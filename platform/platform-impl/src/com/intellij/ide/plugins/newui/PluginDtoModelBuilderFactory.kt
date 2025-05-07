@@ -1,160 +1,173 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui
 
-import com.intellij.ide.plugins.PluginNode
+import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @ApiStatus.Internal
-class PluginNodeModelBuilder(private val pluginId: PluginId) : PluginUiModelBuilder {
-  private val pluginNode = PluginNode(pluginId)
-  
-  override fun setId(id: String): PluginUiModelBuilder {
-    pluginNode.setId(id)
+class PluginDtoModelBuilder(pluginId: PluginId): PluginUiModelBuilder {
+  private val resultDto = PluginDto(null, pluginId)
+
+  override fun setId(id: String): PluginDtoModelBuilder {
+    resultDto.pluginId = PluginId.getId(id)
     return this
   }
 
   override fun setName(name: String?): PluginUiModelBuilder {
-    pluginNode.name = name
+    resultDto.name = name
     return this
   }
-  
+
   override fun setVersion(version: String?): PluginUiModelBuilder {
-    if (version != null) pluginNode.version = version
+    resultDto.version = version
     return this
   }
-  
+
   override fun setDescription(description: String?): PluginUiModelBuilder {
-    pluginNode.description = description
+    resultDto.description = description
     return this
   }
-  
+
   override fun setVendor(vendor: String?): PluginUiModelBuilder {
-    pluginNode.vendor = vendor
+    resultDto.vendor = vendor
     return this
   }
-  
+
   override fun setProductCode(productCode: String?): PluginUiModelBuilder {
-    pluginNode.productCode = productCode
+    resultDto.productCode = productCode
     return this
   }
-  
+
   override fun setCategory(category: String?): PluginUiModelBuilder {
-    if (category != null) pluginNode.setCategory(category)
+    resultDto.category = category
     return this
   }
-  
+
   override fun setChangeNotes(changeNotes: String?): PluginUiModelBuilder {
-    pluginNode.changeNotes = changeNotes
+    resultDto.changeNotes = changeNotes
     return this
   }
-  
+
   override fun setSinceBuild(sinceBuild: String?): PluginUiModelBuilder {
-    pluginNode.sinceBuild = sinceBuild
+    // PluginDto doesn't have direct sinceBuild field
     return this
   }
-  
+
   override fun setUntilBuild(untilBuild: String?): PluginUiModelBuilder {
-    pluginNode.untilBuild = untilBuild
+    // PluginDto doesn't have direct untilBuild field
     return this
   }
-  
+
   override fun setDownloads(downloads: String?): PluginUiModelBuilder {
-    pluginNode.downloads = downloads
+    resultDto.downloads = downloads
     return this
   }
-  
+
   override fun setRating(rating: String?): PluginUiModelBuilder {
-    pluginNode.rating = rating
+    resultDto.rating = rating
     return this
   }
-  
-  override fun setDate(date: Long): PluginUiModelBuilder {
-    pluginNode.date = date
-    return this
-  }
-  
+
   override fun setSize(size: String?): PluginUiModelBuilder {
-    if (size != null) pluginNode.size = size
+    resultDto.size = size
     return this
   }
-  
+
   override fun setVendorEmail(vendorEmail: String?): PluginUiModelBuilder {
-    pluginNode.vendorEmail = vendorEmail
+    // PluginDto doesn't have direct vendorEmail field
     return this
   }
-  
+
   override fun setVendorUrl(vendorUrl: String?): PluginUiModelBuilder {
-    pluginNode.vendorUrl = vendorUrl
+    // PluginDto doesn't have direct vendorUrl field
     return this
   }
-  
+
   override fun setUrl(url: String?): PluginUiModelBuilder {
-    pluginNode.url = url
+    // PluginDto doesn't have direct url field
     return this
   }
-  
+
   override fun setDownloadUrl(downloadUrl: String?): PluginUiModelBuilder {
-    if (downloadUrl != null) pluginNode.downloadUrl = downloadUrl
+    resultDto.downloadUrl = downloadUrl
     return this
   }
-  
+
   override fun setDate(date: String): PluginUiModelBuilder {
-    pluginNode.setDate(date)
+    // Convert string date to long
+    try {
+      val format = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+      resultDto.date = format.parse(date).time
+    } catch (e: Exception) {
+      // If date parsing fails, leave date as 0
+    }
     return this
   }
-  
+
   override fun addDependency(id: String, optional: Boolean): PluginUiModelBuilder {
-    pluginNode.addDepends(id, optional)
+    resultDto.addDependency(PluginId.getId(id), optional)
     return this
   }
-  
+
   override fun addTag(tag: String): PluginUiModelBuilder {
-    pluginNode.addTags(tag)
+    val currentTags = resultDto.tags?.toMutableList() ?: mutableListOf()
+    currentTags.add(tag)
+    resultDto.tags = currentTags
     return this
   }
-  
+
   override fun setIncomplete(incomplete: Boolean): PluginUiModelBuilder {
-    pluginNode.setIncomplete(incomplete)
+    // PluginDto doesn't have direct incomplete field
     return this
   }
 
   override fun setOrganization(string: String?): PluginUiModelBuilder {
-    pluginNode.organization = string
+    resultDto.organization = string
     return this
   }
 
   override fun setIsConverted(converted: Boolean): PluginUiModelBuilder {
-    pluginNode.isConverted = converted
+    resultDto.isConverted = converted
     return this
   }
 
   override fun setIsPaid(isPaid: Boolean): PluginUiModelBuilder {
-    pluginNode.setIsPaid(isPaid)
+    resultDto.isPaid = isPaid
     return this
   }
-  
+
   override fun setExternalPluginId(externalPluginId: String?): PluginUiModelBuilder {
-    pluginNode.externalPluginId = externalPluginId
+    resultDto.externalPluginId = externalPluginId
     return this
   }
-  
+
   override fun setExternalUpdateId(externalUpdateId: String?): PluginUiModelBuilder {
-    pluginNode.externalUpdateId = externalUpdateId
+    resultDto.externalUpdateId = externalUpdateId
     return this
   }
-  
+
   override fun setTags(tags: List<String>?): PluginUiModelBuilder {
-    pluginNode.tags = tags
+    resultDto.tags = tags
+    return this
+  }
+
+  override fun setDate(date: Long): PluginUiModelBuilder {
+    resultDto.date = date
     return this
   }
 
   override fun build(): PluginUiModel {
-    return PluginUiModelAdapter(pluginNode)
+    return resultDto
   }
 }
 
 @ApiStatus.Internal
-object PluginNodeModelBuilderFactory : PluginUiModelBuilderFactory {
-  override fun createBuilder(id: PluginId): PluginUiModelBuilder = PluginNodeModelBuilder(id)
+object PluginDtoModelBuilderFactory : PluginUiModelBuilderFactory {
+  override fun createBuilder(id: PluginId): PluginUiModelBuilder {
+    return PluginDtoModelBuilder(id)
+  }
 }

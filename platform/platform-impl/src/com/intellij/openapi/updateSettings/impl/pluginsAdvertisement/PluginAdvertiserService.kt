@@ -7,8 +7,8 @@ import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
 import com.intellij.ide.plugins.advertiser.PluginFeatureMap
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
-import com.intellij.ide.plugins.newui.PluginNodeModelBuilderFactory
 import com.intellij.ide.plugins.newui.PluginUiModel
+import com.intellij.ide.plugins.newui.PluginUiModelBuilderFactory
 import com.intellij.ide.ui.PluginBooleanOptionDescriptor
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationAction
@@ -154,7 +154,7 @@ open class PluginAdvertiserServiceImpl(
 
   private val notificationManager = SingletonNotificationManager(getPluginSuggestionNotificationGroup().displayId, NotificationType.INFORMATION)
 
-  private val builderFactory = PluginNodeModelBuilderFactory
+  private val builderFactory = PluginUiModelBuilderFactory.getInstance()
 
   override suspend fun run(
     customPlugins: List<PluginNode>,

@@ -6,9 +6,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.ide.plugins.advertiser.PluginData
-import com.intellij.ide.plugins.newui.PluginNodeModelBuilderFactory
 import com.intellij.ide.plugins.newui.PluginUiModel
-import com.intellij.ide.plugins.newui.PluginUiModelAdapter
+import com.intellij.ide.plugins.newui.PluginUiModelBuilderFactory
 import com.intellij.ide.plugins.newui.Tags
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.text.StringUtil.parseLong
@@ -57,7 +56,7 @@ internal data class IntellijUpdateMetadata(
 ) {
   fun toUiModel(): PluginUiModel {
     val pluginId = PluginId.getId(id)
-    val builder = PluginNodeModelBuilderFactory.createBuilder(pluginId)
+    val builder = PluginUiModelBuilderFactory.getInstance().createBuilder(pluginId)
 
     builder.setName(name)
     builder.setSize(size.toString())
@@ -122,7 +121,7 @@ class MarketplaceSearchPluginData(
 
   fun toPluginUiModel(): PluginUiModel {
     val pluginId = PluginId.getId(id)
-    val builder = PluginNodeModelBuilderFactory.createBuilder(pluginId)
+    val builder = PluginUiModelBuilderFactory.getInstance().createBuilder(pluginId)
 
     builder.setName(name)
     builder.setRating("%.2f".format(Locale.US, rating))

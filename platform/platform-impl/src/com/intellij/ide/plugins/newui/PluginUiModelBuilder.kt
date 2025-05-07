@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.newui
 
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -10,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface PluginUiModelBuilder {
-  fun setId(id: String)
+  fun setId(id: String): PluginUiModelBuilder
   fun setName(name: String?): PluginUiModelBuilder
   fun setVersion(version: String?): PluginUiModelBuilder
   fun setDescription(description: String?): PluginUiModelBuilder
@@ -46,4 +47,15 @@ interface PluginUiModelBuilder {
 interface PluginUiModelBuilderFactory {
 
   fun createBuilder(id: PluginId): PluginUiModelBuilder
+
+  companion object {
+    fun getInstance(): PluginUiModelBuilderFactory {
+      if (Registry.`is`("reworked.plugin.manager.enabled")) {
+        return PluginDtoModelBuilderFactory
+      }
+      else {
+        return PluginNodeModelBuilderFactory
+      }
+    }
+  }
 }

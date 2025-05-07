@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.pluginManager.shared.dto
+package com.intellij.ide.plugins.api
 
-import com.intellij.ide.plugins.api.ReviewsPageContainer
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.newui.PluginDependencyModel
 import com.intellij.ide.plugins.newui.PluginSource
 import com.intellij.ide.plugins.newui.PluginUiModel
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class PluginDto(
   override var name: String? = null,
-  override val pluginId: PluginId,
+  override var pluginId: PluginId,
 ) : PluginUiModel {
 
   override var version: String? = null
@@ -74,6 +74,10 @@ class PluginDto(
 
   override var category: String? = null
   override var description: String? = null
+
+  override fun getDescriptor(): IdeaPluginDescriptor {
+    return PluginDtoDescriptorWrapper(this)
+  }
 
   override fun addDependency(id: PluginId, optional: Boolean) {
     dependencies.add(PluginDependencyModel(id, optional))
