@@ -8638,57 +8638,57 @@ jvm_import(
 
 jvm_import(
   name = "search_everywhere_ml-ranking-core-find-action-model",
-  jar = "@find-action-model-231_0_0_http//file",
-  source_jar = "@find-action-model-231_0_0-sources_http//file",
+  jar = "@find-action-model-252_0_0_http//file",
+  source_jar = "@find-action-model-252_0_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "search_everywhere_ml-ranking-core-find-action-model-experimental",
-  jar = "@find-action-model-243_0_1_http//file",
-  source_jar = "@find-action-model-243_0_1-sources_http//file",
+  jar = "@find-action-model-252_0_1_http//file",
+  source_jar = "@find-action-model-252_0_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "search_everywhere_ml-ranking-core-find-all-model-experimental",
-  jar = "@find-all-model-232_1_1_http//file",
-  source_jar = "@find-all-model-232_1_1-sources_http//file",
+  jar = "@find-all-model-252_0_1_http//file",
+  source_jar = "@find-all-model-252_0_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "search_everywhere_ml-ranking-core-find-classes-model",
-  jar = "@find-classes-model-231_0_0_http//file",
-  source_jar = "@find-classes-model-231_0_0-sources_http//file",
+  jar = "@find-classes-model-252_0_0_http//file",
+  source_jar = "@find-classes-model-252_0_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "search_everywhere_ml-ranking-core-find-classes-model-experimental",
-  jar = "@find-classes-model-243_0_1_http//file",
-  source_jar = "@find-classes-model-243_0_1-sources_http//file",
+  jar = "@find-classes-model-252_0_1_http//file",
+  source_jar = "@find-classes-model-252_0_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "search_everywhere_ml-ranking-core-find-ec-model-experimental",
-  jar = "@find-ec-model-251_0_1_http//file",
-  source_jar = "@find-ec-model-251_0_1-sources_http//file",
+  jar = "@find-ec-model-252_0_1_http//file",
+  source_jar = "@find-ec-model-252_0_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "search_everywhere_ml-ranking-core-find-file-model",
-  jar = "@find-file-model-232_1_1_http//file",
-  source_jar = "@find-file-model-232_1_1-sources_http//file",
+  jar = "@find-file-model-252_0_0_http//file",
+  source_jar = "@find-file-model-252_0_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "search_everywhere_ml-ranking-core-find-file-model-experimental",
-  jar = "@find-file-model-243_0_1_http//file",
-  source_jar = "@find-file-model-243_0_1-sources_http//file",
+  jar = "@find-file-model-252_0_1_http//file",
+  source_jar = "@find-file-model-252_0_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
