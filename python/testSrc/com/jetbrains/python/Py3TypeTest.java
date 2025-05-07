@@ -3696,25 +3696,6 @@ public class Py3TypeTest extends PyTestCase {
     });
   }
 
-  // PY-80681
-  public void testTupleDefaultInfer() {
-    doTest("tuple[int, str]",
-           """
-             expr = (1, "a")
-             """);
-    doTest("tuple[int, str]",
-           """
-             def f(a=(1, "a")):
-                 expr = a
-             """);
-    doTest("tuple[int, str]",
-           """
-             class A:
-                 a = (1, "a")
-             expr = A.a
-             """);
-  }
-
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

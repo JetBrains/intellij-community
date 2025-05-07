@@ -227,6 +227,11 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-10967
+  public void testDefaultTupleParameter() {
+    doTest();
+  }
+
   // PY-14222
   public void testRecursiveDictAttribute() {
     doTest();
