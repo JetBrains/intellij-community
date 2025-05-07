@@ -499,7 +499,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return attributesKeys;
   }
 
-  public @NotNull List<TextAttributes> getAttributesForPreviousAndTypedChars(@NotNull Document document, int offset, char c) {
+  public synchronized @NotNull List<TextAttributes> getAttributesForPreviousAndTypedChars(@NotNull Document document, int offset, char c) {
     CharSequence text = document.getImmutableCharSequence();
 
     CharSequence newText = StringUtil.replaceSubSequence(text, offset, offset, new SingleCharSequence(c));
