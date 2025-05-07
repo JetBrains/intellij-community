@@ -1,0 +1,18 @@
+PyFile:FStringInsideTemplateString.py
+  PyAssignmentStatement
+    PyTargetExpression: s
+      PsiElement(Py:IDENTIFIER)('s')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyStringLiteralExpression: {f''}
+      PyFormattedStringElement
+        PsiElement(Py:FSTRING_START)('t"')
+        PyFStringFragment
+          PsiElement(Py:FSTRING_FRAGMENT_START)('{')
+          PyStringLiteralExpression: 
+            PyFormattedStringElement
+              PsiElement(Py:FSTRING_START)('f'')
+              PsiElement(Py:FSTRING_END)(''')
+          PsiElement(Py:FSTRING_FRAGMENT_END)('}')
+        PsiElement(Py:FSTRING_END)('"')

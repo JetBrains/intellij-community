@@ -1,0 +1,55 @@
+PyFile:TemplateStrings.py
+  PyAssignmentStatement
+    PyTargetExpression: s1
+      PsiElement(Py:IDENTIFIER)('s1')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyStringLiteralExpression: 
+      PyFormattedStringElement
+        PsiElement(Py:FSTRING_START)('t'')
+        PsiElement(Py:FSTRING_END)(''')
+  PsiWhiteSpace('\n')
+  PyAssignmentStatement
+    PyTargetExpression: s2
+      PsiElement(Py:IDENTIFIER)('s2')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyStringLiteralExpression: 
+      PyFormattedStringElement
+        PsiElement(Py:FSTRING_START)('tr'')
+        PsiElement(Py:FSTRING_END)(''')
+  PsiWhiteSpace('\n')
+  PyAssignmentStatement
+    PyTargetExpression: s3
+      PsiElement(Py:IDENTIFIER)('s3')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyStringLiteralExpression: 
+      PyFormattedStringElement
+        PsiElement(Py:FSTRING_START)('rt'')
+        PsiElement(Py:FSTRING_END)(''')
+  PsiWhiteSpace('\n')
+  PyAssignmentStatement
+    PyTargetExpression: s4
+      PsiElement(Py:IDENTIFIER)('s4')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyStringLiteralExpression: 
+      PyFormattedStringElement
+        PsiElement(Py:FSTRING_START)('T'')
+        PsiElement(Py:FSTRING_END)(''')
+  PsiWhiteSpace('\n')
+  PyAssignmentStatement
+    PyTargetExpression: s5
+      PsiElement(Py:IDENTIFIER)('s5')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyStringLiteralExpression: 
+      PyFormattedStringElement
+        PsiElement(Py:FSTRING_START)('RT'')
+        PsiElement(Py:FSTRING_END)(''')
