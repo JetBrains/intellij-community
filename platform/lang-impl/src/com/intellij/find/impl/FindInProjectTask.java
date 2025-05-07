@@ -74,6 +74,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 
+import static com.intellij.openapi.roots.impl.FilesScanExecutor.processOnAllThreadsInReadActionWithRetries;
+import static com.intellij.util.containers.ContainerUtil.sorted;
+
 final class FindInProjectTask {
   private static final Logger LOG = Logger.getInstance(FindInProjectTask.class);
 
@@ -182,21 +185,28 @@ final class FindInProjectTask {
       progressIndicator.setIndeterminate(false);
 
       //first process files from searchers (=index):
-      Set<VirtualFile> filesForFastWordSearch = collectFilesForFastWordSearch(filesToScanInitially, searchers, fileMaskFilter);
+      Set<VirtualFile> filesForFastSearch = collectFilesFromSearchers(searchers, fileMaskFilter);
+      for (VirtualFile file : filesToScanInitially) {
+        if (fileMaskFilter.test(file)) {
+          filesForFastSearch.add(file);
+        }
+      }
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Search found " + filesForFastWordSearch.size() + " indexed files");
+        LOG.debug("Search found " + filesForFastSearch.size() + " indexed files, "
+                  + filesToScanInitially.size() + " to scan initially");
       }
 
       AtomicInteger processedFastFiles = new AtomicInteger();
-      FilesScanExecutor.processOnAllThreadsInReadActionWithRetries(
-        new ConcurrentLinkedDeque<>(sorted(filesForFastWordSearch, SEARCH_RESULT_FILE_COMPARATOR)),
+      processOnAllThreadsInReadActionWithRetries(
+        new ConcurrentLinkedDeque<>(sorted(filesForFastSearch, SEARCH_RESULT_FILE_COMPARATOR)),
         file -> {
           boolean result = fileProcessor.process(file);
 
           if (progressIndicator.isRunning()) {
-            double fraction = (double)processedFastFiles.incrementAndGet() / filesForFastWordSearch.size();
+            double fraction = (double)processedFastFiles.incrementAndGet() / filesForFastSearch.size();
             progressIndicator.setFraction(fraction);
           }
+
           return result;
         }
       );
@@ -209,11 +219,15 @@ final class FindInProjectTask {
       List<Object> searchItems = collectSearchItems();
 
       AtomicInteger otherFilesCount = new AtomicInteger();
-      bruteforceProcessSearchItems(searchItems, /*alreadyProcessed: */filesForFastWordSearch, file -> {
-        boolean result = fileProcessor.process(file);
-        otherFilesCount.incrementAndGet();
-        return result;
-      });
+      bruteforceProcessSearchItems(
+        searchItems,
+        /*alreadySearched: */filesForFastSearch::contains,
+        file -> {
+          boolean result = fileProcessor.process(file);
+          otherFilesCount.incrementAndGet();
+          return result;
+        }
+      );
 
       if (LOG.isDebugEnabled()) {
         LOG.debug("Search processed " + otherFilesCount.get() + " non-indexed files");
@@ -377,9 +391,8 @@ final class FindInProjectTask {
 
   // must return non-binary files
   private void bruteforceProcessSearchItems(@NotNull List<Object> searchItems,
-                                            @NotNull Set<? extends VirtualFile> alreadySearched,
+                                            @NotNull Predicate<? super VirtualFile> alreadySearched,
                                             @NotNull Processor<? super VirtualFile> fileProcessor) {
-
 
     SearchScope customScope = findModel.isCustomScope() ? findModel.getCustomScope() : null;
     GlobalSearchScope globalCustomScope = customScope == null ? null : GlobalSearchScopeUtil.toGlobalSearchScope(customScope, project);
@@ -399,7 +412,7 @@ final class FindInProjectTask {
     //wrap into concurrent deque for multi-threaded processing
     ConcurrentLinkedDeque<Object> searchItemsDeque = new ConcurrentLinkedDeque<>(searchItems);
     ConcurrentBitSet visitedFileIds = ConcurrentBitSet.create();
-    FilesScanExecutor.processOnAllThreadsInReadActionWithRetries(
+    processOnAllThreadsInReadActionWithRetries(
       searchItemsDeque,
 
       searchItem -> { // := { VirtualFile | IndexableFilesIterator | FindModelExtension }
@@ -420,7 +433,7 @@ final class FindInProjectTask {
         }
         else if (searchItem instanceof FindModelExtension findModelExtension) {
           findModelExtension.iterateAdditionalFiles(findModel, project, file -> {
-            if (!file.isDirectory() && !alreadySearched.contains(file)) {
+            if (!file.isDirectory() && !alreadySearched.test(file)) {
               //MAYBE RC: why don't we check fileMaskFilter here?
               //          Seems like the only implementation of FindModelExtension does this filtering by itself, inside it
               //          Same question about withSubdirs: here we ignore it, and just skip all the directories.
@@ -486,7 +499,7 @@ final class FindInProjectTask {
             adjustedFile = file;
           }
 
-          if (alreadySearched.contains(adjustedFile)) {
+          if (alreadySearched.test(adjustedFile)) {
             //TODO RC: why not check visitedFileIds also?
             //MAYBE RC: combine alreadySearched+fileMask+visitedFileIds into a single Predicate?
             return true;
@@ -538,15 +551,9 @@ final class FindInProjectTask {
   /**
    * @return filesToScanInitially + candidate files found by searchers, filtered by fileMaskFilter
    */
-  private static @NotNull Set<VirtualFile> collectFilesForFastWordSearch(@NotNull Set<? extends VirtualFile> filesToScanInitially,
-                                                                         @NotNull FindInProjectSearcher @NotNull [] searchers,
-                                                                         @NotNull Predicate<VirtualFile> fileFilter) {
+  private static @NotNull Set<VirtualFile> collectFilesFromSearchers(@NotNull FindInProjectSearcher @NotNull [] searchers,
+                                                                     @NotNull Predicate<VirtualFile> fileFilter) {
     Set<VirtualFile> resultFiles = VfsUtilCore.createCompactVirtualFileSet();
-    for (VirtualFile file : filesToScanInitially) {
-      if (fileFilter.test(file)) {
-        resultFiles.add(file);
-      }
-    }
 
     for (FindInProjectSearcher searcher : searchers) {
       Collection<VirtualFile> virtualFiles = searcher.searchForOccurrences();
