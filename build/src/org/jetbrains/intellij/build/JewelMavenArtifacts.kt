@@ -24,6 +24,8 @@ internal object JewelMavenArtifacts {
     "intellij.platform.jewel.markdown.core" to "jewel-markdown-core",
     "intellij.platform.jewel.ui" to "jewel-ui",
     "intellij.platform.jewel.markdown.extensions.gfmTables" to "jewel-markdown-extensions-gfm-tables",
+    "intellij.platform.jewel.markdown.extensions.gfmStrikethrough" to "jewel-markdown-extensions-gfm-strikethrough",
+    "intellij.platform.jewel.markdown.extensions.autolink" to "jewel-markdown-extensions-autolink",
     "intellij.platform.jewel.markdown.extensions.gfmAlerts" to "jewel-markdown-extensions-gfm-alerts",
   )
   val STANDALONE: Map<String, String> = mapOf(
