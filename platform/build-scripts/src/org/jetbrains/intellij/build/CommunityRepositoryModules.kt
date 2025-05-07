@@ -312,19 +312,12 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.common", "android-common.jar")
       spec.withModule("intellij.android.jps.model", "android-common.jar")
 
-      // android-extensions-ide.jar
-      spec.withModule("intellij.android.kotlin.extensions.common", "android-extensions-ide.jar")
-
-      // android-kotlin-extensions-tooling.jar
-      spec.withModule("intellij.android.kotlin.extensions.tooling", "android-kotlin-extensions-tooling.jar")
-
       //android-gradle-tooling.jar
       spec.withModule("intellij.android.gradle-tooling.api", "android-gradle.jar")
       spec.withModule("intellij.android.gradle-tooling.impl", "android-gradle.jar")
       spec.withModule("intellij.android.projectSystem.gradle.sync", "android-gradle.jar")
 
       // android-kotlin.jar
-      spec.withModule("intellij.android.kotlin.extensions", "android-kotlin.jar")
       spec.withModule("intellij.android.kotlin.idea", "android-kotlin.jar")
       spec.withModule("intellij.android.kotlin.idea.common", "android-kotlin.jar")
       spec.withModule("intellij.android.kotlin.idea.k1", "android-kotlin.jar")

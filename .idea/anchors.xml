@@ -10,7 +10,6 @@
         <entry key="kotlinc.analysis-api-impl-base-tests" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.analysis-api-k2" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.analysis-api-k2-tests" value="kotlin.util.compiler-classpath" />
-        <entry key="kotlinc.android-extensions-compiler-plugin" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.incremental-compilation-impl-tests" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlin-build-common-tests" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlin-compiler-cli" value="kotlin.util.compiler-classpath" />

@@ -2511,6 +2511,31 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
             runTest("../../completion/testData/basic/common/primaryConstructor/previousParameter.kt");
         }
 
+        @TestMetadata("propertyDefaultValue_fromBaseClass.kt")
+        public void testPropertyDefaultValue_fromBaseClass() throws Exception {
+            runTest("../../completion/testData/basic/common/primaryConstructor/propertyDefaultValue_fromBaseClass.kt");
+        }
+
+        @TestMetadata("propertyDefaultValue_fromBody.kt")
+        public void testPropertyDefaultValue_fromBody() throws Exception {
+            runTest("../../completion/testData/basic/common/primaryConstructor/propertyDefaultValue_fromBody.kt");
+        }
+
+        @TestMetadata("propertyDefaultValue_fromCompanionObject.kt")
+        public void testPropertyDefaultValue_fromCompanionObject() throws Exception {
+            runTest("../../completion/testData/basic/common/primaryConstructor/propertyDefaultValue_fromCompanionObject.kt");
+        }
+
+        @TestMetadata("propertyDefaultValue_fromConstructor.kt")
+        public void testPropertyDefaultValue_fromConstructor() throws Exception {
+            runTest("../../completion/testData/basic/common/primaryConstructor/propertyDefaultValue_fromConstructor.kt");
+        }
+
+        @TestMetadata("propertyDefaultValue_outerExtensions.kt")
+        public void testPropertyDefaultValue_outerExtensions() throws Exception {
+            runTest("../../completion/testData/basic/common/primaryConstructor/propertyDefaultValue_outerExtensions.kt");
+        }
+
         @TestMetadata("propertyType.kt")
         public void testPropertyType() throws Exception {
             runTest("../../completion/testData/basic/common/primaryConstructor/propertyType.kt");

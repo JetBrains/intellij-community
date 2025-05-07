@@ -2367,6 +2367,31 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 runTest("../testData/basic/common/primaryConstructor/previousParameter.kt");
             }
 
+            @TestMetadata("propertyDefaultValue_fromBaseClass.kt")
+            public void testPropertyDefaultValue_fromBaseClass() throws Exception {
+                runTest("../testData/basic/common/primaryConstructor/propertyDefaultValue_fromBaseClass.kt");
+            }
+
+            @TestMetadata("propertyDefaultValue_fromBody.kt")
+            public void testPropertyDefaultValue_fromBody() throws Exception {
+                runTest("../testData/basic/common/primaryConstructor/propertyDefaultValue_fromBody.kt");
+            }
+
+            @TestMetadata("propertyDefaultValue_fromCompanionObject.kt")
+            public void testPropertyDefaultValue_fromCompanionObject() throws Exception {
+                runTest("../testData/basic/common/primaryConstructor/propertyDefaultValue_fromCompanionObject.kt");
+            }
+
+            @TestMetadata("propertyDefaultValue_fromConstructor.kt")
+            public void testPropertyDefaultValue_fromConstructor() throws Exception {
+                runTest("../testData/basic/common/primaryConstructor/propertyDefaultValue_fromConstructor.kt");
+            }
+
+            @TestMetadata("propertyDefaultValue_outerExtensions.kt")
+            public void testPropertyDefaultValue_outerExtensions() throws Exception {
+                runTest("../testData/basic/common/primaryConstructor/propertyDefaultValue_outerExtensions.kt");
+            }
+
             @TestMetadata("propertyType.kt")
             public void testPropertyType() throws Exception {
                 runTest("../testData/basic/common/primaryConstructor/propertyType.kt");

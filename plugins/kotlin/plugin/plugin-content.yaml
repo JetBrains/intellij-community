@@ -297,11 +297,6 @@
   files:
   - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2/allopen-compiler-plugin-for-ide-2.jar
   reason: withProjectLibrary
-- name: lib/kotlinc.android-extensions-compiler-plugin.jar
-  library: kotlinc.android-extensions-compiler-plugin
-  files:
-  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/android-extensions-compiler-plugin-for-ide/2/android-extensions-compiler-plugin-for-ide-2.jar
-  reason: withProjectLibrary
 - name: lib/kotlinc.assignment-compiler-plugin.jar
   library: kotlinc.assignment-compiler-plugin
   files:
