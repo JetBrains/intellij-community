@@ -9204,6 +9204,7 @@
         "Chrome": "94",
         "ChromeAndroid": "94",
         "Edge": "94",
+        "Firefox": "preview",
         "Opera": "80"
       },
       "baseline": {
@@ -9220,6 +9221,7 @@
         "Chrome": "94",
         "ChromeAndroid": "94",
         "Edge": "94",
+        "Firefox": "preview",
         "Opera": "80"
       },
       "baseline": {
@@ -9242,6 +9244,7 @@
         "Chrome": "129",
         "ChromeAndroid": "129",
         "Edge": "129",
+        "Firefox": "preview",
         "Opera": "115"
       },
       "baseline": {
@@ -10521,6 +10524,9 @@
         "StandardTrack"
       ],
       "compatibility": {
+        "Chrome": "137",
+        "ChromeAndroid": "137",
+        "Edge": "137",
         "Firefox": "126",
         "FirefoxAndroid": "126",
         "Safari": "17",
@@ -10628,10 +10634,12 @@
     "selection.getcomposedranges": {
       "url": "$MDN_URL$/web/api/selection/getcomposedranges",
       "status": [
-        "Experimental",
         "StandardTrack"
       ],
       "compatibility": {
+        "Chrome": "137",
+        "ChromeAndroid": "137",
+        "Edge": "137",
         "Firefox": "preview",
         "Safari": "17",
         "SafariIOS": "17"
@@ -12527,7 +12535,7 @@
         "Chrome": "117",
         "ChromeAndroid": "117",
         "Edge": "117",
-        "Opera": "103"
+        "Opera": "112"
       },
       "baseline": {
         "level": "NONE"
@@ -12544,7 +12552,7 @@
         "Chrome": "117",
         "ChromeAndroid": "117",
         "Edge": "117",
-        "Opera": "103"
+        "Opera": "112"
       },
       "baseline": {
         "level": "NONE"
@@ -12566,7 +12574,7 @@
         "Chrome": "117",
         "ChromeAndroid": "117",
         "Edge": "117",
-        "Opera": "103"
+        "Opera": "112"
       },
       "baseline": {
         "level": "NONE"
@@ -12584,7 +12592,7 @@
         "Chrome": "117",
         "ChromeAndroid": "117",
         "Edge": "117",
-        "Opera": "103"
+        "Opera": "112"
       },
       "baseline": {
         "level": "NONE"
@@ -12605,7 +12613,7 @@
         "Chrome": "117",
         "ChromeAndroid": "117",
         "Edge": "117",
-        "Opera": "103"
+        "Opera": "112"
       },
       "baseline": {
         "level": "NONE"
@@ -12657,7 +12665,7 @@
         "Chrome": "117",
         "ChromeAndroid": "117",
         "Edge": "117",
-        "Opera": "103"
+        "Opera": "112"
       },
       "baseline": {
         "level": "NONE"
@@ -12674,7 +12682,7 @@
         "Chrome": "117",
         "ChromeAndroid": "117",
         "Edge": "117",
-        "Opera": "103"
+        "Opera": "112"
       },
       "baseline": {
         "level": "NONE"
@@ -12691,7 +12699,7 @@
         "Chrome": "117",
         "ChromeAndroid": "117",
         "Edge": "117",
-        "Opera": "103"
+        "Opera": "112"
       },
       "baseline": {
         "level": "NONE"
@@ -12716,7 +12724,7 @@
         "Chrome": "117",
         "ChromeAndroid": "117",
         "Edge": "117",
-        "Opera": "103"
+        "Opera": "112"
       },
       "baseline": {
         "level": "NONE"
@@ -18608,7 +18616,10 @@
         "Experimental",
         "StandardTrack"
       ],
-      "compatibility": {},
+      "compatibility": {
+        "Firefox": "136",
+        "FirefoxAndroid": "136"
+      },
       "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>SVGDiscardElement</code></strong> interface is an interface for the <a href=\"$MDN_URL$/Web/SVG/Reference/Element/discard\"><code>&lt;discard&gt;</code></a> element.\n<p>Note that it does not provide access to the specific attributes of the <a href=\"$MDN_URL$/Web/SVG/Reference/Element/discard\"><code>&lt;discard&gt;</code></a> element (<code>begin</code> and <code>href</code>)."
     },
     "svgelement": {
@@ -29812,6 +29823,7 @@
         "Chrome": "94",
         "ChromeAndroid": "94",
         "Edge": "94",
+        "Firefox": "preview",
         "Opera": "80"
       },
       "baseline": {
@@ -29828,6 +29840,7 @@
         "Chrome": "94",
         "ChromeAndroid": "94",
         "Edge": "94",
+        "Firefox": "preview",
         "Opera": "80"
       },
       "baseline": {
@@ -29851,6 +29864,7 @@
         "Chrome": "94",
         "ChromeAndroid": "94",
         "Edge": "94",
+        "Firefox": "preview",
         "Opera": "80"
       },
       "baseline": {
@@ -29870,6 +29884,7 @@
         "Chrome": "94",
         "ChromeAndroid": "94",
         "Edge": "94",
+        "Firefox": "preview",
         "Opera": "80"
       },
       "baseline": {
@@ -29886,6 +29901,7 @@
         "Chrome": "94",
         "ChromeAndroid": "94",
         "Edge": "94",
+        "Firefox": "preview",
         "Opera": "80"
       },
       "baseline": {
@@ -29902,6 +29918,7 @@
         "Chrome": "94",
         "ChromeAndroid": "94",
         "Edge": "94",
+        "Firefox": "preview",
         "Opera": "80"
       },
       "baseline": {
@@ -29922,6 +29939,7 @@
         "Chrome": "94",
         "ChromeAndroid": "94",
         "Edge": "94",
+        "Firefox": "preview",
         "Opera": "80"
       },
       "baseline": {
@@ -29960,6 +29978,7 @@
         "Chrome": "94",
         "ChromeAndroid": "94",
         "Edge": "94",
+        "Firefox": "preview",
         "Opera": "80"
       },
       "baseline": {

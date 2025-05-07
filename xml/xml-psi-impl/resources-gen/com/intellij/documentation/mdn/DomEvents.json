@@ -3082,12 +3082,17 @@
     "selectionchange": {
       "url": "$MDN_URL$/web/api/htmlinputelement/selectionchange_event",
       "status": [
-        "Experimental",
         "StandardTrack"
       ],
       "compatibility": {
+        "Chrome": "127",
+        "ChromeAndroid": "127",
+        "Edge": "127",
         "Firefox": "92",
-        "FirefoxAndroid": "92"
+        "FirefoxAndroid": "92",
+        "Opera": "113",
+        "Safari": "18",
+        "SafariIOS": "18"
       },
       "baseline": {
         "level": "NONE"
