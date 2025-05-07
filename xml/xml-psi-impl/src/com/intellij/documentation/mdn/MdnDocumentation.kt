@@ -318,8 +318,8 @@ data class MdnCssDocumentation(
   override val author: MdnNameWithUrl,
   override val lang: String,
   val atRules: Map<String, MdnCssAtRuleSymbolDocumentation>,
-  val dataTypes: Map<String, MdnCssBasicSymbolDocumentation>,
-  val functions: Map<String, MdnCssBasicSymbolDocumentation>,
+  val dataTypes: Map<String, MdnCssPropertySymbolDocumentation>,
+  val functions: Map<String, MdnCssPropertySymbolDocumentation>,
   val properties: Map<String, MdnCssPropertySymbolDocumentation>,
   val pseudoClasses: Map<String, MdnCssBasicSymbolDocumentation>,
   val pseudoElements: Map<String, MdnCssBasicSymbolDocumentation>,
@@ -598,7 +598,7 @@ private fun <T : MdnDocumentation> loadDocumentation(namespace: MdnApiNamespace,
   val obsoleteFile = MdnHtmlDocumentation::class.java.getResource("${namespace.name}${segment?.let { "-$it" } ?: ""}-obsolete.json")
   return sequenceOf(mainFile, obsoleteFile)
     .filterNotNull()
-    .map { jacksonObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).readValue(it, clazz) }
+    .map { jacksonObjectMapper().readValue(it, clazz) }
     .reduce(::mergeDocumentation)
 }
 

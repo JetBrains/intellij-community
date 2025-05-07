@@ -1,4 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.gson.*
 import com.google.gson.stream.JsonReader
 import com.intellij.application.options.CodeStyle
@@ -197,12 +198,72 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
 
   private fun outputJson(outputFile: String, data: MdnDocumentation) {
     val targetFile = Path.of(PathManager.getCommunityHomePath(), OUTPUT_DIR, "$outputFile.json").toFile()
+    if (data is MdnHtmlDocumentation || data is MdnCssDocumentation || data is MdnDomEventsDocumentation) {
+      val targetObsoleteFile = Path.of(PathManager.getCommunityHomePath(), OUTPUT_DIR, "$outputFile-obsolete.json").toFile()
 
-    FileUtil.writeToFile(targetFile,
-                         GsonBuilder().setPrettyPrinting().disableHtmlEscaping()
-                           .registerTypeAdapter(Map::class.java, CompatibilityMapSerializer())
-                           .create()
-                           .toJson(data))
+      val obsoleteData = jacksonObjectMapper().readValue(targetObsoleteFile, data::class.java)
+      val currentData = jacksonObjectMapper().readValue(targetFile, data::class.java)
+
+      when (data) {
+        is MdnDomEventsDocumentation -> {
+          currentData as MdnDomEventsDocumentation
+          obsoleteData as MdnDomEventsDocumentation
+
+          makeMissingSymbolsObsolete(data, currentData, obsoleteData, MdnDomEventsDocumentation::events) {
+            it.copy(status = setOf(MdnApiStatus.Obsolete))
+          }
+        }
+        is MdnHtmlDocumentation -> {
+          currentData as MdnHtmlDocumentation
+          obsoleteData as MdnHtmlDocumentation
+
+          makeMissingSymbolsObsolete(
+            data, currentData, obsoleteData, MdnHtmlDocumentation::tags,
+            { it.copy(status = setOf(MdnApiStatus.Obsolete)) },
+            MdnHtmlElementDocumentation::attrs,
+            { MdnHtmlElementDocumentation(null, null, null, "", null, mutableMapOf()) },
+            { it.copy(status = setOf(MdnApiStatus.Obsolete)) },
+          )
+          makeMissingSymbolsObsolete(data, currentData, obsoleteData, MdnHtmlDocumentation::attrs) {
+            it.copy(status = setOf(MdnApiStatus.Obsolete))
+          }
+        }
+        is MdnCssDocumentation -> {
+          currentData as MdnCssDocumentation
+          obsoleteData as MdnCssDocumentation
+
+          makeMissingSymbolsObsolete(
+            data, currentData, obsoleteData, MdnCssDocumentation::atRules,
+            { it.copy(status = setOf(MdnApiStatus.Obsolete)) },
+            MdnCssAtRuleSymbolDocumentation::properties,
+            { MdnCssAtRuleSymbolDocumentation(null, null, null, "", mutableMapOf(), null) },
+            { it.copy(status = setOf(MdnApiStatus.Obsolete)) }
+          )
+          makeMissingSymbolsObsolete(data, currentData, obsoleteData, MdnCssDocumentation::properties) {
+            it.copy(status = setOf(MdnApiStatus.Obsolete))
+          }
+          makeMissingSymbolsObsolete(data, currentData, obsoleteData, MdnCssDocumentation::pseudoClasses) {
+            it.copy(status = setOf(MdnApiStatus.Obsolete))
+          }
+          makeMissingSymbolsObsolete(data, currentData, obsoleteData, MdnCssDocumentation::pseudoElements) {
+            it.copy(status = setOf(MdnApiStatus.Obsolete))
+          }
+          makeMissingSymbolsObsolete(data, currentData, obsoleteData, MdnCssDocumentation::functions) {
+            it.copy(status = setOf(MdnApiStatus.Obsolete))
+          }
+          makeMissingSymbolsObsolete(data, currentData, obsoleteData, MdnCssDocumentation::dataTypes) {
+            it.copy(status = setOf(MdnApiStatus.Obsolete))
+          }
+        }
+        else -> throw RuntimeException("Unsupported documentation type: ${data::class.java.name}")
+      }
+      FileUtil.writeToFile(targetObsoleteFile, GsonBuilder().setPrettyPrinting().disableHtmlEscaping()
+        .registerTypeAdapter(Map::class.java, CompatibilityMapSerializer(true))
+        .create().toJson(obsoleteData))
+    }
+    FileUtil.writeToFile(targetFile, GsonBuilder().setPrettyPrinting().disableHtmlEscaping()
+      .registerTypeAdapter(Map::class.java, CompatibilityMapSerializer(false))
+      .create().toJson(data))
     updateBcdDescriptions()
   }
 
@@ -451,8 +512,8 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     return MdnCssDocumentation(
       LICENSE, AUTHOR, BUILT_LANG,
       result["atRules"]!!.mapValues { it.value as MdnCssAtRuleSymbolDocumentation },
-      result["dataTypes"]!!.mapValues { it.value.asMdnCssBasicSymbolDocumentation() },
-      result["functions"]!!.mapValues { it.value.asMdnCssBasicSymbolDocumentation() },
+      result["dataTypes"]!!.mapValues { it.value as MdnCssPropertySymbolDocumentation },
+      result["functions"]!!.mapValues { it.value as MdnCssPropertySymbolDocumentation },
       result["properties"]!!.mapValues { it.value as MdnCssPropertySymbolDocumentation },
       result["pseudoClasses"]!!.mapValues { it.value.asMdnCssBasicSymbolDocumentation() },
       result["pseudoElements"]!!.mapValues { it.value.asMdnCssBasicSymbolDocumentation() },
@@ -1197,6 +1258,51 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
   }
 }
 
+private fun <T : MdnDocumentation, K : MdnRawSymbolDocumentation> makeMissingSymbolsObsolete(
+  newData: T,
+  currentData: T,
+  obsoleteData: T,
+  mapGetter: (T) -> Map<String, K>,
+  copyWithObsoleteStatus: (K) -> K,
+) {
+  makeMissingSymbolsObsolete<T, K, MdnRawSymbolDocumentation>(newData, currentData, obsoleteData, mapGetter, copyWithObsoleteStatus, null, null, null)
+}
+
+private fun <T : MdnDocumentation, K : MdnRawSymbolDocumentation, L : MdnRawSymbolDocumentation> makeMissingSymbolsObsolete(
+  newData: T,
+  currentData: T,
+  obsoleteData: T,
+  mapGetter: (T) -> Map<String, K>,
+  copyWithObsoleteStatus: (K) -> K,
+  subMapGetter: ((K) -> Map<String, L>?)?,
+  symbolCreator: ((String) -> K)?,
+  subCopyWithObsoleteStatus: ((L) -> L)?,
+) {
+
+  val newMap = mapGetter(newData)
+  val currentMap = mapGetter(currentData)
+  val obsoleteMap = mapGetter(obsoleteData) as MutableMap<String, K>
+
+  currentMap.entries.forEach { (key, value) ->
+    if (!newMap.contains(key)) {
+      obsoleteMap.put(key, copyWithObsoleteStatus(value))
+    }
+    else if (subMapGetter != null) {
+      val newSubMap = subMapGetter(newMap[key]!!)
+      val currentSubMap = subMapGetter(value)
+      val obsoleteSubMap by lazy {
+        subMapGetter(obsoleteMap.computeIfAbsent(key, symbolCreator!!)) as MutableMap<String, L>
+      }
+
+      currentSubMap?.entries?.forEach {
+        if (newSubMap == null || !newSubMap.contains(it.key)) {
+          obsoleteSubMap.put(it.key, subCopyWithObsoleteStatus!!(it.value))
+        }
+      }
+    }
+  }
+}
+
 private fun String?.extractSvgAttributesSections(): Pair<String?, Map<String, String>?> {
   if (this == null) return Pair(null, null)
   val match = svgAttributeSectionsPattern.matchEntire(this)
@@ -1299,16 +1405,26 @@ private fun String.patchProse(): String =
       }
     }
 
-private class CompatibilityMapSerializer : JsonSerializer<Map<*, *>> {
+private class CompatibilityMapSerializer(private val sortEntries: Boolean) : JsonSerializer<Map<*, *>> {
   override fun serialize(src: Map<*, *>, typeOfSrc: Type, context: JsonSerializationContext): JsonElement =
     if (src.size == 1 && src.containsKey(defaultBcdContext)) {
       context.serialize(src[defaultBcdContext])
     }
+    else if (src.size == 1 && src.containsKey("default_context")) {
+      context.serialize(src["default_context"])
+    }
     else {
       val result = JsonObject()
-      src.entries.forEach { (key, value) ->
-        result.add(key.toString(), context.serialize(value))
-      }
+      src.entries
+        .let { set ->
+          if (sortEntries && set.firstOrNull()?.value !is String)
+            set.sortedBy { it.key.toString() }
+          else
+            set
+        }
+        .forEach { (key, value) ->
+          result.add(key.toString(), context.serialize(value))
+        }
       result
     }
 
