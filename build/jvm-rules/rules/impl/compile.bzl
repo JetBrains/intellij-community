@@ -130,9 +130,13 @@ def _new_plugins_from(targets):
         plugin = t[_KtCompilerPluginInfo]
         if not (plugin.stubs or plugin.compile):
             plugins_without_phase.append("%s: %s" % (t.label, plugin.id))
-        if plugin.id in all_plugins:
-            fail("has multiple plugins with the same id: %s." % plugin.id)
-        all_plugins[plugin.id] = plugin
+
+        existing = all_plugins.get(plugin.id)
+        if existing:
+            if existing != plugin:
+                fail("has multiple plugins with the same id: %s." % plugin.id)
+        else:
+            all_plugins[plugin.id] = plugin
 
     if plugins_without_phase:
         fail("has plugin without a phase defined: %s" % cfgs_without_plugin)

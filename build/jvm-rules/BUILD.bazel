@@ -193,7 +193,7 @@ jvm_import(
     source_jar = "@jackson-databind-sources//file",
     visibility = ["//visibility:public"],
     runtime_deps = [
-        ":jackson-annotations",
+        ":jackson-annotations"
     ],
 )
 
@@ -238,8 +238,8 @@ jvm_import(
     source_jar = "@arrow-vector-sources//file",
     visibility = ["//visibility:public"],
     runtime_deps = [
-        ":arrow-format",
         ":flatbuffers-java",
+        ":arrow-format"
     ],
 )
 
@@ -256,7 +256,7 @@ jvm_import(
     source_jar = "@arrow-memory-netty-sources//file",
     visibility = ["//visibility:public"],
     runtime_deps = [
-        ":arrow-memory-netty-buffer-patch",
+        ":arrow-memory-netty-buffer-patch"
     ],
 )
 
@@ -315,13 +315,13 @@ jvm_import(
     source_jar = "@opentelemetry-api-sources//file",
     visibility = ["//visibility:public"],
     runtime_deps = [
-        ":opentelemetry-context",
         ":opentelemetry-sdk",
         ":opentelemetry-sdk-common",
-        ":opentelemetry-sdk-extension-autoconfigure-spi",
-        ":opentelemetry-sdk-logs",
-        ":opentelemetry-sdk-metrics",
+        ":opentelemetry-context",
         ":opentelemetry-sdk-trace",
+        ":opentelemetry-sdk-metrics",
+        ":opentelemetry-sdk-logs",
+        ":opentelemetry-sdk-extension-autoconfigure-spi"
     ],
 )
 
@@ -408,10 +408,10 @@ jvm_import(
     source_jar = "@opentelemetry-exporter-otlp-sources//file",
     visibility = ["//visibility:public"],
     runtime_deps = [
+        ":opentelemetry-exporter-sender-jdk",
         ":opentelemetry-exporter-common",
         ":opentelemetry-exporter-otlp-common",
-        ":opentelemetry-exporter-sender-jdk",
-        ":opentelemetry-sdk-extension-autoconfigure-spi",
+        ":opentelemetry-sdk-extension-autoconfigure-spi"
     ],
 )
 
@@ -435,7 +435,7 @@ jvm_import(
     source_jar = "@netty-buffer-sources//file",
     visibility = ["//visibility:public"],
     runtime_deps = [
-        ":netty-common",
+        ":netty-common"
     ],
 )
 
