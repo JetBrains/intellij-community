@@ -24,7 +24,6 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.launch
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelEx
 import org.intellij.plugins.markdown.ui.preview.MarkdownUpdateHandler
@@ -141,19 +140,18 @@ internal class MarkdownComposePanel(
     val request by updateHandler.requests.collectAsState(null)
     (request as? PreviewRequest.Update)?.let {
       if (scrollingSynchronizer != null) {
-        val coroutineScope = rememberCoroutineScope()
         LaunchedEffect(Unit) {
-          coroutineScope.launch {
-            scrollToLineFlow.debounce(1.milliseconds).collectLatest { scrollToLine ->
-              scrollingSynchronizer.scrollToLine(scrollToLine, animationSpec)
-            }
+          // wait until the preview finished composing
+          withFrameNanos { }
+          scrollToLineFlow.debounce(1.milliseconds).collectLatest { scrollToLine ->
+            scrollingSynchronizer.scrollToLine(scrollToLine, animationSpec)
           }
         }
         LaunchedEffect(it.initialScrollOffset) {
-          coroutineScope.launch {
-            if (it.initialScrollOffset != 0) {
-              scrollToLineFlow.emit(it.initialScrollOffset)
-            }
+          // wait until the preview finished composing
+          withFrameNanos { }
+          if (it.initialScrollOffset != 0) {
+            scrollToLineFlow.emit(it.initialScrollOffset)
           }
         }
       }
