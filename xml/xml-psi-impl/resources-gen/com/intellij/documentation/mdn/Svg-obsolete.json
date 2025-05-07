@@ -133,21 +133,23 @@
     },
     "filter": {
       "doc": "",
-      "filterres": {
-        "url": "$MDN_URL$/web/svg/attribute/filterres",
-        "status": [
-          "Obsolete"
-        ],
-        "compatibility": {
-          "Chrome": "5",
-          "ChromeAndroid": "",
-          "Edge": "79",
-          "Firefox": "3",
-          "Opera": "15",
-          "Safari": "6",
-          "SafariIOS": "6"
-        },
-        "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>filterRes</code></strong> attribute indicates the width and height of the intermediate images in pixels of a filter primitive.\n<p>Take care when assigning a non-default value to this attribute. Too small of a value may result in unwanted pixelation in the result. Too large of a value may result in slow processing and large memory usage.\n<p>Note that negative values or zero values disable the rendering of the element which referenced the filter.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/filter\"><code>&lt;filter&gt;</code></a></li>\n</ul>"
+      "attrs": {
+        "filterres": {
+          "url": "$MDN_URL$/web/svg/attribute/filterres",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {
+            "Chrome": "5",
+            "ChromeAndroid": "",
+            "Edge": "79",
+            "Firefox": "3",
+            "Opera": "15",
+            "Safari": "6",
+            "SafariIOS": "6"
+          },
+          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>filterRes</code></strong> attribute indicates the width and height of the intermediate images in pixels of a filter primitive.\n<p>Take care when assigning a non-default value to this attribute. Too small of a value may result in unwanted pixelation in the result. Too large of a value may result in slow processing and large memory usage.\n<p>Note that negative values or zero values disable the rendering of the element which referenced the filter.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/filter\"><code>&lt;filter&gt;</code></a></li>\n</ul>"
+        }
       }
     },
     "svg": {
