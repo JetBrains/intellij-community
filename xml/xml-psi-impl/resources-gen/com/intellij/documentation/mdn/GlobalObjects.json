@@ -5018,7 +5018,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -17728,7 +17729,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -17742,7 +17744,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -17757,7 +17760,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -17773,7 +17777,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -17794,7 +17799,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -17809,7 +17815,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -17833,7 +17840,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -17848,7 +17856,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -17879,7 +17888,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -17902,7 +17912,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -17917,7 +17928,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -17932,7 +17944,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -17947,7 +17960,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -17962,7 +17976,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -17977,7 +17992,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -17992,7 +18008,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -18008,7 +18025,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -18030,7 +18048,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -18045,7 +18064,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -18060,7 +18080,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -18081,7 +18102,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -18097,7 +18119,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -18116,7 +18139,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -18138,7 +18162,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -18160,7 +18185,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -18179,7 +18205,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -18194,7 +18221,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -18217,7 +18245,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -18232,7 +18261,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -18247,7 +18277,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -18269,7 +18300,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -18288,7 +18320,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -18303,7 +18336,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -18318,7 +18352,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -18337,7 +18372,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -18360,7 +18396,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -18382,7 +18419,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -18404,7 +18442,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -18426,7 +18465,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -18449,7 +18489,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -18472,7 +18513,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -18494,7 +18536,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -18510,7 +18553,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -18530,7 +18574,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -18552,7 +18597,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -18574,7 +18620,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -18597,7 +18644,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -18616,7 +18664,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -18630,7 +18679,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -18645,7 +18695,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -18666,7 +18717,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -18687,7 +18739,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -18708,7 +18761,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -18723,7 +18777,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -18744,7 +18799,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -18758,7 +18814,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -18780,7 +18837,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -18794,7 +18852,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -18813,7 +18872,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -18827,7 +18887,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -18841,7 +18902,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -18855,7 +18917,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -18869,7 +18932,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -18883,7 +18947,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -18897,7 +18962,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -18915,7 +18981,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -18929,7 +18996,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -18943,7 +19011,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -18966,7 +19035,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -18980,7 +19050,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -18994,7 +19065,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -19008,7 +19080,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -19022,7 +19095,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -19047,7 +19121,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -19069,7 +19144,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -19091,7 +19167,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -19106,7 +19183,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -19129,7 +19207,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -19147,7 +19226,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -19162,7 +19242,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -19177,7 +19258,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -19199,7 +19281,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -19222,7 +19305,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -19244,7 +19328,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -19262,7 +19347,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -19276,7 +19362,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -19299,7 +19386,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -19321,7 +19409,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -19335,7 +19424,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -20065,7 +20155,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -20079,7 +20170,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -20093,7 +20185,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -20107,7 +20200,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -20125,7 +20219,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -20148,7 +20243,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -20162,7 +20258,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -20187,7 +20284,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -20202,7 +20300,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -20225,7 +20324,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -20247,7 +20347,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -20269,7 +20370,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -20287,7 +20389,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -20310,7 +20413,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -20325,7 +20429,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -20344,7 +20449,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -20364,7 +20470,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -20383,7 +20490,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -20407,7 +20515,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -20422,7 +20531,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -20437,7 +20547,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -20452,7 +20563,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -20467,7 +20579,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -20482,7 +20595,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -20509,7 +20623,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -20532,7 +20647,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -20547,7 +20663,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -20570,7 +20687,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -20589,7 +20707,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -20605,7 +20724,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -20628,7 +20748,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -20651,7 +20772,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -20674,7 +20796,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -20693,7 +20816,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Safari": "preview"
       },
       "baseline": {
@@ -20717,7 +20841,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -20731,7 +20856,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -20753,7 +20879,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -20767,7 +20894,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -20786,7 +20914,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -20800,7 +20929,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -20814,7 +20944,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -20832,7 +20963,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -20846,7 +20978,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -20860,7 +20993,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -20883,7 +21017,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -20897,7 +21032,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -20911,7 +21047,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -20925,7 +21062,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -20939,7 +21077,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -20964,7 +21103,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -20986,7 +21126,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21008,7 +21149,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21023,7 +21165,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21046,7 +21189,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21068,7 +21212,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21090,7 +21235,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21112,7 +21258,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21130,7 +21277,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21153,7 +21301,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21167,7 +21316,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21181,7 +21331,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21203,7 +21354,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21217,7 +21369,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21236,7 +21389,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21250,7 +21404,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21264,7 +21419,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21278,7 +21434,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21292,7 +21449,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21306,7 +21464,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21320,7 +21479,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21334,7 +21494,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21348,7 +21509,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21366,7 +21528,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21380,7 +21543,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21394,7 +21558,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21417,7 +21582,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21436,7 +21602,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21450,7 +21617,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21464,7 +21632,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21478,7 +21647,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21492,7 +21662,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21506,7 +21677,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21520,7 +21692,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21534,7 +21707,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21548,7 +21722,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21562,7 +21737,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21576,7 +21752,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21590,7 +21767,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21604,7 +21782,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21626,7 +21805,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21640,7 +21820,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21662,7 +21843,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21677,7 +21859,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21699,7 +21882,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21713,7 +21897,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21728,7 +21913,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21743,7 +21929,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21766,7 +21953,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21781,7 +21969,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21796,7 +21985,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21811,7 +22001,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21833,7 +22024,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21855,7 +22047,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21873,7 +22066,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21887,7 +22081,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21910,7 +22105,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21932,7 +22128,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21950,7 +22147,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21972,7 +22170,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -21986,7 +22185,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"
@@ -22000,7 +22200,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "preview"
+        "Firefox": "139",
+        "FirefoxAndroid": "139"
       },
       "baseline": {
         "level": "NONE"

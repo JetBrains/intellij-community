@@ -3694,7 +3694,7 @@
         "Chrome": "115",
         "ChromeAndroid": "115",
         "Edge": "115",
-        "Opera": "101"
+        "Opera": "112"
       },
       "baseline": {
         "level": "NONE"
@@ -3720,7 +3720,7 @@
             "Chrome": "126",
             "ChromeAndroid": "126",
             "Edge": "126",
-            "Opera": "101"
+            "Opera": "112"
           },
           "baseline": {
             "level": "NONE"
@@ -3737,7 +3737,7 @@
             "Chrome": "126",
             "ChromeAndroid": "126",
             "Edge": "126",
-            "Opera": "101"
+            "Opera": "112"
           },
           "baseline": {
             "level": "NONE"
@@ -3754,7 +3754,7 @@
             "Chrome": "126",
             "ChromeAndroid": "126",
             "Edge": "126",
-            "Opera": "101"
+            "Opera": "112"
           },
           "baseline": {
             "level": "NONE"

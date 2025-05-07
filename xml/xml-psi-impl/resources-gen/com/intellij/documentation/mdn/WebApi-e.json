@@ -378,7 +378,7 @@
       }
     },
     "element.ariaactivedescendantelement": {
-      "url": "$MDN_URL$/web/api/element/ariaActiveDescendantElement",
+      "url": "$MDN_URL$/web/api/element/ariaactivedescendantelement",
       "status": [
         "StandardTrack"
       ],
@@ -606,7 +606,7 @@
       "doc": "The <strong><code>ariaColSpan</code></strong> property of the <a href=\"$MDN_URL$/Web/API/Element\"><code>Element</code></a> interface reflects the value of the <a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Attributes/aria-colspan\"><code>aria-colspan</code></a> attribute, which defines the number of columns spanned by a cell or gridcell within a table, grid, or treegrid."
     },
     "element.ariacontrolselements": {
-      "url": "$MDN_URL$/web/api/element/ariaControlsElements",
+      "url": "$MDN_URL$/web/api/element/ariacontrolselements",
       "status": [
         "StandardTrack"
       ],
@@ -648,7 +648,7 @@
       "doc": "The <strong><code>ariaCurrent</code></strong> property of the <a href=\"$MDN_URL$/Web/API/Element\"><code>Element</code></a> interface reflects the value of the <a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Attributes/aria-current\"><code>aria-current</code></a> attribute, which indicates the element that represents the current item within a container or set of related elements."
     },
     "element.ariadescribedbyelements": {
-      "url": "$MDN_URL$/web/api/element/ariaDescribedByElements",
+      "url": "$MDN_URL$/web/api/element/ariadescribedbyelements",
       "status": [
         "StandardTrack"
       ],
@@ -690,7 +690,7 @@
       "doc": "The <strong><code>ariaDescription</code></strong> property of the <a href=\"$MDN_URL$/Web/API/Element\"><code>Element</code></a> interface reflects the value of the <a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Attributes/aria-description\"><code>aria-description</code></a> attribute, which defines a string value that describes or annotates the current element."
     },
     "element.ariadetailselements": {
-      "url": "$MDN_URL$/web/api/element/ariaDetailsElements",
+      "url": "$MDN_URL$/web/api/element/ariadetailselements",
       "status": [
         "StandardTrack"
       ],
@@ -732,7 +732,7 @@
       "doc": "The <strong><code>ariaDisabled</code></strong> property of the <a href=\"$MDN_URL$/Web/API/Element\"><code>Element</code></a> interface reflects the value of the <a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Attributes/aria-disabled\"><code>aria-disabled</code></a> attribute, which indicates that the element is perceivable but disabled, so it is not editable or otherwise operable.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nWhere possible, use the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input\"><code>&lt;input&gt;</code></a> element with <code>type=\"button\"</code> or the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/button\"><code>&lt;button&gt;</code></a> element — because those elements have built in semantics and do not require ARIA attributes.\n</div>"
     },
     "element.ariaerrormessageelements": {
-      "url": "$MDN_URL$/web/api/element/ariaErrorMessageElements",
+      "url": "$MDN_URL$/web/api/element/ariaerrormessageelements",
       "status": [
         "StandardTrack"
       ],
@@ -774,7 +774,7 @@
       "doc": "The <strong><code>ariaExpanded</code></strong> property of the <a href=\"$MDN_URL$/Web/API/Element\"><code>Element</code></a> interface reflects the value of the <a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Attributes/aria-expanded\"><code>aria-expanded</code></a> attribute, which indicates whether a grouping element owned or controlled by this element is expanded or collapsed."
     },
     "element.ariaflowtoelements": {
-      "url": "$MDN_URL$/web/api/element/ariaFlowToElements",
+      "url": "$MDN_URL$/web/api/element/ariaflowtoelements",
       "status": [
         "StandardTrack"
       ],
@@ -900,7 +900,7 @@
       "doc": "The <strong><code>ariaLabel</code></strong> property of the <a href=\"$MDN_URL$/Web/API/Element\"><code>Element</code></a> interface reflects the value of the <a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Attributes/aria-label\"><code>aria-label</code></a> attribute, which defines a string value that labels the current element."
     },
     "element.arialabelledbyelements": {
-      "url": "$MDN_URL$/web/api/element/ariaLabelledByElements",
+      "url": "$MDN_URL$/web/api/element/arialabelledbyelements",
       "status": [
         "StandardTrack"
       ],
@@ -1047,7 +1047,7 @@
       "doc": "The <strong><code>ariaOrientation</code></strong> property of the <a href=\"$MDN_URL$/Web/API/Element\"><code>Element</code></a> interface reflects the value of the <a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Attributes/aria-orientation\"><code>aria-orientation</code></a> attribute, which indicates whether the element's orientation is horizontal, vertical, or unknown/ambiguous."
     },
     "element.ariaownselements": {
-      "url": "$MDN_URL$/web/api/element/ariaOwnsElements",
+      "url": "$MDN_URL$/web/api/element/ariaownselements",
       "status": [
         "StandardTrack"
       ],
@@ -3502,7 +3502,7 @@
       "doc": "The <strong><code>ElementInternals</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Document_Object_Model\">Document Object Model</a> gives web developers a way to allow custom elements to fully participate in HTML forms. It provides utilities for working with these elements in the same way you would work with any standard HTML form element, and also exposes the <a href=\"https://wicg.github.io/aom/explainer.html\" class=\"external\" target=\"_blank\">Accessibility Object Model</a> to the element."
     },
     "elementinternals.ariaactivedescendantelement": {
-      "url": "$MDN_URL$/web/api/elementinternals/ariaActiveDescendantElement",
+      "url": "$MDN_URL$/web/api/elementinternals/ariaactivedescendantelement",
       "status": [
         "StandardTrack"
       ],
@@ -3730,7 +3730,7 @@
       "doc": "The <strong><code>ariaColSpan</code></strong> property of the <a href=\"$MDN_URL$/Web/API/ElementInternals\"><code>ElementInternals</code></a> interface reflects the value of the <a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Attributes/aria-colspan\"><code>aria-colspan</code></a> attribute, which defines the number of columns spanned by a cell or gridcell within a table, grid, or treegrid.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nSetting aria attributes on <code>ElementInternals</code> allows default semantics to be defined on a custom element. These may be overwritten by author-defined attributes, but ensure that default semantics are retained should the author delete those attributes, or fail to add them at all. For more information see the <a href=\"https://wicg.github.io/aom/explainer.html#default-semantics-for-custom-elements-via-the-elementinternals-object\" class=\"external\" target=\"_blank\">Accessibility Object Model explainer</a>.\n</div>"
     },
     "elementinternals.ariacontrolselements": {
-      "url": "$MDN_URL$/web/api/elementinternals/ariaControlsElements",
+      "url": "$MDN_URL$/web/api/elementinternals/ariacontrolselements",
       "status": [
         "StandardTrack"
       ],
@@ -3772,7 +3772,7 @@
       "doc": "The <strong><code>ariaCurrent</code></strong> property of the <a href=\"$MDN_URL$/Web/API/ElementInternals\"><code>ElementInternals</code></a> interface reflects the value of the <a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Attributes/aria-current\"><code>aria-current</code></a> attribute, which indicates the element that represents the current item within a container or set of related elements.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nSetting aria attributes on <code>ElementInternals</code> allows default semantics to be defined on a custom element. These may be overwritten by author-defined attributes, but ensure that default semantics are retained should the author delete those attributes, or fail to add them at all. For more information see the <a href=\"https://wicg.github.io/aom/explainer.html#default-semantics-for-custom-elements-via-the-elementinternals-object\" class=\"external\" target=\"_blank\">Accessibility Object Model explainer</a>.\n</div>"
     },
     "elementinternals.ariadescribedbyelements": {
-      "url": "$MDN_URL$/web/api/elementinternals/ariaDescribedByElements",
+      "url": "$MDN_URL$/web/api/elementinternals/ariadescribedbyelements",
       "status": [
         "StandardTrack"
       ],
@@ -3811,7 +3811,7 @@
       "doc": "The <strong><code>ariaDescription</code></strong> property of the <a href=\"$MDN_URL$/Web/API/ElementInternals\"><code>ElementInternals</code></a> interface reflects the value of the <a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Attributes/aria-description\"><code>aria-description</code></a> attribute, which defines a string value that describes or annotates the current element.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nSetting aria attributes on <code>ElementInternals</code> allows default semantics to be defined on a custom element. These may be overwritten by author-defined attributes, but ensure that default semantics are retained should the author delete those attributes, or fail to add them at all. For more information see the <a href=\"https://wicg.github.io/aom/explainer.html#default-semantics-for-custom-elements-via-the-elementinternals-object\" class=\"external\" target=\"_blank\">Accessibility Object Model explainer</a>.\n</div>"
     },
     "elementinternals.ariadetailselements": {
-      "url": "$MDN_URL$/web/api/elementinternals/ariaDetailsElements",
+      "url": "$MDN_URL$/web/api/elementinternals/ariadetailselements",
       "status": [
         "StandardTrack"
       ],
@@ -3853,7 +3853,7 @@
       "doc": "The <strong><code>ariaDisabled</code></strong> property of the <a href=\"$MDN_URL$/Web/API/ElementInternals\"><code>ElementInternals</code></a> interface reflects the value of the <a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Attributes/aria-disabled\"><code>aria-disabled</code></a> attribute, which indicates that the element is perceivable but disabled, so it is not editable or otherwise operable.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nSetting aria attributes on <code>ElementInternals</code> allows default semantics to be defined on a custom element. These may be overwritten by author-defined attributes, but ensure that default semantics are retained should the author delete those attributes, or fail to add them at all. For more information see the <a href=\"https://wicg.github.io/aom/explainer.html#default-semantics-for-custom-elements-via-the-elementinternals-object\" class=\"external\" target=\"_blank\">Accessibility Object Model explainer</a>.\n</div>"
     },
     "elementinternals.ariaerrormessageelements": {
-      "url": "$MDN_URL$/web/api/elementinternals/ariaErrorMessageElements",
+      "url": "$MDN_URL$/web/api/elementinternals/ariaerrormessageelements",
       "status": [
         "StandardTrack"
       ],
@@ -3895,7 +3895,7 @@
       "doc": "The <strong><code>ariaExpanded</code></strong> property of the <a href=\"$MDN_URL$/Web/API/ElementInternals\"><code>ElementInternals</code></a> interface reflects the value of the <a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Attributes/aria-expanded\"><code>aria-expanded</code></a> attribute, which indicates whether a grouping element owned or controlled by this element is expanded or collapsed.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nSetting aria attributes on <code>ElementInternals</code> allows default semantics to be defined on a custom element. These may be overwritten by author-defined attributes, but ensure that default semantics are retained should the author delete those attributes, or fail to add them at all. For more information see the <a href=\"https://wicg.github.io/aom/explainer.html#default-semantics-for-custom-elements-via-the-elementinternals-object\" class=\"external\" target=\"_blank\">Accessibility Object Model explainer</a>.\n</div>"
     },
     "elementinternals.ariaflowtoelements": {
-      "url": "$MDN_URL$/web/api/elementinternals/ariaFlowToElements",
+      "url": "$MDN_URL$/web/api/elementinternals/ariaflowtoelements",
       "status": [
         "StandardTrack"
       ],
@@ -4021,7 +4021,7 @@
       "doc": "The <strong><code>ariaLabel</code></strong> property of the <a href=\"$MDN_URL$/Web/API/ElementInternals\"><code>ElementInternals</code></a> interface reflects the value of the <a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Attributes/aria-label\"><code>aria-label</code></a> attribute, which defines a string value that labels the current Element.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nSetting aria attributes on <code>ElementInternals</code> allows default semantics to be defined on a custom element. These may be overwritten by author-defined attributes, but ensure that default semantics are retained should the author delete those attributes, or fail to add them at all. For more information see the <a href=\"https://wicg.github.io/aom/explainer.html#default-semantics-for-custom-elements-via-the-elementinternals-object\" class=\"external\" target=\"_blank\">Accessibility Object Model explainer</a>.\n</div>"
     },
     "elementinternals.arialabelledbyelements": {
-      "url": "$MDN_URL$/web/api/elementinternals/ariaLabelledByElements",
+      "url": "$MDN_URL$/web/api/elementinternals/arialabelledbyelements",
       "status": [
         "StandardTrack"
       ],
@@ -4168,7 +4168,7 @@
       "doc": "The <strong><code>ariaOrientation</code></strong> property of the <a href=\"$MDN_URL$/Web/API/ElementInternals\"><code>ElementInternals</code></a> interface reflects the value of the <a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Attributes/aria-orientation\"><code>aria-orientation</code></a> attribute, which indicates whether the element's orientation is horizontal, vertical, or unknown/ambiguous.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nSetting aria attributes on <code>ElementInternals</code> allows default semantics to be defined on a custom element. These may be overwritten by author-defined attributes, but ensure that default semantics are retained should the author delete those attributes, or fail to add them at all. For more information see the <a href=\"https://wicg.github.io/aom/explainer.html#default-semantics-for-custom-elements-via-the-elementinternals-object\" class=\"external\" target=\"_blank\">Accessibility Object Model explainer</a>.\n</div>"
     },
     "elementinternals.ariaownselements": {
-      "url": "$MDN_URL$/web/api/elementinternals/ariaOwnsElements",
+      "url": "$MDN_URL$/web/api/elementinternals/ariaownselements",
       "status": [
         "StandardTrack"
       ],
@@ -6556,7 +6556,7 @@
         "Chrome": "115",
         "ChromeAndroid": "115",
         "Edge": "115",
-        "Opera": "101"
+        "Opera": "112"
       },
       "baseline": {
         "level": "NONE"
@@ -6573,7 +6573,7 @@
         "Chrome": "115",
         "ChromeAndroid": "115",
         "Edge": "115",
-        "Opera": "101"
+        "Opera": "112"
       },
       "baseline": {
         "level": "NONE"
@@ -6591,7 +6591,7 @@
         "Chrome": "115",
         "ChromeAndroid": "115",
         "Edge": "115",
-        "Opera": "101"
+        "Opera": "112"
       },
       "baseline": {
         "level": "NONE"
@@ -6612,7 +6612,7 @@
         "Chrome": "115",
         "ChromeAndroid": "115",
         "Edge": "115",
-        "Opera": "101"
+        "Opera": "112"
       },
       "baseline": {
         "level": "NONE"
@@ -6633,7 +6633,7 @@
         "Chrome": "115",
         "ChromeAndroid": "115",
         "Edge": "115",
-        "Opera": "101"
+        "Opera": "112"
       },
       "baseline": {
         "level": "NONE"
@@ -6650,7 +6650,7 @@
         "Chrome": "115",
         "ChromeAndroid": "115",
         "Edge": "115",
-        "Opera": "101"
+        "Opera": "112"
       },
       "baseline": {
         "level": "NONE"
@@ -19348,6 +19348,8 @@
         "Chrome": "134",
         "ChromeAndroid": "134",
         "Edge": "134",
+        "Firefox": "139",
+        "FirefoxAndroid": "139",
         "Opera": "119",
         "Safari": "18.4",
         "SafariIOS": "18.4"
@@ -20539,7 +20541,7 @@
         "Chrome": "115",
         "ChromeAndroid": "115",
         "Edge": "115",
-        "Opera": "101"
+        "Opera": "112"
       },
       "baseline": {
         "level": "NONE"
@@ -20556,7 +20558,7 @@
         "Chrome": "115",
         "ChromeAndroid": "115",
         "Edge": "115",
-        "Opera": "101"
+        "Opera": "112"
       },
       "baseline": {
         "level": "NONE"
@@ -20573,7 +20575,7 @@
         "Chrome": "115",
         "ChromeAndroid": "115",
         "Edge": "115",
-        "Opera": "101"
+        "Opera": "112"
       },
       "baseline": {
         "level": "NONE"
@@ -20590,7 +20592,7 @@
         "Chrome": "115",
         "ChromeAndroid": "115",
         "Edge": "115",
-        "Opera": "101"
+        "Opera": "112"
       },
       "baseline": {
         "level": "NONE"
@@ -20607,7 +20609,7 @@
         "Chrome": "115",
         "ChromeAndroid": "115",
         "Edge": "115",
-        "Opera": "101"
+        "Opera": "112"
       },
       "baseline": {
         "level": "NONE"

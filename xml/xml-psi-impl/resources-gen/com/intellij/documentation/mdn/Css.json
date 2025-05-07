@@ -14009,10 +14009,10 @@
       "doc": "The <strong><code>mask-composite</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> property represents a compositing operation used on the current mask layer with the mask layers below it.",
       "formalSyntax": "&lt;compositing-operator&gt;#\n  &lt;compositing-operator&gt; = add | subtract | intersect | exclude",
       "values": {
-        "add": "The source is placed over the destination.",
-        "subtract": "The source is placed, where it falls outside of the destination.",
-        "intersect": "The parts of source that overlap the destination, replace the destination.",
-        "exclude": "The non-overlapping regions of source and destination are combined."
+        "add": "The associated mask image is placed over all mask layers below it (with the corresponding compositing operators applied). This is the default value.",
+        "subtract": "The associated mask image is placed, where it falls outside of all mask layers below it (with the corresponding compositing operators applied).",
+        "intersect": "The parts of the associated mask image that overlap all composited mask layers below it replace those previously composited layers.",
+        "exclude": "The non-overlapping regions of the associated mask image and the mask layers below it, with their corresponding compositing operators applied, are combined."
       }
     },
     "mask-image": {
@@ -14060,12 +14060,12 @@
         "level": "LOW",
         "lowDate": "2023-12-07"
       },
-      "doc": "The <strong><code>mask-mode</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> property sets whether the mask reference defined by <a href=\"$MDN_URL$/Web/CSS/mask-image\"><code>mask-image</code></a> is treated as a luminance or alpha mask.",
+      "doc": "The <strong><code>mask-mode</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> property is set on the element being masked. It sets whether the mask reference defined by the <a href=\"$MDN_URL$/Web/CSS/mask-image\"><code>mask-image</code></a> is treated as a luminance or alpha mask.",
       "formalSyntax": "&lt;masking-mode&gt;#\n  &lt;masking-mode&gt; = alpha | luminance | match-source",
       "values": {
-        "alpha": "This keyword indicates that the transparency (alpha channel) values of the mask layer image should be used as the mask values.",
-        "luminance": "This keyword indicates that the luminance values of the mask layer image should be used as the mask values.",
-        "match-source": "If the <a href=\"$MDN_URL$/Web/CSS/mask-image\"><code>mask-image</code></a> property is of type <code>&lt;mask-source&gt;</code>, the luminance values of the mask layer image should be used as the mask values.\n<p>If it is of type <a href=\"$MDN_URL$/Web/CSS/image\"><code>&lt;image&gt;</code></a>, the alpha values of the mask layer image should be used as the mask values."
+        "alpha": "Indicates that the alpha (transparency) values of the mask image should be used.",
+        "luminance": "Indicates that the <a href=\"#understanding-luminance\">luminance (brightness)</a> values of the mask image should be used.",
+        "match-source": "Indicates that the type of mask is determined by the source. This is the default property value.\n<ul>\n<li>If the <a href=\"$MDN_URL$/Web/CSS/mask-image\"><code>mask-image</code></a> references an SVG <a href=\"$MDN_URL$/Web/SVG/Reference/Element/mask\"><code>&lt;mask&gt;</code></a>, its <a href=\"$MDN_URL$/Web/CSS/mask-type\"><code>mask-type</code></a> property value is used, or it's <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/mask-type\"><code>mask-type</code></a> attribute, if present. If neither is explicitly set, this value defaults to <code>luminance</code>.</li>\n<li>If the mask image source is an <a href=\"$MDN_URL$/Web/CSS/image\"><code>&lt;image&gt;</code></a> or a <a href=\"$MDN_URL$/Web/CSS/gradient\"><code>&lt;gradient&gt;</code></a>, the <code>alpha</code> values of the mask image are used.</li>\n</ul>"
       }
     },
     "mask-origin": {
@@ -14209,11 +14209,11 @@
         "lowDate": "2020-01-15",
         "highDate": "2022-07-15"
       },
-      "doc": "The <strong><code>mask-type</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> property sets whether an SVG <a href=\"$MDN_URL$/Web/SVG/Reference/Element/mask\"><code>&lt;mask&gt;</code></a> element is used as a <em>luminance</em> or an <em>alpha</em> mask. It applies to the <code>&lt;mask&gt;</code> element itself.\n<p>This property may be overridden by the <a href=\"$MDN_URL$/Web/CSS/mask-mode\"><code>mask-mode</code></a> property, which has the same effect but applies to the element where the mask is used. Alpha masks will generally be faster to render.",
+      "doc": "The <strong><code>mask-type</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> property applies to the SVG <a href=\"$MDN_URL$/Web/SVG/Reference/Element/mask\"><code>&lt;mask&gt;</code></a> element. It defines whether to use the <em>luminance</em> (brightness) or <em>alpha</em> (transparency) content of the mask. This property may be overridden by the <a href=\"$MDN_URL$/Web/CSS/mask-mode\"><code>mask-mode</code></a> property. The <code>mask-type</code> property has no effect on image or gradient masks.",
       "formalSyntax": "luminance | alpha",
       "values": {
-        "luminance": "Is a keyword indicating that the associated mask image is a luminance mask, i.e., that its <a href=\"https://en.wikipedia.org/wiki/Luminance_%28relative%29\" class=\"external\" target=\"_blank\">relative luminance</a> values must be used when applying it.",
-        "alpha": "Is a keyword indicating that the associated mask image is an alpha mask, i.e., that its <a href=\"https://en.wikipedia.org/wiki/Alpha_compositing\" class=\"external\" target=\"_blank\">alpha channel</a> values must be used when applying it."
+        "alpha": "Indicates that the alpha (transparency) values of the <code>&lt;mask&gt;</code> should be used.",
+        "luminance": "Indicates that the <a href=\"#understanding-luminance\">luminance (brightness) values</a> of the <code>&lt;mask&gt;</code> should be used."
       }
     },
     "math-depth": {
