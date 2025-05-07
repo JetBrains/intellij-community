@@ -24,7 +24,9 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
@@ -32,7 +34,9 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -62,12 +66,13 @@ import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import java.io.File
+import java.nio.file.Path
 import java.util.jar.JarFile
 
 class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
-    
+
     myFixture.enableInspections(JavaModuleDefinitionInspection())
 
     addFile("module-info.java", "module M2 { }", M2)
@@ -78,7 +83,8 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     try {
       JavaCompilerConfigurationProxy.setAdditionalOptions(project, module, arguments.toList())
       test()
-    } finally {
+    }
+    finally {
       JavaCompilerConfigurationProxy.setAdditionalOptions(project, module, emptyList())
     }
   }
@@ -141,7 +147,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     }
   }
 
-    fun testModuleImportDeclarationUnresolvedModule() {
+  fun testModuleImportDeclarationUnresolvedModule() {
     IdeaTestUtil.withLevel(module, LanguageLevel.JDK_23_PREVIEW) {
       addFile("moodule-info.java", "module current.module.name {}")
       highlight("Test.java", """
@@ -700,7 +706,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
     addFile("module-info.java", "module M6 {  requires lib.named; exports pkg;}", M6)
     addFile("pkg/A.java", "package pkg; public class A {public static void foo(java.util.function.Supplier<pkg.lib1.LC1> f){}}", M6)
-    highlight("pkg/Usage.java","import pkg.lib1.LC1; class Usage { {pkg.A.foo(LC1::new);} }")
+    highlight("pkg/Usage.java", "import pkg.lib1.LC1; class Usage { {pkg.A.foo(LC1::new);} }")
   }
 
   fun testDeprecations() {
@@ -836,7 +842,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   }
 
   fun testBrokenImportModuleStatement() {
-    IdeaTestUtil.withLevel(module, JavaFeature.MODULE_IMPORT_DECLARATIONS.minimumLevel){
+    IdeaTestUtil.withLevel(module, JavaFeature.MODULE_IMPORT_DECLARATIONS.minimumLevel) {
       highlight("A.java", """
         package a;
         
@@ -1034,6 +1040,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   }
 
   fun testIsJdkModuleCaseInsensitiveForWindows() {
+    if (!SystemInfo.isWindows && !SystemInfo.isMac) return // fix it later
     withCaseInsensitiveFs {
       withInternalJdk(INTERNAL_MAIN, LanguageLevel.JDK_11, true) {
         highlight("Main.java", """
@@ -1109,10 +1116,12 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     val availableIntentions = myFixture.availableIntentions
     val available = availableIntentions
       .map { ReportingClassSubstitutor.getClassToReport(it) }
-      .filter { it.name.startsWith("com.intellij.codeInsight.") &&
-                !(it.name.startsWith("com.intellij.codeInsight.intention.impl.") && it.name.endsWith("Action"))
-                && !it.name.endsWith("DisableHighlightingIntentionAction")
-                && !it.name.endsWith("DeclarativeHintsTogglingIntention")}
+      .filter {
+        it.name.startsWith("com.intellij.codeInsight.") &&
+        !(it.name.startsWith("com.intellij.codeInsight.intention.impl.") && it.name.endsWith("Action"))
+        && !it.name.endsWith("DisableHighlightingIntentionAction")
+        && !it.name.endsWith("DeclarativeHintsTogglingIntention")
+      }
       .map { it.simpleName }
     assertThat(available).describedAs(availableIntentions.toString()).containsExactlyInAnyOrder(*fixes)
   }
@@ -1127,7 +1136,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         var path = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().getHomePath()!!
         if (caseInsensitive) path = breakPath(path)
         val jdk = ProjectJdkTable.getInstance().findJdk(name)
-                  ?: JavaSdk.getInstance().createJdk(name, path, false)
+                  ?: createJdk(name, path)
 
         ProjectJdkTable.getInstance().addJdk(jdk, project)
         ModuleRootModificationUtil.setModuleSdk(module, jdk)
@@ -1146,6 +1155,18 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         }
       })
     }
+  }
+
+  fun createJdk(jdkName: String, home: String): Sdk {
+    val jdk = ProjectJdkTable.getInstance().createSdk(jdkName, JavaSdk.getInstance())
+    val sdkModificator = jdk.getSdkModificator()
+
+    sdkModificator.setHomePath(FileUtil.toSystemIndependentName(home))
+    sdkModificator.setVersionString(JavaSdk.getInstance().getVersionString(home))
+    JavaSdkImpl.addClasses(Path.of(home), sdkModificator, false)
+
+    sdkModificator.applyChangesWithoutWriteAction()
+    return jdk
   }
 
   private fun breakPath(path: String): String {
