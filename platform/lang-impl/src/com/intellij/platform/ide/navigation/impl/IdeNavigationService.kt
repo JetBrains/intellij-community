@@ -138,12 +138,14 @@ private suspend fun tryNavigateToSource(
 
   when (request) {
     is SourceNavigationRequest -> {
-      navigateToSourceImpl(
-        request = request,
-        options = options,
-        project = project,
-        dataContext = dataContext,
-      )
+      withContext(Dispatchers.EDT) {
+        navigateToSourceImpl(
+          request = request,
+          options = options,
+          project = project,
+          dataContext = dataContext,
+        )
+      }
       return true
     }
     is DirectoryNavigationRequest -> {
@@ -237,16 +239,7 @@ private suspend fun navigateToSourceImpl(
         }
       }
 
-      if (options.openInRightSplit) {
-        if (openFile(request = request, project = project, options = options)) {
-          return
-        }
-      }
-      // TODO: replace with openFile once IJPL-184882 is fixed
-      else if (FileNavigator.getInstance().canNavigate(descriptor)) {
-        withContext(Dispatchers.EDT) {
-          FileNavigator.getInstance().navigate(descriptor, true)
-        }
+      if (openFile(request = request, project = project, options = options)) {
         return
       }
     }
@@ -311,7 +304,21 @@ private suspend fun openFile(
         val navigated = withContext(Dispatchers.EDT) {
           //todo: try read action only
           writeIntentReadAction {
-            navigateAndSelectEditor(editor = editor, descriptor = descriptor, composite = composite as? EditorComposite)
+            // The current implementation of navigation depends on the type of the editor.
+            // If the editor is a subtype of TextEditorImpl, it falls into the condition editor.canNavigateTo.
+            // If the editor is a subtype of EditorWrapper, the second branch is tested. This scenario is possible
+            // during running some tests but could potentially happen in production code as well.
+            // More details: IJPL-184882 openFile doesn’t perform navigation for a SourceNavigationRequest
+            when {
+              editor.canNavigateTo(descriptor) -> {
+                navigateAndSelectEditor(editor, descriptor, composite as? EditorComposite)
+              }
+              FileNavigator.getInstance().canNavigate(descriptor) -> {
+                FileNavigator.getInstance().navigate(descriptor, true)
+                true
+              }
+              else -> false
+            }
           }
         }
         if (navigated) {
