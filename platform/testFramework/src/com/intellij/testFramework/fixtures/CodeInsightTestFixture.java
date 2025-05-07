@@ -35,6 +35,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.refactoring.rename.RenameProcessor;
@@ -887,5 +888,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    */
   default @NotNull Disposable getProjectDisposable() {
     return ((ProjectEx)getProject()).getEarlyDisposable();
+  }
+
+  default boolean isOpenedInMyEditor(@NotNull VirtualFile virtualFile) {
+    return virtualFile.equals(PsiUtilCore.getVirtualFile(getFile()));
   }
 }

@@ -125,6 +125,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.refactoring.rename.*;
 import com.intellij.refactoring.rename.api.RenameTarget;
@@ -190,7 +191,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private final IdeaProjectTestFixture myProjectFixture;
   private final TempDirTestFixture myTempDirFixture;
   private PsiManagerEx myPsiManager;
-  private VirtualFile myFile;
+  private VirtualFile myVirtualFile;
 
   // Strong references to PSI files configured by the test (to avoid tree access assertions after PSI has been GC'ed)
   @SuppressWarnings("unused") private PsiFile myPsiFile;
@@ -213,15 +214,20 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     myTempDirFixture = tempDirTestFixture;
   }
 
+  private void createAndSetEditor(@NotNull VirtualFile virtualFile) {
+    myVirtualFile = virtualFile; // set file first for isMyFile() to work correctly
+    Editor editor = createEditor(virtualFile);
+    setFileAndEditor(virtualFile, editor);
+  }
   private void setFileAndEditor(@NotNull VirtualFile file, @NotNull Editor editor) {
-    myFile = file;
+    myVirtualFile = file;
     this.editor = editor;
     myEditorTestFixture = new EditorTestFixture(getProject(), editor, file);
-    myPsiFile = ReadAction.compute(() -> PsiManager.getInstance(getProject()).findFile(myFile));
+    myPsiFile = ReadAction.compute(() -> PsiManager.getInstance(getProject()).findFile(myVirtualFile));
   }
 
   private void clearFileAndEditor() {
-    myFile = null;
+    myVirtualFile = null;
     editor = null;
     myEditorTestFixture = null;
     myPsiFile = null;
@@ -588,7 +594,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                            boolean checkInfos,
                                            boolean checkWeakWarnings,
                                            @NotNull Stream<? extends VirtualFile> files) {
-    record FileHighlighting(PsiFile file, Editor editor, ExpectedHighlightingData data) {
+    record FileHighlighting(PsiFile psiFile, ExpectedHighlightingData data) {
     }
     List<FileHighlighting> data = files.map(file -> {
       PsiFile psiFile = myPsiManager.findFile(file);
@@ -598,11 +604,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       ExpectedHighlightingData datum =
         new ExpectedHighlightingData(document, checkWarnings, checkWeakWarnings, checkInfos, false);
       datum.init();
-      return new FileHighlighting(psiFile, createEditor(file), datum);
+      return new FileHighlighting(psiFile, datum);
     }).toList();
     long elapsed = 0;
     for (FileHighlighting highlighting : data) {
-      setFileAndEditor(highlighting.file().getVirtualFile(), highlighting.editor());
+      createAndSetEditor(highlighting.psiFile().getVirtualFile());
       elapsed += collectAndCheckHighlighting(highlighting.data());
     }
     return elapsed;
@@ -652,7 +658,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void openFileInEditor(@NotNull VirtualFile file) {
-    setFileAndEditor(file, createEditor(file));
+    createAndSetEditor(file);
   }
 
   @Override
@@ -1661,7 +1667,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         }
       }
 
-      setFileAndEditor(copy, createEditor(copy));
+      createAndSetEditor(copy);
       if (editor == null) {
         fail("editor couldn't be created for: " + copy.getPath() + ", use copyFileToProject() instead of configureByFile()");
       }
@@ -1744,7 +1750,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   private PsiFile getHostFile() {
-    VirtualFile hostVFile = myFile instanceof VirtualFileWindow ? ((VirtualFileWindow)myFile).getDelegate() : myFile;
+    VirtualFile hostVFile = myVirtualFile instanceof VirtualFileWindow ? ((VirtualFileWindow)myVirtualFile).getDelegate() : myVirtualFile;
     return ReadAction.compute(() -> PsiManager.getInstance(getProject()).findFile(hostVFile));
   }
 
@@ -1840,7 +1846,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public PsiFile getFile() {
-    return myFile != null ? ReadAction.compute(() -> PsiManager.getInstance(getProject()).findFile(myFile)) : null;
+    return myVirtualFile != null ? ReadAction.compute(() -> PsiManager.getInstance(getProject()).findFile(myVirtualFile)) : null;
   }
 
   @Override
@@ -2140,13 +2146,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void testStructureView(@NotNull Consumer<? super StructureViewComponent> consumer) {
-    assertNotNull("configure first", myFile);
+    assertNotNull("configure first", myVirtualFile);
 
-    FileEditor fileEditor = FileEditorManager.getInstance(getProject()).getSelectedEditor(myFile);
-    assertNotNull("editor not opened for " + myFile, myFile);
+    FileEditor fileEditor = FileEditorManager.getInstance(getProject()).getSelectedEditor(myVirtualFile);
+    assertNotNull("editor not opened for " + myVirtualFile, myVirtualFile);
 
     StructureViewBuilder builder = LanguageStructureViewBuilder.getInstance().getStructureViewBuilder(getFile());
-    assertNotNull("no builder for " + myFile, builder);
+    assertNotNull("no builder for " + myVirtualFile, builder);
 
     StructureViewComponent component = null;
     try {
@@ -2409,5 +2415,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   public void setSelectionAndCaretMarkupApplyPolicy(SelectionAndCaretMarkupApplyPolicy policy) {
     mySelectionAndCaretMarkupApplyPolicy = policy;
+  }
+
+  @Override
+  public boolean isOpenedInMyEditor(@NotNull VirtualFile virtualFile) {
+    return virtualFile.equals(myVirtualFile) || myAllPsiFiles != null && ContainerUtil.exists(myAllPsiFiles, psiFile -> virtualFile.equals(PsiUtilCore.getVirtualFile(psiFile)));
   }
 }
