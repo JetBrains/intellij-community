@@ -1699,7 +1699,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-31004
   public void testRecursiveTypeAliasInAnotherFile() {
-    doMultiFileStubAwareTest("list | int",
+    doMultiFileStubAwareTest("list[Any] | int",
                              """
                                from other import MyType
 
@@ -2512,7 +2512,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-53105
   public void testGenericVariadicStarArgsPrefixSuffix() {
-    doTest("tuple[str, list, dict, bool, int]",
+    doTest("tuple[str, list[Any], dict[Any, Any], bool, int]",
            """
              from typing import TypeVarTuple, Tuple
 
@@ -4233,7 +4233,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-61883
   public void testRecursiveTypeAliasInAnotherFilePEP695Syntax() {
-    doMultiFileStubAwareTest("list | int",
+    doMultiFileStubAwareTest("list[Any] | int",
                              """
                                from a import MyType
 
@@ -4721,7 +4721,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-71002
   public void testTypeVarDefaultsClassWithInitMethodReference() {
-    doTest("type[Bar[Any, list]]", """
+    doTest("type[Bar[Any, list[Any]]]", """
       from typing import TypeVar, Generic
       Z1 = TypeVar("Z1")
       ListDefaultT = TypeVar("ListDefaultT", default=list[Z1])
@@ -4733,7 +4733,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-71002
   public void testTypeVarDefaultsClassWithInitMethodReferenceNewSyntax() {
-    doTest("type[Bar[Any, list]]", """
+    doTest("type[Bar[Any, list[Any]]]", """
       from typing import TypeVar, Generic
       class Bar[Z1, ListDefaultT = list[Z1]]:
           def __init__(self, x: Z1, y: ListDefaultT): ...

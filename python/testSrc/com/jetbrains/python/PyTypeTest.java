@@ -686,7 +686,7 @@ public class PyTypeTest extends PyTestCase {
 
   // EA-40207
   public void testRecursion() {
-    doTest("list",
+    doTest("List[Any]",
            """
              def f():
                  return [f()]
@@ -1244,7 +1244,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testUnionTypeAttributeOfDifferentTypes() {
-    doTest("Union[list, int]",
+    doTest("Union[List[Any], int]",
            """
              class Foo:
                  x = []
@@ -1640,7 +1640,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testListLiteral() {
-    doTest("list", "expr = []");
+    doTest("List[Any]", "expr = []");
 
     doTest("List[int]", "expr = [1, 2, 3]");
 
@@ -1658,7 +1658,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testDictLiteral() {
-    doTest("dict", "expr = {}");
+    doTest("Dict[Any, Any]", "expr = {}");
 
     doTest("Dict[int, bool]", "expr = {1: False}");
 
@@ -1712,7 +1712,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-20797
   public void testValueOfEmptyDefaultDict() {
-    doTest("list",
+    doTest("List[Any]",
            """
              from collections import defaultdict
              expr = defaultdict(lambda: [])['x']
@@ -1894,7 +1894,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-21474
   public void testReassigningOptionalListWithDefaultValue() {
-    doTest("Union[List[str], list]",
+    doTest("Union[List[str], List[Any]]",
            """
              def x(things):
                  ""\"
@@ -2034,7 +2034,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-37755
   public void testGlobalType() {
-    doTest("list",
+    doTest("List[Any]",
            """
              expr = []
 
@@ -2042,7 +2042,7 @@ public class PyTypeTest extends PyTestCase {
                  global expr
                  expr""");
 
-    doTest("list",
+    doTest("List[Any]",
            """
              expr = []
 
@@ -2051,7 +2051,7 @@ public class PyTypeTest extends PyTestCase {
                      global expr
                      expr""");
 
-    doTest("list",
+    doTest("List[Any]",
            """
              expr = []
 
@@ -2928,7 +2928,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-26061
   public void testUnknownDictValues() {
-    doTest("list",
+    doTest("List[Any]",
            "expr = dict().values()");
   }
 

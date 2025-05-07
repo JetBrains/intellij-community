@@ -115,11 +115,6 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     }
 
     @Override
-    protected boolean hideAllAnyTypeArguments() {
-      return false;
-    }
-
-    @Override
     public HtmlChunk visitPyCallableType(@NotNull PyCallableType callableType) {
       HtmlBuilder result = new HtmlBuilder();
       result.append(HtmlChunk.raw("Callable")); //NON-NLS
@@ -191,10 +186,6 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     return origin == null || PythonLanguageLevelPusher.getLanguageLevelForFile(origin).isAtLeast(LanguageLevel.PYTHON39);
   }
 
-  protected boolean hideAllAnyTypeArguments() {
-    return true;
-  }
-
   @Override
   public HtmlChunk visitPyGenericType(@NotNull PyCollectionType collectionOf) {
     HtmlChunk genericTypeRender = renderGenericType(collectionOf);
@@ -203,10 +194,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
 
   private @NotNull HtmlChunk renderGenericType(@NotNull PyCollectionType genericType) {
     HtmlBuilder result = new HtmlBuilder();
-    // TODO get rid of that behavior
-    boolean allTypeParamsAreAny = ContainerUtil.and(genericType.getElementTypes(), t -> t == null);
-    boolean renderTypeArgumentList = !genericType.getElementTypes().isEmpty() && 
-                                     !(hideAllAnyTypeArguments() && allTypeParamsAreAny);
+    boolean renderTypeArgumentList = !genericType.getElementTypes().isEmpty();
     String className = genericType.getPyClass().getName();
     if (renderTypeArgumentList && !isGenericBuiltinsAvailable() && PyTypingTypeProvider.TYPING_COLLECTION_CLASSES.containsKey(className)) {
       result.append(className(PyTypingTypeProvider.TYPING_COLLECTION_CLASSES.get(className))); // NON-NLS
