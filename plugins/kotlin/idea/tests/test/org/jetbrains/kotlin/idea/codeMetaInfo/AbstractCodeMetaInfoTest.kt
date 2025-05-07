@@ -140,7 +140,8 @@ class CodeMetaInfoTestCase(
 
     fun checkFile(
         file: VirtualFile, expectedFile: File, project: Project,
-        postprocessActualTestData: (String, Editor) -> String = { s, _ -> s }) {
+        postprocessActualTestData: (String, Editor) -> String = { s, _ -> s }
+    ) {
         myProject = project
         myPsiManager = PsiManagerEx.getInstanceEx(myProject)
         configureByExistingFile(file)

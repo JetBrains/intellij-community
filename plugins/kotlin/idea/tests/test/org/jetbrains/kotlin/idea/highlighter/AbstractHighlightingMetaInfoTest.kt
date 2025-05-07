@@ -5,6 +5,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.PsiFileEx
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.base.test.ensureFilesResolved
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileLightCodeInsightFixtureTestCase
@@ -38,7 +39,10 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
         }
 
         runInEdtAndWait {
-            withCustomCompilerOptionsIfNotSetUpManually(psiFile.text) {
+            withCustomCompilerOptions(psiFile.text, project, module) {
+                if (psiFile is KtFile) {
+                    ensureFilesResolved(psiFile)
+                }
                 checkHighlighting(psiFile, expectedHighlighting, globalDirectives, project)
             }
         }
@@ -49,16 +53,4 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
     }
 
     protected open fun highlightingFileNameSuffix(ktFilePath: File): String = HIGHLIGHTING_EXTENSION
-
-    protected open val isManualCompilerOptionsSetup: Boolean = false
-
-    private fun withCustomCompilerOptionsIfNotSetUpManually(fileText: String, block: () -> Unit) {
-        if (!isManualCompilerOptionsSetup) {
-            withCustomCompilerOptions(fileText, project, module) {
-                block()
-            }
-        } else {
-            block()
-        }
-    }
 }
