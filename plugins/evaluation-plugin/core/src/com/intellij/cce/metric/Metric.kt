@@ -2,6 +2,7 @@
 package com.intellij.cce.metric
 
 import com.intellij.cce.core.Session
+import com.intellij.cce.metric.util.Bootstrap
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
 
@@ -21,7 +22,8 @@ interface Metric {
       sessionIndividualScores = emptyMap()
     )
   }
-  fun confidenceInterval(): Pair<Double, Double>? = null
+
+  fun confidenceInterval(numberOfSessions: Int, initialSampleSize: Int?): Pair<Double, Double>? = null
 
   val value: Double
 
@@ -33,13 +35,31 @@ interface Metric {
 
   val showByDefault: Boolean
 
-  val maximumSessions: Int
-    get() = 75000
-
-  fun shouldComputeIntervals(numberOfSessions: Int): Boolean =
-    numberOfSessions <= maximumSessions && System.getenv("cce_compute_confidence_intervals")?.toBooleanStrictOrNull() == true
-
   companion object {
     val LOG: Logger = thisLogger()
   }
+}
+
+interface ConfidenceIntervalMetric<T> : Metric {
+  val sample: MutableList<T>
+
+  val maximumSessions: Int
+    get() = 75000
+
+  val toggleConfidenceIntervals: Boolean
+    get() = System.getenv("cce_compute_confidence_intervals")?.toBooleanStrictOrNull() == true
+
+  override fun confidenceInterval(numberOfSessions: Int, initialSampleSize: Int?): Pair<Double, Double>? {
+    val currentSample = if (initialSampleSize != null) sample.subList(initialSampleSize, sample.size) else sample
+
+    if (shouldComputeConfidenceIntervals(numberOfSessions))
+      return Bootstrap.computeInterval(currentSample) { compute(it) }
+    else
+      return null
+  }
+
+  fun compute(sample: List<T>): Double
+
+  fun shouldComputeConfidenceIntervals(numberOfSessions: Int): Boolean =
+    numberOfSessions <= maximumSessions && toggleConfidenceIntervals
 }
