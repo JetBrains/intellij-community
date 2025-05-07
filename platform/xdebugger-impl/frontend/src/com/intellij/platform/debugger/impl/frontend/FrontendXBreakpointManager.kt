@@ -111,36 +111,42 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
       val lightBreakpointPosition = LightBreakpointPosition(installationInfo.position.file, installationInfo.position.line)
       val type = installationInfo.types.firstOrNull() ?: return@async null
       val lightBreakpoint = FrontendXLightLineBreakpoint(project, this@async, type, installationInfo, this@FrontendXBreakpointManager)
-      val oldBreakpoint = lightBreakpoints.putIfAbsent(lightBreakpointPosition, lightBreakpoint)
-      if (oldBreakpoint != null) {
-        lightBreakpoint.dispose()
-      }
-      val response = XBreakpointTypeApi.getInstance().toggleLineBreakpoint(project.projectId(), installationInfo.toRequest(oldBreakpoint != null))
+      try {
+        val oldBreakpoint = lightBreakpoints.putIfAbsent(lightBreakpointPosition, lightBreakpoint)
+        if (oldBreakpoint != null) {
+          lightBreakpoint.dispose()
+        }
+        val response = XBreakpointTypeApi.getInstance().toggleLineBreakpoint(project.projectId(), installationInfo.toRequest(oldBreakpoint != null))
 
-      withContext(Dispatchers.EDT + NonCancellable) {
-        lightBreakpoints.remove(lightBreakpointPosition, lightBreakpoint)
-        lightBreakpoint.dispose()
-        when (response) {
-          is XLineBreakpointInstalledResponse -> {
-            val breakpointDto = response.breakpoint
-            if (breakpointDto != null) {
-              addBreakpoint(breakpointDto) as? XLineBreakpointProxy
+        withContext(Dispatchers.EDT + NonCancellable) {
+          lightBreakpoints.remove(lightBreakpointPosition, lightBreakpoint)
+          lightBreakpoint.dispose()
+          when (response) {
+            is XLineBreakpointInstalledResponse -> {
+              val breakpointDto = response.breakpoint
+              if (breakpointDto != null) {
+                addBreakpoint(breakpointDto) as? XLineBreakpointProxy
+              }
+              else {
+                null
+              }
             }
-            else {
+            XRemoveBreakpointResponse -> {
+              val breakpoint = XDebuggerUtilImpl.findBreakpointsAtLine(project, installationInfo).singleOrNull()
+              if (breakpoint != null) {
+                XDebuggerUtilImpl.removeBreakpointIfPossible(project, installationInfo, breakpoint)
+              }
+              null
+            }
+            else -> {
               null
             }
           }
-          XRemoveBreakpointResponse -> {
-            val breakpoint = XDebuggerUtilImpl.findBreakpointsAtLine(project, installationInfo).singleOrNull()
-            if (breakpoint != null) {
-              XDebuggerUtilImpl.removeBreakpointIfPossible(project, installationInfo, breakpoint)
-            }
-            null
-          }
-          else -> {
-            null
-          }
         }
+      }
+      finally {
+        lightBreakpoints.remove(lightBreakpointPosition, lightBreakpoint)
+        lightBreakpoint.dispose()
       }
     }
   }
