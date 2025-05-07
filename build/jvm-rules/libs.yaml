@@ -120,9 +120,9 @@
       version: 1.49.0
     # Netty
     - id: io.netty:netty-common
-      version: 4.2.0.Final
+      version: 4.2.1.Final
     - id: io.netty:netty-buffer
-      version: 4.2.0.Final
+      version: 4.2.1.Final
       runtimeDeps:
         - ":netty-common"
 - url: https://dl.google.com/android/maven2

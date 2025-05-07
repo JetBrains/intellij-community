@@ -638,30 +638,30 @@ http_file(
 
 http_file(
     name = "netty-common",
-    downloaded_file_path = "netty-common-4.2.0.Final.jar",
-    sha256 = "52370b6c131f536b60c9b1e643e9a9b6e7ffecf787d5d3453b1689afbd894886",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-common/4.2.0.Final/netty-common-4.2.0.Final.jar",
+    downloaded_file_path = "netty-common-4.2.1.Final.jar",
+    sha256 = "7eea4a96f61ace06337906374150cb73c94f248897fda3da865b5c38a710bdfd",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-common/4.2.1.Final/netty-common-4.2.1.Final.jar",
 )
 
 http_file(
     name = "netty-common-sources",
-    downloaded_file_path = "netty-common-4.2.0.Final-sources.jar",
-    sha256 = "49c34b8bb551c0df48342dea94429568b1be4b65fd35f7d28bdef043fa08540f",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-common/4.2.0.Final/netty-common-4.2.0.Final-sources.jar",
+    downloaded_file_path = "netty-common-4.2.1.Final-sources.jar",
+    sha256 = "a32127fff3bb7aae678ee69abfc07bb3549ec86bc41604c722a707292a75e450",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-common/4.2.1.Final/netty-common-4.2.1.Final-sources.jar",
 )
 
 http_file(
     name = "netty-buffer",
-    downloaded_file_path = "netty-buffer-4.2.0.Final.jar",
-    sha256 = "c01926017be0d96711845852a2646de4bf00a92542b02ed915f5bee54822fe0d",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-buffer/4.2.0.Final/netty-buffer-4.2.0.Final.jar",
+    downloaded_file_path = "netty-buffer-4.2.1.Final.jar",
+    sha256 = "2ece8d8413d5aa35a1d1e0fe94f69f9e9edd8f7abb53f6c557a473c9fd0bfc8e",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-buffer/4.2.1.Final/netty-buffer-4.2.1.Final.jar",
 )
 
 http_file(
     name = "netty-buffer-sources",
-    downloaded_file_path = "netty-buffer-4.2.0.Final-sources.jar",
-    sha256 = "ff1e9f04410a8ad6e1c1200f93b4f3093131cc6c4e8846acaee1ae051309c863",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-buffer/4.2.0.Final/netty-buffer-4.2.0.Final-sources.jar",
+    downloaded_file_path = "netty-buffer-4.2.1.Final-sources.jar",
+    sha256 = "4916632fb9ffba6d239eb0814211fbafe9130c9871c7691b8b0dbd64b2710d48",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-buffer/4.2.1.Final/netty-buffer-4.2.1.Final-sources.jar",
 )
 
 http_file(
