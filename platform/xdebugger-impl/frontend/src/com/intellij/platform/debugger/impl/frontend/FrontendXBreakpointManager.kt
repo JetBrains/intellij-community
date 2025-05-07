@@ -48,7 +48,7 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
     })
 
   init {
-    cs.launch(Dispatchers.EDT) {
+    cs.launch {
       val typesChangedFlow = FrontendXBreakpointTypesManager.getInstance(project).typesChangedFlow()
       XDebuggerManagerApi.getInstance().getBreakpoints(project.projectId()).combine(typesChangedFlow) { breakpointDtos, _ ->
         // this way we subscribe on breakpoint types updates
