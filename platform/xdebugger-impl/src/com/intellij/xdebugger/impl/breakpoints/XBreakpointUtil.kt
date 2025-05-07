@@ -37,6 +37,7 @@ import one.util.streamex.StreamEx
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.asPromise
 import java.util.concurrent.CompletableFuture
@@ -210,7 +211,9 @@ object XBreakpointUtil {
    * - if folded, checks if line breakpoints could be toggled inside folded text
    */
   @JvmStatic
-  internal fun toggleLineBreakpointProxy(
+  @VisibleForTesting
+  @ApiStatus.Internal
+  fun toggleLineBreakpointProxy(
     project: Project,
     position: XSourcePosition,
     selectVariantByPositionColumn: Boolean,

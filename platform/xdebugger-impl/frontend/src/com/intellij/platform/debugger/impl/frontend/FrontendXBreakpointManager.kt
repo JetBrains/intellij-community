@@ -21,9 +21,13 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.ConcurrentMap
 
-internal class FrontendXBreakpointManager(private val project: Project, private val cs: CoroutineScope) : XBreakpointManagerProxy {
+@ApiStatus.Internal
+@VisibleForTesting
+class FrontendXBreakpointManager(private val project: Project, private val cs: CoroutineScope) : XBreakpointManagerProxy {
   private val breakpointsChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
   private val breakpoints: ConcurrentMap<XBreakpointId, XBreakpointProxy> = ConcurrentCollectionFactory.createConcurrentMap()
@@ -148,6 +152,7 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
         lineBreakpointManager.unregisterBreakpoint(removedBreakpoint)
       }
     }
+    breakpointsChanged.tryEmit(Unit)
   }
 
   fun getBreakpointById(breakpointId: XBreakpointId): XBreakpointProxy? {
@@ -189,6 +194,11 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
         listener()
       }
     }
+  }
+
+  @VisibleForTesting
+  fun getBreakpointsSet(): Set<XBreakpointProxy> {
+    return breakpoints.values.toSet()
   }
 
   override fun getLastRemovedBreakpoint(): XBreakpointProxy? {
