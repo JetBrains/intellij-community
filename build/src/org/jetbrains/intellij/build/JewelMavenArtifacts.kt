@@ -16,6 +16,7 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import kotlin.io.path.exists
 import kotlin.io.path.name
+import kotlin.sequences.filter
 
 internal object JewelMavenArtifacts {
   private const val GROUP_ID: String = "org.jetbrains.jewel"
@@ -34,8 +35,12 @@ internal object JewelMavenArtifacts {
     "intellij.platform.jewel.intUi.standalone" to "jewel-int-ui-standalone",
     "intellij.platform.jewel.decoratedWindow" to "jewel-decorated-window",
   )
+  private val IJ: Map<String, String> = mapOf(
+    "intellij.platform.jewel.ideLafBridge" to "jewel-ide-laf-bridge",
+    "intellij.platform.jewel.markdown.ideLafBridgeStyling" to "jewel-markdown-ide-laf-bridge-styling",
+  )
 
-  private val ALL: Map<String, String> = CORE + STANDALONE
+  private val ALL: Map<String, String> = CORE + STANDALONE + IJ
   val ALL_MODULES: Set<String> = ALL.keys
 
   private val VERSION: String by lazy {
@@ -83,8 +88,19 @@ internal object JewelMavenArtifacts {
   private fun JpsModule.modulesTree(): Sequence<JpsModule> {
     return sequenceOf(this) + dependenciesList.dependencies.asSequence()
       .filterIsInstance<JpsModuleDependency>()
+      .filter { shouldIncludeDependencyForValidation(it) }
       .mapNotNull { it.module }
       .flatMap { it.modulesTree() }
+  }
+
+  // The ideLafBridge depends on random platform modules, however, we don't care about them not being published,
+  // it should not be used without the IDE and is published only for backward compatibilty reasons.
+  private fun JpsModule.shouldIncludeDependencyForValidation(dependency: JpsModuleDependency): Boolean {
+    if (name != "intellij.platform.jewel.ideLafBridge" && name != "intellij.platform.jewel.markdown.ideLafBridgeStyling") return true
+    if (dependency.moduleReference.moduleName.startsWith("intellij.platform.jewel")) return true
+    if (dependency.moduleReference.moduleName.startsWith("intellij.platform")) return false
+    if (dependency.moduleReference.moduleName.startsWith("intellij.libraries")) return false
+    return true
   }
 
   fun validate(context: BuildContext, mavenArtifacts: Collection<GeneratedMavenArtifacts>) {

@@ -14,9 +14,7 @@
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>
-                <arg>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.0.21/kotlin-compose-compiler-plugin-2.0.21.jar</arg>
-              </args>
+              <args>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.0.21/kotlin-compose-compiler-plugin-2.0.21.jar</args>
             </arrayArg>
           </arrayArguments>
         </compilerArguments>
@@ -37,15 +35,15 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.jewel.foundation" />
     <orderEntry type="module" module-name="intellij.platform.jewel.ui" />
-    <orderEntry type="module" module-name="intellij.platform.projectModel" />
-    <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
-    <orderEntry type="module" module-name="intellij.platform.ide" />
-    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel.impl" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.ide" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="PROVIDED" />
     <orderEntry type="library" name="jna" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.skiko" />
-    <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" />
-    <orderEntry type="module" module-name="intellij.platform.editor.ex" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ex" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop.junit" scope="TEST" />
   </component>
 </module>
