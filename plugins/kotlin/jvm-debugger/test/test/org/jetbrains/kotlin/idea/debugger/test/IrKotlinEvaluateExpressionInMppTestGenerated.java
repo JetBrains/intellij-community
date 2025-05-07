@@ -1968,11 +1968,6 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
                 runTest("testData/evaluation/singleBreakpoint/inlineFunctionBreakpointVariants.kt");
             }
 
-            @TestMetadata("inlineFunctionClassFileLoading.kt")
-            public void testInlineFunctionClassFileLoading() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/inlineFunctionClassFileLoading.kt");
-            }
-
             @TestMetadata("inlineFunctionDeepInlining.kt")
             public void testInlineFunctionDeepInlining() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/inlineFunctionDeepInlining.kt");

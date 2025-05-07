@@ -8,8 +8,7 @@
 //
 // See KTIJ-25391.
 
-// MODULE: a
-// PLATFORM: jvm
+// MODULE: jvm-lib
 // FILE: a.kt
 //
 // The following directive attaches the `inline1` library to the IDE module for
@@ -20,12 +19,14 @@
 
 package b
 
-// MODULE: jvm
-// PLATFORM: jvm
+fun justSomeFun() { }
+
+// MODULE: jvm-app(jvm-lib)
 // FILE: jvm.kt
 // ATTACH_LIBRARY: inline2
 
 package c
+
 import test.inline.foo
 
 fun main() {

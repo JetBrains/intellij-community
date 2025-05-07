@@ -9,20 +9,10 @@
 
 import kotlin.reflect.KProperty
 
-internal inline fun topLevelFunc(bar: () -> Int) = bar()
-
-internal inline val topLevelProperty: Int
-    get() {
-        return 2
-    }
-
 class C {
-    internal inline fun memberFunc(bar: () -> Int) = bar()
-
-    internal inline val memberProperty: Int
-        get() {
-            return 4
-        }
+    internal inline operator fun getValue(nothing: Nothing?, property: KProperty<*>): Int {
+        return 5
+    }
 }
 
 // MODULE: jvm-app(jvm-lib)
@@ -31,24 +21,12 @@ class C {
 
 public fun main() {
     val c = C()
-
-    // EXPRESSION: topLevelFunc{1}
-    // RESULT: 1: I
-    //Breakpoint!
     "".toString()
 
-    // EXPRESSION: topLevelProperty
-    // RESULT: 2: I
-    //Breakpoint!
-    "".toString()
-
-    // EXPRESSION: c.memberFunc{3}
-    // RESULT: 3: I
-    //Breakpoint!
-    "".toString()
-
-    // EXPRESSION: c.memberProperty
-    // RESULT: 4: I
+    // EXPRESSION: val delegate by C(); delegate
+    // RESULT: 5: I
     //Breakpoint!
     "".toString()
 }
+
+// IGNORE_K1

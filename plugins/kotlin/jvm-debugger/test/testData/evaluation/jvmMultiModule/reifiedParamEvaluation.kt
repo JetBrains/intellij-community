@@ -7,14 +7,14 @@ inline fun <reified T1, reified T2> foo1() {
     val x = 1
 }
 
-// MODULE: jvm-lib-two()(jvm-lib-one)
+// MODULE: jvm-lib-two(jvm-lib-one)
 // FILE: foo2.kt
 
 inline fun <reified T1> foo2() {
     foo1<String, Array<T1>>()
 }
 
-// MODULE: jvm-app()(jvm-lib-two)
+// MODULE: jvm-app(jvm-lib-two)
 // FILE: call.kt
 
 fun main() {
