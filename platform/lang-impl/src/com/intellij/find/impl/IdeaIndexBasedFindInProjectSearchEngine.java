@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -134,14 +133,16 @@ public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProj
       if (DumbService.isDumb(project)) {
         return false;
       }
-      if (!TrigramTextSearchService.useIndexingSearchExtensions()) {
-        return false;
-      }
+
+      //MAYBE RC: TrigramIndexFilter.isExcludeExtensionsEnabled() -> return false?
+      //          I'm not sure do we need this: if some files are not indexed -> they are rejected by TrigramIndexFilter, hence
+      //          isCovered(file) returns false -> which is enough to still scan the file in 2nd (bruteforce) search phase.
+      //          So, it seems, this condition is not needed at all?
 
       // a local scope may be over a non-indexed file
       if (findModel.getCustomScope() instanceof LocalSearchScope) return false;
 
-      if (hasTrigrams) return true;
+      if (hasTrigrams) return true; //RC: why it is enough to hasTrigrams to be reliable?
 
       // $ is used to separate words when indexing plain-text files but not when indexing
       // Java identifiers, so we can't consistently break a string containing $ characters into words
@@ -158,7 +159,7 @@ public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProj
     }
 
     private boolean isCoveredByIndex(@NotNull VirtualFile file) {
-      //RC: if .java-files are not indexed -- isCoveredByIndex returns false
+      //i.e. if .java-files are not indexed -- isCoveredByIndex returns false
       return textSearchService.isInSearchableScope(file, project);
     }
 

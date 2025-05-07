@@ -28,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.impl.FilesScanExecutor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -185,7 +184,7 @@ final class FindInProjectTask {
       progressIndicator.setIndeterminate(false);
 
       //first process files from searchers (=index):
-      Set<VirtualFile> filesForFastSearch = collectFilesFromSearchers(searchers, fileMaskFilter);
+      Set<VirtualFile> filesForFastSearch = collectFiles(searchers, fileMaskFilter);
       for (VirtualFile file : filesToScanInitially) {
         if (fileMaskFilter.test(file)) {
           filesForFastSearch.add(file);
@@ -219,7 +218,7 @@ final class FindInProjectTask {
       List<Object> searchItems = collectSearchItems();
 
       AtomicInteger otherFilesCount = new AtomicInteger();
-      bruteforceProcessSearchItems(
+      unfoldAndProcessSearchItems(
         searchItems,
         /*alreadySearched: */filesForFastSearch::contains,
         file -> {
@@ -389,10 +388,13 @@ final class FindInProjectTask {
     return true;
   }
 
-  // must return non-binary files
-  private void bruteforceProcessSearchItems(@NotNull List<Object> searchItems,
-                                            @NotNull Predicate<? super VirtualFile> alreadySearched,
-                                            @NotNull Processor<? super VirtualFile> fileProcessor) {
+  /**
+   * Unfold search items (:={ VirtualFile | IndexableFilesIterator | FindModelExtension }) down to individual files,
+   * and process them with the fileProcessor. Also does filtering according to {@link #findModel} settings.
+   */
+  private void unfoldAndProcessSearchItems(@NotNull List<Object> searchItems,
+                                           @NotNull Predicate<? super VirtualFile> alreadySearched,
+                                           @NotNull Processor<? super VirtualFile> fileProcessor) {
 
     SearchScope customScope = findModel.isCustomScope() ? findModel.getCustomScope() : null;
     GlobalSearchScope globalCustomScope = customScope == null ? null : GlobalSearchScopeUtil.toGlobalSearchScope(customScope, project);
@@ -551,8 +553,8 @@ final class FindInProjectTask {
   /**
    * @return filesToScanInitially + candidate files found by searchers, filtered by fileMaskFilter
    */
-  private static @NotNull Set<VirtualFile> collectFilesFromSearchers(@NotNull FindInProjectSearcher @NotNull [] searchers,
-                                                                     @NotNull Predicate<VirtualFile> fileFilter) {
+  private static @NotNull Set<VirtualFile> collectFiles(@NotNull FindInProjectSearcher @NotNull [] searchers,
+                                                        @NotNull Predicate<? super VirtualFile> fileFilter) {
     Set<VirtualFile> resultFiles = VfsUtilCore.createCompactVirtualFileSet();
 
     for (FindInProjectSearcher searcher : searchers) {

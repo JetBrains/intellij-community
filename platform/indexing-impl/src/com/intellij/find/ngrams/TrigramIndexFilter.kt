@@ -35,6 +35,9 @@ internal class TrigramIndexFilter : BaseFileTypeInputFilter(FileTypeSubstitution
     private val EXTENSION_EXCLUDES: CustomizableExcludeExtensions = CustomizableExcludeExtensions(
       ExtensionPointName.create("com.intellij.trigramIndexFilterExcludeExtension")
     )
+
+    @JvmStatic
+    fun isExcludeExtensionsEnabled(): Boolean = ENABLE_EXTENSION_EXCLUDES
   }
 
   init {
