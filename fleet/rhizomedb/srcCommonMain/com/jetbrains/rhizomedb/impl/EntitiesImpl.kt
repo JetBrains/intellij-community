@@ -163,9 +163,9 @@ fun Q.entity(eid: EID): Entity? =
  * @see com.jetbrains.rhizomedb.plugin.EntityTypeRegistrationGenerator
  */
 @ApiStatus.Internal
-fun registerEntityTypeProvider(provider: EntityTypeProvider): Boolean {
-  entityTypeProvidersList.add(provider)
+fun registerEntityTypeProvider(moduleName: String, provider: EntityTypeProvider): Boolean {
+  entityTypeProvidersList.getOrPut(moduleName) { mutableListOf() }.add(provider)
   return true
 }
 
-val entityTypeProvidersList: MutableList<EntityTypeProvider> = mutableListOf()
+val entityTypeProvidersList: MutableMap<String, MutableList<EntityTypeProvider>> = mutableMapOf()
