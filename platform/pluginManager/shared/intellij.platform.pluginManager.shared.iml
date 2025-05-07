@@ -38,6 +38,10 @@
     <orderEntry type="module" module-name="intellij.platform.ide.rpc" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.platform.plugins.parser.impl" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>

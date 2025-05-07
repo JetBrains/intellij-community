@@ -140,6 +140,11 @@ class PluginDtoModelBuilder(pluginId: PluginId): PluginUiModelBuilder {
     return this
   }
 
+  override fun setIsFromMarketPlace(isFromMarketPlace: Boolean): PluginUiModelBuilder {
+    resultDto.isFromMarketplace = isFromMarketPlace
+    return this
+  }
+
   override fun setExternalPluginId(externalPluginId: String?): PluginUiModelBuilder {
     resultDto.externalPluginId = externalPluginId
     return this

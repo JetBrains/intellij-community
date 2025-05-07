@@ -133,7 +133,11 @@ class PluginNodeModelBuilder(private val pluginId: PluginId) : PluginUiModelBuil
     pluginNode.setIsPaid(isPaid)
     return this
   }
-  
+
+  override fun setIsFromMarketPlace(isFromMarketPlace: Boolean): PluginUiModelBuilder {
+    return this
+  }
+
   override fun setExternalPluginId(externalPluginId: String?): PluginUiModelBuilder {
     pluginNode.externalPluginId = externalPluginId
     return this

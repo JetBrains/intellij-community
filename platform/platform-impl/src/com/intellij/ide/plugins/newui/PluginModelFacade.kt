@@ -169,10 +169,11 @@ class PluginModelFacade(private val pluginModel: MyPluginModel) {
   private fun getController(model: PluginUiModel): PluginModelController {
     return getController(model.source)
   }
+
   private fun getController(source: PluginSource): PluginModelController{
     return when (source) {
       PluginSource.LOCAL -> localController
-      PluginSource.REMOTE -> TODO()
+      PluginSource.REMOTE -> localController
     }
   }
   //Temporary field that will allow as to change code in small parts

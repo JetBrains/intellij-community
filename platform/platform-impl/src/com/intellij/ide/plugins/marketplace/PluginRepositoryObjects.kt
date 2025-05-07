@@ -134,6 +134,7 @@ class MarketplaceSearchPluginData(
     builder.setExternalPluginId(externalPluginId)
     builder.setExternalUpdateId(externalUpdateId ?: nearestUpdate?.id)
     builder.setIsPaid(isPaid)
+    builder.setIsFromMarketPlace(true)
 
     if (cdate != null) {
       builder.setDate(cdate)
