@@ -18,9 +18,6 @@ import java.util.List;
  * Holds javadoc-specific navigation logic.
  */
 public final class JavadocNavigationDelegate extends EditorNavigationDelegateAdapter {
-
-  private static final JavadocHelper ourHelper = JavadocHelper.getInstance();
-  
   /**
    * Improves navigation in case of incomplete javadoc parameter descriptions.
    * <p/>
@@ -94,13 +91,13 @@ public final class JavadocNavigationDelegate extends EditorNavigationDelegateAda
       return Result.CONTINUE;
     }
 
-    final Pair<JavadocHelper.JavadocParameterInfo,List<JavadocHelper.JavadocParameterInfo>> pair = ourHelper.parse(psiFile, editor, offset);
+    final Pair<JavadocHelper.JavadocParameterInfo,List<JavadocHelper.JavadocParameterInfo>> pair = JavadocHelper.parse(psiFile, editor, offset);
     if (pair.first == null || pair.first.parameterDescriptionStartPosition != null) {
       return Result.CONTINUE;
     }
 
-    final LogicalPosition position = ourHelper.calculateDescriptionStartPosition(psiFile, pair.second, pair.first);
-    ourHelper.navigate(position, editor, psiFile.getProject());
+    final LogicalPosition position = JavadocHelper.calculateDescriptionStartPosition(psiFile, pair.second, pair.first);
+    JavadocHelper.navigate(position, editor, psiFile.getProject());
     return Result.STOP;
   }
 }

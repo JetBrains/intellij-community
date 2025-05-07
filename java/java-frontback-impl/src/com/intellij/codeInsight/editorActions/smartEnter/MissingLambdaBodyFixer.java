@@ -56,7 +56,7 @@ public class MissingLambdaBodyFixer implements Fixer {
     processor.insertBracesWithNewLine(editor, offset);
     editor.getCaretModel().moveToOffset(offset + 1);
     processor.commit(editor);
-    processor.reformat(editor, psiElement);
+    processor.reformat(psiElement);
     processor.setSkipEnter(BasicJavaAstTreeUtil.is(astNode, BASIC_LAMBDA_EXPRESSION));
   }
 }

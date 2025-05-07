@@ -22,9 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public final class EnterInJavadocParamDescriptionHandler implements EnterHandlerDelegate {
-
-  private final JavadocHelper myHelper = JavadocHelper.getInstance();
-
   @Override
   public Result postProcessEnter(final @NotNull PsiFile file, @NotNull Editor editor, @NotNull DataContext dataContext) {
     if (!(file instanceof PsiJavaFile)
@@ -39,7 +36,7 @@ public final class EnterInJavadocParamDescriptionHandler implements EnterHandler
     }
     
     final Pair<JavadocHelper.JavadocParameterInfo,List<JavadocHelper.JavadocParameterInfo>> pair
-      = myHelper.parse(file, editor, caretOffset);
+      = JavadocHelper.parse(file, editor, caretOffset);
     if (pair.first == null || pair.first.parameterDescriptionStartPosition == null) {
       return Result.Continue;
     }
@@ -64,7 +61,7 @@ public final class EnterInJavadocParamDescriptionHandler implements EnterHandler
       });
     } 
 
-    myHelper.navigate(desiredPosition, editor, file.getProject());
+    JavadocHelper.navigate(desiredPosition, editor, file.getProject());
     return Result.Stop;
   }
   
