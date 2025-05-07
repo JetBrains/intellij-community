@@ -19,8 +19,6 @@ import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.toRequest
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.ConcurrentMap
@@ -53,17 +51,20 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
 
   init {
     cs.launch {
-      val typesChangedFlow = FrontendXBreakpointTypesManager.getInstance(project).typesChangedFlow()
-      XDebuggerManagerApi.getInstance().getBreakpoints(project.projectId()).combine(typesChangedFlow) { breakpointDtos, _ ->
-        // this way we subscribe on breakpoint types updates
-        breakpointDtos
-      }.collectLatest { breakpointDtos ->
-        val breakpointsToRemove = breakpoints.keys - breakpointDtos.map { it.id }.toSet()
-        removeBreakpointsLocally(breakpointsToRemove)
+      FrontendXBreakpointTypesManager.getInstance(project).typesInitialized().await()
+      val (initialBreakpoints, breakpointEvents) = XDebuggerManagerApi.getInstance().getBreakpoints(project.projectId())
+      for (breakpointDto in initialBreakpoints) {
+        addBreakpoint(breakpointDto)
+      }
 
-        val newBreakpoints = breakpointDtos.filter { it.id !in breakpoints }
-        for (breakpointDto in newBreakpoints) {
-          addBreakpoint(breakpointDto)
+      breakpointEvents.toFlow().collect { event ->
+        when (event) {
+          is XBreakpointEvent.BreakpointAdded -> {
+            addBreakpoint(event.breakpointDto)
+          }
+          is XBreakpointEvent.BreakpointRemoved -> {
+            removeBreakpointsLocally(setOf(event.breakpointId))
+          }
         }
       }
     }

@@ -359,11 +359,6 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     return withLockMaybeCancellable(myLock, () -> myAllBreakpoints.getValue().toArray(new XBreakpointBase[0]));
   }
 
-  @ApiStatus.Internal
-  public @NotNull StateFlow<Set<XBreakpointBase<?, ?, ?>>> getAllBreakpointsFlow() {
-    return myAllBreakpoints;
-  }
-
   @Override
   @SuppressWarnings("unchecked")
   public @NotNull <B extends XBreakpoint<?>> Collection<? extends B> getBreakpoints(final @NotNull XBreakpointType<B,?> type) {

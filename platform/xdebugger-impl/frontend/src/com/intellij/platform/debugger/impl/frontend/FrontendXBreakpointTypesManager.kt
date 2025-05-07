@@ -11,7 +11,9 @@ import com.intellij.xdebugger.impl.rpc.XBreakpointTypeApi
 import com.intellij.xdebugger.impl.rpc.XBreakpointTypeDto
 import com.intellij.xdebugger.impl.rpc.XBreakpointTypeId
 import fleet.multiplatform.shims.ConcurrentHashMap
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -25,11 +27,13 @@ internal class FrontendXBreakpointTypesManager(
 ) {
   private val types = ConcurrentHashMap<XBreakpointTypeId, XBreakpointTypeProxy>()
   private val typesChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+  private val typesInitialized = CompletableDeferred<Unit>()
 
   init {
     cs.launch {
       val (initialBreakpointTypes, breakpointTypesFlow) = XBreakpointTypeApi.getInstance().getBreakpointTypeList(project.projectId())
       handleBreakpointTypesFromBackend(initialBreakpointTypes)
+      typesInitialized.complete(Unit)
 
       breakpointTypesFlow.toFlow().collectLatest {
         handleBreakpointTypesFromBackend(it)
@@ -54,6 +58,10 @@ internal class FrontendXBreakpointTypesManager(
         action()
       }
     }
+  }
+
+  fun typesInitialized(): Deferred<Unit> {
+    return typesInitialized
   }
 
   fun typesChangedFlow(): Flow<Unit> = typesChanged
