@@ -315,6 +315,8 @@ internal object SystemHealthMonitor {
 
     val changedOptions = MultiRoutingFileSystemVmOptionsSetter.ensureInVmOptions()
     when {
+      changedOptions.isEmpty() -> Unit
+      
       PluginManagerCore.isRunningFromSources() || AppMode.isDevServer() -> {
         logger<MultiRoutingFileSystemVmOptionsSetter>().warn(
           changedOptions.joinToString(
