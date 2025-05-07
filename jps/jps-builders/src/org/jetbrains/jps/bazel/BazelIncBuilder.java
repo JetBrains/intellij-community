@@ -55,7 +55,7 @@ public class BazelIncBuilder {
       }
       else {
         ConfigurationState pastState = ConfigurationState.loadSavedState(context);
-        ConfigurationState presentState = new ConfigurationState(context.getSources(), context.getBinaryDependencies());
+        ConfigurationState presentState = new ConfigurationState(context.getPathMapper(), context.getSources(), context.getBinaryDependencies());
         
         srcSnapshotDelta = new SnapshotDeltaImpl(pastState.getSources(), context.getSources());
         if (!srcSnapshotDelta.isRecompileAll() && pastState.getClasspathStructureDigest() != presentState.getClasspathStructureDigest()) {
@@ -224,7 +224,7 @@ public class BazelIncBuilder {
       }
 
       if (srcSnapshotDelta != null) {
-        new ConfigurationState(srcSnapshotDelta.asSnapshot(), context.getBinaryDependencies()).save(context);
+        new ConfigurationState(context.getPathMapper(), srcSnapshotDelta.asSnapshot(), context.getBinaryDependencies()).save(context);
       }
 
       try { // backup current abi-jars content

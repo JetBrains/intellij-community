@@ -25,11 +25,16 @@ public interface DataPaths {
 
   static @NotNull Path getJarBackupStoreFile(BuildContext context, Path jarPath) {
     // ensure jars with the same name won't clash in the backup store
-    return getDependenciesBackupStoreDir(context).resolve(Long.toHexString(Utils.digest(jarPath.getParent().normalize().toString())) + "-" + jarPath.getFileName());
+    return getDependenciesBackupStoreDir(context).resolve(Long.toHexString(Utils.digest(jarPath.getParent().normalize().toString())) + "-" + getLibraryName(jarPath));
   }
 
+  static String getLibraryName(Path jarPath) {
+    // todo: match according to maven artifact format "${artifactId}-${version}-${classifier}.jar" and use artifactId as a library name
+    return jarPath.getFileName().toString();
+  }
+  
   static boolean isLibraryTracked(Path path) {
-    return isLibraryTracked(path.getFileName().toString());
+    return isLibraryTracked(getLibraryName(path));
   }
 
   /**

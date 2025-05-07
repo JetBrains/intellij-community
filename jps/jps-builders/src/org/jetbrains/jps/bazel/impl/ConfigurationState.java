@@ -9,9 +9,11 @@ import org.jetbrains.jps.bazel.NodeSourceSnapshot;
 import org.jetbrains.jps.dependency.GraphDataInput;
 import org.jetbrains.jps.dependency.GraphDataOutput;
 import org.jetbrains.jps.dependency.NodeSource;
+import org.jetbrains.jps.dependency.NodeSourcePathMapper;
 import org.jetbrains.jps.dependency.impl.GraphDataInputImpl;
 import org.jetbrains.jps.dependency.impl.GraphDataOutputImpl;
 import org.jetbrains.jps.dependency.impl.PathSource;
+import org.jetbrains.jps.dependency.impl.PathSourceMapper;
 import org.jetbrains.jps.javac.Iterators;
 
 import java.io.DataInputStream;
@@ -30,17 +32,20 @@ import static org.jetbrains.jps.javac.Iterators.flat;
 import static org.jetbrains.jps.javac.Iterators.map;
 
 public class ConfigurationState {
-  private static final ConfigurationState EMPTY = new ConfigurationState(NodeSourceSnapshot.EMPTY, NodeSourceSnapshot.EMPTY);
+  private static final ConfigurationState EMPTY = new ConfigurationState(new PathSourceMapper(), NodeSourceSnapshot.EMPTY, NodeSourceSnapshot.EMPTY);
 
+  private final NodeSourcePathMapper myPathMapper;
   private final NodeSourceSnapshot mySourcesSnapshot;
   private final NodeSourceSnapshot myLibsSnapshot;
 
-  public ConfigurationState(NodeSourceSnapshot sourcesSnapshot, NodeSourceSnapshot libsSnapshot) {
+  public ConfigurationState(NodeSourcePathMapper pathMapper, NodeSourceSnapshot sourcesSnapshot, NodeSourceSnapshot libsSnapshot) {
+    myPathMapper = pathMapper;
     mySourcesSnapshot = sourcesSnapshot;
     myLibsSnapshot = libsSnapshot;
   }
 
-  public ConfigurationState(Path savedState) throws IOException {
+  public ConfigurationState(NodeSourcePathMapper pathMapper, Path savedState) throws IOException {
+    myPathMapper = pathMapper;
     try (var stream = new DataInputStream(new InflaterInputStream(Files.newInputStream(savedState, StandardOpenOption.READ)))) {
       GraphDataInput in = GraphDataInputImpl.wrap(stream);
       mySourcesSnapshot = new SourceSnapshotImpl(in, PathSource::new);
@@ -62,7 +67,7 @@ public class ConfigurationState {
 
   public static ConfigurationState loadSavedState(BuildContext context) {
     try {
-      return new ConfigurationState(DataPaths.getConfigStateStoreFile(context));
+      return new ConfigurationState(context.getPathMapper(), DataPaths.getConfigStateStoreFile(context));
     }
     catch (NoSuchFileException e) {
       return EMPTY;
@@ -87,7 +92,10 @@ public class ConfigurationState {
 
     // digest name, count and order of classpath entries as well as content digests of all non-abi deps
     Iterators.Function<@NotNull NodeSource, Iterable<String>> digestMapper =
-      path -> DataPaths.isLibraryTracked(path.toString())? List.of(path.toString()) : List.of(path.toString(), deps.getDigest(path));
+      src -> {
+        Path path = myPathMapper.toPath(src);
+        return DataPaths.isLibraryTracked(path)? List.of(DataPaths.getLibraryName(path)) : List.of(DataPaths.getLibraryName(path), deps.getDigest(src));
+      };
 
     return Utils.digest(flat(map(deps.getElements(), digestMapper)));
   }
