@@ -1,11 +1,18 @@
 <component name="libraryTable">
-  <library name="kotlinc.kotlin-ide-dist">
+  <library name="kotlinc.kotlin-ide-dist" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-dist-for-ide:2.2.20-dev-2603">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dist-for-ide/2.2.20-dev-2603/kotlin-dist-for-ide-2.2.20-dev-2603.jar">
+          <sha256sum>8c65765f21ccfad1849635a35cba887814a3710a28cf7c180d9010878d0d92b9</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-dist-for-ide/2.2.255-dev-255/kotlin-dist-for-ide-2.2.255-dev-255.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dist-for-ide/2.2.20-dev-2603/kotlin-dist-for-ide-2.2.20-dev-2603.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-dist-for-ide/2.2.255-dev-255/kotlin-dist-for-ide-2.2.255-dev-255-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dist-for-ide/2.2.20-dev-2603/kotlin-dist-for-ide-2.2.20-dev-2603-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
