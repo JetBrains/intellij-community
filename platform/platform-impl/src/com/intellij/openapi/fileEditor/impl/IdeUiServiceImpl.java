@@ -30,6 +30,7 @@ import com.intellij.util.net.IOExceptionDialog;
 import com.intellij.util.net.ssl.CertificateManager;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.ui.SwingHelper;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,6 +46,7 @@ import java.net.URLConnection;
 import java.nio.file.Path;
 import java.util.List;
 
+@ApiStatus.Internal
 public class IdeUiServiceImpl extends IdeUiService {
   @Override
   public void revealFile(Path file) {
@@ -110,8 +112,7 @@ public class IdeUiServiceImpl extends IdeUiService {
   }
 
   @Override
-  public void performActionDumbAwareWithCallbacks(AnAction action,
-                                                  AnActionEvent event) {
+  public void performAction(@NotNull AnAction action, @NotNull AnActionEvent event) {
     ActionUtil.performAction(action, event);
   }
 

@@ -24,7 +24,7 @@ com.intellij.ide.dnd.DnDEvent$DropTargetHighlightingType
 - logIdeScriptUsageEvent(java.lang.Class):V
 - notifyByBalloon(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.ui.MessageType,java.lang.String,javax.swing.Icon,javax.swing.event.HyperlinkListener):Z
 - openHttpConnection(java.lang.String):java.net.URLConnection
-- performActionDumbAwareWithCallbacks(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent):V
+- performAction(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent):V
 - prepareURL(java.lang.String):V
 - revealFile(java.nio.file.Path):V
 - showErrorDialog(java.lang.String,java.lang.String):Z
