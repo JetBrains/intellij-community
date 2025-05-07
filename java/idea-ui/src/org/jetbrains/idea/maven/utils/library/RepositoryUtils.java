@@ -61,8 +61,8 @@ public final class RepositoryUtils {
     return libraryEditor != null && libraryEditor.getUrls(AnnotationOrderRootType.getInstance()).length > 0;
   }
 
-  public static String getStorageRoot(Library library) {
-    return getStorageRoot(library.getUrls(OrderRootType.CLASSES));
+  public static String getStorageRoot(@NotNull Project project, Library library) {
+    return getStorageRoot(project, library.getUrls(OrderRootType.CLASSES));
   }
 
 
@@ -76,7 +76,7 @@ public final class RepositoryUtils {
    * (it's two modes of JPS repository libraries)
    * <p>
    */
-  public static String getStorageRoot(String[] urls) {
+  public static String getStorageRoot(Project project, String[] urls) {
     if (urls.length == 0) {
       return null;
     }
@@ -92,7 +92,7 @@ public final class RepositoryUtils {
       // IJPL-175157 Only one file in the library, so we can't decide on storage root without looking into cache location
       // It's worse with symlinks where we may have a non-canonical path in `firstPath`
       // and canonical path in JarRepositoryManager.getLocalRepositoryPath
-      var localRepositoryPath = JarRepositoryManager.getLocalRepositoryPath();
+      var localRepositoryPath = JarRepositoryManager.getJPSLocalMavenRepositoryForIdeaProject(project).toFile();
 
       // happy case, no symlinks, so canonical localRepositoryPath is the same is firstPath
       if (FileUtil.startsWith(firstPath, localRepositoryPath.getPath())) {
@@ -147,18 +147,18 @@ public final class RepositoryUtils {
     return JarRepositoryManager.loadDependenciesAsync(
       project, properties, downloadSources, downloadJavaDocs, null, copyTo).thenAsync(roots -> {
 
-        if (roots == null || roots.isEmpty()) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            RepositoryLibraryResolveErrorNotification.showOrUpdate(properties, project);
-          });
+      if (roots == null || roots.isEmpty()) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          RepositoryLibraryResolveErrorNotification.showOrUpdate(properties, project);
+        });
 
-          return rejectedPromise("Library '" + properties.getMavenId() + "' resolution failed");
-        }
-        else {
-          LOG.debug("Loaded dependencies for '" + properties.getMavenId() + "' repository library");
+        return rejectedPromise("Library '" + properties.getMavenId() + "' resolution failed");
+      }
+      else {
+        LOG.debug("Loaded dependencies for '" + properties.getMavenId() + "' repository library");
 
-          return setupLibraryRoots(library, properties, annotationUrls, excludedRootUrls, roots).then(ignored -> roots);
-        }
+        return setupLibraryRoots(library, properties, annotationUrls, excludedRootUrls, roots).then(ignored -> roots);
+      }
     });
   }
 
@@ -214,7 +214,8 @@ public final class RepositoryUtils {
 
                 result.setResult(null);
               });
-            } catch (Throwable t) {
+            }
+            catch (Throwable t) {
               LOG.warn("Unable to update project model for library '" + library.getName() + "'", t);
               result.setError(t);
             }
@@ -227,7 +228,10 @@ public final class RepositoryUtils {
       });
   }
 
-  private static @NotNull Boolean libraryRootsEqual(@NotNull LibraryEx library, String[] annotationUrls, String[] excludedRootUrls, List<OrderRoot> roots) {
+  private static @NotNull Boolean libraryRootsEqual(@NotNull LibraryEx library,
+                                                    String[] annotationUrls,
+                                                    String[] excludedRootUrls,
+                                                    List<OrderRoot> roots) {
     List<String> allRootUrls = new ArrayList<>();
 
     Set<Pair<OrderRootType, String>> actualRoots = new HashSet<>();
@@ -285,7 +289,7 @@ public final class RepositoryUtils {
     }
 
     Promise<List<OrderRoot>> mavenResolverPromise = loadDependenciesToLibrary(
-      project, library, libraryHasSources(library), libraryHasJavaDocs(library), getStorageRoot(library));
+      project, library, libraryHasSources(library), libraryHasJavaDocs(library), getStorageRoot(project, library));
     // callers of this function typically do not log, so do it for them
     mavenResolverPromise.onError(error -> {
       LOG.warn("Failed to download repository library '" + library.getName() + "' with maven resolver", error);

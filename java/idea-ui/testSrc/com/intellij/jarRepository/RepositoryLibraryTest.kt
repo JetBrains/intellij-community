@@ -5,6 +5,7 @@ import com.intellij.java.library.getMavenCoordinates
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathMacros
 import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
@@ -15,6 +16,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.testFramework.rules.TempDirectoryExtension
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
@@ -58,8 +60,15 @@ class RepositoryLibraryTest {
     PathMacros.getInstance().setMacro("MAVEN_REPOSITORY", localMavenCache.root.absolutePath)
     Disposer.register(disposable) {
       PathMacros.getInstance().setMacro("MAVEN_REPOSITORY", repo)
-
     }
+
+    val oldService = PathMacroManager.getInstance(projectRule.project)
+    projectRule.project.replaceService(PathMacroManager::class.java, object : PathMacroManager(null) {
+      override fun expandPath(text: String?): String? {
+        if (text == JarRepositoryManager.MAVEN_REPOSITORY_MACRO) return localMavenCache.root.absolutePath
+        return oldService.expandPath(text)
+      }
+    }, disposable);
 
     MavenRepoFixture(mavenRepo.root).apply {
       addLibraryArtifact(group = GROUP_NAME, artifact = ARTIFACT_NAME, version = "1.0")

@@ -4,6 +4,7 @@ package com.intellij.jarRepository
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathMacros
 import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
@@ -12,6 +13,7 @@ import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
+import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.concurrency.Promise
@@ -39,6 +41,13 @@ abstract class LibraryTest : UsefulTestCase() {
     myMavenRepoDescription = RemoteRepositoryDescription("id", "name", myMavenRepo.toURI().toURL().toString())
     myOldTestRepo = PathMacros.getInstance().getValue("MAVEN_REPOSITORY")
     PathMacros.getInstance().setMacro("MAVEN_REPOSITORY", myMavenLocalCache.absolutePath)
+    val oldService = PathMacroManager.getInstance(myProject)
+    myProject.replaceService(PathMacroManager::class.java, object : PathMacroManager(null) {
+      override fun expandPath(text: String?): String? {
+        if (text == JarRepositoryManager.MAVEN_REPOSITORY_MACRO) return myMavenLocalCache.absolutePath
+        return oldService.expandPath(text)
+      }
+    }, testRootDisposable);
   }
 
   override fun tearDown() {
