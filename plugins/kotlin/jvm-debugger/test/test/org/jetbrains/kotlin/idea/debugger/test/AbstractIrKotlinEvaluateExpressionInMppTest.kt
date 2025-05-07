@@ -5,14 +5,15 @@ import com.intellij.execution.ExecutionTestCase
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.doWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.DependencyScope
-import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
-import org.jetbrains.kotlin.config.*
+import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
+import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferenceKeys
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
@@ -22,7 +23,6 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
-import org.jetbrains.kotlin.utils.closure
 import java.io.File
 
 /**
@@ -79,7 +79,6 @@ import java.io.File
  * ```
  */
 abstract class AbstractIrKotlinEvaluateExpressionInMppTest : AbstractIrKotlinEvaluateExpressionTest() {
-    private lateinit var context: ConfigurationContext
     private lateinit var perModuleLibraryOutputDirectory: File
     private lateinit var perModuleLibrarySourceDirectory: File
 
@@ -99,7 +98,7 @@ abstract class AbstractIrKotlinEvaluateExpressionInMppTest : AbstractIrKotlinEva
         }
 
         for ((module, files) in context.filesByModules) {
-            configureModuleByTestFiles(module, files, context)
+            configureModuleByTestFiles(module, files)
         }
 
         for ((module, library) in context.librariesByModule) {
@@ -147,9 +146,8 @@ abstract class AbstractIrKotlinEvaluateExpressionInMppTest : AbstractIrKotlinEva
     private fun configureModuleByTestFiles(
         module: DebuggerTestModule,
         files: List<TestFileWithModule>,
-        context: ConfigurationContext,
     ) {
-        val (platformName, dependsOnModuleNames) = handleDirectives(module, files, context)
+        val (platformName, dependsOnModuleNames) = handleDirectives(module, files)
 
         when (module) {
             is DebuggerTestModule.Common -> createAndConfigureCommonModule(context, module, platformName, dependsOnModuleNames)
@@ -224,7 +222,6 @@ abstract class AbstractIrKotlinEvaluateExpressionInMppTest : AbstractIrKotlinEva
     private fun handleDirectives(
         module: DebuggerTestModule,
         moduleFiles: List<TestFileWithModule>,
-        context: ConfigurationContext
     ): Pair<PlatformName?, List<ModuleName>> {
         check(moduleFiles.all { file -> file.module == module })
 
@@ -240,14 +237,7 @@ abstract class AbstractIrKotlinEvaluateExpressionInMppTest : AbstractIrKotlinEva
             context.librariesByModule[module] = library
         }
 
-        val allModuleNames = context.filesByModules.keys.map(DebuggerTestModule::name)
-        val dependsOnModuleNames = module.dependenciesSymbols
-
-        dependsOnModuleNames.forEach { name ->
-            val dependsOnModule = context.filesByModules.keys.find { it.name == name }
-                ?: error("Unknown module in depends on list. Known modules: $allModuleNames; found: $name for module ${module.name}")
-            context.dependsOnEdges.putValue(module, dependsOnModule)
-        }
+        val dependsOnModuleNames = processDependenciesForDebuggerTestModule(module)
 
         return platform to dependsOnModuleNames
     }
@@ -260,21 +250,6 @@ abstract class AbstractIrKotlinEvaluateExpressionInMppTest : AbstractIrKotlinEva
         assert(dependsOnDirectivesForModule.size <= 1) { "At most one $directivePrefix expected per module" }
 
         return dependsOnDirectivesForModule.singleOrNull()
-    }
-
-    private fun setUpExtraModuleDependenciesFromDependsOnEdges(context: ConfigurationContext) {
-        for ((module, directDependsOnModules) in context.dependsOnEdges.entrySet()) {
-            directDependsOnModules.closure { context.dependsOnEdges[it] }.forEach { transitiveDependsOnDependency ->
-                doWriteAction {
-                    ModuleRootModificationUtil.addDependency(
-                        context.workspaceModuleMap[module]!!,
-                        context.workspaceModuleMap[transitiveDependsOnDependency]!!,
-                        DependencyScope.COMPILE,
-                        false
-                    )
-                }
-            }
-        }
     }
 
     override fun createDebuggerTestCompilerFacility(
@@ -293,13 +268,6 @@ abstract class AbstractIrKotlinEvaluateExpressionInMppTest : AbstractIrKotlinEva
             compilerFacility.compileExternalLibrary(library, perModuleLibrarySourceDirectory, moduleLibOutput)
         }
     }
-
-    private class ConfigurationContext(
-        val filesByModules: Map<DebuggerTestModule, List<TestFileWithModule>>,
-        val dependsOnEdges: MultiMap<DebuggerTestModule, DebuggerTestModule>,
-        val workspaceModuleMap: MutableMap<DebuggerTestModule, Module>,
-        val librariesByModule: MutableMap<DebuggerTestModule, String>,
-    )
 
     companion object {
         private val COMMON_MODULE_TARGET_PLATFORM =

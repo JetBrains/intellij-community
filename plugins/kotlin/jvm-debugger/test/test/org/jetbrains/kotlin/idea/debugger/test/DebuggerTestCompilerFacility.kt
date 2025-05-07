@@ -148,7 +148,8 @@ open class DebuggerTestCompilerFacility(
         commonSrcDir: File,
         scriptSrcDir: File,
         classesDir: File,
-        libClassesDir: File
+        libClassesDir: File,
+        additionalClassesDir: List<File> = emptyList(),
     ) = with(mainFiles) {
         resources.copy(jvmSrcDir)
         resources.copy(classesDir) // sic!
@@ -163,14 +164,14 @@ open class DebuggerTestCompilerFacility(
         if (kotlinJvm.isNotEmpty() || kotlinCommon.isNotEmpty()) {
             val options = getCompileOptionsForMainSources(jvmSrcDir, commonSrcDir, module.name)
             doWriteAction {
-                compileKotlinFilesWithCliCompiler(jvmSrcDir, commonSrcDir, classesDir, libClassesDir, options)
+                compileKotlinFilesWithCliCompiler(jvmSrcDir, commonSrcDir, classesDir, libClassesDir, options, additionalClassesDir)
             }
         }
 
         if (java.isNotEmpty()) {
             CodegenTestUtil.compileJava(
                 java.map { File(jvmSrcDir, it.name).absolutePath },
-                getClasspath(module) + listOf(classesDir.absolutePath),
+                getClasspath(module) + additionalClassesDir.map { it.absolutePath } + listOf(classesDir.absolutePath),
                 listOf("-g"),
                 classesDir
             )
@@ -194,12 +195,12 @@ open class DebuggerTestCompilerFacility(
 
     private fun compileKotlinFilesWithCliCompiler(
         jvmSrcDir: File, commonSrcDir: File, classesDir: File,
-        libClassesDir: File, options: List<String>,
+        libClassesDir: File, options: List<String>, additionalClassesDir: List<File>,
     ) {
         KotlinCompilerStandalone(
             listOf(jvmSrcDir, commonSrcDir), target = classesDir,
             options = options,
-            classpath = mavenArtifacts.map(::File) + libClassesDir,
+            classpath = mavenArtifacts.map(::File) + additionalClassesDir + libClassesDir,
             compileKotlinSourcesBeforeJava = false,
         ).compile()
     }
