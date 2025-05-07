@@ -252,16 +252,19 @@ public final class ImageEditorUI extends JPanel implements UiDataProvider, CopyP
     if (isEmbedded) return;
     ImageDocument document = imageComponent.getDocument();
     BufferedImage image = document.getValue();
+    VirtualFile file = editor != null ? editor.getFile() : null;
+    boolean isScientificMode = (file != null ? file.getUserData(ScientificUtils.SCIENTIFIC_MODE_KEY) : null) != null;
     if (image != null) {
       ColorModel colorModel = image.getColorModel();
       String format = document.getFormat();
       if (format == null) {
         format = editor != null ? ImagesBundle.message("unknown.format") : "";
+      } else if (isScientificMode) {
+        format = "";
       }
       else {
         format = StringUtil.toUpperCase(format);
       }
-      VirtualFile file = editor != null ? editor.getFile() : null;
       infoLabel.setText(
         ImagesBundle.message("image.info",
                              image.getWidth(), image.getHeight(), format,
