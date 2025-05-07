@@ -28,7 +28,7 @@ public interface PyNamedParameter extends PyAstNamedParameter, PyParameter, PsiN
    * @return argument type. Returns element type for *param and value type for **param.
    * @deprecated Use {@link PyCallableParameter#getArgumentType(TypeEvalContext)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   PyType getArgumentType(@NotNull TypeEvalContext context);
 
