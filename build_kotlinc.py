@@ -76,7 +76,7 @@ def update_ide_project_model(args):
 
 # Finds a standard JDK with which to run Gradle.
 def compute_java_home(workspace: Path) -> Path:
-    jdk_base = workspace.joinpath('prebuilts/studio/jdk/jdk17')
+    jdk_base = workspace.joinpath('prebuilts/studio/jdk/jbr-next')
     system = platform.system()
     if system == 'Linux':
         return jdk_base.joinpath('linux')
