@@ -14,7 +14,7 @@ import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.frame.asProxy
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.XValueId
-import com.intellij.xdebugger.impl.rpc.models.BackendXValueModelsManager
+import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -33,7 +33,7 @@ private class MonolithXDebugManagerProxy : XDebugManagerProxy {
   override suspend fun <T> withId(value: XValue, session: XDebugSessionProxy, block: suspend (XValueId) -> T): T {
     val sessionImpl = (session as XDebugSessionProxy.Monolith).session as XDebugSessionImpl
     return withCoroutineScopeForId(block) { scope ->
-      BackendXValueModelsManager.getInstance(session.project).createXValueModel(scope, sessionImpl, value).id
+      BackendXValueModel(scope, sessionImpl, value, precomputePresentation = false).id
     }
   }
 

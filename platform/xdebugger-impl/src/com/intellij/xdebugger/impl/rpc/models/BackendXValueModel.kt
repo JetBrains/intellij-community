@@ -40,6 +40,7 @@ class BackendXValueModel internal constructor(
   val cs: CoroutineScope,
   val session: XDebugSessionImpl,
   val xValue: XValue,
+  precomputePresentation: Boolean,
 ) {
   val id: XValueId = storeValueGlobally(cs, this, type = BackendXValueIdType)
 
@@ -53,16 +54,18 @@ class BackendXValueModel internal constructor(
   val presentation: Flow<XValueSerializedPresentation> = _presentation.asSharedFlow()
 
   init {
-    xValue.computePresentation(
-      cs,
-      XValuePlace.TREE,
-      presentationHandler = {
-        _presentation.tryEmit(it)
-      },
-      fullValueEvaluatorHandler = {
-        _fullValueEvaluator.value = it
-      }
-    )
+    if (precomputePresentation) {
+      xValue.computePresentation(
+        cs,
+        XValuePlace.TREE,
+        presentationHandler = {
+          _presentation.tryEmit(it)
+        },
+        fullValueEvaluatorHandler = {
+          _fullValueEvaluator.value = it
+        }
+      )
+    }
   }
 
   fun computeTooltipPresentation(): Flow<XValueSerializedPresentation> {
@@ -125,7 +128,7 @@ class BackendXValueModelsManager {
 
   @OptIn(AwaitCancellationAndInvoke::class)
   fun createXValueModel(cs: CoroutineScope, session: XDebugSessionImpl, xValue: XValue): BackendXValueModel = synchronized(lock) {
-    val model = BackendXValueModel(cs, session, xValue)
+    val model = BackendXValueModel(cs, session, xValue, precomputePresentation = true)
 
     if (session !in xValueModels) {
       xValueModels[session] = mutableSetOf()
