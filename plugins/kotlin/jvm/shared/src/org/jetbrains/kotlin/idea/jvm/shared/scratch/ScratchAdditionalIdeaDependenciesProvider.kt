@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.core.script.ScriptRelatedModuleNameFile
 import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider
 import org.jetbrains.kotlin.utils.addIfNotNull
 
-class ScratchAdditionalIdeaDependenciesProvider : ScriptAdditionalIdeaDependenciesProvider() {
+class ScratchAdditionalIdeaDependenciesProvider : ScriptAdditionalIdeaDependenciesProvider {
 
     override fun getRelatedModules(file: VirtualFile, project: Project): List<Module> {
         if (!file.isKotlinScratch) return emptyList()

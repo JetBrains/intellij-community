@@ -8,9 +8,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
 
-abstract class ScriptAdditionalIdeaDependenciesProvider {
-    abstract fun getRelatedModules(file: VirtualFile, project: Project): List<Module>
-    abstract fun getRelatedLibraries(file: VirtualFile, project: Project): List<Library>
+interface ScriptAdditionalIdeaDependenciesProvider {
+    fun getRelatedModules(file: VirtualFile, project: Project): List<Module> = emptyList()
+    fun getRelatedLibraries(file: VirtualFile, project: Project): List<Library> = emptyList()
 
     companion object {
         private val EP_NAME: ExtensionPointName<ScriptAdditionalIdeaDependenciesProvider> =
