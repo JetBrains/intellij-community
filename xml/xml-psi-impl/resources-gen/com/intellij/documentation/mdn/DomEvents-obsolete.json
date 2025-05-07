@@ -20,7 +20,6 @@
     },
     "show": {
       "status": [
-        "StandardTrack",
         "Obsolete"
       ],
       "compatibility": {
