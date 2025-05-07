@@ -183,6 +183,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/quickfix/typeMismatch/wrapWithCollectionLiteral", pattern = pattern)
             model("${idea}/quickfix/redundantInterpolationPrefix", pattern = pattern)
             model("${idea}/quickfix/addInterpolationPrefixUnresolvedReference", pattern = pattern)
+            model("${idea}/quickfix/unsupportedFeature", pattern = pattern)
             model("${idea}/intentions/convertSecondaryConstructorToPrimary", pattern = pattern)
         }
 

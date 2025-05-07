@@ -2399,6 +2399,85 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/unsupportedFeature")
+    public static class UnsupportedFeature extends AbstractK2QuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("AnnotationAllUseSiteTarget_2_1.kt")
+        public void testAnnotationAllUseSiteTarget_2_1() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/AnnotationAllUseSiteTarget_2_1.kt");
+        }
+
+        @TestMetadata("AnnotationAllUseSiteTarget_2_2.kt")
+        public void testAnnotationAllUseSiteTarget_2_2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/AnnotationAllUseSiteTarget_2_2.kt");
+        }
+
+        @TestMetadata("BreakContinueInInlineLambdas_2_0.kt")
+        public void testBreakContinueInInlineLambdas_2_0() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/BreakContinueInInlineLambdas_2_0.kt");
+        }
+
+        @TestMetadata("BreakContinueInInlineLambdas_2_1.kt")
+        public void testBreakContinueInInlineLambdas_2_1() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/BreakContinueInInlineLambdas_2_1.kt");
+        }
+
+        @TestMetadata("BreakContinueInInlineLambdas_2_2.kt")
+        public void testBreakContinueInInlineLambdas_2_2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/BreakContinueInInlineLambdas_2_2.kt");
+        }
+
+        @TestMetadata("ContextParameters_2_1.kt")
+        public void testContextParameters_2_1() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/ContextParameters_2_1.kt");
+        }
+
+        @TestMetadata("ContextParameters_2_2.kt")
+        public void testContextParameters_2_2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/ContextParameters_2_2.kt");
+        }
+
+        @TestMetadata("MultiDollarInterpolation_2_0.kt")
+        public void testMultiDollarInterpolation_2_0() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/MultiDollarInterpolation_2_0.kt");
+        }
+
+        @TestMetadata("MultiDollarInterpolation_2_1.kt")
+        public void testMultiDollarInterpolation_2_1() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/MultiDollarInterpolation_2_1.kt");
+        }
+
+        @TestMetadata("MultiDollarInterpolation_2_2.kt")
+        public void testMultiDollarInterpolation_2_2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/MultiDollarInterpolation_2_2.kt");
+        }
+
+        @TestMetadata("WhenGuards_2_0.kt")
+        public void testWhenGuards_2_0() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/WhenGuards_2_0.kt");
+        }
+
+        @TestMetadata("WhenGuards_2_1.kt")
+        public void testWhenGuards_2_1() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/WhenGuards_2_1.kt");
+        }
+
+        @TestMetadata("WhenGuards_2_2.kt")
+        public void testWhenGuards_2_2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/WhenGuards_2_2.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary")
     public static class ConvertSecondaryConstructorToPrimary extends AbstractK2QuickFixTest {
         @java.lang.Override

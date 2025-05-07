@@ -445,6 +445,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                     "simplifyExpression",
                     "redundantInterpolationPrefix", // K2-only multi-dollar interpolation
                     "addInterpolationPrefixUnresolvedReference", // K2-only multi-dollar interpolation
+                    "unsupportedFeature", // K2-related features only
                 )
             )
         }
