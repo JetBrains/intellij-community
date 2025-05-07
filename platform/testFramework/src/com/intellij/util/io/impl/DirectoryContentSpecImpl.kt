@@ -241,7 +241,7 @@ private fun assertDirectoryContentMatches(file: Path,
               val (expected, actual) = if (expectedDataIsInSpec) specString to fileString else fileString to specString
               val (expectedPath, actualPath) = if (expectedDataIsInSpec) specFilePath to null else null to specFilePath
               val message = if (StringUtil.convertLineSeparators(fileString) != StringUtil.convertLineSeparators(specString)) {
-                "File content mismatch$place:"
+                "File content mismatch$place: expected:\n $fileString\n but was\n$specString"
               }
               else {
                 "Different line separators$place, expected ${StringUtil.detectSeparators(specString)}, but ${StringUtil.detectSeparators(fileString)} found:"
