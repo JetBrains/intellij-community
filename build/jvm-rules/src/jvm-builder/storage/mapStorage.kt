@@ -75,6 +75,14 @@ private val dictStringToInt = createImmutableStringMap()
 private val dictIntToString = createImmutableIndexToStringMap()
 private val stringEnumeratorOffset = dictStringToInt.size
 
+private val stringHashToIndexMapBuilder = MVMap.Builder<HashValue128, Int>()
+  .keyType(HashValue128KeyDataType)
+  .valueType(VarIntDataType)
+
+private val stringIndexToStringMapBuilder = MVMap.Builder<Int, String>()
+  .keyType(VarIntDataType)
+  .valueType(ModernStringDataType)
+
 internal class BazelPersistentMapletFactory private constructor(
   private val store: MVStore,
   stringHashToIndexMap: MVMap<HashValue128, Int>,
@@ -86,17 +94,11 @@ internal class BazelPersistentMapletFactory private constructor(
       val store = tryOpenMvStore(dbFile = dbFile, span = span)
       val storageCloser = AutoCloseable(store::closeImmediately)
 
-      val valueType = MVMap.Builder<HashValue128, Int>()
-        .keyType(HashValue128KeyDataType)
-        .valueType(VarIntDataType)
       val stringHashToIndexMap = executeOrCloseStorage(storageCloser) {
-        store.openMap("string-hash-to-index", valueType)
+        store.openMap("string-hash-to-index", stringHashToIndexMapBuilder)
       }
       val indexToStringMap = executeOrCloseStorage(storageCloser) {
-        store.openMap("string-index-to-string", MVMap.Builder<Int, String>()
-          .keyType(VarIntDataType)
-          .valueType(ModernStringDataType)
-        )
+        store.openMap("string-index-to-string", stringIndexToStringMapBuilder)
       }
 
       executeOrCloseStorage(storageCloser) {

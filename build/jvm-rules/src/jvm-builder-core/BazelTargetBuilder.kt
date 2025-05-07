@@ -26,7 +26,7 @@ abstract class BazelTargetBuilder(category: BuilderCategory) : ModuleLevelBuilde
     chunk: ModuleChunk,
     dirtyFilesHolder: DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget>,
     outputConsumer: OutputConsumer,
-  ): ExitCode? {
+  ): ExitCode {
     throw IllegalStateException("Should not be called")
   }
 }

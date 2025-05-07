@@ -5,7 +5,6 @@ package org.jetbrains.bazel.jvm.worker.core
 
 import androidx.collection.ScatterMap
 import org.apache.arrow.memory.RootAllocator
-import org.jetbrains.bazel.jvm.worker.state.DependencyStateStorage
 import org.jetbrains.bazel.jvm.worker.state.SourceDescriptor
 import org.jetbrains.bazel.jvm.util.emptyStringArray
 import org.jetbrains.jps.builders.BuildTarget
@@ -26,7 +25,7 @@ class BazelBuildDataProvider(
   @JvmField val storeFile: Path,
   @JvmField val allocator: RootAllocator,
   @JvmField val isCleanBuild: Boolean,
-  @JvmField val libRootManager: DependencyStateStorage,
+  @JvmField val dependencyFileToDigest: ScatterMap<Path, ByteArray>,
 ) : BuildDataProvider {
   @JvmField
   val stampStorage = BazelStampStorage(sourceToDescriptor)

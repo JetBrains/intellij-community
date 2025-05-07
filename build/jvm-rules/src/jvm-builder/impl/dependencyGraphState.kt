@@ -9,6 +9,7 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.Tracer
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.bazel.jvm.worker.dependencies.DependencyAnalyzer
 import org.jetbrains.bazel.jvm.worker.dependencies.checkDependencies
 import org.jetbrains.bazel.jvm.span
@@ -19,7 +20,7 @@ import org.jetbrains.bazel.jvm.worker.core.BazelBuildRootIndex
 import org.jetbrains.bazel.jvm.worker.core.BazelCompileContext
 import org.jetbrains.bazel.jvm.worker.core.BazelDirtyFileHolder
 import org.jetbrains.bazel.jvm.worker.core.BazelModuleBuildTarget
-import org.jetbrains.jps.ModuleChunk
+import org.jetbrains.bazel.jvm.worker.core.BazelStampStorage
 import org.jetbrains.jps.dependency.Delta
 import org.jetbrains.jps.dependency.NodeSource
 import org.jetbrains.jps.dependency.impl.DependencyGraphImpl
@@ -39,26 +40,27 @@ internal fun fileToNodeSource(file: Path, relativizer: PathTypeAwareRelativizer)
   return PathSource(relativizer.toRelative(file, RelativePathType.SOURCE))
 }
 
+@Suppress("InconsistentCommentForJavaParameter")
 internal suspend fun markDirtyDependenciesForInitialRound(
   dataProvider: BazelBuildDataProvider,
   target: BazelModuleBuildTarget,
   context: BazelCompileContext,
   dirtyFilesHolder: BazelDirtyFileHolder,
-  chunk: ModuleChunk,
   dependencyAnalyzer: DependencyAnalyzer,
+  asyncTaskScope: CoroutineScope,
   tracer: Tracer,
 ) {
   val relativizer = dataProvider.relativizer
-
   tracer.span("check lib deps") { span ->
     checkDependencies(
       context = context,
-      chunk = chunk,
       target = target,
       relativizer = relativizer,
-      dataProvider = dataProvider,
+      dependencyFileToDigest = dataProvider.dependencyFileToDigest,
+      stampStorage = dataProvider.stampStorage,
       tracer = tracer,
       dependencyAnalyzer = dependencyAnalyzer,
+      asyncTaskScope = asyncTaskScope,
       span = span,
     )
   }
@@ -78,19 +80,9 @@ internal suspend fun markDirtyDependenciesForInitialRound(
   }
 
   tracer.span("update dependency graph") { span ->
-    val delta = context.projectDescriptor.dataManager.getDependencyGraph().graph.createDelta(
-      /* sourcesToProcess = */ toCompile,
-      /* deletedSources = */ deletedSources,
-      /* isSourceOnly = */ true,
-    )
-    updateDependencyGraph(
-      context = context,
-      delta = delta,
-      chunk = chunk,
-      dataProvider = dataProvider,
-      target = target,
-      span = span,
-    )
+    val graph = context.projectDescriptor.dataManager.depGraph
+    val delta = graph.createDelta(/* sourcesToProcess = */ toCompile, /* deletedSources = */ deletedSources, /* isSourceOnly = */ true)
+    updateDependencyGraph(context = context, delta = delta, dataProvider = dataProvider, target = target, span = span)
   }
 }
 
@@ -117,15 +109,14 @@ private fun getRemovedPaths(
 /**
  * @param context        compilation context
  * @param delta          registered delta files in this round
- * @return true if additional compilation pass is required, false otherwise
+ * @return true if an additional compilation pass is required, false otherwise
  */
 private fun updateDependencyGraph(
   context: BazelCompileContext,
   delta: Delta,
-  chunk: ModuleChunk,
   target: BazelModuleBuildTarget,
-  span: Span,
   dataProvider: BazelBuildDataProvider,
+  span: Span,
 ): Boolean {
   val errorsDetected = Utils.errorsDetected(context)
   val dataManager = context.projectDescriptor.dataManager
@@ -133,9 +124,9 @@ private fun updateDependencyGraph(
   val dependencyGraph = graphConfig.graph as DependencyGraphImpl
 
   val isRebuild = context.scope.isRebuild
-  val differentiateParams = DifferentiateParametersBuilder.create(chunk.presentableShortName)
+  val differentiateParams = DifferentiateParametersBuilder.create("source")
     .compiledWithErrors(errorsDetected)
-    .calculateAffected(!isRebuild && context.shouldDifferentiate(chunk))
+    .calculateAffected(!isRebuild && context.shouldDifferentiate())
     .processConstantsIncrementally(dataManager.isProcessConstantsIncrementally)
     .withAffectionFilter { !LibraryDef.isLibraryPath(it) }
     .get()
@@ -171,7 +162,7 @@ private fun updateDependencyGraph(
 
     markAffectedFilesDirty(
       context = context,
-      dataProvider = dataProvider,
+      stampStorage = dataProvider.stampStorage,
       target = target,
       affectedFiles = sequence {
         affectedFiles.forEach { yield(it) }
@@ -189,12 +180,11 @@ private fun updateDependencyGraph(
 internal fun markAffectedFilesDirty(
   context: CompileContext,
   affectedFiles: Sequence<Path>,
-  dataProvider: BazelBuildDataProvider,
+  stampStorage: BazelStampStorage,
   target: BazelModuleBuildTarget,
 ) {
   val projectDescriptor = context.projectDescriptor
   val buildRootIndex = projectDescriptor.buildRootIndex as BazelBuildRootIndex
-  val stampStorage = dataProvider.stampStorage
   for (file in affectedFiles) {
     if (file.fileName.toString() == "module-info.java") {
       val moduleIndex = JpsJavaExtensionService.getInstance().getJavaModuleIndex(projectDescriptor.project)

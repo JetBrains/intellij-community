@@ -3,19 +3,7 @@
 
 package org.jetbrains.bazel.jvm.worker.state
 
-import androidx.collection.ObjectList
-import androidx.collection.ScatterMap
 import java.nio.file.Path
-
-// for now, ADDED or DELETED not possible - in configureClasspath we compute DEPENDENCY_PATH_LIST,
-// so, if a dependency list is changed, then we perform rebuild
-enum class DependencyState {
-  CHANGED, ADDED, DELETED
-}
-
-fun isDependencyTracked(file: Path): Boolean = isDependencyTracked(file.toString())
-
-fun isDependencyTracked(path: String): Boolean = path.endsWith(".abi.jar")
 
 // do not include state in equals/hashCode - DependencyDescriptor is used as a key for Caffeine cache
 data class DependencyDescriptor(
@@ -41,8 +29,3 @@ data class DependencyDescriptor(
     return result
   }
 }
-
-class DependencyStateStorage(
-  @JvmField val trackableDependencyFiles: ObjectList<Path>,
-  @JvmField val dependencyFileToDigest: ScatterMap<Path, ByteArray>,
-)

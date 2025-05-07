@@ -6,6 +6,8 @@ package org.jetbrains.bazel.jvm.worker.dependencies
 import androidx.collection.MutableObjectList
 import androidx.collection.MutableScatterMap
 import androidx.collection.MutableScatterSet
+import androidx.collection.ObjectList
+import androidx.collection.ScatterMap
 import com.dynatrace.hash4j.hashing.Hashing
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -14,6 +16,7 @@ import io.opentelemetry.api.trace.Tracer
 import it.unimi.dsi.fastutil.objects.ObjectArraySet
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.ensureActive
@@ -25,15 +28,13 @@ import org.jetbrains.bazel.jvm.mvStore.ModernStringDataType
 import org.jetbrains.bazel.jvm.mvStore.MvStoreMapFactory
 import org.jetbrains.bazel.jvm.worker.impl.markAffectedFilesDirty
 import org.jetbrains.bazel.jvm.worker.state.DependencyDescriptor
-import org.jetbrains.bazel.jvm.worker.state.DependencyState
 import org.jetbrains.bazel.jvm.span
 import org.jetbrains.bazel.jvm.util.emptySet
 import org.jetbrains.bazel.jvm.util.toLinkedSet
-import org.jetbrains.bazel.jvm.worker.core.BazelBuildDataProvider
 import org.jetbrains.bazel.jvm.worker.core.BazelCompileContext
+import org.jetbrains.bazel.jvm.worker.core.BazelConfigurationHolder
 import org.jetbrains.bazel.jvm.worker.core.BazelModuleBuildTarget
-import org.jetbrains.bazel.jvm.worker.state.isDependencyTracked
-import org.jetbrains.jps.ModuleChunk
+import org.jetbrains.bazel.jvm.worker.core.BazelStampStorage
 import org.jetbrains.jps.dependency.BackDependencyIndex
 import org.jetbrains.jps.dependency.Delta
 import org.jetbrains.jps.dependency.Graph
@@ -55,6 +56,12 @@ import kotlin.collections.contentEquals
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.coroutines.coroutineContext
 
+// for now, ADDED or DELETED not possible - in configureClasspath we compute DEPENDENCY_PATH_LIST,
+// so, if a dependency list is changed, then we perform rebuild
+private enum class DependencyState {
+  CHANGED, ADDED, DELETED
+}
+
 internal data class NodeUpdateItem(
   // null if deleted
   @JvmField val newNode: Node<*, *>?,
@@ -68,49 +75,130 @@ internal data class NodeUpdateItem(
  */
 internal suspend fun checkDependencies(
   context: BazelCompileContext,
-  chunk: ModuleChunk,
   target: BazelModuleBuildTarget,
   relativizer: PathTypeAwareRelativizer,
-  span: Span,
   tracer: Tracer,
-  dataProvider: BazelBuildDataProvider,
+  stampStorage: BazelStampStorage,
   dependencyAnalyzer: DependencyAnalyzer,
+  dependencyFileToDigest: ScatterMap<Path, ByteArray>,
+  span: Span,
+  asyncTaskScope: CoroutineScope,
 ) {
+  val trackableDependencyFiles = target.module.container.getChild(BazelConfigurationHolder.KIND).trackableDependencyFiles
+
   val changedOrAdded = MutableObjectList<DependencyDescriptor>()
   val dataManager = context.projectDescriptor.dataManager
   val usedAbiDir = dataManager.dataPaths.dataStorageDir.resolve("used-abi")
-
-  val changedOrAddedNodes = MutableScatterMap<AbiJarSource, NodeUpdateItem>()
-  val deletedNodes = MutableScatterMap<AbiJarSource, NodeUpdateItem>()
   val filesToCopy = MutableObjectList<Pair<Path, Path>>()
-  updateMapAndComputeDiff(
-    dataProvider = dataProvider,
-    mvstoreMapFactory = dataManager.containerFactory.mvstoreMapFactory,
-    relativizer = relativizer,
-  ) { descriptor, state ->
-    require(state != DependencyState.DELETED)
 
-    changedOrAdded.add(descriptor)
-    val newFile = descriptor.file
-    val relativePath = relativizer.toRelative(newFile, RelativePathType.SOURCE)
-    val oldFile = usedAbiDir.resolve(computeCacheName(relativePath))
-    filesToCopy.add(newFile to oldFile)
-    val result = dependencyAnalyzer.computeForChanged(
-      dependencyDescriptor = descriptor,
-      oldFile = oldFile,
-      newFile = newFile,
-      fileBazelDigestHash = Hashing.xxh3_64().hashBytesToLong(descriptor.digest),
+  val isRebuild = context.scope.isRebuild
+  if (isRebuild) {
+    filesToCopy.ensureCapacity(trackableDependencyFiles.size)
+
+    val toAdd = ArrayList<Pair<String, ByteArray>>(trackableDependencyFiles.size)
+    trackableDependencyFiles.forEach { file ->
+      val digest = requireNotNull(dependencyFileToDigest.get(file)) { "cannot find actual digest for $file" }
+      val relativePath = relativizer.toRelative(file, RelativePathType.SOURCE)
+      toAdd.add(relativePath to digest)
+      filesToCopy.add(file to usedAbiDir.resolve(computeCacheName(relativePath)))
+    }
+    initMap(dataManager.containerFactory.mvstoreMapFactory, toAdd)
+  }
+  else {
+    val changedOrAddedNodes = MutableScatterMap<AbiJarSource, NodeUpdateItem>()
+    val deletedNodes = MutableScatterMap<AbiJarSource, NodeUpdateItem>()
+    updateMapAndComputeDiff(
+      dependencyFileToDigest = dependencyFileToDigest,
+      mvstoreMapFactory = dataManager.containerFactory.mvstoreMapFactory,
+      relativizer = relativizer,
+      trackableDependencyFiles = trackableDependencyFiles,
+    ) { descriptor, relativePath, state ->
+      require(state != DependencyState.DELETED)
+
+      changedOrAdded.add(descriptor)
+      val newFile = descriptor.file
+      val oldFile = usedAbiDir.resolve(computeCacheName(relativePath))
+      filesToCopy.add(newFile to oldFile)
+      val result = dependencyAnalyzer.computeForChanged(
+        dependencyDescriptor = descriptor,
+        oldFile = oldFile,
+        newFile = newFile,
+        fileBazelDigestHash = Hashing.xxh3_64().hashBytesToLong(descriptor.digest),
+      )
+      changedOrAddedNodes.putAll(result.first)
+      deletedNodes.putAll(result.second)
+    }
+
+    if (changedOrAddedNodes.isEmpty() && deletedNodes.isEmpty()) {
+      return
+    }
+
+    markAffectedByLibChange(
+      graph = dataManager.depGraph as DependencyGraphImpl,
+      changedOrAddedNodes = changedOrAddedNodes,
+      deletedNodes = deletedNodes,
+      changedOrAdded = changedOrAdded,
+      tracer = tracer,
+      context = context,
+      stampStorage = stampStorage,
+      target = target,
+      relativizer = relativizer,
+      span = span,
     )
-    changedOrAddedNodes.putAll(result.first)
-    deletedNodes.putAll(result.second)
   }
 
-  if (changedOrAddedNodes.isEmpty() && deletedNodes.isEmpty()) {
-    return
+  asyncTaskScope.launch {
+    copyUsedAbi(usedAbiDir, filesToCopy, isRebuild)
   }
+}
 
-  val graph = dataManager.depGraph as DependencyGraphImpl
+private suspend fun copyUsedAbi(usedAbiDir: Path?, filesToCopy: MutableObjectList<Pair<Path, Path>>, isRebuild: Boolean) {
+  try {
+    withContext(Dispatchers.IO.limitedParallelism(8) + NonCancellable) {
+      Files.createDirectories(usedAbiDir)
+      filesToCopy.forEach { (newFile, oldFile) ->
+        launch {
+          if (!isRebuild) {
+            Files.deleteIfExists(oldFile)
+          }
+          Files.createLink(oldFile, newFile)
+        }
+      }
+    }
+  }
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: Throwable) {
+    throw RebuildRequestedException(RuntimeException("cannot integrate ABI", e))
+  }
+}
+
+private const val MAP_NAME = "dependencies"
+
+private fun initMap(mvstoreMapFactory: MvStoreMapFactory, toAdd: MutableList<Pair<String, ByteArray>>) {
+  val map = mvstoreMapFactory.openMap(MAP_NAME, singleWriterMapBuilder)
+  require(map.isEmpty()) { "map should be empty" }
+  toAdd.sortBy { it.first }
+  for ((k, v) in toAdd) {
+    map.append(k, v)
+  }
+}
+
+private suspend fun markAffectedByLibChange(
+  graph: DependencyGraphImpl,
+  changedOrAddedNodes: ScatterMap<AbiJarSource, NodeUpdateItem>,
+  deletedNodes: ScatterMap<AbiJarSource, NodeUpdateItem>,
+  changedOrAdded: ObjectList<DependencyDescriptor>,
+  tracer: Tracer,
+  context: BazelCompileContext,
+  stampStorage: BazelStampStorage,
+  target: BazelModuleBuildTarget,
+  relativizer: PathTypeAwareRelativizer,
+  span: Span,
+) {
   val nodeIdToSourcesMap = MutableScatterMap<ReferenceID, MutableSet<NodeSource>>(changedOrAddedNodes.size)
+
   @Suppress("InconsistentCommentForJavaParameter", "RedundantSuppression")
   val delta = AbiDeltaImpl(
     baseSources = toSourceSet(changedOrAddedNodes),
@@ -140,8 +228,6 @@ internal suspend fun checkDependencies(
     }
   }
 
-  val isRebuild = context.scope.isRebuild
-
   deletedNodes.forEachKey { allProcessedSources.add(it) }
 
   val diffResult = graph.differentiate(
@@ -156,45 +242,22 @@ internal suspend fun checkDependencies(
         graph.getNodes(source)
       }
     },
-    params = DifferentiateParametersBuilder.create("deps").calculateAffected(!isRebuild).get(),
+    params = DifferentiateParametersBuilder.create("deps").calculateAffected(true).get(),
   )
-  if (!isRebuild) {
-    if (!diffResult.isIncremental) {
-      throw RebuildRequestedException(RuntimeException("diffResult is non-incremental: $diffResult"))
-    }
-
-    val affectedSources = diffResult.affectedSources
-    val affectedCount = affectedSources.count()
-    span.addEvent("affected files by lib tracking", Attributes.of(AttributeKey.longKey("count"), affectedCount.toLong()))
-    if (affectedCount > 0) {
-      markAffectedFilesDirty(
-        context = context,
-        dataProvider = dataProvider,
-        target = target,
-        affectedFiles = affectedSources.asSequence().map { relativizer.toAbsoluteFile(it.toString(), RelativePathType.SOURCE) },
-      )
-    }
+  if (!diffResult.isIncremental) {
+    throw RebuildRequestedException(RuntimeException("diffResult is non-incremental: $diffResult"))
   }
 
-  coroutineContext.ensureActive()
-  try {
-    withContext(Dispatchers.IO + NonCancellable) {
-      Files.createDirectories(usedAbiDir)
-      filesToCopy.forEach { (newFile, oldFile) ->
-        launch {
-          if (!isRebuild) {
-            Files.deleteIfExists(oldFile)
-          }
-          Files.createLink(oldFile, newFile)
-        }
-      }
-    }
-  }
-  catch (e: CancellationException) {
-    throw e
-  }
-  catch (e: Throwable) {
-    throw RebuildRequestedException(RuntimeException("cannot integrate ABI", e))
+  val affectedSources = diffResult.affectedSources
+  val affectedCount = affectedSources.count()
+  span.addEvent("affected files by lib tracking", Attributes.of(AttributeKey.longKey("count"), affectedCount.toLong()))
+  if (affectedCount > 0) {
+    markAffectedFilesDirty(
+      context = context,
+      stampStorage = stampStorage,
+      target = target,
+      affectedFiles = affectedSources.asSequence().map { relativizer.toAbsoluteFile(it.toString(), RelativePathType.SOURCE) },
+    )
   }
 }
 
@@ -202,44 +265,37 @@ internal suspend fun checkDependencies(
 // meaning that some files in the classpath are untracked,
 // and any change of the untracked dependency leads to rebuild (this method will not be called)
 private suspend fun updateMapAndComputeDiff(
-  dataProvider: BazelBuildDataProvider,
+  dependencyFileToDigest: ScatterMap<Path, ByteArray>,
   mvstoreMapFactory: MvStoreMapFactory,
   relativizer: PathTypeAwareRelativizer,
-  consumer: suspend (DependencyDescriptor, DependencyState) -> Unit,
+  trackableDependencyFiles: ObjectList<Path>,
+  consumer: suspend (DependencyDescriptor, String, DependencyState) -> Unit,
 ) {
-  val map = mvstoreMapFactory.openMap("dependencies", MVMap.Builder<String, ByteArray>()
-    .keyType(ModernStringDataType)
-    .valueType(ByteArrayDataType.INSTANCE))
+  val map = mvstoreMapFactory.openMap(MAP_NAME, mapBuilder)
 
-  val dependencyFileToDigest = dataProvider.libRootManager.dependencyFileToDigest
-
-  val newFiles = dataProvider.libRootManager.trackableDependencyFiles.toLinkedSet()
+  val newFiles = trackableDependencyFiles.toLinkedSet()
   val cursor = map.cursor(null)
   while (cursor.hasNext()) {
-    val path = cursor.next()
-    if (!isDependencyTracked(path)) {
-      continue
-    }
-
+    val relativePath = cursor.next()
     val oldDigest = cursor.value
 
-    val file = relativizer.toAbsoluteFile(path, RelativePathType.SOURCE)
+    val file = relativizer.toAbsoluteFile(relativePath, RelativePathType.SOURCE)
     val currentDigest = dependencyFileToDigest.get(file)
     if (currentDigest == null) {
-      require(map.remove(path, oldDigest)) {
-        "Failed to remove dependency $path (oldDigest=$oldDigest) (concurrent modification?)"
+      require(map.remove(relativePath, oldDigest)) {
+        "Failed to remove dependency $relativePath (oldDigest=$oldDigest) (concurrent modification?)"
       }
 
-      throw IllegalStateException("Deleted dependency should not be present in the state: $path")
+      throw IllegalStateException("Deleted dependency should not be present in the state: $relativePath")
     }
     else {
       newFiles.remove(file)
       if (!currentDigest.contentEquals(oldDigest)) {
-        require(map.replace(path, oldDigest, currentDigest)) {
-          "Failed to replace dependency $path (oldDigest=$oldDigest, currentDigest=$currentDigest) (concurrent modification?)"
+        require(map.replace(relativePath, oldDigest, currentDigest)) {
+          "Failed to replace dependency $relativePath (oldDigest=$oldDigest, currentDigest=$currentDigest) (concurrent modification?)"
         }
 
-        consumer(DependencyDescriptor(file = file, digest = currentDigest, oldDigest = oldDigest), DependencyState.CHANGED)
+        consumer(DependencyDescriptor(file = file, digest = currentDigest, oldDigest = oldDigest), relativePath, DependencyState.CHANGED)
       }
     }
   }
@@ -247,15 +303,25 @@ private suspend fun updateMapAndComputeDiff(
   if (!newFiles.isEmpty()) {
     for (file in newFiles) {
       val digest = requireNotNull(dependencyFileToDigest.get(file)) { "cannot find actual digest for $file" }
-      require(map.putIfAbsent(relativizer.toRelative(file, RelativePathType.SOURCE), digest) == null) {
+      val relativePath = relativizer.toRelative(file, RelativePathType.SOURCE)
+      require(map.putIfAbsent(relativePath, digest) == null) {
         "Failed to put dependency $file (digest=$digest) (concurrent modification?)"
       }
-      consumer(DependencyDescriptor(file = file, digest = digest, oldDigest = null), DependencyState.ADDED)
+      consumer(DependencyDescriptor(file = file, digest = digest, oldDigest = null), relativePath, DependencyState.ADDED)
     }
   }
 }
 
-private fun toSourceSet(changedOrAddedNodes: MutableScatterMap<AbiJarSource, NodeUpdateItem>): Set<NodeSource> {
+private fun createMapBuilder(): MVMap.Builder<String, ByteArray> {
+  return MVMap.Builder<String, ByteArray>()
+    .keyType(ModernStringDataType)
+    .valueType(ByteArrayDataType.INSTANCE)
+}
+
+private val mapBuilder = createMapBuilder()
+private val singleWriterMapBuilder = createMapBuilder().singleWriter()
+
+private fun toSourceSet(changedOrAddedNodes: ScatterMap<AbiJarSource, NodeUpdateItem>): Set<NodeSource> {
   if (changedOrAddedNodes.isEmpty()) {
     return emptySet()
   }

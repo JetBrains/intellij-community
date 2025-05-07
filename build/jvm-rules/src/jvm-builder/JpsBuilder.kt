@@ -25,7 +25,6 @@ import org.jetbrains.bazel.jvm.util.ArgMap
 import org.jetbrains.bazel.jvm.worker.core.BazelBuildDataProvider
 import org.jetbrains.bazel.jvm.worker.core.BazelCompileContext
 import org.jetbrains.bazel.jvm.worker.core.BazelCompileScope
-import org.jetbrains.bazel.jvm.worker.core.BazelConfigurationHolder
 import org.jetbrains.bazel.jvm.worker.core.BazelModuleBuildTarget
 import org.jetbrains.bazel.jvm.worker.core.BazelPathTypeAwareRelativizer
 import org.jetbrains.bazel.jvm.worker.core.RequestLog
@@ -37,7 +36,6 @@ import org.jetbrains.bazel.jvm.worker.dependencies.DependencyAnalyzer
 import org.jetbrains.bazel.jvm.worker.impl.JpsTargetBuilder
 import org.jetbrains.bazel.jvm.worker.impl.createJpsProjectDescriptor
 import org.jetbrains.bazel.jvm.worker.java.BazelJavaBuilder
-import org.jetbrains.bazel.jvm.worker.state.DependencyStateStorage
 import org.jetbrains.bazel.jvm.worker.state.SourceFileStateResult
 import org.jetbrains.bazel.jvm.worker.state.TargetConfigurationDigestContainer
 import org.jetbrains.bazel.jvm.worker.state.TargetConfigurationDigestProperty
@@ -189,10 +187,9 @@ suspend fun buildUsingJps(
 
   var rebuildReason = validateFileExistence(outputs = outputs, cacheDir = dataDir)
   val buildStateFile = dataDir.resolve("$prefix-state-v1.arrow")
-  val trackableDependencyFiles = moduleTarget.module.container.getChild(BazelConfigurationHolder.KIND).trackableDependencyFiles
 
-  val buildState = if (rebuildReason == null) {
-    tracer.span("load and check state") {
+  val sourceFileState = if (rebuildReason == null) {
+    val buildStateResult = tracer.span("load and check state") {
       computeBuildState(
         buildStateFile = buildStateFile,
         sourceRelativizer = typeAwareRelativizer.sourceRelativizer,
@@ -203,19 +200,17 @@ suspend fun buildUsingJps(
         tracer = tracer,
         parentSpan = it,
       )
-    }.also {
-      rebuildReason = it.rebuildRequested
     }
+    rebuildReason = buildStateResult.rebuildRequested
+    buildStateResult.sourceFileState
   }
   else {
-    createCleanBuildStateResult(rebuildReason)
+    null
   }
 
   val isRebuild = rebuildReason != null
-  if (isRebuild) {
-    if (isDebugEnabled) {
-      log.out.appendLine("rebuild reason: $rebuildReason")
-    }
+  if (isRebuild && isDebugEnabled) {
+    log.out.appendLine("rebuild reason: $rebuildReason")
   }
 
   var exitCode = try {
@@ -231,16 +226,13 @@ suspend fun buildUsingJps(
       jpsModel = jpsModel,
       dataManager = BazelBuildDataProvider(
         relativizer = typeAwareRelativizer,
-        sourceToDescriptor = buildState.sourceFileState?.map ?: createInitialSourceMap(sourceFileToDigest),
+        sourceToDescriptor = sourceFileState?.map ?: createInitialSourceMap(sourceFileToDigest),
         storeFile = buildStateFile,
         allocator = allocator,
         isCleanBuild = isRebuild,
-        libRootManager = DependencyStateStorage(
-          trackableDependencyFiles = trackableDependencyFiles,
-          dependencyFileToDigest = dependencyFileToDigest,
-        ),
+        dependencyFileToDigest = dependencyFileToDigest,
       ),
-      sourceFileState = buildState.sourceFileState,
+      sourceFileState = sourceFileState,
       isDebugEnabled = isDebugEnabled,
       dependencyAnalyzer = dependencyAnalyzer,
     )
@@ -275,10 +267,7 @@ suspend fun buildUsingJps(
         storeFile = buildStateFile,
         allocator = allocator,
         isCleanBuild = true,
-        libRootManager = DependencyStateStorage(
-          trackableDependencyFiles = trackableDependencyFiles,
-          dependencyFileToDigest = dependencyFileToDigest,
-        ),
+        dependencyFileToDigest = dependencyFileToDigest,
       ),
       sourceFileState = null,
       isDebugEnabled = isDebugEnabled,

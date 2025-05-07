@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.bazel.jvm.worker.core
 
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
@@ -20,9 +22,6 @@ class BazelTargetBuildOutputConsumer(
   @JvmField val outputSink: OutputSink,
 ) : ModuleLevelBuilder.OutputConsumer {
   private var registeredSourceCount = 0
-
-  //private val fileGeneratedEvent = FileGeneratedEvent(target)
-
   private val classes = HashMap<String, CompiledClass>()
 
   override fun getTargetCompiledClasses(target: BuildTarget<*>): Collection<CompiledClass> {
@@ -98,15 +97,6 @@ class BazelTargetBuildOutputConsumer(
       classes.put(it, compiled)
     }
 
-    //val previousBuilder = outputToBuilderNameMap.put(outputFile, builderName)
-    //if (previousBuilder != null && previousBuilder != builderName) {
-    //  val source = sourceFiles.firstOrNull()?.toString()
-    //  context.processMessage(CompilerMessage(
-    //    builderName, BuildMessage.Kind.ERROR, "Output file \"${outputFile}\" has already been registered by \"$previousBuilder\"", source
-    //  ))
-    //}
-
-    //fileGeneratedEvent.add("", relativeOutputPath)
     dataManager?.sourceToOutputMapping?.appendRawRelativeOutput(sourceFile, relativeOutputPath)
   }
 
@@ -114,28 +104,9 @@ class BazelTargetBuildOutputConsumer(
     throw IllegalStateException("")
   }
 
-  fun fireFileGeneratedEvents() {
-    //if (!fileGeneratedEvent.isEmpty) {
-    //  context.processMessage(fileGeneratedEvent)
-    //}
-  }
-
   fun getNumberOfProcessedSources(): Int = registeredSourceCount
 
   fun clear() {
     classes.clear()
   }
-
-  //private fun addEventsRecursively(output: File, outputRootPath: String?, relativePath: String) {
-  //  val children = output.listFiles()
-  //  if (children == null) {
-  //    fileGeneratedEvent.add(outputRootPath, relativePath)
-  //  }
-  //  else {
-  //    val prefix = if (relativePath.isEmpty() || relativePath == ".") "" else "$relativePath/"
-  //    for (child in children) {
-  //      addEventsRecursively(child, outputRootPath, prefix + child.getName())
-  //    }
-  //  }
-  //}
 }

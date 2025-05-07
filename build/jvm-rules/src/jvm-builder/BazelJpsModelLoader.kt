@@ -17,7 +17,6 @@ import org.jetbrains.bazel.jvm.util.ArgMap
 import org.jetbrains.bazel.jvm.worker.core.BazelConfigurationHolder
 import org.jetbrains.bazel.jvm.worker.state.TargetConfigurationDigestContainer
 import org.jetbrains.bazel.jvm.worker.state.TargetConfigurationDigestProperty
-import org.jetbrains.bazel.jvm.worker.state.isDependencyTracked
 import org.jetbrains.jps.model.JpsCompositeElement
 import org.jetbrains.jps.model.JpsDummyElement
 import org.jetbrains.jps.model.JpsElement
@@ -247,7 +246,7 @@ private fun configureClasspath(
   var untrackedCount = 0
   val trackableDependencyFiles = MutableObjectList<Path>(files.size)
   for (file in files) {
-    if (isDependencyTracked(file)) {
+    if (isDependencyTracked(file.toString())) {
       trackableDependencyFiles.add(file)
       continue
     }
@@ -347,3 +346,5 @@ private class BazelJpsLibrary(
 
   override fun toString(): String = "BazelJpsLibrary(files=$files)"
 }
+
+private fun isDependencyTracked(path: String): Boolean = path.endsWith(".abi.jar")

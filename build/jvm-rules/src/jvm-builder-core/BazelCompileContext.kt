@@ -58,7 +58,9 @@ class BazelCompileContext(
     isMarkedAsNonIncremental = true
   }
 
-  override fun shouldDifferentiate(chunk: ModuleChunk): Boolean = scope.isIncrementalCompilation && !isMarkedAsNonIncremental
+  override fun shouldDifferentiate(chunk: ModuleChunk): Boolean = shouldDifferentiate()
+
+  fun shouldDifferentiate(): Boolean = scope.isIncrementalCompilation && !isMarkedAsNonIncremental
 
   override fun getCancelStatus(): CanceledStatus = cancelStatus
 
