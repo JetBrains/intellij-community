@@ -860,9 +860,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
     val debuggerManager = myDebuggerManager.breakpointManager
     if (useFeLineBreakpointProxy() && breakpoint is XLineBreakpointImpl<*>) {
       // for useFeLineBreakpointProxy we call update directly since visual presentation is disabled on the backend
-      debuggerManager.lineBreakpointManager.queueBreakpointUpdateCallback(breakpoint, Runnable {
-        breakpoint.fireBreakpointPresentationUpdated(this)
-      })
+      breakpoint.fireBreakpointPresentationUpdated(this)
     }
     else {
       debuggerManager.lineBreakpointManager.queueBreakpointUpdate(breakpoint, Runnable {
