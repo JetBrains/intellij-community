@@ -53,6 +53,7 @@ import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.ui.AppIcon
 import com.intellij.ui.ComponentUtil
+import com.intellij.ui.DisposableWindow
 import com.intellij.util.ModalityUiUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.PlatformUtils
@@ -477,7 +478,7 @@ object ProjectUtil {
   @RequiresEdt
   fun focusProjectWindow(project: Project?, stealFocusIfAppInactive: Boolean = false) {
     val frame = WindowManager.getInstance().getFrame(project) ?: return
-    val appIsActive = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow != null
+    val appIsActive = getActiveWindow() != null
 
     // On macOS, `j.a.Window#toFront` restores the frame if needed.
     // On X Window, restoring minimized frame can steal focus from an active application, so we do it only when the IDE is active.
@@ -685,7 +686,7 @@ object ProjectUtil {
   fun getProjectForComponent(component: Component?): Project? = getProjectForWindow(ComponentUtil.getWindow(component))
 
   @JvmStatic
-  fun getActiveProject(): Project? = getProjectForWindow(KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow)
+  fun getActiveProject(): Project? = getProjectForWindow(getActiveWindow())
 
   @JvmStatic
   fun getOpenProjects(): Array<Project> = ProjectUtilCore.getOpenProjects()
@@ -766,4 +767,10 @@ fun Project.executeOnPooledThread(coroutineScope: CoroutineScope, task: Runnable
 fun Project.executeOnPooledIoThread(task: Runnable) {
   @Suppress("DEPRECATION")
   (this as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.IO) { blockingContext { task.run() } }
+}
+
+private fun getActiveWindow(): Window? {
+  val window = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow
+  if (window is DisposableWindow && window.isWindowDisposed) return null
+  return window
 }
