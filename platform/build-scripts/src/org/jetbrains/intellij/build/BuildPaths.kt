@@ -38,12 +38,12 @@ class BuildPaths(
   companion object {
     @JvmStatic
     val ULTIMATE_HOME: Path by lazy {
-      IdeaProjectLoaderUtil.guessUltimateHome(this::class.java)
+      IdeaProjectLoaderUtil.guessUltimateHome()
     }
 
     @JvmStatic
     val COMMUNITY_ROOT: BuildDependenciesCommunityRoot by lazy {
-      IdeaProjectLoaderUtil.guessCommunityHome(this::class.java)
+      IdeaProjectLoaderUtil.guessCommunityHome()
     }
   }
 

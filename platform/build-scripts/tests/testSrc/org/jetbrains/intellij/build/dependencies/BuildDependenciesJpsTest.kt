@@ -3,7 +3,7 @@ package org.jetbrains.intellij.build.dependencies
 
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.BuildDependenciesJps
-import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
+import org.jetbrains.intellij.build.BuildPaths
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -26,7 +26,7 @@ class BuildDependenciesJpsTest {
       iml,
       "debugger-agent",
       BuildDependenciesConstants.INTELLIJ_DEPENDENCIES_URL,
-      communityRoot,
+      BuildPaths.COMMUNITY_ROOT,
       null
     )
     assertTrue(root.pathString, root.pathString.endsWith("debugger-agent-1.9.jar"))
@@ -46,7 +46,7 @@ class BuildDependenciesJpsTest {
         iml,
         "debugger-agent",
         BuildDependenciesConstants.INTELLIJ_DEPENDENCIES_URL,
-        communityRoot,
+        BuildPaths.COMMUNITY_ROOT,
         null
       )
       assertEquals("must resolve to a local file from .m2/repository", localFile.pathString, resolved.pathString)
@@ -64,7 +64,7 @@ class BuildDependenciesJpsTest {
         iml,
         "debugger-agent",
         BuildDependenciesConstants.INTELLIJ_DEPENDENCIES_URL,
-        communityRoot,
+        BuildPaths.COMMUNITY_ROOT,
         null
       )
     }
@@ -82,7 +82,7 @@ class BuildDependenciesJpsTest {
         iml,
         "debugger-agent",
         BuildDependenciesConstants.INTELLIJ_DEPENDENCIES_URL,
-        communityRoot,
+        BuildPaths.COMMUNITY_ROOT,
         null
       )
     }
@@ -102,7 +102,7 @@ class BuildDependenciesJpsTest {
         iml,
         "debugger-agent",
         BuildDependenciesConstants.INTELLIJ_DEPENDENCIES_URL,
-        communityRoot,
+        BuildPaths.COMMUNITY_ROOT,
         null
       )
       assertEquals("must resolve to a local file from .m2/repository", localFile.pathString, resolved.pathString)
@@ -112,12 +112,8 @@ class BuildDependenciesJpsTest {
     }
   }
 
-  private val communityRoot by lazy {
-    IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
-  }
-
   private fun getTestDataRoot(): Path {
-    val testData = communityRoot.communityRoot.resolve("platform/build-scripts/tests/testData")
+    val testData = BuildPaths.COMMUNITY_ROOT.communityRoot.resolve("platform/build-scripts/tests/testData")
     check(testData.isDirectory()) {
       "not a directory: $testData"
     }
