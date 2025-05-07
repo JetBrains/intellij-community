@@ -158,6 +158,7 @@ public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProj
     }
 
     private boolean isCoveredByIndex(@NotNull VirtualFile file) {
+      //RC: if .java-files are not indexed -- isCoveredByIndex returns false
       return textSearchService.isInSearchableScope(file, project);
     }
 
