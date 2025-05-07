@@ -18,5 +18,4 @@ interface PluginManagerApi: RemoteApi<Unit> {
       return RemoteApiProviderService.resolve(remoteApiDescriptor<PluginManagerApi>())
     }
   }
-
 }

@@ -21,6 +21,7 @@ import java.util.*
  * Object from Search Service for getting compatible updates for IDE.
  * [externalPluginId] plugin ID from Plugin Repository database.
  */
+@Serializable
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class IdeCompatibleUpdate(
   @get:JsonProperty("id")
@@ -35,8 +36,10 @@ data class IdeCompatibleUpdate(
 /**
  * Plugin Repository object for storing information about plugin updates.
  */
+@Serializable
+@ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
-internal data class IntellijUpdateMetadata(
+data class IntellijUpdateMetadata(
   @get:JsonProperty("xmlId")
   val id: String = "",
   val name: String = "",
@@ -71,6 +74,7 @@ internal data class IntellijUpdateMetadata(
     builder.setVersion(version)
     builder.setVendorDetails(organization)
     builder.setUrl(url)
+    builder.setIsFromMarketPlace(true)
 
     for (dep in dependencies) {
       builder.addDependency(dep, false)

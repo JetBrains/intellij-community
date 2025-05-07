@@ -13,6 +13,7 @@ import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.PluginUiModelAdapter
 import com.intellij.ide.plugins.newui.PluginUiModelBuilderFactory
 import com.intellij.ide.plugins.newui.Tags
+import com.intellij.ide.plugins.newui.UiPluginManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.openapi.application.ApplicationManager
@@ -25,6 +26,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.marketplaceIdeCodes
@@ -276,7 +278,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       xmlId: String,
       ideCompatibleUpdate: IdeCompatibleUpdate,
       indicator: ProgressIndicator? = null,
-    ) : PluginNode {
+    ): PluginNode {
       return loadPluginModel(xmlId, ideCompatibleUpdate, indicator).getDescriptor() as PluginNode
     }
 
@@ -285,15 +287,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       ideCompatibleUpdate: IdeCompatibleUpdate,
       indicator: ProgressIndicator? = null,
     ): PluginUiModel {
-      val updateMetadataFile = Paths.get(PathManager.getPluginTempPath(), "meta")
-      return readOrUpdateFile(
-        updateMetadataFile.resolve(ideCompatibleUpdate.externalUpdateId + ".json"),
-        MarketplaceUrls.getUpdateMetaUrl(ideCompatibleUpdate.externalPluginId, ideCompatibleUpdate.externalUpdateId),
-        indicator,
-        IdeBundle.message("progress.downloading.plugins.meta", xmlId)
-      ) {
-        objectMapper.readValue(it, IntellijUpdateMetadata::class.java)
-      }.toUiModel()
+      return UiPluginManager.getInstance().loadUpdateMetadata(xmlId, ideCompatibleUpdate, indicator).toUiModel()
     }
 
     /**
@@ -527,16 +521,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
 
     val includeIncompatible = includeUpgradeToCommercialIde && suggestedIdeCode != null
 
-    val marketplaceSearchPluginData = HttpRequests
-      .request(MarketplaceUrls.getSearchPluginsUrl(query, count, includeIncompatible))
-      .setHeadersViaTuner()
-      .throwStatusCodeException(false)
-      .connect {
-        objectMapper.readValue(
-          it.inputStream,
-          object : TypeReference<List<MarketplaceSearchPluginData>>() {}
-        )
-      }
+    val marketplaceSearchPluginData = UiPluginManager.getInstance().executeMarketplaceQuery(query, count, includeIncompatible)
     // Marketplace Search Service can produce objects without "externalUpdateId". It means that an update is not in the search index yet.
     return marketplaceSearchPluginData
       .mapNotNull {
