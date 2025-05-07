@@ -334,7 +334,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
    * @return string representation of the type
    */
   public static @NotNull @NlsSafe String getTypeName(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    return PyTypeVisitor.visit(type, new PyTypeRenderer.Documentation(context, false)).toString();
+    return PyTypeVisitor.visit(type, new PyTypeRenderer.Documentation(context)).toString();
   }
 
   /**
@@ -358,7 +358,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
 
   /**
    * @param type      type which description will be calculated.
-   *                  Description is the same as {@link PythonDocumentationProvider#getTypeDescription(PyType, TypeEvalContext)} gives but
+   *                  Description is the same as {@link PythonDocumentationProvider#getTypeName(PyType, TypeEvalContext)} gives but
    *                  types are converted to links.
    * @param typeOwner element that has the given type, can be {@code null} for synthetic parameters
    * @param context   type evaluation context
@@ -379,16 +379,6 @@ public class PythonDocumentationProvider implements DocumentationProvider {
       }
     }
     body.append(PyTypeVisitor.visit(type, new PyTypeRenderer.RichDocumentation(context, anchor)));
-  }
-
-  /**
-   * @param type    type which description will be calculated
-   * @param context type evaluation context
-   * @return more user-friendly description than result of {@link PythonDocumentationProvider#getTypeName(PyType, TypeEvalContext)}.
-   * {@code Any} is excluded from {@code Union[Any, ...]}-like types.
-   */
-  public static @NotNull String getTypeDescription(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    return PyTypeVisitor.visit(type, new PyTypeRenderer.Documentation(context, true)).toString();
   }
 
   static @NotNull HtmlChunk describeDecorators(@NotNull PyDecoratable decoratable,

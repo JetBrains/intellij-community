@@ -25,8 +25,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 /**
  * Tests parameter info available via ^P at call sites.
@@ -440,7 +440,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   // PY-22005
   public void testWithSpecifiedType() {
     final int offset = loadTest(1).get("<arg1>").getTextOffset();
-    final String expectedInfo = "a1: str, a2: str | None = None, a3: str | int | None = None, a4: int, *args: int, **kwargs: int";
+    final String expectedInfo = "a1: str, a2: str | None = None, a3: str | int | None = None, a4: int | Any, *args: int, **kwargs: int";
 
     feignCtrlP(offset).check(expectedInfo, new String[]{"a1: str, "});
   }
@@ -733,7 +733,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         feignCtrlP(marks.get("<arg4>").getTextOffset()).check("x, y, z: list = ...", new String[]{"x, "});
         feignCtrlP(marks.get("<arg5>").getTextOffset()).check("x, y: int = ...", new String[]{"x, "});
         feignCtrlP(marks.get("<arg6>").getTextOffset()).check("x, y: str = ...", new String[]{"x, "});
-        feignCtrlP(marks.get("<arg7>").getTextOffset()).check("x: int = ...", new String[]{"x: int = ..."});
+        feignCtrlP(marks.get("<arg7>").getTextOffset()).check("x: int | Any = ...", new String[]{"x: int | Any = ..."});
         feignCtrlP(marks.get("<arg8>").getTextOffset()).check("x, y, z: list = ...", new String[]{"x, "});
       }
     );

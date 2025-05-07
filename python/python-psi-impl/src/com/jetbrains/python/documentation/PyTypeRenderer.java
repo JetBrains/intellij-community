@@ -77,24 +77,11 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     public RichDocumentation(@NotNull TypeEvalContext typeEvalContext, @NotNull PsiElement anchor) {
       super(typeEvalContext, anchor);
     }
-
-    @Override
-    protected boolean hideWeakUnions() {
-      return true;
-    }
   }
 
   public static final class Documentation extends PyTypeRenderer {
-    private final boolean mySimplifyWeakUnions;
-
-    public Documentation(@NotNull TypeEvalContext typeEvalContext, boolean simplifyWeakUnions) {
+    public Documentation(@NotNull TypeEvalContext typeEvalContext) {
       super(typeEvalContext);
-      mySimplifyWeakUnions = simplifyWeakUnions;
-    }
-
-    @Override
-    protected boolean hideWeakUnions() {
-      return mySimplifyWeakUnions;
     }
   }
 
@@ -204,10 +191,6 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     return origin == null || PythonLanguageLevelPusher.getLanguageLevelForFile(origin).isAtLeast(LanguageLevel.PYTHON39);
   }
 
-  protected boolean hideWeakUnions() {
-    return false;
-  }
-
   protected boolean hideAllAnyTypeArguments() {
     return true;
   }
@@ -288,12 +271,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     if (ContainerUtil.all(unionType.getMembers(), t -> t instanceof PyClassType ct && ct.isDefinition())) {
       return wrapInTypingType(render(unionType.map(type -> type != null ? ((PyClassType)type).toInstance() : null)));
     }
-    // TODO Remove special-casing of "weak" unions
-    // Exclude Any from "weak" types
     if (PyTypeChecker.isUnknown(unionType, false, myTypeEvalContext)) {
-      if (hideWeakUnions()) {
-        return render(unionType.excludeNull());
-      }
       // Always put Any at the end of the union
       return renderUnion(List.of(render(unionType.excludeNull()), visitUnknownType()));
     }

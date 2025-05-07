@@ -1306,8 +1306,8 @@ class PyTypeHintsInspection : PyInspection() {
           ?: return
 
         if (!PyTypeChecker.match(commentSelfType, actualSelfType, myTypeEvalContext)) {
-          val actualSelfTypeDescription = PythonDocumentationProvider.getTypeDescription(actualSelfType, myTypeEvalContext)
-          val commentSelfTypeDescription = PythonDocumentationProvider.getTypeDescription(commentSelfType, myTypeEvalContext)
+          val actualSelfTypeDescription = PythonDocumentationProvider.getTypeName(actualSelfType, myTypeEvalContext)
+          val commentSelfTypeDescription = PythonDocumentationProvider.getTypeName(commentSelfType, myTypeEvalContext)
 
           registerProblem(node.typeComment, PyPsiBundle.message("INSP.type.hints.type.self.not.supertype.its.class",
                                                                 commentSelfTypeDescription, actualSelfTypeDescription))
