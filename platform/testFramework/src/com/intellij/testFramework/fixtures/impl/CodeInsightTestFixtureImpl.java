@@ -1851,13 +1851,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void allowTreeAccessForFile(@NotNull VirtualFile file) {
-    assert myVirtualFileFilter instanceof FileTreeAccessFilter : "configured filter does not support this method";
     ((FileTreeAccessFilter)myVirtualFileFilter).allowTreeAccessForFile(file);
   }
 
   @Override
   public void allowTreeAccessForAllFiles() {
-    assert myVirtualFileFilter instanceof FileTreeAccessFilter : "configured filter does not support this method";
     ((FileTreeAccessFilter)myVirtualFileFilter).allowTreeAccessForAllFiles();
   }
 
