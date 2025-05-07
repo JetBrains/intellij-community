@@ -647,6 +647,11 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest());
   }
 
+  public void testAutomaticGetterUsePreferRecordAccessor() {
+    TestDialogManager.setTestDialog(TestDialog.YES, getTestRootDisposable());
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest());
+  }
+
   @Override
   protected Sdk getProjectJDK() {
     return getTestName(false).contains("Src") ? IdeaTestUtil.getMockJdk17() : super.getProjectJDK();

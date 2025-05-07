@@ -4,20 +4,19 @@ package com.siyeh.ig.psiutils;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.function.Predicate;
 
 /**
  * A utility that can replace a direct field access with an accessor method call.
- * 
- * @param accessor accessor method
+ *
+ * @param accessorName accessor method name
  * @param kind     accessor kind (exact, overridable, name-based)
  * @param setter   if true, the accessor is a setter
  */
@@ -103,8 +102,10 @@ public record FieldAccessFixer(@NotNull String accessorName, @NotNull AccessorKi
     }
     else if (PsiUtil.isAccessedForReading(ref)) {
       setter = false;
-      accessor = ContainerUtil.find(containingClass.getMethods(),
-                                    method -> PropertyUtil.getFieldOfGetter(method) == field && accessTest.test(method));
+      accessor = Arrays.stream(containingClass.getMethods())
+        .filter(method -> PropertyUtil.getFieldOfGetter(method) == field && accessTest.test(method))
+        .max(Comparator.comparing(m -> JavaPsiRecordUtil.getRecordComponentForAccessor(m) != null))
+        .orElse(null);
       if (accessor == null) {
         prototype = PropertyUtilBase.generateGetterPrototype(field);
       }
