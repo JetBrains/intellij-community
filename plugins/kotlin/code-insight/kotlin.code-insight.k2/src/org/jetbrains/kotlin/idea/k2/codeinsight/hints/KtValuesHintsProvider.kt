@@ -9,9 +9,8 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.StandardNames.BUILT_INS_PACKAGE_FQ_NAME
@@ -40,15 +39,17 @@ class KtValuesHintsProvider : AbstractKtInlayHintsProvider() {
     private fun collectForKotlinTime(element: PsiElement, sink: InlayTreeSink) {
         val expression = element as? KtDotQualifiedExpression ?: return
         val selectorExpression = expression.selectorExpression ?: return
+
         sink.whenOptionEnabled(SHOW_KOTLIN_TIME.name) {
             val callableId = analyze(expression) {
-                val variableAccessCall = expression.resolveToCall()?.singleVariableAccessCall()
-                val symbol = variableAccessCall?.symbol?.takeIf {
-                    val classId = it.callableId?.classId
-                    classId == DURATION_CLASS_ID  || classId == DURATION_COMPANION_CLASS_ID
-                } as? KaCallableSymbol ?: return@whenOptionEnabled
-                symbol.callableId
+                val variableAccessCall = expression.resolveToCall()?.successfulVariableAccessCall()
+                variableAccessCall?.symbol?.callableId
             } ?: return@whenOptionEnabled
+
+            if (callableId.classId.takeIf { it == DURATION_CLASS_ID || it == DURATION_COMPANION_CLASS_ID } == null) {
+                return@whenOptionEnabled
+            }
+
             when(callableId.callableName.asString()) {
                 "days" -> {
                     sink.addPresentation(InlineInlayPosition(selectorExpression.startOffset, true), hintFormat = HintFormat.default) {
