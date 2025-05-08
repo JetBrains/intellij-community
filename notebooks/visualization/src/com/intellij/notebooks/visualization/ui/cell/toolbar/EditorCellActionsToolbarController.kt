@@ -9,6 +9,7 @@ import com.intellij.notebooks.visualization.controllers.selfUpdate.SelfManagedCe
 import com.intellij.notebooks.visualization.ui.DataProviderComponent
 import com.intellij.notebooks.visualization.ui.EditorCell
 import com.intellij.notebooks.visualization.ui.jupyterToolbars.JupyterCellActionsToolbar
+import com.intellij.notebooks.visualization.ui.notebookEditor
 import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeHandler
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -59,7 +60,7 @@ internal class EditorCellActionsToolbarController(
     cell.isHovered.afterDistinctChange(this) {
       updateToolbarVisibility()
     }
-    cell.isUnderDiff.afterDistinctChange(this) {
+    editor.notebookEditor.singleFileDiffMode.afterDistinctChange(this) {
       updateToolbarVisibility()
     }
     updateToolbarVisibility()
@@ -71,7 +72,7 @@ internal class EditorCellActionsToolbarController(
   }
 
   private fun updateToolbarVisibility() {
-    val shouldBeVisible = cell.isUnderDiff.get().not() && (cell.isSelected.get() || cell.isHovered.get())
+    val shouldBeVisible = editor.notebookEditor.singleFileDiffMode.get().not() && (cell.isSelected.get() || cell.isHovered.get())
     if (shouldBeVisible)
       showToolbar()
     else
