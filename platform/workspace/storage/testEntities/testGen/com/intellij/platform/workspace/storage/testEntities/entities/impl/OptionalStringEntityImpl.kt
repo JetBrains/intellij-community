@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -22,8 +21,8 @@ import com.intellij.platform.workspace.storage.testEntities.entities.OptionalStr
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class OptionalStringEntityImpl(private val dataSource: OptionalStringEntityData) : OptionalStringEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class OptionalStringEntityImpl(private val dataSource: OptionalStringEntityData) : OptionalStringEntity,
+                                                                                            WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -50,8 +49,8 @@ internal class OptionalStringEntityImpl(private val dataSource: OptionalStringEn
   }
 
 
-  internal class Builder(result: OptionalStringEntityData?) : ModifiableWorkspaceEntityBase<OptionalStringEntity, OptionalStringEntityData>(
-    result), OptionalStringEntity.Builder {
+  internal class Builder(result: OptionalStringEntityData?) :
+    ModifiableWorkspaceEntityBase<OptionalStringEntity, OptionalStringEntityData>(result), OptionalStringEntity.Builder {
     internal constructor() : this(OptionalStringEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -143,7 +142,8 @@ internal class OptionalStringEntityData : WorkspaceEntityData<OptionalStringEnti
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.OptionalStringEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.OptionalStringEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

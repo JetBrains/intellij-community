@@ -23,6 +23,7 @@ import kotlinx.serialization.json.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.seconds
 
 @TestApplication
 class WorkspaceModelJsonDumpTest {
@@ -39,7 +40,7 @@ class WorkspaceModelJsonDumpTest {
 
   @Test
   fun `json dump workspace model using service`() {
-    timeoutRunBlocking {
+    timeoutRunBlocking(20.seconds) {
       val project = projectFixture.get()
       project.waitForSmartMode()
       rootFixture.get()
@@ -164,10 +165,10 @@ class WorkspaceModelJsonDumpTest {
               "fqName": "com.intellij.platform.workspace.jps.entities.ModuleSourceDependency"
             },
             {
-              "module": "Unknown \"FinalClassMetadata.KnownClass\": com.intellij.platform.workspace.jps.entities.ModuleId",
               "exported": false,
-              "scope": "Unknown \"FinalClassMetadata.KnownClass\": com.intellij.platform.workspace.jps.entities.DependencyScope",
-              "productionOnTest": true
+              "module": "Unknown \"FinalClassMetadata.KnownClass\": com.intellij.platform.workspace.jps.entities.ModuleId",
+              "productionOnTest": true,
+              "scope": "Unknown \"FinalClassMetadata.KnownClass\": com.intellij.platform.workspace.jps.entities.DependencyScope"
             }
           ],
           "contentRootsCount": 1,

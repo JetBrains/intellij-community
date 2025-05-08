@@ -93,6 +93,9 @@ internal val ClassDescriptor.isEntityInterface: Boolean
   // If this is `WorkspaceEntity` interface, we need to check it
   get() = DescriptorUtils.isInterface(this) && defaultType.isSubclassOf(entitiesSuperclassFqn)
 
+internal val ClassDescriptor.isEntitySource: Boolean
+  get() = defaultType.isSubclassOf(WorkspaceModelDefaults.ENTITY_SOURCE.fqName)
+
 internal val ClassDescriptor.isEntityBuilderInterface: Boolean
   get() = isEntityInterface && name.identifier == "Builder" // TODO: improve
 

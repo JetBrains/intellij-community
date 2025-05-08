@@ -23,8 +23,8 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ScratchRootsEntityImpl(private val dataSource: ScratchRootsEntityData) : ScratchRootsEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class ScratchRootsEntityImpl(private val dataSource: ScratchRootsEntityData) : ScratchRootsEntity,
+                                                                                        WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -51,8 +51,8 @@ internal class ScratchRootsEntityImpl(private val dataSource: ScratchRootsEntity
   }
 
 
-  internal class Builder(result: ScratchRootsEntityData?) : ModifiableWorkspaceEntityBase<ScratchRootsEntity, ScratchRootsEntityData>(
-    result), ScratchRootsEntity.Builder {
+  internal class Builder(result: ScratchRootsEntityData?) :
+    ModifiableWorkspaceEntityBase<ScratchRootsEntity, ScratchRootsEntityData>(result), ScratchRootsEntity.Builder {
     internal constructor() : this(ScratchRootsEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {

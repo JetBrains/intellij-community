@@ -2,14 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.ConnectionId
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
@@ -28,13 +20,13 @@ import com.intellij.platform.workspace.storage.testEntities.entities.TreeMultipa
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class TreeMultiparentRootEntityImpl(private val dataSource: TreeMultiparentRootEntityData) : TreeMultiparentRootEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class TreeMultiparentRootEntityImpl(private val dataSource: TreeMultiparentRootEntityData) : TreeMultiparentRootEntity,
+                                                                                                      WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(TreeMultiparentRootEntity::class.java,
-                                                                            TreeMultiparentLeafEntity::class.java,
-                                                                            ConnectionId.ConnectionType.ONE_TO_MANY, true)
+    internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(
+      TreeMultiparentRootEntity::class.java, TreeMultiparentLeafEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true
+    )
 
     private val connections = listOf<ConnectionId>(
       CHILDREN_CONNECTION_ID,
@@ -64,8 +56,8 @@ internal class TreeMultiparentRootEntityImpl(private val dataSource: TreeMultipa
   }
 
 
-  internal class Builder(result: TreeMultiparentRootEntityData?) : ModifiableWorkspaceEntityBase<TreeMultiparentRootEntity, TreeMultiparentRootEntityData>(
-    result), TreeMultiparentRootEntity.Builder {
+  internal class Builder(result: TreeMultiparentRootEntityData?) :
+    ModifiableWorkspaceEntityBase<TreeMultiparentRootEntity, TreeMultiparentRootEntityData>(result), TreeMultiparentRootEntity.Builder {
     internal constructor() : this(TreeMultiparentRootEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -150,8 +142,8 @@ internal class TreeMultiparentRootEntityImpl(private val dataSource: TreeMultipa
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<TreeMultiparentLeafEntity.Builder>) +
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID, this)!!
+            .toList() as List<TreeMultiparentLeafEntity.Builder>) +
           (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<TreeMultiparentLeafEntity.Builder> ?: emptyList())
         }
         else {
@@ -219,7 +211,8 @@ internal class TreeMultiparentRootEntityData : WorkspaceEntityData<TreeMultipare
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.TreeMultiparentRootEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.TreeMultiparentRootEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

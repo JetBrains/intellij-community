@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -23,8 +22,8 @@ import com.intellij.platform.workspace.storage.testEntities.entities.currentVers
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class NotNullToNullEntityImpl(private val dataSource: NotNullToNullEntityData) : NotNullToNullEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class NotNullToNullEntityImpl(private val dataSource: NotNullToNullEntityData) : NotNullToNullEntity,
+                                                                                          WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -62,8 +61,8 @@ internal class NotNullToNullEntityImpl(private val dataSource: NotNullToNullEnti
   }
 
 
-  internal class Builder(result: NotNullToNullEntityData?) : ModifiableWorkspaceEntityBase<NotNullToNullEntity, NotNullToNullEntityData>(
-    result), NotNullToNullEntity.Builder {
+  internal class Builder(result: NotNullToNullEntityData?) :
+    ModifiableWorkspaceEntityBase<NotNullToNullEntity, NotNullToNullEntityData>(result), NotNullToNullEntity.Builder {
     internal constructor() : this(NotNullToNullEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -200,7 +199,8 @@ internal class NotNullToNullEntityData : WorkspaceEntityData<NotNullToNullEntity
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.NotNullToNullEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.NotNullToNullEntity"
+    ) as EntityMetadata
   }
 
   override fun clone(): NotNullToNullEntityData {

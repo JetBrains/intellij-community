@@ -2,14 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.ConnectionId
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
@@ -29,19 +21,19 @@ import com.intellij.platform.workspace.storage.testEntities.entities.TreeMultipa
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class TreeMultiparentLeafEntityImpl(private val dataSource: TreeMultiparentLeafEntityData) : TreeMultiparentLeafEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class TreeMultiparentLeafEntityImpl(private val dataSource: TreeMultiparentLeafEntityData) : TreeMultiparentLeafEntity,
+                                                                                                      WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val MAINPARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(TreeMultiparentRootEntity::class.java,
-                                                                              TreeMultiparentLeafEntity::class.java,
-                                                                              ConnectionId.ConnectionType.ONE_TO_MANY, true)
-    internal val LEAFPARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(TreeMultiparentLeafEntity::class.java,
-                                                                              TreeMultiparentLeafEntity::class.java,
-                                                                              ConnectionId.ConnectionType.ONE_TO_MANY, true)
-    internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(TreeMultiparentLeafEntity::class.java,
-                                                                            TreeMultiparentLeafEntity::class.java,
-                                                                            ConnectionId.ConnectionType.ONE_TO_MANY, true)
+    internal val MAINPARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(
+      TreeMultiparentRootEntity::class.java, TreeMultiparentLeafEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true
+    )
+    internal val LEAFPARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(
+      TreeMultiparentLeafEntity::class.java, TreeMultiparentLeafEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true
+    )
+    internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(
+      TreeMultiparentLeafEntity::class.java, TreeMultiparentLeafEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true
+    )
 
     private val connections = listOf<ConnectionId>(
       MAINPARENT_CONNECTION_ID,
@@ -77,8 +69,8 @@ internal class TreeMultiparentLeafEntityImpl(private val dataSource: TreeMultipa
   }
 
 
-  internal class Builder(result: TreeMultiparentLeafEntityData?) : ModifiableWorkspaceEntityBase<TreeMultiparentLeafEntity, TreeMultiparentLeafEntityData>(
-    result), TreeMultiparentLeafEntity.Builder {
+  internal class Builder(result: TreeMultiparentLeafEntityData?) :
+    ModifiableWorkspaceEntityBase<TreeMultiparentLeafEntity, TreeMultiparentLeafEntityData>(result), TreeMultiparentLeafEntity.Builder {
     internal constructor() : this(TreeMultiparentLeafEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -160,8 +152,9 @@ internal class TreeMultiparentLeafEntityImpl(private val dataSource: TreeMultipa
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(MAINPARENT_CONNECTION_ID,
-                                                                           this) as? TreeMultiparentRootEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(
+            MAINPARENT_CONNECTION_ID, this
+          ) as? TreeMultiparentRootEntity.Builder)
           ?: (this.entityLinks[EntityLink(false, MAINPARENT_CONNECTION_ID)] as? TreeMultiparentRootEntity.Builder)
         }
         else {
@@ -201,8 +194,9 @@ internal class TreeMultiparentLeafEntityImpl(private val dataSource: TreeMultipa
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(LEAFPARENT_CONNECTION_ID,
-                                                                           this) as? TreeMultiparentLeafEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(
+            LEAFPARENT_CONNECTION_ID, this
+          ) as? TreeMultiparentLeafEntity.Builder)
           ?: (this.entityLinks[EntityLink(false, LEAFPARENT_CONNECTION_ID)] as? TreeMultiparentLeafEntity.Builder)
         }
         else {
@@ -245,8 +239,8 @@ internal class TreeMultiparentLeafEntityImpl(private val dataSource: TreeMultipa
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<TreeMultiparentLeafEntity.Builder>) +
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID, this)!!
+            .toList() as List<TreeMultiparentLeafEntity.Builder>) +
           (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<TreeMultiparentLeafEntity.Builder> ?: emptyList())
         }
         else {
@@ -314,7 +308,8 @@ internal class TreeMultiparentLeafEntityData : WorkspaceEntityData<TreeMultipare
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.TreeMultiparentLeafEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.TreeMultiparentLeafEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

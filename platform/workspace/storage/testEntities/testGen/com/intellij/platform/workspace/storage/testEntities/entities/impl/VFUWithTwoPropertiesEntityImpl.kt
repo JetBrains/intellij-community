@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -24,8 +23,8 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class VFUWithTwoPropertiesEntityImpl(private val dataSource: VFUWithTwoPropertiesEntityData) : VFUWithTwoPropertiesEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class VFUWithTwoPropertiesEntityImpl(private val dataSource: VFUWithTwoPropertiesEntityData) : VFUWithTwoPropertiesEntity,
+                                                                                                        WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -64,8 +63,8 @@ internal class VFUWithTwoPropertiesEntityImpl(private val dataSource: VFUWithTwo
   }
 
 
-  internal class Builder(result: VFUWithTwoPropertiesEntityData?) : ModifiableWorkspaceEntityBase<VFUWithTwoPropertiesEntity, VFUWithTwoPropertiesEntityData>(
-    result), VFUWithTwoPropertiesEntity.Builder {
+  internal class Builder(result: VFUWithTwoPropertiesEntityData?) :
+    ModifiableWorkspaceEntityBase<VFUWithTwoPropertiesEntity, VFUWithTwoPropertiesEntityData>(result), VFUWithTwoPropertiesEntity.Builder {
     internal constructor() : this(VFUWithTwoPropertiesEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -195,7 +194,8 @@ internal class VFUWithTwoPropertiesEntityData : WorkspaceEntityData<VFUWithTwoPr
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.VFUWithTwoPropertiesEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.VFUWithTwoPropertiesEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

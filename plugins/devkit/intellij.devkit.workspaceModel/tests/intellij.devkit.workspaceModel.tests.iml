@@ -29,5 +29,7 @@
     <orderEntry type="library" scope="TEST" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="module" module-name="kotlin.tests-common" />
+    <orderEntry type="library" name="rd-core" level="project" />
+    <orderEntry type="library" name="rd-framework" level="project" />
   </component>
 </module>

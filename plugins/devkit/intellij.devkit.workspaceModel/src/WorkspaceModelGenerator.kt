@@ -146,13 +146,15 @@ class WorkspaceModelGenerator(private val project: Project, private val coroutin
     }
 
   companion object {
-    const val GENERATED_FOLDER_NAME = "gen"
+    const val GENERATED_FOLDER_NAME: String = "gen"
 
-    const val TEST_GENERATED_FOLDER_NAME = "testGen"
+    const val TEST_GENERATED_FOLDER_NAME: String = "testGen"
 
-    private const val RIDER_MODULES_PREFIX = "intellij.rider"
+    const val RIDER_MODULES_PREFIX: String = "intellij.rider"
 
-    val modulesWithAbstractTypes: Set<String> = setOf("intellij.platform.workspace.storage.testEntities")
+    val modulesWithAbstractTypes: Set<String> = setOf(
+      "intellij.platform.workspace.storage.testEntities"
+    )
 
     fun getInstance(project: Project): WorkspaceModelGenerator = project.service()
   }

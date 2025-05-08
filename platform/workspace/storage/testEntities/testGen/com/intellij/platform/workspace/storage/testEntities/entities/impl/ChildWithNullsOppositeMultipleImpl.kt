@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -27,13 +26,13 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ParentWithN
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ChildWithNullsOppositeMultipleImpl(private val dataSource: ChildWithNullsOppositeMultipleData) : ChildWithNullsOppositeMultiple, WorkspaceEntityBase(
-  dataSource) {
+internal class ChildWithNullsOppositeMultipleImpl(private val dataSource: ChildWithNullsOppositeMultipleData) :
+  ChildWithNullsOppositeMultiple, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentWithNullsOppositeMultiple::class.java,
-                                                                                ChildWithNullsOppositeMultiple::class.java,
-                                                                                ConnectionId.ConnectionType.ONE_TO_MANY, true)
+    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(
+      ParentWithNullsOppositeMultiple::class.java, ChildWithNullsOppositeMultiple::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true
+    )
 
     private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
@@ -61,8 +60,9 @@ internal class ChildWithNullsOppositeMultipleImpl(private val dataSource: ChildW
   }
 
 
-  internal class Builder(result: ChildWithNullsOppositeMultipleData?) : ModifiableWorkspaceEntityBase<ChildWithNullsOppositeMultiple, ChildWithNullsOppositeMultipleData>(
-    result), ChildWithNullsOppositeMultiple.Builder {
+  internal class Builder(result: ChildWithNullsOppositeMultipleData?) :
+    ModifiableWorkspaceEntityBase<ChildWithNullsOppositeMultiple, ChildWithNullsOppositeMultipleData>(result),
+    ChildWithNullsOppositeMultiple.Builder {
     internal constructor() : this(ChildWithNullsOppositeMultipleData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -133,8 +133,9 @@ internal class ChildWithNullsOppositeMultipleImpl(private val dataSource: ChildW
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID,
-                                                                           this) as? ParentWithNullsOppositeMultiple.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(
+            PARENTENTITY_CONNECTION_ID, this
+          ) as? ParentWithNullsOppositeMultiple.Builder)
           ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? ParentWithNullsOppositeMultiple.Builder)
         }
         else {
@@ -199,7 +200,8 @@ internal class ChildWithNullsOppositeMultipleData : WorkspaceEntityData<ChildWit
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.ChildWithNullsOppositeMultiple") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.ChildWithNullsOppositeMultiple"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

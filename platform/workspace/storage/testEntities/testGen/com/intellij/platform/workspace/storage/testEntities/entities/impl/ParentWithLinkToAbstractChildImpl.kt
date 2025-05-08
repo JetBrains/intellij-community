@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -28,13 +27,16 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ParentWithL
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ParentWithLinkToAbstractChildImpl(private val dataSource: ParentWithLinkToAbstractChildData) : ParentWithLinkToAbstractChild, WorkspaceEntityBase(
-  dataSource) {
+internal class ParentWithLinkToAbstractChildImpl(private val dataSource: ParentWithLinkToAbstractChildData) : ParentWithLinkToAbstractChild,
+                                                                                                              WorkspaceEntityBase(
+                                                                                                                dataSource
+                                                                                                              ) {
 
   private companion object {
-    internal val CHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentWithLinkToAbstractChild::class.java,
-                                                                         AbstractChildWithLinkToParentEntity::class.java,
-                                                                         ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, true)
+    internal val CHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(
+      ParentWithLinkToAbstractChild::class.java, AbstractChildWithLinkToParentEntity::class.java,
+      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, true
+    )
 
     private val connections = listOf<ConnectionId>(
       CHILD_CONNECTION_ID,
@@ -62,8 +64,9 @@ internal class ParentWithLinkToAbstractChildImpl(private val dataSource: ParentW
   }
 
 
-  internal class Builder(result: ParentWithLinkToAbstractChildData?) : ModifiableWorkspaceEntityBase<ParentWithLinkToAbstractChild, ParentWithLinkToAbstractChildData>(
-    result), ParentWithLinkToAbstractChild.Builder {
+  internal class Builder(result: ParentWithLinkToAbstractChildData?) :
+    ModifiableWorkspaceEntityBase<ParentWithLinkToAbstractChild, ParentWithLinkToAbstractChildData>(result),
+    ParentWithLinkToAbstractChild.Builder {
     internal constructor() : this(ParentWithLinkToAbstractChildData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -134,14 +137,17 @@ internal class ParentWithLinkToAbstractChildImpl(private val dataSource: ParentW
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(CHILD_CONNECTION_ID,
-                                                                             this) as? AbstractChildWithLinkToParentEntity.Builder<out AbstractChildWithLinkToParentEntity>)
-          ?: (this.entityLinks[EntityLink(true,
-                                          CHILD_CONNECTION_ID)] as? AbstractChildWithLinkToParentEntity.Builder<out AbstractChildWithLinkToParentEntity>)
+          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(
+            CHILD_CONNECTION_ID, this
+          ) as? AbstractChildWithLinkToParentEntity.Builder<out AbstractChildWithLinkToParentEntity>)
+          ?: (this.entityLinks[EntityLink(
+            true, CHILD_CONNECTION_ID
+          )] as? AbstractChildWithLinkToParentEntity.Builder<out AbstractChildWithLinkToParentEntity>)
         }
         else {
-          this.entityLinks[EntityLink(true,
-                                      CHILD_CONNECTION_ID)] as? AbstractChildWithLinkToParentEntity.Builder<out AbstractChildWithLinkToParentEntity>
+          this.entityLinks[EntityLink(
+            true, CHILD_CONNECTION_ID
+          )] as? AbstractChildWithLinkToParentEntity.Builder<out AbstractChildWithLinkToParentEntity>
         }
       }
       set(value) {
@@ -198,7 +204,8 @@ internal class ParentWithLinkToAbstractChildData : WorkspaceEntityData<ParentWit
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.ParentWithLinkToAbstractChild") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.ParentWithLinkToAbstractChild"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

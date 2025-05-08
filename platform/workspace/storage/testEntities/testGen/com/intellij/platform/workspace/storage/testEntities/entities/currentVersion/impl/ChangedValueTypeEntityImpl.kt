@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -23,8 +22,8 @@ import com.intellij.platform.workspace.storage.testEntities.entities.currentVers
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ChangedValueTypeEntityImpl(private val dataSource: ChangedValueTypeEntityData) : ChangedValueTypeEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class ChangedValueTypeEntityImpl(private val dataSource: ChangedValueTypeEntityData) : ChangedValueTypeEntity,
+                                                                                                WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -63,8 +62,8 @@ internal class ChangedValueTypeEntityImpl(private val dataSource: ChangedValueTy
   }
 
 
-  internal class Builder(result: ChangedValueTypeEntityData?) : ModifiableWorkspaceEntityBase<ChangedValueTypeEntity, ChangedValueTypeEntityData>(
-    result), ChangedValueTypeEntity.Builder {
+  internal class Builder(result: ChangedValueTypeEntityData?) :
+    ModifiableWorkspaceEntityBase<ChangedValueTypeEntity, ChangedValueTypeEntityData>(result), ChangedValueTypeEntity.Builder {
     internal constructor() : this(ChangedValueTypeEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -209,7 +208,8 @@ internal class ChangedValueTypeEntityData : WorkspaceEntityData<ChangedValueType
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedValueTypeEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedValueTypeEntity"
+    ) as EntityMetadata
   }
 
   override fun clone(): ChangedValueTypeEntityData {

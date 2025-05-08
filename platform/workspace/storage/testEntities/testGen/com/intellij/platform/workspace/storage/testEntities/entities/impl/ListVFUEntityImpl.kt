@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -58,8 +57,8 @@ internal class ListVFUEntityImpl(private val dataSource: ListVFUEntityData) : Li
   }
 
 
-  internal class Builder(result: ListVFUEntityData?) : ModifiableWorkspaceEntityBase<ListVFUEntity, ListVFUEntityData>(
-    result), ListVFUEntity.Builder {
+  internal class Builder(result: ListVFUEntityData?) : ModifiableWorkspaceEntityBase<ListVFUEntity, ListVFUEntityData>(result),
+                                                       ListVFUEntity.Builder {
     internal constructor() : this(ListVFUEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -192,7 +191,8 @@ internal class ListVFUEntityData : WorkspaceEntityData<ListVFUEntity>() {
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.ListVFUEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.ListVFUEntity"
+    ) as EntityMetadata
   }
 
   override fun clone(): ListVFUEntityData {

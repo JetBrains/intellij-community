@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -21,8 +20,8 @@ import com.intellij.platform.workspace.storage.testEntities.entities.AssertConsi
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class AssertConsistencyEntityImpl(private val dataSource: AssertConsistencyEntityData) : AssertConsistencyEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class AssertConsistencyEntityImpl(private val dataSource: AssertConsistencyEntityData) : AssertConsistencyEntity,
+                                                                                                  WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -49,8 +48,8 @@ internal class AssertConsistencyEntityImpl(private val dataSource: AssertConsist
   }
 
 
-  internal class Builder(result: AssertConsistencyEntityData?) : ModifiableWorkspaceEntityBase<AssertConsistencyEntity, AssertConsistencyEntityData>(
-    result), AssertConsistencyEntity.Builder {
+  internal class Builder(result: AssertConsistencyEntityData?) :
+    ModifiableWorkspaceEntityBase<AssertConsistencyEntity, AssertConsistencyEntityData>(result), AssertConsistencyEntity.Builder {
     internal constructor() : this(AssertConsistencyEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -142,7 +141,8 @@ internal class AssertConsistencyEntityData : WorkspaceEntityData<AssertConsisten
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.AssertConsistencyEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.AssertConsistencyEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

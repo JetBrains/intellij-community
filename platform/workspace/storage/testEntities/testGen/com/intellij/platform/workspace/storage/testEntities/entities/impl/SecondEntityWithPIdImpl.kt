@@ -2,14 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.ConnectionId
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
@@ -22,8 +14,8 @@ import com.intellij.platform.workspace.storage.testEntities.entities.SecondPId
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class SecondEntityWithPIdImpl(private val dataSource: SecondEntityWithPIdData) : SecondEntityWithPId, WorkspaceEntityBase(
-  dataSource) {
+internal class SecondEntityWithPIdImpl(private val dataSource: SecondEntityWithPIdData) : SecondEntityWithPId,
+                                                                                          WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -52,8 +44,8 @@ internal class SecondEntityWithPIdImpl(private val dataSource: SecondEntityWithP
   }
 
 
-  internal class Builder(result: SecondEntityWithPIdData?) : ModifiableWorkspaceEntityBase<SecondEntityWithPId, SecondEntityWithPIdData>(
-    result), SecondEntityWithPId.Builder {
+  internal class Builder(result: SecondEntityWithPIdData?) :
+    ModifiableWorkspaceEntityBase<SecondEntityWithPId, SecondEntityWithPIdData>(result), SecondEntityWithPId.Builder {
     internal constructor() : this(SecondEntityWithPIdData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -149,7 +141,8 @@ internal class SecondEntityWithPIdData : WorkspaceEntityData<SecondEntityWithPId
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.SecondEntityWithPId") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.SecondEntityWithPId"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

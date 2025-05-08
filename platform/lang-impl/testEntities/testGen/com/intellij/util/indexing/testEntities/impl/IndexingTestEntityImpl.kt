@@ -23,8 +23,8 @@ import com.intellij.util.indexing.testEntities.IndexingTestEntity
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class IndexingTestEntityImpl(private val dataSource: IndexingTestEntityData) : IndexingTestEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class IndexingTestEntityImpl(private val dataSource: IndexingTestEntityData) : IndexingTestEntity,
+                                                                                        WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -57,8 +57,8 @@ internal class IndexingTestEntityImpl(private val dataSource: IndexingTestEntity
   }
 
 
-  internal class Builder(result: IndexingTestEntityData?) : ModifiableWorkspaceEntityBase<IndexingTestEntity, IndexingTestEntityData>(
-    result), IndexingTestEntity.Builder {
+  internal class Builder(result: IndexingTestEntityData?) :
+    ModifiableWorkspaceEntityBase<IndexingTestEntity, IndexingTestEntityData>(result), IndexingTestEntity.Builder {
     internal constructor() : this(IndexingTestEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {

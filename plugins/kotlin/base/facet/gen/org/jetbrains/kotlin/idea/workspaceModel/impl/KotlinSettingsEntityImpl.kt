@@ -40,12 +40,12 @@ import org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsId
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntityData) : KotlinSettingsEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntityData) : KotlinSettingsEntity,
+                                                                                            WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, KotlinSettingsEntity::class.java,
-                                                                          ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val MODULE_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(ModuleEntity::class.java, KotlinSettingsEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
     private val connections = listOf<ConnectionId>(
       MODULE_CONNECTION_ID,
@@ -55,16 +55,16 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
 
   override val symbolicId: KotlinSettingsId = super.symbolicId
 
-  override val name: String
-    get() {
-      readField("name")
-      return dataSource.name
-    }
-
   override val moduleId: ModuleId
     get() {
       readField("moduleId")
       return dataSource.moduleId
+    }
+
+  override val name: String
+    get() {
+      readField("name")
+      return dataSource.name
     }
 
   override val sourceRoots: List<String>
@@ -197,8 +197,8 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
   }
 
 
-  internal class Builder(result: KotlinSettingsEntityData?) : ModifiableWorkspaceEntityBase<KotlinSettingsEntity, KotlinSettingsEntityData>(
-    result), KotlinSettingsEntity.Builder {
+  internal class Builder(result: KotlinSettingsEntityData?) :
+    ModifiableWorkspaceEntityBase<KotlinSettingsEntity, KotlinSettingsEntityData>(result), KotlinSettingsEntity.Builder {
     internal constructor() : this(KotlinSettingsEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -229,11 +229,11 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
       }
-      if (!getEntityData().isNameInitialized()) {
-        error("Field ModuleSettingsFacetBridgeEntity#name should be initialized")
-      }
       if (!getEntityData().isModuleIdInitialized()) {
         error("Field ModuleSettingsFacetBridgeEntity#moduleId should be initialized")
+      }
+      if (!getEntityData().isNameInitialized()) {
+        error("Field ModuleSettingsFacetBridgeEntity#name should be initialized")
       }
       if (!getEntityData().isSourceRootsInitialized()) {
         error("Field KotlinSettingsEntity#sourceRoots should be initialized")
@@ -320,26 +320,31 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as KotlinSettingsEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.name != dataSource.name) this.name = dataSource.name
       if (this.moduleId != dataSource.moduleId) this.moduleId = dataSource.moduleId
+      if (this.name != dataSource.name) this.name = dataSource.name
       if (this.sourceRoots != dataSource.sourceRoots) this.sourceRoots = dataSource.sourceRoots.toMutableList()
       if (this.configFileItems != dataSource.configFileItems) this.configFileItems = dataSource.configFileItems.toMutableList()
       if (this.useProjectSettings != dataSource.useProjectSettings) this.useProjectSettings = dataSource.useProjectSettings
-      if (this.implementedModuleNames != dataSource.implementedModuleNames) this.implementedModuleNames = dataSource.implementedModuleNames.toMutableList()
-      if (this.dependsOnModuleNames != dataSource.dependsOnModuleNames) this.dependsOnModuleNames = dataSource.dependsOnModuleNames.toMutableList()
-      if (this.additionalVisibleModuleNames != dataSource.additionalVisibleModuleNames) this.additionalVisibleModuleNames = dataSource.additionalVisibleModuleNames.toMutableSet()
+      if (this.implementedModuleNames != dataSource.implementedModuleNames) this.implementedModuleNames =
+        dataSource.implementedModuleNames.toMutableList()
+      if (this.dependsOnModuleNames != dataSource.dependsOnModuleNames) this.dependsOnModuleNames =
+        dataSource.dependsOnModuleNames.toMutableList()
+      if (this.additionalVisibleModuleNames != dataSource.additionalVisibleModuleNames) this.additionalVisibleModuleNames =
+        dataSource.additionalVisibleModuleNames.toMutableSet()
       if (this.productionOutputPath != dataSource?.productionOutputPath) this.productionOutputPath = dataSource.productionOutputPath
       if (this.testOutputPath != dataSource?.testOutputPath) this.testOutputPath = dataSource.testOutputPath
       if (this.sourceSetNames != dataSource.sourceSetNames) this.sourceSetNames = dataSource.sourceSetNames.toMutableList()
       if (this.isTestModule != dataSource.isTestModule) this.isTestModule = dataSource.isTestModule
       if (this.externalProjectId != dataSource.externalProjectId) this.externalProjectId = dataSource.externalProjectId
       if (this.isHmppEnabled != dataSource.isHmppEnabled) this.isHmppEnabled = dataSource.isHmppEnabled
-      if (this.pureKotlinSourceFolders != dataSource.pureKotlinSourceFolders) this.pureKotlinSourceFolders = dataSource.pureKotlinSourceFolders.toMutableList()
+      if (this.pureKotlinSourceFolders != dataSource.pureKotlinSourceFolders) this.pureKotlinSourceFolders =
+        dataSource.pureKotlinSourceFolders.toMutableList()
       if (this.kind != dataSource.kind) this.kind = dataSource.kind
       if (this.compilerArguments != dataSource?.compilerArguments) this.compilerArguments = dataSource.compilerArguments
       if (this.compilerSettings != dataSource?.compilerSettings) this.compilerSettings = dataSource.compilerSettings
       if (this.targetPlatform != dataSource?.targetPlatform) this.targetPlatform = dataSource.targetPlatform
-      if (this.externalSystemRunTasks != dataSource.externalSystemRunTasks) this.externalSystemRunTasks = dataSource.externalSystemRunTasks.toMutableList()
+      if (this.externalSystemRunTasks != dataSource.externalSystemRunTasks) this.externalSystemRunTasks =
+        dataSource.externalSystemRunTasks.toMutableList()
       if (this.version != dataSource.version) this.version = dataSource.version
       if (this.flushNeeded != dataSource.flushNeeded) this.flushNeeded = dataSource.flushNeeded
       updateChildToParentReferences(parents)
@@ -355,14 +360,6 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
 
       }
 
-    override var name: String
-      get() = getEntityData().name
-      set(value) {
-        checkModificationAllowed()
-        getEntityData(true).name = value
-        changedProperty.add("name")
-      }
-
     override var moduleId: ModuleId
       get() = getEntityData().moduleId
       set(value) {
@@ -370,6 +367,14 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
         getEntityData(true).moduleId = value
         changedProperty.add("moduleId")
 
+      }
+
+    override var name: String
+      get() = getEntityData().name
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).name = value
+        changedProperty.add("name")
       }
 
     private val sourceRootsUpdater: (value: List<String>) -> Unit = { value ->
@@ -692,8 +697,8 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class KotlinSettingsEntityData : WorkspaceEntityData<KotlinSettingsEntity>(), SoftLinkable {
-  lateinit var name: String
   lateinit var moduleId: ModuleId
+  lateinit var name: String
   lateinit var sourceRoots: MutableList<String>
   lateinit var configFileItems: MutableList<ConfigFileItem>
   var useProjectSettings: Boolean = false
@@ -715,8 +720,8 @@ internal class KotlinSettingsEntityData : WorkspaceEntityData<KotlinSettingsEnti
   var version: Int = 0
   var flushNeeded: Boolean = false
 
-  internal fun isNameInitialized(): Boolean = ::name.isInitialized
   internal fun isModuleIdInitialized(): Boolean = ::moduleId.isInitialized
+  internal fun isNameInitialized(): Boolean = ::name.isInitialized
   internal fun isSourceRootsInitialized(): Boolean = ::sourceRoots.isInitialized
   internal fun isConfigFileItemsInitialized(): Boolean = ::configFileItems.isInitialized
 
@@ -858,9 +863,11 @@ internal class KotlinSettingsEntityData : WorkspaceEntityData<KotlinSettingsEnti
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
-    return KotlinSettingsEntity(name, moduleId, sourceRoots, configFileItems, useProjectSettings, implementedModuleNames,
-                                dependsOnModuleNames, additionalVisibleModuleNames, sourceSetNames, isTestModule, externalProjectId,
-                                isHmppEnabled, pureKotlinSourceFolders, kind, externalSystemRunTasks, version, flushNeeded, entitySource) {
+    return KotlinSettingsEntity(
+      moduleId, name, sourceRoots, configFileItems, useProjectSettings, implementedModuleNames, dependsOnModuleNames,
+      additionalVisibleModuleNames, sourceSetNames, isTestModule, externalProjectId, isHmppEnabled, pureKotlinSourceFolders, kind,
+      externalSystemRunTasks, version, flushNeeded, entitySource
+    ) {
       this.productionOutputPath = this@KotlinSettingsEntityData.productionOutputPath
       this.testOutputPath = this@KotlinSettingsEntityData.testOutputPath
       this.compilerArguments = this@KotlinSettingsEntityData.compilerArguments
@@ -883,8 +890,8 @@ internal class KotlinSettingsEntityData : WorkspaceEntityData<KotlinSettingsEnti
     other as KotlinSettingsEntityData
 
     if (this.entitySource != other.entitySource) return false
-    if (this.name != other.name) return false
     if (this.moduleId != other.moduleId) return false
+    if (this.name != other.name) return false
     if (this.sourceRoots != other.sourceRoots) return false
     if (this.configFileItems != other.configFileItems) return false
     if (this.useProjectSettings != other.useProjectSettings) return false
@@ -914,8 +921,8 @@ internal class KotlinSettingsEntityData : WorkspaceEntityData<KotlinSettingsEnti
 
     other as KotlinSettingsEntityData
 
-    if (this.name != other.name) return false
     if (this.moduleId != other.moduleId) return false
+    if (this.name != other.name) return false
     if (this.sourceRoots != other.sourceRoots) return false
     if (this.configFileItems != other.configFileItems) return false
     if (this.useProjectSettings != other.useProjectSettings) return false
@@ -941,8 +948,8 @@ internal class KotlinSettingsEntityData : WorkspaceEntityData<KotlinSettingsEnti
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
-    result = 31 * result + name.hashCode()
     result = 31 * result + moduleId.hashCode()
+    result = 31 * result + name.hashCode()
     result = 31 * result + sourceRoots.hashCode()
     result = 31 * result + configFileItems.hashCode()
     result = 31 * result + useProjectSettings.hashCode()
@@ -968,8 +975,8 @@ internal class KotlinSettingsEntityData : WorkspaceEntityData<KotlinSettingsEnti
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
-    result = 31 * result + name.hashCode()
     result = 31 * result + moduleId.hashCode()
+    result = 31 * result + name.hashCode()
     result = 31 * result + sourceRoots.hashCode()
     result = 31 * result + configFileItems.hashCode()
     result = 31 * result + useProjectSettings.hashCode()

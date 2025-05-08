@@ -99,7 +99,7 @@ internal class WorkspaceMetaModelBuilder(
   }
 
   private inner class ObjModuleStub(
-    val module: CompiledObjModuleImpl,
+    val compiledObjModule: CompiledObjModuleImpl,
     val types: List<Pair<ClassDescriptor, ObjClassImpl<Obj>>>,
     val moduleAbstractTypes: List<ClassDescriptor>,
     val moduleDescriptor: ModuleDescriptor,
@@ -127,15 +127,15 @@ internal class WorkspaceMetaModelBuilder(
             objType.addSuperType(superClass)
           }
         }
-        module.addType(objType)
+        compiledObjModule.addType(objType)
       }
 
       moduleAbstractTypes.forEach { registerModuleAbstractType(it) }
 
       for ((extProperty, receiverClass) in extProperties) {
-        module.addExtension(createExtProperty(extProperty, receiverClass, extPropertyId++))
+        compiledObjModule.addExtension(createExtProperty(extProperty, receiverClass, extPropertyId++))
       }
-      return module
+      return compiledObjModule
     }
 
     private fun registerModuleAbstractType(descriptor: ClassDescriptor) {
@@ -144,11 +144,11 @@ internal class WorkspaceMetaModelBuilder(
 
       val blobType = ValueType.Blob<Any>(javaClassFqn, superTypes)
       val inheritors = descriptor.inheritors(javaPsiFacade, allScope)
-        .filter { it.packageName == module.name && it.module == moduleDescriptor }
-        .map { it.toValueType(hashMapOf(javaClassFqn to blobType), true) }
+        .filter { it.packageName == compiledObjModule.name } // && it.module == moduleDescriptor }
+        .map { classDescriptorToValueType(it, hashMapOf(javaClassFqn to blobType), true) }
 
       if (inheritors.isNotEmpty()) {
-        module.addAbstractType(ValueType.AbstractClass<Any>(javaClassFqn, superTypes, inheritors))
+        compiledObjModule.addAbstractType(ValueType.AbstractClass<Any>(javaClassFqn, superTypes, inheritors))
       }
     }
 
@@ -175,7 +175,7 @@ internal class WorkspaceMetaModelBuilder(
       return ExtPropertyImpl(
         findObjClass(receiverClass), extProperty.name.identifier, valueType,
         extProperty.computeKind(), extProperty.isAnnotatedBy(WorkspaceModelDefaults.OPEN_ANNOTATION.fqName),
-        extProperty.isVar, false, module, extPropertyId, propertyAnnotations, extProperty.source.getPsi()
+        extProperty.isVar, false, compiledObjModule, extPropertyId, propertyAnnotations, extProperty.source.getPsi()
       )
     }
 
@@ -211,47 +211,49 @@ internal class WorkspaceMetaModelBuilder(
             WorkspaceModelDefaults.CHILD_ANNOTATION.fqName) || hasChildAnnotation, //todo leave only one target for @Child annotation
                                   findObjClass(descriptor))
         }
-        return descriptor.toValueType(knownTypes, processAbstractTypes)
+        return classDescriptorToValueType(descriptor, knownTypes, processAbstractTypes)
       }
 
       return unsupportedType(type.toString())
     }
 
-    private fun ClassDescriptor.toValueType(
+    private fun classDescriptorToValueType(
+      classDescriptor: ClassDescriptor,
       knownTypes: MutableMap<String, ValueType.Blob<*>>,
       processAbstractTypes: Boolean,
     ): ValueType.JvmClass<*> {
-      val javaClassFqn = javaClassFqn
-      val superTypes = superTypesJavaFqns
+      val javaClassFqn = classDescriptor.javaClassFqn
+      val superTypes = classDescriptor.superTypesJavaFqns
 
       val blobType = ValueType.Blob<Any>(javaClassFqn, superTypes)
-      if (knownTypes.containsKey(javaClassFqn) || isBlob) {
+      if (knownTypes.containsKey(javaClassFqn) || classDescriptor.isBlob) {
         return blobType
       }
 
       knownTypes[javaClassFqn] = blobType
       return when {
-        isObject -> ValueType.Object<Any>(javaClassFqn, superTypes, createProperties(this, knownTypes))
-        isEnumClass -> {
-          val values = unsubstitutedInnerClassesScope.getContributedDescriptors(DescriptorKindFilter.CLASSIFIERS)
-            .filterIsInstance<ClassDescriptor>().filter { it.isEnumEntry }.map { it.name.asString() }
-          ValueType.Enum<Any>(javaClassFqn, superTypes, values, createProperties(this, knownTypes).withoutEnumFields())
+        classDescriptor.isObject -> ValueType.Object<Any>(javaClassFqn, superTypes, createProperties(classDescriptor, knownTypes))
+        classDescriptor.isEnumClass -> {
+          val values = classDescriptor.unsubstitutedInnerClassesScope.getContributedDescriptors(DescriptorKindFilter.CLASSIFIERS)
+            .filterIsInstance<ClassDescriptor>().filter { it.isEnumEntry }.map { it.name.asString() }.sorted()
+          ValueType.Enum<Any>(javaClassFqn, superTypes, values, createProperties(classDescriptor, knownTypes).withoutEnumFields())
         }
-        isSealed() -> {
-          val subclasses = sealedSubclasses.map {
+        classDescriptor.isSealed() -> {
+          val subclasses = classDescriptor.sealedSubclasses.map {
             convertType(it.defaultType, knownTypes, false) as ValueType.JvmClass<*>
           }
           ValueType.AbstractClass<Any>(javaClassFqn, superTypes, subclasses)
         }
-        isAbstractClassOrInterface -> {
+        classDescriptor.isAbstractClassOrInterface -> {
           if (!processAbstractTypes) {
             throw IncorrectObjInterfaceException("$javaClassFqn is abstract type. Abstract types are not supported in generator")
           }
-          val inheritors = inheritors(javaPsiFacade, allScope)
-            .map { it.toValueType(knownTypes, processAbstractTypes) }
+          val inheritors = classDescriptor.inheritors(javaPsiFacade, allScope)
+            .filter { !it.isEntitySource || ( it.packageName == compiledObjModule.name) } // && it.module == moduleDescriptor) }
+            .map { classDescriptorToValueType(it, knownTypes, processAbstractTypes) }
           ValueType.AbstractClass<Any>(javaClassFqn, superTypes, inheritors)
         }
-        else -> ValueType.FinalClass<Any>(javaClassFqn, superTypes, createProperties(this, knownTypes))
+        else -> ValueType.FinalClass<Any>(javaClassFqn, superTypes, createProperties(classDescriptor, knownTypes))
       }
     }
 
@@ -267,9 +269,9 @@ internal class WorkspaceMetaModelBuilder(
 
 
     private fun findObjClass(descriptor: ClassDescriptor): ObjClass<*> {
-      if (descriptor.packageOrDie.asString() == module.name) {
+      if (descriptor.packageOrDie.asString() == compiledObjModule.name) {
         return types.find { it.first.typeConstructor == descriptor.typeConstructor }?.second ?: error(
-          "Cannot find ${descriptor.fqNameSafe} in $module")
+          "Cannot find ${descriptor.fqNameSafe} in $compiledObjModule")
       }
       return getObjClass(descriptor)
     }

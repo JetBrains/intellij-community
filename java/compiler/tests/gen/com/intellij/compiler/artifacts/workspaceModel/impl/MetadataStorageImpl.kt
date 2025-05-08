@@ -1,12 +1,14 @@
-package com.intellij.compiler.artifacts.workspaceModel
+package com.intellij.compiler.artifacts.workspaceModel.impl
 
+import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.metadata.impl.MetadataStorageBase
 import com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata
 import com.intellij.platform.workspace.storage.metadata.model.OwnPropertyMetadata
 import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
 import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
 
-object MetadataStorageImpl: MetadataStorageBase() {
+@OptIn(WorkspaceEntityInternalApi::class)
+internal object MetadataStorageImpl: MetadataStorageBase() {
     override fun initializeMetadata() {
 
         var typeMetadata: StorageTypeMetadata

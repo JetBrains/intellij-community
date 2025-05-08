@@ -25,8 +25,8 @@ import com.intellij.platform.workspace.storage.testEntities.entities.currentVers
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ChangedComputablePropsOrderEntityImpl(private val dataSource: ChangedComputablePropsOrderEntityData) : ChangedComputablePropsOrderEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class ChangedComputablePropsOrderEntityImpl(private val dataSource: ChangedComputablePropsOrderEntityData) :
+  ChangedComputablePropsOrderEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -66,8 +66,9 @@ internal class ChangedComputablePropsOrderEntityImpl(private val dataSource: Cha
   }
 
 
-  internal class Builder(result: ChangedComputablePropsOrderEntityData?) : ModifiableWorkspaceEntityBase<ChangedComputablePropsOrderEntity, ChangedComputablePropsOrderEntityData>(
-    result), ChangedComputablePropsOrderEntity.Builder {
+  internal class Builder(result: ChangedComputablePropsOrderEntityData?) :
+    ModifiableWorkspaceEntityBase<ChangedComputablePropsOrderEntity, ChangedComputablePropsOrderEntityData>(result),
+    ChangedComputablePropsOrderEntity.Builder {
     internal constructor() : this(ChangedComputablePropsOrderEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -206,7 +207,8 @@ internal class ChangedComputablePropsOrderEntityData : WorkspaceEntityData<Chang
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedComputablePropsOrderEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedComputablePropsOrderEntity"
+    ) as EntityMetadata
   }
 
   override fun clone(): ChangedComputablePropsOrderEntityData {

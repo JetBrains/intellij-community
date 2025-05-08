@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -49,8 +48,8 @@ internal class StringEntityImpl(private val dataSource: StringEntityData) : Stri
   }
 
 
-  internal class Builder(result: StringEntityData?) : ModifiableWorkspaceEntityBase<StringEntity, StringEntityData>(
-    result), StringEntity.Builder {
+  internal class Builder(result: StringEntityData?) : ModifiableWorkspaceEntityBase<StringEntity, StringEntityData>(result),
+                                                      StringEntity.Builder {
     internal constructor() : this(StringEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -146,7 +145,8 @@ internal class StringEntityData : WorkspaceEntityData<StringEntity>() {
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.StringEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.StringEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

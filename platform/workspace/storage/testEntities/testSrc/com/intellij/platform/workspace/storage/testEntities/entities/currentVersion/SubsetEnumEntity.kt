@@ -48,6 +48,6 @@ fun MutableEntityStorage.modifySubsetEnumEntity(
 //endregion
 
 enum class SubsetEnumEnum(val type: String) {
-  FIRST(type = "first"), SECOND(type = "second"), THIRD(type = "third"),
-  FOURTH(type = "fourth"), FIFTH(type = "fifth")
+  A_ENUM(type = "a"), B_ENUM(type = "e"), D_ENUM(type = "d"), 
+  E_ENUM(type = "e"), C_ENUM(type = "c")
 }

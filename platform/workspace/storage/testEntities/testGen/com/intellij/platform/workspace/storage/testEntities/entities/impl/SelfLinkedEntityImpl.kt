@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -29,8 +28,8 @@ import com.intellij.platform.workspace.storage.testEntities.entities.SelfLinkedE
 internal class SelfLinkedEntityImpl(private val dataSource: SelfLinkedEntityData) : SelfLinkedEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(SelfLinkedEntity::class.java, SelfLinkedEntity::class.java,
-                                                                                ConnectionId.ConnectionType.ONE_TO_MANY, true)
+    internal val PARENTENTITY_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(SelfLinkedEntity::class.java, SelfLinkedEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true)
 
     private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
@@ -52,8 +51,8 @@ internal class SelfLinkedEntityImpl(private val dataSource: SelfLinkedEntityData
   }
 
 
-  internal class Builder(result: SelfLinkedEntityData?) : ModifiableWorkspaceEntityBase<SelfLinkedEntity, SelfLinkedEntityData>(
-    result), SelfLinkedEntity.Builder {
+  internal class Builder(result: SelfLinkedEntityData?) : ModifiableWorkspaceEntityBase<SelfLinkedEntity, SelfLinkedEntityData>(result),
+                                                          SelfLinkedEntity.Builder {
     internal constructor() : this(SelfLinkedEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -175,7 +174,8 @@ internal class SelfLinkedEntityData : WorkspaceEntityData<SelfLinkedEntity>() {
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.SelfLinkedEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.SelfLinkedEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

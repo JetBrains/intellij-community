@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -29,13 +28,13 @@ import com.intellij.platform.workspace.storage.testEntities.entities.SimpleChild
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class SimpleChildAbstractEntityImpl(private val dataSource: SimpleChildAbstractEntityData) : SimpleChildAbstractEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class SimpleChildAbstractEntityImpl(private val dataSource: SimpleChildAbstractEntityData) : SimpleChildAbstractEntity,
+                                                                                                      WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val PARENTINLIST_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositeAbstractEntity::class.java,
-                                                                                SimpleAbstractEntity::class.java,
-                                                                                ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
+    internal val PARENTINLIST_CONNECTION_ID: ConnectionId = ConnectionId.create(
+      CompositeAbstractEntity::class.java, SimpleAbstractEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true
+    )
 
     private val connections = listOf<ConnectionId>(
       PARENTINLIST_CONNECTION_ID,
@@ -57,8 +56,8 @@ internal class SimpleChildAbstractEntityImpl(private val dataSource: SimpleChild
   }
 
 
-  internal class Builder(result: SimpleChildAbstractEntityData?) : ModifiableWorkspaceEntityBase<SimpleChildAbstractEntity, SimpleChildAbstractEntityData>(
-    result), SimpleChildAbstractEntity.Builder {
+  internal class Builder(result: SimpleChildAbstractEntityData?) :
+    ModifiableWorkspaceEntityBase<SimpleChildAbstractEntity, SimpleChildAbstractEntityData>(result), SimpleChildAbstractEntity.Builder {
     internal constructor() : this(SimpleChildAbstractEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -117,10 +116,12 @@ internal class SimpleChildAbstractEntityImpl(private val dataSource: SimpleChild
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTINLIST_CONNECTION_ID,
-                                                                           this) as? CompositeAbstractEntity.Builder<out CompositeAbstractEntity>)
-          ?: (this.entityLinks[EntityLink(false,
-                                          PARENTINLIST_CONNECTION_ID)] as? CompositeAbstractEntity.Builder<out CompositeAbstractEntity>)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(
+            PARENTINLIST_CONNECTION_ID, this
+          ) as? CompositeAbstractEntity.Builder<out CompositeAbstractEntity>)
+          ?: (this.entityLinks[EntityLink(
+            false, PARENTINLIST_CONNECTION_ID
+          )] as? CompositeAbstractEntity.Builder<out CompositeAbstractEntity>)
         }
         else {
           this.entityLinks[EntityLink(false, PARENTINLIST_CONNECTION_ID)] as? CompositeAbstractEntity.Builder<out CompositeAbstractEntity>
@@ -182,7 +183,8 @@ internal class SimpleChildAbstractEntityData : WorkspaceEntityData<SimpleChildAb
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.SimpleChildAbstractEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.SimpleChildAbstractEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

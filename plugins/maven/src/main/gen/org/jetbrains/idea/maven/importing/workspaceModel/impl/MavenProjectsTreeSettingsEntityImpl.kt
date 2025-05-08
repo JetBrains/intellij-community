@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.workspaceModel.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -23,8 +22,8 @@ import org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectsTreeSettin
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class MavenProjectsTreeSettingsEntityImpl(private val dataSource: MavenProjectsTreeSettingsEntityData) : MavenProjectsTreeSettingsEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class MavenProjectsTreeSettingsEntityImpl(private val dataSource: MavenProjectsTreeSettingsEntityData) :
+  MavenProjectsTreeSettingsEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -51,8 +50,9 @@ internal class MavenProjectsTreeSettingsEntityImpl(private val dataSource: Maven
   }
 
 
-  internal class Builder(result: MavenProjectsTreeSettingsEntityData?) : ModifiableWorkspaceEntityBase<MavenProjectsTreeSettingsEntity, MavenProjectsTreeSettingsEntityData>(
-    result), MavenProjectsTreeSettingsEntity.Builder {
+  internal class Builder(result: MavenProjectsTreeSettingsEntityData?) :
+    ModifiableWorkspaceEntityBase<MavenProjectsTreeSettingsEntity, MavenProjectsTreeSettingsEntityData>(result),
+    MavenProjectsTreeSettingsEntity.Builder {
     internal constructor() : this(MavenProjectsTreeSettingsEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -169,7 +169,8 @@ internal class MavenProjectsTreeSettingsEntityData : WorkspaceEntityData<MavenPr
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectsTreeSettingsEntity") as EntityMetadata
+      "org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectsTreeSettingsEntity"
+    ) as EntityMetadata
   }
 
   override fun clone(): MavenProjectsTreeSettingsEntityData {

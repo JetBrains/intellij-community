@@ -32,13 +32,13 @@ import org.jetbrains.annotations.NonNls
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ExternalSystemModuleOptionsEntityImpl(private val dataSource: ExternalSystemModuleOptionsEntityData) : ExternalSystemModuleOptionsEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class ExternalSystemModuleOptionsEntityImpl(private val dataSource: ExternalSystemModuleOptionsEntityData) :
+  ExternalSystemModuleOptionsEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java,
-                                                                          ExternalSystemModuleOptionsEntity::class.java,
-                                                                          ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(
+      ModuleEntity::class.java, ExternalSystemModuleOptionsEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false
+    )
 
     private val connections = listOf<ConnectionId>(
       MODULE_CONNECTION_ID,
@@ -102,8 +102,9 @@ internal class ExternalSystemModuleOptionsEntityImpl(private val dataSource: Ext
   }
 
 
-  internal class Builder(result: ExternalSystemModuleOptionsEntityData?) : ModifiableWorkspaceEntityBase<ExternalSystemModuleOptionsEntity, ExternalSystemModuleOptionsEntityData>(
-    result), ExternalSystemModuleOptionsEntity.Builder {
+  internal class Builder(result: ExternalSystemModuleOptionsEntityData?) :
+    ModifiableWorkspaceEntityBase<ExternalSystemModuleOptionsEntity, ExternalSystemModuleOptionsEntityData>(result),
+    ExternalSystemModuleOptionsEntity.Builder {
     internal constructor() : this(ExternalSystemModuleOptionsEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -155,12 +156,15 @@ internal class ExternalSystemModuleOptionsEntityImpl(private val dataSource: Ext
       dataSource as ExternalSystemModuleOptionsEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.externalSystem != dataSource?.externalSystem) this.externalSystem = dataSource.externalSystem
-      if (this.externalSystemModuleVersion != dataSource?.externalSystemModuleVersion) this.externalSystemModuleVersion = dataSource.externalSystemModuleVersion
+      if (this.externalSystemModuleVersion != dataSource?.externalSystemModuleVersion) this.externalSystemModuleVersion =
+        dataSource.externalSystemModuleVersion
       if (this.linkedProjectPath != dataSource?.linkedProjectPath) this.linkedProjectPath = dataSource.linkedProjectPath
       if (this.linkedProjectId != dataSource?.linkedProjectId) this.linkedProjectId = dataSource.linkedProjectId
       if (this.rootProjectPath != dataSource?.rootProjectPath) this.rootProjectPath = dataSource.rootProjectPath
-      if (this.externalSystemModuleGroup != dataSource?.externalSystemModuleGroup) this.externalSystemModuleGroup = dataSource.externalSystemModuleGroup
-      if (this.externalSystemModuleType != dataSource?.externalSystemModuleType) this.externalSystemModuleType = dataSource.externalSystemModuleType
+      if (this.externalSystemModuleGroup != dataSource?.externalSystemModuleGroup) this.externalSystemModuleGroup =
+        dataSource.externalSystemModuleGroup
+      if (this.externalSystemModuleType != dataSource?.externalSystemModuleType) this.externalSystemModuleType =
+        dataSource.externalSystemModuleType
       updateChildToParentReferences(parents)
     }
 
@@ -301,7 +305,8 @@ internal class ExternalSystemModuleOptionsEntityData : WorkspaceEntityData<Exter
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity") as EntityMetadata
+      "com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

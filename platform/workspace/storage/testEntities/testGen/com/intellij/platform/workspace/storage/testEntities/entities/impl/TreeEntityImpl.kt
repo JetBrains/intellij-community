@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -31,10 +30,10 @@ import com.intellij.platform.workspace.storage.testEntities.entities.TreeEntity
 internal class TreeEntityImpl(private val dataSource: TreeEntityData) : TreeEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(TreeEntity::class.java, TreeEntity::class.java,
-                                                                            ConnectionId.ConnectionType.ONE_TO_MANY, true)
-    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(TreeEntity::class.java, TreeEntity::class.java,
-                                                                                ConnectionId.ConnectionType.ONE_TO_MANY, true)
+    internal val CHILDREN_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(TreeEntity::class.java, TreeEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true)
+    internal val PARENTENTITY_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(TreeEntity::class.java, TreeEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true)
 
     private val connections = listOf<ConnectionId>(
       CHILDREN_CONNECTION_ID,
@@ -151,8 +150,8 @@ internal class TreeEntityImpl(private val dataSource: TreeEntityData) : TreeEnti
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<TreeEntity.Builder>) +
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID, this)!!
+            .toList() as List<TreeEntity.Builder>) +
           (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<TreeEntity.Builder> ?: emptyList())
         }
         else {
@@ -260,7 +259,8 @@ internal class TreeEntityData : WorkspaceEntityData<TreeEntity>() {
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.TreeEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.TreeEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

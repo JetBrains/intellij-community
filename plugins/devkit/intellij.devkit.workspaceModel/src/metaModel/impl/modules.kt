@@ -25,6 +25,7 @@ open class ObjModuleImpl(override val name: String) : ObjModule {
 
   fun addType(objType: ObjClass<*>) {
     mutableTypes.add(objType)
+    mutableTypes.sortBy { it.name }
   }
 
   fun addAbstractType(abstractType: ValueType.AbstractClass<*>) {

@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -32,19 +31,19 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ProjectMode
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTestEntityData) : ProjectModelTestEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTestEntityData) : ProjectModelTestEntity,
+                                                                                                WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ProjectModelTestEntity::class.java,
-                                                                                ProjectModelTestEntity::class.java,
-                                                                                ConnectionId.ConnectionType.ONE_TO_MANY, true)
-    internal val CHILDRENENTITIES_CONNECTION_ID: ConnectionId = ConnectionId.create(ProjectModelTestEntity::class.java,
-                                                                                    ProjectModelTestEntity::class.java,
-                                                                                    ConnectionId.ConnectionType.ONE_TO_MANY, true)
-    internal val CONTENTROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(ProjectModelTestEntity::class.java,
-                                                                               ContentRootTestEntity::class.java,
-                                                                               ConnectionId.ConnectionType.ONE_TO_ONE, true)
+    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(
+      ProjectModelTestEntity::class.java, ProjectModelTestEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true
+    )
+    internal val CHILDRENENTITIES_CONNECTION_ID: ConnectionId = ConnectionId.create(
+      ProjectModelTestEntity::class.java, ProjectModelTestEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true
+    )
+    internal val CONTENTROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(
+      ProjectModelTestEntity::class.java, ContentRootTestEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, true
+    )
 
     private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
@@ -86,8 +85,8 @@ internal class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTe
   }
 
 
-  internal class Builder(result: ProjectModelTestEntityData?) : ModifiableWorkspaceEntityBase<ProjectModelTestEntity, ProjectModelTestEntityData>(
-    result), ProjectModelTestEntity.Builder {
+  internal class Builder(result: ProjectModelTestEntityData?) :
+    ModifiableWorkspaceEntityBase<ProjectModelTestEntity, ProjectModelTestEntityData>(result), ProjectModelTestEntity.Builder {
     internal constructor() : this(ProjectModelTestEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -182,8 +181,9 @@ internal class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTe
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID,
-                                                                           this) as? ProjectModelTestEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(
+            PARENTENTITY_CONNECTION_ID, this
+          ) as? ProjectModelTestEntity.Builder)
           ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? ProjectModelTestEntity.Builder)
         }
         else {
@@ -226,8 +226,8 @@ internal class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTe
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDRENENTITIES_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<ProjectModelTestEntity.Builder>) +
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDRENENTITIES_CONNECTION_ID, this)!!
+            .toList() as List<ProjectModelTestEntity.Builder>) +
           (this.entityLinks[EntityLink(true, CHILDRENENTITIES_CONNECTION_ID)] as? List<ProjectModelTestEntity.Builder> ?: emptyList())
         }
         else {
@@ -270,8 +270,9 @@ internal class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTe
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(CONTENTROOT_CONNECTION_ID,
-                                                                             this) as? ContentRootTestEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(
+            CONTENTROOT_CONNECTION_ID, this
+          ) as? ContentRootTestEntity.Builder)
           ?: (this.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] as? ContentRootTestEntity.Builder)
         }
         else {
@@ -334,7 +335,8 @@ internal class ProjectModelTestEntityData : WorkspaceEntityData<ProjectModelTest
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.ProjectModelTestEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.ProjectModelTestEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

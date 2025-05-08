@@ -27,20 +27,21 @@ internal class WorkspaceMetaModelProviderImpl : WorkspaceMetaModelProvider {
       processAbstractTypes,
       module.project
     )
+    val kaModule = if (!isTestSourceFolder) {
+      module.toKaSourceModuleForProduction()
+    }
+    else {
+      module.toKaSourceModuleForTest()
+    }
+    if (kaModule == null) {
+      return emptyList()
+    }
     val compiledObjModule = allowAnalysisOnEdt {
       allowAnalysisFromWriteAction {
         packages
           .filter { it != "" }
           .mapNotNull { packageName ->
-            if (!isTestSourceFolder) {
-              module.toKaSourceModuleForProduction()
-            }
-            else {
-              module.toKaSourceModuleForTest()
-            }
-              ?.let { kaModule ->
-                metaModelProvider.getObjModule(packageName, kaModule)
-              }
+            metaModelProvider.getObjModule(packageName, kaModule)
           }
       }
     }

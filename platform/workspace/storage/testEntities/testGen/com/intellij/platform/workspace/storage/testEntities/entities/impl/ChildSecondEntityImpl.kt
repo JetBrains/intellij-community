@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -32,9 +31,9 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ParentAbEnt
 internal class ChildSecondEntityImpl(private val dataSource: ChildSecondEntityData) : ChildSecondEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentAbEntity::class.java,
-                                                                                ChildAbstractBaseEntity::class.java,
-                                                                                ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, false)
+    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(
+      ParentAbEntity::class.java, ChildAbstractBaseEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, false
+    )
 
     private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
@@ -68,8 +67,8 @@ internal class ChildSecondEntityImpl(private val dataSource: ChildSecondEntityDa
   }
 
 
-  internal class Builder(result: ChildSecondEntityData?) : ModifiableWorkspaceEntityBase<ChildSecondEntity, ChildSecondEntityData>(
-    result), ChildSecondEntity.Builder {
+  internal class Builder(result: ChildSecondEntityData?) : ModifiableWorkspaceEntityBase<ChildSecondEntity, ChildSecondEntityData>(result),
+                                                           ChildSecondEntity.Builder {
     internal constructor() : this(ChildSecondEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -229,7 +228,8 @@ internal class ChildSecondEntityData : WorkspaceEntityData<ChildSecondEntity>() 
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.ChildSecondEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.ChildSecondEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

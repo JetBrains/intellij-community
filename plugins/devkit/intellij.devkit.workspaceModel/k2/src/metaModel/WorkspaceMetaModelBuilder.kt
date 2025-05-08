@@ -97,7 +97,7 @@ internal class WorkspaceMetaModelBuilder(
   }
 
   private inner class ObjModuleStub(
-    val module: CompiledObjModuleImpl,
+    val compiledObjModule: CompiledObjModuleImpl,
     // TODO: storing KaClassSymbol is unsafe, ObjModuleStub should inherit from KaLifetimeOwner
     val types: List<Pair<KaClassSymbol, ObjClassImpl<Obj>>>,
     val moduleAbstractTypes: List<KaClassSymbol>,
@@ -131,16 +131,16 @@ internal class WorkspaceMetaModelBuilder(
             }
           }
 
-          module.addType(objType)
+          compiledObjModule.addType(objType)
         }
 
         registerModuleAbstractTypes()
 
         for ((extProperty, receiverClass) in extProperties) {
-          module.addExtension(createExtProperty(extProperty, receiverClass, extPropertyId++))
+          compiledObjModule.addExtension(createExtProperty(extProperty, receiverClass, extPropertyId++))
         }
 
-        module
+        compiledObjModule
       }
 
     private fun KaSession.registerModuleAbstractTypes() {
@@ -154,7 +154,8 @@ internal class WorkspaceMetaModelBuilder(
         for (inheritor in inheritorsKtClasses) {
           analyze(inheritor) {
             val inheritorSymbol = inheritor.namedClassSymbol
-            if (inheritorSymbol != null && inheritorSymbol.packageName == module.name && inheritorSymbol.containingModule == kaModule) {
+            // FIXME: Check for module removed because of problems with kotlin.base.scripting in tests, might liead to other problems
+            if (inheritorSymbol != null && inheritorSymbol.packageName == compiledObjModule.name) { // && inheritorSymbol.containingModule == this@ObjModuleStub.kaModule ) {
               val inheritorValueType = classSymbolToValueType(inheritorSymbol, hashMapOf(javaClassFqn to blobType), true)
               inheritors.add(inheritorValueType)
             }
@@ -162,7 +163,7 @@ internal class WorkspaceMetaModelBuilder(
         }
 
         if (inheritors.isNotEmpty()) {
-          module.addAbstractType(ValueType.AbstractClass<Any>(javaClassFqn, superTypes, inheritors))
+          compiledObjModule.addAbstractType(ValueType.AbstractClass<Any>(javaClassFqn, superTypes, inheritors))
         }
       }
     }
@@ -192,7 +193,7 @@ internal class WorkspaceMetaModelBuilder(
       } ?: emptyList()
 
       return ExtPropertyImpl(findObjClass(receiverClass), extProperty.name.identifier, valueType, computeKind(extProperty),
-                             extProperty.isAnnotatedBy(WorkspaceModelDefaults.OPEN_ANNOTATION.classId), !extProperty.isVal, false, module,
+                             extProperty.isAnnotatedBy(WorkspaceModelDefaults.OPEN_ANNOTATION.classId), !extProperty.isVal, false, compiledObjModule,
                              extPropertyId, propertyAnnotations, extProperty.sourcePsiSafe())
     }
 
@@ -241,9 +242,9 @@ internal class WorkspaceMetaModelBuilder(
     }
 
     private fun KaSession.findObjClass(classSymbol: KaClassSymbol): ObjClass<*> {
-      if (classSymbol.packageOrDie.asString() == module.name) {
+      if (classSymbol.packageOrDie.asString() == compiledObjModule.name) {
         return types.find { it.first.classId == classSymbol.classId }?.second
-               ?: error("Cannot find ${classSymbol.name} in $module")
+               ?: error("Cannot find ${classSymbol.name} in $compiledObjModule")
       }
       return getObjClass(classSymbol)
     }
@@ -267,7 +268,8 @@ internal class WorkspaceMetaModelBuilder(
         classSymbol.classKind == KaClassKind.OBJECT -> ValueType.Object<Any>(javaClassFqn, superTypesJavaFqns,
                                                                              createProperties(classSymbol, knownTypes).toList())
         classSymbol.classKind == KaClassKind.ENUM_CLASS -> {
-          val enumEntries = classSymbol.staticMemberScope.callables.filterIsInstance<KaEnumEntrySymbol>().map { it.name.asString() }
+          val enumEntries =
+            classSymbol.staticMemberScope.callables.filterIsInstance<KaEnumEntrySymbol>().map { it.name.asString() }.sorted()
           ValueType.Enum<Any>(javaClassFqn, superTypesJavaFqns, enumEntries.toList(),
                               createProperties(classSymbol, knownTypes).withoutEnumFields().toList())
         }
@@ -276,7 +278,7 @@ internal class WorkspaceMetaModelBuilder(
             .map { convertType(it.defaultType, knownTypes, false) as ValueType.JvmClass<*> }
           ValueType.AbstractClass<Any>(javaClassFqn, superTypesJavaFqns, subclasses)
         }
-        classSymbol.classKind == KaClassKind.INTERFACE || classSymbol.modality == KaSymbolModality.ABSTRACT -> {
+        classSymbol.classKind == KaClassKind.INTERFACE || classSymbol.modality != KaSymbolModality.FINAL -> {
           if (!processAbstractTypes) {
             throw IncorrectObjInterfaceException("$javaClassFqn is abstract type. Abstract types are not supported in generator")
           }
@@ -284,7 +286,7 @@ internal class WorkspaceMetaModelBuilder(
             .mapNotNull { ktClassOrObject ->
               analyze(ktClassOrObject) {
                 val inheritorSymbol = ktClassOrObject.namedClassSymbol
-                if (inheritorSymbol != null) {
+                if (inheritorSymbol != null && (!isEntitySource(inheritorSymbol) || inheritorSymbol.packageName == compiledObjModule.name)) {
                   classSymbolToValueType(inheritorSymbol, knownTypes, processAbstractTypes)
                 }
                 else null

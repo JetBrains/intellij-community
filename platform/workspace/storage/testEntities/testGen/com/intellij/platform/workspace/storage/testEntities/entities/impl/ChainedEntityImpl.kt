@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -34,12 +33,12 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ChainedPare
 internal class ChainedEntityImpl(private val dataSource: ChainedEntityData) : ChainedEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val PARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(ChainedEntity::class.java, ChainedEntity::class.java,
-                                                                          ConnectionId.ConnectionType.ONE_TO_ONE, true)
-    internal val CHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(ChainedEntity::class.java, ChainedEntity::class.java,
-                                                                         ConnectionId.ConnectionType.ONE_TO_ONE, true)
-    internal val GENERALPARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(ChainedParentEntity::class.java, ChainedEntity::class.java,
-                                                                                 ConnectionId.ConnectionType.ONE_TO_MANY, true)
+    internal val PARENT_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(ChainedEntity::class.java, ChainedEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, true)
+    internal val CHILD_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(ChainedEntity::class.java, ChainedEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, true)
+    internal val GENERALPARENT_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(ChainedParentEntity::class.java, ChainedEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true)
 
     private val connections = listOf<ConnectionId>(
       PARENT_CONNECTION_ID,
@@ -75,8 +74,8 @@ internal class ChainedEntityImpl(private val dataSource: ChainedEntityData) : Ch
   }
 
 
-  internal class Builder(result: ChainedEntityData?) : ModifiableWorkspaceEntityBase<ChainedEntity, ChainedEntityData>(
-    result), ChainedEntity.Builder {
+  internal class Builder(result: ChainedEntityData?) : ModifiableWorkspaceEntityBase<ChainedEntity, ChainedEntityData>(result),
+                                                       ChainedEntity.Builder {
     internal constructor() : this(ChainedEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -219,8 +218,9 @@ internal class ChainedEntityImpl(private val dataSource: ChainedEntityData) : Ch
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(GENERALPARENT_CONNECTION_ID,
-                                                                           this) as? ChainedParentEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(
+            GENERALPARENT_CONNECTION_ID, this
+          ) as? ChainedParentEntity.Builder)
           ?: (this.entityLinks[EntityLink(false, GENERALPARENT_CONNECTION_ID)] as? ChainedParentEntity.Builder)
         }
         else {
@@ -285,7 +285,8 @@ internal class ChainedEntityData : WorkspaceEntityData<ChainedEntity>() {
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.ChainedEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.ChainedEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

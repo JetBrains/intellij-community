@@ -46,5 +46,5 @@ fun MutableEntityStorage.modifyChangedEnumNameEntity(
 //endregion
 
 enum class ChangedEnumNameEnum {
-  FIRST, SECOND, NOT_THIRD // Change is here, new name of the third enum entry
+  A_ENTRY, B_ENTRY, CB_ENTRY // Change is here, new name of the third enum entry
 }
