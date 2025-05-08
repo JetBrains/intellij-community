@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -22,8 +8,11 @@ import com.intellij.ide.codeStyleSettings.CodeStyleTestCase;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.options.SchemeImportException;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.impl.source.codeStyle.json.CodeStyleSchemeJsonExporter;
+import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,6 +79,244 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     exporter.exportScheme(testScheme, outputStream, Collections.singletonList("java"));
     compareWithExpected(outputStream.toString(), "json");
+  }
+
+  public void testNotFirstImportModule() throws IOException {
+    CodeStyleScheme testScheme = new CodeStyleScheme() {
+
+      @NotNull
+      @Override
+      public String getName() {
+        return "Test";
+      }
+
+      @Override
+      public boolean isDefault() {
+        return false;
+      }
+
+      @NotNull
+      @Override
+      public CodeStyleSettings getCodeStyleSettings() {
+        try {
+          return importSettings();
+        }
+        catch (SchemeImportException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    };
+    CodeStyleSchemeJsonExporter exporter = new CodeStyleSchemeJsonExporter();
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    exporter.exportScheme(testScheme, outputStream, Collections.singletonList("java"));
+    compareWithExpected(outputStream.toString(), "json");
+  }
+
+  public void testFirstNotImportedImportModule() throws IOException, JDOMException {
+    CodeStyleSettings originalRoot = CodeStyle.getSettings(getProject());
+    JavaCodeStyleSettings settings = originalRoot.getCustomSettings(JavaCodeStyleSettings.class);
+    String text = """
+      <root>
+        <JavaCodeStyleSettings>
+          <option name="IMPORT_LAYOUT_TABLE">
+            <value>
+              <package name="" withSubpackages="true" static="true" />
+              <package name="" withSubpackages="true" static="false" />
+              <package name="com" withSubpackages="true" static="false" />
+            </value>
+          </option>
+        </JavaCodeStyleSettings>
+      </root>
+      """;
+    settings.readExternal(JDOMUtil.load(text));
+
+    Element root = new Element("root");
+    PackageEntry moduleEntry = settings.IMPORT_LAYOUT_TABLE.getEntryAt(0);
+    assertSame(PackageEntry.ALL_MODULE_IMPORTS, moduleEntry);
+    settings.IMPORT_LAYOUT_TABLE.addEntry(new PackageEntry(true, "org.foo", true));
+    settings.writeExternal(root, new JavaCodeStyleSettings(originalRoot));
+    String actual = """
+      <root>
+        <JavaCodeStyleSettings>
+          <option name="IMPORT_LAYOUT_TABLE">
+            <value>
+              <package name="" withSubpackages="true" static="true" />
+              <package name="" withSubpackages="true" static="false" />
+              <package name="com" withSubpackages="true" static="false" />
+              <package name="org.foo" withSubpackages="true" static="true" />
+            </value>
+          </option>
+        </JavaCodeStyleSettings>
+      </root>""";
+    assertEquals(actual, JDOMUtil.writeElement(root));
+  }
+
+  public void testMovedFirstNotImportedImportModule() throws IOException, JDOMException {
+    CodeStyleSettings originalRoot = CodeStyle.getSettings(getProject());
+    JavaCodeStyleSettings settings = originalRoot.getCustomSettings(JavaCodeStyleSettings.class);
+    String text = """
+      <root>
+        <JavaCodeStyleSettings>
+          <option name="IMPORT_LAYOUT_TABLE">
+            <value>
+              <package name="" withSubpackages="true" static="true" />
+              <package name="" withSubpackages="true" static="false" />
+              <package name="com" withSubpackages="true" static="false" />
+            </value>
+          </option>
+        </JavaCodeStyleSettings>
+      </root>
+      """;
+    settings.readExternal(JDOMUtil.load(text));
+
+    Element root = new Element("root");
+    PackageEntry moduleEntry = settings.IMPORT_LAYOUT_TABLE.getEntryAt(0);
+    assertSame(PackageEntry.ALL_MODULE_IMPORTS, moduleEntry);
+    settings.IMPORT_LAYOUT_TABLE.removeEntryAt(0);
+    settings.IMPORT_LAYOUT_TABLE.insertEntryAt(moduleEntry, 1);
+
+    settings.writeExternal(root, new JavaCodeStyleSettings(originalRoot));
+    String actual = """
+      <root>
+        <JavaCodeStyleSettings>
+          <option name="IMPORT_LAYOUT_TABLE">
+            <value>
+              <package name="" withSubpackages="true" static="true" />
+              <package name="" withSubpackages="true" static="false" module="true" />
+              <package name="" withSubpackages="true" static="false" />
+              <package name="com" withSubpackages="true" static="false" />
+            </value>
+          </option>
+        </JavaCodeStyleSettings>
+      </root>""";
+    assertEquals(actual, JDOMUtil.writeElement(root));
+  }
+
+  public void testMovedFirstImportedImportModule() throws IOException, JDOMException {
+    CodeStyleSettings originalRoot = CodeStyle.getSettings(getProject());
+    JavaCodeStyleSettings settings = originalRoot.getCustomSettings(JavaCodeStyleSettings.class);
+    String text = """
+      <root>
+        <JavaCodeStyleSettings>
+          <option name="IMPORT_LAYOUT_TABLE">
+            <value>
+              <package name="" withSubpackages="true" static="false" module="true" />
+              <package name="" withSubpackages="true" static="true" />
+              <package name="" withSubpackages="true" static="false" />
+              <package name="com" withSubpackages="true" static="false" />
+            </value>
+          </option>
+        </JavaCodeStyleSettings>
+      </root>
+      """;
+    settings.readExternal(JDOMUtil.load(text));
+
+    Element root = new Element("root");
+    PackageEntry moduleEntry = settings.IMPORT_LAYOUT_TABLE.getEntryAt(0);
+    assertSame(PackageEntry.ALL_MODULE_IMPORTS, moduleEntry);
+    settings.IMPORT_LAYOUT_TABLE.removeEntryAt(0);
+    settings.IMPORT_LAYOUT_TABLE.insertEntryAt(moduleEntry, 1);
+
+    settings.writeExternal(root, new JavaCodeStyleSettings(originalRoot));
+    String actual = """
+      <root>
+        <JavaCodeStyleSettings>
+          <option name="IMPORT_LAYOUT_TABLE">
+            <value>
+              <package name="" withSubpackages="true" static="true" />
+              <package name="" withSubpackages="true" static="false" module="true" />
+              <package name="" withSubpackages="true" static="false" />
+              <package name="com" withSubpackages="true" static="false" />
+            </value>
+          </option>
+        </JavaCodeStyleSettings>
+      </root>""";
+    assertEquals(actual, JDOMUtil.writeElement(root));
+  }
+
+  public void testMovedNotFirstImportedImportModule() throws IOException, JDOMException {
+    CodeStyleSettings originalRoot = CodeStyle.getSettings(getProject());
+    JavaCodeStyleSettings settings = originalRoot.getCustomSettings(JavaCodeStyleSettings.class);
+    String text = """
+      <root>
+        <JavaCodeStyleSettings>
+          <option name="IMPORT_LAYOUT_TABLE">
+            <value>
+              <package name="" withSubpackages="true" static="true" />
+              <package name="" withSubpackages="true" static="false" />
+              <package name="" withSubpackages="true" static="false" module="true" />
+              <package name="com" withSubpackages="true" static="false" />
+            </value>
+          </option>
+        </JavaCodeStyleSettings>
+      </root>
+      """;
+    settings.readExternal(JDOMUtil.load(text));
+
+    Element root = new Element("root");
+    PackageEntry notModuleEntry = settings.IMPORT_LAYOUT_TABLE.getEntryAt(0);
+    assertNotSame(PackageEntry.ALL_MODULE_IMPORTS, notModuleEntry);
+    settings.IMPORT_LAYOUT_TABLE.removeEntryAt(0);
+    settings.IMPORT_LAYOUT_TABLE.insertEntryAt(notModuleEntry, 1);
+
+    settings.writeExternal(root, new JavaCodeStyleSettings(originalRoot));
+    String actual = """
+      <root>
+        <JavaCodeStyleSettings>
+          <option name="IMPORT_LAYOUT_TABLE">
+            <value>
+              <package name="" withSubpackages="true" static="false" />
+              <package name="" withSubpackages="true" static="true" />
+              <package name="" withSubpackages="true" static="false" module="true" />
+              <package name="com" withSubpackages="true" static="false" />
+            </value>
+          </option>
+        </JavaCodeStyleSettings>
+      </root>""";
+    assertEquals(actual, JDOMUtil.writeElement(root));
+  }
+
+  public void testFirstImportedImportModule() throws IOException, JDOMException {
+    CodeStyleSettings originalRoot = CodeStyle.getSettings(getProject());
+    JavaCodeStyleSettings settings = originalRoot.getCustomSettings(JavaCodeStyleSettings.class);
+    String text = """
+      <root>
+        <JavaCodeStyleSettings>
+          <option name="IMPORT_LAYOUT_TABLE">
+            <value>
+              <package name="" withSubpackages="true" static="false" module="true" />
+              <package name="" withSubpackages="true" static="true" />
+              <package name="" withSubpackages="true" static="false" />
+              <package name="com" withSubpackages="true" static="false" />
+            </value>
+          </option>
+        </JavaCodeStyleSettings>
+      </root>
+      """;
+    settings.readExternal(JDOMUtil.load(text));
+
+    Element root = new Element("root");
+    PackageEntryTable table = settings.IMPORT_LAYOUT_TABLE;
+    assertSize(4,table.getEntries());
+    PackageEntry moduleEntry = table.getEntryAt(0);
+    assertSame(PackageEntry.ALL_MODULE_IMPORTS, moduleEntry);
+    table.addEntry(new PackageEntry(true, "org.foo", true));
+    settings.writeExternal(root, new JavaCodeStyleSettings(originalRoot));
+    String actual = """
+      <root>
+        <JavaCodeStyleSettings>
+          <option name="IMPORT_LAYOUT_TABLE">
+            <value>
+              <package name="" withSubpackages="true" static="false" module="true" />
+              <package name="" withSubpackages="true" static="true" />
+              <package name="" withSubpackages="true" static="false" />
+              <package name="com" withSubpackages="true" static="false" />
+              <package name="org.foo" withSubpackages="true" static="true" />
+            </value>
+          </option>
+        </JavaCodeStyleSettings>
+      </root>""";
+    assertEquals(actual, JDOMUtil.writeElement(root));
   }
 
   public void testSetProperties() {

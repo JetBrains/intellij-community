@@ -18,7 +18,6 @@ public class JavaPackageEntryTableAccessor extends ValueListPropertyAccessor<Pac
   public static final String STATIC_PREFIX = "$";
   public static final String MODULE_PREFIX = "@";
   private final Field myField;
-
   public JavaPackageEntryTableAccessor(@NotNull Object object, @NotNull Field field) {
     super(object, field);
     myField = field;
@@ -80,7 +79,9 @@ public class JavaPackageEntryTableAccessor extends ValueListPropertyAccessor<Pac
   @Override
   protected @NotNull List<String> toExternal(@NotNull PackageEntryTable value) {
     List<String> externalList = new ArrayList<>();
-    for (PackageEntry entry : value.getEntries()) {
+    PackageEntry[] entries = value.getEntries();
+    for (int i = 0; i < entries.length; i++) {
+      PackageEntry entry = entries[i];
       if (entry == PackageEntry.BLANK_LINE_ENTRY) {
         externalList.add(String.valueOf(BLANK_LINE_CHAR));
       }
@@ -90,6 +91,11 @@ public class JavaPackageEntryTableAccessor extends ValueListPropertyAccessor<Pac
           entryBuilder.append(STATIC_PREFIX);
         }
         if (entry == PackageEntry.ALL_MODULE_IMPORTS) {
+          Object dataObject = getDataObject();
+          //do not save if it was generated
+          if (i == 0 && dataObject instanceof JavaCodeStyleSettings) {
+            continue;
+          }
           entryBuilder.append(MODULE_PREFIX);
         }
         if (entry.isSpecial()) {

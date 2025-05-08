@@ -186,6 +186,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   @Property(externalName = "imports_layout")
   public PackageEntryTable IMPORT_LAYOUT_TABLE = new PackageEntryTable();
 
+  private boolean updatedModuleImportLayout = false;
 
   /**
    * <pre>
@@ -389,7 +390,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
 
   private void initImportsByDefault() {
     PACKAGES_TO_USE_IMPORT_ON_DEMAND.addEntry(new PackageEntry(false, "java.awt", false));
-    PACKAGES_TO_USE_IMPORT_ON_DEMAND.addEntry(new PackageEntry(false,"javax.swing", false));
+    PACKAGES_TO_USE_IMPORT_ON_DEMAND.addEntry(new PackageEntry(false, "javax.swing", false));
     initImportLayout();
   }
 
@@ -499,6 +500,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
       }
       if (!ContainerUtil.exists(entries, entry -> entry == PackageEntry.ALL_MODULE_IMPORTS)) {
         IMPORT_LAYOUT_TABLE.insertEntryAt(PackageEntry.ALL_MODULE_IMPORTS, 0);
+        updatedModuleImportLayout = true;
       }
     }
   }
@@ -508,7 +510,32 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     super.writeExternal(parentElement, parentSettings);
     writeExternalCollection(parentElement, myRepeatAnnotations, REPEAT_ANNOTATIONS, REPEAT_ANNOTATIONS_ITEM);
     writeExternalCollection(parentElement, myDoNotImportInner, DO_NOT_IMPORT_INNER, DO_NOT_IMPORT_INNER_ITEM);
+    //don't change setting file if it was generated and not changed
+    if (updatedModuleImportLayout && IMPORT_LAYOUT_TABLE.getEntries() != null &&
+        IMPORT_LAYOUT_TABLE.getEntries()[0] == PackageEntry.ALL_MODULE_IMPORTS) {
+      deleteFirstModuleFromImportLayoutTable(parentElement);
+    }
     writeVersion(parentElement);
+  }
+
+  private void deleteFirstModuleFromImportLayoutTable(Element parentElement) {
+    Element child = parentElement.getChild(getTagName());
+    if (child == null) return;
+    Element table = null;
+    for (Element option : child.getChildren("option")) {
+      if (option.getAttributeValue("name").equals("IMPORT_LAYOUT_TABLE")) {
+        table = option;
+        break;
+      }
+    }
+    if (table == null) return;
+    Element value = table.getChild("value");
+    if (value == null) return;
+    List<Element> entries = value.getChildren();
+    if (entries == null || entries.isEmpty()) return;
+    Element firstEntry = entries.get(0);
+    if (!"true".equals(firstEntry.getAttributeValue("module"))) return;
+    firstEntry.detach();
   }
 
 
