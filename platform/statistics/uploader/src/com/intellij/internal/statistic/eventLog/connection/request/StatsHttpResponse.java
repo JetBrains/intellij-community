@@ -47,9 +47,13 @@ public class StatsHttpResponse {
 
   private static @Nullable Date parseDate(String string) {
     for (SimpleDateFormat format : DATE_FORMATS) {
-      Date date = format.parse(string, new ParsePosition(0));
-      if (date != null) {
-        return date;
+      try {
+        Date date = format.parse(string, new ParsePosition(0));
+        if (date != null) {
+          return date;
+        }
+      }
+      catch (NumberFormatException ignored) {
       }
     }
     return null;
