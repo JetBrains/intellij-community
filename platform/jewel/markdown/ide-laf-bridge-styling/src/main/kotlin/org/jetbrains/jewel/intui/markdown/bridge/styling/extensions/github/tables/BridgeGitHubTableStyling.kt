@@ -28,7 +28,7 @@ public fun GfmTableColors.Companion.create(
     rowBackgroundColor: Color = Color.Unspecified,
     alternateRowBackgroundColor: Color = if (isLightTheme) Color(0xfff6f8fa) else Color(0xff151b23),
     rowBackgroundStyle: RowBackgroundStyle = RowBackgroundStyle.Striped,
-) = GfmTableColors(borderColor, rowBackgroundColor, alternateRowBackgroundColor, rowBackgroundStyle)
+): GfmTableColors = GfmTableColors(borderColor, rowBackgroundColor, alternateRowBackgroundColor, rowBackgroundStyle)
 
 @ExperimentalJewelApi
 public fun GfmTableMetrics.Companion.create(
@@ -36,4 +36,5 @@ public fun GfmTableMetrics.Companion.create(
     cellPadding: PaddingValues = PaddingValues(horizontal = 13.dp, vertical = 6.dp),
     defaultCellContentAlignment: Alignment.Horizontal = Alignment.Start,
     headerDefaultCellContentAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
-) = GfmTableMetrics(borderWidth, cellPadding, defaultCellContentAlignment, headerDefaultCellContentAlignment)
+): GfmTableMetrics =
+    GfmTableMetrics(borderWidth, cellPadding, defaultCellContentAlignment, headerDefaultCellContentAlignment)
