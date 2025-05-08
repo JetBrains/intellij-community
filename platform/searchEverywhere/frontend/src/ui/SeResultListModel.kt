@@ -6,44 +6,30 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.SeLog
-import com.intellij.platform.searchEverywhere.providers.SeLog.FROZEN_COUNT
 import com.intellij.platform.searchEverywhere.providers.topHit.SeTopHitItemsProvider
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.DefaultListModel
 
 @ApiStatus.Internal
 class SeResultListModel: DefaultListModel<SeResultListRow>() {
-  private var frozenCount: Int = 0
-  var ignoreFreezing: Boolean = false
+  val freezer: Freezer = Freezer { size }
 
   private val prioritizedProviders: List<SeProviderId> = listOfNotNull(
     "CalculatorSEContributor",
     "AutocompletionContributor",
     "CommandsContributor",
-    SeTopHitItemsProvider.id(false),
-    SeTopHitItemsProvider.id(true),
-    if (AdvancedSettings.getBoolean("search.everywhere.recent.at.top")) RecentFilesSEContributor::class.java.getSimpleName() else null
+    SeTopHitItemsProvider.Companion.id(false),
+    SeTopHitItemsProvider.Companion.id(true),
+    if (AdvancedSettings.Companion.getBoolean("search.everywhere.recent.at.top")) RecentFilesSEContributor::class.java.getSimpleName() else null
   ).map { SeProviderId(it) }
 
   private val prioritizedProvidersPriorities: Map<SeProviderId, Int> = prioritizedProviders.withIndex().associate {
     it.value to ( prioritizedProviders.size - it.index)
   }
 
-  fun freeze(count: Int) {
-    if (count > frozenCount) {
-      frozenCount = count
-      SeLog.log(FROZEN_COUNT) { "frozenCount = $frozenCount; size = $size; ignoreFreezing = $ignoreFreezing" }
-    }
-  }
-
-  fun freezeAll() {
-    freeze(size)
-  }
-
   fun reset() {
-    frozenCount = 0
-    ignoreFreezing = true
-    super.removeAllElements()
+    freezer.reset()
+    removeAllElements()
   }
 
   fun removeLoadingItem() {
@@ -73,7 +59,7 @@ class SeResultListModel: DefaultListModel<SeResultListRow>() {
                     }
                     else null
 
-        index?.takeIf { ignoreFreezing || it >= frozenCount }?.let { indexToRemove ->
+        index?.takeIf {  it >= freezer.frozenCount }?.let { indexToRemove ->
           removeElementAt(indexToRemove)
           // Replace item and keep the same index for now
           val index = indexToRemove
@@ -99,7 +85,7 @@ class SeResultListModel: DefaultListModel<SeResultListRow>() {
   }
 
   private fun firstIndexOrNull(fullSearch: Boolean, predicate: (SeItemData) -> Boolean): Int? {
-    val startIndex = if (fullSearch || ignoreFreezing) 0 else frozenCount
+    val startIndex = if (fullSearch) 0 else freezer.frozenCount
 
     return (startIndex until size).firstOrNull { index ->
       when (val row = getElementAt(index)) {
@@ -115,6 +101,33 @@ class SeResultListModel: DefaultListModel<SeResultListRow>() {
     if (size == 0) 0
     else if (lastElement() is SeResultListMoreRow) size - 1
     else size
+
+  class Freezer(private val listSize: () -> Int) {
+    private var frozenCountToApply: Int = 0
+    private var isApplied = false
+
+    val frozenCount: Int get() = if (isApplied) frozenCountToApply else 0
+
+    fun applyFreeze() {
+      isApplied = true
+    }
+
+    fun freezeIfApplied(count: Int) {
+      if (count > frozenCountToApply) {
+        frozenCountToApply = count
+        SeLog.Companion.log(SeLog.FROZEN_COUNT) { "frozenCount = $frozenCountToApply; size = ${listSize()}; isApplied = $isApplied" }
+      }
+    }
+
+    fun freezeAllIfApplied() {
+      freezeIfApplied(listSize())
+    }
+
+    fun reset() {
+      isApplied = false
+      frozenCountToApply = 0
+    }
+  }
 
   companion object {
     const val DEFAULT_FROZEN_COUNT: Int = 10

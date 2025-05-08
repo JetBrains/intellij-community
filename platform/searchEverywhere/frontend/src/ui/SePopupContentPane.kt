@@ -55,7 +55,9 @@ import java.awt.event.*
 import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.text.Document
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
+@OptIn(ExperimentalAtomicApi::class)
 @Internal
 class SePopupContentPane(private val vm: SePopupVm) : JPanel(), Disposable {
   val preferableFocusedComponent: JComponent get() = textField
@@ -120,7 +122,7 @@ class SePopupContentPane(private val vm: SePopupVm) : JPanel(), Disposable {
         launch {
           delay(SeResultListModel.DEFAULT_FREEZING_DELAY_MS)
           withContext(Dispatchers.EDT) {
-            resultListModel.ignoreFreezing = false
+            resultListModel.freezer.applyFreeze()
           }
         }
 
@@ -131,7 +133,7 @@ class SePopupContentPane(private val vm: SePopupVm) : JPanel(), Disposable {
 
             when (listEvent) {
               is SeResultListUpdateEvent -> {
-                resultListModel.freeze(indexToFreezeFromListOffset())
+                resultListModel.freezer.freezeIfApplied(indexToFreezeFromListOffset())
                 resultListModel.addFromEvent(listEvent.event)
               }
               is SeResultListStopEvent -> {
@@ -161,7 +163,7 @@ class SePopupContentPane(private val vm: SePopupVm) : JPanel(), Disposable {
       val yetToScrollHeight = verticalScrollBar.maximum - verticalScrollBar.model.extent - adjustmentEvent.value
 
       if (verticalScrollBar.model.extent > 0 && yetToScrollHeight < 50) {
-        resultListModel.freezeAll()
+        resultListModel.freezer.freezeAllIfApplied()
         vm.shouldLoadMore = true
       }
       else if (yetToScrollHeight > resultsScrollPane.height / 2) {
