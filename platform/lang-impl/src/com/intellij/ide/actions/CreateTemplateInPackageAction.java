@@ -9,7 +9,9 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.module.GeneralModuleType;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -154,7 +156,9 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
 
   private static boolean noSourceRootConfigured(VirtualFile file, ProjectFileIndex index) {
     Module module = index.getModuleForFile(file);
-    return module != null && ModuleRootManager.getInstance(module).getSourceRoots().length == 0;
+    return module != null &&
+           ModuleType.get(module) instanceof GeneralModuleType &&
+           ModuleRootManager.getInstance(module).getSourceRoots().length == 0;
   }
 
   protected abstract boolean checkPackageExists(PsiDirectory directory);
