@@ -1092,6 +1092,17 @@ com.intellij.ide.ui.VirtualFileAppearanceListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - s:fireVirtualFileAppearanceChanged(com.intellij.openapi.vfs.VirtualFile):V
 - a:virtualFileAppearanceChanged(com.intellij.openapi.vfs.VirtualFile):V
+com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo
+- a:dispose():V
+- a:getAuthor():java.lang.String
+- a:getEditorSchemeId():java.lang.String
+- a:getId():java.lang.String
+- a:getName():java.lang.String
+- a:getProviderClassLoader():java.lang.ClassLoader
+- a:installEditorScheme(com.intellij.openapi.editor.colors.EditorColorsScheme):V
+- a:installTheme(javax.swing.UIDefaults):V
+- a:isDark():Z
+- a:isInitialized():Z
 a:com.intellij.ide.ui.search.ActionFromOptionDescriptorProvider
 - sf:EP:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V

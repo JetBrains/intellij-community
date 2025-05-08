@@ -140,17 +140,6 @@ a:com.intellij.ide.ui.LafManager
 - *a:getInstalledThemes():kotlin.sequences.Sequence
 *:com.intellij.ide.ui.PopupLocator
 - a:getPositionFor(com.intellij.openapi.ui.popup.JBPopup):java.awt.Point
-*:com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo
-- a:dispose():V
-- a:getAuthor():java.lang.String
-- a:getEditorSchemeId():java.lang.String
-- a:getId():java.lang.String
-- a:getName():java.lang.String
-- a:getProviderClassLoader():java.lang.ClassLoader
-- a:installEditorScheme(com.intellij.openapi.editor.colors.EditorColorsScheme):V
-- a:installTheme(javax.swing.UIDefaults):V
-- a:isDark():Z
-- a:isInitialized():Z
 c:com.intellij.openapi.actionSystem.PlatformDataKeys
 - com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 - *sf:CONTEXT_MENU_LOCATOR:com.intellij.openapi.actionSystem.DataKey
