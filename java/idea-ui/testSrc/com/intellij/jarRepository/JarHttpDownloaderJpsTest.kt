@@ -117,45 +117,41 @@ class JarHttpDownloaderJpsTest {
   @Test
   fun happy_case() = testRepositoryLibraryUtils(projectTestData) { project, utils ->
 
-    project.withMavenRepoReplace {
-      val libraryRelease = getLibrary(project, "apache.commons.math3") as LibraryEx
-      val promise = JarHttpDownloaderJps.getInstance(project).downloadLibraryFilesAsync(libraryRelease)
-      promise!!.await()
+    val libraryRelease = getLibrary(project, "apache.commons.math3") as LibraryEx
+    val promise = JarHttpDownloaderJps.getInstance(project).downloadLibraryFilesAsync(libraryRelease)
+    promise!!.await()
 
-      val jar = m2DirectoryPath.resolve("org/apache/commons/commons-math3/3.6/commons-math3-3.6.jar")
-      assertEquals("fake jar content", jar.readText())
+    val jar = m2DirectoryPath.resolve("org/apache/commons/commons-math3/3.6/commons-math3-3.6.jar")
+    assertEquals("fake jar content", jar.readText())
 
-      val sourcesJar = m2DirectoryPath.resolve("org/apache/commons/commons-math3/3.6/commons-math3-3.6-sources.jar")
-      assertEquals("fake sources jar content", sourcesJar.readText())
-    }
+    val sourcesJar = m2DirectoryPath.resolve("org/apache/commons/commons-math3/3.6/commons-math3-3.6-sources.jar")
+    assertEquals("fake sources jar content", sourcesJar.readText())
 
   }
 
   @Test
   fun bad_checksum() = testRepositoryLibraryUtils(projectTestData) { project, utils ->
-    project.withMavenRepoReplace {
-      val libraryRelease = getLibrary(project, "apache.commons.math3.bad.checksum") as LibraryEx
-      val promise = JarHttpDownloaderJps.getInstance(project).downloadLibraryFilesAsync(libraryRelease)
+    val libraryRelease = getLibrary(project, "apache.commons.math3.bad.checksum") as LibraryEx
+    val promise = JarHttpDownloaderJps.getInstance(project).downloadLibraryFilesAsync(libraryRelease)
 
-      val exception = assertFailsWith<IllegalStateException> {
-        promise!!.await()
-      }
-
-      assertTrue(exception.message!!.startsWith("Failed to download 1 artifact(s): (first exception) Wrong file checksum"), exception.message!!)
-
-      val cause = exception.cause!!
-      assertTrue(cause.message!!.contains("Wrong file checksum after downloading '${server.url}/org/apache/commons/commons-math3/3.6/commons-math3-3.6.jar'"), cause.message!!)
-      assertTrue(cause.message!!.contains("expected checksum 000000000000000000000000000000000000000000000000000000000000028a, but got 79b0baf88d2bc643f652f413e52702d81ac40a9b782d7f00fc431739e8d1c28a"), cause.message!!)
-
-      // not downloaded due to wrong checksum
-      val jar = m2DirectoryPath.resolve("org/apache/commons/commons-math3/3.6/commons-math3-3.6.jar")
-      Assertions.assertFalse(jar.exists())
-
-      // still downloaded
-      val sourcesJar = m2DirectoryPath.resolve("org/apache/commons/commons-math3/3.6/commons-math3-3.6-sources.jar")
-      assertEquals("fake sources jar content", sourcesJar.readText())
-
+    val exception = assertFailsWith<IllegalStateException> {
+      promise!!.await()
     }
+
+    assertTrue(exception.message!!.startsWith("Failed to download 1 artifact(s): (first exception) Wrong file checksum"), exception.message!!)
+
+    val cause = exception.cause!!
+    assertTrue(cause.message!!.contains("Wrong file checksum after downloading '${server.url}/org/apache/commons/commons-math3/3.6/commons-math3-3.6.jar'"), cause.message!!)
+    assertTrue(cause.message!!.contains("expected checksum 000000000000000000000000000000000000000000000000000000000000028a, but got 79b0baf88d2bc643f652f413e52702d81ac40a9b782d7f00fc431739e8d1c28a"), cause.message!!)
+
+    // not downloaded due to wrong checksum
+    val jar = m2DirectoryPath.resolve("org/apache/commons/commons-math3/3.6/commons-math3-3.6.jar")
+    Assertions.assertFalse(jar.exists())
+
+    // still downloaded
+    val sourcesJar = m2DirectoryPath.resolve("org/apache/commons/commons-math3/3.6/commons-math3-3.6-sources.jar")
+    assertEquals("fake sources jar content", sourcesJar.readText())
+
   }
 
   private suspend fun Project.withMavenRepoReplace(f: suspend () -> Unit) {
@@ -194,10 +190,12 @@ class JarHttpDownloaderJpsTest {
     doNotEnableExternalStorageByDefaultInTests {
       runBlocking {
         createOrLoadProject(projectDirectory, ::copyProjectFiles, loadComponentState = true, useDefaultProjectSettings = false) { project ->
-          val utils = RepositoryLibraryUtils.getInstance(project)
-          utils.setTestCoroutineScope(this)
-          checkProject(project, utils)
-          utils.resetTestCoroutineScope()
+          project.withMavenRepoReplace {
+            val utils = RepositoryLibraryUtils.getInstance(project)
+            utils.setTestCoroutineScope(this)
+            checkProject(project, utils)
+            utils.resetTestCoroutineScope()
+          }
         }
       }
     }

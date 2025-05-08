@@ -72,14 +72,16 @@ class JarHttpDownloaderJps(val project: Project, val coroutineScope: CoroutineSc
       // 2. in tests, JarRepositoryManager.localRepositoryPath can be overridden
       val possibleMavenLocalRepositoryRoots = listOfNotNull(
         // could be overridden, like in tests
-        JarRepositoryManager.getLocalRepositoryPath().path,
+        project?.let { JarRepositoryManager.getJPSLocalMavenRepositoryForIdeaProject(it).toString() },
+
         project?.let { JarRepositoryManager.getJPSLocalMavenRepositoryForIdeaProject(it).toString() },
 
         // always returns a canonical path (symlinks resolved), so can be anything even if it was not overridden
         PathMacroManager.getInstance(ApplicationManager.getApplication()).expandPath(JarRepositoryManager.MAVEN_REPOSITORY_MACRO),
-
         // in some cases, we may receive a non-canonical path (without symlinks resolved)
         JpsMavenSettings.getMavenRepositoryPath(),
+        // in some cases, we may receive a non-canonical path (without symlinks resolved)
+        //JpsMavenSettings.getMavenRepositoryPath(),
       ).map { Path.of(FileUtil.toSystemDependentName(it)).normalize() }
 
       val files = OrderRootType.getAllTypes().flatMap { rootType -> library.getUrls(rootType).map { rootType to it } }
@@ -182,7 +184,7 @@ class JarHttpDownloaderJps(val project: Project, val coroutineScope: CoroutineSc
   }
 
   /**
-   * return null if `library` could not be downloaded by JarHttpDownloader
+   * return rejew if `library` could not be downloaded by JarHttpDownloader
    */
   fun downloadLibraryFilesAsync(library: LibraryEx): Promise<*>? {
     val relativePaths = when (val result = collectRelativePathsForJarHttpDownloaderOrLog(project, library)) {
