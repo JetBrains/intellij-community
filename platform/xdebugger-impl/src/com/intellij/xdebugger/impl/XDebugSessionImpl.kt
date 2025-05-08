@@ -131,7 +131,9 @@ class XDebugSessionImpl @JvmOverloads constructor(
   private val myDispatcher = EventDispatcher.create<XDebugSessionListener>(XDebugSessionListener::class.java)
   private val myProject: Project = debuggerManager.project
 
-  val executionEnvironment: ExecutionEnvironment? = environment
+  private val executionEnvironment: ExecutionEnvironment? = environment
+  override fun getExecutionEnvironment(): ExecutionEnvironment? = executionEnvironment
+
   private val myStopped = MutableStateFlow<Boolean>(false)
   private val myReadOnly = MutableStateFlow<Boolean>(false)
   private val myShowToolWindowOnSuspendOnly: Boolean = showToolWindowOnSuspendOnly
@@ -1052,7 +1054,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
     positionReached(suspendContext, false)
   }
 
-  fun positionReached(suspendContext: XSuspendContext, attract: Boolean) {
+  override fun positionReached(suspendContext: XSuspendContext, attract: Boolean) {
     clearActiveNonLineBreakpoint()
     positionReachedInternal(suspendContext, attract)
   }
@@ -1147,14 +1149,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
     else {
       processHandler.destroyProcess()
     }
-  }
-
-  override fun reportError(message: String) {
-    reportMessage(message, MessageType.ERROR)
-  }
-
-  override fun reportMessage(message: String, type: MessageType) {
-    reportMessage(message, type, null)
   }
 
   override fun reportMessage(message: String, type: MessageType, listener: HyperlinkListener?) {

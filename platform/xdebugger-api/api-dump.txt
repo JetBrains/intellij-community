@@ -85,6 +85,7 @@ com.intellij.xdebugger.XDebugSession
 - a:getCurrentPosition():com.intellij.xdebugger.XSourcePosition
 - a:getCurrentStackFrame():com.intellij.xdebugger.frame.XStackFrame
 - a:getDebugProcess():com.intellij.xdebugger.XDebugProcess
+- a:getExecutionEnvironment():com.intellij.execution.runners.ExecutionEnvironment
 - a:getProject():com.intellij.openapi.project.Project
 - a:getRunContentDescriptor():com.intellij.execution.ui.RunContentDescriptor
 - a:getRunProfile():com.intellij.execution.configurations.RunProfile
@@ -96,10 +97,11 @@ com.intellij.xdebugger.XDebugSession
 - a:isSuspended():Z
 - a:pause():V
 - a:positionReached(com.intellij.xdebugger.frame.XSuspendContext):V
+- positionReached(com.intellij.xdebugger.frame.XSuspendContext,Z):V
 - a:rebuildViews():V
 - a:removeSessionListener(com.intellij.xdebugger.XDebugSessionListener):V
-- a:reportError(java.lang.String):V
-- a:reportMessage(java.lang.String,com.intellij.openapi.ui.MessageType):V
+- reportError(java.lang.String):V
+- reportMessage(java.lang.String,com.intellij.openapi.ui.MessageType):V
 - a:reportMessage(java.lang.String,com.intellij.openapi.ui.MessageType,javax.swing.event.HyperlinkListener):V
 - a:resume():V
 - a:runToPosition(com.intellij.xdebugger.XSourcePosition,Z):V
