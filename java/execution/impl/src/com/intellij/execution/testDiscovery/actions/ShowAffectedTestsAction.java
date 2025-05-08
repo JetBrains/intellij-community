@@ -157,7 +157,7 @@ public final class ShowAffectedTestsAction extends AnAction {
     DiscoveredTestsTree tree = showTree(project, dataContext, presentableName, e.getPlace());
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       if (DumbService.isDumb(project)) return;
-      String className = ReadAction.compute(() -> DiscoveredTestsTreeModel.getClassName(psiClass));
+      String className = ReadAction.compute(() -> ClassUtil.getBinaryClassName(psiClass));
       if (className == null) return;
       List<Couple<String>> classesAndMethods = new SmartList<>(Couple.of(className, null));
       processTestDiscovery(project, createTreeProcessor(tree), classesAndMethods, Collections.emptyList());
@@ -492,7 +492,7 @@ public final class ShowAffectedTestsAction extends AnAction {
   public static @Nullable Couple<String> getMethodKey(@NotNull PsiMethod method) {
     if (DumbService.isDumb(method.getProject())) return null;
     PsiClass c = method.isValid() ? method.getContainingClass() : null;
-    String fqn = c != null ? DiscoveredTestsTreeModel.getClassName(c) : null;
+    String fqn = c != null ? ClassUtil.getBinaryClassName(c) : null;
     return fqn == null ? null : Couple.of(fqn, methodSignature(method));
   }
 

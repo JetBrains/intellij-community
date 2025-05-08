@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testDiscovery.actions;
 
-import com.intellij.ide.util.JavaAnonymousClassesHelper;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
@@ -9,7 +8,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.tree.BaseTreeModel;
 import com.intellij.util.Function;
@@ -103,16 +101,6 @@ final class DiscoveredTestsTreeModel extends BaseTreeModel<Object> implements In
     return myInvoker;
   }
 
-  public static @Nullable String getClassName(@NotNull PsiClass c) {
-    if (c instanceof PsiAnonymousClass) {
-      PsiClass containingClass = PsiTreeUtil.getParentOfType(c, PsiClass.class);
-      if (containingClass != null) {
-        return ClassUtil.getJVMClassName(containingClass) + JavaAnonymousClassesHelper.getName((PsiAnonymousClass)c);
-      }
-    }
-    return ClassUtil.getJVMClassName(c);
-  }
-
   synchronized TestMethodUsage @NotNull [] getTestMethods() {
     return myTests
       .entrySet()
@@ -138,7 +126,7 @@ final class DiscoveredTestsTreeModel extends BaseTreeModel<Object> implements In
       private final String myPackageName;
 
       Clazz(@NotNull PsiClass psi) {
-        super(psi, o -> StringUtil.notNullize(o.getName(), StringUtil.notNullize(getClassName(o), "<null>")));
+        super(psi, o -> StringUtil.notNullize(o.getName(), StringUtil.notNullize(ClassUtil.getBinaryClassName(o), "<null>")));
         myPackageName = PsiUtil.getPackageName(psi);
       }
 
