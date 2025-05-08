@@ -1,197 +1,190 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.debugger.ui.tree.render;
+package com.intellij.debugger.ui.tree.render
 
-import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.engine.*;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluationContext;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.impl.DebuggerUtilsImpl;
-import com.intellij.debugger.impl.MethodNotFoundException;
-import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.IntelliJProjectUtil;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.rt.debugger.BatchEvaluatorServer;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin;
-import com.sun.jdi.*;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.debugger.JavaDebuggerBundle
+import com.intellij.debugger.engine.*
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl.Companion.assertIsManagerThread
+import com.intellij.debugger.engine.evaluation.EvaluateException
+import com.intellij.debugger.engine.evaluation.EvaluationContext
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
+import com.intellij.debugger.impl.DebuggerUtilsEx
+import com.intellij.debugger.impl.DebuggerUtilsEx.mirrorOfArray
+import com.intellij.debugger.impl.DebuggerUtilsImpl
+import com.intellij.debugger.impl.MethodNotFoundException
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.IntelliJProjectUtil
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.getOrCreateUserData
+import com.intellij.openapi.util.registry.Registry.Companion.`is`
+import com.intellij.rt.debugger.BatchEvaluatorServer
+import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin
+import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin.Companion.computeWithOrigin
+import com.sun.jdi.*
+import java.io.ByteArrayInputStream
+import java.io.DataInputStream
+import java.io.IOException
+import java.nio.charset.StandardCharsets
+import java.util.function.Consumer
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
+class BatchEvaluator private constructor() {
+  private val myBuffer = HashMap<SuspendContext?, MutableList<ToStringCommand>>()
 
-public final class BatchEvaluator {
-  private static final Logger LOG = Logger.getInstance(BatchEvaluator.class);
+  fun invoke(command: ToStringCommand) {
+    assertIsManagerThread()
 
-  private static final Key<BatchEvaluator> BATCH_EVALUATOR_KEY = new Key<>("BatchEvaluator");
-  public static final Key<Boolean> REMOTE_SESSION_KEY = new Key<>("is_remote_session_key");
-
-  private final HashMap<SuspendContext, List<ToStringCommand>> myBuffer = new HashMap<>();
-
-  private BatchEvaluator() {
-  }
-
-  public void invoke(ToStringCommand command) {
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-
-    EvaluationContext evaluationContext = command.getEvaluationContext();
-    SuspendContextImpl suspendContext = (SuspendContextImpl)evaluationContext.getSuspendContext();
-    if (!(command.getValue() instanceof ObjectReference) || // skip for primitive values
-        (!Registry.is("debugger.batch.evaluation.force") &&
-        !Registry.is("debugger.batch.evaluation"))) {
-      suspendContext.getManagerThread().invokeCommand(command);
+    val evaluationContext = command.evaluationContext
+    val suspendContext = evaluationContext.getSuspendContext() as SuspendContextImpl
+    if (command.value !is ObjectReference ||  // skip for primitive values
+        (!`is`("debugger.batch.evaluation.force") && !`is`("debugger.batch.evaluation"))) {
+      suspendContext.managerThread.invokeCommand(command)
     }
     else {
-      List<ToStringCommand> toStringCommands = myBuffer.get(suspendContext);
-      if (toStringCommands == null) {
-        toStringCommands = new ArrayList<>();
-        myBuffer.put(suspendContext, toStringCommands);
-        suspendContext.getManagerThread().schedule(new BatchEvaluatorCommand(evaluationContext));
-      }
-
-      toStringCommands.add(command);
+      myBuffer.computeIfAbsent(suspendContext) {
+        suspendContext.managerThread.schedule(BatchEvaluatorCommand(evaluationContext))
+        mutableListOf()
+      }.add(command)
     }
   }
 
-  public static BatchEvaluator getBatchEvaluator(EvaluationContext evaluationContext) {
-    VirtualMachineProxyImpl virtualMachineProxy = ((EvaluationContextImpl)evaluationContext).getVirtualMachineProxy();
-    BatchEvaluator batchEvaluator = virtualMachineProxy.getUserData(BATCH_EVALUATOR_KEY);
+  private inner class BatchEvaluatorCommand(private val myEvaluationContext: EvaluationContext) : PossiblySyncCommand(
+    myEvaluationContext.getSuspendContext() as SuspendContextImpl) {
+    override fun syncAction(suspendContext: SuspendContextImpl) {
+      val commands: MutableList<ToStringCommand> = myBuffer.remove(suspendContext)!!
 
-    if (batchEvaluator == null) {
-      batchEvaluator = new BatchEvaluator();
-      virtualMachineProxy.putUserData(BATCH_EVALUATOR_KEY, batchEvaluator);
+      if ((commands.size == 1 && !`is`("debugger.batch.evaluation.force")) || !doEvaluateBatch(commands, myEvaluationContext)) {
+        commands.forEach(Consumer { obj: ToStringCommand? -> obj!!.action() })
+      }
     }
-    return batchEvaluator;
+
+    override fun commandCancelled() {
+      myBuffer.remove(suspendContext)
+    }
   }
 
-  private static boolean doEvaluateBatch(List<ToStringCommand> requests, EvaluationContext evaluationContext) {
-    try {
-      DebugProcess debugProcess = evaluationContext.getDebugProcess();
-      List<Value> values = ContainerUtil.map(requests, ToStringCommand::getValue);
+  companion object {
+    private val LOG = Logger.getInstance(BatchEvaluator::class.java)
 
-      if (ContainerUtil.exists(values, v -> !(v instanceof ObjectReference))) {
-        LOG.error("Batch toString evaluation can only be used for object references");
-        return false;
-      }
+    private val BATCH_EVALUATOR_KEY = Key.create<BatchEvaluator>("BatchEvaluator")
 
-      String helperMethodName;
+    @JvmField
+    val REMOTE_SESSION_KEY: Key<Boolean?> = Key<Boolean?>("is_remote_session_key")
 
-      ArrayReference argArray = null;
-      List<Value> args;
-      if (values.size() > 10) {
-        ArrayType objectArrayClass = (ArrayType)debugProcess.findClass(
-          evaluationContext,
-          "java.lang.Object[]",
-          evaluationContext.getClassLoader());
-        argArray = DebuggerUtilsEx.mirrorOfArray(objectArrayClass, values, evaluationContext);
-        args = Collections.singletonList(argArray);
-        helperMethodName = "evaluate";
-      }
-      else {
-        args = values;
-        helperMethodName = "evaluate" + values.size();
-      }
+    @JvmStatic
+    fun getBatchEvaluator(evaluationContext: EvaluationContext): BatchEvaluator {
+      val virtualMachineProxy = (evaluationContext as EvaluationContextImpl).virtualMachineProxy
+      return virtualMachineProxy.getOrCreateUserData(BATCH_EVALUATOR_KEY) { BatchEvaluator() }
+    }
 
-      EvaluationContextImpl evaluationContextImpl = (EvaluationContextImpl)evaluationContext;
-      String value = XEvaluationOrigin.computeWithOrigin(evaluationContextImpl, XEvaluationOrigin.RENDERER, () ->
-        DebuggerUtils.getInstance().processCollectibleValue(
-          () -> DebuggerUtilsImpl.invokeHelperMethod(evaluationContextImpl, BatchEvaluatorServer.class,
-                                                     helperMethodName, args, false),
-          result -> result instanceof StringReference ? ((StringReference)result).value() : null,
-          evaluationContext));
+    private fun doEvaluateBatch(requests: MutableList<ToStringCommand>, evaluationContext: EvaluationContext): Boolean {
+      try {
+        val values = requests.map { it.value }
 
-      if (argArray != null) {
-        DebuggerUtilsEx.enableCollection(argArray);
-      }
-      if (value != null) {
-        byte[] bytes = value.getBytes(StandardCharsets.ISO_8859_1);
-        try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(bytes))) {
-          int count = 0;
-          while (dis.available() > 0) {
-            boolean error = dis.readBoolean();
-            String message = dis.readUTF();
-            if (count >= requests.size()) {
-              LOG.error("Invalid number of results: required " + requests.size() + ", reply = " + Arrays.toString(bytes));
-              return false;
-            }
-            ToStringCommand command = requests.get(count++);
-            if (error) {
-              command.evaluationError(JavaDebuggerBundle.message("evaluation.error.method.exception", message));
-            }
-            else {
-              command.evaluationResult(message);
-            }
+        if (values.any { it !is ObjectReference }) {
+          LOG.error("Batch toString evaluation can only be used for object references")
+          return false
+        }
+
+        val evaluationContextImpl = evaluationContext as EvaluationContextImpl
+        var value: String?
+        if (values.size > 10) {
+          value = invokeDefaultHelperMethod(values, evaluationContextImpl)
+        }
+        else {
+          try {
+            value = invokeHelperMethod("evaluate" + values.size, values, evaluationContextImpl)
+          }
+          catch (e: MethodNotFoundException) {
+            LOG.warn("Unable to find helper method", e)
+            value = invokeDefaultHelperMethod(values, evaluationContextImpl)
           }
         }
-        catch (IOException e) {
-          LOG.error("Failed to read batch response", e, "reply was " + Arrays.toString(bytes));
-          return false;
+
+        if (value != null) {
+          val bytes = value.toByteArray(StandardCharsets.ISO_8859_1)
+          try {
+            DataInputStream(ByteArrayInputStream(bytes)).use { dis ->
+              var count = 0
+              while (dis.available() > 0) {
+                val error = dis.readBoolean()
+                val message = dis.readUTF()
+                if (count >= requests.size) {
+                  LOG.error("Invalid number of results: required " + requests.size + ", reply = " + bytes.contentToString())
+                  return false
+                }
+                val command = requests[count++]
+                if (error) {
+                  command.evaluationError(JavaDebuggerBundle.message("evaluation.error.method.exception", message))
+                }
+                else {
+                  command.evaluationResult(message)
+                }
+              }
+            }
+          }
+          catch (e: IOException) {
+            LOG.error("Failed to read batch response", e, "reply was " + bytes.contentToString())
+            return false
+          }
+          return true
         }
-        return true;
       }
-    }
-    catch (ObjectCollectedException e) {
-      LOG.error(e);
-    }
-    catch (MethodNotFoundException e) {
-      if (IntelliJProjectUtil.isIntelliJPlatformProject(evaluationContext.getProject())) {
-        String runProfileName = null;
-        DebugProcessImpl debugProcess = (DebugProcessImpl)evaluationContext.getDebugProcess();
-        XDebugSession session = debugProcess.getSession().getXDebugSession();
-        if (session != null) {
-          RunProfile runProfile = session.getRunProfile();
-          if (runProfile != null) {
-            runProfileName = runProfile.getName();
+      catch (e: ObjectCollectedException) {
+        LOG.error(e)
+      }
+      catch (e: MethodNotFoundException) {
+        if (IntelliJProjectUtil.isIntelliJPlatformProject(evaluationContext.getProject())) {
+          var runProfileName: String? = null
+          val debugProcess = evaluationContext.getDebugProcess() as DebugProcessImpl
+          val session = debugProcess.session.getXDebugSession()
+          if (session != null) {
+            val runProfile = session.getRunProfile()
+            if (runProfile != null) {
+              runProfileName = runProfile.getName()
+            }
+          }
+          if (runProfileName != null) {
+            LOG.error("Unable to find helper method", e, "Run configuration: $runProfileName")
           }
         }
-        if (runProfileName != null) {
-          LOG.error("Unable to find helper method", e, "Run configuration: " + runProfileName);
+        else {
+          LOG.error(e)
         }
       }
-      else {
-        LOG.error(e);
+      catch (e: EvaluateException) {
+        val exceptionFromTargetVM = e.exceptionFromTargetVM
+        if (exceptionFromTargetVM != null && "java.io.UTFDataFormatException" == exceptionFromTargetVM.referenceType().name()) {
+          // one of the strings is too long - just fall back to the regular separate toString calls
+        }
+        else {
+          LOG.error(e)
+        }
       }
-    }
-    catch (EvaluateException e) {
-      ObjectReference exceptionFromTargetVM = e.getExceptionFromTargetVM();
-      if (exceptionFromTargetVM != null && "java.io.UTFDataFormatException".equals(exceptionFromTargetVM.referenceType().name())) {
-        // one of the strings is too long - just fall back to the regular separate toString calls
-      }
-      else {
-        LOG.error(e);
-      }
-    }
-    return false;
-  }
-
-  private class BatchEvaluatorCommand extends PossiblySyncCommand {
-    private final EvaluationContext myEvaluationContext;
-
-    BatchEvaluatorCommand(EvaluationContext evaluationContext) {
-      super((SuspendContextImpl)evaluationContext.getSuspendContext());
-      myEvaluationContext = evaluationContext;
+      return false
     }
 
-    @Override
-    public void syncAction(@NotNull SuspendContextImpl suspendContext) {
-      List<ToStringCommand> commands = myBuffer.remove(suspendContext);
-
-      if ((commands.size() == 1 && !Registry.is("debugger.batch.evaluation.force")) || !doEvaluateBatch(commands, myEvaluationContext)) {
-        commands.forEach(ToStringCommand::action);
+    private fun invokeDefaultHelperMethod(values: List<Value>, evaluationContextImpl: EvaluationContextImpl): String? {
+      val objectArrayClass = evaluationContextImpl.debugProcess.findClass(
+        evaluationContextImpl,
+        "java.lang.Object[]",
+        evaluationContextImpl.getClassLoader()) as ArrayType
+      val argArray = mirrorOfArray(objectArrayClass, values, evaluationContextImpl)
+      try {
+        return invokeHelperMethod("evaluate", listOf(argArray), evaluationContextImpl)
+      }
+      finally {
+        DebuggerUtilsEx.enableCollection(argArray)
       }
     }
 
-    @Override
-    public void commandCancelled() {
-      myBuffer.remove(getSuspendContext());
+    private fun invokeHelperMethod(helperMethodName: String, args: List<Value?>, evaluationContextImpl: EvaluationContextImpl): String? {
+      return computeWithOrigin<String?>(evaluationContextImpl, XEvaluationOrigin.RENDERER) {
+        DebuggerUtils.getInstance().processCollectibleValue<String?, Value?>(
+          {
+            DebuggerUtilsImpl.invokeHelperMethod(evaluationContextImpl, BatchEvaluatorServer::class.java, helperMethodName, args, false)
+          },
+          { (it as? StringReference)?.value() },
+          evaluationContextImpl)
+      }
     }
   }
 }
