@@ -80,8 +80,10 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     private CodeFragmentEvaluator myCurrentFragmentEvaluator;
     private final Set<JavaCodeFragment> myVisitedFragments = new HashSet<>();
     private final @Nullable PsiClass myPositionPsiClass;
+    private final @Nullable PsiElement myPositionPsiElement;
 
     private Builder(@Nullable SourcePosition position) {
+      myPositionPsiElement = position != null ? position.getElementAt() : null;
       myPositionPsiClass = JVMNameUtil.getClassAt(position);
     }
 
@@ -855,7 +857,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
         PsiClass variableClass = getContainingClass(psiVar);
         final PsiClass positionClass = getPositionClass();
         if (Objects.equals(positionClass, variableClass)) {
-          PsiElement method = DebuggerUtilsEx.getContainingMethod(expression);
+          PsiElement method = DebuggerUtilsEx.getContainingMethod(myPositionPsiElement != null ? myPositionPsiElement : expression);
           boolean canScanFrames = method instanceof PsiLambdaExpression || ContextUtil.isJspImplicit(element);
           myResult = new LocalVariableEvaluator(localName, canScanFrames);
           return;
