@@ -23,9 +23,7 @@ fun Finder.ideFrame(action: IdeaFrameUI.() -> Unit) {
   ideFrame().action()
 }
 
-fun Driver.ideFrame(action: IdeaFrameUI.() -> Unit) {
-  this.ui.ideFrame(action)
-}
+fun Driver.ideFrame(action: IdeaFrameUI.() -> Unit = {}): IdeaFrameUI = ui.ideFrame().apply(action)
 
 fun Finder.projectIdeFrame(projectName: String, action: IdeaFrameUI.() -> Unit) {
   x("//div[@class='IdeFrameImpl' and contains(@accessiblename, '${projectName}')]", IdeaFrameUI::class.java).action()
