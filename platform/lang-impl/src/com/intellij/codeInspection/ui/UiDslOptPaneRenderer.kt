@@ -13,6 +13,7 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.IdeFocusManager
@@ -283,24 +284,21 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
         is OptMultiSelector -> {
           val list = JBList(component.elements).apply {
             cellRenderer = listCellRenderer {
-              when (val optElement = value) {
-                is MemberChooserObject -> {
-                  optElement.getIcon(0)?.let { icon(it) }
-                  text(optElement.text) {
-                    speedSearch {}
-                    attributes = optElement.attributes
-                  }
-                  optElement.secondaryText?.let {
-                    text(it) {
-                      speedSearch {}
-                      attributes = optElement.secondaryTextAttributes
-                    }
-                  }
-                }
-                else -> {
-                  text(optElement.text) {
-                    speedSearch {}
-                  }
+              (value as? Iconable)?.getIcon(0)?.let {
+                icon(it)
+              }
+
+              val textAttributes = (value as? MemberChooserObject)?.attributes ?: SimpleTextAttributes.REGULAR_ATTRIBUTES
+              text(value.text) {
+                speedSearch {}
+                attributes = textAttributes
+              }
+
+              val secondaryTextAttributes = (value as? MemberChooserObject)?.secondaryTextAttributes ?: SimpleTextAttributes.GRAYED_ATTRIBUTES
+              value.secondaryText?.let {
+                text(it) {
+                  speedSearch {}
+                  attributes = secondaryTextAttributes
                 }
               }
             }
@@ -319,7 +317,7 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
                                 ?.let { list -> IntArray(list.size) { n -> list[n] } }
                               ?: IntArray(0)
           }
-          TreeUIHelper.getInstance().installListSpeedSearch(list) { element -> element.text }
+          TreeUIHelper.getInstance().installListSpeedSearch(list) { element -> "${element.text} ${element.secondaryText ?: ""}" }
 
           val scroll = JBScrollPane(list)
           scroll.minimumSize = JBDimension(350, 150)
