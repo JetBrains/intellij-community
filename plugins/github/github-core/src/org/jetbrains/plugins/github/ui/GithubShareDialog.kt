@@ -1,11 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui
 
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextArea
@@ -13,6 +17,10 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.dialog.DialogUtils
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
@@ -26,13 +34,14 @@ import java.util.regex.Pattern
 @ApiStatus.Internal
 class GithubShareDialog(
   private val project: Project,
+  parentCs: CoroutineScope,
   existingRemotes: Set<String>,
-  private val accountInformationSupplier: (GithubAccount, Component) -> Pair<Boolean, Set<String>>,
-  projectName: @NlsSafe String
-)
-  : DialogWrapper(project) {
-
+  private val accountInformationSupplier: suspend (GithubAccount, Component) -> Pair<Boolean, Set<String>>,
+  projectName: @NlsSafe String,
+) : DialogWrapper(project) {
   private val GITHUB_REPO_PATTERN = Pattern.compile("[a-zA-Z0-9_.-]+")
+
+  private val cs = parentCs.childScope(javaClass.name, Dispatchers.Default + ModalityState.stateForComponent(window).asContextElement())
 
   private val repositoryTextField = JBTextField(projectName)
   private val privateCheckBox = JBCheckBox(message("share.dialog.private"), true)
@@ -59,30 +68,39 @@ class GithubShareDialog(
     title = message("share.on.github")
     setOKButtonText(message("share.button"))
     init()
-    DialogUtils.invokeLaterAfterDialogShown(this) { switchAccount(getAccount()) }
+    DialogUtils.invokeLaterAfterDialogShown(this) {
+      switchAccount(accountsModel.selected)
+    }
   }
 
   private fun switchAccount(account: GithubAccount?) {
     if (account == null) return
 
-    try {
-      accountInformationLoadingError = null
-      accountInformationSupplier(account, window).let {
-        privateCheckBox.isEnabled = it.first
-        if (!it.first) privateCheckBox.toolTipText = message("share.error.private.repos.not.supported")
-        else privateCheckBox.toolTipText = null
-        existingRepoValidator.records = it.second
+    cs.launch {
+      try {
+        accountInformationLoadingError = null
+        val (canCreatePrivate, takenNames) = accountInformationSupplier(account, window)
+        withContext(Dispatchers.EDT) {
+          privateCheckBox.isEnabled = canCreatePrivate
+
+          if (!canCreatePrivate) privateCheckBox.toolTipText = message("share.error.private.repos.not.supported")
+          else privateCheckBox.toolTipText = null
+
+          existingRepoValidator.records = takenNames
+        }
       }
-    }
-    catch (e: Exception) {
-      val errorText = message("share.dialog.account.info.load.error.prefix", account) +
-                      if (e is ProcessCanceledException) message("share.dialog.account.info.load.process.canceled")
-                      else e.message
-      accountInformationLoadingError = ValidationInfo(errorText)
-      privateCheckBox.isEnabled = false
-      privateCheckBox.toolTipText = null
-      existingRepoValidator.records = emptySet()
-      startTrackingValidation()
+      catch (e: Exception) {
+        withContext(Dispatchers.EDT) {
+          val errorText = message("share.dialog.account.info.load.error.prefix", account) +
+                          if (e is ProcessCanceledException) message("share.dialog.account.info.load.process.canceled")
+                          else e.message
+          accountInformationLoadingError = ValidationInfo(errorText)
+          privateCheckBox.isEnabled = false
+          privateCheckBox.toolTipText = null
+          existingRepoValidator.records = emptySet()
+          startTrackingValidation()
+        }
+      }
     }
   }
 
@@ -111,7 +129,11 @@ class GithubShareDialog(
         comboBox(accountsModel)
           .align(AlignX.FILL)
           .validationOnApply { if (accountsModel.selected == null) error(message("dialog.message.account.cannot.be.empty")) else null }
-          .applyToComponent { addActionListener { switchAccount(getAccount()) } }
+          .applyToComponent {
+            addActionListener {
+              switchAccount(accountsModel.selected)
+            }
+          }
           .resizableColumn()
 
         if (accountsModel.size == 0) {
@@ -147,16 +169,16 @@ class GithubShareDialog(
   override fun getDimensionServiceKey(): String = "Github.ShareDialog"
   override fun getPreferredFocusedComponent(): JBTextField = repositoryTextField
 
-  @NlsSafe
-  fun getRepositoryName(): String = repositoryTextField.text
+  fun getResult(): Result =
+    Result(repositoryTextField.text, remoteTextField.text, privateCheckBox.isSelected, descriptionTextArea.text, accountsModel.selected)
 
-  @NlsSafe
-  fun getRemoteName(): String = remoteTextField.text
-  fun isPrivate(): Boolean = privateCheckBox.isSelected
-
-  @NlsSafe
-  fun getDescription(): String = descriptionTextArea.text
-  fun getAccount(): GithubAccount? = accountsModel.selected
+  data class Result(
+    @NlsSafe val repositoryName: String,
+    val remoteName: String,
+    val isPrivate: Boolean,
+    val description: String,
+    val account: GithubAccount?,
+  )
 
   @TestOnly
   fun testSetRepositoryName(name: String) {
