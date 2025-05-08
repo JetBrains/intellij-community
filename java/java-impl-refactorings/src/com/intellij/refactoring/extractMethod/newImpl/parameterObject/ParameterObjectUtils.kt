@@ -29,17 +29,29 @@ object ParameterObjectUtils {
   }
 
   private fun findAffectedReferences(variable: PsiVariable, scope: List<PsiElement>): List<PsiReferenceExpression>? {
-    val startingOffset = scope.last().textRange.endOffset
+    val parent = scope.first().parent
+    val beforeScope = scope.first().textRange.startOffset
+    val afterScope = scope.last().textRange.endOffset
     val references = ReferencesSearch.search(variable)
       .asIterable()
       .mapNotNull { it.element as? PsiReferenceExpression }
-      .filter { reference -> reference.textRange.startOffset >= startingOffset }
+      .filter { reference -> reference.textRange.startOffset >= afterScope || reference.textRange.endOffset <= beforeScope }
       .sortedBy { reference -> reference.textRange.startOffset }
+    val referencesBefore = references.filter { ref -> ref.textRange.endOffset <= beforeScope }
+    if (!referencesBefore.isEmpty()) {
+      val loop = PsiTreeUtil.getParentOfType(parent, PsiLoopStatement::class.java, true)
+      if (loop != null) {
+        val suspiciousLoop = referencesBefore.any { ref -> PsiTreeUtil.isAncestor(loop, ref, true) }
+        if (suspiciousLoop) return null
+      }
+    }
     val firstAssignment = references.find { reference -> PsiUtil.isAccessedForWriting(reference) } ?: return references
     val assignmentExpression = PsiTreeUtil.getParentOfType(firstAssignment, PsiAssignmentExpression::class.java)
     if (assignmentExpression == null) return null
     if (assignmentExpression.parent.parent != PsiTreeUtil.findCommonParent(assignmentExpression, scope.last())) return null
-    return references.filter { reference -> reference.textRange.endOffset <= assignmentExpression.textRange.endOffset } - firstAssignment
+    return references.filter { ref -> ref != firstAssignment
+                                      && ref.textRange.endOffset <= assignmentExpression.textRange.endOffset
+                                      && ref.textRange.startOffset >= afterScope }
   }
 
 }
