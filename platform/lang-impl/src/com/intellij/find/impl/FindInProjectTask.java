@@ -166,6 +166,33 @@ final class FindInProjectTask {
     }
   }
 
+  /**
+   * Find all usages of a given pattern in a given set of files, and deliver them to the usageProcessor. The pattern, set of files,
+   * and most other details are defined by {@link #findModel}.
+   * <p>
+   * To better understand find usage code take into account that find usage is not an abstract task -- it is very much tailored to
+   * the specific needs and user's expectations of FindUsage UX.
+   * <p>
+   * The find usages process is split into two phases:
+   * <ol>
+   *   <li>
+   *     'Fast search': query the {@link #searchers} for a list of candidate files. Searchers represent a 'fast' way of finding
+   *     the matching candidates -- i.e. some kind of index. The files returned by the searchers are only candidates -- they
+   *     still must be checked against file mask, and looked up for the pattern.
+   *     On this stage we also scan through {@link #filesToScanInitially} -- those are files that were found previously. We
+   *     re-check them so that files that match before and still match now are remains at the top. This provides better UX
+   *     then search pattern is expanded as user types additional symbols.
+   *   </li>
+   *   <li>
+   *     'Brute force search': query all files in the scope defined by {@link #findModel} (including files that were already
+   *     found by searchers on the 1st phase!), and process them, multi-threaded, against fileMask, and the pattern. On this
+   *     phase we skip files already processed on 1st phase.
+   *   </li>
+   * </ol>
+   * Those 2 phases combined give us the chance to deliver indexed files results almost instantly, keep top results consistent
+   * as user continues typing in the search pattern, and still search extensively over (partially-)not-indexed scopes -- slower,
+   * but still.
+   */
   void findUsages(@NotNull FindUsagesProcessPresentation processPresentation,
                   @NotNull Processor<? super UsageInfo> usageProcessor) {
     if (!EDT.isCurrentThreadEdt()) {
