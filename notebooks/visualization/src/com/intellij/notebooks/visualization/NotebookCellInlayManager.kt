@@ -136,10 +136,8 @@ class NotebookCellInlayManager private constructor(
   }
 
   fun getCellByPoint(point: Point): EditorCell? {
-    val visualLine = editor.xyToLogicalPosition(point)
-    val cur = cells.firstOrNull { it.interval.lines.contains(visualLine.line) }
+    val cur = cells.firstOrNull { it.view?.calculateBounds()?.contains(point) == true }
     return cur
-
   }
 
   private fun updateUI(events: List<EditorCellEvent>) {
