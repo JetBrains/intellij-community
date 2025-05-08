@@ -786,13 +786,12 @@ com.intellij.codeInsight.generation.ClassMember
 - s:from(com.intellij.codeInspection.options.OptMultiSelector$OptElement):com.intellij.codeInsight.generation.ClassMember
 - a:getParentNodeDelegate():com.intellij.codeInsight.generation.MemberChooserObject
 com.intellij.codeInsight.generation.MemberChooserObject
+- com.intellij.codeInspection.options.OptMultiSelector$OptElement
 - com.intellij.openapi.util.Iconable
 - a:equals(java.lang.Object):Z
 - getAttributes():com.intellij.ui.SimpleTextAttributes
 - getIcon(I):javax.swing.Icon
-- getSecondaryText():java.lang.String
 - getSecondaryTextAttributes():com.intellij.ui.SimpleTextAttributes
-- a:getText():java.lang.String
 - a:hashCode():I
 - a:renderTreeNode(com.intellij.ui.SimpleColoredComponent,javax.swing.JTree):V
 c:com.intellij.codeInsight.generation.MemberChooserObjectBase

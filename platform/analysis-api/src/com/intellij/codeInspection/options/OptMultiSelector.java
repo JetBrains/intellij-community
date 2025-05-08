@@ -4,7 +4,9 @@ package com.intellij.codeInspection.options;
 import com.intellij.openapi.util.NlsContexts;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -61,5 +63,10 @@ public record OptMultiSelector(@Language("jvm-field-name") @NotNull String bindI
      * @return text to display for the element
      */
     @NlsContexts.Label @NotNull String getText();
+
+    /**
+     * @return additional information to display alongside the main text for the element
+     */
+    default @Nls @Nullable String getSecondaryText() { return null; }
   }
 }

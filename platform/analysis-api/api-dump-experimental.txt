@@ -126,6 +126,7 @@ com.intellij.codeInsight.template.TemplateBuilder
 - mode():com.intellij.codeInspection.options.OptMultiSelector$SelectionMode
 - prefix(java.lang.String):com.intellij.codeInspection.options.OptMultiSelector
 *:com.intellij.codeInspection.options.OptMultiSelector$OptElement
+- getSecondaryText():java.lang.String
 - a:getText():java.lang.String
 *e:com.intellij.codeInspection.options.OptMultiSelector$SelectionMode
 - java.lang.Enum
