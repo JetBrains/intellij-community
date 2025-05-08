@@ -84,6 +84,12 @@ public abstract class DocumentationEditorPane extends JBHtmlPane implements Disp
     myCachedPreferredSize = null;
   }
 
+  @Override
+  public void invalidate() {
+    myCachedPreferredSize = null;
+    super.invalidate();
+  }
+
   @NotNull
   Dimension getPackedSize(int minWidth, int maxWidth) {
     int width = Math.min(

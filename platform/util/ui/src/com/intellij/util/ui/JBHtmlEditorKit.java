@@ -5,6 +5,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.html.DetailsView;
+import com.intellij.util.ui.html.UtilsKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,6 +18,7 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.text.*;
 import javax.swing.text.html.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -24,6 +27,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.StreamSupport;
+
+import static com.intellij.util.ui.html.UtilsKt.reapplyCss;
 
 @ApiStatus.NonExtendable
 public class JBHtmlEditorKit extends HTMLEditorKit {
@@ -34,6 +39,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
 
   private final @NotNull HTMLEditorKit.LinkController myLinkController = new MouseExitSupportLinkController();
   private final @NotNull HyperlinkListener myHyperlinkListener = new LinkUnderlineListener();
+  private final @NotNull JBHtmlEditorKit.DetailsController myDetailsController = new DetailsController();
   private final boolean myDisableLinkedCss;
   private boolean myUnderlineHoveredHyperlink = true;
 
@@ -147,6 +153,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     if (myUnderlineHoveredHyperlink) {
       pane.addHyperlinkListener(myHyperlinkListener);
     }
+    pane.addMouseListener(myDetailsController);
 
     java.util.List<LinkController> listeners1 = filterLinkControllerListeners(pane.getMouseListeners());
     java.util.List<LinkController> listeners2 = filterLinkControllerListeners(pane.getMouseMotionListeners());
@@ -193,6 +200,53 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     public void mouseExited(@NotNull MouseEvent e) {
       mouseMoved(new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiersEx(), -1, -1, e.getClickCount(), e.isPopupTrigger(),
                                 e.getButton()));
+    }
+  }
+
+  private static final class DetailsController extends MouseAdapter {
+    @Override
+    public void mouseClicked(MouseEvent e) {
+      JEditorPane editor = (JEditorPane) e.getSource();
+
+      if (! editor.isEditable() && editor.isEnabled() &&
+          SwingUtilities.isLeftMouseButton(e)) {
+        Point pt = new Point(e.getX(), e.getY());
+        int pos = editor.viewToModel(pt);
+        if (pos >= 0) {
+          clickSummary(pos, editor);
+        }
+      }
+    }
+
+    private static void clickSummary(int pos, JEditorPane html) {
+      Document doc = html.getDocument();
+      if (doc instanceof HTMLDocument hdoc) {
+        Element e = hdoc.getCharacterElement(pos);
+        while (e != null) {
+          String name = e.getName();
+          if (name.equals("a")) break;
+          if (name.equals("summary")) {
+            e = e.getParentElement();
+            if (!e.getName().equals("details")) return;
+            AttributeSet attributes = e.getAttributes();
+            Object attribute = attributes.getAttribute(UtilsKt.getHTML_Tag_DETAILS());
+            if (attribute instanceof MutableAttributeSet a) {
+              a.addAttribute(DetailsView.EXPANDED, a.getAttribute(DetailsView.EXPANDED) != Boolean.TRUE);
+            }
+            var rootView = html.getUI().getRootView(html);
+            reapplyCss(rootView);
+
+            // Force view to be relayouted
+            rootView.setSize(1,1);
+
+            // Force the JEditorPane to be relayouted
+            html.revalidate();
+            html.doLayout();
+            return;
+          }
+          e = e.getParentElement();
+        }
+      }
     }
   }
 
@@ -269,10 +323,19 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
 
       private JBHtmlReader(int offset) {
         super(offset);
+        registerAdditionalTags();
       }
 
       private JBHtmlReader(int offset, int popDepth, int pushDepth, HTML.Tag insertTag) {
         super(offset, popDepth, pushDepth, insertTag);
+        registerAdditionalTags();
+      }
+
+      private void registerAdditionalTags() {
+        TagAction ba = new BlockAction();
+        for (HTML.Tag tag: UtilsKt.getHTML_Tag_CUSTOM_BLOCK_TAGS()) {
+          registerTag(tag, ba);
+        }
       }
 
       @Override

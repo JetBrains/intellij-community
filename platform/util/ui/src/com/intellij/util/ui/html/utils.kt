@@ -3,19 +3,19 @@ package com.intellij.util.ui.html
 
 import com.intellij.util.asSafely
 import com.intellij.util.ui.html.CssAttributesEx.BORDER_RADIUS
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.geom.RoundRectangle2D
 import java.util.*
 import javax.swing.SizeRequirements
-import javax.swing.text.AttributeSet
-import javax.swing.text.BoxView
-import javax.swing.text.GlyphView
-import javax.swing.text.View
-import javax.swing.text.html.BlockView
-import javax.swing.text.html.CSS
-import javax.swing.text.html.HTMLDocument
-import javax.swing.text.html.StyleSheet
+import javax.swing.text.*
+import javax.swing.text.html.*
 import javax.swing.text.html.StyleSheet.BoxPainter
+
+internal val HTML_Tag_SUMMARY: HTML.Tag get() = SUMMARY_TAG
+internal val HTML_Tag_DETAILS: HTML.Tag get() = DETAILS_TAG
+
+internal val HTML_Tag_CUSTOM_BLOCK_TAGS: Set<HTML.Tag> get() = CUSTOM_BLOCK_TAGS_SET
 
 @Suppress("UseDPIAwareInsets")
 val View.cssPadding: Insets
@@ -77,6 +77,26 @@ val Insets.width: Int
 val Insets.height: Int
   get() = top + bottom
 
+@ApiStatus.Internal
+fun visitViews(view: View, visitor: (View) -> Unit) {
+  for (i in 0..<view.viewCount) {
+    view.getView(i)?.let {
+      visitViews(it, visitor)
+    }
+  }
+  visitor(view)
+}
+
+@ApiStatus.Internal
+fun View.reapplyCss() {
+  visitViews(this) { childView ->
+    when (childView) {
+      is BlockView -> blockViewSetPropertiesFromAttributesMethod.invoke(childView)
+      is LabelView -> labelViewSetPropertiesFromAttributesMethod.invoke(childView)
+    }
+  }
+}
+
 internal val BoxView.minorRequest: SizeRequirements?
   get() = minorRequestField.get(this) as? SizeRequirements
 
@@ -137,6 +157,7 @@ internal fun paintControlBackgroundAndBorder(
     g.stroke = BasicStroke(borderWidth.toFloat())
     g.draw(borderShape)
   }
+  g.dispose()
 }
 
 private fun AttributeSet.getLength(attribute: CSS.Attribute, styleSheet: StyleSheet): Float =
@@ -147,6 +168,16 @@ private fun AttributeSet.getColor(attribute: CSS.Attribute): Color? =
 
 private val css: CSS by lazy(LazyThreadSafetyMode.PUBLICATION) {
   CSS().patchAttributes()
+}
+
+private val CUSTOM_BLOCK_TAGS_SET = mutableSetOf<HTML.Tag>()
+
+private fun createNewHtmlBlockTag(name: String): HTML.Tag {
+  val newTag = TagConstructor.newInstance(name, true, true) as HTML.Tag
+  HTMLTagHashtable.put(name, newTag)
+  StyleContext.registerStaticAttributeKey(newTag)
+  CUSTOM_BLOCK_TAGS_SET.add(newTag)
+  return newTag
 }
 
 internal fun StyleSheet.patchAttributes(): StyleSheet {
@@ -239,6 +270,32 @@ private val JustificationInfoClass by lazy(LazyThreadSafetyMode.PUBLICATION) {
   GlyphView::class.java.declaredClasses
     .find { it.simpleName == "JustificationInfo" }!!
 }
+
+private val TagConstructor by lazy(LazyThreadSafetyMode.PUBLICATION) {
+  HTML.Tag::class.java.getDeclaredConstructor(String::class.java, Boolean::class.javaPrimitiveType, Boolean::class.javaPrimitiveType)
+    .also { it.isAccessible = true }
+}
+
+@Suppress("UNCHECKED_CAST")
+private val HTMLTagHashtable by lazy(LazyThreadSafetyMode.PUBLICATION) {
+  HTML::class.java.getDeclaredField("tagHashtable")
+    .also { it.isAccessible = true }.get(null) as Hashtable<String, HTML.Tag>
+}
+
+private val blockViewSetPropertiesFromAttributesMethod by lazy {
+  BlockView::class.java.getDeclaredMethod("setPropertiesFromAttributes").also {
+    it.isAccessible = true
+  }
+}
+
+private val labelViewSetPropertiesFromAttributesMethod by lazy {
+  LabelView::class.java.getDeclaredMethod("setPropertiesFromAttributes").also {
+    it.isAccessible = true
+  }
+}
+
+private val SUMMARY_TAG = createNewHtmlBlockTag("summary")
+private val DETAILS_TAG = createNewHtmlBlockTag("details")
 
 internal data class JustificationInfo(
   val start: Int,

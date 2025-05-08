@@ -30,6 +30,9 @@ import javax.swing.text.Position.Bias
 import javax.swing.text.html.*
 import javax.swing.text.html.HTMLEditorKit.HTMLFactory
 import javax.swing.text.html.ParagraphView
+import javax.swing.text.html.parser.ContentModel
+import javax.swing.text.html.parser.DTD
+import javax.swing.text.html.parser.ParserDelegator
 import kotlin.math.max
 
 /**
@@ -181,6 +184,12 @@ class ExtendableHTMLViewFactory internal constructor(
      */
     @JvmField
     val BLOCK_HR_SUPPORT: Extension = BlockHrSupportExtension()
+
+    /**
+     * Adds support for `<details>`/`<summary>` tags
+     */
+    @JvmField
+    val DETAILS_SUMMARY_SUPPORT: Extension = DetailsSummarySupportExtension()
   }
 
   @ApiStatus.Internal
@@ -518,6 +527,56 @@ private class BlockHrSupportExtension : Extension {
       return null
     }
   }
+}
+
+private class DetailsSummarySupportExtension : Extension {
+
+  companion object {
+    init {
+      (ParserDelegator::class.java.getDeclaredMethod("getDefaultDTD")
+        .also { it.isAccessible = true }
+        .invoke(null) as DTD).let { dtd ->
+
+        // register new tags and make details available under div tag
+
+        val div = dtd.getElement("div")
+        val divContentModelExpr = (div.content.content as ContentModel)
+        val origDivElements = divContentModelExpr.content as ContentModel
+
+        val summary = dtd.defineElement(
+          "summary", DTD.MODEL, false, false, div.content,
+          BitSet(), BitSet(), div.attributes)
+
+        val details = dtd.defineElement(
+          "details", DTD.MODEL, false, false,
+          ContentModel(42, ContentModel(124, ContentModel(0, summary, origDivElements))),
+          BitSet(), BitSet(), div.attributes)
+
+        divContentModelExpr.content = ContentModel(0, details, origDivElements)
+      }
+
+    }
+  }
+
+  override fun invoke(element: Element, defaultView: View): View? =
+    if (element.name.equals("details", true)) {
+      if (element.attributes.getAttribute(HTML_Tag_DETAILS) == null) {
+        (element.document as JBHtmlEditorKit.JBHtmlDocument).tryRunUnderWriteLock {
+          (element as AbstractDocument.AbstractElement).addAttribute(HTML_Tag_DETAILS, SimpleAttributeSet())
+        }
+      }
+      DetailsView(element, View.Y_AXIS)
+    }
+    else if (element.name.equals("summary", true)) {
+      if (element.attributes.getAttribute(HTML_Tag_SUMMARY) == null) {
+        (element.document as JBHtmlEditorKit.JBHtmlDocument).tryRunUnderWriteLock {
+          (element as AbstractDocument.AbstractElement).addAttribute(HTML_Tag_SUMMARY, SimpleAttributeSet())
+        }
+      }
+      BlockViewEx(element, View.Y_AXIS)
+    }
+    else
+      null
 }
 
 private class HiDpiImagesExtension : Extension {
