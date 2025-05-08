@@ -48,6 +48,6 @@
 
     <module name="intellij.platform.execution.impl.frontend"/>
     <module name="intellij.platform.execution.impl.backend"/>
-    <module name="intellij.platform.eel.impl" />
+    <module name="intellij.platform.eel.impl" loading="embedded"/> <!-- referenced from 'intellij.platform.ijent.community.impl' loaded by the core classloader -->
   </content>
 </idea-plugin>
