@@ -75,7 +75,6 @@ fun prepareCompilerConfiguration(
   configurePlugins(
     args = args,
     workingDir = baseDir,
-    targetLabel = args.mandatorySingle(JvmBuilderFlags.TARGET_LABEL),
     abiOutputConsumer = abiOutputConsumer,
   ) {
     config.add(CompilerPluginRegistrar.COMPILER_PLUGIN_REGISTRARS, it.compilerPluginRegistrar!!)
@@ -167,7 +166,7 @@ fun configureModule(
 @OptIn(ExperimentalCompilerApi::class)
 fun getDebugInfoAboutPlugins(args: ArgMap<JvmBuilderFlags>, baseDir: Path, targetLabel: String): String {
   val sb = StringBuilder()
-  configurePlugins(args = args, workingDir = baseDir, targetLabel = targetLabel, abiOutputConsumer = null) { info ->
+  configurePlugins(args = args, workingDir = baseDir, abiOutputConsumer = null) { info ->
     sb.append(info.compilerPluginRegistrar!!.toString())
     if (!info.pluginOptions.isEmpty()) {
       sb.append("(" + info.pluginOptions.joinToString(separator = ", ") + ")")

@@ -21,13 +21,13 @@ import org.jetbrains.kotlinx.serialization.compiler.extensions.SerializationPlug
 import java.net.URLClassLoader
 import java.nio.file.Path
 
+@Suppress("SameParameterValue")
 private fun cliOptionValue(name: String, value: String) = CliOptionValue(pluginId = "<NO_ID>", optionName = name, value = value)
 
 @OptIn(ExperimentalCompilerApi::class)
 internal inline fun configurePlugins(
   args: ArgMap<JvmBuilderFlags>,
   workingDir: Path,
-  targetLabel: String,
   noinline abiOutputConsumer: ((List<OutputFile>) -> Unit)?,
   consumer: (RegisteredPluginInfo) -> Unit,
 ) {
