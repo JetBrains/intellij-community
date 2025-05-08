@@ -97,7 +97,7 @@ fun createVirtualEnvAndSdkSynchronously(
 
   if (!makeShared) {
     when {
-      module != null -> pyModalBlocking { venvSdk.setAssociationToModuleAsync(module) }
+      module != null -> pyModalBlocking { venvSdk.setAssociationToModule(module) }
       projectPath != null -> pyModalBlocking { venvSdk.setAssociationToPath(projectPath) }
     }
   }
@@ -151,7 +151,7 @@ internal fun createSdkForTarget(
   if (PythonInterpreterTargetEnvironmentFactory.by(environmentConfiguration)?.needAssociateWithModule() == true) {
     // FIXME: multi module project support
     project?.modules?.firstOrNull()?.let {
-      sdk.setAssociationToModule(it)
+      pyModalBlocking { sdk.setAssociationToModule(it) }
     }
   }
 

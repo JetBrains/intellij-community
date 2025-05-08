@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.setAssociationToModule
+import com.jetbrains.python.ui.pyModalBlocking
 
 /**
  * A quick-fix for setting up the poetry for the module of the current PSI element.
@@ -17,9 +18,9 @@ class PoetryAssociationQuickFix: LocalQuickFix {
 
   override fun getFamilyName() = quickFixName
 
-  override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-    val element = descriptor.psiElement ?: return
-    val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return
+  override fun applyFix(project: Project, descriptor: ProblemDescriptor): Unit = pyModalBlocking {
+    val element = descriptor.psiElement ?: return@pyModalBlocking
+    val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return@pyModalBlocking
     module.pythonSdk?.setAssociationToModule(module)
   }
 }

@@ -43,7 +43,6 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
-import com.jetbrains.python.ui.pyMayBeModalBlocking
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -237,11 +236,6 @@ fun showSdkExecutionException(sdk: Sdk?, e: ExecutionException, @NlsContexts.Dia
     val description = PyPackageManagementService.toErrorDescription(listOf(e), sdk) ?: return@runInEdt
     PackagesNotificationPanel.showError(title, description)
   }
-}
-
-@Deprecated(replaceWith = ReplaceWith("setAssociationToModule"), message = "Use suspend version")
-fun Sdk.setAssociationToModule(module: Module) {
-  pyMayBeModalBlocking { setAssociationToModuleAsync(module) }
 }
 
 fun Sdk.isAssociatedWithModule(module: Module?): Boolean {

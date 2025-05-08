@@ -66,7 +66,7 @@ suspend fun PythonMutableTargetAddInterpreterModel.setupVirtualenv(venvPath: Pat
   if (module != null) {
     module.excludeInnerVirtualEnv(newSdk)
     if (!this.state.makeAvailableForAllProjects.get()) {
-      newSdk.setAssociationToModuleAsync(module)
+      newSdk.setAssociationToModule(module)
     }
   }
 

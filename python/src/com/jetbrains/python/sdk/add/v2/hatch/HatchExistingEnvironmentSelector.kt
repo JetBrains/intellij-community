@@ -22,7 +22,7 @@ import com.jetbrains.python.sdk.add.v2.PythonInterpreterCreationTargets
 import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.toStatisticsField
 import com.jetbrains.python.sdk.destructured
-import com.jetbrains.python.sdk.setAssociationToModuleAsync
+import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.Dispatchers
@@ -68,7 +68,7 @@ internal class HatchExistingEnvironmentSelector(
         val (project, module) = moduleOrProject.destructured
         val workingDirectory = resolveHatchWorkingDirectory(project, module).getOr { return it }
         environment.createSdk(workingDirectory, module).onSuccess { sdk ->
-          module?.let { module -> sdk.setAssociationToModuleAsync(module) }
+          module?.let { module -> sdk.setAssociationToModule(module) }
         }
       }
     }.onSuccess {

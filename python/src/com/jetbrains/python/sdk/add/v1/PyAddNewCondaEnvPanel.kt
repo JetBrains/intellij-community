@@ -41,7 +41,7 @@ open class PyAddNewCondaEnvPanel(
   private val project: Project?,
   private val module: Module?,
   private val existingSdks: List<Sdk>,
-  newProjectPath: String?
+  newProjectPath: String?,
 ) : PyAddNewEnvPanel(PythonInterpreterSelectionMode.BASE_CONDA) {
   override val envName: String = "Conda"
   override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.new.environment")
@@ -121,9 +121,11 @@ open class PyAddNewCondaEnvPanel(
     val associatedPath = if (!shared) projectBasePath else null
     val sdk = createSdkByGenerateTask(task, existingSdks, null, associatedPath, null)
     if (!shared) {
-      when {
-        newProjectPath != null -> pyMayBeModalBlocking { sdk.setAssociationToPath(newProjectPath) }
-        module != null -> sdk.setAssociationToModule(module)
+      pyMayBeModalBlocking {
+        when {
+          newProjectPath != null -> sdk.setAssociationToPath(newProjectPath)
+          module != null -> sdk.setAssociationToModule(module)
+        }
       }
     }
 
@@ -134,11 +136,11 @@ open class PyAddNewCondaEnvPanel(
   }
 
   override fun getStatisticInfo(): InterpreterStatisticsInfo? {
-      return InterpreterStatisticsInfo(InterpreterType.CONDAVENV,
-                                       InterpreterTarget.LOCAL,
-                                       false,
-                                       makeSharedField.isSelected,
-                                       false)
+    return InterpreterStatisticsInfo(InterpreterType.CONDAVENV,
+                                     InterpreterTarget.LOCAL,
+                                     false,
+                                     makeSharedField.isSelected,
+                                     false)
   }
 
   override fun addChangeListener(listener: Runnable) {

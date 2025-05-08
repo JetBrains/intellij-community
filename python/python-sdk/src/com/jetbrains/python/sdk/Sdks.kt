@@ -180,7 +180,7 @@ object SdksKeeper {
 }
 
 @ApiStatus.Internal
-suspend fun Sdk.setAssociationToModuleAsync(module: Module) {
+suspend fun Sdk.setAssociationToModule(module: Module) {
   val path = module.basePath
   assert(path != null) { "Module $module has not paths, and can't be associated" }
   setAssociationToPath(path)

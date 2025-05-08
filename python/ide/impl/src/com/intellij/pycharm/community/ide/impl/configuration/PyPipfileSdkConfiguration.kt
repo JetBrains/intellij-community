@@ -29,7 +29,7 @@ import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.findAmongRoots
 import com.jetbrains.python.sdk.pipenv.*
 import com.jetbrains.python.sdk.pipenv.ui.PyAddNewPipEnvFromFilePanel
-import com.jetbrains.python.sdk.setAssociationToModuleAsync
+import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -123,7 +123,7 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
       withContext(Dispatchers.EDT) {
         LOGGER.debug("Adding associated pipenv environment: $path, $basePath")
-        sdk.setAssociationToModuleAsync(module)
+        sdk.setAssociationToModule(module)
         SdkConfigurationUtil.addSdk(sdk)
       }
 
