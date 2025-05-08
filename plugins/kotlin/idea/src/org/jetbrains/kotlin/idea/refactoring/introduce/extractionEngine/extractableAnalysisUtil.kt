@@ -8,6 +8,7 @@ import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isFunctionType
+import org.jetbrains.kotlin.builtins.isSuspendFunctionType
 import org.jetbrains.kotlin.cfg.containingDeclarationForPseudocode
 import org.jetbrains.kotlin.cfg.pseudocode.*
 import org.jetbrains.kotlin.cfg.pseudocode.instructions.Instruction
@@ -442,7 +443,7 @@ class KotlinTypeDescriptor(private val data: ExtractionData) : TypeDescriptor<Ko
         variance: Variance
     ): String {
         val renderType = IdeDescriptorRenderers.SOURCE_CODE.renderType(kotlinType)
-        return if (kotlinType.isFunctionType && isReceiver) "($renderType)" else renderType
+        return if ((kotlinType.isFunctionType || kotlinType.isSuspendFunctionType) && isReceiver) "($renderType)" else renderType
     }
 
     override fun renderTypeWithoutApproximation(kotlinType: KotlinType): String {

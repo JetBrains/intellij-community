@@ -3295,6 +3295,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/parameters/misc/smartCastInsideUnqualified.kt");
                 }
 
+                @TestMetadata("suspendReceiverType.kt")
+                public void testSuspendReceiverType() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/misc/suspendReceiverType.kt");
+                }
+
                 @TestMetadata("thisInObject.kt")
                 public void testThisInObject() throws Exception {
                     runTest("testData/refactoring/extractFunction/parameters/misc/thisInObject.kt");

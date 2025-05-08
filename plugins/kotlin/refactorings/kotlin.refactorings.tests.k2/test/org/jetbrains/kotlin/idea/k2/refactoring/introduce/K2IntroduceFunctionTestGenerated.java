@@ -2064,6 +2064,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
                 runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/smartCastInsideUnqualified.kt");
             }
 
+            @TestMetadata("suspendReceiverType.kt")
+            public void testSuspendReceiverType() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/suspendReceiverType.kt");
+            }
+
             @TestMetadata("thisInObject.kt")
             public void testThisInObject() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/thisInObject.kt");

@@ -98,10 +98,10 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
 
     @OptIn(KaExperimentalApi::class)
     override fun renderType(
-        ktType: KaType, isReceiver: Boolean, variance: Variance
+        type: KaType, isReceiver: Boolean, variance: Variance
     ): String = analyze(data.commonParent) {
-        val renderType = ktType.render(position = variance)
-        if (ktType.isFunctionType && isReceiver) "($renderType)" else renderType
+        val renderType = type.render(position = variance)
+        if ((type.isFunctionType || type.isSuspendFunctionType) && isReceiver) "($renderType)" else renderType
     }
 
     override fun isResolvableInScope(
