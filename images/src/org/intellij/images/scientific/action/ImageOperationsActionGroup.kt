@@ -40,6 +40,7 @@ class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, 
 
     val comboBoxModel = DefaultComboBoxModel<String>().apply {
       addElement(ORIGINAL_IMAGE)
+      addElement(REVERSED_IMAGE)
       addElement(INVERTED_IMAGE)
       addElement(GRAYSCALE_IMAGE)
       addElement(BINARIZE_IMAGE)
@@ -103,6 +104,7 @@ class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, 
     val actionManager = ActionManager.getInstance()
     when (mode) {
       ORIGINAL_IMAGE -> actionManager.tryToExecute(RestoreOriginalImageAction(), null, null, null, true)
+      REVERSED_IMAGE -> actionManager.tryToExecute(ReverseChannelsOrderAction(), null, null, null, true)
       INVERTED_IMAGE -> actionManager.tryToExecute(InvertChannelsAction(), null, null, null, true)
       GRAYSCALE_IMAGE -> actionManager.tryToExecute(GrayscaleImageAction(), null, null, null, true)
       BINARIZE_IMAGE -> actionManager.tryToExecute(BinarizeImageAction(), null, null, null, true)
@@ -119,6 +121,8 @@ class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, 
     private val CHANNEL_3: String = ImagesBundle.message("image.channels.mode.channel.3")
     @Nls
     private val ORIGINAL_IMAGE: String = ImagesBundle.message("image.color.mode.original.image")
+    @Nls
+    private val REVERSED_IMAGE: String = ImagesBundle.message("image.color.mode.reversed.image")
     @Nls
     private val INVERTED_IMAGE: String = ImagesBundle.message("image.color.mode.inverted.image")
     @Nls
