@@ -368,28 +368,22 @@ internal class BazelBuildFileGenerator(
           option("kotlinc_opts", kotlincOptionsLabel)
         }
 
-        var isExpectsPluginAdded = false
-
         if (module.name == "fleet.util.multiplatform" || module.name == "intellij.platform.syntax.multiplatformSupport") {
           option("exported_compiler_plugins", arrayOf("@lib//:expects-plugin"))
         }
         if ( module.name == "intellij.platform.syntax.multiplatformSupport") {
           option("plugins", arrayOf("@lib//:expects-plugin"))
-          isExpectsPluginAdded = true
         }
 
         // exported_compiler_plugins does not get exported through PROVIDED dependencies
         // probably needs handling/asserting later
         if (module.name == "fleet.multiplatform.shims") {
           option("plugins", arrayOf("@lib//:expects-plugin"))
-          isExpectsPluginAdded = true
         }
 
         var deps = moduleList.deps.get(moduleDescriptor)
         if (deps != null && deps.provided.isNotEmpty()) {
-          if (!isExpectsPluginAdded && deps.provided.any {
-            it.endsWith("/syntax/syntax-multiplatformSupport:multiplatformSupport") ||
-            it.endsWith("/multiplatform:fleet-util-multiplatform")}) {
+          if (deps.provided.any { it.endsWith("/syntax/syntax-multiplatformSupport:multiplatformSupport") }) {
             option("plugins", arrayOf("@lib//:expects-plugin"))
           }
 
