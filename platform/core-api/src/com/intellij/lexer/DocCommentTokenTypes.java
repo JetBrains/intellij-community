@@ -32,5 +32,5 @@ public interface DocCommentTokenTypes {
   default IElementType tagValueColon() {
     return commentData();
   }
-  default IElementType tagValueDiv() { return commentData(); }
+  default IElementType tagValueSlash() { return commentData(); }
 }

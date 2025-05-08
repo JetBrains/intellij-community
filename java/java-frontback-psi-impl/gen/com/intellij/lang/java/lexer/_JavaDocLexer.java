@@ -975,7 +975,7 @@ class _JavaDocLexer implements FlexLexer {
           // fall through
           case 63: break;
           case 21:
-            { return myTokenTypes.tagValueDiv();
+            { return myTokenTypes.tagValueSlash();
             }
           // fall through
           case 64: break;
