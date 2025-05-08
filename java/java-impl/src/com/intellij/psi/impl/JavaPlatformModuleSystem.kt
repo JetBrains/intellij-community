@@ -24,6 +24,8 @@ import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.JavaFeature
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
@@ -299,15 +301,21 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
   }
 
   private fun isJdkModule(jpsModule: Module, psiModule: PsiJavaModule): Boolean {
-    val sdkHomePath = ModuleRootManager.getInstance(jpsModule).getSdk()?.homePath?.replace('\\', '/')
-    val moduleFilePath = psiModule.containingFile?.virtualFile?.path?.replace('\\', '/')
+    val sdkHomePath = toLocalVirtualFile(ModuleRootManager.getInstance(jpsModule).getSdk()?.homeDirectory)
+    val moduleFilePath = toLocalVirtualFile(psiModule.containingFile?.virtualFile)
+
     if (sdkHomePath != null && moduleFilePath != null) {
-      return moduleFilePath.startsWith("$sdkHomePath!") ||
-             moduleFilePath.startsWith(if(sdkHomePath.last() == '/') sdkHomePath else "$sdkHomePath/")
-    } else {
+      return VfsUtilCore.isAncestor(sdkHomePath, moduleFilePath, false)
+    }
+    else {
       return psiModule.name.startsWith("java.") ||
              psiModule.name.startsWith("jdk.")
     }
+  }
+
+  private fun toLocalVirtualFile(file: VirtualFile?): VirtualFile? {
+    if (file == null) return null
+    return VfsUtilCore.getVirtualFileForJar(file) ?: file
   }
 
   private fun inSameMultiReleaseModule(current: ModuleInfo, target: ModuleInfo): Boolean {

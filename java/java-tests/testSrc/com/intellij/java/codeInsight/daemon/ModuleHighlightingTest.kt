@@ -14,6 +14,7 @@ import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescripto
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
 import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
 import com.intellij.java.workspace.entities.javaSettings
+import com.intellij.mock.MockLocalFileSystem
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteActionAndWait
@@ -22,14 +23,19 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -50,6 +56,7 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.VfsTestUtil
+import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.util.ThrowableRunnable
 import junit.framework.AssertionFailedError
@@ -58,6 +65,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import java.io.File
+import java.nio.file.Path
 import java.util.jar.JarFile
 
 class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
@@ -1008,6 +1016,19 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     }
   }
 
+  fun testIsJdkModuleCaseInsensitiveForWindows() {
+    if (!SystemInfo.isWindows && !SystemInfo.isMac) return // fix it later
+    withCaseInsensitiveFs {
+      withInternalJdk(INTERNAL_MAIN, LanguageLevel.JDK_11, true) {
+        highlight("Main.java", """
+          public class Main {
+            private javax.smartcardio.ATR attr;
+          }
+        """.trimIndent(), INTERNAL_MAIN)
+      }
+    }
+  }
+
   fun testMultiReleaseJarWithDifferentJavaVersions() {
     val location = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/jigsaw/multi-release.jar"
     val libraryFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(location))!!
@@ -1080,15 +1101,17 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     assertThat(available).describedAs(availableIntentions.toString()).containsExactlyInAnyOrder(*fixes)
   }
 
-  private fun withInternalJdk(moduleDescriptor: ModuleDescriptor, level: LanguageLevel, block: () -> Unit) {
+  private fun withInternalJdk(moduleDescriptor: ModuleDescriptor, level: LanguageLevel, caseInsensitive: Boolean = false, block: () -> Unit) {
     val name = "INTERNAL_JDK_TEST"
 
     val module = ModuleManager.getInstance(project).findModuleByName(moduleDescriptor.moduleName)!!
     try {
 
       WriteAction.runAndWait<RuntimeException?>(ThrowableRunnable {
+        var path = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().getHomePath()!!
+        if (caseInsensitive) path = breakPath(path)
         val jdk = ProjectJdkTable.getInstance().findJdk(name)
-                  ?: JavaSdk.getInstance().createJdk(name, JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().getHomePath()!!, false)
+                  ?: createJdk(name, path)
 
         ProjectJdkTable.getInstance().addJdk(jdk, project)
         ModuleRootModificationUtil.setModuleSdk(module, jdk)
@@ -1106,6 +1129,41 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
           ProjectJdkTable.getInstance().removeJdk(jdk)
         }
       })
+    }
+  }
+
+  fun createJdk(jdkName: String, home: String): Sdk {
+    val jdk = ProjectJdkTable.getInstance().createSdk(jdkName, JavaSdk.getInstance())
+    val sdkModificator = jdk.getSdkModificator()
+
+    sdkModificator.setHomePath(FileUtil.toSystemIndependentName(home))
+    sdkModificator.setVersionString(JavaSdk.getInstance().getVersionString(home))
+    JavaSdkImpl.addClasses(Path.of(home), sdkModificator, false)
+
+    sdkModificator.applyChangesWithoutWriteAction()
+    return jdk
+  }
+
+  private fun breakPath(path: String): String {
+    val lastLetterIndex = path.indexOfLast { char -> char.isLetter() }
+    if (lastLetterIndex == -1) return path
+
+    val targetChar = path[lastLetterIndex]
+    val modifiedChar = if (targetChar.isUpperCase()) targetChar.lowercaseChar() else targetChar.uppercaseChar()
+    return path.replaceRange(lastLetterIndex, lastLetterIndex + 1, modifiedChar.toString())
+  }
+
+  private fun withCaseInsensitiveFs(action: () -> Unit) {
+    val mockFs = object : MockLocalFileSystem() {
+      override fun isCaseSensitive() = false
+    }
+    ApplicationManager.getApplication().replaceService(LocalFileSystem::class.java, mockFs, testRootDisposable)
+
+    try {
+      action()
+    }
+    finally {
+      Disposer.dispose(testRootDisposable)
     }
   }
 
