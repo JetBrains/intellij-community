@@ -58,7 +58,7 @@ data class Rete internal constructor(
   }
 
   companion object : CoroutineContext.Key<Rete> {
-    val logger = logger<Rete>()
+    internal val logger = logger<Rete>()
   }
 
   override val key: CoroutineContext.Key<*> = Rete
@@ -304,13 +304,13 @@ fun <T> Query<T>.observe(
  * */
 internal suspend fun <T> withReteDbSource(body: suspend CoroutineScope.() -> T): T =
   requireNotNull(coroutineContext[Rete]) { "no rete on context" }.let { rete ->
-    if (coroutineContext[DbSource.ContextElement]?.dbSource == rete.dbSource) {
+    val currentDbSource = requireNotNull(coroutineContext[DbSource.ContextElement]).dbSource
+    if (currentDbSource == rete.dbSource) {
       coroutineScope(body)
     }
     else {
-      waitForReteToCatchUp(coroutineContext.transactor.dbState.value)
-      val dbSourceContextElement = DbSource.ContextElement(rete.dbSource)
-      val (res, dbTimestamp) = withContext(dbSourceContextElement + ReteSpinChangeInterceptor) {
+      waitForReteToCatchUp(currentDbSource.latest)
+      val (res, dbTimestamp) = withContext(DbSource.ContextElement(rete.dbSource) + ReteSpinChangeInterceptor) {
         val res = body()
         res to db().timestamp
       }
