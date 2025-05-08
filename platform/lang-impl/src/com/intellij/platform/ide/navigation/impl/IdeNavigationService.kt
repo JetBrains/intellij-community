@@ -314,7 +314,7 @@ private suspend fun openFile(
                 navigateAndSelectEditor(editor, descriptor, composite as? EditorComposite)
               }
               FileNavigator.getInstance().canNavigate(descriptor) -> {
-                FileNavigator.getInstance().navigate(descriptor, true)
+                FileNavigator.getInstance().navigate(descriptor, options.requestFocus)
                 true
               }
               else -> false
