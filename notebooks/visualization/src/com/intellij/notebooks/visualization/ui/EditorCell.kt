@@ -27,7 +27,6 @@ class EditorCell(
 ) : Disposable, UserDataHolder by UserDataHolderBase() {
   val isUnfolded: AtomicBooleanProperty = AtomicBooleanProperty(true)
   val isSelected: AtomicBooleanProperty = AtomicBooleanProperty(false)
-  val isUnderDiff: AtomicBooleanProperty = AtomicBooleanProperty(false)
   val isHovered: AtomicBooleanProperty = AtomicBooleanProperty(false)
 
   //Enable NotebookVisibleCellsBatchUpdater if this field is required
