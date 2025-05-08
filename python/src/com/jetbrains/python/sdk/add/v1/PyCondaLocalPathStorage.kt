@@ -8,8 +8,8 @@ import kotlin.io.path.pathString
 private const val PYCHARM_CONDA_FULL_LOCAL_PATH = "PYCHARM_CONDA_FULL_LOCAL_PATH"
 
 
-fun saveLocalPythonCondaPath(condaPath: Path) {
-  PropertiesComponent.getInstance().setValue(PYCHARM_CONDA_FULL_LOCAL_PATH, condaPath.pathString)
+fun saveLocalPythonCondaPath(condaPath: Path?) {
+  PropertiesComponent.getInstance().setValue(PYCHARM_CONDA_FULL_LOCAL_PATH, condaPath?.pathString)
 }
 
 fun loadLocalPythonCondaPath(): Path? = PropertiesComponent.getInstance().getValue(PYCHARM_CONDA_FULL_LOCAL_PATH)?.let {
