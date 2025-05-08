@@ -549,37 +549,36 @@ final class FindInProjectTask {
   private @NotNull List<Object> collectSearchItems() {
     SearchScope customScope = findModel.isCustomScope() ? findModel.getCustomScope() : null;
 
-    List<Object> searchTasks = new ArrayList<>();
-    //fill the list from _one of_ {customScope | directory | module | indexingProviders } + FindModelExtensions:
+    List<Object> searchItems = new ArrayList<>();
+    //fill the list from _one of_ {customScope | directory | module | indexingProviders} + FindModelExtensions:
+    //so the resulting list is of { VirtualFile | IndexableFilesIterator | FindModelExtension }
     if (customScope instanceof LocalSearchScope localSearchScope) {
-      searchTasks.addAll(GlobalSearchScopeUtil.getLocalScopeFiles(localSearchScope));
+      searchItems.addAll(GlobalSearchScopeUtil.getLocalScopeFiles(localSearchScope));
     }
     else if (customScope instanceof VirtualFileEnumeration virtualFileEnumeration) {
       // GlobalSearchScope can include files out of project roots e.g., FileScope / FilesScope
-      ContainerUtil.addAll(searchTasks, FileBasedIndexEx.toFileIterable(virtualFileEnumeration.asArray()));
+      ContainerUtil.addAll(searchItems, FileBasedIndexEx.toFileIterable(virtualFileEnumeration.asArray()));
     }
     else if (directoryToSearchIn != null) {
       boolean withSubdirs = findModel.isWithSubdirectories();
-      searchTasks.addAll(withSubdirs ? List.of(directoryToSearchIn) : List.of(directoryToSearchIn.getChildren()));
+      searchItems.addAll(withSubdirs ? List.of(directoryToSearchIn) : List.of(directoryToSearchIn.getChildren()));
     }
     else if (moduleToSearchIn != null) {
       EntityStorage storage = WorkspaceModel.getInstance(project).getCurrentSnapshot();
       ModuleEntity moduleEntity = Objects.requireNonNull(storage.resolve(new ModuleId(moduleToSearchIn.getName())));
-      searchTasks.addAll(IndexableEntityProviderMethods.INSTANCE.createIterators(moduleEntity, storage, project));
+      searchItems.addAll(IndexableEntityProviderMethods.INSTANCE.createIterators(moduleEntity, storage, project));
     }
     else {
       FileBasedIndexEx indexes = (FileBasedIndexEx)FileBasedIndex.getInstance();
-      searchTasks.addAll(indexes.getIndexableFilesProviders(project));
+      searchItems.addAll(indexes.getIndexableFilesProviders(project));
     }
 
-    searchTasks.addAll(FindModelExtension.EP_NAME.getExtensionList());
+    searchItems.addAll(FindModelExtension.EP_NAME.getExtensionList());
 
-    return searchTasks;
+    return searchItems;
   }
 
-  /**
-   * @return filesToScanInitially + candidate files found by searchers, filtered by fileMaskFilter
-   */
+  /** @return candidate files found by searchers, filtered by fileMaskFilter */
   private static @NotNull Set<VirtualFile> collectFiles(@NotNull FindInProjectSearcher @NotNull [] searchers,
                                                         @NotNull Predicate<? super VirtualFile> fileFilter) {
     Set<VirtualFile> resultFiles = VfsUtilCore.createCompactVirtualFileSet();
