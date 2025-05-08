@@ -29,6 +29,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -409,6 +410,7 @@ public final class DirectoryLock {
   @SuppressWarnings("StringBufferReplaceableByString")
   private String diagnostic() {
     var sb = new StringBuilder();
+    sb.append("Timestamp: ").append(LocalDateTime.now()).append('\n');
     sb.append("Port file: ").append(myPortFile).append('\n');
     sb.append("Redirected: ").append(myRedirectedPortFile).append('\n');
     sb.append("Fallback: ").append(myFallbackMode).append('\n');
