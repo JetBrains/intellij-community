@@ -326,6 +326,11 @@ public abstract class JsK2HighlightingMetaInfoTestGenerated extends AbstractK2Hi
             runTest("../../idea/tests/testData/highlighterMetaInfo/Object.kt");
         }
 
+        @TestMetadata("Parameters.kt")
+        public void testParameters() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/Parameters.kt");
+        }
+
         @TestMetadata("PropertiesWithPropertyDeclarations.kt")
         public void testPropertiesWithPropertyDeclarations() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/PropertiesWithPropertyDeclarations.kt");
