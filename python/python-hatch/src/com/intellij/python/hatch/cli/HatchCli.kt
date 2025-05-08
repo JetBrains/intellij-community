@@ -146,19 +146,16 @@ class HatchCli(private val runtime: HatchRuntime) {
   /**
    * Run commands within project environments
    */
-  suspend fun run(envName: String, vararg command: String): Result<String, ExecException> {
-    val envRuntime = runtime.withEnv(HatchConstants.AppEnvVars.ENV to envName)
+  suspend fun run(envName: String? = null, vararg command: String): Result<String, ExecException> {
+    val envRuntime = envName?.let { runtime.withEnv(HatchConstants.AppEnvVars.ENV to it) } ?: runtime
     return envRuntime.executeAndHandleErrors("run", *command) { output ->
+      if (output.exitCode != 0) return@executeAndHandleErrors Result.failure(null)
+
       val scenario = output.stderr.trim()
-      val content = when {
-        output.exitCode == 0 -> {
-          val installDetailsContent = output.stdout.replace("─", "").trim()
-          val info = installDetailsContent.lines().drop(1).dropLast(2).joinToString("\n")
-          "$scenario\n$info"
-        }
-        else -> scenario
-      }
-      Result.success(content)
+      val installDetailsContent = output.stdout.replace("─", "").trim()
+      val info = installDetailsContent.lines().drop(1).dropLast(2).joinToString("\n")
+
+      Result.success("$scenario\n$info")
     }
   }
 

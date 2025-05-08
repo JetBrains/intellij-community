@@ -1,29 +1,22 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.poetry
 
-import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.python.community.impl.poetry.poetryPath
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyPackage
-import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
-import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateExecutableFile
@@ -31,7 +24,6 @@ import com.jetbrains.python.sdk.*
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import io.github.z4kn4fein.semver.Version
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import io.github.z4kn4fein.semver.toVersion
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -124,28 +116,6 @@ suspend fun setupPoetry(projectPath: Path, python: String?, installPackages: Boo
   }
 
   return runPoetry(projectPath, "env", "info", "-p")
-}
-
-internal fun runPoetryInBackground(module: Module, args: List<String>, @NlsSafe description: String) {
-  service<PythonSdkCoroutineService>().cs.launch {
-    withBackgroundProgress(module.project, "$description...", true) {
-      val sdk = module.pythonSdk ?: return@withBackgroundProgress
-      try {
-        val result = runPoetryWithSdk(sdk, *args.toTypedArray()).exceptionOrNull()
-        if (result is ExecutionException) {
-          withContext(Dispatchers.EDT) {
-            showSdkExecutionException(sdk, result, PyBundle.message("sdk.create.custom.venv.run.error.message", "poetry"))
-          }
-        }
-      }
-      finally {
-        PythonSdkUtil.getSitePackagesDirectory(sdk)?.refresh(true, true)
-        sdk.associatedModuleDir?.refresh(true, false)
-        PythonPackageManager.forSdk(module.project, sdk).reloadPackages()
-        PyPackageManager.getInstance(sdk).refreshAndGetPackages(true)
-      }
-    }
-  }
 }
 
 internal suspend fun detectPoetryEnvs(module: Module?, existingSdkPaths: Set<String>?, projectPath: @SystemIndependent @NonNls String?): List<PyDetectedSdk> {

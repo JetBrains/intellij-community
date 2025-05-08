@@ -172,6 +172,14 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
 
     return pythons
   }
+
+  override suspend fun sync(): Result<String> {
+      return uvCli.runUv(cwd, "sync")
+  }
+
+  override suspend fun lock(): Result<String> {
+      return uvCli.runUv(cwd, "lock")
+  }
 }
 
 fun createUvLowLevel(cwd: Path, uvCli: UvCli = createUvCli()): UvLowLevel {

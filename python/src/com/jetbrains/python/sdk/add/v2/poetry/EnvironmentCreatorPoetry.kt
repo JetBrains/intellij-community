@@ -30,11 +30,9 @@ import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.errorProcessing.asPythonResult
 import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector
 import com.jetbrains.python.sdk.add.v2.CustomNewEnvironmentCreator
-import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.*
 import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.PythonSelectableInterpreter
-import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.*
 import com.jetbrains.python.sdk.add.v2.VenvExistenceValidationState.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -154,7 +152,7 @@ internal class PoetryConfigService : PersistentStateComponent<PoetryConfigServic
     val hasPoetryToml = poetryToml(module) != null
 
     if (isInProjectEnv || hasPoetryToml) {
-      val modulePath = withContext(Dispatchers.IO) { pyProjectToml(module)?.parent?.toNioPath() ?: module.basePath?.let { Path.of(it) } }
+      val modulePath = withContext(Dispatchers.IO) { findPyProjectToml(module)?.parent?.toNioPath() ?: module.basePath?.let { Path.of(it) } }
       configurePoetryEnvironment(modulePath, "virtualenvs.in-project", isInProjectEnv.toString(), "--local")
     }
   }

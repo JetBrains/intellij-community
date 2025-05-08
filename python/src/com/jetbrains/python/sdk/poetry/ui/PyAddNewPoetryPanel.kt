@@ -169,7 +169,7 @@ class PyAddNewPoetryPanel(
   private fun update() {
     service<PythonSdkCoroutineService>().cs.launch {
       selectedModule?.let {
-        installPackagesCheckBox.isEnabled = pyProjectToml(it) != null
+        installPackagesCheckBox.isEnabled = findPyProjectToml(it) != null
       }
     }
   }

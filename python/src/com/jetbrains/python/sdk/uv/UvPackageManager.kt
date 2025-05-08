@@ -67,6 +67,14 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
 
     return uv.listPackages()
   }
+
+  suspend fun sync(): Result<String> {
+    return uv.sync()
+  }
+
+  suspend fun lock(): Result<String> {
+    return uv.lock()
+  }
 }
 
 class UvPackageManagerProvider : PythonPackageManagerProvider {
