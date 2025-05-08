@@ -107,15 +107,16 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
                 }
             }
         }
-        
+
         if (element is KtParameter) {
-            val function = element.getNonStrictParentOfType<KtFunction>()
-            if (function != null) {
-                val parameterIndexAsJavaCall = element.parameterIndex() + if (function.receiverTypeReference != null) 1 else 0
-                findCallArgumentsToDelete(result, element, parameterIndexAsJavaCall, function)
-            }
             if (element.isContextParameter) {
                 findCallsWithContextParameters(result, element, element.ownerDeclaration)
+            } else {
+                val function = element.getNonStrictParentOfType<KtFunction>()
+                if (function != null) {
+                    val parameterIndexAsJavaCall = element.parameterIndex() + if (function.receiverTypeReference != null) 1 else 0
+                    findCallArgumentsToDelete(result, element, parameterIndexAsJavaCall, function)
+                }
             }
         }
 
