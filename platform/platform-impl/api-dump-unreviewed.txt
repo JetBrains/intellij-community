@@ -2673,7 +2673,6 @@ c:com.intellij.ide.browsers.BrowserSelector
 - setSelected(com.intellij.ide.browsers.WebBrowser):V
 f:com.intellij.ide.browsers.BrowserSettings
 - com.intellij.openapi.options.BoundCompositeConfigurable
-- com.intellij.openapi.options.Configurable$NoScroll
 - com.intellij.openapi.options.Configurable$WithEpDependencies
 - com.intellij.openapi.options.SearchableConfigurable
 - <init>():V

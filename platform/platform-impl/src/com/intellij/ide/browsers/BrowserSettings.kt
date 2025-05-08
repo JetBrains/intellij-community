@@ -4,7 +4,6 @@ package com.intellij.ide.browsers
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.options.BoundCompositeConfigurable
-import com.intellij.openapi.options.Configurable.NoScroll
 import com.intellij.openapi.options.Configurable.WithEpDependencies
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
@@ -15,7 +14,7 @@ import com.intellij.ui.dsl.builder.panel
 class BrowserSettings : BoundCompositeConfigurable<UnnamedConfigurable>(
   IdeBundle.message("browsers.settings"),
   "reference.settings.ide.settings.web.browsers"
-), SearchableConfigurable, NoScroll, WithEpDependencies {
+), SearchableConfigurable, WithEpDependencies {
   private var browserSettings = BrowserSettingsConfigurable()
 
   override fun getId(): String = helpTopic!!
