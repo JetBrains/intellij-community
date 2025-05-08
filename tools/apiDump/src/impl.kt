@@ -10,11 +10,11 @@ import kotlinx.validation.api.*
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.AnnotationNode
+import java.net.URI
+import java.nio.file.FileSystemAlreadyExistsException
+import java.nio.file.FileSystems
 import java.nio.file.Path
-import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.inputStream
-import kotlin.io.path.name
-import kotlin.io.path.walk
+import kotlin.io.path.*
 import kotlin.metadata.jvm.JvmFieldSignature
 import kotlin.metadata.jvm.JvmMethodSignature
 
@@ -310,11 +310,22 @@ private fun stableAndExperimentalApi(classSignatures: List<ApiClass>): Pair<List
 
 @OptIn(ExperimentalPathApi::class)
 private fun classFilePaths(classRoot: Path): Sequence<Path> {
-  return classRoot
+  var root = classRoot
+  if (root.isRegularFile() && root.extension == "jar") {
+    val uri = URI("jar:${classRoot.toUri()}!/")
+    val fs = try {
+      FileSystems.newFileSystem(uri, emptyMap<String, Any>())
+    }
+    catch (ignored: FileSystemAlreadyExistsException) {
+      FileSystems.getFileSystem(uri)
+    }
+    root = fs.rootDirectories.single()
+  }
+  return root
     .walk()
     .filter { path ->
-      path.name.endsWith(".class") &&
-      !classRoot.relativize(path).startsWith("META-INF/")
+      path.extension == "class" &&
+      !root.relativize(path).startsWith("META-INF/")
     }
 }
 
@@ -339,7 +350,7 @@ private val unannotated = ApiAnnotations(false, false)
 private fun Sequence<Path>.packages(): Map<String, ApiAnnotations> {
   val packages = HashMap<String, ApiAnnotations>()
   for (path in this) {
-    if (!path.endsWith("package-info.class")) {
+    if (path.name != "package-info.class") {
       continue
     }
     val node = readClass(path)
