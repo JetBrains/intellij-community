@@ -17,7 +17,7 @@ internal class Memoizer<T> {
     return m.compute(key) { _, v ->
       when {
         v == null -> WithEpoch(f(), epoch)
-        unique && v.epoch == epoch -> throw IllegalArgumentException("uui key $key is not unique in scope")
+        unique && v.epoch == epoch -> throw IllegalArgumentException("key $key is not unique in scope. If this happens in a shared block, you might want to use [SharedChangeScope.withKey]")
         else -> v.copy(epoch = epoch)
       }
     }!!.value
