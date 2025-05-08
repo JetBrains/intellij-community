@@ -190,7 +190,7 @@ public final class ImageEditorUI extends JPanel implements UiDataProvider, CopyP
         scientificInfoPanel.add(positionLabel);
         scientificInfoPanel.add(valueLabel);
 
-        imageComponent.addMouseMotionListener(new MouseMotionAdapter() {
+        view.addMouseMotionListener(new MouseMotionAdapter() {
           @Override
           public void mouseMoved(MouseEvent e) {
             BufferedImage image = imageComponent.getDocument().getValue();
