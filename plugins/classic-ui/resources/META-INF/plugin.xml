@@ -4,7 +4,6 @@
     <vendor>JetBrains</vendor>
 
     <incompatible-with>com.intellij.jetbrains.client</incompatible-with>
-    <incompatible-with>com.intellij.gateway</incompatible-with>
 
     <description><![CDATA[
         Provides the classic JetBrains IDE look and feel, which was used before the introduction of <a href="https://www.jetbrains.com/idea/new-ui">New UI</a>.
