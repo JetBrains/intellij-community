@@ -41,6 +41,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.platform.eel.provider.utils.EelProcessUtilsKt.getStderrString;
+import static com.intellij.platform.eel.provider.utils.EelProcessUtilsKt.getStdoutString;
+
 
 /**
  * @deprecated for search in for packages and managing repositories use
@@ -324,14 +327,17 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     if (e instanceof PyExecutionException pyExecEx &&
         pyExecEx.getPyError() instanceof ExecError execError &&
         execError.getErrorReason() instanceof ExecErrorReason.UnexpectedProcessTermination execFailed) {
-      final String stdout = execFailed.getStdout();
+      var stdout = getStdoutString(execFailed);
+      var stderr = getStderrString(execFailed);
       final String stdoutCause = findErrorCause(stdout);
-      final String stderrCause = findErrorCause(execFailed.getStderr());
+      final String stderrCause = findErrorCause(stderr);
       final String cause = stdoutCause != null ? stdoutCause : stderrCause;
       final String message = cause != null ? cause : pyExecEx.getMessage();
       final String command = execError.getAsCommand();
       return new PyPackageInstallationErrorDescription(message, command,
-                                                       stdout.isEmpty() ? execFailed.getStderr() : stdout + "\n" + execFailed.getStderr(),
+                                                       stdout.isEmpty()
+                                                       ? stderr
+                                                       : stdout + "\n" + stderr,
                                                        findErrorSolution(pyExecEx, cause, sdk), packageName, sdk);
     }
     else {
@@ -367,7 +373,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   }
 
   private static boolean containsInOutput(@NotNull ExecErrorReason.UnexpectedProcessTermination e, @NotNull String text) {
-    return StringUtil.containsIgnoreCase(e.getStdout(), text) || StringUtil.containsIgnoreCase(e.getStderr(), text);
+    return StringUtil.containsIgnoreCase(getStdoutString(e), text) || StringUtil.containsIgnoreCase(getStderrString(e), text);
   }
 
   private static @Nullable String findErrorCause(@NotNull String output) {

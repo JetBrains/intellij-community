@@ -1,11 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.execService
 
-import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
+import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.python.community.execService.impl.ExecServiceImpl
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
@@ -20,13 +20,11 @@ import kotlin.time.Duration.Companion.minutes
 /**
  * Error is an optional additionalMessage, that will be used instead of a default one for the [ExecError] in the [com.jetbrains.python.execution.PyExecutionFailure].
  */
-typealias ProcessOutputTransformer<T> = (ProcessOutput) -> Result<T, @NlsSafe String?>
-
-typealias EelProcessInteractiveHandler<T> = suspend (EelProcess) -> Result<T, @NlsSafe String?>
+typealias ProcessOutputTransformer<T> = (EelProcessExecutionResult) -> Result<T, @NlsSafe String?>
 
 object ZeroCodeStdoutTransformer : ProcessOutputTransformer<String> {
-  override fun invoke(processOutput: ProcessOutput): Result<String, String?> =
-    if (processOutput.exitCode == 0) Result.success(processOutput.stdout.trim()) else Result.failure(null)
+  override fun invoke(processOutput: EelProcessExecutionResult): Result<String, String?> =
+    if (processOutput.exitCode == 0) Result.success(processOutput.stdoutString.trim()) else Result.failure(null)
 }
 
 /**
@@ -36,12 +34,19 @@ object ZeroCodeStdoutTransformer : ProcessOutputTransformer<String> {
 @ApiStatus.Internal
 interface ExecService {
 
+  /**
+   * Execute code in a so-called "interactive" mode.
+   * This is a quite advanced mode where *you* are responsible for converting a process to output.
+   * You must listen for process stdout/stderr e.t.c.
+   * Use it if you need to get some info from a process before it ends or to interact (i.e write into stdin).
+   * See [ProcessInteractiveHandler] and [ProcessSemiInteractiveHandler]
+   */
   @CheckReturnValue
   suspend fun <T> executeInteractive(
     whatToExec: WhatToExec,
     args: List<String> = emptyList(),
     options: ExecOptions = ExecOptions(),
-    eelProcessInteractiveHandler: EelProcessInteractiveHandler<T>,
+    processInteractiveHandler: ProcessInteractiveHandler<T>,
   ): Result<T, ExecError>
 
   /**

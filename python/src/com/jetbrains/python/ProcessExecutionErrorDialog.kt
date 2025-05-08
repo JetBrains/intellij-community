@@ -6,6 +6,8 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.platform.eel.provider.utils.stderrString
+import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
@@ -67,7 +69,7 @@ fun showProcessExecutionErrorDialog(
 
       }
       is ExecErrorReason.UnexpectedProcessTermination -> {
-        appendProcessOutput(command, err.stdout, err.stderr, err.exitCode)
+        appendProcessOutput(command, err.stdoutString, err.stderrString, err.exitCode)
       }
       ExecErrorReason.Timeout -> {
         appendProcessOutput(command, "Timeout", "\n", null)

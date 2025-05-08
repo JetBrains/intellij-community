@@ -3,6 +3,8 @@ package com.jetbrains.python.packaging
 
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.utils.stderrString
+import com.intellij.platform.eel.provider.utils.stdoutString
 import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.ExecErrorReason
 import com.jetbrains.python.errorProcessing.MessageError
@@ -23,7 +25,7 @@ internal fun PyExecutionException.copyWith(newCommand: String, newArgs: List<Str
           PyExecutionException(ExecError(Path(newCommand).asEelPath(), newArgs.toTypedArray(), ExecErrorReason.Timeout, err.additionalMessageToUser))
         }
         is ExecErrorReason.UnexpectedProcessTermination -> {
-          val output = ProcessOutput(reason.stdout, reason.stderr, reason.exitCode, false, false)
+          val output = ProcessOutput(reason.stdoutString, reason.stderrString, reason.exitCode, false, false)
           PyExecutionException(err.additionalMessageToUser, newCommand, newArgs, output, fixes)
         }
       }

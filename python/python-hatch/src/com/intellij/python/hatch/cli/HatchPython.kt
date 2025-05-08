@@ -1,8 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.hatch.cli
 
-import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.platform.eel.provider.utils.EelProcessExecutionResultInfo
+import com.intellij.platform.eel.provider.utils.stderrString
+import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.python.hatch.cli.HatchPython.PythonInstallResponse.AbortReason
 import com.intellij.python.hatch.runtime.HatchRuntime
 import com.jetbrains.python.Result
@@ -29,10 +31,10 @@ class HatchPython(runtime: HatchRuntime) : HatchCommand("python", runtime) {
 
     return executeAndHandleErrors("find", *options, name) { output ->
       when {
-        output.exitCode == 1 && output.stderr.contains("Distribution not installed: $name") -> Result.success(null)
+        output.exitCode == 1 && output.stderrString.contains("Distribution not installed: $name") -> Result.success(null)
         output.exitCode != 0 -> Result.failure(null)
         else -> {
-          val path = NioFiles.toPath(output.stdout.trim())
+          val path = NioFiles.toPath(output.stdoutString.trim())
           path?.let { Result.success(it) } ?: Result.failure(null)
         }
       }
@@ -78,8 +80,8 @@ class HatchPython(runtime: HatchRuntime) : HatchCommand("python", runtime) {
    *     app.display(public_directory)
    * ```
    */
-  fun parsePythonInstallCommandOutput(processOutput: ProcessOutput): PythonInstallResponse {
-    val output = processOutput.stderr.replace("\r\n", "\n")
+  fun parsePythonInstallCommandOutput(processOutput: EelProcessExecutionResultInfo): PythonInstallResponse {
+    val output = processOutput.stderrString.replace("\r\n", "\n")
 
     val abort = AbortReason.parse(output)?.let { PythonInstallResponse.Abort(it, output) }
 
@@ -144,7 +146,7 @@ class HatchPython(runtime: HatchRuntime) : HatchCommand("python", runtime) {
    */
   suspend fun remove(vararg names: String = ALL_NAMES, dir: String? = null): Result<PythonRemoveResponse, ExecError> {
     return executeAndHandleErrors("remove", *buildDirOption(dir), *names) { processOutput ->
-      val output = processOutput.stderr
+      val output = processOutput.stderrString
       val notInstalledRegex = Regex("""^Distribution is not installed: (.*)$""", RegexOption.MULTILINE)
       val notInstalled = notInstalledRegex.findAll(output).map { it.destructured.component1() }.toList()
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.hatch.cli
 
+import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.python.hatch.runtime.HatchRuntime
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ExecError
@@ -63,7 +64,7 @@ class HatchProject(runtime: HatchRuntime) : HatchCommand("project", runtime) {
    */
   suspend fun metadata(): Result<Metadata, ExecError> {
     return executeAndHandleErrors("metadata") { processOutput ->
-      val output = processOutput.takeIf { it.exitCode == 0 }?.stdout
+      val output = processOutput.takeIf { it.exitCode == 0 }?.stdoutString
                    ?: return@executeAndHandleErrors Result.failure(null)
 
       val json = Json { ignoreUnknownKeys = true }

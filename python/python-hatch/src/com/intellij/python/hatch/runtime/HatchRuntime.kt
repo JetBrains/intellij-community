@@ -2,10 +2,7 @@ package com.intellij.python.hatch.runtime
 
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.python.community.execService.EelProcessInteractiveHandler
-import com.intellij.python.community.execService.ExecOptions
-import com.intellij.python.community.execService.ExecService
-import com.intellij.python.community.execService.ProcessOutputTransformer
+import com.intellij.python.community.execService.*
 import com.intellij.python.community.execService.WhatToExec.Binary
 import com.intellij.python.hatch.*
 import com.intellij.python.hatch.cli.HatchCli
@@ -62,8 +59,8 @@ class HatchRuntime(
     return execService.execute(hatchBinary, arguments.toList(), execOptions, processOutputTransformer)
   }
 
-  internal suspend fun <T> executeInteractive(vararg arguments: String, eelProcessInteractiveHandler: EelProcessInteractiveHandler<T>): Result<T, ExecError> {
-    return execService.executeInteractive(hatchBinary, arguments.toList(), execOptions, eelProcessInteractiveHandler)
+  internal suspend fun <T> executeInteractive(vararg arguments: String, processSemiInteractiveFun: ProcessSemiInteractiveFun<T>): Result<T, ExecError> {
+    return execService.executeInteractive(hatchBinary, arguments.toList(), execOptions, ProcessSemiInteractiveHandler(processSemiInteractiveFun))
   }
 
   internal suspend fun resolvePythonVirtualEnvironment(pythonHomePath: PythonHomePath): PyResult<PythonVirtualEnvironment> {

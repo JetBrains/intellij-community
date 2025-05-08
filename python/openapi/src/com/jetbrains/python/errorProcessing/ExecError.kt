@@ -4,6 +4,10 @@ package com.jetbrains.python.errorProcessing
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
+import com.intellij.platform.eel.provider.utils.EelProcessExecutionResultInfo
+import com.intellij.platform.eel.provider.utils.stderrString
+import com.intellij.platform.eel.provider.utils.stdoutString
 import com.jetbrains.python.PyCommunityBundle
 import org.jetbrains.annotations.Nls
 
@@ -15,7 +19,7 @@ class ExecError(
   /**
    * I.e ['-v']
    */
-  val args: Array<String>,
+  val args: Array<out String>,
 
   val errorReason: ExecErrorReason,
   /**
@@ -37,8 +41,9 @@ sealed interface ExecErrorReason {
 
   /**
    * A process started but failed with an error.
+   * [processOutput] contains exit code, stdout etc
    */
-  data class UnexpectedProcessTermination(val exitCode: Int, val stdout: String, val stderr: String) : ExecErrorReason
+  data class UnexpectedProcessTermination(private val processOutput: EelProcessExecutionResult) : ExecErrorReason, EelProcessExecutionResultInfo by processOutput
 
   /**
    * Process started, but killed due to timeout without returning any useful data
@@ -47,11 +52,11 @@ sealed interface ExecErrorReason {
 }
 
 fun ProcessOutput.asExecutionFailed(): ExecErrorReason.UnexpectedProcessTermination =
-  ExecErrorReason.UnexpectedProcessTermination(exitCode, stdout, stderr)
+  ExecErrorReason.UnexpectedProcessTermination(EelProcessExecutionResult(exitCode, stdout.encodeToByteArray(), stderr.encodeToByteArray()))
 
 private fun getExecErrorMessage(
   exec: String,
-  args: Array<String>,
+  args: Array<out String>,
   additionalMessage: @NlsContexts.DialogTitle String?,
   execErrorReason: ExecErrorReason,
 ): @Nls String {
@@ -68,8 +73,8 @@ private fun getExecErrorMessage(
       PyCommunityBundle.message("python.execution.error",
                                 additionalMessage ?: "",
                                 commandLine,
-                                r.stdout,
-                                r.stderr,
+                                r.stdoutString,
+                                r.stderrString,
                                 r.exitCode)
     }
 
