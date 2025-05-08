@@ -77,7 +77,7 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
 
     detectedRoots.addAll(scanForRootsInsideDir(myProject, dirToScan, null, scannedDirs));
     detectedRoots.addAll(scanForRootsAboveDirs(Collections.singletonList(dirToScan), scannedDirs, detectedRoots));
-    return detectedRoots;
+    return deduplicate(detectedRoots);
   }
 
   private @NotNull Collection<VcsRoot> scanForRootsInContentRoots() {
@@ -106,7 +106,43 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
     detectedAndKnownRoots.addAll(Arrays.asList(ProjectLevelVcsManager.getInstance(myProject).getAllVcsRoots()));
     detectedRoots.addAll(scanDependentRoots(scannedDirs, detectedAndKnownRoots));
 
-    return detectedRoots;
+    return deduplicate(detectedRoots);
+  }
+
+  /**
+   * @return a deduplicated set of {@code detectedRoots} with removed links pointing to the same canonical file.
+   */
+  private static @NotNull Set<VcsRoot> deduplicate(@NotNull Set<VcsRoot> detectedRoots) {
+    if (detectedRoots.size() <= 1) return detectedRoots;
+
+    Set<VcsRoot> result = new HashSet<>();
+
+    Set<VirtualFile> processedCanonicalRoots = new HashSet<>();
+    Set<VcsRoot> rootsUnderSymlink = new HashSet<>();
+    for (VcsRoot root : detectedRoots) {
+      VirtualFile path = root.getPath();
+      VirtualFile canonicalPath = path.getCanonicalFile();
+      if (canonicalPath != null && !path.equals(canonicalPath)) {
+        rootsUnderSymlink.add(root);
+      } else {
+        processedCanonicalRoots.add(path);
+        result.add(root);
+      }
+    }
+
+    if (rootsUnderSymlink.isEmpty()) return detectedRoots;
+
+    for (VcsRoot root : ContainerUtil.sorted(rootsUnderSymlink, Comparator.comparing(root -> root.getPath().toNioPath()))) {
+      VirtualFile canonicalFile = root.getPath().getCanonicalFile();
+      if (processedCanonicalRoots.contains(canonicalFile)) {
+        LOG.debug("Skipping duplicate VCS root %s: root for canonical file '%s' is already detected".formatted(root, canonicalFile));
+      } else {
+        processedCanonicalRoots.add(canonicalFile);
+        result.add(root);
+      }
+    }
+
+    return result;
   }
 
   private @NotNull Set<VcsRoot> scanForRootsInsideDir(@NotNull Project project,
