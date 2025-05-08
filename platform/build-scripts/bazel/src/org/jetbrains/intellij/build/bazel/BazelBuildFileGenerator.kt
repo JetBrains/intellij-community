@@ -375,12 +375,6 @@ internal class BazelBuildFileGenerator(
           option("plugins", arrayOf("@lib//:expects-plugin"))
         }
 
-        // exported_compiler_plugins does not get exported through PROVIDED dependencies
-        // probably needs handling/asserting later
-        if (module.name == "fleet.multiplatform.shims") {
-          option("plugins", arrayOf("@lib//:expects-plugin"))
-        }
-
         var deps = moduleList.deps.get(moduleDescriptor)
         if (deps != null && deps.provided.isNotEmpty()) {
           if (deps.provided.any { it.endsWith("/syntax/syntax-multiplatformSupport:multiplatformSupport") }) {

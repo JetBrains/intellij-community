@@ -1,11 +1,15 @@
 load("@rules_java//java:defs.bzl", _JavaInfo = "JavaInfo")
-load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo", _KtCompilerPluginInfo = "KtCompilerPluginInfo", "KtPluginConfiguration")
+load("@rules_kotlin//kotlin/internal:defs.bzl", "KtPluginConfiguration", _KtCompilerPluginInfo = "KtCompilerPluginInfo", _KtJvmInfo = "KtJvmInfo")
 load("//:rules/common-attrs.bzl", "add_dicts", "common_attr", "common_outputs", "common_toolchains")
 load("//:rules/impl/compile.bzl", "kt_jvm_produce_jar_actions")
 
 visibility("private")
 
-def _make_providers(ctx, providers):
+def _jvm_library(ctx):
+    if ctx.attr.neverlink and ctx.attr.runtime_deps:
+        fail("runtime_deps and neverlink is nonsensical.", attr = "runtime_deps")
+
+    providers = kt_jvm_produce_jar_actions(ctx, False)
     files = [ctx.outputs.jar]
     return [
         providers.java,
@@ -21,12 +25,6 @@ def _make_providers(ctx, providers):
             ),
         ),
     ]
-
-def _jvm_library(ctx):
-    if ctx.attr.neverlink and ctx.attr.runtime_deps:
-        fail("runtime_deps and neverlink is nonsensical.", attr = "runtime_deps")
-
-    return _make_providers(ctx, kt_jvm_produce_jar_actions(ctx))
 
 jvm_library = rule(
     doc = """This rule compiles and links Kotlin and Java sources into a .jar file.""",
@@ -46,7 +44,7 @@ jvm_library = rule(
     of any targets that directly depend on this target. Unlike `java_plugin`s exported_plugins,
     this is not transitive""",
             default = [],
-            providers = [[_KtCompilerPluginInfo], [KtPluginConfiguration]],
+            providers = [[_KtCompilerPluginInfo]],
         ),
         "exports": attr.label_list(
             doc = """\

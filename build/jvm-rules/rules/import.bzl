@@ -1,5 +1,5 @@
 load("@rules_java//java:defs.bzl", "JavaInfo")
-load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo", _KtCompilerPluginInfo = "KtCompilerPluginInfo", "KtPluginConfiguration")
+load("@rules_kotlin//kotlin/internal:defs.bzl", "KtPluginConfiguration", _KtCompilerPluginInfo = "KtCompilerPluginInfo", _KtJvmInfo = "KtJvmInfo")
 
 visibility("private")
 
@@ -10,10 +10,10 @@ def _jvm_import(ctx):
             compile_jar = ctx.file.jar,
             source_jar = ctx.file.source_jar,
             runtime_deps = [dep[JavaInfo] for dep in ctx.attr.runtime_deps],
-            ),
+        ),
         _KtJvmInfo(
             exported_compiler_plugins = depset(ctx.attr.exported_compiler_plugins),
-            ),
+        ),
     ]
 
 jvm_import = rule(
@@ -36,7 +36,7 @@ jvm_import = rule(
         "exported_compiler_plugins": attr.label_list(
             doc = """Exported compiler plugins.""",
             default = [],
-            providers = [[_KtCompilerPluginInfo], [KtPluginConfiguration]],
+            providers = [[_KtCompilerPluginInfo]],
         ),
     },
     provides = [JavaInfo, _KtJvmInfo],
