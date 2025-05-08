@@ -12,7 +12,6 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "srcJvm/**/*.kt", "srcJvm/**/*.java"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
-  plugins = ["@lib//:expects-plugin"],
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",

@@ -371,16 +371,9 @@ internal class BazelBuildFileGenerator(
         if (module.name == "fleet.util.multiplatform" || module.name == "intellij.platform.syntax.multiplatformSupport") {
           option("exported_compiler_plugins", arrayOf("@lib//:expects-plugin"))
         }
-        if ( module.name == "intellij.platform.syntax.multiplatformSupport") {
-          option("plugins", arrayOf("@lib//:expects-plugin"))
-        }
 
         var deps = moduleList.deps.get(moduleDescriptor)
         if (deps != null && deps.provided.isNotEmpty()) {
-          if (deps.provided.any { it.endsWith("/syntax/syntax-multiplatformSupport:multiplatformSupport") }) {
-            option("plugins", arrayOf("@lib//:expects-plugin"))
-          }
-
           load("@rules_jvm//:jvm.bzl", "jvm_provided_library")
 
           val extraDeps = mutableListOf<String>()

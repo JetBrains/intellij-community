@@ -8,7 +8,6 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
   exported_compiler_plugins = ["@lib//:expects-plugin"],
-  plugins = ["@lib//:expects-plugin"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
