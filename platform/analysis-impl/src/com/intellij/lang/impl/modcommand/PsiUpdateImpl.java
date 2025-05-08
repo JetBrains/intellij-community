@@ -643,6 +643,14 @@ final class PsiUpdateImpl {
       int newLength = event.getNewLength();
       if (pos < offset || (pos == offset && (!leanRight || oldLength > 0))) return pos;
       if (pos >= offset + oldLength) return pos + newLength - oldLength;
+      if (newLength > oldLength) {
+        String newContent = event.getNewFragment().toString();
+        String oldContent = event.getOldFragment().toString();
+        int index = newContent.indexOf(oldContent);
+        if (index >= 0) {
+          return pos + index;
+        }
+      }
       return offset + newLength;
     }
 
