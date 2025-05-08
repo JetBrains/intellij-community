@@ -17,7 +17,7 @@ public class PluginXmlIdentifierHighlightingTest extends LightJavaCodeInsightFix
   }
 
   public void test_ep_references() {
-    IdentifierHighlighterPassFactory.doWithHighlightingEnabled(getProject(), () -> {
+    IdentifierHighlighterPassFactory.doWithIdentifierHighlightingEnabled(getProject(), () -> {
 
       myFixture.configureByText("plugin.xml", """
 <idea-plugin>

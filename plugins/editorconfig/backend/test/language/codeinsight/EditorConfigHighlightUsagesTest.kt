@@ -22,7 +22,7 @@ class EditorConfigHighlightUsagesTest : BasePlatformTestCase() {
   private fun doTest() {
     SeveritiesProvider.EP_NAME.point.registerExtension(SEVERITIES_PROVIDER, testRootDisposable)
     val name = getTestName(true)
-    IdentifierHighlighterPassFactory.doWithHighlightingEnabled (project, Runnable {
+    IdentifierHighlighterPassFactory.doWithIdentifierHighlightingEnabled (project, Runnable {
       myFixture.configureByFile("${name}/.editorconfig")
       myFixture.setReadEditorMarkupModel(true)
       myFixture.checkHighlighting()

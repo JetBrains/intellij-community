@@ -261,7 +261,7 @@ public class HighlightUsagesHandlerTest extends DaemonAnalyzerTestCase {
   }
 
   public void testIdentifierHighlighterForStaticImports() {
-    IdentifierHighlighterPassFactory.doWithHighlightingEnabled(getProject(), ()->{
+    IdentifierHighlighterPassFactory.doWithIdentifierHighlightingEnabled(getProject(), ()->{
       try {
         createClass("""
 
@@ -283,7 +283,7 @@ public class HighlightUsagesHandlerTest extends DaemonAnalyzerTestCase {
           }
         }""");
 
-      IdentifierHighlighterPassFactory.waitForIdentifierHighlighting();
+      IdentifierHighlighterPassFactory.waitForIdentifierHighlighting(getEditor());
 
       assertEquals(2, getIdentifierHighlighters()
         .stream()
@@ -329,7 +329,7 @@ public class HighlightUsagesHandlerTest extends DaemonAnalyzerTestCase {
   }
 
   public void testMethodParameterEndOfIdentifier() {
-    IdentifierHighlighterPassFactory.doWithHighlightingEnabled(getProject(), ()-> {
+    IdentifierHighlighterPassFactory.doWithIdentifierHighlightingEnabled(getProject(), ()-> {
       try {
         configureFile();
       }

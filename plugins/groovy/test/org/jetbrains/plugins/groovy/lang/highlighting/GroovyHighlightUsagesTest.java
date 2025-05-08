@@ -29,7 +29,7 @@ public class GroovyHighlightUsagesTest extends LightGroovyTestCase {
 
   private void doTest(boolean directoryTest) {
     SeveritiesProvider.EP_NAME.getPoint().registerExtension(SEVERITIES_PROVIDER, getTestRootDisposable());
-    IdentifierHighlighterPassFactory.doWithHighlightingEnabled(getProject(), () -> {
+    IdentifierHighlighterPassFactory.doWithIdentifierHighlightingEnabled(getProject(), () -> {
       String name = getTestName();
       JavaCodeInsightTestFixture fixture = getFixture();
       if (directoryTest) {

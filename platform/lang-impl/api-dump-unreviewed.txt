@@ -2275,7 +2275,6 @@ f:com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory
 - <init>():V
 - createHighlightingPass(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.openapi.util.TextRange):com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass
 - s:isEnabled():Z
-- s:waitForIdentifierHighlighting():V
 c:com.intellij.codeInsight.daemon.impl.IndentGuideRenderer
 - com.intellij.openapi.editor.markup.CustomHighlighterRenderer
 - <init>():V

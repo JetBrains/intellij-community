@@ -7,6 +7,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -47,20 +50,26 @@ public final class IdentifierHighlighterPassFactory {
   @TestOnly
   @RequiresEdt
   @ApiStatus.Internal
-  public static void doWithHighlightingEnabled(@NotNull Project project, @NotNull Runnable r) {
+  public static void doWithIdentifierHighlightingEnabled(@NotNull Project project, @NotNull Runnable r) {
     ThreadingAssertions.assertEventDispatchThread();
     BackgroundHighlighter.Companion.runWithEnabledListenersInTest(project, ()-> {
       try {
         TestModeFlags.runWithFlag(ourTestingIdentifierHighlighting, true, r);
       }
       finally {
-        waitForIdentifierHighlighting();
+        for (FileEditor fileEditor : FileEditorManager.getInstance(project).getAllEditors()) {
+          if (fileEditor instanceof TextEditor te) {
+            waitForIdentifierHighlighting(te.getEditor());
+          }
+        }
       }
     });
   }
 
+  @ApiStatus.Internal
   @TestOnly
-  public static void waitForIdentifierHighlighting() {
+  @RequiresEdt
+  public static void waitForIdentifierHighlighting(@NotNull Editor editor) {
     // wait for async "highlight identifier" computation to apply in com.intellij.codeInsight.highlighting.BackgroundHighlighter.updateHighlighted
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();

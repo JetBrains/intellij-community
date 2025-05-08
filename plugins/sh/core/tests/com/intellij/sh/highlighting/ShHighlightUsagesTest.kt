@@ -30,7 +30,7 @@ class ShHighlightUsagesTest : BasePlatformTestCase() {
   }
 
   private fun doTest(vararg expectedHighlighting: String) {
-    IdentifierHighlighterPassFactory.doWithHighlightingEnabled(project) {
+    IdentifierHighlighterPassFactory.doWithIdentifierHighlightingEnabled(project) {
       myFixture.setReadEditorMarkupModel(true)
       myFixture.configureByFile(getTestName(true) + ".sh")
       myFixture.doHighlighting()

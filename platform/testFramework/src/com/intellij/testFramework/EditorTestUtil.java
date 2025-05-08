@@ -840,7 +840,7 @@ public final class EditorTestUtil {
     caretModel.removeSecondaryCarets();
     CharSequence documentSequence = InjectedLanguageEditorUtil.getTopLevelEditor(editor).getDocument().getCharsSequence();
 
-    IdentifierHighlighterPassFactory.doWithHighlightingEnabled(fixture.getProject(), () -> {
+    IdentifierHighlighterPassFactory.doWithIdentifierHighlightingEnabled(fixture.getProject(), () -> {
       for (Integer caretsOffset : caretsOffsets) {
         if (caretsOffset != -1) {
           caretModel.moveToOffset(caretsOffset);

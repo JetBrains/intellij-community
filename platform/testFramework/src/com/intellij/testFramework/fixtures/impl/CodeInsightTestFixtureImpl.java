@@ -308,7 +308,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           if (policy != null) {
             policy.waitForHighlighting(project, editor);
           }
-          IdentifierHighlighterPassFactory.waitForIdentifierHighlighting();
+          IdentifierHighlighterPassFactory.waitForIdentifierHighlighting(editor);
           waitForLazyQuickFixesUnderCaret(psiFile, editor);
           UIUtil.dispatchAllInvocationEvents();
           Segment focusModeRange = (editor instanceof EditorImpl) ? ((EditorImpl)editor).getFocusModeRange() : null;
@@ -574,7 +574,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     if (filePaths.length > 0) {
       configureByFilesInner(filePaths);
     }
-    return collectAndCheckHighlighting(checkWarnings, checkInfos, checkWeakWarnings);
+    return collectAndCheckHighlighting(checkWarnings, checkInfos, checkWeakWarnings, false);
   }
 
   @Override
@@ -637,7 +637,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public long testHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, @NotNull VirtualFile file) {
     openFileInEditor(file);
-    return collectAndCheckHighlighting(checkWarnings, checkInfos, checkWeakWarnings);
+    return collectAndCheckHighlighting(checkWarnings, checkInfos, checkWeakWarnings, false);
   }
 
   @Override
@@ -1730,10 +1730,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     UIUtil.markAsFocused(editor.getContentComponent(), true);
     DaemonCodeAnalyzerEx.getInstanceEx(project).restart("CodeInsightTestFixtureImpl.createEditor");
     return editor;
-  }
-
-  private long collectAndCheckHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) {
-    return collectAndCheckHighlighting(checkWarnings, checkInfos, checkWeakWarnings, false);
   }
 
   private long collectAndCheckHighlighting(boolean checkWarnings,

@@ -548,7 +548,7 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
 
     internal fun <T> Project.highlightFile(block: () -> T): T {
         var value: T? = null
-        IdentifierHighlighterPassFactory.doWithHighlightingEnabled(this) {
+        IdentifierHighlighterPassFactory.doWithIdentifierHighlightingEnabled(this) {
             value = block()
         }
         return value!!
