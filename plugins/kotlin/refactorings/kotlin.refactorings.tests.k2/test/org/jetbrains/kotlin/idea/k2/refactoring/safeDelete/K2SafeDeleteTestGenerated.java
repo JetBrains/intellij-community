@@ -1031,6 +1031,16 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInFunction1.kt");
         }
 
+        @TestMetadata("unusedContextParametersInFunctionChildInHierarchy.kt")
+        public void testUnusedContextParametersInFunctionChildInHierarchy() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInFunctionChildInHierarchy.kt");
+        }
+
+        @TestMetadata("unusedContextParametersInFunctionHierarchy.kt")
+        public void testUnusedContextParametersInFunctionHierarchy() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInFunctionHierarchy.kt");
+        }
+
         @TestMetadata("unusedContextParametersInFunctionMultipleParameters.kt")
         public void testUnusedContextParametersInFunctionMultipleParameters() throws Exception {
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInFunctionMultipleParameters.kt");
@@ -1044,6 +1054,16 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
         @TestMetadata("unusedContextParametersInProperty.kt")
         public void testUnusedContextParametersInProperty() throws Exception {
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInProperty.kt");
+        }
+
+        @TestMetadata("unusedContextParametersInPropertyChildHierarchy.kt")
+        public void testUnusedContextParametersInPropertyChildHierarchy() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInPropertyChildHierarchy.kt");
+        }
+
+        @TestMetadata("unusedContextParametersInPropertyHierarchy.kt")
+        public void testUnusedContextParametersInPropertyHierarchy() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInPropertyHierarchy.kt");
         }
 
         @TestMetadata("usedContextParametersInFunction.kt")
