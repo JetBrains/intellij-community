@@ -6,13 +6,13 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 
 object ScientificImageActionsCollector : CounterUsagesCollector() {
   @JvmStatic
-  private val GROUP = EventLogGroup("scientific.image.actions", 5)
+  private val GROUP = EventLogGroup("scientific.image.actions", 6)
   override fun getGroup(): EventLogGroup = GROUP
 
   private val imageFormatField = EventFields.String("image_format", listOf("png", "jpg", "jpeg", "bmp", "svg"))
   private val channelIndexField = EventFields.Int("channel_index")
   private val rotateAngleField = EventFields.Int("rotate_angle")
-  private val isNormalizeField = EventFields.Boolean("is_normalize")
+  private val isNormalizedField = EventFields.Boolean("is_normalized")
   private val binarizationThresholdField = EventFields.Int("binarization_threshold")
 
   private val invokedCopyImageEvent = GROUP.registerEvent("debug.image.view.copy")
@@ -23,7 +23,8 @@ object ScientificImageActionsCollector : CounterUsagesCollector() {
   private val invokedBinaryImageEvent = GROUP.registerEvent("debug.image.view.binarize", binarizationThresholdField)
   private val invokedRotateImageEvent = GROUP.registerEvent("debug.image.view.rotate", rotateAngleField)
   private val invokedChannelSelectionEvent = GROUP.registerEvent("debug.image.view.channel.selection", channelIndexField)
-  private val invokedNormalizeImageEvent = GROUP.registerEvent("debug.image.view.normalize", isNormalizeField)
+  private val invokedNormalizedImageEvent = GROUP.registerEvent("debug.image.view.normalize", isNormalizedField)
+  private val invokedReverseChannelsOrderEvent = GROUP.registerEvent("debug.image.view.reverse")
 
   fun logCopyImageInvoked() {
     invokedCopyImageEvent.log()
@@ -57,7 +58,11 @@ object ScientificImageActionsCollector : CounterUsagesCollector() {
     invokedChannelSelectionEvent.log(channelIndex)
   }
 
-  fun logNormalizeImageInvoked(isNormalize: Boolean) {
-    invokedNormalizeImageEvent.log(isNormalize)
+  fun logNormalizedImageInvoked(isNormalized: Boolean) {
+    invokedNormalizedImageEvent.log(isNormalized)
+  }
+
+  fun logReverseChannelsOrderInvoked() {
+    invokedReverseChannelsOrderEvent.log()
   }
 }
