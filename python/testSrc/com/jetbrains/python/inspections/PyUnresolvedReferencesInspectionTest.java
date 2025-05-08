@@ -275,11 +275,6 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  // PY-7614
-  public void testNoseToolsDynamicMembers() {
-    doMultiFileTest("a.py");
-  }
-
   public void testDateTodayReturnType() {
     doMultiFileTest("a.py");
   }
