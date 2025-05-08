@@ -9,6 +9,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.lang" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.usageView.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />

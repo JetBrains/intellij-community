@@ -11,6 +11,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.usageView.impl" />
     <orderEntry type="module" module-name="intellij.python.community" exported="" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
