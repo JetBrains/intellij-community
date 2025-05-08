@@ -101,7 +101,7 @@ fun EelPath.asNioPathOrNull(project: Project?): Path? {
 
   // Comparing strings because `Path.of("\\wsl.localhost\distro\").equals(Path.of("\\wsl$\distro\")) == true`
   // If the project works with `wsl$` paths, this function must return `wsl$` paths, and the same for `wsl.localhost`.
-  val projectBasePath = project?.basePath?.let(Path::of)?.toString()?.trimEnd('/', '\\')
+  val projectBasePathNio = project?.basePath?.let(Path::of)
 
   LOG.trace {
     "asNioPathOrNull():" +
@@ -109,36 +109,43 @@ fun EelPath.asNioPathOrNull(project: Project?): Path? {
     " project=$project" +
     " descriptor=$descriptor" +
     " eelRoots=${eelRoots?.joinToString(prefix = "[", postfix = "]", separator = ", ") { path -> "$path (${path.javaClass.name})"}}" +
-    " projectBasePath=$projectBasePath"
+    " projectBasePathNio=$projectBasePathNio"
   }
 
   if (eelRoots == null) {
     return null
   }
 
-  val eelRoot =
-    if (projectBasePath != null) {
-      val projectBasePathRoot = project.basePath!!.let(Path::of).root.toString().trimEnd('/', '\\')
-
-      // Choosing between not only paths belonging to the project, but also paths with the same root (e.g. mount drive on Windows).
-      // It's possible that some code in the project tries to access the file outside the project, f.i., accessing `~/.m2`.
-      eelRoots.singleOrNull { eelRoot ->
-        projectBasePath.startsWith(eelRoot.toString().trimEnd('/', '\\'))
-      }
-      ?: eelRoots.singleOrNull { eelRoot ->
-        eelRoot.root.toString().trimEnd('/', '\\') == projectBasePathRoot
-      }
-      ?: eelRoots.first()
-    }
-    else {
-      eelRoots.first()
-    }
+  val eelRoot: Path = asNioPathOrNullImpl(projectBasePathNio, eelRoots, this)
 
   val result = parts.fold(eelRoot, Path::resolve)
   LOG.trace {
     "asNioPathOrNull(): path=$this project=$project result=$result"
   }
   return result
+}
+
+/**
+ * Choosing between not only paths belonging to the project, but also paths with the same root, e.g., mount drive on Windows.
+ * It's possible that some code in the project tries to access the file outside the project, f.i., accessing `~/.m2`.
+ *
+ * This function also tries to preserve the case in case-insensitive file systems, because some other parts of the IDE
+ * may compare paths as plain string despite the incorrectness of that approach.
+ */
+private fun asNioPathOrNullImpl(basePath: Path?, eelRoots: Collection<Path>, sourcePath: EelPath): Path {
+  if (basePath != null) {
+    for (eelRoot in eelRoots) {
+      if (basePath.startsWith(eelRoot)) {
+        var resultPath = basePath.root
+        if (eelRoot.nameCount > 0) {
+          resultPath = resultPath.resolve(basePath.subpath(0, eelRoot.nameCount))
+        }
+        return resultPath
+      }
+    }
+  }
+
+  return eelRoots.first()
 }
 
 /**

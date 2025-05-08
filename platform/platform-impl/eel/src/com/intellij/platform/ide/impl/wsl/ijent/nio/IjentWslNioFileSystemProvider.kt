@@ -74,7 +74,8 @@ class IjentWslNioFileSystemProvider(
   internal fun toOriginalPath(path: Path, notation: String): Path = path.toOriginalPath(notation)
 
   private tailrec fun Path.toOriginalPath(notation: String): Path {
-    assert(notation == "wsl.localhost" || notation == "wsl$") { notation }
+    val notationLowerCase = notation.lowercase()
+    assert(notationLowerCase == "wsl.localhost" || notationLowerCase == "wsl$") { notation }
     return when (this) {
       is IjentNioPath -> fold(originalFs.getPath("\\\\$notation\\$wslId\\")) { parent, file -> parent.resolve(file.toString()) }
       is IjentWslNioPath -> presentablePath.toOriginalPath(notation)
@@ -118,9 +119,10 @@ class IjentWslNioFileSystemProvider(
 
   private fun wslIdFromPath(path: Path): String {
     val root = path.toAbsolutePath().root.toString()
-    require(root.startsWith("""\\wsl""")) { "`$path` doesn't look like a file on WSL" }
-    val wslIdWithProbablyWrongCase = root.removePrefix("""\\wsl""").substringAfter('\\').trimEnd('\\')
-    return allWslDistributionIds.get().single { wslId -> wslId.equals(wslIdWithProbablyWrongCase, true) }
+    val wslMarker = """\\wsl"""
+    require(root.startsWith(wslMarker, ignoreCase = true)) { "`$path` doesn't look like a file on WSL" }
+    val wslIdWithProbablyWrongCase = root.substring(wslMarker.length).substringAfter('\\').trimEnd('\\')
+    return allWslDistributionIds.get().single { wslId -> wslId.equals(wslIdWithProbablyWrongCase, ignoreCase = true) }
   }
 
   override fun checkAccess(path: Path, vararg modes: AccessMode): Unit =
