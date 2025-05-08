@@ -215,6 +215,12 @@ public final class ClassUtil {
     return Character.isDigit(name.charAt(0));
   }
 
+  /**
+   * Returns the binary class name for top-level and nested classes.
+   *
+   * @deprecated Does not work for anonymous classes and local classes. Use {@link #getBinaryClassName} instead.
+   */
+  @Deprecated
   public static @Nullable @NlsSafe String getJVMClassName(@NotNull PsiClass aClass) {
     final PsiClass containingClass = aClass.getContainingClass();
     if (containingClass != null) {
