@@ -12,8 +12,6 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.langInjection" />
     <orderEntry type="module" module-name="intellij.markdown" />
-    <orderEntry type="module" module-name="intellij.markdown.frontmatter.toml" />
-    <orderEntry type="module" module-name="intellij.markdown.frontmatter.yaml" />
     <orderEntry type="module" module-name="intellij.json.backend" />
     <orderEntry type="module" module-name="intellij.platform.backend" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
