@@ -13102,16 +13102,6 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/optIn/propertyInConstructorAddOptInToConstructor.kt");
             }
 
-            @TestMetadata("switchOn.kt")
-            public void testSwitchOn() throws Exception {
-                runTest("testData/quickfix/optIn/switchOn.kt");
-            }
-
-            @TestMetadata("switchOnWithAnotherMarker.kt")
-            public void testSwitchOnWithAnotherMarker() throws Exception {
-                runTest("testData/quickfix/optIn/switchOnWithAnotherMarker.kt");
-            }
-
             @TestMetadata("typeAlias.kt")
             public void testTypeAlias() throws Exception {
                 runTest("testData/quickfix/optIn/typeAlias.kt");
