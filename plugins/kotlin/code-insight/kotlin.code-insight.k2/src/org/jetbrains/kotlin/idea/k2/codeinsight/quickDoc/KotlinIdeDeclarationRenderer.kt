@@ -326,6 +326,9 @@ internal class KotlinIdeDeclarationRenderer(
                         }
                     }
                 }
+                if (symbol is KaNamedFunctionSymbol && symbol.isSuspend) {
+                    return listOf(KtTokens.SUSPEND_KEYWORD)
+                }
                 return emptyList()
             }
         }
