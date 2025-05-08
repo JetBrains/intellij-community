@@ -5,7 +5,7 @@
 // WITH_STDLIB
 
 class Bla : ImplementMe {
-    <caret>override fun someL(l: MutableList<Int>?) {
+    <caret>override fun someL(l: MutableList<Int>) {
 
     }
 }

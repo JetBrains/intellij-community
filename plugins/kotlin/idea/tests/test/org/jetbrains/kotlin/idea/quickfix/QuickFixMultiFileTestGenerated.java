@@ -1559,6 +1559,16 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/changeSignature/addParameterWithImport.before.Main.kt");
             }
 
+            @TestMetadata("addSecondParameter.before.Main.kt")
+            public void testAddSecondParameter() throws Exception {
+                runTest("testData/quickfix/changeSignature/addSecondParameter.before.Main.kt");
+            }
+
+            @TestMetadata("addSecondParameter1.before.Main.kt")
+            public void testAddSecondParameter1() throws Exception {
+                runTest("testData/quickfix/changeSignature/addSecondParameter1.before.Main.kt");
+            }
+
             @TestMetadata("changeParameter.before.Main.kt")
             public void testChangeParameter() throws Exception {
                 runTest("testData/quickfix/changeSignature/changeParameter.before.Main.kt");
