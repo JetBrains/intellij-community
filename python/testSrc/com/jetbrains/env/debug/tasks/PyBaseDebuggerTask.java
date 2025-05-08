@@ -9,9 +9,11 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -458,6 +460,19 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   protected void setVal(String name, String value) throws PyDebuggerException {
     XValue var = XDebuggerTestUtil.evaluate(mySession, name).first;
     myDebugProcess.changeVariable((PyDebugValue)var, value);
+  }
+
+  /**
+   * Calculates text range that will be evaluated on Alt+Shift+Hover (Quick Evaluation)
+   * @param offset The document offset under a mouse cursor
+   * @return text range that will be highlighted on hover and evaluated on click
+   */
+  protected TextRange getQuickEvaluationTextRange(int offset) {
+    var file = getFileByPath(getFilePath(getScriptName()));
+    var document = ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(file));
+    var project = getProject();
+    var evaluator = new PyDebuggerEvaluator(project, myDebugProcess);
+    return evaluator.getExpressionRangeAtOffset(project, document, offset, true);
   }
 
   /**

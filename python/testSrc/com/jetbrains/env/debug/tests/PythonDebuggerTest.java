@@ -4,6 +4,7 @@ package com.jetbrains.env.debug.tests;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.util.containers.ContainerUtil;
@@ -558,6 +559,38 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         catch (AssertionError e) {
           if (!e.getMessage().contains("SyntaxError: invalid syntax")) throw e;
         }
+      }
+    });
+  }
+
+  @Test
+  public void testQuickEvaluationRangeForCalls() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_quick_eval_range_for_calls.py") {
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getFilePath(getScriptName()), 13);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+
+        // f<caret>oo()
+        assertEquals(new TextRange(142, 147), getQuickEvaluationTextRange(143));
+        // b<caret>ar()
+        assertEquals(new TextRange(150, 155), getQuickEvaluationTextRange(151));
+        // bar()(<caret>)
+        assertEquals(new TextRange(150, 157), getQuickEvaluationTextRange(156));
+        // b<caret>az()
+        assertEquals(new TextRange(160, 165), getQuickEvaluationTextRange(161));
+        // baz()(<caret>)
+        assertEquals(new TextRange(160, 167), getQuickEvaluationTextRange(166));
+        // baz()()(<caret>)
+        assertEquals(new TextRange(160, 169), getQuickEvaluationTextRange(168));
+        // foo() <caret>+ bar()()
+        assertEquals(new TextRange(142, 157), getQuickEvaluationTextRange(148));
+        // foo() + bar()() <caret>+ baz()()()
+        assertEquals(new TextRange(142, 169), getQuickEvaluationTextRange(158));
       }
     });
   }
