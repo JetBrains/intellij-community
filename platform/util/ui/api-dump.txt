@@ -3670,6 +3670,7 @@ f:com.intellij.util.ui.ExtendableHTMLViewFactory$Extensions
 - sf:BASE64_IMAGES:com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
 - sf:BLOCK_HR_SUPPORT:com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
 - sf:BLOCK_VIEW_EX:com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
+- sf:DETAILS_SUMMARY_SUPPORT:com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
 - sf:FIT_TO_WIDTH_IMAGES:com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
 - sf:FORM_VIEW_EX:com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
 - sf:HIDPI_IMAGES:com.intellij.util.ui.ExtendableHTMLViewFactory$Extension

@@ -143,6 +143,9 @@ internal class JBHtmlPaneStyleSheetRulesProvider {
       ul { margin: 0 0 0 ${scale(10)}px; ${paragraphSpacing};}
       ol { margin: 0 0 0 ${scale(20)}px; ${paragraphSpacing};}
       li { padding: ${scale(4)}px 0 ${scale(2)}px 0; }
+      details { margin: ${spacingBefore}px 0 0 0; }
+      summary { margin: 0 0 ${spacingBefore}px 0; }
+      details p { margin: 0 0 0 ${scale(10)}px; }
       li p, li p-implied { padding-top: 0; padding-bottom: 0; line-height: 125%; }
       th { text-align: left; }
       tr, table { margin: 0 0 0 0; padding: 0 0 0 0; }
