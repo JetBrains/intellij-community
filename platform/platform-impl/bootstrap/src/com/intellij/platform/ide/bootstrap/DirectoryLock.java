@@ -62,7 +62,7 @@ public final class DirectoryLock {
     }
 
     @Override
-    public Attachment @NotNull [] getAttachments() {
+    public @NotNull Attachment @NotNull [] getAttachments() {
       return myAttachments;
     }
   }
