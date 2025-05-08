@@ -7,7 +7,9 @@ import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.rpc.UID
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
+import fleet.rpc.core.SendChannelSerializer
 import fleet.rpc.remoteApiDescriptor
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
@@ -46,5 +48,6 @@ data class RunSessionId(override val uid: UID) : Id
 data class RunSession(
   val executorEnvironment: ExecutionEnvironmentProxyDto,
   val processHandler: ProcessHandlerDto?,
+  @Serializable(with = SendChannelSerializer::class) val tabClosedCallback: SendChannel<Unit>,
 )
 

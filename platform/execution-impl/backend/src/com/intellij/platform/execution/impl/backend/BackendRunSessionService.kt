@@ -9,14 +9,20 @@ import com.intellij.execution.rpc.RunSessionEvent.SessionStarted
 import com.intellij.execution.rpc.toDto
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.kernel.ids.BackendValueIdType
 import com.intellij.platform.kernel.ids.findValueById
 import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.platform.project.ProjectId
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
@@ -28,15 +34,7 @@ class BackendRunSessionService() : RunSessionService {
   private val runEventFlow = MutableSharedFlow<RunSessionEvent>(extraBufferCapacity = Channel.UNLIMITED)
 
   override fun storeRunSession(executorEnvironment: ExecutionEnvironment, descriptor: RunContentDescriptor) {
-    service<BackendRunSessionServiceCoroutineScope>().launch { cs ->
-      val runSession = RunSession(
-        executorEnvironment.toDto(cs),
-        createProcessHandlerDto(cs, descriptor.processHandler!!)
-      )
-
-      val runSessionId = runSession.storeGlobally(cs)
-      runEventFlow.emit(SessionStarted(runSessionId, runSession))
-    }
+    service<BackendRunSessionServiceCoroutineScope>().storeRunSession(executorEnvironment, descriptor, runEventFlow)
   }
 
   override suspend fun getRunSession(id: RunSessionId): RunSession? {
@@ -51,9 +49,31 @@ class BackendRunSessionService() : RunSessionService {
 @ApiStatus.Internal
 @Service
 class BackendRunSessionServiceCoroutineScope(val cs: CoroutineScope) {
-  fun launch(consumer: suspend (CoroutineScope) -> Unit) {
+
+  fun storeRunSession(executorEnvironment: ExecutionEnvironment, descriptor: RunContentDescriptor, runEventFlow: MutableSharedFlow<RunSessionEvent>) {
+    val processHandler = descriptor.processHandler ?: return
+
+    val childScope = cs.childScope("RunContentDescriptorChildScope")
+
+    Disposer.register(descriptor) {
+      childScope.cancel()
+    }
+
     cs.launch {
-      consumer.invoke(cs)
+      val tabClosedChannel = Channel<Unit>(capacity = 1)
+      val runSession = RunSession(
+        executorEnvironment.toDto(childScope),
+        createProcessHandlerDto(childScope, processHandler),
+        tabClosedChannel
+      )
+      cs.launch(Dispatchers.EDT) {
+        tabClosedChannel.consumeEach {
+          Disposer.dispose(descriptor)
+        }
+      }
+
+      val runSessionId = runSession.storeGlobally(childScope)
+      runEventFlow.emit(SessionStarted(runSessionId, runSession))
     }
   }
 }

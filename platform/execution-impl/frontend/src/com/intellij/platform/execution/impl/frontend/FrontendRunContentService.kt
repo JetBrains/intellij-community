@@ -19,6 +19,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.project.projectId
 import com.intellij.psi.search.ExecutionSearchScopes
 import kotlinx.coroutines.CoroutineScope
@@ -63,20 +64,25 @@ internal class FrontendRunContentService(private val project: Project, private v
           withContext(Dispatchers.EDT) {
             val executionResultProxy = DefaultExecutionResult(console, frontendProcessHandler)
 
+            // TODO IJPL-181190 use correct arguments instead of mocked
             val runContentBuilder = RunContentBuilder(executionResultProxy, project, globalSearchScope,
                                                       "JavaRunner", "My Runner", "My Runner Session Name")
-            val newDescriptor = runContentBuilder.showRunContent(null,
+            val frontendDescriptor = runContentBuilder.showRunContent(null,
                                                                  runSession.executorEnvironment.runProfileName,
                                                                  runSession.executorEnvironment.icon.icon(),
                                                                  null
             )
+
+            Disposer.register(frontendDescriptor) {
+              runSession.tabClosedCallback.trySend(Unit)
+            }
 
             val defaultRunExecutor = DefaultRunExecutor()
             val runContentManager = RunContentManager.getInstance(project)
             val runContentManagerImpl = runContentManager as RunContentManagerImpl
             runContentManagerImpl.registerToolWindow(defaultRunExecutor)
 
-            runContentManagerImpl.showRunContent(DefaultRunExecutor.getRunExecutorInstance(), newDescriptor)
+            runContentManagerImpl.showRunContent(DefaultRunExecutor.getRunExecutorInstance(), frontendDescriptor)
           }
         }
       }
