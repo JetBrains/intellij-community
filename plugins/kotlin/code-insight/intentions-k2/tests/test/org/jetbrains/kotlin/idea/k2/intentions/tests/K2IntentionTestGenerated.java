@@ -14054,4 +14054,112 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertToConcatenatedStringMultiDollarPrefix/tripleAndDoubleQuotedMix.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/contextParameters")
+    public abstract static class ContextParameters extends AbstractK2IntentionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter")
+        public static class ContextParameterToRegularParameter extends AbstractK2IntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("abstractOverride1.kt")
+            public void testAbstractOverride1() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/abstractOverride1.kt");
+            }
+
+            @TestMetadata("abstractOverride2.kt")
+            public void testAbstractOverride2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/abstractOverride2.kt");
+            }
+
+            @TestMetadata("abstractOverride3.kt")
+            public void testAbstractOverride3() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/abstractOverride3.kt");
+            }
+
+            @TestMetadata("contextDeclarationContextUsage1.kt")
+            public void testContextDeclarationContextUsage1() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/contextDeclarationContextUsage1.kt");
+            }
+
+            @TestMetadata("contextDeclarationContextUsage2.kt")
+            public void testContextDeclarationContextUsage2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/contextDeclarationContextUsage2.kt");
+            }
+
+            @TestMetadata("contextDeclarationContextUsage3.kt")
+            public void testContextDeclarationContextUsage3() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/contextDeclarationContextUsage3.kt");
+            }
+
+            @TestMetadata("contextDeclarationContextUsage4.kt")
+            public void testContextDeclarationContextUsage4() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/contextDeclarationContextUsage4.kt");
+            }
+
+            @TestMetadata("contextDeclarationContextUsage5.kt")
+            public void testContextDeclarationContextUsage5() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/contextDeclarationContextUsage5.kt");
+            }
+
+            @TestMetadata("contextDeclarationContextUsage6.kt")
+            public void testContextDeclarationContextUsage6() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/contextDeclarationContextUsage6.kt");
+            }
+
+            @TestMetadata("contextDeclarationWithUsage1.kt")
+            public void testContextDeclarationWithUsage1() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/contextDeclarationWithUsage1.kt");
+            }
+
+            @TestMetadata("contextDeclarationWithUsage2.kt")
+            public void testContextDeclarationWithUsage2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/contextDeclarationWithUsage2.kt");
+            }
+
+            @TestMetadata("contextDeclarationWithUsage3.kt")
+            public void testContextDeclarationWithUsage3() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/contextDeclarationWithUsage3.kt");
+            }
+
+            @TestMetadata("contextDeclarationWithUsage4.kt")
+            public void testContextDeclarationWithUsage4() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/contextDeclarationWithUsage4.kt");
+            }
+
+            @TestMetadata("contextDeclarationWithUsage5.kt")
+            public void testContextDeclarationWithUsage5() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/contextDeclarationWithUsage5.kt");
+            }
+
+            @TestMetadata("contextDeclarationWithUsage6.kt")
+            public void testContextDeclarationWithUsage6() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/contextDeclarationWithUsage6.kt");
+            }
+
+            @TestMetadata("inapplicableFeatureDisabled.kt")
+            public void testInapplicableFeatureDisabled() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/inapplicableFeatureDisabled.kt");
+            }
+
+            @TestMetadata("inapplicableProperty.kt")
+            public void testInapplicableProperty() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/inapplicableProperty.kt");
+            }
+
+            @TestMetadata("memberFunction1.kt")
+            public void testMemberFunction1() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/memberFunction1.kt");
+            }
+        }
+    }
 }

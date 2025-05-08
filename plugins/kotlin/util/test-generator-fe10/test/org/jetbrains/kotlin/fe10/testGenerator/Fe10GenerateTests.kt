@@ -585,13 +585,16 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             model(
                 "intentions", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$"),
                 excludedDirectories = listOf(
-                    "convertToMultiDollarString", // K2-only
-                    "branched/ifWhen/ifToWhen/whenGuards", // K2-only
-                    "concatenationToBuildCollection", // K2-only
-                    "convertStringTemplateToBuildStringMultiDollarPrefix", // K2-only
-                    "convertToConcatenatedStringMultiDollarPrefix", // K2-only
-                    "convertToStringTemplateInterpolationPrefix", // K2-only
-                    "addAnnotationUseSiteTarget/allTarget", // K2-only
+                    // disabled K2-only features
+                    "convertToMultiDollarString",
+                    "branched/ifWhen/ifToWhen/whenGuards",
+                    "concatenationToBuildCollection",
+                    "convertStringTemplateToBuildStringMultiDollarPrefix",
+                    "convertToConcatenatedStringMultiDollarPrefix",
+                    "convertToStringTemplateInterpolationPrefix",
+                    "addAnnotationUseSiteTarget/allTarget",
+                    "contextParameters",
+                    // end K2-only features
                 )
             )
         }
