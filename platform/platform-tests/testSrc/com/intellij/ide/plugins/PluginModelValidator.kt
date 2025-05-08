@@ -275,6 +275,14 @@ class PluginModelValidator(
     for (pluginInfo in allMainModulesOfPlugins) {
       val descriptor = pluginInfo.descriptor
 
+      for (incompatibleWithId in descriptor.incompatibleWith) {
+        if (incompatibleWithId !in pluginIdToInfo && incompatibleWithId !in pluginAliases 
+            && incompatibleWithId !in validationOptions.referencedPluginIdsOfExternalPlugins) {
+          reportError("'incompatible-with' refers to unknown plugin '$incompatibleWithId'", pluginInfo.sourceModule,
+                      mapOf("descriptorFile" to pluginInfo.descriptorFile))
+        }
+      }
+      
       checkDependencies(descriptor.dependencies, pluginInfo, pluginInfo, moduleNameToInfo, sourceModuleNameToFileInfo,
                         registeredContentModules)
 
