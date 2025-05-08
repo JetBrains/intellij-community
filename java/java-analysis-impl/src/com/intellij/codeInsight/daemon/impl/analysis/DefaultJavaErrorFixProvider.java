@@ -847,12 +847,6 @@ public final class DefaultJavaErrorFixProvider extends AbstractJavaErrorFixProvi
   private void createClassFixes() {
     fix(CLASS_INHERITS_UNRELATED_DEFAULTS, error -> myFactory.createImplementMethodsFix(error.psi()));
     fix(CLASS_INHERITS_ABSTRACT_AND_DEFAULT, error -> myFactory.createImplementMethodsFix(error.psi()));
-    fix(CLASS_NO_ABSTRACT_METHOD, error -> {
-      if (error.psi() instanceof PsiClass aClass && !(aClass instanceof PsiAnonymousClass) && !aClass.isEnum()) {
-        return maybeAddModifierFix(aClass, PsiModifier.ABSTRACT);
-      }
-      return null;
-    });
     fixes(CLASS_NO_ABSTRACT_METHOD, (error, sink) -> {
       PsiMember member = error.psi();
       PsiClass aClass = member instanceof PsiEnumConstant enumConstant ?
@@ -869,6 +863,12 @@ public final class DefaultJavaErrorFixProvider extends AbstractJavaErrorFixProvi
         sink.accept(addModifierFix(anyMethodToImplement, PsiModifier.PROTECTED));
         sink.accept(addModifierFix(anyMethodToImplement, PsiModifier.PUBLIC));
       }
+    });
+    fix(CLASS_NO_ABSTRACT_METHOD, error -> {
+      if (error.psi() instanceof PsiClass aClass && !(aClass instanceof PsiAnonymousClass) && !aClass.isEnum()) {
+        return maybeAddModifierFix(aClass, PsiModifier.ABSTRACT);
+      }
+      return null;
     });
     fix(CLASS_REFERENCE_LIST_DUPLICATE,
         error -> myFactory.createRemoveDuplicateExtendsAction(HighlightNamesUtil.formatClass(error.context())));
