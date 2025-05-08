@@ -25,15 +25,13 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
 
   fun testListenerAfterSessionStart(): Unit = runBlocking {
     val manager = HotSwapSessionManager.getInstance(project)
-    val channel = Channel<HotSwapVisibleStatus?>()
     val disposable1 = Disposer.newDisposable(testRootDisposable)
     val disposable2 = Disposer.newDisposable(testRootDisposable)
     manager.createSession(MockHotSwapProvider(), disposable1)
-    addStatusListener(disposable2, channel)
+    val channel = addStatusListener(disposable2)
     assertEquals(HotSwapVisibleStatus.NO_CHANGES, channel.receive())
     Disposer.dispose(disposable1)
-    assertEquals(HotSwapVisibleStatus.SESSION_COMPLETED, channel.receive())
-    Disposer.dispose(disposable2)
+    assertCompletedAndDispose(channel, disposable2)
   }
 
   fun testOnChanges() = runBlocking {
@@ -55,8 +53,7 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     assertTrue(channel.isEmpty)
     assertEquals(2, hotSwapSession.getChanges().size)
     Disposer.dispose(disposable1)
-    assertEquals(HotSwapVisibleStatus.SESSION_COMPLETED, channel.receive())
-    Disposer.dispose(disposable2)
+    assertCompletedAndDispose(channel, disposable2)
   }
 
   fun testHotSwap() = runBlocking {
@@ -109,8 +106,7 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
       assertEquals(1, hotSwapSession.getChanges().size)
     }
     Disposer.dispose(disposable1)
-    assertEquals(HotSwapVisibleStatus.SESSION_COMPLETED, channel.receive())
-    Disposer.dispose(disposable2)
+    assertCompletedAndDispose(channel, disposable2)
   }
 
   fun testSameHotSwapStatusHasNoEffect() = runBlocking {
@@ -137,7 +133,7 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     assertTrue(channel.isEmpty)
 
     Disposer.dispose(disposable1)
-    assertEquals(HotSwapVisibleStatus.SESSION_COMPLETED, channel.receive())
+    assertCompleted(channel)
 
     listener.onCanceled()
     assertTrue(channel.isEmpty)
@@ -166,6 +162,9 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
         addListener.join()
         var status = channel.receive()
         if (status == HotSwapVisibleStatus.SESSION_COMPLETED) {
+          status = channel.receive()
+        }
+        if (status == null) {
           status = channel.receive()
         }
         if (status == HotSwapVisibleStatus.NO_CHANGES) {
@@ -211,7 +210,7 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     }
 
     Disposer.dispose(disposable1)
-    assertEquals(session1 to HotSwapVisibleStatus.SESSION_COMPLETED, channel.receive())
+    assertCompleted(channel, session1)
 
     Disposer.dispose(disposable0)
   }
@@ -242,7 +241,7 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     assertTrue(channel.isEmpty)
 
     Disposer.dispose(disposable2)
-    assertEquals(session2 to HotSwapVisibleStatus.SESSION_COMPLETED, channel.receive())
+    assertCompleted(channel, session2)
 
     Disposer.dispose(disposable0)
   }
@@ -289,9 +288,26 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     }
 
     Disposer.dispose(disposable1)
-    assertEquals(session1 to HotSwapVisibleStatus.SESSION_COMPLETED, channel.receive())
+    assertCompleted(channel, session1)
 
     Disposer.dispose(disposable0)
+  }
+
+  fun testSessionIsNotLeakedAfterClose() = runBlocking {
+    val disposable = Disposer.newDisposable(testRootDisposable)
+
+    val manager = HotSwapSessionManager.getInstance(project)
+    val provider = MockHotSwapProvider()
+    val session = manager.createSession(provider, disposable)
+
+    val listenerDisposable = Disposer.newDisposable(testRootDisposable)
+    val channel = addSessionAndStatusListener(listenerDisposable)
+
+    assertEquals(session to HotSwapVisibleStatus.NO_CHANGES, channel.receive())
+    Disposer.dispose(disposable)
+
+    assertCompleted(channel, session)
+    Disposer.dispose(listenerDisposable)
   }
 
   fun testSelectionAlreadySelectedOrClosedHasNoEffect() = runBlocking {
@@ -317,13 +333,41 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
 
     Disposer.dispose(disposable1)
     assertNull(manager.currentSession)
-    assertEquals(HotSwapVisibleStatus.SESSION_COMPLETED, channel.receive())
+    assertCompleted(channel)
 
     manager.onSessionSelected(session1)
     assertNull(manager.currentSession)
     assertTrue(channel.isEmpty)
 
     Disposer.dispose(disposable0)
+  }
+
+  private suspend fun assertCompletedAndDispose(
+    channel: ReceiveChannel<HotSwapVisibleStatus?>,
+    disposable2: Disposable,
+  ) {
+    assertCompleted(channel)
+    Disposer.dispose(disposable2)
+    assertTrue(channel.isEmpty)
+  }
+
+  private suspend fun assertCompleted(channel: ReceiveChannel<HotSwapVisibleStatus?>) {
+    var status = channel.receive()
+    if (status == HotSwapVisibleStatus.SESSION_COMPLETED) {
+      status = channel.receive()
+    }
+    assertNull(status)
+  }
+
+  private suspend fun assertCompleted(
+    channel: ReceiveChannel<Pair<HotSwapSession<*>?, HotSwapVisibleStatus?>>,
+    session: HotSwapSession<MockVirtualFile>,
+  ) {
+    var status = channel.receive()
+    if (status == (session to HotSwapVisibleStatus.SESSION_COMPLETED)) {
+      status = channel.receive()
+    }
+    assertEquals(null to null, status)
   }
 
   private fun <T> CoroutineScope.addStatusListener(disposable: Disposable, channel: SendChannel<T>, selector: (CurrentSessionState?) -> T) {
