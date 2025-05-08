@@ -35,6 +35,7 @@
     <orderEntry type="library" exported="" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="module" module-name="intellij.driver.model" />
     <orderEntry type="module" module-name="intellij.platform.util" />
   </component>
 </module>

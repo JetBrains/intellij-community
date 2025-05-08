@@ -18,7 +18,7 @@
     <orderEntry type="library" name="netty-buffer" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core" />
-    <orderEntry type="module" module-name="intellij.driver.model" exported="" />
+    <orderEntry type="module" module-name="intellij.driver.model" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="library" name="jsoup" level="project" />
     <orderEntry type="module" module-name="intellij.driver.impl" exported="" />

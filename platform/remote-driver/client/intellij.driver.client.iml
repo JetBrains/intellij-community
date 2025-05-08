@@ -8,7 +8,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.driver.model" exported="" />
+    <orderEntry type="module" module-name="intellij.driver.model" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
   </component>
