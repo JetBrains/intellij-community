@@ -1463,7 +1463,8 @@
                             implementationClass="com.intellij.codeInsight.completion.RefactoringCompletionContributor"/>
     <completion.contributor language="JAVA" id="JShell" order="before javaLegacy"
                             implementationClass="com.intellij.codeInsight.completion.JShellCompletionContributor"/>
-
+    <completion.contributor language="JAVA" id="mainArgsString"
+                            implementationClass="com.intellij.codeInsight.completion.JavaMainStringArgsContributor"/>
     <completion.contributor language="JAVA" id="jvmLogger"
                             implementationClass="com.intellij.codeInsight.completion.JvmLoggerCompletionContributor"/>
     <completion.contributor language="JAVA" id="jigsaw"
