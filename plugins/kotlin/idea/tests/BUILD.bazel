@@ -31,7 +31,6 @@ jvm_library(
     "//java/java-runtime:rt",
     "@lib//:kotlin-test",
     "//platform/usageView",
-    "@lib//:kotlinc-android-extensions-compiler-plugin",
     "@lib//:gson",
     "@lib//:guava",
     "@lib//:fastutil-min",

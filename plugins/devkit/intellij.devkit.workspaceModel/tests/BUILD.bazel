@@ -38,6 +38,8 @@ jvm_library(
     "@lib//:kotlinx-serialization-json",
     "//plugins/kotlin/tests-common",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "@lib//:rd-core",
+    "@lib//:rd-framework",
   ],
   runtime_deps = ["//plugins/devkit"]
 )

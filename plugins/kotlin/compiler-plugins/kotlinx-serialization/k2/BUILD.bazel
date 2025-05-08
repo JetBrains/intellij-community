@@ -26,6 +26,7 @@ jvm_library(
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-analysis-api-k2",
     "@lib//:kotlinc-kotlinx-serialization-compiler-plugin",
+    "@lib//:kotlinc-kotlin-compiler-fir-provided",
     "//plugins/kotlin/base/util:kotlin-base-util",
     "//plugins/kotlin/frontend-independent:fir-frontend-independent",
     "//platform/analysis-api:analysis",

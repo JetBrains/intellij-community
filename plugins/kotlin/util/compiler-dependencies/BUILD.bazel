@@ -37,7 +37,6 @@ java_library(
     "@lib//:kotlinc-noarg-compiler-plugin",
     "@lib//:kotlinc-sam-with-receiver-compiler-plugin",
     "@lib//:kotlinc-assignment-compiler-plugin",
-    "@lib//:kotlinc-android-extensions-compiler-plugin",
     "@lib//:kotlinc-parcelize-compiler-plugin",
     "@lib//:kotlinc-lombok-compiler-plugin",
     "@lib//:kotlinc-kotlin-dataframe-compiler-plugin",
