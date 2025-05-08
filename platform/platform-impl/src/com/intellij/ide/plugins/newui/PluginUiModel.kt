@@ -25,9 +25,8 @@ interface PluginUiModel {
   @get:NlsSafe
   val version: String?
   val isBundled: Boolean
-  val isDeleted: Boolean
-
   val isIncompatibleWithCurrentOs: Boolean
+
   val isIncompatible: Boolean
   val canBeEnabled: Boolean
   val requiresUpgrade: Boolean
@@ -37,15 +36,15 @@ interface PluginUiModel {
   val detailsLoaded: Boolean
   val allowBundledUpdate: Boolean
   val isPaid: Boolean
-
   val source: PluginSource
+
   val dependencies: List<PluginDependencyModel>
   val dependencyNames: Collection<String>?
   @get:NlsSafe
   val vendor: String?
-
   @get:NlsSafe
   val organization: String?
+
   @get:NlsSafe
   val changeNotes: String?
   @get:NlsSafe
@@ -59,9 +58,9 @@ interface PluginUiModel {
   val displayCategory: String?
   @get:NlsSafe
   var forumUrl: String?
-
   @get:NlsSafe
   var licenseUrl: String?
+
   @get:NlsSafe
   var bugtrackerUrl: String?
   @get:NlsSafe
@@ -72,27 +71,27 @@ interface PluginUiModel {
   var reportPluginUrl: String?
   @get:NlsSafe
   var verifiedName: String?
-
   var isVerified: Boolean
+
   var isTrader: Boolean
   var reviewComments: ReviewsPageContainer?
   var screenShots: List<String>?
-
   var externalPluginIdForScreenShots: String?
+
   var externalPluginId: String?
   var externalUpdateId: String?
   var defaultTrialPeriod: Int?
   var customTrialPeriods: Map<String, Int>?
   var date: Long
   var suggestedFeatures: Collection<String>
-
-
   var isEnabled: Boolean
+
+
   @get:NlsSafe
   var name: String?
   var tags: List<String>?
-
   var suggestedCommercialIde: String?
+
   @get:NlsSafe
   var downloads: String?
   @get:NlsSafe
@@ -106,6 +105,7 @@ interface PluginUiModel {
   var description: String?
   @get:NlsSafe
   var category: String?
+  var isDeleted: Boolean
 
 
   fun addDependency(id: PluginId, optional: Boolean)

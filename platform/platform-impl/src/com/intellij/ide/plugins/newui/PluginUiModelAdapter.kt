@@ -1,7 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui
 
+import com.intellij.codeInspection.ex.ProblemDescriptorImpl
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PageContainer
 import com.intellij.ide.plugins.PluginManagementPolicy
 import com.intellij.ide.plugins.PluginManagerCore
@@ -26,14 +28,12 @@ class PluginUiModelAdapter(
     get() = pluginDescriptor.version
   override val isBundled: Boolean
     get() = pluginDescriptor.isBundled
-  override val isDeleted: Boolean
-    get() = NewUiUtil.isDeleted(pluginDescriptor)
-
   override val isIncompatibleWithCurrentOs: Boolean
     get() {
       if ("com.jetbrains.kmm" != pluginId.idString || SystemInfoRt.isMac) return true
       return getUnfulfilledOsRequirement(pluginDescriptor) != null
     }
+
   override val isIncompatible: Boolean
     get() = PluginManagerCore.isIncompatible(pluginDescriptor)
   override val canBeEnabled: Boolean
@@ -52,17 +52,17 @@ class PluginUiModelAdapter(
     get() = pluginDescriptor.allowBundledUpdate()
   override val isPaid: Boolean
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.getIsPaid() else false
-
   override val source: PluginSource = PluginSource.LOCAL
+
   override val dependencies: List<PluginDependencyModel>
     get() = pluginDescriptor.dependencies.map { PluginDependencyModel(it.pluginId, it.isOptional) }
   override val dependencyNames: Collection<String>?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.dependencyNames else null
   override val vendor: String?
     get() = pluginDescriptor.vendor
-
   override val organization: String?
     get() = pluginDescriptor.organization
+
   override val changeNotes: String?
     get() = pluginDescriptor.changeNotes
   override val productCode: String?
@@ -89,7 +89,6 @@ class PluginUiModelAdapter(
         pluginDescriptor.licenseUrl = value
       }
     }
-
   override var bugtrackerUrl: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.bugtrackerUrl else null
     set(value) {
@@ -97,6 +96,7 @@ class PluginUiModelAdapter(
         pluginDescriptor.bugtrackerUrl = value
       }
     }
+
   override var documentationUrl: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.documentationUrl else null
     set(value) {
@@ -132,7 +132,6 @@ class PluginUiModelAdapter(
         pluginDescriptor.verifiedName = value
       }
     }
-
   override var isVerified: Boolean
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.isVerified else false
     set(value) {
@@ -140,6 +139,7 @@ class PluginUiModelAdapter(
         pluginDescriptor.isVerified = value
       }
     }
+
   override var isTrader: Boolean
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.isTrader else false
     set(value) {
@@ -172,7 +172,6 @@ class PluginUiModelAdapter(
         pluginDescriptor.setReviewComments(container)
       }
     }
-
   override var externalPluginIdForScreenShots: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.externalPluginIdForScreenShots else null
     set(value) {
@@ -180,6 +179,7 @@ class PluginUiModelAdapter(
         pluginDescriptor.externalPluginIdForScreenShots = value
       }
     }
+
   override var externalPluginId: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.externalPluginId else null
     set(value) {
@@ -208,7 +208,6 @@ class PluginUiModelAdapter(
         pluginDescriptor.setCustomTrialPeriodMap(value)
       }
     }
-
   override var name: String?
     get() = pluginDescriptor.name
     set(value) {
@@ -246,6 +245,7 @@ class PluginUiModelAdapter(
         pluginDescriptor.suggestedCommercialIde = value
       }
     }
+
   override var downloads: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.downloads else null
     set(value) {
@@ -300,6 +300,13 @@ class PluginUiModelAdapter(
     set(value) {
       if (pluginDescriptor is PluginNode && value != null) {
         pluginDescriptor.setCategory(value)
+      }
+    }
+  override var isDeleted: Boolean
+    get() = NewUiUtil.isDeleted(pluginDescriptor)
+    set(value) {
+      if(pluginDescriptor is IdeaPluginDescriptorImpl) {
+        pluginDescriptor.isDeleted = value
       }
     }
 
