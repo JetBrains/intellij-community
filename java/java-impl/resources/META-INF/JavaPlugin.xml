@@ -839,6 +839,7 @@
     <internalFileTemplate name="Interface"/>
     <internalFileTemplate name="Enum"/>
     <internalFileTemplate name="Record"/>
+    <internalFileTemplate name="SimpleSourceFile"/>
     <internalFileTemplate name="AnnotationType" subject="@interface"/>
     <internalFileTemplate name="Exception"/>
     <internalFileTemplate name="package-info"/>

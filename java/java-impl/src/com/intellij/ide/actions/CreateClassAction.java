@@ -54,6 +54,12 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
     builder.addKind(JavaPsiBundle.message("node.exception.tooltip"), PlatformIcons.EXCEPTION_CLASS_ICON,
                     JavaTemplateUtil.INTERNAL_EXCEPTION_TYPE_TEMPLATE_NAME);
 
+    if (JavaFeature.IMPLICIT_CLASSES.isSufficient(level)) {
+      builder.addKind(JavaPsiBundle.message("node.simple.source.file.tooltip"),
+                      IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.JavaFileType),
+                      JavaTemplateUtil.INTERNAL_SIMPLE_SOURCE_FILE);
+    }
+
     PsiDirectory[] dirs = {directory};
     for (FileTemplate template : FileTemplateManager.getInstance(project).getAllTemplates()) {
       @NotNull CreateFromTemplateHandler handler = FileTemplateUtil.findHandler(template);

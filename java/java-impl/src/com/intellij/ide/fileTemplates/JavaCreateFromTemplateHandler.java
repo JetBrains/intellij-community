@@ -7,6 +7,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -15,6 +16,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -25,10 +27,23 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
                                                 String content,
                                                 boolean reformat,
                                                 String extension) throws IncorrectOperationException {
+    return createClassOrInterface(project, directory, content, reformat, extension, null);
+  }
+
+  private static PsiClass createClassOrInterface(Project project,
+                                                 PsiDirectory directory,
+                                                 String content,
+                                                 boolean reformat,
+                                                 String extension, @Nullable String optionalClassName) throws IncorrectOperationException {
     if (extension == null) extension = JavaFileType.INSTANCE.getDefaultExtension();
     final String name = "myClass" + "." + extension;
     final PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(name, JavaLanguage.INSTANCE, content, false, false);
-    psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.JDK_16);
+    LanguageLevel highest = LanguageLevel.HIGHEST;
+    LanguageLevel implicitClassesMinimumLevel = JavaFeature.IMPLICIT_CLASSES.getMinimumLevel();
+    if (highest.isLessThan(implicitClassesMinimumLevel)) {
+      highest = implicitClassesMinimumLevel;
+    }
+    psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, highest);
 
     if (!(psiFile instanceof PsiJavaFile psiJavaFile)){
       throw new IncorrectOperationException("This template did not produce a Java class or an interface\n"+psiFile.getText());
@@ -38,7 +53,13 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
       throw new IncorrectOperationException("This template did not produce a Java class or an interface\n"+psiFile.getText());
     }
     PsiClass createdClass = classes[0];
-    String className = createdClass.getName();
+    String className;
+    if (optionalClassName != null && createdClass instanceof PsiImplicitClass) {
+      className = optionalClassName;
+    }
+    else {
+      className = createdClass.getName();
+    }
     JavaDirectoryServiceImpl.checkCreateClassOrInterface(directory, className);
 
     final LanguageLevel ll = JavaDirectoryService.getInstance().getLanguageLevel(directory);
@@ -94,7 +115,11 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
                                                 @NotNull String templateText,
                                                 @NotNull Map<String, Object> props) throws IncorrectOperationException {
     String extension = template.getExtension();
-    PsiElement result = createClassOrInterface(project, directory, templateText, template.isReformatCode(), extension);
+    String name = null;
+    if (props.get(FileTemplate.ATTRIBUTE_NAME) instanceof String optionalName) {
+      name = optionalName;
+    }
+    PsiElement result = createClassOrInterface(project, directory, templateText, template.isReformatCode(), extension, name);
     hackAwayEmptyPackage((PsiJavaFile)result.getContainingFile(), template, props);
     return result;
   }
