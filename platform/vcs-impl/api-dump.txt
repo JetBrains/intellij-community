@@ -3757,8 +3757,7 @@ a:com.intellij.openapi.vcs.impl.ContentRootChangeListener
 a:com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy
 - pf:myProject:com.intellij.openapi.project.Project
 - p:<init>(com.intellij.openapi.project.Project):V
-- f:getDefaultVcsRoots():java.util.Collection
-- pa:getDefaultVcsRootsCandidates():java.util.Collection
+- a:getDefaultVcsRoots():java.util.Collection
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy
 - getProjectConfigurationMessage():java.lang.String
 - p:scheduleMappedRootsUpdate():V
