@@ -43,13 +43,13 @@
     "c260c3230b2340af97d54bf01f7f67ebc57c901922736c881bb11cb981302be2",
     "614806dd73810c80a4751daf28bffc5eb641d6026ee58c71f4a28354e06a7dc8"
   ],
-  "io.netty:netty-buffer:4.2.1.Final": [
-    "2ece8d8413d5aa35a1d1e0fe94f69f9e9edd8f7abb53f6c557a473c9fd0bfc8e",
-    "4916632fb9ffba6d239eb0814211fbafe9130c9871c7691b8b0dbd64b2710d48"
+  "io.netty:netty-buffer:4.2.2.Final-20250508.062804-10": [
+    "35bc0d116ea829e028380a3b3722ad6d4bb852d62fcd30506ed3f39cc8be9396",
+    "fa21f27635dabbfe9b1019056683398ac363ba231a609ddedc72a46204ae0424"
   ],
-  "io.netty:netty-common:4.2.1.Final": [
-    "7eea4a96f61ace06337906374150cb73c94f248897fda3da865b5c38a710bdfd",
-    "a32127fff3bb7aae678ee69abfc07bb3549ec86bc41604c722a707292a75e450"
+  "io.netty:netty-common:4.2.2.Final-20250508.062804-10": [
+    "6223a40b144cbfd8e89d9f957d1d36a72abb4f71a25e52c037bfab18a2face45",
+    "b2e1649e4513fc00d042d3d4ef6c9dda7429cfca25968975889af1b606fb18c5"
   ],
   "io.opentelemetry.semconv:opentelemetry-semconv:1.32.0": [
     "d55c19372d3af757136de763514c0a1a0d80cea0eb185afc4751081a28c42ba0",

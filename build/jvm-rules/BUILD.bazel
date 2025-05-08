@@ -193,7 +193,7 @@ jvm_import(
     source_jar = "@jackson-databind-sources//file",
     visibility = ["//visibility:public"],
     runtime_deps = [
-        ":jackson-annotations"
+        ":jackson-annotations",
     ],
 )
 
@@ -423,23 +423,6 @@ jvm_import(
 )
 
 jvm_import(
-    name = "netty-common",
-    jar = "@netty-common//file",
-    source_jar = "@netty-common-sources//file",
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "netty-buffer",
-    jar = "@netty-buffer//file",
-    source_jar = "@netty-buffer-sources//file",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        ":netty-common",
-    ],
-)
-
-jvm_import(
     name = "collection",
     jar = "@collection-jvm//file",
     source_jar = "@collection-jvm-sources//file",
@@ -472,6 +455,23 @@ jvm_import(
     jar = "@intellij-deps-fastutil//file",
     source_jar = "@intellij-deps-fastutil-sources//file",
     visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "netty-common",
+    jar = "@netty-common//file",
+    source_jar = "@netty-common-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "netty-buffer",
+    jar = "@netty-buffer//file",
+    source_jar = "@netty-buffer-sources//file",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        ":netty-common",
+    ],
 )
 
 ### auto-generated section `libraries` end

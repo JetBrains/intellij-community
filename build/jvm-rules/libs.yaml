@@ -118,13 +118,6 @@
       version: 1.49.0
     - id: io.opentelemetry:opentelemetry-exporter-sender-jdk
       version: 1.49.0
-    # Netty
-    - id: io.netty:netty-common
-      version: 4.2.1.Final
-    - id: io.netty:netty-buffer
-      version: 4.2.1.Final
-      runtimeDeps:
-        - ":netty-common"
 - url: https://dl.google.com/android/maven2
   libs:
     - id: androidx.collection:collection-jvm
@@ -139,3 +132,13 @@
       version: 9.6.1
     - id: org.jetbrains.intellij.deps.fastutil:intellij-deps-fastutil
       version: 8.5.15-jb1
+# https://github.com/netty/netty/pull/15131
+- url: https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies
+  libs:
+    # Netty
+    - id: io.netty:netty-common
+      version: 4.2.2.Final-20250508.062804-10
+    - id: io.netty:netty-buffer
+      version: 4.2.2.Final-20250508.062804-10
+      runtimeDeps:
+        - ":netty-common"
