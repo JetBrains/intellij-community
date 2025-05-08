@@ -4128,6 +4128,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/copyWithoutNamedArguments/base.kt");
         }
 
+        @TestMetadata("dataClassWithoutParams.kt")
+        public void testDataClassWithoutParams() throws Exception {
+            runTest("testData/inspectionsLocal/copyWithoutNamedArguments/dataClassWithoutParams.kt");
+        }
+
         @TestMetadata("notAllNamed.kt")
         public void testNotAllNamed() throws Exception {
             runTest("testData/inspectionsLocal/copyWithoutNamedArguments/notAllNamed.kt");

@@ -15931,6 +15931,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/copyWithoutNamedArguments/base.kt");
         }
 
+        @TestMetadata("dataClassWithoutParams.kt")
+        public void testDataClassWithoutParams() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/copyWithoutNamedArguments/dataClassWithoutParams.kt");
+        }
+
         @TestMetadata("notAllNamed.kt")
         public void testNotAllNamed() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/copyWithoutNamedArguments/notAllNamed.kt");
