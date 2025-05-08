@@ -22,9 +22,11 @@ class MainKtsScriptDefinitionSource(val project: Project) : ScriptDefinitionsSou
                 ::loggingReporter
             ).definitions
 
+            val mainKtsScriptConfigurationProvider = MainKtsScriptConfigurationProvider.getInstance(project)
+
             return discoveredDefinitions.map { definition ->
                 val compilationConfiguration = definition.compilationConfiguration.withTransformedResolvers {
-                    ReportingExternalDependenciesResolver(it, DependencyResolutionService.getInstance(project))
+                    ReportingExternalDependenciesResolver(it, mainKtsScriptConfigurationProvider)
                 }.with {
                     ide.dependenciesSources(JvmDependency(KotlinArtifacts.kotlinStdlibSources))
                     ide {
@@ -34,10 +36,10 @@ class MainKtsScriptDefinitionSource(val project: Project) : ScriptDefinitionsSou
                             templateName = "Kotlin Script MainKts"
                         })
                         configurationResolverDelegate {
-                            MainKtsScriptConfigurationProvider.getInstance(project)
+                            mainKtsScriptConfigurationProvider
                         }
                         scriptWorkspaceModelManagerDelegate {
-                            MainKtsScriptConfigurationProvider.getInstance(project)
+                            mainKtsScriptConfigurationProvider
                         }
                     }
                 }

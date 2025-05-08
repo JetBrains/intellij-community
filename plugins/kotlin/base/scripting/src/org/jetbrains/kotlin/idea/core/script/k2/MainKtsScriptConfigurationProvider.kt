@@ -11,6 +11,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.SequentialProgressReporter
+import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -18,9 +21,9 @@ import com.intellij.psi.util.childrenOfType
 import com.intellij.util.containers.addIfNotNull
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.amper.dependency.resolution.LocalM2RepositoryFinder
+import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.*
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptClassPathUtil.Companion.findVirtualFiles
-import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtLiteralStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtValueArgumentList
@@ -43,13 +46,22 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
     private val data = ConcurrentHashMap<VirtualFile, ScriptConfigurationWithSdk>()
     private val m2LocalRepositoryPath = LocalM2RepositoryFinder.findPath()
 
+    var reporter: SequentialProgressReporter? = null
+        private set
+
     override fun get(virtualFile: VirtualFile): ScriptConfigurationWithSdk? = data[virtualFile]
 
     override suspend fun create(virtualFile: VirtualFile, definition: ScriptDefinition): ScriptConfigurationWithSdk? {
-        val ktFile = readAction { virtualFile.toPsiFile(project) as? KtFile } ?: return null
-        val hasNoDependencies = readAction { ktFile.hasNoDependencies() }
-        if (hasNoDependencies || ktFile.dependenciesExistLocally()) {
-            refineConfiguration(virtualFile)
+        withBackgroundProgress(project, title = KotlinBaseScriptingBundle.message("progress.title.dependency.resolution")) {
+            reportSequentialProgress { theReporter ->
+                try {
+                    reporter = theReporter
+                    refineConfiguration(virtualFile)
+                }
+                finally {
+                    reporter = null
+                }
+            }
         }
 
         return data[virtualFile]

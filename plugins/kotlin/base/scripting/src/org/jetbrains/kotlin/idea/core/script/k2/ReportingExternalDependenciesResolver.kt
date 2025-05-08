@@ -11,7 +11,7 @@ import kotlin.script.experimental.dependencies.RepositoryCoordinates
 
 internal class ReportingExternalDependenciesResolver(
   private val delegate: ExternalDependenciesResolver,
-  private val dependenciesResolutionService: DependencyResolutionService,
+  private val configurationProvider: MainKtsScriptConfigurationProvider,
 ) : ExternalDependenciesResolver {
 
     override fun acceptsArtifact(artifactCoordinates: String): Boolean =
@@ -32,7 +32,7 @@ internal class ReportingExternalDependenciesResolver(
         options: ExternalDependenciesResolver.Options,
         sourceCodeLocation: SourceCode.LocationWithId?
     ): ResultWithDiagnostics<List<File>> {
-        dependenciesResolutionService.reporter?.indeterminateStep(KotlinBaseScriptingBundle.message("progress.text.resolving", artifactCoordinates))
+        configurationProvider.reporter?.indeterminateStep(KotlinBaseScriptingBundle.message("progress.text.resolving", artifactCoordinates))
         return super.resolve(artifactCoordinates, options, sourceCodeLocation)
     }
 
