@@ -38,8 +38,9 @@ import kotlin.coroutines.CoroutineContext
  *      override suspend fun log(msg: String) {
  *        channel.send(msg)
  *      }
- *    })
- *    channel.close()
+ *    }).also {
+ *      channel.close()
+ *    }
  *  }
  * ```
  * Notice that logger is not canceled, but shuts down by itself, which allows it to flush all buffered messages.

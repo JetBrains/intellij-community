@@ -5,9 +5,14 @@ import com.jetbrains.rhizomedb.*
 import fleet.reporting.shared.runtime.currentSpan
 import fleet.reporting.shared.tracing.spannedScope
 import fleet.util.async.*
+import fleet.util.logging.logger
 import kotlinx.coroutines.*
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+
+private object Saga {
+  val logger = logger<Saga>()
+}
 
 /**
  * Is used to launch a coroutine with entities and spans.
@@ -16,10 +21,12 @@ import kotlin.coroutines.EmptyCoroutineContext
  * The saga function may take vararg-entities as arguments, and in this case guarantees that
  * these entities exist in the database until the coroutine is completed (otherwise, it throws an exception).
  */
-fun <T> CoroutineScope.saga(vararg requiredEntities: Entity,
-                            name: String = "anonymous saga",
-                            coroutineContext: CoroutineContext = EmptyCoroutineContext,
-                            f: suspend CoroutineScope.() -> T): Deferred<T> {
+fun <T> CoroutineScope.saga(
+  vararg requiredEntities: Entity,
+  name: String = "anonymous saga",
+  coroutineContext: CoroutineContext = EmptyCoroutineContext,
+  f: suspend CoroutineScope.() -> T,
+): Deferred<T> {
   val outerSpan = currentSpan
   return async(coroutineContext) {
     catching {
@@ -34,7 +41,7 @@ fun <T> CoroutineScope.saga(vararg requiredEntities: Entity,
       // according to [kotlinx.coroutines.CoroutineExceptionHandler] docs, a coroutine that was created using async
       // always catches all its exceptions and represents them in the resulting [Deferred] object,
       // so we have to log an exception manually
-      SagaScopeEntity.logger.error(e) { "Exception in saga" }
+      Saga.logger.error(e) { "Exception in saga" }
     }.getOrThrow()
   }
 }

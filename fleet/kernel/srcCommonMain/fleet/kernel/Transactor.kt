@@ -335,7 +335,6 @@ suspend fun <T> withTransactor(
               context.run {
                 registerMixin(Durable)
                 registerRetractionRelations()
-                register(SagaScopeEntity)
                 register(OfferContributorEntity)
                 register(RemoteKernelConnectionEntity)
                 register(WorkspaceClockEntity)
