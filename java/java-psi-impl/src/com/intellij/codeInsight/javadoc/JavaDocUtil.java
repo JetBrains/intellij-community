@@ -294,6 +294,9 @@ public final class JavaDocUtil {
                ((PsiParameterList)element.getParent()).getParameterIndex((PsiParameter)element);
       }
     }
+    else if (element instanceof PsiJavaModule) {
+      return ((PsiJavaModule)element).getName() + "/";
+    }
     else if (element instanceof PsiNamedElement) {
       return ((PsiNamedElement)element).getName();
     }
