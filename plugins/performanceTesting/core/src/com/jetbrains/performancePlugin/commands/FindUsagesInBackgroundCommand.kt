@@ -52,15 +52,15 @@ class FindUsagesInBackgroundCommand(text: String, line: Int) : PerformanceComman
           throw Exception("No editor is opened")
         }
 
-        val (offset, scope) = writeIntentReadAction {
-          Pair(editor.caretModel.offset, FindUsagesOptions.findScopeByName(project, null, options.scope))
+        val scope = readAction {
+          FindUsagesOptions.findScopeByName(project, null, options.scope)
         }
 
         val searchTargets = readAction {
-          PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.let { searchTargets(it, offset) }
+          PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.let { searchTargets(it, editor.caretModel.offset) }
         }
 
-        val element = getElement(project, editor, offset)
+        val element = getElement(project, editor)
 
         val firstUsageSpan = PerformanceTestSpan
           .getTracer(isWarmupMode)
