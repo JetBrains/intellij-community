@@ -15921,6 +15921,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("allNamed.kt")
+        public void testAllNamed() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/copyWithoutNamedArguments/allNamed.kt");
+        }
+
         @TestMetadata("base.kt")
         public void testBase() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/copyWithoutNamedArguments/base.kt");

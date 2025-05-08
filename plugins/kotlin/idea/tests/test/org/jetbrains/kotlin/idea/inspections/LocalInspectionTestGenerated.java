@@ -4118,6 +4118,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("allNamed.kt")
+        public void testAllNamed() throws Exception {
+            runTest("testData/inspectionsLocal/copyWithoutNamedArguments/allNamed.kt");
+        }
+
         @TestMetadata("base.kt")
         public void testBase() throws Exception {
             runTest("testData/inspectionsLocal/copyWithoutNamedArguments/base.kt");
