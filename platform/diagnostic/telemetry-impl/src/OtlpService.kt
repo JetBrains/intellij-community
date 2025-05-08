@@ -7,7 +7,6 @@ import com.intellij.diagnostic.ActivityImpl
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.platform.diagnostic.telemetry.OtlpConfiguration.getTraceEndpoint
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.exporters.*
 import com.intellij.platform.util.http.ContentType
@@ -39,10 +38,12 @@ internal class OtlpService private constructor() {
   internal val traceIdSalt: Long = System.identityHashCode(spans).toLong() shl 32 or (System.identityHashCode(this).toLong() and 0xffffffffL)
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  fun process(coroutineScope: CoroutineScope,
-              batchSpanProcessor: BatchSpanProcessor?,
-              opentelemetrySdkResource: io.opentelemetry.sdk.resources.Resource): Job? {
-    val endpoint = getTraceEndpoint()
+  fun process(
+    coroutineScope: CoroutineScope,
+    batchSpanProcessor: BatchSpanProcessor?,
+    endpoint: String?,
+    opentelemetrySdkResource: io.opentelemetry.sdk.resources.Resource,
+  ): Job? {
     if (endpoint == null && batchSpanProcessor == null) {
       return null
     }

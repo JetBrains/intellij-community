@@ -8,8 +8,19 @@ import java.net.URI
 object OtlpConfiguration {
 
   @JvmStatic
+  fun isTraceEnabled(): Boolean {
+    val endpoint = System.getenv("OTLP_ENDPOINT") ?: System.getProperty("idea.diagnostic.opentelemetry.otlp")
+    return normalizeTraceEndpoint(endpoint) != null
+  }
+
+  @JvmStatic
   fun getTraceEndpoint(): String? {
-    return normalizeTraceEndpoint(System.getenv("OTLP_ENDPOINT") ?: System.getProperty("idea.diagnostic.opentelemetry.otlp"))
+    if (System.getProperty(OpenTelemetryUtils.RDCT_TRACING_DIAGNOSTIC_FLAG) != null) {
+      return null // this dependency is strange, but it is api
+    }
+
+    val endpoint = System.getenv("OTLP_ENDPOINT") ?: System.getProperty("idea.diagnostic.opentelemetry.otlp")
+    return normalizeTraceEndpoint(endpoint)
   }
 
   @JvmStatic

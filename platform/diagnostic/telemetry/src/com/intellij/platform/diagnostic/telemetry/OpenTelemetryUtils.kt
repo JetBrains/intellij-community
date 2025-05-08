@@ -12,7 +12,9 @@ import java.nio.file.Path
 
 @ApiStatus.Internal
 object OpenTelemetryUtils {
-  // flags
+  /**
+   * Report span telemetry to the client instead of OTLP. Requires OTLP to be enabled.
+   */
   const val RDCT_TRACING_DIAGNOSTIC_FLAG: String = "rdct.diagnostic.otlp"
   const val RDCT_CONN_METRICS_DIAGNOSTIC_FLAG: String = "rdct.connection.metrics.enabled"
   const val RDCT_LUX_METRICS_DIAGNOSTIC_FLAG: String = "lux.metrics.enabled"

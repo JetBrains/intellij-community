@@ -91,7 +91,8 @@ class TelemetryManagerImpl(coroutineScope: CoroutineScope, isUnitTestMode: Boole
     }
 
     otlJob = otlpService.process(coroutineScope = otlpServiceCoroutineScope,
-                                 batchSpanProcessor = batchSpanProcessor,
+                                 batchSpanProcessor = batchSpanProcessor, // JaegerJsonSpanExporter only
+                                 endpoint = getTraceEndpoint(),
                                  opentelemetrySdkResource = configurator.resource)
 
     sdk = configurator.sdkBuilder
