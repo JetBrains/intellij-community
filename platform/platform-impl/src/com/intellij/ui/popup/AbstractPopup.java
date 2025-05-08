@@ -2867,20 +2867,27 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     }
 
     // Try forwarding the input method event to various possible speed search handlers
+    Component focusOwner = IdeFocusManager.getGlobalInstance().getFocusOwner();
+    Component typingRecipient = SwingUtilities.isDescendingFrom(myComponent, focusOwner) ? focusOwner : myPreferredFocusedComponent;
 
-    JComponent comp = myPreferredFocusedComponent == null ? myComponent : myPreferredFocusedComponent;
-    SpeedSearchSupply supply = SpeedSearchSupply.getSupply(comp, true);
+    // Speedsearch can be installed on a non-leaf component. Ex: SwitcherSpeedSearch
+    SpeedSearchSupply supply = UIUtil.uiParents(typingRecipient, false)
+      .takeWhile(comp -> comp != myComponent.getParent())
+      .filter(JComponent.class)
+      .map(comp -> SpeedSearchSupply.getSupply(comp, true))
+      .filterNotNull()
+      .first();
 
     if (!event.isConsumed() && supply instanceof SpeedSearchBase<?>) {
       ((SpeedSearchBase<?>)supply).processInputMethodEvent(event);
     }
 
-    if (!event.isConsumed() && comp instanceof ListWithFilter<?>) {
-      ((ListWithFilter<?>)comp).processInputMethodEvent(event);
+    if (!event.isConsumed() && typingRecipient instanceof ListWithFilter<?>) {
+      ((ListWithFilter<?>)typingRecipient).processInputMethodEvent(event);
     }
 
     // Don't try to attempt to pass IMEs to speed search if the popup is a text field
-    boolean isText = comp instanceof EditorTextField || comp instanceof JTextComponent;
+    boolean isText = typingRecipient instanceof EditorTextField || typingRecipient instanceof JTextComponent;
     if (!event.isConsumed() && !isText && mySpeedSearchPatternField != null) {
       mySpeedSearchPatternField.getTextEditor().dispatchEvent(event);
       mySpeedSearch.updatePattern(mySpeedSearchPatternField.getText());
