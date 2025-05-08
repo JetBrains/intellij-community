@@ -25,7 +25,6 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
 import com.jetbrains.python.codeInsight.typing.isInInlinePackage
 import com.jetbrains.python.codeInsight.typing.isInStubPackage
-import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil
 import com.jetbrains.python.facet.PythonPathContributingFacet
 import com.jetbrains.python.module.PyModuleService
 import com.jetbrains.python.psi.LanguageLevel
@@ -245,10 +244,8 @@ fun relativeResultsForStubsFromRoots(name: QualifiedName, context: PyQualifiedNa
 
 private fun resolveWithRelativeLevel(name: QualifiedName, context: PyQualifiedNameResolveContext): List<PsiElement> {
   val footholdFile = context.footholdFile
-  if (context.relativeLevel >= 0 && footholdFile != null && !PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(footholdFile)) {
-    return resolveModuleAt(name, context.containingDirectory,
-                           context) + relativeResultsForStubsFromRoots(
-      name, context)
+  if (context.relativeLevel >= 0 && footholdFile != null) {
+    return resolveModuleAt(name, context.containingDirectory, context) + relativeResultsForStubsFromRoots(name, context)
   }
   return emptyList()
 }
@@ -276,7 +273,6 @@ private fun resultsFromRoots(name: QualifiedName, context: PyQualifiedNameResolv
     val results = if (isModuleSource) moduleResults else sdkResults
     val effectiveSdk = sdk ?: context.effectiveSdk
     if (!root.isValid ||
-        root == PyUserSkeletonsUtil.getUserSkeletonsDirectory() ||
         effectiveSdk != null && PyTypeShed.isInside(root) && !PyTypeShed.maySearchForStubInRoot(name, root, effectiveSdk)) {
       return@RootVisitor true
     }

@@ -571,11 +571,6 @@
     <!-- IPython -->
     <pyReferenceResolveProvider implementation="com.jetbrains.python.psi.resolve.PyIPythonBuiltinReferenceResolveProvider"/>
 
-    <!-- User skeletons -->
-    <pyModuleMembersProvider implementation="com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsModuleMembersProvider"/>
-    <pyClassMembersProvider implementation="com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsClassMembersProvider"/>
-    <typeProvider implementation="com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsTypeProvider"/>
-
     <pyReferenceResolveProvider implementation="com.jetbrains.python.psi.resolve.PythonBuiltinReferenceResolveProvider"/>
     <pyReferenceResolveProvider implementation="com.jetbrains.python.psi.resolve.PythonOverridingBuiltinReferenceResolveProvider"/>
 

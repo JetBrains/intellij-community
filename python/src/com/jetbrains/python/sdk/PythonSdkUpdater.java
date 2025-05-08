@@ -44,7 +44,6 @@ import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.PythonPluginDisposable;
 import com.jetbrains.python.codeInsight.typing.PyBundledStubs;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
-import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyPackageManagerBridge;
 import com.jetbrains.python.packaging.common.PythonPackage;
@@ -664,11 +663,6 @@ public final class PythonSdkUpdater {
         results.add(skeletonsDir);
         LOG.info("Binary skeletons directory for SDK " + getSdkPresentableName(sdk) + "): " + skeletonsDir.getPath());
       }
-    }
-    final VirtualFile userSkeletonsDir = PyUserSkeletonsUtil.getUserSkeletonsDirectory();
-    if (userSkeletonsDir != null) {
-      results.add(userSkeletonsDir);
-      LOG.info("User skeletons directory for SDK " + getSdkPresentableName(sdk) + "): " + userSkeletonsDir.getPath());
     }
     return results;
   }

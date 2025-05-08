@@ -417,10 +417,6 @@
 
     <macro implementation="com.jetbrains.python.sdk.InterpreterDirectoryMacro"/>
 
-    <!-- User skeletons -->
-    <codeInsight.lineMarkerProvider language="Python"
-                                    implementationClass="com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsLineMarkerProvider"/>
-
     <!-- TestRunnerService -->
     <moduleService serviceImplementation="com.jetbrains.python.testing.TestRunnerService$ModuleService"/>
     <applicationService serviceImplementation="com.jetbrains.python.testing.TestRunnerService$AppService"/>

@@ -1225,15 +1225,6 @@ public class PyTypeTest extends PyTestCase {
              expr = f3(42)""");
   }
 
-  // PY-8836
-  public void testNumpyArrayIntMultiplicationType() {
-    doMultiFileTest("ndarray",
-                    """
-                      import numpy as np
-                      expr = np.ones(10) * 2
-                      """);
-  }
-
   // PY-9439
   public void testNumpyArrayType() {
     doMultiFileTest("ndarray",
@@ -1721,24 +1712,24 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-8473
   public void testCopyDotCopy() {
-    doMultiFileTest("A",
-                    """
-                      import copy
-                      class A(object):
-                          pass
-                      expr = copy.copy(A())
-                      """);
+    doTest("A",
+           """
+             import copy
+             class A(object):
+                 pass
+             expr = copy.copy(A())
+             """);
   }
 
   // PY-8473
   public void testCopyDotDeepCopy() {
-    doMultiFileTest("A",
-                    """
-                      import copy
-                      class A(object):
-                          pass
-                      expr = copy.deepcopy(A())
-                      """);
+    doTest("A",
+           """
+             import copy
+             class A(object):
+                 pass
+             expr = copy.deepcopy(A())
+             """);
   }
 
   // PY-21083

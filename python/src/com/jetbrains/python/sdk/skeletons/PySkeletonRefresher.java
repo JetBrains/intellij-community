@@ -18,7 +18,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
-import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PyRemoteSkeletonGeneratorFactory;
 import com.jetbrains.python.sdk.InvalidSdkException;
@@ -195,9 +194,6 @@ public class PySkeletonRefresher {
   private static List<String> calculateExtraSysPath(final @NotNull Sdk sdk, final @Nullable String skeletonsPath) {
     final File skeletons = skeletonsPath != null ? new File(skeletonsPath) : null;
 
-    final VirtualFile userSkeletonsDir = PyUserSkeletonsUtil.getUserSkeletonsDirectory();
-    final File userSkeletons = userSkeletonsDir != null ? new File(userSkeletonsDir.getPath()) : null;
-
     final VirtualFile remoteSourcesDir = PythonSdkUtil.findAnyRemoteLibrary(sdk);
     final File remoteSources = remoteSourcesDir != null ? new File(remoteSourcesDir.getPath()) : null;
 
@@ -207,7 +203,6 @@ public class PySkeletonRefresher {
         final File canonicalFile = new File(file.getPath());
         if (canonicalFile.exists() &&
             !FileUtil.filesEqual(canonicalFile, skeletons) &&
-            !FileUtil.filesEqual(canonicalFile, userSkeletons) &&
             !PyTypeShed.INSTANCE.isInside(file) &&
             !FileUtil.filesEqual(canonicalFile, remoteSources)) {
           return file.getPath();
