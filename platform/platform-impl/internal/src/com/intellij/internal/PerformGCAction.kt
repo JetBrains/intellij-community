@@ -3,9 +3,15 @@ package com.intellij.internal
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.jetbrains.JBR
 
 internal class PerformGCAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    System.gc()
+    if (JBR.isSystemUtilsSupported()) {
+      JBR.getSystemUtils().fullGC()
+    }
+    else {
+      System.gc()
+    }
   }
 }
