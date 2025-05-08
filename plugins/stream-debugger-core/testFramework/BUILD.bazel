@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "debugger-streams-core-testFramework_resources",
+  name = "testFramework_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "debugger-streams-core-testFramework",
+  name = "testFramework",
   module_name = "intellij.debugger.streams.core.testFramework",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -19,6 +19,6 @@ jvm_library(
     "//plugins/stream-debugger-core:debugger-streams-core",
     "//platform/xdebugger-api:debugger",
   ],
-  runtime_deps = [":debugger-streams-core-testFramework_resources"]
+  runtime_deps = [":testFramework_resources"]
 )
 ### auto-generated section `build intellij.debugger.streams.core.testFramework` end

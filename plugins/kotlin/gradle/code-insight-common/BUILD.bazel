@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "kotlin-gradle-code-insight-common_resources",
+  name = "code-insight-common_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-gradle-code-insight-common",
+  name = "code-insight-common",
   module_name = "kotlin.gradle.code-insight-common",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -19,30 +19,30 @@ jvm_library(
     "@lib//:kotlinc-analysis-api",
     "//platform/platform-impl:ide-impl",
     "@lib//:gradle",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
-    "//platform/observable:ide-observable",
-    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//platform/observable",
+    "//plugins/kotlin/base/util",
     "//platform/smRunner",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin",
     "//platform/util/progress",
-    "//plugins/kotlin/base/indices:kotlin-base-indices",
-    "//plugins/kotlin/base/platforms:kotlin-base-platforms",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
-    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
-    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/base/platforms",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/code-insight",
     "//plugins/kotlin/project-configuration",
     "//plugins/kotlin/plugin-updater",
     "//plugins/kotlin/inspections",
-    "//plugins/kotlin/gradle/gradle:kotlin-gradle-gradle",
+    "//plugins/kotlin/gradle/gradle",
     "//platform/core-impl",
     "//platform/projectModel-api:projectModel",
     "//platform/external-system-api:externalSystem",
     "//java/java-impl:impl",
     "//plugins/gradle:gradle-common",
-    "//plugins/kotlin/project-wizard/core:kotlin-project-wizard-core",
+    "//plugins/kotlin/project-wizard/core",
     "//plugins/gradle/java",
-    "//plugins/kotlin/base/statistics:kotlin-base-statistics",
+    "//plugins/kotlin/base/statistics",
     "//platform/diff-api:diff",
     "//platform/diff-impl",
     "//platform/util/diff",
@@ -50,6 +50,6 @@ jvm_library(
     "//platform/core-ui",
     "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared",
   ],
-  runtime_deps = [":kotlin-gradle-code-insight-common_resources"]
+  runtime_deps = [":code-insight-common_resources"]
 )
 ### auto-generated section `build kotlin.gradle.code-insight-common` end

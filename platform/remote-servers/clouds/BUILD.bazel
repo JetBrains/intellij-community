@@ -19,11 +19,11 @@ jvm_library(
     "//platform/ide-core",
     "//platform/lang-api:lang",
     "//platform/remote-servers/api:remoteServers",
-    "//platform/remote-servers/impl:remoteServers-impl",
+    "//platform/remote-servers/impl",
   ],
   runtime_deps = [
     ":clouds_resources",
-    "//platform/execution.dashboard:execution-dashboard",
+    "//platform/execution.dashboard",
   ]
 )
 ### auto-generated section `build intellij.platform.clouds` end

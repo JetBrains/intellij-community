@@ -13,7 +13,7 @@ create_kotlinc_options(
 )
 
 jvm_library(
-  name = "kotlin-base-fe10-obsolete-compat",
+  name = "obsolete-compat",
   module_name = "kotlin.base.fe10.obsolete-compat",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -22,11 +22,11 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",
-    "//plugins/kotlin/base/psi:kotlin-base-psi",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
-    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
-    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
-    "//plugins/kotlin/base/fe10/code-insight:kotlin-base-fe10-code-insight",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/base/fe10/analysis",
+    "//plugins/kotlin/base/fe10/code-insight",
     "//platform/core-impl",
     "//platform/editor-ui-api:editor-ui",
     "//platform/external-system-api:externalSystem",

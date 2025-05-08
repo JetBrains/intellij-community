@@ -22,7 +22,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/platform-util-io:ide-util-io",
     "//platform/ijent",
-    "//platform/ijent/impl:community-impl",
+    "//platform/ijent/impl",
     "//platform/execution",
     "//platform/util-ex",
     "//platform/util/coroutines",

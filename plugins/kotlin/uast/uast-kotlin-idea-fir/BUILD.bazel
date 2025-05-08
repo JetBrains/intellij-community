@@ -22,20 +22,20 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-analysis-api-k2",
-    "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-uast-kotlin-base",
+    "//plugins/kotlin/uast/uast-kotlin-base",
     "//platform/util",
-    "//plugins/kotlin/frontend-independent:fir-frontend-independent",
-    "//plugins/kotlin/uast/uast-kotlin-idea-base:kotlin-uast-uast-kotlin-idea-base",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/uast/uast-kotlin-idea-base",
     "//platform/util-ex",
     "//platform/core-impl",
     "//platform/projectModel-api:projectModel",
     "//uast/uast-common:uast",
     "//plugins/kotlin/uast/uast-kotlin-fir:kotlin-uast-uast-kotlin-k2",
-    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/util",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
     "//uast/uast-common-ide:ide",
   ],
-  runtime_deps = ["//plugins/kotlin/gradle/gradle:kotlin-gradle-gradle"]
+  runtime_deps = ["//plugins/kotlin/gradle/gradle"]
 )
 ### auto-generated section `build kotlin.uast.uast-kotlin-idea.k2` end

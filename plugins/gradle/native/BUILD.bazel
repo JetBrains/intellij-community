@@ -17,13 +17,13 @@ jvm_library(
     "//platform/lang-impl",
     "//plugins/gradle",
     "//plugins/gradle:gradle-common",
-    "//plugins/gradle/native/tooling:gradle-native-tooling",
+    "//plugins/gradle/native/tooling",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
     "//platform/platform-util-io:ide-util-io",
   ],
   exports = [
     "//plugins/gradle:gradle-common",
-    "//plugins/gradle/native/tooling:gradle-native-tooling",
+    "//plugins/gradle/native/tooling",
   ],
   runtime_deps = [":native_resources"]
 )

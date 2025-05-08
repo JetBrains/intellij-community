@@ -12,7 +12,7 @@ create_kotlinc_options(
 )
 
 jvm_library(
-  name = "kotlin-code-insight-api",
+  name = "api",
   module_name = "kotlin.code-insight.api",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -22,17 +22,17 @@ jvm_library(
     "@lib//:kotlin-reflect",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/psi:kotlin-base-psi",
-    "//plugins/kotlin/code-insight/utils:kotlin-code-insight-utils",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/code-insight/utils",
     "//platform/core-impl",
     "//platform/editor-ui-api:editor-ui",
     "//platform/lang-api:lang",
     "//java/java-psi-api:psi",
     "//platform/projectModel-impl",
-    "//plugins/kotlin/base/statistics:kotlin-base-statistics",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/statistics",
+    "//plugins/kotlin/base/project-structure",
     "//platform/statistics",
   ]
 )

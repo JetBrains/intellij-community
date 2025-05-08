@@ -3,12 +3,12 @@ load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
-  name = "kotlin-compiler-plugins-compiler-plugin-support-tests",
+  name = "tests",
   visibility = ["//visibility:public"]
 )
 
 jvm_library(
-  name = "kotlin-compiler-plugins-compiler-plugin-support-tests_test_lib",
+  name = "tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
@@ -18,14 +18,14 @@ jvm_library(
     "//java/testFramework",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
-    "//plugins/kotlin/base/facet/tests:kotlin-base-facet-tests_test_lib",
-    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compiler-plugins-compiler-plugin-support-common",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/facet/tests:tests_test_lib",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common",
   ]
 )
 
 jvm_test(
-  name = "kotlin-compiler-plugins-compiler-plugin-support-tests_test",
-  runtime_deps = [":kotlin-compiler-plugins-compiler-plugin-support-tests_test_lib"]
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
 )
 ### auto-generated section `build kotlin.compiler-plugins.compiler-plugin-support.tests` end

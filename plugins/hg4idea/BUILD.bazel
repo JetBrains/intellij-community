@@ -21,7 +21,7 @@ jvm_library(
     "@lib//:guava",
     "//platform/dvcs-impl:vcs-dvcs-impl",
     "//platform/vcs-log/api:vcs-log",
-    "//platform/vcs-log/impl:vcs-log-impl",
+    "//platform/vcs-log/impl",
     "//platform/dvcs-api:vcs-dvcs",
     "//platform/lang-impl",
     "@lib//:miglayout-swing",
@@ -29,7 +29,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/coroutines",
-    "//platform/dvcs-impl/shared:vcs-dvcs-impl-shared",
+    "//platform/dvcs-impl/shared",
   ],
   runtime_deps = [":vcs-hg_resources"]
 )
@@ -53,8 +53,8 @@ jvm_library(
     "//platform/dvcs-impl:vcs-dvcs-impl",
     "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
     "//platform/vcs-log/api:vcs-log",
-    "//platform/vcs-log/impl:vcs-log-impl",
-    "//platform/vcs-log/impl:vcs-log-impl_test_lib",
+    "//platform/vcs-log/impl",
+    "//platform/vcs-log/impl:impl_test_lib",
     "//platform/dvcs-api:vcs-dvcs",
     "//platform/lang-impl",
     "//platform/vcs-tests:vcs-testFramework",
@@ -63,7 +63,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/coroutines",
-    "//platform/dvcs-impl/shared:vcs-dvcs-impl-shared",
+    "//platform/dvcs-impl/shared",
   ],
   runtime_deps = [":vcs-hg_resources"]
 )

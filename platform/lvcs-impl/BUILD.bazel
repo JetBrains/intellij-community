@@ -28,7 +28,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/statistics",
     "//platform/util",
-    "//platform/vcs-impl/shared:vcs-impl-shared",
+    "//platform/vcs-impl/shared",
     "@lib//:jetbrains-annotations",
   ],
   runtime_deps = [":lvcs-impl_resources"]
@@ -64,7 +64,7 @@ jvm_library(
     "@lib//:easymock",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
-    "//platform/vcs-impl/shared:vcs-impl-shared",
+    "//platform/vcs-impl/shared",
     "@lib//:jetbrains-annotations",
   ],
   runtime_deps = [":lvcs-impl_resources"]

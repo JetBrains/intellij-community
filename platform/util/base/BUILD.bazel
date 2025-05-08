@@ -14,8 +14,8 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-coroutines-debug",
-    "//platform/util/base/multiplatform:util-base-multiplatform",
+    "//platform/util/base/multiplatform",
   ],
-  exports = ["//platform/util/base/multiplatform:util-base-multiplatform"]
+  exports = ["//platform/util/base/multiplatform"]
 )
 ### auto-generated section `build intellij.platform.util.base` end

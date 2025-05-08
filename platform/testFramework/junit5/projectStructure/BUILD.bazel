@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 jvm_library(
-  name = "testFramework-junit5-projectStructure",
+  name = "projectStructure",
   module_name = "intellij.platform.testFramework.junit5.projectStructure",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -16,10 +16,10 @@ jvm_library(
 )
 
 jvm_library(
-  name = "testFramework-junit5-projectStructure_test_lib",
+  name = "projectStructure_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
-  associates = [":testFramework-junit5-projectStructure"],
+  associates = [":projectStructure"],
   deps = [
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
@@ -32,7 +32,7 @@ jvm_library(
 )
 
 jvm_test(
-  name = "testFramework-junit5-projectStructure_test",
-  runtime_deps = [":testFramework-junit5-projectStructure_test_lib"]
+  name = "projectStructure_test",
+  runtime_deps = [":projectStructure_test_lib"]
 )
 ### auto-generated section `build intellij.platform.testFramework.junit5.projectStructure` end

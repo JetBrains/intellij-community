@@ -22,17 +22,17 @@ jvm_library(
     "//fleet/rhizomedb",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
-    "//fleet/util/core:fleet-util-core",
+    "//fleet/util/core",
     "//fleet/rpc",
     "@lib//:kotlinx-coroutines-core",
-    "//fleet/reporting/api:fleet-reporting-api",
-    "//fleet/reporting/shared:fleet-reporting-shared",
-    "//fleet/multiplatform.shims:multiplatform-shims",
+    "//fleet/reporting/api",
+    "//fleet/reporting/shared",
+    "//fleet/multiplatform.shims",
     "@lib//:fastutil-min",
   ],
   exports = [
     "//fleet/rhizomedb",
-    "//fleet/util/core:fleet-util-core",
+    "//fleet/util/core",
     "//fleet/rpc",
   ]
 )

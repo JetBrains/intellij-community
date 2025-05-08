@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "ide-ui",
+  name = "ui",
   module_name = "intellij.platform.ide.ui",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),

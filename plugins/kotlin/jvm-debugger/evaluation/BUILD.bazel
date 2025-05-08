@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "kotlin-jvm-debugger-evaluation_resources",
+  name = "evaluation_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-jvm-debugger-evaluation",
+  name = "evaluation",
   module_name = "kotlin.jvm-debugger.evaluation",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -18,22 +18,22 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-analysis-api-platform-interface",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
-    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
-    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
-    "//plugins/kotlin/base/statistics:kotlin-base-statistics",
-    "//plugins/kotlin/jvm-debugger/base/util:kotlin-jvm-debugger-base-util",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/base/statistics",
+    "//plugins/kotlin/jvm-debugger/base/util",
     "//java/debugger/openapi:java-debugger",
-    "//plugins/kotlin/jvm-debugger/eval4j:kotlin-jvm-debugger-eval4j",
-    "//plugins/kotlin/jvm-debugger/core:kotlin-jvm-debugger-core",
+    "//plugins/kotlin/jvm-debugger/eval4j",
+    "//plugins/kotlin/jvm-debugger/core",
     "//platform/xdebugger-impl:debugger-impl",
     "//java/java-psi-impl:psi-impl",
-    "//java/debugger/impl:java-debugger-impl",
-    "//plugins/kotlin/jvm-debugger/coroutines:kotlin-jvm-debugger-coroutines",
+    "//java/debugger/impl",
+    "//plugins/kotlin/jvm-debugger/coroutines",
     "//platform/statistics",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/base/facet",
   ],
-  runtime_deps = [":kotlin-jvm-debugger-evaluation_resources"]
+  runtime_deps = [":evaluation_resources"]
 )
 ### auto-generated section `build kotlin.jvm-debugger.evaluation` end

@@ -3,12 +3,12 @@ load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
-  name = "kotlin-maven-tests",
+  name = "tests",
   visibility = ["//visibility:public"]
 )
 
 jvm_library(
-  name = "kotlin-maven-tests_test_lib",
+  name = "tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
@@ -20,30 +20,30 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:gson",
-    "//plugins/kotlin/plugin/k1:kotlin-plugin-k1",
+    "//plugins/kotlin/plugin/k1",
     "//java/testFramework",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/util:kotlin-base-util_test_lib",
-    "//plugins/kotlin/base/compiler-configuration:kotlin-base-compiler-configuration",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
-    "//plugins/kotlin/base/platforms:kotlin-base-platforms",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
-    "//plugins/kotlin/base/jps:kotlin-base-jps",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure_test_lib",
-    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
-    "//plugins/kotlin/base/test:kotlin-base-test",
-    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
-    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/platforms",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/jps",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/test",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/base/fe10/analysis",
     "//plugins/kotlin/core",
     "//plugins/kotlin/project-configuration",
-    "//plugins/kotlin/frontend-independent:fir-frontend-independent",
+    "//plugins/kotlin/frontend-independent",
     "@lib//:kotlinc-kotlin-jps-common",
     "//plugins/kotlin/idea",
-    "//plugins/kotlin/idea/tests:kotlin-idea-tests",
-    "//plugins/kotlin/idea/tests:kotlin-idea-tests_test_lib",
-    "//plugins/kotlin/jvm/shared:kotlin-jvm-shared",
+    "//plugins/kotlin/idea/tests",
+    "//plugins/kotlin/idea/tests:tests_test_lib",
+    "//plugins/kotlin/jvm/shared",
     "//plugins/kotlin/formatter",
     "//plugins/kotlin/maven",
     "//plugins/kotlin/tests-common",
@@ -56,20 +56,20 @@ jvm_library(
   ],
   runtime_deps = [
     "//plugins/kotlin/compiler-plugins/allopen/common-k1:kotlin-compiler-plugins-allopen-common-k1",
-    "//plugins/kotlin/compiler-plugins/allopen/maven:kotlin-compiler-plugins-allopen-maven",
-    "//plugins/kotlin/compiler-plugins/noarg/common:kotlin-compiler-plugins-noarg-common",
-    "//plugins/kotlin/compiler-plugins/noarg/maven:kotlin-compiler-plugins-noarg-maven",
-    "//plugins/kotlin/compiler-plugins/sam-with-receiver/common:kotlin-compiler-plugins-sam-with-receiver-common",
-    "//plugins/kotlin/compiler-plugins/sam-with-receiver/maven:kotlin-compiler-plugins-sam-with-receiver-maven",
+    "//plugins/kotlin/compiler-plugins/allopen/maven",
+    "//plugins/kotlin/compiler-plugins/noarg/common",
+    "//plugins/kotlin/compiler-plugins/noarg/maven",
+    "//plugins/kotlin/compiler-plugins/sam-with-receiver/common",
+    "//plugins/kotlin/compiler-plugins/sam-with-receiver/maven",
     "//plugins/kotlin/compiler-plugins/assignment/common-k1:kotlin-compiler-plugins-assignment-common-k1",
-    "//plugins/kotlin/compiler-plugins/assignment/maven:kotlin-compiler-plugins-assignment-maven",
-    "//plugins/kotlin/compiler-plugins/kotlinx-serialization/common:kotlin-compiler-plugins-kotlinx-serialization-common",
-    "//plugins/kotlin/compiler-plugins/kotlinx-serialization/maven:kotlin-compiler-plugins-kotlinx-serialization-maven",
+    "//plugins/kotlin/compiler-plugins/assignment/maven",
+    "//plugins/kotlin/compiler-plugins/kotlinx-serialization/common",
+    "//plugins/kotlin/compiler-plugins/kotlinx-serialization/maven",
   ]
 )
 
 jvm_test(
-  name = "kotlin-maven-tests_test",
-  runtime_deps = [":kotlin-maven-tests_test_lib"]
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
 )
 ### auto-generated section `build kotlin.maven.tests` end

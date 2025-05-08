@@ -3,18 +3,18 @@ load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
-  name = "kotlin-gradle-gradle-tests_test_resources",
+  name = "tests_test_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 java_library(
-  name = "kotlin-gradle-gradle-tests",
+  name = "tests",
   visibility = ["//visibility:public"]
 )
 
 jvm_library(
-  name = "kotlin-gradle-gradle-tests_test_lib",
+  name = "tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
@@ -26,39 +26,39 @@ jvm_library(
     "@lib//:guava",
     "@lib//:junit4",
     "@lib//:kotlin-test",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/util:kotlin-base-util_test_lib",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/util:util_test_lib",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
-    "//plugins/kotlin/base/project-model:kotlin-base-project-model",
-    "//plugins/kotlin/base/compiler-configuration:kotlin-base-compiler-configuration",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
-    "//plugins/kotlin/base/platforms:kotlin-base-platforms",
+    "//plugins/kotlin/base/project-model",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/platforms",
     "//java/testFramework",
-    "//plugins/kotlin/base/scripting:kotlin-base-scripting",
-    "//plugins/kotlin/base/scripting:kotlin-base-scripting_test_lib",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure_test_lib",
-    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
-    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
-    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight_test_lib",
-    "//plugins/kotlin/base/test:kotlin-base-test",
-    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
-    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+    "//plugins/kotlin/base/scripting",
+    "//plugins/kotlin/base/scripting:scripting_test_lib",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/base/code-insight:code-insight_test_lib",
+    "//plugins/kotlin/base/test",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/base/fe10/analysis",
     "//plugins/kotlin/project-configuration",
     "//plugins/kotlin/core",
-    "//plugins/kotlin/frontend-independent:fir-frontend-independent",
+    "//plugins/kotlin/frontend-independent",
     "//plugins/kotlin/idea",
-    "//plugins/kotlin/idea/tests:kotlin-idea-tests",
-    "//plugins/kotlin/idea/tests:kotlin-idea-tests_test_lib",
-    "//plugins/kotlin/jvm/shared:kotlin-jvm-shared",
+    "//plugins/kotlin/idea/tests",
+    "//plugins/kotlin/idea/tests:tests_test_lib",
+    "//plugins/kotlin/jvm/shared",
     "//plugins/kotlin/migration",
     "//plugins/kotlin/inspections",
-    "//plugins/kotlin/gradle/code-insight-groovy:kotlin-gradle-code-insight-groovy",
-    "//plugins/kotlin/gradle/gradle:kotlin-gradle-gradle",
-    "//plugins/kotlin/gradle/code-insight-common:kotlin-gradle-code-insight-common",
+    "//plugins/kotlin/gradle/code-insight-groovy",
+    "//plugins/kotlin/gradle/gradle",
+    "//plugins/kotlin/gradle/code-insight-common",
     "//plugins/groovy/groovy-psi:psi",
     "//plugins/kotlin/tests-common",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
@@ -73,7 +73,7 @@ jvm_library(
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlin-tooling-core",
-    "//plugins/kotlin/run-configurations/jvm:kotlin-run-configurations-jvm",
+    "//plugins/kotlin/run-configurations/jvm",
     "//plugins/groovy",
     "//plugins/groovy:groovy_test_lib",
     "//plugins/kotlin/completion/tests-shared:kotlin-completion-tests-shared_test_lib",
@@ -84,11 +84,11 @@ jvm_library(
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
   ],
-  runtime_deps = [":kotlin-gradle-gradle-tests_test_resources"]
+  runtime_deps = [":tests_test_resources"]
 )
 
 jvm_test(
-  name = "kotlin-gradle-gradle-tests_test",
-  runtime_deps = [":kotlin-gradle-gradle-tests_test_lib"]
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
 )
 ### auto-generated section `build kotlin.gradle.gradle.tests` end

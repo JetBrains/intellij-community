@@ -29,7 +29,7 @@ jvm_library(
     "//platform/statistics",
     "//platform/indexing-api:indexing",
     "//platform/lang-impl",
-    "//platform/platform-impl/ui:ide-ui",
+    "//platform/platform-impl/ui",
     "//platform/feedback",
   ],
   runtime_deps = [":frontend_resources"]
@@ -60,7 +60,7 @@ jvm_library(
     "//platform/statistics:statistics_test_lib",
     "//platform/indexing-api:indexing",
     "//platform/lang-impl",
-    "//platform/platform-impl/ui:ide-ui",
+    "//platform/platform-impl/ui",
     "//platform/feedback",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

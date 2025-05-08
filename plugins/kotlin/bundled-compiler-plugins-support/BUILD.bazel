@@ -20,7 +20,7 @@ jvm_library(
     "@lib//:kotlinc-parcelize-compiler-plugin",
     "@lib//:kotlinc-scripting-compiler-plugin",
     "@lib//:kotlinc-js-plain-objects-compiler-plugin",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin",
     "@lib//:kotlinc-kotlinx-serialization-compiler-plugin",
     "@lib//:kotlinc-kotlin-dataframe-compiler-plugin",
   ]

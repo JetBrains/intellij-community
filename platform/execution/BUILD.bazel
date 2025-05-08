@@ -16,7 +16,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
     "//platform/ide-core",
-    "//platform/ide-core/plugins:ide-core-plugins",
+    "//platform/ide-core/plugins",
     "//platform/platform-util-io:ide-util-io",
     "//platform/util:util-ui",
     "//platform/util/jdom",

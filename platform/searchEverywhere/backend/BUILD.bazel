@@ -21,7 +21,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/project/shared:project",
     "//platform/util",
-    "//platform/platform-impl/rpc:ide-rpc",
+    "//platform/platform-impl/rpc",
     "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
     "//platform/usageView",

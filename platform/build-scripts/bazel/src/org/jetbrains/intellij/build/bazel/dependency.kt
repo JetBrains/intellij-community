@@ -14,7 +14,7 @@ import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.model.module.JpsTestModuleProperties
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Path
-import java.util.*
+import java.util.TreeSet
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.relativeTo
@@ -57,9 +57,8 @@ internal fun generateDeps(
 
     if (element is JpsModuleDependency) {
       val dependencyModule = element.moduleReference.resolve()!!
-      // todo runtime dependency (getBazelDependencyLabel() is null only because fake "main" modules do not have content roots, and we don't know where to create BUILD file)
       val dependencyModuleDescriptor = context.getKnownModuleDescriptorOrError(dependencyModule)
-      val label = context.getBazelDependencyLabel(module = dependencyModuleDescriptor, dependent = module) ?: continue
+      val label = context.getBazelDependencyLabel(module = dependencyModuleDescriptor, dependent = module)
 
       // intellij.platform.configurationStore.tests uses internal symbols from intellij.platform.configurationStore.impl
       val dependencyModuleName = dependencyModule.name
@@ -293,7 +292,7 @@ private fun addDep(
         else {
           if (hasOnlyTestResources(dependencyModuleDescriptor)) {
             // module with only test resources
-            runtimeDeps.add(dependencyLabel + TEST_RESOURCES_TARGET_SUFFIX)
+            runtimeDeps.add(addSuffix(dependencyLabel, TEST_RESOURCES_TARGET_SUFFIX))
             if (isExported) {
               throw RuntimeException("Do not export test dependency (module=${dependentModule.module.name}, exported=${dependencyModuleDescriptor.module.name})")
             }
@@ -362,6 +361,16 @@ private fun addDep(
       // we produce separate Bazel targets for production and test source roots
     }
   }
+}
+
+private fun addSuffix(s: String, @Suppress("SameParameterValue") labelSuffix: String): String {
+  val lastSlashIndex = s.lastIndexOf('/')
+  return (if (s.indexOf(':', lastSlashIndex) == -1) {
+    s + ":" + s.substring(lastSlashIndex + 1)
+  }
+  else {
+    s
+  }) + labelSuffix
 }
 
 internal fun hasOnlyTestResources(moduleDescriptor: ModuleDescriptor): Boolean {

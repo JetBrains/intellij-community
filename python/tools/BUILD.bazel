@@ -21,13 +21,13 @@ jvm_library(
     "//python/python-sdk:sdk",
     "@lib//:kotlin-script-runtime",
     "@lib//ant/lib:ant-antlr-provided",
-    "//python/testFramework:community-testFramework",
+    "//python/testFramework",
   ],
   runtime_deps = [
     ":tools_resources",
     "//python:pycharm-community",
     "//python/pluginCore:community-plugin",
-    "//platform/build-scripts/downloader:buildScripts-downloader",
+    "//platform/build-scripts/downloader",
   ]
 )
 ### auto-generated section `build intellij.python.tools` end

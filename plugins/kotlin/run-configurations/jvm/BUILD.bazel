@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "kotlin-run-configurations-jvm_resources",
+  name = "jvm_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-run-configurations-jvm",
+  name = "jvm",
   module_name = "kotlin.run-configurations.jvm",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -18,16 +18,16 @@ jvm_library(
     "@lib//:kotlinc-kotlin-jps-common",
     "//platform/util/jdom",
     "//platform/platform-impl:ide-impl",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/psi:kotlin-base-psi",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/indices:kotlin-base-indices",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
-    "//plugins/kotlin/base/scripting:kotlin-base-scripting",
-    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
-    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/scripting",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/code-insight",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//platform/analysis-api:analysis",
@@ -37,9 +37,9 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//java/openapi:java",
     "//java/java-impl:impl",
-    "//java/execution/impl:java-execution-impl",
+    "//java/execution/impl",
     "//platform/core-ui",
   ],
-  runtime_deps = [":kotlin-run-configurations-jvm_resources"]
+  runtime_deps = [":jvm_resources"]
 )
 ### auto-generated section `build kotlin.run-configurations.jvm` end

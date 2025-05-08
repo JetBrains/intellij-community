@@ -16,7 +16,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/util",
     "@lib//:kotlinc-kotlin-compiler-common",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/frontend-agnostic",
     "//platform/core-impl",
     "//platform/util-ex",
     "//plugins/grazie/src:core",

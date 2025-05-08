@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "java-debugger-impl-shared_resources",
+  name = "shared_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "java-debugger-impl-shared",
+  name = "shared",
   module_name = "intellij.java.debugger.impl.shared",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -24,12 +24,12 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
-    "//platform/platform-impl/rpc:ide-rpc",
+    "//platform/platform-impl/rpc",
     "//platform/execution",
     "//platform/execution-impl",
     "//java/java-frontback-impl:frontback-impl",
     "//platform/util/coroutines",
   ],
-  runtime_deps = [":java-debugger-impl-shared_resources"]
+  runtime_deps = [":shared_resources"]
 )
 ### auto-generated section `build intellij.java.debugger.impl.shared` end

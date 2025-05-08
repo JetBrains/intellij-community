@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "kotlin-base-facet_resources",
+  name = "facet_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-base-facet",
+  name = "facet",
   module_name = "kotlin.base.facet",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
@@ -16,12 +16,12 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-jps-common",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/compiler-configuration:kotlin-base-compiler-configuration",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/platforms:kotlin-base-platforms",
-    "//plugins/kotlin/base/project-model:kotlin-base-project-model",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/platforms",
+    "//plugins/kotlin/base/project-model",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//platform/util/jdom",
     "//platform/core-impl",
@@ -35,6 +35,6 @@ jvm_library(
     "//platform/backend/workspace",
     "@lib//:gson",
   ],
-  runtime_deps = [":kotlin-base-facet_resources"]
+  runtime_deps = [":facet_resources"]
 )
 ### auto-generated section `build kotlin.base.facet` end

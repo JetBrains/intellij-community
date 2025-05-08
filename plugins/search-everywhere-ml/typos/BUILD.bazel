@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
-  name = "searchEverywhereMl-typos_resources",
+  name = "typos_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "searchEverywhereMl-typos",
+  name = "typos",
   module_name = "intellij.searchEverywhereMl.typos",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -24,14 +24,14 @@ jvm_library(
     "//plugins/search-everywhere-ml:searchEverywhereMl",
     "@lib//:fastutil-min",
   ],
-  runtime_deps = [":searchEverywhereMl-typos_resources"]
+  runtime_deps = [":typos_resources"]
 )
 
 jvm_library(
-  name = "searchEverywhereMl-typos_test_lib",
+  name = "typos_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
-  associates = [":searchEverywhereMl-typos"],
+  associates = [":typos"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
@@ -50,11 +50,11 @@ jvm_library(
     "//plugins/search-everywhere-ml:searchEverywhereMl_test_lib",
     "@lib//:fastutil-min",
   ],
-  runtime_deps = [":searchEverywhereMl-typos_resources"]
+  runtime_deps = [":typos_resources"]
 )
 
 jvm_test(
-  name = "searchEverywhereMl-typos_test",
-  runtime_deps = [":searchEverywhereMl-typos_test_lib"]
+  name = "typos_test",
+  runtime_deps = [":typos_test_lib"]
 )
 ### auto-generated section `build intellij.searchEverywhereMl.typos` end

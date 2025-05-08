@@ -12,7 +12,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
-    "//plugins/kotlin/plugin/common:kotlin-plugin-common",
+    "//plugins/kotlin/plugin/common",
     "//java/testFramework",
     "//plugins/junit/testFramework",
     "//platform/testFramework",
@@ -21,7 +21,7 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "//jvm/jvm-analysis-testFramework:analysis-testFramework",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
-    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/junit/java-tests:java-tests_test_lib",
   ]
 )

@@ -35,14 +35,14 @@ jvm_library(
     "@lib//:kotlinx-serialization-protobuf",
     "@lib//:kotlinx-serialization-core",
     "//platform/diagnostic",
-    "//platform/diagnostic/telemetry.exporters:telemetry-exporters",
+    "//platform/diagnostic/telemetry.exporters",
     "//platform/util/coroutines",
-    "//platform/diagnostic/telemetry/rt:diagnostic-telemetry-rt",
+    "//platform/diagnostic/telemetry/rt",
     "@lib//:guava",
   ],
   exports = [
-    "//platform/diagnostic/telemetry.exporters:telemetry-exporters",
-    "//platform/diagnostic/telemetry/rt:diagnostic-telemetry-rt",
+    "//platform/diagnostic/telemetry.exporters",
+    "//platform/diagnostic/telemetry/rt",
   ],
   runtime_deps = [":telemetry-impl_resources"]
 )

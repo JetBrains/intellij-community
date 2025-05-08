@@ -2,23 +2,23 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "kotlin-compiler-plugins-kotlinx-serialization-gradle_resources",
+  name = "gradle_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-compiler-plugins-kotlinx-serialization-gradle",
+  name = "gradle",
   module_name = "kotlin.compiler-plugins.kotlinx-serialization.gradle",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
-    "//plugins/kotlin/gradle/gradle-java:kotlin-gradle-gradle-java",
-    "//plugins/kotlin/compiler-plugins/kotlinx-serialization/common:kotlin-compiler-plugins-kotlinx-serialization-common",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/gradle/gradle-java",
+    "//plugins/kotlin/compiler-plugins/kotlinx-serialization/common",
     "//plugins/gradle:gradle-common",
   ],
-  runtime_deps = [":kotlin-compiler-plugins-kotlinx-serialization-gradle_resources"]
+  runtime_deps = [":gradle_resources"]
 )
 ### auto-generated section `build kotlin.compiler-plugins.kotlinx-serialization.gradle` end

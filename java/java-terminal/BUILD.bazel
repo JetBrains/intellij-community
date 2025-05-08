@@ -16,7 +16,7 @@ jvm_library(
     "@lib//:kotlin-stdlib-provided",
     "//plugins/terminal",
     "//platform/core-api:core",
-    "//java/execution/impl:java-execution-impl",
+    "//java/execution/impl",
     "//platform/lang-impl",
   ],
   runtime_deps = [":terminal_resources"]
@@ -43,7 +43,7 @@ jvm_library(
     "//platform/platform-tests:tests_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//java/execution/impl:java-execution-impl",
+    "//java/execution/impl",
     "//plugins/terminal",
     "//plugins/terminal:terminal_test_lib",
   ]

@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "community-buildConstants",
+  name = "buildConstants",
   module_name = "intellij.platform.ijent.community.buildConstants",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),

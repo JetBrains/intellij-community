@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "testFramework-junit5-highlighting",
+  name = "highlighting",
   module_name = "intellij.platform.testFramework.junit5.highlighting",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),

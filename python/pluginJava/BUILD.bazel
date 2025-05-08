@@ -23,7 +23,7 @@ jvm_library(
     "//java/java-indexing-api:indexing",
     "//platform/platform-impl:ide-impl",
     "//java/idea-ui:ui",
-    "//python/pluginCore/impl:python-community-plugin-impl",
+    "//python/pluginCore/impl",
     "//python/python-psi-impl:psi-impl",
     "//platform/inspect",
     "//platform/core-ui",

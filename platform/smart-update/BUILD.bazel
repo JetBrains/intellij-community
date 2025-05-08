@@ -23,7 +23,7 @@ jvm_library(
     "//platform/built-in-server:builtInServer-impl",
     "//platform/core-ui",
     "//platform/statistics",
-    "//platform/platform-impl/ui:ide-ui",
+    "//platform/platform-impl/ui",
   ],
   runtime_deps = [":smart-update_resources"]
 )

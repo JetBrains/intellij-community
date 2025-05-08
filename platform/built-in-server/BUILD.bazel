@@ -17,7 +17,7 @@ jvm_library(
     "//platform/core-impl",
     "//platform/projectModel-impl",
     "//platform/platform-impl:ide-impl",
-    "//platform/ide-core/plugins:ide-core-plugins",
+    "//platform/ide-core/plugins",
     "//platform/xdebugger-api:debugger",
     "@lib//:guava",
     "@lib//:gson",

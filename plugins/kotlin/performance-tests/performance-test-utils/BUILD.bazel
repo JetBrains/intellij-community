@@ -3,12 +3,12 @@ load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
-  name = "kotlin-performance-tests-performance-test-utils",
+  name = "performance-test-utils",
   visibility = ["//visibility:public"]
 )
 
 jvm_library(
-  name = "kotlin-performance-tests-performance-test-utils_test_lib",
+  name = "performance-test-utils_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
@@ -20,27 +20,27 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-kotlin-compiler-tests",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/util:kotlin-base-util_test_lib",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/util:util_test_lib",
     "//platform/vcs-api:vcs",
-    "//plugins/kotlin/base/project-model:kotlin-base-project-model",
+    "//plugins/kotlin/base/project-model",
     "//java/testFramework",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
-    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
-    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
-    "//plugins/kotlin/plugin/k1:kotlin-plugin-k1",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/fe10/analysis",
+    "//plugins/kotlin/plugin/k1",
     "//plugins/kotlin/core",
     "//plugins/kotlin/project-configuration",
     "//java/openapi:java",
-    "//plugins/kotlin/frontend-independent:fir-frontend-independent",
-    "//plugins/kotlin/gradle/gradle-tooling:kotlin-gradle-gradle-tooling",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/gradle/gradle-tooling",
     "//plugins/kotlin/idea",
-    "//plugins/kotlin/idea/tests:kotlin-idea-tests_test_lib",
-    "//plugins/kotlin/gradle/gradle:kotlin-gradle-gradle",
+    "//plugins/kotlin/idea/tests:tests_test_lib",
+    "//plugins/kotlin/gradle/gradle",
     "//plugins/kotlin/native",
     "//plugins/kotlin/formatter",
     "@lib//:kotlinc-kotlin-jps-common",
-    "//plugins/kotlin/jvm/shared:kotlin-jvm-shared",
+    "//plugins/kotlin/jvm/shared",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/compiler-reference-index",
@@ -53,11 +53,11 @@ jvm_library(
     "@lib//:jackson-module-kotlin",
     "@lib//:okhttp",
   ],
-  runtime_deps = ["//plugins/kotlin/compiler-plugins/lombok/gradle:kotlin-compiler-plugins-lombok-gradle"]
+  runtime_deps = ["//plugins/kotlin/compiler-plugins/lombok/gradle"]
 )
 
 jvm_test(
-  name = "kotlin-performance-tests-performance-test-utils_test",
-  runtime_deps = [":kotlin-performance-tests-performance-test-utils_test_lib"]
+  name = "performance-test-utils_test",
+  runtime_deps = [":performance-test-utils_test_lib"]
 )
 ### auto-generated section `build kotlin.performance-tests.performance-test-utils` end

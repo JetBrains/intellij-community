@@ -3,37 +3,37 @@ load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
-  name = "kotlin-code-insight-inspections-shared-tests-k1",
+  name = "k1",
   visibility = ["//visibility:public"]
 )
 
 jvm_library(
-  name = "kotlin-code-insight-inspections-shared-tests-k1_test_lib",
+  name = "k1_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
-    "//plugins/kotlin/plugin/k1:kotlin-plugin-k1",
+    "//plugins/kotlin/plugin/k1",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlin-reflect",
     "@lib//:kotlinc-kotlin-compiler-tests",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/util:kotlin-base-util_test_lib",
-    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/psi",
     "//java/testFramework",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
-    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight_test_lib",
-    "//plugins/kotlin/base/fe10/plugin:kotlin-base-fe10-plugin",
-    "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
-    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
-    "//plugins/kotlin/code-insight/utils:kotlin-code-insight-utils",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/base/code-insight:code-insight_test_lib",
+    "//plugins/kotlin/base/fe10/plugin",
+    "//plugins/kotlin/code-insight/api",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/code-insight/utils",
     "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared",
-    "//plugins/kotlin/idea/tests:kotlin-idea-tests_test_lib",
+    "//plugins/kotlin/idea/tests:tests_test_lib",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//platform/core-impl",
     "//platform/analysis-api:analysis",
@@ -41,16 +41,16 @@ jvm_library(
     "//platform/lang-api:lang",
     "//java/java-psi-api:psi",
     "@lib//:kotlinc-kotlin-compiler-fe10",
-    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+    "//plugins/kotlin/base/fe10/analysis",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//platform/util/jdom",
     "//plugins/kotlin/code-insight/inspections-k1:kotlin-code-insight-inspections-k1",
   ]
 )
 
 jvm_test(
-  name = "kotlin-code-insight-inspections-shared-tests-k1_test",
-  runtime_deps = [":kotlin-code-insight-inspections-shared-tests-k1_test_lib"]
+  name = "k1_test",
+  runtime_deps = [":k1_test_lib"]
 )
 ### auto-generated section `build kotlin.code-insight.inspections-shared.tests.k1` end

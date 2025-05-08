@@ -13,13 +13,13 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "kotlin-base-fe10-analysis-api-platform_resources",
+  name = "analysis-api-platform_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-base-fe10-analysis-api-platform",
+  name = "analysis-api-platform",
   module_name = "kotlin.base.fe10.analysis-api-platform",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -29,14 +29,14 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-analysis-api-platform-interface",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
-    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/analysis",
     "//platform/core-impl",
-    "//plugins/kotlin/base/analysis-api-platform:kotlin-base-analysis-api-platform",
+    "//plugins/kotlin/base/analysis-api-platform",
     "//java/openapi:java",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/fe10/analysis",
   ],
-  runtime_deps = [":kotlin-base-fe10-analysis-api-platform_resources"]
+  runtime_deps = [":analysis-api-platform_resources"]
 )
 ### auto-generated section `build kotlin.base.fe10.analysis-api-platform` end

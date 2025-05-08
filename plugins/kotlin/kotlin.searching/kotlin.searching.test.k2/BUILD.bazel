@@ -14,18 +14,18 @@ jvm_library(
   deps = [
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-tests",
-    "//plugins/kotlin/plugin/k2:kotlin-plugin-k2",
+    "//plugins/kotlin/plugin/k2",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//plugins/kotlin/kotlin.searching:searching-k2",
     "//java/testFramework",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
     "//platform/usageView",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
-    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/analysis",
   ],
   runtime_deps = ["//plugins/kotlin/fir"]
 )

@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "kotlin-compiler-plugins-assignment-maven_resources",
+  name = "maven_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-compiler-plugins-assignment-maven",
+  name = "maven",
   module_name = "kotlin.compiler-plugins.assignment.maven",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -16,13 +16,13 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-assignment-compiler-plugin",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/jps:kotlin-base-jps",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/jps",
     "//plugins/kotlin/maven",
-    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compiler-plugins-compiler-plugin-support-common",
-    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/maven:kotlin-compiler-plugins-compiler-plugin-support-maven",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/maven",
     "//plugins/maven",
   ],
-  runtime_deps = [":kotlin-compiler-plugins-assignment-maven_resources"]
+  runtime_deps = [":maven_resources"]
 )
 ### auto-generated section `build kotlin.compiler-plugins.assignment.maven` end

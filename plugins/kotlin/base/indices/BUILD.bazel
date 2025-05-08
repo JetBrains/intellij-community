@@ -2,15 +2,15 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "kotlin-base-indices",
+  name = "indices",
   module_name = "kotlin.base.indices",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
-    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/psi",
     "//platform/core-impl",
     "//platform/indexing-api:indexing",
     "//java/java-psi-impl:psi-impl",
@@ -19,7 +19,7 @@ jvm_library(
     "//platform/ide-core",
     "//platform/analysis-api:analysis",
     "//java/openapi:java",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin",
   ]
 )
 ### auto-generated section `build kotlin.base.indices` end

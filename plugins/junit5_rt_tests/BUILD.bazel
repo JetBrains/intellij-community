@@ -9,7 +9,7 @@ jvm_library(
   deps = [
     "//plugins/junit5_rt:junit-v5-rt",
     "//java/testFramework",
-    "//java/execution/impl:java-execution-impl",
+    "//java/execution/impl",
     "//plugins/junit",
     "//java/java-tests:tests_test_lib",
     "//aether-dependency-resolver:java-aetherDependencyResolver",

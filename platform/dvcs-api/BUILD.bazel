@@ -21,7 +21,7 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/vcs-log/api:vcs-log",
     "@lib//:kotlin-stdlib",
-    "//platform/dvcs-impl/shared:vcs-dvcs-impl-shared",
+    "//platform/dvcs-impl/shared",
   ],
   exports = ["//platform/vcs-log/graph-api:vcs-log-graph"],
   runtime_deps = [":vcs-dvcs_resources"]

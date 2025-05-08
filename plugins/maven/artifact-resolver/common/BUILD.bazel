@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "maven-artifactResolver-common",
+  name = "common",
   module_name = "intellij.maven.artifactResolver.common",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),

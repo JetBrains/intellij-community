@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "buildScripts-downloader",
+  name = "downloader",
   module_name = "intellij.platform.buildScripts.downloader",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),

@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "kotlin-uast-uast-kotlin",
+  name = "uast-kotlin",
   module_name = "kotlin.uast.uast-kotlin",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -18,7 +18,7 @@ jvm_library(
     "//java/java-psi-impl:psi-impl",
     "//uast/uast-java:java-uast",
     "@lib//:kotlinc-analysis-api",
-    "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-uast-kotlin-base",
+    "//plugins/kotlin/uast/uast-kotlin-base",
   ]
 )
 ### auto-generated section `build kotlin.uast.uast-kotlin` end

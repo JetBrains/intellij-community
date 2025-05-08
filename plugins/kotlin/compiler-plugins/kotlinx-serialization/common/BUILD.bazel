@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "kotlin-compiler-plugins-kotlinx-serialization-common_resources",
+  name = "common_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-compiler-plugins-kotlinx-serialization-common",
+  name = "common",
   module_name = "kotlin.compiler-plugins.kotlinx-serialization.common",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -19,27 +19,27 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-ir",
     "@lib//:kotlinc-kotlinx-serialization-compiler-plugin",
     "@lib//:kotlinc-kotlin-jps-common",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
-    "//plugins/kotlin/base/jps:kotlin-base-jps",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
-    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
-    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
-    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
-    "//plugins/kotlin/base/fe10/code-insight:kotlin-base-fe10-code-insight",
-    "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
-    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compiler-plugins-compiler-plugin-support-common",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/jps",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/base/fe10/analysis",
+    "//plugins/kotlin/base/fe10/code-insight",
+    "//plugins/kotlin/code-insight/api",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common",
     "//plugins/kotlin/core",
     "//plugins/kotlin/idea",
-    "//plugins/kotlin/frontend-independent:fir-frontend-independent",
+    "//plugins/kotlin/frontend-independent",
     "//java/java-psi-api:psi",
     "//platform/core-impl",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
-    "//plugins/kotlin/base/compiler-configuration:kotlin-base-compiler-configuration",
+    "//plugins/kotlin/base/compiler-configuration",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//platform/lang-impl",
   ],
-  runtime_deps = [":kotlin-compiler-plugins-kotlinx-serialization-common_resources"]
+  runtime_deps = [":common_resources"]
 )
 ### auto-generated section `build kotlin.compiler-plugins.kotlinx-serialization.common` end

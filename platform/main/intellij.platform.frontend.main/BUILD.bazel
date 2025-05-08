@@ -7,12 +7,12 @@ java_library(
   runtime_deps = [
     "//platform/main/intellij.platform.main:main",
     "//platform/navbar/frontend",
-    "//platform/xdebugger-impl/frontend:debugger-impl-frontend",
+    "//platform/xdebugger-impl/frontend",
     "//platform/searchEverywhere/frontend",
-    "//platform/vcs-impl/frontend:vcs-impl-frontend",
+    "//platform/vcs-impl/frontend",
     "//platform/bookmarks/frontend",
     "//platform/recentFiles/frontend",
-    "//platform/execution-impl/frontend:execution-impl-frontend",
+    "//platform/execution-impl/frontend",
     "//platform/execution.dashboard/frontend",
     "//platform/execution.serviceView/frontend",
   ]

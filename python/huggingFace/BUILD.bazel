@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "community-impl-huggingFace_resources",
+  name = "huggingFace_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "community-impl-huggingFace",
+  name = "huggingFace",
   module_name = "intellij.python.community.impl.huggingFace",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
@@ -35,6 +35,6 @@ jvm_library(
     "//platform/statistics",
     "//json/backend",
   ],
-  runtime_deps = [":community-impl-huggingFace_resources"]
+  runtime_deps = [":huggingFace_resources"]
 )
 ### auto-generated section `build intellij.python.community.impl.huggingFace` end

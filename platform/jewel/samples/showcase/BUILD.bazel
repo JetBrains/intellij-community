@@ -14,13 +14,13 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "jewel-samples-showcase_resources",
+  name = "showcase_resources",
   files = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
 jvm_library(
-  name = "jewel-samples-showcase",
+  name = "showcase",
   module_name = "intellij.platform.jewel.samples.showcase",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
@@ -31,11 +31,11 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//platform/jewel/ui",
     "//platform/jewel/foundation",
-    "//platform/jewel/markdown/core:jewel-markdown-core",
+    "//platform/jewel/markdown/core",
     "//libraries/skiko",
     "//libraries/compose-foundation-desktop",
   ],
-  runtime_deps = [":jewel-samples-showcase_resources"],
+  runtime_deps = [":showcase_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
 ### auto-generated section `build intellij.platform.jewel.samples.showcase` end

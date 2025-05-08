@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "kotlin-jvm-debugger-base-util",
+  name = "util",
   module_name = "kotlin.jvm-debugger.base.util",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -11,19 +11,19 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
     "@lib//:asm",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/psi",
     "//java/debugger/openapi:java-debugger",
-    "//plugins/kotlin/base/indices:kotlin-base-indices",
-    "//plugins/kotlin/base/platforms:kotlin-base-platforms",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/base/platforms",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/project-structure",
     "//platform/core-impl",
     "//platform/xdebugger-impl:debugger-impl",
     "//java/compiler/openapi:java-compiler",
     "//java/java-psi-api:psi",
-    "//java/debugger/impl:java-debugger-impl",
+    "//java/debugger/impl",
   ]
 )
 ### auto-generated section `build kotlin.jvm-debugger.base.util` end

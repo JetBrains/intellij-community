@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "kotlin-compiler-plugins-noarg-common",
+  name = "common",
   module_name = "kotlin.compiler-plugins.noarg.common",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -12,7 +12,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "//platform/util",
     "@lib//:kotlinc-noarg-compiler-plugin",
-    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compiler-plugins-compiler-plugin-support-common",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common",
     "//platform/core-impl",
     "//java/java-psi-impl:psi-impl",
   ]

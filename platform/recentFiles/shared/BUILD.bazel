@@ -21,7 +21,7 @@ jvm_library(
     "//platform/kernel/shared:kernel",
     "@lib//:jetbrains-annotations",
     "@lib//:kotlinx-coroutines-core",
-    "//platform/platform-impl/rpc:ide-rpc",
+    "//platform/platform-impl/rpc",
     "//platform/platform-api:ide",
     "//platform/core-ui",
     "//platform/util:util-ui",

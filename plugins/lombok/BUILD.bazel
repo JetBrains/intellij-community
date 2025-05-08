@@ -34,11 +34,11 @@ jvm_library(
     "//java/java-impl:impl",
     "//platform/core-ui",
     "//java/compiler/openapi:java-compiler",
-    "//java/compiler/impl:java-compiler-impl",
+    "//java/compiler/impl",
     "@lib//:guava",
     "//java/java-impl-inspections:impl-inspections",
     "//java/java-impl-refactorings:impl-refactorings",
-    "//java/codeserver/highlighting:java-codeserver-highlighting",
+    "//java/codeserver/highlighting",
   ],
   runtime_deps = [":lombok_resources"]
 )
@@ -59,7 +59,7 @@ jvm_library(
     "//java/java-impl:impl",
     "//platform/core-ui",
     "//java/compiler/openapi:java-compiler",
-    "//java/compiler/impl:java-compiler-impl",
+    "//java/compiler/impl",
     "@lib//:guava",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
@@ -71,7 +71,7 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//java/java-tests:tests_test_lib",
-    "//java/codeserver/highlighting:java-codeserver-highlighting",
+    "//java/codeserver/highlighting",
   ],
   runtime_deps = [
     ":lombok_resources",

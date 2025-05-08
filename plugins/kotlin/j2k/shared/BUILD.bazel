@@ -12,13 +12,13 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "kotlin-j2k-shared_resources",
+  name = "shared_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-j2k-shared",
+  name = "shared",
   module_name = "kotlin.j2k.shared",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -32,22 +32,22 @@ jvm_library(
     "//java/java-psi-api:psi",
     "//platform/core-impl",
     "//platform/indexing-api:indexing",
-    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
-    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
-    "//plugins/kotlin/base/indices:kotlin-base-indices",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/project-structure",
     "//platform/platform-impl:ide-impl",
-    "//plugins/kotlin/base/psi:kotlin-base-psi",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/frontend-independent:fir-frontend-independent",
-    "//plugins/kotlin/code-insight/utils:kotlin-code-insight-utils",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/code-insight/utils",
     "//platform/core-api:core",
     "//platform/util",
     "//plugins/kotlin/project-configuration",
     "//plugins/kotlin/preferences",
-    "//plugins/kotlin/base/statistics:kotlin-base-statistics",
+    "//plugins/kotlin/base/statistics",
   ],
-  runtime_deps = [":kotlin-j2k-shared_resources"]
+  runtime_deps = [":shared_resources"]
 )
 ### auto-generated section `build kotlin.j2k.shared` end

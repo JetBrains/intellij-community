@@ -15,10 +15,10 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
-    "//plugins/kotlin/frontend-independent:fir-frontend-independent",
+    "//plugins/kotlin/frontend-independent",
     "//plugins/java-i18n",
     "//plugins/properties/properties-psi-impl:backend-psi",
-    "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
+    "//plugins/kotlin/code-insight/api",
     "@lib//:kotlinc-analysis-api",
   ],
   runtime_deps = [":i18n_resources"]

@@ -13,13 +13,13 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "kotlin-base-code-insight_resources",
+  name = "code-insight_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-base-code-insight",
+  name = "code-insight",
   module_name = "kotlin.base.code-insight",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -31,16 +31,16 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-kotlin-jps-common",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/project-model:kotlin-base-project-model",
-    "//plugins/kotlin/base/psi:kotlin-base-psi",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/project-model",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/project-structure",
     "//platform/platform-impl:ide-impl",
-    "//plugins/kotlin/base/indices:kotlin-base-indices",
-    "//plugins/kotlin/base/platforms:kotlin-base-platforms",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/base/platforms",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//platform/analysis-impl",
     "//platform/core-ui",
@@ -55,18 +55,18 @@ jvm_library(
     "//java/java-analysis-api:analysis",
     "//platform/backend/workspace",
     "//plugins/kotlin/formatter",
-    "//plugins/kotlin/base/code-insight/minimal:kotlin-base-code-insight-minimal",
+    "//plugins/kotlin/base/code-insight/minimal",
   ],
-  exports = ["//plugins/kotlin/base/code-insight/minimal:kotlin-base-code-insight-minimal"],
-  runtime_deps = [":kotlin-base-code-insight_resources"]
+  exports = ["//plugins/kotlin/base/code-insight/minimal"],
+  runtime_deps = [":code-insight_resources"]
 )
 
 jvm_library(
-  name = "kotlin-base-code-insight_test_lib",
+  name = "code-insight_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
-  associates = [":kotlin-base-code-insight"],
+  associates = [":code-insight"],
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
@@ -74,20 +74,20 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-kotlin-jps-common",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/util:kotlin-base-util_test_lib",
-    "//plugins/kotlin/base/project-model:kotlin-base-project-model",
-    "//plugins/kotlin/base/psi:kotlin-base-psi",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure_test_lib",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/project-model",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
-    "//plugins/kotlin/base/indices:kotlin-base-indices",
-    "//plugins/kotlin/base/platforms:kotlin-base-platforms",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/base/platforms",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//platform/analysis-impl",
     "//platform/core-ui",
@@ -106,16 +106,16 @@ jvm_library(
     "@lib//:junit4",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
-    "//plugins/kotlin/base/code-insight/minimal:kotlin-base-code-insight-minimal",
+    "//plugins/kotlin/base/code-insight/minimal",
     "@lib//:kotlin-test",
   ],
-  runtime_deps = [":kotlin-base-code-insight_resources"]
+  runtime_deps = [":code-insight_resources"]
 )
 
 jvm_test(
-  name = "kotlin-base-code-insight_test",
-  runtime_deps = [":kotlin-base-code-insight_test_lib"]
+  name = "code-insight_test",
+  runtime_deps = [":code-insight_test_lib"]
 )
 ### auto-generated section `build kotlin.base.code-insight` end

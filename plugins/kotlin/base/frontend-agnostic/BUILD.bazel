@@ -2,7 +2,7 @@
 load("@rules_java//java:defs.bzl", "java_library")
 
 java_library(
-  name = "kotlin-base-frontend-agnostic",
+  name = "frontend-agnostic",
   visibility = ["//visibility:public"]
 )
 ### auto-generated section `build kotlin.base.frontend-agnostic` end

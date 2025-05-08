@@ -3,12 +3,12 @@ load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
-  name = "kotlin-uast-uast-kotlin-tests",
+  name = "tests",
   visibility = ["//visibility:public"]
 )
 
 jvm_library(
-  name = "kotlin-uast-uast-kotlin-tests_test_lib",
+  name = "tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
@@ -22,20 +22,20 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
     "@lib//:kotlinc-kotlin-compiler-fir",
     "@lib//:kotlinc-kotlin-compiler-cli",
     "@lib//:kotlinc-kotlin-compiler-tests",
-    "//plugins/kotlin/plugin/k1:kotlin-plugin-k1",
-    "//plugins/kotlin/base/psi:kotlin-base-psi",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+    "//plugins/kotlin/plugin/k1",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//plugins/kotlin/core",
-    "//plugins/kotlin/frontend-independent:fir-frontend-independent",
-    "//plugins/kotlin/uast/uast-kotlin:kotlin-uast-uast-kotlin",
-    "//plugins/kotlin/uast/uast-kotlin-idea-base:kotlin-uast-uast-kotlin-idea-base",
-    "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-uast-kotlin-base",
-    "//plugins/kotlin/uast/uast-kotlin-base/tests:kotlin-uast-uast-kotlin-base-tests_test_lib",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/uast/uast-kotlin",
+    "//plugins/kotlin/uast/uast-kotlin-idea-base",
+    "//plugins/kotlin/uast/uast-kotlin-base",
+    "//plugins/kotlin/uast/uast-kotlin-base/tests:tests_test_lib",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//uast/uast-common:uast",
@@ -48,7 +48,7 @@ jvm_library(
 )
 
 jvm_test(
-  name = "kotlin-uast-uast-kotlin-tests_test",
-  runtime_deps = [":kotlin-uast-uast-kotlin-tests_test_lib"]
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
 )
 ### auto-generated section `build kotlin.uast.uast-kotlin.tests` end

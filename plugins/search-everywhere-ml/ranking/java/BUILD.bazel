@@ -2,22 +2,22 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "searchEverywhereMl-ranking-java_resources",
+  name = "java_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "searchEverywhereMl-ranking-java",
+  name = "java",
   module_name = "intellij.searchEverywhereMl.ranking.java",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
-    "//plugins/search-everywhere-ml/ranking/core:searchEverywhereMl-ranking-core",
+    "//plugins/search-everywhere-ml/ranking/core",
     "//platform/lang-impl",
     "//java/java-psi-api:psi",
   ],
-  runtime_deps = [":searchEverywhereMl-ranking-java_resources"]
+  runtime_deps = [":java_resources"]
 )
 ### auto-generated section `build intellij.searchEverywhereMl.ranking.java` end

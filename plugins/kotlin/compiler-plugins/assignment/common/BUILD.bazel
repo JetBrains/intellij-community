@@ -21,7 +21,7 @@ jvm_library(
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",
-    "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
+    "//plugins/kotlin/code-insight/api",
     "@lib//:kotlinc-analysis-api-k2",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
@@ -33,7 +33,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//java/java-psi-api:psi",
     "//plugins/kotlin/code-insight/fixes-k2:kotlin-code-insight-fixes-k2",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/project-structure",
   ],
   runtime_deps = [":kotlin-compiler-plugins-assignment-common-k2_resources"]
 )

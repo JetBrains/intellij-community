@@ -18,7 +18,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   deps = [
-    "//platform/build-scripts/downloader:buildScripts-downloader",
+    "//platform/build-scripts/downloader",
     "@lib//:commons-compress",
     "//platform/util",
     "//jps/model-api:model",
@@ -82,7 +82,7 @@ jvm_library(
     "@lib//:ion",
     "//platform/buildData",
     "//platform/boot",
-    "//platform/ijent/buildConstants:community-buildConstants",
+    "//platform/ijent/buildConstants",
     "@lib//:ktor-client-core",
     "@lib//:netty",
     "@lib//:netty-tcnative-boringssl",

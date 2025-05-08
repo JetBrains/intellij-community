@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
-  name = "idea-tools-launch_resources",
+  name = "launch_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "idea-tools-launch",
+  name = "launch",
   module_name = "intellij.idea.tools.launch",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -19,17 +19,17 @@ jvm_library(
     "//platform/util",
     "//jps/model-api:model",
     "//jps/model-serialization",
-    "//platform/build-scripts/downloader:buildScripts-downloader",
-    "//platform/ijent/buildConstants:community-buildConstants",
+    "//platform/build-scripts/downloader",
+    "//platform/ijent/buildConstants",
   ],
-  runtime_deps = [":idea-tools-launch_resources"]
+  runtime_deps = [":launch_resources"]
 )
 
 jvm_library(
-  name = "idea-tools-launch_test_lib",
+  name = "launch_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
-  associates = [":idea-tools-launch"],
+  associates = [":launch"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
@@ -37,17 +37,17 @@ jvm_library(
     "//platform/util",
     "//jps/model-api:model",
     "//jps/model-serialization",
-    "//platform/build-scripts/downloader:buildScripts-downloader",
+    "//platform/build-scripts/downloader",
     "@lib//:junit5",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
-    "//platform/ijent/buildConstants:community-buildConstants",
+    "//platform/ijent/buildConstants",
   ],
-  runtime_deps = [":idea-tools-launch_resources"]
+  runtime_deps = [":launch_resources"]
 )
 
 jvm_test(
-  name = "idea-tools-launch_test",
-  runtime_deps = [":idea-tools-launch_test_lib"]
+  name = "launch_test",
+  runtime_deps = [":launch_test_lib"]
 )
 ### auto-generated section `build intellij.idea.tools.launch` end

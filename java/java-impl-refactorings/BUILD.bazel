@@ -25,7 +25,7 @@ jvm_library(
     "//platform/diff-impl",
     "//platform/util/jdom",
     "//platform/core-ui",
-    "//java/codeserver/core:java-codeserver-core",
+    "//java/codeserver/core",
   ]
 )
 ### auto-generated section `build intellij.java.impl.refactorings` end

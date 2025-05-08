@@ -16,7 +16,7 @@ jvm_library(
     "@lib//:fastutil-min",
     "//platform/diagnostic/telemetry",
     "//platform/diagnostic/telemetry:telemetry_test_lib",
-    "//platform/util/storages:io-storages",
+    "//platform/util/storages",
     "//platform/indexing-impl",
     "//platform/lang-impl",
     "//platform/util:util-tests_test_lib",

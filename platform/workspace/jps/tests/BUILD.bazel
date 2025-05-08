@@ -3,18 +3,18 @@ load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
-  name = "workspace-jps-tests_test_resources",
+  name = "tests_test_resources",
   files = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
 )
 
 java_library(
-  name = "workspace-jps-tests",
+  name = "tests",
   visibility = ["//visibility:public"]
 )
 
 jvm_library(
-  name = "workspace-jps-tests_test_lib",
+  name = "tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testGen/**/*.kt", "testGen/**/*.java"], allow_empty = True),
   associates = ["//platform/workspace/jps"],
@@ -27,12 +27,12 @@ jvm_library(
     "@lib//:fastutil-min",
     "//platform/lang-impl:lang-tests",
     "//platform/lang-impl:lang-tests_test_lib",
-    "//platform/workspace/storage/tests:workspace-storage-tests_test_lib",
+    "//platform/workspace/storage/tests:tests_test_lib",
     "@lib//:assert_j",
     "//platform/core-ui",
     "@lib//:commons-lang3",
     "//platform/util/jdom",
-    "//platform/workspace/storage/testEntities:workspace-storage-testEntities_test_lib",
+    "//platform/workspace/storage/testEntities:testEntities_test_lib",
     "@lib//:kotlinx-coroutines-core",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
@@ -44,14 +44,14 @@ jvm_library(
     "@lib//:kotlinx-collections-immutable",
     "//java/java-impl:impl",
     "//platform/eel-provider",
-    "//platform/testFramework/junit5/eel:testFramework-junit5-eel",
-    "//platform/testFramework/junit5/eel:testFramework-junit5-eel_test_lib",
+    "//platform/testFramework/junit5/eel",
+    "//platform/testFramework/junit5/eel:eel_test_lib",
   ],
-  runtime_deps = [":workspace-jps-tests_test_resources"]
+  runtime_deps = [":tests_test_resources"]
 )
 
 jvm_test(
-  name = "workspace-jps-tests_test",
-  runtime_deps = [":workspace-jps-tests_test_lib"]
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
 )
 ### auto-generated section `build intellij.platform.workspace.jps.tests` end

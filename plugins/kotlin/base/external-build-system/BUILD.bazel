@@ -2,21 +2,21 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "kotlin-base-external-build-system_resources",
+  name = "external-build-system_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-base-external-build-system",
+  name = "external-build-system",
   module_name = "kotlin.base.external-build-system",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/plugin",
     "//platform/core-impl",
     "//platform/projectModel-impl",
     "//platform/util",
@@ -24,6 +24,6 @@ jvm_library(
     "//platform/external-system-api:externalSystem",
     "@lib//:kotlin-tooling-core",
   ],
-  runtime_deps = [":kotlin-base-external-build-system_resources"]
+  runtime_deps = [":external-build-system_resources"]
 )
 ### auto-generated section `build kotlin.base.external-build-system` end

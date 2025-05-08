@@ -14,17 +14,17 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/preferences",
     "//platform/projectModel-api:projectModel",
     "//platform/lang-api:lang",
     "//platform/platform-impl:ide-impl",
     "//plugins/completion-ml-ranking:completionMlRanking",
-    "//platform/platform-impl/internal:ide-internal",
+    "//platform/platform-impl/internal",
     "@lib//:kotlin-ml-completion-completion-ranking-kotlin",
-    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+    "//plugins/kotlin/base/code-insight",
   ],
   runtime_deps = [":ml-completion_resources"]
 )

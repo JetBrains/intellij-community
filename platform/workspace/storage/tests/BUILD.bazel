@@ -12,18 +12,18 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "workspace-storage-tests_test_resources",
+  name = "tests_test_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 java_library(
-  name = "workspace-storage-tests",
+  name = "tests",
   visibility = ["//visibility:public"]
 )
 
 jvm_library(
-  name = "workspace-storage-tests_test_lib",
+  name = "tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
@@ -31,7 +31,7 @@ jvm_library(
   deps = [
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//platform/workspace/storage/testEntities:workspace-storage-testEntities_test_lib",
+    "//platform/workspace/storage/testEntities:testEntities_test_lib",
     "@lib//:guava",
     "@lib//:kotlin-reflect",
     "@lib//:fastutil-min",
@@ -42,11 +42,11 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "@lib//:kotlinx-collections-immutable",
   ],
-  runtime_deps = [":workspace-storage-tests_test_resources"]
+  runtime_deps = [":tests_test_resources"]
 )
 
 jvm_test(
-  name = "workspace-storage-tests_test",
-  runtime_deps = [":workspace-storage-tests_test_lib"]
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
 )
 ### auto-generated section `build intellij.platform.workspace.storage.tests` end

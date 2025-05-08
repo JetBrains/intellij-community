@@ -29,7 +29,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jetbrains-annotations",
-    "//platform/jewel/markdown/core:jewel-markdown-core",
+    "//platform/jewel/markdown/core",
     "//platform/jewel/ui",
     "//platform/jewel/foundation",
     "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",

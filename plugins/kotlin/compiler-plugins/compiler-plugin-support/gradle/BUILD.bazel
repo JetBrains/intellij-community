@@ -2,25 +2,25 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "kotlin-compiler-plugins-compiler-plugin-support-gradle_resources",
+  name = "gradle_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-compiler-plugins-compiler-plugin-support-gradle",
+  name = "gradle",
   module_name = "kotlin.compiler-plugins.compiler-plugin-support.gradle",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/util",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
-    "//plugins/kotlin/gradle/gradle-tooling/impl:kotlin-gradle-gradle-tooling-impl",
-    "//plugins/kotlin/gradle/gradle-java:kotlin-gradle-gradle-java",
-    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compiler-plugins-compiler-plugin-support-common",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/gradle/gradle-tooling/impl",
+    "//plugins/kotlin/gradle/gradle-java",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common",
     "//plugins/gradle:gradle-common",
   ],
-  runtime_deps = [":kotlin-compiler-plugins-compiler-plugin-support-gradle_resources"]
+  runtime_deps = [":gradle_resources"]
 )
 ### auto-generated section `build kotlin.compiler-plugins.compiler-plugin-support.gradle` end

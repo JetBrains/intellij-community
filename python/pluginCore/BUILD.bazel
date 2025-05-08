@@ -16,7 +16,7 @@ java_library(
     "//platform/lang-api:lang",
     "//python/intellij.python.community.communityOnly:community-communityOnly",
     "//python/services/system-python:python-community-services-systemPython",
-    "//python/services/shared:python-community-services-shared",
+    "//python/services/shared",
     "//json/backend",
   ]
 )

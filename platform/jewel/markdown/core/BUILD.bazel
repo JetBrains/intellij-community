@@ -14,13 +14,13 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "jewel-markdown-core_resources",
+  name = "core_resources",
   files = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
 jvm_library(
-  name = "jewel-markdown-core",
+  name = "core",
   module_name = "intellij.platform.jewel.markdown.core",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
@@ -35,16 +35,16 @@ jvm_library(
     "//libraries/compose-foundation-desktop",
   ],
   exports = ["@lib//:platform-jewel-markdown-core-org-commonmark-commonmark"],
-  runtime_deps = [":jewel-markdown-core_resources"],
+  runtime_deps = [":core_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
 
 jvm_library(
-  name = "jewel-markdown-core_test_lib",
+  name = "core_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
-  associates = [":jewel-markdown-core"],
+  associates = [":core"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
@@ -57,12 +57,12 @@ jvm_library(
     "//libraries/compose-foundation-desktop",
     "//libraries/compose-foundation-desktop-junit",
   ],
-  runtime_deps = [":jewel-markdown-core_resources"],
+  runtime_deps = [":core_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
 
 jvm_test(
-  name = "jewel-markdown-core_test",
-  runtime_deps = [":jewel-markdown-core_test_lib"]
+  name = "core_test",
+  runtime_deps = [":core_test_lib"]
 )
 ### auto-generated section `build intellij.platform.jewel.markdown.core` end

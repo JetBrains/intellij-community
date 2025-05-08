@@ -22,7 +22,7 @@ jvm_library(
     "//plugins/completion-ml-ranking:completionMlRanking",
     "//platform/lang-impl",
     "//platform/ml-impl",
-    "//platform/platform-impl/internal:ide-internal",
+    "//platform/platform-impl/internal",
     "//platform/ml-api:ml",
   ],
   runtime_deps = [":turboComplete_resources"]

@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "kotlin-base-compiler-configuration-ui_resources",
+  name = "compiler-configuration-ui_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-base-compiler-configuration-ui",
+  name = "compiler-configuration-ui",
   module_name = "kotlin.base.compiler-configuration-ui",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -18,22 +18,22 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-kotlin-jps-common",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/compiler-configuration:kotlin-base-compiler-configuration",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/platforms:kotlin-base-platforms",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
-    "//plugins/kotlin/base/jps:kotlin-base-jps",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/platforms",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/jps",
     "//platform/core-impl",
     "//platform/core-ui",
     "//platform/util:util-ui",
     "//platform/platform-impl:ide-impl",
     "//java/openapi:java",
     "//java/idea-ui:ui",
-    "//java/compiler/impl:java-compiler-impl",
+    "//java/compiler/impl",
     "//platform/backend/workspace",
   ],
-  runtime_deps = [":kotlin-base-compiler-configuration-ui_resources"]
+  runtime_deps = [":compiler-configuration-ui_resources"]
 )
 ### auto-generated section `build kotlin.base.compiler-configuration-ui` end

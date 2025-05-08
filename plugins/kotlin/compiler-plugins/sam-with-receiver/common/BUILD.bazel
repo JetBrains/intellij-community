@@ -13,7 +13,7 @@ create_kotlinc_options(
 )
 
 jvm_library(
-  name = "kotlin-compiler-plugins-sam-with-receiver-common",
+  name = "common",
   module_name = "kotlin.compiler-plugins.sam-with-receiver.common",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -24,11 +24,11 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "@lib//:kotlinc-sam-with-receiver-compiler-plugin",
-    "//plugins/kotlin/base/scripting:kotlin-base-scripting",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
-    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//plugins/kotlin/base/scripting",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/analysis",
     "//platform/util",
-    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compiler-plugins-compiler-plugin-support-common",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common",
     "//platform/core-api:core",
   ]
 )

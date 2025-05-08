@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "markdown-backend_resources",
+  name = "backend_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "markdown-backend",
+  name = "backend",
   module_name = "intellij.markdown.backend",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -28,11 +28,11 @@ jvm_library(
     "//platform/remote-driver/test-sdk:driver-sdk",
     "//platform/lang-api:lang",
     "//platform/ide-core-impl",
-    "//platform/platform-impl/rpc:ide-rpc",
+    "//platform/platform-impl/rpc",
   ],
   exports = ["//plugins/markdown/core:markdown"],
   runtime_deps = [
-    ":markdown-backend_resources",
+    ":backend_resources",
     "//platform/backend",
   ]
 )

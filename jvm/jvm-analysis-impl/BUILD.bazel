@@ -25,7 +25,7 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/ide-core-impl",
     "//jvm/jvm-analysis-quickFix:analysis-quickFix",
-    "//java/codeserver/core:java-codeserver-core",
+    "//java/codeserver/core",
   ],
   exports = ["//jvm/jvm-analysis-api:analysis"],
   runtime_deps = [":analysis-impl_resources"]

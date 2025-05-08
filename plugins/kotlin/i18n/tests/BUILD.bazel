@@ -3,12 +3,12 @@ load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
-  name = "kotlin-i18n-tests",
+  name = "tests",
   visibility = ["//visibility:public"]
 )
 
 jvm_library(
-  name = "kotlin-i18n-tests_test_lib",
+  name = "tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
@@ -16,7 +16,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:junit4",
     "//java/testFramework",
-    "//plugins/kotlin/frontend-independent:fir-frontend-independent",
+    "//plugins/kotlin/frontend-independent",
     "//plugins/kotlin/i18n",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
@@ -24,12 +24,12 @@ jvm_library(
     "//plugins/java-i18n",
     "//plugins/java-i18n:java-i18n_test_lib",
     "//plugins/properties/properties-psi-impl:backend-psi",
-    "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
+    "//plugins/kotlin/code-insight/api",
   ]
 )
 
 jvm_test(
-  name = "kotlin-i18n-tests_test",
-  runtime_deps = [":kotlin-i18n-tests_test_lib"]
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
 )
 ### auto-generated section `build kotlin.i18n.tests` end

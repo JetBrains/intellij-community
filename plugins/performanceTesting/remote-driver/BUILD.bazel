@@ -23,18 +23,18 @@ jvm_library(
     "@lib//:netty-buffer",
     "@lib//:netty-codec-http",
     "//platform/core-api:core",
-    "//platform/remote-driver/model:driver-model",
+    "//platform/remote-driver/model",
     "//platform/platform-api:ide",
     "@lib//:jsoup",
     "//platform/remote-driver/core:driver-impl",
-    "//platform/remote-driver/client:driver-client",
+    "//platform/remote-driver/client",
     "@lib//:jcef",
     "//platform/platform-impl:ide-impl",
-    "//platform/ui.jcef:ui-jcef",
+    "//platform/ui.jcef",
   ],
   exports = [
     "//platform/remote-driver/core:driver-impl",
-    "//platform/remote-driver/client:driver-client",
+    "//platform/remote-driver/client",
   ],
   runtime_deps = [":remoteDriver_resources"]
 )

@@ -14,13 +14,13 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "jewel-samples-standalone_resources",
+  name = "standalone_resources",
   files = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
 jvm_library(
-  name = "jewel-samples-standalone",
+  name = "standalone",
   module_name = "intellij.platform.jewel.samples.standalone",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
@@ -31,23 +31,23 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "@lib//:platform-jewel-samples-standalone-com-darkrockstudios-mpfilepicker",
     "@lib//:platform-jewel-samples-standalone-com-darkrockstudios-mpfilepicker-jvm",
-    "//platform/jewel/markdown/extensions/autolink:jewel-markdown-extensions-autolink",
+    "//platform/jewel/markdown/extensions/autolink",
     "//platform/jewel/ui",
     "//platform/jewel/foundation",
     "//platform/jewel/int-ui/int-ui-decorated-window:jewel-intUi-decoratedWindow",
     "//libraries/skiko",
     "//platform/jewel/decorated-window:decoratedWindow",
     "//platform/jewel/markdown/int-ui-standalone-styling:jewel-markdown-intUiStandaloneStyling",
-    "//platform/jewel/markdown/core:jewel-markdown-core",
+    "//platform/jewel/markdown/core",
     "//platform/jewel/markdown/extensions/gfm-alerts:jewel-markdown-extensions-gfmAlerts",
     "//platform/jewel/markdown/extensions/gfm-tables:jewel-markdown-extensions-gfmTables",
     "//platform/jewel/markdown/extensions/gfm-strikethrough:jewel-markdown-extensions-gfmStrikethrough",
     "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
     "//libraries/compose-foundation-desktop",
-    "//platform/jewel/samples/showcase:jewel-samples-showcase",
+    "//platform/jewel/samples/showcase",
   ],
   runtime_deps = [
-    ":jewel-samples-standalone_resources",
+    ":standalone_resources",
     "@lib//:platform-jewel-samples-standalone-org-lwjgl-lwjgl-tinyfd",
     "@lib//:platform-jewel-samples-standalone-org-nibor-autolink-autolink",
     "@lib//:jna",

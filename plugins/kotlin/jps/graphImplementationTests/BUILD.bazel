@@ -3,12 +3,12 @@ load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
-  name = "kotlin-jps-graphImplementationTests",
+  name = "graphImplementationTests",
   visibility = ["//visibility:public"]
 )
 
 jvm_library(
-  name = "kotlin-jps-graphImplementationTests_test_lib",
+  name = "graphImplementationTests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
   deps = [
@@ -17,13 +17,13 @@ jvm_library(
     "@lib//:kotlinc-kotlin-jps-plugin-tests",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
-    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
-    "//plugins/kotlin/util/compiler-dependencies:kotlin-util-compiler-dependencies",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/util/compiler-dependencies",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/devkit/jps-plugin:jps",
     "//java/testFramework",
@@ -38,7 +38,7 @@ jvm_library(
 )
 
 jvm_test(
-  name = "kotlin-jps-graphImplementationTests_test",
-  runtime_deps = [":kotlin-jps-graphImplementationTests_test_lib"]
+  name = "graphImplementationTests_test",
+  runtime_deps = [":graphImplementationTests_test_lib"]
 )
 ### auto-generated section `build kotlin.jps.graphImplementationTests` end

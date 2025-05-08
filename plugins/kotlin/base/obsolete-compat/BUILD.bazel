@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "kotlin-base-obsolete-compat",
+  name = "obsolete-compat",
   module_name = "kotlin.base.obsolete-compat",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -10,17 +10,17 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
-    "//plugins/kotlin/base/psi:kotlin-base-psi",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/project-structure",
     "//platform/util",
     "//platform/core-impl",
-    "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
+    "//plugins/kotlin/code-insight/api",
     "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/code-insight/utils:kotlin-code-insight-utils",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/code-insight/utils",
     "@lib//:kotlinc-kotlin-compiler-fe10",
-    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+    "//plugins/kotlin/base/fe10/analysis",
   ]
 )
 ### auto-generated section `build kotlin.base.obsolete-compat` end

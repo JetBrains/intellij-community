@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "kotlin-base-statistics",
+  name = "statistics",
   module_name = "kotlin.base.statistics",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -11,14 +11,14 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-jps-common",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/platforms:kotlin-base-platforms",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/platforms",
+    "//plugins/kotlin/base/facet",
     "//platform/core-impl",
     "//java/java-impl:impl",
     "//plugins/gradle:gradle-common",
-    "//plugins/kotlin/base/compiler-configuration:kotlin-base-compiler-configuration",
+    "//plugins/kotlin/base/compiler-configuration",
     "@lib//:kotlinx-serialization-core",
   ]
 )

@@ -23,7 +23,7 @@ jvm_library(
     "@lib//:kotlinc-kotlinx-serialization-compiler-plugin",
     "@lib//:kotlin-reflect",
     "//platform/util",
-    "//platform/util/storages:io-storages",
+    "//platform/util/storages",
   ]
 )
 

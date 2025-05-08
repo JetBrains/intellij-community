@@ -12,13 +12,13 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "kotlin-j2k-k2_resources",
+  name = "k2_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-j2k-k2",
+  name = "k2",
   module_name = "kotlin.j2k.k2",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -35,22 +35,22 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
-    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
-    "//plugins/kotlin/base/psi:kotlin-base-psi",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/code-insight/api",
     "//plugins/kotlin/code-insight/fixes-k2:kotlin-code-insight-fixes-k2",
-    "//plugins/kotlin/code-insight/utils:kotlin-code-insight-utils",
-    "//plugins/kotlin/frontend-independent:fir-frontend-independent",
-    "//plugins/kotlin/j2k/shared:kotlin-j2k-shared",
+    "//plugins/kotlin/code-insight/utils",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/j2k/shared",
     "//platform/refactoring",
     "//java/java-analysis-impl:analysis-impl",
     "//java/java-indexing-api:indexing",
     "//platform/lang-impl",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-code-insight-k2",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/project-structure",
   ],
-  runtime_deps = [":kotlin-j2k-k2_resources"]
+  runtime_deps = [":k2_resources"]
 )
 ### auto-generated section `build kotlin.j2k.k2` end

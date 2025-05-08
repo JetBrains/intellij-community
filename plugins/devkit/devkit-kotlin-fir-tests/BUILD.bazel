@@ -2,11 +2,6 @@
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
-java_library(
-  name = "kotlin-fir-tests",
-  visibility = ["//visibility:public"]
-)
-
 jvm_library(
   name = "kotlin-fir-tests_test_lib",
   visibility = ["//visibility:public"],
@@ -24,17 +19,17 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//xml/dom-openapi:dom",
-    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
-    "//plugins/kotlin/fir/tests:kotlin-fir-tests_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/fir/tests:tests_test_lib",
     "@lib//:jetbrains-annotations",
     "//plugins/devkit/devkit-kotlin-tests:kotlin-tests_test_lib",
   ],
   runtime_deps = [
     "//plugins/kotlin:kotlin-plugin-community-main",
-    "//plugins/devkit/intellij.kotlin.devkit/k2:kotlin-devkit-k2",
+    "//plugins/devkit/intellij.kotlin.devkit/k2",
   ]
 )
 

@@ -18,7 +18,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/util",
     "@lib//:kotlinc-kotlin-scripting-common",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/frontend-agnostic",
   ]
 )
 ### auto-generated section `build kotlin.scripting` end

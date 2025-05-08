@@ -14,9 +14,9 @@ jvm_library(
     "//platform/core-ui",
     "//platform/util/coroutines",
     "//platform/analysis-impl",
-    "//platform/platform-impl/ui:ide-ui",
+    "//platform/platform-impl/ui",
     "//platform/lang-api:lang",
-    "//fleet/util/core:fleet-util-core",
+    "//fleet/util/core",
     "@lib//:kotlinx-serialization-core",
   ]
 )

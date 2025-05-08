@@ -2,18 +2,18 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
 
 jvm_resources(
-  name = "markdown-frontmatter-toml_resources",
+  name = "toml_resources",
   files = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
 jvm_provided_library(
-  name = "toml-core_provided",
+  name = "core_provided",
   lib = "//plugins/toml/core"
 )
 
 jvm_library(
-  name = "markdown-frontmatter-toml",
+  name = "toml",
   module_name = "intellij.markdown.frontmatter.toml",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
@@ -24,8 +24,8 @@ jvm_library(
     "//plugins/markdown/core:markdown",
     "//platform/backend",
     "@lib//:kotlin-stdlib",
-    ":toml-core_provided",
+    ":core_provided",
   ],
-  runtime_deps = [":markdown-frontmatter-toml_resources"]
+  runtime_deps = [":toml_resources"]
 )
 ### auto-generated section `build intellij.markdown.frontmatter.toml` end

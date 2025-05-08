@@ -11,7 +11,7 @@ jvm_library(
     "//platform/core-impl",
     "//platform/xdebugger-api:debugger",
     "//platform/platform-impl:ide-impl",
-    "//platform/script-debugger/backend:scriptDebugger-backend",
+    "//platform/script-debugger/backend",
     "//platform/xdebugger-impl:debugger-impl",
     "@lib//:guava",
     "//platform/execution-impl",

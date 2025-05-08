@@ -13,7 +13,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
-    "//platform/remote-driver/model:driver-model",
+    "//platform/remote-driver/model",
     "@lib//:jetbrains-annotations",
     "//platform/core-api:core",
     "//platform/core-impl",

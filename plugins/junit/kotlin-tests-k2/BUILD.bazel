@@ -17,11 +17,11 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/junit/kotlin-tests-shared:kotlin-tests-shared_test_lib",
     "//jvm/jvm-analysis-testFramework:analysis-testFramework",
-    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
   ],
-  runtime_deps = ["//plugins/kotlin/plugin/k2:kotlin-plugin-k2"]
+  runtime_deps = ["//plugins/kotlin/plugin/k2"]
 )
 
 jvm_test(

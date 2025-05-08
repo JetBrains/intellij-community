@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "java-debugger-impl-frontend_resources",
+  name = "frontend_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "java-debugger-impl-frontend",
+  name = "frontend",
   module_name = "intellij.java.debugger.impl.frontend",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -22,9 +22,9 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
-    "//java/debugger/shared:java-debugger-impl-shared",
-    "//platform/xdebugger-impl/frontend:debugger-impl-frontend",
+    "//java/debugger/shared",
+    "//platform/xdebugger-impl/frontend",
   ],
-  runtime_deps = [":java-debugger-impl-frontend_resources"]
+  runtime_deps = [":frontend_resources"]
 )
 ### auto-generated section `build intellij.java.debugger.impl.frontend` end

@@ -3,12 +3,12 @@ load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
-  name = "kotlin-compiler-plugins-noarg-tests",
+  name = "tests",
   visibility = ["//visibility:public"]
 )
 
 jvm_library(
-  name = "kotlin-compiler-plugins-noarg-tests_test_lib",
+  name = "tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
@@ -18,16 +18,16 @@ jvm_library(
     "@lib//:kotlinc-noarg-compiler-plugin",
     "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:junit4",
-    "//plugins/kotlin/plugin/k1:kotlin-plugin-k1",
+    "//plugins/kotlin/plugin/k1",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
-    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/test:test_test_lib",
     "//java/testFramework",
     "//plugins/kotlin/core",
-    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compiler-plugins-compiler-plugin-support-common",
-    "//plugins/kotlin/compiler-plugins/noarg/common:kotlin-compiler-plugins-noarg-common",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common",
+    "//plugins/kotlin/compiler-plugins/noarg/common",
     "//plugins/kotlin/test-framework",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//platform/testFramework",
@@ -36,13 +36,13 @@ jvm_library(
     "//java/java-psi-impl:psi-impl",
   ],
   runtime_deps = [
-    "//plugins/kotlin/gradle/gradle:kotlin-gradle-gradle",
-    "//plugins/kotlin/uast/uast-kotlin:kotlin-uast-uast-kotlin",
+    "//plugins/kotlin/gradle/gradle",
+    "//plugins/kotlin/uast/uast-kotlin",
   ]
 )
 
 jvm_test(
-  name = "kotlin-compiler-plugins-noarg-tests_test",
-  runtime_deps = [":kotlin-compiler-plugins-noarg-tests_test_lib"]
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
 )
 ### auto-generated section `build kotlin.compiler-plugins.noarg.tests` end

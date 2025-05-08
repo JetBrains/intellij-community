@@ -8,19 +8,19 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "kotlin-gradle-gradle_resources",
+  name = "gradle_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_resources(
-  name = "kotlin-gradle-gradle_resources_1",
+  name = "gradle_resources_1",
   files = glob(["resources-en/**/*"]),
   strip_prefix = "resources-en"
 )
 
 jvm_library(
-  name = "kotlin-gradle-gradle",
+  name = "gradle",
   module_name = "kotlin.gradle.gradle",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -41,16 +41,16 @@ jvm_library(
     "@lib//:kotlin-gradle-plugin-idea",
     "@lib//:guava",
     "@lib//:gradle",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/project-model:kotlin-base-project-model",
-    "//plugins/kotlin/base/platforms:kotlin-base-platforms",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/scripting:kotlin-base-scripting",
-    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
-    "//plugins/kotlin/base/statistics:kotlin-base-statistics",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/project-model",
+    "//plugins/kotlin/base/platforms",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/scripting",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/statistics",
     "//plugins/kotlin/formatter",
-    "//plugins/kotlin/gradle/gradle-tooling/impl:kotlin-gradle-gradle-tooling-impl",
+    "//plugins/kotlin/gradle/gradle-tooling/impl",
     "//plugins/kotlin/native",
     "//platform/object-serializer:objectSerializer-annotations",
     "//platform/projectModel-impl",
@@ -62,17 +62,17 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//java/java-impl:impl",
     "//java/idea-ui:ui",
-    "//java/execution/impl:java-execution-impl",
-    "//java/compiler/impl:java-compiler-impl",
+    "//java/execution/impl",
+    "//java/compiler/impl",
     "//plugins/gradle:gradle-common",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/facet",
     "//platform/util/jdom",
   ],
   runtime_deps = [
-    ":kotlin-gradle-gradle_resources",
-    ":kotlin-gradle-gradle_resources_1",
+    ":gradle_resources",
+    ":gradle_resources_1",
   ]
 )
 ### auto-generated section `build kotlin.gradle.gradle` end

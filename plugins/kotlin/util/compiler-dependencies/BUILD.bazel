@@ -2,7 +2,7 @@
 load("@rules_java//java:defs.bzl", "java_library")
 
 java_library(
-  name = "kotlin-util-compiler-dependencies",
+  name = "compiler-dependencies",
   visibility = ["//visibility:public"],
   runtime_deps = [
     "@lib//:kotlinc-kotlin-dist",

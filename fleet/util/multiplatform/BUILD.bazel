@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "fleet-util-multiplatform",
+  name = "multiplatform",
   module_name = "fleet.util.multiplatform",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "srcCommonMain/**/*.kt", "srcCommonMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),

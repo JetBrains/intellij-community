@@ -13,10 +13,10 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
-    "//plugins/kotlin/project-wizard/core:kotlin-project-wizard-core",
-    "//plugins/kotlin/project-wizard/idea:kotlin-project-wizard-idea",
+    "//plugins/kotlin/project-wizard/core",
+    "//plugins/kotlin/project-wizard/idea",
     "//plugins/kotlin/idea",
-    "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
+    "//plugins/kotlin/code-insight/api",
     "//platform/lang-impl",
   ],
   runtime_deps = [":kotlin-project-wizard-idea-k1_resources"]

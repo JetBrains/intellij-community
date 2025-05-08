@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
 
 jvm_resources(
-  name = "turboComplete-languages-kotlin-k1_resources",
+  name = "k1_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
@@ -13,7 +13,7 @@ jvm_provided_library(
 )
 
 jvm_library(
-  name = "turboComplete-languages-kotlin-k1",
+  name = "k1",
   module_name = "intellij.turboComplete.languages.kotlin.k1",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -22,10 +22,10 @@ jvm_library(
     "//platform/ml-impl",
     "@lib//:turbo_complete-languages-kotlin-k1-completion-performance-kotlin",
     "//plugins/turboComplete",
-    "//platform/platform-impl/internal:ide-internal",
+    "//platform/platform-impl/internal",
     "//platform/platform-impl:ide-impl",
     ":kotlin-completion-impl-k1_provided",
   ],
-  runtime_deps = [":turboComplete-languages-kotlin-k1_resources"]
+  runtime_deps = [":k1_resources"]
 )
 ### auto-generated section `build intellij.turboComplete.languages.kotlin.k1` end

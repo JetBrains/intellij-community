@@ -24,7 +24,7 @@ jvm_library(
     "//platform/jewel/markdown/ide-laf-bridge-styling:jewel-markdown-ideLafBridgeStyling",
     "//platform/jewel/markdown/extensions/gfm-tables:jewel-markdown-extensions-gfmTables",
     "//platform/jewel/markdown/extensions/gfm-strikethrough:jewel-markdown-extensions-gfmStrikethrough",
-    "//platform/jewel/markdown/extensions/autolink:jewel-markdown-extensions-autolink",
+    "//platform/jewel/markdown/extensions/autolink",
   ],
   runtime_deps = [":compose-preview_resources"],
   plugins = ["@lib//:compose-plugin"]

@@ -2,19 +2,19 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "kotlin-formatter-minimal_resources",
+  name = "minimal_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_resources(
-  name = "kotlin-formatter-minimal_resources_1",
+  name = "minimal_resources_1",
   files = glob(["resources-en/**/*"]),
   strip_prefix = "resources-en"
 )
 
 jvm_library(
-  name = "kotlin-formatter-minimal",
+  name = "minimal",
   module_name = "kotlin.formatter.minimal",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -24,7 +24,7 @@ jvm_library(
     "//platform/util",
     "//platform/code-style-api:codeStyle",
     "//platform/platform-impl:ide-impl",
-    "//plugins/kotlin/base/code-insight/minimal:kotlin-base-code-insight-minimal",
+    "//plugins/kotlin/base/code-insight/minimal",
     "//platform/projectModel-api:projectModel",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//platform/lang-impl",
@@ -35,9 +35,9 @@ jvm_library(
     "//platform/code-style-impl:codeStyle-impl",
   ],
   runtime_deps = [
-    ":kotlin-formatter-minimal_resources",
-    ":kotlin-formatter-minimal_resources_1",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    ":minimal_resources",
+    ":minimal_resources_1",
+    "//plugins/kotlin/base/frontend-agnostic",
   ]
 )
 ### auto-generated section `build kotlin.formatter.minimal` end

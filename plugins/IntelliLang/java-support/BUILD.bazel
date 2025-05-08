@@ -16,7 +16,7 @@ jvm_library(
     "//java/openapi:java",
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
-    "//java/compiler/impl:java-compiler-impl",
+    "//java/compiler/impl",
     "//RegExpSupport:regexp",
     "//platform/platform-api:ide",
     "//java/java-impl:impl",

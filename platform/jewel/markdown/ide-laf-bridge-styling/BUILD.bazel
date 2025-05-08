@@ -29,7 +29,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jetbrains-annotations",
-    "//platform/jewel/markdown/core:jewel-markdown-core",
+    "//platform/jewel/markdown/core",
     "//platform/jewel/ui",
     "//platform/jewel/foundation",
     "//platform/jewel/ide-laf-bridge:ideLafBridge",
@@ -42,7 +42,7 @@ jvm_library(
     "//libraries/compose-foundation-desktop",
   ],
   exports = [
-    "//platform/jewel/markdown/core:jewel-markdown-core",
+    "//platform/jewel/markdown/core",
     "//platform/jewel/ui",
     "//platform/jewel/ide-laf-bridge:ideLafBridge",
   ],

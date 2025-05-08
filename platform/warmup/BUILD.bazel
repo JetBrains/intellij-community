@@ -22,7 +22,7 @@ jvm_library(
     "//platform/indexing-impl",
     "//platform/platform-api:ide",
     "//platform/util/progress",
-    "//platform/platform-impl/bootstrap:ide-bootstrap",
+    "//platform/platform-impl/bootstrap",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "//platform/backend/observation",

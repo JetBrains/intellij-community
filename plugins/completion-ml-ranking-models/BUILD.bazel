@@ -15,7 +15,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/completion-ml-ranking:completionMlRanking",
-    "//platform/platform-impl/internal:ide-internal",
+    "//platform/platform-impl/internal",
     "@lib//:completion_ml_ranking_models-completion-ranking-java-exp",
     "@lib//:completion_ml_ranking_models-completion-ranking-java-exp2",
     "@lib//:completion_ml_ranking_models-completion-ranking-kotlin-exp",
@@ -52,7 +52,7 @@ jvm_library(
     "@lib//:junit4",
     "//plugins/completion-ml-ranking-models:completionMlRankingModels",
     "//plugins/completion-ml-ranking:completionMlRanking",
-    "//platform/platform-impl/internal:ide-internal",
+    "//platform/platform-impl/internal",
   ]
 )
 

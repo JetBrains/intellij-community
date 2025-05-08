@@ -3,18 +3,18 @@ load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
-  name = "diff-tests_test_resources",
+  name = "tests_test_resources",
   files = glob(["testData/**/*"]),
   strip_prefix = "testData"
 )
 
 java_library(
-  name = "diff-tests",
+  name = "tests",
   visibility = ["//visibility:public"]
 )
 
 jvm_library(
-  name = "diff-tests_test_lib",
+  name = "tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = ["//platform/diff-impl"],
@@ -39,11 +39,11 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
   ],
-  runtime_deps = [":diff-tests_test_resources"]
+  runtime_deps = [":tests_test_resources"]
 )
 
 jvm_test(
-  name = "diff-tests_test",
-  runtime_deps = [":diff-tests_test_lib"]
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
 )
 ### auto-generated section `build intellij.platform.diff.tests` end

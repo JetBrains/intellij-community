@@ -16,7 +16,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/ide-core",
     "//platform/platform-api:ide",
-    "//python/ide/impl:pycharm-community-ide-impl",
+    "//python/ide/impl",
     "//python:python-community-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",

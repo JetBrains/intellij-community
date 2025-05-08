@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "kotlin-plugin-common_resources",
+  name = "common_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-plugin-common",
+  name = "common",
   module_name = "kotlin.plugin.common",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -16,6 +16,6 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
   ],
-  runtime_deps = [":kotlin-plugin-common_resources"]
+  runtime_deps = [":common_resources"]
 )
 ### auto-generated section `build kotlin.plugin.common` end

@@ -16,9 +16,9 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/psi:kotlin-base-psi",
-    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/fe10/analysis",
     "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared",
     "//plugins/kotlin/code-insight/live-templates-k1:kotlin-code-insight-live-templates-k1",
     "//plugins/kotlin/core",
@@ -26,7 +26,7 @@ jvm_library(
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//platform/lang-impl",
     "//java/java-psi-api:psi",
-    "//plugins/kotlin/code-insight/impl-base:kotlin-code-insight-impl-base",
+    "//plugins/kotlin/code-insight/impl-base",
   ],
   runtime_deps = [":kotlin-code-insight-postfix-templates-k1_resources"]
 )

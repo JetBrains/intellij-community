@@ -12,13 +12,13 @@ java_import(
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "java-execution-impl_resources",
+  name = "impl_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "java-execution-impl",
+  name = "impl",
   module_name = "intellij.java.execution.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -27,7 +27,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//java/execution/openapi:java-execution",
     "//java/java-runtime:rt",
-    "//java/debugger/impl:java-debugger-impl",
+    "//java/debugger/impl",
     "//platform/testRunner",
     "//platform/vcs-api:vcs",
     "//platform/usageView",
@@ -45,7 +45,7 @@ jvm_library(
     "@lib//:jackson",
     "@lib//:miglayout-swing",
     "//platform/vcs-impl",
-    "//platform/vcs-impl/lang:vcs-impl-lang",
+    "//platform/vcs-impl/lang",
     "//platform/util/nanoxml",
     "@lib//:jackson-databind",
     "//platform/xdebugger-impl:debugger-impl",
@@ -58,8 +58,8 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/threadDumpParser",
     "//platform/eel-provider",
-    "//java/debugger/shared:java-debugger-impl-shared",
-    "//java/codeserver/core:java-codeserver-core",
+    "//java/debugger/shared",
+    "//java/codeserver/core",
   ],
   exports = [
     "//java/execution/openapi:java-execution",
@@ -67,7 +67,7 @@ jvm_library(
     "//platform/statistics",
   ],
   runtime_deps = [
-    ":java-execution-impl_resources",
+    ":impl_resources",
     "//java/execution/impl:jshell-frontend",
   ]
 )

@@ -15,7 +15,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//python/python-parser:parser",
-    "//python/services/shared:python-community-services-shared",
+    "//python/services/shared",
     "//platform/eel-provider",
     "@lib//:jetbrains-annotations",
     "//python/openapi:community",
@@ -33,7 +33,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//python/python-parser:parser",
-    "//python/services/shared:python-community-services-shared",
+    "//python/services/shared",
     "//platform/eel-provider",
     "@lib//:jetbrains-annotations",
     "//python/openapi:community",

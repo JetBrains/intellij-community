@@ -25,7 +25,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
-    "//platform/platform-impl/rpc:ide-rpc",
+    "//platform/platform-impl/rpc",
     "//platform/util/text-matching",
   ],
   exports = ["//platform/lang-impl"],

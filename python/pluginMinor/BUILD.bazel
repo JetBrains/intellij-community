@@ -16,7 +16,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//platform/lang-impl",
     "//python:python-community-impl",
-    "//python/pluginCore/impl:python-community-plugin-impl",
+    "//python/pluginCore/impl",
     "//platform/util/jdom",
   ],
   runtime_deps = [":community-plugin-minor_resources"]

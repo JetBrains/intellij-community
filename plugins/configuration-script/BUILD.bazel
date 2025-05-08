@@ -89,7 +89,7 @@ jvm_library(
   deps = [
     "//plugins/configuration-script:configurationScript",
     "//plugins/configuration-script:configurationScript_test_lib",
-    "//java/execution/impl:java-execution-impl",
+    "//java/execution/impl",
     "@lib//:kotlin-stdlib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

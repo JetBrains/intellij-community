@@ -13,13 +13,13 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "kotlin-refactorings-rename-k2_resources",
+  name = "rename.k2_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-refactorings-rename-k2",
+  name = "rename.k2",
   module_name = "kotlin.refactorings.rename.k2",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -27,68 +27,68 @@ jvm_library(
   deps = [
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
-    "//plugins/kotlin/base/psi:kotlin-base-psi",
-    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/util",
     "//java/java-psi-api:psi",
     "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/lang-impl",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings-k2",
-    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//plugins/kotlin/base/analysis",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//plugins/kotlin/kotlin.searching:searching-k2",
     "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
     "//java/java-indexing-api:indexing",
     "//java/java-impl-refactorings:impl-refactorings",
   ],
-  runtime_deps = [":kotlin-refactorings-rename-k2_resources"]
+  runtime_deps = [":rename.k2_resources"]
 )
 
 jvm_library(
-  name = "kotlin-refactorings-rename-k2_test_lib",
+  name = "rename.k2_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
-  associates = [":kotlin-refactorings-rename-k2"],
+  associates = [":rename.k2"],
   deps = [
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:gson",
     "@lib//:kotlinc-analysis-api",
-    "//plugins/kotlin/plugin/k2:kotlin-plugin-k2",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
-    "//plugins/kotlin/base/psi:kotlin-base-psi",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/util:kotlin-base-util_test_lib",
+    "//plugins/kotlin/plugin/k2",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/util:util_test_lib",
     "//java/java-psi-api:psi",
     "//platform/core-api:core",
     "//platform/core-impl",
-    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/lang-impl",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
-    "//plugins/kotlin/fir/tests:kotlin-fir-tests_test_lib",
-    "//plugins/kotlin/base/fir/code-insight:kotlin-base-fir-code-insight",
+    "//plugins/kotlin/fir/tests:tests_test_lib",
+    "//plugins/kotlin/base/fir/code-insight",
     "//java/testFramework",
-    "//plugins/kotlin/idea/tests:kotlin-idea-tests_test_lib",
+    "//plugins/kotlin/idea/tests:tests_test_lib",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings-k2",
-    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//plugins/kotlin/base/analysis",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//plugins/kotlin/kotlin.searching:searching-k2",
     "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
     "//java/java-indexing-api:indexing",
     "//java/java-impl-refactorings:impl-refactorings",
   ],
-  runtime_deps = [":kotlin-refactorings-rename-k2_resources"]
+  runtime_deps = [":rename.k2_resources"]
 )
 
 jvm_test(
-  name = "kotlin-refactorings-rename-k2_test",
-  runtime_deps = [":kotlin-refactorings-rename-k2_test_lib"]
+  name = "rename.k2_test",
+  runtime_deps = [":rename.k2_test_lib"]
 )
 ### auto-generated section `build kotlin.refactorings.rename.k2` end

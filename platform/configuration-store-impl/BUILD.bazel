@@ -69,7 +69,7 @@ jvm_library(
   associates = ["//platform/configuration-store-impl:configurationStore-impl"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "//platform/ide-core/plugins:ide-core-plugins",
+    "//platform/ide-core/plugins",
     "@lib//:assert_j",
     "//platform/testFramework/extensions:testExtensions",
     "//platform/testFramework",

@@ -33,7 +33,7 @@ jvm_library(
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "//platform/diagnostic/telemetry",
-    "//platform/platform-impl/internal:ide-internal",
+    "//platform/platform-impl/internal",
     "//platform/diagnostic/telemetry-impl",
     "//platform/lang-api:lang",
     "//platform/vcs-api:vcs",
@@ -62,7 +62,7 @@ jvm_library(
     "//platform/ml-impl:ml-impl_test_lib",
     "//platform/core-ui",
     "@lib//:ngram-slp",
-    "//platform/platform-impl/internal:ide-internal",
+    "//platform/platform-impl/internal",
     "//platform/ml-api:ml",
   ]
 )

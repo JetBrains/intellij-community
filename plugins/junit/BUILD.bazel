@@ -15,7 +15,7 @@ jvm_library(
   deps = [
     "//java/execution/openapi:java-execution",
     "//java/openapi:java",
-    "//java/execution/impl:java-execution-impl",
+    "//java/execution/impl",
     "//java/java-runtime:rt",
     "//platform/testRunner",
     "//platform/vcs-api:vcs",
@@ -26,7 +26,7 @@ jvm_library(
     "//jvm/jvm-analysis-refactoring:analysis-refactoring",
     "//java/java-indexing-api:indexing",
     "//platform/smRunner",
-    "//java/debugger/impl:java-debugger-impl",
+    "//java/debugger/impl",
     "//java/idea-ui:ui",
     "//platform/external-system-api:externalSystem",
     "//jvm/jvm-analysis-api:analysis",

@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
-  name = "execution-process-mediator-common_resources",
+  name = "common_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "execution-process-mediator-common",
+  name = "common",
   module_name = "intellij.execution.process.mediator.common",
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -21,14 +21,14 @@ jvm_library(
     "@lib//:javax-annotation-api",
     "//libraries/grpc",
   ],
-  runtime_deps = [":execution-process-mediator-common_resources"]
+  runtime_deps = [":common_resources"]
 )
 
 jvm_library(
-  name = "execution-process-mediator-common_test_lib",
+  name = "common_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
-  associates = [":execution-process-mediator-common"],
+  associates = [":common"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
@@ -40,11 +40,11 @@ jvm_library(
     "@lib//:execution-process-mediator-common-com-willowtreeapps-assertk-assertk-jvm",
     "//libraries/grpc",
   ],
-  runtime_deps = [":execution-process-mediator-common_resources"]
+  runtime_deps = [":common_resources"]
 )
 
 jvm_test(
-  name = "execution-process-mediator-common_test",
-  runtime_deps = [":execution-process-mediator-common_test_lib"]
+  name = "common_test",
+  runtime_deps = [":common_test_lib"]
 )
 ### auto-generated section `build intellij.execution.process.mediator.common` end

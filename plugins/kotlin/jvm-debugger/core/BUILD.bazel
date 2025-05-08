@@ -9,13 +9,13 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "kotlin-jvm-debugger-core_resources",
+  name = "core_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-jvm-debugger-core",
+  name = "core",
   module_name = "kotlin.jvm-debugger.core",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -27,16 +27,16 @@ jvm_library(
     "@lib//:kotlinc-analysis-api-impl-base",
     "@lib//:asm",
     "@lib//:jb-jdi",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/psi:kotlin-base-psi",
-    "//plugins/kotlin/base/indices:kotlin-base-indices",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
-    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
-    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
-    "//plugins/kotlin/jvm-debugger/base/util:kotlin-jvm-debugger-base-util",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/jvm-debugger/base/util",
     "//platform/core-ui",
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/projectModel-impl",
@@ -49,18 +49,18 @@ jvm_library(
     "//java/openapi:java",
     "//platform/util/progress",
     "//java/execution/openapi:java-execution",
-    "//java/debugger/impl:java-debugger-impl",
+    "//java/debugger/impl",
     "//java/java-psi-impl:psi-impl",
-    "//plugins/kotlin/code-insight/utils:kotlin-code-insight-utils",
+    "//plugins/kotlin/code-insight/utils",
     "//platform/statistics",
     "//platform/util",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "@lib//:gson",
-    "//java/debugger/shared:java-debugger-impl-shared",
+    "//java/debugger/shared",
     "//platform/util/jdom",
     "//java/java-runtime:rt",
     "@lib//:kotlin-metadata",
   ],
-  runtime_deps = [":kotlin-jvm-debugger-core_resources"]
+  runtime_deps = [":core_resources"]
 )
 ### auto-generated section `build kotlin.jvm-debugger.core` end

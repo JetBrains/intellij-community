@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "kotlin-jvm-k1_resources",
+  name = "k1_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-jvm-k1",
+  name = "k1",
   module_name = "kotlin.jvm.k1",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -17,35 +17,35 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api-fe10",
     "@lib//:kotlinc-kotlin-compiler-fe10",
-    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
-    "//plugins/kotlin/base/fe10/code-insight:kotlin-base-fe10-code-insight",
+    "//plugins/kotlin/base/fe10/analysis",
+    "//plugins/kotlin/base/fe10/code-insight",
     "//plugins/kotlin/project-configuration",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin",
     "//platform/core-api:core",
     "//platform/projectModel-api:projectModel",
-    "//plugins/kotlin/jvm/shared:kotlin-jvm-shared",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
-    "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
+    "//plugins/kotlin/jvm/shared",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/code-insight/api",
     "//platform/analysis-api:analysis",
     "//java/java-impl:impl",
     "//plugins/kotlin/idea",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/compiler-configuration:kotlin-base-compiler-configuration",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//plugins/kotlin/base/project-structure",
     "@lib//:kotlinc-kotlin-jps-plugin-classpath",
-    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+    "//plugins/kotlin/base/code-insight",
     "//platform/platform-impl:ide-impl",
     "@lib//:kotlinc-analysis-api",
-    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/base/psi",
     "//platform/platform-util-io:ide-util-io",
-    "//plugins/kotlin/base/scripting:kotlin-base-scripting",
+    "//plugins/kotlin/base/scripting",
     "//plugins/kotlin/repl",
     "//platform/vcs-impl",
-    "//java/execution/impl:java-execution-impl",
+    "//java/execution/impl",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//platform/core-ui",
   ],
-  runtime_deps = [":kotlin-jvm-k1_resources"]
+  runtime_deps = [":k1_resources"]
 )
 ### auto-generated section `build kotlin.jvm.k1` end

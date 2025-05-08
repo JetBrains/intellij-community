@@ -8,13 +8,13 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "kotlin-j2k-k1-old_resources",
+  name = "k1.old_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-j2k-k1-old",
+  name = "k1.old",
   module_name = "kotlin.j2k.k1.old",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -24,19 +24,19 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-analysis-api",
-    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/util",
     "//plugins/kotlin/core",
     "//plugins/kotlin/idea",
-    "//plugins/kotlin/frontend-independent:fir-frontend-independent",
+    "//plugins/kotlin/frontend-independent",
     "//platform/lang-api:lang",
     "//java/java-psi-impl:psi-impl",
-    "//plugins/kotlin/j2k/shared:kotlin-j2k-shared",
-    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+    "//plugins/kotlin/j2k/shared",
+    "//plugins/kotlin/base/fe10/analysis",
     "//java/java-analysis-impl:analysis-impl",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/fe10/code-insight:kotlin-base-fe10-code-insight",
-    "//plugins/kotlin/j2k/k1.new:kotlin-j2k-k1-new",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/fe10/code-insight",
+    "//plugins/kotlin/j2k/k1.new",
   ],
-  runtime_deps = [":kotlin-j2k-k1-old_resources"]
+  runtime_deps = [":k1.old_resources"]
 )
 ### auto-generated section `build kotlin.j2k.k1.old` end

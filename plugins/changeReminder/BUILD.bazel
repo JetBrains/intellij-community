@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "vcs-changeReminder_resources",
+  name = "changeReminder_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "vcs-changeReminder",
+  name = "changeReminder",
   module_name = "intellij.vcs.changeReminder",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -17,7 +17,7 @@ jvm_library(
     "//platform/vcs-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/vcs-log/graph:vcs-log-graph-impl",
-    "//platform/vcs-log/impl:vcs-log-impl",
+    "//platform/vcs-log/impl",
     "//platform/vcs-log/api:vcs-log",
     "//platform/core-impl",
     "//plugins/git4idea:vcs-git",
@@ -25,6 +25,6 @@ jvm_library(
     "//platform/statistics",
     "//platform/core-ui",
   ],
-  runtime_deps = [":vcs-changeReminder_resources"]
+  runtime_deps = [":changeReminder_resources"]
 )
 ### auto-generated section `build intellij.vcs.changeReminder` end

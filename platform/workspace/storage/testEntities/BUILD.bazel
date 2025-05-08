@@ -3,12 +3,12 @@ load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
-  name = "workspace-storage-testEntities",
+  name = "testEntities",
   visibility = ["//visibility:public"]
 )
 
 jvm_library(
-  name = "workspace-storage-testEntities_test_lib",
+  name = "testEntities_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testGen/**/*.kt", "testGen/**/*.java"], allow_empty = True),
   deps = [
@@ -20,7 +20,7 @@ jvm_library(
 )
 
 jvm_test(
-  name = "workspace-storage-testEntities_test",
-  runtime_deps = [":workspace-storage-testEntities_test_lib"]
+  name = "testEntities_test",
+  runtime_deps = [":testEntities_test_lib"]
 )
 ### auto-generated section `build intellij.platform.workspace.storage.testEntities` end

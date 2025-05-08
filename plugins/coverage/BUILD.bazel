@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
-  name = "java-coverage_resources",
+  name = "coverage_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "java-coverage",
+  name = "coverage",
   module_name = "intellij.java.coverage",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -17,7 +17,7 @@ jvm_library(
     "//plugins/coverage-common:coverage",
     "//java/execution/openapi:java-execution",
     "//java/openapi:java",
-    "//java/execution/impl:java-execution-impl",
+    "//java/execution/impl",
     "//platform/testRunner",
     "//plugins/testng_rt:testng-rt",
     "//plugins/junit_rt:junit-rt",
@@ -42,21 +42,21 @@ jvm_library(
     "//java/execution/openapi:java-execution",
     "//java/openapi:java",
   ],
-  runtime_deps = [":java-coverage_resources"]
+  runtime_deps = [":coverage_resources"]
 )
 
 jvm_library(
-  name = "java-coverage_test_lib",
+  name = "coverage_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
-  associates = [":java-coverage"],
+  associates = [":coverage"],
   deps = [
     "@lib//:java-coverage-_ja_co_co",
     "//plugins/coverage-common:coverage",
     "//plugins/coverage-common:coverage_test_lib",
     "//java/execution/openapi:java-execution",
     "//java/openapi:java",
-    "//java/execution/impl:java-execution-impl",
+    "//java/execution/impl",
     "//platform/testRunner",
     "//platform/testRunner:testRunner_test_lib",
     "//plugins/testng_rt:testng-rt",
@@ -81,11 +81,11 @@ jvm_library(
     "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent",
     "@lib//:fastutil-min",
   ],
-  runtime_deps = [":java-coverage_resources"]
+  runtime_deps = [":coverage_resources"]
 )
 
 jvm_test(
-  name = "java-coverage_test",
-  runtime_deps = [":java-coverage_test_lib"]
+  name = "coverage_test",
+  runtime_deps = [":coverage_test_lib"]
 )
 ### auto-generated section `build intellij.java.coverage` end

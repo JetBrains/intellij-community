@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "execution-process-mediator-daemon_resources",
+  name = "daemon_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "execution-process-mediator-daemon",
+  name = "daemon",
   module_name = "intellij.execution.process.mediator.daemon",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -19,10 +19,10 @@ jvm_library(
     "@lib//:guava",
     "@lib//:protobuf",
     "@lib//:jna",
-    "//platform/execution-process-mediator/common:execution-process-mediator-common",
+    "//platform/execution-process-mediator/common",
     "//libraries/grpc",
     "//libraries/grpc-netty-shaded",
   ],
-  runtime_deps = [":execution-process-mediator-daemon_resources"]
+  runtime_deps = [":daemon_resources"]
 )
 ### auto-generated section `build intellij.execution.process.mediator.daemon` end

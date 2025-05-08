@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "execution-impl-frontend_resources",
+  name = "frontend_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "execution-impl-frontend",
+  name = "frontend",
   module_name = "intellij.platform.execution.impl.frontend",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -23,9 +23,9 @@ jvm_library(
     "//platform/project/shared:project",
     "//platform/platform-util-io:ide-util-io",
     "//platform/platform-api:ide",
-    "//platform/platform-impl/rpc:ide-rpc",
+    "//platform/platform-impl/rpc",
     "//platform/execution",
   ],
-  runtime_deps = [":execution-impl-frontend_resources"]
+  runtime_deps = [":frontend_resources"]
 )
 ### auto-generated section `build intellij.platform.execution.impl.frontend` end

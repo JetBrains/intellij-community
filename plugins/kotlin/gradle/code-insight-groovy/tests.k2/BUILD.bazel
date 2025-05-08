@@ -3,32 +3,32 @@ load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
-  name = "kotlin-gradle-code-insight-groovy-tests-k2",
+  name = "tests.k2",
   visibility = ["//visibility:public"]
 )
 
 jvm_library(
-  name = "kotlin-gradle-code-insight-groovy-tests-k2_test_lib",
+  name = "tests.k2_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
-    "//plugins/kotlin/plugin/k2:kotlin-plugin-k2",
+    "//plugins/kotlin/plugin/k2",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
     "@lib//:kotlinc-kotlin-compiler-tests",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
-    "//plugins/kotlin/gradle/code-insight-groovy:kotlin-gradle-code-insight-groovy",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/gradle/code-insight-groovy",
   ]
 )
 
 jvm_test(
-  name = "kotlin-gradle-code-insight-groovy-tests-k2_test",
-  runtime_deps = [":kotlin-gradle-code-insight-groovy-tests-k2_test_lib"]
+  name = "tests.k2_test",
+  runtime_deps = [":tests.k2_test_lib"]
 )
 ### auto-generated section `build kotlin.gradle.code-insight-groovy.tests.k2` end

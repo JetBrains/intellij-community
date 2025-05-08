@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "evaluationPlugin-languages",
+  name = "languages",
   module_name = "intellij.evaluationPlugin.languages",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -12,7 +12,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/platform-api:ide",
     "//platform/lang-impl",
-    "//plugins/evaluation-plugin/core:evaluationPlugin-core",
+    "//plugins/evaluation-plugin/core",
     "//platform/statistics",
     "//platform/statistics/uploader",
   ]

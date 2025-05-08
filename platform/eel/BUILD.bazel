@@ -37,9 +37,9 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/util/jdom",
     "//platform/workspace/jps",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/base/facet",
   ],
-  runtime_deps = ["//plugins/kotlin/idea/tests:kotlin-idea-tests"]
+  runtime_deps = ["//plugins/kotlin/idea/tests"]
 )
 
 jvm_test(

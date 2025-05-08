@@ -16,7 +16,7 @@ java_library(
     "//java/ide-resources",
     "@lib//:idea-community-customization-tips-idea-ce",
     "//platform/platform-impl:ide-impl",
-    "//idea/customization/base:idea-customization-base",
+    "//idea/customization/base",
     "//platform/experiment",
   ]
 )

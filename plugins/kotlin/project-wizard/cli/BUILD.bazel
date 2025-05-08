@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "kotlin-project-wizard-cli",
+  name = "cli",
   module_name = "kotlin.project-wizard.cli",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -11,8 +11,8 @@ jvm_library(
     "@lib//:kotlin-reflect",
     "@lib//:kotlinx-collections-immutable",
     "@lib//:snakeyaml",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
-    "//plugins/kotlin/project-wizard/core:kotlin-project-wizard-core",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/project-wizard/core",
   ],
   runtime_deps = [
     "//platform/core-api:core",

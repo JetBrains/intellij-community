@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 jvm_library(
-  name = "pycharm-community-build",
+  name = "build",
   module_name = "intellij.pycharm.community.build",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -12,7 +12,7 @@ jvm_library(
     "//platform/util",
     "@lib//:kotlinx-collections-immutable",
     "@lib//:kotlinx-coroutines-core",
-    "//platform/build-scripts/downloader:buildScripts-downloader",
+    "//platform/build-scripts/downloader",
     "//build/tasks",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
@@ -28,18 +28,18 @@ jvm_library(
 )
 
 jvm_library(
-  name = "pycharm-community-build_test_lib",
+  name = "build_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
-  associates = [":pycharm-community-build"],
+  associates = [":build"],
   deps = [
     "//build",
-    "//platform/build-scripts/testFramework:buildScripts-testFramework",
+    "//platform/build-scripts/testFramework",
     "@lib//:kotlin-stdlib",
     "//platform/util",
     "@lib//:kotlinx-collections-immutable",
     "@lib//:kotlinx-coroutines-core",
-    "//platform/build-scripts/downloader:buildScripts-downloader",
+    "//platform/build-scripts/downloader",
     "//build/tasks",
     "//build/tasks:tasks_test_lib",
     "@lib//:opentelemetry",
@@ -58,7 +58,7 @@ jvm_library(
 )
 
 jvm_test(
-  name = "pycharm-community-build_test",
-  runtime_deps = [":pycharm-community-build_test_lib"]
+  name = "build_test",
+  runtime_deps = [":build_test_lib"]
 )
 ### auto-generated section `build intellij.pycharm.community.build` end

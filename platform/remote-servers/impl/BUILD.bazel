@@ -2,19 +2,19 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "remoteServers-impl_resources",
+  name = "impl_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_resources(
-  name = "remoteServers-impl_resources_1",
+  name = "impl_resources_1",
   files = glob(["compatibilityResources/**/*"]),
   strip_prefix = "compatibilityResources"
 )
 
 jvm_library(
-  name = "remoteServers-impl",
+  name = "impl",
   module_name = "intellij.platform.remoteServers.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -33,8 +33,8 @@ jvm_library(
     "//platform/util-ex",
   ],
   runtime_deps = [
-    ":remoteServers-impl_resources",
-    ":remoteServers-impl_resources_1",
+    ":impl_resources",
+    ":impl_resources_1",
   ]
 )
 ### auto-generated section `build intellij.platform.remoteServers.impl` end

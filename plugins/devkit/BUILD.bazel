@@ -24,8 +24,8 @@ java_library(
   runtime_deps = [
     "//plugins/devkit:devkit-plugin-main-noKotlin",
     "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit",
-    "//plugins/devkit/intellij.kotlin.devkit/k1:kotlin-devkit-k1",
-    "//plugins/devkit/intellij.kotlin.devkit/k2:kotlin-devkit-k2",
+    "//plugins/devkit/intellij.kotlin.devkit/k1",
+    "//plugins/devkit/intellij.kotlin.devkit/k2",
     "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
   ]
 )
@@ -49,7 +49,7 @@ java_library(
     "//plugins/devkit/intellij.devkit.themes:themes",
     "//plugins/devkit/intellij.devkit.uiDesigner:uiDesigner",
     "//plugins/devkit/jps-plugin:jps",
-    "//plugins/devkit/runtimeModuleRepository/jps:devkit-runtimeModuleRepository-jps",
+    "//plugins/devkit/runtimeModuleRepository/jps",
     "//plugins/devkit/intellij.devkit.stacktrace:stacktrace",
     "//plugins/devkit/api-dump:apiDump",
     "//plugins/devkit/api-dump-lang:apiDump-lang",

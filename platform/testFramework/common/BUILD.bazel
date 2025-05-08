@@ -29,7 +29,7 @@ jvm_library(
     "//platform/indexing-impl",
     "//platform/boot",
     "//platform/util-class-loader:util-classLoader",
-    "//platform/platform-impl/bootstrap:ide-bootstrap",
+    "//platform/platform-impl/bootstrap",
     "//platform/util",
     "//platform/core-api:core",
     "//platform/ide-core-impl",
@@ -43,7 +43,7 @@ jvm_library(
     "//platform/diagnostic",
     "//platform/diagnostic/telemetry",
     "@lib//:jetbrains-annotations",
-    "//platform/platform-impl/bootstrap/kernel:ide-bootstrap-kernel",
+    "//platform/platform-impl/bootstrap/kernel",
   ],
   runtime_deps = [":common_resources"]
 )

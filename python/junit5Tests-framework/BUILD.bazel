@@ -44,7 +44,7 @@ jvm_library(
     "//platform/util",
     "//python/openapi:community",
     "//python/openapi:community_test_lib",
-    "//python/poetry:community-impl-poetry",
+    "//python/poetry",
     "//python/setup-test-environment:community-testFramework-testEnv",
     "//python/python-sdk:sdk",
     "//python/python-sdk:sdk_test_lib",

@@ -15,7 +15,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/frontend-agnostic",
     "//platform/util/jdom",
     "//platform/lang-api:lang",
     "//platform/core-impl",
@@ -24,13 +24,13 @@ jvm_library(
     "//platform/core-ui",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
-    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/util",
     "//platform/lang-impl",
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/statistics",
-    "//plugins/kotlin/formatter/minimal:kotlin-formatter-minimal",
+    "//plugins/kotlin/formatter/minimal",
   ],
-  exports = ["//plugins/kotlin/formatter/minimal:kotlin-formatter-minimal"],
+  exports = ["//plugins/kotlin/formatter/minimal"],
   runtime_deps = [":formatter_resources"]
 )
 ### auto-generated section `build kotlin.formatter` end

@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "vcs-dvcs-impl-shared_resources",
+  name = "shared_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "vcs-dvcs-impl-shared",
+  name = "shared",
   module_name = "intellij.platform.vcs.dvcs.impl.shared",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -19,6 +19,6 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/editor-ui-api:editor-ui",
   ],
-  runtime_deps = [":vcs-dvcs-impl-shared_resources"]
+  runtime_deps = [":shared_resources"]
 )
 ### auto-generated section `build intellij.platform.vcs.dvcs.impl.shared` end

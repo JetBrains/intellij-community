@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "kotlin-util-project-model-updater_resources",
+  name = "project-model-updater_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-util-project-model-updater",
+  name = "project-model-updater",
   module_name = "kotlin.util.project-model-updater",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -17,6 +17,6 @@ jvm_library(
     "@lib//:kotlin-reflect",
     "//platform/util/jdom",
   ],
-  runtime_deps = [":kotlin-util-project-model-updater_resources"]
+  runtime_deps = [":project-model-updater_resources"]
 )
 ### auto-generated section `build kotlin.util.project-model-updater` end

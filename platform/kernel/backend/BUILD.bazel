@@ -29,12 +29,12 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//platform/util/coroutines",
     "//platform/kernel/shared:kernel",
-    "//platform/kernel/rpc.backend:rpc-backend",
+    "//platform/kernel/rpc.backend",
     "//platform/core-api:core",
   ],
   exports = [
     "//platform/kernel/shared:kernel",
-    "//platform/kernel/rpc.backend:rpc-backend",
+    "//platform/kernel/rpc.backend",
   ],
   runtime_deps = [
     ":backend_resources",

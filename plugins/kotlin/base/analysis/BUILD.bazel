@@ -12,13 +12,13 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "kotlin-base-analysis_resources",
+  name = "analysis_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-base-analysis",
+  name = "analysis",
   module_name = "kotlin.base.analysis",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -35,17 +35,17 @@ jvm_library(
     "@lib//:kotlinc-analysis-api-platform-interface",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:guava",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/psi",
     "//platform/usageView",
-    "//plugins/kotlin/base/indices:kotlin-base-indices",
-    "//plugins/kotlin/base/platforms:kotlin-base-platforms",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
-    "//plugins/kotlin/base/compiler-configuration:kotlin-base-compiler-configuration",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
-    "//plugins/kotlin/base/scripting:kotlin-base-scripting",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/base/platforms",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/scripting",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//platform/util/jdom",
     "//platform/util-class-loader:util-classLoader",
@@ -59,6 +59,6 @@ jvm_library(
     "//platform/workspace/jps",
     "//platform/backend/workspace",
   ],
-  runtime_deps = [":kotlin-base-analysis_resources"]
+  runtime_deps = [":analysis_resources"]
 )
 ### auto-generated section `build kotlin.base.analysis` end

@@ -23,7 +23,7 @@ jvm_library(
     "@lib//:fastutil-min",
     "//platform/core-ui",
     "//platform/util/jdom",
-    "//platform/platform-impl/designer:ide-designer",
+    "//platform/platform-impl/designer",
   ],
   runtime_deps = [":uiDesigner_resources"]
 )

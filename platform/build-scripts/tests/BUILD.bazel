@@ -3,18 +3,18 @@ load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
-  name = "buildScripts-tests_test_resources",
+  name = "tests_test_resources",
   files = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
 )
 
 java_library(
-  name = "buildScripts-tests",
+  name = "tests",
   visibility = ["//visibility:public"]
 )
 
 jvm_library(
-  name = "buildScripts-tests_test_lib",
+  name = "tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [
@@ -23,7 +23,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
-    "//platform/build-scripts/downloader:buildScripts-downloader",
+    "//platform/build-scripts/downloader",
     "//platform/util",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
@@ -45,11 +45,11 @@ jvm_library(
     "@lib//:fastutil-min",
     "@lib//:maven-resolver-provider",
   ],
-  runtime_deps = [":buildScripts-tests_test_resources"]
+  runtime_deps = [":tests_test_resources"]
 )
 
 jvm_test(
-  name = "buildScripts-tests_test",
-  runtime_deps = [":buildScripts-tests_test_lib"]
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
 )
 ### auto-generated section `build intellij.platform.buildScripts.tests` end

@@ -27,7 +27,7 @@ jvm_library(
     "@lib//:kotlinx-serialization-core",
     "//platform/core-impl",
     "//platform/platform-impl:ide-impl",
-    "//platform/observable:ide-observable",
+    "//platform/observable",
     "//platform/code-style-api:codeStyle",
     "//platform/core-ui",
     "//platform/projectModel-impl",

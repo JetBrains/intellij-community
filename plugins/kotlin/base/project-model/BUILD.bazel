@@ -2,14 +2,14 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "kotlin-base-project-model",
+  name = "project-model",
   module_name = "kotlin.base.project-model",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
   deps = [
     "@lib//:kotlin-stdlib",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/frontend-agnostic",
     "@lib//:kotlin-gradle-plugin-idea",
     "@lib//:kotlin-tooling-core",
   ],

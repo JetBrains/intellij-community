@@ -15,9 +15,9 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
-    "//platform/execution-process-mediator/client:execution-process-mediator-client",
-    "//platform/execution-process-mediator/daemon:execution-process-mediator-daemon",
-    "//platform/execution-process-mediator/common:execution-process-mediator-common",
+    "//platform/execution-process-mediator/client",
+    "//platform/execution-process-mediator/daemon",
+    "//platform/execution-process-mediator/common",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-util-io:ide-util-io",
     "//platform/ide-core-impl",

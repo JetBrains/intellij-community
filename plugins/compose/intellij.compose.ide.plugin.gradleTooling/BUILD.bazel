@@ -16,7 +16,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/gradle/tooling-extension-api:toolingExtension",
-    "//plugins/kotlin/gradle/gradle-tooling/impl:kotlin-gradle-gradle-tooling-impl",
+    "//plugins/kotlin/gradle/gradle-tooling/impl",
   ],
   runtime_deps = [":ide-plugin-gradleTooling-rt_resources"]
 )

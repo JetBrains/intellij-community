@@ -9,12 +9,12 @@ create_kotlinc_options(
 )
 
 java_library(
-  name = "kotlin-j2k-k1-new-tests",
+  name = "tests",
   visibility = ["//visibility:public"]
 )
 
 jvm_library(
-  name = "kotlin-j2k-k1-new-tests_test_lib",
+  name = "tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
@@ -23,38 +23,38 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",
-    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
     "//java/testFramework",
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-kotlin-compiler-tests",
-    "//plugins/kotlin/plugin/k1:kotlin-plugin-k1",
-    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/util:kotlin-base-util_test_lib",
-    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
-    "//plugins/kotlin/base/fe10/code-insight:kotlin-base-fe10-code-insight",
-    "//plugins/kotlin/j2k/shared:kotlin-j2k-shared",
-    "//plugins/kotlin/j2k/k1.new.post-processing:kotlin-j2k-k1-new-post-processing",
-    "//plugins/kotlin/j2k/k1.new:kotlin-j2k-k1-new",
+    "//plugins/kotlin/plugin/k1",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/fe10/analysis",
+    "//plugins/kotlin/base/fe10/code-insight",
+    "//plugins/kotlin/j2k/shared",
+    "//plugins/kotlin/j2k/k1.new.post-processing",
+    "//plugins/kotlin/j2k/k1.new",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//plugins/kotlin/idea",
     "//plugins/kotlin/core",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//plugins/kotlin/idea/tests:kotlin-idea-tests_test_lib",
-    "//plugins/kotlin/frontend-independent:fir-frontend-independent",
+    "//plugins/kotlin/idea/tests:tests_test_lib",
+    "//plugins/kotlin/frontend-independent",
     "//java/java-psi-api:psi",
     "//platform/code-style-impl:codeStyle-impl",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
-    "//plugins/kotlin/code-insight/utils:kotlin-code-insight-utils",
-    "//plugins/kotlin/j2k/shared/tests:kotlin-j2k-shared-tests_test_lib",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+    "//plugins/kotlin/code-insight/utils",
+    "//plugins/kotlin/j2k/shared/tests:tests_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
   ]
 )
 
 jvm_test(
-  name = "kotlin-j2k-k1-new-tests_test",
-  runtime_deps = [":kotlin-j2k-k1-new-tests_test_lib"]
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
 )
 ### auto-generated section `build kotlin.j2k.k1.new.tests` end

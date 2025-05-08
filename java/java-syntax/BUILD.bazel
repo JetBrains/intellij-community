@@ -28,7 +28,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/syntax/syntax-i18n:i18n",
     "@lib//:jetbrains-annotations",
-    "//platform/util/base/multiplatform:util-base-multiplatform",
+    "//platform/util/base/multiplatform",
     "//platform/util/multiplatform",
     "//platform/syntax/syntax-util:util",
   ],

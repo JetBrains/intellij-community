@@ -17,7 +17,7 @@ jvm_library(
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "@lib//:kotlinx-coroutines-core",
-    "//platform/build-scripts/downloader:buildScripts-downloader",
+    "//platform/build-scripts/downloader",
     "@rules_jvm//zip",
     "@lib//:maven-resolver-provider",
   ],

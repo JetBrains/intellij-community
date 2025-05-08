@@ -47,7 +47,7 @@ jvm_library(
     "@lib//:opentelemetry-semconv",
     "//platform/workspace/jps",
     "//platform/backend/workspace",
-    "//platform/ide-core/plugins:ide-core-plugins",
+    "//platform/ide-core/plugins",
     "//platform/diagnostic",
     "//platform/util:util-ui",
     "//platform/util/coroutines",
@@ -55,9 +55,9 @@ jvm_library(
     "@lib//:kotlinx-serialization-json",
     "//libraries/microba",
     "//platform/kernel/shared:kernel",
-    "//platform/vcs-impl/shared:vcs-impl-shared",
+    "//platform/vcs-impl/shared",
     "@lib//:jgoodies-forms",
-    "//platform/observable:ide-observable",
+    "//platform/observable",
   ],
   runtime_deps = [":vcs-impl_resources"]
 )
@@ -109,7 +109,7 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/workspace/jps",
     "//platform/backend/workspace",
-    "//platform/ide-core/plugins:ide-core-plugins",
+    "//platform/ide-core/plugins",
     "//platform/diagnostic",
     "//platform/util:util-ui",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
@@ -119,9 +119,9 @@ jvm_library(
     "@lib//:kotlinx-serialization-json",
     "//libraries/microba",
     "//platform/kernel/shared:kernel",
-    "//platform/vcs-impl/shared:vcs-impl-shared",
+    "//platform/vcs-impl/shared",
     "@lib//:jgoodies-forms",
-    "//platform/observable:ide-observable",
+    "//platform/observable",
   ],
   runtime_deps = [":vcs-impl_resources"]
 )

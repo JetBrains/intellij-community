@@ -2,26 +2,26 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "kotlin-project-wizard-maven_resources",
+  name = "maven_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-project-wizard-maven",
+  name = "maven",
   module_name = "kotlin.project-wizard.maven",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/project-wizard/core:kotlin-project-wizard-core",
-    "//plugins/kotlin/project-wizard/idea:kotlin-project-wizard-idea",
-    "//platform/observable:ide-observable",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/project-wizard/core",
+    "//plugins/kotlin/project-wizard/idea",
+    "//platform/observable",
     "//platform/platform-impl:ide-impl",
     "//plugins/maven",
   ],
-  runtime_deps = [":kotlin-project-wizard-maven_resources"]
+  runtime_deps = [":maven_resources"]
 )
 ### auto-generated section `build kotlin.project-wizard.maven` end

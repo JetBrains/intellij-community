@@ -12,13 +12,13 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "kotlin-base-analysis-api-platform_resources",
+  name = "analysis-api-platform_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-base-analysis-api-platform",
+  name = "analysis-api-platform",
   module_name = "kotlin.base.analysis-api-platform",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -29,24 +29,24 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-analysis-api-platform-interface",
-    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
-    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
     "//platform/util",
-    "//plugins/kotlin/base/indices:kotlin-base-indices",
+    "//plugins/kotlin/base/indices",
     "//platform/core-impl",
     "//platform/indexing-api:indexing",
     "//java/java-psi-api:psi",
     "//platform/projectModel-api:projectModel",
     "//platform/projectModel-impl",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/project-structure",
     "//platform/workspace/jps",
     "//platform/backend/workspace",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/base/facet",
     "//platform/analysis-impl",
     "//java/java-analysis-impl:analysis-impl",
-    "//java/codeserver/core:java-codeserver-core",
+    "//java/codeserver/core",
   ],
-  runtime_deps = [":kotlin-base-analysis-api-platform_resources"]
+  runtime_deps = [":analysis-api-platform_resources"]
 )
 ### auto-generated section `build kotlin.base.analysis-api-platform` end

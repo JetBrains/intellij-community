@@ -13,13 +13,13 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "kotlin-base-fir-project-structure_resources",
+  name = "project-structure_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-base-fir-project-structure",
+  name = "project-structure",
   module_name = "kotlin.base.fir.project-structure",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -29,42 +29,42 @@ jvm_library(
     "//platform/workspace/storage",
     "//platform/backend/workspace",
     "//platform/core-api:core",
-    "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-base-fir-analysis-api-platform",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/fir/analysis-api-platform",
+    "//plugins/kotlin/base/project-structure",
     "//platform/projectModel-impl",
     "@lib//:kotlinc-analysis-api",
     "//platform/workspace/jps",
     "//java/java-impl:impl",
     "@lib//:kotlinc-analysis-api-platform-interface",
     "@lib//:kotlinc-kotlin-compiler-common",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/facet",
     "@lib//:kotlinc-analysis-api-impl-base",
-    "//plugins/kotlin/base/platforms:kotlin-base-platforms",
+    "//plugins/kotlin/base/platforms",
     "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:fastutil-min",
     "//java/openapi:java",
   ],
-  runtime_deps = [":kotlin-base-fir-project-structure_resources"]
+  runtime_deps = [":project-structure_resources"]
 )
 
 jvm_library(
-  name = "kotlin-base-fir-project-structure_test_lib",
+  name = "project-structure_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
-  associates = [":kotlin-base-fir-project-structure"],
+  associates = [":project-structure"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "//plugins/kotlin/plugin/k2:kotlin-plugin-k2",
+    "//plugins/kotlin/plugin/k2",
     "//platform/workspace/storage",
     "//java/testFramework",
     "//platform/backend/workspace",
     "//platform/core-api:core",
-    "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-base-fir-analysis-api-platform",
-    "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-base-fir-analysis-api-platform_test_lib",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure_test_lib",
+    "//plugins/kotlin/base/fir/analysis-api-platform",
+    "//plugins/kotlin/base/fir/analysis-api-platform:analysis-api-platform_test_lib",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
     "//platform/projectModel-impl",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
@@ -73,35 +73,35 @@ jvm_library(
     "//java/java-impl:impl",
     "@lib//:kotlinc-analysis-api-platform-interface",
     "@lib//:kotlinc-kotlin-compiler-common",
-    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/util:kotlin-base-util_test_lib",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/facet",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "@lib//:gson",
     "@lib//:kotlinc-analysis-api-impl-base",
     "@lib//:kotlinc-kotlin-compiler-tests",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
-    "//plugins/kotlin/gradle/gradle-java/tests.shared:kotlin-gradle-gradle-java-tests-shared_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
     "@lib//:gradle",
     "//plugins/gradle:gradle-tests_test_lib",
     "//plugins/groovy",
     "//plugins/groovy:groovy_test_lib",
-    "//plugins/kotlin/base/scripting:kotlin-base-scripting",
-    "//plugins/kotlin/base/scripting:kotlin-base-scripting_test_lib",
-    "//plugins/kotlin/idea/tests:kotlin-idea-tests_test_lib",
-    "//plugins/kotlin/base/platforms:kotlin-base-platforms",
+    "//plugins/kotlin/base/scripting",
+    "//plugins/kotlin/base/scripting:scripting_test_lib",
+    "//plugins/kotlin/idea/tests:tests_test_lib",
+    "//plugins/kotlin/base/platforms",
     "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:fastutil-min",
     "//java/openapi:java",
   ],
-  runtime_deps = [":kotlin-base-fir-project-structure_resources"]
+  runtime_deps = [":project-structure_resources"]
 )
 
 jvm_test(
-  name = "kotlin-base-fir-project-structure_test",
-  runtime_deps = [":kotlin-base-fir-project-structure_test_lib"]
+  name = "project-structure_test",
+  runtime_deps = [":project-structure_test_lib"]
 )
 ### auto-generated section `build kotlin.base.fir.project-structure` end

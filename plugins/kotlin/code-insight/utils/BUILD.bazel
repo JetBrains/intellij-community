@@ -9,7 +9,7 @@ create_kotlinc_options(
 )
 
 jvm_library(
-  name = "kotlin-code-insight-utils",
+  name = "utils",
   module_name = "kotlin.code-insight.utils",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -19,12 +19,12 @@ jvm_library(
     "@lib//:kotlin-reflect",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/psi:kotlin-base-psi",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
-    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+    "//plugins/kotlin/base/code-insight",
     "//plugins/kotlin/formatter",
     "//platform/lang-impl",
     "//platform/editor-ui-api:editor-ui",

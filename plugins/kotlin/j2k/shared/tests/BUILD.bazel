@@ -9,12 +9,12 @@ create_kotlinc_options(
 )
 
 java_library(
-  name = "kotlin-j2k-shared-tests",
+  name = "tests",
   visibility = ["//visibility:public"]
 )
 
 jvm_library(
-  name = "kotlin-j2k-shared-tests_test_lib",
+  name = "tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
@@ -26,26 +26,26 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:kotlin-test",
     "//java/java-psi-api:psi",
-    "//plugins/kotlin/frontend-independent:fir-frontend-independent",
-    "//plugins/kotlin/j2k/shared:kotlin-j2k-shared",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/j2k/shared",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
-    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
-    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/util:kotlin-base-util_test_lib",
-    "//plugins/kotlin/code-insight/utils:kotlin-code-insight-utils",
-    "//plugins/kotlin/idea/tests:kotlin-idea-tests_test_lib",
-    "//plugins/kotlin/base/code-insight/minimal:kotlin-base-code-insight-minimal",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/code-insight/utils",
+    "//plugins/kotlin/idea/tests:tests_test_lib",
+    "//plugins/kotlin/base/code-insight/minimal",
   ]
 )
 
 jvm_test(
-  name = "kotlin-j2k-shared-tests_test",
-  runtime_deps = [":kotlin-j2k-shared-tests_test_lib"]
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
 )
 ### auto-generated section `build kotlin.j2k.shared.tests` end

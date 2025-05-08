@@ -13,13 +13,13 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [
     "//build",
-    "//platform/build-scripts/testFramework:buildScripts-testFramework",
+    "//platform/build-scripts/testFramework",
     "@lib//:kotlin-stdlib",
     "@lib//:junit5",
     "@lib//:assert_j",
     "//platform/util",
     "@lib//:kotlinx-coroutines-core",
-    "//platform/build-scripts/downloader:buildScripts-downloader",
+    "//platform/build-scripts/downloader",
   ]
 )
 

@@ -23,11 +23,11 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/xdebugger-api:debugger",
     "//platform/core-ui",
-    "//java/debugger/impl:java-debugger-impl",
+    "//java/debugger/impl",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
-    "//java/execution/impl:java-execution-impl",
-    "//java/debugger/shared:java-debugger-impl-shared",
+    "//java/execution/impl",
+    "//java/debugger/shared",
   ],
   runtime_deps = [":featuresTrainer_resources"]
 )
@@ -50,13 +50,13 @@ jvm_library(
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/xdebugger-api:debugger",
     "//platform/core-ui",
-    "//java/debugger/impl:java-debugger-impl",
+    "//java/debugger/impl",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//java/execution/impl:java-execution-impl",
-    "//java/debugger/shared:java-debugger-impl-shared",
+    "//java/execution/impl",
+    "//java/debugger/shared",
   ],
   runtime_deps = [":featuresTrainer_resources"]
 )

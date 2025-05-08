@@ -34,8 +34,8 @@ jvm_library(
     "//platform/backend/workspace",
     "//java/java-frontback-impl:frontback-impl",
     "//platform/editor-ui-ex:editor-ex",
-    "//java/codeserver/highlighting:java-codeserver-highlighting",
-    "//java/codeserver/core:java-codeserver-core",
+    "//java/codeserver/highlighting",
+    "//java/codeserver/core",
   ],
   exports = [
     "//platform/analysis-impl",

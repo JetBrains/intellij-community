@@ -46,7 +46,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "@lib//:jcef",
     "//plugins/restructuredtext",
-    "//platform/ui.jcef:ui-jcef",
+    "//platform/ui.jcef",
     ":lang-impl_provided",
     ":execution-impl_provided",
     ":python-community-impl_provided",

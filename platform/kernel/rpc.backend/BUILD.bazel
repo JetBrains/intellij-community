@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "rpc-backend_resources",
+  name = "rpc.backend_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "rpc-backend",
+  name = "rpc.backend",
   module_name = "intellij.platform.rpc.backend",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -17,12 +17,12 @@ jvm_library(
     "//platform/util",
     "//platform/extensions",
     "//platform/kernel/rpc",
-    "//fleet/rpc.server:rpc-server",
+    "//fleet/rpc.server",
   ],
   exports = [
     "//platform/kernel/rpc",
-    "//fleet/rpc.server:rpc-server",
+    "//fleet/rpc.server",
   ],
-  runtime_deps = [":rpc-backend_resources"]
+  runtime_deps = [":rpc.backend_resources"]
 )
 ### auto-generated section `build intellij.platform.rpc.backend` end

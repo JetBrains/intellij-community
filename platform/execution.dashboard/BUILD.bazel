@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "execution-dashboard_resources",
+  name = "execution.dashboard_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "execution-dashboard",
+  name = "execution.dashboard",
   module_name = "intellij.platform.execution.dashboard",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -21,8 +21,8 @@ jvm_library(
     "@lib//:fastutil-min",
     "@lib//:guava",
     "//platform/ide-core-impl",
-    "//platform/execution.serviceView:execution-serviceView",
+    "//platform/execution.serviceView",
   ],
-  runtime_deps = [":execution-dashboard_resources"]
+  runtime_deps = [":execution.dashboard_resources"]
 )
 ### auto-generated section `build intellij.platform.execution.dashboard` end

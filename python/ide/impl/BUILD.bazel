@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
-  name = "pycharm-community-ide-impl_resources",
+  name = "impl_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "pycharm-community-ide-impl",
+  name = "impl",
   module_name = "intellij.pycharm.community.ide.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -38,21 +38,21 @@ jvm_library(
     "@lib//:jna",
     "//python/services/system-python:python-community-services-systemPython",
     "//platform/eel",
-    "//python/services/shared:python-community-services-shared",
-    "//python/poetry:community-impl-poetry",
+    "//python/services/shared",
+    "//python/poetry",
     "//python/python-venv:community-impl-venv",
     "@lib//:jetbrains-annotations",
     "//python/python-pyproject:pyproject",
     "//python/python-hatch:hatch",
   ],
-  runtime_deps = [":pycharm-community-ide-impl_resources"]
+  runtime_deps = [":impl_resources"]
 )
 
 jvm_library(
-  name = "pycharm-community-ide-impl_test_lib",
+  name = "impl_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
-  associates = [":pycharm-community-ide-impl"],
+  associates = [":impl"],
   deps = [
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
@@ -86,8 +86,8 @@ jvm_library(
     "//python/services/system-python:python-community-services-systemPython",
     "//python/services/system-python:python-community-services-systemPython_test_lib",
     "//platform/eel",
-    "//python/services/shared:python-community-services-shared",
-    "//python/poetry:community-impl-poetry",
+    "//python/services/shared",
+    "//python/poetry",
     "//python/python-venv:community-impl-venv",
     "//python/python-venv:community-impl-venv_test_lib",
     "@lib//:jetbrains-annotations",
@@ -98,11 +98,11 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "@lib//:junit5",
   ],
-  runtime_deps = [":pycharm-community-ide-impl_resources"]
+  runtime_deps = [":impl_resources"]
 )
 
 jvm_test(
-  name = "pycharm-community-ide-impl_test",
-  runtime_deps = [":pycharm-community-ide-impl_test_lib"]
+  name = "impl_test",
+  runtime_deps = [":impl_test_lib"]
 )
 ### auto-generated section `build intellij.pycharm.community.ide.impl` end

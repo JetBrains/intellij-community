@@ -60,7 +60,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl_test_lib",
     "//xml/openapi:xml",
     "//json/backend",
-    "//json/backend/tests:json-tests_test_lib",
+    "//json/backend/tests:tests_test_lib",
     "//platform/indexing-impl",
     "//platform/editor-ui-ex:editor-ex",
     "@lib//:stream_ex",

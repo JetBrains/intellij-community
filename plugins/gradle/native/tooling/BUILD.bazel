@@ -9,13 +9,13 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "gradle-native-tooling_resources",
+  name = "tooling_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "gradle-native-tooling",
+  name = "tooling",
   module_name = "intellij.gradle.native.tooling",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -27,7 +27,7 @@ jvm_library(
     "@lib//:gradle",
     "//platform/object-serializer:objectSerializer-annotations",
   ],
-  runtime_deps = [":gradle-native-tooling_resources"]
+  runtime_deps = [":tooling_resources"]
 )
 ### auto-generated section `build intellij.gradle.native.tooling` end
 
@@ -42,7 +42,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:junit4",
-    "//plugins/gradle/native/tooling:gradle-native-tooling",
+    "//plugins/gradle/native/tooling",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
     "//platform/object-serializer:objectSerializer",
     "//platform/object-serializer:objectSerializer_test_lib",

@@ -3,12 +3,12 @@ load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
-  name = "kotlin-uast-uast-kotlin-idea-base-tests",
+  name = "tests",
   visibility = ["//visibility:public"]
 )
 
 jvm_library(
-  name = "kotlin-uast-uast-kotlin-idea-base-tests_test_lib",
+  name = "tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
@@ -18,18 +18,18 @@ jvm_library(
     "//uast/uast-common:uast",
     "//uast/testFramework",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
-    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/testFramework",
     "@lib//:kotlinc-kotlin-compiler-tests",
-    "//plugins/kotlin/uast/uast-kotlin-idea-base:kotlin-uast-uast-kotlin-idea-base",
+    "//plugins/kotlin/uast/uast-kotlin-idea-base",
   ]
 )
 
 jvm_test(
-  name = "kotlin-uast-uast-kotlin-idea-base-tests_test",
-  runtime_deps = [":kotlin-uast-uast-kotlin-idea-base-tests_test_lib"]
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
 )
 ### auto-generated section `build kotlin.uast.uast-kotlin-idea-base.tests` end

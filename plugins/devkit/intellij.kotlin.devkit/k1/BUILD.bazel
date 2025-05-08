@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
-  name = "kotlin-devkit-k1_resources",
+  name = "k1_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-devkit-k1",
+  name = "k1",
   module_name = "intellij.kotlin.devkit.k1",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -20,19 +20,19 @@ jvm_library(
     "//platform/lang-impl",
     "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit",
     "//plugins/kotlin/idea",
-    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
-    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/base/fe10/analysis",
     "//plugins/devkit/devkit-core:core",
-    "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
+    "//plugins/kotlin/code-insight/api",
   ],
-  runtime_deps = [":kotlin-devkit-k1_resources"]
+  runtime_deps = [":k1_resources"]
 )
 
 jvm_library(
-  name = "kotlin-devkit-k1_test_lib",
+  name = "k1_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
-  associates = [":kotlin-devkit-k1"],
+  associates = [":k1"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common-provided",
@@ -41,26 +41,26 @@ jvm_library(
     "//platform/lang-impl",
     "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit",
     "//plugins/kotlin/idea",
-    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
-    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight_test_lib",
-    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/base/code-insight:code-insight_test_lib",
+    "//plugins/kotlin/base/fe10/analysis",
     "//plugins/devkit/devkit-kotlin-tests:kotlin-tests_test_lib",
     "//plugins/devkit/devkit-tests:testFramework_test_lib",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
-    "//plugins/kotlin/plugin/k1:kotlin-plugin-k1",
+    "//plugins/kotlin/plugin/k1",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/devkit/devkit-core:core",
-    "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
+    "//plugins/kotlin/code-insight/api",
   ],
-  runtime_deps = [":kotlin-devkit-k1_resources"]
+  runtime_deps = [":k1_resources"]
 )
 
 jvm_test(
-  name = "kotlin-devkit-k1_test",
-  runtime_deps = [":kotlin-devkit-k1_test_lib"]
+  name = "k1_test",
+  runtime_deps = [":k1_test_lib"]
 )
 ### auto-generated section `build intellij.kotlin.devkit.k1` end

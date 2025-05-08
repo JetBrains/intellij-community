@@ -19,7 +19,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//platform/external-system-rt:externalSystem-rt",
     "@lib//:kotlin-stdlib",
-    "//platform/observable:ide-observable",
+    "//platform/observable",
     "//platform/util/jdom",
     "//platform/object-serializer:objectSerializer",
     "//platform/object-serializer:objectSerializer-annotations",

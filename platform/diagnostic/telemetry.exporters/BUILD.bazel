@@ -8,13 +8,13 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "telemetry-exporters_resources",
+  name = "telemetry.exporters_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "telemetry-exporters",
+  name = "telemetry.exporters",
   module_name = "intellij.platform.diagnostic.telemetry.exporters",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -35,6 +35,6 @@ jvm_library(
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-protobuf",
   ],
-  runtime_deps = [":telemetry-exporters_resources"]
+  runtime_deps = [":telemetry.exporters_resources"]
 )
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.exporters` end

@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "kotlin-compiler-plugins-kapt_resources",
+  name = "kapt_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-compiler-plugins-kapt",
+  name = "kapt",
   module_name = "kotlin.compiler-plugins.kapt",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -16,12 +16,12 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-jps-common",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
-    "//plugins/kotlin/gradle/gradle-java:kotlin-gradle-gradle-java",
-    "//plugins/kotlin/gradle/gradle-tooling/impl:kotlin-gradle-gradle-tooling-impl",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/gradle/gradle-java",
+    "//plugins/kotlin/gradle/gradle-tooling/impl",
     "//platform/lang-api:lang",
     "//plugins/gradle:gradle-common",
   ],
-  runtime_deps = [":kotlin-compiler-plugins-kapt_resources"]
+  runtime_deps = [":kapt_resources"]
 )
 ### auto-generated section `build kotlin.compiler-plugins.kapt` end

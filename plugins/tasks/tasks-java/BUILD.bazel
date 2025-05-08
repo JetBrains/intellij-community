@@ -10,7 +10,7 @@ jvm_library(
     "//plugins/tasks/tasks-api:tasks",
     "//platform/platform-api:ide",
     "//java/debugger/openapi:java-debugger",
-    "//java/debugger/impl:java-debugger-impl",
+    "//java/debugger/impl",
     "//platform/tasks-platform-api:tasks",
     "//platform/util/jdom",
     "//platform/tasks-platform-impl:tasks-impl",

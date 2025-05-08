@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
-  name = "kotlin-project-wizard-core_resources",
+  name = "core_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-project-wizard-core",
+  name = "core",
   module_name = "kotlin.project-wizard.core",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "generated/**/*.kt", "generated/**/*.java"], allow_empty = True),
@@ -16,12 +16,12 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-reflect",
     "@lib//:kotlinx-collections-immutable",
-    "//platform/observable:ide-observable",
+    "//platform/observable",
     "@lib//:velocity",
     "@lib//:gson",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/frontend-agnostic",
     "//platform/core-api:core",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//platform/editor-ui-api:editor-ui",
     "@lib//:slf4j-api",
@@ -34,31 +34,31 @@ jvm_library(
     "//java/java-psi-api:psi",
     "//java/java-impl:impl",
     "//plugins/kotlin/project-configuration",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/project-structure",
     "@lib//:kotlinc-kotlin-jps-plugin-classpath",
   ],
-  runtime_deps = [":kotlin-project-wizard-core_resources"]
+  runtime_deps = [":core_resources"]
 )
 
 jvm_library(
-  name = "kotlin-project-wizard-core_test_lib",
+  name = "core_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
-  associates = [":kotlin-project-wizard-core"],
+  associates = [":core"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-reflect",
     "@lib//:kotlinx-collections-immutable",
-    "//platform/observable:ide-observable",
+    "//platform/observable",
     "@lib//:velocity",
     "@lib//:gson",
     "@lib//:junit4",
     "@lib//:kotlin-test-junit",
     "@lib//:kotlin-test",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/frontend-agnostic",
     "//platform/core-api:core",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//platform/editor-ui-api:editor-ui",
     "@lib//:slf4j-api",
@@ -72,15 +72,15 @@ jvm_library(
     "//java/java-psi-api:psi",
     "//java/java-impl:impl",
     "//plugins/kotlin/project-configuration",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure_test_lib",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
     "@lib//:kotlinc-kotlin-jps-plugin-classpath",
   ],
-  runtime_deps = [":kotlin-project-wizard-core_resources"]
+  runtime_deps = [":core_resources"]
 )
 
 jvm_test(
-  name = "kotlin-project-wizard-core_test",
-  runtime_deps = [":kotlin-project-wizard-core_test_lib"]
+  name = "core_test",
+  runtime_deps = [":core_test_lib"]
 )
 ### auto-generated section `build kotlin.project-wizard.core` end

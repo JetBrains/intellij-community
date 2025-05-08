@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "markdown-frontend_resources",
+  name = "frontend_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "markdown-frontend",
+  name = "frontend",
   module_name = "intellij.markdown.frontend",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -21,10 +21,10 @@ jvm_library(
     "//platform/platform-util-netty:ide-util-netty",
     "//platform/util:util-ui",
     "//platform/kernel/shared:kernel",
-    "//platform/platform-impl/rpc:ide-rpc",
+    "//platform/platform-impl/rpc",
     "//platform/platform-impl:ide-impl",
   ],
   exports = ["//plugins/markdown/core:markdown"],
-  runtime_deps = [":markdown-frontend_resources"]
+  runtime_deps = [":frontend_resources"]
 )
 ### auto-generated section `build intellij.markdown.frontend` end

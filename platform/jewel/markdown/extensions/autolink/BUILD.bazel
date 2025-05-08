@@ -14,13 +14,13 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "jewel-markdown-extensions-autolink_resources",
+  name = "autolink_resources",
   files = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
 jvm_library(
-  name = "jewel-markdown-extensions-autolink",
+  name = "autolink",
   module_name = "intellij.platform.jewel.markdown.extensions.autolink",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
@@ -29,28 +29,28 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jetbrains-annotations",
-    "//platform/jewel/markdown/core:jewel-markdown-core",
+    "//platform/jewel/markdown/core",
     "//platform/jewel/ui",
     "//platform/jewel/foundation",
     "@lib//:platform-jewel-markdown-extensions-autolink-commonmark-ext-autolink",
     "//libraries/compose-foundation-desktop",
   ],
-  runtime_deps = [":jewel-markdown-extensions-autolink_resources"],
+  runtime_deps = [":autolink_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
 
 jvm_library(
-  name = "jewel-markdown-extensions-autolink_test_lib",
+  name = "autolink_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
-  associates = [":jewel-markdown-extensions-autolink"],
+  associates = [":autolink"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jetbrains-annotations",
-    "//platform/jewel/markdown/core:jewel-markdown-core",
-    "//platform/jewel/markdown/core:jewel-markdown-core_test_lib",
+    "//platform/jewel/markdown/core",
+    "//platform/jewel/markdown/core:core_test_lib",
     "//platform/jewel/ui",
     "//platform/jewel/ui:ui_test_lib",
     "//platform/jewel/foundation",
@@ -59,12 +59,12 @@ jvm_library(
     "//libraries/compose-foundation-desktop",
     "//libraries/compose-foundation-desktop-junit",
   ],
-  runtime_deps = [":jewel-markdown-extensions-autolink_resources"],
+  runtime_deps = [":autolink_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
 
 jvm_test(
-  name = "jewel-markdown-extensions-autolink_test",
-  runtime_deps = [":jewel-markdown-extensions-autolink_test_lib"]
+  name = "autolink_test",
+  runtime_deps = [":autolink_test_lib"]
 )
 ### auto-generated section `build intellij.platform.jewel.markdown.extensions.autolink` end

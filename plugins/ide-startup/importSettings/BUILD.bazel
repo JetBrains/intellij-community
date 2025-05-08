@@ -2,23 +2,23 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
-  name = "ide-startup-importSettings_resources",
+  name = "importSettings_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "ide-startup-importSettings",
+  name = "importSettings",
   module_name = "intellij.ide.startup.importSettings",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl/bootstrap:ide-bootstrap",
+    "//platform/platform-impl/bootstrap",
     "//platform/core-ui",
     "//platform/ide-core-impl",
-    "//platform/ide-core/plugins:ide-core-plugins",
+    "//platform/ide-core/plugins",
     "@lib//:rd-core",
     "@lib//:rd-swing",
     "//platform/rd-platform-community:rd-community",
@@ -30,7 +30,7 @@ jvm_library(
     "//platform/statistics",
     "@lib//:jackson-databind",
     "@lib//:jackson",
-    "//platform/observable:ide-observable",
+    "//platform/observable",
     "@lib//:miglayout-swing",
     "@lib//:kotlinx-serialization-json",
     "@lib//:kotlinx-serialization-core",
@@ -40,25 +40,25 @@ jvm_library(
     "//platform/util:util-ui",
     "//platform/lang-impl",
     "//platform/util/progress",
-    "//platform/platform-impl/ui:ide-ui",
-    "//platform/plugins/parser/impl:plugins-parser-impl",
+    "//platform/platform-impl/ui",
+    "//platform/plugins/parser/impl",
   ],
-  runtime_deps = [":ide-startup-importSettings_resources"]
+  runtime_deps = [":importSettings_resources"]
 )
 
 jvm_library(
-  name = "ide-startup-importSettings_test_lib",
+  name = "importSettings_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
-  associates = [":ide-startup-importSettings"],
+  associates = [":importSettings"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
-    "//platform/platform-impl/bootstrap:ide-bootstrap",
+    "//platform/platform-impl/bootstrap",
     "//platform/core-ui",
     "//platform/ide-core-impl",
-    "//platform/ide-core/plugins:ide-core-plugins",
+    "//platform/ide-core/plugins",
     "@lib//:rd-core",
     "@lib//:rd-swing",
     "//platform/rd-platform-community:rd-community",
@@ -72,7 +72,7 @@ jvm_library(
     "//platform/statistics:statistics_test_lib",
     "@lib//:jackson-databind",
     "@lib//:jackson",
-    "//platform/observable:ide-observable",
+    "//platform/observable",
     "@lib//:miglayout-swing",
     "@lib//:kotlinx-serialization-json",
     "@lib//:kotlinx-serialization-core",
@@ -86,14 +86,14 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/lang-impl",
     "//platform/util/progress",
-    "//platform/platform-impl/ui:ide-ui",
-    "//platform/plugins/parser/impl:plugins-parser-impl",
+    "//platform/platform-impl/ui",
+    "//platform/plugins/parser/impl",
   ],
-  runtime_deps = [":ide-startup-importSettings_resources"]
+  runtime_deps = [":importSettings_resources"]
 )
 
 jvm_test(
-  name = "ide-startup-importSettings_test",
-  runtime_deps = [":ide-startup-importSettings_test_lib"]
+  name = "importSettings_test",
+  runtime_deps = [":importSettings_test_lib"]
 )
 ### auto-generated section `build intellij.ide.startup.importSettings` end

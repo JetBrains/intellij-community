@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "markdown-frontmatter-yaml_resources",
+  name = "yaml_resources",
   files = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
 jvm_library(
-  name = "markdown-frontmatter-yaml",
+  name = "yaml",
   module_name = "intellij.markdown.frontmatter.yaml",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
@@ -21,6 +21,6 @@ jvm_library(
     "//plugins/yaml",
     "//platform/backend",
   ],
-  runtime_deps = [":markdown-frontmatter-yaml_resources"]
+  runtime_deps = [":yaml_resources"]
 )
 ### auto-generated section `build intellij.markdown.frontmatter.yaml` end

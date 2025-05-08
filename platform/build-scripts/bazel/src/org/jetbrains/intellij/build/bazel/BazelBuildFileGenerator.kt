@@ -276,7 +276,7 @@ internal class BazelBuildFileGenerator(
     }
   }
 
-  fun getBazelDependencyLabel(module: ModuleDescriptor, dependent: ModuleDescriptor): String? {
+  fun getBazelDependencyLabel(module: ModuleDescriptor, dependent: ModuleDescriptor): String {
     if (module.module.name == "intellij.idea.community.build.zip") {
       return "@rules_jvm//zip"
     }
@@ -377,12 +377,9 @@ internal class BazelBuildFileGenerator(
           load("@rules_jvm//:jvm.bzl", "jvm_provided_library")
 
           val extraDeps = mutableListOf<String>()
+          val labelToName = getUniqueSegmentName(deps.provided)
           for (label in deps.provided) {
-            var n = label.substringAfterLast(':').substringAfterLast('/')
-            if (n == "core" || n == "psi") {
-              n = label.substringAfter("//").substringBeforeLast(':').split('/').get(1) + "-" + n
-            }
-            val name = n + "_provided"
+            val name = labelToName.get(label) + "_provided"
             extraDeps.add(":$name")
             target("jvm_provided_library") {
               option("name", name)
@@ -720,12 +717,17 @@ private fun jpsModuleNameToBazelBuildName(module: JpsModule, baseBuildDir: Path,
     return "zip"
   }
 
+  val baseDirFilename = baseBuildDir.fileName.toString()
+  if (baseDirFilename != "resources" && module.name.endsWith(".$baseDirFilename")) {
+    return baseDirFilename
+  }
+
   val result = module.name
     .removePrefix("intellij.platform.")
     .removePrefix("intellij.idea.community.")
     .removePrefix("intellij.")
 
-  val parentDirDirName = if (baseBuildDir.parent == projectDir) "idea"  else baseBuildDir.parent.fileName
+  val parentDirDirName = if (baseBuildDir.parent == projectDir) "idea" else baseBuildDir.parent.fileName
   return result
     .removePrefix("$parentDirDirName.")
     .replace('.', '-')
@@ -844,5 +846,59 @@ private fun renderDeps(
   }
   if (deps != null && deps.plugins.isNotEmpty()) {
     target.option("plugins", deps.plugins)
+  }
+}
+
+private fun getUniqueSegmentName(labels: List<String>): Map<String, String> {
+  // first try with just last segments
+  val lastSegments = labels.associateWith { path ->
+    path.splitToSequence('/').last().substringAfter(':').replace('.', '-')
+  }
+
+  // find which names have collisions
+  val nameCount = lastSegments.values.groupingBy { it }.eachCount()
+  if (nameCount.none { it.value > 1 }) {
+    return lastSegments
+  }
+
+  // for paths with colliding names, try using more segments
+  val result = LinkedHashMap<String, String>()
+  var segmentDepth = 2
+
+  while (true) {
+    result.clear()
+    for (label in labels) {
+      val segments = label.splitToSequence('/')
+        .map { it.substringAfter(':').replace('.', '-') }
+        .filter { it.isNotEmpty() }
+        .toList()
+      if (segments.isEmpty()) {
+        continue
+      }
+
+      val lastSegment = segments.last()
+
+      // if this last segment has collisions, use more segments
+      if ((nameCount[lastSegment] ?: 0) > 1) {
+        val relevantSegments = segments.takeLast(minOf(segmentDepth, segments.size))
+        result.put(label, relevantSegments.joinToString("-"))
+      }
+      else {
+        // no collision - use just the last segment
+        result.put(label, lastSegment.replace('.', '-'))
+      }
+    }
+
+    // check if we resolved all collisions
+    val newNameCount = result.values.groupingBy { it }.eachCount()
+    if (newNameCount.none { it.value > 1 }) {
+      return result
+    }
+
+    segmentDepth++
+    // safety check to prevent infinite loop
+    if (segmentDepth > 5) {
+      throw IllegalStateException("Unable to resolve unique names after trying 5 segment levels")
+    }
   }
 }

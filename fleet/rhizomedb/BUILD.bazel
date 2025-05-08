@@ -18,8 +18,8 @@ jvm_library(
   srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   kotlinc_opts = ":custom",
   deps = [
-    "//fleet/util/core:fleet-util-core",
-    "//fleet/multiplatform.shims:multiplatform-shims",
+    "//fleet/util/core",
+    "//fleet/multiplatform.shims",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-collections-immutable",
     "@lib//:jetbrains-annotations",

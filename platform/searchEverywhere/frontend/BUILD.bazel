@@ -27,7 +27,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/lang-api:lang",
     "//platform/core-impl",
-    "//platform/platform-impl/rpc:ide-rpc",
+    "//platform/platform-impl/rpc",
     "//platform/lang-impl",
     "//platform/usageView",
   ],

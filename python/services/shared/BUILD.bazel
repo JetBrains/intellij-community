@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "python-community-services-shared_resources",
+  name = "shared_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "python-community-services-shared",
+  name = "shared",
   module_name = "intellij.python.community.services.shared",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -18,6 +18,6 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//platform/eel-provider",
   ],
-  runtime_deps = [":python-community-services-shared_resources"]
+  runtime_deps = [":shared_resources"]
 )
 ### auto-generated section `build intellij.python.community.services.shared` end

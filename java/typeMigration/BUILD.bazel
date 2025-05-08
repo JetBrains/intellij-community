@@ -21,7 +21,7 @@ jvm_library(
     "//java/java-impl:impl",
     "//java/structuralsearch-java:structuralSearch",
     "//java/java-impl-refactorings:impl-refactorings",
-    "//java/codeserver/highlighting:java-codeserver-highlighting",
+    "//java/codeserver/highlighting",
   ],
   runtime_deps = [":typeMigration_resources"]
 )
@@ -45,7 +45,7 @@ jvm_library(
     "//java/structuralsearch-java:structuralSearch_test_lib",
     "//platform/code-style-impl:codeStyle-impl",
     "//java/java-impl-refactorings:impl-refactorings",
-    "//java/codeserver/highlighting:java-codeserver-highlighting",
+    "//java/codeserver/highlighting",
   ],
   runtime_deps = [":typeMigration_resources"]
 )

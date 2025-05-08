@@ -2,35 +2,35 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "kotlin-run-configurations-junit_resources",
+  name = "junit_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-run-configurations-junit",
+  name = "junit",
   module_name = "kotlin.run-configurations.junit",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
-    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/analysis",
     "//platform/smRunner",
-    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
-    "//plugins/kotlin/base/indices:kotlin-base-indices",
-    "//plugins/kotlin/run-configurations/jvm:kotlin-run-configurations-jvm",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/run-configurations/jvm",
     "//platform/lang-api:lang",
-    "//java/execution/impl:java-execution-impl",
+    "//java/execution/impl",
     "//java/java-analysis-impl:analysis-impl",
     "//plugins/junit",
     "//java/java-impl:impl",
-    "//plugins/kotlin/code-insight/impl-base:kotlin-code-insight-impl-base",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/code-insight/impl-base",
+    "//plugins/kotlin/base/plugin",
   ],
-  runtime_deps = [":kotlin-run-configurations-junit_resources"]
+  runtime_deps = [":junit_resources"]
 )
 ### auto-generated section `build kotlin.run-configurations.junit` end

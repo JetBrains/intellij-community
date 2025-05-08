@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "driver-model_resources",
+  name = "model_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "driver-model",
+  name = "model",
   module_name = "intellij.driver.model",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -16,6 +16,6 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
   ],
-  runtime_deps = [":driver-model_resources"]
+  runtime_deps = [":model_resources"]
 )
 ### auto-generated section `build intellij.driver.model` end

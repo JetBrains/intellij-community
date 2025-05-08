@@ -12,13 +12,13 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "kotlin-base-fir-analysis-api-platform_resources",
+  name = "analysis-api-platform_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-base-fir-analysis-api-platform",
+  name = "analysis-api-platform",
   module_name = "kotlin.base.fir.analysis-api-platform",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -31,35 +31,35 @@ jvm_library(
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-analysis-api-k2",
     "@lib//:kotlinc-low-level-api-fir",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
-    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/analysis",
     "//platform/core-impl",
     "//platform/projectModel-impl",
     "//java/java-psi-api:psi",
-    "//plugins/kotlin/base/analysis-api-platform:kotlin-base-analysis-api-platform",
+    "//plugins/kotlin/base/analysis-api-platform",
     "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
     "//java/openapi:java",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/base/facet",
     "//platform/workspace/jps",
     "//platform/backend/workspace",
     "//platform/platform-api:ide",
     "//platform/analysis-impl",
-    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/base/psi",
     "//plugins/kotlin/kotlin.searching:searching-k2",
     "//java/java-psi-impl:psi-impl",
   ],
-  runtime_deps = [":kotlin-base-fir-analysis-api-platform_resources"]
+  runtime_deps = [":analysis-api-platform_resources"]
 )
 
 jvm_library(
-  name = "kotlin-base-fir-analysis-api-platform_test_lib",
+  name = "analysis-api-platform_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
-  associates = [":kotlin-base-fir-analysis-api-platform"],
+  associates = [":analysis-api-platform"],
   deps = [
-    "//plugins/kotlin/plugin/k2:kotlin-plugin-k2",
+    "//plugins/kotlin/plugin/k2",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fir",
@@ -69,13 +69,13 @@ jvm_library(
     "@lib//:kotlinc-low-level-api-fir",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:gson",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/util:kotlin-base-util_test_lib",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure_test_lib",
-    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/base/analysis",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
-    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
@@ -83,29 +83,29 @@ jvm_library(
     "//platform/core-impl",
     "//platform/projectModel-impl",
     "//java/java-psi-api:psi",
-    "//plugins/kotlin/base/analysis-api-platform:kotlin-base-analysis-api-platform",
+    "//plugins/kotlin/base/analysis-api-platform",
     "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//java/openapi:java",
     "//platform/external-system-api:externalSystem",
     "//plugins/kotlin/project-configuration",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/base/facet",
     "//platform/workspace/jps",
     "//platform/backend/workspace",
     "//platform/platform-api:ide",
     "//platform/analysis-impl",
-    "//plugins/kotlin/base/scripting:kotlin-base-scripting",
-    "//plugins/kotlin/base/scripting:kotlin-base-scripting_test_lib",
-    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/base/scripting",
+    "//plugins/kotlin/base/scripting:scripting_test_lib",
+    "//plugins/kotlin/base/psi",
     "//plugins/kotlin/kotlin.searching:searching-k2",
     "//java/java-psi-impl:psi-impl",
   ],
-  runtime_deps = [":kotlin-base-fir-analysis-api-platform_resources"]
+  runtime_deps = [":analysis-api-platform_resources"]
 )
 
 jvm_test(
-  name = "kotlin-base-fir-analysis-api-platform_test",
-  runtime_deps = [":kotlin-base-fir-analysis-api-platform_test_lib"]
+  name = "analysis-api-platform_test",
+  runtime_deps = [":analysis-api-platform_test_lib"]
 )
 ### auto-generated section `build kotlin.base.fir.analysis-api-platform` end

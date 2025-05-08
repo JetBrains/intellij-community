@@ -2,8 +2,13 @@
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
+java_library(
+  name = "tests",
+  visibility = ["//visibility:public"]
+)
+
 jvm_library(
-  name = "runtime-product-tests_test_lib",
+  name = "tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [
@@ -11,12 +16,12 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/runtime/repository",
-    "//platform/runtime/repository/tests:runtime-repository-tests_test_lib",
+    "//platform/runtime/repository/tests:tests_test_lib",
   ]
 )
 
 jvm_test(
-  name = "runtime-product-tests_test",
-  runtime_deps = [":runtime-product-tests_test_lib"]
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
 )
 ### auto-generated section `build intellij.platform.runtime.product.tests` end

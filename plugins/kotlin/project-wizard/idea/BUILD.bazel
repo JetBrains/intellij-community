@@ -2,37 +2,37 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "kotlin-project-wizard-idea_resources",
+  name = "idea_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-project-wizard-idea",
+  name = "idea",
   module_name = "kotlin.project-wizard.idea",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-collections-immutable",
-    "//platform/observable:ide-observable",
+    "//platform/observable",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:java_compatibility",
     "//platform/platform-impl:ide-impl",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/frontend-agnostic",
     "//platform/ide-core-impl",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/compiler-configuration:kotlin-base-compiler-configuration",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
-    "//plugins/kotlin/base/statistics:kotlin-base-statistics",
-    "//plugins/kotlin/base/external-build-system:kotlin-base-external-build-system",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/statistics",
+    "//plugins/kotlin/base/external-build-system",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//plugins/kotlin/project-configuration",
     "//plugins/kotlin/formatter",
-    "//plugins/kotlin/project-wizard/core:kotlin-project-wizard-core",
+    "//plugins/kotlin/project-wizard/core",
     "//platform/core-ui",
     "//platform/lang-impl",
     "//platform/vcs-impl",
@@ -43,10 +43,10 @@ jvm_library(
     "//java/idea-ui:ui",
     "@lib//:kotlinx-coroutines-core",
     "//plugins/gradle:gradle-common",
-    "//plugins/kotlin/base/indices:kotlin-base-indices",
+    "//plugins/kotlin/base/indices",
     "//platform/platform-api:ide",
-    "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
+    "//plugins/kotlin/code-insight/api",
   ],
-  runtime_deps = [":kotlin-project-wizard-idea_resources"]
+  runtime_deps = [":idea_resources"]
 )
 ### auto-generated section `build kotlin.project-wizard.idea` end

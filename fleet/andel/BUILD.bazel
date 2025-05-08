@@ -17,7 +17,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-collections-immutable",
     "@lib//:jetbrains-annotations",
-    "//fleet/util/core:fleet-util-core",
+    "//fleet/util/core",
     "@lib//:fastutil-min",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",

@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "searchEverywhereMl-ranking-yaml_resources",
+  name = "yaml_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "searchEverywhereMl-ranking-yaml",
+  name = "yaml",
   module_name = "intellij.searchEverywhereMl.ranking.yaml",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -19,8 +19,8 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
-    "//plugins/search-everywhere-ml/ranking/core:searchEverywhereMl-ranking-core",
+    "//plugins/search-everywhere-ml/ranking/core",
   ],
-  runtime_deps = [":searchEverywhereMl-ranking-yaml_resources"]
+  runtime_deps = [":yaml_resources"]
 )
 ### auto-generated section `build intellij.searchEverywhereMl.ranking.yaml` end

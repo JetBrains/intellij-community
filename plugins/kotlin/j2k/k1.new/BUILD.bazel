@@ -9,7 +9,7 @@ create_kotlinc_options(
 )
 
 jvm_library(
-  name = "kotlin-j2k-k1-new",
+  name = "k1.new",
   module_name = "kotlin.j2k.k1.new",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -20,18 +20,18 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-analysis-api",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/psi:kotlin-base-psi",
-    "//plugins/kotlin/base/indices:kotlin-base-indices",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/base/project-structure",
     "//java/java-impl:impl",
-    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
-    "//plugins/kotlin/base/fe10/code-insight:kotlin-base-fe10-code-insight",
+    "//plugins/kotlin/base/fe10/analysis",
+    "//plugins/kotlin/base/fe10/code-insight",
     "//plugins/kotlin/core",
-    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/j2k/shared:kotlin-j2k-shared",
-    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/j2k/shared",
+    "//plugins/kotlin/base/code-insight",
     "//plugins/kotlin/idea",
   ]
 )

@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "ide-bootstrap",
+  name = "bootstrap",
   module_name = "intellij.platform.ide.bootstrap",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -29,15 +29,15 @@ jvm_library(
     "//platform/lvcs-api:lvcs",
     "//platform/util/coroutines",
     "//platform/indexing-api:indexing",
-    "//platform/platform-impl/ui:ide-ui",
-    "//platform/platform-impl/bootstrap/eel:ide-bootstrap-eel",
+    "//platform/platform-impl/ui",
+    "//platform/platform-impl/bootstrap/eel",
     "//fleet/kernel",
     "@lib//:jna",
     "@lib//:hash4j",
     "@lib//:jbr-api",
     "@lib//:googlecode-plist-dd",
     "@lib//:netty-codec-http",
-    "//platform/platform-impl/bootstrap/kernel:ide-bootstrap-kernel",
+    "//platform/platform-impl/bootstrap/kernel",
     "//platform/platform-impl/eel:ide-impl-wsl",
   ]
 )

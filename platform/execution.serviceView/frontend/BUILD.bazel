@@ -15,7 +15,7 @@ java_library(
     ":frontend_resources",
     "@lib//:kotlin-stdlib",
     "//platform/lang-impl",
-    "//platform/execution.serviceView:execution-serviceView",
+    "//platform/execution.serviceView",
     "//platform/core-ui",
   ]
 )

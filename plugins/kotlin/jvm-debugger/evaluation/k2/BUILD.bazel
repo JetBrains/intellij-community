@@ -2,32 +2,32 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "kotlin-jvm-debugger-evaluation-k2_resources",
+  name = "k2_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-jvm-debugger-evaluation-k2",
+  name = "k2",
   module_name = "kotlin.jvm-debugger.evaluation.k2",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//plugins/kotlin/code-insight/inspections-k2:kotlin-code-insight-inspections-k2",
-    "//java/debugger/impl:java-debugger-impl",
+    "//java/debugger/impl",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlin-stdlib",
     "//java/debugger/openapi:java-debugger",
     "//platform/analysis-impl",
     "//java/java-analysis-impl:analysis-impl",
-    "//plugins/kotlin/jvm-debugger/base/util:kotlin-jvm-debugger-base-util",
-    "//plugins/kotlin/jvm-debugger/evaluation:kotlin-jvm-debugger-evaluation",
+    "//plugins/kotlin/jvm-debugger/base/util",
+    "//plugins/kotlin/jvm-debugger/evaluation",
     "@lib//:asm",
     "//platform/xdebugger-impl:debugger-impl",
-    "//plugins/kotlin/code-insight/impl-base:kotlin-code-insight-impl-base",
-    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/code-insight/impl-base",
+    "//plugins/kotlin/base/psi",
   ],
-  runtime_deps = [":kotlin-jvm-debugger-evaluation-k2_resources"]
+  runtime_deps = [":k2_resources"]
 )
 ### auto-generated section `build kotlin.jvm-debugger.evaluation.k2` end

@@ -9,13 +9,13 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "kotlin-injection-k2_resources",
+  name = "k2_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-injection-k2",
+  name = "k2",
   module_name = "kotlin.injection.k2",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -25,9 +25,9 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
     "//plugins/kotlin/injection/base:kotlin-base-injection",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/psi:kotlin-base-psi",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/fir",
     "//platform/lang-impl",
     "//platform/core-api:core",
@@ -35,8 +35,8 @@ jvm_library(
     "//plugins/IntelliLang:langInjection",
     "//java/java-psi-api:psi",
     "//plugins/IntelliLang/java-support:java-langInjection",
-    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+    "//plugins/kotlin/base/code-insight",
   ],
-  runtime_deps = [":kotlin-injection-k2_resources"]
+  runtime_deps = [":k2_resources"]
 )
 ### auto-generated section `build kotlin.injection.k2` end

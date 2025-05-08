@@ -8,7 +8,7 @@ create_kotlinc_options(
 )
 
 jvm_library(
-  name = "buildScripts-testFramework",
+  name = "testFramework",
   module_name = "intellij.platform.buildScripts.testFramework",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -36,8 +36,8 @@ jvm_library(
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
     "@lib//:kaml",
-    "//platform/build-scripts/downloader:buildScripts-downloader",
-    "//tools/reproducibleBuilds.diff:reproducibleBuilds-diff",
+    "//platform/build-scripts/downloader",
+    "//tools/reproducibleBuilds.diff",
     "//jps/jps-builders:build",
     "//platform/runtime/product",
     "@lib//:devkit-runtime-module-repository-jps",

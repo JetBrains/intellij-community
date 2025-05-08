@@ -17,7 +17,7 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/tracing:tracing-rt",
     "//platform/lang-api:lang",
-    "//java/compiler/impl:java-compiler-impl",
+    "//java/compiler/impl",
   ],
   runtime_deps = [":tracing-ide_resources"]
 )

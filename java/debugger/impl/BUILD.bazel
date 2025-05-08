@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "java-debugger-impl_resources",
+  name = "impl_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "java-debugger-impl",
+  name = "impl",
   module_name = "intellij.java.debugger.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -20,7 +20,7 @@ jvm_library(
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/lang-api:lang",
     "//java/compiler/openapi:java-compiler",
-    "//java/compiler/impl:java-compiler-impl",
+    "//java/compiler/impl",
     "//java/java-runtime:rt",
     "//platform/ide-core-impl",
     "//java/jsp-openapi:jsp",
@@ -41,7 +41,7 @@ jvm_library(
     "@lib//:gson",
     "@lib//:asm",
     "//platform/util/jdom",
-    "//platform/build-scripts/downloader:buildScripts-downloader",
+    "//platform/build-scripts/downloader",
     "//platform/feedback",
     "//platform/util/progress",
     "@lib//:kotlinx-datetime-jvm",
@@ -49,10 +49,10 @@ jvm_library(
     "@lib//:kotlinx-serialization-json",
     "//platform/util/coroutines",
     "//platform/threadDumpParser",
-    "//java/debugger/shared:java-debugger-impl-shared",
+    "//java/debugger/shared",
     "//platform/eel-provider",
-    "//java/codeserver/highlighting:java-codeserver-highlighting",
+    "//java/codeserver/highlighting",
   ],
-  runtime_deps = [":java-debugger-impl_resources"]
+  runtime_deps = [":impl_resources"]
 )
 ### auto-generated section `build intellij.java.debugger.impl` end

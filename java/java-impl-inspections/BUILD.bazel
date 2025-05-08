@@ -22,8 +22,8 @@ jvm_library(
     "//platform/backend/workspace",
     "//platform/core-ui",
     "//platform/util/text-matching",
-    "//java/codeserver/highlighting:java-codeserver-highlighting",
-    "//java/codeserver/core:java-codeserver-core",
+    "//java/codeserver/highlighting",
+    "//java/codeserver/core",
     "//java/java-syntax:syntax",
   ]
 )

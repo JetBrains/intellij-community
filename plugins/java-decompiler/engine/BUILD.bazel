@@ -2,35 +2,35 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
-  name = "java-decompiler-engine_resources",
+  name = "engine_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "java-decompiler-engine",
+  name = "engine",
   module_name = "intellij.java.decompiler.engine",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = ["@lib//:jetbrains-annotations"],
-  runtime_deps = [":java-decompiler-engine_resources"]
+  runtime_deps = [":engine_resources"]
 )
 
 jvm_library(
-  name = "java-decompiler-engine_test_lib",
+  name = "engine_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
-  associates = [":java-decompiler-engine"],
+  associates = [":engine"],
   deps = [
     "@lib//:junit4",
     "@lib//:assert_j",
     "@lib//:jetbrains-annotations",
   ],
-  runtime_deps = [":java-decompiler-engine_resources"]
+  runtime_deps = [":engine_resources"]
 )
 
 jvm_test(
-  name = "java-decompiler-engine_test",
-  runtime_deps = [":java-decompiler-engine_test_lib"]
+  name = "engine_test",
+  runtime_deps = [":engine_test_lib"]
 )
 ### auto-generated section `build intellij.java.decompiler.engine` end

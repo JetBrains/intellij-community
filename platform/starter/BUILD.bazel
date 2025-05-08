@@ -9,7 +9,7 @@ jvm_library(
   deps = [
     "//platform/platform-impl:ide-impl",
     "//platform/core-impl",
-    "//platform/platform-impl/bootstrap:ide-bootstrap",
+    "//platform/platform-impl/bootstrap",
     "//platform/bootstrap",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlin-stdlib",

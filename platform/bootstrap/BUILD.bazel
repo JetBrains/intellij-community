@@ -13,7 +13,7 @@ jvm_library(
     "//platform/service-container:serviceContainer",
     "//platform/core-impl",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl/bootstrap:ide-bootstrap",
+    "//platform/platform-impl/bootstrap",
     "//platform/boot",
     "//platform/ide-core-impl",
     "@lib//:jbr-api",
@@ -21,7 +21,7 @@ jvm_library(
     "//platform/diagnostic",
     "//platform/runtime/repository",
     "//platform/diagnostic/telemetry-impl",
-    "//platform/plugins/parser/impl:plugins-parser-impl",
+    "//platform/plugins/parser/impl",
   ],
   runtime_deps = ["//platform/bootstrap/coroutine"]
 )

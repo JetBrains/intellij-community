@@ -2,21 +2,21 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "driver-client_resources",
+  name = "client_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "driver-client",
+  name = "client",
   module_name = "intellij.driver.client",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
-    "//platform/remote-driver/model:driver-model",
+    "//platform/remote-driver/model",
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
   ],
-  runtime_deps = [":driver-client_resources"]
+  runtime_deps = [":client_resources"]
 )
 ### auto-generated section `build intellij.driver.client` end

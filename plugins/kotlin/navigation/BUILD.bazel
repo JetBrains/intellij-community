@@ -26,7 +26,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//platform/core-api:core",
-    "//plugins/kotlin/base/indices:kotlin-base-indices",
+    "//plugins/kotlin/base/indices",
     "//platform/core-impl",
     "//java/java-psi-api:psi",
     "//platform/util",
@@ -34,7 +34,7 @@ jvm_library(
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-analysis-api-platform-interface",
     "//platform/analysis-api:analysis",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/project-structure",
   ],
   runtime_deps = [":navigation_resources"]
 )

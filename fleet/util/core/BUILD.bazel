@@ -8,12 +8,12 @@ create_kotlinc_options(
 )
 
 jvm_provided_library(
-  name = "fleet-util-multiplatform_provided",
-  lib = "//fleet/util/multiplatform:fleet-util-multiplatform"
+  name = "multiplatform_provided",
+  lib = "//fleet/util/multiplatform"
 )
 
 jvm_library(
-  name = "fleet-util-core",
+  name = "core",
   module_name = "fleet.util.core",
   visibility = ["//visibility:public"],
   srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcCommonMain/**/*.kt", "srcCommonMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
@@ -23,20 +23,20 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
-    "//fleet/util/logging/api:fleet-util-logging-api",
+    "//fleet/util/logging/api",
     "@lib//:kotlinx-collections-immutable",
-    "//fleet/reporting/api:fleet-reporting-api",
-    "//fleet/reporting/shared:fleet-reporting-shared",
-    "//fleet/multiplatform.shims:multiplatform-shims",
+    "//fleet/reporting/api",
+    "//fleet/reporting/shared",
+    "//fleet/multiplatform.shims",
     "//fleet/fastutil",
     "@lib//:kotlinx-datetime-jvm",
     "@lib//:de-cketti-unicode-kotlin-codepoints-jvm",
-    ":fleet-util-multiplatform_provided",
+    ":multiplatform_provided",
   ],
   exports = [
-    "//fleet/util/logging/api:fleet-util-logging-api",
+    "//fleet/util/logging/api",
     "@lib//:kotlinx-collections-immutable",
-    "//fleet/multiplatform.shims:multiplatform-shims",
+    "//fleet/multiplatform.shims",
     "//fleet/fastutil",
   ]
 )

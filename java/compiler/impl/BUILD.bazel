@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "java-compiler-impl",
+  name = "impl",
   module_name = "intellij.java.compiler.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -13,7 +13,7 @@ jvm_library(
     "//java/openapi:java",
     "//platform/platform-impl:ide-impl",
     "//java/java-runtime:rt",
-    "//platform/ide-core/plugins:ide-core-plugins",
+    "//platform/ide-core/plugins",
     "//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
     "//platform/vcs-api:vcs",
     "//platform/platform-api:ide",

@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
-  name = "vcs-log-impl_resources",
+  name = "impl_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "vcs-log-impl",
+  name = "impl",
   module_name = "intellij.platform.vcs.log.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
@@ -42,18 +42,18 @@ jvm_library(
     "//platform/diagnostic/telemetry-impl",
     "//platform/backend/observation",
     "//platform/util/coroutines",
-    "//platform/util/storages:io-storages",
-    "//platform/vcs-impl/shared:vcs-impl-shared",
+    "//platform/util/storages",
+    "//platform/vcs-impl/shared",
     "//platform/bookmarks",
   ],
-  runtime_deps = [":vcs-log-impl_resources"]
+  runtime_deps = [":impl_resources"]
 )
 
 jvm_library(
-  name = "vcs-log-impl_test_lib",
+  name = "impl_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
-  associates = [":vcs-log-impl"],
+  associates = [":impl"],
   deps = [
     "//platform/core-api:core",
     "//platform/vcs-log/api:vcs-log",
@@ -97,16 +97,16 @@ jvm_library(
     "//platform/backend/observation",
     "//platform/backend/observation:observation_test_lib",
     "//platform/util/coroutines",
-    "//platform/util/storages:io-storages",
-    "//platform/vcs-impl/shared:vcs-impl-shared",
+    "//platform/util/storages",
+    "//platform/vcs-impl/shared",
     "@lib//:mockito",
     "//platform/bookmarks",
   ],
-  runtime_deps = [":vcs-log-impl_resources"]
+  runtime_deps = [":impl_resources"]
 )
 
 jvm_test(
-  name = "vcs-log-impl_test",
-  runtime_deps = [":vcs-log-impl_test_lib"]
+  name = "impl_test",
+  runtime_deps = [":impl_test_lib"]
 )
 ### auto-generated section `build intellij.platform.vcs.log.impl` end

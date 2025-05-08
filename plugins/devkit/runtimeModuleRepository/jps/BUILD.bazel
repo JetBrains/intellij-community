@@ -9,13 +9,13 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "devkit-runtimeModuleRepository-jps_resources",
+  name = "jps_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "devkit-runtimeModuleRepository-jps",
+  name = "jps",
   module_name = "intellij.devkit.runtimeModuleRepository.jps",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -29,15 +29,15 @@ jvm_library(
     "//jps/model-serialization",
     "@lib//:hash4j",
   ],
-  runtime_deps = [":devkit-runtimeModuleRepository-jps_resources"]
+  runtime_deps = [":jps_resources"]
 )
 
 jvm_library(
-  name = "devkit-runtimeModuleRepository-jps_test_lib",
+  name = "jps_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
-  associates = [":devkit-runtimeModuleRepository-jps"],
+  associates = [":jps"],
   deps = [
     "//jps/model-api:model",
     "//platform/util",
@@ -50,11 +50,11 @@ jvm_library(
     "//jps/model-serialization",
     "@lib//:hash4j",
   ],
-  runtime_deps = [":devkit-runtimeModuleRepository-jps_resources"]
+  runtime_deps = [":jps_resources"]
 )
 
 jvm_test(
-  name = "devkit-runtimeModuleRepository-jps_test",
-  runtime_deps = [":devkit-runtimeModuleRepository-jps_test_lib"]
+  name = "jps_test",
+  runtime_deps = [":jps_test_lib"]
 )
 ### auto-generated section `build intellij.devkit.runtimeModuleRepository.jps` end

@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "kotlin-compiler-plugins-compiler-plugin-support-common",
+  name = "common",
   module_name = "kotlin.compiler-plugins.compiler-plugin-support.common",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -10,13 +10,13 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-jps-common",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
-    "//plugins/kotlin/base/jps:kotlin-base-jps",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/jps",
     "//platform/lang-api:lang",
     "//platform/external-system-api:externalSystem",
-    "//plugins/kotlin/base/compiler-configuration:kotlin-base-compiler-configuration",
+    "//plugins/kotlin/base/compiler-configuration",
   ]
 )
 ### auto-generated section `build kotlin.compiler-plugins.compiler-plugin-support.common` end

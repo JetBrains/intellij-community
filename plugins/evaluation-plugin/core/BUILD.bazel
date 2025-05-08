@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "evaluationPlugin-core_resources",
+  name = "core_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "evaluationPlugin-core",
+  name = "core",
   module_name = "intellij.evaluationPlugin.core",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -29,7 +29,7 @@ jvm_library(
     "//platform/util-ex",
   ],
   runtime_deps = [
-    ":evaluationPlugin-core_resources",
+    ":core_resources",
     "//platform/backend",
   ]
 )

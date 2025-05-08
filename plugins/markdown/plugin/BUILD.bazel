@@ -7,14 +7,14 @@ java_library(
   runtime_deps = [
     "//plugins/markdown/fenceInjection",
     "//plugins/markdown/frontmatter",
-    "//plugins/markdown/frontmatter/toml:markdown-frontmatter-toml",
-    "//plugins/markdown/frontmatter/yaml:markdown-frontmatter-yaml",
+    "//plugins/markdown/frontmatter/toml",
+    "//plugins/markdown/frontmatter/yaml",
     "//plugins/markdown/images",
     "//plugins/markdown/model",
     "//plugins/markdown/spellchecker",
     "//plugins/markdown/xml",
     "//plugins/markdown/compose:compose-preview",
-    "//plugins/markdown/core/frontend:markdown-frontend",
+    "//plugins/markdown/core/frontend",
   ]
 )
 ### auto-generated section `build intellij.markdown.plugin.main` end

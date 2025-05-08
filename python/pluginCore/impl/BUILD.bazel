@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "python-community-plugin-impl_resources",
+  name = "impl_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "python-community-plugin-impl",
+  name = "impl",
   module_name = "intellij.python.community.plugin.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -22,6 +22,6 @@ jvm_library(
     "@lib//:guava",
     "//platform/core-ui",
   ],
-  runtime_deps = [":python-community-plugin-impl_resources"]
+  runtime_deps = [":impl_resources"]
 )
 ### auto-generated section `build intellij.python.community.plugin.impl` end

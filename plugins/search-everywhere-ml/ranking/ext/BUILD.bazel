@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "searchEverywhereMl-ranking-ext_resources",
+  name = "ext_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "searchEverywhereMl-ranking-ext",
+  name = "ext",
   module_name = "intellij.searchEverywhereMl.ranking.ext",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -19,6 +19,6 @@ jvm_library(
     "//platform/extensions",
     "//platform/statistics",
   ],
-  runtime_deps = [":searchEverywhereMl-ranking-ext_resources"]
+  runtime_deps = [":ext_resources"]
 )
 ### auto-generated section `build intellij.searchEverywhereMl.ranking.ext` end

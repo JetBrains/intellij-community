@@ -26,7 +26,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/util/jdom",
     "//platform/ide-core",
-    "//platform/platform-impl/rpc:ide-rpc",
+    "//platform/platform-impl/rpc",
     "//platform/project/shared:project",
     "//platform/kernel/rpc",
     "@lib//:kotlinx-coroutines-core",

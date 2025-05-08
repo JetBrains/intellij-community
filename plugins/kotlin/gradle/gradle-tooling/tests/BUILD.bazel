@@ -3,25 +3,25 @@ load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
-  name = "kotlin-gradle-gradle-tooling-tests",
+  name = "tests",
   visibility = ["//visibility:public"]
 )
 
 jvm_library(
-  name = "kotlin-gradle-gradle-tooling-tests_test_lib",
+  name = "tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   associates = [
-    "//plugins/kotlin/gradle/gradle-tooling/impl:kotlin-gradle-gradle-tooling-impl",
-    "//plugins/kotlin/gradle/gradle-tooling/impl:kotlin-gradle-gradle-tooling-impl_test_lib",
+    "//plugins/kotlin/gradle/gradle-tooling/impl",
+    "//plugins/kotlin/gradle/gradle-tooling/impl:impl_test_lib",
   ],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-project-model",
     "@lib//:kotlin-test",
     "@lib//:junit4",
-    "//plugins/kotlin/base/project-model:kotlin-base-project-model",
-    "//plugins/kotlin/gradle/gradle-tooling:kotlin-gradle-gradle-tooling",
+    "//plugins/kotlin/base/project-model",
+    "//plugins/kotlin/gradle/gradle-tooling",
     "//plugins/kotlin/tests-common",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//plugins/gradle/tooling-extension-api:toolingExtension",
@@ -32,7 +32,7 @@ jvm_library(
 )
 
 jvm_test(
-  name = "kotlin-gradle-gradle-tooling-tests_test",
-  runtime_deps = [":kotlin-gradle-gradle-tooling-tests_test_lib"]
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
 )
 ### auto-generated section `build kotlin.gradle.gradle-tooling.tests` end

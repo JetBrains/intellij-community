@@ -12,13 +12,13 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "kotlin-base-fe10-code-insight_resources",
+  name = "code-insight_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-base-fe10-code-insight",
+  name = "code-insight",
   module_name = "kotlin.base.fe10.code-insight",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -31,15 +31,15 @@ jvm_library(
     "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:kotlinc-analysis-api",
     "@lib//:guava",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/psi:kotlin-base-psi",
-    "//plugins/kotlin/base/platforms:kotlin-base-platforms",
-    "//plugins/kotlin/base/project-model:kotlin-base-project-model",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/platforms",
+    "//plugins/kotlin/base/project-model",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
-    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
-    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/base/fe10/analysis",
     "//plugins/kotlin/highlighting/highlighting-k1:kotlin-highlighting-k1",
     "//platform/core-impl",
     "//platform/analysis-api:analysis",
@@ -51,8 +51,8 @@ jvm_library(
     "//platform/util:util-ui",
     "//platform/core-ui",
     "//java/java-psi-api:psi",
-    "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
+    "//plugins/kotlin/code-insight/api",
   ],
-  runtime_deps = [":kotlin-base-fe10-code-insight_resources"]
+  runtime_deps = [":code-insight_resources"]
 )
 ### auto-generated section `build kotlin.base.fe10.code-insight` end

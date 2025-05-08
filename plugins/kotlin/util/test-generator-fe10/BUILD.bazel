@@ -3,12 +3,12 @@ load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
-  name = "kotlin-util-test-generator-fe10",
+  name = "test-generator-fe10",
   visibility = ["//visibility:public"]
 )
 
 jvm_library(
-  name = "kotlin-util-test-generator-fe10_test_lib",
+  name = "test-generator-fe10_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
@@ -19,44 +19,44 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:kotlinc-kotlin-build-common-tests",
     "@lib//:guava",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
-    "//plugins/kotlin/util/test-generator-api:kotlin-util-test-generator-api_test_lib",
-    "//plugins/kotlin/jvm-debugger/test:kotlin-jvm-debugger-test_test_lib",
-    "//plugins/kotlin/idea/tests:kotlin-idea-tests_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/util/test-generator-api:test-generator-api_test_lib",
+    "//plugins/kotlin/jvm-debugger/test:test_test_lib",
+    "//plugins/kotlin/idea/tests:tests_test_lib",
     "//plugins/kotlin/scripting-support:scripting-support_test_lib",
-    "//plugins/kotlin/maven/tests:kotlin-maven-tests_test_lib",
+    "//plugins/kotlin/maven/tests:tests_test_lib",
     "//java/testFramework",
-    "//plugins/kotlin/gradle/gradle-java/k1:kotlin-gradle-gradle-java-k1",
-    "//plugins/kotlin/gradle/gradle-java/k1:kotlin-gradle-gradle-java-k1_test_lib",
-    "//plugins/kotlin/project-wizard/cli:kotlin-project-wizard-cli",
-    "//plugins/kotlin/project-wizard/tests:kotlin-project-wizard-tests_test_lib",
-    "//plugins/kotlin/j2k/k1.new/tests:kotlin-j2k-k1-new-tests_test_lib",
+    "//plugins/kotlin/gradle/gradle-java/k1",
+    "//plugins/kotlin/gradle/gradle-java/k1:k1_test_lib",
+    "//plugins/kotlin/project-wizard/cli",
+    "//plugins/kotlin/project-wizard/tests:tests_test_lib",
+    "//plugins/kotlin/j2k/k1.new/tests:tests_test_lib",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
-    "//plugins/kotlin/compiler-plugins/kotlinx-serialization/common:kotlin-compiler-plugins-kotlinx-serialization-common",
+    "//plugins/kotlin/compiler-plugins/kotlinx-serialization/common",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/performance-tests:performance-tests_test_lib",
     "//jps/jps-builders:build",
-    "//plugins/kotlin/compiler-plugins/parcelize/tests:kotlin-compiler-plugins-parcelize-tests_test_lib",
-    "//plugins/kotlin/compiler-reference-index/tests:kotlin-compiler-reference-index-tests_test_lib",
-    "//plugins/kotlin/coverage/tests:kotlin-coverage-tests_test_lib",
-    "//plugins/kotlin/copyright/tests:kotlin-copyright-tests_test_lib",
-    "//plugins/kotlin/uast/uast-kotlin/tests:kotlin-uast-uast-kotlin-tests_test_lib",
-    "//plugins/kotlin/compiler-plugins/kotlinx-serialization/tests:kotlin-compiler-plugins-kotlinx-serialization-tests_test_lib",
-    "//plugins/kotlin/code-insight/intentions-shared/tests/k1:kotlin-code-insight-intentions-shared-tests-k1_test_lib",
-    "//plugins/kotlin/code-insight/inspections-shared/tests/k1:kotlin-code-insight-inspections-shared-tests-k1_test_lib",
+    "//plugins/kotlin/compiler-plugins/parcelize/tests:tests_test_lib",
+    "//plugins/kotlin/compiler-reference-index/tests:tests_test_lib",
+    "//plugins/kotlin/coverage/tests:tests_test_lib",
+    "//plugins/kotlin/copyright/tests:tests_test_lib",
+    "//plugins/kotlin/uast/uast-kotlin/tests:tests_test_lib",
+    "//plugins/kotlin/compiler-plugins/kotlinx-serialization/tests:tests_test_lib",
+    "//plugins/kotlin/code-insight/intentions-shared/tests/k1:k1_test_lib",
+    "//plugins/kotlin/code-insight/inspections-shared/tests/k1:k1_test_lib",
     "//plugins/kotlin/completion/tests-shared:kotlin-completion-tests-shared_test_lib",
     "//plugins/kotlin/completion/tests-k1:kotlin-completion-tests-k1_test_lib",
-    "//plugins/kotlin/compiler-plugins/parcelize/tests/k1:kotlin-compiler-plugins-parcelize-tests-k1_test_lib",
-    "//plugins/kotlin/gradle/gradle-java/tests.shared:kotlin-gradle-gradle-java-tests-shared_test_lib",
+    "//plugins/kotlin/compiler-plugins/parcelize/tests/k1:k1_test_lib",
+    "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
   ]
 )
 
 jvm_test(
-  name = "kotlin-util-test-generator-fe10_test",
-  runtime_deps = [":kotlin-util-test-generator-fe10_test_lib"]
+  name = "test-generator-fe10_test",
+  runtime_deps = [":test-generator-fe10_test_lib"]
 )
 ### auto-generated section `build kotlin.util.test-generator-fe10` end

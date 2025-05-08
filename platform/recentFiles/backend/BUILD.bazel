@@ -14,7 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/recentFiles/shared:recentFiles",
-    "//platform/kernel/rpc.backend:rpc-backend",
+    "//platform/kernel/rpc.backend",
     "//platform/project/shared:project",
     "//platform/platform-impl:ide-impl",
     "//platform/util",
@@ -29,7 +29,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "//platform/kernel/backend",
     "//platform/statistics",
-    "//platform/platform-impl/rpc:ide-rpc",
+    "//platform/platform-impl/rpc",
     "//platform/backend",
     "//platform/util/coroutines",
   ],

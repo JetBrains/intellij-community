@@ -20,7 +20,7 @@ jvm_library(
     "//platform/indexing-impl",
     "//platform/analysis-impl",
     "//platform/platform-impl:ide-impl",
-    "//platform/observable:ide-observable",
+    "//platform/observable",
     "@lib//:netty-codec-http",
     "//platform/ide-core-impl",
     "//platform/refactoring",
@@ -46,15 +46,15 @@ jvm_library(
     "//platform/diagnostic",
     "//platform/util/coroutines",
     "@lib//:caffeine",
-    "//platform/ui.jcef:ui-jcef",
+    "//platform/ui.jcef",
     "@lib//:kotlin-stdlib",
     "//platform/project/shared:project",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
     "//platform/kernel/shared:kernel",
-    "//platform/platform-impl/rpc:ide-rpc",
+    "//platform/platform-impl/rpc",
   ],
-  exports = ["//platform/ui.jcef:ui-jcef"],
+  exports = ["//platform/ui.jcef"],
   runtime_deps = [":markdown_resources"]
 )
 ### auto-generated section `build intellij.markdown` end

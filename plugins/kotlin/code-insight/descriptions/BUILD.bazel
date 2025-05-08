@@ -3,17 +3,17 @@ load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_resources")
 
 jvm_resources(
-  name = "kotlin-code-insight-descriptions_resources",
+  name = "descriptions_resources",
   files = glob(["resources-en/**/*"]),
   strip_prefix = "resources-en"
 )
 
 java_library(
-  name = "kotlin-code-insight-descriptions",
+  name = "descriptions",
   visibility = ["//visibility:public"],
   runtime_deps = [
-    ":kotlin-code-insight-descriptions_resources",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    ":descriptions_resources",
+    "//plugins/kotlin/base/frontend-agnostic",
   ]
 )
 ### auto-generated section `build kotlin.code-insight.descriptions` end

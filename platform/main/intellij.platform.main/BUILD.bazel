@@ -7,8 +7,8 @@ java_library(
   runtime_deps = [
     "//platform/bootstrap",
     "//platform/remote-servers/clouds",
-    "//platform/execution.dashboard:execution-dashboard",
-    "//platform/execution.serviceView:execution-serviceView",
+    "//platform/execution.dashboard",
+    "//platform/execution.serviceView",
     "//platform/kernel/shared:kernel",
     "//platform/platform-impl/ui-inspector:ide-ui-inspector",
     "//platform/inline-completion/shared:inline-completion",

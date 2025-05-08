@@ -20,16 +20,16 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:guava",
     "@lib//:gson",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//java/testFramework",
-    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
     "//java/openapi:java",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/util:kotlin-base-util_test_lib",
-    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/analysis",
     "//platform/ide-core-impl",
-    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+    "//plugins/kotlin/base/fe10/analysis",
     "//plugins/kotlin/formatter",
     "//plugins/kotlin/completion/impl-shared:kotlin-completion-impl-shared",
     "//plugins/kotlin/completion/impl-k1:kotlin-completion-impl-k1",
@@ -40,12 +40,12 @@ jvm_library(
     "//platform/service-container:serviceContainer",
     "//platform/service-container:serviceContainer_test_lib",
     "//plugins/turboComplete",
-    "//plugins/turboComplete/languages/kotlin/k1:turboComplete-languages-kotlin-k1",
+    "//plugins/turboComplete/languages/kotlin/k1",
     "//platform/ml-impl",
     "//platform/ml-impl:ml-impl_test_lib",
     "@lib//:junit4",
   ],
-  runtime_deps = ["//plugins/kotlin/plugin/k1:kotlin-plugin-k1"]
+  runtime_deps = ["//plugins/kotlin/plugin/k1"]
 )
 
 jvm_test(

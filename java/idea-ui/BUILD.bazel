@@ -15,7 +15,7 @@ jvm_library(
   deps = [
     "//java/openapi:java",
     "//java/compiler/openapi:java-compiler",
-    "//java/compiler/impl:java-compiler-impl",
+    "//java/compiler/impl",
     "//platform/platform-impl:ide-impl",
     "//java/java-impl:impl",
     "//platform/ide-core-impl",
@@ -23,7 +23,7 @@ jvm_library(
     "//platform/util/progress",
     "//aether-dependency-resolver:java-aetherDependencyResolver",
     "//platform/vcs-impl",
-    "//platform/observable:ide-observable",
+    "//platform/observable",
     "//platform/diff-api:diff",
     "@lib//:guava",
     "@lib//:jna",
@@ -71,7 +71,7 @@ jvm_library(
     "//java/testFramework",
     "//aether-dependency-resolver:java-aetherDependencyResolver",
     "//aether-dependency-resolver:java-aetherDependencyResolver_test_lib",
-    "//java/execution/impl:java-execution-impl",
+    "//java/execution/impl",
     "@lib//:assert_j",
     "//platform/platform-tests:tests_test_lib",
     "//platform/core-ui",
@@ -89,8 +89,8 @@ jvm_library(
     "@lib//:kotlin-test",
     "//platform/util",
     "@lib//:ktor-server-cio",
-    "//platform/testFramework/junit5/eel:testFramework-junit5-eel",
-    "//platform/testFramework/junit5/eel:testFramework-junit5-eel_test_lib",
+    "//platform/testFramework/junit5/eel",
+    "//platform/testFramework/junit5/eel:eel_test_lib",
     "//platform/eel-provider",
   ]
 )

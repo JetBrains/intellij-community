@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "dotenv-java_resources",
+  name = "java_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "dotenv-java",
+  name = "java",
   module_name = "intellij.dotenv.java",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -22,6 +22,6 @@ jvm_library(
     "//platform/core-ui",
     "//platform/projectModel-api:projectModel",
   ],
-  runtime_deps = [":dotenv-java_resources"]
+  runtime_deps = [":java_resources"]
 )
 ### auto-generated section `build intellij.dotenv.java` end

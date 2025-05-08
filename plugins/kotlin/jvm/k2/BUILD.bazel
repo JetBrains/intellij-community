@@ -2,19 +2,19 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "kotlin-jvm-k2_resources",
+  name = "k2_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-jvm-k2",
+  name = "k2",
   module_name = "kotlin.jvm.k2",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
-    "//plugins/kotlin/jvm/shared:kotlin-jvm-shared",
+    "//plugins/kotlin/jvm/shared",
     "//platform/util:util-ui",
     "//platform/editor-ui-api:editor-ui",
     "//platform/lang-api:lang",
@@ -23,21 +23,21 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/util/coroutines",
     "//platform/diff-impl",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/scripting:kotlin-base-scripting",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/scripting",
     "//plugins/kotlin/idea",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/psi:kotlin-base-psi",
-    "//java/execution/impl:java-execution-impl",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/psi",
+    "//java/execution/impl",
     "//java/java-frontback-psi-api:frontback-psi",
     "//platform/vcs-impl",
     "//platform/platform-util-io:ide-util-io",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/project-structure",
     "//java/java-frontback-psi-impl:frontback-psi-impl",
-    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+    "//plugins/kotlin/base/code-insight",
     "//java/java-psi-impl:psi-impl",
   ],
-  runtime_deps = [":kotlin-jvm-k2_resources"]
+  runtime_deps = [":k2_resources"]
 )
 ### auto-generated section `build kotlin.jvm.k2` end

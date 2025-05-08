@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "ide-bootstrap-eel",
+  name = "eel",
   module_name = "intellij.platform.ide.bootstrap.eel",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -14,8 +14,8 @@ jvm_library(
     "//platform/eel",
     "//platform/eel-provider",
     "//platform/platform-impl:ide-impl",
-    "//platform/ijent/buildConstants:community-buildConstants",
-    "//platform/ijent/impl:community-impl",
+    "//platform/ijent/buildConstants",
+    "//platform/ijent/impl",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.bootstrap.eel` end

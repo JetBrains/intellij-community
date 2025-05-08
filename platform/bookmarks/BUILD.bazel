@@ -21,13 +21,13 @@ jvm_library(
     "//platform/project/shared:project",
     "//platform/platform-impl:ide-impl",
     "//platform/lang-api:lang",
-    "//platform/favoritesTreeView:ide-favoritesTreeView",
+    "//platform/favoritesTreeView",
     "//platform/core-ui",
     "//platform/lang-impl",
     "//platform/util/jdom",
     "//platform/editor-ui-ex:editor-ex",
   ],
-  exports = ["//platform/favoritesTreeView:ide-favoritesTreeView"],
+  exports = ["//platform/favoritesTreeView"],
   runtime_deps = [":bookmarks_resources"]
 )
 ### auto-generated section `build intellij.platform.bookmarks` end

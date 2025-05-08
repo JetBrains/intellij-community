@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 jvm_library(
-  name = "kotlin-base-util",
+  name = "util",
   module_name = "kotlin.base.util",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -11,7 +11,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:kotlinx-coroutines-core",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/frontend-agnostic",
     "//platform/platform-impl:ide-impl",
     "//platform/ide-core-impl",
     "//platform/external-system-api:externalSystem",
@@ -29,16 +29,16 @@ jvm_library(
 )
 
 jvm_library(
-  name = "kotlin-base-util_test_lib",
+  name = "util_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
-  associates = [":kotlin-base-util"],
+  associates = [":util"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:kotlinx-coroutines-core",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/frontend-agnostic",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl",
@@ -60,7 +60,7 @@ jvm_library(
 )
 
 jvm_test(
-  name = "kotlin-base-util_test",
-  runtime_deps = [":kotlin-base-util_test_lib"]
+  name = "util_test",
+  runtime_deps = [":util_test_lib"]
 )
 ### auto-generated section `build kotlin.base.util` end

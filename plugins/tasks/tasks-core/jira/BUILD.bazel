@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "tasks-jira_resources",
+  name = "jira_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "tasks-jira",
+  name = "jira",
   module_name = "intellij.tasks.jira",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
@@ -25,6 +25,6 @@ jvm_library(
     "//platform/core-ui",
     "//platform/util/jdom",
   ],
-  runtime_deps = [":tasks-jira_resources"]
+  runtime_deps = [":jira_resources"]
 )
 ### auto-generated section `build intellij.tasks.jira` end

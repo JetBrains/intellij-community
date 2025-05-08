@@ -13,9 +13,9 @@ jvm_library(
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/smRunner",
     "//java/openapi:java",
-    "//java/execution/impl:java-execution-impl",
+    "//java/execution/impl",
     "//java/testFramework",
-    "//java/codeserver/core:java-codeserver-core",
+    "//java/codeserver/core",
   ]
 )
 ### auto-generated section `build intellij.jvm.analysis.internal.testFramework` end

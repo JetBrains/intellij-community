@@ -3,24 +3,24 @@ load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 jvm_library(
-  name = "kotlin-util-test-generator-all_test_lib",
+  name = "test-generator-all_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-tests",
-    "//plugins/kotlin/util/test-generator-api:kotlin-util-test-generator-api_test_lib",
-    "//plugins/kotlin/util/test-generator-fir:kotlin-util-test-generator-fir_test_lib",
-    "//plugins/kotlin/util/test-generator-fe10:kotlin-util-test-generator-fe10_test_lib",
+    "//plugins/kotlin/util/test-generator-api:test-generator-api_test_lib",
+    "//plugins/kotlin/util/test-generator-fir:test-generator-fir_test_lib",
+    "//plugins/kotlin/util/test-generator-fe10:test-generator-fe10_test_lib",
     "@lib//:junit4",
-    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
   ]
 )
 
 jvm_test(
-  name = "kotlin-util-test-generator-all_test",
-  runtime_deps = [":kotlin-util-test-generator-all_test_lib"]
+  name = "test-generator-all_test",
+  runtime_deps = [":test-generator-all_test_lib"]
 )
 ### auto-generated section `build kotlin.util.test-generator-all` end

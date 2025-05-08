@@ -20,7 +20,7 @@ jvm_library(
     "//plugins/devkit/devkit-core:core",
     "//platform/core-ui",
     "//platform/util/text-matching",
-    "//platform/platform-impl/designer:ide-designer",
+    "//platform/platform-impl/designer",
   ],
   runtime_deps = [":uiDesigner_resources"]
 )

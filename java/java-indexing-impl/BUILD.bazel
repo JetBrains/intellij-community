@@ -23,7 +23,7 @@ jvm_library(
     "//java/java-indexing-api:indexing",
     "@lib//:kotlin-stdlib",
     "@lib//:fastutil-min",
-    "//java/codeserver/core:java-codeserver-core",
+    "//java/codeserver/core",
     "//java/java-syntax:syntax",
   ],
   exports = [

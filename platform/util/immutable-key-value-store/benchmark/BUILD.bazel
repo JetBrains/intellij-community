@@ -2,8 +2,13 @@
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
+java_library(
+  name = "benchmark",
+  visibility = ["//visibility:public"]
+)
+
 jvm_library(
-  name = "util-immutableKeyValueStore-benchmark_test_lib",
+  name = "benchmark_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
@@ -18,7 +23,7 @@ jvm_library(
 )
 
 jvm_test(
-  name = "util-immutableKeyValueStore-benchmark_test",
-  runtime_deps = [":util-immutableKeyValueStore-benchmark_test_lib"]
+  name = "benchmark_test",
+  runtime_deps = [":benchmark_test_lib"]
 )
 ### auto-generated section `build intellij.platform.util.immutableKeyValueStore.benchmark` end

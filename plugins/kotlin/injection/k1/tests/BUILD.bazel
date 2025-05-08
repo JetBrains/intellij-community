@@ -9,28 +9,28 @@ create_kotlinc_options(
 )
 
 java_library(
-  name = "kotlin-injection-tests",
+  name = "tests",
   visibility = ["//visibility:public"]
 )
 
 jvm_library(
-  name = "kotlin-injection-tests_test_lib",
+  name = "tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   deps = [
     "//plugins/kotlin/test-framework:test-framework_test_lib",
-    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/testFramework",
-    "//plugins/kotlin/injection/base/tests:kotlin-base-injection-tests_test_lib",
+    "//plugins/kotlin/injection/base/tests:tests_test_lib",
   ]
 )
 
 jvm_test(
-  name = "kotlin-injection-tests_test",
-  runtime_deps = [":kotlin-injection-tests_test_lib"]
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
 )
 ### auto-generated section `build kotlin.injection.tests` end

@@ -11,13 +11,13 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "kotlin-base-fir-scripting_resources",
+  name = "scripting_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-base-fir-scripting",
+  name = "scripting",
   module_name = "kotlin.base.fir.scripting",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -27,25 +27,25 @@ jvm_library(
     "//platform/workspace/storage",
     "//platform/backend/workspace",
     "//platform/core-api:core",
-    "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-base-fir-analysis-api-platform",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/fir/analysis-api-platform",
+    "//plugins/kotlin/base/project-structure",
     "//platform/projectModel-impl",
     "@lib//:kotlinc-analysis-api",
     "//platform/workspace/jps",
     "//java/java-impl:impl",
     "@lib//:kotlinc-analysis-api-platform-interface",
     "@lib//:kotlinc-kotlin-compiler-common",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
-    "//plugins/kotlin/base/platforms:kotlin-base-platforms",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/platforms",
     "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:kotlinc-kotlin-script-runtime",
     "@lib//:kotlinc-kotlin-scripting-common",
     "@lib//:kotlinc-kotlin-scripting-jvm",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
-    "//plugins/kotlin/base/scripting:kotlin-base-scripting",
-    "//plugins/kotlin/base/fir/project-structure:kotlin-base-fir-project-structure",
+    "//plugins/kotlin/base/scripting",
+    "//plugins/kotlin/base/fir/project-structure",
   ],
-  runtime_deps = [":kotlin-base-fir-scripting_resources"]
+  runtime_deps = [":scripting_resources"]
 )
 ### auto-generated section `build kotlin.base.fir.scripting` end

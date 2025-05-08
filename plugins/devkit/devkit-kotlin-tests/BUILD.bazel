@@ -38,10 +38,10 @@ jvm_library(
     "//platform/testRunner:testRunner_test_lib",
     "@lib//:kotlin-test",
     "//plugins/devkit/devkit-core:core",
-    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
   ],
   runtime_deps = [
     ":kotlin-tests_test_resources",

@@ -3,16 +3,16 @@ load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
-  name = "kotlin-highlighting-shared-tests",
+  name = "tests",
   visibility = ["//visibility:public"]
 )
 
 jvm_library(
-  name = "kotlin-highlighting-shared-tests_test_lib",
+  name = "tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
-    "//plugins/kotlin/idea/tests:kotlin-idea-tests_test_lib",
+    "//plugins/kotlin/idea/tests:tests_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/testFramework",
@@ -24,7 +24,7 @@ jvm_library(
 )
 
 jvm_test(
-  name = "kotlin-highlighting-shared-tests_test",
-  runtime_deps = [":kotlin-highlighting-shared-tests_test_lib"]
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
 )
 ### auto-generated section `build kotlin.highlighting.shared.tests` end

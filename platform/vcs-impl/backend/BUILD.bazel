@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "vcs-impl-backend_resources",
+  name = "backend_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "vcs-impl-backend",
+  name = "backend",
   module_name = "intellij.platform.vcs.impl.backend",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -27,13 +27,13 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/diff-impl",
     "//platform/core-ui",
-    "//platform/vcs-impl/shared:vcs-impl-shared",
+    "//platform/vcs-impl/shared",
     "//platform/project/shared:project",
     "//platform/projectModel-impl",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
   ],
   exports = ["//platform/vcs-api:vcs"],
-  runtime_deps = [":vcs-impl-backend_resources"]
+  runtime_deps = [":backend_resources"]
 )
 ### auto-generated section `build intellij.platform.vcs.impl.backend` end

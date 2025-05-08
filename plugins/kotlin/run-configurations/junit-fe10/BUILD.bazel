@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "kotlin-run-configurations-junit-fe10_resources",
+  name = "junit-fe10_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-run-configurations-junit-fe10",
+  name = "junit-fe10",
   module_name = "kotlin.run-configurations.junit-fe10",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -16,14 +16,14 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-kotlin-compiler-common",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/facet",
     "//platform/util",
-    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+    "//plugins/kotlin/base/fe10/analysis",
     "//platform/core-impl",
     "//java/java-psi-api:psi",
     "//java/execution/openapi:java-execution",
   ],
-  runtime_deps = [":kotlin-run-configurations-junit-fe10_resources"]
+  runtime_deps = [":junit-fe10_resources"]
 )
 ### auto-generated section `build kotlin.run-configurations.junit-fe10` end
