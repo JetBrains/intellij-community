@@ -359,6 +359,17 @@ public final class HighlightNamesUtil {
         range = referenceNameElement.getTextRange();
       }
     }
+    return generateClassNameHighlight(resolved, scheme, range);
+  }
+
+  static @NotNull HighlightInfo highlightModule(@Nullable PsiElement resolved, @NotNull PsiReference elementToHighlight, @NotNull TextAttributesScheme scheme) {
+    TextRange range = elementToHighlight.getElement().getTextRange();
+    return generateClassNameHighlight(resolved, scheme, range);
+  }
+
+  private static @NotNull HighlightInfo generateClassNameHighlight(@Nullable PsiElement resolved,
+                                                                   @NotNull TextAttributesScheme scheme,
+                                                                   TextRange range) {
     HighlightInfoType type = JavaHighlightInfoTypes.CLASS_NAME;
     TextAttributes attributes = mergeWithScopeAttributes(resolved, type, scheme);
     HighlightInfo.Builder builder = nameBuilder(type).range(range);

@@ -77,6 +77,9 @@ final class JavaNamesHighlightVisitor extends JavaElementVisitor implements High
   public void visitDocTagValue(@NotNull PsiDocTagValue value) {
     PsiElement element = computeIfSmartMode(value.getProject(), () -> {
       PsiReference reference = value.getReference();
+      if (reference == null && value.getFirstChild() instanceof PsiJavaModuleReferenceElement moduleReference) {
+        reference = moduleReference.getReference();
+      }
       return reference == null ? null : reference.resolve();
     });
     if (element instanceof PsiMethod psiMethod) {
@@ -87,6 +90,12 @@ final class JavaNamesHighlightVisitor extends JavaElementVisitor implements High
     }
     else if (element instanceof PsiParameter psiParam) {
       myHolder.add(HighlightNamesUtil.highlightVariableName(psiParam, value.getNavigationElement(), myHolder.getColorsScheme()));
+    }
+    else if (element instanceof PsiJavaModule javaModule) {
+      final var reference = value.getFirstChild().getReference();
+      if (reference != null) {
+        myHolder.add(HighlightNamesUtil.highlightModule(javaModule, reference, myHolder.getColorsScheme()));
+      }
     }
   }
 
