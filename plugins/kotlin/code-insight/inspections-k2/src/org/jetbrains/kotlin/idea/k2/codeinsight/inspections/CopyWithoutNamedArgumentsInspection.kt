@@ -69,12 +69,12 @@ internal class CopyWithoutNamedArgumentsInspection :
             element: KtCallExpression,
             updater: ModPsiUpdater,
         ) {
-            val argumentNames = buildMap {
+            val writableArgumentNames = buildMap {
                 context.argumentNames.forEach { (pointer, name) ->
                     pointer.element?.let { put(updater.getWritable(it), name) }
                 }
             }
-            NamedArgumentUtils.addArgumentNames(argumentNames)
+            NamedArgumentUtils.addArgumentNames(writableArgumentNames)
         }
     }
 }
