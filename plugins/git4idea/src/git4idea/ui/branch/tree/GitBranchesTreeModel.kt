@@ -10,8 +10,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.util.ui.tree.AbstractTreeModel
-import com.intellij.vcs.git.frontend.repo.GitRepositoriesFrontendHolder
-import com.intellij.vcs.git.frontend.repo.GitRepositoryFrontendModel
+import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
+import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
 import com.intellij.vcsUtil.Delegates.equalVetoingObservable
 import git4idea.GitLocalBranch
 import git4idea.GitReference

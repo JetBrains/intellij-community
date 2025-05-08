@@ -11,7 +11,7 @@ import com.intellij.testFramework.assertions.Assertions
 import com.intellij.ui.SeparatorWithText
 import com.intellij.ui.tree.TreeTestUtil
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.vcs.git.frontend.repo.GitRepositoriesFrontendHolder
+import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
 import git4idea.test.*

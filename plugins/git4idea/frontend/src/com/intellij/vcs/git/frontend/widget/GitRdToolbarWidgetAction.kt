@@ -18,8 +18,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.ui.RowIcon
 import com.intellij.vcs.git.frontend.GitFrontendBundle
-import com.intellij.vcs.git.frontend.repo.GitRepositoriesFrontendHolder
 import com.intellij.vcs.git.shared.isRdBranchWidgetEnabled
+import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
 import com.intellij.vcs.git.shared.rpc.GitWidgetState
 import icons.DvcsImplIcons
 

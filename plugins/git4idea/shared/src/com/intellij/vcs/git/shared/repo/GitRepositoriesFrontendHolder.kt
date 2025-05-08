@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.git.frontend.repo
+package com.intellij.vcs.git.shared.repo
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
@@ -8,7 +8,6 @@ import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
 import com.intellij.vcs.git.shared.ref.GitFavoriteRefs
-import com.intellij.vcs.git.shared.repo.GitRepositoryState
 import com.intellij.vcs.git.shared.rpc.GitRepositoryApi
 import com.intellij.vcs.git.shared.rpc.GitRepositoryDto
 import com.intellij.vcs.git.shared.rpc.GitRepositoryEvent

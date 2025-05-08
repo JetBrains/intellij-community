@@ -3,7 +3,7 @@ package git4idea.ui.branch.tree
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.MinusculeMatcher
-import com.intellij.vcs.git.frontend.repo.GitRepositoriesFrontendHolder
+import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitRefType

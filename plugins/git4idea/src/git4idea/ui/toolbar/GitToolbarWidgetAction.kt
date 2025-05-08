@@ -24,8 +24,8 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.RowIcon
 import com.intellij.ui.util.maximumWidth
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.vcs.git.frontend.repo.GitRepositoriesFrontendHolder
 import com.intellij.vcs.git.shared.isRdBranchWidgetEnabled
+import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
 import git4idea.GitVcs
 import git4idea.branch.GitBranchSyncStatus
 import git4idea.branch.GitBranchUtil

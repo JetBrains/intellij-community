@@ -17,7 +17,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UpdateScaleHelper
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.vcs.git.frontend.repo.GitRepositoriesFrontendHolder
+import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
 import com.intellij.vcs.git.shared.ui.GitBranchesTreeIconProvider
 import git4idea.GitBranch
 import git4idea.GitReference

@@ -12,8 +12,8 @@ import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.platform.project.projectId
 import com.intellij.ui.popup.WizardPopup
 import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.vcs.git.frontend.repo.GitRepositoriesFrontendHolder
 import com.intellij.vcs.git.shared.ref.GitReferenceName
+import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
 import com.intellij.vcs.git.shared.rpc.GitRepositoryApi
 import git4idea.GitReference
 import git4idea.actions.branch.GitBranchActionsUtil
