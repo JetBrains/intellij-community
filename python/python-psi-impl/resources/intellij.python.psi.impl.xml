@@ -586,7 +586,6 @@
     <typeProvider implementation="com.jetbrains.python.numpy.codeInsight.NumpyDocStringTypeProvider"
                   order="before pythonDocstringTypeProvider"/>
     <pyClassMembersProvider implementation="com.jetbrains.python.numpy.codeInsight.NumpyClassMembersProvider"/>
-    <pyModuleMembersProvider implementation="com.jetbrains.python.numpy.codeInsight.NumpyModuleMembersProvider"/>
     <resolveResultRater implementation="com.jetbrains.python.numpy.codeInsight.NumpyResolveRater"/>
     <pyiStubSuppressor implementation="com.jetbrains.python.numpy.codeInsight.NumpyPyiStubsSuppressor"/>
 
