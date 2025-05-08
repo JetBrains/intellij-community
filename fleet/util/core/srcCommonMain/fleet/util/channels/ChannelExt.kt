@@ -3,7 +3,6 @@ package fleet.util.channels
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.selects.SelectBuilder
 import kotlinx.coroutines.selects.select
 
 inline fun <T, R> SendChannel<T>.use(block: (SendChannel<T>) -> R): R {
@@ -20,68 +19,15 @@ inline fun <T, R> SendChannel<T>.use(block: (SendChannel<T>) -> R): R {
   }
 }
 
-fun <T> CoroutineScope.batching(source: ReceiveChannel<T>,
-                                sink: SendChannel<List<T>>) {
-  launch {
-    var acc = ArrayList<T>()
-    var loop = true
-    while (loop) {
-      loop = select {
-        source.onReceiveCatching { t ->
-          if (t.isClosed) {
-            sink.send(acc)
-            sink.close()
-            false
-          }
-          else {
-            acc.add(t.getOrThrow())
-            true
-          }
-        }
-        if (acc.isNotEmpty()) {
-          sink.onSend(acc) {
-            acc = ArrayList()
-            true
-          }
-        }
-      }
-    }
-  }
-}
-
-fun <T> CoroutineScope.debounce(source: ReceiveChannel<T>,
-                                sink: SendChannel<T>,
-                                millis: Long) {
-  launch {
-    try {
-      source.consumeEach { t ->
-        sink.send(t)
-        delay(millis)
-      }
-    }
-    finally {
-      sink.close()
-    }
-  }
-}
-
 suspend fun <T> consumeAll(vararg channels: ReceiveChannel<*>, body: suspend CoroutineScope.() -> T): T = consumeAll(channels, 0, body)
 
 suspend fun <T> useAll(vararg channels: SendChannel<*>?, body: suspend CoroutineScope.() -> T): T = useAll(channels, 0, body)
-
-suspend inline fun consumeAllAndSelect(vararg channels: ReceiveChannel<*>, crossinline builder: SelectBuilder<Boolean>.() -> Unit) {
-  consumeAll(*channels) {
-    @Suppress("ControlFlowWithEmptyBody")
-    while (!select(builder));
-  }
-}
 
 suspend fun <T> consumeEach(vararg channels: ReceiveChannel<T>, body: suspend (T) -> Unit) {
   consumeAll(*channels) {
     while (true) {
       val open = channels.filter { !it.isClosedForReceive }
       if (open.isNotEmpty()) {
-        @Suppress("RemoveExplicitTypeArguments")
         select<Unit> {
           for (channel in open) {
             channel.onReceiveCatching { res ->
@@ -134,4 +80,4 @@ fun <T> channels(
   onBufferOverlow: BufferOverflow = BufferOverflow.SUSPEND,
 ): Pair<SendChannel<T>, ReceiveChannel<T>> = Channel<T>(capacity, onBufferOverflow = onBufferOverlow).split()
 
-val <T> ChannelResult<T>.isFull get() = isFailure && !isClosed
+val <T> ChannelResult<T>.isFull: Boolean get() = isFailure && !isClosed
