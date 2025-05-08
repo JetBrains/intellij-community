@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.roots
 
 import com.intellij.openapi.components.service
@@ -8,8 +8,11 @@ import com.intellij.openapi.vcs.VcsTestUtil.assertEqualCollections
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.VfsTestUtil
+import com.intellij.testFramework.utils.io.createDirectory
+import com.intellij.testFramework.utils.io.createFile
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.util.Collections.emptyList
+import kotlin.io.path.createSymbolicLinkPointingTo
 
 class VcsRootDetectorTest : VcsRootBaseTest() {
   fun `test no roots`() {
@@ -162,6 +165,95 @@ class VcsRootDetectorTest : VcsRootBaseTest() {
     createVcsRoots("vendor", "vendor/child/child")
 
     expect(projectRoot)
+  }
+
+  // IJPL-172487
+  fun `test root referenced via child symlink should not be duplicated`() {
+    initRepository(projectRoot)
+
+    // Created layout:
+    // project/
+    // -child/
+    // --test
+    // --root-symlink -> project
+    val targetDir = projectNioRoot.createDirectory("child")
+    targetDir.createFile("test")
+    targetDir.resolve("root-symlink").createSymbolicLinkPointingTo(projectNioRoot)
+
+    VfsTestUtil.syncRefresh()
+
+    PsiTestUtil.addContentRoot(rootModule, projectRoot)
+
+    expect(projectRoot)
+  }
+
+  // IJPL-181017
+  fun `test root has symlink parent`() {
+    val symlink = projectNioRoot.resolve("symlink")
+    val projectSibling = testNioRoot.createDirectory("project-sibling")
+    symlink.createSymbolicLinkPointingTo(projectSibling)
+    VfsTestUtil.syncRefresh()
+
+    val vcsRoot = createVcsRoots("symlink/repo-root")
+    // Expected `project/symlink/repo-root` which is not a canonical path `project-sibling/repo-root`
+    expect(vcsRoot)
+  }
+
+
+  fun `test multiple roots under symlink`() {
+    val symlink = projectNioRoot.resolve("symlink")
+    val projectSibling = testNioRoot.createDirectory("project-sibling")
+    symlink.createSymbolicLinkPointingTo(projectSibling)
+    VfsTestUtil.syncRefresh()
+
+    // Created layout:
+    // project/
+    // -symlink -> project-sibling
+    // project-sibling/
+    // -root1
+    // -root2
+    // -root3
+    val roots = createVcsRoots("symlink/root1", "symlink/root2", "symlink/root3")
+    expect(roots)
+  }
+
+  fun `test multiple roots with symlink target outside project`() {
+    initRepository(projectRoot)
+
+    val symlink = projectNioRoot.resolve("symlink")
+    val projectSibling = testNioRoot.createDirectory("project-sibling")
+    symlink.createSymbolicLinkPointingTo(projectSibling)
+    VfsTestUtil.syncRefresh()
+
+    val vcsRoot = createVcsRoots("symlink/repo-root")
+    expect(vcsRoot + projectRoot)
+  }
+
+  // Combined scenario for IJPL-172487 and IJPL-181017
+  fun `test symlinks under symlinks`() {
+    val symlink = projectNioRoot.resolve("symlink")
+    val projectSibling = testNioRoot.createDirectory("project-sibling")
+    symlink.createSymbolicLinkPointingTo(projectSibling)
+    VfsTestUtil.syncRefresh()
+
+    val vcsRoot = createVcsRoots("symlink/repo-root")
+
+    // Created layout:
+    // project/
+    // -symlink -> project-sibling/
+    // project-sibling/
+    // -repo-root
+    // --test
+    // --sublink -> repo-root
+    val repoRoot = symlink.resolve("repo-root")
+    repoRoot.createFile("test")
+    val linkToRepo = repoRoot.resolve("sublink")
+    linkToRepo.createSymbolicLinkPointingTo(repoRoot)
+
+    VfsTestUtil.syncRefresh()
+
+    // Expected only `project/symlink/repo-root`
+    expect(vcsRoot)
   }
 
   private fun createVcsRoots(vararg relativePaths: String, registerContentRoot: Boolean = true): List<VirtualFile> {
