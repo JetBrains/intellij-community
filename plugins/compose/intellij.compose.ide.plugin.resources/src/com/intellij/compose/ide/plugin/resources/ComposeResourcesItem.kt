@@ -3,8 +3,6 @@ package com.intellij.compose.ide.plugin.resources
 
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -54,33 +52,34 @@ internal fun getMinifiedResourceCandidate(kotlinSourceElement: KtProperty): KtCa
 
 private fun getInternalProperty(kotlinSourceElement: KtElement) = kotlinSourceElement.mainReference?.resolve() as? KtProperty
 
-internal data class ResourceItem(val type: ResourceType, val id: String, val key: String?, val paths: List<String>) {
+internal data class ResourceItem(
+  val type: ResourceType,
+  val id: String,
+  val key: String?,
+  val module: Module?,
+  val paths: List<String>,
+) {
 
   /**
    * Retrieves a list of [PsiElement] objects representing resources based on the given paths.
    * The method attempts to locate the files specified by the paths, convert them to PSI files,
    * and extract the relevant PSI elements for further processing.
    *
-   * @param project the current project context in which the lookup will be performed
    * @return a list of PsiElement objects corresponding to the found resources; returns an empty list if no resources are found or applicable
    */
-  fun getPsiElements(sourceModule: Module): List<PsiElement> {
-    val project = sourceModule.project
-    val composeResourcesDirsDependencies = sourceModule.getComposeResourcesDirsDependencies()
+  fun getPsiElements(): List<PsiElement> {
+    val project = module?.project ?: return emptyList()
     return paths.mapNotNull { path ->
-      val targetResourceFile = composeResourcesDirsDependencies.firstNotNullOfOrNull { it.findFileByRelativePath(path) } ?: run {
+      val targetResourceFile = module.getComposeResourcesDir()?.findFileByRelativePath(path) ?: run {
         log.warn("Target Compose resource file for '${this@ResourceItem}' not found: $path")
         return@mapNotNull null
       }
       val targetResourcePsiFile = targetResourceFile.findPsiFile(project) ?: return@mapNotNull null
       if (type.isStringType) {
-        val targetStringPsiElement = composeResourcesDirsDependencies
-                                       .mapNotNull { it.findFileByRelativePath(path)?.findPsiFile(project) }
-                                       .firstNotNullOfOrNull { findAttributeByResourceKey(it, this) }
-                                     ?: run {
-                                       log.warn("Target Compose resource string for '${this@ResourceItem}' not found: $path")
-                                       return@mapNotNull null
-                                     }
+        val targetStringPsiElement = findAttributeByResourceKey(targetResourcePsiFile, this) ?: run {
+          log.warn("Target Compose resource string for '${this@ResourceItem}' not found: $path")
+          return@mapNotNull null
+        }
         val attributeValueToBeRenamed = targetStringPsiElement.children.lastOrNull() as? XmlAttributeValue ?: return@mapNotNull null
         attributeValueToBeRenamed
       }
@@ -89,10 +88,6 @@ internal data class ResourceItem(val type: ResourceType, val id: String, val key
       }
     }
   }
-
-  private fun Module.getComposeResourcesDirsDependencies(): List<VirtualFile> =
-    buildSet { ModuleUtilCore.getDependencies(this@getComposeResourcesDirsDependencies, this) }.mapNotNull { it.getComposeResourcesDir() }
-
 
   private fun findAttributeByResourceKey(targetResourcePsiFile: PsiFile, targetResourceItem: ResourceItem): XmlAttributeImpl? =
     findChildrenOfType(targetResourcePsiFile, XmlAttributeImpl::class.java).firstOrNull { it.value == targetResourceItem.key }
@@ -108,6 +103,7 @@ internal data class ResourceItem(val type: ResourceType, val id: String, val key
         type = type,
         id = templateStrings.first(),
         key = if (type.isStringType) templateStrings[1] else null,
+        module = declaration.module,
         paths = paths,
       )
     }
