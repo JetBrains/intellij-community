@@ -36,6 +36,7 @@ import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.sdk.PyLazySdk;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.venvReader.VirtualEnvReader;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,6 +50,7 @@ import java.util.*;
  * @deprecated TODO: explain
  */
 @Deprecated(forRemoval = true)
+@ApiStatus.Internal
 public final class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase {
   private static final Logger LOG = Logger.getInstance(PyTargetEnvironmentPackageManager.class);
 

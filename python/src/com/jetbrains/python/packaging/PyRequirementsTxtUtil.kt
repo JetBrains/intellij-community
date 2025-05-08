@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging
 
 import com.intellij.notification.NotificationAction
@@ -32,6 +32,7 @@ import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.PySdkPopupFactory
 import com.jetbrains.python.sdk.PythonSdkUtil
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Paths
 import java.util.Locale
 
@@ -43,6 +44,8 @@ import java.util.Locale
  * @param unhandledLines lines that we failed to analyze
  * @param unchangedInBaseFiles packages with different versions to notify the user about if modification of base files is not allowed
  */
+@ApiStatus.Internal
+
 data class PyRequirementsAnalysisResult(val currentFileOutput: List<String>,
                                         val baseFilesOutput: Map<VirtualFile, List<String>>,
                                         val unhandledLines: List<String>,
@@ -58,7 +61,6 @@ data class PyRequirementsAnalysisResult(val currentFileOutput: List<String>,
     return PyRequirementsAnalysisResult(newCurrentFile, baseFilesOutput, unhandledLines, unchangedInBaseFiles)
   }
 }
-
 private class PyCollectImportsTask(
   private val module: Module,
   private val psiManager: PsiManager,

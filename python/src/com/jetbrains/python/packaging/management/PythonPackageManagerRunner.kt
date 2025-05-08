@@ -10,7 +10,9 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.jetbrains.python.packaging.conda.PyPackageProcessHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 internal object PythonPackageManagerRunner {
   suspend fun runProcess(
     packageManager: PythonPackageManager,

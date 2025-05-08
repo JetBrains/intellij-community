@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
 import com.google.common.collect.Sets;
@@ -53,6 +53,7 @@ import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor;
 import com.jetbrains.python.target.PyTargetAwareAdditionalData;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,6 +61,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+@ApiStatus.Internal
 
 public final class PyPackageUtil {
   public static final String SETUPTOOLS = "setuptools";

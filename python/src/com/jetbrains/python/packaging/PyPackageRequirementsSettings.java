@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.components.RoamingType;
@@ -10,8 +10,10 @@ import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareModu
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareService;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceClasses;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceModuleConfigurator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+@ApiStatus.Internal
 
 public abstract class PyPackageRequirementsSettings extends PyDefaultProjectAwareService<
   PyPackageRequirementsSettings.ServiceState,

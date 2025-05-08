@@ -34,6 +34,7 @@ import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
 import kotlin.text.Regex.Companion.escape
 
@@ -44,6 +45,7 @@ import kotlin.text.Regex.Companion.escape
  * @param T The type of the Python package manager this action operates on.
  * @param V The result type of the background jobs performed by this action.
  */
+@ApiStatus.Internal
 abstract class PythonPackageManagerAction<T : PythonPackageManager, V> : DumbAwareAction() {
   protected val errorSink: ErrorSink = ShowingMessageErrorSync
   protected val scope: CoroutineScope = service<PythonSdkCoroutineService>().cs

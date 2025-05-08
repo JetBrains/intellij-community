@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -14,6 +15,7 @@ import java.util.List;
  * or {@link com.jetbrains.python.packaging.management.PythonRepositoryManager#allPackages()} to search for all available packages.
  */
 @Deprecated(forRemoval = true)
+@ApiStatus.Internal
 public class PyPIPackageCache extends PyAbstractPackageCache {
   private static final String CACHE_FILE_NAME = "pypi-cache.json";
 

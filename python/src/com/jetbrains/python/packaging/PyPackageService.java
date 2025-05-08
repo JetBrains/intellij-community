@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -8,6 +8,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -17,6 +18,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @State(name = "PyPackageService", storages = @Storage(value = "packages.xml", roamingType = RoamingType.DISABLED), reportStatistic = false)
+@ApiStatus.Internal
+
 public class PyPackageService implements
                               PersistentStateComponent<PyPackageService> {
   public volatile Map<String, Boolean> sdkToUsersite = new ConcurrentHashMap<>();

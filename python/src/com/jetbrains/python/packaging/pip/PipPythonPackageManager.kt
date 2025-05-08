@@ -21,6 +21,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 @ApiStatus.Experimental
+@ApiStatus.Internal
 open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
   @Volatile
   override var installedPackages: List<PythonPackage> = emptyList()

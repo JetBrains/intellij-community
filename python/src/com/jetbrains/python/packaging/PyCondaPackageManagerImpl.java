@@ -11,12 +11,14 @@ import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.PyCondaRunKt;
 import com.jetbrains.python.venvReader.VirtualEnvReader;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
+@ApiStatus.Internal
 
 public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   private volatile @Nullable List<PyPackage> mySideCache = null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.Disposable;
@@ -13,10 +13,12 @@ import com.jetbrains.python.packaging.management.PythonPackageManagerService;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
+@ApiStatus.Internal
 
 public class PyPackageManagersImpl extends PyPackageManagers {
   private static final Logger LOG = Logger.getInstance(PyPackageManagersImpl.class);

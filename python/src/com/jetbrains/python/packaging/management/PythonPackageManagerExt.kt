@@ -28,8 +28,10 @@ import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.buildTargetedCommandLine
 import com.jetbrains.python.run.ensureProjectSdkAndModuleDirsAreOnTarget
 import com.jetbrains.python.run.prepareHelperScriptExecution
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import kotlin.math.min
+@ApiStatus.Internal
 
 @RequiresBackgroundThread
 fun PythonPackageManager.launchReload() {
@@ -39,6 +41,7 @@ fun PythonPackageManager.launchReload() {
     }
   }
 }
+@ApiStatus.Internal
 
 suspend fun PythonPackageManager.runPackagingTool(
   operation: String, arguments: List<String>, @Nls text: String,
@@ -128,14 +131,17 @@ private val proxyString: String?
     }
     return null
   }
+@ApiStatus.Internal
 
 fun PythonRepositoryManager.packagesByRepository(): Sequence<Pair<PyPackageRepository, Set<String>>> {
   return repositories.asSequence().map { it to it.getPackages() }
 }
+@ApiStatus.Internal
 
 fun PythonPackageManager.isInstalled(name: String): Boolean {
   return installedPackages.any { it.name.lowercase() == name.lowercase() }
 }
+@ApiStatus.Internal
 
 fun PythonRepositoryManager.createSpecification(
   name: String,

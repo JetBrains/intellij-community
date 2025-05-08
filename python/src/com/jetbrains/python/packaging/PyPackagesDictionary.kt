@@ -1,13 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging
 
 import com.intellij.spellchecker.dictionary.Dictionary
 import com.intellij.spellchecker.dictionary.RuntimeDictionaryProvider
 import com.jetbrains.python.PyBundle.message
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Ignores the names of Python packages in spellcheck.
  */
+@ApiStatus.Internal
+
 class PyPackagesDictionary : Dictionary {
   override fun getName(): String = message("python.packages.dictionary.name")
 

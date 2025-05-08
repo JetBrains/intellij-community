@@ -12,7 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
-class PythonPackageManagerServiceImpl(private val serviceScope: CoroutineScope) : PythonPackageManagerService, Disposable {
+internal class PythonPackageManagerServiceImpl(private val serviceScope: CoroutineScope) : PythonPackageManagerService, Disposable {
   private val cache = ConcurrentHashMap<UUID, PythonPackageManager>()
 
   private val bridgeCache = ConcurrentHashMap<UUID, PythonPackageManagementServiceBridge>()
