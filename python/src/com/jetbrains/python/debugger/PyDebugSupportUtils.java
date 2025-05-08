@@ -44,6 +44,10 @@ public final class PyDebugSupportUtils {
         if (element instanceof PyLiteralExpression) {
           return null;
         }
+        if (element instanceof PyReferenceExpression && element.getParent() instanceof PyCallExpression parent) {
+          // Don't evaluate function objects, expand range for the entire call (`foo` -> `foo(arg1, ..., argN)`)
+          element = parent;
+        }
         if (element != null && isSimpleEnough(element) && isExpression(project, document.getText(element.getTextRange()))) {
           return element.getTextRange();
         }
@@ -57,7 +61,8 @@ public final class PyDebugSupportUtils {
     return element instanceof PyLiteralExpression ||
            element instanceof PyQualifiedExpression ||
            element instanceof PySliceExpression ||
-           element instanceof PyNamedParameter;
+           element instanceof PyNamedParameter ||
+           element instanceof PyCallExpression;
   }
 
   // is expression a variable reference and can be evaluated
