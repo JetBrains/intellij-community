@@ -39,8 +39,8 @@ public class ParameterClassMember implements ClassMember {
   }
 
   @Override
-  public @Nullable Icon getIcon() {
-    return myParameter.getIcon(0);
+  public @Nullable Icon getIcon(int flags) {
+    return myParameter.getIcon(flags);
   }
 
   public PsiParameter getParameter() {

@@ -786,9 +786,10 @@ com.intellij.codeInsight.generation.ClassMember
 - s:from(com.intellij.codeInspection.options.OptMultiSelector$OptElement):com.intellij.codeInsight.generation.ClassMember
 - a:getParentNodeDelegate():com.intellij.codeInsight.generation.MemberChooserObject
 com.intellij.codeInsight.generation.MemberChooserObject
+- com.intellij.openapi.util.Iconable
 - a:equals(java.lang.Object):Z
 - getAttributes():com.intellij.ui.SimpleTextAttributes
-- getIcon():javax.swing.Icon
+- getIcon(I):javax.swing.Icon
 - getSecondaryText():java.lang.String
 - getSecondaryTextAttributes():com.intellij.ui.SimpleTextAttributes
 - a:getText():java.lang.String
@@ -798,7 +799,7 @@ c:com.intellij.codeInsight.generation.MemberChooserObjectBase
 - com.intellij.codeInsight.generation.MemberChooserObject
 - <init>(java.lang.String):V
 - <init>(java.lang.String,javax.swing.Icon):V
-- getIcon():javax.swing.Icon
+- getIcon(I):javax.swing.Icon
 - getText():java.lang.String
 - p:getTextAttributes():com.intellij.ui.SimpleTextAttributes
 - p:getTextAttributes(javax.swing.JTree):com.intellij.ui.SimpleTextAttributes

@@ -285,7 +285,7 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
             cellRenderer = listCellRenderer {
               when (val optElement = value) {
                 is MemberChooserObject -> {
-                  optElement.icon?.let { icon(it) }
+                  optElement.getIcon(0)?.let { icon(it) }
                   text(optElement.text) {
                     speedSearch {}
                     attributes = optElement.attributes

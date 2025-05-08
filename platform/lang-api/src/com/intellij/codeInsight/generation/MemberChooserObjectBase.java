@@ -37,7 +37,7 @@ public class MemberChooserObjectBase implements MemberChooserObject {
   }
 
   @Override
-  public @Nullable Icon getIcon() {
+  public @Nullable Icon getIcon(int flags) {
     return myIcon;
   }
 
