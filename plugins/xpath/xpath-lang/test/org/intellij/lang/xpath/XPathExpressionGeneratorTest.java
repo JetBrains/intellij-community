@@ -18,7 +18,7 @@ public class XPathExpressionGeneratorTest extends TestBase {
     assertXPath("/stopWord/word/@attribute", "/stopWord/word[4]/@attribute");
   }
 
-  public void testManySiblings() {
+  public void testManySiblingsPerformance() {
     Benchmark.newBenchmark("Many siblings", () -> {
         assertXPath("/stopWord/word", "/stopWord/word[2359]");
       })

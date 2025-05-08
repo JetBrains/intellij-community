@@ -96,7 +96,7 @@ public class JsonFormattingTest extends JsonTestCase {
   public void testIndentForElements() { doTest();}
   public void testNoExtraNewLineByWrap() { doTest();}
 
-  public void testHugeJsonFile() {
+  public void testHugeJsonFilePerformance() {
     // IDEA-195340 bad JSON kills IntelliJ
     myFixture.configureByFile(getTestName(false) + ".json");
     Benchmark.newBenchmark(getTestName(false), this::reformatAndCheck).attempts(1).start();

@@ -148,7 +148,7 @@ class YAMLIncompatibleTypesInspectionTest : BasePlatformTestCase() {
     """.trimIndent())
   }
 
-  fun testVeryLargeArray() {
+  fun testVeryLargeArrayPerformance() {
     myFixture.configureByText("test.yaml", """
       top4:
       ${
