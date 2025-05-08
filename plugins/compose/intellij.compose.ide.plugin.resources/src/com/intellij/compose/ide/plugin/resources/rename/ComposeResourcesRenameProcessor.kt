@@ -6,8 +6,6 @@ import com.intellij.compose.ide.plugin.resources.isComposeResourceProperty
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
-import org.jetbrains.kotlin.idea.base.util.module
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtProperty
 
 /**
@@ -21,15 +19,11 @@ internal class ComposeResourcesRenameProcessor : RenamePsiElementProcessor() {
   }
 
   override fun prepareRenaming(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>) {
-    val file = element.containingFile as? KtFile ?: return
-
-    val sourceModule = file.module ?: return
-
     // find the resource object of the sourceElement
     val kotlinSourceElement = element as? KtProperty ?: return
     val targetResourceItem = getResourceItem(kotlinSourceElement) ?: return
 
-    targetResourceItem.getPsiElements(sourceModule).forEach {
+    targetResourceItem.getPsiElements().forEach {
       allRenames[it] = if (it is PsiFile) "$newName.${it.virtualFile.extension}" else newName
     }
   }
