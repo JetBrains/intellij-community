@@ -189,7 +189,7 @@ fun getStepOverAction(
                     // limit stepping "out": prevent stepping into inline function bodies from inlined lambda body
                     // e.g., `fun main { run { println() } }`: step from println should jump to the main function, without stopping at the end of run body
                     && (!stepThroughLambdas || posInTheSameFunction || !isInInlineFunctionBody())
-                    //&& !isInlineFunctionFromLibrary(positionManager, dstLocation, dstLocationToken)
+                    && !isInlineFunctionFromLibrary(positionManager, dstLocation, dstLocationToken)
                     && !dstLocation.isOnFunctionDeclaration(positionManager)
         }
     }
