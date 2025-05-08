@@ -1202,7 +1202,8 @@ c:com.intellij.openapi.vcs.changes.ExternallyRenamedChange
 - setRenamedOrMovedTarget(com.intellij.openapi.vcs.FilePath):V
 com.intellij.openapi.vcs.changes.FilePathIconProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- a:getIcon(com.intellij.openapi.vcs.FilePath,com.intellij.openapi.project.Project):javax.swing.Icon
+- getIcon(com.intellij.openapi.vcs.FilePath,com.intellij.openapi.project.Project):javax.swing.Icon
+- getIcon(com.intellij.openapi.vcs.FilePath,Z,com.intellij.openapi.project.Project):javax.swing.Icon
 f:com.intellij.openapi.vcs.changes.FilePathsHelper
 - s:convertPath(com.intellij.openapi.vcs.FilePath):java.lang.String
 - s:convertPath(java.lang.String):java.lang.String
