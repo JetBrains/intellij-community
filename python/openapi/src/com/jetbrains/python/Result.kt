@@ -24,7 +24,7 @@ import com.jetbrains.python.Result.Success
  *
  * Chain several calls, get latest result or first error (all errors are the same): [mapResult].
  *
- * When errors are different: [mapResultWithErr]
+ * When errors are different: [mapSuccessError]
  *
  * Fast return: [getOr]
  * ```kotlin
@@ -46,7 +46,10 @@ sealed class Result<out SUCC, out ERR> {
   data class Failure<out ERR>(val error: ERR) : Result<Nothing, ERR>()
   data class Success<out SUCC>(val result: SUCC) : Result<SUCC, Nothing>()
 
-  fun <RES> map(map: (SUCC) -> RES): Result<RES, ERR> =
+  /**
+   * See also [mapSuccessError], [mapError]
+   */
+  fun <RES> mapSuccess(map: (SUCC) -> RES): Result<RES, ERR> =
     when (this) {
       is Success -> Success(map(result))
       is Failure -> Failure(error)
@@ -75,8 +78,9 @@ sealed class Result<out SUCC, out ERR> {
    *   onErr = { LocalizedErrorString("Oops, ${it.message}") }
    * )
    * ```
+   * See also [mapError]
    */
-  inline fun <NEW_ERR, NEW_S> mapResultWithErr(
+  inline fun <NEW_ERR, NEW_S> mapSuccessError(
     onSuccess: (SUCC) -> Result<NEW_S, NEW_ERR>,
     onErr: (ERR) -> NEW_ERR,
   ): Result<NEW_S, NEW_ERR> =
@@ -155,6 +159,17 @@ inline fun <S, E> Result<S, E>.onFailure(code: (E) -> Unit): Result<S, E> {
   }
   return this
 }
+
+/**
+ * Like [Result.mapSuccess] but for error. See also [Result.mapSuccessError]
+ */
+inline fun <S, E, E2> Result<S, E>.mapError(code: (E) -> E2): Result<S, E2> =
+  when (this) {
+    is Success -> this
+    is Failure -> {
+      Result.failure(code(this.error))
+    }
+  }
 
 // aliases to drop-in replace for kotlin Result
 fun <S, E> Result<S, E>.getOrNull(): S? = this.successOrNull

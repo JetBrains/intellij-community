@@ -34,7 +34,7 @@ class ResultShowCaseTest {
     val result = openFile()
       .mapResult { // Same errors, map success only
         readData(it)
-      }.mapResultWithErr( // Errors are different: IOException vs. LocalizedErrorString, use mapping
+      }.mapSuccessError( // Errors are different: IOException vs. LocalizedErrorString, use mapping
         onSuccess = { businessLogic(it) },
         onErr = { "Oops, ${it.message}" }
       )
