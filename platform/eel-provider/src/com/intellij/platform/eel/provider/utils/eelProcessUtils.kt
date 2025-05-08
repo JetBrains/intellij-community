@@ -5,7 +5,6 @@ package com.intellij.platform.eel.provider.utils
 
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.eel.*
-import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.ResultErrImpl
 import com.intellij.platform.eel.provider.ResultOkImpl
 import com.intellij.platform.eel.provider.getEelDescriptor
@@ -21,10 +20,19 @@ import kotlin.io.path.pathString
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 
-val EelProcessExecutionResult.stdoutString: String get() = String(stdout)
-val EelProcessExecutionResult.stderrString: String get() = String(stderr)
+/**
+ * To simplify [EelProcessExecutionResult] delegation
+ */
+interface EelProcessExecutionResultInfo {
+  val exitCode: Int
+  val stdout: ByteArray
+  val stderr: ByteArray
+}
 
-class EelProcessExecutionResult(val exitCode: Int, val stdout: ByteArray, val stderr: ByteArray)
+val EelProcessExecutionResultInfo.stdoutString: String get() = String(stdout)
+val EelProcessExecutionResultInfo.stderrString: String get() = String(stderr)
+
+class EelProcessExecutionResult(override val exitCode: Int, override val stdout: ByteArray, override val stderr: ByteArray) : EelProcessExecutionResultInfo
 
 /**
  * Function that awaits the completion of an [EelProcess] and retrieves its execution result,
