@@ -789,9 +789,7 @@ com.intellij.codeInsight.generation.MemberChooserObject
 - com.intellij.codeInspection.options.OptMultiSelector$OptElement
 - com.intellij.openapi.util.Iconable
 - a:equals(java.lang.Object):Z
-- getAttributes():com.intellij.ui.SimpleTextAttributes
 - getIcon(I):javax.swing.Icon
-- getSecondaryTextAttributes():com.intellij.ui.SimpleTextAttributes
 - a:hashCode():I
 - a:renderTreeNode(com.intellij.ui.SimpleColoredComponent,javax.swing.JTree):V
 c:com.intellij.codeInsight.generation.MemberChooserObjectBase
