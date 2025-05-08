@@ -17,6 +17,7 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
@@ -31,7 +32,6 @@ import com.intellij.refactoring.JavaRefactoringFactory;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jdom.Element;
@@ -58,16 +58,8 @@ public final class MethodMayBeStaticInspection extends BaseInspection {
   public boolean m_replaceQualifier = true;
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new InspectionGadgetsFix() {
-      @Override
-      public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        final PsiMethod element = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class);
-        if (element != null) {
-          JavaRefactoringFactory.getInstance(project).createMakeMethodStatic(element, m_replaceQualifier, null, PsiField.EMPTY_ARRAY, null).run();
-        }
-      }
-
+  protected LocalQuickFix buildFix(Object... infos) {
+    return new LocalQuickFix() {
       @Override
       public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
         final PsiMethod element = PsiTreeUtil.getParentOfType(previewDescriptor.getPsiElement(), PsiMethod.class);
@@ -85,6 +77,17 @@ public final class MethodMayBeStaticInspection extends BaseInspection {
       @Override
       public @NotNull String getFamilyName() {
         return InspectionGadgetsBundle.message("change.modifier.quickfix", PsiModifier.STATIC);
+      }
+
+      @Override
+      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+        final PsiElement problemElement = descriptor.getPsiElement();
+        if (problemElement == null || !problemElement.isValid()) return;
+
+        final PsiMethod element = PsiTreeUtil.getParentOfType(problemElement, PsiMethod.class);
+        if (element != null) {
+          JavaRefactoringFactory.getInstance(project).createMakeMethodStatic(element, m_replaceQualifier, null, PsiField.EMPTY_ARRAY, null).run();
+        }
       }
     };
   }

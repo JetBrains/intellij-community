@@ -25,21 +25,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.text.Document;
-import java.text.NumberFormat;
-import java.text.ParseException;
 import java.util.List;
 
 public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -95,7 +88,7 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
    * @return an array of fixes (empty array if no fix is available).
    */
   protected @NotNull LocalQuickFix @NotNull [] buildFixes(Object... infos) {
-    return InspectionGadgetsFix.EMPTY_ARRAY;
+    return LocalQuickFix.EMPTY_ARRAY;
   }
 
   /**
@@ -166,35 +159,6 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
   @Deprecated
   public boolean shouldInspect(@NotNull PsiFile file) {
     return true;
-  }
-
-  protected JFormattedTextField prepareNumberEditor(final @NonNls String fieldName) {
-    final NumberFormat formatter = NumberFormat.getIntegerInstance();
-    formatter.setParseIntegerOnly(true);
-    final JFormattedTextField valueField = new JFormattedTextField(formatter);
-    final Object value = ReflectionUtil.getField(getClass(), this, null, fieldName);
-    valueField.setValue(value);
-    valueField.setColumns(4);
-
-    // hack to work around text field becoming unusably small sometimes when using GridBagLayout
-    valueField.setMinimumSize(valueField.getPreferredSize());
-
-    UIUtil.fixFormattedField(valueField);
-    final Document document = valueField.getDocument();
-    document.addDocumentListener(new DocumentAdapter() {
-      @Override
-      public void textChanged(@NotNull DocumentEvent evt) {
-        try {
-          valueField.commitEdit();
-          final Number number = (Number)valueField.getValue();
-          ReflectionUtil.setField(BaseInspection.this.getClass(), BaseInspection.this, int.class, fieldName, number.intValue());
-        }
-        catch (ParseException e) {
-          // No luck this time. Will update the field when correct value is entered.
-        }
-      }
-    });
-    return valueField;
   }
 
   @SafeVarargs

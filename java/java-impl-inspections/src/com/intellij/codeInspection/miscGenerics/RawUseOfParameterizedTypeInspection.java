@@ -26,7 +26,6 @@ import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.Pattern;
@@ -57,7 +56,7 @@ public final class RawUseOfParameterizedTypeInspection extends BaseInspection {
   }
 
   @Override
-  public @Nullable String getAlternativeID() {
+  public @NotNull String getAlternativeID() {
     return "RawUseOfParameterized";
   }
 
@@ -367,7 +366,7 @@ public final class RawUseOfParameterizedTypeInspection extends BaseInspection {
     }
   }
 
-  private static class RawTypeCanBeGenericFix extends InspectionGadgetsFix {
+  private static class RawTypeCanBeGenericFix implements LocalQuickFix {
     private final @IntentionName String myName;
 
     RawTypeCanBeGenericFix(@NotNull @IntentionName String name) {
@@ -390,7 +389,9 @@ public final class RawUseOfParameterizedTypeInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiElement problemElement = descriptor.getPsiElement();
+      if (problemElement == null || !problemElement.isValid()) return;
       final PsiElement element = descriptor.getStartElement().getParent();
       if (element instanceof PsiVariable variable) {
         final PsiType type = getSuggestedType(variable);

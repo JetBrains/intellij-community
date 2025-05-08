@@ -23,14 +23,14 @@ import static com.intellij.codeInsight.intention.CustomizableIntentionAction.Ran
 /**
  * QuickFix based on {@link ProblemDescriptor ProblemDescriptor}
  * <p/>
- * N.B. Please DO NOT store PSI elements inside the LocalQuickFix instance, to avoid holding too much PSI files during inspection.
+ * N.B. Please DO NOT store PSI elements inside the LocalQuickFix instance to avoid holding too many PSI files during inspection.
  * Instead, use the {@link ProblemDescriptor#getPsiElement()}
  * in {@link QuickFix#applyFix(Project, CommonProblemDescriptor)}
  * to retrieve the PSI context the fix will work on.
  * See also {@link LocalQuickFixOnPsiElement} which uses {@link com.intellij.psi.SmartPsiElementPointer} instead of storing PSI elements.
  * <p>
  * Implement {@link com.intellij.openapi.util.Iconable Iconable} interface to
- * change icon in quick fix popup menu.
+ * change icon in the quick-fix popup menu.
  * <p>
  * Implement {@link com.intellij.codeInsight.intention.HighPriorityAction HighPriorityAction} or
  * {@link com.intellij.codeInsight.intention.LowPriorityAction LowPriorityAction} to change ordering.
@@ -102,7 +102,7 @@ public interface LocalQuickFix extends QuickFix<ProblemDescriptor>, FileModifier
    * @return an array with a single element {@code fix} or an empty array if the argument is null
    */
   static @NotNull LocalQuickFix @NotNull [] notNullElements(@Nullable LocalQuickFix fix) {
-    return fix == null ? LocalQuickFix.EMPTY_ARRAY : new LocalQuickFix[]{fix};
+    return fix == null ? EMPTY_ARRAY : new LocalQuickFix[]{fix};
   }
   /**
    * @return an array containing all not-null elements from {@code fixes}
@@ -110,7 +110,7 @@ public interface LocalQuickFix extends QuickFix<ProblemDescriptor>, FileModifier
   static @NotNull LocalQuickFix @NotNull [] notNullElements(@Nullable LocalQuickFix @NotNull... fixes) {
     List<LocalQuickFix> result = new ArrayList<>(fixes.length);
     ContainerUtil.addAllNotNull(result, fixes);
-    return result.isEmpty() ? LocalQuickFix.EMPTY_ARRAY : result.toArray(EMPTY_ARRAY);
+    return result.isEmpty() ? EMPTY_ARRAY : result.toArray(EMPTY_ARRAY);
   }
 
   /**

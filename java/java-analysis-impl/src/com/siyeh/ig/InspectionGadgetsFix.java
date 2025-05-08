@@ -23,6 +23,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
+
+/**
+ * @deprecated Use {@link LocalQuickFix} directly instead.
+ */
+@Deprecated
 public abstract class InspectionGadgetsFix implements LocalQuickFix {
 
   public static final InspectionGadgetsFix[] EMPTY_ARRAY = {};

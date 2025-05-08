@@ -2,6 +2,7 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.RefactoringQuickFix;
 import com.intellij.openapi.project.Project;
@@ -13,7 +14,9 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
+ * @deprecated Should not be used, as the whole {@link InspectionGadgetsFix} hierarchy. Use {@link LocalQuickFix} directly.
  */
+@Deprecated
 public abstract class RefactoringInspectionGadgetsFix extends InspectionGadgetsFix implements RefactoringQuickFix {
 
   @Override
