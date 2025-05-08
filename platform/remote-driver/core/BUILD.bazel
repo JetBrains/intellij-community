@@ -23,7 +23,6 @@ jvm_library(
     "@lib//:opentelemetry-semconv",
     "@lib//:commons-lang3",
   ],
-  exports = ["//platform/remote-driver/model:driver-model"],
   runtime_deps = [":driver-impl_resources"]
 )
 ### auto-generated section `build intellij.driver.impl` end

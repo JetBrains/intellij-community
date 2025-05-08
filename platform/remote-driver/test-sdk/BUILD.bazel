@@ -18,6 +18,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-serialization-json",
     "@lib//:kotlinx-serialization-core",
+    "//platform/remote-driver/model:driver-model",
     "//platform/util",
   ],
   exports = [

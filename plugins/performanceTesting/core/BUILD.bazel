@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/remote-driver/model:driver-model",
     "//platform/analysis-api:analysis",
     "//platform/indexing-impl",
     "//platform/lang-impl",
@@ -62,6 +63,7 @@ jvm_library(
   associates = [":performanceTesting"],
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/remote-driver/model:driver-model",
     "//platform/analysis-api:analysis",
     "//platform/indexing-impl",
     "//platform/lang-impl",

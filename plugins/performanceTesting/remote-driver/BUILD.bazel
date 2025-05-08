@@ -33,7 +33,6 @@ jvm_library(
     "//platform/ui.jcef:ui-jcef",
   ],
   exports = [
-    "//platform/remote-driver/model:driver-model",
     "//platform/remote-driver/core:driver-impl",
     "//platform/remote-driver/client:driver-client",
   ],

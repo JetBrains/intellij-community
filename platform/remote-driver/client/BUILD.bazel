@@ -17,7 +17,6 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
   ],
-  exports = ["//platform/remote-driver/model:driver-model"],
   runtime_deps = [":driver-client_resources"]
 )
 ### auto-generated section `build intellij.driver.client` end
