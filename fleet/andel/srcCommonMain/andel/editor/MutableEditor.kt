@@ -116,6 +116,7 @@ interface Editor {
   val layout: EditorLayout
 
   val composableTextRange: TextRange?
+  val timestamp: Long
 }
 
 interface MutableEditor : Editor {

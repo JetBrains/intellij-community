@@ -72,7 +72,8 @@ fun simpleEditor(
       xKind = EditorScrollKind.Smallest,
       yKind = EditorScrollKind.Smallest,
       timestamp = scrollCommandTimestamp)
-    else null
+    else null,
+    timestamp = 0
   )
 }
 
@@ -142,6 +143,7 @@ data class SimpleEditorState(
   val focusPlace: EditorFocusPlace,
   val userActionTimestamp: Map<EditorCommandType, Long> = emptyMap(),
   override val composableTextRange: TextRange? = null,
+  override val timestamp: Long
 ) : Editor {
   override val undoLog: UndoLog get() = document.undoLog
   override val layout: EditorLayout
@@ -163,6 +165,7 @@ fun SimpleEditorState.mutate(f: MutableEditor.() -> Unit): SimpleEditorState {
                                           SimpleMutableMultiCaret(mutableDocument, multiCaret),
                                           oneLine,
                                           writable,
+                                          timestamp,
                                           editorLayoutComponent,
                                           focusPlace,
                                           scrollCommand,
@@ -176,7 +179,8 @@ fun SimpleEditorState.mutate(f: MutableEditor.() -> Unit): SimpleEditorState {
                    scrollCommand = mutableEditor.scrollCommand,
                    focusPlace = mutableEditor.focusPlace,
                    userActionTimestamp = mutableEditor.userActionTimestamp,
-                   composableTextRange = mutableEditor.composableTextRange)
+                   composableTextRange = mutableEditor.composableTextRange,
+                   timestamp = documentStateAfter.timestamp + 1)
 }
 
 data class SimpleMultiCaretState(
@@ -272,6 +276,7 @@ class SimpleMutableEditor(
   override val multiCaret: SimpleMutableMultiCaret,
   override val oneLine: Boolean,
   override val writable: Boolean,
+  override val timestamp: Long,
   val editorLayout: SimpleEditorLayoutComponent,
   var focusPlace: EditorFocusPlace,
   override var scrollCommand: EditorScrollCommand?,
