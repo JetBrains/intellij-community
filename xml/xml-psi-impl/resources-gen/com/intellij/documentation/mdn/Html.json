@@ -333,6 +333,46 @@
       },
       "doc": "<div class=\"notecard note\">\n<p><strong>Note:</strong> <a href=\"https://github.com/WebKit/standards-positions/issues/97\" class=\"external\" target=\"_blank\">Safari does not plan to support custom built-in elements</a> and <a href=\"https://github.com/WICG/webcomponents/issues/1029\" class=\"external\" target=\"_blank\">browser vendors are exploring alternative solutions to customizing built-ins</a>. Check the <a href=\"#browser_compatibility\">browser compatibility</a> section for support information.\n</div>\n<p>The <strong><code>is</code></strong> <a href=\"$MDN_URL$/Web/HTML/Reference/Global_attributes\">global attribute</a> allows you to specify that a standard HTML element should behave like a defined custom built-in element (see <a href=\"$MDN_URL$/Web/API/Web_components/Using_custom_elements\">Using custom elements</a> for more details).\n<p>This attribute can only be used if the specified custom element name has been successfully <a href=\"$MDN_URL$/Web/API/CustomElementRegistry/define\">defined</a> in the current document, and extends the element type it is being applied to."
     },
+    "itemid": {
+      "url": "$MDN_URL$/web/html/reference/global_attributes/itemid",
+      "status": [
+        "Experimental",
+        "Deprecated"
+      ],
+      "doc": "The <strong><code>itemid</code></strong> <a href=\"$MDN_URL$/Web/HTML/Reference/Global_attributes\">global attribute</a> provides microdata in the form of a unique, global identifier of an item.\n<p>An <code>itemid</code> attribute can only be specified for an element that has both <a href=\"$MDN_URL$/Web/HTML/Reference/Global_attributes/itemscope\"><code>itemscope</code></a> and <a href=\"$MDN_URL$/Web/HTML/Reference/Global_attributes/itemtype\"><code>itemtype</code></a> attributes. Also, <code>itemid</code> can only be specified on elements that possess an <code>itemscope</code> attribute whose corresponding <code>itemtype</code> refers to or defines a vocabulary that supports global identifiers.\n<p>The exact meaning of an <code>itemtype</code>'s global identifier is provided by the definition of that identifier within the specified vocabulary. The vocabulary defines whether several items with the same global identifier can coexist and, if so, how items with the same identifier are handled.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThe <a href=\"$MDN_URL$/Glossary/WHATWG\">WHATWG</a> definition specifies that an <code>itemid</code> must be a <a href=\"$MDN_URL$/Glossary/URL\">URL</a>. However, the following example correctly illustrates that a <a href=\"$MDN_URL$/Glossary/URN\">URN</a> may also be used. This inconsistency may reflect the incomplete nature of the Microdata specification.\n</div>"
+    },
+    "itemprop": {
+      "url": "$MDN_URL$/web/html/reference/global_attributes/itemprop",
+      "status": [
+        "Experimental",
+        "Deprecated"
+      ],
+      "doc": "The <strong><code>itemprop</code></strong> <a href=\"$MDN_URL$/Web/HTML/Reference/Global_attributes\">global attribute</a> is used to add properties to an item. Every HTML element can have an <code>itemprop</code> attribute specified, and an <code>itemprop</code> consists of a name-value pair. Each name-value pair is called a <strong>property</strong>, and a group of one or more properties forms an <strong>item</strong>. Property values are either a string or a URL and can be associated with a very wide range of elements including <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/audio\"><code>&lt;audio&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/embed\"><code>&lt;embed&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/iframe\"><code>&lt;iframe&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/img\"><code>&lt;img&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/link\"><code>&lt;link&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/object\"><code>&lt;object&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/source\"><code>&lt;source&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/track\"><code>&lt;track&gt;</code></a>, and <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/video\"><code>&lt;video&gt;</code></a>."
+    },
+    "itemref": {
+      "url": "$MDN_URL$/web/html/reference/global_attributes/itemref",
+      "status": [
+        "Experimental",
+        "Deprecated"
+      ],
+      "doc": "Properties that are not descendants of an element with the <a href=\"$MDN_URL$/Web/HTML/Reference/Global_attributes/itemscope\"><code>itemscope</code></a> attribute can be associated with an item using the <a href=\"$MDN_URL$/Web/HTML/Reference/Global_attributes\">global attribute</a> <strong><code>itemref</code></strong>.\n<p><code>itemref</code> provides a list of element IDs (not <code>itemid</code>s) elsewhere in the document, with additional properties\n<p>The <code>itemref</code> attribute can only be specified on elements that have an <code>itemscope</code> attribute specified.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThe <code>itemref</code> attribute is not part of the microdata data model. It is merely a syntactic construct to aid authors in adding annotations to pages where the data to be annotated does not follow a convenient tree structure. For example, it allows authors to mark up data in a table so that each column defines a separate item while keeping the properties in the cells.\n</div>"
+    },
+    "itemscope": {
+      "url": "$MDN_URL$/web/html/reference/global_attributes/itemscope",
+      "status": [
+        "Experimental",
+        "Deprecated"
+      ],
+      "doc": "<strong><code>itemscope</code></strong> is a boolean <a href=\"$MDN_URL$/Web/HTML/Reference/Global_attributes\">global attribute</a> that defines the scope of associated metadata. Specifying the <strong><code>itemscope</code></strong> attribute for an element creates a new item, which results in a number of name-value pairs that are associated with the element.\n<p>A related attribute, <a href=\"$MDN_URL$/Web/HTML/Reference/Global_attributes/itemtype\"><code>itemtype</code></a>, is used to specify the valid URL of a vocabulary (such as <a href=\"https://schema.org/\" class=\"external\" target=\"_blank\">schema.org</a>) that describes the item and its properties context. In each of the following examples, the vocabulary is from <a href=\"https://schema.org/\" class=\"external\" target=\"_blank\">schema.org</a>.\n<p>Every HTML element may have an <code>itemscope</code> attribute specified. An <code>itemscope</code> element that does not have an associated <code>itemtype</code> must have an associated <code>itemref</code>.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nFind more about <code>itemtype</code> attributes at <a href=\"https://schema.org/Thing\" class=\"external\" target=\"_blank\">https://schema.org/Thing</a>\n</div>"
+    },
+    "itemtype": {
+      "url": "$MDN_URL$/web/html/reference/global_attributes/itemtype",
+      "status": [
+        "Experimental",
+        "Deprecated"
+      ],
+      "doc": "The <a href=\"$MDN_URL$/Web/HTML/Reference/Global_attributes\">global attribute</a> <strong><code>itemtype</code></strong> specifies the URL of the vocabulary that will be used to define <code>itemprop</code>'s (item properties) in the data structure.\n<p><a href=\"$MDN_URL$/Web/HTML/Reference/Global_attributes/itemscope\"><code>itemscope</code></a> is used to set the scope of where in the data structure the vocabulary set by <code>itemtype</code> will be active.\n<p>Google and other major search engines support the <a href=\"https://schema.org/\" class=\"external\" target=\"_blank\">schema.org</a> vocabulary for structured data. This vocabulary defines a standard set of type names and property names. For example, <code>MusicEvent</code> indicates a concert performance, with <a href=\"https://schema.org/startDate\" class=\"external\" target=\"_blank\"><code>startDate</code></a> and <a href=\"https://schema.org/location\" class=\"external\" target=\"_blank\"><code>location</code></a> properties specifying the concert's key details. In this case, <a href=\"https://schema.org/MusicEvent\" class=\"external\" target=\"_blank\"><code>MusicEvent</code></a> would be the URL used by <code>itemtype</code>, with <code>startDate</code> and location as <code>itemprop</code>'s which <a href=\"https://schema.org/MusicEvent\" class=\"external\" target=\"_blank\"><code>MusicEvent</code></a> defines.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nMore about <code>itemtype</code> attributes can be found at <a href=\"https://schema.org/Thing\" class=\"external\" target=\"_blank\">https://schema.org/Thing</a>\n</div>\n<ul>\n<li>The <strong>itemtype</strong> attribute must have a value that is an unordered set of unique tokens which are case-sensitive, each is a valid and absolute URL, and all defined to use the same vocabulary. The attribute's value must have at least one token.</li>\n<li>The item types must all be types defined in applicable specifications (such as <a href=\"https://schema.org/\" class=\"external\" target=\"_blank\">schema.org</a>), and must all be defined to use the same vocabulary.</li>\n<li>The itemtype attribute can only be specified on elements which have an itemscope attribute specified.</li>\n<li>The itemid attribute can only be specified on elements which have both an itemscope attribute and an itemtype attribute specified. They must only be specified on elements with an itemscope attribute, whose itemtype attribute specifies a vocabulary not supporting global identifiers for items, as defined by that vocabulary's specification.</li>\n<li>The exact meaning of a global identifier is determined by the vocabulary's specification. It is left to such specifications to define whether multiple items of the same global identifier (whether on the same page or different pages) are allowed to exist, and what processing rules for that vocabulary are, with respect to handling the case of multiple items with the same ID.</li>\n</ul>"
+    },
     "lang": {
       "url": "$MDN_URL$/web/html/reference/global_attributes/lang",
       "status": [
@@ -5808,7 +5848,8 @@
             "level": "HIGH",
             "lowDate": "2015-07-29",
             "highDate": "2018-01-29"
-          }
+          },
+          "doc": "The <strong><code>accept</code></strong> attribute takes as its value a comma-separated list of one or more file types, or <a href=\"#unique_file_type_specifiers\">unique file type specifiers</a>, describing which file types to allow."
         },
         "align": {
           "url": "$MDN_URL$/web/html/reference/elements/input#align",
@@ -5883,7 +5924,8 @@
             "level": "HIGH",
             "lowDate": "2015-07-29",
             "highDate": "2018-01-29"
-          }
+          },
+          "doc": "The HTML <code>autocomplete</code> attribute lets web developers specify what if any permission the <a href=\"$MDN_URL$/Glossary/User_agent\">user agent</a> has to provide automated assistance in filling out form field values, as well as guidance to the browser as to the type of information expected in the field.\n<p>It is available on <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input\"><code>&lt;input&gt;</code></a> elements that take a text or numeric value as input, <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/textarea\"><code>&lt;textarea&gt;</code></a> elements, <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/select\"><code>&lt;select&gt;</code></a> elements, and <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/form\"><code>&lt;form&gt;</code></a> elements.\n<p>The <code>autocomplete</code> attribute provides a hint to the user agent specifying how to, or indeed whether to, prefill a form control. The attribute value is either the keyword <code>off</code> or <code>on</code>, or an ordered list of space-separated tokens.\n<div>\n```html\n<input autocomplete=\"off\" />\n<input autocomplete=\"on\" />\n<input autocomplete=\"shipping street-address\" />\n<input autocomplete=\"section-user1 billing postal-code\" />\n```\n</div>\n<p>If an <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input\"><code>&lt;input&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/select\"><code>&lt;select&gt;</code></a> or <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/textarea\"><code>&lt;textarea&gt;</code></a> element has no <code>autocomplete</code> attribute, the browser will use the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/form#autocomplete\"><code>autocomplete</code> attribute of the element's <strong>owning form</strong></a>. The owning form is either the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/form\"><code>&lt;form&gt;</code></a> matching the <code>id</code> specified by the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input#form\"><code>form</code></a> attribute of the element (if present) or, more commonly, the <code>&lt;form&gt;</code> the element is nested in.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nIn order to provide autocompletion, user-agents might require <code>&lt;input&gt;</code>/<code>&lt;select&gt;</code>/<code>&lt;textarea&gt;</code> elements to:\n<ol>\n<li>Have a <code>name</code> and/or <code>id</code> attribute</li>\n<li>Be descendants of a <code>&lt;form&gt;</code> element</li>\n<li>Be owned by a form with a <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/submit\">submit</a> button</li>\n</ol>\n</div>\n<p>If the same list of tokens is used in more than one form control, the user-agent will autocomplete all occurrences of the same <code>autocomplete</code> value with the same data value.\n<p>Some tokens may be used more than once with potentially different expected values, such as the <code>zip-code</code> token in a form that contains both shipping and billing addresses. Including multiple different tokens in a space-separated list causes the associated form controls to be given unique autocomplete values: in this case, <code>autocomplete=\"shipping zip-code\"</code> and <code>autocomplete=\"billing zip-code\"</code>.\n<p>Some autocomplete values may need to be re-used multiple times. For example, a form may contain multiple shipping addresses and therefore multiple occurrences of <code>\"shipping zip-code\"</code> while still expecting different values. To make the autocomplete value unique in these cases, the first token in the space-separated list of tokens can be a <code>section-*</code> token, where the token's first eight characters are always the string \"section-\", followed by an alphanumeric string. All form fields given the <code>section-*</code> token with the same alphanumeric string belong to the same <strong>named group</strong>.\n<p>If including the <code>autocomplete</code> attribute on <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/hidden\">hidden</a> input elements (<code>&lt;input type=\"hidden\"&gt;</code>), its value must be an ordered list of space-separated tokens; the <code>on</code> and <code>off</code> keywords are not allowed.\n<p>The source of the suggested values is generally up to the browser; typically values come from past values entered by the user, but they may also come from pre-configured values. For instance, a browser might let the user save their name, address, phone number, and email addresses for autocomplete purposes. The browser may also offer the ability to save encrypted credit card information, for autocompletion following an authentication procedure.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThe <code>autocomplete</code> attribute also controls whether Firefox will — unlike other browsers — <a href=\"https://stackoverflow.com/questions/5985839/bug-with-firefox-disabled-attribute-of-input-not-resetting-when-refreshing\" class=\"external\" target=\"_blank\">persist the dynamic disabled state and (if applicable) dynamic checkedness</a> of an <code>&lt;input&gt;</code> element, <code>&lt;textarea&gt;</code> element, or entire <code>&lt;form&gt;</code> across page loads. The persistence feature is enabled by default. Setting the value of the <code>autocomplete</code> attribute to <code>off</code> disables this feature. This works even when the <code>autocomplete</code> attribute would normally not apply by virtue of its <code>type</code>. See <a href=\"https://bugzil.la/654072\" class=\"external\" target=\"_blank\">Firefox bug 654072</a>.\n</div>"
         },
         "capture": {
           "url": "$MDN_URL$/web/html/reference/elements/input#capture",
@@ -5897,7 +5939,8 @@
           },
           "baseline": {
             "level": "NONE"
-          }
+          },
+          "doc": "The <strong><code>capture</code></strong> attribute specifies that, optionally, a new file should be captured, and which device should be used to capture that new media of a type defined by the <a href=\"$MDN_URL$/Web/HTML/Reference/Attributes/accept\"><code>accept</code></a> attribute.\n<p>Values include <code>user</code> and <code>environment</code>. The capture attribute is supported on the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/file\">file</a> input type.\n<p>The <code>capture</code> attribute takes as its value a string that specifies which camera to use for capture of image or video data, if the <a href=\"$MDN_URL$/Web/HTML/Reference/Attributes/accept\">accept</a> attribute indicates that the input should be of one of those types.\n<figure class=\"table-container\"><table>\n<thead>\n<tr>\n<th>Value</th>\n<th>Description</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>user</code></td>\n<td>The user-facing camera and/or microphone should be used.</td>\n</tr>\n<tr>\n<td><code>environment</code></td>\n<td>The outward-facing camera and/or microphone should be used</td>\n</tr>\n</tbody>\n</table></figure>\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nCapture was previously a Boolean attribute which, if present, requested that the device's media capture device(s) such as camera or microphone be used instead of requesting a file input.\n</div>"
         },
         "checked": {
           "url": "$MDN_URL$/web/html/reference/elements/input#checked",
@@ -5951,7 +5994,8 @@
           "baseline": {
             "level": "LOW",
             "lowDate": "2023-08-01"
-          }
+          },
+          "doc": "The <strong><code>dirname</code></strong> attribute can be used on the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/textarea\"><code>&lt;textarea&gt;</code></a> element and several <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input\"><code>&lt;input&gt;</code></a> types and describes the directionality of the element's text content during form submission.\nThe browser uses this attribute's value to determine whether text the user has entered is left-to-right or right-to-left oriented.\nWhen used, the element's text directionality value is included in form submission data along with the <code>dirname</code> attribute's value as the name of the field."
         },
         "disabled": {
           "url": "$MDN_URL$/web/html/reference/elements/input#disabled",
@@ -5972,7 +6016,8 @@
             "level": "HIGH",
             "lowDate": "2015-07-29",
             "highDate": "2018-01-29"
-          }
+          },
+          "doc": "The Boolean <strong><code>disabled</code></strong> attribute, when present, makes the element not mutable, focusable, or even submitted with the form. The user can neither edit nor focus on the control, nor its form control descendants."
         },
         "form": {
           "url": "$MDN_URL$/web/html/reference/elements/input#form",
@@ -6144,7 +6189,8 @@
             "level": "HIGH",
             "lowDate": "2015-07-29",
             "highDate": "2018-01-29"
-          }
+          },
+          "doc": "The <strong><code>max</code></strong> attribute defines the maximum value that is acceptable and valid for the input containing the attribute. If the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input#value\"><code>value</code></a> of the element is greater than this, the element fails <a href=\"$MDN_URL$/Learn_web_development/Extensions/Forms/Form_validation\">validation</a>. This value must be greater than or equal to the value of the <a href=\"$MDN_URL$/Web/HTML/Reference/Attributes/min\"><code>min</code></a> attribute. If the <code>max</code> attribute is present but is not specified or is invalid, no <code>max</code> value is applied. If the <code>max</code> attribute is valid and a non-empty value is greater than the maximum allowed by the <code>max</code> attribute, constraint validation will prevent form submission.\n<p>The max attribute is valid for the numeric input types, including the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/date\">date</a>, <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/month\">month</a>, <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/week\">week</a>, <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/time\">time</a>, <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/datetime-local\">datetime-local</a>, <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/number\">number</a> and <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/range\">range</a> types, and both the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/progress\"><code>&lt;progress&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/meter\"><code>&lt;meter&gt;</code></a> elements. It is a number that specifies the most positive value a form control to be considered valid.\n<p>If the value exceeds the max value allowed, the <a href=\"$MDN_URL$/Web/API/ValidityState/rangeOverflow\"><code>validityState.rangeOverflow</code></a> will be true, and the control will be matched by the <a href=\"$MDN_URL$/Web/CSS/:out-of-range\"><code>:out-of-range</code></a> and <a href=\"$MDN_URL$/Web/CSS/:invalid\"><code>:invalid</code></a> pseudo-classes."
         },
         "maxlength": {
           "url": "$MDN_URL$/web/html/reference/elements/input#maxlength",
@@ -6165,7 +6211,8 @@
             "level": "HIGH",
             "lowDate": "2015-07-29",
             "highDate": "2018-01-29"
-          }
+          },
+          "doc": "The <strong><code>maxlength</code></strong> attribute defines the maximum <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/String/length\">string length</a> that the user can enter into an <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input\"><code>&lt;input&gt;</code></a> or <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/textarea\"><code>&lt;textarea&gt;</code></a>. The attribute must have an integer value of 0 or higher.\n<p>The length is measured in UTF-16 code units, which (<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/String/length#strings_with_length_not_equal_to_the_number_of_characters\">for most scripts</a>) is equivalent to the number of characters. If no <code>maxlength</code> is specified, or an invalid value is specified, the input has no maximum length.\n<p>Any <code>maxlength</code> value must be greater than or equal to the value of <a href=\"$MDN_URL$/Web/HTML/Reference/Attributes/minlength\"><code>minlength</code></a>, if present and valid. The input will fail constraint validation if the length of the text value of the field is greater than maxlength UTF-16 code units long. Constraint validation is only applied when the value is changed by the user."
         },
         "min": {
           "url": "$MDN_URL$/web/html/reference/elements/input#min",
@@ -6186,7 +6233,8 @@
             "level": "HIGH",
             "lowDate": "2015-07-29",
             "highDate": "2018-01-29"
-          }
+          },
+          "doc": "The <strong><code>min</code></strong> attribute defines the minimum value that is acceptable and valid for the input containing the attribute. If the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input#value\"><code>value</code></a> of the element is less than this, the element fails <a href=\"$MDN_URL$/Learn_web_development/Extensions/Forms/Form_validation\">validation</a>. This value must be less than or equal to the value of the <code>max</code> attribute.\n<p>Some input types have a default minimum. If the input has no default minimum and a value is specified for <code>min</code> that can't be converted to a valid number (or no minimum value is set), the input has no minimum value.\n<p>It is valid for the input types including: <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/date\">date</a>, <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/month\">month</a>, <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/week\">week</a>, <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/time\">time</a>, <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/datetime-local\">datetime-local</a>, <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/number\">number</a> and <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/range\">range</a> types, and the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/meter\"><code>&lt;meter&gt;</code></a> element."
         },
         "minlength": {
           "url": "$MDN_URL$/web/html/reference/elements/input#minlength",
@@ -6207,7 +6255,8 @@
             "level": "HIGH",
             "lowDate": "2018-04-30",
             "highDate": "2020-10-30"
-          }
+          },
+          "doc": "The <strong><code>minlength</code></strong> attribute defines the minimum <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/String/length\">string length</a> that the user can enter into an <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input\"><code>&lt;input&gt;</code></a> or <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/textarea\"><code>&lt;textarea&gt;</code></a>. The attribute must have an integer value of 0 or higher.\n<p>The length is measured in UTF-16 code units, which (<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/String/length#strings_with_length_not_equal_to_the_number_of_characters\">for most scripts</a>) is equivalent to the number of characters. If no <code>minlength</code> is specified, or an invalid value is specified, the input has no minimum length. This value must be less than or equal to the value of <a href=\"$MDN_URL$/Web/HTML/Reference/Attributes/maxlength\">maxlength</a>, otherwise the value will never be valid, as it is impossible to meet both criteria.\n<p>The input will fail constraint validation if the length of the text value of the field is less than minlength UTF-16 code units long, with <a href=\"$MDN_URL$/Web/API/ValidityState/tooShort\"><code>validityState.tooShort</code></a> returning <code>true</code>. Constraint validation is only applied when the value is changed by the user. Once submission fails, some browsers will display an error message indicating the minimum length required and the current length.\n<p><code>minlength</code> does not imply <a href=\"$MDN_URL$/Web/HTML/Reference/Attributes/required\"><code>required</code></a>; an input only violates a <code>minlength</code> constraint if the user has input a value. If an input is not <code>required</code>, an empty string can be submitted even if <code>minlength</code> is set."
         },
         "mozactionhint": {
           "url": "$MDN_URL$/web/html/reference/elements/input#mozactionhint",
@@ -6239,7 +6288,8 @@
             "level": "HIGH",
             "lowDate": "2015-07-29",
             "highDate": "2018-01-29"
-          }
+          },
+          "doc": "The Boolean <strong><code>multiple</code></strong> attribute, if set, means the form control accepts one or more values. The attribute is valid for the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/email\">email</a> and <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/file\">file</a> input types and the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/select\"><code>&lt;select&gt;</code></a>. The manner by which the user opts for multiple values depends on the form control."
         },
         "name": {
           "url": "$MDN_URL$/web/html/reference/elements/input#name",
@@ -6285,7 +6335,8 @@
             "level": "HIGH",
             "lowDate": "2015-07-29",
             "highDate": "2018-01-29"
-          }
+          },
+          "doc": "The <strong><code>pattern</code></strong> attribute specifies a <a href=\"$MDN_URL$/Web/JavaScript/Guide/Regular_expressions\">regular expression</a> the form control's value should match. If a non-<code>null</code> value doesn't conform to the constraints set by the <code>pattern</code> value, the <a href=\"$MDN_URL$/Web/API/ValidityState\"><code>ValidityState</code></a> object's read-only <a href=\"$MDN_URL$/Web/API/ValidityState/patternMismatch\" ><code>patternMismatch</code></a> property will be true."
         },
         "placeholder": {
           "url": "$MDN_URL$/web/html/reference/elements/input#placeholder",
@@ -6306,7 +6357,8 @@
             "level": "HIGH",
             "lowDate": "2015-07-29",
             "highDate": "2018-01-29"
-          }
+          },
+          "doc": "The <strong><code>placeholder</code></strong> attribute defines the text displayed in a form control when the control has no value. The placeholder text should provide a brief hint to the user as to the expected type of data that should be entered into the control.\n<p>Effective placeholder text includes a word or short phrase that hints at the expected data type, not an explanation or prompt. The placeholder must not be used instead of a <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/label\"><code>&lt;label&gt;</code></a>. As the placeholder is not visible if the value of the form control is not null, using <code>placeholder</code> instead of a <code>&lt;label&gt;</code> for a prompt harms usability and accessibility.\n<p>The <code>placeholder</code> attribute is supported by the following input types: <code><a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/text\">text</a></code>, <code><a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/search\">search</a></code>, <code><a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/url\">url</a></code>, <code><a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/tel\">tel</a></code>, <code><a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/email\">email</a></code>, and <code><a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/password\">password</a></code>. It is also supported by the <code><a href=\"$MDN_URL$/Web/HTML/Reference/Elements/textarea\"><code>&lt;textarea&gt;</code></a></code> element. The <a href=\"#example\">example</a> below shows the <code>placeholder</code> attribute in use to explain the expected format of an input field.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nExcept in <code><a href=\"$MDN_URL$/Web/HTML/Reference/Elements/textarea\"><code>&lt;textarea&gt;</code></a></code> elements, the <code>placeholder</code> attribute can't include any line feeds (LF) or carriage returns (CR). If either is included in the value, the placeholder text will be clipped.\n</div>"
         },
         "popovertarget": {
           "url": "$MDN_URL$/web/html/reference/elements/input#popovertarget",
@@ -6367,7 +6419,8 @@
             "level": "HIGH",
             "lowDate": "2015-07-29",
             "highDate": "2018-01-29"
-          }
+          },
+          "doc": "The Boolean <strong><code>readonly</code></strong> attribute, when present, makes the element not mutable, meaning the user can not edit the control."
         },
         "required": {
           "url": "$MDN_URL$/web/html/reference/elements/input#required",
@@ -6388,7 +6441,8 @@
             "level": "HIGH",
             "lowDate": "2015-07-29",
             "highDate": "2018-01-29"
-          }
+          },
+          "doc": "The <a href=\"$MDN_URL$/Glossary/Boolean/HTML\">Boolean</a> <strong><code>required</code></strong> attribute, if present, indicates that the user must specify a value for the input before the owning form can be submitted.\n<p>The <code>required</code> attribute is supported by <code><a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/text\">text</a></code>, <code><a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/search\">search</a></code>, <code><a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/url\">url</a></code>, <code><a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/tel\">tel</a></code>, <code><a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/email\">email</a></code>, <code><a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/password\">password</a></code>, <code><a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/date\">date</a></code>, <code><a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/month\">month</a></code>, <code><a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/week\">week</a></code>, <code><a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/time\">time</a></code>, <code><a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/datetime-local\">datetime-local</a></code>, <code><a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/number\">number</a></code>, <code><a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/checkbox\">checkbox</a></code>, <code><a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/radio\">radio</a></code>, <code><a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/file\">file</a></code>, <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input\"><code>&lt;input&gt;</code></a> types along with the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/select\"><code>&lt;select&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/textarea\"><code>&lt;textarea&gt;</code></a> form control elements. If present on any of these input types and elements, the <a href=\"$MDN_URL$/Web/CSS/:required\"><code>:required</code></a> pseudo class will match. If the attribute is not included, the <a href=\"$MDN_URL$/Web/CSS/:optional\"><code>:optional</code></a> pseudo class will match.\n<p>The attribute is not supported on, or relevant to, <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/range\">range</a> and <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/color\">color</a> input types, as both have default values. Type <code>color</code> defaults to <code>#000000</code>. Type <code>range</code> defaults to the midpoint between <code>min</code> and <code>max</code> — with <code>min</code> and <code>max</code> defaulting to 0 and 100 respectively in most browsers if not declared. <code>required</code> is also not supported on the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/hidden\">hidden</a> input type — users cannot be expected to fill out a hidden form field. Finally, <code>required</code> is not supported on any button input types, including <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/image\">image</a>.\n<p>In the case of a same named group of <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/radio\">radio</a> buttons, if a single radio button in the group has the <code>required</code> attribute, a radio button in that group must be checked, although it doesn't have to be the one on which the attribute is applied. To improve code maintenance, it is recommended to either include the <code>required</code> attribute in every same-named radio button in the group, or else in none.\n<p>In the case of a same named group of <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/checkbox\">checkbox</a> input types, only the checkboxes with the <code>required</code> attribute are required.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nSetting <a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Attributes/aria-required\"><code>aria-required=\"true\"</code></a> tells a screen reader that an element (any element) is required, but has no bearing on the optionality of the element.\n</div>"
         },
         "results": {
           "url": "$MDN_URL$/web/html/reference/elements/input#results",
@@ -6413,7 +6467,8 @@
             "level": "HIGH",
             "lowDate": "2015-07-29",
             "highDate": "2018-01-29"
-          }
+          },
+          "doc": "The <strong><code>size</code></strong> attribute defines the width of the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input\"><code>&lt;input&gt;</code></a> and the height of the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/select\"><code>&lt;select&gt;</code></a> element. For an <code>input</code> element, it defines the number of characters that the user agent allows the user to see when editing the value. For a <code>select</code> element, it defines the number of options that should be shown to the user. This must be a valid non-negative integer greater than zero.\n<p>If no <code>size</code> is specified, or an invalid value is specified, the input has no size declared, and the form control will be the default width based on the user agent. If CSS targets the element with properties impacting the width, CSS takes precedence.\n<p>The <code>size</code> attribute has no impact on constraint validation."
         },
         "src": {
           "url": "$MDN_URL$/web/html/reference/elements/input#src",
@@ -6455,7 +6510,8 @@
             "level": "HIGH",
             "lowDate": "2015-07-29",
             "highDate": "2018-01-29"
-          }
+          },
+          "doc": "The <strong><code>step</code></strong> attribute is a number that specifies the granularity that the value must adhere to or the keyword <code>any</code>. It is valid for the numeric input types, including the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/date\">date</a>, <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/month\">month</a>, <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/week\">week</a>, <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/time\">time</a>, <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/datetime-local\">datetime-local</a>, <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/number\">number</a> and <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/range\">range</a> types.\n<p>The <code>step</code> sets the <em>stepping interval</em> when clicking up and down spinner buttons, moving a slider left and right on a range, and validating the different date types. If not explicitly included, <code>step</code> defaults to 1 for <code>number</code> and <code>range</code>, and 1 unit type (minute, week, month, day) for the date/time input types. The value must be a positive number - integer or float — or the special value <code>any</code>, which means no stepping is implied and any value is allowed (barring other constraints, such as <a href=\"$MDN_URL$/Web/HTML/Reference/Attributes/min\"><code>min</code></a> and <a href=\"$MDN_URL$/Web/HTML/Reference/Attributes/max\"><code>max</code></a>).\n<p>The default stepping value for <code>number</code> inputs is 1, allowing only integers to be entered, <em>unless</em> the stepping base is not an integer. The default stepping value for <code>time</code> is 60 seconds, with 900 being equal to 15 minutes."
         },
         "usemap": {
           "url": "$MDN_URL$/web/html/reference/elements/input#usemap",

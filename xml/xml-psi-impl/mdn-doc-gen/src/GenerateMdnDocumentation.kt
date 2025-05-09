@@ -72,7 +72,7 @@ val seePattern = Regex("<p>See <a href=\"/$BUILT_LANG/$WEB_DOCS/([a-z0-9_\\-/]+)
                        RegexOption.IGNORE_CASE)
 
 val svgAttributeSectionsPattern = Regex(
-  "(.*)<em>Value type</em>\\s*:(.*);\\s*<em>Default value(?:</em>)?\\s*:(.*);\\s*(?:<em>)?Animatable</em>\\s*:\\s*(.*)",
+  "(.*)<em>Value type</em>\\s*:(.*)\\s*<em>Default value(?:</em>)?\\s*:(.*)\\s+(?:<em>)?Animatable</em>\\s*:\\s*(.*)",
   RegexOption.DOT_MATCHES_ALL)
 
 val bcd: Bcd = readBcd(BROWSER_COMPAT_DATA_PATH)
@@ -97,14 +97,15 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
   /* Run these tests to generate documentation. Prepare MDN documentation repositories with `prepare-mdn.sh` */
   fun testGenHtml() {
     val attributes =
-      extractInformationSimple("html.global_attributes", "html/global_attributes", listOf('_', '-'),
+      extractInformationSimple("html.global_attributes", "html/reference/global_attributes", listOf('_', '-'),
                                this::extractAttributeDocumentation)
     outputJson(MdnApiNamespace.Html.name, MdnHtmlDocumentation(
       LICENSE, AUTHOR, BUILT_LANG,
       attributes,
-      extractInformationSimple("html.elements", "html/elements", listOf('_', '-'),
+      extractInformationSimple("html.elements", "html/reference/elements", listOf('_', '-'),
                                allowList = htmlSpecialMappings.keys) { dir, bcdPath, bcdInfo ->
-        this.extractElementDocumentation(dir, "html/global_attributes", bcdPath, bcdInfo, attributes)
+        this.extractElementDocumentation(dir, "html/reference/attributes", "html/reference/global_attributes",
+                                         bcdPath, bcdInfo, attributes)
       },
       reversedAliasesMap(htmlSpecialMappings)
     ))
@@ -112,20 +113,21 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
 
   fun testGenMathML() {
     val attributes =
-      extractInformationSimple("mathml.global_attributes", "mathml/attribute", emptyList(),
+      extractInformationSimple("mathml.global_attributes", "mathml/reference/global_attributes", emptyList(),
                                this::extractAttributeDocumentation)
     outputJson(MdnApiNamespace.MathML.name, MdnHtmlDocumentation(
       LICENSE, AUTHOR, BUILT_LANG,
       attributes,
-      extractInformationSimple("mathml.elements", "mathml/element", emptyList()) { dir, bcdPath, bcdInfo ->
-        this.extractElementDocumentation(dir, "mathml/attribute", bcdPath, bcdInfo, attributes)
+      extractInformationSimple("mathml.elements", "mathml/reference/element", emptyList()) { dir, bcdPath, bcdInfo ->
+        this.extractElementDocumentation(dir, "mathml/reference/attribute", "mathml/reference/global_attributes",
+                                         bcdPath, bcdInfo, attributes)
       }
     ))
   }
 
   fun testGenSvg() {
     val attributes =
-      extractInformationSimple("svg.global_attributes", "svg/attribute", listOf('_')) { dir, bcdPath, bcd ->
+      extractInformationSimple("svg.global_attributes", "svg/reference/attribute", listOf('_')) { dir, bcdPath, bcd ->
         if (bcd == null && dir.name !in listOf("requiredfeatures", "systemlanguage"))
           null
         else
@@ -134,8 +136,8 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     outputJson(MdnApiNamespace.Svg.name, MdnHtmlDocumentation(
       LICENSE, AUTHOR, BUILT_LANG,
       attributes,
-      extractInformationSimple("svg.elements", "svg/element", listOf('_')) { dir, bcdPath, bcdInfo ->
-        this.extractElementDocumentation(dir, "svg/attribute", bcdPath, bcdInfo, attributes)
+      extractInformationSimple("svg.elements", "svg/reference/element", listOf('_')) { dir, bcdPath, bcdInfo ->
+        this.extractElementDocumentation(dir, "svg/reference/attribute", null, bcdPath, bcdInfo, attributes)
       }
     ))
   }
@@ -390,6 +392,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
   private fun extractElementDocumentation(
     dir: File,
     attributesMdnPath: String,
+    globalAttributesMdnPath: String?,
     bcdPath: String?,
     compatData: Identifier?,
     commonAttributes: Map<String, MdnHtmlAttributeDocumentation>,
@@ -418,7 +421,8 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
                        ?.takeIf { it.isNotEmpty() }
 
     return MdnHtmlElementDocumentation(getMdnDocsUrl(dir), status, compatibility, contents.baseline, documentation, properties,
-                                       buildAttributes(dir, getMdnDir(attributesMdnPath), attributesDoc, bcdPath, compatData, commonAttributes))
+                                       buildAttributes(dir, getMdnDir(attributesMdnPath), globalAttributesMdnPath?.let { getMdnDir(it) },
+                                                       attributesDoc, bcdPath, compatData, commonAttributes))
   }
 
   private fun extractAttributeDocumentation(dir: File, bcdPath: String?, compatData: Identifier?): MdnHtmlAttributeDocumentation {
@@ -675,11 +679,14 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
   private fun buildAttributes(
     tagDir: File,
     attributesDir: File,
+    globalAttributesDir: File?,
     attributesDoc: RawProse?,
     bcdPath: String?,
     elementCompatData: Identifier?,
     commonAttributes: Map<String, MdnHtmlAttributeDocumentation>,
   ): Map<String, MdnHtmlAttributeDocumentation>? {
+    assert(attributesDir.exists()) { "Attributes dir does not exist - $attributesDir" }
+    assert(globalAttributesDir == null || globalAttributesDir.exists()) { "Global attributes dir does not exist - $globalAttributesDir" }
     val docAttrs = processDataList(attributesDoc).flatMap { (name, doc) ->
       if (name.contains(','))
         name.splitToSequence(',').map { Pair(it.trim(), doc) }
@@ -701,15 +708,28 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     val tagName = tagDir.name
     val missing = ((compatAttrs.keys - docAttrs.keys)) - commonAttributes.keys
 
-    val fromGlobal = missing
-      .mapNotNull { id ->
+    val fromLocal = docAttrs.keys.asSequence()
+      .plus(compatAttrs.keys).distinct()
+      .associateWith { id ->
         val dir = File(attributesDir, id).takeIf { it.isDirectory }
+        val bcd = elementCompatData?.additionalProperties?.entries?.find { it.key.equals(id, true) }?.value
+        if (dir?.isDirectory == true) {
+          extractAttributeDocumentation(dir, bcdPath?.let { "$it.$id" }, bcd)
+        }
+        else null
+      }
+
+    val fromGlobal = if (globalAttributesDir != null)
+      missing.mapNotNull { id ->
+        val dir = File(globalAttributesDir, id).takeIf { it.isDirectory }
         val bcd = elementCompatData?.additionalProperties?.entries?.find { it.key.equals(id, true) }?.value
         if (dir?.isDirectory == true) {
           Pair(id, extractAttributeDocumentation(dir, bcdPath?.let { "$it.$id" }, bcd))
         }
         else null
       }
+    else
+      emptyList()
 
     val reallyMissing = missing.minus(fromGlobal.map { it.first }.toSet())
     if (reallyMissing.isNotEmpty()) {
@@ -721,9 +741,11 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
       .plus(compatAttrs.keys).distinct()
       .map { StringUtil.toLowerCase(it) }
       .map {
+        val local = fromLocal[it]
         val (doc, sections) = docAttrs[it].extractSvgAttributesSections()
         Pair(it, MdnHtmlAttributeDocumentation(
-          urlPrefix + it, compatAttrs[it]?.first, compatAttrs[it]?.second, compatAttrs[it]?.third, doc, sections))
+          urlPrefix + it, compatAttrs[it]?.first, compatAttrs[it]?.second, compatAttrs[it]?.third,
+          doc ?: local?.doc, sections ?: local?.sections?.takeIf { it.isNotEmpty() }))
       }
       .plus(fromGlobal)
       .sortedBy { it.first }
@@ -1084,7 +1106,8 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
           if (compatMap.values.all { it == firstValue })
             mapOf(defaultBcdContext to firstValue)
           else compatMap
-        } else compatMap
+        }
+        else compatMap
       }
 
   private fun getBcdId(id: String): String =
@@ -1291,8 +1314,9 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
         prose = emptyList()
         browserCompatData = emptyList()
       }
-      if (bcdPath != null)
+      if (bcdPath != null) {
         baselineJson = BaseLineService.computeBaseline(bcdPath)
+      }
       baseline = if (baselineJson != null) {
         BaselineData(
           baselineJson.getAsJsonPrimitive("baseline").let {
@@ -1364,6 +1388,13 @@ private fun <T : MdnDocumentation, K : MdnRawSymbolDocumentation, L : MdnRawSymb
       }
     }
   }
+  obsoleteMap.entries.removeIf { newMap.containsKey(it.key) && it.value.doc != "" }
+  if (subMapGetter != null) {
+    obsoleteMap.entries.forEach { entry ->
+      val newSubMap = subMapGetter(newMap[entry.key] ?: return@forEach) ?: return@forEach
+      (subMapGetter(entry.value) as? MutableMap<String, L>)?.entries?.removeIf { newSubMap.contains(it.key) }
+    }
+  }
 }
 
 private fun String?.extractSvgAttributesSections(): Pair<String?, Map<String, String>?> {
@@ -1371,11 +1402,11 @@ private fun String?.extractSvgAttributesSections(): Pair<String?, Map<String, St
   val match = svgAttributeSectionsPattern.matchEntire(this)
               ?: return Pair(this, null)
   return Pair(
-    match.groupValues[1].trim().removeSuffix("<br>"),
+    match.groupValues[1].trim().removeSuffix("<br>").removeSuffix("<p>").trim(),
     mapOf(
-      "Value type" to match.groupValues[2].trim(),
-      "Default" to match.groupValues[3].trim(),
-      "Animatable" to match.groupValues[4].trim(),
+      "Value type" to match.groupValues[2].trim().removeSuffix(".").removeSuffix(";").trim(),
+      "Default" to match.groupValues[3].trim().removeSuffix(".").removeSuffix(";").trim(),
+      "Animatable" to match.groupValues[4].trim().removeSuffix(".").removeSuffix(";").trim(),
     )
   )
 }

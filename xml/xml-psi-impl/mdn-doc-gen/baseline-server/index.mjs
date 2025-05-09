@@ -15,13 +15,22 @@ const rl = readline.createInterface({
 // Process each line from stdin
 rl.on('line', (line) => {
   if (line.trim()) {
-    const result = computeBaseline({
-      compatKeys: [line],
-      checkAncestors: true
-    }, compat);
+    try {
+      const result = computeBaseline({
+        compatKeys: [line],
+        checkAncestors: true
+      }, compat);
 
-    // Output the result as a single line to stdout
-    console.log(JSON.stringify(result));
+      // Output the result as a single line to stdout
+      console.log(JSON.stringify(result));
+    } catch (e) {
+      if ((e.message?.indexOf("is unindexable at") ?? -1) > 0) {
+        console.error(e.message)
+      } else {
+        console.error(e)
+      }
+      console.log("\"null\"")
+    }
   }
 });
 
