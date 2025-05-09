@@ -51,6 +51,11 @@
                          bundle="messages.PyBundle"
                          key="configurable.PyDependenciesConfigurable.display.name"
                          provider="com.intellij.pycharm.community.ide.impl.configuration.PyDependenciesConfigurableProvider"/>
+    <applicationConfigurable id="memory.settings" groupWeight="45"
+                             key="settings.memory.group.title"
+                             bundle="messages.PyBundle"
+                             instance="com.intellij.pycharm.community.ide.impl.settings.MemoryUsageConfigurable"
+                             groupId="root"/>
 
     <statusBarWidgetFactory id="pythonInterpreterWidget"
                             implementation="com.intellij.pycharm.community.ide.impl.configuration.PySdkStatusBarWidgetFactory"
