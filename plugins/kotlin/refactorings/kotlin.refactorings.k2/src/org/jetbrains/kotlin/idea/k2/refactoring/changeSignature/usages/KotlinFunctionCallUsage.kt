@@ -281,7 +281,7 @@ internal class KotlinFunctionCallUsage(
         val oldArguments = element.valueArguments
         val newParameters = changeInfo.newParameters.filter { changeInfo.receiverParameterInfo != it && !it.isContextParameter }
 
-        val contextValues = changeInfo.newParameters.filter { it.isContextParameter }.mapNotNull { argumentMapping[it.oldIndex]?.element?.text ?: it.defaultValueForCall?.text }
+        val contextValues = changeInfo.newParameters.filter { it.isContextParameter && !it.wasContextParameter }.mapNotNull { argumentMapping[it.oldIndex]?.element?.text ?: it.defaultValueForCall?.text }
 
         val purelyNamedCall = element is KtCallExpression && oldArguments.isNotEmpty() && oldArguments.all { it.isNamed() }
 

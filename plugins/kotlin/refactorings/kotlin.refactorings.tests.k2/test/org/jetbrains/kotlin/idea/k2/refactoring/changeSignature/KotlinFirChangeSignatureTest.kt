@@ -287,4 +287,8 @@ class KotlinFirChangeSignatureTest :
     fun testContextParameterInDeepHierarchy() = doTest {
       newParameters[0].isContextParameter = false
     }
+
+    fun testFromContextParameterNormalParameterConflict() = doTest {
+        newParameters[0].isContextParameter = false
+    }
 }

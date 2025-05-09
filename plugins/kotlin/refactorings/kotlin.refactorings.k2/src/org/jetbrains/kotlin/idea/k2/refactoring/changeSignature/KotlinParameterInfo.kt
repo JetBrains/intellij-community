@@ -133,7 +133,7 @@ class KotlinParameterInfo(
     }
 
     private fun getOriginalParameter(inheritedCallable: KtDeclaration?): KtParameter? {
-        if (isContextParameter) return null
+        if (isContextParameter || wasContextParameter) return null
         val indexInVariableParameters = oldIndex - (if ((inheritedCallable as? KtCallableDeclaration)?.receiverTypeReference != null) 1 else 0)
         return (inheritedCallable as? KtCallableDeclaration)?.valueParameters?.getOrNull(indexInVariableParameters)
     }

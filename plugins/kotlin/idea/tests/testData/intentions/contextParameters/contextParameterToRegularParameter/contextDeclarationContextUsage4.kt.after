@@ -1,8 +1,5 @@
 // COMPILER_ARGUMENTS: -Xcontext-parameters
 
-// Issue: KTIJ-34116
-// IGNORE_K2
-
 fun foo(c1: String, p1: Double, p2: Float) {
 }
 

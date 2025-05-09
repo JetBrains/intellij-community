@@ -1,8 +1,5 @@
 // COMPILER_ARGUMENTS: -Xcontext-parameters
 
-// Issue: KTIJ-34116
-// IGNORE_K2
-
 context(c1: String, <caret>c2: Int)
 fun foo(p1: Double, p2: Float) {
 }
