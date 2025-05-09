@@ -112,16 +112,14 @@ internal class GitBranchesTreeMultiRepoFilteringModel(
     (actionsTree.topMatch ?: repositoriesTree.topMatch ?: getPreferredBranch())?.let { createTreePathFor(this, it) }
 
   private fun getPreferredBranch(): Any? =
-    getPreferredBranch(project, repositories, nameMatcher, localBranchesTree, remoteBranchesTree, tagsTree)
+    getPreferredBranch(project, repositoriesFrontendModel, nameMatcher, localBranchesTree, remoteBranchesTree, tagsTree)
     ?: getPreferredRefUnderFirstNonEmptyRepo()
 
   private fun getPreferredRefUnderFirstNonEmptyRepo(): RefUnderRepository? {
     val nonEmptyRepo = repositoriesFrontendModel.firstOrNull { repositoriesWithBranchesTree.isNotEmpty(it.repositoryId) } ?: return null
 
     val subtreeHolder = repositoriesWithBranchesTree[nonEmptyRepo.repositoryId]
-    val backendRepo = repositories.find { it.rpcId == nonEmptyRepo.repositoryId } ?: return null
-
-    return getPreferredBranch(project, listOf(backendRepo), nameMatcher, subtreeHolder.localBranches, subtreeHolder.remoteBranches, subtreeHolder.tags)
+    return getPreferredBranch(project, listOf(nonEmptyRepo), nameMatcher, subtreeHolder.localBranches, subtreeHolder.remoteBranches, subtreeHolder.tags)
       ?.let { RefUnderRepository(nonEmptyRepo, it) }
   }
 

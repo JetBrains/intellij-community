@@ -69,7 +69,7 @@ internal open class GitBranchesTreeSingleRepoModel(
     (actionsTree.topMatch ?: getPreferredBranch())?.let { createTreePathFor(this, it) }
 
   protected fun getPreferredBranch(): GitReference? =
-    getPreferredBranch(project, listOf(repository), nameMatcher, localBranchesTree, remoteBranchesTree, tagsTree, recentCheckoutBranchesTree)
+    getPreferredBranch(project, repositoriesFrontendModel, nameMatcher, localBranchesTree, remoteBranchesTree, tagsTree, recentCheckoutBranchesTree)
 
   protected open fun notHaveFilteredNodes(): Boolean {
     return nameMatcher != null

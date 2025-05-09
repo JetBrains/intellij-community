@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.tree
 
-import com.intellij.dvcs.getCommonCurrentBranch
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsScope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
@@ -12,6 +11,7 @@ import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.tree.TreePathUtil
 import com.intellij.util.containers.headTail
 import com.intellij.util.containers.init
+import com.intellij.vcs.git.shared.ref.GitRefUtil
 import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
 import git4idea.*
 import git4idea.branch.GitBranchType
@@ -110,7 +110,7 @@ internal fun createTreePathFor(model: GitBranchesTreeModel, value: Any): TreePat
 
 @Suppress("UNCHECKED_CAST")
 internal fun getPreferredBranch(project: Project,
-                                repositories: List<GitRepository>,
+                                repositories: List<GitRepositoryFrontendModel>,
                                 branchNameMatcher: MinusculeMatcher?,
                                 localBranchesTree: LazyRefsSubtreeHolder<GitStandardLocalBranch>,
                                 remoteBranchesTree: LazyRefsSubtreeHolder<GitRemoteBranch>,
@@ -130,33 +130,20 @@ internal fun getPreferredBranch(project: Project,
 
 internal fun getPreferredBranch(
   project: Project,
-  repositories: List<GitRepository>,
+  repositories: List<GitRepositoryFrontendModel>,
   localBranches: List<GitBranch>
 ): GitBranch? {
-  if (repositories.size == 1) {
-    val repository = repositories.single()
-    val recentBranches = GitVcsSettings.getInstance(project).recentBranchesByRepository
-    val recentBranch = recentBranches[repository.root.path]?.let { recentBranchName ->
-      repository.recentCheckoutBranches.find { it.name == recentBranchName }
-      ?: localBranches.find { it.name == recentBranchName }
-    }
-    if (recentBranch != null) {
-      return recentBranch
-    }
+  val repository = repositories.singleOrNull()
 
-    val currentBranch = repository.currentBranch
-    if (currentBranch != null) {
-      return currentBranch
+  if (repository != null) {
+    val recentBranch = GitVcsSettings.getInstance(project).recentBranchesByRepository[repository.root.path]?.let { recentBranchName ->
+      localBranches.find { it.name == recentBranchName }
     }
-
-    return null
+    return recentBranch ?: repository.state.currentBranch
   }
   else {
-    val branch = (GitVcsSettings.getInstance(project).recentCommonBranch ?: repositories.getCommonCurrentBranch())
-      ?.let { recentOrCommonBranchName ->
-        localBranches.find { it.name == recentOrCommonBranchName }
-      }
-    return branch
+    return GitVcsSettings.getInstance(project).recentCommonBranch?.let { recentCommonBranch -> localBranches.find { it.name == recentCommonBranch } }
+           ?: GitRefUtil.getCommonCurrentBranch(repositories)
   }
 }
 

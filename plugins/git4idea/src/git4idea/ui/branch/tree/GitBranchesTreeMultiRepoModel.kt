@@ -63,5 +63,5 @@ internal class GitBranchesTreeMultiRepoModel(
   override fun getPreferredSelection(): TreePath? = getPreferredBranch()?.let { createTreePathFor(this, it) }
 
   private fun getPreferredBranch(): GitReference? =
-    getPreferredBranch(project, repositories, null, localBranchesTree, remoteBranchesTree, tagsTree)
+    getPreferredBranch(project, repositoriesFrontendModel, null, localBranchesTree, remoteBranchesTree, tagsTree)
 }

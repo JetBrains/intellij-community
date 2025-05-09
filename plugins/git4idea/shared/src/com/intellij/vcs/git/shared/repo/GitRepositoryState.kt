@@ -26,13 +26,12 @@ class GitRepositoryState(
    */
   private val trackingInfo: Map<String, GitStandardRemoteBranch>,
 ) {
-  private val currentBranchName: @NlsSafe String?
-    get() = (currentRef as? GitCurrentRef.LocalBranch)?.branch?.name
+  val currentBranch: GitStandardLocalBranch? get() = (currentRef as? GitCurrentRef.LocalBranch)?.branch
 
   fun isCurrentRef(ref: GitReference): Boolean = currentRef != null && currentRef.matches(ref)
 
   fun getDisplayableBranchText(): @Nls String {
-    val branchOrEmpty = currentBranchName ?: ""
+    val branchOrEmpty = currentBranch?.name ?: ""
     return when (operationState) {
       GitOperationState.NORMAL -> branchOrEmpty
       GitOperationState.REBASE -> GitBundle.message("git.status.bar.widget.text.rebase", branchOrEmpty)
