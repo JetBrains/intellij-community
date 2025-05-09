@@ -326,6 +326,7 @@ class MdnSymbolDocumentationAdapter(
       result.append(supportedEnginesString)
       result.append("</details>")
     }
+    result.append("\n")
     return result.toString()
   }
 
