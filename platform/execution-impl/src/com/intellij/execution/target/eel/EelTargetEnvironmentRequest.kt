@@ -257,18 +257,11 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
       }
 
       fun createFor(eel: EelApi, downloadRoot: DownloadRoot): EelVolume {
-        val target = downloadRoot.targetRootPath as TargetPath.Persistent // how could it be temp?
+        val localRootPath =
+          downloadRoot.localRootPath
+          ?: FileUtil.createTempDirectory("intellij-eel-target.", "").toPath()
 
-        if (downloadRoot.localRootPath == null) {
-          return EelVolume(
-            eel = eel,
-            localRoot = FileUtil.createTempDirectory("intellij-eel-target.", "").toPath(),
-            targetRoot = target.absolutePath,
-          )
-        }
-        else {
-          return createFor(eel, { downloadRoot.localRootPath!! }, { downloadRoot.targetRootPath })
-        }
+        return createFor(eel, { localRootPath }, { downloadRoot.targetRootPath })
       }
     }
   }
