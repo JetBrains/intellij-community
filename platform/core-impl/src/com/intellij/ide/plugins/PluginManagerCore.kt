@@ -823,37 +823,6 @@ object PluginManagerCore {
     return choice == 0
   }
 
-  private fun checkAndPut(
-    descriptor: IdeaPluginDescriptorImpl,
-    id: PluginId,
-    idMap: MutableMap<PluginId, IdeaPluginDescriptorImpl>,
-    prevDuplicateMap: MutableMap<PluginId, MutableList<IdeaPluginDescriptorImpl>>?,
-  ): MutableMap<PluginId, MutableList<IdeaPluginDescriptorImpl>>? {
-    var duplicateMap = prevDuplicateMap
-    if (duplicateMap != null) {
-      val duplicates = duplicateMap[id]
-      if (duplicates != null) {
-        duplicates.add(descriptor)
-        return duplicateMap
-      }
-    }
-    val existingDescriptor = idMap.put(id, descriptor)
-    if (existingDescriptor == null) {
-      return null
-    }
-
-    // if duplicated, both are removed
-    idMap.remove(id)
-    if (duplicateMap == null) {
-      duplicateMap = LinkedHashMap()
-    }
-    val list = ArrayList<IdeaPluginDescriptorImpl>()
-    list.add(existingDescriptor)
-    list.add(descriptor)
-    duplicateMap.put(id, list)
-    return duplicateMap
-  }
-
   @JvmStatic
   fun getPluginNameAndVendor(descriptor: IdeaPluginDescriptor): @Nls String {
     val vendor = descriptor.vendor ?: descriptor.organization
@@ -907,25 +876,25 @@ object PluginManagerCore {
     return pluginSet.isPluginEnabled(id) || pluginSet.isPluginInstalled(id)
   }
 
-  @Internal
+  @ApiStatus.Internal
   fun buildPluginIdMap(): Map<PluginId, IdeaPluginDescriptorImpl> {
+    // FIXME deduplicate with com.intellij.ide.plugins.ModulesWithDependenciesKt.createModulesWithDependenciesAndAdditionalEdges
     LoadingState.COMPONENTS_REGISTERED.checkOccurred()
-    val idMap = HashMap<PluginId, IdeaPluginDescriptorImpl>(getPluginSet().allPlugins.size)
-    var duplicateMap: MutableMap<PluginId, MutableList<IdeaPluginDescriptorImpl>>? = null
-    for (descriptor in getPluginSet().allPlugins) {
-      var newDuplicateMap = checkAndPut(descriptor, descriptor.getPluginId(), idMap, duplicateMap)
-      if (newDuplicateMap != null) {
-        duplicateMap = newDuplicateMap
-        continue
+    val pluginIdResolutionMap = HashMap<PluginId, MutableList<IdeaPluginDescriptorImpl>>()
+    for (plugin in getPluginSet().allPlugins) {
+      pluginIdResolutionMap.computeIfAbsent(plugin.pluginId) { ArrayList() }.add(plugin)
+      for (pluginAlias in plugin.pluginAliases) {
+        pluginIdResolutionMap.computeIfAbsent(pluginAlias) { ArrayList() }.add(plugin)
       }
-      for (pluginAlias in descriptor.pluginAliases) {
-        newDuplicateMap = checkAndPut(descriptor = descriptor, id = pluginAlias, idMap = idMap, prevDuplicateMap = duplicateMap)
-        if (newDuplicateMap != null) {
-          duplicateMap = newDuplicateMap
+      for (contentModule in plugin.content.modules) {
+        // plugin aliases in content modules are resolved as plugin id references
+        for (pluginAlias in contentModule.requireDescriptor().pluginAliases) {
+          pluginIdResolutionMap.computeIfAbsent(pluginAlias) { ArrayList() }.add(contentModule.requireDescriptor())
         }
       }
     }
-    return idMap
+    // FIXME this is a bad way to treat ambiguous plugin ids
+    return pluginIdResolutionMap.asSequence().filter { it.value.size == 1 }.associateTo(HashMap()) { it.key to it.value[0] }
   }
 
   @Internal
