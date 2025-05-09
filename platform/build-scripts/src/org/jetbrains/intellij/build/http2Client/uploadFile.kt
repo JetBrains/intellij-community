@@ -35,12 +35,13 @@ internal class UploadResult {
   @JvmField var fileSize: Long = 0L
 }
 
-internal suspend fun Http2ClientConnection.upload(path: CharSequence, file: Path): UploadResult {
+internal suspend fun Http2ClientConnection.upload(path: CharSequence, file: Path, extraHeaders: List<AsciiString> = emptyList()): UploadResult {
+  val headers = withDefaultContentType(extraHeaders).toTypedArray()
   return connection.stream { stream, result ->
     val uploadResult = UploadResult()
     stream.pipeline().addLast(WebDavPutStatusChecker(result, uploadResult, path))
 
-    stream.writeHeaders(createHeaders(HttpMethod.PUT, AsciiString.of(path), HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_OCTET_STREAM), endStream = false)
+    stream.writeHeaders(createHeaders(HttpMethod.PUT, AsciiString.of(path), *headers), endStream = false)
 
     FileChannel.open(file, READ_OPERATION).use { channel ->
       uploadUncompressed(fileChannel = channel, maxSourceBlockSize = SOURCE_BUFFER_SIZE, stream = stream, fileSize = channel.size(), result = uploadResult)
@@ -48,11 +49,12 @@ internal suspend fun Http2ClientConnection.upload(path: CharSequence, file: Path
   }
 }
 
-internal suspend fun Http2ClientConnection.upload(path: CharSequence, data: CharSequence) {
+internal suspend fun Http2ClientConnection.upload(path: CharSequence, data: CharSequence, extraHeaders: List<AsciiString> = emptyList()) {
+  val headers = withDefaultContentType(extraHeaders).toTypedArray()
   return connection.stream { stream, result ->
     stream.pipeline().addLast(WebDavPutStatusChecker(result, Unit, path))
 
-    stream.writeHeaders(createHeaders(HttpMethod.PUT, AsciiString.of(path), HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_OCTET_STREAM), endStream = false)
+    stream.writeHeaders(createHeaders(HttpMethod.PUT, AsciiString.of(path), *headers), endStream = false)
     stream.writeAndFlush(DefaultHttp2DataFrame(ByteBufUtil.writeUtf8(stream.alloc(), data), true)).joinCancellable()
   }
 }
@@ -63,12 +65,14 @@ internal suspend fun Http2ClientConnection.upload(
   sourceBlockSize: Int = SOURCE_BUFFER_SIZE,
   zstdCompressContextPool: ZstdCompressContextPool,
   isDir: Boolean = false,
+  extraHeaders: List<AsciiString> = emptyList(),
 ): UploadResult {
+  val headers = withDefaultContentType(extraHeaders).toTypedArray()
   return connection.stream { stream, result ->
     val uploadResult = UploadResult()
     stream.pipeline().addLast(WebDavPutStatusChecker(result, uploadResult, path))
 
-    stream.writeHeaders(createHeaders(HttpMethod.PUT, AsciiString.of(path), HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_OCTET_STREAM), endStream = false)
+    stream.writeHeaders(createHeaders(HttpMethod.PUT, AsciiString.of(path), *headers), endStream = false)
 
     if (isDir) {
       zstdCompressContextPool.withZstd(contentSize = -1) { zstd ->
@@ -79,6 +83,21 @@ internal suspend fun Http2ClientConnection.upload(
       compressFile(file = file, zstdCompressContextPool = zstdCompressContextPool, sourceBlockSize = sourceBlockSize, stream = stream, result = uploadResult)
     }
   }
+}
+
+private fun withDefaultContentType(extraHeaders: List<AsciiString>): ArrayList<AsciiString> {
+  require(extraHeaders.size % 2 == 0) {
+    "extraHeaders must be a list of key-value pairs, got $extraHeaders"
+  }
+  val headers: ArrayList<AsciiString>
+  if (extraHeaders.contains(HttpHeaderNames.CONTENT_TYPE)) {
+    headers = arrayListOf()
+  }
+  else {
+    headers = arrayListOf(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_OCTET_STREAM)
+  }
+  headers.addAll(extraHeaders)
+  return headers
 }
 
 private suspend fun compressFile(

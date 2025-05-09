@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.http2Client
 
+import com.intellij.openapi.util.Ref
 import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.ByteBufInputStream
 import io.netty.buffer.ByteBufUtil
@@ -11,6 +12,7 @@ import io.netty.handler.codec.http.HttpMethod
 import io.netty.handler.codec.http.HttpResponseStatus
 import io.netty.handler.codec.http2.DefaultHttp2DataFrame
 import io.netty.handler.codec.http2.Http2DataFrame
+import io.netty.handler.codec.http2.Http2Headers
 import io.netty.handler.codec.http2.Http2HeadersFrame
 import io.netty.handler.codec.http2.Http2StreamFrame
 import io.netty.util.AsciiString
@@ -26,9 +28,9 @@ private val json = Json {
   ignoreUnknownKeys = true
 }
 
-internal suspend fun Http2ClientConnection.getString(path: CharSequence): String {
+internal suspend fun Http2ClientConnection.getString(path: CharSequence, headers: Ref<Http2Headers>? = null): String {
   return connection.stream { stream, result ->
-    stream.pipeline().addLast(Http2StreamJsonInboundHandler(urlPath = path, result = result, bufferAllocator = stream.alloc(), deserializer = null))
+    stream.pipeline().addLast(Http2StreamJsonInboundHandler(urlPath = path, result = result, bufferAllocator = stream.alloc(), deserializer = null, headers = headers))
 
     stream.writeHeaders(
       headers = createHeaders(
@@ -101,6 +103,7 @@ private class Http2StreamJsonInboundHandler<T : Any>(
   private val result: CompletableDeferred<T>,
   private val deserializer: DeserializationStrategy<T>?,
   private val defaultIfNotFound: T? = null,
+  private val headers: Ref<Http2Headers>? = null,
 ) : InboundHandlerResultTracker<Http2StreamFrame>(result) {
   private var isGzip = false
 
@@ -153,7 +156,8 @@ private class Http2StreamJsonInboundHandler<T : Any>(
       result.complete(response)
     }
     else if (frame is Http2HeadersFrame) {
-      val status = HttpResponseStatus.parseLine(frame.headers().status())
+      val headers = frame.headers()
+      val status = HttpResponseStatus.parseLine(headers.status())
       if (status != HttpResponseStatus.OK) {
         if (status == HttpResponseStatus.NOT_FOUND && defaultIfNotFound != null) {
           result.complete(defaultIfNotFound)
@@ -164,7 +168,8 @@ private class Http2StreamJsonInboundHandler<T : Any>(
         return
       }
 
-      isGzip = frame.headers().get(HttpHeaderNames.CONTENT_ENCODING) == HttpHeaderValues.GZIP
+      isGzip = headers.get(HttpHeaderNames.CONTENT_ENCODING) == HttpHeaderValues.GZIP
+      this.headers?.set(headers)
     }
   }
 }
