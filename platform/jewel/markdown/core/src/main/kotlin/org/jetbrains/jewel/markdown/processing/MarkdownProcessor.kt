@@ -250,7 +250,7 @@ public class MarkdownProcessor(
     private fun FencedCodeBlock.toMarkdownCodeBlockOrNull(): CodeBlock.FencedCodeBlock =
         CodeBlock.FencedCodeBlock(
             content = literal.removeSuffix("\n"),
-            mimeType = MimeType.Known.fromMarkdownLanguageName(info),
+            mimeType = MimeType.Known.fromMarkdownLanguageName(info) ?: MimeType("text/x-$info"),
         )
 
     private fun IndentedCodeBlock.toMarkdownCodeBlockOrNull(): CodeBlock.IndentedCodeBlock =

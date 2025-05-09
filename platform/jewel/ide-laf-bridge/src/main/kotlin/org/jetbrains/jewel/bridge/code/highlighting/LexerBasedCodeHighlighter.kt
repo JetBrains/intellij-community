@@ -9,6 +9,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
+import com.intellij.lexer.EmptyLexer
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.markup.EffectType
@@ -27,6 +28,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.withContext
 import org.jetbrains.jewel.bridge.toComposeColorOrUnspecified
 import org.jetbrains.jewel.foundation.code.MimeType
+import org.jetbrains.jewel.foundation.code.MimeType.Known.toFileExtensionIfKnown
 import org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighter
 
 internal class LexerBasedCodeHighlighter(
@@ -35,13 +37,25 @@ internal class LexerBasedCodeHighlighter(
     private val highlightDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : CodeHighlighter {
     override fun highlight(code: String, mimeType: MimeType?): Flow<AnnotatedString> {
-        val language = mimeType?.toLanguageOrNull() ?: return flowOf(AnnotatedString(code))
-        val fileExtension = language.associatedFileType?.defaultExtension ?: return flowOf(AnnotatedString(code))
+        mimeType ?: return flowOf(AnnotatedString(code))
+        // Fall back on textmate if no language was found
+        val existingLanguage = mimeType.toLanguageOrNull()
+        val language =
+            existingLanguage ?: LanguageUtil.findRegisteredLanguage("textmate") ?: return flowOf(AnnotatedString(code))
+        val fileExtension =
+            if (existingLanguage == null) {
+                // When using textmate, we have to determine the file extension ourselves from the
+                // MimeType
+                mimeType.toFileExtensionIfKnown() ?: mimeType.toString().removePrefix("text/x-")
+            } else {
+                language.associatedFileType?.defaultExtension ?: return flowOf(AnnotatedString(code))
+            }
         val virtualFile = LightVirtualFile("markdown_code_block_${code.hashCode()}.$fileExtension", language, code)
         val colorScheme = EditorColorsManager.getInstance().globalScheme
         val highlighter =
-            SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, virtualFile)
-                ?: return flowOf(AnnotatedString(code))
+            SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, virtualFile).takeIf {
+                it.highlightingLexer !is EmptyLexer
+            } ?: return flowOf(AnnotatedString(code))
 
         return flow {
             highlightAndEmit(highlighter, code, colorScheme)
@@ -76,7 +90,12 @@ internal class LexerBasedCodeHighlighter(
         }
     }
 
-    private fun MimeType.toLanguageOrNull(): Language? = LanguageUtil.findRegisteredLanguage(displayName().lowercase())
+    private fun MimeType.toLanguageOrNull(): Language? =
+        when (this) {
+            // handle names mismatch
+            MimeType.Known.REGEX -> LanguageUtil.findRegisteredLanguage("RegExp")
+            else -> LanguageUtil.findRegisteredLanguage(displayName().lowercase())
+        }
 
     private fun AnnotatedString.Builder.withTextAttributes(
         textAttributes: TextAttributes?,
