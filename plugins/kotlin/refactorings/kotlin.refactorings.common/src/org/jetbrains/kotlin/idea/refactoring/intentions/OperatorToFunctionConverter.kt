@@ -228,7 +228,7 @@ object OperatorToFunctionConverter {
         }
 
         val parent = element.parent
-        if (!isAnonymousFunctionWithReceiver && !isLambdaWithReceiver && parent is KtDotQualifiedExpression) {
+        if (!isAnonymousFunctionWithReceiver && !isLambdaWithReceiver && parent is KtDotQualifiedExpression && parent.selectorExpression == element) {
             // lift dot qualifier (calleeText) to the upper level, otherwise psi is created as
             // dotQualified
             // - receiver

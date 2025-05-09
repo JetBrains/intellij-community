@@ -1750,6 +1750,11 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
             runTest("../testData/intentions/operatorToFunction/compoundAssignment2.kt");
         }
 
+        @TestMetadata("dotQualifiedReceiver.kt")
+        public void testDotQualifiedReceiver() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/dotQualifiedReceiver.kt");
+        }
+
         @TestMetadata("emptyInvoke.kt")
         public void testEmptyInvoke() throws Exception {
             runTest("../testData/intentions/operatorToFunction/emptyInvoke.kt");
