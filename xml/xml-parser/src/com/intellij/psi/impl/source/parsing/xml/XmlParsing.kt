@@ -234,6 +234,18 @@ open class XmlParsing(
 
   fun parseTagContent() {
     var xmlText: PsiBuilder.Marker? = null
+
+    fun terminateText() {
+      xmlText?.let {
+        it.done(XML_TEXT)
+        xmlText = null
+      }
+    }
+
+    fun startText() {
+      if (xmlText == null) xmlText = mark()
+    }
+
     while (true) {
       val tt = token()
       if (tt == null || tt === XML_END_TAG_START) {
@@ -241,54 +253,50 @@ open class XmlParsing(
       }
 
       if (tt === XML_START_TAG_START) {
-        xmlText = terminateText(xmlText)
+        terminateText()
         parseTag(false)
       }
       else if (tt === XML_PI_START) {
-        xmlText = terminateText(xmlText)
+        terminateText()
         parseProcessingInstruction()
       }
       else if (tt === XML_ENTITY_REF_TOKEN) {
-        xmlText = terminateText(xmlText)
+        terminateText()
         parseReference()
       }
       else if (tt === XML_CHAR_ENTITY_REF) {
-        xmlText = startText(xmlText)
+        startText()
         parseReference()
       }
       else if (tt === XML_CDATA_START) {
-        xmlText = startText(xmlText)
+        startText()
         parseCData()
       }
       else if (isCommentToken(tt)) {
-        xmlText = terminateText(xmlText)
+        terminateText()
         parseComment()
       }
       else if (tt === XML_BAD_CHARACTER) {
-        xmlText = startText(xmlText)
+        startText()
         val error = mark()
         advance()
         error.error(message("xml.parsing.unescaped.ampersand.or.nonterminated.character.entity.reference"))
       }
       else if (tt is ICustomParsingType || tt is ILazyParseableElementType) {
-        xmlText = terminateText(xmlText)
+        terminateText()
         advance()
       }
       else {
-        xmlText = startText(xmlText)
+        startText()
         advance()
       }
     }
 
-    terminateText(xmlText)
+    terminateText()
   }
 
   protected open fun isCommentToken(tt: IElementType?): Boolean {
     return tt === XML_COMMENT_START
-  }
-
-  private fun startText(xmlText: PsiBuilder.Marker?): PsiBuilder.Marker {
-    return xmlText ?: mark()
   }
 
   protected fun mark(): PsiBuilder.Marker {
@@ -482,11 +490,6 @@ open class XmlParsing(
 
   private fun flushError(error: PsiBuilder.Marker?): PsiBuilder.Marker? {
     error?.error(message("xml.parsing.unexpected.tokens"))
-    return null
-  }
-
-  private fun terminateText(xmlText: PsiBuilder.Marker?): PsiBuilder.Marker? {
-    xmlText?.done(XML_TEXT)
     return null
   }
 
