@@ -6,9 +6,12 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.intellij.util.io.delete
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
+import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.ExecErrorReason
+import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.errorProcessing.PyExecResult
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.errorProcessing.asKotlinResult
 import com.jetbrains.python.errorProcessing.failure
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
@@ -90,7 +93,7 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
     return PyResult.success(pythons)
   }
 
-  override suspend fun listPackages(): PyExecResult<List<PythonPackage>> {
+  override suspend fun listPackages(): PyResult<List<PythonPackage>> {
     val out = uvCli.runUv(cwd, "pip", "list", "--format", "json")
       .getOr { return it }
 
@@ -125,47 +128,43 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
     }
   }
 
-  override suspend fun installPackage(name: PythonPackageInstallRequest, options: List<String>): PyExecResult<Unit> {
+  override suspend fun installPackage(name: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
     uvCli.runUv(cwd, "pip", "install", name.formatPackageName(), *options.toTypedArray())
-      .onFailure { return PyExecResult.failure(it) }
+      .onFailure { return PyResult.failure(it) }
 
     return PyExecResult.success(Unit)
   }
 
-  override suspend fun uninstallPackage(name: PythonPackage): PyExecResult<Unit> {
+  override suspend fun uninstallPackage(name: PythonPackage): PyResult<Unit> {
     // TODO: check if package is in dependencies and reject it
     uvCli.runUv(cwd, "pip", "uninstall", name.name)
-      .onFailure { return PyExecResult.failure(it) }
+      .onFailure { return PyResult.failure(it) }
 
     return PyExecResult.success(Unit)
   }
 
-  override suspend fun addDependency(name: PythonPackageInstallRequest, options: List<String>): PyExecResult<Unit> {
+  override suspend fun addDependency(name: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
     uvCli.runUv(cwd, "add", name.formatPackageName(), *options.toTypedArray())
-      .onFailure { return PyExecResult.failure(it) }
+      .onFailure { return PyResult.failure(it) }
 
     return PyExecResult.success(Unit)
   }
 
-  override suspend fun removeDependency(name: PythonPackage): PyExecResult<Unit> {
+  override suspend fun removeDependency(name: PythonPackage): PyResult<Unit> {
     uvCli.runUv(cwd, "remove", name.name)
-      .onFailure { return PyExecResult.failure(it) }
+      .onFailure { return PyResult.failure(it) }
 
     return PyExecResult.success(Unit)
   }
 
-  override suspend fun isProjectSynced(inexact: Boolean): PyExecResult<Boolean> {
+  override suspend fun isProjectSynced(inexact: Boolean): PyResult<Boolean> {
     val args = constructSyncArgs(inexact)
 
     uvCli.runUv(cwd, *args.toTypedArray())
       .onFailure {
-        val errorReason = it.errorReason
-        val stderr = when (errorReason) {
-          is ExecErrorReason.UnexpectedProcessTermination -> errorReason.stderr
-          else -> ""
-        }
+        val stderr = tryExtractStderr(it)
 
-        if (stderr.contains(OUTDATED_ENV_MESSAGE)) {
+        if (stderr?.contains(OUTDATED_ENV_MESSAGE) == true) {
           return PyExecResult.success(false)
         }
 
@@ -175,22 +174,18 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
     return PyExecResult.success(true)
   }
 
-  override suspend fun isScriptSynced(inexact: Boolean, scriptPath: Path): PyExecResult<ScriptSyncCheckResult> {
+  override suspend fun isScriptSynced(inexact: Boolean, scriptPath: Path): PyResult<ScriptSyncCheckResult> {
     val args = constructSyncArgs(inexact) + listOf("--script", scriptPath.pathString)
 
     uvCli.runUv(cwd, *args.toTypedArray())
       .onFailure {
-        val errorReason = it.errorReason
-        val stderr = when (errorReason) {
-          is ExecErrorReason.UnexpectedProcessTermination -> errorReason.stderr
-          else -> ""
-        }
+        val stderr = tryExtractStderr(it)
 
-        if (stderr.contains(NO_METADATA_MESSAGE)) {
+        if (stderr?.contains(NO_METADATA_MESSAGE) == true) {
           return PyExecResult.success(ScriptSyncCheckResult.NoInlineMetadata)
         }
 
-        if (stderr.contains(OUTDATED_ENV_MESSAGE)) {
+        if (stderr?.contains(OUTDATED_ENV_MESSAGE) == true) {
           return PyExecResult.success(ScriptSyncCheckResult.NotSynced)
         }
 
@@ -244,14 +239,26 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
   }
 
   override suspend fun sync(): Result<String> {
-      return uvCli.runUv(cwd, "sync")
+      return uvCli.runUv(cwd, "sync").asKotlinResult()
   }
 
   override suspend fun lock(): Result<String> {
-      return uvCli.runUv(cwd, "lock")
+      return uvCli.runUv(cwd, "lock").asKotlinResult()
   }
 }
 
 fun createUvLowLevel(cwd: Path, uvCli: UvCli = createUvCli()): UvLowLevel {
   return UvLowLevelImpl(cwd, uvCli)
 }
+
+private fun tryExtractStderr(err: PyError): String? =
+  when (err) {
+    is ExecError -> {
+      val errorReason = err.errorReason
+      when (errorReason) {
+        is ExecErrorReason.UnexpectedProcessTermination -> String(errorReason.stderr)
+        else -> null
+      }
+    }
+    else -> null
+  }

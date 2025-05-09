@@ -46,10 +46,10 @@ class UvRunConfiguration(
   factory: ConfigurationFactory,
 ) : AbstractPythonRunConfiguration<UvRunConfiguration>(project, factory) {
   var options: UvRunConfigurationOptions = UvRunConfigurationOptions(
-    uvSdkKey = project.pythonSdk?.name,
+    uvSdkKey = module?.pythonSdk?.name ?: project.pythonSdk?.name,
   )
 
-  override fun createConfigurationEditor(): SettingsEditor<UvRunConfiguration> = UvRunSettingsEditor(project, this)
+  override fun createConfigurationEditor(): SettingsEditor<UvRunConfiguration> = UvRunSettingsEditor(project, this, uvSdkList())
 
   override fun getState(
     executor: Executor,
