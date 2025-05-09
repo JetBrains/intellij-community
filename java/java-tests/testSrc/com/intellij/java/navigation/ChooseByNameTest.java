@@ -34,7 +34,7 @@ import java.util.*;
 @SuppressWarnings("NewClassNamingConvention")
 public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
 
-  private static final RegistryValue fuzzySearchRegistryValue = Registry.get("search.everywhere.fuzzy.file.search.enabled");
+  private static final RegistryValue fuzzySearchRegistryValue = Registry.get("search.everywhere.fuzzy.file.search.test");
   private static final boolean initialFuzzySearchRegistryValue = fuzzySearchRegistryValue.asBoolean();
 
   public static Test suite() {
