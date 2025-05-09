@@ -36,7 +36,10 @@ public final class BackgroundHighlightingUtil {
   /**
    * Add this key to the {@link Editor}'s user data to prohibit running all background highlighting activities.
    */
-  public static final Key<Boolean> IGNORE_EDITOR = Key.create("BackgroundHighlightingUtil.IGNORE_EDITOR");
+  private static final Key<Boolean> IGNORE_EDITOR = Key.create("BackgroundHighlightingUtil.IGNORE_EDITOR");
+  public static void disableBackgroundHighlightingForeverIn(@NotNull Editor editor) {
+    editor.putUserData(IGNORE_EDITOR, true);
+  }
 
   /**
    * start background thread where find injected fragment at the caret position,

@@ -355,7 +355,7 @@ internal class ReworkedTerminalView(
     editor.settings.isUseSoftWraps = true
     editor.useTerminalDefaultBackground(parentDisposable = this)
 
-    editor.putUserData(BackgroundHighlightingUtil.IGNORE_EDITOR, true)
+    BackgroundHighlightingUtil.disableBackgroundHighlightingForeverIn(editor)
     TextEditorProvider.putTextEditor(editor, TerminalOutputTextEditor(editor))
 
     Disposer.register(parentDisposable) {
