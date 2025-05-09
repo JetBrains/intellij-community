@@ -141,10 +141,13 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
   }
 
   fun testGenJsWebApi() {
-    val symbols = extractInformation("api", bcd.resolve("api"), jsWebApiNameFilter)
-    { dir, _, bcdInfo ->
+    val symbols = extractInformation(
+      "api", bcd.resolve("api"), jsWebApiNameFilter
+    ) { dir, _, bcdInfo ->
       extractJavascriptDocumentation(dir, bcdInfo, "")
-    }.resolveReferences()
+    }
+      .filter { !it.key.startsWith("window.window.") }
+      .resolveReferences()
     val fragments = webApiFragmentStarts.associateWithTo(TreeMap()) { sortedMapOf<String, MdnJsSymbolDocumentation>() }
     symbols.forEach { (name, doc) ->
       (fragments.floorEntry(name[0]) ?: throw IllegalStateException("Null entry for $name")).value[name] = doc
@@ -1169,6 +1172,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
           ?.let { Pair(it, symbolName) }
       }
       .toMap(TreeMap())
+      .ifEmpty { throw IllegalStateException("Uninitialized JS indexes.") }
   }
 
   private val redirects = FileUtil.loadFile(Path.of(MDN_CONTENT_ROOT, BUILT_LANG, "_redirects.txt").toFile())
