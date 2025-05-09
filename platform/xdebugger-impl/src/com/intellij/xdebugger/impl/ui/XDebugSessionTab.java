@@ -20,7 +20,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.customization.CustomActionsListener;
-import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.ide.ui.customization.DefaultActionGroupWithDelegate;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
@@ -425,7 +424,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       leftToolbar.addSeparator();
       leftToolbar.addAll(session.getExtraActions());
     }
-    RunContentBuilder.addAvoidingDuplicates(leftToolbar, ((CustomisedActionGroup)leftGroup).getDefaultChildrenOrStubs());
+    RunContentBuilder.addAvoidingDuplicates(leftToolbar, leftGroup);
 
     for (AnAction action : session.getExtraStopActions()) {
       leftToolbar.add(action, new Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM));
@@ -448,7 +447,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     ActionGroup topGroup = getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_GROUP);
     DefaultActionGroup topLeftToolbar = new DefaultActionGroupWithDelegate(topGroup);
-    RunContentBuilder.addAvoidingDuplicates(topLeftToolbar, ((CustomisedActionGroup)topGroup).getDefaultChildrenOrStubs());
+    RunContentBuilder.addAvoidingDuplicates(topLeftToolbar, topGroup);
 
     registerAdditionalActions(leftToolbar, topLeftToolbar, settings);
     myUi.getOptions().setLeftToolbar(leftToolbar, ActionPlaces.DEBUGGER_TOOLBAR);

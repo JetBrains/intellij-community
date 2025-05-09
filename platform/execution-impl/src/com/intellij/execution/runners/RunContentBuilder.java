@@ -275,7 +275,7 @@ public final class RunContentBuilder extends RunTab {
     String mainGroupId = isNewLayout ? RUN_TOOL_WINDOW_TOP_TOOLBAR_GROUP : RUN_TOOL_WINDOW_TOP_TOOLBAR_OLD_GROUP;
     ActionGroup toolbarGroup = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(mainGroupId);
     DefaultActionGroup actionGroup = new DefaultActionGroupWithDelegate(toolbarGroup);
-    addAvoidingDuplicates(actionGroup, ((CustomisedActionGroup)toolbarGroup).getDefaultChildrenOrStubs());
+    addAvoidingDuplicates(actionGroup, toolbarGroup);
 
     DefaultActionGroup afterRunActions = new DefaultActionGroup(restartActions);
     if (!isNewLayout) {
@@ -288,7 +288,7 @@ public final class RunContentBuilder extends RunTab {
       moreGroup = createToolbarMoreActionGroup(actionGroup);
       ActionGroup moreActionGroup =
         (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(RUN_TOOL_WINDOW_TOP_TOOLBAR_MORE_GROUP);
-      addAvoidingDuplicates(moreGroup, ((CustomisedActionGroup)moreActionGroup).getDefaultChildrenOrStubs());
+      addAvoidingDuplicates(moreGroup, moreActionGroup);
     }
 
     addActionsWithConstraints(afterRunActions.getChildren(actionManager), new Constraints(AFTER, IdeActions.ACTION_RERUN), actionGroup, moreGroup);
@@ -524,7 +524,17 @@ public final class RunContentBuilder extends RunTab {
   }
 
   @ApiStatus.Internal
-  public static void addAvoidingDuplicates(DefaultActionGroup group, AnAction[] actions) {
-    addAvoidingDuplicates(group, actions, Constraints.LAST, AnAction.EMPTY_ARRAY);
+  public static void addAvoidingDuplicates(DefaultActionGroup toGroup, ActionGroup fromGroup) {
+    addAvoidingDuplicates(toGroup, getChildActionsOrStubs(fromGroup), Constraints.LAST, AnAction.EMPTY_ARRAY);
+  }
+
+  private static AnAction @NotNull [] getChildActionsOrStubs(ActionGroup group) {
+    if (group instanceof DefaultActionGroup defaultActionGroup) {
+      return defaultActionGroup.getChildActionsOrStubs();
+    }
+    if (group instanceof CustomisedActionGroup customisedActionGroup) {
+      return customisedActionGroup.getDefaultChildrenOrStubs();
+    }
+    return AnAction.EMPTY_ARRAY;
   }
 }
