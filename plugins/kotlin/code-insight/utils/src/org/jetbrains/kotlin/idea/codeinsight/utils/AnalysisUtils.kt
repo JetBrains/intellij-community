@@ -1,11 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
@@ -13,6 +15,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.unwrapNullability
 import org.jetbrains.kotlin.resolve.ArrayFqNames
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
@@ -116,3 +119,35 @@ fun KtExpression.resolveExpression(): KaSymbol? {
     val call = resolveToCall()?.calls?.singleOrNull() ?: return null
     return if (call is KaCallableMemberCall<*, *>) call.symbol else null
 }
+
+/**
+ * A less fragile alternative to [KaSession.type] which should be safer to use on incomplete code. 
+ * 
+ * Can be used now in cases when exceptions occur too frequently, but should eventually become obsolete,
+ * as [KaSession.type] becomes less fragile.
+ * 
+ * See KT-77222 for more information.
+ * 
+ * N.B. This function should NOT be used everywhere - only in cases where exceptions are too frequent.
+ */
+context(KaSession)
+@get:ApiStatus.Internal
+val KtTypeReference.typeIfSafeToResolve: KaType?
+    get() {
+        val typeElement = this.typeElement?.unwrapNullability() ?: return null
+
+        if (typeElement !is KtUserType) {
+            // We currently do a generous assumption that only `KtUserType`s are really fragile.
+            // If proved otherwise, this condition should become more restrictive.
+            return this.type
+        }
+
+        val typeNameExpression = typeElement.referenceExpression
+
+        if (typeNameExpression?.mainReference?.resolveToSymbols().isNullOrEmpty()) {
+            // resolveToSymbols failed, no point in calling type, it may produce/log exceptions 
+            return null
+        }
+
+        return this.type
+    }

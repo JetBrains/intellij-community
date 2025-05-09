@@ -15700,6 +15700,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/contextParam.kt");
         }
 
+        @TestMetadata("contextParamPartial.kt")
+        public void testContextParamPartial() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/contextParamPartial.kt");
+        }
+
         @TestMetadata("contextParamWithAngleBracketsBeforeDot.kt")
         public void testContextParamWithAngleBracketsBeforeDot() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/contextParamWithAngleBracketsBeforeDot.kt");
@@ -15738,6 +15743,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("nullableTypealias.kt")
         public void testNullableTypealias() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/nullableTypealias.kt");
+        }
+
+        @TestMetadata("recursiveTypeAlias.kt")
+        public void testRecursiveTypeAlias() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/recursiveTypeAlias.kt");
         }
 
         @TestMetadata("superTypeQualifier.kt")

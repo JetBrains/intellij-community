@@ -8,7 +8,6 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.util.PsiTreeUtil
 import org.jdom.Element
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
@@ -22,6 +21,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.utils.typeIfSafeToResolve
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.FqNameUnsafe
@@ -104,8 +104,6 @@ internal class JavaCollectionWithNullableTypeArgumentInspection :
     }
 
     override fun KaSession.prepareContext(element: KtElement): Context? {
-        if (PsiTreeUtil.hasErrorElements(element)) return null // Temporary check until KT-77222 is fixed
-        if (element is KtTypeReference && element.parent is KtSuperExpression) return null // super type qualifier `super<Foo>`
         val typeArguments = element.getTypeArguments() ?: return null
 
         val canMakeNonNullable: Boolean
@@ -124,7 +122,7 @@ internal class JavaCollectionWithNullableTypeArgumentInspection :
             }
 
             is KtTypeReference -> {
-                collectionName = element.type.symbol?.importableFqName ?: return null
+                collectionName = element.typeIfSafeToResolve?.symbol?.importableFqName ?: return null
                 canMakeNonNullable = canMakeNonNullable(typeArguments) ?: return null
             }
 
