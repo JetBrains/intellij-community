@@ -22,7 +22,7 @@
 
   <xi:include href="/META-INF/JavaPlugin.xml"/>
 
-  <!-- todo: these files are present in Java plugin for IDEA Ultimate only, they should be extract to a different plugin.xml -->
+  <!-- todo: these files are present in Java plugin for IDEA Ultimate only, they should be converted to content modules -->
   <xi:include href="intellij.java.duplicates.analysis.xml">
     <xi:fallback/>
   </xi:include>
