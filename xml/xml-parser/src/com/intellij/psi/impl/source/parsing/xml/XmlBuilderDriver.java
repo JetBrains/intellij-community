@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
@@ -58,18 +58,17 @@ public class XmlBuilderDriver {
       LighterASTNode child = children[i];
       final IElementType tt = child.getTokenType();
       if (tt instanceof IXmlTagElementType) {
-        processTagNode(b, structure, child, builder);
+        processTagNode(structure, child, builder);
       }
       else if (tt == XmlElementType.XML_PROLOG) {
-        processPrologNode(b, builder, structure, child);
+        processPrologNode(builder, structure, child);
       }
     }
 
     structure.disposeChildren(children, count);
   }
 
-  private void processPrologNode(PsiBuilder psiBuilder,
-                                 XmlBuilder builder,
+  private void processPrologNode(XmlBuilder builder,
                                  FlyweightCapableTreeStructure<LighterASTNode> structure,
                                  LighterASTNode prolog) {
     final Ref<LighterASTNode[]> prologChildren = new Ref<>(null);
@@ -82,7 +81,7 @@ public class XmlBuilderDriver {
         break;
       }
       if (type == TokenType.ERROR_ELEMENT) {
-        processErrorNode(psiBuilder, node, builder);
+        processErrorNode(node, builder);
       }
     }
   }
@@ -131,15 +130,14 @@ public class XmlBuilderDriver {
     return b;
   }
 
-  private static void processErrorNode(PsiBuilder psiBuilder, LighterASTNode node, XmlBuilder builder) {
+  private static void processErrorNode(LighterASTNode node, XmlBuilder builder) {
     assert node.getTokenType() == TokenType.ERROR_ELEMENT;
     String message = PsiBuilderImpl.getErrorMessage(node);
     assert message != null;
     builder.error(message, node.getStartOffset(), node.getEndOffset());
   }
 
-  private void processTagNode(PsiBuilder psiBuilder,
-                              FlyweightCapableTreeStructure<LighterASTNode> structure,
+  private void processTagNode(FlyweightCapableTreeStructure<LighterASTNode> structure,
                               LighterASTNode node,
                               XmlBuilder builder) {
     final IElementType nodeTT = node.getTokenType();
@@ -178,8 +176,8 @@ public class XmlBuilderDriver {
     for (int i = 0; i < count; i++) {
       LighterASTNode child = children[i];
       IElementType tt = child.getTokenType();
-      if (tt == TokenType.ERROR_ELEMENT) processErrorNode(psiBuilder, child, builder);
-      if (tt instanceof IXmlTagElementType) processTagNode(psiBuilder, structure, child, builder);
+      if (tt == TokenType.ERROR_ELEMENT) processErrorNode(child, builder);
+      if (tt instanceof IXmlTagElementType) processTagNode(structure, child, builder);
       if (processAttrs && tt instanceof IXmlAttributeElementType) processAttributeNode(child, structure, builder);
       if (processTexts && tt == XmlElementType.XML_TEXT) processTextNode(structure, child, builder);
       if (tt == XmlElementType.XML_ENTITY_REF) builder.entityRef(getTokenText(child), child.getStartOffset(), child.getEndOffset());
