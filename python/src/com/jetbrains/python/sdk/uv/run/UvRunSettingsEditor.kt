@@ -23,7 +23,7 @@ import com.jetbrains.python.sdk.PySdkListCellRenderer
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.sdkSeemsValid
-import com.jetbrains.python.sdk.uv.UvSdkAdditionalData
+import com.jetbrains.python.sdk.uv.isUv
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -61,7 +61,7 @@ internal data class UvRunSettingsEditor(val project: Project) : SettingsEditor<U
       PythonSdkUtil
         .getAllSdks()
         .filter { sdk ->
-          sdk.sdkAdditionalData is UvSdkAdditionalData && sdk.sdkSeemsValid && !PythonSdkType.hasInvalidRemoteCredentials(sdk)
+          sdk.isUv && sdk.sdkSeemsValid && !PythonSdkType.hasInvalidRemoteCredentials(sdk)
         }
 
     panel = panel {
@@ -165,3 +165,7 @@ internal data class UvRunSettingsEditor(val project: Project) : SettingsEditor<U
 
   override fun createEditor(): JComponent = panel
 }
+
+private val whiteSpaceRegex = Regex("\\s+")
+
+private fun String.splitParams(): List<String> = this.trim().split(whiteSpaceRegex).filter { it != "" }

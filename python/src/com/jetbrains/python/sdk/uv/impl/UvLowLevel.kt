@@ -17,6 +17,9 @@ import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
 
+private const val NO_METADATA_MESSAGE = "does not contain a PEP 723 metadata tag"
+private const val OUTDATED_ENV_MESSAGE = "The environment is outdated"
+
 private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLevel {
   override suspend fun initializeEnvironment(init: Boolean, python: Path?): Result<Path> {
     val addPythonArg: (MutableList<String>) -> Unit = { args ->
@@ -154,7 +157,7 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
       .onFailure {
         val message = it.message ?: ""
 
-        if (message.contains("The environment is outdated")) {
+        if (message.contains(OUTDATED_ENV_MESSAGE)) {
           return Result.success(false)
         }
 
@@ -171,11 +174,11 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
       .onFailure {
         val message = it.message ?: ""
 
-        if (message.contains("does not contain a PEP 723 metadata tag")) {
+        if (message.contains(NO_METADATA_MESSAGE)) {
           return Result.success(ScriptSyncCheckResult.NoInlineMetadata)
         }
 
-        if (message.contains("The environment is outdated")) {
+        if (message.contains(OUTDATED_ENV_MESSAGE)) {
           return Result.success(ScriptSyncCheckResult.NotSynced)
         }
 
