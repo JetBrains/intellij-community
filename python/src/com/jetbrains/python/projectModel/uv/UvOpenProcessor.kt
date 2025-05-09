@@ -7,7 +7,9 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectOpenProcessor
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.icons.PythonIcons
 import org.jetbrains.annotations.Nls
+import javax.swing.Icon
 
 /**
  * Automatically configures a new project without `.idea/` as a project managed by uv if there is
@@ -21,6 +23,9 @@ class UvOpenProcessor: ProjectOpenProcessor() {
   private val importProvider = UvOpenProvider()
   
   override val name: @Nls String = PyBundle.message("python.project.model.uv")
+
+  override val icon: Icon?
+    get() = PythonIcons.UV
 
   override fun canOpenProject(file: VirtualFile): Boolean {
     return Registry.`is`("python.project.model.uv") && importProvider.canOpenProject(file)
