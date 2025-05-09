@@ -52,7 +52,7 @@ internal class UvExistingEnvironmentSelector(model: PythonMutableTargetAddInterp
       usePip,
       projectDir,
       allSdk.toList()
-    ).asPythonResult()
+    )
   }
 
   override suspend fun detectEnvironments(modulePath: Path) {
