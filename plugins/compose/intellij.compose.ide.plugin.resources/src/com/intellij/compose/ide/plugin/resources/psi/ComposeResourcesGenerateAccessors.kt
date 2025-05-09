@@ -150,7 +150,7 @@ private fun Path.listNotHiddenFiles(): List<Path> =
   Files.list(this).filter { !Files.isHidden(it) }.toList()
 
 
-private fun String.asUnderscoredIdentifier(): String =
+internal fun String.asUnderscoredIdentifier(): String =
   replace('-', '_')
     .let { if (it.isNotEmpty() && it.first().isDigit()) "_$it" else it }
 

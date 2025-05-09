@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.resources
 
+import com.intellij.compose.ide.plugin.resources.psi.asUnderscoredIdentifier
 import com.intellij.lang.xml.XMLLanguage
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.psi.PsiElement
@@ -73,14 +74,14 @@ internal interface ComposeResourcesBase {
 
 internal interface ComposeResourcesFileBase : ComposeResourcesBase {
   override fun getPsiFile(element: PsiElement): PsiFile? = element as? PsiFile
-  override fun getName(element: PsiElement): String? = element.namedUnwrappedElement?.name?.withoutExtension
+  override fun getName(element: PsiElement): String? = element.namedUnwrappedElement?.name?.withoutExtension?.asUnderscoredIdentifier()
   override val validInnerComposeResourcesDirNames: Set<String>
     get() = setOf("drawable", "font")
 }
 
 internal interface ComposeResourcesXmlBase : ComposeResourcesBase {
   override fun getPsiFile(element: PsiElement): PsiFile? = element.containingFile?.takeIf { it.language == XMLLanguage.INSTANCE }
-  override fun getName(element: PsiElement): String? = element.text
+  override fun getName(element: PsiElement): String? = element.text.asUnderscoredIdentifier()
   override val validInnerComposeResourcesDirNames: Set<String>
     get() = setOf("values")
 }
