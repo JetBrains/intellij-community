@@ -20,6 +20,7 @@ import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ipp.imports.ReplaceOnDemandImportIntention;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -203,12 +204,35 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
       String body = tracker.rangeText(lBrace.getNextSibling(), rBrace.getPrevSibling());
       PsiImplicitClass newClass = PsiElementFactory.getInstance(project).createImplicitClassFromText(body, psiClass);
       PsiElement replaced = tracker.replace(psiClass, newClass);
-      tracker.insertCommentsBefore(replaced);
+      if (!(replaced instanceof PsiImplicitClass implicitClass)) {
+        return;
+      }
+
+      tracker.insertCommentsBefore(implicitClass);
+
+      cleanMainMethod(implicitClass);
+
 
       PsiFile replacedContainingFile = replaced.getContainingFile();
       if (replacedContainingFile != null) {
         JavaCodeStyleManager.getInstance(project).optimizeImports(replacedContainingFile);
       }
+    }
+
+    private static void cleanMainMethod(@NotNull PsiImplicitClass implicitClass) {
+      PsiMethod mainMethod = PsiMethodUtil.findMainInClass(implicitClass);
+      if (mainMethod == null) return;
+      PsiModifierList modifierList = mainMethod.getModifierList();
+      modifierList.setModifierProperty(PsiModifier.PUBLIC, false);
+      modifierList.setModifierProperty(PsiModifier.PROTECTED, false);
+      modifierList.setModifierProperty(PsiModifier.STATIC, false);
+
+      PsiParameterList parameterList = mainMethod.getParameterList();
+      if (parameterList.getParametersCount() == 0) return;
+      PsiParameter parameter = parameterList.getParameters()[0];
+      if (VariableAccessUtils.variableIsUsed(parameter, mainMethod)) return;
+      CommentTracker ct = new CommentTracker();
+      ct.deleteAndRestoreComments(parameter);
     }
   }
 }

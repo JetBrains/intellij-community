@@ -4,6 +4,6 @@ import p.*;
 
   public static void main(String[] args) {
     List a = null;
-    System.out.println("Hello, world!");
+    System.out.println("Hello, world!" + args);
   }
 }
