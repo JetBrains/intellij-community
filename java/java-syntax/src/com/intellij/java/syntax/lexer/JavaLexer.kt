@@ -94,6 +94,16 @@ class JavaLexer(level: LanguageLevel) : Lexer {
 
     val c = locateCharAt(myBufferIndex)
     when (c) {
+      //allowed only at the end of files
+      '\u001a' -> {
+        if (myBufferIndex + mySymbolLength == myBufferEndOffset) {
+          myTokenType = WHITE_SPACE
+          myTokenEndOffset = myBufferIndex + mySymbolLength
+        }
+        else {
+          flexLocateToken()
+        }
+      }
       ' ', '\t', '\n', '\r', '\u000C' -> {
         myTokenType = WHITE_SPACE
         myTokenEndOffset = getWhitespaces(myBufferIndex + mySymbolLength)
@@ -209,17 +219,20 @@ class JavaLexer(level: LanguageLevel) : Lexer {
   }
 
   private fun getWhitespaces(offset: Int): Int {
-    return getChars(offset, " \t\n\r\u000c")
+    return getChars(offset, " \t\n\r\u000c", '\u001a')
   }
 
   private fun getSimpleWhitespaces(offset: Int): Int {
-    return getChars(offset, " \t")
+    return getChars(offset, " \t", null)
   }
 
   /**
+   * @param offset  the offset to start.
+   * @param charsToDetect  the chars to detect.
+   * @param endChar  the char which is applied only at the end of the file, or `null` if no end sequence is needed.
    * @return The new position if none of the chars were detected
    */
-  private fun getChars(offset: Int, charsToDetect: CharSequence): Int {
+  private fun getChars(offset: Int, charsToDetect: CharSequence, endChar: Char?): Int {
     var pos = offset
     while (pos < myBufferEndOffset) {
       var detected = false
@@ -231,7 +244,12 @@ class JavaLexer(level: LanguageLevel) : Lexer {
           break
         }
       }
-
+      if (!detected && endChar != null && pos + mySymbolLength == myBufferEndOffset) {
+        if (endChar == c) {
+          pos += mySymbolLength
+          break
+        }
+      }
       if (!detected) break
     }
 
