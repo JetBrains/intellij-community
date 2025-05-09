@@ -1,3 +1,4 @@
+// "Inline variable" "true-preview"
 class C {
     void m() throws Exception {
         try (AutoCloseable r1 = null; AutoCloseable <caret>r2 = r1) {

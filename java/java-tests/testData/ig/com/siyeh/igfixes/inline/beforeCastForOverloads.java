@@ -1,3 +1,4 @@
+// "Inline variable" "false"
 class Base {
   {
     Descendant descendant = new Descendant();

@@ -15,55 +15,30 @@
  */
 package com.siyeh.ig.fixes;
 
-import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLocalVariable;
-import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.refactoring.util.CommonJavaInlineUtil;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-
-public class InlineVariableFix extends PsiUpdateModCommandQuickFix {
-
+public class InlineVariableFix extends ModCommandQuickFix {
   @Override
   public @NotNull String getFamilyName() {
     return InspectionGadgetsBundle.message("inline.variable.quickfix");
   }
 
   @Override
-  protected void applyFix(@NotNull Project project, @NotNull PsiElement nameElement, @NotNull ModPsiUpdater updater) {
-    final PsiLocalVariable variable = (PsiLocalVariable)nameElement.getParent();
+  public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    final PsiLocalVariable variable = (PsiLocalVariable)descriptor.getPsiElement().getParent();
     final PsiExpression initializer = variable.getInitializer();
     if (initializer == null) {
-      return;
+      return ModCommand.nop();
     }
-
-    final Collection<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(variable);
-    final Collection<PsiElement> replacedElements = new ArrayList<>();
-    for (PsiReferenceExpression reference : references) {
-      var inlineUtil = CommonJavaInlineUtil.getInstance();
-      final PsiExpression expression = inlineUtil.inlineVariable(variable, initializer, reference, null);
-      replacedElements.add(expression);
-    }
-
-    new CommentTracker().deleteAndRestoreComments(variable);
-    boolean positioned = false;
-    for (PsiElement element : replacedElements) {
-      if (element.isValid()) {
-        updater.highlight(element);
-        if (!positioned) {
-          positioned = true;
-          updater.moveCaretTo(element);
-        }
-      }
-    }
+    var inlineUtil = CommonJavaInlineUtil.getInstance();
+    return inlineUtil.inline(variable);
   }
 }

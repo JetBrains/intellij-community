@@ -1,3 +1,4 @@
+// "Inline variable" "true-preview"
 import java.util.List;
 
 public class Demo {
