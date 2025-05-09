@@ -1152,7 +1152,7 @@ public class HighlightInfo implements Segment {
       document = fixMarker != null && fixMarker != FIX_MARKER_SAME_AS_HIGHLIGHTER ? fixMarker.getDocument() : highlighter != null ? highlighter.getDocument() : null;
     }
     if (document != null) {
-      newFixRange = TextRangeScalarUtil.coerce(newFixRange, 0, document.getTextLength());
+      newFixRange = TextRangeScalarUtil.coerceRange(newFixRange, 0, document.getTextLength());
 
       // highlighter already has been created, we need to update IntentionActionDescriptor.myFixRange
       Long2ObjectMap<RangeMarker> cache = getRangeMarkerCache();
@@ -1227,7 +1227,7 @@ public class HighlightInfo implements Segment {
   synchronized void updateQuickFixFields(@NotNull Document document,
                                          @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
                                          long finalHighlighterRange) {
-    long fixTextRange = TextRangeScalarUtil.coerce(TextRangeScalarUtil.toScalarRange(getFixTextRange()), 0, document.getTextLength());
+    long fixTextRange = TextRangeScalarUtil.coerceRange(TextRangeScalarUtil.toScalarRange(getFixTextRange()), 0, document.getTextLength());
     updateFixMarker(document, range2markerCache, fixTextRange, finalHighlighterRange);
     updateDescriptorFixRanges(getIntentionActionDescriptors(), document, range2markerCache, fixTextRange);
   }
