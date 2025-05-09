@@ -69,8 +69,6 @@ class PluginUiModelAdapter(
     get() = pluginDescriptor.productCode
   override val size: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.size else null
-  override val downloadUrl: String?
-    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.downloadUrl else null
   override val releaseVersion: Int
     get() = pluginDescriptor.releaseVersion
   override val displayCategory: String?
@@ -307,6 +305,14 @@ class PluginUiModelAdapter(
     set(value) {
       if(pluginDescriptor is IdeaPluginDescriptorImpl) {
         pluginDescriptor.isDeleted = value
+      }
+    }
+
+  override var downloadUrl: String?
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.downloadUrl else null
+    set(value) {
+      if (pluginDescriptor is PluginNode) {
+        pluginDescriptor.downloadUrl = value
       }
     }
 

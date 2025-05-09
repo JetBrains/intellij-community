@@ -51,8 +51,6 @@ interface PluginUiModel {
   val productCode: String?
   @get:NlsSafe
   val size: String?
-  @get:NlsSafe
-  val downloadUrl: String?
   val releaseVersion: Int
   @get:NlsSafe
   val displayCategory: String?
@@ -77,6 +75,8 @@ interface PluginUiModel {
   var reviewComments: ReviewsPageContainer?
   var screenShots: List<String>?
   var externalPluginIdForScreenShots: String?
+  @get:NlsSafe
+  var downloadUrl: String?
 
   var externalPluginId: String?
   var externalUpdateId: String?
