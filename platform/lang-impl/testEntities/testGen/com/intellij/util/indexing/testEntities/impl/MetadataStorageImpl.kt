@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.testEntities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
@@ -16,6 +17,10 @@ internal object MetadataStorageImpl: MetadataStorageBase() {
         val primitiveTypeListNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "List")
 
         var typeMetadata: StorageTypeMetadata
+
+        typeMetadata = FinalClassMetadata.ObjectMetadata(fqName = "com.intellij.util.indexing.testEntities.TestModuleEntitySource", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "virtualFileUrl", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = true, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")), withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
+
+        addMetadata(typeMetadata)
 
         typeMetadata = EntityMetadata(fqName = "com.intellij.util.indexing.testEntities.ChildTestEntity", entityDataFqName = "com.intellij.util.indexing.testEntities.impl.ChildTestEntityData", supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"), properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")), withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "parent", valueType = ValueTypeMetadata.EntityReference(connectionType = ConnectionId.ConnectionType.ONE_TO_ONE, entityFqName = "com.intellij.util.indexing.testEntities.ParentTestEntity", isChild = false, isNullable = false), withDefault = false),
@@ -40,6 +45,8 @@ OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = 
         addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.ChildTestEntity", metadataHash = -1326732737)
         addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.IndexingTestEntity", metadataHash = -233870197)
         addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.ParentTestEntity", metadataHash = 451967055)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 1279624819)
+        addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.TestModuleEntitySource", metadataHash = -1815413801)
     }
 
 }
