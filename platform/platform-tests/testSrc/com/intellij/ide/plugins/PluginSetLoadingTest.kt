@@ -36,7 +36,7 @@ class PluginSetLoadingTest {
         <version>2.0</version>
       </idea-plugin>""")
 
-    val pluginSet = PluginSetTestBuilder(pluginsDirPath).build()
+    val pluginSet = PluginSetTestBuilder.fromPath(pluginsDirPath).build()
     val plugins = pluginSet.enabledPlugins
     assertThat(plugins).hasSize(1)
     val foo = plugins[0]
@@ -62,7 +62,7 @@ class PluginSetLoadingTest {
         <version>2.0</version>
       </idea-plugin>""")
 
-    val (_, result) = PluginSetTestBuilder(pluginsDirPath)
+    val (_, result) = PluginSetTestBuilder.fromPath(pluginsDirPath)
       .withDisabledPlugins("foo")
       .buildLoadingResult()
 
@@ -91,7 +91,7 @@ class PluginSetLoadingTest {
         <idea-version until-build="4"/>
       </idea-plugin>""")
 
-    val (_, result) = PluginSetTestBuilder(pluginsDirPath)
+    val (_, result) = PluginSetTestBuilder.fromPath(pluginsDirPath)
       .withProductBuildNumber(BuildNumber.fromString("4.0")!!)
       .buildLoadingResult()
 
@@ -125,7 +125,7 @@ class PluginSetLoadingTest {
         <idea-version since-build="2.0" until-build="4.*"/>
       </idea-plugin>""")
 
-    val pluginSet = PluginSetTestBuilder(pluginsDirPath)
+    val pluginSet = PluginSetTestBuilder.fromPath(pluginsDirPath)
       .withProductBuildNumber(BuildNumber.fromString("3.12")!!)
       .build()
     val plugins = pluginSet.enabledPlugins
@@ -143,7 +143,7 @@ class PluginSetLoadingTest {
     PluginBuilder.empty().id("foo").version("1.0").build(pluginsDirPath.resolve("foo_1-0"))
     PluginBuilder.empty().id("foo").version("1.0").build(pluginsDirPath.resolve("foo_another"))
 
-    val pluginSet = PluginSetTestBuilder(pluginsDirPath).build()
+    val pluginSet = PluginSetTestBuilder.fromPath(pluginsDirPath).build()
     val plugins = pluginSet.enabledPlugins
     assertThat(plugins).hasSize(1)
     val foo = plugins[0]
@@ -381,5 +381,5 @@ class PluginSetLoadingTest {
     assertThat(pluginSet).hasExactlyEnabledPlugins(*enabledIds.toTypedArray())
   }
 
-  private fun buildPluginSet(builder: PluginSetTestBuilder.() -> Unit = {}): PluginSet = PluginSetTestBuilder(pluginsDirPath).apply(builder).build()
+  private fun buildPluginSet(builder: PluginSetTestBuilder.() -> Unit = {}): PluginSet = PluginSetTestBuilder.fromPath(pluginsDirPath).apply(builder).build()
 }

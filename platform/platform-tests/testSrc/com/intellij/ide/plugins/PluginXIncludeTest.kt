@@ -348,7 +348,7 @@ internal class PluginXIncludeTest {
   }
 
   private fun buildPluginSet(expiredPluginIds: Array<String> = emptyArray(), disabledPluginIds: Array<String> = emptyArray()) =
-    PluginSetTestBuilder(pluginsPath)
+    PluginSetTestBuilder.fromPath(pluginsPath)
       .withExpiredPlugins(*expiredPluginIds)
       .withDisabledPlugins(*disabledPluginIds)
       .build()

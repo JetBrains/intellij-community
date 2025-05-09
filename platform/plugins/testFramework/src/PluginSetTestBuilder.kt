@@ -2,6 +2,7 @@
 package com.intellij.platform.plugins.testFramework
 
 import com.intellij.ide.plugins.DiscoveredPluginsList
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginDescriptorLoadingContext
 import com.intellij.ide.plugins.PluginDescriptorLoadingResult
 import com.intellij.ide.plugins.PluginInitializationContext
@@ -19,12 +20,23 @@ import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 import java.util.Collections.emptySet
 
-class PluginSetTestBuilder(private val path: Path) {
+class PluginSetTestBuilder private constructor(
+  private val pluginDescriptorLoader: (loadingContext: PluginDescriptorLoadingContext) -> List<IdeaPluginDescriptorImpl>,
+) {
   private var disabledPluginIds = mutableSetOf<PluginId>()
   private var expiredPluginIds = mutableSetOf<PluginId>()
   private var brokenPlugins = mutableMapOf<PluginId, MutableSet<String?>>()
   private var productBuildNumber = PluginManagerCore.buildNumber
 
+  companion object {
+    @JvmStatic
+    fun fromPath(path: Path): PluginSetTestBuilder = PluginSetTestBuilder { loadingContext -> 
+      // constant order in tests
+      val paths: List<Path> = path.directoryStreamIfExists { it.sorted() }!!
+      paths.mapNotNull { path -> loadDescriptor(path, loadingContext, ZipFilePoolImpl()) }
+    }
+  }
+  
   fun withDisabledPlugins(vararg disabledPluginIds: String): PluginSetTestBuilder = apply {
     this.disabledPluginIds += disabledPluginIds.map(PluginId::getId)
   }
@@ -67,10 +79,7 @@ class PluginSetTestBuilder(private val path: Path) {
     val initContext = initContext ?: buildInitContext()
     val loadingContext = PluginDescriptorLoadingContext(getBuildNumberForDefaultDescriptorVersion = { productBuildNumber })
     val result = PluginLoadingResult()
-    // constant order in tests
-    val paths: List<Path> = path.directoryStreamIfExists { it.sorted() }!!
-    val descriptors = paths.mapNotNull { path -> loadDescriptor(path, loadingContext, ZipFilePoolImpl()) }
-    val pluginList = DiscoveredPluginsList(descriptors, PluginsSourceContext.Custom)
+    val pluginList = DiscoveredPluginsList(pluginDescriptorLoader(loadingContext), PluginsSourceContext.Custom)
     loadingContext.use {
       @Suppress("RAW_RUN_BLOCKING") //it's used in tests where the Application isn't available
       runBlocking {

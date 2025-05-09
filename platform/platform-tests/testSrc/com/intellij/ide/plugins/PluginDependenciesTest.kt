@@ -631,7 +631,7 @@ internal class PluginDependenciesTest {
     .build(pluginDirPath.resolve("baz"))
 
   private fun buildPluginSet(expiredPluginIds: Array<String> = emptyArray(), disabledPluginIds: Array<String> = emptyArray()) =
-    PluginSetTestBuilder(pluginDirPath)
+    PluginSetTestBuilder.fromPath(pluginDirPath)
       .withExpiredPlugins(*expiredPluginIds)
       .withDisabledPlugins(*disabledPluginIds)
       .build()
