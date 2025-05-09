@@ -1500,7 +1500,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
                 "MethodType mt = MethodType.fromMethodDescriptorString(\"" + JVMNameUtil.getJVMSignature(method) + "\", null);\n" +
                 "MethodHandle mh = MethodHandles.lookup()." + find + ";\n" +
                 bidStr +
-                "MethodHandleProxies.asInterfaceInstance(" + interfaceType.getCanonicalText() + ".class, mh);";
+                "MethodHandleProxies.asInterfaceInstance(" + interfaceType.getCanonicalText() + ".class, mh.asFixedArity());";
             }
           }
           else if (PsiUtil.isArrayClass(resolved)) {
