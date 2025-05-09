@@ -51,6 +51,9 @@ build:ci --nowatchfs
 common --enable_platform_specific_config
 common --incompatible_strict_action_env=true
 
+# Do not depend on external environment
+build --action_env BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
+
 # Generally good remote cache tweaks
 # on CI, set remote_cache_async to false! set to false for local runs also, to investigate https://github.com/bazelbuild/bazel/issues/19273
 common --remote_cache_async=false --remote_cache_compression=true

@@ -20,6 +20,9 @@ common --symlink_prefix=/
 common --noenable_workspace
 test --test_verbose_timeout_warnings --test_timeout=60 --test_output=all
 
+# Do not depend on external environment
+build --action_env BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
+
 # https://www.buildbuddy.io/blog/debugging-slow-bazel-builds/
 common --nolegacy_important_outputs --remote_build_event_upload=minimal --remote_cache_async --remote_cache_compression
 
