@@ -35,7 +35,7 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
            "<div class='definition'><pre>body</pre></div>\n<div class='content'>" +
            "The <strong><code>&lt;body&gt;</code></strong> <a href=\"https://developer.mozilla.org/en-us/docs/Web/HTML\">HTML</a> " +
            "element represents the content of",
-           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/element/body"));
+           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/reference/elements/body"));
   }
 
   public void testQuickDocumentationHtml5TagDialog() {
@@ -49,7 +49,7 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
            "<div class='definition'><pre>dialog</pre></div>\n<div class='content'>" +
            "The <strong><code>&lt;dialog&gt;</code></strong> <a href=\"https://developer.mozilla.org/en-us/docs/Web/HTML\">HTML</a> " +
            "element represents a modal",
-           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/element/dialog"));
+           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/reference/elements/dialog"));
   }
 
   public void testQuickDocumentationHtml5Attr() {
@@ -73,8 +73,8 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
              </body>
              </html>""",
            "<div class='definition'><pre>svg</pre></div>\n<div class='content'>" +
-           "The <code>svg</code> element is a container that defines a new coordinate system and",
-           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/svg/element/svg"));
+           "The <strong><code>&lt;svg&gt;</code></strong> <a href=\"https://developer.mozilla.org/en-us/docs/Web/SVG\">SVG</a> element is a container that defines a new coordinate system and",
+           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/svg/reference/element/svg"));
   }
 
   public void testQuickDocumentationHtml5SvgImage() {
@@ -89,8 +89,8 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
              </body>
              </html>""",
            "<div class='definition'><pre>image</pre></div>\n<div class='content'>" +
-           "The <strong><code>&lt;image&gt;</code></strong> SVG element includes images inside SVG documents.",
-           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/svg/element/image"));
+           "The <strong><code>&lt;image&gt;</code></strong> <a href=\"https://developer.mozilla.org/en-us/docs/Web/SVG\">SVG</a> element includes images inside SVG documents.",
+           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/svg/reference/element/image"));
   }
 
   public void testQuickDocumentationHtml5Math() {
@@ -105,7 +105,7 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
            "<div class='definition'><pre>math</pre></div>\n<div class='content'>" +
            "The <strong><code>&lt;math&gt;</code></strong> <a href=\"https://developer.mozilla.org/en-us/docs/Web/MathML\">MathML</a> " +
            "element is the top-level MathML element",
-           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/mathml/element/math"));
+           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/mathml/reference/element/math"));
   }
 
   public void testQuickDocumentationHtml5MathMrow() {
@@ -122,7 +122,7 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
            "<div class='definition'><pre>mrow</pre></div>\n<div class='content'>" +
            "The <strong><code>&lt;mrow&gt;</code></strong> <a href=\"https://developer.mozilla.org/en-us/docs/Web/MathML\">MathML</a> " +
            "element is used to group sub-expressions",
-           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/mathml/element/mrow"));
+           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/mathml/reference/element/mrow"));
   }
 
   public void testQuickDocumentationHtml4Tag() {
@@ -136,7 +136,7 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
            "<div class='definition'><pre>body</pre></div>\n<div class='content'>" +
            "The <strong><code>&lt;body&gt;</code></strong> <a href=\"https://developer.mozilla.org/en-us/docs/Web/HTML\">HTML</a> " +
            "element represents the content of an HTML document.",
-           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/element/body"));
+           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/reference/elements/body"));
   }
 
   public void testQuickDocumentationHtml4Attr() {
@@ -156,7 +156,7 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
            "<div class='definition'><pre>script</pre></div>\n<div class='content'>" +
            "The <strong><code>&lt;script&gt;</code></strong> <a href=\"https://developer.mozilla.org/en-us/docs/Web/HTML\">HTML</a> " +
            "element is used to embed executable",
-           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/element/script"));
+           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/reference/elements/script"));
   }
 
 
@@ -182,6 +182,9 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
     DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(originalElement);
 
     String generatedDoc = documentationProvider.generateDoc(element, originalElement);
+    if (generatedDoc != null) {
+      generatedDoc = generatedDoc.replaceAll("(?s)<details>.+</details>\n", "");
+    }
     if (generatedDoc == null) {
       //noinspection ConstantConditions
       assertEquals(doc, generatedDoc);
