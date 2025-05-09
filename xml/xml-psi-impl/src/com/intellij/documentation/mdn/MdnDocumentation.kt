@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.html.dtd.HtmlSymbolDeclaration
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.*
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.asSafely
 import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.WebSymbolsBundle
@@ -217,7 +218,7 @@ class MdnSymbolDocumentationAdapter(
     } ?: WebSymbolApiStatus.Stable
 
   override val description: String
-    get() = capitalize(
+    get() = renderBaseline() + capitalize(
       doc.doc?.let {
         if (it.contains("```"))
           DocMarkdownToHtmlConverter.convert(DefaultProjectFactory.getInstance().defaultProject, it)
@@ -231,6 +232,7 @@ class MdnSymbolDocumentationAdapter(
       val result = doc.sections.toMutableMap()
       if (doc.compatibility != null) {
         doc.compatibility!!.entries.forEach { (id, map) ->
+          if (id == defaultBcdContext && doc.baseline != null) return@forEach
           val actualId = if (id == defaultBcdContext) "browser_compatibility" else id
           val bundleKey = "mdn.documentation.section.compat.$actualId"
           val sectionName: String = if (actualId.startsWith("support_of_") && !MdnBundle.hasKey(bundleKey)) {
@@ -267,6 +269,65 @@ class MdnSymbolDocumentationAdapter(
   private fun String.fixUrls(): String =
     fixMdnUrls(replace(Regex("<a[ \n\t]+href=[ \t]*['\"]#([^'\"]*)['\"]"), "<a href=\"${escapeReplacement(doc.url ?: "")}#$1\""),
                source.lang)
+
+  private fun renderBaseline(): String {
+    val baseline = doc.baseline ?: return ""
+    val supportedEngines = doc.compatibility?.get(defaultBcdContext)
+    val supportedEnginesString = supportedEngines?.entries
+      ?.joinToString(", ") { it.key.displayName + (if (it.value.isNotEmpty()) " " + it.value else "") }
+      ?.ifBlank { MdnBundle.message("mdn.documentation.section.compat.supported_by.none") }
+    val result = StringBuilder()
+    if (supportedEnginesString != null) {
+      result.append("<details><summary>")
+    }
+    result.append("<table style='margin:0px;padding:0px'><tr><td width=2 valign=top style='margin:0px;padding:0px ${JBUIScale.scale(4)}px 0px 0px'>" +
+                  "<icon src='com.intellij.xml.psi.impl.icons.XmlPsiImplIcons.Baseline${baseline.level.name.lowercase().capitalize()}'></icon>\n" +
+                  "<td style='margin:0px;padding:0px'>")
+    when (baseline.level) {
+      BaselineLevel.NONE -> {
+        if (supportedEngines != null) {
+          val notSupportedEngines = BASELINE_BROWSERS.filter { supportedEngines[it] == null }
+          if (notSupportedEngines.size == BASELINE_BROWSERS.size) {
+            result.append(MdnBundle.message("mdn.documentation.baseline.not-supported"))
+          }
+          else if (notSupportedEngines.isNotEmpty()) {
+            result.append(MdnBundle.message("mdn.documentation.baseline.limited-availability"))
+            result.append(" <i>(")
+            result.append(MdnBundle.message("mdn.documentation.baseline.not-supported-by",
+                                            notSupportedEngines.map { it.displayName }.sorted().joinToString(", ")))
+            result.append(")</i>")
+          }
+          else {
+            result.append(MdnBundle.message("mdn.documentation.baseline.limited-availability"))
+          }
+        }
+        else {
+          result.append(MdnBundle.message("mdn.documentation.baseline.limited-availability"))
+        }
+      }
+      BaselineLevel.LOW -> {
+        result.append(MdnBundle.message("mdn.documentation.baseline.newly-available"))
+      }
+      BaselineLevel.HIGH -> {
+        result.append(MdnBundle.message("mdn.documentation.baseline.widely-available"))
+      }
+    }
+    (baseline.highDate ?: baseline.lowDate)?.dropWhile { !it.isDigit() }?.let { date ->
+      result.append(" <i>(")
+      result.append(MdnBundle.message("mdn.documentation.baseline.since", date.takeWhile { it.isDigit() })
+                      .replace(" ", "&nbsp;"))
+      result.append(")</i>")
+    }
+    result.append("\n</td></tr></table>")
+    if (supportedEnginesString != null) {
+      result.append("</summary>")
+      result.append("<p class='grayed'>")
+      DocumentationMarkup.CLASS_SECTION
+      result.append(supportedEnginesString)
+      result.append("</details>")
+    }
+    return result.toString()
+  }
 
 }
 
@@ -493,6 +554,16 @@ enum class MdnJavaScriptRuntime(displayName: String? = null, mdnId: String? = nu
   val displayName: String = displayName ?: name
 
 }
+
+val BASELINE_BROWSERS = setOf(
+  MdnJavaScriptRuntime.Chrome,
+  MdnJavaScriptRuntime.ChromeAndroid,
+  MdnJavaScriptRuntime.Firefox,
+  MdnJavaScriptRuntime.FirefoxAndroid,
+  MdnJavaScriptRuntime.Edge,
+  MdnJavaScriptRuntime.Safari,
+  MdnJavaScriptRuntime.SafariIOS,
+)
 
 enum class MdnCssSymbolKind {
   AtRule {
