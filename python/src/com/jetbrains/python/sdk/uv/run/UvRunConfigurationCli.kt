@@ -20,6 +20,11 @@ import kotlin.io.path.pathString
 @RequiresBackgroundThread(generateAssertion = false)
 fun buildUvRunConfigurationCli(options: UvRunConfigurationOptions, isDebug: Boolean): PythonExecution {
   val toolPath = getUvExecutable()
+
+  if (toolPath == null) {
+    throw RuntimeException("Unable to find uv executable.")
+  }
+
   val toolParams = mutableListOf("run")
 
   if (isDebug && !options.uvArgs.contains("--cache-dir")) {
@@ -37,35 +42,35 @@ fun buildUvRunConfigurationCli(options: UvRunConfigurationOptions, isDebug: Bool
   toolParams += options.uvArgs
 
   val execution = when (options.runType) {
-    UvRunType.SCRIPT -> PythonToolScriptExecution().apply {
-      this.toolParams = if (isDebug && !options.uvArgs.contains("--no-sync")) {
-         listOf(
-          "run",
-          "--no-sync", // initial script helper execution should not sync
-          PythonHelpersLocator.findPathStringInHelpers("uv/uv_sync_proxy.py"),
-          toolPath?.pathString ?: "uv",
-          options.scriptOrModule
-        ) + toolParams
-      } else if (!isDebug) {
-        toolParams + "--script"
-      } else {
-        toolParams
-      }
-
-      this.toolPath = toolPath
-
-      pythonScriptPath = constant(Path.of(options.scriptOrModule))
+    UvRunType.SCRIPT -> {
+      PythonToolScriptExecution(
+        toolPath,
+        if (isDebug && !options.uvArgs.contains("--no-sync")) {
+          listOf(
+            "run",
+            "--no-sync", // initial script helper execution should not sync
+            PythonHelpersLocator.findPathStringInHelpers("uv/uv_sync_proxy.py"),
+            toolPath.pathString,
+            options.scriptOrModule
+          ) + toolParams
+        } else if (!isDebug) {
+          toolParams + "--script"
+        } else {
+          toolParams
+        },
+        pythonScriptPath = constant(Path.of(options.scriptOrModule))
+      )
     }
-    UvRunType.MODULE -> PythonToolModuleExecution().apply {
-      this.toolPath = toolPath
-      this.toolParams = toolParams
-      moduleName = options.scriptOrModule
-      moduleFlag = "--module"
-    }
+    UvRunType.MODULE -> PythonToolModuleExecution(
+      toolPath,
+      toolParams,
+      options.scriptOrModule,
+      "--module"
+    )
   }
 
   execution.addParameters(options.args)
-  options.env.forEach { execution.envs.put(it.key, constant(it.value)) }
+  execution.envs += mapOf(*options.env.map { it.key to constant(it.value) }.toTypedArray())
 
   return execution
 }

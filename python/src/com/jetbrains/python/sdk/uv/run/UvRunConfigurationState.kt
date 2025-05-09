@@ -2,6 +2,8 @@
 package com.jetbrains.python.sdk.uv.run
 
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -27,12 +29,15 @@ class UvRunConfigurationState(
   env: ExecutionEnvironment,
   val project: Project,
 ) : PythonCommandLineState(uvRunConfiguration, env) {
+  private val logger = fileLogger()
+
   @RequiresEdt
   override fun canRun(): Boolean {
     return canRun(
       project,
       uvRunConfiguration.options,
-      UvSyncWarningDialogFactoryImpl()
+      UvSyncWarningDialogFactoryImpl(),
+      logger
     )
   }
 
@@ -46,7 +51,8 @@ class UvRunConfigurationState(
 fun canRun(
   project: Project,
   options: UvRunConfigurationOptions,
-  syncWarningFactory: UvSyncWarningDialogFactory
+  syncWarningFactory: UvSyncWarningDialogFactory,
+  logger: Logger,
 ): Boolean {
   // force save to make sure that commands read the most up-to-date pyproject.toml
   FileDocumentManager.getInstance().saveAllDocuments()
@@ -65,7 +71,7 @@ fun canRun(
     runWithModalProgressBlocking(project, PyBundle.message("uv.run.configuration.state.progress.name")) {
       val uv = createUvLowLevel(Path.of(associatedModulePath), createUvCli(uvExecutable))
 
-      when (requiresSync(uv, options).getOrNull()) {
+      when (requiresSync(uv, options, logger).getOrNull()) {
         true -> isUnsynced = true
         false -> {}
         null -> isError = true
@@ -83,7 +89,11 @@ fun canRun(
 }
 
 @ApiStatus.Internal
-suspend fun requiresSync(uv: UvLowLevel, options: UvRunConfigurationOptions): Result<Boolean, Unit> {
+suspend fun requiresSync(
+  uv: UvLowLevel,
+  options: UvRunConfigurationOptions,
+  logger: Logger,
+): Result<Boolean, Unit> {
   // module scenarios:
   // 1. module with --no-project flag -- no sync
   // 2. module -- syncs project
@@ -100,6 +110,9 @@ suspend fun requiresSync(uv: UvLowLevel, options: UvRunConfigurationOptions): Re
   if (options.runType == UvRunType.SCRIPT) {
     val result = uv
       .isScriptSynced(!containsExact, Path.of(options.scriptOrModule))
+      .onFailure {
+        logger.warn(it)
+      }
       .getOrNull()
 
     when (result) {
@@ -115,7 +128,12 @@ suspend fun requiresSync(uv: UvLowLevel, options: UvRunConfigurationOptions): Re
   }
 
   if (hasNoMetadata && !options.uvArgs.contains("--no-project")) {
-    val isProjectSynced = uv.isProjectSynced(!containsExact).getOrNull()
+    val isProjectSynced = uv
+      .isProjectSynced(!containsExact)
+      .onFailure {
+        logger.warn(it)
+      }
+      .getOrNull()
 
     when (isProjectSynced) {
       true -> {}

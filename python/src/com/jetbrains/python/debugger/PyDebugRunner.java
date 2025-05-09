@@ -361,6 +361,9 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
   protected @NotNull Promise<@Nullable RunContentDescriptor> execute(@NotNull ExecutionEnvironment environment, @NotNull RunProfileState state)
     throws ExecutionException {
     // aborts the execution of the run configuration if `.canRun` returns false
+    // this is used for cases in which a user action prevents the execution; for example,
+    // a warning dialog could be displayed to the user asking them if they wish to proceed with
+    // running the configuration
     if (state instanceof PythonCommandLineState pythonState && !pythonState.canRun()) {
       return Promises.resolvedPromise(null);
     }
@@ -619,7 +622,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       debuggerScript = PythonScripts.prepareHelperScriptViaToolExecution(
         PythonHelper.DEBUGGER,
         request,
-        pythonToolExecution.getToolPath() != null ? pythonToolExecution.getToolPath() : Path.of(""),
+        pythonToolExecution.getToolPath(),
         pythonToolExecution.getToolParams()
       );
     }
@@ -699,23 +702,13 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       @Override
       public void visit(@NotNull PythonToolScriptExecution pythonToolScriptExecution) {
         Function<TargetEnvironment, Path> scriptPath = pythonToolScriptExecution.getPythonScriptPath();
-        if (scriptPath != null) {
-          debuggerScript.addParameter(scriptPath.andThen((it) -> it.toString()));
-        }
-        else {
-          throw new IllegalArgumentException("Python script path must be set");
-        }
+        debuggerScript.addParameter(scriptPath.andThen((it) -> it.toString()));
       }
 
       @Override
       public void visit(@NotNull PythonToolModuleExecution pythonToolModuleExecution) {
         String moduleName = pythonToolModuleExecution.getModuleName();
-        if (moduleName != null) {
-          debuggerScript.addParameter(moduleName);
-        }
-        else {
-          throw new IllegalArgumentException("Python module name must be set");
-        }
+        debuggerScript.addParameter(moduleName);
       }
     });
 

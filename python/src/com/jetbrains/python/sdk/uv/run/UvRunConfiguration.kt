@@ -11,6 +11,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.xmlb.XmlSerializer
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.Result
+import com.jetbrains.python.onFailure
 import com.jetbrains.python.run.*
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonSdk
@@ -64,7 +66,10 @@ class UvRunConfiguration(
   }
 
   override fun checkConfiguration() {
-    checkConfiguration(options)
+    checkConfiguration(options).onFailure {
+      @Suppress("HardCodedStringLiteral") // these strings are all returned already localized
+      throw RuntimeConfigurationError(it)
+    }
   }
 }
 
@@ -79,19 +84,21 @@ fun writeExternal(element: Element, options: UvRunConfigurationOptions) {
 }
 
 @ApiStatus.Internal
-fun checkConfiguration(options: UvRunConfigurationOptions) {
+fun checkConfiguration(options: UvRunConfigurationOptions): Result<Unit, String> {
   if (options.uvSdk == null) {
-    throw RuntimeConfigurationError(PyBundle.message("uv.run.configuration.validation.sdk"))
+    return Result.failure(PyBundle.message("uv.run.configuration.validation.sdk"))
   }
 
   val runType = options.runType
   val scriptOrModule = options.scriptOrModule
 
   if (runType == UvRunType.SCRIPT && (tryResolvePath(scriptOrModule) == null || scriptOrModule.isEmpty())) {
-    throw RuntimeConfigurationError(PyBundle.message("uv.run.configuration.validation.script"))
+    return Result.failure(PyBundle.message("uv.run.configuration.validation.script"))
   }
 
   if (runType == UvRunType.MODULE && scriptOrModule.isEmpty()) {
-    throw RuntimeConfigurationError(PyBundle.message("uv.run.configuration.validation.module"))
+    return Result.failure(PyBundle.message("uv.run.configuration.validation.module"))
   }
+
+  return Result.success(Unit)
 }
