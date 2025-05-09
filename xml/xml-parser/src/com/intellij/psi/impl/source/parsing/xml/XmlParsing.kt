@@ -105,7 +105,7 @@ open class XmlParsing(
   }
 
   private fun parseDoctype() {
-    assert(token() === XML_DOCTYPE_START) { "Doctype start expected" }
+    checkCurrentToken(XML_DOCTYPE_START) { "Doctype start expected" }
     val doctype = mark()
     advance()
 
@@ -121,7 +121,7 @@ open class XmlParsing(
   }
 
   protected fun parseTag(multipleRootTagError: Boolean) {
-    assert(token() === XML_START_TAG_START) { "Tag start expected" }
+    checkCurrentToken(XML_START_TAG_START) { "Tag start expected" }
     val tag = mark()
 
     val tagName = parseTagHeader(multipleRootTagError, tag)
@@ -302,7 +302,7 @@ open class XmlParsing(
   }
 
   private fun parseCData() {
-    assert(token() === XML_CDATA_START)
+    checkCurrentToken(XML_CDATA_START)
     val cdata = mark()
     while (token() !== XML_CDATA_END && !eof()) {
       advance()
@@ -353,12 +353,12 @@ open class XmlParsing(
       ref.done(XML_ENTITY_REF)
     }
     else {
-      assert(false) { "Unexpected token" }
+      kotlin.error("Unexpected token: ${token()}")
     }
   }
 
   private fun parseAttribute() {
-    assert(token() === XML_NAME)
+    checkCurrentToken(XML_NAME)
     val att = mark()
     advance()
     if (token() === XML_EQ) {
@@ -436,7 +436,7 @@ open class XmlParsing(
   }
 
   private fun parseProcessingInstruction() {
-    assert(token() === XML_PI_START)
+    checkCurrentToken(XML_PI_START)
     val pi = mark()
     advance()
     if (token() !== XML_NAME) {
@@ -499,6 +499,14 @@ open class XmlParsing(
   private fun terminateText(xmlText: PsiBuilder.Marker?): PsiBuilder.Marker? {
     xmlText?.done(XML_TEXT)
     return null
+  }
+
+  private fun checkCurrentToken(type: IElementType) {
+    check(token() === type) { "Expected: $type, got: ${token()}" }
+  }
+
+  private inline fun checkCurrentToken(type: IElementType, error: () -> String) {
+    check(token() === type, error)
   }
 }
 
