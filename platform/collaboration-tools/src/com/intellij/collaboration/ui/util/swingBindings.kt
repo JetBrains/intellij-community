@@ -5,8 +5,8 @@ import com.intellij.collaboration.async.ComputedListChange
 import com.intellij.collaboration.async.changesFlow
 import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.async.launchNow
-import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.ComboBoxWithActionsModel
+import com.intellij.collaboration.ui.setContentPreservingFocus
 import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.collaboration.ui.setItems
 import com.intellij.openapi.application.EDT
@@ -40,7 +40,6 @@ import javax.swing.border.Border
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 import javax.swing.text.JTextComponent
-import kotlin.collections.forEach
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -385,24 +384,13 @@ private suspend fun <D> Wrapper.bindContentImpl(
   try {
     dataFlow.collectScoped {
       val component = componentFactory(it)
-      runPreservingFocus {
-        setContent(component)
-      }
+      setContentPreservingFocus(component)
       awaitCancellation()
     }
     awaitCancellation()
   }
   finally {
-    setContent(defaultComponent)
-  }
-}
-
-@ApiStatus.Internal
-fun JPanel.runPreservingFocus(runnable: () -> Unit) {
-  val focused = CollaborationToolsUIUtil.isFocusParent(this)
-  runnable()
-  if (focused) {
-    CollaborationToolsUIUtil.focusPanel(this)
+    setContentPreservingFocus(defaultComponent)
   }
 }
 

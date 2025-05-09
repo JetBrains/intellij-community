@@ -290,11 +290,9 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - f:hideWhenNoVisibleChildren(javax.swing.JComponent):V
 - f:installValidator(javax.swing.JComponent,com.intellij.collaboration.ui.SingleValueModel):V
 - f:isDefault(javax.swing.JButton):Z
-- f:isFocusParent(javax.swing.JComponent):Z
 - f:moveToCenter(javax.swing.JComponent):javax.swing.JComponent
 - f:overrideUIDependentProperty(javax.swing.JComponent,kotlin.jvm.functions.Function1):V
 - f:registerFocusActions(javax.swing.JComponent):V
-- f:setComponentPreservingFocus(com.intellij.ui.content.Content,javax.swing.JComponent):V
 - f:setDefault(javax.swing.JButton,Z):V
 - f:wrapWithLimitedSize(javax.swing.JComponent,com.intellij.collaboration.ui.util.DimensionRestrictions):javax.swing.JComponent
 - f:wrapWithLimitedSize(javax.swing.JComponent,java.lang.Integer,java.lang.Integer):javax.swing.JComponent
@@ -319,7 +317,9 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - bs:VerticalListPanel$default(I,I,java.lang.Object):javax.swing.JPanel
 - sf:jbColorFromHex(java.lang.String,java.lang.String):com.intellij.ui.JBColor
 - sf:jbColorFromHex(java.lang.String,java.lang.String,java.lang.String):com.intellij.ui.JBColor
+- sf:requestFocusPreferred(javax.swing.JComponent):V
 - sf:selectFirst(javax.swing.ComboBoxModel):V
+- sf:setContentPreservingFocus(com.intellij.ui.components.panels.Wrapper,javax.swing.JComponent):V
 *f:com.intellij.collaboration.ui.ComponentListPanelFactory
 - sf:INSTANCE:com.intellij.collaboration.ui.ComponentListPanelFactory
 - f:createHorizontal(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.StateFlow,kotlin.jvm.functions.Function1,I,kotlin.jvm.functions.Function2):javax.swing.JPanel

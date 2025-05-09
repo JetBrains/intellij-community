@@ -18,6 +18,7 @@ import com.intellij.openapi.observable.properties.AbstractObservableProperty
 import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.isFocusAncestor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
@@ -26,7 +27,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.BackgroundRoundedPanel
 import com.intellij.ui.components.panels.ListLayout
-import com.intellij.ui.content.Content
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.speedSearch.NameFilteringListModel
 import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.util.ui.JBFont
@@ -225,30 +226,11 @@ object CollaborationToolsUIUtil {
     .removeSuffix("/")
 
   /**
-   * Checks if focus is somewhere down the hierarchy from [component]
-   */
-  // used externally
-  @Suppress("MemberVisibilityCanBePrivate")
-  fun isFocusParent(component: JComponent): Boolean {
-    val focusOwner = IdeFocusManager.findInstanceByComponent(component).focusOwner ?: return false
-    return SwingUtilities.isDescendingFrom(focusOwner, component)
-  }
-
-  /**
    * Finds the proper focus target for [panel] and set focus to it
    */
   fun focusPanel(panel: JComponent) {
-    val focusManager = IdeFocusManager.findInstanceByComponent(panel)
-    val toFocus = focusManager.getFocusTargetFor(panel) ?: return
-    focusManager.doWhenFocusSettlesDown { focusManager.requestFocus(toFocus, true) }
-  }
-
-  fun setComponentPreservingFocus(content: Content, component: JComponent) {
-    val focused = isFocusParent(content.component)
-    content.component = component
-    if (focused) {
-      focusPanel(content.component)
-    }
+    val toFocus = IdeFocusManager.findInstanceByComponent(panel).getFocusTargetFor(panel)
+    toFocus?.requestFocusInWindow()
   }
 
   fun getFocusBorderInset(): Int {
@@ -466,6 +448,45 @@ fun TransparentScrollPane(content: JComponent): JScrollPane =
     isOpaque = false
     viewport.isOpaque = false
   }
+
+/**
+ * A simple stub that can be used to transfer focus to an empty panel
+ */
+@ApiStatus.Internal
+@Suppress("FunctionName")
+fun FocusableStub(): JComponent =
+  JLabel().apply {
+    isFocusable = true
+  }
+
+/**
+ * Update the content and re-request focus if the content had it previously
+ */
+fun Wrapper.setContentPreservingFocus(content: JComponent?) {
+  if (content == null) {
+    setContent(null)
+  }
+  else {
+    runPreservingFocus {
+      setContent(content)
+    }
+  }
+}
+
+private fun JPanel.runPreservingFocus(runnable: () -> Unit) {
+  val focused = isFocusAncestor()
+  runnable()
+  if (focused) {
+    requestFocusPreferred()
+  }
+}
+
+/**
+ * Request focus on the component or a child determined by a focus policy
+ */
+fun JComponent.requestFocusPreferred() {
+  CollaborationToolsUIUtil.focusPanel(this)
+}
 
 internal fun <E> ListModel<E>.findIndex(item: E): Int {
   for (i in 0 until size) {
