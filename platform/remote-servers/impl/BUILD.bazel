@@ -19,6 +19,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
     "//platform/remote-servers/api:remoteServers",
     "//platform/core-impl",

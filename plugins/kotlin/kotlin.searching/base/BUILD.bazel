@@ -20,6 +20,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
     "//platform/analysis-impl",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/usageView",
     "//java/java-analysis-impl:analysis-impl",
     "//java/java-impl:impl",

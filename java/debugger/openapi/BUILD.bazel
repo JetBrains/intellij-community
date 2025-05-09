@@ -17,6 +17,7 @@ jvm_library(
     "//java/jsp-openapi:jsp",
     "//java/java-psi-api:psi",
     "//resources-en:java-resources-en",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/util/jdom",
     "//platform/platform-api:ide",
     "//platform/lang-api:lang",

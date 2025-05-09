@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/usageView-impl",
     "//platform/workspace/jps",
     "@lib//:jetbrains-annotations",
@@ -38,6 +39,7 @@ jvm_library(
   associates = [":apiDump-lang"],
   deps = [
     "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/usageView-impl",
     "//platform/workspace/jps",
     "@lib//:jetbrains-annotations",

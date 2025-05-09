@@ -29,6 +29,7 @@ jvm_library(
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",
+    "//platform/editor-ui-api:editor-ui",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/core",
     "//plugins/kotlin/frontend-independent",

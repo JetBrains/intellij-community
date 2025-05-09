@@ -19,6 +19,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-ir",
     "@lib//:kotlinc-kotlinx-serialization-compiler-plugin",
     "@lib//:kotlinc-kotlin-jps-common",
+    "//platform/editor-ui-api:editor-ui",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/facet",

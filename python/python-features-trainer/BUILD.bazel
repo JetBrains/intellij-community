@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/editor-ui-api:editor-ui",
     "//python:python-community-impl",
     "//plugins/ide-features-trainer:featuresTrainer",
     "//platform/platform-impl:ide-impl",
@@ -37,6 +38,7 @@ jvm_library(
   associates = [":featuresTrainer"],
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/editor-ui-api:editor-ui",
     "//python:python-community-impl",
     "//plugins/ide-features-trainer:featuresTrainer",
     "//plugins/ide-features-trainer:featuresTrainer_test_lib",

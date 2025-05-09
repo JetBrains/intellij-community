@@ -14,6 +14,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/gradle:gradle-tests_test_lib",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/execution/impl",

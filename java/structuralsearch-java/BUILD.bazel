@@ -28,6 +28,7 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = [":structuralSearch"],
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//platform/structuralsearch:structuralSearch",
     "//platform/lang-impl",
     "//platform/testFramework",

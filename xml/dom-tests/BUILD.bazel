@@ -13,6 +13,7 @@ jvm_library(
   srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
   associates = ["//xml/dom-impl"],
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//xml/impl",
     "//java/testFramework",
     "//java/java-psi-impl:psi-impl",

@@ -13,6 +13,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-impl",
     "//platform/markdown-utils",
     "//platform/built-in-server-api:builtInServer",

@@ -26,6 +26,7 @@ jvm_library(
   srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "lang/src/**/*.kt", "lang/src/**/*.java"], allow_empty = True),
   deps = [
     "//plugins/lombok/generated",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-api:lang",
     "//platform/analysis-impl",
     "//java/openapi:java",
@@ -50,6 +51,7 @@ jvm_library(
   associates = [":lombok"],
   deps = [
     "//plugins/lombok/generated",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-api:lang",
     "//platform/analysis-impl",
     "//java/openapi:java",

@@ -18,6 +18,7 @@ jvm_library(
     "//plugins/evaluation-plugin/core",
     "//plugins/completion-ml-ranking:completionMlRanking",
     "//libraries/ktor-client",
+    "//platform/editor-ui-api:editor-ui",
     "//plugins/stats-collector:statsCollector",
     "//platform/ide-core-impl",
     "//platform/platform-impl:ide-impl",

@@ -17,6 +17,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:jaxb-api",
     "@lib//:gson",
+    "//platform/editor-ui-api:editor-ui",
     "//plugins/kotlin/base/frontend-agnostic",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/plugin",

@@ -9,6 +9,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-impl",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
     "//platform/statistics",
     "//platform/service-container:serviceContainer",

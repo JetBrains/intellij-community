@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/settings-sync-core:settingsSync-core",
     "//platform/core-ui",
     "//platform/ide-core",
@@ -35,6 +36,7 @@ jvm_library(
   associates = [":settingsSync"],
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/settings-sync-core:settingsSync-core",
     "//platform/settings-sync-core:settingsSync-core_test_lib",
     "//platform/core-ui",

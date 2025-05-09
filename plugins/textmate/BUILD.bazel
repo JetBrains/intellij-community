@@ -13,6 +13,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-impl",
     "//platform/ide-core-impl",
     "//spellchecker",
@@ -41,6 +42,7 @@ jvm_library(
   srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
   associates = [":textmate"],
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-impl",
     "//platform/ide-core-impl",
     "//platform/testFramework",

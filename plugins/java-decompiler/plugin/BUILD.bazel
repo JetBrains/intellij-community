@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//plugins/java-decompiler/engine",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-api:lang",
     "//java/java-psi-api:psi",
     "//platform/ide-core-impl",
@@ -37,6 +38,7 @@ jvm_library(
   deps = [
     "//plugins/java-decompiler/engine",
     "//plugins/java-decompiler/engine:engine_test_lib",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-api:lang",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

@@ -25,6 +25,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-api:lang",
     "//platform/analysis-impl",
     "//platform/lang-impl",
@@ -60,6 +61,7 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = [":spellchecker"],
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-api:lang",
     "//platform/analysis-impl",
     "//platform/lang-impl",

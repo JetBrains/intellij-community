@@ -13,6 +13,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
     "//platform/configuration-store-impl:configurationStore-impl",
     "//platform/projectModel-impl",
@@ -53,6 +54,7 @@ jvm_library(
   srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
   associates = [":settingsSync-core"],
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
     "//platform/configuration-store-impl:configurationStore-impl",
     "//platform/projectModel-impl",

@@ -17,6 +17,7 @@ jvm_library(
     "//java/java-impl:impl",
     "//platform/backend/workspace",
     "//plugins/ml-local-models:ml-models-local",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/workspace/jps",
   ],
   runtime_deps = [":java_resources"]

@@ -13,6 +13,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
     "//platform/ide-core-impl",
     "//plugins/terminal",
@@ -36,6 +37,7 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = [":backend"],
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl",

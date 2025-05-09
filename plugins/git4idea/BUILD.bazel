@@ -32,6 +32,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//platform/observable",
     "//platform/vcs-api:vcs",
     "//platform/platform-impl:ide-impl",
@@ -110,6 +111,7 @@ jvm_library(
   kotlinc_opts = ":custom",
   associates = [":vcs-git"],
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//platform/observable",
     "//platform/vcs-api:vcs",
     "//platform/platform-impl:ide-impl",

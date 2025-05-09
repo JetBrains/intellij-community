@@ -10,6 +10,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:vavr",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/util/jdom",
     "@lib//:javax-inject",
     "@lib//:guava",

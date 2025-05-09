@@ -9,6 +9,7 @@ jvm_library(
   deps = [
     "@lib//:junit4",
     "@lib//:kotlinc-kotlin-jps-common",
+    "//platform/editor-ui-api:editor-ui",
     "//plugins/kotlin/plugin/k2",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/util:util_test_lib",

@@ -18,6 +18,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["kotlin/**/*.kt", "kotlin/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
     "//plugins/grazie",

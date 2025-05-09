@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "//java/java-impl:impl",
     "//platform/diff-impl",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
     "//platform/core-ui",
     "//platform/util/jdom",
@@ -31,6 +32,7 @@ jvm_library(
   deps = [
     "//java/java-impl:impl",
     "//platform/diff-impl",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
     "//java/testFramework",

@@ -64,6 +64,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/external-system-impl:externalSystem-tests_test_lib",
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-kotlin-jps-common",

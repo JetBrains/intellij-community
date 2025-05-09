@@ -27,6 +27,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-kotlin-jps-common",
@@ -67,6 +68,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
     "@lib//:kotlinc-kotlin-compiler-fe10",

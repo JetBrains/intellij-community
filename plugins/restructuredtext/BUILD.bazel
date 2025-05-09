@@ -39,6 +39,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "@lib//:guava",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/platform-impl:ide-impl",

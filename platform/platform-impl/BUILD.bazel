@@ -32,6 +32,7 @@ jvm_library(
   javac_opts = ":custom-javac-options",
   deps = [
     "@lib//:eawtstub-provided",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
     "@lib//:oro_matcher",
     "//platform/lang-api:lang",
@@ -173,6 +174,7 @@ jvm_library(
   associates = [":ide-impl"],
   deps = [
     "@lib//:eawtstub-provided",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
     "@lib//:oro_matcher",
     "//platform/lang-api:lang",

@@ -18,6 +18,7 @@ jvm_library(
     "//platform/xdebugger-api:debugger",
     "//platform/xdebugger-impl:debugger-impl",
     "@lib//:stream_ex",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/util:util-ui",
     "//platform/core-ui",
     "//platform/platform-impl:ide-impl",

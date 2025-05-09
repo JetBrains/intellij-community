@@ -23,6 +23,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//xml/dom-openapi:dom",
     "//java/openapi:java",
     "//java/debugger/openapi:java-debugger",
@@ -82,6 +83,7 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   associates = [":groovy"],
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//xml/dom-openapi:dom",
     "//java/openapi:java",
     "//java/debugger/openapi:java-debugger",

@@ -19,6 +19,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["generated/**/*.kt", "generated/**/*.java", "src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//platform/external-system-api:externalSystem",
     "//platform/observable",
     "//platform/external-system-impl:externalSystem-impl",
@@ -118,6 +119,7 @@ jvm_library(
     "//plugins/gradle",
     "//plugins/gradle:gradle-common",
     "//platform/backend/workspace",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/external-system-api/dependency-updater:externalSystem-dependencyUpdater",
     "//platform/observable",
     "//plugins/gradle/java",

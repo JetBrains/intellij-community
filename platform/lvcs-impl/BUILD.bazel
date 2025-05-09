@@ -13,6 +13,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//platform/vcs-api:vcs",
     "//platform/vcs-impl",
     "//platform/lvcs-api:lvcs",
@@ -40,6 +41,7 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = [":lvcs-impl"],
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//platform/vcs-api:vcs",
     "//platform/vcs-impl",
     "//platform/vcs-impl:vcs-impl_test_lib",

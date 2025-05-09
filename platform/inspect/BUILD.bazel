@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-impl",
     "//platform/extensions",
     "//platform/analysis-api:analysis",
@@ -52,6 +53,7 @@ jvm_library(
   associates = [":inspect"],
   deps = [
     "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-impl",
     "@lib//:junit4",
     "//platform/extensions",

@@ -10,6 +10,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/core-impl",
     "//platform/xdebugger-api:debugger",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
     "//platform/script-debugger/backend",
     "//platform/xdebugger-impl:debugger-impl",

@@ -17,7 +17,6 @@ jvm_library(
     "@lib//:fastutil-min",
     "//platform/core-api:core",
     "//platform/util",
-    "//platform/ide-core",
     "//platform/util/coroutines",
   ],
   exports = [

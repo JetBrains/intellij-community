@@ -17,6 +17,7 @@ jvm_library(
     "//java/openapi:java",
     "//java/execution/impl",
     "//java/java-runtime:rt",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/testRunner",
     "//platform/vcs-api:vcs",
     "//plugins/junit_rt:junit-rt",

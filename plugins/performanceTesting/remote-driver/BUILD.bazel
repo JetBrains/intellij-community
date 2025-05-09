@@ -17,6 +17,7 @@ jvm_library(
     "//plugins/performanceTesting/core:performanceTesting",
     "@lib//:assert_j",
     "@lib//:assertj-swing",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-util-netty:ide-util-netty",
     "//platform/built-in-server-api:builtInServer",
     "//platform/built-in-server:builtInServer-impl",

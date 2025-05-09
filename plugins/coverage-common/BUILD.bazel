@@ -13,6 +13,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
     "//platform/lang-api:lang",
     "//platform/util",
@@ -42,6 +43,7 @@ jvm_library(
   associates = [":coverage"],
   deps = [
     "@lib//:junit5",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
     "//platform/lang-api:lang",
     "//platform/util",

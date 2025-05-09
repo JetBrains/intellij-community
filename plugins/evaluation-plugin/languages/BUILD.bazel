@@ -10,6 +10,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:commons-io",
     "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
     "//platform/lang-impl",
     "//plugins/evaluation-plugin/core",

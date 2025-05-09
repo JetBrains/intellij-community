@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
     "//platform/lang-impl",
     "//plugins/completion-ml-ranking:completionMlRanking",
@@ -46,6 +47,7 @@ jvm_library(
     "//java/testFramework",
     "@lib//:mockito",
     "@lib//:assert_j",
+    "//platform/editor-ui-api:editor-ui",
     "//plugins/stats-collector:statsCollector",
     "//plugins/completion-ml-ranking:completionMlRanking",
     "@lib//:stats_collector-tests-completion-log-events",

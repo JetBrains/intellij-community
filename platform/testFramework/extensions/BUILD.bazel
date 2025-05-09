@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-impl",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/util",
     "//platform/util-ex",
     "//platform/execution",

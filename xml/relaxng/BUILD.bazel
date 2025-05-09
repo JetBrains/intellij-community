@@ -13,6 +13,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-api:lang",
     "//xml/impl",
     "//xml/dom-openapi:dom",
@@ -38,6 +39,7 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   associates = [":relaxng"],
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-api:lang",
     "//xml/impl",
     "//xml/dom-openapi:dom",

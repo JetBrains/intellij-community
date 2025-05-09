@@ -13,6 +13,7 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
     "//java/testFramework",
+    "//platform/editor-ui-api:editor-ui",
     "//plugins/IntelliLang:langInjection",
     "//plugins/IntelliLang/xml-support:xml-langInjection",
     "//xml/impl",

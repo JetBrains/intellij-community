@@ -21,6 +21,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/util",
     "//platform/code-style-api:codeStyle",
     "//platform/platform-impl:ide-impl",

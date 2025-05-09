@@ -59,6 +59,7 @@ jvm_library(
   kotlinc_opts = ":custom",
   associates = [":analysis-api-platform"],
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//plugins/kotlin/plugin/k2",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",

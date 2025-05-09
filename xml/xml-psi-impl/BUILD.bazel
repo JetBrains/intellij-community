@@ -19,6 +19,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//xml/xml-frontback-impl:frontback-impl",
     "//xml/xml-psi-api:psi",
     "//platform/core-api:core",

@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/core-ui",
@@ -44,6 +45,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["testFramework/**/*.kt", "testFramework/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//platform/webSymbols",
     "//platform/analysis-api:analysis",
     "//platform/lang-impl",

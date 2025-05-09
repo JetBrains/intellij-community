@@ -26,6 +26,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:guava",
+    "//platform/editor-ui-api:editor-ui",
     "//plugins/kotlin/base/util",
     "//platform/platform-impl:ide-impl",
     "//plugins/kotlin/base/psi",

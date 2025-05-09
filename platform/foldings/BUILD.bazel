@@ -9,6 +9,7 @@ jvm_library(
   deps = [
     "//platform/core-ui",
     "//platform/code-style-impl:codeStyle-impl",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/util/jdom",
     "@lib//:kotlin-stdlib",
     "//platform/platform-impl:ide-impl",

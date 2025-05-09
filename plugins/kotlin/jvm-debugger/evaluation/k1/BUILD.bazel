@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//plugins/kotlin/base/fe10/analysis",
     "//java/debugger/openapi:java-debugger",
     "//plugins/kotlin/jvm-debugger/evaluation",

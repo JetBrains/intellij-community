@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/xdebugger-api:debugger",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/observable",
     "//platform/lang-impl",
     "//platform/execution-impl",
@@ -54,6 +55,7 @@ jvm_library(
   associates = [":debugger-impl"],
   deps = [
     "//platform/xdebugger-api:debugger",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/observable",
     "//platform/lang-impl",
     "//platform/execution-impl",

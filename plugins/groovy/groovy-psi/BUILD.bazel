@@ -16,6 +16,7 @@ jvm_library(
     "@lib//:org-codehaus-groovy-groovy",
     "//java/openapi:java",
     "//java/java-indexing-api:indexing",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
     "//java/java-psi-impl:psi-impl",
     "//java/java-impl:impl",

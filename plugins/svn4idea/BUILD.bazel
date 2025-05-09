@@ -13,6 +13,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//platform/util",
     "//platform/vcs-api:vcs",
     "//platform/platform-api:ide",
@@ -60,6 +61,7 @@ jvm_library(
   srcs = glob(["testSource/**/*.kt", "testSource/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:junit4",
+    "//platform/editor-ui-api:editor-ui",
     "//plugins/svn4idea:vcs-svn",
     "//platform/vcs-api:vcs",
     "//platform/vcs-impl",

@@ -18,6 +18,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//plugins/kotlin/base/psi",
     "//platform/editor-ui-ex:editor-ex",
     "//plugins/kotlin/base/util",

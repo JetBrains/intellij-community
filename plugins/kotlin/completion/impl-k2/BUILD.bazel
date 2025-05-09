@@ -31,6 +31,7 @@ jvm_library(
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-analysis-api-impl-base",
     "@lib//:kotlinc-analysis-api-k2",
+    "//platform/editor-ui-api:editor-ui",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/psi",
     "//platform/platform-impl:ide-impl",

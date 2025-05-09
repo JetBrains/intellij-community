@@ -12,6 +12,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//uast/uast-common:uast",
     "@lib//:kotlin-stdlib",
     "@lib//:junit4",

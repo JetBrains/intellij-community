@@ -20,6 +20,7 @@ jvm_library(
     "@lib//:kotlin-test",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/test:test_test_lib",

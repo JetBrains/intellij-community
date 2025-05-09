@@ -13,6 +13,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-api:lang",
     "//java/execution/openapi:java-execution",
     "//java/execution/impl",
@@ -30,7 +31,6 @@ jvm_library(
     "//plugins/javaFX/common",
     "//java/manifest",
     "//java/idea-ui:ui",
-    "//plugins/properties:properties-backend",
     "//java/typeMigration",
     "//platform/util/nanoxml",
     "//platform/core-ui",
@@ -49,6 +49,7 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = [":javaFX"],
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-api:lang",
     "//java/execution/openapi:java-execution",
     "//java/execution/impl",
@@ -70,7 +71,6 @@ jvm_library(
     "//java/manifest",
     "//java/manifest:manifest_test_lib",
     "//java/idea-ui:ui",
-    "//plugins/properties:properties-backend",
     "//java/testFramework",
     "//java/typeMigration",
     "//java/typeMigration:typeMigration_test_lib",

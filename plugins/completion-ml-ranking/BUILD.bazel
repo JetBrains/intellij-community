@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:ngram-slp",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
     "//platform/analysis-impl",
@@ -56,6 +57,7 @@ jvm_library(
     "//java/testFramework",
     "@lib//:assert_j",
     "//plugins/completion-ml-ranking:completionMlRanking",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/ml-impl",

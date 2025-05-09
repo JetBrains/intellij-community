@@ -8,6 +8,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//java/java-impl:impl",
+    "//platform/editor-ui-api:editor-ui",
     "//uast/uast-java:java-uast",
   ],
   exports = ["//uast/uast-java:java-uast"]

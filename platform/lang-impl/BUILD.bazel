@@ -26,6 +26,7 @@ jvm_library(
   javac_opts = ":custom-javac-options",
   deps = [
     "//platform/boot",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-api:lang",
     "@lib//:oro_matcher",
     "@lib//:velocity",
@@ -141,6 +142,7 @@ jvm_library(
   associates = ["//platform/lang-impl"],
   deps = [
     "//platform/boot",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-api:lang",
     "//platform/usageView-impl",
     "//platform/vcs-api:vcs",

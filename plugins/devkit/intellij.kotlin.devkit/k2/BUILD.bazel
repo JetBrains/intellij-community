@@ -28,6 +28,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common-provided",
     "@lib//:kotlinc-analysis-api-provided",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/refactoring",
     "//platform/lang-impl",
     "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit",

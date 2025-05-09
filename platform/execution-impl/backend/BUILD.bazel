@@ -24,6 +24,8 @@ jvm_library(
     "//platform/kernel/backend",
     "//platform/project/shared:project",
     "//platform/platform-impl/rpc",
+    "//platform/execution",
+    "//platform/util/coroutines",
   ],
   runtime_deps = [":backend_resources"]
 )

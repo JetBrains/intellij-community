@@ -22,6 +22,7 @@ jvm_library(
     "//plugins/devkit/devkit-tests:testFramework",
     "//plugins/devkit/devkit-tests:testFramework_test_lib",
     "@lib//:kotlin-stdlib",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/devkit/devkit-java-tests:java-tests_test_lib",

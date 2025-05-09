@@ -13,6 +13,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//platform/util/jdom",
     "//java/openapi:java",
     "//platform/platform-impl:ide-impl",
@@ -40,6 +41,7 @@ jvm_library(
   srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
   associates = [":eclipse"],
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//platform/util/jdom",
     "//java/openapi:java",
     "//platform/platform-impl:ide-impl",

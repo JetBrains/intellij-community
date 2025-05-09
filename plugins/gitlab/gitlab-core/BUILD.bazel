@@ -21,6 +21,7 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-util-io:ide-util-io",
@@ -66,6 +67,7 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",

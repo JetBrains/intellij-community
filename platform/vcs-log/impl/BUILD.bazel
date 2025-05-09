@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/vcs-log/api:vcs-log",
     "//platform/vcs-api:vcs",
     "//platform/vcs-log/graph:vcs-log-graph-impl",
@@ -56,6 +57,7 @@ jvm_library(
   associates = [":impl"],
   deps = [
     "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/vcs-log/api:vcs-log",
     "//platform/vcs-api:vcs",
     "//platform/vcs-log/graph:vcs-log-graph-impl",

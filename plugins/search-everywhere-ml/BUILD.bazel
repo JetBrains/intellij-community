@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-impl",
     "//platform/statistics",
     "@lib//:search_everywhere_ml-ai-grazie-emb",
@@ -29,6 +30,7 @@ jvm_library(
   associates = [":searchEverywhereMl"],
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-impl",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",

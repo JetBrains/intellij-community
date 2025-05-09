@@ -31,6 +31,7 @@ jvm_library(
     "//java/java-indexing-api:indexing",
     "//java/java-psi-api:psi",
     "//platform/core-impl",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//plugins/kotlin/base/analysis",
     "//plugins/kotlin/base/code-insight",

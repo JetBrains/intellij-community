@@ -19,6 +19,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-cli",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:guava",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/ide-core-impl",
     "@lib//:kotlin-test",
     "@lib//:junit4",

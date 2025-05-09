@@ -19,6 +19,7 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",

@@ -40,6 +40,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-reflect",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/util",
     "//platform/util-ex",
     "//platform/analysis-impl",

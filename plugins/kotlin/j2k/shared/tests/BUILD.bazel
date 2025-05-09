@@ -26,6 +26,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:kotlin-test",
     "//java/java-psi-api:psi",
+    "//platform/editor-ui-api:editor-ui",
     "//plugins/kotlin/frontend-independent",
     "//plugins/kotlin/j2k/shared",
     "//plugins/kotlin/test-framework:test-framework_test_lib",

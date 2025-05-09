@@ -8,6 +8,7 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/editor-ui-api:editor-ui",
     "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-code-insight-k2",
     "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-code-insight-k2_test_lib",
     "//plugins/devkit",

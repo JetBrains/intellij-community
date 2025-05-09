@@ -19,6 +19,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["xpath-lang/src/**/*.kt", "xpath-lang/src/**/*.java", "xpath-view/src/**/*.kt", "xpath-view/src/**/*.java", "xpath-lang/gen/**/*.kt", "xpath-lang/gen/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//xml/openapi:xml",
     "//platform/lang-api:lang",
     "//platform/platform-impl:ide-impl",
@@ -51,6 +52,7 @@ jvm_library(
   srcs = glob(["xpath-lang/test/**/*.kt", "xpath-lang/test/**/*.java"], allow_empty = True),
   associates = [":xpath"],
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//xml/openapi:xml",
     "//platform/lang-api:lang",
     "//platform/platform-impl:ide-impl",

@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/statistics",
     "//platform/core-impl",
     "//platform/analysis-api:analysis",
@@ -47,6 +48,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
     "//platform/core-impl",

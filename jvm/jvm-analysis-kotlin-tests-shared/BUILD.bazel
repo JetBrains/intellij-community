@@ -12,6 +12,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//plugins/kotlin/plugin/common",
     "//jvm/jvm-analysis-internal-testFramework:analysis-internal-testFramework",
     "//java/java-tests:tests_test_lib",

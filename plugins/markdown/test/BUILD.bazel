@@ -28,6 +28,7 @@ jvm_library(
     "//plugins/markdown/model",
     "//plugins/markdown/spellchecker",
     "//plugins/markdown/xml",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/usageView",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",

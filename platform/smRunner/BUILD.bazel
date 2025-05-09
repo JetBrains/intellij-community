@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-impl",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/execution-impl",
     "//platform/testRunner",
     "//platform/xdebugger-api:debugger",
@@ -43,6 +44,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-impl",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/execution-impl",
     "//platform/testRunner",
     "//platform/testRunner:testRunner_test_lib",

@@ -13,6 +13,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//platform/util",
     "//platform/lang-api:lang",
     "//platform/lang-impl",
@@ -31,6 +32,7 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   associates = [":typeMigration"],
   deps = [
+    "//platform/editor-ui-api:editor-ui",
     "//platform/util",
     "//platform/lang-api:lang",
     "//platform/lang-impl",

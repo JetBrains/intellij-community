@@ -16,6 +16,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//grid/impl",
     "//grid/core-impl",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/util",
     "//platform/core-api:core",
     "//platform/ide-core",
