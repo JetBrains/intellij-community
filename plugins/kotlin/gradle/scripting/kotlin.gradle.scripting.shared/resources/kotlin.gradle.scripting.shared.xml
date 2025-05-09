@@ -1,7 +1,6 @@
 <idea-plugin package="org.jetbrains.kotlin.gradle.scripting.shared">
   <dependencies>
     <plugin id="org.jetbrains.plugins.gradle"/>
-<!--    <module name="kotlin.gradle.gradle"/>-->
     <module name="kotlin.gradle.gradle-tooling"/>
   </dependencies>
   <projectListeners>
@@ -12,10 +11,6 @@
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
     <projectResolve implementation="org.jetbrains.kotlin.gradle.scripting.shared.importing.KotlinDslScriptModelResolver" order="first"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.gradle.scripting.shared.importing.KotlinDslSyncListener"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">

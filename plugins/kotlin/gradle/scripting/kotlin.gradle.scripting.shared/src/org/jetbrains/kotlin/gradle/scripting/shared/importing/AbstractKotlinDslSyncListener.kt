@@ -7,28 +7,21 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType.RESOLVE_PROJECT
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JdkUtil
-import org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptDefinitionsContributor
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsManager
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.util.*
 
-val kotlinDslSyncListenerInstance: KotlinDslSyncListener?
+val kotlinDslSyncListenerInstance: AbstractKotlinDslSyncListener?
     get() =
-        ExternalSystemTaskNotificationListener.EP_NAME.findExtension(KotlinDslSyncListener::class.java)
+        ExternalSystemTaskNotificationListener.EP_NAME.findExtension(AbstractKotlinDslSyncListener::class.java)
 
-class KotlinDslSyncListener : ExternalSystemTaskNotificationListener {
-    companion object {
-        val instance: KotlinDslSyncListener?
-            get() =
-                kotlinDslSyncListenerInstance
-    }
-
-    public val tasks: WeakHashMap<ExternalSystemTaskId, KotlinDslGradleBuildSync> = WeakHashMap<ExternalSystemTaskId, KotlinDslGradleBuildSync>()
+abstract class AbstractKotlinDslSyncListener : ExternalSystemTaskNotificationListener {
+    val tasks: WeakHashMap<ExternalSystemTaskId, KotlinDslGradleBuildSync> = WeakHashMap<ExternalSystemTaskId, KotlinDslGradleBuildSync>()
 
     override fun onStart(projectPath: String, id: ExternalSystemTaskId) {
         if (!id.isGradleRelatedTask()) return
@@ -73,15 +66,11 @@ class KotlinDslSyncListener : ExternalSystemTaskNotificationListener {
                 }
             }
 
-        if (KotlinPluginModeProvider.isK1Mode()) {
-            @Suppress("DEPRECATION")
-            GradleScriptDefinitionsContributor.getInstance(project)?.reloadIfNeeded(
-                sync.workingDir, sync.gradleHome, sync.javaHome
-            )
-        }
-
+        reloadDefinitions(project, sync)
         saveScriptModels(project, sync)
     }
+
+    abstract fun reloadDefinitions(project: Project, sync: KotlinDslGradleBuildSync)
 
     override fun onFailure(projectPath: String, id: ExternalSystemTaskId, exception: Exception) {
         if (!id.isGradleRelatedTask()) return

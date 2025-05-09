@@ -17,8 +17,6 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 class StandaloneScriptsStorage : PersistentStateComponent<StandaloneScriptsStorage> {
     var files: MutableSet<String> = hashSetOf()
 
-    fun getScripts(): List<String> = files.toList()
-
     override fun getState(): StandaloneScriptsStorage = this
 
     override fun loadState(state: StandaloneScriptsStorage) {

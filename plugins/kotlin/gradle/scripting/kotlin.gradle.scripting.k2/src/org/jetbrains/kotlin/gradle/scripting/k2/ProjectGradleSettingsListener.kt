@@ -12,7 +12,6 @@ import kotlinx.coroutines.Dispatchers
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptModel
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptRefinedConfigurationProvider
 import org.jetbrains.kotlin.gradle.scripting.shared.getGradleVersion
-import org.jetbrains.kotlin.gradle.scripting.shared.loadGradleDefinitions
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootData
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsManager
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.Imported
@@ -51,7 +50,7 @@ class ProjectGradleSettingsListener(
                     buildRootsManager.loadLinkedRoot(it, gradleVersion)
                 }
                 if (newRoot is Imported) {
-                    loadScriptConfigurations(newRoot.data, it)
+                    loadScriptConfigurations(newRoot.data)
                 }
             }
         }
@@ -72,13 +71,8 @@ class ProjectGradleSettingsListener(
         buildRootsManager.reloadBuildRoot(linkedProjectPath, null)
     }
 
-    private suspend fun loadScriptConfigurations(
-        data: GradleBuildRootData,
-        settings: GradleProjectSettings
-    ) {
+    private suspend fun loadScriptConfigurations(data: GradleBuildRootData) {
         if (data.models.isEmpty()) return
-        val javaHome = data.javaHome
-        val definitions = loadGradleDefinitions(settings.externalProjectPath, data.gradleHome, javaHome, project)
 
         val gradleScripts = data.models.mapNotNullTo(mutableSetOf()) {
             val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(Path.of(it.file)) ?: return@mapNotNullTo null
@@ -87,11 +81,10 @@ class ProjectGradleSettingsListener(
                 it.classPath,
                 it.sourcePath,
                 it.imports,
-                javaHome
+                data.javaHome
             )
         }
 
-        GradleScriptDefinitionsHolder.getInstance(project).updateDefinitions(definitions)
         GradleScriptRefinedConfigurationProvider.getInstance(project).processScripts(gradleScripts)
 
         val ktFiles = gradleScripts.mapNotNull {

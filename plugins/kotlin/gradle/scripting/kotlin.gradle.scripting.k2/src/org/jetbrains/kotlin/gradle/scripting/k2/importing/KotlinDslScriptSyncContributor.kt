@@ -7,14 +7,13 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.psi.PsiManager
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
-import org.jetbrains.kotlin.gradle.scripting.k2.GradleScriptDefinitionsHolder
+import org.jetbrains.kotlin.gradle.scripting.k2.GradleScriptDefinitionsStorage
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptModel
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptRefinedConfigurationProvider
 import org.jetbrains.kotlin.gradle.scripting.shared.importing.kotlinDslSyncListenerInstance
 import org.jetbrains.kotlin.gradle.scripting.shared.importing.processScriptModel
 import org.jetbrains.kotlin.gradle.scripting.shared.importing.saveGradleBuildEnvironment
 import org.jetbrains.kotlin.gradle.scripting.shared.kotlinDslScriptsModelImportSupported
-import org.jetbrains.kotlin.gradle.scripting.shared.loadGradleDefinitions
 import org.jetbrains.kotlin.idea.core.script.k2.DefaultScriptResolutionStrategy
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
@@ -55,9 +54,7 @@ class KotlinDslScriptSyncContributor : GradleSyncContributor {
 
         if (sync == null || sync.models.isEmpty()) return
 
-        val definitions = loadGradleDefinitions(sync.workingDir, sync.gradleHome, sync.javaHome, project)
-        GradleScriptDefinitionsHolder.getInstance(project).updateDefinitions(definitions)
-
+        GradleScriptDefinitionsStorage.getInstance(project).loadDefinitionsFromDisk(sync.workingDir, sync.gradleHome, sync.javaHome)
         val gradleScripts = sync.models.mapNotNullTo(mutableSetOf()) {
             val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(Path.of(it.file)) ?: return@mapNotNullTo null
             GradleScriptModel(

@@ -15,7 +15,10 @@
     <syncContributor implementation="org.jetbrains.kotlin.gradle.scripting.k2.importing.KotlinDslScriptSyncContributor"/>
   </extensions>
 
+
   <extensions defaultExtensionNs="com.intellij">
+    <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.gradle.scripting.k2.importing.KotlinDslSyncListener"/>
+
     <editorNotificationProvider
             implementation="org.jetbrains.kotlin.gradle.scripting.k2.IndexScriptDependenciesSourcesNotificationProvider"/>
     <editorNotificationProvider implementation="org.jetbrains.kotlin.gradle.scripting.k2.GradleScriptNotificationProvider"/>

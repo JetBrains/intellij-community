@@ -9,6 +9,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.gradle.scripting.k1.importing.KotlinDslSyncListener"/>
     <editorNotificationProvider implementation="org.jetbrains.kotlin.gradle.scripting.k1.GradleScriptNotificationProvider"/>
   </extensions>
 
