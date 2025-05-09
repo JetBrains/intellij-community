@@ -213,11 +213,7 @@ class DirtyFilesQueueTest {
         registerFiletype(filetype)
         val src = tempDir.createVirtualDir("src")
 
-        edtWriteAction {
-          val rootModel = ModuleRootManager.getInstance(module).modifiableModel
-          rootModel.addContentEntry(src)
-          rootModel.commit()
-        }
+        module.createContentRoot(project, src)
         IndexingTestUtil.waitUntilIndexesAreReady(project) // scanning due to model change
         edtWriteAction {
           src.createFile("A.${filetype.defaultExtension}")
