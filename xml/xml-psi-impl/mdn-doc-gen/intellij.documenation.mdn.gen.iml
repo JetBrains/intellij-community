@@ -27,5 +27,14 @@
     <orderEntry type="module" module-name="intellij.javascript" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
+    <orderEntry type="module" module-name="intellij.javascript.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.angular" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.vuejs.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.javascript.web.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.css.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.html.tools.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.react.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.astro.tests" scope="TEST" />
   </component>
 </module>
