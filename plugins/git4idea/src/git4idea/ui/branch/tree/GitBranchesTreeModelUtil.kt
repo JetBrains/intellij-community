@@ -13,7 +13,6 @@ import com.intellij.ui.tree.TreePathUtil
 import com.intellij.util.containers.headTail
 import com.intellij.util.containers.init
 import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
-import com.intellij.vcs.log.Hash
 import git4idea.*
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitRefType
@@ -81,7 +80,7 @@ internal fun createTreePathFor(model: GitBranchesTreeModel, value: Any): TreePat
 
   val refUnderRepository = value as? GitBranchesTreeModel.RefUnderRepository
   val reference = value as? GitReference ?: refUnderRepository?.ref ?: return null
-  val isRecent = reference is GitLocalBranch && model.getIndexOfChild(root, GitBranchType.RECENT) != -1
+  val isRecent = reference is GitStandardLocalBranch && model.getIndexOfChild(root, GitBranchType.RECENT) != -1
   val refType = GitRefType.of(reference, isRecent)
   val path = mutableListOf<Any>().apply {
     add(root)
@@ -113,7 +112,7 @@ internal fun createTreePathFor(model: GitBranchesTreeModel, value: Any): TreePat
 internal fun getPreferredBranch(project: Project,
                                 repositories: List<GitRepository>,
                                 branchNameMatcher: MinusculeMatcher?,
-                                localBranchesTree: LazyRefsSubtreeHolder<GitLocalBranch>,
+                                localBranchesTree: LazyRefsSubtreeHolder<GitStandardLocalBranch>,
                                 remoteBranchesTree: LazyRefsSubtreeHolder<GitRemoteBranch>,
                                 tagsTree: LazyRefsSubtreeHolder<GitTag>,
                                 recentBranchesTree: LazyRefsSubtreeHolder<GitReference> = localBranchesTree, ): GitReference? {
@@ -161,7 +160,7 @@ internal fun getPreferredBranch(
   }
 }
 
-internal fun getLocalAndRemoteTopLevelNodes(localBranchesTree: LazyRefsSubtreeHolder<GitLocalBranch>,
+internal fun getLocalAndRemoteTopLevelNodes(localBranchesTree: LazyRefsSubtreeHolder<GitStandardLocalBranch>,
                                             remoteBranchesTree: LazyRefsSubtreeHolder<GitRemoteBranch>,
                                             tagsTree: LazyRefsSubtreeHolder<GitTag>? = null,
                                             recentCheckoutBranchesTree: LazyRefsSubtreeHolder<GitReference>? = null): List<Any> {

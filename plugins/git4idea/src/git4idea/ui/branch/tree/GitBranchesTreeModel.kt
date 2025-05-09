@@ -11,9 +11,9 @@ import com.intellij.util.ui.tree.AbstractTreeModel
 import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
 import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
 import com.intellij.vcsUtil.Delegates.equalVetoingObservable
-import git4idea.GitLocalBranch
 import git4idea.GitReference
 import git4idea.GitRemoteBranch
+import git4idea.GitStandardLocalBranch
 import git4idea.GitTag
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitRefType
@@ -29,10 +29,10 @@ internal abstract class GitBranchesTreeModel(
   protected val repositories: List<GitRepository>,
 ) : AbstractTreeModel() {
   protected var actionsTree: LazyActionsHolder = LazyActionsHolder(project, emptyList(), null)
-  protected var localBranchesTree: LazyRefsSubtreeHolder<GitLocalBranch> = LazyRefsSubtreeHolder.emptyHolder()
+  protected var localBranchesTree: LazyRefsSubtreeHolder<GitStandardLocalBranch> = LazyRefsSubtreeHolder.emptyHolder()
   protected var remoteBranchesTree: LazyRefsSubtreeHolder<GitRemoteBranch> = LazyRefsSubtreeHolder.emptyHolder()
   protected var tagsTree: LazyRefsSubtreeHolder<GitTag> = LazyRefsSubtreeHolder.emptyHolder()
-  protected var recentCheckoutBranchesTree: LazyRefsSubtreeHolder<GitLocalBranch> = LazyRefsSubtreeHolder.emptyHolder()
+  protected var recentCheckoutBranchesTree: LazyRefsSubtreeHolder<GitStandardLocalBranch> = LazyRefsSubtreeHolder.emptyHolder()
 
   protected val branchesTreeCache = mutableMapOf<Any, List<Any>>()
 
@@ -100,14 +100,14 @@ internal abstract class GitBranchesTreeModel(
     treeStructureChanged(pathChanged, null, null)
   }
 
-  protected abstract fun getLocalBranches(): Collection<GitLocalBranch>
+  protected abstract fun getLocalBranches(): Collection<GitStandardLocalBranch>
 
   protected abstract fun getRemoteBranches(): Collection<GitRemoteBranch>
 
   /**
    * @return null if recent branches are not displayed
    */
-  protected open fun getRecentBranches(): Collection<GitLocalBranch>? = null
+  protected open fun getRecentBranches(): Collection<GitStandardLocalBranch>? = null
 
   protected abstract fun getTags(): Collection<GitTag>
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.compareWith
 
 import com.intellij.dvcs.ui.DvcsBundle
@@ -7,8 +7,8 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.util.ui.JBDimension
-import git4idea.GitLocalBranch
 import git4idea.GitReference
+import git4idea.GitStandardLocalBranch
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.popup.GitBranchesTreePopupBase
@@ -54,10 +54,10 @@ internal class GitCompareWithBranchPopupStep(
 }
 
 private class GitCompareWithBranchesTreeModel(project: Project, repository: GitRepository) : GitBranchesTreeSingleRepoModel(project, repository, emptyList()) {
-  override fun getLocalBranches(): Collection<GitLocalBranch> = repository.branches.localBranches.skipCurrentBranch()
-  override fun getRecentBranches(): Collection<GitLocalBranch> = super.getRecentBranches().skipCurrentBranch()
+  override fun getLocalBranches(): Collection<GitStandardLocalBranch> = repository.branches.localBranches.skipCurrentBranch()
+  override fun getRecentBranches(): Collection<GitStandardLocalBranch> = super.getRecentBranches().skipCurrentBranch()
 
-  private fun Collection<GitLocalBranch>.skipCurrentBranch(): Collection<GitLocalBranch> {
+  private fun Collection<GitStandardLocalBranch>.skipCurrentBranch(): Collection<GitStandardLocalBranch> {
     val currentBranch = repository.currentBranch
     return this.filter { it != currentBranch }
   }
