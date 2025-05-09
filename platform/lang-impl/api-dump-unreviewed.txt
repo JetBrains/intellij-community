@@ -2974,6 +2974,7 @@ f:com.intellij.codeInsight.editorActions.FixDocCommentAction
 - com.intellij.openapi.editor.actionSystem.EditorAction
 - sf:ACTION_ID:java.lang.String
 - <init>():V
+- s:generateComment(com.intellij.psi.PsiElement,com.intellij.openapi.project.Project,com.intellij.modcommand.ModPsiNavigator):V
 - s:generateOrFixComment(com.intellij.psi.PsiElement,com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):V
 f:com.intellij.codeInsight.editorActions.IndentTransferableData
 - com.intellij.codeInsight.editorActions.TextBlockTransferableData

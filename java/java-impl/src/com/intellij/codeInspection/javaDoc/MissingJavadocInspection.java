@@ -2,7 +2,10 @@
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeInsight.intention.impl.AddJavadocIntention;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.options.*;
 import com.intellij.codeInspection.reference.RefJavaUtil;
 import com.intellij.ide.nls.NlsMessages;
@@ -444,7 +447,7 @@ public final class MissingJavadocInspection extends LocalInspectionTool {
 
   private static void reportMissingJavadoc(@NotNull PsiElement toHighlight, @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     String message = JavaBundle.message("inspection.javadoc.problem.descriptor");
-    LocalQuickFix fix = isOnTheFly ? IntentionWrapper.wrapToQuickFix(new AddJavadocIntention(), holder.getFile()) : null;
+    LocalQuickFix fix = isOnTheFly ? LocalQuickFix.from(new AddJavadocIntention()) : null;
     problem(holder, toHighlight, message, fix);
   }
 

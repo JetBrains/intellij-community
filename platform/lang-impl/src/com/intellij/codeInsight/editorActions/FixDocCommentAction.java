@@ -9,18 +9,20 @@ import com.intellij.lang.*;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.modcommand.ModPsiNavigator;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -73,6 +75,47 @@ public final class FixDocCommentAction extends EditorAction {
   }
 
   /**
+   * Generates a comment if it does not exist
+   *
+   * @param element     target element for which a comment should be generated
+   * @param project     current project
+   * @param navigator   navigator to use to set caret position
+   */
+  public static void generateComment(final @NotNull PsiElement element, final @NotNull Project project, final @NotNull ModPsiNavigator navigator) {
+    Language language = element.getLanguage();
+    final CodeDocumentationProvider docProvider = getDocumentationProvider(language);
+    if (docProvider == null) {
+      return;
+    }
+
+    final Pair<PsiElement, PsiComment> pair = docProvider.parseContext(element);
+    if (pair == null || pair.second != null) {
+      return;
+    }
+
+    Commenter c = LanguageCommenters.INSTANCE.forLanguage(language);
+    if (!(c instanceof CodeDocumentationAwareCommenter commenter)) {
+      return;
+    }
+    generateComment(pair.first, navigator, docProvider, commenter, project);
+  }
+
+  private static @Nullable CodeDocumentationProvider getDocumentationProvider(Language language) {
+    final CodeDocumentationProvider docProvider;
+    final DocumentationProvider langDocumentationProvider = LanguageDocumentation.INSTANCE.forLanguage(language);
+    if (langDocumentationProvider instanceof CompositeDocumentationProvider provider) {
+      docProvider = provider.getFirstCodeDocumentationProvider();
+    }
+    else if (langDocumentationProvider instanceof CodeDocumentationProvider provider) {
+      docProvider = provider;
+    }
+    else {
+      docProvider = null;
+    }
+    return docProvider;
+  }
+
+  /**
    * Generates comment if it's not exist or try to fix if exists
    *
    * @param element     target element for which a comment should be generated
@@ -81,17 +124,7 @@ public final class FixDocCommentAction extends EditorAction {
    */
   public static void generateOrFixComment(final @NotNull PsiElement element, final @NotNull Project project, final @NotNull Editor editor) {
     Language language = element.getLanguage();
-    final CodeDocumentationProvider docProvider;
-    final DocumentationProvider langDocumentationProvider = LanguageDocumentation.INSTANCE.forLanguage(language);
-    if (langDocumentationProvider instanceof CompositeDocumentationProvider) {
-      docProvider = ((CompositeDocumentationProvider)langDocumentationProvider).getFirstCodeDocumentationProvider();
-    }
-    else if (langDocumentationProvider instanceof CodeDocumentationProvider) {
-      docProvider = (CodeDocumentationProvider)langDocumentationProvider;
-    }
-    else {
-      docProvider = null;
-    }
+    final CodeDocumentationProvider docProvider = getDocumentationProvider(language);
     if (docProvider == null) {
       return;
     }
@@ -107,7 +140,7 @@ public final class FixDocCommentAction extends EditorAction {
     }
     final Runnable task;
     if (pair.second == null || pair.second.getTextRange().isEmpty()) {
-      task = () -> generateComment(pair.first, editor, docProvider, commenter, project);
+      task = () -> generateComment(pair.first, EditorUtil.asPsiNavigator(editor), docProvider, commenter, project);
     }
     else {
       final DocCommentFixer fixer = DocCommentFixer.EXTENSION.forLanguage(language);
@@ -133,19 +166,19 @@ public final class FixDocCommentAction extends EditorAction {
    * changes during the processing.
    *
    * @param anchor      target element for which a comment should be generated
-   * @param editor      target editor
+   * @param navigator   navigator to use
    * @param commenter   commenter to use
    * @param project     current project
    */
   private static void generateComment(@NotNull PsiElement anchor,
-                                      @NotNull Editor editor,
+                                      @NotNull ModPsiNavigator navigator,
                                       @NotNull CodeDocumentationProvider documentationProvider,
                                       @NotNull CodeDocumentationAwareCommenter commenter,
-                                      @NotNull Project project)
-  {
-    Document document = editor.getDocument();
+                                      @NotNull Project project) {
+    Document document = anchor.getContainingFile().getFileDocument();
     int commentStartOffset = anchor.getTextRange().getStartOffset();
     int lineStartOffset = document.getLineStartOffset(document.getLineNumber(commentStartOffset));
+    CharSequence charSequence = document.getCharsSequence();
     if (lineStartOffset > 0 && lineStartOffset < commentStartOffset) {
       // Example:
       //    void test1() {
@@ -154,16 +187,17 @@ public final class FixDocCommentAction extends EditorAction {
       //       <offset>
       //    }
       // We want to insert the comment at the start of the line where 'test2()' is declared.
-      int nonWhiteSpaceOffset = CharArrayUtil.shiftBackward(document.getCharsSequence(), lineStartOffset, commentStartOffset - 1, " \t") + 1;
+      int nonWhiteSpaceOffset = CharArrayUtil.shiftBackward(charSequence, lineStartOffset, commentStartOffset - 1, " \t") + 1;
       commentStartOffset = Math.max(nonWhiteSpaceOffset, lineStartOffset);
     }
 
     int commentBodyRelativeOffset = 0;
-    int caretOffsetToSet = -1;
+    int caretLineOffset = 0;
     StringBuilder buffer = new StringBuilder();
     String commentPrefix = commenter.getDocumentationCommentPrefix();
     if (commentPrefix != null) {
       buffer.append(commentPrefix).append("\n");
+      caretLineOffset++;
       commentBodyRelativeOffset += commentPrefix.length() + 1;
     }
 
@@ -171,7 +205,6 @@ public final class FixDocCommentAction extends EditorAction {
     if (linePrefix != null) {
       buffer.append(linePrefix);
       commentBodyRelativeOffset += linePrefix.length();
-      caretOffsetToSet = commentStartOffset + commentBodyRelativeOffset;
     }
     buffer.append("\n");
     commentBodyRelativeOffset++;
@@ -195,7 +228,6 @@ public final class FixDocCommentAction extends EditorAction {
     }
 
     String stub = documentationProvider.generateDocumentationContentStub(pair.second);
-    CaretModel caretModel = editor.getCaretModel();
     if (stub != null) {
       int insertionOffset = commentStartOffset + commentBodyRelativeOffset;
       document.insertString(insertionOffset, stub);
@@ -203,10 +235,8 @@ public final class FixDocCommentAction extends EditorAction {
       pair = documentationProvider.parseContext(anchor);
     }
 
-    if (caretOffsetToSet >= 0) {
-      caretModel.moveToOffset(caretOffsetToSet);
-      editor.getSelectionModel().removeSelection();
-    }
+    navigator.moveCaretTo(commentStartOffset);
+    navigator.select(TextRange.from(commentStartOffset, 0));
 
     if (pair == null || pair.second == null) {
       return;
@@ -216,14 +246,14 @@ public final class FixDocCommentAction extends EditorAction {
     int end = pair.second.getTextRange().getEndOffset();
 
     reformatCommentKeepingEmptyTags(anchor.getContainingFile(), project, start, end);
-    editor.getCaretModel().moveToOffset(document.getLineEndOffset(document.getLineNumber(editor.getCaretModel().getOffset())));
+    int caretOffset = document.getLineEndOffset(document.getLineNumber(navigator.getCaretOffset()) + caretLineOffset);
+    navigator.moveCaretTo(caretOffset);
 
-    int caretOffset = caretModel.getOffset();
     if (caretOffset > 0 && caretOffset <= document.getTextLength()) {
-      char c = document.getCharsSequence().charAt(caretOffset - 1);
+      char c = charSequence.charAt(caretOffset - 1);
       if (!StringUtil.isWhiteSpace(c)) {
         document.insertString(caretOffset, " ");
-        caretModel.moveToOffset(caretOffset + 1);
+        navigator.moveCaretTo(caretOffset + 1);
       }
     }
   }
