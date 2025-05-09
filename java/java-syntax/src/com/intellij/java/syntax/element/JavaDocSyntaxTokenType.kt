@@ -2,6 +2,7 @@
 package com.intellij.java.syntax.element
 
 import com.intellij.platform.syntax.SyntaxElementType
+import kotlin.jvm.JvmField
 
 /**
  * @see com.intellij.psi.JavaDocTokenType
