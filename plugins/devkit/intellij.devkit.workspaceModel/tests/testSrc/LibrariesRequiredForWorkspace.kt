@@ -129,21 +129,28 @@ private fun addDependencyFromCompilationOutput(model: ModifiableRootModel, libra
   val library = model.moduleLibraryTable.modifiableModel.createLibrary(libraryName)
   val modifiableModel = library.modifiableModel
 
-  val classpathFolderVirtualFile: VirtualFile?
+  var classpathRootVirtualFile: VirtualFile?
 
   val mapping = PathManager.getArchivedCompiledClassesMapping()
   if (mapping != null) {
     val jar = mapping["production/$classpathFolder"] ?: error("No jar found for $classpathFolder production classes")
-    classpathFolderVirtualFile = VirtualFileManager.getInstance().refreshAndFindFileByUrl(VfsUtil.pathToUrl(jar))
-    assertNotNull("Cannot find $classpathFolder in production classes jars. Possibly, project was partially compiled", classpathFolderVirtualFile)
+    classpathRootVirtualFile = VirtualFileManager.getInstance().refreshAndFindFileByUrl(VfsUtil.pathToUrl(jar))
+    assertNotNull("Cannot find $classpathFolder in production classes jars. Possibly, project was partially compiled", classpathRootVirtualFile)
   }
   else {
     val classesPathUrl = VfsUtil.pathToUrl(PathUtil.getJarPathForClass(WorkspaceEntity::class.java))
     val classesRootVirtualFile = VirtualFileManager.getInstance().refreshAndFindFileByUrl(classesPathUrl)
-    classpathFolderVirtualFile = classesRootVirtualFile?.parent?.children?.find { it.name == classpathFolder }
-    assertNotNull("Cannot find $classpathFolder in $classesRootVirtualFile. Possibly, project was partially compiled", classpathFolderVirtualFile)
+    classpathRootVirtualFile = classesRootVirtualFile?.parent?.children?.find { it.name == classpathFolder }
+    assertNotNull("Cannot find $classpathFolder in $classesRootVirtualFile. Possibly, project was partially compiled", classpathRootVirtualFile)
   }
-  VfsUtil.markDirtyAndRefresh(false, true, true, classpathFolderVirtualFile)
-  modifiableModel.addDependency(classpathFolderVirtualFile!!)
+
+  if (classpathRootVirtualFile!!.isFile && classpathRootVirtualFile.extension == "jar") {
+    val file = classpathRootVirtualFile
+    classpathRootVirtualFile = JarFileSystem.getInstance().getJarRootForLocalFile(file)
+    assertNotNull("Cannot convert $file to a jar VirtualFile", classpathRootVirtualFile)
+  }
+
+  VfsUtil.markDirtyAndRefresh(false, true, true, classpathRootVirtualFile)
+  modifiableModel.addDependency(classpathRootVirtualFile!!)
   modifiableModel.commit()
 }
