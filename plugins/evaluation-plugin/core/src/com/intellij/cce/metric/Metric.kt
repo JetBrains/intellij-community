@@ -40,10 +40,10 @@ interface Metric {
   }
 }
 
-interface ConfidenceIntervalMetric<T> : Metric {
-  val sample: MutableList<T>
+abstract class ConfidenceIntervalMetric<T> : Metric {
+  val sample: MutableList<T> = mutableListOf()
 
-  val maximumSessions: Int
+  open val maximumSessions: Int
     get() = 75000
 
   val toggleConfidenceIntervals: Boolean
@@ -58,7 +58,7 @@ interface ConfidenceIntervalMetric<T> : Metric {
       return null
   }
 
-  fun compute(sample: List<T>): Double
+  abstract fun compute(sample: List<T>): Double
 
   fun shouldComputeConfidenceIntervals(numberOfSessions: Int): Boolean =
     numberOfSessions <= maximumSessions && toggleConfidenceIntervals

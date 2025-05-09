@@ -6,8 +6,7 @@ import com.intellij.cce.evaluable.AIA_GROUND_TRUTH_INTERNAL_API_CALLS
 import com.intellij.cce.evaluable.AIA_PREDICTED_API_CALLS
 import com.intellij.cce.metric.util.Sample
 
-class ApiRecall : ConfidenceIntervalMetric<Double> {
-  override val sample = mutableListOf<Double>()
+class ApiRecall : ConfidenceIntervalMetric<Double>() {
   override val name: String = "API Recall"
   override val description: String = "The fraction of correctly guessed project-defined API calls"
   override val showByDefault: Boolean = true

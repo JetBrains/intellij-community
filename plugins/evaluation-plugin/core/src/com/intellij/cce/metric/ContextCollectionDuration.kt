@@ -4,8 +4,7 @@ import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
 import com.intellij.cce.evaluable.AIA_CONTEXT_COLLECTION_DURATION_MS
 
-abstract class ContextCollectionDuration : ConfidenceIntervalMetric<Double> {
-  override val sample = mutableListOf<Double>()
+abstract class ContextCollectionDuration : ConfidenceIntervalMetric<Double>() {
   override val value: Double
     get() = compute(sample)
 

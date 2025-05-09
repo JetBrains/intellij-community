@@ -5,8 +5,7 @@ import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
 import com.intellij.cce.metric.util.Sample
 
-abstract class PrecisionMetricBase : ConfidenceIntervalMetric<Double> {
-  override val sample = mutableListOf<Double>()
+abstract class PrecisionMetricBase : ConfidenceIntervalMetric<Double>() {
   override val showByDefault: Boolean = true
   override val valueType = MetricValueType.DOUBLE
   override val value: Double

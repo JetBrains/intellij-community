@@ -15,11 +15,10 @@ import org.apache.commons.text.similarity.LevenshteinDistance
 import kotlin.math.max
 import kotlin.math.min
 
-abstract class SimilarityMetric(override val showByDefault: Boolean) : ConfidenceIntervalMetric<Pair<Double, Double>> {
+abstract class SimilarityMetric(override val showByDefault: Boolean) : ConfidenceIntervalMetric<Pair<Double, Double>>() {
   override val supportsIndividualScores: Boolean = true
   private var totalMatched: Double = 0.0
   private var totalExpected: Double = 0.0
-  override val sample: MutableList<Pair<Double, Double>> = mutableListOf()
 
   override val valueType = MetricValueType.DOUBLE
   override val value: Double

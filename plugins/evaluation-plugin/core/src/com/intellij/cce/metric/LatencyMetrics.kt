@@ -4,8 +4,7 @@ package com.intellij.cce.metric
 import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
 
-abstract class LatencyMetric(override val name: String) : ConfidenceIntervalMetric<Double> {
-  override val sample = mutableListOf<Double>()
+abstract class LatencyMetric(override val name: String) : ConfidenceIntervalMetric<Double>() {
   override val value: Double
     get() = compute(sample)
 
