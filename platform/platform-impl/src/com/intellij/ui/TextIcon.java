@@ -1,7 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -10,11 +12,13 @@ import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
+import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.ui.paint.RectanglePainter.DRAW;
 import static com.intellij.ui.paint.RectanglePainter.FILL;
 import static com.intellij.util.ui.UIUtil.getLcdContrastValue;
+import static java.lang.Math.min;
 
 public final class TextIcon implements Icon {
   private static final Logger LOG = Logger.getInstance(TextIcon.class);
@@ -31,12 +35,23 @@ public final class TextIcon implements Icon {
   private Rectangle myTextBounds;
   private FontRenderContext myContext;
   private AffineTransform myFontTransform;
+  private List<String> myTextsForMinimumBounds;
+  private Rectangle myMinimumTextBounds;
 
   private Rectangle getTextBounds() {
     if (myTextBounds == null && myFont != null && myText != null && !myText.isEmpty()) {
       myContext = createContext();
       Font fnt = myFontTransform == null ? myFont : myFont.deriveFont(myFontTransform);
       myTextBounds = getPixelBounds(fnt, myText, myContext);
+
+      if (myTextsForMinimumBounds != null) {
+        if (myMinimumTextBounds == null) {
+          for (String text : myTextsForMinimumBounds) {
+            myMinimumTextBounds = max(myMinimumTextBounds, getPixelBounds(fnt, text, myContext));
+          }
+        }
+        myTextBounds = max(myMinimumTextBounds, myTextBounds);
+      }
 
       if (myFontTransform != null) {
         try {
@@ -49,6 +64,15 @@ public final class TextIcon implements Icon {
       }
     }
     return myTextBounds;
+  }
+
+  @NotNull
+  private static Rectangle max(@Nullable Rectangle one, @NotNull Rectangle other) {
+    if (one == null) return other;
+    return new Rectangle(min(one.x, other.x),
+                         min(one.y, other.y),
+                         Math.max(one.width, other.width),
+                         Math.max(one.height, other.height));
   }
 
   public TextIcon(String text, Color foreground, Color background, int margin) {
@@ -79,6 +103,7 @@ public final class TextIcon implements Icon {
 
   public void setFontTransform(AffineTransform fontTransform) {
     myFontTransform = fontTransform;
+    myMinimumTextBounds = null;
   }
 
   public void setInsets(int top, int left, int bottom, int right) {
@@ -117,6 +142,13 @@ public final class TextIcon implements Icon {
   public void setFont(Font font) {
     myFont = font;
     myTextBounds = null;
+    myMinimumTextBounds = null;
+  }
+
+  public void setTextsForMinimumBounds(List<String> textsForMinimumBounds) {
+    myTextsForMinimumBounds = textsForMinimumBounds;
+    myTextBounds = null;
+    myMinimumTextBounds = null;
   }
 
   public Insets getInsets() {

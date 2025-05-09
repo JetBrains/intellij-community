@@ -12966,6 +12966,34 @@ c:com.intellij.ui.ComboboxSpeedSearch
 - p:selectElement(java.lang.Object,java.lang.String):V
 - setupListeners():V
 com.intellij.ui.ComponentWithMnemonics
+f:com.intellij.ui.CounterIcon
+- javax.swing.Icon
+- sf:Companion:com.intellij.ui.CounterIcon$Companion
+- <init>(I,java.awt.Color,java.awt.Color):V
+- <init>(com.intellij.ui.TextIcon,I):V
+- f:getBackground():java.awt.Color
+- f:getBorderColor():java.awt.Color
+- f:getFont():java.awt.Font
+- f:getFontTransform():java.awt.geom.AffineTransform
+- f:getForeground():java.awt.Color
+- getIconHeight():I
+- getIconWidth():I
+- f:getInsets():java.awt.Insets
+- f:getNumber():I
+- f:getRound():java.lang.Integer
+- f:getWithBorders():Z
+- paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
+- f:setBackground(java.awt.Color):V
+- f:setBorderColor(java.awt.Color):V
+- f:setFont(java.awt.Font):V
+- f:setFontTransform(java.awt.geom.AffineTransform):V
+- f:setForeground(java.awt.Color):V
+- f:setInsets(java.awt.Insets):V
+- f:setNumber(I):V
+- f:setRound(java.lang.Integer):V
+- f:setWithBorders(Z):V
+f:com.intellij.ui.CounterIcon$Companion
+- f:createRoundIcon(I,java.awt.Color,java.awt.Color):com.intellij.ui.CounterIcon
 f:com.intellij.ui.DeferredIconImpl
 - com.intellij.util.ui.JBScalableIcon
 - com.intellij.ui.DeferredIcon
@@ -14191,6 +14219,7 @@ f:com.intellij.ui.TextIcon
 - setInsets(java.awt.Insets):V
 - setRound(I):V
 - setText(java.lang.String):V
+- setTextsForMinimumBounds(java.util.List):V
 - setWithBorders(Z):V
 c:com.intellij.ui.TooltipWithClickableLinks
 - com.intellij.ide.IdeTooltip
