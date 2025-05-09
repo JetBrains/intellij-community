@@ -1,3 +1,0 @@
-- name: lib/emojipicker.jar
-  modules:
-  - name: intellij.emojipicker
