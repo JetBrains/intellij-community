@@ -342,6 +342,32 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     Disposer.dispose(disposable0)
   }
 
+  fun testHidingAndAddingChangesAfterIt() = runBlocking {
+    val disposable = Disposer.newDisposable(testRootDisposable)
+
+    val manager = HotSwapSessionManager.getInstance(project)
+    val provider = MockHotSwapProvider()
+    manager.createSession(provider, disposable)
+
+    val listenerDisposable = Disposer.newDisposable(testRootDisposable)
+    val channel = addStatusListener(listenerDisposable)
+    assertEquals(HotSwapVisibleStatus.NO_CHANGES, channel.receive())
+
+    provider.collector.addFile(MockVirtualFile("a.txt"))
+    assertEquals(HotSwapVisibleStatus.CHANGES_READY, channel.receive())
+
+    manager.hide()
+    assertEquals(HotSwapVisibleStatus.HIDDEN, channel.receive())
+
+    provider.collector.addFile(MockVirtualFile("a.txt"))
+    assertEquals(HotSwapVisibleStatus.CHANGES_READY, channel.receive())
+
+    Disposer.dispose(disposable)
+
+    assertCompleted(channel)
+    Disposer.dispose(listenerDisposable)
+  }
+
   private suspend fun assertCompletedAndDispose(
     channel: ReceiveChannel<HotSwapVisibleStatus?>,
     disposable2: Disposable,
