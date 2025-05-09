@@ -1410,7 +1410,9 @@ private fun RawProse.appendOtherSections(indexDataProseValues: List<JsonObject>)
         val iframeEnd = try_it_section.indexOf("</iframe>")
                           .takeIf { it > 0 }?.let { it + "</iframe>".length }
                         ?: try_it_section.indexOf("</interactive-example>")
-                          .takeIf { it > 0 }?.let { it + "</interactive-example>".length }
+                          .takeIf { it > 0 }
+                          ?.let { try_it_section.lastIndexOf("</code></pre></div>") + "</code></pre></div>".length }
+                          ?.takeIf { it > 0 }
         if (iframeEnd == null) throw RuntimeException("Cannot find iframe or interactive-example end - $try_it_section")
         try_it_section.substring(iframeEnd).trim()
       }
