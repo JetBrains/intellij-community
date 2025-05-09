@@ -14,7 +14,6 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//android/gradle-dsl",
-    "//android/gradle-dsl-toml",
     "//plugins/gradle/java",
     "//java/java-psi-api:psi",
     "//java/java-psi-impl:psi-impl",

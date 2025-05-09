@@ -1,0 +1,19 @@
+### auto-generated section `build intellij.platform.plugins.testFramework` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "testFramework",
+  module_name = "intellij.platform.plugins.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-impl",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/diagnostic",
+    "//platform/plugins/parser/impl",
+    "//platform/util-ex",
+    "//platform/platform-impl/bootstrap",
+  ]
+)
+### auto-generated section `build intellij.platform.plugins.testFramework` end
