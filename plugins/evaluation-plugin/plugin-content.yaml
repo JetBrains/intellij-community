@@ -29,6 +29,7 @@
   - name: intellij.evaluationPlugin.fullLine
   - name: intellij.evaluationPlugin.llm
   - name: intellij.evaluationPlugin.ultimate
+  - name: intellij.evaluationPlugin.ijnext
   - name: intellij.tools.ide.metrics.collector
   - name: intellij.evaluationPlugin.languages
     reason: <- intellij.evaluationPlugin
