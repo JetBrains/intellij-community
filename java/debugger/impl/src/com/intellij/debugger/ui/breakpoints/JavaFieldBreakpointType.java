@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.CommonBundle;
@@ -120,16 +120,23 @@ public final class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<Ja
     return getText(breakpoint, false);
   }
 
-  private static @Nls String getText(XBreakpoint<JavaFieldBreakpointProperties> breakpoint, boolean simple) {
+  private static @Nls @NotNull String getText(XBreakpoint<JavaFieldBreakpointProperties> breakpoint, boolean simple) {
     //if (!isValid()) {
     //  return JavaDebuggerBundle.message("status.breakpoint.invalid");
     //}
 
     JavaFieldBreakpointProperties properties = breakpoint.getProperties();
     String className = properties.myClassName;
-    if (className == null || className.isEmpty()) return properties.myFieldName;
+    String fieldName = properties.myFieldName;
+    if (className == null || className.isEmpty()) {
+      if (fieldName == null || fieldName.isEmpty()) {
+        // TODO: what to do in the case when JavaFieldBreakpointProperties are not initialized yet?
+        return JavaDebuggerBundle.message("field.watchpoint.description");
+      }
+      return fieldName;
+    }
     String displayedClassName = simple ? ClassUtil.extractClassName(className) : className;
-    return displayedClassName + "." + properties.myFieldName;
+    return displayedClassName + "." + fieldName;
   }
 
   @Override
