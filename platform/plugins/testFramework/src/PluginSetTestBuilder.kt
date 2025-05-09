@@ -25,19 +25,19 @@ class PluginSetTestBuilder(private val path: Path) {
   private var brokenPlugins = mutableMapOf<PluginId, MutableSet<String?>>()
   private var productBuildNumber = PluginManagerCore.buildNumber
 
-  fun withDisabledPlugins(vararg disabledPluginIds: String) = apply {
+  fun withDisabledPlugins(vararg disabledPluginIds: String): PluginSetTestBuilder = apply {
     this.disabledPluginIds += disabledPluginIds.map(PluginId::getId)
   }
 
-  fun withExpiredPlugins(vararg expiredPluginIds: String) = apply {
+  fun withExpiredPlugins(vararg expiredPluginIds: String): PluginSetTestBuilder = apply {
     this.expiredPluginIds += expiredPluginIds.map(PluginId::getId)
   }
 
-  fun withBrokenPlugin(pluginId: String, vararg versions: String?) = apply {
-    brokenPlugins.computeIfAbsent(PluginId.getId(pluginId), { mutableSetOf() }).addAll(versions)
+  fun withBrokenPlugin(pluginId: String, vararg versions: String?): PluginSetTestBuilder = apply {
+    brokenPlugins.computeIfAbsent(PluginId.getId(pluginId)) { mutableSetOf() }.addAll(versions)
   }
 
-  fun withProductBuildNumber(productBuildNumber: BuildNumber) = apply {
+  fun withProductBuildNumber(productBuildNumber: BuildNumber): PluginSetTestBuilder = apply {
     this.productBuildNumber = productBuildNumber
   }
 
@@ -72,6 +72,7 @@ class PluginSetTestBuilder(private val path: Path) {
     val descriptors = paths.mapNotNull { path -> loadDescriptor(path, loadingContext, ZipFilePoolImpl()) }
     val pluginList = DiscoveredPluginsList(descriptors, PluginsSourceContext.Custom)
     loadingContext.use {
+      @Suppress("RAW_RUN_BLOCKING") //it's used in tests where the Application isn't available
       runBlocking {
         result.initAndAddAll(
           descriptorLoadingResult = PluginDescriptorLoadingResult.build(listOf(pluginList)),
