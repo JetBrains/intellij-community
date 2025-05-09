@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.pinned.items
 
 import com.intellij.openapi.Disposable
@@ -15,6 +15,7 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import icons.PlatformDebuggerImplIcons
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.lang.ref.WeakReference
 
 @Internal
 class XDebuggerPinToTopManager(coroutineScope: CoroutineScope) {
@@ -29,7 +30,7 @@ class XDebuggerPinToTopManager(coroutineScope: CoroutineScope) {
   private val listeners = mutableListOf<XDebuggerPinToTopListener>()
 
   private var nodeHoverLifetime: Disposable? = null
-  private var activeNode: XDebuggerTreeNode? = null
+  private var activeNode: WeakReference<XValueNodeImpl>? = null
   private var pinnedMembers = HashSet<PinnedItemInfo>()
   private val pinToTopIconAlarm = Alarm(threadToUse = Alarm.ThreadToUse.SWING_THREAD, coroutineScope = coroutineScope)
 
@@ -39,7 +40,7 @@ class XDebuggerPinToTopManager(coroutineScope: CoroutineScope) {
   fun isEnabled(): Boolean = Registry.`is`("debugger.field.pin.to.top", true)
 
   fun onNodeHovered(node: XDebuggerTreeNode?, lifetimeHolder: Disposable) {
-    if (activeNode == node) {
+    if (activeNode?.get() == node) {
       return
     }
     if (!isEnabled()) {
@@ -58,8 +59,10 @@ class XDebuggerPinToTopManager(coroutineScope: CoroutineScope) {
     }
 
     var oldIcon = valueNode.icon
+    val nodeRef = WeakReference(node)
 
     val changeIconLifetime = Disposable {
+      val node = nodeRef.get() ?: return@Disposable
       val xValuePresentation = node.valuePresentation
       if (node.icon == PlatformDebuggerImplIcons.PinToTop.UnpinnedItem && xValuePresentation != null) {
         node.setPresentation(oldIcon, xValuePresentation, !node.isLeaf)
@@ -67,7 +70,7 @@ class XDebuggerPinToTopManager(coroutineScope: CoroutineScope) {
       activeNode = null
       nodeHoverLifetime = null
     }
-    activeNode = node
+    activeNode = nodeRef
     nodeHoverLifetime = changeIconLifetime
 
     pinToTopIconAlarm.addRequest(
