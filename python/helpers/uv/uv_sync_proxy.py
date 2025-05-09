@@ -1,6 +1,8 @@
 import sys
 import os
 import subprocess
+import re
+import pathlib
 
 # this script calls sync before any given `uv run` calls
 # the first argument is the path to uv
@@ -14,13 +16,23 @@ uv_path = sys.argv[1]
 script_path = sys.argv[2]
 
 should_sync_project = False
+venv_path = None
 
 try:
     sync_output = subprocess.check_output(
         [uv_path, "sync", "--script", script_path],
         stderr=subprocess.STDOUT
-    )
-    print(sync_output.decode("utf-8"))
+    ).decode("utf-8")
+
+    result = re.search(r"environment at: (.*)\n", sync_output)
+
+    if result is not None:
+        venv_path = pathlib.Path(result.groups()[0])
+
+        if not os.path.exists(str(venv_path)):
+            venv_path = None
+
+    print(sync_output)
 except subprocess.CalledProcessError as e:
     str_output = e.output.decode("utf-8")
     if "does not contain a PEP 723 metadata tag" in str_output:
@@ -28,7 +40,11 @@ except subprocess.CalledProcessError as e:
     print(str_output, file=sys.stderr)
 
 
-command = uv_path + " run " + ("" if should_sync_project else "--no-sync ") + " ".join(sys.argv[4:])
+sync_segment = "" if should_sync_project else "--no-sync "
+venv_segment = "" if venv_path is None else "VIRTUAL_ENV=" + str(venv_path) + " "
+active_segment = "" if venv_path is None else "--active "
+
+command = venv_segment + uv_path + " run " + active_segment + sync_segment + " ".join(sys.argv[4:])
 print()
 print(command)
 os.system(command)
