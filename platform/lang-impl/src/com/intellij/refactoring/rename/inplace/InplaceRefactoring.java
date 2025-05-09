@@ -130,7 +130,7 @@ public abstract class InplaceRefactoring {
                             @NotNull Project project,
                             @Nullable String initialName,
                             @Nullable String oldName) {
-    myEditor = /*(editor instanceof EditorWindow)? ((EditorWindow)editor).getDelegate() : */editor;
+    myEditor = editor;
     myElementToRename = elementToRename;
     myProject = project;
     myOldName = oldName;

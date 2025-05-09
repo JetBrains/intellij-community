@@ -3,7 +3,6 @@
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -601,7 +600,7 @@ public final class DocumentWindowImpl extends UserDataHolderBase implements Disp
     // heuristics: return offset closest to the caret
     Editor editor = EditorFactory.getInstance().editors(getDelegate()).findFirst().orElse(null);
     if (editor != null) {
-      if (editor instanceof EditorWindow) editor = ((EditorWindow)editor).getDelegate();
+      editor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
       int caret = editor.getCaretModel().getOffset();
       return Math.abs(caret - offsetInLeftFragment) < Math.abs(caret - offsetInRightFragment) ? offsetInLeftFragment : offsetInRightFragment;
     }

@@ -514,7 +514,7 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
     private Point previousBestPoint;
     private Short previousBestPosition;
 
-    MyBestLocationPointProvider(Editor editor) {
+    MyBestLocationPointProvider(@NotNull Editor editor) {
       myEditor = editor;
     }
 
@@ -556,7 +556,7 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
         // editor this position will likely be outside of our range and the hint position
         // will be our range's end. To avoid that and compute hint position correctly,
         // switch to the host editor.
-        editor = myEditor instanceof EditorWindow ? ((EditorWindow)myEditor).getDelegate() : editor;
+        editor = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
       }
       Pair<Point, Short> position = chooseBestHintPosition(editor, pos, hint, activeLookup, preferredPosition, false);
 

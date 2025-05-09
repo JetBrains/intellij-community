@@ -21,7 +21,6 @@ import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.*;
@@ -54,6 +53,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
@@ -86,8 +86,8 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
   @RequiresEdt
   @Override
   public void executeInteractively(@NotNull ActionContext context, @NotNull ModCommand command, @Nullable Editor editor) {
-    if (editor instanceof EditorWindow window) {
-      editor = window.getDelegate();
+    if (editor != null) {
+      editor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
     }
     if (!ensureWritable(context.project(), command)) return;
     doExecuteInteractively(context, command, ModCommand.nop(), editor);

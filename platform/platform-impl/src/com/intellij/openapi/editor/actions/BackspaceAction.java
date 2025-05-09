@@ -3,7 +3,6 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
@@ -11,6 +10,7 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.actionSystem.LatencyAwareEditorAction;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,11 +24,9 @@ public final class BackspaceAction extends TextComponentEditorAction implements 
     public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       EditorUIUtil.hideCursorInEditor(editor);
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
-      if (editor instanceof EditorWindow) {
-        // manipulate actual document/editor instead of injected
-        // since the latter have trouble finding the right location of caret movement in the case of multi-shred injected fragments
-        editor = ((EditorWindow)editor).getDelegate();
-      }
+      // manipulate actual document/editor instead of injected
+      // since the latter have trouble finding the right location of caret movement in the case of multi-shred injected fragments
+      editor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
       doBackSpaceAtCaret(editor);
     }
   }

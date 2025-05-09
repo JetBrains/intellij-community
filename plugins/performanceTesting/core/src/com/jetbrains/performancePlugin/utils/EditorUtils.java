@@ -3,18 +3,18 @@ package com.jetbrains.performancePlugin.utils;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.ide.DataManager;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 public final class EditorUtils {
 
   public static DataContext createEditorContext(@NotNull Editor editor) {
-    Editor hostEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+    Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
     DataContext parent = DataManager.getInstance().getDataContext(editor.getContentComponent());
     return SimpleDataContext.builder()
       .setParent(parent)

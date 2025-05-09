@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.ex.temp.TempFileSystemMarker
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.injected.InjectedCaret
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.containers.ContainerUtil
@@ -39,7 +40,7 @@ internal class TextEditorPsiDataRule : UiDataRule {
     }
 
     val file = editor.virtualFile ?: return
-    val hostEditor = if (editor is EditorWindow) editor.delegate else editor
+    val hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
     sink[CommonDataKeys.HOST_EDITOR] = hostEditor
     sink[LangDataKeys.IDE_VIEW] = getIdeView(editor, file)
 

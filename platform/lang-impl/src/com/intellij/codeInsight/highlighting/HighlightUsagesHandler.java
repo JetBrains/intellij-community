@@ -6,7 +6,6 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.IdentifierUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.EditorSearchSession;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -32,6 +31,7 @@ import com.intellij.pom.PomTarget;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.pom.PsiDeclaredTarget;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
@@ -126,10 +126,8 @@ public final class HighlightUsagesHandler extends HighlightHandlerBase {
     final String text = editor.getSelectionModel().getSelectedText();
     if (text == null) return;
 
-    if (editor instanceof EditorWindow) {
-      // highlight selection in the whole editor, not injected fragment only
-      editor = ((EditorWindow)editor).getDelegate();
-    }
+    // highlight selection in the whole editor, not injected fragment only
+    editor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
 
     EditorSearchSession oldSearch = EditorSearchSession.get(editor);
     if (oldSearch != null) {
@@ -166,7 +164,7 @@ public final class HighlightUsagesHandler extends HighlightHandlerBase {
       myRefs = refs;
       myProject = project;
       myTarget = target;
-      myEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+      myEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
       myFile = file;
       myClearHighlights = clearHighlights;
     }
@@ -311,7 +309,7 @@ public final class HighlightUsagesHandler extends HighlightHandlerBase {
   }
 
   public static boolean isClearHighlights(@NotNull Editor editor) {
-    if (editor instanceof EditorWindow) editor = ((EditorWindow)editor).getDelegate();
+    editor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
 
     RangeHighlighter[] highlighters = ((HighlightManagerImpl)HighlightManager.getInstance(editor.getProject())).getHighlighters(editor);
     int caretOffset = editor.getCaretModel().getOffset();
@@ -330,7 +328,7 @@ public final class HighlightUsagesHandler extends HighlightHandlerBase {
                                       @Nullable TextAttributesKey attributesKey) {
     assert attributes != null || attributesKey != null : "Both attributes and attributesKey are null";
 
-    if (editor instanceof EditorWindow) editor = ((EditorWindow)editor).getDelegate();
+    editor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
     RangeHighlighter[] highlighters = ((HighlightManagerImpl)highlightManager).getHighlighters(editor);
     Arrays.sort(highlighters, Comparator.comparingInt(RangeMarker::getStartOffset));
     rangesToHighlight = ContainerUtil.sorted(rangesToHighlight, Comparator.comparingInt(TextRange::getStartOffset));

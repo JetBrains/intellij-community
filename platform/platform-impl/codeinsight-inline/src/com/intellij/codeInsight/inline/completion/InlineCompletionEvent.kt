@@ -20,6 +20,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.PsiFileImpl
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.ui.EDT
@@ -245,7 +246,7 @@ interface InlineCompletionEvent {
     // Since injected editors are poorly supported, we register handlers only for top-level editors.
     @get:ApiStatus.Experimental
     val topLevelEditor: Editor
-      get() = (editor as? EditorWindow)?.delegate ?: editor
+      get() = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
 
     val event: LookupEvent
 

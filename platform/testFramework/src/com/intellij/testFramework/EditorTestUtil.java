@@ -150,7 +150,7 @@ public final class EditorTestUtil {
   }
 
   private static @NotNull DataContext createEditorContext(@NotNull Editor editor) {
-    Editor hostEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+    Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
     DataContext parent = DataManager.getInstance().getDataContext(editor.getContentComponent());
     return SimpleDataContext.builder()
       .setParent(parent)

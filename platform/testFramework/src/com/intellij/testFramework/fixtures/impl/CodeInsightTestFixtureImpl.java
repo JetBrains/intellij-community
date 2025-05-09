@@ -1878,8 +1878,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     assertInitialized();
     Project project = getProject();
     Editor editor = getEditor();
-    if (editor instanceof EditorWindow) {
-      editor = ((EditorWindow)editor).getDelegate();
+    if (editor != null) {
+      editor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
     }
 
     UsefulTestCase.doPostponedFormatting(getProject());

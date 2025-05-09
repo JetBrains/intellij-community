@@ -7,6 +7,7 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.testFramework.LightJavaCodeInsightTestCase
 import com.intellij.testFramework.UsefulTestCase
 import org.junit.Assert
@@ -37,7 +38,7 @@ class ShowIntentionActionsHandlerTest : LightJavaCodeInsightTestCase() {
     UsefulTestCase.assertInstanceOf(editor, EditorWindow::class.java)
     val injectedLanguageManager = InjectedLanguageManager.getInstance(project)
     Assert.assertTrue(injectedLanguageManager.isInjectedFragment(file))
-    val hostEditor = (editor as EditorWindow).delegate
+    val hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
     val hostFile = injectedLanguageManager.getInjectionHost(file)!!.containingFile
     doTest(hostEditor, hostFile) {
       UsefulTestCase.assertSize(2, it)

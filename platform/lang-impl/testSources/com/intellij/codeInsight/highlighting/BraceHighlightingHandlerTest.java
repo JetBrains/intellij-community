@@ -1,13 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.highlighting;
 
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.testFramework.FileBasedTestCaseHelper;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.TestDataPath;
@@ -47,7 +47,7 @@ public class BraceHighlightingHandlerTest extends LightPlatformCodeInsightTestCa
    * @return a text from passed editor with highlighted braces wrapped in {@code <brace></brace>} tags. And {@link <caret>} marker
    */
   public static String getEditorTextWithHighlightedBraces(@NotNull Editor editor, @NotNull PsiFile psiFile) {
-    Editor hostEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+    Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
     List<Pair<Integer, String>> markers = new ArrayList<>();
     Alarm alarm = new Alarm();
     try {

@@ -11,6 +11,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.psi.injection.Injectable
 import com.intellij.psi.util.parents
@@ -316,7 +317,7 @@ abstract class AbstractYamlMultilineInjectionTest(val async: Boolean) : BasePlat
     testNewLineInInjectedXMLinNested()
 
     // then undo and try again to check that all editors are disposed properly
-    val hostEditor = myFixture.editor.let { it.asSafely<EditorWindow>()?.delegate ?: it }
+    val hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(myFixture.editor)
     val hostFile = PsiDocumentManager.getInstance(project).getPsiFile(hostEditor.document) ?: throw AssertionError("no psi file")
     val hostVFile = hostFile.virtualFile
     myFixture.openFileInEditor(hostVFile)

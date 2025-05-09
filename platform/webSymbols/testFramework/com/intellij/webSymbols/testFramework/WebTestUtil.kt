@@ -36,6 +36,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiPolyVariantReference
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
@@ -673,4 +674,4 @@ private val Editor.currentPositionSignature: String
 
 
 private val Editor.topLevelEditor
-  get() = if (this is EditorWindow) delegate else this
+  get() = InjectedLanguageEditorUtil.getTopLevelEditor(this)

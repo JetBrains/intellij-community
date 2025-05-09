@@ -7,7 +7,6 @@ import com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl;
 import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
@@ -27,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
@@ -129,7 +129,7 @@ public final class CompletionInitializationUtil {
     }
 
     Editor editor = initContext.getEditor();
-    Editor hostEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+    Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
     OffsetMap hostMap = topLevelOffsets.getOffsets();
 
     PsiFile hostCopy = obtainFileCopy(topLevelOffsets.getFile(), noWriteLock);

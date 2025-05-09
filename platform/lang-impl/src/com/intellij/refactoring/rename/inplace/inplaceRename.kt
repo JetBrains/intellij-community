@@ -44,6 +44,7 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.PsiDocumentManagerBase
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.refactoring.InplaceRefactoringContinuation
 import com.intellij.refactoring.RefactoringBundle
@@ -85,7 +86,7 @@ internal fun inplaceRename(project: Project, editor: Editor, target: RenameTarge
   val file: PsiFile = PsiDocumentManager.getInstance(project).getPsiFile(document)
                       ?: return false
 
-  val hostEditor: Editor = (editor as? EditorWindow)?.delegate ?: editor
+  val hostEditor: Editor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
   val hostDocument: Document = PsiDocumentManagerBase.getTopLevelDocument(document)
   val hostFile: PsiFile = PsiDocumentManager.getInstance(project).getPsiFile(hostDocument)
                           ?: return false

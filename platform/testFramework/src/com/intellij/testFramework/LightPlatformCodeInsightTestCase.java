@@ -41,6 +41,7 @@ import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
@@ -232,7 +233,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
 
   protected void setupEditorForInjectedLanguage() {
     if (getEditor() != null) {
-      Editor hostEditor = getEditor() instanceof EditorWindow ? ((EditorWindow)getEditor()).getDelegate() : getEditor();
+      Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(getEditor());
       PsiFile hostFile = myFile == null ? null : InjectedLanguageManager.getInstance(getProject()).getTopLevelFile(myFile);
       Ref<EditorWindow> editorWindowRef = new Ref<>();
       hostEditor.getCaretModel().runForEachCaret(caret -> {

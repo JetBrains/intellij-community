@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.SmartList;
@@ -545,10 +546,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   }
 
   protected List<LookupElement> getExactMatches(List<? extends LookupElement> items) {
-    Editor editor = myProcess.getParameters().getEditor();
-    if (editor instanceof EditorWindow) {
-      editor = ((EditorWindow)editor).getDelegate();
-    }
+    Editor editor = InjectedLanguageEditorUtil.getTopLevelEditor(myProcess.getParameters().getEditor());
     String selectedText = editor.getSelectionModel().getSelectedText();
     List<LookupElement> exactMatches = new SmartList<>();
     for (LookupElement item : items) {

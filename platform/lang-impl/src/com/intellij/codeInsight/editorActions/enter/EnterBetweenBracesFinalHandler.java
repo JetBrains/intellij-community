@@ -5,7 +5,6 @@ package com.intellij.codeInsight.editorActions.enter;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.CodeDocumentationUtil;
 import com.intellij.codeInsight.editorActions.EnterHandler;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -19,6 +18,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,9 +56,7 @@ public class EnterBetweenBracesFinalHandler implements EnterHandlerDelegate {
     if (indentInsideJavadoc != null &&
         project != null &&
         data.isLeadingAsteriskEnabled()) {
-      if (editor instanceof EditorWindow) {
-        editor = ((EditorWindow)editor).getDelegate();
-      }
+      editor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
       editor.getDocument().insertString(editor.getCaretModel().getOffset(), "*" + indentInsideJavadoc);
     }
 

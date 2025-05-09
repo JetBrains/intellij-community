@@ -2,7 +2,6 @@
 package org.intellij.lang.xpath.xslt.refactoring;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.lang.refactoring.InlineActionHandler;
@@ -22,6 +21,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -140,7 +140,7 @@ public final class VariableInlineHandler extends InlineActionHandler {
       }
       return psiElement.getTextRange().cutOut(s.getRangeInElement());
     });
-    final Editor e = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+    final Editor e = editor == null ? null : InjectedLanguageEditorUtil.getTopLevelEditor(editor);
     for (TextRange range : ranges) {
       final TextAttributes textAttributes = EditorColors.SEARCH_RESULT_ATTRIBUTES.getDefaultAttributes();
       final Color color = getScrollmarkColor(textAttributes);
