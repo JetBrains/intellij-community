@@ -4561,66 +4561,14 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "support_of_h1": {
-          "Chrome": "",
-          "ChromeAndroid": "",
-          "Edge": "",
-          "Firefox": "",
-          "FirefoxAndroid": "4",
-          "Opera": "15",
-          "Safari": "",
-          "SafariIOS": ""
-        },
-        "support_of_h2": {
-          "Chrome": "",
-          "ChromeAndroid": "",
-          "Edge": "",
-          "Firefox": "",
-          "FirefoxAndroid": "4",
-          "Opera": "15",
-          "Safari": "",
-          "SafariIOS": ""
-        },
-        "support_of_h3": {
-          "Chrome": "",
-          "ChromeAndroid": "",
-          "Edge": "",
-          "Firefox": "",
-          "FirefoxAndroid": "4",
-          "Opera": "15",
-          "Safari": "",
-          "SafariIOS": ""
-        },
-        "support_of_h4": {
-          "Chrome": "",
-          "ChromeAndroid": "",
-          "Edge": "",
-          "Firefox": "",
-          "FirefoxAndroid": "4",
-          "Opera": "15",
-          "Safari": "",
-          "SafariIOS": ""
-        },
-        "support_of_h5": {
-          "Chrome": "",
-          "ChromeAndroid": "",
-          "Edge": "",
-          "Firefox": "",
-          "FirefoxAndroid": "4",
-          "Opera": "15",
-          "Safari": "",
-          "SafariIOS": ""
-        },
-        "support_of_h6": {
-          "Chrome": "",
-          "ChromeAndroid": "",
-          "Edge": "",
-          "Firefox": "",
-          "FirefoxAndroid": "4",
-          "Opera": "15",
-          "Safari": "",
-          "SafariIOS": ""
-        }
+        "Chrome": "",
+        "ChromeAndroid": "",
+        "Edge": "",
+        "Firefox": "",
+        "FirefoxAndroid": "4",
+        "Opera": "15",
+        "Safari": "",
+        "SafariIOS": ""
       },
       "doc": "The <strong><code>&lt;h1&gt;</code></strong> to <strong><code>&lt;h6&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> elements represent six levels of section headings. <code>&lt;h1&gt;</code> is the highest section level and <code>&lt;h6&gt;</code> is the lowest. By default, all heading elements create a <a href=\"$MDN_URL$/Glossary/Block-level_content\">block-level</a> box in the layout, starting on a new line and taking up the full width available in their containing block.",
       "details": {

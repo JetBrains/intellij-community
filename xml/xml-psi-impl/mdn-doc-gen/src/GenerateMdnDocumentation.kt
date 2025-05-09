@@ -85,7 +85,13 @@ val jsWebApiNameFilter: (String) -> Boolean = { name ->
 
 val bcdIdDescriptions = mutableMapOf<String, String>()
 
-/* It's so much easier to run a test, than to setup the whole IJ environment */
+/**
+ * Run the tests to generate documentation. Prepare MDN documentation repositories with `prepare-mdn.sh`.
+ * Afterwards run MdnDocUpdateTestSuite to update any failing tests due to doc content changes.
+ *
+ * It's so much easier to run a test, than to setup the whole IJ environment.
+ *
+ */
 class GenerateMdnDocumentation : BasePlatformTestCase() {
 
   /* Run these tests to generate documentation. Prepare MDN documentation repositories with `prepare-mdn.sh` */
@@ -1069,6 +1075,14 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
       }
       .toMap(TreeMap())
       .takeIf { it.isNotEmpty() }
+      ?.let { compatMap ->
+        if (compatMap.size > 1) {
+          val firstValue = compatMap.values.first()
+          if (compatMap.values.all { it == firstValue })
+            mapOf(defaultBcdContext to firstValue)
+          else compatMap
+        } else compatMap
+      }
 
   private fun getBcdId(id: String): String =
     id.takeLastWhile { it != '.' }.let {
