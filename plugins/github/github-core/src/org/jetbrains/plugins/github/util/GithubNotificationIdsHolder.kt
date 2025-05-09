@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.util
 
 import com.intellij.notification.impl.NotificationIdsHolder
 
-class GithubNotificationIdsHolder : NotificationIdsHolder {
+internal class GithubNotificationIdsHolder : NotificationIdsHolder {
   override fun getNotificationIds(): List<String> {
     return listOf(MISSING_DEFAULT_ACCOUNT,
                   PULL_REQUEST_CANNOT_SET_TRACKING_BRANCH,
@@ -37,14 +37,7 @@ class GithubNotificationIdsHolder : NotificationIdsHolder {
                   REBASE_REMOTE_ORIGIN_NOT_FOUND,
                   REBASE_ACCOUNT_NOT_FOUND,
                   REBASE_FAILED_TO_MATCH_REPO,
-                  SHARE_CANNOT_FIND_GIT_REPO,
-                  SHARE_CANNOT_CREATE_REPO,
-                  SHARE_PROJECT_SUCCESSFULLY_SHARED,
-                  SHARE_EMPTY_REPO_CREATED,
-                  SHARE_PROJECT_INIT_COMMIT_FAILED,
-                  SHARE_PROJECT_INIT_PUSH_FAILED,
-                  GIST_CREATED,
-                  GIT_REPO_INIT_REPO)
+                  GIST_CREATED)
   }
 
   companion object {
@@ -80,13 +73,6 @@ class GithubNotificationIdsHolder : NotificationIdsHolder {
     const val REBASE_REMOTE_ORIGIN_NOT_FOUND = "github.rebase.remote.origin.not.found"
     const val REBASE_ACCOUNT_NOT_FOUND = "github.rebase.account.not.found"
     const val REBASE_FAILED_TO_MATCH_REPO = "rebase.error.failed.to.match.gh.repo"
-    const val SHARE_CANNOT_FIND_GIT_REPO = "github.share.cannot.find.git.repo"
-    const val SHARE_CANNOT_CREATE_REPO = "github.share.cannot.create.repo"
-    const val SHARE_PROJECT_SUCCESSFULLY_SHARED = "github.share.project.successfully.shared"
-    const val SHARE_EMPTY_REPO_CREATED = "github.share.empty.repo.created"
-    const val SHARE_PROJECT_INIT_COMMIT_FAILED = "github.share.project.created.init.commit.failed"
-    const val SHARE_PROJECT_INIT_PUSH_FAILED = "github.share.init.push.failed"
     const val GIST_CREATED = "github.gist.created"
-    const val GIT_REPO_INIT_REPO = "github.git.repo.init.error"
   }
 }

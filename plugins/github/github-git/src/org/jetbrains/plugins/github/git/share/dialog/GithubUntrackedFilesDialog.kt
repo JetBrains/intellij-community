@@ -11,8 +11,8 @@ import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.vfs.VirtualFile
+import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.github.i18n.GithubBundle
 import javax.swing.JComponent
 
 // Git + Services notifications
@@ -27,7 +27,7 @@ class GithubUntrackedFilesDialog(
     get() = myCommitMessagePanel!!.comment
 
   init {
-    title = GithubBundle.message("untracked.files.dialog.title")
+    title = GitBundle.message("share.untracked.files.dialog.title")
     setOKButtonText(CommonBundle.getAddButtonText())
     setCancelButtonText(CommonBundle.getCancelButtonText())
     init()

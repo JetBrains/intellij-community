@@ -3,19 +3,21 @@ package org.jetbrains.plugins.github
 
 import com.intellij.configurationStore.saveSettings
 import com.intellij.ide.IdeBundle
+import com.intellij.notification.NotificationListener
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.workspace.SubprojectInfoProvider
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.ModalTaskOwner
@@ -42,6 +44,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.request.Type
@@ -56,8 +59,12 @@ import org.jetbrains.plugins.github.git.share.dialog.GithubExistingRemotesDialog
 import org.jetbrains.plugins.github.git.share.dialog.GithubUntrackedFilesDialog
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.GithubShareDialog
-import org.jetbrains.plugins.github.util.*
+import org.jetbrains.plugins.github.util.GHCompatibilityUtil
+import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
+import org.jetbrains.plugins.github.util.GithubGitHelper
+import org.jetbrains.plugins.github.util.GithubUtil
 import java.awt.Component
+import java.net.UnknownHostException
 import java.util.*
 
 object GHShareProjectUtil {
@@ -100,7 +107,7 @@ object GHShareProjectUtil {
     val spService = project.service<GHShareProjectService>()
 
     val shareDialogResult = spService.showShareProjectDialog(gitRepository, projectName) ?: return
-    spService.performShareProjectOnGithub(gitRepository, root, shareDialogResult)
+    spService.performShareProjectOnGithub(GithubBundle.message("settings.configurable.display.name"), gitRepository, root, shareDialogResult)
   }
 }
 
@@ -135,7 +142,7 @@ private class GHShareProjectService(private val project: Project, private val cs
   private suspend fun loadEnsuringTokenExistsToken(account: GithubAccount, comp: Component): Pair<Boolean, Set<String>> {
     while (true) {
       try {
-        return withModalProgress(ModalTaskOwner.project(project), GithubBundle.message("share.process.loading.account.info", account), TaskCancellation.cancellable()) {
+        return withModalProgress(ModalTaskOwner.project(project), GitBundle.message("share.process.loading.account.info", account), TaskCancellation.cancellable()) {
           val token = serviceAsync<GHAccountManager>().findCredentials(account) ?: throw GithubMissingTokenException(account)
           val requestExecutor = GithubApiRequestExecutor.Factory.getInstance().create(account.server, token)
 
@@ -153,6 +160,7 @@ private class GHShareProjectService(private val project: Project, private val cs
   }
 
   fun performShareProjectOnGithub(
+    hostServiceName: @NlsContexts.ConfigurableName String,
     gitRepository: GitRepository?,
     root: VirtualFile,
     shareDialogResult: GithubShareDialog.Result,
@@ -165,66 +173,71 @@ private class GHShareProjectService(private val project: Project, private val cs
     val requestExecutor = GithubApiRequestExecutor.Factory.getInstance().create(account.server, token)
 
     cs.launch(Dispatchers.Default) {
-      withBackgroundProgress(project, GithubBundle.message("share.process"), false) {
+      withBackgroundProgress(project, GitBundle.message("share.process", hostServiceName), false) {
         try {
           reportSequentialProgress(size = 7) { reporter ->
             // create GitHub repo (network)
-            val url = reporter.itemStep(GithubBundle.message("share.process.creating.repository")) {
+            val url = reporter.itemStep(GitBundle.message("share.process.creating.repository", hostServiceName)) {
               LOG.info("Creating GitHub repository")
               createRepo(requestExecutor, shareDialogResult)
             }
             LOG.info("Successfully created GitHub repository")
 
             // creating empty git repo if git is not initialized
-            val repository = reporter.itemStep(GithubBundle.message("share.process.creating.git.repository")) {
+            val repository = reporter.itemStep(GitBundle.message("share.process.creating.git.repository")) {
               ensureGitRepositoryExistsAndGet(gitRepository, root)
             }
             if (repository == null) return@withBackgroundProgress
 
             // retrieve remote URL
-            val remoteUrl = reporter.itemStep(GithubBundle.message("share.process.retrieving.username")) {
+            val remoteUrl = reporter.itemStep(GitBundle.message("share.process.retrieving.username")) {
               retrieveRepoRemoteUrl(requestExecutor, account, name)
             }
 
             // git remote add origin git@github.com:login/name.git
-            reporter.itemStep(GithubBundle.message("share.process.adding.gh.as.remote.host")) {
+            reporter.itemStep(GitBundle.message("share.process.adding.gh.as.remote.host", hostServiceName)) {
               LOG.info("Adding GitHub as a remote host")
               addGitRemote(repository, remoteName, remoteUrl)
             }
 
             // create sample commit for binding project
-            if (!performFirstCommitIfRequired(project, root, repository, reporter, name, url)) {
+            if (!performFirstCommitIfRequired(hostServiceName, root, repository, reporter, name, url)) {
               return@withBackgroundProgress
             }
 
             // git push origin master
-            if (!reporter.itemStep(GithubBundle.message("share.process.pushing.to.github.master", repository.currentBranch?.name ?: "")) {
+            if (!reporter.itemStep(GitBundle.message("share.process.pushing.to.github.master", hostServiceName, repository.currentBranch?.name
+                                                                                                                ?: "")) {
                 LOG.info("Pushing to github master")
-                pushCurrentBranch(project, repository, remoteName, remoteUrl, name, url)
+                pushCurrentBranch(hostServiceName, repository, remoteName, remoteUrl, name, url)
               }) {
               return@withBackgroundProgress
             }
 
             // Show final success notification
-            GithubNotifications.showInfoURL(
-              project,
-              GithubNotificationIdsHolder.SHARE_PROJECT_SUCCESSFULLY_SHARED,
-              GithubBundle.message("share.process.successfully.shared"),
-              name,
-              url
+            VcsNotifier.getInstance(project).notifyImportantInfo(
+              VcsNotificationIdsHolder.SHARE_PROJECT_SUCCESSFULLY_SHARED,
+              GitBundle.message("share.process.successfully.shared", hostServiceName),
+              HtmlChunk.link(url, name).toString(),
+              NotificationListener.URL_OPENING_LISTENER
             )
           }
         }
         catch (error: Throwable) {
-          GithubNotifications.showError(
-            project,
-            GithubNotificationIdsHolder.SHARE_CANNOT_CREATE_REPO,
-            GithubBundle.message("share.error.failed.to.create.repo"), error
+          if (error is ProcessCanceledException) return@withBackgroundProgress
+          VcsNotifier.getInstance(project).notifyError(
+            VcsNotificationIdsHolder.SHARE_CANNOT_CREATE_REPO,
+            GitBundle.message("share.error.failed.to.create.repo"),
+            getErrorTextFromException(error)
           )
         }
       }
     }
   }
+
+  private fun getErrorTextFromException(e: Throwable): @Nls String =
+    if (e is UnknownHostException) GitBundle.message("share.error.unknownHost", e.message)
+    else StringUtil.notNullize(e.message, GitBundle.message("share.error.unknown"))
 
   // Service
   private suspend fun createRepo(
@@ -259,7 +272,7 @@ private class GHShareProjectService(private val project: Project, private val cs
     repository.update()
   }
 
-  // Git/collab + Services notifications
+  // Git/collab
   private fun ensureGitRepositoryExistsAndGet(
     repository: GitRepository?,
     root: VirtualFile,
@@ -267,7 +280,7 @@ private class GHShareProjectService(private val project: Project, private val cs
     LOG.info("Binding local project with GitHub")
     if (repository == null) {
       LOG.info("No git detected, creating empty git repo")
-      if (!createEmptyGitRepository(project, root)) {
+      if (!createEmptyGitRepository(root)) {
         return null
       }
     }
@@ -275,11 +288,10 @@ private class GHShareProjectService(private val project: Project, private val cs
     val repositoryManager = GitUtil.getRepositoryManager(project)
     val repository = repositoryManager.getRepositoryForRoot(root)
     if (repository == null) {
-      GithubNotifications.showError(
-        project,
-        GithubNotificationIdsHolder.SHARE_CANNOT_FIND_GIT_REPO,
-        GithubBundle.message("share.error.failed.to.create.repo"),
-        GithubBundle.message("cannot.find.git.repo")
+      VcsNotifier.getInstance(project).notifyError(
+        VcsNotificationIdsHolder.SHARE_CANNOT_FIND_GIT_REPO,
+        GitBundle.message("share.error.failed.to.create.repo"),
+        GitBundle.message("share.error.cannot.find.git.repo")
       )
       return null
     }
@@ -289,13 +301,12 @@ private class GHShareProjectService(private val project: Project, private val cs
 
   // Git/collab
   private fun createEmptyGitRepository(
-    project: Project,
     root: VirtualFile,
   ): Boolean {
     val result = Git.getInstance().init(project, root)
     if (!result.success()) {
       VcsNotifier.getInstance(project).notifyError(
-        GithubNotificationIdsHolder.GIT_REPO_INIT_REPO,
+        VcsNotificationIdsHolder.GIT_REPO_INIT_REPO,
         GitBundle.message("initializing.title"),
         result.errorOutputAsHtmlString
       )
@@ -309,7 +320,7 @@ private class GHShareProjectService(private val project: Project, private val cs
 
   // Git/collab + Service notifications
   private suspend fun performFirstCommitIfRequired(
-    project: Project,
+    hostServiceName: @NlsContexts.ConfigurableName String,
     root: VirtualFile,
     repository: GitRepository,
     reporter: SequentialProgressReporter,
@@ -330,13 +341,13 @@ private class GHShareProjectService(private val project: Project, private val cs
       LOG.info("Adding files for commit")
 
       // ask for files to add
-      val addFilesStepResult = reporter.itemStep(GithubBundle.message("share.process.adding.files")) {
+      val addFilesStepResult = reporter.itemStep(GitBundle.message("share.process.adding.files")) {
         val manager = GitUtil.getRepositoryManager(project)
         val trackedFiles = ChangeListManager.getInstance(project).affectedFiles.filter {
           it.isInLocalFileSystem && manager.getRepositoryForFileQuick(it) == repository
         }.toMutableList()
         val untrackedFiles =
-          filterOutIgnored(project, repository.untrackedFilesHolder.retrieveUntrackedFilePaths().mapNotNull(FilePath::getVirtualFile))
+          filterOutIgnored(repository.untrackedFilesHolder.retrieveUntrackedFilePaths().mapNotNull(FilePath::getVirtualFile))
         trackedFiles.removeAll(untrackedFiles) // fix IDEA-119855
 
         val allFiles = ArrayList<VirtualFile>()
@@ -361,11 +372,11 @@ private class GHShareProjectService(private val project: Project, private val cs
 
 
         if (data == null) {
-          GithubNotifications.showInfoURL(
-            project,
-            GithubNotificationIdsHolder.SHARE_EMPTY_REPO_CREATED,
-            GithubBundle.message("share.process.empty.project.created"),
-            name, url
+          VcsNotifier.getInstance(project).notifyImportantInfo(
+            VcsNotificationIdsHolder.SHARE_EMPTY_REPO_CREATED,
+            GitBundle.message("share.process.empty.project.created", hostServiceName),
+            HtmlChunk.link(url, name).toString(),
+            NotificationListener.URL_OPENING_LISTENER
           )
           return@itemStep null
         }
@@ -385,7 +396,7 @@ private class GHShareProjectService(private val project: Project, private val cs
       val (modified, commitMessage) = addFilesStepResult
 
       // commit
-      reporter.itemStep(GithubBundle.message("share.process.performing.commit")) {
+      reporter.itemStep(GitBundle.message("share.process.performing.commit")) {
         val handler = GitLineHandler(project, root, GitCommand.COMMIT)
         handler.setStdoutSuppressed(false)
         handler.addParameters("-m", commitMessage)
@@ -397,15 +408,8 @@ private class GHShareProjectService(private val project: Project, private val cs
     }
     catch (e: VcsException) {
       LOG.warn(e)
-      GithubNotifications.showErrorURL(
-        project, GithubNotificationIdsHolder.SHARE_PROJECT_INIT_COMMIT_FAILED,
-        GithubBundle.message("share.error.cannot.finish"),
-        GithubBundle.message("share.error.created.project"),
-        " '$name' ",
-        GithubBundle.message("share.error.init.commit.failed") + GithubUtil.getErrorTextFromException(
-          e),
-        url
-      )
+      notifyProjectCreationFailure(VcsNotificationIdsHolder.SHARE_PROJECT_INIT_COMMIT_FAILED, hostServiceName, name, url,
+                                   GitBundle.message("share.error.init.commit.failed", hostServiceName) + GithubUtil.getErrorTextFromException(e))
       return false
     }
 
@@ -414,7 +418,7 @@ private class GHShareProjectService(private val project: Project, private val cs
   }
 
   // Git/collab
-  private fun filterOutIgnored(project: Project, files: Collection<VirtualFile>): Collection<VirtualFile> {
+  private fun filterOutIgnored(files: Collection<VirtualFile>): Collection<VirtualFile> {
     val changeListManager = ChangeListManager.getInstance(project)
     val vcsManager = ProjectLevelVcsManager.getInstance(project)
     return files.filter({ file -> !changeListManager.isIgnoredFile(file) && !vcsManager.isIgnored(file) })
@@ -422,37 +426,41 @@ private class GHShareProjectService(private val project: Project, private val cs
 
   // Git/collab + Service notifications
   private fun pushCurrentBranch(
-    project: Project,
+    hostServiceName: @NlsContexts.ConfigurableName String,
     repository: GitRepository,
     remoteName: String,
     remoteUrl: String,
-    name: String,
+    name: @Nls String,
     url: String,
   ): Boolean {
     val currentBranch = repository.currentBranch
     if (currentBranch == null) {
-      GithubNotifications.showErrorURL(
-        project, GithubNotificationIdsHolder.SHARE_PROJECT_INIT_PUSH_FAILED,
-        GithubBundle.message("share.error.cannot.finish"),
-        GithubBundle.message("share.error.created.project"),
-        " '$name' ",
-        GithubBundle.message("share.error.push.no.current.branch"),
-        url
-      )
+      notifyProjectCreationFailure(VcsNotificationIdsHolder.SHARE_PROJECT_INIT_PUSH_FAILED, hostServiceName, name, url,
+                                   GitBundle.message("share.error.push.no.current.branch", hostServiceName))
       return false
     }
     val result = Git.getInstance().push(repository, remoteName, remoteUrl, currentBranch.name, true)
     if (!result.success()) {
-      GithubNotifications.showErrorURL(
-        project, GithubNotificationIdsHolder.SHARE_PROJECT_INIT_PUSH_FAILED,
-        GithubBundle.message("share.error.cannot.finish"),
-        GithubBundle.message("share.error.created.project"),
-        " '$name' ",
-        GithubBundle.message("share.error.push.failed", result.errorOutputAsHtmlString),
-        url
-      )
+      notifyProjectCreationFailure(VcsNotificationIdsHolder.SHARE_PROJECT_INIT_PUSH_FAILED, hostServiceName, name, url,
+                                   GitBundle.message("share.error.push.failed", hostServiceName, result.errorOutputAsHtmlString))
       return false
     }
     return true
+  }
+
+  // Git/collab
+  private fun notifyProjectCreationFailure(
+    hostServiceName: @NlsContexts.ConfigurableName String,
+    notificationId: String,
+    name: @Nls String,
+    url: String,
+    postfix: @Nls String,
+  ) {
+    VcsNotifier.getInstance(project).notifyError(
+      notificationId,
+      GitBundle.message("share.error.cannot.finish", hostServiceName),
+      "${GitBundle.message("share.error.created.project")}${HtmlChunk.link(url, " '$name' ")}${postfix}",
+      NotificationListener.URL_OPENING_LISTENER
+    )
   }
 }

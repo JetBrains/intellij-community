@@ -4,12 +4,13 @@ package org.jetbrains.plugins.github.git.share.dialog
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.BrowserLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.github.i18n.GithubBundle
 import java.awt.BorderLayout
 import java.awt.Container
 import javax.swing.BoxLayout
@@ -18,16 +19,20 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 
 @ApiStatus.Internal
-class GithubExistingRemotesDialog(project: Project, private val remotes: List<String>) : DialogWrapper(project) {
+class GithubExistingRemotesDialog(
+  project: Project,
+  hostServiceName: @NlsContexts.ConfigurableName String,
+  private val remotes: List<String>
+) : DialogWrapper(project) {
   init {
-    title = GithubBundle.message("share.error.project.is.on.github")
-    setOKButtonText(GithubBundle.message("share.anyway.button"))
+    title = GitBundle.message("share.error.project.is.on.github", hostServiceName)
+    setOKButtonText(GitBundle.message("share.anyway.button"))
     init()
   }
 
   override fun createCenterPanel(): JComponent {
-    val mainText = JBLabel(if (remotes.size == 1) GithubBundle.message("share.action.remote.is.on.github")
-                           else GithubBundle.message("share.action.remotes.are.on.github"))
+    val mainText = JBLabel(if (remotes.size == 1) GitBundle.message("share.action.remote.is.on.github")
+                           else GitBundle.message("share.action.remotes.are.on.github"))
 
     val remotesPanel = JPanel().apply {
       layout = BoxLayout(this, BoxLayout.Y_AXIS)

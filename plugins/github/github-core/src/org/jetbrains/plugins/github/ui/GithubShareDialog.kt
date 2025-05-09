@@ -21,7 +21,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -173,15 +172,10 @@ class GithubShareDialog(
     Result(repositoryTextField.text, remoteTextField.text, privateCheckBox.isSelected, descriptionTextArea.text, accountsModel.selected)
 
   data class Result(
-    @NlsSafe val repositoryName: String,
+    val repositoryName: @NlsSafe String,
     val remoteName: String,
     val isPrivate: Boolean,
     val description: String,
     val account: GithubAccount?,
   )
-
-  @TestOnly
-  fun testSetRepositoryName(name: String) {
-    repositoryTextField.text = name
-  }
 }
