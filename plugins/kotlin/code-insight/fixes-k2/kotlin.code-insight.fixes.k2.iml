@@ -40,6 +40,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.java.psi" />
     <orderEntry type="module" module-name="intellij.java.analysis.impl" />
+    <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module" module-name="kotlin.base.analysis-api.utils" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" />

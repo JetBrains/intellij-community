@@ -17,6 +17,7 @@ jvm_library(
     "//plugins/performanceTesting/core:performanceTesting",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
+    "//platform/refactoring",
     "//plugins/kotlin/frontend-independent",
     "//platform/ide-core-impl",
     "//plugins/kotlin/base/analysis",

@@ -23,6 +23,7 @@ jvm_library(
     "@lib//:junit4",
     "@lib//:jmock",
     "//platform/observable",
+    "//platform/refactoring",
     "//platform/usageView-impl",
     "//platform/vcs-api:vcs",
     "@lib//:jmock-junit4",

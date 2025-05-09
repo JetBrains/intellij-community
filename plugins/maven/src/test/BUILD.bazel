@@ -21,6 +21,7 @@ jvm_library(
     "//plugins/maven",
     "//plugins/maven/testFramework",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/refactoring",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/testFramework",

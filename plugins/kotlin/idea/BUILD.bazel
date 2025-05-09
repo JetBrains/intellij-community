@@ -45,6 +45,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:guava",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/refactoring",
     "//platform/usageView-impl",
     "//platform/util/jdom",
     "@lib//:gson",

@@ -31,6 +31,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-fir",
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-analysis-api-k2",
+    "//platform/refactoring",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/psi",
     "//plugins/kotlin/base/resources:kotlin-base-resources",

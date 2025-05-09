@@ -26,6 +26,7 @@ jvm_library(
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/refactoring",
     "//plugins/kotlin/code-insight/api",
     "//platform/core-api:core",
     "@lib//:kotlinc-analysis-api",

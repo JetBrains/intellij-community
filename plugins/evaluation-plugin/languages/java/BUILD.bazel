@@ -22,6 +22,7 @@ jvm_library(
     "//plugins/evaluation-plugin/languages",
     "//plugins/evaluation-plugin/core",
     "//plugins/gradle:gradle-common",
+    "//platform/refactoring",
   ],
   runtime_deps = [":java_resources"]
 )
@@ -41,6 +42,7 @@ jvm_library(
     "//plugins/evaluation-plugin/languages",
     "//plugins/evaluation-plugin/core",
     "//plugins/gradle:gradle-common",
+    "//platform/refactoring",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
   ],

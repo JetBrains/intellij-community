@@ -24,6 +24,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/refactoring",
     "//plugins/kotlin/plugin/k2",
     "//plugins/kotlin/fir",
     "//java/testFramework",

@@ -9,6 +9,7 @@ jvm_library(
   deps = [
     "//platform/external-system-api:externalSystem",
     "//platform/external-system-impl:externalSystem-impl",
+    "//platform/refactoring",
     "//platform/testFramework",
     "//platform/platform-util-io:ide-util-io",
     "@lib//:assert_j",

@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/editor-ui-api:editor-ui",
+    "//platform/refactoring",
     "//platform/util",
     "//platform/lang-api:lang",
     "//platform/lang-impl",
@@ -33,6 +34,7 @@ jvm_library(
   associates = [":typeMigration"],
   deps = [
     "//platform/editor-ui-api:editor-ui",
+    "//platform/refactoring",
     "//platform/util",
     "//platform/lang-api:lang",
     "//platform/lang-impl",

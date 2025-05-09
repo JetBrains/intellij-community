@@ -42,7 +42,7 @@
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.indexing.impl" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
-    <orderEntry type="module" module-name="intellij.platform.refactoring" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module" module-name="intellij.platform.usageView.impl" />
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
     <orderEntry type="library" name="swingx" level="project" />

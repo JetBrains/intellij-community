@@ -31,6 +31,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/lang-api:lang",
     "//java/java-impl:impl",
+    "//platform/refactoring",
     "//xml/impl",
     "//platform/util/progress",
     "//platform/usageView",

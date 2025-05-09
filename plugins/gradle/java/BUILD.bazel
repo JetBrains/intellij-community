@@ -22,6 +22,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//java/idea-ui:ui",
     "//platform/observable",
+    "//platform/refactoring",
     "//platform/usageView",
     "//platform/lang-api:lang",
     "//platform/external-system-api/dependency-updater:externalSystem-dependencyUpdater",

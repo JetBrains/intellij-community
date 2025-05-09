@@ -27,6 +27,7 @@ jvm_library(
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
+    "//platform/refactoring",
     "//platform/usageView",
     "@lib//:kotlin-reflect",
     "@lib//:kotlinc-kotlin-compiler-common",

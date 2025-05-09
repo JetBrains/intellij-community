@@ -16,6 +16,7 @@ jvm_library(
     "//java/openapi:java",
     "//java/testFramework/shared",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/refactoring",
     "//platform/util",
     "//libraries/junit4",
     "//platform/util/jdom",

@@ -22,6 +22,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/analysis-impl",
     "//platform/core-ui",
+    "//platform/refactoring",
     "//xml/xml-parser:parser",
     "//platform/core-api:core",
     "//platform/util/jdom",

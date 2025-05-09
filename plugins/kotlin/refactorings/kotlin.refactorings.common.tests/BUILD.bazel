@@ -13,6 +13,7 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
     "//platform/editor-ui-api:editor-ui",
+    "//platform/refactoring",
     "//plugins/kotlin/base/test:test_test_lib",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/tests-common:tests-common_test_lib",

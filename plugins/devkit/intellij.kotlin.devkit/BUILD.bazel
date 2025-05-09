@@ -24,6 +24,7 @@ jvm_library(
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/refactoring",
     "//platform/util",
     "//platform/core-api:core",
     "//plugins/devkit/devkit-core:core",

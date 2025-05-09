@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/refactoring",
     "//python:python-community-impl",
     "//plugins/ide-features-trainer:featuresTrainer",
     "//platform/platform-impl:ide-impl",
@@ -39,6 +40,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/refactoring",
     "//python:python-community-impl",
     "//plugins/ide-features-trainer:featuresTrainer",
     "//plugins/ide-features-trainer:featuresTrainer_test_lib",

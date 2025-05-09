@@ -41,6 +41,7 @@ jvm_library(
     "//platform/lang-impl",
     "//java/java-psi-api:psi",
     "//java/java-analysis-impl:analysis-impl",
+    "//platform/refactoring",
     "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
     "//plugins/kotlin/base/code-insight",
     "//plugins/kotlin/code-insight/utils",

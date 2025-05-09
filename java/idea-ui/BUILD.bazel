@@ -21,6 +21,7 @@ jvm_library(
     "//java/java-impl:impl",
     "//platform/ide-core-impl",
     "//java/java-impl-refactorings:impl-refactorings",
+    "//platform/refactoring",
     "//platform/util/progress",
     "//aether-dependency-resolver:java-aetherDependencyResolver",
     "//platform/vcs-impl",

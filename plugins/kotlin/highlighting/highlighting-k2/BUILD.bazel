@@ -24,6 +24,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   deps = [
+    "//platform/refactoring",
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -67,6 +68,7 @@ jvm_library(
   kotlinc_opts = ":custom",
   associates = [":kotlin-highlighting-k2"],
   deps = [
+    "//platform/refactoring",
     "//plugins/kotlin/plugin/k2",
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",

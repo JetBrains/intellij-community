@@ -18,6 +18,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/projectModel-api:projectModel",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/core-ui",
   ],
   runtime_deps = [":shared_resources"]
 )

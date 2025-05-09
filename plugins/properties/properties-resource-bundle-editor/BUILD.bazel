@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/editor-ui-api:editor-ui",
+    "//platform/refactoring",
     "//platform/util",
     "//platform/lang-impl",
     "//plugins/properties/properties-psi-impl:backend-psi",
@@ -40,6 +41,7 @@ jvm_library(
   associates = [":resource-bundle-editor"],
   deps = [
     "//platform/editor-ui-api:editor-ui",
+    "//platform/refactoring",
     "//platform/util",
     "//platform/lang-impl",
     "//plugins/properties/properties-psi-impl:backend-psi",

@@ -13,6 +13,7 @@ jvm_library(
     "//platform/core-impl",
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
+    "//platform/refactoring",
     "//platform/statistics",
     "//java/openapi:java",
     "//java/java-psi-impl:psi-impl",

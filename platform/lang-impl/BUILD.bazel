@@ -116,7 +116,6 @@ jvm_library(
   ],
   exports = [
     "//platform/lang-api:lang",
-    "//platform/refactoring",
     "//platform/analysis-impl",
     "//platform/structure-view-impl:structureView-impl",
     "//platform/util",

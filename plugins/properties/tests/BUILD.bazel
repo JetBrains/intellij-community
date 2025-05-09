@@ -18,6 +18,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/refactoring",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//spellchecker",

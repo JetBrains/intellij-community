@@ -24,6 +24,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/editor-ui-api:editor-ui",
+    "//platform/refactoring",
     "//xml/dom-openapi:dom",
     "//java/openapi:java",
     "//java/debugger/openapi:java-debugger",
@@ -84,6 +85,7 @@ jvm_library(
   associates = [":groovy"],
   deps = [
     "//platform/editor-ui-api:editor-ui",
+    "//platform/refactoring",
     "//xml/dom-openapi:dom",
     "//java/openapi:java",
     "//java/debugger/openapi:java-debugger",

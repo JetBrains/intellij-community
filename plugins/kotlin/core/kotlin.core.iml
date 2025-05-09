@@ -11,6 +11,7 @@
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="vavr" level="project" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
+    <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="library" name="javax-inject" level="project" />
     <orderEntry type="library" name="Guava" level="project" />

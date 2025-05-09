@@ -26,6 +26,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/ide-core-impl",
     "//platform/core-api:core",
+    "//platform/refactoring",
     "//platform/smRunner",
     "//platform/smRunner:smRunner_test_lib",
     "@lib//:vavr",

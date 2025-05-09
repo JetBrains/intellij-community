@@ -23,6 +23,7 @@
     <orderEntry type="module" module-name="intellij.java.impl" />
     <orderEntry type="module" module-name="intellij.performanceTesting.vcs" />
     <orderEntry type="module" module-name="intellij.java.impl.refactorings" />
+    <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module" module-name="intellij.java" />
   </component>
 </module>
