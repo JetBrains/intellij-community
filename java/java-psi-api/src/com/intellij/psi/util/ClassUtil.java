@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
+import com.intellij.ide.util.JavaAnonymousClassesHelper;
+import com.intellij.ide.util.JavaLocalClassesHelper;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
@@ -213,6 +215,12 @@ public final class ClassUtil {
     return Character.isDigit(name.charAt(0));
   }
 
+  /**
+   * Returns the binary class name for top-level and nested classes.
+   *
+   * @deprecated Does not work for anonymous classes and local classes. Use {@link #getBinaryClassName} instead.
+   */
+  @Deprecated
   public static @Nullable @NlsSafe String getJVMClassName(@NotNull PsiClass aClass) {
     final PsiClass containingClass = aClass.getContainingClass();
     if (containingClass != null) {
@@ -223,6 +231,31 @@ public final class ClassUtil {
       return parentName + "$" + aClass.getName();
     }
     return aClass.getQualifiedName();
+  }
+
+  /**
+   * Returns the binary class name, i.e. the string that would be returned by {@link Class#getName}.
+   *
+   * <p>Inner classes ({@code Foo$Bar}), anonymous ({@code Foo$1}), and local ({@code Foo$1Bar}) classes are taken into account.
+   */
+  public static @Nullable @NlsSafe String getBinaryClassName(@NotNull PsiClass aClass) {
+    if (PsiUtil.isLocalOrAnonymousClass(aClass)) {
+      PsiClass parentClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
+      if (parentClass == null) {
+        return null;
+      }
+      String parentName = getBinaryClassName(parentClass);
+      if (parentName == null) {
+        return null;
+      }
+      if (aClass instanceof PsiAnonymousClass) {
+        return parentName + JavaAnonymousClassesHelper.getName((PsiAnonymousClass) aClass);
+      } else {
+        return parentName + JavaLocalClassesHelper.getName(aClass);
+      }
+    }
+
+    return getJVMClassName(aClass);
   }
 
   /**
