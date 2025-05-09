@@ -361,7 +361,7 @@ public class LiveTemplateTest extends LiveTemplateTestCase {
       TemplateManagerImpl.getApplicableContextTypes(TemplateActionContext.expanding(myFixture.getFile(), getEditor()));
     assertEquals(2, types.size());
     assertTrue(types.contains(TemplateContextTypes.getByClass(JavaCodeContextType.Declaration.class)));
-    assertTrue(types.contains(TemplateContextTypes.getByClass(JavaCodeContextType.NormalClassDeclaration.class)));
+    assertTrue(types.contains(TemplateContextTypes.getByClass(JavaCodeContextType.NormalClassDeclarationBeforeShortMainMethod.class)));
 
     configureFromFileText("a.txt", "class Foo { <caret>xxx }");
     assertInstanceOf(assertOneElement(

@@ -268,17 +268,32 @@ public abstract class JavaCodeContextType extends TemplateContextType {
     }
   }
 
-  public static final class NormalClassDeclaration extends JavaCodeContextType {
+  public static final class NormalClassDeclarationBeforeShortMainMethod extends JavaCodeContextType {
     private final JavaCodeContextType declarationContext = new Declaration();
-    private final JavaCodeContextType implicitClassContext = new ImplicitClassDeclaration();
 
-    public NormalClassDeclaration() {
-      super(JavaBundle.message("live.template.context.normal.class.declaration"));
+    public NormalClassDeclarationBeforeShortMainMethod() {
+      super(JavaBundle.message("live.template.context.normal.class.before.instance.main.declaration"));
     }
 
     @Override
     protected boolean isInContext(@NotNull PsiElement element) {
-      return declarationContext.isInContext(element) && !implicitClassContext.isInContext(element);
+      return declarationContext.isInContext(element) && !PsiUtil.isAvailable(JavaFeature.IMPLICIT_CLASSES, element);
+    }
+  }
+
+  public static final class NormalClassDeclarationAfterShortMainMethod extends JavaCodeContextType {
+    private final JavaCodeContextType declarationContext = new Declaration();
+    private final JavaCodeContextType implicitClassContext = new ImplicitClassDeclaration();
+
+    public NormalClassDeclarationAfterShortMainMethod() {
+      super(JavaBundle.message("live.template.context.normal.class.after.instance.main.declaration"));
+    }
+
+    @Override
+    protected boolean isInContext(@NotNull PsiElement element) {
+      return PsiUtil.isAvailable(JavaFeature.IMPLICIT_CLASSES, element) &&
+             declarationContext.isInContext(element) &&
+             !implicitClassContext.isInContext(element);
     }
   }
 }
