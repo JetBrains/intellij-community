@@ -21,6 +21,8 @@ import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.intellij.ui.EditorCustomization;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -237,7 +239,28 @@ public final class ANSIColoredConsoleColorsPage implements ColorSettingsPage, Di
 
   @Override
   public @NotNull String getDisplayName() {
+    return getSearchableName();
+  }
+
+  @ApiStatus.Internal
+  public static @Nls @NotNull String getSearchableName() {
     return OptionsBundle.message("color.settings.console.name");
+  }
+
+  @ApiStatus.Internal
+  public static @Nls @NotNull String getSearchableReworkedTerminalName() {
+    // We need something to provide to com.intellij.application.options.colors.ColorAndFontOptions.selectOrEditColor as a name.
+    // However, due to the incredibly complicated interaction between
+    // com.intellij.application.options.colors.OptionsPanelImpl.processListValueChanged,
+    // Swing events and their listeners, it turns out that if we try to select "Reworked terminal" (the parent node),
+    // then the selection is reset immediately as the configurable is shown.
+    // The reason for this is that some previously saved selection is loaded.
+    // The only way to avoid this without changing anything in that complicated logic
+    // is to pass something that can overwrite the previously saved selection.
+    // However, according to processListValueChanged, only nodes that implement EditorSchemeAttributeDescriptor are saved.
+    // The "Reworked terminal" parent doesn't implement it (it's just a String), but individual colors do.
+    // So we select the first color.
+    return OptionsBundle.message("color.settings.terminal.black");
   }
 
   @Override

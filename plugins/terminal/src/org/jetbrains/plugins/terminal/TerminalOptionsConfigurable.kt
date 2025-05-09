@@ -1,8 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal
 
+import com.intellij.application.options.colors.ColorAndFontOptions
 import com.intellij.codeWithMe.ClientId
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton
+import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.client.ClientKind
@@ -13,6 +15,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.options.colors.pages.ANSIColoredConsoleColorsPage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
@@ -22,6 +25,7 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.FontComboBox
 import com.intellij.ui.FontInfoRenderer
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
 import com.intellij.ui.dsl.builder.*
@@ -37,6 +41,7 @@ import org.jetbrains.plugins.terminal.block.feedback.askForFeedbackIfReworkedTer
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
 import java.awt.Color
+import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.JTextField
 import javax.swing.UIManager
@@ -168,6 +173,16 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
               setter = { fontSettings = fontSettings.copy(columnSpacing = TerminalColumnSpacing.parse(it)) },
             )
         }
+
+        row {
+          cell(ActionLink(message("settings.colors")) { actionEvent ->
+            ColorAndFontOptions.selectOrEditColor(
+              DataManager.getInstance().getDataContext(actionEvent.source as? Component?),
+              ANSIColoredConsoleColorsPage.getSearchableReworkedTerminalName(),
+              ANSIColoredConsoleColorsPage.getSearchableName(),
+            )
+          })
+        }.visibleIf(terminalEngineComboBox.selectedValueIs(TerminalEngine.REWORKED))
 
         onApply {
           TerminalFontSettingsService.getInstance().setSettings(fontSettings)
