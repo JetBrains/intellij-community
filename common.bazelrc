@@ -45,7 +45,7 @@ common --symlink_prefix=out/bazel-
 
 # FS Watch
 build --watchfs
-build --experimental_windows_watchfs
+#build --experimental_windows_watchfs
 build:ci --nowatchfs
 
 common --enable_platform_specific_config
