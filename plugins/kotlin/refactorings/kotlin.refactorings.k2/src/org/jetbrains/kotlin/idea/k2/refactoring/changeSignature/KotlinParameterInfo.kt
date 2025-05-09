@@ -102,6 +102,13 @@ class KotlinParameterInfo(
 
     fun getInheritedName(inheritor: KtCallableDeclaration?): String {
         val name = this.name.quoteIfNeeded()
+
+        if (wasContextParameter) {
+            val contextParameters = inheritor?.modifierList?.contextReceiverList?.contextParameters() ?: return name
+            if (oldIndex < 0 || oldIndex >= contextParameters.size) return name
+            return contextParameters[oldIndex].name ?: name
+        }
+
         if (inheritor is KtFunctionLiteral && inheritor.valueParameters.size == 0 && oldIndex == 0) {
             //preserve default name
             return "it"

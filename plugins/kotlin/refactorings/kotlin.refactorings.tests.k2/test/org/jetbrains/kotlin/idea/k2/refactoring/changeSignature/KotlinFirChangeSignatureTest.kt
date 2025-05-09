@@ -291,4 +291,8 @@ class KotlinFirChangeSignatureTest :
     fun testFromContextParameterNormalParameterConflict() = doTest {
         newParameters[0].isContextParameter = false
     }
+
+    fun testContextParameterAndNewParameter() = doTest {
+        addParameter(createKotlinIntParameter())
+    }
 }
