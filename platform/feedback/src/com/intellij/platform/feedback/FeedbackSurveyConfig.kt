@@ -2,12 +2,8 @@
 package com.intellij.platform.feedback
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
-import com.intellij.platform.feedback.impl.checkIsFeedbackCollectionDeadlineNotPast
-import com.intellij.platform.feedback.impl.checkIsIdeEAPIfRequired
 import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.datetime.LocalDate
 import org.jetbrains.annotations.Nls
 
@@ -60,18 +56,6 @@ interface FeedbackSurveyConfig {
   fun checkExtraConditionSatisfied(project: Project): Boolean
 
   /**
-   * Checks whether the extra conditions for showing the survey by an explicit user action are satisfied.
-   *
-   * The same as [checkExtraConditionSatisfied] but for the case when the user intentionally submits
-   * feedback through an explicit feature-specific action and not through a regular survey notification.
-   *
-   * Normally it imposes less restrictions, as, for example, [checkExtraConditionSatisfied] might check whether
-   * the user has been using a specific feature long enough before showing a survey notification,
-   * but when the user explicitly wants to provide feedback already, such conditions are usually irrelevant.
-   */
-  fun checkExtraConditionSatisfiedForExplicitUserAction(project: Project): Boolean = true
-
-  /**
    * Returns a notification encouraging the user to leave feedback, which will be shown to the user.
    */
   fun createNotification(project: Project, forTest: Boolean): RequestFeedbackNotification
@@ -106,30 +90,4 @@ interface FeedbackSurveyConfig {
     return {}
   }
 
-}
-
-/**
- * Checks whether it's possible for the user to explicitly submit feedback.
- *
- * Intended to be used by feature-specific feedback actions,
- * where this function is used for [com.intellij.openapi.actionSystem.AnAction.update]
- * and [com.intellij.platform.feedback.InIdeFeedbackSurveyConfig.showFeedbackDialog]
- * is used for [com.intellij.openapi.actionSystem.AnAction.actionPerformed].
- */
-@RequiresBackgroundThread
-fun FeedbackSurveyConfig.isSuitableToShowByExplicitUserAction(project: Project): Boolean {
-  val commonConditionsForAllSurveys = if (Registry.`is`("platform.feedback.ignore.common.conditions.for.all.surveys", false)) {
-    true
-  }
-  else {
-    // Only a subset is checked as compared to com.intellij.platform.feedback.impl.FeedbackSurveyUtilsKt.isSuitableToShow.
-    // This is because if the user wants to explicitly submit feedback, we shouldn't prevent it just because the feedback is already sent,
-    // or because a feedback notification was shown several times.
-    // But we still want feedback submission to be available only for the right IDE, right EAP/release mode
-    // and don't want to allow outdated feedback.
-    checkIdeIsSuitable() &&
-    checkIsFeedbackCollectionDeadlineNotPast() &&
-    checkIsIdeEAPIfRequired()
-  }
-  return commonConditionsForAllSurveys && checkExtraConditionSatisfiedForExplicitUserAction(project)
 }
