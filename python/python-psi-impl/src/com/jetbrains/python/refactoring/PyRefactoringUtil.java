@@ -75,6 +75,15 @@ public final class PyRefactoringUtil {
     if (parent == null) {
       return null;
     }
+
+    // Allow function call where arguments are on multiple lines
+    if (parent instanceof PyArgumentList || parent instanceof PyKeywordArgument) {
+      PyCallExpression callExpression = PsiTreeUtil.getParentOfType(parent, PyCallExpression.class);
+      if (callExpression != null) {
+        return callExpression;
+      }
+    }
+
     // If it is PyIfPart for example, parent if statement, we should deny
     if (!(parent instanceof PyExpression)){
       return null;
