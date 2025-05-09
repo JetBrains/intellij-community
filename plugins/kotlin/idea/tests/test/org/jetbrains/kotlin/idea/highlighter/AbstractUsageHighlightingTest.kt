@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
-import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingComputer
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.editor.colors.EditorColors
@@ -36,7 +36,7 @@ abstract class AbstractUsageHighlightingTest : KotlinLightCodeInsightFixtureTest
         val ranges =
             myFixture.editor.markupModel.allHighlighters.filter { isUsageHighlighting(it) }.mapNotNull { it.asTextRange } +
                     (myFixture.file.findElementAt(myFixture.editor.caretModel.offset - 1)?.parent?.let {
-            val usages = IdentifierHighlighterPass.getUsages(it, myFixture.file, false)
+                        val usages = IdentifierHighlightingComputer.getUsages(it, myFixture.file, false)
             usages
         } ?: emptyList())
 

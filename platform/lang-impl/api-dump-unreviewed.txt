@@ -2266,7 +2266,6 @@ f:com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection
 - setRunAnnotators(Z):com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection
 - setRunVisitors(Z):com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection
 f:com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass
-- s:clearMyHighlights(com.intellij.openapi.editor.Document,com.intellij.openapi.project.Project):V
 - doAdditionalCodeBlockHighlighting():V
 - doCollectInformation(com.intellij.codeInsight.daemon.impl.HighlightingSession):V
 - s:getHighlightUsages(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,Z,java.util.Collection,java.util.Collection):V
