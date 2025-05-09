@@ -12,7 +12,7 @@ interface PyAddSdkProvider {
   /**
    * Returns [PyAddSdkView] if applicable.
    */
-  fun createView(project: Project?,
+  fun createView(project: Project,
                  module: Module?,
                  newProjectPath: String?,
                  existingSdks: List<Sdk>,

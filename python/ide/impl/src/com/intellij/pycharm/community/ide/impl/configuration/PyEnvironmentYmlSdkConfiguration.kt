@@ -40,9 +40,8 @@ import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import com.jetbrains.python.sdk.flavors.listCondaEnvironments
-import com.jetbrains.python.sdk.setAssociationToModule
+import com.jetbrains.python.sdk.setAssociationToModuleAsync
 import com.jetbrains.python.sdk.showSdkExecutionException
-import com.jetbrains.python.ui.pyModalBlocking
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import java.awt.BorderLayout
@@ -56,14 +55,12 @@ import javax.swing.JPanel
  */
 internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
   private val LOGGER = Logger.getInstance(PyEnvironmentYmlSdkConfiguration::class.java)
-
   @RequiresBackgroundThread
   override fun createAndAddSdkForConfigurator(module: Module): Sdk? = createAndAddSdk(module, Source.CONFIGURATOR)
 
   override fun getIntention(module: Module): @IntentionName String? = getEnvironmentYml(module)?.let {
     PyCharmCommunityCustomizationBundle.message("sdk.create.condaenv.suggestion")
   }
-
   @RequiresBackgroundThread
   override fun createAndAddSdkForInspection(module: Module): Sdk? = createAndAddSdk(module, Source.INSPECTION)
 
@@ -123,7 +120,7 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
     ApplicationManager.getApplication().invokeAndWait {
       LOGGER.debug("Adding conda environment: ${sdk.homePath}, associated ${shared}}, module path ${basePath})")
       if (!shared) {
-        pyModalBlocking { sdk.setAssociationToModule(module) }
+        sdk.setAssociationToModuleAsync(module)
       }
 
       SdkConfigurationUtil.addSdk(sdk)

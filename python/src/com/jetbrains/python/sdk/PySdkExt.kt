@@ -249,7 +249,6 @@ fun showSdkExecutionException(sdk: Sdk?, e: ExecutionException, @NlsContexts.Dia
 }
 
 @Internal
-
 fun Sdk.isAssociatedWithModule(module: Module?): Boolean {
   val basePath = module?.basePath
   val associatedPath = associatedModulePath
@@ -259,7 +258,6 @@ fun Sdk.isAssociatedWithModule(module: Module?): Boolean {
 }
 
 @Internal
-
 fun Sdk.isAssociatedWithAnotherModule(module: Module?): Boolean {
   val basePath = module?.basePath ?: return false
   val associatedPath = associatedModulePath ?: return false
@@ -402,7 +400,7 @@ fun getInnerVirtualEnvRoot(sdk: Sdk): VirtualFile? {
   }
 }
 
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false)
 internal fun suggestAssociatedSdkName(sdkHome: String, associatedPath: String?): String? {
   // please don't forget to update com.jetbrains.python.inspections.PyInterpreterInspection.Visitor#getSuitableSdkFix
   // after changing this method

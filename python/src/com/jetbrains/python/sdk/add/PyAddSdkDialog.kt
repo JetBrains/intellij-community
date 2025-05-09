@@ -46,7 +46,7 @@ import javax.swing.JPanel
  *
  */
 class PyAddSdkDialog private constructor(
-  private val project: Project?,
+  private val project: Project,
   private val module: Module?,
   private val existingSdks: List<Sdk>,
 ) : DialogWrapper(project) {
@@ -340,7 +340,7 @@ class PyAddSdkDialog private constructor(
     private const val WIZARD_CARD_PANE = "Wizard"
 
     @JvmStatic
-    fun show(project: Project?, module: Module?, existingSdks: List<Sdk>, sdkAddedCallback: Consumer<Sdk?>) {
+    fun show(project: Project, module: Module?, existingSdks: List<Sdk>, sdkAddedCallback: Consumer<Sdk?>) {
       val dialog = PyAddSdkDialog(project = project, module = module, existingSdks = existingSdks)
       dialog.init()
 
@@ -354,7 +354,7 @@ class PyAddSdkDialog private constructor(
      * `org.jetbrains.plugins.remote-run` plugin is disabled.
      */
     private fun PyAddSdkProvider.safeCreateView(
-      project: Project?,
+      project: Project,
       module: Module?,
       existingSdks: List<Sdk>,
       context: UserDataHolder,

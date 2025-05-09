@@ -48,7 +48,7 @@ public final class MacPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empt
     return PyFlavorData.Empty.class;
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false)
   @Override
   protected @NotNull Collection<@NotNull Path> suggestLocalHomePathsImpl(@Nullable Module module, @Nullable UserDataHolder context) {
     Set<Path> candidates = new HashSet<>();

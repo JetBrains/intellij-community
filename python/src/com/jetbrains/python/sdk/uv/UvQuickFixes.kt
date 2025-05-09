@@ -10,26 +10,25 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.inspections.requirement.RunningPackagingTasksListener
 import com.jetbrains.python.packaging.PyPackageManagerUI
 import com.jetbrains.python.sdk.pythonSdk
-import com.jetbrains.python.sdk.setAssociationToModule
-import com.jetbrains.python.ui.pyModalBlocking
+import com.jetbrains.python.sdk.setAssociationToModuleAsync
 
 internal class UvAssociationQuickFix : LocalQuickFix {
   private val quickFixName = PyBundle.message("python.sdk.quickfix.use.uv.name")
 
   override fun getFamilyName() = quickFixName
 
-  override fun applyFix(project: Project, descriptor: ProblemDescriptor): Unit = pyModalBlocking {
+  override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val element = descriptor.psiElement
     if (element == null) {
-      return@pyModalBlocking
+      return
     }
 
     val module = ModuleUtilCore.findModuleForPsiElement(element)
     if (module == null) {
-      return@pyModalBlocking
+      return
     }
 
-    module.pythonSdk?.setAssociationToModule(module)
+    module.pythonSdk?.setAssociationToModuleAsync(module)
   }
 }
 
@@ -47,7 +46,9 @@ class UvInstallQuickFix : LocalQuickFix {
     }
   }
 
-  override fun getFamilyName() = PyBundle.message("python.sdk.intention.family.name.install.requirements.from.uv.lock")
+  override fun getFamilyName(): String {
+    return PyBundle.message("python.sdk.intention.family.name.install.requirements.from.uv.lock")
+  }
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val element = descriptor.psiElement

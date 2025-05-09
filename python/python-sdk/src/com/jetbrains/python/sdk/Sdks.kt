@@ -11,6 +11,8 @@ import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.common.io.Resources
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -191,6 +193,28 @@ object SdksKeeper {
   private fun load() = configUrl?.let { Resources.toString(it, StandardCharsets.UTF_8) }
 }
 
+// Non suspend version is required for all cases where it is possible to call it from quick-fixes,
+// as right now calling pyModuleBlocking from quick-fix is not allowed in EDT.
+@ApiStatus.Internal
+fun Sdk.setAssociationToModuleAsync(module: Module) {
+  val path = module.basePath
+  assert(path != null) { "Module $module has not paths, and can't be associated" }
+
+  val data = getOrCreateAdditionalData()
+    .also {
+      it.associatedModulePath = path
+    }
+
+  val modificator = sdkModificator
+  modificator.sdkAdditionalData = data
+
+  runInEdt {
+    ApplicationManager.getApplication().runWriteAction {
+      modificator.commitChanges()
+    }
+  }
+}
+
 @ApiStatus.Internal
 suspend fun Sdk.setAssociationToModule(module: Module) {
   val path = module.basePath
@@ -200,12 +224,10 @@ suspend fun Sdk.setAssociationToModule(module: Module) {
 
 @ApiStatus.Internal
 suspend fun Sdk.setAssociationToPath(path: String?) {
-  val data = getOrCreateAdditionalData().also {
-    when {
-      path != null -> it.associatedModulePath = path
-      else -> it.associatedModulePath = null
+  val data = getOrCreateAdditionalData()
+    .also {
+      it.associatedModulePath = path
     }
-  }
 
   val modificator = sdkModificator
   modificator.sdkAdditionalData = data

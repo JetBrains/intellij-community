@@ -45,7 +45,7 @@ import javax.swing.JPanel
  * The panel that is supposed to be used both for local and non-local target-based versions of "New Interpreter" dialog.
  */
 internal class PyAddTargetBasedSdkPanel(
-  private val project: Project?,
+  private val project: Project,
   private val module: Module?,
   private val existingSdks: List<Sdk>,
   private val targetSupplier: Supplier<TargetEnvironmentConfiguration>?,

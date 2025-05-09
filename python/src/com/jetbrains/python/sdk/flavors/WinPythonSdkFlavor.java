@@ -85,7 +85,7 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
     return PyFlavorData.Empty.class;
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false)
   @Override
   protected final @NotNull Collection<@NotNull Path> suggestLocalHomePathsImpl(final @Nullable Module module,
                                                                                final @Nullable UserDataHolder context) {
@@ -95,7 +95,7 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
     return ContainerUtil.map(candidates, Path::of);
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false)
   private void findInCandidatePaths(Set<String> candidates, String... exe_names) {
     @SuppressWarnings("TestOnlyProblems")
     var root = System.getProperty(ROOT_TO_SEARCH_PYTHON_IN, "C:\\");

@@ -45,7 +45,7 @@ public final class UnixPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Emp
     return PyFlavorData.Empty.class;
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false)
   @Override
   protected @NotNull Collection<@NotNull Path> suggestLocalHomePathsImpl(@Nullable Module module, @Nullable UserDataHolder context) {
     return getDefaultUnixPythons();

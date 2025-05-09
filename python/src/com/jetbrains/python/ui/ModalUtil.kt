@@ -8,7 +8,6 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PySdkBundle
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.SwingUtilities
 
 /**
@@ -25,9 +24,7 @@ fun <T> pyModalBlocking(modalTaskOwner: ModalTaskOwner = ModalTaskOwner.guess(),
 /**
  * It is *not* recommended to use this function. Prefer suspend functions.
  */
-@ApiStatus.Obsolete
-@ApiStatus.Internal
-fun <T> pyMayBeModalBlocking(modalTaskOwner: ModalTaskOwner = ModalTaskOwner.guess(), code: suspend () -> T): T =
+internal fun <T> pyMayBeModalBlocking(modalTaskOwner: ModalTaskOwner = ModalTaskOwner.guess(), code: suspend () -> T): T =
   if (SwingUtilities.isEventDispatchThread()) {
     pyModalBlocking(modalTaskOwner, code)
   }

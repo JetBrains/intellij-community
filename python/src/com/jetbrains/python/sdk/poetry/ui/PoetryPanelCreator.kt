@@ -16,7 +16,7 @@ import com.jetbrains.python.ui.pyModalBlocking
 import java.util.function.Supplier
 
 fun createPoetryPanel(
-  project: Project?,
+  project: Project,
   module: Module?,
   existingSdks: List<Sdk>,
   newProjectPath: String?,

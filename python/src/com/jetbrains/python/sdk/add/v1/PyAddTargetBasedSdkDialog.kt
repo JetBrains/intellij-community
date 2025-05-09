@@ -16,7 +16,7 @@ import javax.swing.JComponent
 /**
  * Use [PyAddTargetBasedSdkDialog.Companion.show] to instantiate and show the dialog.
  */
-class PyAddTargetBasedSdkDialog private constructor(private val project: Project?,
+class PyAddTargetBasedSdkDialog private constructor(private val project: Project,
                                                     private val module: Module?,
                                                     private val existingSdks: List<Sdk>,
                                                     private val targetEnvironmentConfiguration: TargetEnvironmentConfiguration?)
@@ -58,7 +58,7 @@ class PyAddTargetBasedSdkDialog private constructor(private val project: Project
      * target.
      */
     @JvmStatic
-    fun show(project: Project?,
+    fun show(project: Project,
              module: Module?,
              existingSdks: List<Sdk>,
              sdkAddedCallback: Consumer<Sdk?>,

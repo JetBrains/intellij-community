@@ -9,19 +9,20 @@ import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.sdk.*
-import com.jetbrains.python.sdk.add.PyAddSdkView
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
 import com.jetbrains.python.sdk.add.addInterpretersAsync
 import com.jetbrains.python.sdk.poetry.*
+import com.jetbrains.python.ui.pyMayBeModalBlocking
 import com.jetbrains.python.ui.pyModalBlocking
+import com.jetbrains.python.util.runWithModalBlockingOrInBackground
 import java.awt.BorderLayout
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
 
 
 class PyAddExistingPoetryEnvPanel(
-  private val project: Project?,
+  private val project: Project,
   private val module: Module?,
   private val existingSdks: List<Sdk>,
   override var newProjectPath: String?,
@@ -41,9 +42,8 @@ class PyAddExistingPoetryEnvPanel(
     add(formPanel, BorderLayout.NORTH)
     addInterpretersAsync(sdkComboBox) {
       val existingSdkPaths = sdkHomes(existingSdks)
-
       val moduleSdks = allModules(project).parallelStream().flatMap { module ->
-        val sdks = pyModalBlocking {
+        val sdks = pyMayBeModalBlocking {
           detectPoetryEnvs(module, existingSdkPaths, module.basePath)
         }.filterNot { it.isAssociatedWithAnotherModule(module) }
 
@@ -51,8 +51,8 @@ class PyAddExistingPoetryEnvPanel(
         sdks.stream()
       }.toList()
 
-      val rootSdks = pyModalBlocking {
-        detectPoetryEnvs(module, existingSdkPaths, project?.basePath ?: newProjectPath)
+      val rootSdks = pyMayBeModalBlocking {
+        detectPoetryEnvs(module, existingSdkPaths, project.basePath ?: newProjectPath)
       }.filterNot { it.isAssociatedWithAnotherModule(module) }
 
       val moduleSdkPaths = moduleSdks.map { it.name }.toSet()
@@ -63,14 +63,15 @@ class PyAddExistingPoetryEnvPanel(
   }
 
   override fun validateAll(): List<ValidationInfo> {
-    return listOfNotNull(validateSdkComboBox(sdkComboBox, this))
+    return emptyList()
+
   }
 
   override fun getOrCreateSdk(): Sdk? {
     return when (val sdk = sdkComboBox.selectedSdk) {
       is PyDetectedSdk -> {
         val mappedModule = sdkToModule[sdk.name] ?: module
-        pyModalBlocking {
+        runWithModalBlockingOrInBackground(project, msg = PyBundle.message("python.sdk.dialog.title.setting.up.poetry.environment")) {
           setupPoetrySdkUnderProgress(project, mappedModule, existingSdks, newProjectPath,
                                       getPythonExecutable(sdk.name), false, sdk.name).onSuccess {
             PySdkSettings.instance.preferredVirtualEnvBaseSdk = getPythonExecutable(sdk.name)
@@ -78,14 +79,6 @@ class PyAddExistingPoetryEnvPanel(
         }.getOrNull()
       }
       else -> sdk
-    }
-  }
-
-  // FIXME: @Egor
-  fun validateSdkComboBox(field: PySdkPathChoosingComboBox, view: PyAddSdkView): ValidationInfo? {
-    return when (val sdk = field.selectedSdk) {
-      null -> ValidationInfo(PySdkBundle.message("python.sdk.field.is.empty"), field)
-      else -> null
     }
   }
 }

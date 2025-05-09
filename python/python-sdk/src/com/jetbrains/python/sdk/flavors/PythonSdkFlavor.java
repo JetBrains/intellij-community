@@ -99,7 +99,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   /**
    * Flavors that are aware of some system pythons must return them there.
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false)
   protected @NotNull Collection<@NotNull Path> suggestLocalHomePathsImpl(final @Nullable Module module,
                                                                          final @Nullable UserDataHolder context) {
     return Collections.emptyList();
@@ -108,7 +108,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   /**
    * On local targets some flavors could be detected. It returns a path to python interpreters for such cases.
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false)
   public final @NotNull Collection<@NotNull Path> suggestLocalHomePaths(final @Nullable Module module,
                                                                         final @Nullable UserDataHolder context) {
     return suggestLocalHomePathsImpl(module, context).stream().filter(path -> {

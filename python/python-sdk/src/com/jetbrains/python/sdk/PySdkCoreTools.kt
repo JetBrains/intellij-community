@@ -45,13 +45,26 @@ fun Sdk.getOrCreateAdditionalData(): PythonSdkAdditionalData {
   return newData
 }
 
-@Internal
 /**
  * Saves SDK to the project table if there is no sdk with same name
  */
+
+@Internal
 suspend fun Sdk.persist(): Unit = edtWriteAction {
   if (ProjectJdkTable.getInstance().findJdk(name) == null) { // Saving 2 SDKs with same name is an error
     getOrCreateAdditionalData() // additional data is always required
     ProjectJdkTable.getInstance().addJdk(this)
+  }
+}
+
+@Internal
+fun Sdk.persistSync() {
+  ApplicationManager.getApplication().invokeAndWait {
+    ApplicationManager.getApplication().runWriteAction {
+      if (ProjectJdkTable.getInstance().findJdk(name) == null) { // Saving 2 SDKs with same name is an error
+        getOrCreateAdditionalData() // additional data is always required
+        ProjectJdkTable.getInstance().addJdk(this)
+      }
+    }
   }
 }

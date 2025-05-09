@@ -151,7 +151,7 @@ internal fun createSdkForTarget(
   if (PythonInterpreterTargetEnvironmentFactory.by(environmentConfiguration)?.needAssociateWithModule() == true) {
     // FIXME: multi module project support
     project?.modules?.firstOrNull()?.let {
-      pyModalBlocking { sdk.setAssociationToModule(it) }
+      sdk.setAssociationToModuleAsync(it)
     }
   }
 
