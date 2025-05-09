@@ -1,36 +1,31 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.platform.util.coroutines.mapConcurrent
-import io.ktor.client.HttpClient
-import io.ktor.client.plugins.HttpRedirect
-import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.request.get
-import io.ktor.client.request.head
-import io.ktor.http.HttpStatusCode
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.LibraryLicense
+import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import java.net.HttpURLConnection
+import java.net.URI
 import java.net.URL
-import java.util.*
-import kotlin.time.Duration.Companion.minutes
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
+import java.time.Duration
+import java.util.Collections
 
-private val httpClient: HttpClient by lazy {
-  createSubClient {
-    install(HttpRedirect) {
-      allowHttpsDowngrade = true  // some servers play a foolish HTTPS->HTTP->HTTPS ping-pong game
-    }
-    install(HttpTimeout) {
-      connectTimeoutMillis = System.getProperty("idea.connection.timeout")?.toLongOrNull() ?: 2.minutes.inWholeMilliseconds
-    }
-  }
-}
+private val CONNECT_TIMEOUT = Duration.ofMillis(System.getProperty("idea.connection.timeout")?.toLong() ?: 30_000)
+private val READ_TIMEOUT = Duration.ofMillis(System.getProperty("idea.read.timeout")?.toLong() ?: 60_000)
 
-internal suspend fun checkLibraryUrls(context: BuildContext) {
+suspend fun checkLibraryUrls(context: BuildContext) {
   context.executeStep(spanBuilder("checking library URLs"), BuildOptions.LIBRARY_URL_CHECK_STEP) {
     val licenses = context.productProperties.allLibraryLicenses
     val errors = Collections.synchronizedList(ArrayList<String>())
@@ -92,14 +87,25 @@ private fun checkUrls(type: String, urls: Map<String, List<LibraryLicense>>, err
 
   fun usedIn(libs: List<LibraryLicense>): String = "Used in: ${libs.joinToString { "'${it.presentableName}'" }}"
 
+  val client = HttpClient.newBuilder()
+    .executor(Dispatchers.IO.asExecutor())
+    .connectTimeout(CONNECT_TIMEOUT)
+    .followRedirects(HttpClient.Redirect.ALWAYS)
+    .build()
+
   runBlocking(Dispatchers.IO) {
     for (group in urlsAndLicensesGroupedByHost.values) {
       launch {
         group.mapConcurrent(concurrency = maxParallelPerHosts) { (url, libraries) ->
           try {
-            val response = if (url.startsWith("https://redocly.com/")) httpClient.get(url) else httpClient.head(url)
-            if (response.status != HttpStatusCode.OK) {
-              errors += "${type} URL '${url}' error: ${response.status.toString().trim()}. ${usedIn(libraries)}"
+            val request = HttpRequest.newBuilder(URI(url))
+              .apply { if (url.startsWith("https://redocly.com/")) GET() else method("HEAD", HttpRequest.BodyPublishers.noBody()) }
+              .timeout(READ_TIMEOUT)
+              .header("User-Agent", "IntelliJ")
+              .build()
+            val response = client.send(request, HttpResponse.BodyHandlers.ofString())
+            if (response.statusCode() != HttpURLConnection.HTTP_OK) {
+              errors += "${type} URL '${url}' error: ${response.statusCode()}. ${usedIn(libraries)}"
             }
           }
           catch (e: Exception) {
