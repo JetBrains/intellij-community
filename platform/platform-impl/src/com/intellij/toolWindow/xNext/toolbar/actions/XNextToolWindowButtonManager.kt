@@ -13,14 +13,7 @@ internal class XNextToolWindowButtonManager(paneId: String, isPrimary: Boolean) 
 
   constructor(paneId: String) : this(paneId, true)
 
-  private val xNextToolbar = XNextToolWindowToolbar(paneId, isPrimary)
   private val xNextBar = XNextBar()
-
-  override fun setupToolWindowPane(pane: JComponent) {
-    xNextToolbar.topStripe.bottomAnchorDropAreaComponent = pane
-    xNextToolbar.bottomStripe.bottomAnchorDropAreaComponent = pane
-    super.setupToolWindowPane(pane)
-  }
 
   override fun initMoreButton(project: Project) {
     super.initMoreButton(project)
