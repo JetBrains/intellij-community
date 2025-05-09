@@ -9,9 +9,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonHelpersLocator.Companion.findPathInHelpers
+import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.common.PythonPackage
-import com.jetbrains.python.packaging.common.PythonPackageSpecification
+import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
+import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.management.runPackagingTool
@@ -20,6 +22,21 @@ import com.jetbrains.python.statistics.version
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
+private fun PythonRepositoryPackageSpecification.buildPipInstallArguments(): List<String> = buildList {
+  add(nameWithVersionSpec)
+  val urlForInstallation = repository.urlForInstallation.toString()
+  urlForInstallation.takeIf { it.isNotBlank() && it != PyPIPackageUtil.PYPI_LIST_URL }?.let {
+    add("--index-url")
+    add(it)
+  }
+}
+
+private fun PythonPackageInstallRequest.buildPipInstallArguments(): List<String> = when (this) {
+  is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecification -> this.specification.buildPipInstallArguments()
+  is PythonPackageInstallRequest.ByLocation -> listOf(location.toString())
+  is PythonPackageInstallRequest.AllRequirements -> emptyList()
+}
+
 @ApiStatus.Experimental
 @ApiStatus.Internal
 open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
@@ -27,10 +44,10 @@ open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageMa
   override var installedPackages: List<PythonPackage> = emptyList()
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager(project)
 
-  override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<Unit> {
+  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): Result<Unit> {
     PipManagementInstaller(sdk, this).installManagementIfNeeded()
     try {
-      runPackagingTool("install", specification.buildInstallationString() + options, PyBundle.message("python.packaging.install.progress", specification.name), withBackgroundProgress = false)
+      runPackagingTool("install", installRequest.buildPipInstallArguments() + options, PyBundle.message("python.packaging.install.progress", installRequest.title), withBackgroundProgress = false)
     }
     catch (ex: ExecutionException) {
       return Result.failure(ex)
@@ -39,9 +56,9 @@ open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageMa
     return Result.success(Unit)
   }
 
-  override suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<Unit> {
+  override suspend fun updatePackageCommand(specification: PythonRepositoryPackageSpecification): Result<Unit> {
     try {
-      runPackagingTool("install", listOf("--upgrade") + specification.buildInstallationString(), PyBundle.message("python.packaging.update.progress", specification.name))
+      runPackagingTool("install", listOf("--upgrade") + specification.buildPipInstallArguments(), PyBundle.message("python.packaging.update.progress", specification.name))
     }
     catch (ex: ExecutionException) {
       return Result.failure(ex)
@@ -119,7 +136,8 @@ class PipManagementInstaller(private val sdk: Sdk, private val manager: PythonPa
       val processHandler = CapturingProcessHandler(GeneralCommandLine(commandArguments))
       val output: ProcessOutput = processHandler.runProcess()
       output.exitCode == 0
-    } catch (ex: Exception) {
+    }
+    catch (ex: Exception) {
       throw ExecutionException(ex.message, ex)
     }
 

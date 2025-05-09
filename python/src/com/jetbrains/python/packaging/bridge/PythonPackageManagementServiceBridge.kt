@@ -14,11 +14,16 @@ import com.intellij.webcore.packaging.InstalledPackage
 import com.intellij.webcore.packaging.PackageVersionComparator
 import com.intellij.webcore.packaging.RepoPackage
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.packaging.PyPackagingSettings
-import com.jetbrains.python.packaging.common.*
+import com.jetbrains.python.packaging.common.PythonPackageDetails
+import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
+import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
+import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
 import com.jetbrains.python.packaging.conda.CondaPackageCache
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.packagesByRepository
+import com.jetbrains.python.packaging.management.toInstallRequest
 import com.jetbrains.python.packaging.repository.PyPIPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
@@ -59,10 +64,7 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
   }
 
   private fun createRepoPackage(pkg: String, repository: PyPackageRepository): RepoPackage {
-    val repositoryUrl = when {
-      repository.isCustom -> repository.repositoryUrl
-      else -> null
-    }
+    val repositoryUrl = repository.repositoryUrl.takeIf { it != PyPIPackageRepository.repositoryUrl }
     val latestVersion = getLatestVersion(pkg)
     return RepoPackage(pkg, repositoryUrl, latestVersion)
   }
@@ -88,25 +90,29 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
     }
   }
 
-  override fun installPackage(repoPackage: RepoPackage,
-                              version: String?,
-                              forceUpgrade: Boolean,
-                              extraOptions: String?,
-                              listener: Listener,
-                              installToUser: Boolean) {
+  override fun installPackage(
+    repoPackage: RepoPackage,
+    version: String?,
+    forceUpgrade: Boolean,
+    extraOptions: String?,
+    listener: Listener,
+    installToUser: Boolean,
+  ) {
     scope.launch(Dispatchers.IO + ModalityState.current().asContextElement()) {
       val repository = if (repoPackage.repoUrl != null) {
         manager.repositoryManager.repositories.find { it.repositoryUrl == repoPackage.repoUrl }
-      } else null
+      }
+      else null
       try {
         val specification = specForPackage(repoPackage.name, version, repository)
         runningUnderOldUI = true
         listener.operationStarted(specification.name)
-        val result = manager.installPackage(specification, emptyList(), withBackgroundProgress = true)
+        val result = manager.installPackage(specification.toInstallRequest(), emptyList(), withBackgroundProgress = true)
         val exception = if (result.isFailure) mutableListOf(result.exceptionOrNull() as ExecutionException) else null
         listener.operationFinished(specification.name,
                                    toErrorDescription(exception, mySdk, specification.name))
-      } finally {
+      }
+      finally {
         runningUnderOldUI = false
       }
     }
@@ -138,14 +144,14 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
 
   override fun fetchPackageVersions(packageName: String, consumer: CatchingConsumer<in List<String>, in Exception>) {
     scope.launch {
-      val details = manager.repositoryManager.getPackageDetails(specForPackage(packageName))
+      val details = manager.repositoryManager.getPackageDetails(specForPackage(packageName)).getOrThrow()
       consumer.consume(details.availableVersions.sortedWith(PackageVersionComparator.VERSION_COMPARATOR.reversed()))
     }
   }
 
   override fun fetchPackageDetails(packageName: String, consumer: CatchingConsumer<in String, in Exception>) {
     scope.launch {
-      val details = manager.repositoryManager.getPackageDetails(specForPackage(packageName))
+      val details = manager.repositoryManager.getPackageDetails(specForPackage(packageName)).getOrThrow()
       consumer.consume(buildDescription(details))
     }
   }
@@ -156,17 +162,10 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
 
   override fun fetchLatestVersion(pkg: InstalledPackage, consumer: CatchingConsumer<in String, in Exception>) {
     scope.launch {
-      val details = manager.repositoryManager.getPackageDetails(specForPackage(pkg.name, pkg.version))
+      val details = manager.repositoryManager.getPackageDetails(specForPackage(pkg.name, pkg.version)).getOrThrow()
       consumer.consume(PyPackagingSettings.getInstance(project).selectLatestVersion(details.availableVersions))
     }
   }
-
-  private fun findRepositoryForPackage(name: String): PyPackageRepository =
-    manager
-      .repositoryManager
-      .packagesByRepository()
-      .firstOrNull { (_, packages) -> name in packages }
-      ?.first ?: PyPIPackageRepository
 
   private fun buildDescription(details: PythonPackageDetails): String {
     return buildString {
@@ -198,8 +197,13 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
     }
   }
 
-  private fun specForPackage(packageName: String, version: String? = null, repository: PyPackageRepository? = null): PythonPackageSpecification =
-    PythonSimplePackageSpecification(packageName, version, repository ?: findRepositoryForPackage(packageName))
+  private fun specForPackage(packageName: String, version: String? = null, repository: PyPackageRepository? = null): PythonRepositoryPackageSpecification {
+    return when (repository) {
+      null -> manager.createPackageSpecification(packageName, version)
+              ?: throw IllegalArgumentException(PyBundle.message("python.packaging.error.package.is.not.listed.in.repositories", packageName))
+      else -> repository.createPackageSpecification(packageName, version)
+    }
+  }
 
   override fun shouldFetchLatestVersionsForOnlyInstalledPackages(): Boolean = !(isConda && useConda)
 

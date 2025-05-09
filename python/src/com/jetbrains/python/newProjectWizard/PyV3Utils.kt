@@ -3,7 +3,8 @@ package com.jetbrains.python.newProjectWizard
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.packaging.common.PythonSimplePackageSpecification
+import com.jetbrains.python.PyBundle
+import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import kotlinx.coroutines.supervisorScope
 import org.jetbrains.annotations.CheckReturnValue
@@ -16,9 +17,14 @@ import org.jetbrains.annotations.CheckReturnValue
 suspend fun installPackages(project: Project, sdk: Sdk, vararg packages: String): Result<Unit> {
   val packageManager = PythonPackageManager.forSdk(project, sdk)
   return supervisorScope { // Not install other packages if one failed
-    val specifications = packages.map { PythonSimplePackageSpecification(it, null, null) }
-    return@supervisorScope packageManager.installPackages(specifications, emptyList(),
-                                                          withBackgroundProgress = true).map {
+    val specifications = packages.map {
+      packageManager.createPackageSpecification(it)
+      ?: return@supervisorScope Result.failure(IllegalArgumentException(
+        PyBundle.message("python.packaging.error.package.is.not.listed.in.repositories", it)
+      ))
+    }
+    val requests = specifications.map { PythonPackageInstallRequest.ByRepositoryPythonPackageSpecification(it) }
+    return@supervisorScope packageManager.installPackages(requests, emptyList(), withBackgroundProgress = true).map {
       // We don't care about result, we just want to fail if any package failed to install
     }
   }

@@ -5,10 +5,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
-import com.jetbrains.python.packaging.common.PythonPackageSpecification
+import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
+import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
+import com.jetbrains.python.packaging.management.toInstallRequest
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
 import com.jetbrains.python.sdk.uv.impl.createUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
@@ -21,12 +23,12 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
   @Volatile
   var outdatedPackages: Map<String, PythonOutdatedPackage> = emptyMap()
 
-  override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<Unit> {
+  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): Result<Unit> {
     val result = if (sdk.uvUsePackageManagement) {
-      uv.installPackage(specification, emptyList())
+      uv.installPackage(installRequest, emptyList())
     }
     else {
-      uv.addDependency(specification, emptyList())
+      uv.addDependency(installRequest, emptyList())
     }
 
     result.getOrElse {
@@ -36,8 +38,8 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
     return Result.success(Unit)
   }
 
-  override suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<Unit> {
-    installPackageCommand(specification, emptyList()).getOrElse {
+  override suspend fun updatePackageCommand(specification: PythonRepositoryPackageSpecification): Result<Unit> {
+    installPackageCommand(specification.toInstallRequest(), emptyList()).getOrElse {
       return Result.failure(it)
     }
 

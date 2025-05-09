@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.packaging.common.PythonPackageDetails
+import com.jetbrains.python.packaging.management.toInstallRequest
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents.selectedPackage
@@ -50,8 +51,8 @@ internal class InstallWithOptionsPackageAction : DumbAwareAction() {
 
       val options = optionsString.split(' ').map { it.trim() }.filter { it.isNotBlank() }
 
-      val specification = details.repository.createPackageSpecification(details.name, version ?: details.availableVersions.first())
-      project.service<PyPackagingToolWindowService>().installPackage(specification, options)
+      val specification = details.toPackageSpecification(version ?: details.availableVersions.first())
+      project.service<PyPackagingToolWindowService>().installPackage(specification.toInstallRequest(), options)
     }
 
   }

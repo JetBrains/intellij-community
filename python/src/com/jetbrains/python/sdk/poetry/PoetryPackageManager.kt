@@ -3,9 +3,8 @@ package com.jetbrains.python.sdk.poetry
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.packaging.common.PythonOutdatedPackage
-import com.jetbrains.python.packaging.common.PythonPackage
-import com.jetbrains.python.packaging.common.PythonPackageSpecification
+import com.jetbrains.python.packaging.common.*
+import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
@@ -21,15 +20,22 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
   @Volatile
   private var outdatedPackages: Map<String, PythonOutdatedPackage> = emptyMap()
 
-  override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<Unit> {
-    poetryInstallPackage(sdk, specification.getVersionForPoetry(), options)
+  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): Result<Unit> {
+    val packageWithVersion = when (installRequest) {
+      is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecification -> installRequest.specification.getPackageWithVersionInPoetryFormat()
+      else -> {
+        return Result.failure(UnsupportedOperationException("Poetry supports installing only single packages from repositories"))
+      }
+    }
+
+    poetryInstallPackage(sdk, packageWithVersion, options)
       .onFailure { return Result.failure(it) }
 
     return Result.success(Unit)
   }
 
-  override suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<Unit> {
-    poetryInstallPackage(sdk, specification.getVersionForPoetry(), emptyList())
+  override suspend fun updatePackageCommand(specification: PythonRepositoryPackageSpecification): Result<Unit> {
+    poetryInstallPackage(sdk, specification.getPackageWithVersionInPoetryFormat(), emptyList())
       .onFailure { return Result.failure(it) }
 
     return Result.success(Unit)
@@ -60,7 +66,9 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
 
   internal fun getOutdatedPackages(): Map<String, PythonOutdatedPackage> = outdatedPackages
 
-  private fun PythonPackageSpecification.getVersionForPoetry(): String = if (versionSpecs == null) name else "$name@$versionSpecs"
+  private fun PythonRepositoryPackageSpecification.getPackageWithVersionInPoetryFormat(): String {
+    return versionSpec?.let { "$name@${it.presentableText}" } ?: name
+  }
 }
 
 /**

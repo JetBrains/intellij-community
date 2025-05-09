@@ -5,9 +5,8 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.intellij.util.io.delete
-import com.jetbrains.python.packaging.common.PythonOutdatedPackage
-import com.jetbrains.python.packaging.common.PythonPackage
-import com.jetbrains.python.packaging.common.PythonPackageSpecification
+import com.jetbrains.python.packaging.common.*
+import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.sdk.uv.UvCli
 import com.jetbrains.python.sdk.uv.UvLowLevel
 import com.jetbrains.python.venvReader.VirtualEnvReader
@@ -117,8 +116,8 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
     }
   }
 
-  override suspend fun installPackage(name: PythonPackageSpecification, options: List<String>): Result<Unit> {
-    uvCli.runUv(cwd, "pip", "install", formatPackageName(name), *options.toTypedArray())
+  override suspend fun installPackage(name: PythonPackageInstallRequest, options: List<String>): Result<Unit> {
+    uvCli.runUv(cwd, "pip", "install", name.formatPackageName(), *options.toTypedArray())
       .onFailure { return Result.failure(it) }
 
     return Result.success(Unit)
@@ -132,8 +131,8 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
     return Result.success(Unit)
   }
 
-  override suspend fun addDependency(name: PythonPackageSpecification, options: List<String>): Result<Unit> {
-    uvCli.runUv(cwd, "add", formatPackageName(name), *options.toTypedArray())
+  override suspend fun addDependency(name: PythonPackageInstallRequest, options: List<String>): Result<Unit> {
+    uvCli.runUv(cwd, "add", name.formatPackageName(), *options.toTypedArray())
       .onFailure { return Result.failure(it) }
 
     return Result.success(Unit)
@@ -146,8 +145,10 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
     return Result.success(Unit)
   }
 
-  fun formatPackageName(name: PythonPackageSpecification): String {
-    return if (name.versionSpecs.isNullOrBlank()) name.name else "${name.name}${name.versionSpecs}"
+  fun PythonPackageInstallRequest.formatPackageName(): String = when (this) {
+    is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecification -> specification.nameWithVersionSpec
+    is PythonPackageInstallRequest.AllRequirements -> error("UV supports only single requirement installation")
+    is PythonPackageInstallRequest.ByLocation -> error("UV does not support installing from location uri")
   }
 
   fun parseUvPythonList(uvDir: Path, out: String): Set<Path> {

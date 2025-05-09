@@ -24,8 +24,10 @@ internal class UpdatePackageToLatestAction : DumbAwareAction() {
 
     PyPackageCoroutine.getIoScope(project).launch {
       for (pkg in packages) {
-        val specification = pkg.repository.createPackageSpecification(pkg.name, pkg.nextVersion!!.presentableText)
-        service.updatePackage(specification)
+        val specification = pkg.repository?.createPackageSpecification(pkg.name, pkg.nextVersion!!.presentableText)
+        specification?.let {
+          service.updatePackage(it)
+        }
       }
     }
   }

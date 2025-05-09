@@ -18,12 +18,25 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
-import com.jetbrains.python.packaging.common.PythonPackageSpecification
+import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
+import com.jetbrains.python.packaging.requirement.PyRequirementRelation
+import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 import com.jetbrains.python.sdk.PythonSdkUpdater
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import java.net.URI
+
+sealed class PythonPackageInstallRequest(val title: String) {
+  data object AllRequirements : PythonPackageInstallRequest("All Requirements")
+  data class ByLocation(val location: URI) : PythonPackageInstallRequest(location.toString())
+  data class ByRepositoryPythonPackageSpecification(val specification: PythonRepositoryPackageSpecification) : PythonPackageInstallRequest(specification.nameWithVersionSpec)
+}
+
+fun PythonRepositoryPackageSpecification.toInstallRequest(): PythonPackageInstallRequest.ByRepositoryPythonPackageSpecification {
+  return PythonPackageInstallRequest.ByRepositoryPythonPackageSpecification(this)
+}
 
 @ApiStatus.Experimental
 abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
@@ -32,23 +45,23 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
   abstract val repositoryManager: PythonRepositoryManager
 
   suspend fun installPackage(
-    spec: PythonPackageSpecification,
+    installRequest: PythonPackageInstallRequest,
     options: List<String> = emptyList(),
     withBackgroundProgress: Boolean,
-  ): Result<List<PythonPackage>> = installPackages(listOf(spec), options, withBackgroundProgress)
+  ): Result<List<PythonPackage>> = installPackages(listOf(installRequest), options, withBackgroundProgress)
 
   suspend fun installPackages(
-    packages: List<PythonPackageSpecification>,
+    installRequests: List<PythonPackageInstallRequest>,
     options: List<String> = emptyList(),
     withBackgroundProgress: Boolean,
   ): Result<List<PythonPackage>> {
     return if (withBackgroundProgress)
-      installPackagesWithBackgroundProcess(packages, options)
+      installPackagesWithBackgroundProcess(installRequests, options)
     else
-      installPackagesSilently(packages, options)
+      installPackagesSilently(installRequests, options)
   }
 
-  suspend fun updatePackage(specification: PythonPackageSpecification): Result<List<PythonPackage>> {
+  suspend fun updatePackage(specification: PythonRepositoryPackageSpecification): Result<List<PythonPackage>> {
     updatePackageCommand(specification).onFailure {
       return Result.failure(it)
     }
@@ -82,8 +95,8 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
 
   fun packageExists(pkg: PythonPackage): Boolean = installedPackages.any { it.name.equals(pkg.name, ignoreCase = true) }
 
-  abstract suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<Unit>
-  protected abstract suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<Unit>
+  abstract suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): Result<Unit>
+  protected abstract suspend fun updatePackageCommand(specification: PythonRepositoryPackageSpecification): Result<Unit>
   protected abstract suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<Unit>
   protected abstract suspend fun reloadPackagesCommand(): Result<List<PythonPackage>>
 
@@ -100,18 +113,19 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
     }
   }
 
-  private suspend fun installPackagesWithBackgroundProcess(packages: List<PythonPackageSpecification>, options: List<String> = emptyList()): Result<List<PythonPackage>> {
+  private suspend fun installPackagesWithBackgroundProcess(packages: List<PythonPackageInstallRequest>, options: List<String> = emptyList()): Result<List<PythonPackage>> {
     val progressTitle = if (packages.size > 1) {
       PyBundle.message("python.packaging.installing.packages")
     }
     else {
-      PyBundle.message("python.packaging.installing.package", packages.first().name)
+      PyBundle.message("python.packaging.installing.package", packages.first().title)
     }
 
     return withBackgroundProgress(project = project, progressTitle, cancellable = true) {
       reportSequentialProgress(packages.size) { reporter ->
         packages.forEach { specification ->
-          reporter.itemStep(PyBundle.message("python.packaging.installing.package", specification.name)) {
+          reporter.itemStep(PyBundle.message("python.packaging.installing.package", specification.title))
+          runCatching {
             installPackageInternal(specification, options)
           }.onFailure { return@withBackgroundProgress Result.failure(it) }
         }
@@ -123,7 +137,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
   }
 
   private suspend fun installPackagesSilently(
-    specifications: List<PythonPackageSpecification>,
+    specifications: List<PythonPackageInstallRequest>,
     options: List<String>,
   ): Result<List<PythonPackage>> {
     specifications.forEach { specification ->
@@ -138,8 +152,8 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
   }
 
 
-  private suspend fun installPackageInternal(specification: PythonPackageSpecification, options: List<String>): Result<Unit> {
-    val result = runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.new.project.install.failed.title", specification.name), specification.name) {
+  private suspend fun installPackageInternal(specification: PythonPackageInstallRequest, options: List<String>): Result<Unit> {
+    val result = runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.new.project.install.failed.title", specification.title), specification.title) {
       installPackageCommand(specification, options)
     }
     result.onFailure {
@@ -151,6 +165,14 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
       return Result.success(Unit)
     }
     return result
+  }
+
+  fun createPackageSpecificationWithSpec(packageName: String, versionSpec: PyRequirementVersionSpec? = null): PythonRepositoryPackageSpecification? {
+    return repositoryManager.findPackageRepository(packageName)?.createPackageSpecificationWithSpec(packageName, versionSpec)
+  }
+
+  fun createPackageSpecification(packageName: String, version: String? = null, relation: PyRequirementRelation = PyRequirementRelation.EQ): PythonRepositoryPackageSpecification? {
+    return repositoryManager.findPackageRepository(packageName)?.createPackageSpecification(packageName, version, relation)
   }
 
   companion object {

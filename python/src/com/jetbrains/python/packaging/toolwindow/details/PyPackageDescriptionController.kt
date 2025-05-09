@@ -34,6 +34,7 @@ import com.intellij.ui.jcef.JCEFHtmlPanel
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.common.PythonPackageDetails
+import com.jetbrains.python.packaging.management.toInstallRequest
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.actions.InstallWithOptionsPackageAction
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
@@ -78,8 +79,8 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
   private val installAction = wrapAction(message("action.PyInstallPackage.text"), message("progress.text.installing")) {
     val details = selectedPackageDetails.get() ?: return@wrapAction
     val version = versionSelector.text.takeIf { it != latestText }
-    val specification = details.repository.createPackageSpecification(details.name, version)
-    project.service<PyPackagingToolWindowService>().installPackage(specification)
+    val specification = details.toPackageSpecification(version)
+    project.service<PyPackagingToolWindowService>().installPackage(specification.toInstallRequest())
   }
 
   private val installWithOptionAction: Action = wrapAction(message("action.PyInstallWithOptionPackage.text"), message("progress.text.installing")) {
@@ -196,10 +197,9 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
   private fun updatePackageVersion(newVersion: String) {
     val details = selectedPackageDetails.get() ?: return
     val newVersionSpec = details.toPackageSpecification(newVersion)
-    println(newVersionSpec.versionSpecs)
     val pyPackagingToolWindowService = PyPackagingToolWindowService.getInstance(project)
     PyPackageCoroutine.launch(project, Dispatchers.IO) {
-      pyPackagingToolWindowService.installPackage(newVersionSpec)
+      pyPackagingToolWindowService.installPackage(newVersionSpec.toInstallRequest())
     }
   }
 

@@ -20,7 +20,6 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.packaging.PyExecutionException
-import com.jetbrains.python.packaging.common.PythonPackageSpecification
 import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
 import com.jetbrains.python.packaging.normalizePackageName
 import com.jetbrains.python.packaging.repository.PyPackageRepository
@@ -31,8 +30,8 @@ import com.jetbrains.python.run.prepareHelperScriptExecution
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import kotlin.math.min
-@ApiStatus.Internal
 
+@ApiStatus.Internal
 @RequiresBackgroundThread
 fun PythonPackageManager.launchReload() {
   runBlockingCancellable {
@@ -41,8 +40,8 @@ fun PythonPackageManager.launchReload() {
     }
   }
 }
-@ApiStatus.Internal
 
+@ApiStatus.Internal
 suspend fun PythonPackageManager.runPackagingTool(
   operation: String, arguments: List<String>, @Nls text: String,
   withBackgroundProgress: Boolean = true,
@@ -131,27 +130,29 @@ private val proxyString: String?
     }
     return null
   }
-@ApiStatus.Internal
 
+@ApiStatus.Internal
 fun PythonRepositoryManager.packagesByRepository(): Sequence<Pair<PyPackageRepository, Set<String>>> {
   return repositories.asSequence().map { it to it.getPackages() }
 }
-@ApiStatus.Internal
 
+@ApiStatus.Internal
 fun PythonPackageManager.isInstalled(name: String): Boolean {
-  return installedPackages.any { it.name.lowercase() == name.lowercase() }
+  return installedPackages.any { it.name.equals(name, ignoreCase = true) }
 }
-@ApiStatus.Internal
 
-fun PythonRepositoryManager.createSpecification(
-  name: String,
-  versionSpec: String? = null,
-): PythonPackageSpecification? {
-  val normalizePackageName = normalizePackageName(name)
-  val repository = packagesByRepository().firstOrNull { repo ->
-    val packages = repo.second
-    packages.contains(normalizePackageName) ||
-    repo.second.any { normalizePackageName(it) == normalizePackageName }
-  }?.first
-  return repository?.createForcedSpecPackageSpecification(name, versionSpec)
+/**
+ * Finds the first repository that contains the package with the given name.
+ * Fallbacks to the main (first) repository if nothing is found, just to keep existing behavior.
+ * It looks like this fallback should be reviewed, possibly removed and tested.
+ */
+@ApiStatus.Internal
+fun PythonRepositoryManager.findPackageRepository(packageName: String): PyPackageRepository? {
+  val normalizePackageName = normalizePackageName(packageName)
+  val repository = packagesByRepository().firstNotNullOfOrNull { (repository, packageNames) ->
+    val contains = packageNames.contains(normalizePackageName) ||
+                   packageNames.any { normalizePackageName(it) == normalizePackageName }
+    if (contains) repository else null
+  }
+  return repository ?: repositories.firstOrNull()
 }

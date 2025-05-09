@@ -21,6 +21,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.RequestBuilder;
 import com.intellij.webcore.packaging.RepoPackage;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.packaging.repository.PyPackageRepositories;
 import com.jetbrains.python.packaging.repository.PyPackageRepositoryUtil;
 import one.util.streamex.EntryStream;
@@ -40,7 +41,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 import static com.jetbrains.python.packaging.PyPackageNameNormalizeUtilKt.normalizePackageName;
 
@@ -63,6 +63,12 @@ public final class PyPIPackageUtil {
   public static final String PYPI_LIST_URL = PYPI_BASE_URL + PYPI_SIMPLE_REPOSITORY_API;
 
   public static final PyPIPackageUtil INSTANCE = new PyPIPackageUtil();
+
+  public static class NotSimpleRepositoryApiUrlException extends Exception {
+    private NotSimpleRepositoryApiUrlException(String url) {
+      super(PyBundle.message("python.packaging.error.not.simple.repository.url", url, PYPI_SIMPLE_REPOSITORY_API));
+    }
+  }
 
   private PyPIPackageUtil() {
   }
@@ -179,10 +185,7 @@ public final class PyPIPackageUtil {
   }
 
   private static @NotNull List<RepoPackage> getPackagesFromAdditionalRepository(@NotNull String url) throws IOException {
-    return parsePyPIListFromWeb(url)
-      .stream()
-      .map(s -> new RepoPackage(s, url, null))
-      .collect(Collectors.toList());
+    return ContainerUtil.map(parsePyPIListFromWeb(url), s -> new RepoPackage(s, url, null));
   }
 
   public void fillPackageDetails(@NotNull String packageName, @NotNull CatchingConsumer<PackageDetails.Info, Exception> callback) {
@@ -281,11 +284,11 @@ public final class PyPIPackageUtil {
     return version;
   }
 
-  private static String normalizeRepositoryUrl(@NotNull String repositoryUrl) throws IllegalArgumentException {
+  private static String normalizeRepositoryUrl(@NotNull String repositoryUrl) throws NotSimpleRepositoryApiUrlException {
     final String normalizedRepositoryUrl = repositoryUrl.endsWith("/") ? repositoryUrl : repositoryUrl + "/";
 
     if (!normalizedRepositoryUrl.endsWith(PYPI_SIMPLE_REPOSITORY_API)) {
-      throw new IllegalArgumentException("The Repository URL must end with " + PYPI_SIMPLE_REPOSITORY_API);
+      throw new NotSimpleRepositoryApiUrlException(normalizedRepositoryUrl);
     }
 
     return normalizedRepositoryUrl;
@@ -303,7 +306,10 @@ public final class PyPIPackageUtil {
    * @see <a href="https://packaging.python.org/en/latest/specifications/simple-repository-api/#base-html-api">Base HTML API</a>
    * @see <a href="https://packaging.python.org/en/latest/specifications/simple-repository-api/#normalized-names">Normalized Names</a>
    */
-  public static @NotNull String buildPackageUrl(@NotNull String repositoryUrl, @NotNull String packageName) {
+  public static @NotNull String buildPackageUrl(
+    @NotNull String repositoryUrl,
+    @NotNull String packageName
+  ) throws NotSimpleRepositoryApiUrlException {
     final String normalizedPackageName = normalizePackageName(packageName);
     final String normalizedRepositoryUrl = normalizeRepositoryUrl(repositoryUrl);
     final String packageUrl = normalizedRepositoryUrl + normalizedPackageName + "/";
@@ -322,7 +328,7 @@ public final class PyPIPackageUtil {
    * Details API uses normalized names, makes HTTP 301 redirect in case of non-normalized.
    */
   public static @NotNull String buildDetailsUrl(@NotNull String repositoryUrl,
-                                                @NotNull String packageName) throws IllegalArgumentException {
+                                                @NotNull String packageName) throws NotSimpleRepositoryApiUrlException {
     final String normalizedRepositoryUrl = normalizeRepositoryUrl(repositoryUrl);
     final String normalizedPackageName = normalizePackageName(packageName);
 
@@ -331,8 +337,8 @@ public final class PyPIPackageUtil {
     return detailsUrl;
   }
 
-  public static @NotNull List<String> parsePackageVersionsFromRepository(@NotNull String repositoryUrl,
-                                                                         @NotNull String packageName) throws IOException {
+  public static @NotNull List<String> parsePackageVersionsFromRepository(@NotNull String repositoryUrl, @NotNull String packageName)
+    throws IOException, NotSimpleRepositoryApiUrlException {
     String packageUrl = buildPackageUrl(repositoryUrl, packageName);
     return parsePackageVersionsFromArchives(packageUrl, packageName);
   }

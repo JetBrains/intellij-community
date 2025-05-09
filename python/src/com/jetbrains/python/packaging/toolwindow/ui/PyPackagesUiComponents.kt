@@ -15,6 +15,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.packaging.common.PythonPackageDetails
+import com.jetbrains.python.packaging.management.toInstallRequest
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
@@ -40,9 +41,10 @@ object PyPackagesUiComponents {
     return JBPopupFactory.getInstance().createListPopup(object : BaseListPopupStep<String>(null, details.availableVersions) {
       override fun onChosen(selectedValue: String?, finalChoice: Boolean): PopupStep<*>? {
         return doFinalStep {
-          val specification = selectedPackage.repository.createPackageSpecification(selectedPackage.name, selectedValue)
+          val repository = checkNotNull(selectedPackage.repository)
+          val specification = repository.createPackageSpecification(selectedPackage.name, selectedValue)
           PyPackageCoroutine.getIoScope(project).launch(Dispatchers.IO) {
-            project.service<PyPackagingToolWindowService>().installPackage(specification)
+            project.service<PyPackagingToolWindowService>().installPackage(specification.toInstallRequest())
           }
         }
       }

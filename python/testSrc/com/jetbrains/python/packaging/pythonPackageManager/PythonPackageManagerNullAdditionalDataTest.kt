@@ -10,8 +10,10 @@ import com.jetbrains.env.EnvTestTagsRequired
 import com.jetbrains.env.PyEnvTestCase
 import com.jetbrains.env.PyExecutionFixtureTestTask
 import com.jetbrains.python.packaging.common.PythonPackage
-import com.jetbrains.python.packaging.common.PythonSimplePackageSpecification
+import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.toInstallRequest
+import com.jetbrains.python.packaging.repository.PyPIPackageRepository
 import com.jetbrains.python.sdk.PythonSdkType
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertTrue
@@ -21,7 +23,7 @@ import org.junit.Test
 class PythonPackageManagerNullAdditionalDataTest : PyEnvTestCase() {
 
   companion object {
-    private val PKG = PythonSimplePackageSpecification("requests", null, null)
+    private val PKG = requireNotNull(PyPIPackageRepository.createPackageSpecification("requests"))
   }
 
   @EnvTestTagsRequired(tags = ["python3.8"])
@@ -56,7 +58,7 @@ class PythonPackageManagerNullAdditionalDataTest : PyEnvTestCase() {
 }
 
 
-class PythonPackageManagerNullAdditionalDataTask(private val pkg: PythonSimplePackageSpecification) : PyExecutionFixtureTestTask("") {
+class PythonPackageManagerNullAdditionalDataTask(private val pkg: PythonRepositoryPackageSpecification) : PyExecutionFixtureTestTask("") {
 
   private fun createSdkWithNullAdditionalData(sdkTypeId: SdkTypeId, homePath: String, existingSdk: Sdk): Sdk {
     val sdkTable = ProjectJdkTable.getInstance()
@@ -86,10 +88,10 @@ class PythonPackageManagerNullAdditionalDataTask(private val pkg: PythonSimplePa
     val manager = PythonPackageManager.forSdk(myFixture.project, configuredSdk)
 
     runBlocking {
-      manager.installPackage(pkg, emptyList(), withBackgroundProgress = false)
+      manager.installPackage(pkg.toInstallRequest(), emptyList(), withBackgroundProgress = false)
       assertTrue("Package should be installed", manager.installedPackages.map { it.name }.contains(pkg.name))
 
-      manager.uninstallPackage(PythonPackage(pkg.name, pkg.version.orEmpty(), false))
+      manager.uninstallPackage(PythonPackage(pkg.name, pkg.versionSpec?.version.orEmpty(), false))
       assertTrue("Package should be uninstalled", !manager.installedPackages.map { it.name }.contains(pkg.name))
     }
   }

@@ -14,7 +14,7 @@ import com.jetbrains.python.fixtures.PyLightProjectDescriptor
 import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
 import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
 import com.jetbrains.python.packaging.management.TestPackageManagerProvider
-import com.jetbrains.python.packaging.repository.PyEmptyPackagePackageRepository
+import com.jetbrains.python.packaging.management.TestPackageRepository
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
@@ -30,7 +30,7 @@ abstract class PythonDependencyTestCase : BasePlatformTestCase() {
   protected fun mockPackageDetails(packageName: String, availableVersions: List<String>) {
     val packageManagerProvider = TestPackageManagerProvider()
       .withPackageNames(listOf(packageName))
-      .withPackageDetails(PythonSimplePackageDetails(packageName, availableVersions, PyEmptyPackagePackageRepository))
+      .withPackageDetails(PythonSimplePackageDetails(packageName, availableVersions, TestPackageRepository(emptySet())))
     ExtensionTestUtil.maskExtensions(PythonPackageManagerProvider.EP_NAME, listOf(packageManagerProvider), testRootDisposable)
   }
 

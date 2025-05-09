@@ -10,8 +10,6 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyPackage
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonPackage
-import com.jetbrains.python.packaging.common.PythonPackageSpecificationBase
-import com.jetbrains.python.packaging.common.PythonSimplePackageSpecification
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -48,8 +46,8 @@ class PythonPackagesInstaller {
       indicator.text = PyBundle.message("python.packaging.installing.packages")
       indicator.isIndeterminate = true
 
-      val emptySpecification = PythonPackageSpecificationBase("", null, null, null)
-      return manager.installPackage(emptySpecification, emptyList(), withBackgroundProgress = true).map { }
+      val installAllRequirementsSpecification = PythonPackageInstallRequest.AllRequirements
+      return manager.installPackage(installAllRequirementsSpecification, emptyList(), withBackgroundProgress = true).map { }
     }
 
     private suspend fun installWithRequirements(
@@ -57,10 +55,11 @@ class PythonPackagesInstaller {
       requirements: List<PyRequirement>,
       extraArgs: List<String>,
     ): Result<Unit> {
-      val specs = requirements.map { requirement ->
-         PythonSimplePackageSpecification(requirement.name, requirement.versionSpecs.firstOrNull()?.version, null)
-      }
-      return manager.installPackages(specs, extraArgs, withBackgroundProgress = true).map { }
+      val installRequests = requirements.map { requirement ->
+        manager.createPackageSpecificationWithSpec(requirement.name, versionSpec = requirement.versionSpecs.firstOrNull())
+        ?: return Result.failure(ExecutionException(PyBundle.message("python.packaging.error.package.is.not.listed.in.repositories", requirement.name)))
+      }.map { it.toInstallRequest() }
+      return manager.installPackages(installRequests, extraArgs, withBackgroundProgress = true).map { }
     }
 
     @JvmStatic

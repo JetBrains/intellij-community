@@ -21,8 +21,9 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.packaging.common.PythonPackage
-import com.jetbrains.python.packaging.common.PythonPackageSpecificationBase
+import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.toInstallRequest
 import com.jetbrains.python.packaging.pip.PipPythonPackageManager
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.sdk.PythonSdkType
@@ -41,7 +42,7 @@ class SetupPythonInterpreterStepFactory(private val project: Project) : SetupSdk
 
 private class SetupPythonInterpreterStep(
   private val project: Project,
-  private val preferences: SetupSdkPreferences
+  private val preferences: SetupSdkPreferences,
 ) : ForegroundEvaluationStep {
   companion object {
     private const val pythonPluginId = "PythonCore"
@@ -145,35 +146,40 @@ private class SetupPythonInterpreterStep(
     val packageManager = PythonPackageManager.forSdk(project, sdk)
     packageManager.reloadPackages()
 
-    val packages = readRequiredPackages().filterNot { packageManager.packageExists(PythonPackage(it.name, "", false)) }
+    val packages = readRequiredPackages(packageManager).filterNot { packageManager.packageExists(PythonPackage(it.name, "", false)) }
     if (packages.isEmpty()) {
       println("No packages to install. Skipping.")
       return
     }
 
-    val cacheOptions = if (preferences.cacheDir == null) emptyList() else when (packageManager) {
+    val cacheOptions = if (preferences.cacheDir == null) emptyList()
+    else when (packageManager) {
       is PipPythonPackageManager -> listOf("--cache-dir=${preferences.cacheDir}/pip")
       else -> emptyList()
     }
 
     // resolves `'runBlockingCancellable' is forbidden in the Write Action` from PythonSdkUpdater.scheduleUpdate
     keepTasksAsynchronousInHeadlessMode {
-      packageManager.installPackages(packages, cacheOptions, false)
-      println("Installed packages: ${packages.joinToString(", ") {it.name}}")
+      packageManager.installPackages(packages.map { it.toInstallRequest() }, cacheOptions, false)
+      println("Installed packages: ${packages.joinToString(", ") { it.name }}")
     }
   }
 
-  private fun readRequiredPackages(): List<PythonPackageSpecificationBase> {
+  private fun readRequiredPackages(packageManager: PythonPackageManager): List<PythonRepositoryPackageSpecification> {
     val projectPath = project.basePath ?: return emptyList()
     val requirementsTxt = Path.of(projectPath).resolve("requirements.txt")
     if (!requirementsTxt.exists()) {
       return emptyList()
     }
-    return requirementsTxt.toFile().inputStream().bufferedReader().use {
-      it.readLines().filter { it.isNotBlank() }.map { line ->
+    return requirementsTxt.toFile().inputStream().bufferedReader().use { reader ->
+      reader.readLines().filter { it.isNotBlank() }.mapNotNull { line ->
         val relation = PyRequirementRelation.entries.find { line.contains(it.presentableText) }
         val parts = if (relation != null) line.split(relation.presentableText).map { it.trim() } else listOf(line.trim())
-        PythonPackageSpecificationBase(parts[0], parts.getOrNull(1), relation, null)
+        packageManager.createPackageSpecification(
+          packageName = parts[0],
+          version = parts.getOrNull(1),
+          relation = relation ?: PyRequirementRelation.EQ
+        )
       }
     }
   }

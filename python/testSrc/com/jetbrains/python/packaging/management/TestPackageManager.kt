@@ -6,8 +6,8 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridge
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageDetails
-import com.jetbrains.python.packaging.common.PythonPackageSpecification
 import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
+import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import org.jetbrains.annotations.TestOnly
@@ -23,16 +23,21 @@ class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManage
   override val repositoryManager: PythonRepositoryManager
     get() = TestPythonRepositoryManager(project).withPackageNames(packageNames).withPackageDetails(packageDetails)
 
-  override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<Unit> {
-    return if (repositoryManager.allPackages().contains(specification.name)) {
-      installedPackages += PythonPackage(specification.name, specification.versionSpecs.orEmpty(), false)
+  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): Result<Unit> {
+    if (installRequest !is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecification) {
+      return Result.failure(Exception("Test Manager supports only simple repository package specification"))
+    }
+
+    return if (repositoryManager.allPackages().contains(installRequest.specification.name)) {
+      val version = installRequest.specification.versionSpec?.version.orEmpty()
+      installedPackages += PythonPackage(installRequest.specification.name, version, false)
       Result.success(Unit)
     } else {
       Result.failure(Exception(PACKAGE_INSTALL_FAILURE_MESSAGE))
     }
   }
 
-  override suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<Unit> {
+  override suspend fun updatePackageCommand(specification: PythonRepositoryPackageSpecification): Result<Unit> {
     return Result.success(Unit)
   }
 

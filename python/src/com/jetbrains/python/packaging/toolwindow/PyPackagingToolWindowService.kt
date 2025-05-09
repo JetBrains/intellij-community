@@ -22,43 +22,23 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.packaging.PyPIPackageRanking
-import com.jetbrains.python.packaging.PyPIPackageUtil
-import com.jetbrains.python.packaging.PyPackageService
-import com.jetbrains.python.packaging.PyPackageVersion
-import com.jetbrains.python.packaging.PyPackageVersionComparator
-import com.jetbrains.python.packaging.PyPackageVersionNormalizer
-import com.jetbrains.python.packaging.common.PythonPackageDetails
-import com.jetbrains.python.packaging.common.PythonPackageManagementListener
-import com.jetbrains.python.packaging.common.PythonPackageSpecification
-import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
+import com.jetbrains.python.getOrThrow
+import com.jetbrains.python.packaging.*
+import com.jetbrains.python.packaging.common.*
 import com.jetbrains.python.packaging.conda.CondaPackage
+import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.packagesByRepository
-import com.jetbrains.python.packaging.normalizePackageName
-import com.jetbrains.python.packaging.repository.PyEmptyPackagePackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepositories
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.repository.PyRepositoriesList
 import com.jetbrains.python.packaging.repository.checkValid
 import com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector
-import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
-import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
-import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
-import com.jetbrains.python.packaging.toolwindow.model.PyInvalidRepositoryViewData
-import com.jetbrains.python.packaging.toolwindow.model.PyPackagesViewData
+import com.jetbrains.python.packaging.toolwindow.model.*
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.statistics.modules
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
 
 @Service(Service.Level.PROJECT)
@@ -85,8 +65,13 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
 
   suspend fun detailsForPackage(selectedPackage: DisplayablePackage): PythonPackageDetails = withContext(Dispatchers.IO) {
     PythonPackagesToolwindowStatisticsCollector.requestDetailsEvent.log(project)
-    val spec = selectedPackage.repository.createPackageSpecification(selectedPackage.name)
-    manager.repositoryManager.getPackageDetails(spec)
+    val spec = when (selectedPackage) {
+      is InstalledPackage -> manager.createPackageSpecification(selectedPackage.name)
+      is InstallablePackage -> selectedPackage.repository.createPackageSpecification(selectedPackage.name)
+      is ExpandResultNode -> selectedPackage.repository.createPackageSpecification(selectedPackage.name)
+    }
+
+    spec?.let { manager.repositoryManager.getPackageDetails(it).getOrThrow() } ?: error("Invalid package specification")
   }
 
 
@@ -127,12 +112,12 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     }
   }
 
-  suspend fun installPackage(specification: PythonPackageSpecification, options: List<String> = emptyList()) {
+  suspend fun installPackage(installRequest: PythonPackageInstallRequest, options: List<String> = emptyList()) {
     PythonPackagesToolwindowStatisticsCollector.installPackageEvent.log(project)
-    val result = manager.installPackage(specification, options, withBackgroundProgress = true)
+    val result = manager.installPackage(installRequest, options, withBackgroundProgress = true)
 
     if (result.isSuccess) {
-      handleActionCompleted(message("python.packaging.notification.installed", specification.name))
+      handleActionCompleted(message("python.packaging.notification.installed", installRequest.title))
     }
   }
 
@@ -147,13 +132,14 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     }
   }
 
-  suspend fun updatePackage(specification: PythonPackageSpecification) {
+  suspend fun updatePackage(specification: PythonRepositoryPackageSpecification) {
     val result = runPackagingOperationOrShowErrorDialog(manager.sdk, message("python.packaging.notification.update.failed", specification.name), specification.name) {
       manager.updatePackage(specification)
     }
 
     if (result.isSuccess) {
-      handleActionCompleted(message("python.packaging.notification.updated", specification.name, specification.versionSpecs))
+      val version = specification.versionSpec?.version
+      handleActionCompleted(message("python.packaging.notification.updated", specification.name, version))
     }
   }
 
@@ -224,7 +210,8 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
 
   suspend fun refreshInstalledPackages() {
     val packages = manager.installedPackages.map {
-      val repository = installedPackages.values.find { pkg -> pkg.name == it.name }?.repository ?: PyEmptyPackagePackageRepository
+      val spec = manager.createPackageSpecification(it.name,  it.version)
+      val repository = spec?.repository
       InstalledPackage(it, repository, null)
     }
 
@@ -270,8 +257,8 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
       return pyPackage.nextVersion
 
     try {
-      val specification = pyPackage.repository.createPackageSpecification(pyPackage.name)
-      val latestVersion = manager.repositoryManager.getLatestVersion(specification)
+      val specification = pyPackage.repository?.createPackageSpecification(pyPackage.name)
+      val latestVersion = specification?.let { manager.repositoryManager.getLatestVersion(it) }
       val currentVersion = PyPackageVersionNormalizer.normalize(pyPackage.instance.version)
 
       val upgradeTo = if (latestVersion != null && currentVersion != null &&

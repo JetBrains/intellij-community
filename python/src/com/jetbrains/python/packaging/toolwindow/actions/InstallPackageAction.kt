@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.awt.RelativePoint
+import com.jetbrains.python.packaging.management.toInstallRequest
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
@@ -24,7 +25,7 @@ internal class InstallPackageAction : DumbAwareAction() {
       PyPackageCoroutine.launch(project, Dispatchers.IO) {
         selectedPackages.forEach { pkg ->
           val specification = pkg.repository.createPackageSpecification(pkg.name, null)
-          project.service<PyPackagingToolWindowService>().installPackage(specification)
+          project.service<PyPackagingToolWindowService>().installPackage(specification.toInstallRequest())
         }
       }
       return

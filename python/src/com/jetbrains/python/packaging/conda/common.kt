@@ -2,12 +2,15 @@
 package com.jetbrains.python.packaging.conda
 
 import com.intellij.openapi.components.service
+import com.jetbrains.python.PyBundle
+import com.jetbrains.python.errorProcessing.MessageError
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.getOrNull
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageDetails
-import com.jetbrains.python.packaging.common.PythonPackageSpecification
-import com.jetbrains.python.packaging.common.PythonPackageSpecificationBase
+import com.jetbrains.python.packaging.repository.PyPIPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
-import com.jetbrains.python.packaging.requirement.PyRequirementRelation
+import com.jetbrains.python.packaging.repository.buildPackageDetailsBySimpleDetailsProtocol
 
 class CondaPackage(
   name: String, version: String,
@@ -19,42 +22,46 @@ class CondaPackage(
   }
 }
 
-class CondaPackageSpecification(name: String,
-                                version: String?,
-                                relation: PyRequirementRelation? = null) : PythonPackageSpecificationBase(name, version, relation, CondaPackageRepository) {
+class CondaPackageDetails(
+  override val name: String,
+  override val availableVersions: List<String> = emptyList(),
+  override val summary: String? = null,
+  override val description: String? = null,
+  override val descriptionContentType: String? = null,
+  override val documentationUrl: String? = null,
+) : PythonPackageDetails {
   override val repository: PyPackageRepository = CondaPackageRepository
-  override var versionSpecs: String? = null
-    get() = if (field != null) "${field}" else if (version != null) "${relation?.presentableText ?: "=="}$version" else ""
-
-  override fun buildInstallationString(): List<String> {
-    return listOf("$name$versionSpecs")
-  }
 }
 
-class CondaPackageDetails(override val name: String,
-                          override val availableVersions: List<String> = emptyList(),
-                          override val summary: String? = null,
-                          override val description: String? = null,
-                          override val descriptionContentType: String? = null,
-                          override val documentationUrl: String? = null)  : PythonPackageDetails {
-  override val repository: PyPackageRepository = CondaPackageRepository
-  override fun toPackageSpecification(version: String?): PythonPackageSpecification {
-    return CondaPackageSpecification(name, version)
-  }
+fun PythonPackageDetails?.toCondaPackageDetails(packageName: String, availableVersions: List<String>): CondaPackageDetails = when (this) {
+  null -> CondaPackageDetails(
+    name = packageName,
+    availableVersions = availableVersions,
+    summary = PyBundle.message("conda.packaging.empty.pypi.info")
+  )
+  else -> CondaPackageDetails(
+    availableVersions = availableVersions,
+    name = packageName,
+    summary = summary,
+    description = description,
+    descriptionContentType = descriptionContentType,
+    documentationUrl = documentationUrl
+  )
 }
+
 
 object CondaPackageRepository : PyPackageRepository("Conda", null, null) {
-  override fun createPackageSpecification(packageName: String, version: String?, relation: PyRequirementRelation?): PythonPackageSpecification {
-    return CondaPackageSpecification(packageName, version, relation)
-  }
-
-  override fun createForcedSpecPackageSpecification(packageName: String, versionSpecs: String?): PythonPackageSpecification {
-    val spec = CondaPackageSpecification(packageName, null, null)
-    spec.versionSpecs = versionSpecs
-    return spec
-  }
-
   override fun getPackages(): Set<String> {
     return service<CondaPackageCache>().packages
+  }
+
+  override fun buildPackageDetails(packageName: String): PyResult<PythonPackageDetails> {
+    val versions = service<CondaPackageCache>()[packageName]
+                   ?: return PyResult.failure(MessageError("No conda package versions in cache"))
+
+    val pypiSimpleDetails = PyPIPackageRepository.buildPackageDetailsBySimpleDetailsProtocol(packageName).getOrNull()
+    val condaDetails = pypiSimpleDetails.toCondaPackageDetails(packageName, versions)
+
+    return PyResult.success(condaDetails)
   }
 }

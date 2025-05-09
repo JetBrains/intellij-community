@@ -23,7 +23,8 @@ import com.jetbrains.python.inspections.quickfix.InstallPackageQuickFix
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.management.createSpecification
+import com.jetbrains.python.packaging.management.toInstallRequest
+import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 import com.jetbrains.python.packaging.ui.PyChooseRequirementsDialog
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.statistics.PyPackagesUsageCollector
@@ -66,7 +67,7 @@ object PyPackageInstallUtils {
   }
 
 
-  suspend fun confirmAndInstall(project: Project, sdk: Sdk, packageName: String, versionSpec: String? = null) {
+  suspend fun confirmAndInstall(project: Project, sdk: Sdk, packageName: String, versionSpec: PyRequirementVersionSpec? = null) {
     val isConfirmed = withContext(Dispatchers.EDT) {
       confirmInstall(project, packageName)
     }
@@ -107,7 +108,7 @@ object PyPackageInstallUtils {
     sdk: Sdk,
     packageName: String,
     withBackgroundProgress: Boolean,
-    versionSpec: String? = null,
+    versionSpec: PyRequirementVersionSpec? = null,
     options: List<String> = emptyList(),
   ): Result<List<PythonPackage>> {
     return try {
@@ -118,15 +119,10 @@ object PyPackageInstallUtils {
       }
 
       val spec = withContext(Dispatchers.IO) {
-        pythonPackageManager.repositoryManager.createSpecification(packageName, versionSpec)
+        pythonPackageManager.createPackageSpecificationWithSpec(packageName, versionSpec)
       } ?: return Result.failure(Exception("Package $packageName not found in any repository"))
 
-      return if (withBackgroundProgress) {
-        pythonPackageManager.installPackage(spec, options, withBackgroundProgress = true)
-      }
-      else {
-        pythonPackageManager.installPackage(spec, options, withBackgroundProgress)
-      }
+      return pythonPackageManager.installPackage(spec.toInstallRequest(), options, withBackgroundProgress)
     }
     catch (t: Throwable) {
       Result.failure(t)
@@ -162,7 +158,7 @@ object PyPackageInstallUtils {
   }
 
 
-  fun invokeInstallPackage(project: Project, pythonSdk: Sdk, packageName: String, point: RelativePoint, versionSpec: String? = null) {
+  fun invokeInstallPackage(project: Project, pythonSdk: Sdk, packageName: String, point: RelativePoint, versionSpec: PyRequirementVersionSpec? = null) {
     PyPackageCoroutine.launch(project) {
       runPackagingOperationOrShowErrorDialog(pythonSdk, PyBundle.message("python.new.project.install.failed.title", packageName),
                                              packageName) {

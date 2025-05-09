@@ -7,22 +7,25 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.components.dialog
 import com.intellij.ui.dsl.builder.*
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.packaging.common.PythonVcsPackageSpecification
+import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
+import java.net.URI
 
 internal class InstallFromVcsPackageAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
 
     val service = PyPackagingToolWindowService.getInstance(project)
-    val specification = showInstallFromVcsDialog(service) ?: return
-    PyPackageCoroutine.launch(project) {
-      service.installPackage(specification)
+    showInstallFromVcsDialog(service)?.let { (location, editable) ->
+      PyPackageCoroutine.launch(project) {
+        val options = if (editable) listOf("-e") else emptyList()
+        service.installPackage(PythonPackageInstallRequest.ByLocation(location), options)
+      }
     }
   }
 
-  private fun showInstallFromVcsDialog(service: PyPackagingToolWindowService): PythonVcsPackageSpecification? {
+  private fun showInstallFromVcsDialog(service: PyPackagingToolWindowService): Pair<URI, Boolean>? {
     var editable = false
     var link = ""
     val systems = listOf(message("python.toolwindow.packages.add.package.vcs.git"),
@@ -56,7 +59,7 @@ internal class InstallFromVcsPackageAction : DumbAwareAction() {
         else -> throw IllegalStateException("Unknown VCS")
       }
 
-      return PythonVcsPackageSpecification(link, link, prefix, editable)
+      return URI("$prefix$link") to editable
     }
     return null
   }

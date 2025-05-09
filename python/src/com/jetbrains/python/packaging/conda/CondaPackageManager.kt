@@ -12,7 +12,8 @@ import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.packaging.common.PythonPackage
-import com.jetbrains.python.packaging.common.PythonPackageSpecification
+import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
+import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerRunner
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
@@ -24,23 +25,36 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
+private fun PythonPackageInstallRequest.buildInstallationArguments(): Result<List<String>> = when (this) {
+  is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecification -> {
+    when (this.specification.repository) {
+      is CondaPackageRepository -> Result.success(listOf(this.specification.nameWithVersionSpec))
+      else -> Result.failure(UnsupportedOperationException("CondaManager installer supports only conda repositories, got ${this.specification.repository} "))
+    }
+  }
+  is PythonPackageInstallRequest.AllRequirements -> Result.success(emptyList())
+  is PythonPackageInstallRequest.ByLocation -> Result.failure(UnsupportedOperationException("CondaManager does not support installing from location uri"))
+}
+
 @ApiStatus.Experimental
 class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
   @Volatile
   override var installedPackages: List<PythonPackage> = emptyList()
   override val repositoryManager: PythonRepositoryManager = CondaRepositoryManger(project, sdk)
 
-  override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<Unit> =
-    try {
-      runConda("install", specification.buildInstallationString() + "-y" + options, message("conda.packaging.install.progress", specification.name),
+  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): Result<Unit> {
+    val installationArgs = installRequest.buildInstallationArguments().getOrElse { return Result.failure(it) }
+    return try {
+      runConda("install", installationArgs + "-y" + options, message("conda.packaging.install.progress", installRequest.title),
                withBackgroundProgress = false)
       Result.success(Unit)
     }
     catch (ex: ExecutionException) {
       Result.failure(ex)
     }
+  }
 
-  override suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<Unit> =
+  override suspend fun updatePackageCommand(specification: PythonRepositoryPackageSpecification): Result<Unit> =
     try {
       runConda("update", listOf(specification.name, "-y"), message("conda.packaging.update.progress", specification.name))
       Result.success(Unit)

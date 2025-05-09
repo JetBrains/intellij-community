@@ -3,7 +3,7 @@ package com.jetbrains.python.sdk.uv
 
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
-import com.jetbrains.python.packaging.common.PythonPackageSpecification
+import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import java.nio.file.Path
 
 interface UvCli {
@@ -18,13 +18,13 @@ interface UvLowLevel {
   /**
   * Manage project dependencies by adding/removing them to the project along side installation
   */
-  suspend fun addDependency(name: PythonPackageSpecification, options: List<String>): Result<Unit>
+  suspend fun addDependency(name: PythonPackageInstallRequest, options: List<String>): Result<Unit>
   suspend fun removeDependency(name: PythonPackage): Result<Unit>
 
   /**
    * Managing environment packages directly w/o depending or changing the project
    */
-  suspend fun installPackage(name: PythonPackageSpecification, options: List<String>): Result<Unit>
+  suspend fun installPackage(name: PythonPackageInstallRequest, options: List<String>): Result<Unit>
   suspend fun uninstallPackage(name: PythonPackage): Result<Unit>
 
   suspend fun listPackages(): Result<List<PythonPackage>>

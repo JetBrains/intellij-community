@@ -12,9 +12,9 @@ import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.psi.icons.PythonPsiApiIcons
 import javax.swing.Icon
 
-sealed class DisplayablePackage(@NlsSafe val name: String, val repository: PyPackageRepository)
+sealed class DisplayablePackage(val name: @NlsSafe String, open val repository: PyPackageRepository?)
 
-class InstalledPackage(val instance: PythonPackage, repository: PyPackageRepository, val nextVersion: PyPackageVersion? = null) : DisplayablePackage(instance.presentableName, repository) {
+class InstalledPackage(val instance: PythonPackage, repository: PyPackageRepository?, val nextVersion: PyPackageVersion? = null) : DisplayablePackage(instance.presentableName, repository) {
   val currentVersion: PyPackageVersion? = PyPackageVersionNormalizer.normalize(instance.version)
 
   val isEditMode: Boolean = instance.isEditableMode
@@ -41,9 +41,9 @@ class InstalledPackage(val instance: PythonPackage, repository: PyPackageReposit
 }
 
 
-class InstallablePackage(name: String, repository: PyPackageRepository) : DisplayablePackage(name, repository)
+class InstallablePackage(name: String, override val repository: PyPackageRepository) : DisplayablePackage(name, repository)
 
-class ExpandResultNode(var more: Int, repository: PyPackageRepository) : DisplayablePackage("", repository)
+class ExpandResultNode(var more: Int, override val repository: PyPackageRepository) : DisplayablePackage("", repository)
 
 open class PyPackagesViewData(@NlsSafe val repository: PyPackageRepository, val packages: List<DisplayablePackage>, val exactMatch: Int = -1, val moreItems: Int = 0)
 

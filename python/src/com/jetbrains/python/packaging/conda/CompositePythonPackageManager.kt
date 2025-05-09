@@ -5,7 +5,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.common.PythonPackage
-import com.jetbrains.python.packaging.common.PythonPackageSpecification
+import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
+import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
 
@@ -23,15 +24,15 @@ internal class CompositePythonPackageManager(
 
   private val managerNames = managers.joinToString { it.javaClass.simpleName }
 
-  override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<Unit> {
+  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): Result<Unit> {
     return processPackageOperation(
       errorMessageKey = "python.packaging.composite.install.package.error",
-      operation = { it.installPackageCommand(specification, options) },
-      name = specification.name
+      operation = { it.installPackageCommand(installRequest, options) },
+      name = installRequest.title
     )
   }
 
-  override suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<Unit> {
+  override suspend fun updatePackageCommand(specification: PythonRepositoryPackageSpecification): Result<Unit> {
     return processPackageOperation(
       errorMessageKey = "python.packaging.composite.update.package.error",
       operation = { it.updatePackage(specification) },

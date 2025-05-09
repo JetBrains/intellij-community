@@ -1,20 +1,65 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.repository
 
+import com.google.gson.Gson
+import com.google.gson.JsonSyntaxException
 import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.generateServiceName
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.components.service
+import com.intellij.util.io.HttpRequests
 import com.intellij.util.xmlb.annotations.Transient
+import com.jetbrains.python.errorProcessing.MessageError
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.errorProcessing.failure
+import com.jetbrains.python.packaging.PyPIPackageUtil
+import com.jetbrains.python.packaging.PyPackageVersionComparator
 import com.jetbrains.python.packaging.cache.PythonSimpleRepositoryCache
-import com.jetbrains.python.packaging.common.PythonPackageSpecification
-import com.jetbrains.python.packaging.common.PythonSimplePackageSpecification
-import com.jetbrains.python.packaging.conda.CondaPackageRepository
+import com.jetbrains.python.packaging.common.PythonPackageDetails
+import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
+import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
+import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 import org.apache.http.client.utils.URIBuilder
 import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
 import java.net.URL
+
+private val GSON = Gson()
+
+internal fun PyPackageRepository.buildPackageDetailsBySimpleDetailsProtocol(packageName: String): PyResult<PythonSimplePackageDetails> {
+  val repositoryUrl = repositoryUrl ?: return PyResult.failure(MessageError("There is no repository url for $name"))
+
+  val packageDetails = runCatching {
+    val packageDetailsUrl = PyPIPackageUtil.buildDetailsUrl(repositoryUrl, packageName)
+    val rawInfo = HttpRequests.request(packageDetailsUrl)
+      .withBasicAuthorization(this)
+      .readTimeout(3000)
+      .readString()
+
+    GSON.fromJson(rawInfo, PyPIPackageUtil.PackageDetails::class.java)
+  }.getOrElse { throwable ->
+    when (throwable) {
+      is JsonSyntaxException, is PyPIPackageUtil.NotSimpleRepositoryApiUrlException, is IOException -> return failure(throwable.localizedMessage)
+      else -> throw throwable
+    }
+  }
+
+  val pythonSimplePackageDetails = PythonSimplePackageDetails(
+    name = packageName,
+    availableVersions = packageDetails.releases.sortedWith(PyPackageVersionComparator.STR_COMPARATOR.reversed()),
+    repository = this,
+    summary = packageDetails.info.summary,
+    description = packageDetails.info.description,
+    descriptionContentType = packageDetails.info.descriptionContentType,
+    documentationUrl = packageDetails.info.projectUrls["Documentation"],
+    author = packageDetails.info.author,
+    authorEmail = packageDetails.info.authorEmail,
+    homepageUrl = packageDetails.info.homePage
+  )
+  return PyResult.success(pythonSimplePackageDetails)
+}
 
 @ApiStatus.Internal
 open class PyPackageRepository() {
@@ -33,9 +78,6 @@ open class PyPackageRepository() {
     this.repositoryUrl = repositoryUrl
     this.login = login
   }
-
-  internal val isCustom: Boolean
-   get() = this !is PyPIPackageRepository && this !is CondaPackageRepository
 
   private val serviceName: String
     get() = generateServiceName(SUBSYSTEM_NAME, name)
@@ -66,23 +108,23 @@ open class PyPackageRepository() {
     PasswordSafe.instance.set(attributes, null)
   }
 
-  open fun createPackageSpecification(
+  fun createPackageSpecificationWithSpec(
+    packageName: String,
+    versionSpecs: PyRequirementVersionSpec? = null,
+  ): PythonRepositoryPackageSpecification = PythonRepositoryPackageSpecification(this, packageName, versionSpecs)
+
+  fun createPackageSpecification(
     packageName: String,
     version: String? = null,
-    relation: PyRequirementRelation? = null,
-  ): PythonPackageSpecification =
-    PythonSimplePackageSpecification(packageName, version, this, relation)
-
-  open fun createForcedSpecPackageSpecification(
-    packageName: String,
-    versionSpecs: String? = null,
-  ): PythonPackageSpecification =
-    PythonSimplePackageSpecification(packageName, null, this).apply {
-      this.versionSpecs = versionSpecs
-    }
+    relation: PyRequirementRelation = PyRequirementRelation.EQ,
+  ): PythonRepositoryPackageSpecification = PythonRepositoryPackageSpecification(this, packageName, version, relation)
 
   open fun getPackages(): Set<String> =
     service<PythonSimpleRepositoryCache>()[this] ?: emptySet()
+
+  open fun buildPackageDetails(packageName: String): PyResult<PythonPackageDetails> {
+    return buildPackageDetailsBySimpleDetailsProtocol(packageName)
+  }
 
   companion object {
     private const val SUBSYSTEM_NAME = "PyCharm"
