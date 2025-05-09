@@ -36,7 +36,13 @@ internal class ComposeResourcesProjectResolver : AbstractProjectResolverExtensio
         directoryPath
       }
 
-    val composeResources = ComposeResourcesModelImpl(customComposeResourcesDirs = composeResourcesDirs)
+    val isPublicResClass = composeResourcesModel?.isPublicResClass ?: false
+    val nameOfResClass = composeResourcesModel?.nameOfResClass ?: "Res"
+    val composeResources = ComposeResourcesModelImpl(
+      customComposeResourcesDirs = composeResourcesDirs,
+      isPublicResClass = isPublicResClass,
+      nameOfResClass = nameOfResClass,
+    )
     ideModule.createChild(COMPOSE_RESOURCES_KEY, composeResources)
   }
 
