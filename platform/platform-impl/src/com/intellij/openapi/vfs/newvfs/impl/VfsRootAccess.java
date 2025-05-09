@@ -184,6 +184,7 @@ public final class VfsRootAccess {
         String wslName = System.getProperty("wsl.distribution.name");
         if (wslName != null) {
           allowed.add(FileUtil.toSystemIndependentName("\\\\wsl$\\" + wslName));
+          allowed.add(FileUtil.toSystemIndependentName("\\\\wsl.localhost\\" + wslName));
         }
       }
       else {
