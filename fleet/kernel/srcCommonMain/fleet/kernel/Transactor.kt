@@ -256,13 +256,7 @@ class ChangeInterceptor(
 ) : CoroutineContext.Element {
   companion object : CoroutineContext.Key<ChangeInterceptor> {
     val Identity: ChangeInterceptor = ChangeInterceptor("identity") { changeFn, next ->
-      next(changeFn).also {
-        /**
-         * because [fleet.kernel.rete.ReteSpinChangeInterceptor] wants to be in control of the threadBound context
-         * setting the database becomes a responsibility of the interceptor
-         * */
-        DbContext.threadBound.set(it.dbAfter)
-      }
+      next(changeFn)
     }
   }
 
