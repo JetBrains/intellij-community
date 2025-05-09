@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.github.git.share.dialog
+package git4idea.remote.hosting.ui
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -19,7 +19,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 
 @ApiStatus.Internal
-class GithubExistingRemotesDialog(
+class ShareProjectExistingRemotesDialog(
   project: Project,
   hostServiceName: @NlsContexts.ConfigurableName String,
   private val remotes: List<String>

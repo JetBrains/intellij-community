@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.github.git.share.dialog
+package git4idea.remote.hosting.ui
 
 import com.intellij.CommonBundle
 import com.intellij.openapi.actionSystem.DataSink
@@ -15,9 +15,7 @@ import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
-// Git + Services notifications
-@ApiStatus.Internal
-class GithubUntrackedFilesDialog(
+internal class ShareProjectUntrackedFilesDialog(
   private val myProject: Project,
   untrackedFiles: List<VirtualFile>
 ) : SelectFilesDialog(myProject, untrackedFiles, null, null, true, false), UiDataProvider {
@@ -58,7 +56,5 @@ class GithubUntrackedFilesDialog(
     sink[VcsDataKeys.COMMIT_MESSAGE_CONTROL] = myCommitMessagePanel
   }
 
-  override fun getDimensionServiceKey(): String {
-    return "Github.UntrackedFilesDialog"
-  }
+  override fun getDimensionServiceKey(): String = "Git.ShareProject.UntrackedFilesDialog"
 }
