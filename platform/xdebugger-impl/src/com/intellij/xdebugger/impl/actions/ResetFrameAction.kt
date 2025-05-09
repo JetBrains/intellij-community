@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.util.ThreeState
 import com.intellij.xdebugger.frame.XDropFrameHandler
@@ -11,7 +12,7 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class ResetFrameAction : DumbAwareAction() {
+class ResetFrameAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   override fun actionPerformed(e: AnActionEvent) {
     withHandler(e, true) { handler, stackFrame -> handler.drop(stackFrame) }
   }
@@ -23,11 +24,11 @@ class ResetFrameAction : DumbAwareAction() {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   private fun <T> withHandler(e: AnActionEvent, default: T, action: (XDropFrameHandler, XStackFrame) -> T): T {
-    val session = DebuggerUIUtil.getSession(e)
+    val session = DebuggerUIUtil.getSessionProxy(e)
     if (session != null) {
-      val dropFrameHandler = session.debugProcess.dropFrameHandler
+      val dropFrameHandler = session.getDropFrameHandler()
       if (dropFrameHandler != null) {
-        val currentFrame = session.currentStackFrame
+        val currentFrame = session.getCurrentStackFrame()
         if (currentFrame != null) {
           return action(dropFrameHandler, currentFrame)
         }
