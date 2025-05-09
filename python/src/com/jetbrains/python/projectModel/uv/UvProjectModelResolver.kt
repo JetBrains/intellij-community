@@ -11,6 +11,8 @@ import org.apache.tuweni.toml.TomlTable
 import java.nio.file.Path
 import kotlin.io.path.*
 
+private const val DEFAULT_VENV_DIR = ".venv"
+
 @OptIn(ExperimentalPathApi::class)
 object UvProjectModelResolver : PythonProjectModelResolver {
   override fun discoverProjectRootSubgraph(root: Path): ProjectModelGraph? {
@@ -27,6 +29,8 @@ object UvProjectModelResolver : PythonProjectModelResolver {
     // Can workspace members contain editable path dependencies inside?
     val allUvProjects: List<UvPyProjectToml> = root
       .walk()
+      // TODO skip excluded project directories
+      .filterNot { it.startsWith(root / DEFAULT_VENV_DIR) }
       .filter { it.name == UvConstants.PYPROJECT_TOML }
       .mapNotNull(::readUvPyProjectToml)
       .toList()

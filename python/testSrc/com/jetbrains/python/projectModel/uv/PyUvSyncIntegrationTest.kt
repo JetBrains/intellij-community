@@ -27,6 +27,24 @@ class PyUvSyncIntegrationTest {
   private val multiprojectFixture by multiProjectFixture()
 
   @Test
+  fun `projects inside dot venv are skipped`() = timeoutRunBlocking {
+    testRoot.createFile("pyproject.toml").writeText("""
+      [project]
+      name = "main"
+    """.trimIndent())
+
+    testRoot.createFile(".venv/lib/python3.13/site-packages/pandas/pyproject.toml").writeText("""
+      [project]
+      name = 'pandas'
+    """.trimIndent())
+
+    multiprojectFixture.linkProject(project, testRoot, UvConstants.SYSTEM_ID)
+    syncAllProjects(project)
+
+    ModuleAssertions.assertModules(project, "main")
+  }
+
+  @Test
   fun `workspace project with a path dependency`() = timeoutRunBlocking {
     testRoot.createFile("pyproject.toml").writeText("""
       [project]
