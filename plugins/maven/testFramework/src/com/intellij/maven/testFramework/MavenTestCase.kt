@@ -4,7 +4,6 @@ package com.intellij.maven.testFramework
 import com.intellij.UtilBundle
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.execution.wsl.WSLDistribution
-import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
@@ -147,7 +146,6 @@ abstract class MavenTestCase : UsefulTestCase() {
     setUpFixtures()
     myProject = myTestFixture!!.project
     myPathTransformer = RemotePathTransformerFactory.createForProject(project)
-    setupWslDistribution()
     setupCustomJdk()
     ensureTempDirCreated()
 
@@ -215,14 +213,6 @@ abstract class MavenTestCase : UsefulTestCase() {
     }
   }
 
-  private fun setupWslDistribution() {
-    val wslMsId = System.getProperty("wsl.distribution.name")
-    if (wslMsId == null) return
-    val distributions = WslDistributionManager.getInstance().installedDistributions
-    if (distributions.isEmpty()) throw IllegalStateException("no WSL distributions configured!")
-    myWSLDistribution = distributions.firstOrNull { it.msId == wslMsId }
-                        ?: throw IllegalStateException("Distribution $wslMsId was not found")
-  }
 
   private fun isProjectInEelEnvironment(): Boolean {
     return System.getenv("EEL_FIXTURE_ENGINE") != null
@@ -238,6 +228,22 @@ abstract class MavenTestCase : UsefulTestCase() {
       { MavenUtil.noUncompletedRunnables() }, 15)
   }
 
+  private fun isNetworkNameError(t: Throwable, message: String): Boolean {
+    return (t.message ?: "").contains("The network name cannot be found") &&
+           message.contains("Couldn't read shelf information")
+  }
+
+  private fun isJdkAnnotationsError(t: Throwable, category: String): Boolean {
+    return "JDK annotations not found" == t.message &&
+           "#com.intellij.openapi.projectRoots.impl.JavaSdkImpl" == category
+  }
+
+  private fun isLicenseError(message: String): Boolean {
+    return "LicenseManager is not installed" == message
+  }
+
+
+
   override fun runBare(testRunnable: ThrowableRunnable<Throwable>) {
     LoggedErrorProcessor.executeWith<Throwable>(object : LoggedErrorProcessor() {
       override fun processError(
@@ -246,13 +252,12 @@ abstract class MavenTestCase : UsefulTestCase() {
         details: Array<String>,
         t: Throwable?,
       ): Set<Action> {
-        val intercept = t != null && ((t.message ?: "").contains("The network name cannot be found") &&
-                                      message.contains("Couldn't read shelf information") ||
-                                      "JDK annotations not found" == t.message && "#com.intellij.openapi.projectRoots.impl.JavaSdkImpl" == category)
+        val intercept = t != null && (isNetworkNameError(t, message) || isJdkAnnotationsError(t, category) || isLicenseError(message))
         return if (intercept) Action.NONE else Action.ALL
       }
     }) { super.runBare(testRunnable) }
   }
+  
 
   private fun findExisingJdkByPath(jdkPath: String): Sdk? {
     val sdk = ProjectJdkTable.getInstance().allJdks.find { jdkPath == it.homePath }!!
@@ -327,14 +332,14 @@ abstract class MavenTestCase : UsefulTestCase() {
   protected open fun setUpFixtures() {
     val wslDistributionName = System.getProperty("wsl.distribution.name")
     myTestFixture = when {
-      wslDistributionName != null -> setupWsl(wslDistributionName)
+      wslDistributionName != null -> setupFixtureOnWsl(wslDistributionName)
       else -> IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name, useDirectoryBasedProjectFormat()).fixture
     }
     myTestFixture!!.setUp()
   }
 
-  private fun setupWsl(wslDistributionName: String): IdeaProjectTestFixture {
-    val path = generateTemporaryPath(FileUtil.sanitizeFileName(name, false), Paths.get("\\\\wsl$\\${wslDistributionName}\\tmp"))
+  private fun setupFixtureOnWsl(wslDistributionName: String): IdeaProjectTestFixture {
+    val path = generateTemporaryPath(FileUtil.sanitizeFileName(name, false), Paths.get("\\\\wsl.localhost\\${wslDistributionName}\\tmp"))
     return IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name, path, useDirectoryBasedProjectFormat()).fixture
   }
 
