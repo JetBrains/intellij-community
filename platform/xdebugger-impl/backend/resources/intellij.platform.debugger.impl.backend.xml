@@ -2,6 +2,8 @@
   <dependencies>
     <module name="intellij.platform.kernel.backend"/>
     <module name="intellij.platform.execution.impl.backend"/>
+    <module name="intellij.platform.debugger.impl.shared"/>
+    <module name="intellij.platform.debugger.impl.rpc"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.backend.remoteApiProvider

@@ -2,6 +2,8 @@
   <dependencies>
     <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.execution.impl.frontend"/>
+    <module name="intellij.platform.debugger.impl.shared"/>
+    <module name="intellij.platform.debugger.impl.rpc"/>
   </dependencies>
   <extensionPoints>
     <extensionPoint name="xdebugger.customQuickEvaluateActionProvider"
