@@ -271,21 +271,18 @@ public final class RepositoryUtils {
     if (JarHttpDownloaderJps.enabled()) {
       Promise<?> promise = JarHttpDownloaderJps.getInstance(project).downloadLibraryFilesAsync(library);
 
-      // null means this library should be handled by standard resolver
-      if (promise != null) {
-        // callers of this function typically do not log, so do it for them
-        promise.onError(error -> {
-          LOG.warn("Failed to download repository library '" + library.getName() + "' with JarHttpDownloader", error);
+      // callers of this function typically do not log, so do it for them
+      promise.onError(error -> {
+        LOG.warn("Failed to download repository library '" + library.getName() + "' with JarHttpDownloader", error);
+      });
+
+      if (LOG.isDebugEnabled()) {
+        promise.onSuccess(result -> {
+          LOG.debug("Downloaded repository library '" + library.getName() + "' with JarHttpDownloader");
         });
-
-        if (LOG.isDebugEnabled()) {
-          promise.onSuccess(result -> {
-            LOG.debug("Downloaded repository library '" + library.getName() + "' with JarHttpDownloader");
-          });
-        }
-
-        return promise;
       }
+
+      return promise;
     }
 
     Promise<List<OrderRoot>> mavenResolverPromise = loadDependenciesToLibrary(

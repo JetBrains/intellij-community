@@ -38,6 +38,7 @@ import kotlin.test.assertTrue
 
 @TestApplication
 class JarHttpDownloaderJpsTest {
+  private val TEST_MAVEN_LOCAL_REPOSITORY_MACRO = "REPOSITORY_LIBRARY_UTILS_TEST_LOCAL_MAVEN_REPOSITORY"
   private val TEST_REMOTE_REPOSITORIES_ROOT_MACRO = "REPOSITORY_LIBRARY_UTILS_TEST_REMOTE_REPOSITORIES_ROOT"
 
   @JvmField
@@ -78,9 +79,17 @@ class JarHttpDownloaderJpsTest {
   @BeforeEach
   fun beforeEach() {
     val pathMacros: PathMacros = PathMacros.getInstance()
+    pathMacros.setMacro(TEST_MAVEN_LOCAL_REPOSITORY_MACRO, m2DirectoryPath.toString())
+    Disposer.register(disposable) {
+      pathMacros.setMacro(TEST_MAVEN_LOCAL_REPOSITORY_MACRO, null)
+    }
     pathMacros.setMacro(TEST_REMOTE_REPOSITORIES_ROOT_MACRO, server.url)
     Disposer.register(disposable) {
       pathMacros.setMacro(TEST_REMOTE_REPOSITORIES_ROOT_MACRO, null)
+    }
+    JarRepositoryManager.setLocalRepositoryPath(m2DirectoryPath.toFile())
+    Disposer.register(disposable) {
+      JarRepositoryManager.setLocalRepositoryPath(null)
     }
 
     val repo = PathMacros.getInstance().getValue("MAVEN_REPOSITORY")
@@ -135,7 +144,7 @@ class JarHttpDownloaderJpsTest {
     val promise = JarHttpDownloaderJps.getInstance(project).downloadLibraryFilesAsync(libraryRelease)
 
     val exception = assertFailsWith<IllegalStateException> {
-      promise!!.await()
+      promise.await()
     }
 
     assertTrue(exception.message!!.startsWith("Failed to download 1 artifact(s): (first exception) Wrong file checksum"), exception.message!!)
