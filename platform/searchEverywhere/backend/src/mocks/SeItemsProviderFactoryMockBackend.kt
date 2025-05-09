@@ -13,10 +13,10 @@ class SeItemsProviderFactoryMockBackend: SeItemsProviderFactory {
   override val id: String get() = ID
 
   override suspend fun getItemsProvider(project: Project?, dataContext: DataContext): SeItemsProvider? =
-    SeItemsProviderMock(resultPrefix = PREFIX, id = ID, displayName = PREFIX, delayMillis = 300, delayStep = 5)
+    SeItemsProviderMock(resultPrefix = PREFIX, id = ID, displayName = PREFIX, delayMillis = 100, delayStep = 1)
 
   companion object {
     const val PREFIX: String = "MockBackend"
-    const val ID: String = "SearchEverywhereItemsProviderMock_$PREFIX"
+    const val ID: String = "SearchEverywhereItemsProviderMock_MockBackend"
   }
 }

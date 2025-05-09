@@ -10,7 +10,8 @@ enum class SeLog {
   ITEM_EMIT,
   USER_ACTION,
   LIFE_CYCLE,
-  FROZEN_COUNT;
+  FROZEN_COUNT,
+  THROTTLING;
 
   companion object {
     private val allowedCategories = setOf(
@@ -18,7 +19,8 @@ enum class SeLog {
       ITEM_EMIT,
       USER_ACTION,
       LIFE_CYCLE,
-      FROZEN_COUNT
+      FROZEN_COUNT,
+      THROTTLING,
     )
 
     // #com.intellij.platform.searchEverywhere.providers.SeLog

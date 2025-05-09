@@ -4,9 +4,7 @@ package com.intellij.platform.searchEverywhere.providers.mocks
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.SeLog
-import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
-import com.intellij.platform.searchEverywhere.providers.SeLog.LIFE_CYCLE
-import com.intellij.platform.searchEverywhere.providers.SeLog.USER_ACTION
+import com.intellij.platform.searchEverywhere.providers.SeLog.*
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -30,7 +28,7 @@ class SeItemsProviderMock(
         delay(delayMillis)
 
         repeat(size) { index ->
-          val item = SeItemMock("$resultPrefix $index")
+          val item = SeItemMock("$resultPrefix $index - ${params.inputQuery}")
 
           if (params.inputQuery.isEmpty() || item.text.contains(params.inputQuery, ignoreCase = true)) {
             SeLog.log(ITEM_EMIT) { "Provider ${id} emitting: ${item.text}" }

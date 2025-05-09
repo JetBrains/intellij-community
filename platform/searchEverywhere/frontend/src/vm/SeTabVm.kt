@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeFilterState
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.SeResultEvent
 import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.utils.SuspendLazyProperty
@@ -25,19 +26,19 @@ class SeTabVm(
   private val tab: SeTab,
   searchPattern: StateFlow<String>,
 ) {
-  val searchResults: StateFlow<Flow<SeResultListEvent>> get() = _searchResults.asStateFlow()
+  val searchResults: StateFlow<Flow<SeThrottledItems<SeResultEvent>>> get() = _searchResults.asStateFlow()
   val name: String get() = tab.name
   val filterEditor: SuspendLazyProperty<SeFilterEditor?> = suspendLazy { tab.getFilterEditor() }
   val tabId: String get() = tab.id
 
-  fun filterEditorOrNull(): SeFilterEditor? = filterEditor.getValueOrNull()
-
   private val shouldLoadMoreFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
   var shouldLoadMore: Boolean
     get() = shouldLoadMoreFlow.value
-    set(value) { shouldLoadMoreFlow.value = value }
+    set(value) {
+      shouldLoadMoreFlow.value = value
+    }
 
-  private val _searchResults: MutableStateFlow<Flow<SeResultListEvent>> = MutableStateFlow(emptyFlow())
+  private val _searchResults: MutableStateFlow<Flow<SeThrottledItems<SeResultEvent>>> = MutableStateFlow(emptyFlow())
   private val isActiveFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
   private val dumbModeStateFlow =
@@ -63,21 +64,25 @@ class SeTabVm(
       }.collectLatest { isActive ->
         if (!isActive) return@collectLatest
 
+        var shouldThrottle = false
+
         combine(searchPattern, filterEditor.getValue()?.resultFlow ?: flowOf(null)) { searchPattern, filterData ->
           Pair(searchPattern, filterData ?: SeFilterState.Empty)
         }.mapLatest { (searchPattern, filterData) ->
           val params = SeParams(searchPattern, filterData)
 
-          flow {
-            tab.getItems(params).map { item ->
-              shouldLoadMoreFlow.first { it }
-              item
-            }.onCompletion {
-              emit(SeResultListStopEvent)
-            }.collect {
-              emit(SeResultListUpdateEvent(it))
-            }
+          val resultsFlow = tab.getItems(params).let {
+            //if (shouldThrottle)
+              it.throttledWithAccumulation()
+            //else
+            //  it.map { event -> SeThrottledOneItem(event) }
+          }.map { item ->
+            shouldLoadMoreFlow.first { it }
+            item
           }
+
+          shouldThrottle = true
+          resultsFlow
         }.collect {
           _searchResults.value = it
         }
