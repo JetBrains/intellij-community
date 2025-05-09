@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class IdeEventQueueTest extends LightPlatformTestCase {
-  public void testManyEventsStress() {
+  public void testManyEventsStressPerformance() {
     int N = 100000;
     Benchmark.newBenchmark("Event queue dispatch", () -> {
       UIUtil.dispatchAllInvocationEvents();

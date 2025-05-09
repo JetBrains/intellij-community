@@ -491,7 +491,7 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     )
   }
 
-  fun `test many appends`() {
+  fun `test many appends performance`() {
     val size = 250
     val file = myFixture.configureByText("MyFile.java", """
       class MyFile {
