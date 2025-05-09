@@ -24,6 +24,7 @@ import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.sdkSeemsValid
 import com.jetbrains.python.sdk.uv.isUv
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -50,19 +51,11 @@ internal data class UvRunSettingsEditor(val project: Project) : SettingsEditor<U
   private val isScript = propertyGraph.property(true)
   private val isModule = propertyGraph.property(false)
 
-  constructor(project: Project, uvRunConfiguration: UvRunConfiguration) : this(project) {
+  constructor(project: Project, uvRunConfiguration: UvRunConfiguration, sdks: List<Sdk?>) : this(project) {
     scriptField.addBrowseFolderListener(
       project,
       FileChooserDescriptorFactory.singleFile(),
     )
-
-    val sdks =
-      listOf(null) +
-      PythonSdkUtil
-        .getAllSdks()
-        .filter { sdk ->
-          sdk.isUv && sdk.sdkSeemsValid && !PythonSdkType.hasInvalidRemoteCredentials(sdk)
-        }
 
     panel = panel {
       var items = listOf(RunTypeField.SCRIPT, RunTypeField.MODULE)
@@ -165,6 +158,15 @@ internal data class UvRunSettingsEditor(val project: Project) : SettingsEditor<U
 
   override fun createEditor(): JComponent = panel
 }
+
+@ApiStatus.Internal
+fun uvSdkList(): List<Sdk?> =
+  listOf(null) +
+  PythonSdkUtil
+    .getAllSdks()
+    .filter { sdk ->
+      sdk.isUv && sdk.sdkSeemsValid && !PythonSdkType.hasInvalidRemoteCredentials(sdk)
+    }
 
 private val whiteSpaceRegex = Regex("\\s+")
 

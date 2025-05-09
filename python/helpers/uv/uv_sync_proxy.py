@@ -41,10 +41,12 @@ except subprocess.CalledProcessError as e:
 
 
 sync_segment = "" if should_sync_project else "--no-sync "
-venv_segment = "" if venv_path is None else "VIRTUAL_ENV=" + str(venv_path) + " "
 active_segment = "" if venv_path is None else "--active "
 
-command = venv_segment + uv_path + " run " + active_segment + sync_segment + " ".join(sys.argv[4:])
+if venv_path is not None:
+    os.environ["VIRTUAL_ENV"] = str(venv_path)
+
+command = uv_path + " run " + active_segment + sync_segment + " ".join(sys.argv[4:])
 print()
 print(command)
 os.system(command)
