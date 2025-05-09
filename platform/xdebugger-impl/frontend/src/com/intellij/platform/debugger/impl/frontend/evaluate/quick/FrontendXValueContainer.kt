@@ -8,7 +8,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XValueChildrenList
 import com.intellij.xdebugger.frame.XValueContainer
-import com.intellij.xdebugger.impl.rpc.XValueComputeChildrenEvent
+import com.intellij.platform.xdebugger.impl.rpc.XValueComputeChildrenEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async

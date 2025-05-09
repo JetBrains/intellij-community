@@ -11,6 +11,23 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
 
+// TODO: should be moved to RPC module!!
+@ApiStatus.Internal
+@Serializable
+class XDebuggerConsoleViewData(@Serializable internal val remoteData: RemoteXDebuggerConsoleViewData? = null, @Transient internal val localConsole: ConsoleView? = null)
+
+@ApiStatus.Internal
+@Serializable
+data class RemoteXDebuggerConsoleViewData(
+  val projectId: ProjectId,
+  val executionId: Long,
+  val idBased: Boolean,
+  val testFramework: String,
+  val uniqueId: String,
+  val consoleId: Int,
+  val runnerLayoutUiId: Int?,
+)
+
 @ApiStatus.Internal
 suspend fun ConsoleView.toRpc(contentDescriptor: RunContentDescriptor, debugProcess: XDebugProcess?): XDebuggerConsoleViewData {
   val remoteData = XDebuggerConsoleViewConverter.EP_NAME.extensionList.firstNotNullOfOrNull {
@@ -43,19 +60,3 @@ interface XDebuggerConsoleViewConverter {
 
   suspend fun convert(remoteData: RemoteXDebuggerConsoleViewData, processHandler: ProcessHandler): ConsoleView?
 }
-
-@ApiStatus.Internal
-@Serializable
-class XDebuggerConsoleViewData internal constructor(@Serializable internal val remoteData: RemoteXDebuggerConsoleViewData? = null, @Transient internal val localConsole: ConsoleView? = null)
-
-@ApiStatus.Internal
-@Serializable
-data class RemoteXDebuggerConsoleViewData(
-  val projectId: ProjectId,
-  val executionId: Long,
-  val idBased: Boolean,
-  val testFramework: String,
-  val uniqueId: String,
-  val consoleId: Int,
-  val runnerLayoutUiId: Int?,
-)

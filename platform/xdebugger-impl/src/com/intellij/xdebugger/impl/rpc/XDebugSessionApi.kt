@@ -9,6 +9,7 @@ import com.intellij.ide.rpc.FrontendDocumentId
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.util.NlsContexts
+import kotlinx.serialization.Transient
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.rpc.Id
 import com.intellij.platform.rpc.RemoteApiProviderService
@@ -24,7 +25,6 @@ import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
@@ -88,14 +88,6 @@ interface XDebugSessionApi : RemoteApi<Unit> {
   }
 }
 
-/**
- * @see XDebugSessionId.findValue
- * @see com.intellij.xdebugger.impl.XDebugSessionImpl.id
- */
-@ApiStatus.Internal
-@Serializable
-data class XDebugSessionId(override val uid: UID) : Id
-
 @ApiStatus.Internal
 @Serializable
 data class XDebugSessionDto(
@@ -111,6 +103,24 @@ data class XDebugSessionDto(
   val smartStepIntoHandlerDto: XSmartStepIntoHandlerDto?,
   val isLibraryFrameFilterSupported: Boolean,
   val activeNonLineBreakpointIdFlow: RpcFlow<XBreakpointId?>,
+)
+
+@ApiStatus.Internal
+@Serializable
+sealed interface XExecutionStacksEvent {
+  @Serializable
+  data class NewExecutionStacks(val stacks: List<XExecutionStackDto>, val last: Boolean) : XExecutionStacksEvent
+
+  @Serializable
+  data class ErrorOccurred(val errorMessage: @NlsContexts.DialogMessage String) : XExecutionStacksEvent
+}
+
+@ApiStatus.Internal
+@Serializable
+data class XExecutionStackDto(
+  val executionStackId: XExecutionStackId,
+  val displayName: @Nls String,
+  val icon: IconId?,
 )
 
 

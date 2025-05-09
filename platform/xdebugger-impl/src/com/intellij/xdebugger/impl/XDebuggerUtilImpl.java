@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.xdebugger.impl.shared.XDebuggerUtilImplShared;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -959,37 +960,10 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   }
 
   public static Navigatable createNavigatable(Project project, XSourcePosition position) {
-    return new XSourcePositionNavigatable(project, position);
-  }
-
-  private static class XSourcePositionNavigatable implements Navigatable {
-    private final Project myProject;
-    private final XSourcePosition myPosition;
-
-    private XSourcePositionNavigatable(Project project, XSourcePosition position) {
-      myProject = project;
-      myPosition = position;
-    }
-
-    @Override
-    public void navigate(boolean requestFocus) {
-      createOpenFileDescriptor(myProject, myPosition).navigate(requestFocus);
-    }
-
-    @Override
-    public boolean canNavigate() {
-      return myPosition.getFile().isValid();
-    }
-
-    @Override
-    public boolean canNavigateToSource() {
-      return canNavigate();
-    }
+    return XDebuggerUtilImplShared.createNavigatable(project, position);
   }
 
   public static @NotNull OpenFileDescriptor createOpenFileDescriptor(@NotNull Project project, @NotNull XSourcePosition position) {
-    return position.getOffset() != -1
-           ? new OpenFileDescriptor(project, position.getFile(), position.getOffset())
-           : new OpenFileDescriptor(project, position.getFile(), position.getLine(), 0);
+    return XDebuggerUtilImplShared.createOpenFileDescriptor(project, position);
   }
 }

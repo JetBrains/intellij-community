@@ -3,12 +3,12 @@ package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
+import com.intellij.platform.xdebugger.impl.rpc.XBreakpointDependencyDto
+import com.intellij.platform.xdebugger.impl.rpc.XBreakpointDependencyEvent
+import com.intellij.platform.xdebugger.impl.rpc.XDependentBreakpointManagerApi
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManagerProxy
-import com.intellij.xdebugger.impl.rpc.XBreakpointDependencyDto
-import com.intellij.xdebugger.impl.rpc.XBreakpointDependencyEvent
 import com.intellij.xdebugger.impl.rpc.XBreakpointId
-import com.intellij.xdebugger.impl.rpc.XDependentBreakpointManagerApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch

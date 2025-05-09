@@ -25,7 +25,7 @@ import org.jetbrains.annotations.ApiStatus
 
 /**
  * Model which holds reference to the [XValue].
- * This model allows sending [XValueId] to a client and afterward retrieving [XValue] by this id.
+ * This model allows sending [com.intellij.platform.xdebugger.impl.rpc.XValueId] to a client and afterward retrieving [XValue] by this id.
  *
  * Since [XValue] implementation is provided by plugins we cannot easily extend this API to support
  * [XFullValueEvaluator], [ValueMarkup] etc. which are needed for the RPC backend implementation.
@@ -33,7 +33,7 @@ import org.jetbrains.annotations.ApiStatus
  *
  * [BackendXValueModel] can be created by [BackendXValueModelsManager.createXValueModel] function.
  *
- * @see [XValueId]
+ * @see [com.intellij.platform.xdebugger.impl.rpc.XValueId]
  */
 @ApiStatus.Internal
 class BackendXValueModel internal constructor(

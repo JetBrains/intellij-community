@@ -40,7 +40,6 @@ import kotlinx.coroutines.flow.channelFlow
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.await
 import org.jetbrains.concurrency.resolvedPromise
-import kotlin.collections.map
 
 internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
   override suspend fun getBreakpointTypeList(project: ProjectId): XBreakpointTypeList {

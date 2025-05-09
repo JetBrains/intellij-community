@@ -1,8 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.xdebugger.impl.rpc
+package com.intellij.platform.xdebugger.impl.rpc
 
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.util.ThreeState
+import com.intellij.xdebugger.impl.rpc.XExpressionDto
+import com.intellij.xdebugger.impl.rpc.XSourcePositionDto
+import com.intellij.xdebugger.impl.rpc.XValueId
+import com.intellij.xdebugger.impl.rpc.XValueSerializedPresentation
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.core.RpcFlow

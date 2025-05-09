@@ -15,7 +15,13 @@ import com.intellij.xdebugger.Obsolescent
 import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.frame.presentation.XValuePresentation
-import com.intellij.xdebugger.impl.rpc.*
+import com.intellij.platform.xdebugger.impl.rpc.*
+import com.intellij.xdebugger.impl.rpc.XSourcePositionDto
+import com.intellij.xdebugger.impl.rpc.XValueAdvancedPresentationPart
+import com.intellij.xdebugger.impl.rpc.XValueMarkerDto
+import com.intellij.xdebugger.impl.rpc.XValueSerializedPresentation
+import com.intellij.xdebugger.impl.rpc.sourcePosition
+import com.intellij.xdebugger.impl.rpc.xExpression
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*

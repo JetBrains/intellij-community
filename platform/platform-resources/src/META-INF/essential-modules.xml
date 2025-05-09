@@ -35,7 +35,7 @@
     <module name="intellij.platform.debugger.impl.frontend"/>
     <module name="intellij.platform.debugger.impl.backend"/>
     <module name="intellij.platform.debugger.impl.shared" loading="embedded"/>
-    <module name="intellij.platform.debugger.impl.rpc"/>
+    <module name="intellij.platform.debugger.impl.rpc" loading="embedded"/>
 
     <module name="intellij.platform.bookmarks.backend"/>
     <module name="intellij.platform.bookmarks.frontend"/>

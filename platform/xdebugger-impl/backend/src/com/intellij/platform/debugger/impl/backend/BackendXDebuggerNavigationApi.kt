@@ -5,9 +5,9 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.platform.xdebugger.impl.rpc.XDebuggerNavigationApi
 import com.intellij.xdebugger.frame.XNavigatable
 import com.intellij.xdebugger.frame.XValue
-import com.intellij.xdebugger.impl.rpc.XDebuggerNavigationApi
 import com.intellij.xdebugger.impl.rpc.XValueId
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import com.intellij.xdebugger.impl.ui.tree.actions.computeSourcePositionWithTimeout

@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.xdebugger.impl.rpc
+package com.intellij.platform.xdebugger.impl.rpc
 
 import com.intellij.ide.ui.colors.ColorId
 import com.intellij.ide.ui.colors.color
@@ -9,34 +9,12 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.rpc.Id
 import com.intellij.platform.rpc.UID
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.xdebugger.impl.rpc.XExecutionStackId
+import com.intellij.xdebugger.impl.rpc.XSourcePositionDto
+import com.intellij.xdebugger.impl.rpc.XStackFrameId
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-
-@ApiStatus.Internal
-@Serializable
-sealed interface XExecutionStacksEvent {
-  @Serializable
-  data class NewExecutionStacks(val stacks: List<XExecutionStackDto>, val last: Boolean) : XExecutionStacksEvent
-
-  @Serializable
-  data class ErrorOccurred(val errorMessage: @NlsContexts.DialogMessage String) : XExecutionStacksEvent
-}
-
-/**
- * @see com.intellij.xdebugger.impl.rpc.models.XExecutionStackModel
- */
-@ApiStatus.Internal
-@Serializable
-data class XExecutionStackId(override val uid: UID) : Id
-
-@ApiStatus.Internal
-@Serializable
-data class XExecutionStackDto(
-  val executionStackId: XExecutionStackId,
-  val displayName: @Nls String,
-  val icon: IconId?,
-)
 
 @ApiStatus.Internal
 @Serializable
@@ -48,14 +26,6 @@ sealed interface XStackFramesEvent {
   @Serializable
   data class ErrorOccurred(val errorMessage: @NlsContexts.DialogMessage String) : XStackFramesEvent
 }
-
-/**
- * @see com.intellij.xdebugger.impl.rpc.models.XStackFrameValueIdType
- * @see com.intellij.xdebugger.impl.rpc.models.XStackFrameModel
- */
-@ApiStatus.Internal
-@Serializable
-data class XStackFrameId(override val uid: UID) : Id
 
 @ApiStatus.Internal
 @Serializable

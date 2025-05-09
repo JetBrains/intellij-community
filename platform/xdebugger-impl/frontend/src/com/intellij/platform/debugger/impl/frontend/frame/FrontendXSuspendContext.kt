@@ -3,11 +3,11 @@ package com.intellij.platform.debugger.impl.frontend.frame
 
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.storage.getOrCreateStackFrame
+import com.intellij.platform.xdebugger.impl.rpc.XStackFrameDto
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
 import com.intellij.xdebugger.impl.rpc.XExecutionStacksEvent
-import com.intellij.xdebugger.impl.rpc.XStackFrameDto
 import com.intellij.xdebugger.impl.rpc.XSuspendContextDto
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel

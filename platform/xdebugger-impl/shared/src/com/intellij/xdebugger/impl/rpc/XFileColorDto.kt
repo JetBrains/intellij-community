@@ -6,6 +6,7 @@ import com.intellij.ide.vfs.VirtualFileId
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
+// TODO: should be moved to RPC module!!
 @ApiStatus.Internal
 @Serializable
 data class XFileColorDto(

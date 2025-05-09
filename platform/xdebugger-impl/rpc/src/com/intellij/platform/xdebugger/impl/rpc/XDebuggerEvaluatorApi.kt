@@ -1,17 +1,22 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.xdebugger.impl.rpc
+package com.intellij.platform.xdebugger.impl.rpc
 
 import com.intellij.ide.rpc.DocumentId
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.rpc.Id
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
 import com.intellij.xdebugger.frame.XValueDescriptor
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
+import com.intellij.xdebugger.impl.rpc.XExpressionDto
+import com.intellij.xdebugger.impl.rpc.XSourcePositionDto
+import com.intellij.xdebugger.impl.rpc.XStackFrameId
+import com.intellij.xdebugger.impl.rpc.XValueId
+import com.intellij.xdebugger.impl.rpc.XValueMarkerDto
+import com.intellij.xdebugger.impl.rpc.XValueSerializedPresentation
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.core.DeferredSerializer
@@ -83,13 +88,6 @@ sealed interface XEvaluationResult {
   data class EvaluationError(val errorMessage: @NlsContexts.DialogMessage String) : XEvaluationResult
 }
 
-/**
- * @see com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
- */
-@ApiStatus.Internal
-@Serializable
-data class XValueId(override val uid: com.intellij.platform.rpc.UID) : Id
-
 @ApiStatus.Internal
 @Serializable
 data class XValueDto(
@@ -111,31 +109,6 @@ data class XValueMarkerId(val id: UID)
 @ApiStatus.Internal
 @Serializable
 data class XDebuggerEvaluatorDto(val canEvaluateInDocument: Boolean)
-
-@ApiStatus.Internal
-@Serializable
-sealed interface XValueSerializedPresentation {
-  @ApiStatus.Internal
-  @Serializable
-  data class SimplePresentation(
-    @JvmField val icon: IconId?,
-    @JvmField val presentationType: String?,
-    @JvmField val value: String,
-    @JvmField val hasChildren: Boolean,
-  ) : XValueSerializedPresentation
-
-  @ApiStatus.Internal
-  @Serializable
-  data class AdvancedPresentation(
-    @JvmField val icon: IconId?,
-    @JvmField val hasChildren: Boolean,
-    @JvmField val separator: String,
-    @JvmField val isShownName: Boolean,
-    @JvmField val presentationType: String?,
-    @JvmField val isAsync: Boolean,
-    @JvmField val parts: List<XValueAdvancedPresentationPart>,
-  ) : XValueSerializedPresentation
-}
 
 @ApiStatus.Internal
 @Serializable
@@ -165,47 +138,3 @@ sealed interface XFullValueEvaluatorResult {
   data class EvaluationError(val errorMessage: @NlsContexts.DialogMessage String) : XFullValueEvaluatorResult
 }
 
-@ApiStatus.Internal
-@Serializable
-sealed interface XValueAdvancedPresentationPart {
-  @ApiStatus.Internal
-  @Serializable
-  data class Value(@JvmField val value: String) : XValueAdvancedPresentationPart
-
-  @ApiStatus.Internal
-  @Serializable
-  data class StringValue(@JvmField val value: String) : XValueAdvancedPresentationPart
-
-  @ApiStatus.Internal
-  @Serializable
-  data class NumericValue(@JvmField val value: String) : XValueAdvancedPresentationPart
-
-  @ApiStatus.Internal
-  @Serializable
-  data class KeywordValue(@JvmField val value: String) : XValueAdvancedPresentationPart
-
-  // TODO[IJPL-160146]: support [TextAttributesKey] serialization
-  @ApiStatus.Internal
-  @Serializable
-  data class ValueWithAttributes(@JvmField val value: String, @Transient @JvmField val key: TextAttributesKey? = null) : XValueAdvancedPresentationPart
-
-  @ApiStatus.Internal
-  @Serializable
-  data class StringValueWithHighlighting(
-    @JvmField val value: String,
-    @JvmField val additionalSpecialCharsToHighlight: String?,
-    @JvmField val maxLength: Int,
-  ) : XValueAdvancedPresentationPart
-
-  @ApiStatus.Internal
-  @Serializable
-  data class Comment(@JvmField val comment: String) : XValueAdvancedPresentationPart
-
-  @ApiStatus.Internal
-  @Serializable
-  data class SpecialSymbol(@JvmField val symbol: String) : XValueAdvancedPresentationPart
-
-  @ApiStatus.Internal
-  @Serializable
-  data class Error(@JvmField val error: String) : XValueAdvancedPresentationPart
-}

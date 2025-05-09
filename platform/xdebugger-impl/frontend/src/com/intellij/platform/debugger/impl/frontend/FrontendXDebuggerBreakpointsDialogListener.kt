@@ -9,7 +9,7 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory
-import com.intellij.xdebugger.impl.rpc.XDebuggerBreakpointsDialogApi
+import com.intellij.platform.xdebugger.impl.rpc.XDebuggerBreakpointsDialogApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

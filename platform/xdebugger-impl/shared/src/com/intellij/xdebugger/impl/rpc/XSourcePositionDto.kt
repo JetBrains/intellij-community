@@ -6,13 +6,14 @@ import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.xdebugger.impl.shared.XDebuggerUtilImplShared
 import com.intellij.pom.Navigatable
 import com.intellij.xdebugger.XSourcePosition
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
 
+// TODO: move to RPC module!!
 @ApiStatus.Internal
 @Serializable
 data class XSourcePositionDto(
@@ -52,6 +53,6 @@ private class SerializedXSourcePosition(private val dto: XSourcePositionDto) : X
   }
 
   override fun createNavigatable(project: Project): Navigatable {
-    return XDebuggerUtilImpl.createNavigatable(project, this)
+    return XDebuggerUtilImplShared.createNavigatable(project, this)
   }
 }

@@ -77,10 +77,6 @@ fun XBreakpointTypeSerializableStandardPanels.standardPanel(): XBreakpointType.S
 
 @ApiStatus.Internal
 @Serializable
-data class XBreakpointTypeId(val id: String)
-
-@ApiStatus.Internal
-@Serializable
 sealed interface XToggleLineBreakpointResponse
 
 @ApiStatus.Internal
