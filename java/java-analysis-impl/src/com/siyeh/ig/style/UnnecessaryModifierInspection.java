@@ -4,10 +4,15 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.pom.java.JavaFeature;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -143,6 +148,54 @@ public final class UnnecessaryModifierInspection extends BaseInspection implemen
           else if (JavaTokenType.ABSTRACT_KEYWORD == tokenType) {
             // all non-default, non-static methods of interfaces are implicitly abstract
             registerError(modifier, "unnecessary.interface.method.modifier.problem.descriptor");
+          }
+        }
+      }
+
+      processMainMethod(method);
+    }
+
+    private void processMainMethod(@NotNull PsiMethod method) {
+      if (PsiUtil.isAvailable(JavaFeature.IMPLICIT_CLASSES, method) &&
+          HardcodedMethodConstants.MAIN.equals(method.getName()) &&
+          PsiMethodUtil.isMainMethod(method)) {
+        boolean isImplicitClass = method.getParent() instanceof PsiImplicitClass;
+        final PsiModifierList modifierList = method.getModifierList();
+        final List<PsiKeyword> modifiers = PsiTreeUtil.getChildrenOfTypeAsList(modifierList, PsiKeyword.class);
+        LanguageLevel level = PsiUtil.getLanguageLevel(method);
+        for (PsiKeyword modifier : modifiers) {
+          if (modifier.getTokenType() == JavaTokenType.STATIC_KEYWORD && isImplicitClass) {
+            //static for implicit class
+            registerError(modifier, InspectionGadgetsBundle.message("unnecessary.main.modifier.problem.descriptor", level.getShortText()),
+                          modifier.getText());
+            continue;
+          }
+          if (modifier.getTokenType() == JavaTokenType.PUBLIC_KEYWORD ||
+              modifier.getTokenType() == JavaTokenType.PROTECTED_KEYWORD) {
+            if (isImplicitClass) {
+              //public and protected for implicit class
+              registerError(modifier, InspectionGadgetsBundle.message("unnecessary.main.modifier.problem.descriptor", level.getShortText()),
+                            modifier.getText());
+              continue;
+            }
+            if (isOnTheFly()) {
+              final PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(method.getProject());
+              PsiClass containingClass = method.getContainingClass();
+              if (containingClass == null || containingClass.getName() == null) return;
+              final PsiSearchHelper.SearchCostResult cost =
+                searchHelper.isCheapEnoughToSearch(containingClass.getName(), containingClass.getResolveScope(), null);
+              if (cost == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) {
+                continue;
+              }
+            }
+
+            PsiReference first = ReferencesSearch.search(method, method.getResolveScope()).findFirst();
+            if (first != null) {
+              continue;
+            }
+            //public and protected for normal class
+            registerError(modifier, InspectionGadgetsBundle.message("unnecessary.main.modifier.problem.descriptor", level.getShortText()),
+                          modifier.getText());
           }
         }
       }
