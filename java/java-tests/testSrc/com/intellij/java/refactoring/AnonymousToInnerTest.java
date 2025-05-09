@@ -23,6 +23,14 @@ public class AnonymousToInnerTest extends LightJavaCodeInsightTestCase {
     doTest("MyIterator", true);
   }
 
+  public void testGenericTypeParametersNonStatic() {
+    doTest("MyIterator", false);
+  }
+
+  public void testGenericTypeParametersNonStaticNoGenericsNeeded() {
+    doTest("MyIterator", false);
+  }
+
   public void testInsideInterface() {  // IDEADEV-29446
     doTest("MyRunnable", true);
   }
