@@ -15,6 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import javax.swing.JComponent
 
+// Git + Services notifications
 @ApiStatus.Internal
 class GithubUntrackedFilesDialog(
   private val myProject: Project,

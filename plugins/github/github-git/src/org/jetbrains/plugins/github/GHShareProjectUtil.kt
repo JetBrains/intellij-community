@@ -131,6 +131,7 @@ private class GHShareProjectService(private val project: Project, private val cs
     return if (shareDialog.isOK) shareDialog.getResult() else null
   }
 
+  // Service
   private suspend fun loadEnsuringTokenExistsToken(account: GithubAccount, comp: Component): Pair<Boolean, Set<String>> {
     while (true) {
       try {
@@ -154,67 +155,41 @@ private class GHShareProjectService(private val project: Project, private val cs
   fun performShareProjectOnGithub(
     gitRepository: GitRepository?,
     root: VirtualFile,
-    shareDialog: GithubShareDialog.Result,
+    shareDialogResult: GithubShareDialog.Result,
   ) {
-    val name: String = shareDialog.repositoryName
-    val isPrivate: Boolean = shareDialog.isPrivate
-    val remoteName: String = shareDialog.remoteName
-    val description: String = shareDialog.description
-    val account: GithubAccount = shareDialog.account!!
+    val name: String = shareDialogResult.repositoryName
+    val remoteName: String = shareDialogResult.remoteName
+    val account: GithubAccount = shareDialogResult.account!!
 
     val token = GHCompatibilityUtil.getOrRequestToken(account, project) ?: return
     val requestExecutor = GithubApiRequestExecutor.Factory.getInstance().create(account.server, token)
 
     cs.launch(Dispatchers.Default) {
       withBackgroundProgress(project, GithubBundle.message("share.process"), false) {
-        lateinit var url: String
-
         try {
           reportSequentialProgress(size = 7) { reporter ->
             // create GitHub repo (network)
-            reporter.itemStep(GithubBundle.message("share.process.creating.repository")) {
+            val url = reporter.itemStep(GithubBundle.message("share.process.creating.repository")) {
               LOG.info("Creating GitHub repository")
-              url = requestExecutor.executeSuspend(GithubApiRequests.CurrentUser.Repos.create(account.server, name, description, isPrivate)).htmlUrl
-              LOG.info("Successfully created GitHub repository")
+              createRepo(requestExecutor, shareDialogResult)
             }
+            LOG.info("Successfully created GitHub repository")
 
             // creating empty git repo if git is not initialized
             val repository = reporter.itemStep(GithubBundle.message("share.process.creating.git.repository")) {
-              LOG.info("Binding local project with GitHub")
-              if (gitRepository == null) {
-                LOG.info("No git detected, creating empty git repo")
-                if (!createEmptyGitRepository(project, root)) {
-                  return@itemStep null
-                }
-              }
-
-              val repositoryManager = GitUtil.getRepositoryManager(project)
-              val repository = repositoryManager.getRepositoryForRoot(root)
-              if (repository == null) {
-                GithubNotifications.showError(project,
-                                              GithubNotificationIdsHolder.SHARE_CANNOT_FIND_GIT_REPO,
-                                              GithubBundle.message("share.error.failed.to.create.repo"),
-                                              GithubBundle.message("cannot.find.git.repo"))
-                return@itemStep null
-              }
-
-              repository
+              ensureGitRepositoryExistsAndGet(gitRepository, root)
             }
             if (repository == null) return@withBackgroundProgress
 
             // retrieve remote URL
             val remoteUrl = reporter.itemStep(GithubBundle.message("share.process.retrieving.username")) {
-              val username = GHCachingAccountInformationProvider.getInstance().loadInformation(requestExecutor, account).login
-              val remoteUrl = GithubGitHelper.getInstance().getRemoteUrl(account.server, username, name)
-
-              remoteUrl
+              retrieveRepoRemoteUrl(requestExecutor, account, name)
             }
 
-            //git remote add origin git@github.com:login/name.git
+            // git remote add origin git@github.com:login/name.git
             reporter.itemStep(GithubBundle.message("share.process.adding.gh.as.remote.host")) {
               LOG.info("Adding GitHub as a remote host")
-              Git.getInstance().addRemote(repository, remoteName, remoteUrl).throwOnError()
-              repository.update()
+              addGitRemote(repository, remoteName, remoteUrl)
             }
 
             // create sample commit for binding project
@@ -222,7 +197,7 @@ private class GHShareProjectService(private val project: Project, private val cs
               return@withBackgroundProgress
             }
 
-            //git push origin master
+            // git push origin master
             if (!reporter.itemStep(GithubBundle.message("share.process.pushing.to.github.master", repository.currentBranch?.name ?: "")) {
                 LOG.info("Pushing to github master")
                 pushCurrentBranch(project, repository, remoteName, remoteUrl, name, url)
@@ -230,6 +205,7 @@ private class GHShareProjectService(private val project: Project, private val cs
               return@withBackgroundProgress
             }
 
+            // Show final success notification
             GithubNotifications.showInfoURL(
               project,
               GithubNotificationIdsHolder.SHARE_PROJECT_SUCCESSFULLY_SHARED,
@@ -250,6 +226,68 @@ private class GHShareProjectService(private val project: Project, private val cs
     }
   }
 
+  // Service
+  private suspend fun createRepo(
+    requestExecutor: GithubApiRequestExecutor,
+    shareDialogResult: GithubShareDialog.Result,
+  ): String {
+    val name: String = shareDialogResult.repositoryName
+    val description: String = shareDialogResult.description
+    val isPrivate: Boolean = shareDialogResult.isPrivate
+    val account: GithubAccount = shareDialogResult.account!!
+
+    return requestExecutor.executeSuspend(GithubApiRequests.CurrentUser.Repos.create(account.server, name, description, isPrivate)).htmlUrl
+  }
+
+  // Service
+  private suspend fun retrieveRepoRemoteUrl(
+    requestExecutor: GithubApiRequestExecutor,
+    account: GithubAccount,
+    name: String,
+  ): String {
+    val username = GHCachingAccountInformationProvider.getInstance().loadInformation(requestExecutor, account).login
+    return GithubGitHelper.getInstance().getRemoteUrl(account.server, username, name)
+  }
+
+  // Git/collab
+  private fun addGitRemote(
+    repository: GitRepository,
+    remoteName: String,
+    remoteUrl: String,
+  ) {
+    Git.getInstance().addRemote(repository, remoteName, remoteUrl).throwOnError()
+    repository.update()
+  }
+
+  // Git/collab + Services notifications
+  private fun ensureGitRepositoryExistsAndGet(
+    repository: GitRepository?,
+    root: VirtualFile,
+  ): GitRepository? {
+    LOG.info("Binding local project with GitHub")
+    if (repository == null) {
+      LOG.info("No git detected, creating empty git repo")
+      if (!createEmptyGitRepository(project, root)) {
+        return null
+      }
+    }
+
+    val repositoryManager = GitUtil.getRepositoryManager(project)
+    val repository = repositoryManager.getRepositoryForRoot(root)
+    if (repository == null) {
+      GithubNotifications.showError(
+        project,
+        GithubNotificationIdsHolder.SHARE_CANNOT_FIND_GIT_REPO,
+        GithubBundle.message("share.error.failed.to.create.repo"),
+        GithubBundle.message("cannot.find.git.repo")
+      )
+      return null
+    }
+
+    return repository
+  }
+
+  // Git/collab
   private fun createEmptyGitRepository(
     project: Project,
     root: VirtualFile,
@@ -269,6 +307,7 @@ private class GHShareProjectService(private val project: Project, private val cs
     return true
   }
 
+  // Git/collab + Service notifications
   private suspend fun performFirstCommitIfRequired(
     project: Project,
     root: VirtualFile,
@@ -322,10 +361,12 @@ private class GHShareProjectService(private val project: Project, private val cs
 
 
         if (data == null) {
-          GithubNotifications.showInfoURL(project,
-                                          GithubNotificationIdsHolder.SHARE_EMPTY_REPO_CREATED,
-                                          GithubBundle.message("share.process.empty.project.created"),
-                                          name, url)
+          GithubNotifications.showInfoURL(
+            project,
+            GithubNotificationIdsHolder.SHARE_EMPTY_REPO_CREATED,
+            GithubBundle.message("share.process.empty.project.created"),
+            name, url
+          )
           return@itemStep null
         }
         val (files2commit, commitMessage) = data
@@ -372,12 +413,14 @@ private class GHShareProjectService(private val project: Project, private val cs
     return true
   }
 
+  // Git/collab
   private fun filterOutIgnored(project: Project, files: Collection<VirtualFile>): Collection<VirtualFile> {
     val changeListManager = ChangeListManager.getInstance(project)
     val vcsManager = ProjectLevelVcsManager.getInstance(project)
     return files.filter({ file -> !changeListManager.isIgnoredFile(file) && !vcsManager.isIgnored(file) })
   }
 
+  // Git/collab + Service notifications
   private fun pushCurrentBranch(
     project: Project,
     repository: GitRepository,
