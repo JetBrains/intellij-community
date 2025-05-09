@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
 import okhttp3.MediaType.Companion.toMediaType
@@ -33,10 +33,12 @@ internal inline fun <T> Response.useSuccessful(task: (Response) -> T): T {
     when {
       response.isSuccessful -> task(response)
       response.code == 404 -> throw NoMoreRetriesException("Unexpected code $response")
-      else -> throw IOException("Unexpected code $response")
+      else -> throw HttpException(response.code, "Unexpected code $response")
     }
   }
 }
+
+class HttpException(val code: Int, message: String, cause: Throwable? = null) : IOException(message, cause)
 
 internal val httpClient: OkHttpClient by lazy {
   val timeout = 1L
