@@ -9,6 +9,7 @@ import com.intellij.lang.javascript.typescript.TypeScriptDocumentationTest
 import com.intellij.lang.javascript.typescript.service.TypeScriptServiceDocumentationTest
 import com.intellij.react.ReactDocumentationTest
 import com.intellij.react.tsc.ReactDocumentationWithServiceTest
+import com.jetbrains.rider.test.cases.markup.documentation.BlazorDocumentationTest
 import css.CssDocumentationTest
 import org.angular2.codeInsight.Angular2DocumentationTest
 import org.angular2.codeInsight.deprecated.Angular2AttributesTest
@@ -39,5 +40,7 @@ import org.junit.runners.Suite
   VueDocumentationTest::class,
   VueCompletionTest::class,
   AstroDocumentationTest::class,
+  // Run "Compile Rider Backend" before running this test
+  BlazorDocumentationTest::class,
 )
 class MdnDocUpdateTestSuite

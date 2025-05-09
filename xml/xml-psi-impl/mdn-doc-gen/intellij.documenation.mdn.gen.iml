@@ -36,5 +36,6 @@
     <orderEntry type="module" module-name="intellij.html.tools.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.react.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.astro.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.rider.test.cases" scope="TEST" />
   </component>
 </module>
