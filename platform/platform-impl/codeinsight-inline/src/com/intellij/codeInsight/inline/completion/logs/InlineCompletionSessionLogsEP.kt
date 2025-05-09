@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsContainer.Phase
+import com.intellij.codeInsight.inline.completion.statistics.LocalStatistics
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
@@ -22,7 +23,7 @@ abstract class PhasedLogs(val phase: Phase) {
    * Associate the given [field] with the [phase].
    * Such a log will be sent only for a fraction of requests in the release build.
    */
-  protected fun<T> register(field: EventField<T>): EventField<T> {
+  protected fun <T> register(field: EventField<T>): EventField<T> {
     fields.add(EventFieldExt(field, false))
     return field
   }
@@ -32,9 +33,14 @@ abstract class PhasedLogs(val phase: Phase) {
    * Such a log will always be sent;
    * Important: try to keep the number of basic fields as small as possible
    */
-  protected fun<T> registerBasic(field: EventField<T>): EventField<T> {
+  protected fun <T> registerBasic(field: EventField<T>): EventField<T> {
     fields.add(EventFieldExt(field, true))
     return field
+  }
+
+  protected fun <T> EventField<T>.alsoLocalStatistic(): EventField<T> {
+    LocalStatistics.Schema.register(this)
+    return this
   }
 }
 

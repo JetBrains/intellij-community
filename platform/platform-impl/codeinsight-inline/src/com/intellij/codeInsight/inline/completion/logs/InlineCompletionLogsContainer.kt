@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionEapSupport
+import com.intellij.codeInsight.inline.completion.statistics.LocalStatistics
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData
@@ -139,7 +140,7 @@ class InlineCompletionLogsContainer() {
       }
     })
     extraLogger?.log(project, filteredEvents)
-
+    logs.map { it.value }.flatten().forEach { LocalStatistics.getInstance().saveIfRegistered(it) }
     logs.forEach { (_, events) -> events.clear() }
   }
 
