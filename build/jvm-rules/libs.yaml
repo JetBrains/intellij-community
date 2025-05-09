@@ -126,8 +126,6 @@
   libs:
     - id: com.intellij.platform:kotlinx-coroutines-core-jvm
       version: 1.10.1-intellij-4
-    - id: jetbrains.fleet:expects-compiler-plugin
-      version: 2.1.20-0.2
     - id: org.jetbrains.intellij.deps:asm-all
       version: 9.6.1
     - id: org.jetbrains.intellij.deps.fastutil:intellij-deps-fastutil

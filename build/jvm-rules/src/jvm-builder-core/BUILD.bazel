@@ -1,4 +1,3 @@
-load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("//:jvm.bzl", "jvm_import")
 load("//:src/jvm-args.bzl", "get_jvm_flags")
@@ -7,6 +6,8 @@ kt_jvm_library(
     name = "jvm-builder-core",
     srcs = glob(["**/*.kt"]),
     kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+    visibility = ["//visibility:public"],
+    # buildifier: leave-alone
     deps = [
         "//src/kotlin/kotlin-shadow",
         "//:collection",
@@ -21,7 +22,6 @@ kt_jvm_library(
         "//src/kotlin/kotlin-compiler",
         "//:netty-buffer",
         "//:netty-common",
-        "//:opentelemetry-api"
+        "//:opentelemetry-api",
     ],
-    visibility = ["//visibility:public"],
 )

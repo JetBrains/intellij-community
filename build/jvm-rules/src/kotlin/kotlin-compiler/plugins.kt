@@ -3,7 +3,6 @@ package org.jetbrains.bazel.jvm.kotlin
 
 import androidx.compose.compiler.plugins.kotlin.ComposeCommandLineProcessor
 import androidx.compose.compiler.plugins.kotlin.ComposePluginRegistrar
-import fleet.multiplatform.expects.ExpectsPluginRegistrar
 import org.jetbrains.bazel.jvm.util.ArgMap
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.cli.jvm.plugins.PluginCliParser.RegisteredPluginInfo
@@ -24,11 +23,16 @@ import java.nio.file.Path
 @Suppress("SameParameterValue")
 private fun cliOptionValue(name: String, value: String) = CliOptionValue(pluginId = "<NO_ID>", optionName = name, value = value)
 
+interface CompilerPluginProvider {
+  fun provide(id: String): RegisteredPluginInfo
+}
+
 @OptIn(ExperimentalCompilerApi::class)
-internal inline fun configurePlugins(
+internal fun configurePlugins(
   args: ArgMap<JvmBuilderFlags>,
   workingDir: Path,
-  noinline abiOutputConsumer: ((List<OutputFile>) -> Unit)?,
+  abiOutputConsumer: ((List<OutputFile>) -> Unit)?,
+  pluginProvider: CompilerPluginProvider,
   consumer: (RegisteredPluginInfo) -> Unit,
 ) {
   // put user plugins first
@@ -64,17 +68,9 @@ internal inline fun configurePlugins(
         ))
       }
 
-      // todo it should be in maven central / not in the default image of jvm-builder
-      "jetbrains.fleet.expects-compiler-plugin" -> {
-        consumer(RegisteredPluginInfo(
-          componentRegistrar = null,
-          compilerPluginRegistrar = ExpectsPluginRegistrar(),
-          commandLineProcessor = null,
-          pluginOptions = emptyList(),
-        ))
+      else -> {
+        consumer(pluginProvider.provide(id))
       }
-
-      else -> throw IllegalArgumentException("plugin requires classpath: $id")
     }
   }
 

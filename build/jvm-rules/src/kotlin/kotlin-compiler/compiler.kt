@@ -68,6 +68,7 @@ fun prepareCompilerConfiguration(
   args: ArgMap<JvmBuilderFlags>,
   kotlinArgs: K2JVMCompilerArguments,
   baseDir: Path,
+  pluginProvider: CompilerPluginProvider,
   abiOutputConsumer: (List<OutputFile>) -> Unit,
 ): CompilerConfiguration {
   val config = configTemplate.copy()
@@ -75,6 +76,7 @@ fun prepareCompilerConfiguration(
   configurePlugins(
     args = args,
     workingDir = baseDir,
+    pluginProvider = pluginProvider,
     abiOutputConsumer = abiOutputConsumer,
   ) {
     config.add(CompilerPluginRegistrar.COMPILER_PLUGIN_REGISTRARS, it.compilerPluginRegistrar!!)
@@ -164,9 +166,9 @@ fun configureModule(
 }
 
 @OptIn(ExperimentalCompilerApi::class)
-fun getDebugInfoAboutPlugins(args: ArgMap<JvmBuilderFlags>, baseDir: Path, targetLabel: String): String {
+fun getDebugInfoAboutPlugins(args: ArgMap<JvmBuilderFlags>, baseDir: Path, pluginProvider: CompilerPluginProvider): String {
   val sb = StringBuilder()
-  configurePlugins(args = args, workingDir = baseDir, abiOutputConsumer = null) { info ->
+  configurePlugins(args = args, workingDir = baseDir, pluginProvider = pluginProvider, abiOutputConsumer = null) { info ->
     sb.append(info.compilerPluginRegistrar!!.toString())
     if (!info.pluginOptions.isEmpty()) {
       sb.append("(" + info.pluginOptions.joinToString(separator = ", ") + ")")
@@ -219,7 +221,7 @@ private class BazelJvmConfigurationPipelinePhase(
   postActions = setOf(CheckCompilationErrors.CheckMessageCollector),
   configurationUpdaters = emptyList()
 ) {
-  override fun executePhase(input: ArgumentsPipelineArtifact<K2JVMCompilerArguments>): ConfigurationPipelineArtifact? {
+  override fun executePhase(input: ArgumentsPipelineArtifact<K2JVMCompilerArguments>): ConfigurationPipelineArtifact {
     return ConfigurationPipelineArtifact(config, input.diagnosticCollector, input.rootDisposable)
   }
 
@@ -242,7 +244,7 @@ private class BazelJvmBackendPipelinePhase(
     CheckCompilationErrors.CheckDiagnosticCollector
   )
 ) {
-  override fun executePhase(input: JvmFir2IrPipelineArtifact): JvmBinaryPipelineArtifact? {
+  override fun executePhase(input: JvmFir2IrPipelineArtifact): JvmBinaryPipelineArtifact {
     val (fir2IrResult, configuration, environment, diagnosticCollector) = input
     val project = environment.project
     val classResolver = FirJvmBackendClassResolver(fir2IrResult.components)

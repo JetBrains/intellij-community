@@ -6,10 +6,6 @@ package org.jetbrains.bazel.jvm.kotlin
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
-import org.jetbrains.bazel.jvm.kotlin.configureModule
-import org.jetbrains.bazel.jvm.kotlin.createJvmPipeline
-import org.jetbrains.bazel.jvm.kotlin.executeJvmPipeline
-import org.jetbrains.bazel.jvm.kotlin.prepareCompilerConfiguration
 import org.jetbrains.bazel.jvm.worker.core.BazelCompileContext
 import org.jetbrains.bazel.jvm.worker.core.BazelConfigurationHolder
 import org.jetbrains.bazel.jvm.worker.core.BazelDirtyFileHolder
@@ -62,6 +58,7 @@ class NonIncrementalKotlinBuilder(
       args = bazelConfigurationHolder.args,
       kotlinArgs = bazelConfigurationHolder.kotlinArgs,
       baseDir = bazelConfigurationHolder.classPathRootDir,
+      pluginProvider = context.pluginProvider,
       abiOutputConsumer = {
         outputConsumer.registerKotlincAbiOutput(it)
       },

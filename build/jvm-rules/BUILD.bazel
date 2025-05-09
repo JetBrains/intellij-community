@@ -11,8 +11,14 @@ label_flag(
 )
 
 label_flag(
-    name = "worker-impl",
+    name = "resource-packager",
     build_setting_default = "//src/misc:worker-jvm",
+    visibility = ["//visibility:public"],
+)
+
+label_flag(
+    name = "jvm-builder",
+    build_setting_default = "//src/jvm-builder",
     visibility = ["//visibility:public"],
 )
 
@@ -433,13 +439,6 @@ jvm_import(
     name = "kotlinx-coroutines-core",
     jar = "@kotlinx-coroutines-core-jvm//file",
     source_jar = "@kotlinx-coroutines-core-jvm-sources//file",
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "expects-compiler-plugin",
-    jar = "@expects-compiler-plugin//file",
-    source_jar = "@expects-compiler-plugin-sources//file",
     visibility = ["//visibility:public"],
 )
 

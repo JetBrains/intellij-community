@@ -92,7 +92,7 @@ common_attr = add_dicts(
             providers = [_JavacOptions],
         ),
         "_jvm_builder": attr.label(
-            default = "//src/jvm-builder:jvm-builder",
+            default = "//:jvm-builder",
             executable = True,
             allow_files = True,
             cfg = "exec",

@@ -4,13 +4,12 @@ kt_jvm_library(
     name = "kotlin-compiler",
     srcs = glob(["*.kt"]),
     kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
-    deps = [
-      "//src/worker-util",
-      "//:kotlin-compiler",
-      "//src/kotlin/kotlin-plugins/abi",
-      "//:kotlin-compose-compiler-plugin",
-      "//:expects-compiler-plugin",
-      "//:kotlin-serialization-compiler-plugin",
-    ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//:kotlin-compiler",
+        "//:kotlin-compose-compiler-plugin",
+        "//:kotlin-serialization-compiler-plugin",
+        "//src/kotlin/kotlin-plugins/abi",
+        "//src/worker-util",
+    ],
 )

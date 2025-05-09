@@ -59,7 +59,7 @@ jvm_resources = rule(
         ),
         # see https://bazel.build/extending/rules#private_attributes_and_implicit_dependencies about implicit dependencies
         "_worker": attr.label(
-            default = Label("//:worker-impl"),
+            default = Label("//:resource-packager"),
             executable = True,
             allow_files = True,
             cfg = "exec",

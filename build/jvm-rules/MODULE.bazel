@@ -675,20 +675,6 @@ http_file(
 )
 
 http_file(
-    name = "expects-compiler-plugin",
-    downloaded_file_path = "expects-compiler-plugin-2.1.20-0.2.jar",
-    sha256 = "53f345b9ec17aa821e8e4acce59b6584f55a2193f5c48dcea9ffc41eaac4add4",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/expects-compiler-plugin/2.1.20-0.2/expects-compiler-plugin-2.1.20-0.2.jar",
-)
-
-http_file(
-    name = "expects-compiler-plugin-sources",
-    downloaded_file_path = "expects-compiler-plugin-2.1.20-0.2-sources.jar",
-    sha256 = "a9125f58235ac48fbc657210b43eb2a8a80d2c6cc9538219764d5d64a852c49f",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/expects-compiler-plugin/2.1.20-0.2/expects-compiler-plugin-2.1.20-0.2-sources.jar",
-)
-
-http_file(
     name = "asm-all",
     downloaded_file_path = "asm-all-9.6.1.jar",
     sha256 = "a72e84efb1406a7ab326e0b28c4376e9e1ebfc08c09f23edff5e6e7249588df7",

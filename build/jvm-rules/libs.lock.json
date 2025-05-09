@@ -107,10 +107,6 @@
     "d6fdaf0f04724d5c9362db2f809fd21f36e95c9c039d22fe695692d606107bff",
     "dd827c172d20f046d5bf6a9df772290b0eaafb59589b6b98fd742c6bc78c2d37"
   ],
-  "jetbrains.fleet:expects-compiler-plugin:2.1.20-0.2": [
-    "53f345b9ec17aa821e8e4acce59b6584f55a2193f5c48dcea9ffc41eaac4add4",
-    "a9125f58235ac48fbc657210b43eb2a8a80d2c6cc9538219764d5d64a852c49f"
-  ],
   "org.apache.arrow:arrow-format:18.2.0": [
     "6d977352a232559c97a38dfdd786f014e87489d3bb3f33f12cfed30bdd164669",
     "6b0e19b1d0270a5fd51182d815738e7b2aba4f00b6cf9a3a41d13aebb4e12d0a"

@@ -13,9 +13,6 @@ kt_compiler_plugin(
 kt_compiler_plugin(
   name = "rhizomedb-plugin",
   id = "org.jetbrains.fleet.rhizomedb-compiler-plugin",
-  deps = [
-    ":rhizomedb-compiler-plugin-lib"
-  ],
   visibility = ["//visibility:public"]
 )
 
@@ -23,11 +20,6 @@ kt_compiler_plugin(
   name = "expects-plugin",
   id = "jetbrains.fleet.expects-compiler-plugin",
   visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "rhizomedb-compiler-plugin-lib",
-  jar = "@rhizomedb-compiler-plugin-2_1_20-0_3_http//file",
 )
 
 kt_compiler_plugin(
@@ -8594,7 +8586,6 @@ jvm_import(
   name = "rhizomedb-compiler-plugin",
   jar = "@rhizomedb-compiler-plugin-2_1_20-0_3_http//file",
   source_jar = "@rhizomedb-compiler-plugin-2_1_20-0_3-sources_http//file",
-  exported_compiler_plugins = ["@lib//:rhizomedb-plugin"],
   visibility = ["//visibility:public"]
 )
 

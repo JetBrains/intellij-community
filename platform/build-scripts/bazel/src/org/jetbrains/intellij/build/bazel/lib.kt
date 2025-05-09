@@ -101,9 +101,6 @@ internal fun BuildFile.generateMavenLib(
         exportedCompilerPlugins = listOf("@lib//:kotlin-serialization-plugin")
         option("exported_compiler_plugins", exportedCompilerPlugins)
       }
-      if (targetName == "rhizomedb-compiler-plugin") {
-        option("exported_compiler_plugins", arrayOf("@lib//:rhizomedb-plugin"))
-      }
 
       libVisibility?.let {
         visibility(arrayOf(it))

@@ -105,7 +105,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.coroutines.coroutineContext
 
-private val classesToLoadByParent = ClassCondition { className ->
+private val classesToLoadByParent = ClassCondition { _ ->
   throw IllegalStateException("Should never be called")
 }
 
@@ -289,7 +289,7 @@ class IncrementalKotlinBuilder(
       importTracker = ImportTrackerImpl(),
       chunk = chunk,
       messageCollector = messageCollector
-    ) ?: return ModuleLevelBuilder.ExitCode.ABORT
+    )
 
     val generatedFiles = doCompileModuleChunk(
       prevOutputVirtualDir = prevOutputVirtualDir,
@@ -539,6 +539,7 @@ private suspend fun doCompileModuleChunk(
     args = bazelConfigurationHolder.args,
     kotlinArgs = bazelConfigurationHolder.kotlinArgs,
     baseDir = bazelConfigurationHolder.classPathRootDir,
+    pluginProvider = context.pluginProvider,
     abiOutputConsumer = {
       outputConsumer.registerKotlincAbiOutput(it)
     },
@@ -616,7 +617,7 @@ private fun createCompileEnvironment(
   chunk: ModuleChunk,
   messageCollector: MessageCollectorAdapter,
   outputItemCollector: OutputItemsCollectorImpl
-): JpsCompilerEnvironment? {
+): JpsCompilerEnvironment {
   val builder = Services.Builder()
   builder.register(LookupTracker::class.java, implementation = lookupTracker)
   builder.register(ExpectActualTracker::class.java, implementation = exceptActualTracer)
@@ -800,5 +801,5 @@ private object DummyKotlinPaths : KotlinPaths {
 
   override fun klib(jar: KotlinPaths.Jar): File = throw kotlin.IllegalStateException()
 
-  override fun sourcesJar(jar: KotlinPaths.Jar): File? = throw kotlin.IllegalStateException()
+  override fun sourcesJar(jar: KotlinPaths.Jar): File = throw kotlin.IllegalStateException()
 }

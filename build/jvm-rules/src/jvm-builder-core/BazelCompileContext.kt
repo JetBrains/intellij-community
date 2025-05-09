@@ -1,10 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(ExperimentalCompilerApi::class)
+
 package org.jetbrains.bazel.jvm.worker.core
 
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.util.EventDispatcher
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.isActive
+import org.jetbrains.bazel.jvm.kotlin.CompilerPluginProvider
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.api.CanceledStatus
 import org.jetbrains.jps.builders.BuildTarget
@@ -18,8 +21,16 @@ import org.jetbrains.jps.incremental.messages.BuildMessage
 import org.jetbrains.jps.incremental.messages.FileDeletedEvent
 import org.jetbrains.jps.incremental.messages.FileGeneratedEvent
 import org.jetbrains.jps.incremental.messages.ProgressMessage
+import org.jetbrains.kotlin.cli.jvm.plugins.PluginCliParser
+import org.jetbrains.kotlin.compiler.plugin.CommandLineProcessor
+import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
+import java.lang.invoke.MethodHandle
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 import kotlin.coroutines.CoroutineContext
 
+@Suppress("SpellCheckingInspection")
 class BazelCompileContext(
   @JvmField val scope: BazelCompileScope,
   private val projectDescriptor: ProjectDescriptor,
@@ -27,6 +38,25 @@ class BazelCompileContext(
   private val coroutineContext: CoroutineContext,
 ) : UserDataHolderBase(), CompileContext {
   private val cancelStatus = CanceledStatus { !coroutineContext.isActive }
+
+  @JvmField
+  val pluginProvider: CompilerPluginProvider = object : CompilerPluginProvider {
+    // todo configure via build setting label
+    private val expects by getConstructor("fleet.multiplatform.expects.ExpectsPluginRegistrar", null)
+    private val rhizomeDb by getConstructor(
+      registrar = "com.jetbrains.rhizomedb.plugin.RhizomedbComponentRegistrar",
+      commandLineProcessor = "com.jetbrains.rhizomedb.plugin.RhizomedbCommandLineProcessor",
+      )
+
+    @Suppress("SpellCheckingInspection")
+    override fun provide(id: String): PluginCliParser.RegisteredPluginInfo {
+      return when (id) {
+        "jetbrains.fleet.expects-compiler-plugin" -> createPluginInfo(expects)
+        "org.jetbrains.fleet.rhizomedb-compiler-plugin" -> createPluginInfo(rhizomeDb)
+        else -> throw IllegalArgumentException("plugin requires classpath: $id")
+      }
+    }
+  }
 
   private var isMarkedAsNonIncremental = false
   @Volatile
@@ -102,4 +132,24 @@ class BazelCompileContext(
   }
 
   override fun getProjectDescriptor(): ProjectDescriptor = projectDescriptor
+}
+
+private fun createPluginInfo(data: Pair<MethodHandle, MethodHandle?>): PluginCliParser.RegisteredPluginInfo {
+  return PluginCliParser.RegisteredPluginInfo(
+    componentRegistrar = null,
+    compilerPluginRegistrar = data.first.invoke() as CompilerPluginRegistrar,
+    commandLineProcessor = data.second?.invoke() as CommandLineProcessor?,
+    pluginOptions = emptyList(),
+  )
+}
+
+private fun getConstructor(registrar: String, commandLineProcessor: String?): Lazy<Pair<MethodHandle, MethodHandle?>> {
+  return lazy {
+    findConstructor(registrar) to commandLineProcessor?.let { findConstructor(it) }
+  }
+}
+
+private fun findConstructor(name: String): MethodHandle {
+  val aClass = BazelCompileContext::class.java.classLoader.loadClass(name)
+  return MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE))
 }

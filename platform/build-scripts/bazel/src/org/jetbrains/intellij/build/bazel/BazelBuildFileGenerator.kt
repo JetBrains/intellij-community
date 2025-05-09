@@ -371,6 +371,10 @@ internal class BazelBuildFileGenerator(
         if (module.name == "fleet.util.multiplatform" || module.name == "intellij.platform.syntax.multiplatformSupport") {
           option("exported_compiler_plugins", arrayOf("@lib//:expects-plugin"))
         }
+        else if (module.name == "fleet.rhizomedb") {
+          // https://youtrack.jetbrains.com/issue/IJI-2662/RhizomedbCommandLineProcessor-requires-output-dir-but-we-dont-have-it-for-Bazel-compilation
+          //option("exported_compiler_plugins", arrayOf("@lib//:rhizomedb-plugin"))
+        }
 
         var deps = moduleList.deps.get(moduleDescriptor)
         if (deps != null && deps.provided.isNotEmpty()) {
