@@ -1,6 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.plugins
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.plugins.testFramework
 
+import com.intellij.ide.plugins.DiscoveredPluginsList
+import com.intellij.ide.plugins.PluginDescriptorLoadingContext
+import com.intellij.ide.plugins.PluginDescriptorLoadingResult
+import com.intellij.ide.plugins.PluginInitializationContext
+import com.intellij.ide.plugins.PluginLoadingResult
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginSet
+import com.intellij.ide.plugins.PluginsSourceContext
+import com.intellij.ide.plugins.loadDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
@@ -8,6 +17,7 @@ import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.lang.UrlClassLoader
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
+import java.util.Collections.emptySet
 
 class PluginSetTestBuilder(private val path: Path) {
   private var disabledPluginIds = mutableSetOf<PluginId>()
