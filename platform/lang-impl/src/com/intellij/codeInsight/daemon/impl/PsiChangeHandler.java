@@ -17,16 +17,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
-import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.SlowOperations;
-import com.intellij.util.messages.SimpleMessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -39,7 +36,6 @@ import java.util.concurrent.CountDownLatch;
 
 final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
   private static final ExtensionPointName<ChangeLocalityDetector> EP_NAME = new ExtensionPointName<>("com.intellij.daemon.changeLocalityDetector");
-  private /*NOT STATIC!!!*/ final Key<Boolean> UPDATE_ON_COMMIT_ENGAGED = Key.create("UPDATE_ON_COMMIT_ENGAGED");
 
   private final Project myProject;
   private final Map<Document, List<Change>> changedElements = new WeakHashMap<>(); // guarded by changedElements
@@ -48,53 +44,17 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
 
   private record Change(@NotNull PsiElement psiElement, boolean whiteSpaceOptimizationAllowed) {}
 
-  PsiChangeHandler(@NotNull Project project, @NotNull SimpleMessageBusConnection connection,
+  PsiChangeHandler(@NotNull Project project,
                    @NotNull DaemonCodeAnalyzerEx daemonCodeAnalyzerEx, @NotNull Disposable parentDisposable) {
     myProject = project;
     myFileStatusMap = daemonCodeAnalyzerEx.getFileStatusMap();
+    DocumentAfterCommitListener.listen(project, parentDisposable, document -> updateChangesForDocument(document));
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(ProjectDisposeAwareDocumentListener.create(project, new DocumentListener() {
-      @Override
-      public void beforeDocumentChange(@NotNull DocumentEvent event) {
-        if (myProject.isDisposed()) return;
-        Document document = event.getDocument();
-        PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
-        if (documentManager.getSynchronizer().isInSynchronization(document)) {
-          return;
-        }
-
-        PsiFile psi = documentManager.getCachedPsiFile(document);
-        if (psi == null || !psi.getViewProvider().isEventSystemEnabled()) {
-          return;
-        }
-
-        if (document.getUserData(UPDATE_ON_COMMIT_ENGAGED) == null) {
-          document.putUserData(UPDATE_ON_COMMIT_ENGAGED, Boolean.TRUE);
-          documentManager.addRunOnCommit(document, () -> {
-            if (document.getUserData(UPDATE_ON_COMMIT_ENGAGED) != null) {
-              updateChangesForDocument(document);
-              document.putUserData(UPDATE_ON_COMMIT_ENGAGED, null);
-            }
-          });
-        }
-      }
-
       @Override
       public void documentChanged(@NotNull DocumentEvent event) {
         myFileStatusMap.addDocumentDirtyRange(event);
       }
     }), parentDisposable);
-
-    connection.subscribe(PsiDocumentTransactionListener.TOPIC, new PsiDocumentTransactionListener() {
-      @Override
-      public void transactionStarted(@NotNull Document doc, @NotNull PsiFile file) {
-      }
-
-      @Override
-      public void transactionCompleted(@NotNull Document document, @NotNull PsiFile file) {
-        updateChangesForDocument(document);
-        document.putUserData(UPDATE_ON_COMMIT_ENGAGED, null); // ensure we don't call updateChangesForDocument() twice which can lead to the whole file re-highlight
-      }
-    });
     myUpdateFileStatusAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable);
   }
 

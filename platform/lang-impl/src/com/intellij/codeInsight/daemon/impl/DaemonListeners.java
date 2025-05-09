@@ -237,7 +237,7 @@ public final class DaemonListeners implements Disposable {
       }
     }, this);
 
-    myPsiChangeHandler = new PsiChangeHandler(myProject, connection, daemonCodeAnalyzer, this);
+    myPsiChangeHandler = new PsiChangeHandler(myProject, daemonCodeAnalyzer, this);
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiChangeHandler, this);
 
     connection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
