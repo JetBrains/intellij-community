@@ -173,6 +173,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/usageView-impl",
     "//python/openapi:community",
     "//platform/ide-core-impl",
     "//platform/platform-impl:ide-impl",

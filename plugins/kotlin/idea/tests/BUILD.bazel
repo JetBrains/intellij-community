@@ -34,6 +34,7 @@ jvm_library(
     "@lib//:gson",
     "@lib//:guava",
     "@lib//:fastutil-min",
+    "//platform/usageView-impl",
     "//platform/vcs-api:vcs",
     "//plugins/kotlin/plugin/k1",
     "//plugins/kotlin/code-insight/api",

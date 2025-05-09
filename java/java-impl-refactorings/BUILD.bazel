@@ -23,6 +23,7 @@ jvm_library(
     "//platform/code-style-impl:codeStyle-impl",
     "@lib//:fastutil-min",
     "//platform/diff-impl",
+    "//platform/usageView-impl",
     "//platform/util/jdom",
     "//platform/core-ui",
     "//java/codeserver/core",

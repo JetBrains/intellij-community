@@ -27,6 +27,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "//platform/lang-impl",
     "@lib//:kotlinc-analysis-api",
+    "//platform/usageView-impl",
     "//plugins/kotlin/base/indices",
     "//plugins/kotlin/base/project-structure",
     "//java/java-psi-impl:psi-impl",

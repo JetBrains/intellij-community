@@ -23,6 +23,7 @@ jvm_library(
     "//platform/usageView",
     "//java/java-analysis-impl:analysis-impl",
     "//java/java-impl:impl",
+    "//platform/usageView-impl",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//platform/core-impl",
     "//platform/core-ui",

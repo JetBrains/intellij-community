@@ -24,6 +24,7 @@ jvm_library(
     "//java/testFramework",
     "//java/java-impl-inspections:impl-inspections",
     "//java/idea-ui:ui",
+    "//platform/usageView-impl",
     "//platform/vcs-api:vcs",
     "//platform/editor-ui-ex:editor-ex",
     "//java/execution/impl",
