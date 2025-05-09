@@ -129,7 +129,7 @@ abstract class BaseProjectModelService<E : EntitySource> {
     val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
     val basePathUrl = project.baseNioPath?.toVirtualFileUrl(virtualFileUrlManager) ?: return
     val contentRoots = storage
-      .entitiesBySource { getEntitySourceClass().isInstance(it)  }
+      .entitiesBySource { !getEntitySourceClass().isInstance(it) }
       .filterIsInstance<ContentRootEntity>()
       .filter { it.url == basePathUrl }
       .toList()
