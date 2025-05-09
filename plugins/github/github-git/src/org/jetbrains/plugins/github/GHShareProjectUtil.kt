@@ -97,7 +97,7 @@ object GHShareProjectUtil {
       ?.let(project.service<GHHostedRepositoriesManager>()::findKnownRepositories)
       ?.map { it.remote.url }.orEmpty()
     if (possibleRemotes.isNotEmpty()) {
-      val existingRemotesDialog = GithubExistingRemotesDialog(project, possibleRemotes)
+      val existingRemotesDialog = GithubExistingRemotesDialog(project, GithubBundle.message("settings.configurable.display.name"), possibleRemotes)
       DialogManager.show(existingRemotesDialog)
       if (!existingRemotesDialog.isOK) {
         return
@@ -107,7 +107,40 @@ object GHShareProjectUtil {
     val spService = project.service<GHShareProjectService>()
 
     val shareDialogResult = spService.showShareProjectDialog(gitRepository, projectName) ?: return
-    spService.performShareProjectOnGithub(GithubBundle.message("settings.configurable.display.name"), gitRepository, root, shareDialogResult)
+
+    val account: GithubAccount = shareDialogResult.account!!
+
+    val token = GHCompatibilityUtil.getOrRequestToken(account, project) ?: return
+    val requestExecutor = GithubApiRequestExecutor.Factory.getInstance().create(account.server, token)
+
+    spService.performShareProject(
+      GithubBundle.message("settings.configurable.display.name"), gitRepository, root, shareDialogResult.repositoryName, shareDialogResult.remoteName,
+      createRepo = { createRepo(requestExecutor, shareDialogResult) },
+      retrieveRepoRemoteUrl = { retrieveRepoRemoteUrl(requestExecutor, account, shareDialogResult.repositoryName) }
+    )
+  }
+
+  // Service
+  private suspend fun createRepo(
+    requestExecutor: GithubApiRequestExecutor,
+    shareDialogResult: GithubShareDialog.Result,
+  ): String {
+    val name: String = shareDialogResult.repositoryName
+    val description: String = shareDialogResult.description
+    val isPrivate: Boolean = shareDialogResult.isPrivate
+    val account: GithubAccount = shareDialogResult.account!!
+
+    return requestExecutor.executeSuspend(GithubApiRequests.CurrentUser.Repos.create(account.server, name, description, isPrivate)).htmlUrl
+  }
+
+  // Service
+  private suspend fun retrieveRepoRemoteUrl(
+    requestExecutor: GithubApiRequestExecutor,
+    account: GithubAccount,
+    name: String,
+  ): String {
+    val username = GHCachingAccountInformationProvider.getInstance().loadInformation(requestExecutor, account).login
+    return GithubGitHelper.getInstance().getRemoteUrl(account.server, username, name)
   }
 }
 
@@ -159,19 +192,15 @@ private class GHShareProjectService(private val project: Project, private val cs
     }
   }
 
-  fun performShareProjectOnGithub(
+  fun performShareProject(
     hostServiceName: @NlsContexts.ConfigurableName String,
     gitRepository: GitRepository?,
     root: VirtualFile,
-    shareDialogResult: GithubShareDialog.Result,
+    repositoryName: @Nls String,
+    remoteName: String,
+    createRepo: suspend () -> String,
+    retrieveRepoRemoteUrl: suspend () -> String,
   ) {
-    val name: String = shareDialogResult.repositoryName
-    val remoteName: String = shareDialogResult.remoteName
-    val account: GithubAccount = shareDialogResult.account!!
-
-    val token = GHCompatibilityUtil.getOrRequestToken(account, project) ?: return
-    val requestExecutor = GithubApiRequestExecutor.Factory.getInstance().create(account.server, token)
-
     cs.launch(Dispatchers.Default) {
       withBackgroundProgress(project, GitBundle.message("share.process", hostServiceName), false) {
         try {
@@ -179,7 +208,7 @@ private class GHShareProjectService(private val project: Project, private val cs
             // create GitHub repo (network)
             val url = reporter.itemStep(GitBundle.message("share.process.creating.repository", hostServiceName)) {
               LOG.info("Creating GitHub repository")
-              createRepo(requestExecutor, shareDialogResult)
+              createRepo()
             }
             LOG.info("Successfully created GitHub repository")
 
@@ -191,7 +220,7 @@ private class GHShareProjectService(private val project: Project, private val cs
 
             // retrieve remote URL
             val remoteUrl = reporter.itemStep(GitBundle.message("share.process.retrieving.username")) {
-              retrieveRepoRemoteUrl(requestExecutor, account, name)
+              retrieveRepoRemoteUrl()
             }
 
             // git remote add origin git@github.com:login/name.git
@@ -201,7 +230,7 @@ private class GHShareProjectService(private val project: Project, private val cs
             }
 
             // create sample commit for binding project
-            if (!performFirstCommitIfRequired(hostServiceName, root, repository, reporter, name, url)) {
+            if (!performFirstCommitIfRequired(hostServiceName, root, repository, reporter, repositoryName, url)) {
               return@withBackgroundProgress
             }
 
@@ -209,7 +238,7 @@ private class GHShareProjectService(private val project: Project, private val cs
             if (!reporter.itemStep(GitBundle.message("share.process.pushing.to.github.master", hostServiceName, repository.currentBranch?.name
                                                                                                                 ?: "")) {
                 LOG.info("Pushing to github master")
-                pushCurrentBranch(hostServiceName, repository, remoteName, remoteUrl, name, url)
+                pushCurrentBranch(hostServiceName, repository, remoteName, remoteUrl, repositoryName, url)
               }) {
               return@withBackgroundProgress
             }
@@ -218,7 +247,7 @@ private class GHShareProjectService(private val project: Project, private val cs
             VcsNotifier.getInstance(project).notifyImportantInfo(
               VcsNotificationIdsHolder.SHARE_PROJECT_SUCCESSFULLY_SHARED,
               GitBundle.message("share.process.successfully.shared", hostServiceName),
-              HtmlChunk.link(url, name).toString(),
+              HtmlChunk.link(url, repositoryName).toString(),
               NotificationListener.URL_OPENING_LISTENER
             )
           }
@@ -238,29 +267,6 @@ private class GHShareProjectService(private val project: Project, private val cs
   private fun getErrorTextFromException(e: Throwable): @Nls String =
     if (e is UnknownHostException) GitBundle.message("share.error.unknownHost", e.message)
     else StringUtil.notNullize(e.message, GitBundle.message("share.error.unknown"))
-
-  // Service
-  private suspend fun createRepo(
-    requestExecutor: GithubApiRequestExecutor,
-    shareDialogResult: GithubShareDialog.Result,
-  ): String {
-    val name: String = shareDialogResult.repositoryName
-    val description: String = shareDialogResult.description
-    val isPrivate: Boolean = shareDialogResult.isPrivate
-    val account: GithubAccount = shareDialogResult.account!!
-
-    return requestExecutor.executeSuspend(GithubApiRequests.CurrentUser.Repos.create(account.server, name, description, isPrivate)).htmlUrl
-  }
-
-  // Service
-  private suspend fun retrieveRepoRemoteUrl(
-    requestExecutor: GithubApiRequestExecutor,
-    account: GithubAccount,
-    name: String,
-  ): String {
-    val username = GHCachingAccountInformationProvider.getInstance().loadInformation(requestExecutor, account).login
-    return GithubGitHelper.getInstance().getRemoteUrl(account.server, username, name)
-  }
 
   // Git/collab
   private fun addGitRemote(
@@ -328,9 +334,7 @@ private class GHShareProjectService(private val project: Project, private val cs
     url: String,
   ): Boolean {
     // check if there is no commits
-    if (!repository.isFresh) {
-      return true
-    }
+    if (!repository.isFresh) return true
 
     withModalProgress(project, IdeBundle.message("progress.saving.project", project.name)) {
       saveSettings(project, forceSavingAllSettings = true)
