@@ -124,8 +124,7 @@ open class XmlParsing(
     checkCurrentToken(XML_START_TAG_START) { "Tag start expected" }
     val tag = mark()
 
-    val tagName = parseTagHeader(multipleRootTagError, tag)
-    if (tagName == null) return
+    val tagName = parseTagHeader(multipleRootTagError, tag) ?: return
 
     val content = mark()
     parseTagContent()
@@ -136,7 +135,7 @@ open class XmlParsing(
 
       if (token() === XML_NAME) {
         val endName = myBuilder.tokenText
-        if (tagName != endName && tagNamesStack.contains(endName)) {
+        if (tagName != endName && endName in tagNamesStack) {
           footer.rollbackTo()
           tagNamesStack.pop()
           tag.doneBefore(XML_TAG, content, message("xml.parsing.named.element.is.not.closed", tagName))
@@ -198,19 +197,14 @@ open class XmlParsing(
     }
     tagNamesStack.push(tagName)
 
-    do {
+    while (true) {
       val tt = token()
-      if (tt === XML_NAME) {
-        parseAttribute()
-      }
-      else if (tt === XML_CHAR_ENTITY_REF || tt === XML_ENTITY_REF_TOKEN) {
-        parseReference()
-      }
-      else {
-        break
+      when {
+        tt === XML_NAME -> parseAttribute()
+        tt === XML_CHAR_ENTITY_REF || tt === XML_ENTITY_REF_TOKEN -> parseReference()
+        else -> break
       }
     }
-    while (true)
 
     if (token() === XML_EMPTY_ELEMENT_END) {
       advance()
@@ -344,16 +338,19 @@ open class XmlParsing(
   }
 
   private fun parseReference() {
-    if (token() === XML_CHAR_ENTITY_REF) {
-      advance()
-    }
-    else if (token() === XML_ENTITY_REF_TOKEN) {
-      val ref = mark()
-      advance()
-      ref.done(XML_ENTITY_REF)
-    }
-    else {
-      kotlin.error("Unexpected token: ${token()}")
+    val tt = token()
+    when {
+      tt === XML_CHAR_ENTITY_REF -> {
+        advance()
+      }
+      tt === XML_ENTITY_REF_TOKEN -> {
+        val ref = mark()
+        advance()
+        ref.done(XML_ENTITY_REF)
+      }
+      else -> {
+        kotlin.error("Unexpected token: $tt")
+      }
     }
   }
 
@@ -416,20 +413,12 @@ open class XmlParsing(
     val prolog = mark()
     while (true) {
       val tt = token()
-      if (tt === XML_PI_START) {
-        parseProcessingInstruction()
-      }
-      else if (tt === XML_DOCTYPE_START) {
-        parseDoctype()
-      }
-      else if (isCommentToken(tt)) {
-        parseComment()
-      }
-      else if (tt === XML_REAL_WHITE_SPACE) {
-        advance()
-      }
-      else {
-        break
+      when {
+        tt === XML_PI_START -> parseProcessingInstruction()
+        tt === XML_DOCTYPE_START -> parseDoctype()
+        isCommentToken(tt) -> parseComment()
+        tt === XML_REAL_WHITE_SPACE -> advance()
+        else -> break
       }
     }
     prolog.done(XML_PROLOG)
