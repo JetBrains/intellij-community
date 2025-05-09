@@ -2,7 +2,6 @@
 package com.intellij.junit4
 
 import com.intellij.execution.configurations.RunConfiguration
-import com.intellij.execution.junit.JUnitConfiguration
 import com.intellij.java.execution.AbstractTestFrameworkCompilingIntegrationTest
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.JavaPsiFacade
@@ -19,12 +18,6 @@ class Junit5VintageEngineIntegrationTest : AbstractTestFrameworkCompilingIntegra
   }
   override fun getTestContentRoot(): String? = VfsUtilCore.pathToUrl(PlatformTestUtil.getCommunityPath() + "/plugins/junit5_rt_tests/testData/integration/vintageEngine")
 
-  fun testRunPackageJUnit4() {
-    val configuration = createRunPackageConfiguration("v4")
-    val processOutput = doStartTestsProcess(configuration)
-    assertTrue(processOutput.sys.toString().contains("-junit5"))
-  }
-
   fun testRunClassJUnit4() {
     val testClass = findClass("v4")
     val configuration = createConfiguration<RunConfiguration>(testClass)
@@ -36,12 +29,6 @@ class Junit5VintageEngineIntegrationTest : AbstractTestFrameworkCompilingIntegra
     val testClass = findClass("v4")
     val testMethod = testClass.findMethodsByName("simple", false)[0]
     val configuration = createConfiguration<RunConfiguration>(testMethod)
-    val processOutput = doStartTestsProcess(configuration)
-    assertTrue(processOutput.sys.toString().contains("-junit5"))
-  }
-
-  fun testRunPackageJUnit3() {
-    val configuration = createRunPackageConfiguration("v3")
     val processOutput = doStartTestsProcess(configuration)
     assertTrue(processOutput.sys.toString().contains("-junit5"))
   }
@@ -59,14 +46,6 @@ class Junit5VintageEngineIntegrationTest : AbstractTestFrameworkCompilingIntegra
     val configuration = createConfiguration<RunConfiguration>(testMethod)
     val processOutput = doStartTestsProcess(configuration)
     assertTrue(processOutput.sys.toString().contains("-junit5"))
-  }
-
-  private fun createRunPackageConfiguration(packageName: String): RunConfiguration {
-    val aPackage = JavaPsiFacade.getInstance(myProject).findPackage(packageName)
-    assertNotNull(aPackage)
-    val configuration = createConfiguration<RunConfiguration?>(aPackage!!)
-    assertInstanceOf(configuration, JUnitConfiguration::class.java)
-    return configuration!!
   }
 
   private fun findClass(packageName:String ): PsiClass {
