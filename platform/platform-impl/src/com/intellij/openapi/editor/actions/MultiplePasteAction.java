@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.DefaultEditorKit;
@@ -27,6 +26,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class MultiplePasteAction extends AnAction implements DumbAware {
+
+  private static final char P = 'P';
 
   public MultiplePasteAction() {
     setEnabledInModalContext(true);
@@ -114,7 +115,7 @@ public final class MultiplePasteAction extends AnAction implements DumbAware {
     ClipboardContentChooser(Project project) {
       super(project, UIBundle.message("choose.content.to.paste.dialog.title"), true, true);
       setOKButtonText(ActionsBundle.actionText(IdeActions.ACTION_EDITOR_PASTE));
-      setOKButtonMnemonic('P');
+      setOKButtonMnemonic(P);
       setKeepPopupsOpen(true);
     }
 
@@ -124,7 +125,7 @@ public final class MultiplePasteAction extends AnAction implements DumbAware {
     }
 
     @Override
-    protected @Nullable String getHelpId() {
+    protected @NotNull String getHelpId() {
       return "ixPasteSelected";
     }
 
