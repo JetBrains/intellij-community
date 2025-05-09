@@ -104,10 +104,10 @@ class PythonModuleExecution : PythonExecution() {
 }
 
 @ApiStatus.Internal
-sealed class PythonToolExecution : PythonExecution() {
-  var toolPath: Path? = null
-  var toolParams: List<String> = listOf()
-
+sealed class PythonToolExecution(
+  val toolPath: Path,
+  val toolParams: List<String>,
+) : PythonExecution() {
   override fun accept(visitor: Visitor) {
     when (this) {
       is PythonToolScriptExecution -> visitor.visit(this)
@@ -117,16 +117,20 @@ sealed class PythonToolExecution : PythonExecution() {
 }
 
 @ApiStatus.Internal
-class PythonToolScriptExecution : PythonToolExecution() {
-  var pythonScriptPath: TargetEnvironmentFunction<Path>? = null
-
+class PythonToolScriptExecution(
+  toolPath: Path,
+  toolParams: List<String>,
+  val pythonScriptPath: TargetEnvironmentFunction<Path>
+) : PythonToolExecution(toolPath, toolParams) {
   override fun accept(visitor: Visitor) = visitor.visit(this)
 }
 
 @ApiStatus.Internal
-class PythonToolModuleExecution : PythonToolExecution() {
-  var moduleName: String? = null
-  var moduleFlag: String? = null
-
+class PythonToolModuleExecution(
+  toolPath: Path,
+  toolParams: List<String>,
+  val moduleName: String,
+  val moduleFlag: String
+) : PythonToolExecution(toolPath, toolParams) {
   override fun accept(visitor: Visitor) = visitor.visit(this)
 }

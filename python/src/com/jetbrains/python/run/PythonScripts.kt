@@ -144,14 +144,17 @@ fun prepareHelperScriptViaToolExecution(
   helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest,
   toolPath: Path,
   toolParams: List<String>,
-): PythonToolScriptExecution =
-  PythonToolScriptExecution().apply {
-    val uploads = applyHelperPackageToPythonPath(helperPackage, helpersAwareTargetRequest)
-    pythonScriptPath = resolveUploadPath(helperPackage.asParamString(), uploads)
-      .andThen { Path.of(it) }
-    this.toolPath = toolPath
-    this.toolParams = toolParams
-  }
+): PythonToolScriptExecution {
+  val envs: MutableMap<String, TargetEnvironmentFunction<String>> = mutableMapOf()
+  val uploads = addHelperEntriesToPythonPath(envs, helperPackage.pythonPathEntries, helpersAwareTargetRequest)
+  val execution = PythonToolScriptExecution(
+    toolPath,
+    toolParams,
+    resolveUploadPath(helperPackage.asParamString(), uploads).andThen { Path.of(it) }
+  )
+  execution.envs += envs;
+  return execution;
+}
 
 private const val PYTHONPATH_ENV = "PYTHONPATH"
 
