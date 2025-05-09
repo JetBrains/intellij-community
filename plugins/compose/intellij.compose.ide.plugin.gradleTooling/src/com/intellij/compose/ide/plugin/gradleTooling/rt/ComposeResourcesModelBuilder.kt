@@ -19,12 +19,12 @@ class ComposeResourcesExtension private constructor(extension: Any) {
   }
 
   @Suppress("UNCHECKED_CAST")
-  val customComposeResourcesDirectories: Map<String, String> by lazy {
+  val customComposeResourcesDirectories: Map<String, Pair<String, Boolean>> by lazy {
     val invoke = extension("getCustomResourceDirectories\$compose") as? MutableMap<*, *> ?: emptyMap()
     invoke.entries.associate {
       val sourceSetName = it.key as String
       val directoryName = (it.value as? Provider<Directory>)?.orNull?.asFile?.path as String
-      sourceSetName to directoryName
+      sourceSetName to (directoryName to /*isCustom*/ true)
     }.toMap()
   }
 
