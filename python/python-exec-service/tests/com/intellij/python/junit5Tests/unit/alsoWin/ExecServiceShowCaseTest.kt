@@ -13,18 +13,21 @@ import com.intellij.platform.testFramework.junit5.eel.params.api.EelSource
 import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplicationWithEel
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.ProcessInteractiveHandler
-import com.intellij.python.community.execService.ProcessSemiInteractiveHandler
 import com.intellij.python.community.execService.WhatToExec
+import com.intellij.python.community.execService.processSemiInteractiveHandler
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.python.Result
 import com.jetbrains.python.getOrThrow
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.hamcrest.CoreMatchers
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.params.ParameterizedTest
 import org.junitpioneer.jupiter.cartesian.CartesianTest
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * How to use [ExecService].
@@ -110,14 +113,13 @@ class ExecServiceShowCaseTest {
   }
 
   @CartesianTest
-
   fun testSemiInteractive(
     @EelSource eelHolder: EelHolder,
     @CartesianTest.Values(booleans = [true, false]) sunny: Boolean,
   ): Unit = timeoutRunBlocking {
     val messageToUser = "abc123"
     val shell = eelHolder.eel.exec.getShell().first
-    val result = ExecService().executeInteractive(WhatToExec.Binary(shell.asNioPath()), emptyList(), processInteractiveHandler = ProcessSemiInteractiveHandler<Unit> { channel, exitCode ->
+    val result = ExecService().executeInteractive(WhatToExec.Binary(shell.asNioPath()), emptyList(), processInteractiveHandler = processSemiInteractiveHandler<Unit> { channel, exitCode ->
       channel.sendWholeText("exit\n").getOrThrow()
       assertEquals(0, exitCode.await(), "Wrong exit code")
       if (sunny) {

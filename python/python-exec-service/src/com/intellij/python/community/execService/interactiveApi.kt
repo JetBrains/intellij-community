@@ -4,9 +4,8 @@ package com.intellij.python.community.execService
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
-import com.intellij.platform.eel.provider.utils.awaitProcessResult
+import com.intellij.python.community.execService.impl.ProcessSemiInteractiveHandlerImpl
 import com.jetbrains.python.Result
-import com.jetbrains.python.mapError
 import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.Nls
 import java.io.IOException
@@ -19,7 +18,7 @@ typealias CustomErrorMessage = @Nls String
 
 
 /**
- * In most cases you need [ProcessSemiInteractiveHandler]
+ * In most cases you need [processSemiInteractiveHandler]
  */
 fun interface ProcessInteractiveHandler<T> {
   /**
@@ -32,20 +31,12 @@ fun interface ProcessInteractiveHandler<T> {
 
 
 /**
- * [ProcessInteractiveHandler], but you do not have to collect output by yourself. You only have access to stdout and exit code.
- * So, you can only *write* something to process.
- */
-class ProcessSemiInteractiveHandler<T>(private val code: ProcessSemiInteractiveFun<T>) : ProcessInteractiveHandler<T> {
-  override suspend fun getResultFromProcess(process: EelProcess): Result<T, Pair<EelProcessExecutionResult, CustomErrorMessage?>> {
-    val result = code(process.stdin, process.exitCode)
-    val processOutput = process.awaitProcessResult()
-    return result.mapError { customErrorMessage ->
-      Pair(processOutput, customErrorMessage)
-    }
-  }
-}
-
-/**
  * Process stdout -> result
  */
 typealias ProcessSemiInteractiveFun<T> = suspend (EelSendChannel<IOException>, Deferred<Int>) -> Result<T, CustomErrorMessage?>
+
+/**
+ * [ProcessInteractiveHandler], but you do not have to collect output by yourself. You only have access to stdout and exit code.
+ * So, you can only *write* something to process.
+ */
+fun <T> processSemiInteractiveHandler(code: ProcessSemiInteractiveFun<T>): ProcessInteractiveHandler<T> = ProcessSemiInteractiveHandlerImpl(code)
