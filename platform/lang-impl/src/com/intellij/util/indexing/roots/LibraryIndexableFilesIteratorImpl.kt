@@ -30,9 +30,9 @@ private constructor(private val libraryName: @NlsSafe String?,
   override fun getDebugName(): String {
     return if (Registry.`is`("use.workspace.file.index.to.generate.iterators")) {
       val debugMessage = if (classRoots.isNotEmpty()) {
-        "(#1 class root ${classRoots.first().name})"
+        "(class root ${classRoots.first().name})"
       } else if (sourceRoots.isNotEmpty()) {
-        "(#1 source root ${sourceRoots.first().name})"
+        "(source root ${sourceRoots.first().name})"
       } else {
         "(no root)"
       }
