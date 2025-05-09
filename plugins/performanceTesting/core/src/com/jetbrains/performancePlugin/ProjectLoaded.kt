@@ -336,9 +336,14 @@ private fun reportScriptError(errorMessage: AbstractMessage) {
   val throwable = errorMessage.throwable
   var cause: Throwable? = throwable
   var causeMessage: String? = ""
+  val maxTestNameLength = 250
+  var testName: String? = throwable.javaClass.name + ": " + throwable.message
   while (cause!!.cause != null) {
     cause = cause.cause
-    causeMessage = cause!!.message
+    causeMessage = cause?.message?.let { "${cause.javaClass.name}: $it" } ?: causeMessage
+  }
+  if (!causeMessage.isNullOrEmpty()) {
+    testName = causeMessage
   }
   if (causeMessage.isNullOrEmpty()) {
     causeMessage = errorMessage.message
@@ -376,6 +381,7 @@ private fun reportScriptError(errorMessage: AbstractMessage) {
 
     Files.createDirectories(errorDir)
     Files.writeString(errorDir.resolve("message.txt"), causeMessage)
+    Files.writeString(errorDir.resolve("testName.txt"), (testName ?: causeMessage).take(maxTestNameLength))
     Files.writeString(errorDir.resolve("stacktrace.txt"), errorMessage.throwableText)
     val attachments = errorMessage.allAttachments
     val nameConflicts = attachments.groupBy { it.name }.filter { it.value.size > 1 }.keys
