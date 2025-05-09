@@ -10,6 +10,7 @@ import org.junit.platform.engine.support.descriptor.EngineDescriptor;
 import org.junit.platform.launcher.*;
 import org.junit.platform.launcher.core.LauncherFactory;
 
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -19,6 +20,14 @@ public final class JUnit5IdeaTestRunner implements IdeaTestRunner<TestIdentifier
   private final List<JUnit5TestExecutionListener> myExecutionListeners = new ArrayList<>();
   private ArrayList<String> myListeners;
   private Launcher myLauncher;
+
+  public JUnit5IdeaTestRunner() {
+    Runnable warmup = (Runnable) Proxy.newProxyInstance(
+      JUnit5IdeaTestRunner.class.getClassLoader(),
+      new Class<?>[]{Runnable.class},
+      (proxy, method, args) -> null);
+    warmup.run();
+  }
 
   @Override
   public void createListeners(ArrayList<String> listeners, int count) {
@@ -31,6 +40,7 @@ public final class JUnit5IdeaTestRunner implements IdeaTestRunner<TestIdentifier
       }
     }
     while (--count > 0);
+    myLauncher = LauncherFactory.create();
   }
 
   @Override
@@ -53,7 +63,7 @@ public final class JUnit5IdeaTestRunner implements IdeaTestRunner<TestIdentifier
         }
       }
 
-      getLauncher().execute(discoveryRequest, listeners.toArray(new TestExecutionListener[0]));
+      myLauncher.execute(discoveryRequest, listeners.toArray(new TestExecutionListener[0]));
 
       return listener.wasSuccessful() ? 0 : -1;
     }
@@ -72,7 +82,7 @@ public final class JUnit5IdeaTestRunner implements IdeaTestRunner<TestIdentifier
   @Override
   public TestIdentifier getTestToStart(String[] args, String name) {
     final LauncherDiscoveryRequest discoveryRequest = JUnit5TestRunnerUtil.buildRequest(args, new String[1], "");
-    myForkedTestPlan = getLauncher().discover(discoveryRequest);
+    myForkedTestPlan = LauncherFactory.create().discover(discoveryRequest);
     final Set<TestIdentifier> roots = myForkedTestPlan.getRoots();
     if (roots.isEmpty()) return null;
     List<TestIdentifier> nonEmptyRoots = roots.stream()
@@ -144,12 +154,5 @@ public final class JUnit5IdeaTestRunner implements IdeaTestRunner<TestIdentifier
         }
       }
     }
-  }
-
-  private Launcher getLauncher() {
-    if (myLauncher == null) {
-      myLauncher = LauncherFactory.create();
-    }
-    return myLauncher;
   }
 }
