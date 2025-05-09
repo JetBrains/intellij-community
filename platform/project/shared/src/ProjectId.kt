@@ -5,14 +5,9 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.Key
 import fleet.util.UID
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
-
-@JvmField
-@ApiStatus.Internal
-val PROJECT_ID: Key<ProjectId> = Key.create<ProjectId>("ProjectImpl.PROJECT_ID")
 
 private val LOG = fileLogger()
 
@@ -39,8 +34,7 @@ data class ProjectId(private val id: UID) {
     /**
      * Creates a new unique identifier for a [Project]
      */
-    @ApiStatus.Internal
-    fun create(): ProjectId {
+    internal fun create(): ProjectId {
       return ProjectId(UID.random())
     }
 
@@ -56,6 +50,46 @@ data class ProjectId(private val id: UID) {
 }
 
 /**
+ * Creates and assigns a new [ProjectId] to the given [Project].
+ * The assigned [ProjectId] will be used to uniquely identify this [Project] instance.
+ *
+ * When the [ProjectId] is assigned, future calls to [ProjectId.findProject] will return this [project].
+ *
+ * Has to be called by [Project] implementations ONLY.
+ */
+@ApiStatus.Internal
+fun registerNewProjectId(project: Project): ProjectId? {
+  return ProjectIdsStorage.getInstance().registerProject(project)
+}
+
+/**
+ * Removes the [ProjectId] associated with the given [Project].
+ * This method should be called when a project is being disposed to prevent memory leaks.
+ *
+ * After unregistering, the [ProjectId] will no longer be available for this [Project] instance,
+ * and [ProjectId.findProject] will return [null].
+ *
+ * Has to be called by [Project] implementations ONLY.
+ */
+@ApiStatus.Internal
+fun unregisterProjectId(project: Project) {
+  ProjectIdsStorage.getInstance().unregisterProject(project)
+}
+
+/**
+ * Sets a specific [ProjectId] for the given [Project].
+ * Previously associated [ProjectId] won't be attached to the [Project] anymore.
+ *
+ * When the [newProjectId] is assigned, future calls to [ProjectId.findProject] will return this [project].
+ *
+ * Has to be called by Remote Development implementation only.
+ */
+@ApiStatus.Internal
+fun setNewProjectId(project: Project, newProjectId: ProjectId) {
+  ProjectIdsStorage.getInstance().setProjectId(project, newProjectId)
+}
+
+/**
  * Provides the [ProjectId] for the given [Project].
  * This [ProjectId] can be used for RPC calls between frontend and backend
  *
@@ -64,7 +98,7 @@ data class ProjectId(private val id: UID) {
  */
 @ApiStatus.Internal
 fun Project.projectIdOrNull(): ProjectId? {
-  return getUserData(PROJECT_ID)
+  return ProjectIdsStorage.getInstance().getProjectId(this)
 }
 
 /**
@@ -87,8 +121,7 @@ fun Project.projectId(): ProjectId {
  */
 @ApiStatus.Internal
 fun ProjectId.findProjectOrNull(): Project? {
-  return ProjectManager.getInstance().openProjects.firstOrNull { it.getUserData(PROJECT_ID) == this }
-         ?: ProjectIdResolver.EP_NAME.extensionList.firstNotNullOfOrNull { it.resolve(this) }
+  return ProjectIdsStorage.getInstance().findProject(this)
 }
 
 /**
@@ -102,19 +135,5 @@ fun ProjectId.findProject(): Project {
   return findProjectOrNull() ?: run {
     LOG.error("Project is not found for $this. Opened projects: ${ProjectManager.getInstance().openProjects.joinToString { it.projectId().toString() }}")
     error("Project is not found for $this")
-  }
-}
-
-/**
- * Extension point which allows providing a custom way to convert [ProjectId] to [Project].
- *
- * The extension will be used, if [ProjectManager] doesn't have [Project] with [ProjectId] in [ProjectManager.getOpenProjects].
- */
-@ApiStatus.Internal
-interface ProjectIdResolver {
-  fun resolve(id: ProjectId): Project?
-
-  companion object {
-    internal val EP_NAME = ExtensionPointName.create<ProjectIdResolver>("com.intellij.project.projectIdResolver")
   }
 }

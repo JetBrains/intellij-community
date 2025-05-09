@@ -1913,7 +1913,6 @@
     <applicationService serviceInterface="com.intellij.auth.GenericAuthService"
                         serviceImplementation="com.intellij.auth.LocalGenericAuthService"
                         client="local"/>
-    <project.projectIdResolver implementation="com.intellij.ide.lightEdit.project.LightEditProjectIdResolver" />
 
     <actionGroupCustomization
       implementation="com.intellij.openapi.wm.impl.headertoolbar.MainToolbarActionGroupCustomization" />

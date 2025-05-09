@@ -13,12 +13,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.client.ClientAwareComponentManager
 import com.intellij.openapi.client.ClientKind
-import com.intellij.openapi.components.ComponentConfig
-import com.intellij.openapi.components.ComponentManager
-import com.intellij.openapi.components.ComponentManagerEx
-import com.intellij.openapi.components.ServiceDescriptor
+import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.IComponentStore
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionsArea
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -29,13 +25,9 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.project.PROJECT_ID
-import com.intellij.platform.project.ProjectId
-import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.serviceContainer.coroutineScopeMethodType
-import com.intellij.serviceContainer.emptyConstructorMethodType
-import com.intellij.serviceContainer.findConstructorOrNull
-import com.intellij.serviceContainer.getComponentManagerImpl
+import com.intellij.platform.project.registerNewProjectId
+import com.intellij.platform.project.unregisterProjectId
+import com.intellij.serviceContainer.*
 import com.intellij.util.application
 import com.intellij.util.messages.MessageBus
 import kotlinx.coroutines.CoroutineScope
@@ -71,8 +63,7 @@ internal class DefaultProject : UserDataHolderBase(), Project, ComponentManagerE
   }
 
   init {
-    @Suppress("LeakingThis")
-    putUserData(PROJECT_ID, ProjectId.create())
+    registerNewProjectId(this)
   }
 
   override fun <T> instantiateClass(aClass: Class<T>, pluginId: PluginId): T = delegate.instantiateClass(aClass, pluginId)
@@ -120,6 +111,7 @@ internal class DefaultProject : UserDataHolderBase(), Project, ComponentManagerE
       throw IllegalStateException("Must not dispose default project")
     }
     Disposer.dispose(timedProject)
+    unregisterProjectId(this)
   }
   
   override fun getMutableComponentContainer(): ComponentManager = 
@@ -270,8 +262,7 @@ private class DefaultProjectImpl(
   private val actualContainerInstance: Project
 ) : ClientAwareComponentManager(ApplicationManager.getApplication().getComponentManagerImpl()), Project {
   init {
-    @Suppress("LeakingThis")
-    putUserData(PROJECT_ID, ProjectId.create())
+    registerNewProjectId(this)
   }
 
   override fun <T : Any> findConstructorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
@@ -295,6 +286,7 @@ private class DefaultProjectImpl(
     super.dispose()
     // possibly re-enable "the only project" optimization since we have closed the extra project.
     (ProjectManager.getInstance() as ProjectManagerImpl).updateTheOnlyProjectField();
+    unregisterProjectId(this)
   }
 
   override fun isParentLazyListenersIgnored(): Boolean = true

@@ -1,9 +1,4 @@
 <idea-plugin>
-  <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.project.projectIdResolver"
-                    interface="com.intellij.platform.project.ProjectIdResolver"
-                    dynamic="true" />
-  </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <platform.entityTypes implementation="com.intellij.platform.project.ProjectEntitiesProvider"/>
   </extensions>

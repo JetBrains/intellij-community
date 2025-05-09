@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.intellij.openapi.project.impl
@@ -39,8 +39,8 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
-import com.intellij.platform.project.PROJECT_ID
-import com.intellij.platform.project.ProjectId
+import com.intellij.platform.project.registerNewProjectId
+import com.intellij.platform.project.unregisterProjectId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.project.ProjectStoreOwner
 import com.intellij.serviceContainer.*
@@ -143,8 +143,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     @Suppress("LeakingThis")
     putUserData(CREATION_TIME, System.nanoTime())
 
-    @Suppress("LeakingThis")
-    putUserData(PROJECT_ID, ProjectId.create())
+    registerNewProjectId(this)
 
     @Suppress("LeakingThis")
     registerServiceInstance(Project::class.java, this, fakeCorePluginDescriptor)
@@ -342,6 +341,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
       app.messageBus.syncPublisher(ProjectLifecycleListener.TOPIC).afterProjectClosed(this)
     }
     projectManager.updateTheOnlyProjectField()
+    unregisterProjectId(this)
     TimedReference.disposeTimed()
     LaterInvocator.purgeExpiredItems()
   }
