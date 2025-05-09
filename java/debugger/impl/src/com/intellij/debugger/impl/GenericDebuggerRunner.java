@@ -125,9 +125,10 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
       return attachVirtualMachine(state, environment, connection, true);
     }
 
-    if (state instanceof PatchedRunnableState) {
+    if (state instanceof PatchedRunnableState patchedRunnableState) {
       RemoteConnection connection =
         doPatch(new JavaParameters(), environment.getRunnerSettings(), true, environment.getProject());
+      patchedRunnableState.patchConnection(connection);
       return attachVirtualMachine(state, environment, connection, true);
     }
 
