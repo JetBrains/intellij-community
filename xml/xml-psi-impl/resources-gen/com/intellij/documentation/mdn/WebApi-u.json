@@ -9874,26 +9874,14 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "support_of_texParameterf": {
-          "Chrome": "9",
-          "ChromeAndroid": "25",
-          "Edge": "",
-          "Firefox": "4",
-          "FirefoxAndroid": "4",
-          "Opera": "12",
-          "Safari": "5.1",
-          "SafariIOS": "8"
-        },
-        "support_of_texParameteri": {
-          "Chrome": "9",
-          "ChromeAndroid": "25",
-          "Edge": "",
-          "Firefox": "4",
-          "FirefoxAndroid": "4",
-          "Opera": "12",
-          "Safari": "5.1",
-          "SafariIOS": "8"
-        }
+        "Chrome": "9",
+        "ChromeAndroid": "25",
+        "Edge": "",
+        "Firefox": "4",
+        "FirefoxAndroid": "4",
+        "Opera": "12",
+        "Safari": "5.1",
+        "SafariIOS": "8"
       },
       "doc": "<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>WebGLRenderingContext.texParameter[fi]()</code></strong> methods of\nthe <a href=\"$MDN_URL$/Web/API/WebGL_API\">WebGL API</a> set texture parameters.",
       "parameters": {
@@ -13586,26 +13574,14 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "support_of_texParameterf": {
-          "Chrome": "9",
-          "ChromeAndroid": "25",
-          "Edge": "",
-          "Firefox": "4",
-          "FirefoxAndroid": "4",
-          "Opera": "12",
-          "Safari": "5.1",
-          "SafariIOS": "8"
-        },
-        "support_of_texParameteri": {
-          "Chrome": "9",
-          "ChromeAndroid": "25",
-          "Edge": "",
-          "Firefox": "4",
-          "FirefoxAndroid": "4",
-          "Opera": "12",
-          "Safari": "5.1",
-          "SafariIOS": "8"
-        }
+        "Chrome": "9",
+        "ChromeAndroid": "25",
+        "Edge": "",
+        "Firefox": "4",
+        "FirefoxAndroid": "4",
+        "Opera": "12",
+        "Safari": "5.1",
+        "SafariIOS": "8"
       },
       "doc": "<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>WebGLRenderingContext.texParameter[fi]()</code></strong> methods of\nthe <a href=\"$MDN_URL$/Web/API/WebGL_API\">WebGL API</a> set texture parameters.",
       "parameters": {

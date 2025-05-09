@@ -2699,26 +2699,14 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "support_of_block": {
-          "Chrome": "",
-          "ChromeAndroid": "",
-          "Edge": "",
-          "Firefox": "",
-          "FirefoxAndroid": "4",
-          "Opera": "7",
-          "Safari": "",
-          "SafariIOS": ""
-        },
-        "support_of_inline": {
-          "Chrome": "",
-          "ChromeAndroid": "",
-          "Edge": "",
-          "Firefox": "",
-          "FirefoxAndroid": "4",
-          "Opera": "7",
-          "Safari": "",
-          "SafariIOS": ""
-        }
+        "Chrome": "",
+        "ChromeAndroid": "",
+        "Edge": "",
+        "Firefox": "",
+        "FirefoxAndroid": "4",
+        "Opera": "7",
+        "Safari": "",
+        "SafariIOS": ""
       },
       "doc": "The <code>&lt;display-outside&gt;</code> keywords specify the element's outer <a href=\"$MDN_URL$/Web/CSS/display\"><code>display</code></a> type, which is essentially its role in flow layout. These keywords are used as values of the <code>display</code> property, and can be used for legacy purposes as a single keyword, or as defined in the Level 3 specification alongside a value from the <a href=\"$MDN_URL$/Web/CSS/display-inside\"><code>&lt;display-inside&gt;</code></a> keywords.",
       "formalSyntax": "block | inline | run-in"
@@ -9434,26 +9422,14 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "multicol_context": {
-          "Chrome": "50",
-          "ChromeAndroid": "50",
-          "Edge": "",
-          "Firefox": "65",
-          "FirefoxAndroid": "65",
-          "Opera": "37",
-          "Safari": "10",
-          "SafariIOS": "10"
-        },
-        "paged_context": {
-          "Chrome": "50",
-          "ChromeAndroid": "50",
-          "Edge": "",
-          "Firefox": "65",
-          "FirefoxAndroid": "65",
-          "Opera": "37",
-          "Safari": "10",
-          "SafariIOS": "10"
-        }
+        "Chrome": "50",
+        "ChromeAndroid": "50",
+        "Edge": "",
+        "Firefox": "65",
+        "FirefoxAndroid": "65",
+        "Opera": "37",
+        "Safari": "10",
+        "SafariIOS": "10"
       },
       "baseline": {
         "level": "HIGH",
@@ -15962,26 +15938,14 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "flex_context": {
-          "Chrome": "59",
-          "ChromeAndroid": "59",
-          "Edge": "79",
-          "Firefox": "45",
-          "FirefoxAndroid": "45",
-          "Opera": "46",
-          "Safari": "11",
-          "SafariIOS": "11"
-        },
-        "grid_context": {
-          "Chrome": "59",
-          "ChromeAndroid": "59",
-          "Edge": "79",
-          "Firefox": "45",
-          "FirefoxAndroid": "45",
-          "Opera": "46",
-          "Safari": "11",
-          "SafariIOS": "11"
-        }
+        "Chrome": "59",
+        "ChromeAndroid": "59",
+        "Edge": "79",
+        "Firefox": "45",
+        "FirefoxAndroid": "45",
+        "Opera": "46",
+        "Safari": "11",
+        "SafariIOS": "11"
       },
       "baseline": {
         "level": "HIGH",
