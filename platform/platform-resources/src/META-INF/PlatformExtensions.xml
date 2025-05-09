@@ -954,6 +954,7 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.UpdateManagerUsagesCollector"
                                            allowOnStartup="true"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.settings.ProxySettingsCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.settings.SystemPropertiesFileCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.diff.statistics.DiffUsagesCollector"/>
     <applicationActivity implementation="com.intellij.openapi.application.ImportOldConfigsUsagesCollector$Trigger"/>
     <statistics.applicationUsagesCollector
