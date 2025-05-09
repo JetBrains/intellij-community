@@ -4,6 +4,7 @@ package com.intellij.codeInsight.inline.edit
 import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -61,26 +62,27 @@ private class InlineEditRequestExecutorImpl(parentScope: CoroutineScope) : Inlin
         val nextRequest = nextTask.receive()
         val nextTimestamp = nextRequest.timestamp
         currentJob.get()?.cancelAndJoin()
-        ensureActive()
+        currentJob.set(null)
+
+        // Workaround because there is some unexpected race with the Coroutine Completion Handler
+        // Timestamps are only increasing, so nothing is broken
+        setLastExecutedToAtLeast(nextTimestamp - 1)
+        checkCanceled()
 
         val nextJob = when (nextRequest) {
           is Request.Execute -> nextRequest.job
           is Request.Cancel -> null
         }
 
-        if (!currentJob.compareAndSet(null, nextJob)) {
-          LOG.error("[Inline Edit] request execution was not reset after its cancellation.")
-          currentJob.set(null)
-        }
-
         when (nextJob) {
           null -> {
-            lastExecutedTimestamp.set(nextTimestamp)
+            setLastExecutedToAtLeast(nextTimestamp)
           }
           else -> {
+            currentJob.set(nextJob)
             nextJob.invokeOnCompletion { _ ->
               currentJob.set(null) // IJPL-159913
-              lastExecutedTimestamp.set(nextTimestamp)
+              setLastExecutedToAtLeast(nextTimestamp)
             }
             nextJob.start()
           }
@@ -128,6 +130,18 @@ private class InlineEditRequestExecutorImpl(parentScope: CoroutineScope) : Inlin
     }
     nextTask.cancel()
     scope.cancel()
+  }
+
+  private fun setLastExecutedToAtLeast(atLeastTimestamp: Long) {
+    while (true) {
+      val currentTimestamp = lastExecutedTimestamp.get()
+      if (currentTimestamp >= atLeastTimestamp) {
+        return
+      }
+      if (lastExecutedTimestamp.compareAndSet(currentTimestamp, atLeastTimestamp)) {
+        return
+      }
+    }
   }
 
   private fun checkNotCancelled(): Boolean {
