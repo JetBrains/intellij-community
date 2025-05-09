@@ -1,0 +1,41 @@
+{
+  "projectPath": "../ml-eval/jackson-core",
+  "repository": "https://github.com/fasterxml/jackson-core",
+  "revision": "fb695545312cc2340604e61642f36138152fba93",
+  "outputDir": "bin/ml-eval-code-generation-junie-swe-java-output",
+  "strategy": {
+    "instanceId": "fasterxml__jackson-core-1172"
+  },
+  "fileDataset": {
+    "url": "remote:https://huggingface.co/datasets/JetBrains/eval_plugin/resolve/main/junie-swe/java/java_swe_bench.json"
+  },
+  "interpret": {
+    "saveLogs": true,
+    "sessionProbability": 1.0,
+    "sessionSeed": null,
+    "sessionsLimit": 400,
+    "filesLimit": 100,
+    "order": "LINEAR",
+    "trainTestSplit": 70,
+    "registry": ""
+  },
+  "reports": {
+    "evaluationTitle": "Default",
+    "defaultMetrics": [
+      "Sessions",
+      "Precision",
+      "SessionsWithoutSyntaxErrorsRatio",
+      "WithoutHighlightErrors",
+      "PreservedAPI",
+      "MeanLatency"
+    ],
+    "sessionsFilters": [],
+    "comparisonFilters": []
+  },
+  "language": "Java",
+  "actions": {
+    "evaluationRoots": [
+      "."
+    ]
+  }
+}
