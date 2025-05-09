@@ -390,11 +390,6 @@ fun <T> Query<T>.tokenSetsFlow(): Flow<TokenSet<T>> = let { query ->
       }
     }.useInline {
       receive.consumeEach { ts ->
-        // collector might not be actually suspended, and thus,
-        // DbSource will not be invoked to update the db on thread local context.
-        // this trick partially mitigates this problem, but it does not always work,
-        // because the real collector might be actually running on a different thread
-        DbContext.threadBound.set(rete.reteState.value.dbOrThrow())
         emit(ts)
       }
     }
