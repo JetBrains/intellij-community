@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation.cache
 
+import org.assertj.core.api.BDDAssertions.then
 import org.junit.Test
 
 class CommitsHistoryTest {
@@ -13,9 +14,9 @@ class CommitsHistoryTest {
       "remote1" : [ "commit1.3", "commit1.3" ],
       "remote3" : [ "commit3.1" ]
     }""")
-    assert((union.commitsForRemote("remote1") - listOf("commit1.1", "commit1.2", "commit1.3")).isEmpty())
-    assert((union.commitsForRemote("remote2") - listOf("commit2.1", "commit2.2")).isEmpty())
-    assert((union.commitsForRemote("remote3") - listOf("commit3.1")).isEmpty())
+    then(union.commitsForRemote("remote1")).containsExactlyInAnyOrder("commit1.1", "commit1.2", "commit1.3")
+    then(union.commitsForRemote("remote2")).containsExactlyInAnyOrder("commit2.1", "commit2.2")
+    then(union.commitsForRemote("remote3")).containsExactlyInAnyOrder("commit3.1")
   }
 
   @Test
@@ -28,8 +29,8 @@ class CommitsHistoryTest {
       "remote2" : [ "commit2.1", "commit2.3" ],
       "remote3" : [ "commit3.1" ]
     }""")
-    assert((subtraction.commitsForRemote("remote1") - "commit1.1").isEmpty())
-    assert((subtraction.commitsForRemote("remote2") - "commit2.2").isEmpty())
-    assert(subtraction.commitsForRemote("remote3").isEmpty())
+    then(subtraction.commitsForRemote("remote1")).containsExactlyInAnyOrder("commit1.1")
+    then(subtraction.commitsForRemote("remote2")).containsExactlyInAnyOrder("commit2.2")
+    then(subtraction.commitsForRemote("remote3")).isEmpty()
   }
 }

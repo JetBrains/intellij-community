@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.intellij.openapi.util.io.FileUtil
@@ -8,6 +8,11 @@ import com.intellij.util.io.Compressor
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import okhttp3.Headers
+import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody
 import okio.BufferedSink
@@ -21,6 +26,7 @@ import org.jetbrains.intellij.build.io.copyFile
 import org.jetbrains.intellij.build.io.moveFile
 import org.jetbrains.intellij.build.io.zipWithCompression
 import org.jetbrains.intellij.build.retryWithExponentialBackOff
+import org.jetbrains.intellij.build.suspendingRetryWithExponentialBackOff
 import org.jetbrains.jps.cache.model.BuildTargetState
 import org.jetbrains.jps.incremental.storage.ProjectStamps
 import java.nio.file.Files
@@ -150,10 +156,9 @@ internal class PortableCompilationCacheUploader(
         "JPS Caches are uploaded: $cacheUploaded, metadata is uploaded: $metadataUploaded"
       }
     }
-    val newHistory = if (overrideRemoteHistory) commitHistory else commitHistory + remoteCommitHistory()
-    uploader.upload(path = CommitsHistory.JSON_FILE, file = writeCommitHistory(newHistory))
+    val newHistory: CommitsHistory = uploadHistory(overrideRemoteHistory, commitHistory)
     val expected = newHistory.commitsForRemote(remoteGitUrl).toSet()
-    val actual = remoteCommitHistory().commitsForRemote(remoteGitUrl).toSet()
+    val actual = remoteCommitHistory().first.commitsForRemote(remoteGitUrl).toSet()
     val missing = expected - actual
     val unexpected = actual - expected
     check(missing.none() && unexpected.none()) {
@@ -164,12 +169,58 @@ internal class PortableCompilationCacheUploader(
     }
   }
 
-  private fun remoteCommitHistory(): CommitsHistory {
-    return if (uploader.isExist(CommitsHistory.JSON_FILE)) {
-      CommitsHistory(uploader.getAsString(CommitsHistory.JSON_FILE, remoteCache.authHeader))
+  private fun uploadHistory(
+    overrideRemoteHistory: Boolean,
+    commitHistory: CommitsHistory,
+  ): CommitsHistory {
+    if (overrideRemoteHistory) {
+      val updated = commitHistory
+      uploader.upload(path = CommitsHistory.JSON_FILE, file = writeCommitHistory(updated))
+      return updated
     }
     else {
-      CommitsHistory(emptyMap())
+      var attempts = 0
+      while (true) {
+        val (remoteCommitHistory, etag) = remoteCommitHistory()
+        val updated = commitHistory + remoteCommitHistory
+        try {
+          val content: ByteArray = updated.toJson().toByteArray(Charsets.UTF_8)
+          runBlocking(Dispatchers.IO) {
+            // Retry all errors except 409 and 412, we handle them below in our own loop
+            suspendingRetryWithExponentialBackOff(onException = { _: Int, e: Exception -> if (e is HttpException && e.code in setOf(409, 412)) throw e }) {
+              uploader.uploadContent(
+                path = CommitsHistory.JSON_FILE,
+                content = content,
+                contentType = "application/json; charset=utf-8".toMediaType(),
+                headers = etag?.let { listOf("If-Match" to etag.removePrefix("W/")) } ?: emptyList(),
+              )
+            }
+          }
+        }
+        catch (e: HttpException) {
+          if (e.code == 409 || e.code == 412) {
+            if (attempts > 10) {
+              Span.current().addEvent("upload failed with etag mismatch, attempts limit reached")
+              throw e
+            }
+            Span.current().addEvent("upload failed with etag mismatch, will try again")
+            attempts++
+            continue
+          }
+        }
+        writeCommitHistory(updated)
+        return updated
+      }
+    }
+  }
+
+  private fun remoteCommitHistory(): Pair<CommitsHistory, String?> {
+    return if (uploader.isExist(CommitsHistory.JSON_FILE)) {
+      val response = uploader.getAsStringAndHeaders(CommitsHistory.JSON_FILE, remoteCache.authHeader)
+      CommitsHistory(response.first) to response.second["ETag"]
+    }
+    else {
+      CommitsHistory(emptyMap()) to null
     }
   }
 
@@ -208,6 +259,29 @@ private class Uploader(serverUrl: String, val authHeader: String) {
     }
   }
 
+  fun uploadContent(path: String, content: ByteArray, contentType: MediaType, headers: List<Pair<String, String>> = emptyList()) {
+    val url = pathToUrl(path)
+    spanBuilder("upload")
+      .setAttribute("url", url).setAttribute("content-length", content.size.toString())
+      .apply { headers.forEach { (name, value) -> setAttribute("header:$name", value) } }
+      .use {
+        httpClient.newCall(
+          Request.Builder().url(url)
+            .header("Authorization", authHeader)
+            .apply { headers.forEach { (name, value) -> header(name, value) } }
+            .put(object : RequestBody() {
+              override fun contentType() = contentType
+
+              override fun contentLength() = content.size.toLong()
+
+              override fun writeTo(sink: BufferedSink) {
+                sink.write(content)
+              }
+            }).build()
+        ).execute().useSuccessful {}
+      }
+  }
+
   fun isExist(path: String, logIfExists: Boolean = false): Boolean {
     val url = pathToUrl(path)
     spanBuilder("head").setAttribute("url", url).useWithoutActiveScope { span ->
@@ -235,8 +309,13 @@ private class Uploader(serverUrl: String, val authHeader: String) {
     return false
   }
 
-  fun getAsString(path: String, authHeader: String) = retryWithExponentialBackOff {
-    httpClient.get(pathToUrl(path), authHeader) { it.body.string() }
+  fun getAsStringAndHeaders(path: String, authHeader: String): Pair<String, Headers> {
+    val url = pathToUrl(path)
+    spanBuilder("get").setAttribute("url", url).useWithoutActiveScope {
+      return retryWithExponentialBackOff {
+        httpClient.get(url, authHeader) { it.body.string() to it.headers }
+      }
+    }
   }
 
   private fun pathToUrl(path: String) = "$serverUrl/${path.trimStart('/')}"
