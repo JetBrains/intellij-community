@@ -9,38 +9,6 @@
   },
   "lang": "en-us",
   "atRules": {
-    "font-face": {
-      "doc": "",
-      "properties": {
-        "woff": {
-          "url": "$MDN_URL$/web/guide/woff",
-          "status": [
-            "Obsolete"
-          ],
-          "compatibility": {
-            "support_of_WOFF": {
-              "Chrome": "6",
-              "ChromeAndroid": "",
-              "Edge": "",
-              "Firefox": "3.5",
-              "Opera": "11.1",
-              "Safari": "5.1",
-              "SafariIOS": "5"
-            },
-            "support_of_WOFF_2": {
-              "Chrome": "36",
-              "ChromeAndroid": "36",
-              "Edge": "14",
-              "Firefox": "39",
-              "Opera": "23",
-              "Safari": "10",
-              "SafariIOS": "10"
-            }
-          },
-          "doc": "<strong>WOFF</strong> (the <strong>Web Open Font Format</strong>) is a web font format developed by Mozilla in concert with Type Supply, LettError, and other organizations. It uses a compressed version of the same table-based <code>sfnt</code> structure used by TrueType, OpenType, and Open Font Format, but adds metadata and private-use data structures, including predefined fields allowing foundries and vendors to provide license information if desired.\n<p>There are three main benefits to using WOFF:\n<ol>\n<li>The font data is compressed, so sites using WOFF will use less bandwidth and will load faster than if they used equivalent uncompressed TrueType or OpenType files.</li>\n<li>Many font vendors that are unwilling to license their TrueType or OpenType format fonts for use on the web will license WOFF format fonts. This improves availability of fonts to site designers.</li>\n<li>Both proprietary and free software browser vendors like the WOFF format, so it has the potential of becoming a truly universal, interoperable font format for the web, unlike other current font formats.</li>\n</ol>\n<p>There are two versions of WOFF: WOFF and WOFF2. They mostly differ in regard to the compression algorithm used. In <a href=\"$MDN_URL$/Web/CSS/@font-face\"><code>@font-face</code></a> they are identified by the <code>'woff'</code> and <code>'woff2'</code> format descriptor respectively."
-        }
-      }
-    },
     "viewport": {
       "url": "$MDN_URL$/web/CSS/@viewport",
       "status": [
