@@ -650,9 +650,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       public void visit(@NotNull PythonToolModuleExecution pythonToolModuleExecution) {
         // add module flag only after command line parameters
         var moduleFlag = pythonToolModuleExecution.getModuleFlag();
-        if (moduleFlag != null) {
-          debuggerScript.addParameter(moduleFlag);
-        }
+        debuggerScript.addParameter(moduleFlag);
       }
     });
 

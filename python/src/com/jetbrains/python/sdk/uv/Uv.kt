@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv
 
-import com.jetbrains.python.errorProcessing.PyExecResult
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
@@ -9,7 +8,7 @@ import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import java.nio.file.Path
 
 interface UvCli {
-  suspend fun runUv(workingDir: Path, vararg args: String): PyExecResult<String>
+  suspend fun runUv(workingDir: Path, vararg args: String): PyResult<String>
 }
 
 interface UvLowLevel {
@@ -32,8 +31,8 @@ interface UvLowLevel {
   suspend fun listPackages(): PyResult<List<PythonPackage>>
   suspend fun listOutdatedPackages(): PyResult<List<PythonOutdatedPackage>>
 
-  suspend fun isProjectSynced(inexact: Boolean): Result<Boolean>
-  suspend fun isScriptSynced(inexact: Boolean, scriptPath: Path): Result<ScriptSyncCheckResult>
+  suspend fun isProjectSynced(inexact: Boolean): PyResult<Boolean>
+  suspend fun isScriptSynced(inexact: Boolean, scriptPath: Path): PyResult<ScriptSyncCheckResult>
 
   suspend fun sync(): Result<String>
   suspend fun lock(): Result<String>
