@@ -97,7 +97,7 @@ private fun InfiniteAnimation() {
     infiniteRepeatable(tween(durationMillis = 1000, easing = EaseInOut), repeatMode = RepeatMode.Reverse),
   )
   Box(Modifier.alpha(animatedAlpha)) {
-    Text("Animation!", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+    Text("Animation!")
   }
 }
 
