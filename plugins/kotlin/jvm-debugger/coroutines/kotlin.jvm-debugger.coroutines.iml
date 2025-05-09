@@ -37,6 +37,7 @@
     <orderEntry type="library" name="maven-resolver-provider" level="project" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" name="ASM" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="kotlin.base.util" />
     <orderEntry type="module" module-name="kotlin.base.psi" />
     <orderEntry type="module" module-name="kotlin.base.analysis" />

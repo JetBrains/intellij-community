@@ -11,6 +11,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.xml.frontback.impl" exported="" />
     <orderEntry type="module" module-name="intellij.xml.psi" exported="" />
     <orderEntry type="module" module-name="intellij.platform.core" />

@@ -32,6 +32,7 @@
     <orderEntry type="library" scope="PROVIDED" name="Mac" level="project" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide" exported="" />
     <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="module" module-name="intellij.platform.lang" />

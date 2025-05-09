@@ -11,6 +11,7 @@
     <orderEntry type="library" exported="" scope="TEST" name="mockito" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="kotlin-test" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.java.frontback.psi.impl" />

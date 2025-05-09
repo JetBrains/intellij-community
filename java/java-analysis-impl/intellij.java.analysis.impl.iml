@@ -11,6 +11,7 @@
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" exported="" />
     <orderEntry type="module" module-name="intellij.java.indexing.impl" exported="" />
     <orderEntry type="module" module-name="intellij.java.psi.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" exported="" />
     <orderEntry type="module" module-name="intellij.java.analysis" exported="" />
     <orderEntry type="module" module-name="intellij.java.resources.en" />

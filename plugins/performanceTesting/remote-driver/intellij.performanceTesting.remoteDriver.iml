@@ -12,6 +12,7 @@
     <orderEntry type="module" module-name="intellij.performanceTesting" />
     <orderEntry type="library" name="assertJ" level="project" />
     <orderEntry type="library" name="assertj-swing" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" />

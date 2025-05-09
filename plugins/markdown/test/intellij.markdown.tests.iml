@@ -18,6 +18,7 @@
     <orderEntry type="module" module-name="intellij.markdown.model" />
     <orderEntry type="module" module-name="intellij.markdown.spellchecker" />
     <orderEntry type="module" module-name="intellij.markdown.xml" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.usageView" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="module" module-name="intellij.yaml" />

@@ -7,6 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tasks" />
     <orderEntry type="module" module-name="intellij.tasks.core" />
     <orderEntry type="module" module-name="intellij.tasks.java" />

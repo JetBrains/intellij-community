@@ -7,6 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.sh.core" />
     <orderEntry type="module" module-name="intellij.sh" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.spellchecker" scope="TEST" />
