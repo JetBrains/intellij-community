@@ -84,8 +84,9 @@ public final class JarRepositoryManager {
   /**
    * * @deprecated Do not use it. See description for getLocalRepositoryPath
    */
+  @ApiStatus.Internal
   @ApiStatus.Obsolete
-  static final String MAVEN_REPOSITORY_MACRO = "$MAVEN_REPOSITORY$";
+  public static final String MAVEN_REPOSITORY_MACRO = "$MAVEN_REPOSITORY$";
 
   private static final String DEFAULT_REPOSITORY_PATH = ".m2/repository";
   private static final AtomicInteger ourTasksInProgress = new AtomicInteger();
