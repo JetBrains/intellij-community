@@ -3,6 +3,8 @@ package com.jetbrains.python.sdk.uv
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.errorProcessing.asKotlinResult
+import com.jetbrains.python.onSuccess
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
@@ -50,7 +52,7 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
     }
     else {
       uv.removeDependency(pkg)
-    }
+    }.asKotlinResult()
 
     result.getOrElse {
       return Result.failure(it)
@@ -61,11 +63,11 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
 
   override suspend fun reloadPackagesCommand(): Result<List<PythonPackage>> {
     // ignoring errors as handling outdated packages is a pretty new option
-    uv.listOutdatedPackages().onSuccess {
-      outdatedPackages = it.associateBy { it.name }
+    uv.listOutdatedPackages().onSuccess { packages ->
+      outdatedPackages = packages.associateBy { it.name }
     }
 
-    return uv.listPackages()
+    return uv.listPackages().asKotlinResult()
   }
 
   suspend fun sync(): Result<String> {
