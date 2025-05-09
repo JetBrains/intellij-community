@@ -69,7 +69,7 @@ class KotlinFirChangeSignatureTest :
     override fun createChangeInfo(): KotlinChangeInfo {
         val element = findTargetElement()?.unwrapped as KtElement
         val targetElement = KotlinChangeSignatureHandler.findDeclaration(element, element, project, editor) as KtNamedDeclaration
-        val superMethod = (checkSuperMethods(targetElement, emptyList(), RefactoringBundle.message("to.refactor")).first() as KtNamedDeclaration).takeIf { !file.name.contains("OverriderOnly") } ?: targetElement
+        val superMethod = (checkSuperMethods(targetElement, emptyList(), RefactoringBundle.message("to.refactor")).last() as KtNamedDeclaration).takeIf { !file.name.contains("OverriderOnly") } ?: targetElement
         return KotlinChangeInfo(KotlinMethodDescriptor(superMethod))
     }
 
@@ -282,5 +282,9 @@ class KotlinFirChangeSignatureTest :
 
     fun testRenameContextParameter() = doTest {
         newParameters[0].name = "a"
+    }
+
+    fun testContextParameterInDeepHierarchy() = doTest {
+      newParameters[0].isContextParameter = false
     }
 }

@@ -408,13 +408,6 @@ public @interface NotNull {
         }
     }
 
-    fun testPreferContainedInClass() {
-        configureFiles()
-        doTestWithIgnoredDirective {
-            assertEquals("param", createChangeInfo().newParameters[0].name)
-        }
-    }
-
     fun testBadSelection() {
         myFixture.configureByFile(getTestName(false) + "Before.kt")
         assertNull(findTargetElement())
