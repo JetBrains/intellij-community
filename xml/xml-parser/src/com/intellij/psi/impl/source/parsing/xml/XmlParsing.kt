@@ -67,28 +67,38 @@ open class XmlParsing(
 
     var rootTagCount = 0
     var error: PsiBuilder.Marker? = null
+
+    fun flushError() {
+      error?.let {
+        it.error(message("xml.parsing.unexpected.tokens"))
+        error = null
+      }
+    }
+
     while (!eof()) {
       val tt = token()
-      if (tt === XML_START_TAG_START) {
-        error = flushError(error)
-        rootTagCount++
-        parseTag(rootTagCount > 1)
-      }
-      else if (isCommentToken(tt)) {
-        error = flushError(error)
-        parseComment()
-      }
-      else if (tt === XML_PI_START) {
-        error = flushError(error)
-        parseProcessingInstruction()
-      }
-      else if (tt === XML_REAL_WHITE_SPACE) {
-        error = flushError(error)
-        advance()
-      }
-      else {
-        if (error == null) error = mark()
-        advance()
+      when {
+        tt === XML_START_TAG_START -> {
+          flushError()
+          rootTagCount++
+          parseTag(rootTagCount > 1)
+        }
+        isCommentToken(tt) -> {
+          flushError()
+          parseComment()
+        }
+        tt === XML_PI_START -> {
+          flushError()
+          parseProcessingInstruction()
+        }
+        tt === XML_REAL_WHITE_SPACE -> {
+          flushError()
+          advance()
+        }
+        else -> {
+          if (error == null) error = mark()
+          advance()
+        }
       }
     }
 
@@ -96,8 +106,7 @@ open class XmlParsing(
 
     if (rootTagCount == 0) {
       val rootTag = mark()
-      error = mark()
-      error.error(message("xml.parsing.absent.root.tag"))
+      mark().error(message("xml.parsing.absent.root.tag"))
       rootTag.done(XML_TAG)
     }
 
@@ -486,11 +495,6 @@ open class XmlParsing(
 
   private fun error(message: @NlsContexts.ParsingError String) {
     myBuilder.error(message)
-  }
-
-  private fun flushError(error: PsiBuilder.Marker?): PsiBuilder.Marker? {
-    error?.error(message("xml.parsing.unexpected.tokens"))
-    return null
   }
 
   private fun checkCurrentToken(type: IElementType) {
