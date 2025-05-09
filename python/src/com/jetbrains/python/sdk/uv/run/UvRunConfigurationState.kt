@@ -11,6 +11,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.getOrNull
+import com.jetbrains.python.onFailure
 import com.jetbrains.python.run.PythonCommandLineState
 import com.jetbrains.python.run.PythonExecution
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
@@ -111,7 +112,7 @@ suspend fun requiresSync(
     val result = uv
       .isScriptSynced(!containsExact, Path.of(options.scriptOrModule))
       .onFailure {
-        logger.warn(it)
+        logger.warn(it.message)
       }
       .getOrNull()
 
@@ -131,7 +132,7 @@ suspend fun requiresSync(
     val isProjectSynced = uv
       .isProjectSynced(!containsExact)
       .onFailure {
-        logger.warn(it)
+        logger.warn(it.message)
       }
       .getOrNull()
 

@@ -1,19 +1,21 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv
 
+import com.jetbrains.python.errorProcessing.PyExecResult
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
 import java.nio.file.Path
 
 interface UvCli {
-  suspend fun runUv(workingDir: Path, vararg args: String): Result<String>
+  suspend fun runUv(workingDir: Path, vararg args: String): PyExecResult<String>
 }
 
 interface UvLowLevel {
-  suspend fun initializeEnvironment(init: Boolean, python: Path?): Result<Path>
+  suspend fun initializeEnvironment(init: Boolean, python: Path?): PyResult<Path>
 
-  suspend fun listUvPythons(): Result<Set<Path>>
+  suspend fun listUvPythons(): PyResult<Set<Path>>
 
   /**
   * Manage project dependencies by adding/removing them to the project along side installation
@@ -27,8 +29,8 @@ interface UvLowLevel {
   suspend fun installPackage(name: PythonPackageSpecification, options: List<String>): Result<Unit>
   suspend fun uninstallPackage(name: PythonPackage): Result<Unit>
 
-  suspend fun listPackages(): Result<List<PythonPackage>>
-  suspend fun listOutdatedPackages(): Result<List<PythonOutdatedPackage>>
+  suspend fun listPackages(): PyResult<List<PythonPackage>>
+  suspend fun listOutdatedPackages(): PyResult<List<PythonOutdatedPackage>>
 
   suspend fun isProjectSynced(inexact: Boolean): Result<Boolean>
   suspend fun isScriptSynced(inexact: Boolean, scriptPath: Path): Result<ScriptSyncCheckResult>
