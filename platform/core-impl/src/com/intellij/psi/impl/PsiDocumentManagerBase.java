@@ -752,6 +752,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   private static void runActions(@NotNull List<Runnable> actions) {
     List<Pair<Runnable, Throwable>> exceptions = new ArrayList<>();
     for (Runnable action : actions) {
+      //noinspection IncorrectCancellationExceptionHandling
       try (AccessToken ignored = ThreadContext.resetThreadContext()) {
         action.run();
       }
