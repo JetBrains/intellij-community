@@ -14,6 +14,7 @@ import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.openapi.wm.impl.status.MemoryUsagePanel
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetSettings
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.RestartDialogImpl
@@ -25,6 +26,7 @@ class MemoryUsageConfigurable : BoundSearchableConfigurable(
   helpTopic = MEMORY_USAGE_SETTINGS_HELP_TOPIC,
   _id = MEMORY_USAGE_SETTINGS_ID) {
 
+  private val UNKNOWN_MEMORY_VALUE = -1
   private val MIN_VALUE: Int = 256
   private val MAX_VALUE: Int = 1_000_000
   private val HEAP_INCREMENT: Int = 512
@@ -34,8 +36,11 @@ class MemoryUsageConfigurable : BoundSearchableConfigurable(
   private var newHeapSize: String = initialHeapSize.toString()
   private lateinit var newHeapSizeField: JBTextField
 
+  private var memoryWidgetCheckbox: JBCheckBox? = null
+  private var initialMemoryWidgetValue: Boolean? = null
+
   override fun createPanel(): DialogPanel {
-    val formattedInitialHeapSize = if (initialHeapSize == -1) DiagnosticBundle.message("change.memory.unknown") else initialHeapSize
+    val formattedInitialHeapSize = if (initialHeapSize == UNKNOWN_MEMORY_VALUE) DiagnosticBundle.message("change.memory.unknown") else initialHeapSize
     val suggestedHeapSize = getSuggestedValue()
 
     return panel {
@@ -63,22 +68,22 @@ class MemoryUsageConfigurable : BoundSearchableConfigurable(
       }
 
       val statusBarWidgetSettings = StatusBarWidgetSettings.getInstance()
-      val memoryWidgetFactory = StatusBarWidgetFactory.EP_NAME.extensionList.find { it.id == MemoryUsagePanel.WIDGET_ID }
+      val memoryWidgetFactory: StatusBarWidgetFactory? = StatusBarWidgetFactory.EP_NAME.extensionList.find { it.id == MemoryUsagePanel.WIDGET_ID }
       if (memoryWidgetFactory != null) {
-        val initialCheckboxValue = statusBarWidgetSettings.isEnabled(memoryWidgetFactory)
-
+        initialMemoryWidgetValue = StatusBarWidgetSettings.getInstance().isEnabled(memoryWidgetFactory)
         group(PyBundle.message("settings.memory.indicator.group")) {
           row {
-            checkBox(PyBundle.message("settings.memory.indicator.checkbox"))
-              .selected(initialCheckboxValue)
+            memoryWidgetCheckbox = checkBox(PyBundle.message("settings.memory.indicator.checkbox"))
+              .selected(initialMemoryWidgetValue ?: false)
               .onChanged {
-                val newCheckboxValue = it.isSelected
+                val newMemoryWidgetValue = it.isSelected
 
-                statusBarWidgetSettings.setEnabled(memoryWidgetFactory, newCheckboxValue)
+                statusBarWidgetSettings.setEnabled(memoryWidgetFactory, newMemoryWidgetValue)
                 ProjectManager.getInstance().openProjects.forEach { project ->
                   project.service<StatusBarWidgetsManager>().updateWidget(memoryWidgetFactory)
                 }
               }
+              .component
           }.rowComment(PyBundle.message("settings.memory.indicator.row.comment"))
         }
       }
@@ -86,12 +91,16 @@ class MemoryUsageConfigurable : BoundSearchableConfigurable(
   }
 
   override fun isModified(): Boolean {
-    return initialHeapSize.toString() != newHeapSize
+    val memoryWidgetModified = initialMemoryWidgetValue?.let { initial ->
+      initial != memoryWidgetCheckbox?.isSelected
+    } ?: false
+
+    return memoryWidgetModified || initialHeapSize.toString() != newHeapSize
   }
 
   override fun apply() {
     super.apply()
-    if (isModified) {
+    if (isModified && !isInDebugMode()) {
       saveNewHeapSize()
       RestartDialogImpl.showRestartRequired()
     }
@@ -101,23 +110,27 @@ class MemoryUsageConfigurable : BoundSearchableConfigurable(
     super.reset()
     newHeapSize = initialHeapSize.toString()
     newHeapSizeField.text = newHeapSize
-  }
-
-  private fun getInitialHeapSize(): Int {
-    return VMOptions.readOption(option, true)
+    memoryWidgetCheckbox?.isSelected = initialMemoryWidgetValue ?: false
   }
 
   @Throws(ConfigurationException::class)
-  private fun saveNewHeapSize(): Boolean {
+  private fun saveNewHeapSize() {
+    if (isInDebugMode()) return
+
     try {
       val newSize = newHeapSize.toInt()
       EditMemorySettingsService.getInstance().save(option, newSize)
-      return true
     }
     catch (e: IOException) {
       throw ConfigurationException(/* message = */ e.message,
                                    /* title = */ OptionsBundle.message("cannot.save.settings.default.dialog.title"))
     }
+  }
+
+  private fun getInitialHeapSize(): Int {
+    if (isInDebugMode()) return UNKNOWN_MEMORY_VALUE
+
+    return VMOptions.readOption(option, true)
   }
 
   private fun getSuggestedValue(): Int {
@@ -129,6 +142,10 @@ class MemoryUsageConfigurable : BoundSearchableConfigurable(
     else {
       maxSuggestedHeapSizeFromRegistry
     }
+  }
+
+  private fun isInDebugMode(): Boolean {
+    return VMOptions.canWriteOptions()
   }
 
   companion object {
