@@ -139,4 +139,41 @@ class PlatformUtilitiesTest {
     nbraJob.join()
     assertThat(counter.get()).isEqualTo(1)
   }
+
+  @Test
+  fun `non-blocking read action is cancellable inside a non-cancellable section 2`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    val beforeWaJob = Job(coroutineContext.job)
+    val waJob = Job(coroutineContext.job)
+    val counter = AtomicInteger(0)
+    launch {
+      beforeWaJob.join()
+      writeAction {
+        waJob.asCompletableFuture().join()
+      }
+    }
+    val nbraJob = launch {
+      Cancellation.withNonCancelableSection().use {
+        readAction {
+          ReadAction.nonBlocking {
+            try {
+              beforeWaJob.complete()
+              Thread.sleep(100)
+              Cancellation.checkCancelled()
+              if (counter.get() == 0) {
+                fail<Nothing>()
+              }
+            }
+            catch (e: ProcessCanceledException) {
+              counter.incrementAndGet()
+              throw e
+            }
+          }.executeSynchronously()
+        }
+      }
+    }
+    delay(50)
+    waJob.complete()
+    nbraJob.join()
+    assertThat(counter.get()).isEqualTo(1)
+  }
 }
