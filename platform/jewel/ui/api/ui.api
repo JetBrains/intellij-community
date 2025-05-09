@@ -384,6 +384,7 @@ public final class org/jetbrains/jewel/ui/component/DropdownState$Companion {
 
 public final class org/jetbrains/jewel/ui/component/EditableComboBoxKt {
 	public static final fun EditableComboBox (Landroidx/compose/foundation/text/input/TextFieldState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/Outline;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lorg/jetbrains/jewel/ui/component/PopupManager;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
+	public static final fun detectPressAndCancel (Landroidx/compose/ui/input/pointer/PointerInputScope;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class org/jetbrains/jewel/ui/component/FixedCursorPoint : androidx/compose/foundation/TooltipPlacement {
@@ -4203,6 +4204,12 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Profiler {
 	public final fun getCollapseNode ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getExpandNode ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getRec ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+}
+
+public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Promo {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/ui/icons/AllIconsKeys$Promo;
+	public final fun getJavaDuke ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 }
 
 public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Providers {
