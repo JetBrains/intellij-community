@@ -6,16 +6,13 @@ import com.intellij.find.FindBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.lang.refactoring.InlineHandlers;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -102,14 +99,8 @@ public final class GenericInlineHandler {
             languageSpecific.removeDefinition(element, settings);
           }
         };
-
-        if (Registry.is("run.refactorings.under.progress")) {
-          ((ApplicationImpl)ApplicationManager.getApplication())
-            .runWriteActionWithNonCancellableProgressInDispatchThread(commandName, project, null, perform);
-        }
-        else {
-          perform.accept(new EmptyProgressIndicator());
-        }
+        ApplicationManagerEx.getApplicationEx()
+          .runWriteActionWithNonCancellableProgressInDispatchThread(commandName, project, null, perform);
       });
     return true;
   }

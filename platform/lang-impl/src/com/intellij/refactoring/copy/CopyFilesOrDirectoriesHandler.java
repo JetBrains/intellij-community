@@ -10,7 +10,6 @@ import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.PlatformPackageUtil;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
@@ -28,7 +27,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
@@ -283,13 +281,8 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase imple
     if (added.isEmpty()) return;
     Project project = added.get(0).getProject();
     DumbService dumbService = DumbService.getInstance(project);
-    if (Registry.is("run.refactorings.under.progress")) {
-      ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(
-        RefactoringBundle.message("progress.title.update.added.files"), project, null, pi -> dumbService.runWithAlternativeResolveEnabled(() -> UpdateAddedFileProcessor.updateAddedFiles(added, originals)));
-    }
-    else {
-      WriteAction.run(() -> dumbService.runWithAlternativeResolveEnabled(() -> UpdateAddedFileProcessor.updateAddedFiles(added, originals)));
-    }
+    ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(
+      RefactoringBundle.message("progress.title.update.added.files"), project, null, pi -> dumbService.runWithAlternativeResolveEnabled(() -> UpdateAddedFileProcessor.updateAddedFiles(added, originals)));
   }
 
   /**
@@ -334,47 +327,35 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase imple
                                       @NotNull List<? super PsiFile> originals) throws IncorrectOperationException, IOException {
     MultiMap<PsiDirectory, PsiFile> existingFiles = new MultiMap<>();
     ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-    if (Registry.is("run.refactorings.under.progress")) {
-      AtomicReference<Throwable> thrown = new AtomicReference<>();
-      Consumer<ProgressIndicator> copyAction = pi -> {
-        Project project = targetDirectory.getProject();
-        int fileCount = ActionUtil.underModalProgress(
-          project,
-          IdeBundle.message("progress.counting.files"),
-          () -> countFiles(elementsToCopy)
-        );
-        pi.setIndeterminate(fileCount <= 1); // don't show progression when copy-pasting a single file
-        try {
-          for (PsiFileSystemItem elementToCopy : elementsToCopy) {
-            copyToDirectoryUnderProgress(elementToCopy, newName, targetDirectory, added, originals, existingFiles,
-                                         Ref.create(0), fileCount, pi);
-          }
+    AtomicReference<Throwable> thrown = new AtomicReference<>();
+    Consumer<ProgressIndicator> copyAction = pi -> {
+      Project project = targetDirectory.getProject();
+      int fileCount = ActionUtil.underModalProgress(
+        project,
+        IdeBundle.message("progress.counting.files"),
+        () -> countFiles(elementsToCopy)
+      );
+      pi.setIndeterminate(fileCount <= 1); // don't show progression when copy-pasting a single file
+      try {
+        for (PsiFileSystemItem elementToCopy : elementsToCopy) {
+          copyToDirectoryUnderProgress(elementToCopy, newName, targetDirectory, added, originals, existingFiles,
+                                       Ref.create(0), fileCount, pi);
         }
-        catch (Throwable e) {
-          thrown.set(e);
-        }
-      };
-      CommandProcessor.getInstance().executeCommand(targetDirectory.getProject(),
-                                                    () -> app.runWriteActionWithCancellableProgressInDispatchThread(
-                                                      ObjectUtils.notNull(title, RefactoringBundle.message("command.name.copy")),
-                                                      targetDirectory.getProject(), null, copyAction), title, null);
-      Throwable throwable = thrown.get();
-      if (throwable instanceof ProcessCanceledException) {
-        //process was canceled, don't proceed with existing files
-        return;
       }
-      rethrow(throwable);
+      catch (Throwable e) {
+        thrown.set(e);
+      }
+    };
+    CommandProcessor.getInstance().executeCommand(targetDirectory.getProject(),
+                                                  () -> app.runWriteActionWithCancellableProgressInDispatchThread(
+                                                    ObjectUtils.notNull(title, RefactoringBundle.message("command.name.copy")),
+                                                    targetDirectory.getProject(), null, copyAction), title, null);
+    Throwable throwable = thrown.get();
+    if (throwable instanceof ProcessCanceledException) {
+      //process was canceled, don't proceed with existing files
+      return;
     }
-    else {
-      WriteCommandAction.writeCommandAction(targetDirectory.getProject())
-        .withName(title)
-        .run(() -> {
-          for (PsiFileSystemItem elementToCopy : elementsToCopy) {
-            copyToDirectoryUnderProgress(elementToCopy, newName, targetDirectory, added, originals, existingFiles, Ref.create(0), -1, null);
-          }
-        });
-    }
-
+    rethrow(throwable);
     handleExistingFiles(newName, targetDirectory, choice, title, existingFiles, added);
   }
 
@@ -448,12 +429,8 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase imple
           }
           else if (userChoice == SkipOverwriteChoice.OVERWRITE_ALL) {
             Consumer<ProgressIndicator> r = pi -> handleExistingFiles(SkipOverwriteChoice.OVERWRITE_ALL, choice, newName, targetDirectory, title, existingFiles, added, pi);
-            if (Registry.is("run.refactorings.under.progress")) {
-              CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(title, project, null, r), title, null);
-            }
-            else {
-              r.accept(null);
-            }
+            CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManagerEx.getApplicationEx()
+              .runWriteActionWithCancellableProgressInDispatchThread(title, project, null, r), title, null);
             return SkipOverwriteChoice.OVERWRITE_ALL;
           }
         }
@@ -467,7 +444,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase imple
           ((PsiDirectoryImpl)targetDirectory).executeWithUpdatingAddedFilesDisabled(() -> ContainerUtil.addIfNotNull(added, tDirectory.copyFileFrom(name, replacement)));
         };
 
-        if (userChoice == SkipOverwriteChoice.OVERWRITE || userChoice == SkipOverwriteChoice.OVERWRITE_ALL && !Registry.is("run.refactorings.under.progress")) {
+        if (userChoice == SkipOverwriteChoice.OVERWRITE) {
           WriteCommandAction.writeCommandAction(project)
             .withName(title)
             .run(doCopy);

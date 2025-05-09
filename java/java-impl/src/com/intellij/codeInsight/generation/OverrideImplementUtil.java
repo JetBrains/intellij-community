@@ -24,7 +24,6 @@ import com.intellij.openapi.application.NonBlockingReadAction;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -39,7 +38,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
@@ -465,24 +463,19 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     final ThrowableRunnable<RuntimeException> performImplementOverrideRunnable =
       () -> DumbService.getInstance(project).withAlternativeResolveEnabled(
         () -> overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, showedChooser.getOptions()));
-    if (Registry.is("run.refactorings.under.progress")) {
-      if (!FileModificationService.getInstance().preparePsiElementsForWrite(aClass)) {
-        return;
-      }
-      final String commandName = CommandProcessor.getInstance().getCurrentCommandName();
-      String title = ObjectUtils.notNull(commandName, getChooserTitle(toImplement, false));
-      Runnable runnable = () -> ApplicationManagerEx.getApplicationEx()
-        .runWriteActionWithCancellableProgressInDispatchThread(title, project, null,
-                                                               indicator -> performImplementOverrideRunnable.run());
-      if (commandName == null) {
-        CommandProcessor.getInstance().executeCommand(project, runnable, title, null);
-      }
-      else {
-        runnable.run();
-      }
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(aClass)) {
+      return;
+    }
+    final String commandName = CommandProcessor.getInstance().getCurrentCommandName();
+    String title = ObjectUtils.notNull(commandName, getChooserTitle(toImplement, false));
+    Runnable runnable = () -> ApplicationManagerEx.getApplicationEx()
+      .runWriteActionWithCancellableProgressInDispatchThread(title, project, null,
+                                                             indicator -> performImplementOverrideRunnable.run());
+    if (commandName == null) {
+      CommandProcessor.getInstance().executeCommand(project, runnable, title, null);
     }
     else {
-      WriteCommandAction.writeCommandAction(project, aClass.getContainingFile()).run(performImplementOverrideRunnable);
+      runnable.run();
     }
   }
 

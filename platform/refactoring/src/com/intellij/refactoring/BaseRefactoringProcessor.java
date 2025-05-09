@@ -30,7 +30,6 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.NlsContexts.Command;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -541,14 +540,9 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       }
 
       ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-      if (Registry.is("run.refactorings.under.progress")) {
-        if (!app.runWriteActionWithCancellableProgressInDispatchThread(commandName, myProject, null,
-                                                                       indicator -> performRefactoring(writableUsageInfos))) {
-          return;
-        }
-      }
-      else {
-        app.runWriteAction(() -> performRefactoring(writableUsageInfos));
+      if (!app.runWriteActionWithCancellableProgressInDispatchThread(commandName, myProject, null,
+                                                                     indicator -> performRefactoring(writableUsageInfos))) {
+        return;
       }
 
       DumbService.getInstance(myProject).completeJustSubmittedTasks();
@@ -561,14 +555,9 @@ public abstract class BaseRefactoringProcessor implements Runnable {
         refactoringHelper.performOperation(myProject, operation);
       }
       myTransaction.commit();
-      if (Registry.is("run.refactorings.under.progress")) {
-        if (!app.runWriteActionWithCancellableProgressInDispatchThread(commandName, myProject, null,
-                                                                       indicator -> performPsiSpoilingRefactoring())) {
-          return;
-        }
-      }
-      else {
-        app.runWriteAction(this::performPsiSpoilingRefactoring);
+      if (!app.runWriteActionWithCancellableProgressInDispatchThread(commandName, myProject, null,
+                                                                     indicator -> performPsiSpoilingRefactoring())) {
+        return;
       }
     }
     finally {

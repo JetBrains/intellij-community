@@ -16,7 +16,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -27,7 +26,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LightweightHint;
@@ -123,15 +121,10 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
     assert values.size() == 1;
     ReferenceData[] referenceData = values.get(0).getData();
     TRef[] refs;
-    if (Registry.is("run.refactorings.under.progress")) {
-      refs = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        () -> ReadAction.compute(
-          () -> findReferencesToRestore(file, bounds, referenceData)
-        ), JavaBundle.message("progress.title.searching.references"), true, project);
-    }
-    else {
-      refs = findReferencesToRestore(file, bounds, referenceData);
-    }
+    refs = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ReadAction.compute(
+        () -> findReferencesToRestore(file, bounds, referenceData)
+      ), JavaBundle.message("progress.title.searching.references"), true, project);
     if (refs == null) return;
     if (CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE == CodeInsightSettings.ASK) {
       askReferencesToRestore(project, refs, referenceData);
@@ -140,12 +133,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
     ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     Consumer<ProgressIndicator> consumer = indicator -> {
       Set<String> imported = new TreeSet<>();
-      if (Registry.is("run.refactorings.under.progress")) {
-        createAndApplyRestoreReferencesFixWithModCommand(referenceData, refs, imported, editor, file);
-      }
-      else {
-        restoreReferences(referenceData, Arrays.asList(refs), imported);
-      }
+      createAndApplyRestoreReferencesFixWithModCommand(referenceData, refs, imported, editor, file);
       if (CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE == CodeInsightSettings.YES && !imported.isEmpty()) {
         Integer size = imported.size();
         String notificationText = JavaBundle.message("copy.paste.reference.notification", size);
@@ -157,12 +145,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
           }), ModalityState.nonModal(), __ -> editor.isDisposed());
       }
     };
-    if (Registry.is("run.refactorings.under.progress")) {
-      consumer.accept(null);
-    }
-    else {
-      app.runWriteAction(() -> consumer.accept(null));
-    }
+    consumer.accept(null);
   }
 
   private void createAndApplyRestoreReferencesFixWithModCommand(ReferenceData[] data,
@@ -270,15 +253,10 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
       return new Pair<>(array, refObjects);
     };
     Pair<ArrayList<Object>, Object[]> context;
-    if (Registry.is("run.refactorings.under.progress")) {
-      context = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        () -> ReadAction.compute(
-          computable
-        ), JavaBundle.message("progress.title.searching.references"), true, project);
-    }
-    else {
-      context = computable.compute();
-    }
+    context = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ReadAction.compute(
+        computable
+      ), JavaBundle.message("progress.title.searching.references"), true, project);
     if (context == null) return;
     ArrayList<Object> array = context.getFirst();
     Object[] refObjects = context.getSecond();
