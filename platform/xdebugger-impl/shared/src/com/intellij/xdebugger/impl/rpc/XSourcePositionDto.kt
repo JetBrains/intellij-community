@@ -6,7 +6,7 @@ import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.xdebugger.impl.shared.XDebuggerUtilImplShared
+import com.intellij.platform.debugger.impl.shared.XDebuggerUtilImplShared
 import com.intellij.pom.Navigatable
 import com.intellij.xdebugger.XSourcePosition
 import kotlinx.serialization.Serializable
