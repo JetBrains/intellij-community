@@ -79,7 +79,17 @@ abstract class AbstractKotlinUVariable(
         }
         if (sourcePsi is KtModifierListOwner) {
             sourcePsi.annotationEntries
-                .filter { acceptsAnnotationTarget(it.useSiteTarget?.getAnnotationUseSiteTarget()) }
+                .filter { entry ->
+                    acceptsAnnotationTarget(
+                        entry.useSiteTarget?.getAnnotationUseSiteTarget()
+                            // @JvmField can be used without specifying use-site
+                            // But, make sure the corresponding UVariable can accept `FIELD` annotation target.
+                            ?: AnnotationUseSiteTarget.FIELD.takeIf {
+                                val annoName = entry.shortName?.identifier
+                                annoName == "JvmField" || annoName == "kotlin.jvm.JvmField"
+                            }
+                    )
+                }
                 .mapTo(annotations) { baseResolveProviderService.baseKotlinConverter.convertAnnotation(it, this) }
         }
         return annotations

@@ -19,7 +19,7 @@ abstract class KotlinMustAlreadyBeRemovedApiInspectionTest : MustAlreadyBeRemove
       @Deprecated("")
       class <error descr="API must have been removed in version 2.0 but the current version is 3.0">Warnings</error> {
 
-        @ApiStatus.ScheduledForRemoval(inVersion = "2.0")
+        @field:ApiStatus.ScheduledForRemoval(inVersion = "2.0")
         @Deprecated("")
         var <error descr="API must have been removed in version 2.0 but the current version is 3.0">field</error>: String? = null
 

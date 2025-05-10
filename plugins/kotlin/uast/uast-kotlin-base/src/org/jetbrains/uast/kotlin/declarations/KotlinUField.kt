@@ -5,7 +5,6 @@ import com.intellij.psi.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UField
 import org.jetbrains.uast.UFieldEx
@@ -30,8 +29,7 @@ open class KotlinUField(
 
     override fun acceptsAnnotationTarget(target: AnnotationUseSiteTarget?): Boolean =
         target == AnnotationUseSiteTarget.FIELD ||
-                target == AnnotationUseSiteTarget.PROPERTY_DELEGATE_FIELD ||
-                (sourcePsi is KtProperty) && (target == null || target == AnnotationUseSiteTarget.PROPERTY)
+                target == AnnotationUseSiteTarget.PROPERTY_DELEGATE_FIELD
 
     override fun getInitializer(): PsiExpression? {
         return super<AbstractKotlinUVariable>.getInitializer()

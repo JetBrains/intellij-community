@@ -1,11 +1,12 @@
 import org.jetbrains.annotations.NonNls
 
-@NonNls var topLevelVar = "topLevelNonNlsVarValue"
+@field:NonNls
+var topLevelVar = "topLevelNonNlsVarValue"
 
 class NonNlsStringLiteral {
-  @NonNls
+  @field:NonNls
   var nonNlsField = "nonNlsFieldValue"
-  @NonNls
+  @field:NonNls
   var nonNlsMultilineField = """
     nonNlsMultilineFieldValue
   """

@@ -3,14 +3,13 @@
 import javax.annotation.Tainted
 import javax.annotation.Untainted
 
-
-@Tainted
+@field:Tainted
 val dirty: String = ""
 
-@Untainted
+@field:Untainted
 var clean: String = <warning descr="Unsafe string is used in a safe context">dirty</warning> //warn
 
-@Untainted
+@field:Untainted
 var clean2: String = ""
 
 class SinkTestKotlin {
@@ -20,13 +19,13 @@ class SinkTestKotlin {
   }
 
   companion object {
-    @Tainted
+    @field:Tainted
     val dirty: String = ""
 
-    @Untainted
+    @field:Untainted
     var clean: String = <warning descr="Unsafe string is used in a safe context">dirty</warning> //warn
 
-    @Untainted
+    @field:Untainted
     var clean2: String = ""
 
     fun breakClean2(dirty: String) {
@@ -43,7 +42,6 @@ class SinkTestKotlin {
     return <warning descr="Unknown string is returned from safe method">dirty</warning> //warn
   }
 
-
   fun sink(@Untainted clear: String?) {
     println(clear!!)
   }
@@ -55,7 +53,7 @@ class SinkTestKotlin {
     clear2 = dirty
   }
 
-  @Untainted
+  @field:Untainted
   var dirty: String? = <warning descr="Unsafe string is used in a safe context">getFromStatic()</warning> //warn
 
   @Tainted
@@ -63,7 +61,7 @@ class SinkTestKotlin {
     return ""
   }
 
-  @Untainted
+  @field:Untainted
   var clear: String? = ""
 
   fun spoil(dirty: String?) {
