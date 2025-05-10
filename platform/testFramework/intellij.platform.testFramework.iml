@@ -36,6 +36,7 @@
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.foldings" />
     <orderEntry type="module" module-name="intellij.platform.ide.codeinsight.inline" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" exported="" />

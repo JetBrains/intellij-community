@@ -19,6 +19,7 @@ jvm_library(
   kotlinc_opts = ":custom",
   deps = [
     "//platform/editor-ui-api:editor-ui",
+    "//platform/foldings",
     "//platform/refactoring",
     "//plugins/kotlin/base/psi",
     "//platform/editor-ui-ex:editor-ex",

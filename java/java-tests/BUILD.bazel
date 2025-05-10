@@ -20,6 +20,7 @@ jvm_library(
   associates = ["//java/java-impl:impl"],
   deps = [
     "//platform/editor-ui-api:editor-ui",
+    "//platform/foldings",
     "//platform/refactoring",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

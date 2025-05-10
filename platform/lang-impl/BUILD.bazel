@@ -119,7 +119,6 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/structure-view-impl:structureView-impl",
     "//platform/util",
-    "//platform/foldings",
   ],
   runtime_deps = [":lang-impl_resources"]
 )

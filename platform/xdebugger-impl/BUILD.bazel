@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "//platform/xdebugger-api:debugger",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/foldings",
     "//platform/observable",
     "//platform/lang-impl",
     "//platform/execution-impl",
@@ -56,6 +57,7 @@ jvm_library(
   deps = [
     "//platform/xdebugger-api:debugger",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/foldings",
     "//platform/observable",
     "//platform/lang-impl",
     "//platform/execution-impl",

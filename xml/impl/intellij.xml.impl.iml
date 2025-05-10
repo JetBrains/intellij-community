@@ -8,6 +8,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
+    <orderEntry type="module" module-name="intellij.platform.foldings" />
     <orderEntry type="module" module-name="intellij.xml" exported="" />
     <orderEntry type="library" name="Xerces" level="project" />
     <orderEntry type="sourceFolder" forTests="false" />

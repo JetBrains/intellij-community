@@ -3551,6 +3551,13 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
+java_library(
+  name = "kotlinc-allopen-compiler-plugin-provided",
+  exports = [":kotlinc-allopen-compiler-plugin"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
 jvm_import(
   name = "kotlinc-analysis-api",
   jar = "@analysis-api-for-ide-2_2_20-dev-2603_http//file",
@@ -3933,6 +3940,13 @@ jvm_import(
   name = "kotlinc-noarg-compiler-plugin",
   jar = "@noarg-compiler-plugin-for-ide-2_2_20-dev-2603_http//file",
   source_jar = "@noarg-compiler-plugin-for-ide-2_2_20-dev-2603-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinc-noarg-compiler-plugin-provided",
+  exports = [":kotlinc-noarg-compiler-plugin"],
+  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
