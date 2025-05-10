@@ -4,10 +4,10 @@ package com.intellij.platform.debugger.impl.backend
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.platform.xdebugger.impl.rpc.XFullValueEvaluatorResult
-import com.intellij.platform.xdebugger.impl.rpc.XInlineDebuggerDataDto
-import com.intellij.platform.xdebugger.impl.rpc.XValueApi
-import com.intellij.platform.xdebugger.impl.rpc.XValueComputeChildrenEvent
+import com.intellij.platform.debugger.impl.rpc.XFullValueEvaluatorResult
+import com.intellij.platform.debugger.impl.rpc.XInlineDebuggerDataDto
+import com.intellij.platform.debugger.impl.rpc.XValueApi
+import com.intellij.platform.debugger.impl.rpc.XValueComputeChildrenEvent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.Obsolescent
 import com.intellij.xdebugger.XDebuggerBundle

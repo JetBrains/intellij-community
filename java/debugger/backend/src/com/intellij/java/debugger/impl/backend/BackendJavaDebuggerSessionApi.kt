@@ -8,7 +8,7 @@ import com.intellij.debugger.engine.executeOnDMT
 import com.intellij.execution.filters.ExceptionFilters
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.java.debugger.impl.shared.rpc.*
-import com.intellij.platform.xdebugger.impl.rpc.toRpc
+import com.intellij.platform.debugger.impl.rpc.toRpc
 import com.intellij.unscramble.CompoundDumpItem
 import com.intellij.unscramble.DumpItem
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId

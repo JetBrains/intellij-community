@@ -4,8 +4,8 @@ package com.intellij.platform.debugger.impl.frontend.frame
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.storage.getOrCreateStackFrame
-import com.intellij.platform.xdebugger.impl.rpc.XExecutionStackApi
-import com.intellij.platform.xdebugger.impl.rpc.XStackFramesEvent
+import com.intellij.platform.debugger.impl.rpc.XExecutionStackApi
+import com.intellij.platform.debugger.impl.rpc.XStackFramesEvent
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.rpc.XExecutionStackDto

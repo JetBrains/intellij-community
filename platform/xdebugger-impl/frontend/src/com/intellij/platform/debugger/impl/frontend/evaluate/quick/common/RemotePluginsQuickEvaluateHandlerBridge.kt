@@ -10,8 +10,8 @@ import com.intellij.xdebugger.evaluation.ExpressionInfo
 import com.intellij.xdebugger.impl.evaluate.childCoroutineScope
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
-import com.intellij.platform.xdebugger.impl.rpc.RemoteValueHintId
-import com.intellij.platform.xdebugger.impl.rpc.XDebuggerValueLookupHintsRemoteApi
+import com.intellij.platform.debugger.impl.rpc.RemoteValueHintId
+import com.intellij.platform.debugger.impl.rpc.XDebuggerValueLookupHintsRemoteApi
 import kotlinx.coroutines.*
 import java.awt.Point
 

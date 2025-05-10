@@ -5,7 +5,7 @@ import com.intellij.execution.filters.Filter
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.rpc.RemoteApiProviderService
-import com.intellij.platform.xdebugger.impl.rpc.SerializableSimpleTextAttributes
+import com.intellij.platform.debugger.impl.rpc.SerializableSimpleTextAttributes
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc

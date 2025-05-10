@@ -9,6 +9,9 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.platform.debugger.impl.rpc.XDebuggerEvaluatorApi
+import com.intellij.platform.debugger.impl.rpc.XEvaluationResult
+import com.intellij.platform.debugger.impl.rpc.XFullValueEvaluatorDto
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator.XEvaluationCallback
@@ -16,8 +19,8 @@ import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluator
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
-import com.intellij.platform.xdebugger.impl.rpc.*
-import com.intellij.platform.xdebugger.impl.rpc.XFullValueEvaluatorDto.FullValueEvaluatorLinkAttributes
+import com.intellij.platform.debugger.impl.rpc.XFullValueEvaluatorDto.FullValueEvaluatorLinkAttributes
+import com.intellij.platform.debugger.impl.rpc.XValueDto
 import com.intellij.xdebugger.impl.rpc.XExpressionDto
 import com.intellij.xdebugger.impl.rpc.XSourcePositionDto
 import com.intellij.xdebugger.impl.rpc.XStackFrameId
@@ -27,7 +30,6 @@ import com.intellij.xdebugger.impl.rpc.models.BackendXValueModelsManager
 import com.intellij.xdebugger.impl.rpc.models.XStackFrameModel
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import com.intellij.xdebugger.impl.rpc.sourcePosition
-import com.intellij.xdebugger.impl.rpc.toRpc
 import com.intellij.xdebugger.impl.rpc.xExpression
 import fleet.rpc.core.RpcFlow
 import fleet.rpc.core.toRpc

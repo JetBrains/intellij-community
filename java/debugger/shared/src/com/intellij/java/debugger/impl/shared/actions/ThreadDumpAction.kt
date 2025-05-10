@@ -19,7 +19,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.xdebugger.impl.rpc.toSimpleTextAttributes
+import com.intellij.platform.debugger.impl.rpc.toSimpleTextAttributes
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.unscramble.DumpItem
 import com.intellij.util.BitUtil

@@ -4,7 +4,7 @@ package com.intellij.xdebugger.impl.rpc
 import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
-import com.intellij.platform.xdebugger.impl.rpc.XStackFrameDto
+import com.intellij.platform.debugger.impl.rpc.XStackFrameDto
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.core.DeferredSerializer

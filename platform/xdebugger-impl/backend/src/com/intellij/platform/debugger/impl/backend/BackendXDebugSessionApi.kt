@@ -13,7 +13,14 @@ import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.platform.xdebugger.impl.rpc.*
+import com.intellij.platform.debugger.impl.rpc.XDebuggerEvaluatorDto
+import com.intellij.platform.debugger.impl.rpc.XStackFrameCaptionInfo
+import com.intellij.platform.debugger.impl.rpc.XStackFrameCustomBackgroundInfo
+import com.intellij.platform.debugger.impl.rpc.XStackFrameDto
+import com.intellij.platform.debugger.impl.rpc.XStackFramePresentation
+import com.intellij.platform.debugger.impl.rpc.XStackFramePresentationFragment
+import com.intellij.platform.debugger.impl.rpc.XStackFrameStringEqualityObject
+import com.intellij.platform.debugger.impl.rpc.toRpc
 import com.intellij.ui.ColoredTextContainer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.XSourcePosition

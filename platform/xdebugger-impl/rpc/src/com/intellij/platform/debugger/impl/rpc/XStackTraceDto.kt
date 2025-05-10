@@ -1,20 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.xdebugger.impl.rpc
+package com.intellij.platform.debugger.impl.rpc
 
 import com.intellij.ide.ui.colors.ColorId
 import com.intellij.ide.ui.colors.color
 import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.platform.rpc.Id
-import com.intellij.platform.rpc.UID
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.xdebugger.impl.rpc.XExecutionStackId
 import com.intellij.xdebugger.impl.rpc.XSourcePositionDto
 import com.intellij.xdebugger.impl.rpc.XStackFrameId
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
 @Serializable

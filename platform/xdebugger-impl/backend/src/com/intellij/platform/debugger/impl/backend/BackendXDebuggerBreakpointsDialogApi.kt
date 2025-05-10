@@ -4,8 +4,8 @@ package com.intellij.platform.debugger.impl.backend
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory
-import com.intellij.platform.xdebugger.impl.rpc.ShowBreakpointDialogRequest
-import com.intellij.platform.xdebugger.impl.rpc.XDebuggerBreakpointsDialogApi
+import com.intellij.platform.debugger.impl.rpc.ShowBreakpointDialogRequest
+import com.intellij.platform.debugger.impl.rpc.XDebuggerBreakpointsDialogApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow

@@ -18,7 +18,7 @@ import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
-import com.intellij.platform.xdebugger.impl.rpc.XDebuggerValueLookupHintsRemoteApi
+import com.intellij.platform.debugger.impl.rpc.XDebuggerValueLookupHintsRemoteApi
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture

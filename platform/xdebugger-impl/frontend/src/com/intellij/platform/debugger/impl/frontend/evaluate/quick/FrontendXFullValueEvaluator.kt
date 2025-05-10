@@ -3,9 +3,9 @@ package com.intellij.platform.debugger.impl.frontend.evaluate.quick
 
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.application.EDT
-import com.intellij.platform.xdebugger.impl.rpc.XFullValueEvaluatorDto
-import com.intellij.platform.xdebugger.impl.rpc.XFullValueEvaluatorResult
-import com.intellij.platform.xdebugger.impl.rpc.XValueApi
+import com.intellij.platform.debugger.impl.rpc.XFullValueEvaluatorDto
+import com.intellij.platform.debugger.impl.rpc.XFullValueEvaluatorResult
+import com.intellij.platform.debugger.impl.rpc.XValueApi
 import com.intellij.xdebugger.frame.XFullValueEvaluator
 import com.intellij.xdebugger.impl.rpc.XValueId
 import kotlinx.coroutines.CoroutineScope

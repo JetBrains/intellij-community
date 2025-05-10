@@ -19,7 +19,6 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl.reshowInlayRunToCursor
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
-import com.intellij.platform.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.rpc.SuspendData
 import com.intellij.xdebugger.impl.rpc.XBreakpointEvent
 import com.intellij.xdebugger.impl.rpc.XBreakpointsSetDto

@@ -8,8 +8,8 @@ import com.intellij.openapi.editor.markup.GutterDraggableObject
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.debugger.impl.rpc.XBreakpointApi
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.platform.xdebugger.impl.rpc.*
 import com.intellij.pom.Navigatable
 import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.XSourcePosition

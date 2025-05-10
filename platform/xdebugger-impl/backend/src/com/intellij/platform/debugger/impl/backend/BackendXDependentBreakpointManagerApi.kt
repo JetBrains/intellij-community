@@ -5,10 +5,10 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
-import com.intellij.platform.xdebugger.impl.rpc.XBreakpointDependenciesDto
-import com.intellij.platform.xdebugger.impl.rpc.XBreakpointDependencyDto
-import com.intellij.platform.xdebugger.impl.rpc.XBreakpointDependencyEvent
-import com.intellij.platform.xdebugger.impl.rpc.XDependentBreakpointManagerApi
+import com.intellij.platform.debugger.impl.rpc.XBreakpointDependenciesDto
+import com.intellij.platform.debugger.impl.rpc.XBreakpointDependencyDto
+import com.intellij.platform.debugger.impl.rpc.XBreakpointDependencyEvent
+import com.intellij.platform.debugger.impl.rpc.XDependentBreakpointManagerApi
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
