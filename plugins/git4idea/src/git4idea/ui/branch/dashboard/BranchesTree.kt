@@ -25,7 +25,6 @@ import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.containers.FList
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.launchOnShow
 import com.intellij.util.ui.tree.TreeUtil
@@ -37,7 +36,6 @@ import com.intellij.vcs.branch.LinkedBranchDataImpl
 import com.intellij.vcs.git.shared.branch.calcTooltip
 import com.intellij.vcs.git.shared.ui.GitBranchesTreeIconProvider
 import com.intellij.vcsUtil.VcsImplUtil
-import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
@@ -228,15 +226,6 @@ internal class FilteringBranchesTree(
       private val listener = object : BranchesTreeModel.Listener {
         override fun onTreeChange() {
           updateTree()
-        }
-
-        override fun onLoadingStateChange() {
-          if (model.isLoading) {
-            component.emptyText.text = message("action.Git.Loading.Branches.progress")
-          }
-          else {
-            component.emptyText.text = StatusText.getDefaultEmptyText()
-          }
         }
       }
 

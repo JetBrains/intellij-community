@@ -19,6 +19,7 @@ import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
+import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.ui.ProgressStripe
 import git4idea.i18n.GitBundle.message
@@ -67,16 +68,22 @@ object BranchesDashboardTreeComponent {
     }
 
     val progressStripe = ProgressStripe(ScrollPaneFactory.createScrollPane(tree, true), parentDisposable)
+    fun updateLoadingState() {
+      if (model.isLoading) {
+        progressStripe.startLoading()
+        tree.emptyText.text = message("action.Git.Loading.Branches.progress")
+      }
+      else {
+        progressStripe.stopLoading()
+        tree.emptyText.text = StatusText.getDefaultEmptyText()
+      }
+    }
     model.addListener(object : BranchesTreeModel.Listener {
       override fun onLoadingStateChange() {
-        if (model.isLoading) {
-          progressStripe.startLoading()
-        }
-        else {
-          progressStripe.stopLoading()
-        }
+        updateLoadingState()
       }
     })
+    updateLoadingState()
 
     val uiController = BranchesDashboardTreeController(project, selectionHandler, model, tree)
 

@@ -98,7 +98,7 @@ internal class BranchesVcsLogUi(
   }
 
   private fun createMainComponent(logData: VcsLogData, properties: MainVcsLogUiProperties, mainFrame: MainFrame): JComponent {
-    val model = BranchesDashboardTreeModelImpl(logData).also {
+    val model = SyncBranchesDashboardTreeModel(logData).also {
       Disposer.register(this, it)
     }
 
