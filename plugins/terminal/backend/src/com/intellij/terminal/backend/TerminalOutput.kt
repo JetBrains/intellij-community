@@ -103,7 +103,8 @@ internal fun createTerminalOutputFlow(
     isAltSendsEscape = controller.altSendsEscape,
     isBracketedPasteMode = terminalDisplay.isBracketedPasteMode,
     windowTitle = terminalDisplay.windowTitleText,
-    isShellIntegrationEnabled = false
+    isShellIntegrationEnabled = false,
+    currentDirectory = services.startupOptions.workingDirectory ?: error("Working directory not set"),
   )
 
   controller.addListener(object : JediTerminalListener {

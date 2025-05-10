@@ -37,7 +37,7 @@ internal object TerminalSessionTestUtil {
       .envVariables(mapOf(EnvironmentUtil.DISABLE_OMZ_AUTO_UPDATE to "true", "HISTFILE" to "/dev/null") + extraEnvVariables)
       .build()
     val (ttyConnector, _) = startTerminalProcess(project, options)
-    val session = createTerminalSession(project, ttyConnector, size, JBTerminalSystemSettingsProviderBase(), coroutineScope)
+    val session = createTerminalSession(project, ttyConnector, options, JBTerminalSystemSettingsProviderBase(), coroutineScope)
     return session
   }
 

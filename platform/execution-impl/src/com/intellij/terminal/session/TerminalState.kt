@@ -22,4 +22,5 @@ data class TerminalState(
   val windowTitle: String,
   /** Whether such events as command started/finished are supported by the shell integration */
   val isShellIntegrationEnabled: Boolean,
+  val currentDirectory: String,
 )
