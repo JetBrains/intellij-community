@@ -15,6 +15,7 @@ internal class PerformanceTest : JBCefTestAppFrame.TestCase() {
     val panel = JPanel(VerticalFlowLayout(FlowLayout.LEFT))
     panel.add(createTestCaseItem("Resize test", "Measures the time to redraw the component after resize", "Start Test", ::runSimpleResizeTest))
     panel.add(createTestCaseItem("Manual scrolling test", "Manual scrolling with the scrolling requested/performed diagram", "Start Test", ::runScrollingTest))
+    panel.add(createTestCaseItem("FPS test", "A simple FPS test", "Start Test", ::runFpsTest))
 
     val scrollPane = JBScrollPane(panel)
     scrollPane.horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER

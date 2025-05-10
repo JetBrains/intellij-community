@@ -8,15 +8,16 @@ import com.intellij.ui.jcef.TestUtils
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import javax.swing.JFrame
+import javax.swing.JPanel
 import javax.swing.JSplitPane
 import javax.swing.SwingUtilities
 
-private class TestPanel : JFrame() {
+internal class ScrollTestPanel : JPanel() {
   val browser: JBCefBrowser = JBCefBrowser()
   val repaintListener = PerformanceTest.RepaintListener(browser.component)
 
   init {
-    contentPane.add(repaintListener)
+    add(repaintListener)
   }
 
   fun getComponent() = repaintListener
@@ -32,7 +33,7 @@ private class TestPanel : JFrame() {
 
 internal fun runScrollingTest() {
   SwingUtilities.invokeLater {
-    val testFrame = TestPanel()
+    val testPanel = ScrollTestPanel()
     val chart = PlotlyChart()
 
     chart.newPlot(
@@ -93,22 +94,22 @@ internal fun runScrollingTest() {
     }
 
     val rotationFactor = RegistryManager.getInstance().intValue("ide.browser.jcef.osr.wheelRotation.factor")
-    testFrame.browser.cefBrowser.uiComponent.addMouseWheelListener {
+    testPanel.browser.cefBrowser.uiComponent.addMouseWheelListener {
       scrollRequested += it.preciseWheelRotation * rotationFactor
       appendToChart(scrollRequested, 0)
     }
 
-    testFrame.repaintListener.onRepaint = {
-      val color = TestUtils.getColorAt(testFrame.browser.browserComponent, 0, 0)
+    testPanel.repaintListener.onRepaint = {
+      val color = TestUtils.getColorAt(testPanel.browser.browserComponent, 0, 0)
       if (color != null) {
         val scrollPerformed: Double = (color.blue + (color.green shl 8) + (color.red shl 16)).toDouble()
         appendToChart(scrollPerformed, 1)
       }
     }
-    testFrame.load()
+    testPanel.load()
 
     val splitPane = JSplitPane(JSplitPane.HORIZONTAL_SPLIT).apply {
-      leftComponent = testFrame.getComponent()
+      leftComponent = testPanel.getComponent()
       rightComponent = chart.getComponent()
       resizeWeight = 0.5
     }
@@ -120,7 +121,7 @@ internal fun runScrollingTest() {
     frame.isVisible = true
     frame.addWindowListener(object : WindowAdapter() {
       override fun windowClosed(e: WindowEvent?) {
-        Disposer.dispose(testFrame.browser)
+        Disposer.dispose(testPanel.browser)
         Disposer.dispose(chart)
       }
     })
