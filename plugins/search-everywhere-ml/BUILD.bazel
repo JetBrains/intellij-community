@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
-  name = "searchEverywhereMl_resources",
+  name = "search-everywhere-ml_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "searchEverywhereMl",
+  name = "search-everywhere-ml",
   module_name = "intellij.searchEverywhereMl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -20,14 +20,14 @@ jvm_library(
     "@lib//:search_everywhere_ml-ai-grazie-emb",
   ],
   exports = ["@lib//:search_everywhere_ml-ai-grazie-emb"],
-  runtime_deps = [":searchEverywhereMl_resources"]
+  runtime_deps = [":search-everywhere-ml_resources"]
 )
 
 jvm_library(
-  name = "searchEverywhereMl_test_lib",
+  name = "search-everywhere-ml_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
-  associates = [":searchEverywhereMl"],
+  associates = [":search-everywhere-ml"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/editor-ui-api:editor-ui",
@@ -38,11 +38,11 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:search_everywhere_ml-ai-grazie-emb",
   ],
-  runtime_deps = [":searchEverywhereMl_resources"]
+  runtime_deps = [":search-everywhere-ml_resources"]
 )
 
 jvm_test(
-  name = "searchEverywhereMl_test",
-  runtime_deps = [":searchEverywhereMl_test_lib"]
+  name = "search-everywhere-ml_test",
+  runtime_deps = [":search-everywhere-ml_test_lib"]
 )
 ### auto-generated section `build intellij.searchEverywhereMl` end

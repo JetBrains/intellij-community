@@ -15,13 +15,18 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "uiTests_test_resources",
+  name = "ui-tests_test_resources",
   files = glob(["src/test/resources/**/*"]),
   strip_prefix = "src/test/resources"
 )
 
+java_library(
+  name = "ui-tests",
+  visibility = ["//visibility:public"]
+)
+
 jvm_library(
-  name = "uiTests_test_lib",
+  name = "ui-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
@@ -38,12 +43,12 @@ jvm_library(
     "//libraries/compose-foundation-desktop-junit",
     "@lib//:kotlin-stdlib",
   ],
-  runtime_deps = [":uiTests_test_resources"],
+  runtime_deps = [":ui-tests_test_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
 
 jvm_test(
-  name = "uiTests_test",
-  runtime_deps = [":uiTests_test_lib"]
+  name = "ui-tests_test",
+  runtime_deps = [":ui-tests_test_lib"]
 )
 ### auto-generated section `build intellij.platform.jewel.uiTests` end

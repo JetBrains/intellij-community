@@ -27,7 +27,7 @@ jvm_library(
     "//platform/execution-impl",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
-    "//python/services/system-python:python-community-services-systemPython",
+    "//python/services/system-python",
   ],
   runtime_deps = [":featuresTrainer_resources"]
 )
@@ -58,8 +58,8 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//python:pycharm-community",
-    "//python/services/system-python:python-community-services-systemPython",
-    "//python/services/system-python:python-community-services-systemPython_test_lib",
+    "//python/services/system-python",
+    "//python/services/system-python:system-python_test_lib",
     "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",

@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "externalSystem-dependencyUpdater_resources",
+  name = "dependency-updater_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "externalSystem-dependencyUpdater",
+  name = "dependency-updater",
   module_name = "intellij.platform.externalSystem.dependencyUpdater",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -22,7 +22,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/util",
   ],
-  runtime_deps = [":externalSystem-dependencyUpdater_resources"]
+  runtime_deps = [":dependency-updater_resources"]
 )
 ### auto-generated section `build intellij.platform.externalSystem.dependencyUpdater` end
 
@@ -41,7 +41,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [
-    "//platform/external-system-api/dependency-updater:externalSystem-dependencyUpdater",
+    "//platform/external-system-api/dependency-updater",
     "//java/openapi:java",
     "//plugins/groovy/groovy-psi:psi",
     "//plugins/gradle",

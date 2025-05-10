@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "commonsLangV2Shim",
+  name = "commons-lang-v2-shim",
   module_name = "intellij.platform.util.commonsLangV2Shim",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),

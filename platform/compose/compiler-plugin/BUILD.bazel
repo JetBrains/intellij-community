@@ -2,7 +2,7 @@
 load("@rules_java//java:defs.bzl", "java_library")
 
 java_library(
-  name = "compilerPlugin",
+  name = "compiler-plugin",
   visibility = ["//visibility:public"]
 )
 ### auto-generated section `build intellij.platform.compose.compilerPlugin` end

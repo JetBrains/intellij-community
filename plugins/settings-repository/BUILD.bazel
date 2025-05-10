@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "settingsRepository_resources",
+  name = "settings-repository_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "settingsRepository",
+  name = "settings-repository",
   module_name = "intellij.settingsRepository",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -48,7 +48,7 @@ jvm_library(
     "@lib//:jzlib",
     "@lib//:apache-sshd-osgi",
   ],
-  runtime_deps = [":settingsRepository_resources"]
+  runtime_deps = [":settings-repository_resources"]
 )
 ### auto-generated section `build intellij.settingsRepository` end
 
@@ -76,7 +76,7 @@ jvm_library(
     "//platform/vcs-api:vcs",
     "//platform/configuration-store-impl:configurationStore-impl",
     "//platform/util:util-tests_test_lib",
-    "//plugins/settings-repository:settingsRepository",
+    "//plugins/settings-repository",
     "@lib//:assert_j",
     "//platform/credential-store-ui:credentialStore-ui",
     "//platform/testFramework/extensions:testExtensions",

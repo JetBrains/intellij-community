@@ -17,7 +17,7 @@ jvm_library(
     "//java/testFramework",
     "//java/openapi:java",
     "@lib//:junit4",
-    "//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
+    "//java/compiler/instrumentation-util",
     "//java/idea-ui:ui",
     "//platform/editor-ui-api:editor-ui",
     "//platform/testFramework",

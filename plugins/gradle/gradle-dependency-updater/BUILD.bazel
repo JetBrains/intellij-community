@@ -18,7 +18,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/lang-api:lang",
     "//platform/lang-impl",
-    "//platform/external-system-api/dependency-updater:externalSystem-dependencyUpdater",
+    "//platform/external-system-api/dependency-updater",
     "//android/gradle-dsl",
     "//platform/core-ui",
   ],

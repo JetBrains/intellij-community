@@ -3,12 +3,12 @@ load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
-  name = "testsFromCompiler",
+  name = "tests-from-compiler",
   visibility = ["//visibility:public"]
 )
 
 jvm_library(
-  name = "testsFromCompiler_test_lib",
+  name = "tests-from-compiler_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
   deps = [
@@ -33,7 +33,7 @@ jvm_library(
 )
 
 jvm_test(
-  name = "testsFromCompiler_test",
-  runtime_deps = [":testsFromCompiler_test_lib"]
+  name = "tests-from-compiler_test",
+  runtime_deps = [":tests-from-compiler_test_lib"]
 )
 ### auto-generated section `build kotlin.testsFromCompiler` end

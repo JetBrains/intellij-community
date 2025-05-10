@@ -14,13 +14,13 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "ideLafBridge_resources",
+  name = "ide-laf-bridge_resources",
   files = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
 jvm_library(
-  name = "ideLafBridge",
+  name = "ide-laf-bridge",
   module_name = "intellij.platform.jewel.ideLafBridge",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
@@ -42,16 +42,16 @@ jvm_library(
     "//libraries/compose-foundation-desktop",
     "//platform/editor-ui-ex:editor-ex",
   ],
-  runtime_deps = [":ideLafBridge_resources"],
+  runtime_deps = [":ide-laf-bridge_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
 
 jvm_library(
-  name = "ideLafBridge_test_lib",
+  name = "ide-laf-bridge_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["ide-laf-bridge-tests/src/test/kotlin/**/*.kt", "ide-laf-bridge-tests/src/test/kotlin/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
-  associates = [":ideLafBridge"],
+  associates = [":ide-laf-bridge"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
@@ -73,12 +73,12 @@ jvm_library(
     "//platform/editor-ui-ex:editor-ex",
     "//libraries/compose-foundation-desktop-junit",
   ],
-  runtime_deps = [":ideLafBridge_resources"],
+  runtime_deps = [":ide-laf-bridge_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
 
 jvm_test(
-  name = "ideLafBridge_test",
-  runtime_deps = [":ideLafBridge_test_lib"]
+  name = "ide-laf-bridge_test",
+  runtime_deps = [":ide-laf-bridge_test_lib"]
 )
 ### auto-generated section `build intellij.platform.jewel.ideLafBridge` end

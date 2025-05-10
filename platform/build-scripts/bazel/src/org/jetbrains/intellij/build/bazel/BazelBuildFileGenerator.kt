@@ -717,16 +717,18 @@ private fun isUsed(
 
 private fun jpsModuleNameToBazelBuildName(module: JpsModule, baseBuildDir: Path, projectDir: Path): @NlsSafe String {
   // non-standard location unfortunately
-  if (module.name == "intellij.idea.community.build.zip") {
+  val moduleName = module.name
+  if (moduleName == "intellij.idea.community.build.zip") {
     return "zip"
   }
 
   val baseDirFilename = baseBuildDir.fileName.toString()
-  if (baseDirFilename != "resources" && module.name.endsWith(".$baseDirFilename")) {
+  if (baseDirFilename != "resources" &&
+      (moduleName.endsWith(".$baseDirFilename") || (camelToSnakeCase(moduleName, '-')).endsWith(".$baseDirFilename"))) {
     return baseDirFilename
   }
 
-  val result = module.name
+  val result = moduleName
     .removePrefix("intellij.platform.")
     .removePrefix("intellij.idea.community.")
     .removePrefix("intellij.")

@@ -19,7 +19,7 @@ jvm_library(
     "//platform/util/progress",
     "//platform/util",
     "//platform/core-api:core",
-    "//platform/service-container:serviceContainer",
+    "//platform/service-container",
     "//platform/kernel/shared:kernel",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",

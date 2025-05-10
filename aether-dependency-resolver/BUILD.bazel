@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 jvm_library(
-  name = "java-aetherDependencyResolver",
+  name = "aether-dependency-resolver",
   module_name = "intellij.java.aetherDependencyResolver",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -25,11 +25,11 @@ jvm_library(
 )
 
 jvm_library(
-  name = "java-aetherDependencyResolver_test_lib",
+  name = "aether-dependency-resolver_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   kotlinc_opts = "@community//:k11",
-  associates = [":java-aetherDependencyResolver"],
+  associates = [":aether-dependency-resolver"],
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:http-client",
@@ -50,7 +50,7 @@ jvm_library(
 )
 
 jvm_test(
-  name = "java-aetherDependencyResolver_test",
-  runtime_deps = [":java-aetherDependencyResolver_test_lib"]
+  name = "aether-dependency-resolver_test",
+  runtime_deps = [":aether-dependency-resolver_test_lib"]
 )
 ### auto-generated section `build intellij.java.aetherDependencyResolver` end

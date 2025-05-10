@@ -12,7 +12,7 @@ create_kotlinc_options(
 )
 
 jvm_library(
-  name = "buildScripts",
+  name = "build-scripts",
   module_name = "intellij.platform.buildScripts",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -26,7 +26,7 @@ jvm_library(
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "@lib//:kotlin-stdlib",
-    "//aether-dependency-resolver:java-aetherDependencyResolver",
+    "//aether-dependency-resolver",
     "@lib//:jackson",
     "//jps/model-impl",
     "//platform/util/xmlDom",

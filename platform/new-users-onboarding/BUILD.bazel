@@ -2,26 +2,26 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "ide-newUsersOnboarding_resources",
+  name = "new-users-onboarding_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "ide-newUsersOnboarding",
+  name = "new-users-onboarding",
   module_name = "intellij.platform.ide.newUsersOnboarding",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
-    "//platform/new-ui-onboarding:ide-newUiOnboarding",
+    "//platform/new-ui-onboarding",
     "//platform/core-ui",
     "//platform/util/coroutines",
     "//platform/statistics",
     "//platform/lang-impl",
     "//platform/experiment",
   ],
-  runtime_deps = [":ide-newUsersOnboarding_resources"]
+  runtime_deps = [":new-users-onboarding_resources"]
 )
 ### auto-generated section `build intellij.platform.ide.newUsersOnboarding` end

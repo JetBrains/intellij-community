@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "remoteDriver_resources",
+  name = "remote-driver_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "remoteDriver",
+  name = "remote-driver",
   module_name = "intellij.performanceTesting.remoteDriver",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -37,6 +37,6 @@ jvm_library(
     "//platform/remote-driver/core:driver-impl",
     "//platform/remote-driver/client",
   ],
-  runtime_deps = [":remoteDriver_resources"]
+  runtime_deps = [":remote-driver_resources"]
 )
 ### auto-generated section `build intellij.performanceTesting.remoteDriver` end

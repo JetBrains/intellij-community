@@ -22,7 +22,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "@lib//:ai-grazie-spell-gec-engine-local",
     "//platform/statistics",
-    "//plugins/search-everywhere-ml:searchEverywhereMl",
+    "//plugins/search-everywhere-ml",
     "@lib//:fastutil-min",
   ],
   runtime_deps = [":typos_resources"]
@@ -48,8 +48,8 @@ jvm_library(
     "@lib//:ai-grazie-spell-gec-engine-local",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
-    "//plugins/search-everywhere-ml:searchEverywhereMl",
-    "//plugins/search-everywhere-ml:searchEverywhereMl_test_lib",
+    "//plugins/search-everywhere-ml",
+    "//plugins/search-everywhere-ml:search-everywhere-ml_test_lib",
     "@lib//:fastutil-min",
   ],
   runtime_deps = [":typos_resources"]

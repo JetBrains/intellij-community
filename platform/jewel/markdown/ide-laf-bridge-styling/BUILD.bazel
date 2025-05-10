@@ -14,13 +14,13 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "jewel-markdown-ideLafBridgeStyling_resources",
+  name = "ide-laf-bridge-styling_resources",
   files = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
 jvm_library(
-  name = "jewel-markdown-ideLafBridgeStyling",
+  name = "ide-laf-bridge-styling",
   module_name = "intellij.platform.jewel.markdown.ideLafBridgeStyling",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
@@ -33,9 +33,9 @@ jvm_library(
     "//platform/jewel/markdown/core",
     "//platform/jewel/ui",
     "//platform/jewel/foundation",
-    "//platform/jewel/ide-laf-bridge:ideLafBridge",
-    "//platform/jewel/markdown/extensions/gfm-alerts:jewel-markdown-extensions-gfmAlerts",
-    "//platform/jewel/markdown/extensions/gfm-tables:jewel-markdown-extensions-gfmTables",
+    "//platform/jewel/ide-laf-bridge",
+    "//platform/jewel/markdown/extensions/gfm-alerts",
+    "//platform/jewel/markdown/extensions/gfm-tables",
     "//platform/platform-api:ide",
     "//platform/ide-core",
     "//platform/ide-core-impl",
@@ -45,9 +45,9 @@ jvm_library(
   exports = [
     "//platform/jewel/markdown/core",
     "//platform/jewel/ui",
-    "//platform/jewel/ide-laf-bridge:ideLafBridge",
+    "//platform/jewel/ide-laf-bridge",
   ],
-  runtime_deps = [":jewel-markdown-ideLafBridgeStyling_resources"],
+  runtime_deps = [":ide-laf-bridge-styling_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
 ### auto-generated section `build intellij.platform.jewel.markdown.ideLafBridgeStyling` end

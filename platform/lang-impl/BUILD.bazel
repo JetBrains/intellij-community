@@ -55,7 +55,7 @@ jvm_library(
     "@lib//:jna",
     "@lib//:lz4-java",
     "//platform/util",
-    "//platform/service-container:serviceContainer",
+    "//platform/service-container",
     "//platform/execution-impl",
     "@lib//:jackson",
     "@lib//:jackson-databind",

@@ -17,7 +17,7 @@ jvm_library(
     "//plugins/github/github-core:vcs-github",
     "//platform/platform-api:ide",
     "//platform/util:util-ui",
-    "//platform/collaboration-tools:collaborationTools",
+    "//platform/collaboration-tools",
     "//platform/vcs-api/vcs-api-core:vcs-core",
     "//platform/core-ui",
     "@lib//:kotlin-stdlib",

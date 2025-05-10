@@ -29,7 +29,7 @@ jvm_library(
     "//plugins/repository-search",
     "//plugins/repository-search:repository-search_test_lib",
     "@lib//:assert_j",
-    "//platform/external-system-api/dependency-updater:externalSystem-dependencyUpdater",
+    "//platform/external-system-api/dependency-updater",
     "//platform/external-system-impl:externalSystem-tests_test_lib",
     "//plugins/properties/properties-psi-api:psi",
     "//spellchecker",

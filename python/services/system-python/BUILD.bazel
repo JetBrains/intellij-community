@@ -2,19 +2,19 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
-  name = "python-community-services-systemPython_resources",
+  name = "system-python_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_resources(
-  name = "python-community-services-systemPython_test_resources",
+  name = "system-python_test_resources",
   files = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
 )
 
 jvm_library(
-  name = "python-community-services-systemPython",
+  name = "system-python",
   module_name = "intellij.python.community.services.systemPython",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -34,14 +34,14 @@ jvm_library(
     "//python/installer",
   ],
   exports = ["//python/services/shared"],
-  runtime_deps = [":python-community-services-systemPython_resources"]
+  runtime_deps = [":system-python_resources"]
 )
 
 jvm_library(
-  name = "python-community-services-systemPython_test_lib",
+  name = "system-python_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
-  associates = [":python-community-services-systemPython"],
+  associates = [":system-python"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//python/python-sdk:sdk",
@@ -74,13 +74,13 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
   ],
   runtime_deps = [
-    ":python-community-services-systemPython_resources",
-    ":python-community-services-systemPython_test_resources",
+    ":system-python_resources",
+    ":system-python_test_resources",
   ]
 )
 
 jvm_test(
-  name = "python-community-services-systemPython_test",
-  runtime_deps = [":python-community-services-systemPython_test_lib"]
+  name = "system-python_test",
+  runtime_deps = [":system-python_test_lib"]
 )
 ### auto-generated section `build intellij.python.community.services.systemPython` end

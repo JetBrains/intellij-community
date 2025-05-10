@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
-  name = "detektPlugin_resources",
+  name = "detekt-plugin_resources",
   files = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
 jvm_library(
-  name = "detektPlugin",
+  name = "detekt-plugin",
   module_name = "intellij.platform.jewel.detektPlugin",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
@@ -18,14 +18,14 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "@lib//:platform-jewel-detekt_plugin-io-gitlab-arturbosch-detekt-api",
   ],
-  runtime_deps = [":detektPlugin_resources"]
+  runtime_deps = [":detekt-plugin_resources"]
 )
 
 jvm_library(
-  name = "detektPlugin_test_lib",
+  name = "detekt-plugin_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java"], allow_empty = True),
-  associates = [":detektPlugin"],
+  associates = [":detekt-plugin"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
@@ -35,11 +35,11 @@ jvm_library(
     "@lib//:assert_j",
     "@lib//:platform-jewel-detekt_plugin-io-gitlab-arturbosch-detekt-test",
   ],
-  runtime_deps = [":detektPlugin_resources"]
+  runtime_deps = [":detekt-plugin_resources"]
 )
 
 jvm_test(
-  name = "detektPlugin_test",
-  runtime_deps = [":detektPlugin_test_lib"]
+  name = "detekt-plugin_test",
+  runtime_deps = [":detekt-plugin_test_lib"]
 )
 ### auto-generated section `build intellij.platform.jewel.detektPlugin` end

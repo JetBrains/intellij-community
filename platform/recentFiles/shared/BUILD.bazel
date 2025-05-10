@@ -15,7 +15,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/project/shared:project",
-    "//platform/object-serializer:objectSerializer",
+    "//platform/object-serializer",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
     "//platform/kernel/shared:kernel",

@@ -54,7 +54,6 @@ jvm_library(
     ":junit5_provided",
     ":junit5-launcher_provided",
   ],
-  exports = ["//platform/testFramework/common"],
   runtime_deps = [":junit5_resources"]
 )
 

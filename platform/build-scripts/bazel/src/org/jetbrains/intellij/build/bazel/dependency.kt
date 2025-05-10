@@ -399,11 +399,11 @@ private fun getLabelForTest(dependencyLabel: String): String {
 
 private val camelCaseToSnakeCasePattern = Regex("(?<=.)[A-Z]")
 
-private fun camelToSnakeCase(s: String): String {
+internal fun camelToSnakeCase(s: String, replacement: Char = '_'): String {
   return when {
     s.startsWith("JUnit") -> "junit" + s.removePrefix("JUnit")
     s.all { it.isUpperCase() } -> s.lowercase()
-    else -> s.replace(" ", "").replace("_RC", "_rc").replace("SNAPSHOT", "snapshot").replace(camelCaseToSnakeCasePattern, "_$0").lowercase()
+    else -> s.replace(" ", "").replace("_RC", "_rc").replace("SNAPSHOT", "snapshot").replace(camelCaseToSnakeCasePattern, "${replacement}$0").lowercase()
   }
 }
 

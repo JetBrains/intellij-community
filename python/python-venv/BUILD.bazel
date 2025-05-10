@@ -49,6 +49,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/util",
     "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
+    "//platform/testFramework/common",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "@lib//:junit5",

@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "builtInHelp_resources",
+  name = "built-in-help_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "builtInHelp",
+  name = "built-in-help",
   module_name = "intellij.builtInHelp",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -41,6 +41,6 @@ jvm_library(
     "@lib//:jackson-module-kotlin",
     "//plugins/maven/maven-server-indexer:server-indexer",
   ],
-  runtime_deps = [":builtInHelp_resources"]
+  runtime_deps = [":built-in-help_resources"]
 )
 ### auto-generated section `build intellij.builtInHelp` end

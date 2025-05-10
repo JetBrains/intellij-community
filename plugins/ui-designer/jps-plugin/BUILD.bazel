@@ -19,7 +19,7 @@ jvm_library(
     "//jps/model-serialization",
     "//jps/jps-builders:build",
     "//jps/jps-builders-6:build-javac-rt",
-    "//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
+    "//java/compiler/instrumentation-util",
     "//java/compiler/forms-compiler:java-guiForms-compiler",
     "//platform/forms_rt:java-guiForms-rt",
     "@lib//:asm",
