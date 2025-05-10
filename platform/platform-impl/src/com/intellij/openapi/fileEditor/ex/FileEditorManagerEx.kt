@@ -107,8 +107,6 @@ abstract class FileEditorManagerEx : FileEditorManager() {
     return FileEditorProviderManager.getInstance().getProviderList(project, file).isNotEmpty()
   }
 
-  abstract val currentFile: VirtualFile?
-
   final override fun getSelectedEditor(file: VirtualFile): FileEditor? = getSelectedEditorWithProvider(file)?.fileEditor
 
   abstract fun getSelectedEditorWithProvider(file: VirtualFile): FileEditorWithProvider?

@@ -142,6 +142,13 @@ public abstract class FileEditorManager {
   }
 
   /**
+   * Get a file currently being edited
+   * Can depend on the current focus location and selection
+   */
+  @ApiStatus.Experimental
+  public abstract @Nullable VirtualFile getCurrentFile();
+
+  /**
    * @return files currently selected. The method returns an empty array if there are no selected files.
    * If more than one file is selected (split), the file with the most recent focused editor is returned first.
    */

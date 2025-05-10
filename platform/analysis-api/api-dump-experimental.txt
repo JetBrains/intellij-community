@@ -302,6 +302,7 @@ a:com.intellij.openapi.command.undo.UndoManager
 - *a:isNextUndoAskConfirmation(com.intellij.openapi.fileEditor.FileEditor):Z
 a:com.intellij.openapi.fileEditor.FileEditorManager
 - *a:canOpenFile(com.intellij.openapi.vfs.VirtualFile):Z
+- *a:getCurrentFile():com.intellij.openapi.vfs.VirtualFile
 - *a:getOpenFilesWithRemotes():java.util.List
 - *a:getSelectedEditorFlow():kotlinx.coroutines.flow.StateFlow
 - *:getSelectedEditorWithRemotes():java.util.Collection

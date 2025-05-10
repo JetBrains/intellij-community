@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -76,7 +75,7 @@ public final class FileEditorPsiTreeChangeListener extends PsiTreeChangeAdapter 
     if (psiFile == null) return;
     VirtualFile file = psiFile.getVirtualFile();
     if (file == null) return;
-    FileEditorManagerEx fileEditorManager = (FileEditorManagerEx)FileEditorManager.getInstance(myProject);
+    FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
     @NotNull @Unmodifiable List<@NotNull FileEditor> editors = fileEditorManager.getAllEditorList(file);
     if (editors.isEmpty()) {
       return;

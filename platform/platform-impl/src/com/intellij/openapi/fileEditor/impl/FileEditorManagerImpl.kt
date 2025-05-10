@@ -701,16 +701,15 @@ open class FileEditorManagerImpl(
 
   override fun hasOpenedFile(): Boolean = splitters.currentWindow?.selectedComposite != null
 
-  override val currentFile: VirtualFile?
-    get() {
-      if (!ClientId.isCurrentlyUnderLocalId) {
-        return clientFileEditorManager?.getSelectedFile()
-      }
-      if (!initJob.isCompleted) {
-        return null
-      }
-      return getActiveSplitterSync().currentFile
+  override fun getCurrentFile(): VirtualFile? {
+    if (!ClientId.isCurrentlyUnderLocalId) {
+      return clientFileEditorManager?.getSelectedFile()
     }
+    if (!initJob.isCompleted) {
+      return null
+    }
+    return getActiveSplitterSync().currentFile
+  }
 
   override val activeWindow: CompletableFuture<EditorWindow?>
     get() = getActiveSplittersAsync().asCompletableFuture().thenApply { it?.currentWindow }

@@ -218,14 +218,13 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
 
   override fun hasOpenedFile(): Boolean = false
 
-  override val currentFile: VirtualFile?
-    get() {
-      if (!isCurrentlyUnderLocalId) {
-        val clientManager = clientFileEditorManager ?: return null
-        return clientManager.getSelectedFile()
-      }
-      return activeFile
+  override fun getCurrentFile(): VirtualFile? {
+    if (!isCurrentlyUnderLocalId) {
+      val clientManager = clientFileEditorManager ?: return null
+      return clientManager.getSelectedFile()
     }
+    return activeFile
+  }
 
   private val clientFileEditorManager: ClientFileEditorManager?
     get() {

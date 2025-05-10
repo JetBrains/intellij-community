@@ -33,7 +33,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
@@ -1103,7 +1103,7 @@ class LineStatusTrackerManager(
 
   @RequiresEdt
   internal fun notifyInactiveRangesDamaged(virtualFile: VirtualFile) {
-    if (filesWithDamagedInactiveRanges.contains(virtualFile) || virtualFile == FileEditorManagerEx.getInstanceEx(project).currentFile) {
+    if (filesWithDamagedInactiveRanges.contains(virtualFile) || virtualFile == FileEditorManager.getInstance(project).currentFile) {
       return
     }
     filesWithDamagedInactiveRanges.add(virtualFile)
