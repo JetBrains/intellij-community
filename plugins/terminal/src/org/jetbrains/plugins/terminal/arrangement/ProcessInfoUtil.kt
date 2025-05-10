@@ -1,108 +1,141 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.arrangement;
 
-import com.google.common.util.concurrent.Futures;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.CapturingProcessRunner;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.pty4j.windows.conpty.WinConPtyProcess;
-import com.pty4j.windows.winpty.WinPtyProcess;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.execution.ExecutionException
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.CapturingProcessRunner
+import com.intellij.execution.process.OSProcessHandler
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.system.OS
+import com.pty4j.windows.conpty.WinConPtyProcess
+import com.pty4j.windows.winpty.WinPtyProcess
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
+import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Paths
 
-import java.io.File;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
+@ApiStatus.Internal
+@Service(Service.Level.APP)
+class ProcessInfoUtil(private val coroutineScope: CoroutineScope) {
+  // Limit the number of simultaneous CWD compute requests
+  private val cwdComputeRequests = Channel<CwdComputeRequest>()
 
-public final class ProcessInfoUtil {
-  private static final Logger LOG = Logger.getInstance(ProcessInfoUtil.class);
-  private static final int TIMEOUT_MILLIS = 2000;
-  // restrict amount of concurrent cwd fetching to not utilize all the threads in case of unpredicted hangings
-  private static final ExecutorService POOL = AppExecutorUtil.createBoundedScheduledExecutorService("Terminal CWD", 1);
-
-  private ProcessInfoUtil() {}
-
-  public static @NotNull Future<String> getCurrentWorkingDirectory(@NotNull Process process) {
-    if (process.isAlive()) {
-      return POOL.submit(() -> doGetCwd(process));
+  init {
+    coroutineScope.launch(Dispatchers.IO) {
+      for (request in cwdComputeRequests) {
+        try {
+          val cwd = doGetCwd(request.process)
+          request.cwdDeferred.complete(cwd)
+        }
+        catch (e: CancellationException) {
+          throw e
+        }
+        catch (e: Exception) {
+          request.cwdDeferred.completeExceptionally(e)
+        }
+      }
     }
-    return Futures.immediateFuture(null);
   }
 
-  private static @Nullable String doGetCwd(@NotNull Process process) throws Exception {
-    if (SystemInfo.isUnix) {
-      int pid = (int)process.pid();
-      String result = tryGetCwdFastOnUnix(pid);
-      if (result != null) {
-        return result;
-      }
-      return getCwdOnUnix(pid);
+  @Throws(ExecutionException::class, IllegalStateException::class)
+  suspend fun getCurrentWorkingDirectory(process: Process): String? {
+    return if (process.isAlive) {
+      val deferred = CompletableDeferred<String?>()
+      val request = CwdComputeRequest(process, deferred)
+      cwdComputeRequests.send(request)
+      deferred.await()
     }
-    else if (SystemInfo.isWindows) {
-      if (process instanceof WinPtyProcess) {
-        return ((WinPtyProcess)process).getWorkingDirectory();
-      }
-      if (process instanceof WinConPtyProcess) {
-        return ((WinConPtyProcess)process).getWorkingDirectory();
-      }
-      throw new IllegalStateException("Cwd cannot be fetched for " + process.getClass());
-    }
-    throw new IllegalStateException("Unsupported OS: " + SystemInfo.OS_NAME);
+    else null
   }
 
-  private static @Nullable String tryGetCwdFastOnUnix(int pid) {
-    String procPath = "/proc/" + pid + "/cwd";
+  fun getCurrentWorkingDirectoryDeferred(process: Process): CompletableDeferred<String?> {
+    return if (process.isAlive) {
+      val deferred = CompletableDeferred<String?>()
+      val request = CwdComputeRequest(process, deferred)
+      coroutineScope.launch {
+        cwdComputeRequests.send(request)
+      }
+      deferred
+    }
+    else CompletableDeferred(null)
+  }
+
+  @Throws(IllegalStateException::class)
+  private fun doGetCwd(process: Process): String? {
+    return when {
+      SystemInfo.isUnix -> {
+        val pid = process.pid().toInt()
+        tryGetCwdFastOnUnix(pid) ?: getCwdOnUnix(pid)
+      }
+      SystemInfo.isWindows -> {
+        when (process) {
+          is WinPtyProcess -> process.workingDirectory
+          is WinConPtyProcess -> process.workingDirectory
+          else -> error("Cwd cannot be fetched for ${process.javaClass}")
+        }
+      }
+      else -> {
+        error("Unsupported OS: " + OS.CURRENT)
+      }
+    }
+  }
+
+  private fun tryGetCwdFastOnUnix(pid: Int): String? {
+    val procPath = "/proc/$pid/cwd"
     try {
-      File dir = Paths.get(procPath).toRealPath().toFile();
+      val dir = Paths.get(procPath).toRealPath().toFile()
       if (dir.isDirectory()) {
-        return dir.getAbsolutePath();
+        return dir.absolutePath
       }
     }
-    catch (Exception e) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Cannot resolve cwd from " + procPath + ", fallback to lsof -a -d cwd -p " + pid, e);
-      }
+    catch (e: Exception) {
+      LOG.debug(e) { "Cannot resolve cwd from $procPath, fallback to lsof -a -d cwd -p $pid" }
     }
-    return null;
+    return null
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
-  private static @NotNull String getCwdOnUnix(int pid) throws ExecutionException {
-    GeneralCommandLine commandLine = new GeneralCommandLine("lsof", "-a", "-d", "cwd", "-p", String.valueOf(pid), "-Fn");
-    CapturingProcessRunner runner = new CapturingProcessRunner(new OSProcessHandler(commandLine));
-    ProcessOutput output = runner.runProcess(TIMEOUT_MILLIS);
-    if (output.isTimeout()) {
-      throw new ExecutionException("Timeout running " + commandLine.getCommandLineString());
+  @Suppress("HardCodedStringLiteral")
+  @Throws(ExecutionException::class)
+  private fun getCwdOnUnix(pid: Int): String {
+    val commandLine = GeneralCommandLine("lsof", "-a", "-d", "cwd", "-p", pid.toString(), "-Fn")
+    val runner = CapturingProcessRunner(OSProcessHandler(commandLine))
+    val output = runner.runProcess(TIMEOUT_MILLIS)
+    if (output.isTimeout) {
+      throw ExecutionException("Timeout running ${commandLine.commandLineString}")
     }
-    if (output.getExitCode() != 0) {
-      throw new ExecutionException("Exit code " + output.getExitCode() + " for " + commandLine.getCommandLineString());
+    else if (output.getExitCode() != 0) {
+      throw ExecutionException("Exit code ${output.getExitCode()} for ${commandLine.commandLineString}")
     }
-    String workingDir = parseWorkingDirectory(output.getStdoutLines(), pid);
-    if (workingDir == null) {
-      throw new ExecutionException("Cannot parse working directory from " + commandLine.getCommandLineString());
-    }
-    return workingDir;
+    return parseWorkingDirectory(output.stdoutLines, pid)
+           ?: throw ExecutionException("Cannot parse working directory from ${commandLine.commandLineString}")
   }
 
-  private static @Nullable String parseWorkingDirectory(@NotNull List<String> stdoutLines, int pid) {
-    boolean pidEncountered = false;
-    for (String line : stdoutLines) {
+  private fun parseWorkingDirectory(stdoutLines: List<String>, pid: Int): String? {
+    var pidEncountered = false
+    for (line in stdoutLines) {
       if (line.startsWith("p")) {
-        int p = StringUtil.parseInt(line.substring(1), -1);
-        pidEncountered |= p == pid;
+        val p = StringUtil.parseInt(line.substring(1), -1)
+        pidEncountered = pidEncountered || p == pid
       }
       else if (pidEncountered && line.startsWith("n")) {
-        return line.substring(1);
+        return line.substring(1)
       }
     }
-    return null;
+    return null
+  }
+
+  private data class CwdComputeRequest(val process: Process, val cwdDeferred: CompletableDeferred<String?>)
+
+  companion object {
+    @JvmStatic
+    fun getInstance(): ProcessInfoUtil = service()
+
+    private val LOG = logger<ProcessInfoUtil>()
+    private const val TIMEOUT_MILLIS = 2000
   }
 }
