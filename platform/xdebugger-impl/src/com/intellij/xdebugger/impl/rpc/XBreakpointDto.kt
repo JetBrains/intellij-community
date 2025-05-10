@@ -5,6 +5,7 @@ import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
@@ -151,7 +152,7 @@ private suspend fun XBreakpointBase<*, *, *>.getDtoState(currentSession: XDebugS
   return withContext(Dispatchers.Default) {
     XBreakpointDtoState(
       displayText = XBreakpointUtil.getShortText(breakpoint),
-      sourcePosition = sourcePosition?.toRpc(),
+      sourcePosition = readAction { sourcePosition?.toRpc () },
       isDefault = XDebuggerManager.getInstance(project).breakpointManager.isDefaultBreakpoint(breakpoint),
       logExpressionObject = logExpressionObject?.toRpc(),
       conditionExpression = conditionExpression?.toRpc(),
