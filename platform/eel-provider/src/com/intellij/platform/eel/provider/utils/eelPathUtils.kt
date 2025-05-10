@@ -15,12 +15,9 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
@@ -32,22 +29,10 @@ import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption.*
-import java.nio.file.attribute.BasicFileAttributeView
-import java.nio.file.attribute.BasicFileAttributes
-import java.nio.file.attribute.DosFileAttributeView
-import java.nio.file.attribute.DosFileAttributes
-import java.nio.file.attribute.PosixFileAttributeView
-import java.nio.file.attribute.PosixFileAttributes
-import java.nio.file.attribute.PosixFilePermission
+import java.nio.file.attribute.*
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.io.path.createDirectories
-import kotlin.io.path.fileAttributesView
-import kotlin.io.path.fileAttributesViewOrNull
-import kotlin.io.path.isDirectory
-import kotlin.io.path.name
-import kotlin.io.path.pathString
-import kotlin.io.path.relativeTo
+import kotlin.io.path.*
 
 @ApiStatus.Internal
 object EelPathUtils {
@@ -182,6 +167,7 @@ object EelPathUtils {
   @ApiStatus.Obsolete
   @JvmStatic
   @JvmOverloads
+  @RequiresBackgroundThread
   fun transferContentsIfNonLocal(
     eel: EelApi,
     source: Path,
@@ -208,6 +194,7 @@ object EelPathUtils {
    */
   @JvmStatic
   @JvmOverloads
+  @RequiresBackgroundThread
   fun transferLocalContentToRemote(
     source: Path,
     target: TransferTarget,
@@ -249,7 +236,8 @@ object EelPathUtils {
               Files.move(tempSink, sink, StandardCopyOption.REPLACE_EXISTING)
             }
             finally {
-              Files.delete(tempSink)
+              // This file can only exist if `Files.move` hasn't been called
+              Files.deleteIfExists(tempSink)
             }
           }
 
