@@ -17,6 +17,7 @@ jvm_library(
     "//java/testFramework/shared",
     "//platform/editor-ui-api:editor-ui",
     "//platform/refactoring",
+    "//platform/structure-view-impl:structureView-impl",
     "//platform/util",
     "//libraries/junit4",
     "//platform/util/jdom",

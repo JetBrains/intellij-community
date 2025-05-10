@@ -25,6 +25,7 @@ jvm_library(
     "@lib//:jmock",
     "//platform/observable",
     "//platform/refactoring",
+    "//platform/structure-view-impl:structureView-impl",
     "//platform/usageView-impl",
     "//platform/vcs-api:vcs",
     "@lib//:jmock-junit4",

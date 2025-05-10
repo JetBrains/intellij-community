@@ -23,6 +23,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "//platform/core-impl",
     "//platform/extensions",
+    "//platform/structure-view-impl:structureView-impl",
     "//xml/xml-psi-impl:psi-impl",
     "//platform/editor-ui-ex:editor-ex",
     "//java/java-analysis-impl:analysis-impl",

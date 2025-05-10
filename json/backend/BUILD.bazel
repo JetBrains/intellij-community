@@ -18,6 +18,7 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/lang-impl",
     "//platform/markdown-utils",
+    "//platform/structure-view-impl:structureView-impl",
     "//spellchecker",
     "@lib//:guava",
     "//platform/analysis-impl",

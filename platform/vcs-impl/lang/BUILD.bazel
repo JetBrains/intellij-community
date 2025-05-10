@@ -19,6 +19,7 @@ jvm_library(
     "//platform/indexing-impl",
     "//platform/lang-impl",
     "//platform/editor-ui-ex:editor-ex",
+    "//platform/structure-view-impl:structureView-impl",
     "//platform/vcs-api:vcs",
     "//platform/vcs-impl",
     "//platform/diff-impl",

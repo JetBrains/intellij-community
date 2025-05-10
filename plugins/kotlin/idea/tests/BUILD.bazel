@@ -32,6 +32,7 @@ jvm_library(
     "@lib//:vavr",
     "//java/java-runtime:rt",
     "@lib//:kotlin-test",
+    "//platform/structure-view-impl:structureView-impl",
     "//platform/usageView",
     "@lib//:gson",
     "@lib//:guava",

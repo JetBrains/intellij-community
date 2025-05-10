@@ -86,6 +86,7 @@ jvm_library(
   deps = [
     "//platform/editor-ui-api:editor-ui",
     "//platform/refactoring",
+    "//platform/structure-view-impl:structureView-impl",
     "//xml/dom-openapi:dom",
     "//java/openapi:java",
     "//java/debugger/openapi:java-debugger",

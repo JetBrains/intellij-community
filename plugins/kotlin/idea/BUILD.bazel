@@ -46,6 +46,7 @@ jvm_library(
     "@lib//:guava",
     "//platform/editor-ui-api:editor-ui",
     "//platform/refactoring",
+    "//platform/structure-view-impl:structureView-impl",
     "//platform/usageView-impl",
     "//platform/util/jdom",
     "@lib//:gson",

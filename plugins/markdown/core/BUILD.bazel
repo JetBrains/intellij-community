@@ -42,6 +42,7 @@ jvm_library(
     "@lib//:miglayout-swing",
     "//platform/platform-api:ide",
     "//platform/statistics",
+    "//platform/structure-view-impl:structureView-impl",
     "//platform/util/jdom",
     "@lib//:kotlinx-coroutines-core",
     "//platform/diagnostic",

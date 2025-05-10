@@ -95,6 +95,7 @@ jvm_library(
     "@lib//:jmock",
     "@lib//:junit4",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/structure-view-impl:structureView-impl",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/testFramework",

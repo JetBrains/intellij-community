@@ -117,7 +117,6 @@ jvm_library(
   exports = [
     "//platform/lang-api:lang",
     "//platform/analysis-impl",
-    "//platform/structure-view-impl:structureView-impl",
     "//platform/util",
   ],
   runtime_deps = [":lang-impl_resources"]

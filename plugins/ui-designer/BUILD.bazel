@@ -78,6 +78,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/ide-core-impl",
     "//platform/refactoring",
+    "//platform/structure-view-impl:structureView-impl",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/platform-impl:ide-impl",

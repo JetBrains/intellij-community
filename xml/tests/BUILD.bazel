@@ -22,6 +22,7 @@ jvm_library(
     "@lib//:junit4",
     "//platform/editor-ui-api:editor-ui",
     "//platform/refactoring",
+    "//platform/structure-view-impl:structureView-impl",
     "//java/testFramework",
     "@lib//:xerces",
     "//java/idea-ui:ui",

@@ -20,6 +20,7 @@ jvm_library(
     "//java/java-psi-impl:psi-impl",
     "//java/java-impl:impl",
     "//java/jsp-openapi:jsp",
+    "//platform/structure-view-impl:structureView-impl",
     "//platform/usageView",
     "//platform/ide-core-impl",
     "@lib//:stream_ex",

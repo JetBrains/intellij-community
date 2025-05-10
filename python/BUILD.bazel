@@ -176,6 +176,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/foldings",
     "//platform/refactoring",
+    "//platform/structure-view-impl:structureView-impl",
     "//platform/usageView-impl",
     "//python/openapi:community",
     "//platform/ide-core-impl",

@@ -41,6 +41,7 @@ jvm_library(
   deps = [
     "//platform/editor-ui-api:editor-ui",
     "@lib//:guava",
+    "//platform/structure-view-impl:structureView-impl",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/platform-impl:ide-impl",
     "//platform/indexing-impl",
