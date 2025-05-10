@@ -42,7 +42,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
     connection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, object : FileEditorManagerListener.Before {
       override fun beforeFileClosed(source: FileEditorManager, file: VirtualFile) {
         updateHistoryEntry(
-          fileEditorManager = source as FileEditorManagerEx,
+          fileEditorManager = source,
           file = file,
           fallback = null,
           changeEntryOrderOnly = false,
@@ -377,7 +377,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
       service.fileOpenedImpl(
         file = file,
         fallback = null,
-        fileEditorManager = source as? FileEditorManagerEx ?: return,
+        fileEditorManager = source,
       )
     }
 
@@ -393,7 +393,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
         val oldFile = event.oldFile
         if (oldFile != null) {
           service.updateHistoryEntry(
-            fileEditorManager = event.manager as FileEditorManagerEx,
+            fileEditorManager = event.manager,
             file = oldFile,
             fallback = event.oldEditor?.let { FileEditorWithProvider(fileEditor = it, provider = event.oldProvider!!) },
             changeEntryOrderOnly = false,
@@ -403,7 +403,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
         val newFile = event.newFile
         if (newFile != null) {
           service.updateHistoryEntry(
-            fileEditorManager = event.manager as FileEditorManagerEx,
+            fileEditorManager = event.manager,
             file = newFile,
             fallback = event.newEditor?.let { FileEditorWithProvider(fileEditor = it, provider = event.newProvider!!) },
             changeEntryOrderOnly = true,
