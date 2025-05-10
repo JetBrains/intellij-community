@@ -34,12 +34,6 @@
             area="IDEA_PROJECT"/>
 
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.scripting.idea.settings.provider"
-            interface="org.jetbrains.kotlin.idea.script.configuration.ScriptingSupportSpecificSettingsProvider"
-            dynamic="true"
-            area="IDEA_PROJECT"/>
-
-    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.scriptAdditionalIdeaDependenciesProvider"
             interface="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider"
             area="IDEA_PROJECT"

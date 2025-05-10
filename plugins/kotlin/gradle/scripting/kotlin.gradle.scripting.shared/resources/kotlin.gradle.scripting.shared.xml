@@ -29,7 +29,6 @@
     <listener order="first" implementation="org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptListener"/>
     <loader order="first" implementation="org.jetbrains.kotlin.gradle.scripting.shared.legacy.GradleLegacyScriptConfigurationLoader"/>
     <scriptingSupport implementation="org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsManager"/>
-    <settings.provider implementation="org.jetbrains.kotlin.gradle.scripting.shared.settings.GradleSettingsProvider"/>
   </extensions>
 
   <actions resource-bundle="messages.KotlinGradleScriptingBundle">

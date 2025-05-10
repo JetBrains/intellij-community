@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.idea.core.script.k2.K2ScriptDefinitionProvider
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptDefinitionPersistentSettings
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptDefinitionSetting
 import org.jetbrains.kotlin.idea.core.script.scriptDefinitionsSourceOfType
-import org.jetbrains.kotlin.idea.script.configuration.ScriptingSupportSpecificSettingsProvider
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ListSelectionModel
@@ -79,18 +78,6 @@ private class KotlinScriptingSettingsConfigurable(val project: Project, val coro
                 }
             }
             label("").bindText(definitionsFromClassPathTitle)
-        }
-
-        for (provider in ScriptingSupportSpecificSettingsProvider.SETTINGS_PROVIDERS.getExtensionList(project)) {
-            group(indent = false) {
-                row(provider.title) {}
-                row {
-                    provider.createConfigurable().createComponent()?.let {
-                        cell(it)
-                            .align(Align.FILL)
-                    }
-                }
-            }
         }
     }
 
