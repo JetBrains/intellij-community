@@ -119,6 +119,8 @@ private fun appendDebug(debugString: java.lang.StringBuilder, input: String, dig
     .append('\n')
 }
 
+internal const val INCREMENTAL_CACHE_DIRECTORY_SUFFIX = "-ic"
+
 @VisibleForTesting
 suspend fun buildUsingJps(
   baseDir: Path,
@@ -142,7 +144,7 @@ suspend fun buildUsingJps(
   val outJar = baseDir.resolve(args.mandatorySingle(JvmBuilderFlags.OUT)).normalize()
   val prefix = outJar.fileName.toString().removeSuffix(".jar")
   val bazelOutDir = outJar.parent
-  val dataDir = bazelOutDir.resolve("$cachePrefix$prefix-ic")
+  val dataDir = bazelOutDir.resolve("$cachePrefix$prefix$INCREMENTAL_CACHE_DIRECTORY_SUFFIX")
   val outputs = OutputFiles(
     outJar = outJar,
     abiJar = args.optionalSingle(JvmBuilderFlags.ABI_OUT)?.let { baseDir.resolve(it).normalize() },

@@ -9,6 +9,7 @@ import androidx.collection.MutableScatterSet
 import androidx.collection.ObjectList
 import androidx.collection.ScatterMap
 import com.dynatrace.hash4j.hashing.Hashing
+import com.sun.nio.file.ExtendedOpenOption
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -29,6 +30,7 @@ import org.jetbrains.bazel.jvm.worker.impl.markAffectedFilesDirty
 import org.jetbrains.bazel.jvm.span
 import org.jetbrains.bazel.jvm.util.emptySet
 import org.jetbrains.bazel.jvm.util.toLinkedSet
+import org.jetbrains.bazel.jvm.worker.INCREMENTAL_CACHE_DIRECTORY_SUFFIX
 import org.jetbrains.bazel.jvm.worker.core.BazelCompileContext
 import org.jetbrains.bazel.jvm.worker.core.BazelConfigurationHolder
 import org.jetbrains.bazel.jvm.worker.core.BazelModuleBuildTarget
@@ -49,10 +51,17 @@ import org.jetbrains.jps.dependency.java.SubclassesIndex
 import org.jetbrains.jps.incremental.RebuildRequestedException
 import org.jetbrains.jps.incremental.storage.PathTypeAwareRelativizer
 import org.jetbrains.jps.incremental.storage.RelativePathType
+import java.nio.file.AccessDeniedException
+import java.nio.file.FileAlreadyExistsException
+import java.nio.file.FileSystemException
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import kotlin.collections.contentEquals
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.io.path.createDirectories
+import kotlin.io.path.exists
+import kotlin.io.path.name
 
 // for now, ADDED or DELETED not possible - in configureClasspath we compute DEPENDENCY_PATH_LIST,
 // so, if a dependency list is changed, then we perform rebuild
@@ -174,7 +183,10 @@ private suspend fun copyUsedAbi(usedAbiDir: Path?, filesToCopy: MutableObjectLis
           if (item.toDelete != null) {
             Files.deleteIfExists(item.toDelete)
           }
-          Files.createLink(item.linkFile, item.originalFile)
+          if (!tryCreateLink(item.linkFile, item.originalFile)) {
+            val dataDir = item.originalFile.resolveSibling(item.originalFile.name.removeSuffix(".abi.jar") + INCREMENTAL_CACHE_DIRECTORY_SUFFIX)
+            createLinkAfterCopy(item.linkFile, item.originalFile, dataDir.resolve("_trash").createDirectories())
+          }
         }
       }
     }
@@ -184,6 +196,54 @@ private suspend fun copyUsedAbi(usedAbiDir: Path?, filesToCopy: MutableObjectLis
   }
   catch (e: Throwable) {
     throw RebuildRequestedException(RuntimeException("cannot integrate ABI", e))
+  }
+}
+
+private fun createLinkAfterCopy(linkFile: Path, originalFile: Path, tempDir: Path) {
+  var index = 1
+  do {
+    val copyFile = tempDir.resolve(linkFile.name + "-${index++}")
+    if (!copyFile.exists()) {
+      var tempFile = Files.createTempFile(tempDir, null, null)
+      try {
+        Files.newOutputStream(tempFile, ExtendedOpenOption.NOSHARE_WRITE).use {
+          Files.copy(originalFile, it)
+        }
+
+        try {
+          Files.move(tempFile, copyFile, StandardCopyOption.ATOMIC_MOVE)
+          tempFile = null
+        }
+        catch (_: AccessDeniedException) {
+          // ATOMIC_MOVE uses MOVEFILE_REPLACE_EXISTING, ignore
+        }
+        catch (_: FileAlreadyExistsException) {
+          // ignore
+        }
+      }
+      finally {
+        if (tempFile != null) {
+          Files.delete(tempFile)
+        }
+      }
+    }
+  } while (!tryCreateLink(linkFile, copyFile))
+}
+
+private const val WINDOWS_ERROR_TOO_MANY_LINKS = "An attempt was made to create more links on a file than the file system supports"
+
+private fun tryCreateLink(link: Path, existing: Path): Boolean {
+  return try {
+    Files.createLink(link, existing)
+    true
+  }
+  catch (e: FileSystemException) {
+    if (e.message?.endsWith(WINDOWS_ERROR_TOO_MANY_LINKS) == true) {
+      false
+    }
+    else {
+      throw e
+    }
   }
 }
 
