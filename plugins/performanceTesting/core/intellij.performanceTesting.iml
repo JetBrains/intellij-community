@@ -72,6 +72,5 @@
     <orderEntry type="module" module-name="intellij.tools.ide.starter.bus" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.platform.recentFiles.frontend" />
-    <orderEntry type="library" name="jbr-api" level="project" />
   </component>
 </module>
