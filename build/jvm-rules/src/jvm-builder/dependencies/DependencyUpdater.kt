@@ -36,6 +36,7 @@ import org.jetbrains.bazel.jvm.worker.core.BazelConfigurationHolder
 import org.jetbrains.bazel.jvm.worker.core.BazelModuleBuildTarget
 import org.jetbrains.bazel.jvm.worker.core.BazelStampStorage
 import org.jetbrains.bazel.jvm.worker.state.DependencyDescriptor
+import org.jetbrains.bazel.jvm.worker.storage.StorageInitializer
 import org.jetbrains.jps.dependency.BackDependencyIndex
 import org.jetbrains.jps.dependency.Delta
 import org.jetbrains.jps.dependency.Graph
@@ -185,7 +186,7 @@ private suspend fun copyUsedAbi(usedAbiDir: Path?, filesToCopy: MutableObjectLis
           }
           if (!tryCreateLink(item.linkFile, item.originalFile)) {
             val dataDir = item.originalFile.resolveSibling(item.originalFile.name.removeSuffix(".abi.jar") + INCREMENTAL_CACHE_DIRECTORY_SUFFIX)
-            createLinkAfterCopy(item.linkFile, item.originalFile, dataDir.resolve("_trash").createDirectories())
+            createLinkAfterCopy(item.linkFile, item.originalFile, StorageInitializer.getTrashDirectory(dataDir).createDirectories())
           }
         }
       }

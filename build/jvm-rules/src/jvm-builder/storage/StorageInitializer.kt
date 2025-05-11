@@ -17,8 +17,15 @@ import org.jetbrains.jps.builders.storage.BuildDataPaths
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 import org.jetbrains.jps.incremental.storage.BuildDataManager
 import org.jetbrains.jps.incremental.storage.BuildTargetsState
+import java.io.IOException
+import java.nio.file.DirectoryNotEmptyException
+import java.nio.file.FileVisitResult
 import java.nio.file.Files
+import java.nio.file.LinkOption
 import java.nio.file.Path
+import java.nio.file.SimpleFileVisitor
+import java.nio.file.StandardCopyOption
+import java.nio.file.attribute.BasicFileAttributes
 
 internal class StorageInitializer(private val dataDir: Path, private val dbFile: Path) {
   private var wasCleared = false
@@ -32,7 +39,16 @@ internal class StorageInitializer(private val dataDir: Path, private val dbFile:
     if (isRebuild) {
       wasCleared = true
       withContext(Dispatchers.IO) {
-        FileUtilRt.deleteRecursively(dataDir)
+        deleteOrMoveRecursively(dataDir, getTrashDirectory(dataDir))
+      }
+    }
+    else {  // clear trash only
+      withContext(Dispatchers.IO) {
+        getTrashDirectory(dataDir).takeIf(Files::exists)?.let { trashDir ->
+          Files.newDirectoryStream(trashDir).use {
+            it.forEach(::tryDeleteFile)
+          }
+        }
       }
     }
 
@@ -70,6 +86,50 @@ internal class StorageInitializer(private val dataDir: Path, private val dbFile:
     // todo rename and store
     FileUtilRt.deleteRecursively(dataDir)
   }
+
+  companion object {
+    fun getTrashDirectory(dataDir: Path): Path = dataDir.resolve("_trash")
+
+    private fun deleteOrMoveRecursively(dataDir: Path, trashDir: Path) {
+      if (!Files.exists(dataDir)) {
+        return
+      }
+
+      Files.walkFileTree(dataDir, object : SimpleFileVisitor<Path>() {
+        override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+          if (!tryDeleteFile(file) && !file.startsWith(trashDir)) {
+            Files.createDirectories(trashDir)
+            val tempFile = Files.createTempFile(trashDir, null, null)
+            Files.move(file, tempFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
+          }
+          return FileVisitResult.CONTINUE
+        }
+
+        override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
+          if (exc != null) {
+            throw exc
+          }
+
+          try {
+            Files.deleteIfExists(dir)
+          }
+          catch (e: DirectoryNotEmptyException) {
+            if (dir == trashDir || Files.exists(trashDir) && dir == dataDir) {
+              // ignore
+            }
+            else {
+              throw e
+            }
+          }
+          return FileVisitResult.CONTINUE
+        }
+      })
+    }
+  }
+}
+
+private fun tryDeleteFile(file: Path): Boolean {
+  return file.toFile().delete() || !Files.exists(file, LinkOption.NOFOLLOW_LINKS)
 }
 
 private class BazelBuildDataPaths(private val dir: Path) : BuildDataPaths {
