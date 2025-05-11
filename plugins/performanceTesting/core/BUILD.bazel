@@ -53,7 +53,6 @@ jvm_library(
     "//plugins/performanceTesting/event-bus:tools-ide-starter-bus",
     "//platform/eel-provider",
     "//platform/recentFiles/frontend",
-    "@lib//:jbr-api",
   ],
   runtime_deps = [":performanceTesting_resources"]
 )
@@ -112,7 +111,6 @@ jvm_library(
     "//plugins/performanceTesting/event-bus:tools-ide-starter-bus_test_lib",
     "//platform/eel-provider",
     "//platform/recentFiles/frontend",
-    "@lib//:jbr-api",
   ],
   runtime_deps = [":performanceTesting_resources"]
 )

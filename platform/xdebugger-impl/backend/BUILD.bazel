@@ -37,6 +37,8 @@ jvm_library(
     "//platform/execution-impl",
     "//platform/platform-util-io:ide-util-io",
     "//platform/execution-impl/backend",
+    "//platform/xdebugger-impl/shared",
+    "//platform/xdebugger-impl/rpc",
   ],
   runtime_deps = [
     ":backend_resources",

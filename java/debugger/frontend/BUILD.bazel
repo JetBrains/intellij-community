@@ -25,6 +25,8 @@ jvm_library(
     "@lib//:kotlinx-serialization-json",
     "//java/debugger/shared",
     "//platform/xdebugger-impl/frontend",
+    "//platform/xdebugger-impl/shared",
+    "//platform/xdebugger-impl/rpc",
   ],
   runtime_deps = [":frontend_resources"]
 )

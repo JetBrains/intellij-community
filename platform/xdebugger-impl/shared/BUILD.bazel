@@ -1,0 +1,27 @@
+### auto-generated section `build intellij.platform.debugger.impl.shared` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "shared_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "shared",
+  module_name = "intellij.platform.debugger.impl.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/kernel/shared:kernel",
+    "//platform/xdebugger-api:debugger",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//platform/platform-impl/rpc",
+    "//platform/project/shared:project",
+    "//platform/editor-ui-api:editor-ui",
+  ],
+  runtime_deps = [":shared_resources"]
+)
+### auto-generated section `build intellij.platform.debugger.impl.shared` end

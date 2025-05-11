@@ -53,6 +53,7 @@ jvm_library(
     "//java/debugger/shared",
     "//platform/eel-provider",
     "//java/codeserver/highlighting",
+    "//platform/xdebugger-impl/shared",
   ],
   runtime_deps = [":impl_resources"]
 )

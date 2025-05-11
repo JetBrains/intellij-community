@@ -30,6 +30,8 @@ jvm_library(
     "//platform/execution-impl",
     "//java/java-frontback-impl:frontback-impl",
     "//platform/util/coroutines",
+    "//platform/xdebugger-impl/rpc",
+    "//platform/xdebugger-impl/shared",
   ],
   runtime_deps = [":shared_resources"]
 )
