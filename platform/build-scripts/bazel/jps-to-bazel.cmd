@@ -12,6 +12,8 @@ cd "$script_dir"
 exec /bin/bash "$root/bazel.cmd" run "$@" //:jps-to-bazel
 :CMDSCRIPT
 
-cd /d "%~dp0"
+pushd "%~dp0"
 call "%~dp0\..\..\..\..\bazel.cmd" run //:jps-to-bazel
-EXIT /B %ERRORLEVEL%
+set _exit_code=%ERRORLEVEL%
+popd
+EXIT /B %_exit_code%
