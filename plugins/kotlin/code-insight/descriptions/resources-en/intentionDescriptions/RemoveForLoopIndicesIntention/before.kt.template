@@ -1,0 +1,5 @@
+fun foo(bar: List<String>) {
+     for (<spot>(index : Int, value: String) in bar.withIndex()</spot>) {
+         println(value)
+     }
+  }

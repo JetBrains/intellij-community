@@ -3331,6 +3331,55 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/removeForLoopIndices")
+    public static class RemoveForLoopIndices extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("inapplicableForLoop.kt")
+        public void testInapplicableForLoop() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeForLoopIndices/inapplicableForLoop.kt");
+        }
+
+        @TestMetadata("inapplicableIndexUse.kt")
+        public void testInapplicableIndexUse() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeForLoopIndices/inapplicableIndexUse.kt");
+        }
+
+        @TestMetadata("inapplicableOverridenFunction.kt")
+        public void testInapplicableOverridenFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeForLoopIndices/inapplicableOverridenFunction.kt");
+        }
+
+        @TestMetadata("loopWithType.kt")
+        public void testLoopWithType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeForLoopIndices/loopWithType.kt");
+        }
+
+        @TestMetadata("simpleLoopWithIndices.kt")
+        public void testSimpleLoopWithIndices() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeForLoopIndices/simpleLoopWithIndices.kt");
+        }
+
+        @TestMetadata("simpleLoopWithIndicesOverCharSequence.kt")
+        public void testSimpleLoopWithIndicesOverCharSequence() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeForLoopIndices/simpleLoopWithIndicesOverCharSequence.kt");
+        }
+
+        @TestMetadata("simpleLoopWithIndicesOverSequence.kt")
+        public void testSimpleLoopWithIndicesOverSequence() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeForLoopIndices/simpleLoopWithIndicesOverSequence.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/addWhenRemainingBranches")
     public static class AddWhenRemainingBranches extends AbstractK2IntentionTest {
         @java.lang.Override
