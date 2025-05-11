@@ -46,7 +46,7 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
 
   class State {
     @ApiStatus.Internal
-    var terminalEngine: TerminalEngine = TerminalEngine.CLASSIC
+    var terminalEngine: TerminalEngine = TerminalEngine.REWORKED
 
     @ApiStatus.Internal
     var terminalEngineInRemDev: TerminalEngine = TerminalEngine.REWORKED
@@ -241,7 +241,9 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
 
       try {
         migrateCursorShape()
-        initializeTerminalEngine()
+        // Disable the terminal engine migration.
+        // Now it is Reworked by default, not depending on the previously set settings.
+        //initializeTerminalEngine()
       }
       finally {
         // Trigger sending the updated values to the backend
@@ -259,6 +261,8 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
     LOG.info("Initialized TerminalOptionsProvider.cursorShape value to ${state.cursorShape}")
   }
 
+  // Left to prevent possible merge conflicts if we need to change something there and backport to the stable release.
+  @Suppress("unused")
   private fun initializeTerminalEngine() {
     if (TerminalNewUserTracker.isNewUser()) {
       state.terminalEngine = TerminalEngine.REWORKED
