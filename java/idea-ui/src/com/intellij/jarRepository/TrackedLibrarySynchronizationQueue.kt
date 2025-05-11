@@ -11,9 +11,10 @@ import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Track loading libraries with ActivityKey.
@@ -28,7 +29,17 @@ internal class TrackedLibrarySynchronizationQueue(val project: Project, val scop
   }
 
   private val channel = Channel<CompletableDeferred<Unit>>(1)
-  private val subscribedToUpdates = AtomicBoolean(false)
+  private val workspaceSubscription = scope.launch(start = CoroutineStart.LAZY) {
+    project.serviceAsync<WorkspaceModel>().eventLog.collect { event ->
+      project.trackActivity(LoadDependenciesActivityKey) {
+        val libraryChanges = event.getChanges(LibraryEntity::class.java)
+        val libraryPropertiesChanges = event.getChanges(LibraryPropertiesEntity::class.java)
+        if (libraryChanges.isNotEmpty() || libraryPropertiesChanges.isNotEmpty()) {
+          requestDependenciesSync().await()
+        }
+      }
+    }
+  }
 
   init {
     launchLoadChannelConsumer()
@@ -36,21 +47,12 @@ internal class TrackedLibrarySynchronizationQueue(val project: Project, val scop
 
   suspend fun loadDependencies() {
     project.trackActivity(LoadDependenciesActivityKey) {
-      requestAndWaitDependenciesSync()
+      requestDependenciesSync().await()
     }
   }
 
   fun subscribeToModelUpdates() {
-    if (!subscribedToUpdates.compareAndSet(false, true)) return
-    scope.launch {
-      project.serviceAsync<WorkspaceModel>().eventLog.collect { event ->
-        project.trackActivity(LoadDependenciesActivityKey) {
-          val libraryChanges = event.getChanges(LibraryEntity::class.java)
-          val libraryPropertiesChanges = event.getChanges(LibraryPropertiesEntity::class.java)
-          if (libraryChanges.isNotEmpty() || libraryPropertiesChanges.isNotEmpty()) requestAndWaitDependenciesSync()
-        }
-      }
-    }
+    workspaceSubscription.start()
   }
 
   private fun launchLoadChannelConsumer() {
@@ -69,9 +71,20 @@ internal class TrackedLibrarySynchronizationQueue(val project: Project, val scop
     }
   }
 
-  private suspend fun requestAndWaitDependenciesSync() {
-    val deferred = CompletableDeferred<Unit>()
-    if (!channel.trySend(deferred).isSuccess) return
-    deferred.await()
+  /**
+   * @return A deferred object that completes when the activity tracking has started.
+   */
+  private fun requestDependenciesSync(): Deferred<Unit> {
+    val trackingStarted = CompletableDeferred<Unit>()
+    scope.launch {
+      project.trackActivity(LoadDependenciesActivityKey) {
+        trackingStarted.complete(Unit)
+        val deferred = CompletableDeferred<Unit>()
+        if (channel.trySend(deferred).isSuccess) {
+          deferred.await()
+        }
+      }
+    }
+    return trackingStarted
   }
 }
