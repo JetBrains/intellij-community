@@ -25,6 +25,7 @@ common --java_runtime_version=remotejdk_21
 # see https://bazel.build/external/lockfile
 # use `bazel mod deps --lockfile_mode=refresh` to update lock file
 common --lockfile_mode=error
+common:windows --lockfile_mode=update  # todo: https://youtrack.jetbrains.com/issue/DPE-59
 
 common --noenable_workspace
 
