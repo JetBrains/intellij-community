@@ -9,12 +9,10 @@ import com.intellij.ui.tabs.impl.JBEditorTabs
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics
 import java.awt.Paint
 import javax.swing.JComponent
 
-@ApiStatus.Internal
 internal class ManyIslandsRoundedBorder(fillColor: (JComponent) -> Paint?) :
   XNextRoundedBorder(
     fillColor,

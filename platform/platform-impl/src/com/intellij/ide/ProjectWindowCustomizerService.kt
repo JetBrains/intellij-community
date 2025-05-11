@@ -403,8 +403,8 @@ class ProjectWindowCustomizerService : Disposable {
     val rightX = leftX + leftWidth
     val rightWidth = alignIntToInt(length, ctx, PaintUtil.RoundingMode.CEIL, null)
 
-    val leftGradientTexture = leftGradientCache.getTexture(g, leftWidth, parent.background, blendedColor, leftX)
-    val rightGradientTexture = rightGradientCache.getTexture(g, rightWidth, blendedColor, parent.background, rightX)
+    val leftGradientTexture = leftGradientCache.getHorizontalTexture(g, leftWidth, parent.background, blendedColor, leftX)
+    val rightGradientTexture = rightGradientCache.getHorizontalTexture(g, rightWidth, blendedColor, parent.background, rightX)
 
     g.paint = leftGradientTexture
     g.fillRect(leftX, 0, leftWidth, height)

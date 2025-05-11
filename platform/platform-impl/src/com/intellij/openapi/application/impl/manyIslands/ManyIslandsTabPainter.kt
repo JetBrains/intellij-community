@@ -14,11 +14,9 @@ import com.intellij.ui.tabs.impl.themes.TabTheme
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.geom.RoundRectangle2D
 
-@ApiStatus.Internal
 internal class ManyIslandsTabPainterAdapter : TabPainterAdapter {
   override val tabPainter: JBTabPainter = ManyIslandsTabPainter()
 

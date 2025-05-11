@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.Splittable
+import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.IdeGlassPane
 import com.intellij.toolWindow.StripesUxCustomizer
 import com.intellij.toolWindow.xNext.XNextStripesUxCustomizer
@@ -65,6 +66,8 @@ open class InternalUICustomization {
   else
     StripesUxCustomizer ()
 
+  open fun configureButtonLook(look: ActionButtonLook, g: Graphics): Graphics? = null
+
   open fun getEditorToolbarButtonLook(): ActionButtonLook? = null
 
   open fun configureEditorsSplitters(component: EditorsSplitters) {}
@@ -86,6 +89,8 @@ open class InternalUICustomization {
   open fun createCustomToolWindowPaneHolder(): JPanel = JPanel()
 
   open val isCustomPaintersAllowed: Boolean = false
+
+  open fun attachIdeFrameBackgroundPainter(frame: IdeFrame, glassPane: IdeGlassPane): Unit = Unit
 
   open fun attachIdeFallbackBackgroundPainter(glassPane: IdeGlassPane): Unit = Unit
 

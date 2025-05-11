@@ -12708,6 +12708,8 @@ f:com.intellij.ui.AppUIUtil
 - f:confirmConsentOptions(java.util.List):Z
 - f:createHorizontalGradientTexture(java.awt.Graphics,java.awt.Color,java.awt.Color,I,I,I):java.awt.TexturePaint
 - bs:createHorizontalGradientTexture$default(com.intellij.ui.AppUIUtil,java.awt.Graphics,java.awt.Color,java.awt.Color,I,I,I,I,java.lang.Object):java.awt.TexturePaint
+- f:createVerticalGradientTexture(java.awt.Graphics,java.awt.Color,java.awt.Color,I,I,I):java.awt.TexturePaint
+- bs:createVerticalGradientTexture$default(com.intellij.ui.AppUIUtil,java.awt.Graphics,java.awt.Color,java.awt.Color,I,I,I,I,java.lang.Object):java.awt.TexturePaint
 - f:getAdjustedFractionalMetricsValue():java.lang.Object
 - f:getFrameClass():java.lang.String
 - sf:invokeLaterIfProjectAlive(com.intellij.openapi.project.Project,java.lang.Runnable):V

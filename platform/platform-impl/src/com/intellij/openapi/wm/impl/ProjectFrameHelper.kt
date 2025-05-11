@@ -112,6 +112,8 @@ abstract class ProjectFrameHelper internal constructor(
     glassPane = IdeGlassPaneImpl(rootPane, loadingState, cs.childScope())
     rootPane.overrideGlassPane(glassPane)
 
+    InternalUICustomization.getInstance()?.attachIdeFrameBackgroundPainter(this, glassPane)
+
     frame.doSetRootPane(rootPane)
 
     frameDecorator = IdeFrameDecorator.decorate(frame, glassPane, cs.childScope())
