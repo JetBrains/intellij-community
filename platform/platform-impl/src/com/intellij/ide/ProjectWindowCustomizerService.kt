@@ -369,11 +369,16 @@ class ProjectWindowCustomizerService : Disposable {
     listeners.forEach { it(isActive()) }
   }
 
+  private fun doPaint(): Boolean {
+    val customization = InternalUICustomization.getInstance()
+    return customization == null || customization.isProjectCustomDecorationGradientPaint
+  }
+
   /**
    * @return true if method painted something
    */
   fun paint(window: Window, parent: JComponent, g: Graphics2D): Boolean {
-    if (!isActive()) return false
+    if (!isActive() || !doPaint()) return false
 
     val frameHelper = ProjectFrameHelper.getFrameHelper(window) ?: return false
     val project = frameHelper.project ?: return false

@@ -49,9 +49,16 @@ open class InternalUICustomization {
 
   open val editorTabPainterAdapter: TabPainterAdapter = EditorTabPainterAdapter()
 
+  open val shouldPaintEditorFadeout: Boolean = true
+
   open val toolWindowUIDecorator: ToolWindowUIDecorator = ToolWindowUIDecorator()
 
   open val isProjectCustomDecorationActive: Boolean = true
+
+  open val isProjectCustomDecorationGradientPaint: Boolean
+    get() {
+      return isProjectCustomDecorationActive
+    }
 
   open val isDefaultCustomization: Boolean = true
   /**

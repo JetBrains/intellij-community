@@ -13,6 +13,8 @@ import java.awt.RenderingHints
 internal class ManyIslandsGradientPainter(private val frame: IdeFrame, private val endColor: Color) : AbstractPainter() {
   private val gradientCache: GradientTextureCache = GradientTextureCache()
 
+  private val projectWindowCustomizer = ProjectWindowCustomizerService.getInstance()
+
   private var doPaint = true
 
   override fun needsRepaint(): Boolean = true
@@ -30,10 +32,9 @@ internal class ManyIslandsGradientPainter(private val frame: IdeFrame, private v
   }
 
   private fun doPaint(component: Component, g: Graphics2D) {
-    g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
+    val startColor = projectWindowCustomizer.getGradientProjectColor(frame.project ?: return)
 
-    val projectWindowCustomizerService = ProjectWindowCustomizerService.getInstance()
-    val startColor = projectWindowCustomizerService.getGradientProjectColor(frame.project!!)
+    g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
 
     g.paint = gradientCache.getVerticalTexture(g, component.height, startColor, endColor, 0, 0)
     g.fillRect(0, 0, component.width, component.height)

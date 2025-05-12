@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl.manyIslands
 
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.paint.RectanglePainter2D
@@ -47,7 +46,7 @@ internal class ManyIslandsTabPainterAdapter : TabPainterAdapter {
 
 private class ManyIslandsTabTheme : TabTheme {
   override val background: Color
-    get() = EditorColorsManager.getInstance().globalScheme.defaultBackground
+    get() = JBUI.CurrentTheme.EditorTabs.background()
 
   override val borderColor: Color
     get() = background

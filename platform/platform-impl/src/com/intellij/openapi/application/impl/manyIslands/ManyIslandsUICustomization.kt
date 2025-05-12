@@ -15,6 +15,7 @@ import com.intellij.toolWindow.xNext.island.XNextIslandHolder
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.JBColor
 import com.intellij.ui.tabs.impl.TabPainterAdapter
+import com.intellij.util.ui.JBSwingUtilities
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Graphics
@@ -25,6 +26,10 @@ internal class ManyIslandsUICustomization : InternalUICustomization() {
   private val isManyIslandsGradientEnabled: Boolean = Registry.`is`("idea.many.islands.gradient.enabled", false)
 
   override val isDefaultCustomization: Boolean = !isManyIslandsEnabled
+
+  override val isProjectCustomDecorationGradientPaint: Boolean = !isManyIslandsEnabled || !isManyIslandsGradientEnabled
+
+  override val shouldPaintEditorFadeout: Boolean = !isManyIslandsEnabled
 
   private val toolWindowDecorator = object : ToolWindowUIDecorator() {
     override fun decorateAndReturnHolder(divider: JComponent, child: JComponent): JComponent? {
@@ -87,5 +92,23 @@ internal class ManyIslandsUICustomization : InternalUICustomization() {
       return IdeBackgroundUtil.getOriginalGraphics(g)
     }
     return null
+  }
+
+  override fun transformGraphics(component: JComponent, graphics: Graphics): Graphics {
+    if (isManyIslandsEnabled && isManyIslandsGradientEnabled) {
+      return JBSwingUtilities.runGlobalCGTransform(component, graphics)
+    }
+    return graphics
+  }
+
+  override fun transformButtonGraphics(graphics: Graphics): Graphics {
+    return preserveGraphics(graphics)
+  }
+
+  override fun preserveGraphics(graphics: Graphics): Graphics {
+    if (isManyIslandsEnabled && isManyIslandsGradientEnabled) {
+      return IdeBackgroundUtil.getOriginalGraphics(graphics)
+    }
+    return graphics
   }
 }

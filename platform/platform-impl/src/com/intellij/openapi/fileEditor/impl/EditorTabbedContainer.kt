@@ -35,6 +35,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.toolWindow.ToolWindowHeader
 import com.intellij.ui.*
 import com.intellij.ui.docking.DockContainer
@@ -735,7 +736,11 @@ private class EditorTabLabel(info: TabInfo, tabs: JBTabsImpl) : TabLabel(tabs, i
   override val isTabActionsOnTheRight: Boolean
     get() = UISettings.getInstance().closeTabButtonOnTheRight
 
-  override fun shouldPaintFadeout(): Boolean = super.shouldPaintFadeout() && Registry.`is`("ide.editor.tabs.show.fadeout", true)
+  override fun shouldPaintFadeout(): Boolean {
+    val customization = InternalUICustomization.getInstance()
+    return super.shouldPaintFadeout() && Registry.`is`("ide.editor.tabs.show.fadeout", true) &&
+           (customization == null || customization.shouldPaintEditorFadeout)
+  }
 
   override fun editLabelForeground(baseForeground: Color?): Color? {
     if (baseForeground != null && paintDimmed()) {
