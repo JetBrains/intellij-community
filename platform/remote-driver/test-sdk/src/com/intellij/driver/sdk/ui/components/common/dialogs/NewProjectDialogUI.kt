@@ -46,9 +46,7 @@ open class NewProjectDialogUI(data: ComponentData) : UiComponent(data) {
   val nextButton = x("//div[@text='Next']")
   open val createButton = x("//div[@text='Create']")
   private val projectTypeList = x("//div[@class='JBList']")
-  val sampleCodeLabel = checkBox { byText ("Add sample code") }
-  val multiModuleLabel = checkBox { byText ("Generate multi-module build") }
-  val compactStructureLabel = checkBox { byText ("Use compact project structure") }
-
-
+  val sampleCodeLabel = checkBox { byText("Add sample code") }
+  val multiModuleLabel = checkBox { byText("Generate multi-module build") }
+  val compactStructureLabel = checkBox { byText("Use compact project structure") }
 }
