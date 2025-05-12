@@ -10181,13 +10181,6 @@ e:com.intellij.openapi.updateSettings.impl.ChannelStatus
 - getDisplayName():java.lang.String
 - s:valueOf(java.lang.String):com.intellij.openapi.updateSettings.impl.ChannelStatus
 - s:values():com.intellij.openapi.updateSettings.impl.ChannelStatus[]
-f:com.intellij.openapi.updateSettings.impl.DetectedPluginsPanel
-- com.intellij.ui.OrderPanel
-- <init>(com.intellij.openapi.project.Project):V
-- addAll(java.util.Collection):V
-- isChecked(com.intellij.openapi.updateSettings.impl.PluginDownloader):Z
-- requestFocus():V
-- setChecked(com.intellij.openapi.updateSettings.impl.PluginDownloader,Z):V
 e:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
 - java.lang.Enum
 - sf:ACTUAL:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager

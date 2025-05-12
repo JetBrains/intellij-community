@@ -867,7 +867,6 @@
       <module fileurl="file://$PROJECT_DIR$/platform/object-serializer/intellij.platform.objectSerializer.annotations.iml" filepath="$PROJECT_DIR$/platform/object-serializer/intellij.platform.objectSerializer.annotations.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/object-serializer/intellij.platform.objectSerializer.tests.iml" filepath="$PROJECT_DIR$/platform/object-serializer/intellij.platform.objectSerializer.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/kernel/pasta/intellij.platform.pasta.iml" filepath="$PROJECT_DIR$/platform/kernel/pasta/intellij.platform.pasta.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/plugins/intellij.platform.plugins.iml" filepath="$PROJECT_DIR$/platform/plugins/intellij.platform.plugins.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/plugins/parser/impl/intellij.platform.plugins.parser.impl.iml" filepath="$PROJECT_DIR$/platform/plugins/parser/impl/intellij.platform.plugins.parser.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/plugins/testFramework/intellij.platform.plugins.testFramework.iml" filepath="$PROJECT_DIR$/platform/plugins/testFramework/intellij.platform.plugins.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/progress/backend/intellij.platform.progress.backend.iml" filepath="$PROJECT_DIR$/platform/progress/backend/intellij.platform.progress.backend.iml" />
