@@ -15,9 +15,5 @@
  */
 package com.intellij.execution.configurations;
 
-import org.jetbrains.annotations.ApiStatus;
-
 public interface PatchedRunnableState extends RunProfileState {
-  @ApiStatus.Internal
-  default void patchConnection(RemoteConnection connection) {}
 }
