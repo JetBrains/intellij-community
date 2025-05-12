@@ -3,9 +3,13 @@ package com.intellij.codeInsight.completion.command.commands
 
 import com.intellij.codeInsight.completion.command.*
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.ide.ActivityTracker
 import com.intellij.ide.DataManager
+import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.keymap.KeymapUtil
@@ -14,6 +18,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
@@ -162,6 +167,10 @@ open class ActionCompletionCommand(
   override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
     val action = action ?: return
     if (editor == null) return
+    //drop data context caches for rem dev because there were changes, which can be missed
+    if (AppMode.isRemoteDevHost()) {
+      ActivityTracker.getInstance().inc()
+    }
     val dataContext = DataManager.getInstance().getDataContext(editor.getComponent())
     val presentation: Presentation = action.templatePresentation.clone()
     val event = AnActionEvent.createEvent(action, dataContext, presentation, ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION,
