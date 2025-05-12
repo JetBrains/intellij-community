@@ -93,7 +93,7 @@
     <applicationService serviceImplementation="com.intellij.debugger.settings.ThreadsViewSettings"/>
     <applicationService serviceImplementation="com.intellij.debugger.settings.TraceSettings"/>
     <projectService serviceInterface="com.intellij.debugger.ui.HotSwapUI" serviceImplementation="com.intellij.debugger.ui.HotSwapUIImpl"/>
-    <projectService serviceImplementation="com.intellij.debugger.impl.hotswap.HotSwapDebugSessionManager" preload="true"/>
+    <postStartupActivity implementation="com.intellij.debugger.impl.hotswap.HotSwapManagerInitActivity"/>
     <projectService serviceInterface="com.intellij.debugger.DebuggerManager"
                     serviceImplementation="com.intellij.debugger.impl.DebuggerManagerImpl"/>
     <debugger.additionalContextProvider implementation="com.intellij.debugger.engine.evaluation.MarkedObjectAdditionalContextProvider"/>

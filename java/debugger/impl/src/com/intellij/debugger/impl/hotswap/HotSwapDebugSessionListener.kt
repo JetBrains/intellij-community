@@ -5,8 +5,11 @@ import com.intellij.debugger.engine.JavaDebugProcess
 import com.intellij.debugger.impl.DebuggerSession
 import com.intellij.debugger.ui.HotSwapStatusListener
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.asDisposable
@@ -23,6 +26,13 @@ import java.util.concurrent.ConcurrentHashMap
 
 private data class JavaHotSwapSessionEntry(val hotSwapSession: HotSwapSession<*>, val disposable: Disposable)
 
+private class HotSwapManagerInitActivity : ProjectActivity {
+  override suspend fun execute(project: Project) {
+    project.serviceAsync<HotSwapDebugSessionManager>()
+  }
+}
+
+@Service(Service.Level.PROJECT)
 internal class HotSwapDebugSessionManager(project: Project, cs: CoroutineScope) : XDebuggerManagerListener {
   private val sessions = ConcurrentHashMap<DebuggerSession, JavaHotSwapSessionEntry>()
 
