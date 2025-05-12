@@ -203,7 +203,7 @@ class DecoratedEditor private constructor(
       }
       mouseButton == MouseEvent.BUTTON1 && !model.isSelectedCell(clickedCell) -> {
         model.selectSingleCell(clickedCell)
-        return true
+        return false
       }
     }
     return false
