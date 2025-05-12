@@ -247,6 +247,7 @@ public final class TerminalToolWindowManager implements Disposable {
       tabState.myTabName = tab.getName();
       tabState.myIsUserDefinedTabTitle = tab.isUserDefinedName();
       tabState.myShellCommand = tab.getShellCommand();
+      tabState.myWorkingDirectory = tab.getWorkingDirectory();
 
       createNewSession(myTerminalRunner, tabState, tab, null, false, true);
     }
