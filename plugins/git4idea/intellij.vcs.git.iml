@@ -108,7 +108,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.ui" />
     <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl.shared" />
     <orderEntry type="module" module-name="intellij.vcs.git.shared" />
-    <orderEntry type="module" module-name="intellij.vcs.git.frontend" />
     <orderEntry type="module" module-name="intellij.platform.kernel.backend" />
     <orderEntry type="module" module-name="intellij.platform.ide.rpc" />
     <orderEntry type="module" module-name="intellij.platform.project" />
