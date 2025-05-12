@@ -22,6 +22,8 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 import org.jetbrains.kotlin.resolve.ArrayFqNames
+import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
+import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
 // Analogous to Call.resolveCandidates() in plugins/kotlin/core/src/org/jetbrains/kotlin/idea/core/Utils.kt
 context(KaSession)
@@ -132,7 +134,12 @@ fun collectReceiverTypesForExplicitReceiverExpression(explicitReceiver: KtExpres
 
     val isSafeCall = explicitReceiver.parent is KtSafeQualifiedExpression
 
-    val explicitReceiverType = explicitReceiver.expressionType ?: error("Receiver should have a KaType")
+    val explicitReceiverType = explicitReceiver.expressionType ?: 
+        errorWithAttachment("Receiver should have a KaType") {
+            withPsiEntry("explicitReceiver", explicitReceiver)
+            withPsiEntry("file", explicitReceiver.containingKtFile)
+        }
+    
     val adjustedType = if (isSafeCall) {
         explicitReceiverType.withNullability(KaTypeNullability.NON_NULLABLE)
     } else {
