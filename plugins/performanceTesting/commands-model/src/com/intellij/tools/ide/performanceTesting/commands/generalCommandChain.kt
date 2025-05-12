@@ -858,6 +858,10 @@ fun <T : CommandChain> T.performGC(): T = apply {
   addCommand("${CMD_PREFIX}performGC")
 }
 
+fun <T : CommandChain> T.performFullGC(): T = apply {
+  addCommand("${CMD_PREFIX}performFullGC")
+}
+
 fun <T : CommandChain> T.copy(): T = apply {
   executeEditorAction("\$Copy")
 }
