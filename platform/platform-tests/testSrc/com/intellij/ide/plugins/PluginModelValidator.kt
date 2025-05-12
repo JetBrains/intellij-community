@@ -7,19 +7,16 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
 import com.intellij.platform.plugins.parser.impl.RawPluginDescriptor
-import com.intellij.platform.plugins.parser.impl.ReadModuleContext
 import com.intellij.platform.plugins.parser.impl.XIncludeLoader
 import com.intellij.platform.plugins.parser.impl.elements.ContentElement
 import com.intellij.platform.plugins.parser.impl.elements.DependenciesElement
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule
-import com.intellij.platform.plugins.parser.impl.elements.OS
+import com.intellij.platform.plugins.testFramework.ValidationReadModuleContext
 import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.NamedFailure
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
-import com.intellij.util.xml.dom.NoOpXmlInterner
-import com.intellij.util.xml.dom.XmlInterner
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -29,15 +26,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.opentest4j.MultipleFailuresError
 import java.io.StringWriter
 import java.nio.file.Path
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.io.path.exists
-import kotlin.io.path.inputStream
-import kotlin.io.path.invariantSeparatorsPathString
-import kotlin.io.path.isDirectory
-import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.name
-import kotlin.io.path.pathString
+import kotlin.io.path.*
 
 data class CorePluginDescription(
   val mainModuleName: String,
@@ -720,13 +709,6 @@ class PluginModelValidator(
       is Path -> projectHomePath.relativize(value).invariantSeparatorsPathString
       else -> value.toString()
     }
-  }
-
-  private object ValidationReadModuleContext : ReadModuleContext {
-    override val interner: XmlInterner
-      get() = NoOpXmlInterner
-    override val elementOsFilter: (OS) -> Boolean
-      get() = { true }
   }
 }
 
