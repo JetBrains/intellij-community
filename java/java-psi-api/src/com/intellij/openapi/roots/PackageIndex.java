@@ -29,13 +29,13 @@ public abstract class PackageIndex {
    * @param includeLibrarySources if true, directories under library sources are included in the returned list.
    * @return the array of directories.
    */
-  public abstract VirtualFile @NotNull [] getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources);
+  public abstract VirtualFile @NotNull [] getDirectoriesByPackageName(@NotNull @NlsSafe String packageName, boolean includeLibrarySources);
 
   /**
    * @return all directories in the given scope corresponding to the given package name. Note that package may also contain
    * single file source roots. Use {@link #getFilesByPackageName(String)} to get them.
    */
-  public Query<VirtualFile> getDirsByPackageName(@NotNull String packageName, @NotNull GlobalSearchScope scope) {
+  public Query<VirtualFile> getDirsByPackageName(@NotNull @NlsSafe String packageName, @NotNull GlobalSearchScope scope) {
     return getDirsByPackageName(packageName, true).filtering(scope::contains);
   }
 
@@ -55,7 +55,7 @@ public abstract class PackageIndex {
    * @param includeLibrarySources if true, directories under library sources are included in the returned list.
    * @return the query returning the list of directories.
    */
-  public abstract @NotNull Query<VirtualFile> getDirsByPackageName(@NotNull String packageName, boolean includeLibrarySources);
+  public abstract @NotNull Query<VirtualFile> getDirsByPackageName(@NotNull @NlsSafe String packageName, boolean includeLibrarySources);
 
   /**
    * Returns the name of the package corresponding to the specified directory or a specific file if the file is a single-file root.

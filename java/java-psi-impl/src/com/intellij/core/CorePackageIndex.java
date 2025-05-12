@@ -3,6 +3,7 @@ package com.intellij.core;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.PackageIndex;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CollectionQuery;
@@ -38,12 +39,12 @@ public class CorePackageIndex extends PackageIndex {
   }
 
   @Override
-  public VirtualFile @NotNull [] getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
+  public VirtualFile @NotNull [] getDirectoriesByPackageName(@NotNull @NlsSafe String packageName, boolean includeLibrarySources) {
     return getDirsByPackageName(packageName, includeLibrarySources).toArray(VirtualFile.EMPTY_ARRAY);
   }
 
   @Override
-  public @NotNull Query<VirtualFile> getDirsByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
+  public @NotNull Query<VirtualFile> getDirsByPackageName(@NotNull @NlsSafe String packageName, boolean includeLibrarySources) {
     return new CollectionQuery<>(findDirectoriesByPackageName(packageName));
   }
 
