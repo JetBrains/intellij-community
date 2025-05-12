@@ -174,20 +174,14 @@ private fun configureKotlinCompiler(
 ): K2JVMCompilerArguments {
   val kotlinFacetSettings = KotlinFacetSettings()
   kotlinFacetSettings.useProjectSettings = false
-  val kotlinArgs = K2JVMCompilerArguments()
-  val moduleName = args.mandatorySingle(JvmBuilderFlags.KOTLIN_MODULE_NAME)
-  kotlinArgs.moduleName = moduleName
-  kotlinFacetSettings.compilerArguments = kotlinArgs
-  configureCommonCompilerArgs(kotlinArgs = kotlinArgs, args = args, workingDir = classPathRootDir)
 
-  configHash.putString(kotlinArgs.apiVersion ?: "")
-  configHash.putString(kotlinArgs.languageVersion ?: "")
-  configHash.putString(kotlinArgs.jvmTarget ?: "")
-  configHash.putString(kotlinArgs.lambdas ?: "")
-  configHash.putString(kotlinArgs.jvmDefault)
-  configHash.putBoolean(kotlinArgs.inlineClasses)
-  configHash.putBoolean(kotlinArgs.allowKotlinPackage)
-  configHash.putString(moduleName)
+  val kotlinArgs = K2JVMCompilerArguments()
+
+  kotlinArgs.moduleName = args.mandatorySingle(JvmBuilderFlags.KOTLIN_MODULE_NAME)
+  configHash.putString(kotlinArgs.moduleName)
+
+  kotlinFacetSettings.compilerArguments = kotlinArgs
+  configureCommonCompilerArgs(kotlinArgs = kotlinArgs, args = args, workingDir = classPathRootDir, configHash = configHash)
 
   val plugins = args.optionalList(JvmBuilderFlags.PLUGIN_ID).zip(args.optionalList(JvmBuilderFlags.PLUGIN_CLASSPATH))
   configHash.putInt(plugins.size)

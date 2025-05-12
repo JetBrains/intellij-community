@@ -6,6 +6,7 @@ kt_jvm_library(
     kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
     visibility = ["//visibility:public"],
     deps = [
+        "//:hash4j",
         "//:kotlin-compiler",
         "//:kotlin-compose-compiler-plugin",
         "//:kotlin-serialization-compiler-plugin",
