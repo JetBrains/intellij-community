@@ -402,11 +402,10 @@ internal class ReworkedTerminalView(
     TerminalFontSettingsService.getInstance().addListener(fontSettingsListener, parentDisposable)
 
     TerminalFontSizeProviderImpl.getInstance().addListener(parentDisposable, object : TerminalFontSizeProvider.Listener {
-      override fun fontChanged() {
-        result.setFontSize(
-          TerminalFontSizeProviderImpl.getInstance().getFontSize(),
-          ChangeTerminalFontSizeStrategy.preferredZoomPointRelative(result),
-          true
+      override fun fontChanged(showZoomIndicator: Boolean) {
+        result.setTerminalFontSize(
+          fontSize = TerminalFontSizeProviderImpl.getInstance().getFontSize(),
+          showZoomIndicator = showZoomIndicator,
         )
         result.resizeIfShowing()
       }

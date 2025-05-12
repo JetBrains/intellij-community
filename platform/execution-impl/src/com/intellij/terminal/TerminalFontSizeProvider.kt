@@ -27,6 +27,6 @@ interface TerminalFontSizeProvider {
   fun addListener(parentDisposable: Disposable, listener: Listener)
 
   interface Listener {
-    fun fontChanged()
+    fun fontChanged(showZoomIndicator: Boolean)
   }
 }
