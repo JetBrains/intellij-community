@@ -22,7 +22,6 @@ import com.intellij.usages.UsagePresentation
 import com.intellij.usages.rules.MergeableUsage
 import com.intellij.usages.rules.UsageDocumentProcessor
 import com.intellij.usages.rules.UsageInFile
-import com.intellij.util.Processor
 import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.CompletableFuture
 import javax.swing.Icon
@@ -43,25 +42,43 @@ class UsageInfoModel(val project: Project, val model: FindInFilesResult, val cor
     psiFile
   }
 
+  private val defaultRange: TextRange =
+    TextRange(model.navigationOffset, model.navigationOffset + model.length)
+
   private val smartRange: SmartPsiFileRange? = run {
     val range = psiFile?.let {
-      val range = TextRange(model.navigationOffset, model.navigationOffset + model.length)
-      SmartPointerManager.getInstance(project).createSmartPsiFileRangePointer(it, range)
+      SmartPointerManager.getInstance(project).createSmartPsiFileRangePointer(it, defaultRange)
     }
     if (range == null) LOG.error("Cannot create smart range for ${model.presentablePath}")
     range
   }
 
-  private val defaultRange: TextRange =
-    TextRange(model.navigationOffset, model.navigationOffset + model.length)
+  private val defaultMergedRanges: List<TextRange> = model.mergedOffsets.map {
+    TextRange(it, it + model.length)
+  }
+
+  private val mergedSmartRanges: List<SmartPsiFileRange> = run {
+    val psiFile = psiFile ?: return@run emptyList()
+    if (smartRange != null && defaultMergedRanges.size == 1) {
+      return@run listOf(smartRange)
+    }
+    defaultMergedRanges.map {
+      SmartPointerManager.getInstance(project).createSmartPsiFileRangePointer(psiFile, it)
+    }
+  }
+
+  private fun getMergedRanges(): List<TextRange> {
+    return if (mergedSmartRanges.isEmpty()) defaultMergedRanges else mergedSmartRanges.mapNotNull { smartRange -> smartRange.range?.let { TextRange(it.startOffset, it.endOffset) } }
+  }
+
 
 
   private fun calculateRange(): Segment {
-    val psiRange = smartRange?.psiRange
-    if (psiRange == null) {
+    val range = smartRange?.range
+    if (range == null) {
       LOG.warn("Smart range is null for ${model.presentablePath}. The default range will be used.")
     }
-    return psiRange ?: defaultRange
+    return range ?: defaultRange
   }
 
   override fun isValid(): Boolean = psiFile?.isValid ?: false
@@ -69,10 +86,10 @@ class UsageInfoModel(val project: Project, val model: FindInFilesResult, val cor
   override fun getMergedInfos(): Array<UsageInfo> {
     val virtualFile = model.fileId.virtualFile() ?: return emptyArray()
     val psiFile = PsiManager.getInstance(project).findFile(virtualFile) ?: return emptyArray()
-    val usageInfos = model.mergedOffsets.map {
+    val usageInfos = getMergedRanges().map {
       UsageInfo(
         psiFile,
-        it, it + model.length
+        it, false
       )
     }.toTypedArray()
     return usageInfos
