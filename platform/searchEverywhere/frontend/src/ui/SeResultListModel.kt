@@ -6,24 +6,29 @@ import com.intellij.platform.searchEverywhere.frontend.vm.SeThrottledAccumulated
 import com.intellij.platform.searchEverywhere.frontend.vm.SeThrottledItems
 import com.intellij.platform.searchEverywhere.frontend.vm.SeThrottledOneItem
 import com.intellij.platform.searchEverywhere.providers.SeLog
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.DefaultListModel
 
 @ApiStatus.Internal
 class SeResultListModel: DefaultListModel<SeResultListRow>() {
   val freezer: Freezer = Freezer { size }
-  var isValid: Boolean = true
-    private set
+
+  val isValid: Boolean get() = isValidState.value
+  val isValidState: StateFlow<Boolean> get() = _isValidState.asStateFlow()
+  private val _isValidState = MutableStateFlow(true)
 
   fun reset() {
     SeLog.log(SeLog.THROTTLING) { "Will reset result list model" }
     freezer.reset()
-    isValid = true
+    _isValidState.value = true
     removeAllElements()
   }
 
   fun invalidate() {
-    isValid = false
+    _isValidState.value = false
   }
 
   fun removeLoadingItem() {

@@ -46,9 +46,7 @@ import com.intellij.util.ui.StartupUiUtil.isWaylandToolkit
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Point
 import java.awt.event.*
@@ -167,16 +165,29 @@ class SePopupContentPane(private val vm: SePopupVm) : JPanel(), Disposable {
       }
     }
 
+    val isScrolledAlmostToAnEnd = MutableStateFlow(false)
     val verticalScrollBar = resultsScrollPane.verticalScrollBar
     verticalScrollBar.addAdjustmentListener { adjustmentEvent ->
       val yetToScrollHeight = verticalScrollBar.maximum - verticalScrollBar.model.extent - adjustmentEvent.value
 
       if (verticalScrollBar.model.extent > 0 && yetToScrollHeight < 50) {
         resultListModel.freezer.freezeAllIfEnabled()
-        vm.shouldLoadMore = true
+        isScrolledAlmostToAnEnd.value = true
       }
       else if (yetToScrollHeight > resultsScrollPane.height / 2) {
-        //vm.shouldLoadMore = false
+        isScrolledAlmostToAnEnd.value = false
+      }
+    }
+
+    vm.coroutineScope.launch {
+      vm.currentTabFlow.collectLatest {  tabVm ->
+        coroutineScope {
+          combine(isScrolledAlmostToAnEnd, resultListModel.isValidState) {
+            it[0] to it[1]
+          }.collect {  (isScrolledAlmostToAnEnd, isValidList) ->
+            tabVm.shouldLoadMore = isScrolledAlmostToAnEnd || !isValidList
+          }
+        }
       }
     }
 
