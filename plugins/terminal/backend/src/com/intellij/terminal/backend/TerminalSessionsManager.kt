@@ -43,7 +43,7 @@ internal class TerminalSessionsManager {
     val (ttyConnector, configuredOptions) = startTerminalProcess(project, optionsWithSize)
     val observableTtyConnector = ObservableTtyConnector(ttyConnector)
     val session = createTerminalSession(project, observableTtyConnector, configuredOptions, JBTerminalSystemSettingsProvider(), scope)
-    val stateAwareSession = StateAwareTerminalSession(session)
+    val stateAwareSession = StateAwareTerminalSession(session, scope.childScope("StateAwareSession"))
 
     val sessionId = storeSession(stateAwareSession, scope)
 
