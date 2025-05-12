@@ -6,6 +6,7 @@ import com.intellij.ide.SelectInEditorManager
 import com.intellij.ide.ui.icons.icon
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.project.Project
@@ -13,21 +14,21 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
-import com.intellij.psi.SmartPointerManager
-import com.intellij.psi.SmartPsiFileRange
+import com.intellij.psi.*
 import com.intellij.usageView.UsageInfo
 import com.intellij.usages.TextChunk
 import com.intellij.usages.UsageInfoAdapter
 import com.intellij.usages.UsagePresentation
 import com.intellij.usages.rules.MergeableUsage
+import com.intellij.usages.rules.UsageDocumentProcessor
+import com.intellij.usages.rules.UsageInFile
+import com.intellij.util.Processor
 import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.CompletableFuture
 import javax.swing.Icon
 
 private val LOG = logger<UsageInfoModel>()
-class UsageInfoModel(val project: Project, val model: FindInFilesResult, val coroutineScope: CoroutineScope) : UsageInfoAdapter {
+class UsageInfoModel(val project: Project, val model: FindInFilesResult, val coroutineScope: CoroutineScope) : UsageInfoAdapter, UsageInFile, UsageDocumentProcessor {
   private val virtualFile: VirtualFile? = run {
     val virtualFile = model.fileId.virtualFile()
     if (virtualFile == null) LOG.error("Cannot find virtualFile for ${model.presentablePath}")
@@ -146,6 +147,13 @@ class UsageInfoModel(val project: Project, val model: FindInFilesResult, val cor
 
   override fun getPresentation(): UsagePresentation {
     return UsageInfoModelPresentation(model)
+  }
+
+  override fun getFile(): VirtualFile? = virtualFile
+
+  override fun getDocument(): Document? {
+    if (psiFile == null) return null
+    return PsiDocumentManager.getInstance(project).getDocument(psiFile)
   }
 
   private class UsageInfoModelPresentation(val model: FindInFilesResult) : UsagePresentation {

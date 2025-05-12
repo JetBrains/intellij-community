@@ -42,6 +42,7 @@ import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.rules.UsageInFile;
+import com.intellij.usages.rules.UsageDocumentProcessor;
 import com.intellij.util.AdapterProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -244,7 +245,7 @@ public class ReplaceInProjectManager {
   }
 
   private static @Unmodifiable Set<VirtualFile> getFiles(@NotNull Collection<Usage> usages) {
-    return ContainerUtil.map2Set(usages, usage -> ((UsageInfo2UsageAdapter)usage).getFile());
+    return ContainerUtil.map2Set(usages, usage -> ((UsageInFile)usage).getFile());
   }
 
   private void addReplaceActions(final ReplaceContext replaceContext) {
@@ -398,10 +399,10 @@ public class ReplaceInProjectManager {
         return false;
       }
 
-      final Document document = ((UsageInfo2UsageAdapter)usage).getDocument();
+      final Document document = ((UsageDocumentProcessor)usage).getDocument();
       if (document == null || !document.isWritable()) return false;
 
-      return ((UsageInfo2UsageAdapter)usage).processRangeMarkers(segment -> {
+      return ((UsageDocumentProcessor)usage).processRangeMarkers(segment -> {
         final int textOffset = segment.getStartOffset();
         final int textEndOffset = segment.getEndOffset();
         final Ref<String> stringToReplace = Ref.create();

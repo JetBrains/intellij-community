@@ -46,7 +46,7 @@ import java.util.concurrent.CompletableFuture;
 public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
                                                UsageInLibrary, UsageInFile, PsiElementUsage,
                                                MergeableUsage,
-                                               RenameableUsage, UiCompatibleDataProvider, UsagePresentation {
+                                               RenameableUsage, UiCompatibleDataProvider, UsagePresentation, UsageDocumentProcessor {
   public static final NotNullFunction<UsageInfo, Usage> CONVERTER = UsageInfo2UsageAdapter::new;
   private static final Comparator<UsageInfo> BY_NAVIGATION_OFFSET = Comparator.comparingInt(UsageInfo::getNavigationOffset);
   @SuppressWarnings("StaticNonFinalField")
@@ -254,6 +254,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   }
 
   // must iterate in start offset order
+  @Override
   public boolean processRangeMarkers(@NotNull Processor<? super Segment> processor) {
     for (UsageInfo usageInfo : getMergedInfos()) {
       Segment segment = usageInfo.getSegment();
@@ -264,6 +265,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     return true;
   }
 
+  @Override
   public Document getDocument() {
     PsiFile file = getUsageInfo().getFile();
     if (file == null) return null;
