@@ -14,7 +14,7 @@ abstract class LatencyMetric(override val name: String) : ConfidenceIntervalMetr
       .flatMap { session -> session.lookups }
       .filter(::shouldInclude)
       .forEach {
-        this.sample.add(it.latency.toDouble())
+        this.coreSample.add(it.latency.toDouble())
         fileSample.add(it.latency.toDouble())
       }
     return compute(fileSample)

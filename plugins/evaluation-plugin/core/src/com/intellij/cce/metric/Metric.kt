@@ -41,7 +41,10 @@ interface Metric {
 }
 
 abstract class ConfidenceIntervalMetric<T> : Metric {
-  val sample: MutableList<T> = mutableListOf()
+  protected val coreSample: MutableList<T> = mutableListOf()
+
+  val sample: List<T>
+    get() = coreSample
 
   open val maximumSessions: Int
     get() = 75000
@@ -52,10 +55,8 @@ abstract class ConfidenceIntervalMetric<T> : Metric {
   override fun confidenceInterval(numberOfSessions: Int, initialSampleSize: Int?): Pair<Double, Double>? {
     val currentSample = if (initialSampleSize != null) sample.subList(initialSampleSize, sample.size) else sample
 
-    if (shouldComputeConfidenceIntervals(numberOfSessions))
-      return Bootstrap.computeInterval(currentSample) { compute(it) }
-    else
-      return null
+    return if (shouldComputeConfidenceIntervals(numberOfSessions)) Bootstrap.computeInterval(currentSample) { compute(it) }
+      else null
   }
 
   abstract fun compute(sample: List<T>): Double

@@ -16,7 +16,7 @@ abstract class ContextCollectionDuration : ConfidenceIntervalMetric<Double>() {
       .forEach {
         val duration = it.contextCollectionDuration()
         if (duration != null) {
-          this.sample.add(duration)
+          this.coreSample.add(duration)
           fileSample.add(duration)
         }
       }

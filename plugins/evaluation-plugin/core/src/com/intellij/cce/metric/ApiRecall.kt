@@ -24,7 +24,7 @@ class ApiRecall : ConfidenceIntervalMetric<Double>() {
         val groundTruthApiCalls = it.additionalList(AIA_GROUND_TRUTH_INTERNAL_API_CALLS) ?: emptyList()
         val apiRecall = calculateApiRecallForLookupSnippets(predictedApiCalls, groundTruthApiCalls)
         fileSample.add(apiRecall)
-        sample.add(apiRecall)
+        coreSample.add(apiRecall)
       }
     return fileSample.mean()
   }

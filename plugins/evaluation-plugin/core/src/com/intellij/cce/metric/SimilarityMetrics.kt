@@ -27,7 +27,7 @@ abstract class SimilarityMetric(override val showByDefault: Boolean) : Confidenc
   override val maximumSessions: Int
     get() = 10000
 
-  override fun compute(sample: List<Pair<Double, Double>>): Double = sample.sumOf { it.first } / sample.sumOf { it.second }
+  override fun compute(sample: List<Pair<Double, Double>>): Double = if(sample.isNotEmpty()) sample.sumOf { it.first } / sample.sumOf { it.second } else 0.0
 
   override fun evaluateWithIndividualScores(sessions: List<Session>): MetricEvaluationResult {
     val sessionIndividualScores = mutableMapOf<String, SessionIndividualScore>()
@@ -46,7 +46,7 @@ abstract class SimilarityMetric(override val showByDefault: Boolean) : Confidenc
         metricScores.computeIfAbsent(name) { mutableListOf() }.add(similarity)
         postCompute(lookup, similarity, additionalInfo)
         matched += similarity
-        sample.add(Pair(similarity, currentExpected))
+        coreSample.add(Pair(similarity, currentExpected))
       }
 
       sessionIndividualScores[session.id] = SessionIndividualScore(
@@ -73,7 +73,7 @@ abstract class SimilarityMetric(override val showByDefault: Boolean) : Confidenc
         expected += currentExpected
         val similarity = computeSimilarity(lookup, expectedText) ?: 0.0
         matched += similarity
-        sample.add(Pair(similarity, currentExpected))
+        coreSample.add(Pair(similarity, currentExpected))
       }
     }
     totalMatched += matched

@@ -20,7 +20,7 @@ abstract class PrecisionMetricBase : ConfidenceIntervalMetric<Double>() {
       for (suggestion in lookup.suggestions) {
         val value = if (suggestion.isRelevant) 1.0 else 0.0
         fileSample.add(value)
-        sample.add(value)
+        coreSample.add(value)
       }
     }
     return fileSample.mean()
