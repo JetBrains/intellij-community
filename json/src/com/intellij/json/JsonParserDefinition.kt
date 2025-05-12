@@ -5,19 +5,17 @@ import com.intellij.json.psi.impl.JsonFileImpl
 import com.intellij.json.syntax.JsonLexer
 import com.intellij.lang.ASTNode
 import com.intellij.lang.ParserDefinition
-import com.intellij.lang.PsiBuilder
 import com.intellij.lang.PsiParser
 import com.intellij.lexer.Lexer
 import com.intellij.openapi.project.Project
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.psi.ElementTypeConverters.getConverter
 import com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory.Companion.getInstance
-import com.intellij.platform.syntax.psi.impl.*
+import com.intellij.platform.syntax.psi.impl.getSyntaxParserRuntimeFactory
 import com.intellij.platform.syntax.psi.lexer.LexerAdapter
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
 
@@ -48,14 +46,7 @@ open class JsonParserDefinition : ParserDefinition {
     return LexerAdapter(JsonLexer(), getConverter(JsonLanguage.INSTANCE))
   }
 
-  override fun createParser(project: Project?): PsiParser {
-    assert(false)
-    return object : PsiParser {
-      override fun parse(root: IElementType, builder: PsiBuilder): ASTNode {
-        TODO("Not yet implemented")
-      }
-    }
-  }
+  override fun createParser(project: Project?): PsiParser {throw UnsupportedOperationException("Should not be called directly")}
 
   override fun getFileNodeType(): IFileElementType {
     return FILE

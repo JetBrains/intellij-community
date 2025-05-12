@@ -8,6 +8,10 @@
   elementTypeClass = 'com.intellij.json.JsonElementType'
   psiClassPrefix = "Json"
   psiVisitorName = "JsonElementVisitor"
+  
+  psiOutputPath="community/json"
+  syntaxElementTypeHolderClass="JsonSyntaxElementTypes"
+  elementTypeConverterFactoryClass="JsonElementTypeConverterFactory"
 
   psiImplUtilClass = 'com.intellij.json.psi.impl.JsonPsiImplUtils'
   tokenTypeClass = 'com.intellij.json.JsonTokenType'
