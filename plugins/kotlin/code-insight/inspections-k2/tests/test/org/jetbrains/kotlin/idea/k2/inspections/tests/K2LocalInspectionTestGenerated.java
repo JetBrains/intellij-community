@@ -15700,6 +15700,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/contextParam.kt");
         }
 
+        @TestMetadata("contextParamInFunctionalTypePartial.kt")
+        public void testContextParamInFunctionalTypePartial() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/contextParamInFunctionalTypePartial.kt");
+        }
+
         @TestMetadata("contextParamPartial.kt")
         public void testContextParamPartial() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/contextParamPartial.kt");
