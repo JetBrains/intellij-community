@@ -125,7 +125,7 @@ class MemoryUsageConfigurable : BoundSearchableConfigurable(
   }
 
   private fun isInDebugMode(): Boolean {
-    return VMOptions.canWriteOptions()
+    return !VMOptions.canWriteOptions()
   }
 
   companion object {
