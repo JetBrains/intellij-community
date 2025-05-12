@@ -9,5 +9,4 @@ fun foo(c: C) {
     c.<caret>
 }
 
-// IGNORE_K2
 // EXIST: { lookupString: "[]", itemText: "[]", tailText: "(p: Int) for C in p", typeText: "Int", attributes: "bold", icon: "Function"}

@@ -1431,9 +1431,19 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/getOperator/Extension.kt");
             }
 
+            @TestMetadata("NotForImplicitReceiver.kt")
+            public void testNotForImplicitReceiver() throws Exception {
+                runTest("../testData/basic/common/getOperator/NotForImplicitReceiver.kt");
+            }
+
             @TestMetadata("NotForSafeCall.kt")
             public void testNotForSafeCall() throws Exception {
                 runTest("../testData/basic/common/getOperator/NotForSafeCall.kt");
+            }
+
+            @TestMetadata("PreferOperator.kt")
+            public void testPreferOperator() throws Exception {
+                runTest("../testData/basic/common/getOperator/PreferOperator.kt");
             }
 
             @TestMetadata("Simple.kt")

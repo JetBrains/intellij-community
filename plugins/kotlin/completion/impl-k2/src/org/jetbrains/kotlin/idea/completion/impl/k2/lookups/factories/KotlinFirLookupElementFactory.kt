@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.idea.completion.lookups.factories
 
+import com.intellij.codeInsight.completion.CompositeDeclarativeInsertHandler
+import com.intellij.codeInsight.completion.DeclarativeInsertHandler
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import org.jetbrains.annotations.ApiStatus
@@ -13,12 +15,14 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.TypeLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.detectCallableOptions
+import org.jetbrains.kotlin.idea.completion.priority
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
@@ -74,6 +78,28 @@ object KotlinFirLookupElementFactory {
     ): LookupElementBuilder = when (signature) {
         is KaFunctionSignature<*> -> FunctionLookupElementFactory.createLookup(name, signature, options, expectedType)
         is KaVariableSignature<*> -> VariableLookupElementFactory.createLookup(signature, options)
+    }
+
+    context(KaSession)
+    fun createGetOperatorLookupElement(
+        signature: KaCallableSignature<*>,
+        options: CallableInsertionOptions,
+        expectedType: KaType? = null,
+    ): LookupElementBuilder {
+        val brackets = "[]"
+        // Removes the dot and places the caret inside the brackets
+        val insertHandler = CompositeDeclarativeInsertHandler.withUniversalHandler(
+            "\n\t",
+            DeclarativeInsertHandler.Builder()
+                .addOperation(offsetFrom = -1 - brackets.length, offsetTo = -brackets.length, newText = "")
+                .withOffsetToPutCaret(-1)
+                .withPopupOptions(DeclarativeInsertHandler.PopupOptions.ParameterInfo)
+                .build()
+        )
+        val indexingLookupElement = createCallableLookupElement(Name.identifier(brackets), signature, options, expectedType)
+            .withInsertHandler(insertHandler)
+        indexingLookupElement.priority = ItemPriority.GET_OPERATOR
+        return indexingLookupElement
     }
 
     context(KaSession)

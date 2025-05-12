@@ -2,4 +2,6 @@ fun some(list: List<String>) {
     list.<caret>
 }
 
-// ELEMENT: "[]"
+// WITH_ORDER
+// EXIST: "[]"
+// EXIST: get

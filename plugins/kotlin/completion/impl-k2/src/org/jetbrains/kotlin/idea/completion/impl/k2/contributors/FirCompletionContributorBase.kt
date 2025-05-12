@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
@@ -41,6 +42,7 @@ import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.renderer.render
+import org.jetbrains.kotlin.util.OperatorNameConventions
 
 internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContext>(
     protected val parameters: KotlinFirCompletionParameters,
@@ -101,6 +103,19 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
                     signature = signature,
                     options = options,
                 )?.let { yield(it) }
+            }
+
+            if (namedSymbol is KaNamedFunctionSymbol &&
+                namedSymbol.isOperator &&
+                namedSymbol.name == OperatorNameConventions.GET &&
+                // Only offer the get operator after dot, not for safe access or implicit receivers
+                parameters.position.parent?.parent is KtDotQualifiedExpression
+            ) {
+                KotlinFirLookupElementFactory.createGetOperatorLookupElement(
+                    signature = signature,
+                    options = options,
+                    expectedType = context.expectedType
+                ).let { yield(it) }
             }
         }.map { builder ->
             if (presentableText == null) builder

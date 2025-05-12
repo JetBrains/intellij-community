@@ -1505,9 +1505,19 @@ public abstract class JsKotlinKmpCompletionTestGenerated extends AbstractKotlinK
             runTest("../../completion/testData/basic/common/getOperator/Extension.kt");
         }
 
+        @TestMetadata("NotForImplicitReceiver.kt")
+        public void testNotForImplicitReceiver() throws Exception {
+            runTest("../../completion/testData/basic/common/getOperator/NotForImplicitReceiver.kt");
+        }
+
         @TestMetadata("NotForSafeCall.kt")
         public void testNotForSafeCall() throws Exception {
             runTest("../../completion/testData/basic/common/getOperator/NotForSafeCall.kt");
+        }
+
+        @TestMetadata("PreferOperator.kt")
+        public void testPreferOperator() throws Exception {
+            runTest("../../completion/testData/basic/common/getOperator/PreferOperator.kt");
         }
 
         @TestMetadata("Simple.kt")
