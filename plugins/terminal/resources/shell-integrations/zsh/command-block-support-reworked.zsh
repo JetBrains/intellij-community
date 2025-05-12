@@ -41,6 +41,9 @@ __jetbrains_intellij_command_preexec() {
 }
 
 __jetbrains_intellij_command_precmd() {
+  # Should be always the first line in the function!
+  builtin local LAST_EXIT_CODE="$?"
+
   if [[ -z "${__jetbrains_intellij_initialized-}" ]]; then
     # As `precmd` is executed before each prompt, for the first time it is called after
     # all rc files have been processed and before the first prompt is displayed.
@@ -50,7 +53,7 @@ __jetbrains_intellij_command_precmd() {
     __jetbrains_intellij_update_prompt
     builtin return
   fi
-  builtin local LAST_EXIT_CODE="$?"
+
   builtin printf '\e]1341;command_finished;exit_code=%s\a' "$LAST_EXIT_CODE"
 
   if [ -n "$__jetbrains_intellij_command_running" ]; then
