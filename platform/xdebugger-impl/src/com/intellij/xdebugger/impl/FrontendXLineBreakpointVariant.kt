@@ -51,7 +51,8 @@ fun XLineBreakpointInstallationInfo.toRequest(hasOneBreakpoint: Boolean): XLineB
   isTemporary,
   isConditional,
   condition,
-  willRemoveBreakpointIfSingleVariant = canRemoveBreakpoint() && hasOneBreakpoint,
+  canRemoveBreakpoint(),
+  hasOneBreakpoint = hasOneBreakpoint,
 )
 
 internal class VariantChoiceData(
@@ -109,6 +110,9 @@ internal fun computeBreakpointProxy(
             responseWithVariantChoice(project, result, response.selectionCallback, i)
           }
           onVariantsChoice(choiceData)
+        }
+        XLineBreakpointIgnoreResponse -> {
+          result.complete(null)
         }
       }
     }

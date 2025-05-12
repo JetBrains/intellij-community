@@ -91,6 +91,10 @@ object XRemoveBreakpointResponse : XToggleLineBreakpointResponse
 
 @ApiStatus.Internal
 @Serializable
+object XLineBreakpointIgnoreResponse : XToggleLineBreakpointResponse
+
+@ApiStatus.Internal
+@Serializable
 data class XLineBreakpointMultipleVariantResponse(
   val variants: List<XLineBreakpointVariantDto>,
   @Serializable(with = SendChannelSerializer::class) val selectionCallback: SendChannel<VariantSelectedResponse>,
@@ -104,7 +108,8 @@ data class XLineBreakpointInstallationRequest(
   val isTemporary: Boolean,
   val isConditional: Boolean,
   val condition: String?,
-  val willRemoveBreakpointIfSingleVariant: Boolean,
+  val canRemoveBreakpoint: Boolean,
+  val hasOneBreakpoint: Boolean,
 )
 
 

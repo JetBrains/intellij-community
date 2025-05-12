@@ -118,8 +118,11 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     if (variants.isEmpty()) return XLineBreakpointInstalledResponse(null)
     val singleVariant = variants.singleOrNull()
     if (singleVariant != null) {
-      if (request.willRemoveBreakpointIfSingleVariant) {
+      if (request.hasOneBreakpoint && request.canRemoveBreakpoint) {
         return XRemoveBreakpointResponse
+      }
+      if (request.hasOneBreakpoint) {
+        return XLineBreakpointIgnoreResponse
       }
       val breakpoint = createBreakpointByVariant(project, singleVariant, position, request)
       return XLineBreakpointInstalledResponse(breakpoint?.toRpc())
