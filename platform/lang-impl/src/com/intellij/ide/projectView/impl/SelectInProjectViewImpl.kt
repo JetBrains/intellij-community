@@ -6,7 +6,6 @@ import com.intellij.ide.*
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.scopeView.ScopeViewPane
 import com.intellij.openapi.application.*
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.debug
@@ -26,6 +25,7 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.SlowOperations
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Supplier
@@ -33,8 +33,8 @@ import java.util.function.Supplier
 @VisibleForTesting
 fun isSelectInProjectViewServiceBusy(project: Project):Boolean = project.serviceOrNull<SelectInProjectViewImpl>()?.isBusy == true
 
-@Service(Service.Level.PROJECT)
-internal class SelectInProjectViewImpl(
+@ApiStatus.Internal
+open class SelectInProjectViewImpl(
   private val project: Project,
   private val coroutineScope: CoroutineScope,
 ) {
@@ -341,6 +341,9 @@ internal class SelectInProjectViewImpl(
     }
   }
 
+  open fun selectCB(pane: AbstractProjectViewPane, element: Any?, file: VirtualFile?, requestFocus: Boolean): ActionCallback {
+    return pane.selectWithCallback(element, file, requestFocus)
+  }
 }
 
 private suspend fun SelectInContext.selectInCurrentTarget(project: Project, requestFocus: Boolean) {

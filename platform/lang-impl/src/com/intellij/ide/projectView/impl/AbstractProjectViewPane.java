@@ -234,6 +234,17 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
 
   public abstract void select(Object element, VirtualFile file, boolean requestFocus);
 
+  @NotNull
+  public final ActionCallback selectWithCallback(@Nullable Object element, @Nullable VirtualFile file, boolean requestFocus) {
+    if (this instanceof ProjectViewPaneWithAsyncSelect async) {
+      return async.selectCB(element, file, requestFocus);
+    }
+    else {
+      select(element, file, requestFocus);
+      return ActionCallback.DONE;
+    }
+  }
+
   public void selectModule(@NotNull Module module, final boolean requestFocus) {
     doSelectModuleOrGroup(module, requestFocus);
   }

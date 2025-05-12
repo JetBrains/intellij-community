@@ -155,6 +155,9 @@
                     serviceImplementation="com.intellij.codeInsight.lookup.impl.GuestLookupManager"
                     client="remote"/>
 
+    <projectService serviceImplementation="com.intellij.ide.projectView.impl.SelectInProjectViewImpl"
+                    client="local"/>
+
     <applicationService serviceInterface="com.intellij.psi.meta.MetaDataRegistrar"
                         serviceImplementation="com.intellij.psi.impl.meta.MetaRegistry"/>
 

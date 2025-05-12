@@ -10136,6 +10136,7 @@ a:com.intellij.ide.projectView.impl.AbstractProjectViewPane
 - a:select(java.lang.Object,com.intellij.openapi.vfs.VirtualFile,Z):V
 - selectModule(com.intellij.openapi.module.Module,Z):V
 - selectModuleGroup(com.intellij.ide.projectView.impl.ModuleGroup,Z):V
+- f:selectWithCallback(java.lang.Object,com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.openapi.util.ActionCallback
 - f:setSubId(java.lang.String):V
 - supportsManualOrder():Z
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
