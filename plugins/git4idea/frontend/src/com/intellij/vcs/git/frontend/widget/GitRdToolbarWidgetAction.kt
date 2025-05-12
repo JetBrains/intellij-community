@@ -59,7 +59,12 @@ internal class GitRdToolbarWidgetAction : ExpandableComboAction(), DumbAware {
   }
 
   private fun doUpdate(e: AnActionEvent, project: Project) {
-    val state = GitWidgetStateHolder.getInstance(project).currentState
+    val state = if (GitRepositoriesFrontendHolder.getInstance(project).initialized) {
+      GitWidgetStateHolder.getInstance(project).currentState
+    } else {
+      GitWidgetState.DoNotShow
+    }
+
     if (state is GitWidgetState.OnRepository) {
       GitWidgetPlaceholder.updatePlaceholder(project, state.presentationData.text)
     }
