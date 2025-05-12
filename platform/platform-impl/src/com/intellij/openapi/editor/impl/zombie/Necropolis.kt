@@ -8,6 +8,7 @@ import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -21,7 +22,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.util.application
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
@@ -69,8 +70,8 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
     highlighterReady: suspend () -> Unit,
   ) {
     require(project == this.project)
-    if (!project.isDisposed && !project.isDefault && file is VirtualFileWithId) {
-      val fileId = file.id
+    if (!project.isDisposed && !project.isDefault) {
+      val fileId = application.serviceAsync<ZombieOriginRecipeBook>().getIdForFile(file) ?: return
       val (modStamp, documentContent) = readActionBlocking {
         // get consistent modStamp with docContent under RA
         document.modificationStamp to document.immutableCharSequence
@@ -100,10 +101,11 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
   }
 
   private fun subscribeEditorClosed(necromancers: List<Necromancer<Zombie>>) {
+    val originRecipeBook = application.service<ZombieOriginRecipeBook>()
     EditorFactory.getInstance().addEditorFactoryListener(
       object : EditorFactoryListener {
         override fun editorReleased(event: EditorFactoryEvent) {
-          val recipe = createTurningRecipe(event)
+          val recipe = createTurningRecipe(event, originRecipeBook)
           if (recipe != null) {
             //maybe readaction
             WriteIntentReadAction.run {
@@ -116,14 +118,13 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
     )
   }
 
-  private fun createTurningRecipe(event: EditorFactoryEvent): TurningRecipe? {
+  private fun createTurningRecipe(event: EditorFactoryEvent, recipeBook: ZombieOriginRecipeBook): TurningRecipe? {
     val editor = event.editor
     if (editor.editorKind == EditorKind.MAIN_EDITOR && editor.project == project) {
       val document = editor.document
-      val file = FileDocumentManager.getInstance().getFile(document)
-      if (file is VirtualFileWithId) {
-        return TurningRecipe(project, file.id, file, document, document.modificationStamp, editor)
-      }
+      val file = FileDocumentManager.getInstance().getFile(document) ?: return null
+      val fileId = recipeBook.getIdForFile(file) ?: return null
+      return TurningRecipe(project, fileId, file, document, document.modificationStamp, editor)
     }
     return null
   }
