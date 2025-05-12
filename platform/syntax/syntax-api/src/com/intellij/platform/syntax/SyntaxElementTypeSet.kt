@@ -14,17 +14,20 @@ fun Collection<SyntaxElementType>.asSyntaxElementTypeSet(): SyntaxElementTypeSet
 
   if (this.isEmpty()) return emptySet
 
-  val indexes = IntArrayList(size)
-  for (type in this) {
+  val distinctElementTypes = this as? Set ?: this.toSet()
+
+  val indexes = IntArrayList(distinctElementTypes.size)
+  for (type in distinctElementTypes) {
     indexes.add(type.index)
   }
+
   val bitSet = BitSet(indexes)
-  return SyntaxElementTypeSet(bitSet, this.toTypedArray())
+  return SyntaxElementTypeSet(bitSet, distinctElementTypes.toTypedArray())
 }
 
 @ApiStatus.Experimental
 fun syntaxElementTypeSetOf(vararg tokens: SyntaxElementType): SyntaxElementTypeSet =
-  listOf(*tokens).asSyntaxElementTypeSet()
+  setOf(*tokens).asSyntaxElementTypeSet()
 
 private val emptySet = SyntaxElementTypeSet(BitSet(IntArrayList()), emptyArray())
 
@@ -55,9 +58,14 @@ class SyntaxElementTypeSet internal constructor(
   override val size: Int
     get() = tokens.size
 
-  operator fun plus(other: Iterable<SyntaxElementType>): SyntaxElementTypeSet =
-    (listOf(*tokens) + other).asSyntaxElementTypeSet()
+  operator fun plus(other: Iterable<SyntaxElementType>): SyntaxElementTypeSet {
+    val newSet = tokens.toSet() + other
+    if (newSet.size == size) return this // no new elements
+    return newSet.asSyntaxElementTypeSet()
+  }
 
-  operator fun plus(other: SyntaxElementType): SyntaxElementTypeSet =
-    (listOf(*tokens) + other).asSyntaxElementTypeSet()
+  operator fun plus(other: SyntaxElementType): SyntaxElementTypeSet {
+    if (other in this) return this
+    return setOf(*tokens, other).asSyntaxElementTypeSet()
+  }
 }
