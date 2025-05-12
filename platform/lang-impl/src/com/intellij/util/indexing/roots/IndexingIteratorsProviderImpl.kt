@@ -61,7 +61,7 @@ class IndexingIteratorsProviderImpl(
     val index = WorkspaceFileIndex.getInstance(project) as WorkspaceFileIndexImpl
     val storage = model.currentSnapshot
     val virtualFileUrlManager = model.getVirtualFileUrlManager()
-    val moduleDependencyIndex = ModuleDependencyIndex.getInstance(project)
+    val moduleDependencyIndex by lazy { ModuleDependencyIndex.getInstance(project) }
 
     val iterators = ArrayList<IndexableFilesIterator>()
     val libraryOrigins = HashSet<LibraryOrigin>()
