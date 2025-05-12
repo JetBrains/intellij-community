@@ -24,6 +24,7 @@
     <module name="intellij.platform.diagnostic.freezes"/>
     <module name="intellij.settingsSync.core"/>
     <module name="intellij.emojipicker"/>
+    <module name="intellij.platform.ide.impl.wsl"/>
   </content>
 
   <xi:include href="/META-INF/grid-core-modules.xml"/>

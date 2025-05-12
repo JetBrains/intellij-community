@@ -71,7 +71,9 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isLoadedFromCacheButHasNoModules
 import com.intellij.platform.attachToProjectAsync
+import com.intellij.platform.core.nio.fs.MultiRoutingFileSystem
 import com.intellij.platform.diagnostic.telemetry.impl.span
+ import com.intellij.platform.eel.provider.EelInitialization
 import com.intellij.platform.project.ProjectEntitiesStorage
 import com.intellij.platform.workspace.jps.JpsMetrics
 import com.intellij.projectImport.ProjectAttachProcessor
@@ -101,6 +103,7 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.coroutineContext
+import kotlin.io.path.Path
 import kotlin.system.measureTimeMillis
 
 @Internal
@@ -540,6 +543,12 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   final override suspend fun openProjectAsync(projectStoreBaseDir: Path, options: OpenProjectTask): Project? {
+    if (projectStoreBaseDir.fileSystem.javaClass.name == MultiRoutingFileSystem::javaClass.name) {
+      span("EelInitialization.runEelInitialization") {
+        EelInitialization.runEelInitialization(projectStoreBaseDir.toString())
+      }
+    }
+
     jpsMetrics.startNewSpan("project.opening", JpsMetrics.jpsSyncSpanName)
 
     if (LOG.isDebugEnabled && !ApplicationManager.getApplication().isUnitTestMode) {

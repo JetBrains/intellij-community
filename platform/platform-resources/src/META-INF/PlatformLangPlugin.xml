@@ -7,6 +7,7 @@
   <module value="com.intellij.modules.lang"/>
   <module value="com.intellij.modules.xdebugger"/>
   <module value="com.intellij.modules.externalSystem"/>
+  <module value="com.intellij.platform.ide.impl.wsl"/>
 
   <xi:include href="PlatformLangComponents.xml"/>
   <xi:include href="/idea/PriorityEditorLangActions.xml"/>

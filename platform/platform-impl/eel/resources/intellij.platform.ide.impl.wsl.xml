@@ -1,4 +1,7 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
+    <eelProvider implementation="com.intellij.platform.ide.impl.wsl.WslEelProvider" os="windows"/>
+    <applicationService serviceInterface="com.intellij.execution.wsl.WslIjentManager"
+                        serviceImplementation="com.intellij.platform.ide.impl.wsl.ProductionWslIjentManager"/>
   </extensions>
 </idea-plugin>
