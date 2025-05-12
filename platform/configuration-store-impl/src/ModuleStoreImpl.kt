@@ -22,9 +22,7 @@ import kotlin.io.path.invariantSeparatorsPathString
 
 private val MODULE_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(StoragePathMacros.MODULE_FILE, false)
 
-internal class ModuleStoreImpl(module: Module) : ComponentStoreImpl(), ModuleStore {
-  private val pathMacroManager = PathMacroManager.getInstance(module)
-
+internal class ModuleStoreImpl(module: Module, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl(), ModuleStore {
   override val project: Project = module.project
 
   override val storageManager: StateStorageManagerImpl = ModuleStateStorageManager(TrackingPathMacroSubstitutorImpl(pathMacroManager), module)

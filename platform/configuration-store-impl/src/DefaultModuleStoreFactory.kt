@@ -10,12 +10,13 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class DefaultModuleStoreFactory : ModuleStoreFactory {
   override fun createModuleStore(module: Module): IComponentStore {
-    return createDefaultStore(module)
+    val pathMacroManager = ModulePathMacroManager(module)
+    return createDefaultStore(module, pathMacroManager)
   }
 
   companion object {
-    fun createDefaultStore(module: Module): IComponentStore {
-      return ModuleStoreImpl(module)
+    fun createDefaultStore(module: Module, pathMacroManager: PathMacroManager): IComponentStore {
+      return ModuleStoreImpl(module, pathMacroManager)
     }
 
     fun createNonPersistentStore(module: Module): IComponentStore {

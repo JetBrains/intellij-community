@@ -118,6 +118,7 @@ c:com.intellij.openapi.components.PathMacroManager
 - expandPaths(org.jdom.Element):V
 - getExpandMacroMap():com.intellij.openapi.components.ExpandMacroToPathMap
 - s:getInstance(com.intellij.openapi.components.ComponentManager):com.intellij.openapi.components.PathMacroManager
+- s:getInstance(com.intellij.openapi.module.Module):com.intellij.openapi.components.PathMacroManager
 - getMacroFilter():com.intellij.openapi.application.PathMacroFilter
 - f:getReplacePathMap():com.intellij.application.options.ReplacePathToMacroMap
 - ps:pathsEqual(java.lang.String,java.lang.String):Z
