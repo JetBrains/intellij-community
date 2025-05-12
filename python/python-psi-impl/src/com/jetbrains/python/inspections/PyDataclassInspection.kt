@@ -18,8 +18,8 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.ParamHelper
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.impl.PyEvaluator
+import com.jetbrains.python.psi.impl.mapArguments
 import com.jetbrains.python.psi.types.*
 import one.util.streamex.StreamEx
 
@@ -192,7 +192,7 @@ class PyDataclassInspection : PyInspection() {
         }
 
         val callableType = callees.first()
-        val mapping = PyCallExpressionHelper.mapArguments(node, callableType, myTypeEvalContext)
+        val mapping = node.mapArguments(callableType, myTypeEvalContext)
 
         val dataclassParameter = callableType.getParameters(myTypeEvalContext)?.firstOrNull()
         val dataclassArgument = mapping.mappedParameters.entries.firstOrNull { it.value == dataclassParameter }?.key
@@ -419,7 +419,7 @@ class PyDataclassInspection : PyInspection() {
           .multiResolveCallee(resolveContext)
           .filter { it.callable?.qualifiedName == Dataclasses.DATACLASSES_FIELD }
           .any {
-            PyCallExpressionHelper.mapArguments(value, it, myTypeEvalContext).mappedParameters.values.any { p ->
+            value.mapArguments(it, myTypeEvalContext).mappedParameters.values.any { p ->
               p.name == "default_factory"
             }
           }

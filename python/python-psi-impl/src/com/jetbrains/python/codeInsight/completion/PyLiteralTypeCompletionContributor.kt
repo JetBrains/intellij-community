@@ -10,8 +10,8 @@ import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.psi.*
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.impl.PyPsiUtils
+import com.jetbrains.python.psi.impl.getMappedParameters
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyType
@@ -29,7 +29,7 @@ private class PyLiteralTypeCompletionProvider : CompletionProvider<CompletionPar
     val position = parameters.position.parent as? PyExpression ?: return
     val typeEvalContext = TypeEvalContext.codeCompletion(position.project, position.containingFile)
 
-    val mappedParameters = PyCallExpressionHelper.getMappedParameters(position, PyResolveContext.defaultContext(typeEvalContext))
+    val mappedParameters = position.getMappedParameters(PyResolveContext.defaultContext(typeEvalContext))
     if (mappedParameters != null) {
       val types = mappedParameters.mapNotNull { it.getArgumentType(typeEvalContext) }
       addToResult(position, types, result)
