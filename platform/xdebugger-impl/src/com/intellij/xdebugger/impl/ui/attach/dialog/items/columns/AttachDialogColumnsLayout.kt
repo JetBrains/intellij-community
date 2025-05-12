@@ -1,19 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.attach.dialog.items.columns
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessElementsFilters
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.cells.AttachTableCell
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.nodes.AttachDialogProcessNode
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 abstract class AttachDialogColumnsLayout {
 
-  abstract fun getColumnInfos(): List<AttachDialogColumnInfo>
+  internal abstract fun getColumnInfos(): List<AttachDialogColumnInfo>
 
-  @ApiStatus.Internal
-  abstract fun createCell(columnIndex: Int, node: AttachDialogProcessNode, filters: AttachToProcessElementsFilters, isInsideTree: Boolean): AttachTableCell
+  internal abstract fun createCell(columnIndex: Int, node: AttachDialogProcessNode, filters: AttachToProcessElementsFilters, isInsideTree: Boolean): AttachTableCell
 
   fun getColumnsCount(): Int = getColumnInfos().size
 
@@ -45,9 +43,8 @@ abstract class AttachDialogColumnsLayout {
   private fun getDefaultColumnWidth(columnKey: String) = getColumnInfos().first { it.columnKey == columnKey }.defaultColumnWidth
 }
 
-@ApiStatus.Internal
-data class AttachDialogColumnInfo(
+internal data class AttachDialogColumnInfo(
   val columnKey: String,
   val columnClass: Class<*>,
-  @Nls val columnHeader: String,
+  @param:Nls val columnHeader: String,
   val defaultColumnWidth: Int)

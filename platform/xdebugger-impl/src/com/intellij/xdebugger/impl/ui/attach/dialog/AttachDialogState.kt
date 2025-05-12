@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.attach.dialog
 
 import com.intellij.ide.util.PropertiesComponent
@@ -26,13 +26,13 @@ class AttachDialogState(val dialogDisposable: Disposable, val dataContext: DataC
       get() = JBUI.scale(24)
   }
 
-  val searchFieldValue = AtomicLazyProperty { "" }
-  val selectedDebuggerItem = AtomicLazyProperty<AttachDialogProcessItem?> { null }
-  val currentList = AtomicLazyProperty<AttachToProcessItemsListBase?> { null }
-  val itemWasDoubleClicked = AtomicLazyProperty { false }
-  val selectedDebuggersFilter = AtomicLazyProperty<AttachDialogDebuggersFilter> { AttachDialogAllDebuggersFilter }
+  internal val searchFieldValue = AtomicLazyProperty { "" }
+  internal val selectedDebuggerItem = AtomicLazyProperty<AttachDialogProcessItem?> { null }
+  internal val currentList = AtomicLazyProperty<AttachToProcessItemsListBase?> { null }
+  internal val itemWasDoubleClicked = AtomicLazyProperty { false }
+  internal val selectedDebuggersFilter = AtomicLazyProperty<AttachDialogDebuggersFilter> { AttachDialogAllDebuggersFilter }
 
-  val selectedViewType = AtomicLazyProperty { getDefaultView() }
+  internal val selectedViewType = AtomicLazyProperty { getDefaultView() }
 
   init {
     selectedViewType.afterChange {

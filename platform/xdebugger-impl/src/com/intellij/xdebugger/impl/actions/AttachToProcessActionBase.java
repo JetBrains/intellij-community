@@ -232,7 +232,9 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
     return doCollectAttachProcessItems(project, host, getProcessInfos(host), indicator, getProvidersApplicableForHost(host));
   }
 
-  static @NotNull List<AttachToProcessItem> doCollectAttachProcessItems(final @NotNull Project project,
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @NotNull List<AttachToProcessItem> doCollectAttachProcessItems(final @NotNull Project project,
                                                                         @NotNull XAttachHost host,
                                                                         @NotNull List<? extends ProcessInfo> processInfos,
                                                                         @NotNull ProgressIndicator indicator,

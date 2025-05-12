@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.attach.dialog.items.columns
 
 import com.intellij.util.ui.JBUI
@@ -6,10 +6,8 @@ import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessElementsFilters
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.cells.*
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.nodes.AttachDialogProcessNode
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-class AttachDialogDefaultColumnsLayout : AttachDialogColumnsLayout() {
+internal class AttachDialogDefaultColumnsLayout : AttachDialogColumnsLayout() {
 
   companion object {
     const val EXECUTABLE_CELL_KEY = "AttachDialogExecutable"
