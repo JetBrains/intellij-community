@@ -32,8 +32,11 @@
 - containsAll(java.util.Collection):Z
 - f:containsNullable(com.intellij.platform.syntax.SyntaxElementType):Z
 - getSize():I
+- f:intersect(com.intellij.platform.syntax.SyntaxElementTypeSet):com.intellij.platform.syntax.SyntaxElementTypeSet
 - isEmpty():Z
 - iterator():java.util.Iterator
+- f:minus(com.intellij.platform.syntax.SyntaxElementType):com.intellij.platform.syntax.SyntaxElementTypeSet
+- f:minus(java.lang.Iterable):com.intellij.platform.syntax.SyntaxElementTypeSet
 - f:plus(com.intellij.platform.syntax.SyntaxElementType):com.intellij.platform.syntax.SyntaxElementTypeSet
 - f:plus(java.lang.Iterable):com.intellij.platform.syntax.SyntaxElementTypeSet
 - remove(java.lang.Object):Z

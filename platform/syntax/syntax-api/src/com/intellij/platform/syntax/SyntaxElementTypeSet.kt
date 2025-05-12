@@ -68,4 +68,21 @@ class SyntaxElementTypeSet internal constructor(
     if (other in this) return this
     return setOf(*tokens, other).asSyntaxElementTypeSet()
   }
+
+  operator fun minus(other: Iterable<SyntaxElementType>): SyntaxElementTypeSet {
+    val newSet = tokens.toSet() - other.toSet()
+    if (newSet.size == size) return this // no removed elements
+    return newSet.asSyntaxElementTypeSet()
+  }
+
+  operator fun minus(other: SyntaxElementType): SyntaxElementTypeSet {
+    if (other !in this) return this
+    return (setOf(*tokens) - other).asSyntaxElementTypeSet()
+  }
+
+  fun intersect(other: SyntaxElementTypeSet): SyntaxElementTypeSet {
+    val newSet = tokens.toSet().intersect(other)
+    if (newSet.size == size) return this // no removed elements
+    return newSet.asSyntaxElementTypeSet()
+  }
 }
