@@ -30,6 +30,8 @@ object ZeroCodeStdoutTransformer : ProcessOutputTransformer<String> {
 /**
  * Service is a thin wrapper over [EelApi] to execute python tools on local or remote Eel.
  * to obtain service, use function with same name.
+ *
+ * For all APIs but full interactive mode (which is a very low-level custom mode) stdout/stderr is reported as a progress.
  */
 @ApiStatus.Internal
 interface ExecService {

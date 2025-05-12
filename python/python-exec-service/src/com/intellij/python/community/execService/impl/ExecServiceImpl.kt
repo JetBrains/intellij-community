@@ -10,7 +10,6 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.EelPathUtils
-import com.intellij.platform.eel.provider.utils.awaitProcessResult
 import com.intellij.python.community.execService.*
 import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.Result
@@ -63,7 +62,7 @@ internal object ExecServiceImpl : ExecService {
     val eelProcess = executableProcess.run().getOr { return it }
 
     val eelProcessExecutionResult = try {
-      withTimeout(options.timeout) { eelProcess.awaitProcessResult() }
+      withTimeout(options.timeout) { eelProcess.awaitWithReporting() }
     }
     catch (_: TimeoutCancellationException) {
       return executableProcess.killProcessAndFailAsTimeout(eelProcess, options.timeout)

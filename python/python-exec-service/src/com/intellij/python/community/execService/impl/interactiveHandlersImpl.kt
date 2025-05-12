@@ -3,19 +3,21 @@ package com.intellij.python.community.execService.impl
 
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
-import com.intellij.platform.eel.provider.utils.awaitProcessResult
 import com.intellij.python.community.execService.CustomErrorMessage
 import com.intellij.python.community.execService.ProcessInteractiveHandler
 import com.intellij.python.community.execService.ProcessSemiInteractiveFun
 import com.jetbrains.python.Result
 import com.jetbrains.python.mapError
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 
 internal class ProcessSemiInteractiveHandlerImpl<T>(private val code: ProcessSemiInteractiveFun<T>) : ProcessInteractiveHandler<T> {
-  override suspend fun getResultFromProcess(process: EelProcess): Result<T, Pair<EelProcessExecutionResult, CustomErrorMessage?>> {
-    val result = code(process.stdin, process.exitCode)
-    val processOutput = process.awaitProcessResult()
-    return result.mapError { customErrorMessage ->
-      Pair(processOutput, customErrorMessage)
+  override suspend fun getResultFromProcess(process: EelProcess): Result<T, Pair<EelProcessExecutionResult, CustomErrorMessage?>> =
+    coroutineScope {
+      val processOutput = async { process.awaitWithReporting() }
+      val result = code(process.stdin, process.exitCode)
+      return@coroutineScope result.mapError { customErrorMessage ->
+        Pair(processOutput.await(), customErrorMessage)
+      }
     }
-  }
 }

@@ -11,6 +11,7 @@ import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelHolder
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelSource
 import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplicationWithEel
+import com.intellij.platform.util.progress.createProgressPipe
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.ProcessInteractiveHandler
 import com.intellij.python.community.execService.WhatToExec
@@ -21,13 +22,17 @@ import com.jetbrains.python.getOrThrow
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import org.hamcrest.CoreMatchers
 import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.params.ParameterizedTest
 import org.junitpioneer.jupiter.cartesian.CartesianTest
+import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * How to use [ExecService].
@@ -156,5 +161,43 @@ class ExecServiceShowCaseTest {
         assertEquals("foo", err.args[0], "Wrong args reported")
       }
     }
+  }
+
+  // Process reports something to stdout, we show it as a progress
+  @ParameterizedTest
+  @EelSource
+  fun testProgress(eelHolder: EelHolder): Unit = timeoutRunBlocking(10.minutes) {
+    val eel = eelHolder.eel
+    val shell = eel.exec.getShell().first
+    val reportPipe = createProgressPipe()
+
+    val progress = CopyOnWriteArrayList<String>()
+    val progressJob = launch {
+      reportPipe.progressUpdates().collect {
+        it.details?.let { text ->
+          progress.add(text)
+        }
+      }
+    }
+
+    val text = "Once there was a captain brave".split(" ").toTypedArray()
+
+    reportPipe.collectProgressUpdates {
+      ExecService().executeInteractive(WhatToExec.Binary(shell.asNioPath()), args = emptyList(), processInteractiveHandler = processSemiInteractiveHandler<Unit> { stdin, exitCode ->
+        for (string in text) {
+          stdin.sendWholeText("echo $string\n").getOrThrow()
+          delay(500)
+        }
+        stdin.sendWholeText("exit\n").getOrThrow()
+        Result.success(Unit)
+      }).getOrThrow()
+    }
+    withTimeout(30.seconds) {
+      while (progress.size < text.size) {
+        delay(1.seconds)
+      }
+    }
+    progressJob.cancel()
+    assertThat("Progress lost", progress, Matchers.containsInRelativeOrder(*text))
   }
 }
