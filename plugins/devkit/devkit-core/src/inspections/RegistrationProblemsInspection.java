@@ -15,10 +15,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.util.ActionType;
 import org.jetbrains.uast.UClass;
@@ -27,8 +24,8 @@ import java.util.Set;
 
 @ApiStatus.Internal
 public final class RegistrationProblemsInspection extends DevKitUastInspectionBase {
-
-  RegistrationProblemsInspection() {
+  @VisibleForTesting
+  public RegistrationProblemsInspection() {
     super(UClass.class);
   }
 

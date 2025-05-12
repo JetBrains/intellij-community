@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.commandLine;
 
 import org.jetbrains.idea.svn.api.Url;
@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 /**
  * Handles server connectivity issues
  */
-public class ServerUnavailableCallback extends AuthCallbackCase {
+public final class ServerUnavailableCallback extends AuthCallbackCase {
   public ServerUnavailableCallback(AuthenticationService service, Url url) {super(service, url);}
 
   // SVN 1.6 message
@@ -36,7 +36,7 @@ public class ServerUnavailableCallback extends AuthCallbackCase {
   }
 
   @Override
-  boolean getCredentials(String errText) throws SvnBindException {
+  public boolean getCredentials(String errText) throws SvnBindException {
     Matcher matcher = PATTERN.matcher(errText);
     boolean matches = matcher.matches();
     assert matches;

@@ -1,8 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal;
 
-import com.intellij.execution.process.LocalPtyOptions;
 import com.intellij.execution.process.LocalProcessService;
+import com.intellij.execution.process.LocalPtyOptions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
@@ -15,6 +15,7 @@ import com.pty4j.PtyProcess;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector;
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
 import org.jetbrains.plugins.terminal.runner.LocalOptionsConfigurer;
@@ -221,7 +222,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return command;
   }
 
-  @NotNull ShellStartupOptions injectShellIntegration(@NotNull List<String> shellCommand,
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public @NotNull ShellStartupOptions injectShellIntegration(@NotNull List<String> shellCommand,
                                                              @NotNull Map<String, String> envs) {
     ShellStartupOptions options = new ShellStartupOptions.Builder().shellCommand(shellCommand).envVariables(envs).build();
     return LocalShellIntegrationInjector.injectShellIntegration(options, isGenOneTerminalEnabled(), isGenTwoTerminalEnabled());

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
@@ -411,7 +411,8 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
 
   @TestOnly
   @NotNull
-  VcsLogModifiableIndex getModifiableIndex() {
+  @ApiStatus.Internal
+  public VcsLogModifiableIndex getModifiableIndex() {
     return myIndex;
   }
 
@@ -419,7 +420,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     CREATED, INITIALIZED, DISPOSED
   }
 
-  private class MyVcsLogUserResolver extends VcsLogUserResolverBase implements Disposable {
+  private final class MyVcsLogUserResolver extends VcsLogUserResolverBase implements Disposable {
     private final @NotNull DataPackChangeListener myListener = newDataPack -> {
       clearCache();
     };

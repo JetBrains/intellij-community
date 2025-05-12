@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -155,7 +155,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
   }
 
   @TestOnly
-  void indexNow(boolean full) {
+  public void indexNow(boolean full) {
     doScheduleIndex(full, request -> request.run(myProgress.createProgressIndicator(INDEXING)));
   }
 

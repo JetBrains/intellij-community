@@ -16,6 +16,7 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
 
@@ -27,7 +28,8 @@ public final class LinearBekGraphBuilder {
   private final @NotNull GraphLayout myGraphLayout;
   private final LinearBekGraph myLinearBekGraph;
 
-  LinearBekGraphBuilder(@NotNull LinearBekGraph bekGraph, @NotNull GraphLayout graphLayout) {
+  @VisibleForTesting
+  public LinearBekGraphBuilder(@NotNull LinearBekGraph bekGraph, @NotNull GraphLayout graphLayout) {
     myLinearBekGraph = bekGraph;
     myGraphLayout = graphLayout;
   }
@@ -305,7 +307,7 @@ public final class LinearBekGraphBuilder {
     }
   }
 
-  private static class GraphEdgeComparator implements Comparator<GraphEdge> {
+  private static final class GraphEdgeComparator implements Comparator<GraphEdge> {
     @Override
     public int compare(@NotNull GraphEdge e1, @NotNull GraphEdge e2) {
       Integer d1 = e1.getDownNodeIndex();
@@ -321,7 +323,7 @@ public final class LinearBekGraphBuilder {
     }
   }
 
-  private static class GraphEdgeToDownNode implements Function<GraphEdge, Integer> {
+  private static final class GraphEdgeToDownNode implements Function<GraphEdge, Integer> {
     @Override
     public Integer fun(GraphEdge graphEdge) {
       return graphEdge.getDownNodeIndex();

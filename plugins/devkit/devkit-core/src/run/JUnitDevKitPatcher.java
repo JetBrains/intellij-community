@@ -146,7 +146,7 @@ public final class JUnitDevKitPatcher extends JUnitPatcher {
     javaParameters.getClassPath().addFirst(libPath + "resources.jar");
   }
 
-  static void appendAddOpensWhenNeeded(@NotNull Project project, @NotNull Sdk jdk, @NotNull ParametersList vm) {
+  public static void appendAddOpensWhenNeeded(@NotNull Project project, @NotNull Sdk jdk, @NotNull ParametersList vm) {
     var sdkVersion = jdk.getSdkType() instanceof JavaSdk javaSdk ? javaSdk.getVersion(jdk) : null;
     if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_17)) {
       var scope = ProjectScope.getContentScope(project);

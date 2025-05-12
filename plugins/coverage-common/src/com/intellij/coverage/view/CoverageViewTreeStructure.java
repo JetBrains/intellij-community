@@ -18,7 +18,7 @@ public final class CoverageViewTreeStructure extends AbstractTreeStructure {
   private final AtomicReference<Object> myRootNode = new AtomicReference<>(null);
   final CoverageSuitesBundle myData;
 
-  CoverageViewTreeStructure(Project project, CoverageSuitesBundle bundle) {
+  public CoverageViewTreeStructure(Project project, CoverageSuitesBundle bundle) {
     myProject = project;
     myData = bundle;
   }

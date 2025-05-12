@@ -19,7 +19,7 @@ import java.util.function.BiFunction;
 /**
  * @see MultiRoutingFileSystemProvider
  */
-public class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFileSystemProvider> {
+public final class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFileSystemProvider> {
   private final MultiRoutingFileSystemProvider myProvider;
   private final FileSystem myLocalFS;
 
@@ -204,7 +204,7 @@ public class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFil
    * It is reasonable to assume that if this method returns {@code false}, then the path will be handled by the local NIO file system.
    * In some sense, this method is an approximation of a predicate "is this path remote?"
    */
-  public final boolean isRoutable(@NotNull Path path) {
+  public boolean isRoutable(@NotNull Path path) {
     Path root = path.getRoot();
     if (root == null) {
       return false;

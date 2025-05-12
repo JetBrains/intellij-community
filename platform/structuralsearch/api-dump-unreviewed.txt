@@ -89,7 +89,7 @@ f:com.intellij.structuralsearch.MatchUtil
 - s:shieldRegExpMetaChars(java.lang.String):java.lang.String
 - s:shieldRegExpMetaChars(java.lang.String,java.lang.StringBuilder):java.lang.StringBuilder
 - s:stripAccents(java.lang.String):java.lang.String
-c:com.intellij.structuralsearch.MatchVariableConstraint
+f:com.intellij.structuralsearch.MatchVariableConstraint
 - com.intellij.structuralsearch.NamedScriptableDefinition
 - <init>():V
 - <init>(java.lang.String):V
@@ -211,7 +211,7 @@ f:com.intellij.structuralsearch.PredefinedConfigurationUtil
 - s:createConfiguration(java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.openapi.fileTypes.LanguageFileType,com.intellij.structuralsearch.PatternContext):com.intellij.structuralsearch.plugin.ui.Configuration
 - s:createLegacyConfiguration(java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.openapi.fileTypes.LanguageFileType):com.intellij.structuralsearch.plugin.ui.Configuration
 - s:createLegacyConfiguration(java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.openapi.fileTypes.LanguageFileType,com.intellij.structuralsearch.PatternContext):com.intellij.structuralsearch.plugin.ui.Configuration
-c:com.intellij.structuralsearch.ReplacementVariableDefinition
+f:com.intellij.structuralsearch.ReplacementVariableDefinition
 - com.intellij.structuralsearch.NamedScriptableDefinition
 - <init>():V
 - <init>(com.intellij.structuralsearch.ReplacementVariableDefinition):V

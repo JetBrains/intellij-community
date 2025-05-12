@@ -48,7 +48,7 @@ public final class JpsCompilationOutputLoader implements JpsOutputLoader<List<Ou
   private List<File> myOldModulesPaths;
   private JpsLoaderContext myContext;
 
-  JpsCompilationOutputLoader(@NotNull JpsServerClient client, @NotNull String buildDirPath) {
+  public JpsCompilationOutputLoader(@NotNull JpsServerClient client, @NotNull String buildDirPath) {
     myClient = client;
     myBuildDirPath = buildDirPath;
   }
@@ -305,13 +305,14 @@ public final class JpsCompilationOutputLoader implements JpsOutputLoader<List<Ou
   }
 
   @TestOnly
-  List<File> getOldModulesPaths() {
+  public List<File> getOldModulesPaths() {
     return myOldModulesPaths;
   }
 
   @TestOnly
-  List<AffectedModule> getAffectedModules(@Nullable Map<String, Map<String, BuildTargetState>> currentModulesState,
-                                          @NotNull Map<String, Map<String, BuildTargetState>> commitModulesState, boolean checkExistence) {
+  public List<AffectedModule> getAffectedModules(@Nullable Map<String, Map<String, BuildTargetState>> currentModulesState,
+                                                 @NotNull Map<String, Map<String, BuildTargetState>> commitModulesState,
+                                                 boolean checkExistence) {
     return calculateAffectedModules(currentModulesState, commitModulesState, checkExistence);
   }
 

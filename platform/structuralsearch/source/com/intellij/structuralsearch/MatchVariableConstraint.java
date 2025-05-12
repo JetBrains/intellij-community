@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.util.InvalidDataException;
@@ -7,8 +7,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -19,7 +21,7 @@ import java.util.regex.Pattern;
 /**
  * @author Maxim.Mossienko
  */
-public class MatchVariableConstraint extends NamedScriptableDefinition {
+public final class MatchVariableConstraint extends NamedScriptableDefinition {
   private static final Pattern VALID_CONSTRAINT_NAME = Pattern.compile("[a-z][A-Za-z\\d]*");
 
   private Map<String, String> additionalConstraints;
@@ -124,7 +126,9 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     return new MatchVariableConstraint(this);
   }
 
-  static @NotNull String convertRegExpTypeToTypeString(@NotNull String regexp) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @NotNull String convertRegExpTypeToTypeString(@NotNull String regexp) {
     final StringBuilder result = new StringBuilder();
     for (int i = 0, length = regexp.length(); i < length; i++) {
       final int c = regexp.codePointAt(i);
@@ -164,7 +168,9 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     return result.toString();
   }
 
-  static @NotNull String convertTypeStringToRegExp(@NotNull String typeString) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @NotNull String convertTypeStringToRegExp(@NotNull String typeString) {
     final StringBuilder result = new StringBuilder();
     for (String type : StringUtil.split(typeString, "|")) {
       if (!result.isEmpty()) {

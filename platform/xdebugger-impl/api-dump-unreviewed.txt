@@ -1046,14 +1046,8 @@ f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogProcessItem$Companion
 f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState
 - sf:Companion:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState$Companion
 - <init>(com.intellij.openapi.Disposable,com.intellij.openapi.actionSystem.DataContext):V
-- f:getCurrentList():com.intellij.openapi.observable.properties.AtomicLazyProperty
 - f:getDataContext():com.intellij.openapi.actionSystem.DataContext
 - f:getDialogDisposable():com.intellij.openapi.Disposable
-- f:getItemWasDoubleClicked():com.intellij.openapi.observable.properties.AtomicLazyProperty
-- f:getSearchFieldValue():com.intellij.openapi.observable.properties.AtomicLazyProperty
-- f:getSelectedDebuggerItem():com.intellij.openapi.observable.properties.AtomicLazyProperty
-- f:getSelectedDebuggersFilter():com.intellij.openapi.observable.properties.AtomicLazyProperty
-- f:getSelectedViewType():com.intellij.openapi.observable.properties.AtomicLazyProperty
 f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState$Companion
 - f:getCOLUMN_MINIMUM_WIDTH():I
 - f:getDEFAULT_ROW_HEIGHT():I
@@ -1196,7 +1190,6 @@ a:com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumns
 - f:getColumnClass(I):java.lang.Class
 - f:getColumnClass(java.lang.String):java.lang.Class
 - f:getColumnIndex(java.lang.String):I
-- a:getColumnInfos():java.util.List
 - f:getColumnKey(I):java.lang.String
 - f:getColumnName(I):java.lang.String
 - f:getColumnName(java.lang.String):java.lang.String

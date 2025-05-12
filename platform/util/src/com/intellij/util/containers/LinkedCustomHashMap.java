@@ -48,7 +48,7 @@ public final class LinkedCustomHashMap<K, V> {
   }
 
   @TestOnly
-  LinkedCustomHashMap() {
+  public LinkedCustomHashMap() {
     //noinspection unchecked
     this((EqualityPolicy<? super K>)EqualityPolicy.CANONICAL, (map, eldest, key, value) -> {
       return false;

@@ -162,7 +162,7 @@ public final class LocalShellIntegrationInjector {
   }
 
   @VisibleForTesting
-  static @NotNull String findAbsolutePath(@NotNull String relativePath) throws IOException {
+  public static @NotNull String findAbsolutePath(@NotNull String relativePath) throws IOException {
     String jarPath = PathUtil.getJarPathForClass(LocalTerminalDirectRunner.class);
     final File result;
     if (PluginManagerCore.isRunningFromSources()) {
