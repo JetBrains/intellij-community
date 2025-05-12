@@ -23,5 +23,6 @@
     <orderEntry type="module" module-name="intellij.performanceTesting" />
     <orderEntry type="library" scope="TEST" name="mockito" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
+    <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-test" level="project" />
   </component>
 </module>

@@ -6,6 +6,8 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.ex.ActionUtil.performAction
+import com.intellij.openapi.actionSystem.ex.ActionUtil.performActionDumbAwareWithCallbacks
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -17,15 +19,20 @@ import com.intellij.openapi.ui.DialogWrapper.OK_EXIT_CODE
 import com.intellij.openapi.ui.ExitActionType
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.settingsSync.core.SettingsSyncEvents
+import com.intellij.settingsSync.core.SettingsSyncLocalSettings
+import com.intellij.settingsSync.core.SettingsSyncSettings
 import com.intellij.settingsSync.core.auth.SettingsSyncAuthService
+import com.intellij.settingsSync.core.communicator.RemoteCommunicatorHolder
 import com.intellij.settingsSync.core.communicator.SettingsSyncUserData
 import com.intellij.settingsSync.jba.SettingsSyncJbaBundle
 import com.intellij.settingsSync.jba.SettingsSyncPromotion
 import com.intellij.ui.JBAccountInfoService
+import com.intellij.ui.JBAccountInfoService.AuthStateListener
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.util.application
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import java.awt.Component
@@ -40,7 +47,7 @@ import javax.swing.event.HyperlinkEvent
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-internal class JBAAuthService() : SettingsSyncAuthService {
+internal class JBAAuthService(private val cs: CoroutineScope) : SettingsSyncAuthService {
 
   companion object {
     private val LOG = logger<JBAAuthService>()
@@ -50,8 +57,26 @@ internal class JBAAuthService() : SettingsSyncAuthService {
   @Volatile
   private var invalidatedIdToken: String? = null
 
+  private val listenForLogoutLazy = lazy {
+    listenForLogout()
+  }
+
   private fun isTokenValid(token: String?): Boolean {
     return token != null && token != invalidatedIdToken
+  }
+
+  private fun listenForLogout() {
+    val messageBusConnection = application.messageBus.connect(cs)
+    messageBusConnection.subscribe(AuthStateListener.TOPIC, AuthStateListener { jbaData ->
+      if (jbaData == null && RemoteCommunicatorHolder.getAuthService() == this) {
+        if (SettingsSyncSettings.getInstance().syncEnabled) {
+          SettingsSyncSettings.getInstance().syncEnabled = false
+          SettingsSyncLocalSettings.getInstance().userId = null
+          SettingsSyncLocalSettings.getInstance().providerCode = null
+        }
+        SettingsSyncEvents.getInstance().fireLoginStateChanged()
+      }
+    })
   }
 
   override fun getUserData(userId: String) = fromJBAData(
@@ -88,6 +113,7 @@ internal class JBAAuthService() : SettingsSyncAuthService {
     get() {
       val token = getAccountInfoService()?.idToken
       if (!isTokenValid(token)) return null
+      listenForLogoutLazy.value
       return token
     }
   override val providerCode: String
@@ -201,6 +227,23 @@ internal class JBAAuthService() : SettingsSyncAuthService {
     }
     return instance
   }
+
+  override val logoutFunction: (suspend (Component?) -> Unit)?
+    get() {
+      if (RemoteCommunicatorHolder.getExternalProviders().isEmpty())
+        return null
+      val actionManager = ActionManager.getInstance()
+      val registerAction = actionManager.getAction("RegisterPlugins") ?: actionManager.getAction("Register")
+      if (registerAction != null) {
+        return {
+          performAction(registerAction,
+                        AnActionEvent.createEvent(DataContext.EMPTY_CONTEXT, Presentation(), "", ActionUiKind.NONE, null))
+
+        }
+      }
+
+      return null
+    }
 }
 
 private class LogInProgressDialog(parent: JComponent) : DialogWrapper(parent, false) {

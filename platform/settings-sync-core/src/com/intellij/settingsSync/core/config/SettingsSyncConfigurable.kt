@@ -62,7 +62,8 @@ import javax.swing.event.HyperlinkEvent
 
 internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineScope) : BoundConfigurable(message("title.settings.sync")),
                                                                                       SettingsSyncEnabler.Listener,
-                                                                                      SettingsSyncStatusTracker.Listener {
+                                                                                      SettingsSyncStatusTracker.Listener,
+                                                                                      SettingsSyncEventListener {
   companion object {
     private val LOG = logger<SettingsSyncConfigurable>()
   }
@@ -93,6 +94,13 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
   init {
     syncEnabler.addListener(this)
     SettingsSyncStatusTracker.getInstance().addListener(this)
+    SettingsSyncEvents.getInstance().addListener(this)
+  }
+
+  override fun disposeUIResources() {
+    super.disposeUIResources()
+    SettingsSyncStatusTracker.getInstance().removeListener(this)
+    SettingsSyncEvents.getInstance().removeListener(this)
   }
 
   override fun createPanel(): DialogPanel {
@@ -208,7 +216,17 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
 
           row {
             cell(syncConfigPanel)
-              .onReset(syncConfigPanel::reset)
+              .onReset {
+                syncConfigPanel.reset()
+                wasUsedBefore.set(SettingsSyncLocalSettings.getInstance().userId != null)
+                hasMultipleProviders.set(RemoteCommunicatorHolder.getExternalProviders().isNotEmpty())
+                enableCheckbox.isSelected = SettingsSyncSettings.getInstance().syncEnabled
+                if (SettingsSyncLocalSettings.getInstance().userId != null) {
+                  userDropDownLink.selectedItem = userAccountsList.firstOrNull { it.userId == SettingsSyncLocalSettings.getInstance().userId}
+                } else {
+                  userDropDownLink.selectedItem = null
+                }
+              }
               .onIsModified {
                 enableCheckbox.isSelected != SettingsSyncSettings.getInstance().syncEnabled
                 || syncConfigPanel.isModified()
@@ -467,7 +485,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
           return super.setFooterComponent(c)
         }
         super.setFooterComponent(DslLabel(DslLabelType.LABEL).apply {
-          text = "<a>${message("logout.link.text", currentProviderCode ?: "")}</a>"
+          text = "<a>${message("logout.link.text", provider.authService.providerName ?: "")}</a>"
 
           addHyperlinkListener {
             if (it.eventType == HyperlinkEvent.EventType.ACTIVATED) {
@@ -675,6 +693,12 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
   private suspend fun showErrorOnEDT(message: String, title: String = message("notification.title.update.error")) {
     withContext(Dispatchers.EDT) {
       Messages.showErrorDialog(configPanel, message, title)
+    }
+  }
+
+  override fun loginStateChanged() {
+    if (wasUsedBefore.get() && SettingsSyncLocalSettings.getInstance().userId == null) {
+      this.reset()
     }
   }
 

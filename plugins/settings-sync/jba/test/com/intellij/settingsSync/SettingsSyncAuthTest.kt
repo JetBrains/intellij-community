@@ -16,14 +16,23 @@ import com.jetbrains.cloudconfig.CloudConfigFileClientV2
 import com.jetbrains.cloudconfig.Configuration
 import com.jetbrains.cloudconfig.FileVersionInfo
 import com.jetbrains.cloudconfig.exception.UnauthorizedException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestCoroutineScheduler
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.runCurrent
+import org.junit.jupiter.api.BeforeEach
 import org.mockito.Mockito.*
 import java.util.Date
 
 @RunWith(JUnit4::class)
-internal class SettingsSyncAuthTest : BasePlatformTestCase() {
+@OptIn(ExperimentalCoroutinesApi::class)
+internal class SettingsSyncAuthTest() : BasePlatformTestCase() {
+
+  private lateinit var testScope: TestScope
 
   private fun dummyFileVersionInfo(): FileVersionInfo {
     return object : FileVersionInfo() {
@@ -41,10 +50,16 @@ internal class SettingsSyncAuthTest : BasePlatformTestCase() {
     }
   }
 
+  @BeforeEach
+  override fun setUp() {
+    super.setUp()
+    testScope = TestScope(StandardTestDispatcher(TestCoroutineScheduler()))
+  }
+
   @Test
   @TestFor(issues = ["IDEA-307565"])
   fun `idToken is invalidated after unauthorized exception`() {
-    val authServiceSpy = spy<JBAAuthService>()
+    val authServiceSpy = spy(JBAAuthService(testScope))
     ApplicationManager.getApplication().replaceService(SettingsSyncAuthService::class.java, authServiceSpy, SettingsSyncMain.getInstance())
 
     val accountInfoService = mock<JBAccountInfoService>()
@@ -94,7 +109,7 @@ internal class SettingsSyncAuthTest : BasePlatformTestCase() {
     SettingsSyncSettings.getInstance().syncEnabled = true
     assertTrue(SettingsSyncSettings.getInstance().syncEnabled)
 
-    val authServiceSpy = spy<JBAAuthService>()
+    val authServiceSpy = spy(JBAAuthService(testScope))
     ApplicationManager.getApplication().replaceService(SettingsSyncAuthService::class.java, authServiceSpy, SettingsSyncMain.getInstance())
 
     val accountInfoService = mock<JBAccountInfoService>()
@@ -130,7 +145,7 @@ internal class SettingsSyncAuthTest : BasePlatformTestCase() {
     SettingsSyncSettings.getInstance().syncEnabled = true
     assertTrue(SettingsSyncSettings.getInstance().syncEnabled)
 
-    val authServiceSpy = spy<JBAAuthService>()
+    val authServiceSpy = spy(JBAAuthService(testScope))
     ApplicationManager.getApplication().replaceService(SettingsSyncAuthService::class.java, authServiceSpy, SettingsSyncMain.getInstance())
 
     val accountInfoService = mock<JBAccountInfoService>()
