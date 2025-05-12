@@ -4,17 +4,71 @@
     <projectService serviceInterface="com.intellij.execution.RunManager"
                     serviceImplementation="com.intellij.execution.impl.RunManagerImpl"/>
     <projectServiceInitializer implementation="com.intellij.execution.impl.ProjectRunConfigurationInitializer"/>
+    <pathMacroFilter implementation="com.intellij.execution.configuration.RunConfigurationPathMacroFilter"/>
+
     <projectFileScanner implementation="com.intellij.execution.impl.RunConfigurationInArbitraryFileScanner"/>
     <vfs.asyncListener implementation="com.intellij.execution.impl.RCInArbitraryFileListener"/>
     <editorNotificationProvider implementation="com.intellij.execution.impl.RunConfigEditorNotificationProvider"/>
+
+    <projectService serviceInterface="com.intellij.execution.runners.ExecutionEnvironmentProvider"
+                    serviceImplementation="com.intellij.task.impl.ExecutionEnvironmentProviderImpl"/>
+
+    <stepsBeforeRunProvider implementation="com.intellij.execution.impl.RunConfigurationBeforeRunProvider"/>
+
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector$RunConfigurationUtilValidator"/>
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector$RunConfigurationExecutorUtilValidator"/>
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector$RunTargetValidator"/>
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.execution.impl.statistics.MacroNameValidationRule"/>
+
     <postStartupActivity implementation="com.intellij.execution.impl.RunConfigurationFeatureCollector"/>
     <applicationService serviceInterface="com.intellij.execution.ui.FragmentStatisticsService"
                         serviceImplementation="com.intellij.execution.impl.statistics.FragmentedStatisticsServiceImpl"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.execution.impl.statistics.RunConfigurationOptionUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.execution.impl.statistics.ProgramRunnerUsageCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.execution.impl.statistics.MacroUsageCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.execution.target.TargetCounterUsagesCollector"/>
+
+    <statistics.collectorExtension implementation="com.intellij.execution.impl.statistics.RunConfigurationUsageLanguageExtension"/>
+    <statistics.collectorExtension implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeLanguageExtension"/>
+    <refactoring.elementListenerProvider implementation="com.intellij.execution.impl.RunConfigurationRefactoringElementListenerProvider"/>
 
     <applicationService serviceInterface="com.intellij.execution.ExecutorRegistry"
                         serviceImplementation="com.intellij.execution.ExecutorRegistryImpl"/>
     <actionConfigurationCustomizer implementation="com.intellij.execution.ExecutorRegistryImpl$ExecutorRegistryActionConfigurationTuner"/>
+    <applicationService serviceInterface="com.intellij.execution.impl.NewRunConfigurationTreePopupFactory"
+                        serviceImplementation="com.intellij.execution.impl.DefaultNewRunConfigurationTreePopupFactory"/>
+    <projectService serviceInterface="com.intellij.execution.ui.RunContentManager"
+                    serviceImplementation="com.intellij.execution.ui.RunContentManagerImpl"/>
+    <applicationService serviceImplementation="com.intellij.execution.ui.layout.impl.RunnerLayoutSettings"/>
+    <projectService serviceInterface="com.intellij.execution.ui.RunnerLayoutUi$Factory"
+                    serviceImplementation="com.intellij.execution.ui.layout.impl.RunnerLayoutUiFactoryImpl"/>
+
+    <runAnything.executionProvider id="RunAnythingRunConfigurationProvider"
+                                   implementation="com.intellij.ide.actions.runAnything.RunAnythingRunConfigurationProvider"/>
+
+    <projectService serviceInterface="com.intellij.execution.InlineResumeCreator"
+                    serviceImplementation="com.intellij.execution.DefaultInlineResumeCreator"/>
+
+    <projectService serviceInterface="com.intellij.execution.AdditionalRunningOptions"
+                    serviceImplementation="com.intellij.execution.EmptyAdditionalRunningOptions"/>
+    <projectService serviceInterface="com.intellij.execution.ExecutionManager"
+                    serviceImplementation="com.intellij.execution.impl.ExecutionManagerImpl"/>
+    <projectService serviceInterface="com.intellij.execution.ExecutionTargetManager"
+                    serviceImplementation="com.intellij.execution.ExecutionTargetManagerImpl"/>
+
+    <executor implementation="com.intellij.execution.executors.DefaultRunExecutor" order="first" id="run"/>
+    <runToolbarProcess implementation="com.intellij.execution.runToolbar.RunToolbarRunProcess"/>
+    <executionTargetProvider implementation="com.intellij.execution.DefaultExecutionTargetProvider"/>
+    <configurationType implementation="com.intellij.execution.compound.CompoundRunConfigurationType"/>
+    <projectConfigurable groupId="build" id="Runtime.Targets.Configurable" bundle="messages.IdeBundle"
+                         key="configurable.Runtime.Targets.Configurable.display.name"
+                         provider="com.intellij.execution.target.TargetEnvironmentsConfigurableProvider"/>
 
     <projectConfigurable groupId="tools"
                          provider="com.intellij.execution.startup.ProjectStartupConfigurable$ProjectStartupConfigurableProvider"

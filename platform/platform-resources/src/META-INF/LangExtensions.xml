@@ -126,7 +126,6 @@
     <consoleFilterProvider implementation="com.intellij.execution.filters.UrlFilter$UrlFilterProvider"/>
 
     <applicationService serviceImplementation="com.intellij.codeInsight.template.impl.TemplateSettings"/>
-    <applicationService serviceImplementation="com.intellij.execution.ui.layout.impl.RunnerLayoutSettings"/>
 
     <applicationService serviceImplementation="com.intellij.codeEditor.printing.PrintSettings"/>
     <applicationService serviceInterface="com.intellij.codeInsight.daemon.LineMarkerSettings"
@@ -236,9 +235,6 @@
 
     <applicationService serviceInterface="com.intellij.codeInsight.editorActions.TabOutScopesTracker"
                         serviceImplementation="com.intellij.codeInsight.editorActions.TabOutScopesTrackerImpl"/>
-
-    <applicationService serviceInterface="com.intellij.execution.impl.NewRunConfigurationTreePopupFactory"
-                        serviceImplementation="com.intellij.execution.impl.DefaultNewRunConfigurationTreePopupFactory"/>
 
     <applicationService serviceInterface="com.intellij.psi.search.IndexPatternOptimizer"
                         serviceImplementation="com.intellij.psi.search.IndexPatternOptimizerImpl"/>
@@ -692,16 +688,6 @@
     <applicationService serviceImplementation="com.intellij.psi.templateLanguages.TemplateDataLanguagePatterns"/>
     <filePropertyPusher implementation="com.intellij.psi.templateLanguages.TemplateDataLanguagePusher"/>
 
-    <!-- execution -->
-
-    <executor implementation="com.intellij.execution.executors.DefaultRunExecutor" order="first" id="run"/>
-    <runToolbarProcess implementation="com.intellij.execution.runToolbar.RunToolbarRunProcess"/>
-    <executionTargetProvider implementation="com.intellij.execution.DefaultExecutionTargetProvider"/>
-    <configurationType implementation="com.intellij.execution.compound.CompoundRunConfigurationType"/>
-    <projectConfigurable groupId="build" id="Runtime.Targets.Configurable" bundle="messages.IdeBundle"
-                         key="configurable.Runtime.Targets.Configurable.display.name"
-                         provider="com.intellij.execution.target.TargetEnvironmentsConfigurableProvider"/>
-
     <findUsagesHandlerFactory implementation="com.intellij.find.findUsages.DefaultFindUsagesHandlerFactory" id="default" order="last"/>
     <usageTargetProvider implementation="com.intellij.find.findUsages.DefaultUsageTargetProvider" id="default" order="last"/>
     <registryKey defaultValue="false"
@@ -970,8 +956,6 @@
                  key="ide.project.view.show.new.element.button" />
     <pathMacroFilter implementation="com.intellij.ide.projectView.impl.ProjectViewPathMacroFilter"/>
     <projectService serviceImplementation="com.intellij.ide.projectView.impl.ProjectViewState"/>
-    <projectService serviceInterface="com.intellij.execution.ui.RunnerLayoutUi$Factory"
-                    serviceImplementation="com.intellij.execution.ui.layout.impl.RunnerLayoutUiFactoryImpl"/>
 
     <applicationService serviceInterface="com.intellij.codeInsight.documentation.render.DocRenderItemManager"
                         serviceImplementation="com.intellij.codeInsight.documentation.render.DocRenderItemManagerImpl" />
@@ -1125,14 +1109,6 @@
     <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.PluginIdRuleValidator"/>
     <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.ProductCodeRuleValidator"/>
     <statistics.validation.customValidationRule
-      implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector$RunConfigurationUtilValidator"/>
-    <statistics.validation.customValidationRule
-      implementation="com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector$RunConfigurationExecutorUtilValidator"/>
-    <statistics.validation.customValidationRule
-      implementation="com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector$RunTargetValidator"/>
-    <statistics.validation.customValidationRule
-      implementation="com.intellij.execution.impl.statistics.MacroNameValidationRule"/>
-    <statistics.validation.customValidationRule
       implementation="com.intellij.codeInsight.template.postfix.templates.PostfixTemplateLogger$PostfixTemplateValidator"/>
     <statistics.validation.customValidationRule
       implementation="com.intellij.internal.statistic.InspectionUsageFUSCollector$InspectionToolValidator"/>
@@ -1146,7 +1122,6 @@
     <statistics.validation.customValidationRule implementation="com.intellij.usages.impl.ScopeRuleValidator"/>
     <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.ui.ListValidationRule"/>
 
-    <statistics.projectUsagesCollector implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.editor.EditorSettingsStatisticsCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetUsagesCollector"/>
     <statistics.projectUsagesCollector
@@ -1173,18 +1148,11 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.ui.RefactoringDialogUsageCollector"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.ide.projectView.impl.ProjectViewImpl$ProjectViewPaneChangesCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.execution.impl.statistics.ProgramRunnerUsageCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.execution.impl.statistics.MacroUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.IntentionFUSCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.template.postfix.templates.PostfixTemplateLogger"/>
 
-    <statistics.collectorExtension implementation="com.intellij.execution.impl.statistics.RunConfigurationUsageLanguageExtension"/>
-    <statistics.collectorExtension implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeLanguageExtension"/>
-
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationFeatureUsagesUtil"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.execution.target.TargetCounterUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.hints.declarative.impl.InlayActionHandlerUsagesCollector"/>
 
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor" order="last" id="renamePsiFile"/>
@@ -1193,7 +1161,6 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbarCollector" />
     <textEditorCustomizer implementation="com.intellij.ui.codeFloatingToolbar.FloatingCodeToolbarEditorCustomizer" />
     <customizableActionGroupProvider implementation="com.intellij.ui.codeFloatingToolbar.FloatingCodeToolbarGroupCustomizer"/>
-    <refactoring.elementListenerProvider implementation="com.intellij.execution.impl.RunConfigurationRefactoringElementListenerProvider"/>
     <refactoring.elementListenerProvider implementation="com.intellij.ui.EditorNotificationsImpl$RefactoringListenerProvider"/>
 
     <keymapExtension implementation="com.intellij.tools.ToolKeymapExtension"/>
@@ -1224,7 +1191,6 @@
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.CustomFileTypeCompletionContributor"/>
     <completion.confidence language="any" implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInLargeFiles"/>
 
-    <pathMacroFilter implementation="com.intellij.execution.configuration.RunConfigurationPathMacroFilter"/>
     <pathMacroFilter implementation="com.intellij.openapi.application.StructuralSearchPathMacroFilter"/>
     <pathMacroFilter implementation="com.intellij.openapi.application.PathMappingsMacroFilter"/>
 
@@ -1245,8 +1211,6 @@
 
     <actionPromoter implementation="com.intellij.ui.EditorTextFieldActionPromoter"/>
     <actionPromoter implementation="com.intellij.codeInsight.editorActions.TabActionsPromoter"/>
-
-    <stepsBeforeRunProvider implementation="com.intellij.execution.impl.RunConfigurationBeforeRunProvider"/>
 
     <lang.foldingBuilder language="TEXT" implementationClass="com.intellij.ide.highlighter.custom.impl.CustomFileTypeFoldingBuilder"/>
 
@@ -1269,21 +1233,10 @@
                             implementationClass="com.intellij.codeInsight.template.postfix.completion.PostfixTemplateCompletionContributor"
                             order="last"/>
 
-    <projectService serviceInterface="com.intellij.execution.InlineResumeCreator"
-                    serviceImplementation="com.intellij.execution.DefaultInlineResumeCreator"/>
-
-    <projectService serviceInterface="com.intellij.execution.AdditionalRunningOptions"
-                    serviceImplementation="com.intellij.execution.EmptyAdditionalRunningOptions"/>
-    <projectService serviceInterface="com.intellij.execution.ExecutionManager"
-                    serviceImplementation="com.intellij.execution.impl.ExecutionManagerImpl"/>
-    <projectService serviceInterface="com.intellij.execution.ExecutionTargetManager"
-                    serviceImplementation="com.intellij.execution.ExecutionTargetManagerImpl"/>
     <notificationGroup id="JDK Update Error" displayType="STICKY_BALLOON" bundle="messages.LangBundle"
                        key="notification.group.jdk.update.error"/>
     <notificationGroup id="ColorSchemeDrop" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="Batch quick fix" displayType="BALLOON" bundle="messages.LangBundle" key="notification.group.batch.quick.fix"/>
-    <projectService serviceInterface="com.intellij.execution.ui.RunContentManager"
-                    serviceImplementation="com.intellij.execution.ui.RunContentManagerImpl"/>
 
     <applicationService serviceInterface="com.intellij.find.impl.FindPopupScopeUIProvider"
                         serviceImplementation="com.intellij.find.impl.FindPopupScopeUIProviderImpl"/>
@@ -1393,8 +1346,6 @@
     <actionConfigurationCustomizer implementation="com.intellij.ide.actions.runAnything.RunAnythingAction$ShortcutTracker"/>
     <actionConfigurationCustomizer implementation="com.intellij.ide.actions.SearchEverywhereAction$ShortcutTracker"/>
 
-    <runAnything.executionProvider id="RunAnythingRunConfigurationProvider"
-                                   implementation="com.intellij.ide.actions.runAnything.RunAnythingRunConfigurationProvider"/>
     <runAnything.executionProvider implementation="com.intellij.ide.actions.runAnything.activity.RunAnythingRecentProjectProvider"/>
     <runAnything.executionProvider id="recentCommandProvider"
                                    implementation="com.intellij.ide.actions.runAnything.activity.RunAnythingRecentCommandProvider"
@@ -1405,8 +1356,6 @@
     <!-- Project tasks execution (delegation of the build/run actions) -->
     <projectService serviceInterface="com.intellij.task.ProjectTaskManager"
                     serviceImplementation="com.intellij.task.impl.ProjectTaskManagerImpl"/>
-    <projectService serviceInterface="com.intellij.execution.runners.ExecutionEnvironmentProvider"
-                    serviceImplementation="com.intellij.task.impl.ExecutionEnvironmentProviderImpl"/>
 
     <!-- Build view -->
     <projectService serviceInterface="com.intellij.build.BuildContentManager"
