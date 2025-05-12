@@ -2,9 +2,10 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <usagePresentationProvider implementation="com.intellij.platform.find.UsageInfoModelPresentationProvider"/>
+
     <!--suppress PluginXmlRegistrationCheck -->
-    <applicationService serviceInterface="com.intellij.find.impl.FindExecutor"
-                        serviceImplementation="com.intellij.platform.find.FindExecutorImpl"/>
+    <applicationService serviceInterface="com.intellij.find.impl.FindInProjectExecutor"
+                        serviceImplementation="com.intellij.platform.find.FindInProjectExecutorImpl"/>
   </extensions>
 
 </idea-plugin>
