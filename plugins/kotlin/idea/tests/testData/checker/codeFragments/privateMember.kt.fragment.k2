@@ -1,2 +1,2 @@
-@Suppress("INVISIBLE_MEMBER")
+@Suppress("INVISIBLE_MEMBER", "INFERRED_INVISIBLE_RETURN_TYPE_WARNING")
 (MyClass().privateFun() + MyClass().privateVal + MyClass.PrivateClass().a)
