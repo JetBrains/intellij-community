@@ -64,14 +64,14 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     boolean preserveModuleImports = javaSettings.isPreserveModuleImports();
     PackageEntryTable table = javaSettings.IMPORT_LAYOUT_TABLE;
     int classOnDemand = javaSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND;
-    int NamesOnDemand = javaSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND;
+    int namesOnDemand = javaSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND;
     Disposer.register(getTestRootDisposable(), new Disposable() {
       @Override
       public void dispose() {
         javaSettings.setPreserveModuleImports(preserveModuleImports);
         javaSettings.IMPORT_LAYOUT_TABLE = table;
         javaSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = classOnDemand;
-        javaSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = NamesOnDemand;
+        javaSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = namesOnDemand;
       }
     });
     myFixture.enableInspections(new UnusedDeclarationInspection());
