@@ -34,9 +34,9 @@ internal abstract class AbstractGCCommand(text: String, line: Int) : AbstractCom
   protected abstract fun performGC()
 }
 
-internal class GCCommand(text: String, line: Int) : AbstractGCCommand(text, line) {
+internal class SystemGCCommand(text: String, line: Int) : AbstractGCCommand(text, line) {
   companion object {
-    const val PREFIX = CMD_PREFIX + "performGC"
+    const val PREFIX = CMD_PREFIX + "performSystemGC"
   }
 
   override fun performGC() {
@@ -44,9 +44,9 @@ internal class GCCommand(text: String, line: Int) : AbstractGCCommand(text, line
   }
 }
 
-internal class FullGCCommand(text: String, line: Int) : AbstractGCCommand(text, line) {
+internal class JBRFullGCCommand(text: String, line: Int) : AbstractGCCommand(text, line) {
   companion object {
-    const val PREFIX = CMD_PREFIX + "performFullGC"
+    const val PREFIX = CMD_PREFIX + "performJBRFullGC"
   }
 
   override fun performGC() {

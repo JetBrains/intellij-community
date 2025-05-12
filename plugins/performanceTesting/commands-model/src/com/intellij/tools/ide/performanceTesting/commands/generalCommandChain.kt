@@ -854,12 +854,12 @@ fun <T : CommandChain> T.moveDeclarations(moveDeclarationData: MoveDeclarationsD
   addCommand("${CMD_PREFIX}moveDeclarations $jsonData")
 }
 
-fun <T : CommandChain> T.performGC(): T = apply {
-  addCommand("${CMD_PREFIX}performGC")
+fun <T : CommandChain> T.performSystemGC(): T = apply {
+  addCommand("${CMD_PREFIX}performSystemGC")
 }
 
-fun <T : CommandChain> T.performFullGC(): T = apply {
-  addCommand("${CMD_PREFIX}performFullGC")
+fun <T : CommandChain> T.performJBRFullGC(): T = apply {
+  addCommand("${CMD_PREFIX}performJBRFullGC")
 }
 
 fun <T : CommandChain> T.copy(): T = apply {
