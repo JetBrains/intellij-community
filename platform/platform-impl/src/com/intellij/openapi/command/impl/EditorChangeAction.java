@@ -100,7 +100,9 @@ final class EditorChangeAction extends BasicUndoableAction implements Adjustable
 
   @Override
   public @NonNls String toString() {
-    return "editor change: '" + myOldString + "' to '" + myNewString + "'" + " at: " + myChangeRange.getOffset();
+    String oldString = myOldString.toString().replace("\n", "\\n");
+    String newString = myNewString.toString().replace("\n", "\\n");
+    return "%s:'%s'->'%s'".formatted(myChangeRange.getOffset(), oldString, newString);
   }
 }
 

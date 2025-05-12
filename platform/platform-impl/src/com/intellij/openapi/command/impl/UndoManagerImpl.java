@@ -142,6 +142,35 @@ public class UndoManagerImpl extends UndoManager {
     public void dispose() {
       myManager.invalidate(this);
     }
+
+    private @NotNull String dump(@NotNull Collection<DocumentReference> docs) {
+      StringBuilder sb = new StringBuilder();
+      sb.append(myClientId);
+      sb.append("\n");
+      for (DocumentReference doc : docs) {
+        sb.append(dumpStack(doc, true));
+        sb.append("\n");
+        sb.append(dumpStack(doc, false));
+      }
+      return sb.toString();
+    }
+
+    private @NotNull String dumpStack(@NotNull DocumentReference doc, boolean isUndo) {
+      String name = isUndo ? "UndoStack" : "RedoStack";
+      UndoRedoList<UndoableGroup> stack = isUndo ? myUndoStacksHolder.getStack(doc) : myRedoStacksHolder.getStack(doc);
+      return name + " for " + doc.getDocument() + "\n" + dumpStack(stack);
+    }
+
+    private static @NotNull String dumpStack(@NotNull UndoRedoList<UndoableGroup> stack) {
+      ArrayList<String> reversed = new ArrayList<>();
+      Iterator<UndoableGroup> it = stack.descendingIterator();
+      int i = 0;
+      while (it.hasNext()) {
+        reversed.add("  %s {%s}".formatted(i, it.next().dumpState0()));
+        i++;
+      }
+      return String.join("\n", reversed);
+    }
   }
 
   private enum OperationState {NONE, UNDO, REDO}
@@ -982,6 +1011,31 @@ public class UndoManagerImpl extends UndoManager {
       .getMessageBus()
       .syncPublisher(UndoRedoListener.Companion.getTOPIC())
       .undoRedoStarted(myProject, this, editor, isUndo, disposable);
+  }
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public @NotNull String dumpState(@Nullable FileEditor editor) {
+    boolean undoAvailable = isUndoAvailable(editor);
+    boolean redoAvailable = isRedoAvailable(editor);
+    Pair<String, String> undoDescription = getUndoActionNameAndDescription(editor);
+    Pair<String, String> redoDescription = getRedoActionNameAndDescription(editor);
+    String undoStatus = "undo: %s, %s, %s".formatted(undoAvailable, undoDescription.getFirst(), undoDescription.getSecond());
+    String redoStatus = "redo: %s, %s, %s".formatted(redoAvailable, redoDescription.getFirst(), redoDescription.getSecond());
+
+    String stacks;
+    ClientState state = getClientState(editor);
+    Collection<DocumentReference> docRefs = getDocRefs(editor);
+    if (state == null && docRefs == null) {
+      stacks = "no state, no docs";
+    } else if (state != null && docRefs == null) {
+      stacks = "no docs";
+    } else if (state == null /* && docRefs != null */) {
+      stacks = "no state";
+    } else {
+      stacks = state.dump(docRefs);
+    }
+    return  "\n" + undoStatus + "\n" + redoStatus + "\n" + stacks;
   }
 
   @Override

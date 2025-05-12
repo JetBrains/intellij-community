@@ -1782,5 +1782,7 @@
       <separator key="group.MainToolbarQuickActions.text"/>
       <reference ref="MainToolbarQuickActionsRaw"/>
     </group>
+
+    <action id="UndoDumpAction" internal="true" class="com.intellij.ide.actions.UndoDumpAction" />
   </actions>
 </idea-plugin>

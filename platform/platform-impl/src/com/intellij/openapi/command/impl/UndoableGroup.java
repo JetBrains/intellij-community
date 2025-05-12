@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 final class UndoableGroup implements Dumpable {
   private static final Logger LOG = Logger.getInstance(UndoableGroup.class);
@@ -395,6 +396,51 @@ final class UndoableGroup implements Dumpable {
     if (multiline) result.append("\n");
     result.append("]");
     return result.toString();
+  }
+
+  @NotNull String dumpState0() {
+    StringBuilder sb = new StringBuilder();
+    String command;
+    if (myCommandName == null) {
+      command = "NULL";
+    } else if (myCommandName.isEmpty()) {
+      command = "EMPTY";
+    } else {
+      command = "'" + myCommandName + "'";
+    }
+    sb.append(command);
+    sb.append(" with ");
+    sb.append(myActions.size());
+    sb.append(" actions: ");
+    String actions = myActions.stream()
+      .map(a -> "(" + a + ")")
+      .collect(Collectors.joining(", ", "[", "]"));
+    sb.append(actions);
+    if (myGlobal) {
+      sb.append(" global");
+    }
+    if (myTransparent) {
+      sb.append(" transparent");
+    }
+    if (myTemporary) {
+      sb.append(" temp");
+    }
+    if (myConfirmationPolicy != UndoConfirmationPolicy.DEFAULT) {
+      sb.append(" ");
+      sb.append(myConfirmationPolicy);
+    }
+    if (!myValid) {
+      sb.append(" invalid");
+    }
+    if (getAffectedDocuments().size() > 1) {
+      sb.append(" affected: ");
+      sb.append(
+        getAffectedDocuments().stream()
+          .map(r -> Objects.toString(r.getDocument()))
+          .collect(Collectors.joining(", "))
+      );
+    }
+    return sb.toString();
   }
 
   static final class UndoableGroupOriginalContext {

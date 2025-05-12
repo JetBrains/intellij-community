@@ -99,6 +99,15 @@ public abstract class UndoRedoAction extends DumbAwareAction implements ActionRe
   }
 
   private @Nullable UndoManager getUndoManager(@Nullable FileEditor editor, DataContext dataContext, boolean isActionPerformed) {
+    return getUndoManager(editor, dataContext, myActionInProgress, isActionPerformed);
+  }
+
+  static @Nullable UndoManager getUndoManager(
+    @Nullable FileEditor editor,
+    DataContext dataContext,
+    boolean isActionInProgress,
+    boolean isActionPerformed
+  ) {
     Component component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     if (component instanceof JTextComponent && !ClientProperty.isTrue(component, IGNORE_SWING_UNDO_MANAGER)) {
       return SwingUndoManagerWrapper.fromContext(dataContext);
@@ -114,7 +123,7 @@ public abstract class UndoRedoAction extends DumbAwareAction implements ActionRe
         return SwingUndoManagerWrapper.fromContext(dataContext);
       }
     }
-    if (myActionInProgress && isActionPerformed) {
+    if (isActionInProgress && isActionPerformed) {
       LOG.error(
         "Recursive undo invocation attempt, component: %s, fileEditor: %s, rootPane: %s, popup: %s"
           .formatted(component, editor, rootPane, popup)
