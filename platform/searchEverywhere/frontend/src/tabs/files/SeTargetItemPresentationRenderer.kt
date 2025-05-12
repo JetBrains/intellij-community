@@ -18,6 +18,7 @@ class SeTargetItemPresentationRenderer {
     val presentation = (value as SeResultListItemRow).item.presentation as SeTargetItemPresentation
     val selected = selected
     selectionColor = UIUtil.getListBackground(selected, selected)
+    presentation.backgroundColor?.let { background = it }
 
     presentation.icon?.let { icon(it) }
 
