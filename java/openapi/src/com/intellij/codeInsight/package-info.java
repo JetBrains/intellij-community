@@ -3,6 +3,6 @@
  * Provides interfaces for working with highlighting in standard IDE editors, interfaces
  * and classes for defining intention actions and additional functionality related to background
  * code analysis in the IDE.
- * @see <a href="https://plugins.jetbrains.com/docs/intellij/glossary.html#js6hv0_51">Code Insight (IntelliJ Platform Docs)</a>
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/glossary.html#code-insight">Code Insight (IntelliJ Platform Docs)</a>
  */
 package com.intellij.codeInsight;
