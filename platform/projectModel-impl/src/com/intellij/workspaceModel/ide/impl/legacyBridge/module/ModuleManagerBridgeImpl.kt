@@ -492,10 +492,7 @@ abstract class ModuleManagerBridgeImpl(
         listenerCallbacks = null
       )
 
-      if (moduleFileUrl == null) {
-        registerNonPersistentModuleStore(module)
-      }
-      else {
+      if (moduleFileUrl != null) {
         val moduleStore = module.stateStore as ModuleStore
         moduleStore.setPath(path = moduleFileUrl.toPath(), virtualFile = null, isNew = isNew)
       }
@@ -519,8 +516,6 @@ abstract class ModuleManagerBridgeImpl(
     module.callCreateComponents()
     return@addMeasuredTime module
   }
-
-  open fun registerNonPersistentModuleStore(module: ModuleBridge) {}
 
   abstract fun loadModuleToBuilder(moduleName: String, filePath: String, diff: MutableEntityStorage): ModuleEntity
 

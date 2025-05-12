@@ -3,6 +3,7 @@
 
 package com.intellij.openapi.module.impl
 
+import com.intellij.configurationStore.NonPersistentModuleStore
 import com.intellij.configurationStore.RenameableStateStorageManager
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.openapi.components.*
@@ -74,19 +75,11 @@ open class ModuleImpl(
     // because there are a lot of modules and no need to measure each one
     val moduleComponentManager = getModuleComponentManager()
     moduleComponentManager.registerComponents()
-    if (!isPersistent) {
-      moduleComponentManager.registerService(
-        serviceInterface = IComponentStore::class.java,
-        implementation = NonPersistentModuleStore::class.java,
-        pluginDescriptor = fakeCorePluginDescriptor,
-        override = true,
-      )
-    }
     @Suppress("DEPRECATION")
     moduleComponentManager.createComponents()
   }
 
-  private val isPersistent: Boolean
+  protected val isPersistent: Boolean
     get() = imlFilePointer != null
 
   override val delegateComponentManager: ComponentManagerEx

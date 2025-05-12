@@ -2,14 +2,12 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.ModuleComponentManager
-import com.intellij.openapi.module.impl.NonPersistentModuleStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -29,7 +27,6 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.getComponentManagerImpl
 import com.intellij.serviceContainer.precomputeModuleLevelExtensionModel
 import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
@@ -150,15 +147,6 @@ open class ModuleManagerComponentBridge(private val project: Project, coroutineS
         (moduleRootComponent.getModuleLibraryTable() as ModuleLibraryTableBridgeImpl).addLibrary(change.newEntity, builder)
       }
     }
-  }
-
-  override fun registerNonPersistentModuleStore(module: ModuleBridge) {
-    (module as ModuleBridgeImpl).getModuleComponentManager().registerService(
-      serviceInterface = IComponentStore::class.java,
-      implementation = NonPersistentModuleStore::class.java,
-      pluginDescriptor = ComponentManagerImpl.fakeCorePluginDescriptor,
-      override = true,
-    )
   }
 
   override fun loadModuleToBuilder(moduleName: String, filePath: String, diff: MutableEntityStorage): ModuleEntity {

@@ -8,11 +8,14 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.components.ComponentConfig
 import com.intellij.openapi.components.impl.stores.ComponentStoreOwner
+import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
@@ -99,6 +102,22 @@ class ModuleComponentManager(parent: ComponentManagerImpl) : ComponentManagerImp
     if (modules.any { it.pluginId == PluginManagerCore.CORE_ID }) {
       unregisterComponent(DeprecatedModuleOptionManager::class.java)
     }
+  }
+
+  override fun registerService(serviceInterface: Class<*>, implementation: Class<*>, pluginDescriptor: PluginDescriptor, override: Boolean, clientKind: ClientKind?) {
+    if (serviceInterface == IComponentStore::class.java) {
+      LOG.error("Don't register IComponentStore as a module service. " +
+                "Override project service ModuleStoreFactory as a temporary solution if default store override is needed.")
+    }
+    super.registerService(serviceInterface, implementation, pluginDescriptor, override, clientKind)
+  }
+
+  override fun isServiceSuitable(descriptor: ServiceDescriptor): Boolean {
+    if (descriptor.serviceInterface == "com.intellij.openapi.components.impl.stores.IComponentStore") {
+      LOG.error("Don't use IComponentStore as a module service. Use extension function ComponentManager.stateStore instead.")
+      return false
+    }
+    return super.isServiceSuitable(descriptor)
   }
 
   override val componentStore: IComponentStore

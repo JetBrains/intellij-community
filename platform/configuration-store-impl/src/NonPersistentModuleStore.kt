@@ -1,10 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.module.impl
+package com.intellij.configurationStore
 
-import com.intellij.configurationStore.DummyStreamProvider
-import com.intellij.configurationStore.SaveSessionProducer
-import com.intellij.configurationStore.StateStorageManager
-import com.intellij.configurationStore.StreamProvider
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.ModuleStore
 import com.intellij.openapi.extensions.PluginId
@@ -13,13 +9,12 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 @ApiStatus.Internal
-internal class NonPersistentModuleStore : ModuleStore {
+class NonPersistentModuleStore internal constructor() : ModuleStore {
   override val storageManager: StateStorageManager
     get() = NonPersistentStateStorageManager
 
   override val isStoreInitialized: Boolean
     get() = true
-
   override fun setPath(path: Path) {
   }
 
