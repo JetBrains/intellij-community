@@ -1861,7 +1861,7 @@
                      level="WARNING" implementationClass="com.siyeh.ig.performance.MethodMayBeStaticInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ClassInitializerMayBeStatic" bundle="messages.InspectionGadgetsBundle"
                      key="class.initializer.may.be.static.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.performance.ClassInitializerMayBeStaticInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ObjectAllocationInLoop" bundle="messages.InspectionGadgetsBundle"
                      key="object.allocation.in.loop.display.name" groupBundle="messages.InspectionsBundle"
