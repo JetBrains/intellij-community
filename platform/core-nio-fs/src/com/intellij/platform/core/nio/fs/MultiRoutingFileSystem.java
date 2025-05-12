@@ -1,12 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.core.nio.fs;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.FileStore;
+import java.nio.file.FileSystem;
+import java.nio.file.Path;
+import java.nio.file.WatchService;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -19,7 +23,7 @@ public class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFil
   private final MultiRoutingFileSystemProvider myProvider;
   private final FileSystem myLocalFS;
 
-  private static class Backend {
+  private static final class Backend {
     final @NotNull String root;
     final boolean prefix;
     final boolean caseSensitive;
@@ -90,7 +94,8 @@ public class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFil
   /**
    * @see MultiRoutingFileSystemProvider#computeBackend(FileSystemProvider, String, boolean, boolean, BiFunction)
    */
-  void computeBackend(
+  @VisibleForTesting
+  public void computeBackend(
     @NotNull String root,
     boolean isPrefix,
     boolean caseSensitive,
@@ -183,7 +188,8 @@ public class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFil
     return myLocalFS.supportedFileAttributeViews();
   }
 
-  @NotNull FileSystem getBackend(@NotNull String path) {
+  @VisibleForTesting
+  public @NotNull FileSystem getBackend(@NotNull String path) {
     // It's important that the backends are sorted by the path length in the reverse order. Otherwise, prefixes won't work correctly.
     for (Backend backend : myBackends.get()) {
       if (backend.matchPath(path)) {

@@ -7,12 +7,16 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.*;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.CurrentJavaVersion;
+import com.intellij.util.PathUtilRt;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.groovy.compiler.rt.ClassDependencyLoader;
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
 import org.jetbrains.jps.incremental.CompileContext;
@@ -228,7 +232,8 @@ public final class InProcessGroovyc implements GroovycFlavor {
     return null;
   }
 
-  static @Nullable String evaluatePathToGroovyJarForParentClassloader(Collection<String> compilationClassPath) {
+  @VisibleForTesting
+  public static @Nullable String evaluatePathToGroovyJarForParentClassloader(Collection<String> compilationClassPath) {
     if (!"true".equals(System.getProperty("groovyc.reuse.compiler.classes", "true"))) {
       return null;
     }
