@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.impl.view.DoubleWidthCharacterStrategy
 import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.fileEditor.impl.zoomIndicator.ZoomIndicatorManager
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
@@ -300,6 +301,21 @@ fun EditorImpl.applyFontSettings(newSettings: JBTerminalSystemSettingsProviderBa
   settings.apply {
     characterGridWidthMultiplier = newSettings.columnSpacing
   }
+}
+
+@ApiStatus.Internal
+fun EditorImpl.setTerminalFontSize(
+  fontSize: Float,
+  showZoomIndicator: Boolean,
+) {
+  if (!showZoomIndicator) {
+    putUserData(ZoomIndicatorManager.SUPPRESS_ZOOM_INDICATOR_ONCE, true)
+  }
+  setFontSize(
+    fontSize,
+    ChangeTerminalFontSizeStrategy.preferredZoomPointRelative(this),
+    true
+  )
 }
 
 internal fun Editor.getCharSize(): Dimension2D {

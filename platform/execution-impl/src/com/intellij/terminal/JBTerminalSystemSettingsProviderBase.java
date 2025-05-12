@@ -67,7 +67,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
     // Use `myFontSettingsProvider` to make it possible to substitute another implementation in descendants.
     myFontSizeProvider.addListener(parentDisposable, new TerminalFontSizeProvider.Listener() {
       @Override
-      public void fontChanged() {
+      public void fontChanged(boolean showZoomIndicator) {
         listener.fontChanged();
       }
     });

@@ -21,7 +21,7 @@ internal class TerminalConsoleFontSizeProvider : TerminalFontSizeProvider {
   override fun addListener(parentDisposable: Disposable, listener: TerminalFontSizeProvider.Listener) {
     uiSettingsManager.addListener(parentDisposable, object : TerminalUiSettingsListener {
       override fun fontChanged() {
-        listener.fontChanged()
+        listener.fontChanged(false) // the argument doesn't matter, it's only used in the terminal plugin, not here
       }
     })
   }
