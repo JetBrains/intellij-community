@@ -310,8 +310,11 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
     };
     if (ApplicationManager.getApplication().isDispatchThread()) {
       myCaretActionListeners.getMulticaster().beforeAllCaretsAction();
-      doWithCaretMerging(iteration);
-      myCaretActionListeners.getMulticaster().afterAllCaretsAction();
+      try {
+        doWithCaretMerging(iteration);
+      } finally {
+        myCaretActionListeners.getMulticaster().afterAllCaretsAction();
+      }
     }
     else {
       iteration.run();
