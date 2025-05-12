@@ -6,9 +6,11 @@ import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.ExpectedType
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypePointer
 import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.getExpectedKotlinType
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -18,16 +20,18 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 /**
  * A request to create Kotlin callable from the usage in Kotlin.
  */
-internal class CreateMethodFromKotlinUsageRequest (
+internal class CreateMethodFromKotlinUsageRequest @OptIn(KaExperimentalApi::class) constructor(
     functionCall: KtCallExpression,
     modifiers: Collection<JvmModifier>,
     val receiverExpression: KtExpression?,
-    val receiverType: KaType?, // (in case receiverExpression is null) it can be notnull when there's implicit receiver: `blah { unknownFunc() }`
+    receiverType: KaType?, // (in case receiverExpression is null) it can be notnull when there's implicit receiver: `blah { unknownFunc() }`
     val isExtension: Boolean,
     val isAbstractClassOrInterface: Boolean,
     val isForCompanion: Boolean,
 ) : CreateExecutableFromKotlinUsageRequest<KtCallExpression>(functionCall, modifiers), CreateMethodRequest {
     internal val targetClass: PsiElement? = initializeTargetClass(receiverExpression, functionCall)
+    @OptIn(KaExperimentalApi::class)
+    internal val receiverTypePointer: KaTypePointer<KaType>? = receiverType?.createPointer()
 
     private fun initializeTargetClass(receiverExpression: KtExpression?, functionCall: KtCallExpression): PsiElement? {
         return analyze(functionCall) {

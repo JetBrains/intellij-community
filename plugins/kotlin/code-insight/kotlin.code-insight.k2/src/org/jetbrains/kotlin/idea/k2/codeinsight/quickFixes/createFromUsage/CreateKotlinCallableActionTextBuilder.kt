@@ -51,10 +51,11 @@ object CreateKotlinCallableActionTextBuilder {
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun descriptionOfCallableAsString(request: CreateMethodFromKotlinUsageRequest): String = when {
         request.isAbstractClassOrInterface -> KotlinBundle.message("text.abstract")
         request.isExtension -> KotlinBundle.message("text.extension")
-        request.receiverExpression != null || request.receiverType != null -> KotlinBundle.message("text.member")
+        request.receiverExpression != null || request.receiverTypePointer != null -> KotlinBundle.message("text.member")
         else -> ""
     }
 
@@ -66,13 +67,14 @@ object CreateKotlinCallableActionTextBuilder {
             val receiverTypeText: String
 
             val renderer = if (request.isExtension) RENDERER_OPTION_FOR_CREATE_FROM_USAGE_TEXT else RAW_RENDERER_OPTION_FOR_CREATE_FROM_USAGE_TEXT
+            val receiverType = request.receiverTypePointer?.restore()
             if (request.receiverExpression == null || request.receiverExpression.expressionType is KaErrorType) {
-                if (request.receiverType == null) return "" to ""
+                if (receiverType == null) return "" to ""
                 receiverSymbol = null
-                receiverTypeText = request.receiverType.render(renderer, Variance.INVARIANT)
+                receiverTypeText = receiverType.render(renderer, Variance.INVARIANT)
             } else {
                 receiverSymbol = request.receiverExpression.resolveExpression()
-                val receiverType = request.receiverType ?: request.receiverExpression.expressionType
+                val receiverType = receiverType ?: request.receiverExpression.expressionType
                 val recPackageFqName = request.receiverExpression.expressionType?.convertToClass()?.classIdIfNonLocal?.packageFqName
                 val addedPackage = if (recPackageFqName == container.containingKtFile.packageFqName || recPackageFqName == null || recPackageFqName.asString().startsWith("kotlin")) "" else recPackageFqName.asString()+"."
                 // Since receiverExpression.getKtType() returns `kotlin/Unit` for a companion object, we first try the symbol resolution and its type rendering.
@@ -149,7 +151,7 @@ object CreateKotlinCallableActionTextBuilder {
     @OptIn(KaExperimentalApi::class)
     fun renderTypeName(expectedType: ExpectedType, container: KtElement): String? {
         val ktType = if (expectedType is ExpectedKotlinType) expectedType.kaType else expectedType.toKtTypeWithNullability(container)
-        if (ktType == null || ktType == builtinTypes.unit) return null
+        if (ktType == null || ktType.isUnitType) return null
         return ktType.render(renderer = K2CreateFunctionFromUsageUtil.WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS, position = Variance.INVARIANT)
     }
 
