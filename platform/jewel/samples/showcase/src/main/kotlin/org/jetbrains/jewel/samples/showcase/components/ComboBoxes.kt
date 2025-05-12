@@ -233,8 +233,8 @@ private fun CustomComboBoxes() {
                     SimpleListItem(
                         text = languageOptions[selectedIndex].name,
                         icon = languageOptions[selectedIndex].icon,
-                        isSelected = false,
-                        isActive = true,
+                        selected = false,
+                        active = true,
                     )
                 },
             )
