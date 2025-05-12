@@ -34,7 +34,9 @@ import com.intellij.openapi.extensions.*
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.extensions.impl.createExtensionPoints
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.*
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IntellijInternalApi
@@ -43,12 +45,11 @@ import com.intellij.platform.instanceContainer.internal.*
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.UList
-import com.intellij.util.messages.*
-import com.intellij.util.messages.impl.MessageBusEx
-import com.intellij.util.messages.impl.PluginListenerDescriptor
-import com.intellij.util.messages.impl.MessageBusImpl
-import com.intellij.util.messages.impl.MessageDeliveryListener
-import com.intellij.util.messages.impl.listenerClassName
+import com.intellij.util.messages.MessageBus
+import com.intellij.util.messages.MessageBusFactory
+import com.intellij.util.messages.MessageBusOwner
+import com.intellij.util.messages.Topic
+import com.intellij.util.messages.impl.*
 import com.intellij.util.runSuppressing
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.intellij.IntellijCoroutines
@@ -756,7 +757,14 @@ abstract class ComponentManagerImpl(
     if (parent != null) {
       val result = parent.doGetService(serviceClass, createIfNeeded)
       if (result != null) {
-        LOG.error("$key is registered as application service, but requested as project one")
+        fun decodeContainerName(container: ComponentManager) = when {
+          container is Application -> "application"
+          container is Project -> "project"
+          container is Module -> "module"
+          (container.javaClass.name == "com.intellij.openapi.module.impl.ModuleComponentManager") -> "module"
+          else -> container.javaClass.name
+        }
+        LOG.error("$key is registered as ${decodeContainerName(parent)} service, but requested as ${decodeContainerName(this)} one")
         return result
       }
     }
