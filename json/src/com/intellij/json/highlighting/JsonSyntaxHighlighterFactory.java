@@ -4,7 +4,7 @@ package com.intellij.json.highlighting;
 import com.intellij.json.JsonElementTypes;
 import com.intellij.json.JsonFileType;
 import com.intellij.json.JsonLanguage;
-import com.intellij.json.JsonLexer;
+import com.intellij.json.syntax.JsonLexer;
 import com.intellij.lang.Language;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.HighlighterColors;
@@ -15,6 +15,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.syntax.psi.lexer.LexerAdapter;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
@@ -25,6 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.*;
+import static com.intellij.platform.syntax.psi.ElementTypeConverters.getConverter;
 
 public class JsonSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
   public static final TextAttributesKey JSON_BRACKETS = TextAttributesKey.createTextAttributesKey("JSON.BRACKETS", BRACKETS);
@@ -108,7 +110,7 @@ public class JsonSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
   }
 
   protected @NotNull Lexer getLexer() {
-    return new JsonLexer();
+    return new LexerAdapter(new JsonLexer(), getConverter(JsonLanguage.INSTANCE));
   }
 
   protected boolean isCanEscapeEol() {

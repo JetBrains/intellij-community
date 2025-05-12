@@ -1,61 +1,83 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.json;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.json
 
-import com.intellij.json.psi.impl.JsonFileImpl;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.PsiParser;
-import com.intellij.lexer.Lexer;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.IFileElementType;
-import com.intellij.psi.tree.TokenSet;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.json.psi.impl.JsonFileImpl
+import com.intellij.json.syntax.JsonLexer
+import com.intellij.lang.ASTNode
+import com.intellij.lang.ParserDefinition
+import com.intellij.lang.PsiBuilder
+import com.intellij.lang.PsiParser
+import com.intellij.lexer.Lexer
+import com.intellij.openapi.project.Project
+import com.intellij.platform.syntax.SyntaxElementType
+import com.intellij.platform.syntax.psi.ElementTypeConverters.getConverter
+import com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory.Companion.getInstance
+import com.intellij.platform.syntax.psi.impl.*
+import com.intellij.platform.syntax.psi.lexer.LexerAdapter
+import com.intellij.psi.FileViewProvider
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.tree.IElementType
+import com.intellij.psi.tree.IFileElementType
+import com.intellij.psi.tree.TokenSet
 
-import static com.intellij.json.JsonElementTypes.Factory;
+@JvmField
+val SYNTAX_FILE: SyntaxElementType = SyntaxElementType("FILE")
+@JvmField
+val FILE: IFileElementType = object : IFileElementType(JsonLanguage.INSTANCE) {
+  override fun doParseContents(chameleon: ASTNode, psi: PsiElement): ASTNode? {
+    val builderFactory = getInstance()
+    val elementType = chameleon.getElementType()
+    val lexer = JsonLexer()
+    val syntaxBuilder = builderFactory.createBuilder(chameleon,
+                                                     lexer,
+                                                     language,
+                                                     chameleon.getChars())
+    val runtimeParserRuntime =
+      getSyntaxParserRuntimeFactory(language).buildParserUtils(syntaxBuilder.getSyntaxTreeBuilder())
+    val convertedElement = getConverter(language).convert(elementType)
+    assert(convertedElement != null)
+    JsonParser().parse(convertedElement!!, runtimeParserRuntime)
+    return syntaxBuilder.getTreeBuilt().getFirstChildNode()
+  }
+}
 
-public class JsonParserDefinition implements ParserDefinition {
-  public static final IFileElementType FILE = new IFileElementType(JsonLanguage.INSTANCE);
+open class JsonParserDefinition : ParserDefinition {
 
-  @Override
-  public @NotNull Lexer createLexer(Project project) {
-    return new JsonLexer();
+  override fun createLexer(project: Project?): Lexer {
+    return LexerAdapter(JsonLexer(), getConverter(JsonLanguage.INSTANCE))
   }
 
-  @Override
-  public @NotNull PsiParser createParser(Project project) {
-    return new JsonParser();
+  override fun createParser(project: Project?): PsiParser {
+    assert(false)
+    return object : PsiParser {
+      override fun parse(root: IElementType, builder: PsiBuilder): ASTNode {
+        TODO("Not yet implemented")
+      }
+    }
   }
 
-  @Override
-  public @NotNull IFileElementType getFileNodeType() {
-    return FILE;
+  override fun getFileNodeType(): IFileElementType {
+    return FILE
   }
 
-  @Override
-  public @NotNull TokenSet getCommentTokens() {
-    return JsonTokenSets.JSON_COMMENTARIES;
+  override fun getCommentTokens(): TokenSet {
+    return JsonTokenSets.JSON_COMMENTARIES
   }
 
-  @Override
-  public @NotNull TokenSet getStringLiteralElements() {
-    return JsonTokenSets.STRING_LITERALS;
+  override fun getStringLiteralElements(): TokenSet {
+    return JsonTokenSets.STRING_LITERALS
   }
 
-  @Override
-  public @NotNull PsiElement createElement(ASTNode astNode) {
-    return Factory.createElement(astNode);
+  override fun createElement(astNode: ASTNode): PsiElement {
+    return JsonElementTypes.Factory.createElement(astNode)
   }
 
-  @Override
-  public @NotNull PsiFile createFile(@NotNull FileViewProvider fileViewProvider) {
-    return new JsonFileImpl(fileViewProvider, JsonLanguage.INSTANCE);
+  override fun createFile(fileViewProvider: FileViewProvider): PsiFile {
+    return JsonFileImpl(fileViewProvider, JsonLanguage.INSTANCE)
   }
 
-  @Override
-  public @NotNull SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode astNode, ASTNode astNode2) {
-    return SpaceRequirements.MAY;
+  override fun spaceExistenceTypeBetweenTokens(astNode: ASTNode?, astNode2: ASTNode?): ParserDefinition.SpaceRequirements {
+    return ParserDefinition.SpaceRequirements.MAY
   }
 }

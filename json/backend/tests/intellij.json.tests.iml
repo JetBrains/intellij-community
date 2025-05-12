@@ -33,5 +33,8 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlin-reflect" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.syntax.psi" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.json.syntax" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.syntax.util" scope="TEST" />
   </component>
 </module>
