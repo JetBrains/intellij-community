@@ -40,17 +40,21 @@ class TerminalFontSizeProviderImpl : TerminalFontSizeProvider, Disposable {
   }
 
   override fun setFontSize(newSize: Float) {
+    setFontSizeImpl(newSize, showZoomIndicator = true)
+  }
+
+  override fun resetFontSize() {
+    setFontSizeImpl(getDefaultScaledFontSize().floatValue, showZoomIndicator = false)
+  }
+
+  private fun setFontSizeImpl(newSize: Float, showZoomIndicator: Boolean) {
     val oldSize = fontSize
     if (oldSize != TerminalFontSize.ofFloat(newSize)) {
       fontSize = TerminalFontSize.ofFloat(newSize)
       for (listener in listeners) {
-        listener.fontChanged()
+        listener.fontChanged(showZoomIndicator)
       }
     }
-  }
-
-  override fun resetFontSize() {
-    setFontSize(getDefaultScaledFontSize().floatValue)
   }
 
   internal fun getDefaultScaledFontSize(): TerminalFontSize {
