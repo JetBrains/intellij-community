@@ -177,7 +177,7 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
         }
       }
     }
-    container.logCurrent() // see doc of this function, it's very fast, and we should wait for its completion
+    container.logCurrent(CustomRequestIdLogger.remove(editor)) // see doc of this function, it's very fast, and we should wait for its completion
 
     // `SELECTED` case is handled in the afterInsert case
     if (event.finishType != InlineCompletionUsageTracker.ShownEvents.FinishType.SELECTED) {

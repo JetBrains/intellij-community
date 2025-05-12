@@ -116,28 +116,30 @@ class InlineCompletionLogsContainer() {
    * Await for this function completion before exit from the inline completion request and process next typings or next requests.
    * Should be very fast.
    */
-  fun logCurrent() {
+  fun logCurrent(extraLogger: CustomRequestIdLogger? = null) {
     cancelAsyncAdds()
 
-    InlineCompletionLogs.Session.SESSION_EVENT.log(project = project, // log function is asynchronous, so it's ok to launch it even on EDT
-                                                   logs.filter { it.value.isNotEmpty() }.mapNotNull { (phase, logs) ->
-
-        // for release, log only basic fields for most of the requests and very rarely log everything.
-        val filteredEvents = if (getShouldSendFullLogs()) {
-          logs
-        } else {
-          logs.filter { pair -> InlineCompletionLogs.Session.isBasic(pair) }
-        }
-
-        val logPhaseObject = InlineCompletionLogs.Session.phases[phase]
-        if (logPhaseObject != null) {
-          logPhaseObject.with(ObjectEventData(filteredEvents.toList()))
-        } else {
-          logger.error("ObjectEventField is not found for $phase, FUS event may be configured incorrectly!")
-          null
-        }
+    val filteredEvents = logs.filter { it.value.isNotEmpty() }.mapValues { (_, logs) ->
+      // for release, log only basic fields for most of the requests and very rarely log everything.
+      if (getShouldSendFullLogs()) {
+        logs
+      } else {
+        logs.filter { pair -> InlineCompletionLogs.Session.isBasic(pair) }
       }
-    )
+    }
+
+    // log function is asynchronous, so it's ok to launch it even on EDT
+    InlineCompletionLogs.Session.SESSION_EVENT.log(project = project, filteredEvents.mapNotNull { (phase, events) ->
+      val logPhaseObject = InlineCompletionLogs.Session.phases[phase]
+      if (logPhaseObject != null) {
+        logPhaseObject.with(ObjectEventData(events.toList()))
+      } else {
+        logger.error("ObjectEventField is not found for $phase, FUS event may be configured incorrectly!")
+        null
+      }
+    })
+    extraLogger?.log(project, filteredEvents)
+
     logs.forEach { (_, events) -> events.clear() }
   }
 
