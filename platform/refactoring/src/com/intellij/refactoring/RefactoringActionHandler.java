@@ -12,14 +12,16 @@ import org.jetbrains.annotations.NotNull;
 /**
  * RefactoringActionHandler is an implementation of a specific IDE refactoring,
  * with dialogs, UI and all.
- * It is what gets invoked when user chooses an item from 'Refactoring' menu.<br>
+ * It is what gets invoked when the user chooses an item from the 'Refactoring' menu.
  * <p>
  * {@code RefactoringActionHandler} is a &quot;one-shot&quot; object: you should not
  * invoke it twice.
  * <p>
  * Use {@link ContextAwareActionHandler} to hide an action from popups but allow access by shortcut, main menu or find.
+ * <p>
  *
  * @see RefactoringActionHandlerFactory
+ * @see PreviewableRefactoringActionHandler
  */
 public interface RefactoringActionHandler {
   /**

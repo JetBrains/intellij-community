@@ -1317,6 +1317,7 @@ com.intellij.codeInspection.RefactoringQuickFix
 - applyFix(com.intellij.openapi.project.Project,com.intellij.codeInspection.ProblemDescriptor):V
 - doFix(com.intellij.psi.PsiElement):V
 - enhanceDataContext(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.DataContext
+- generatePreview(com.intellij.openapi.project.Project,com.intellij.codeInspection.ProblemDescriptor):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - getElementToRefactor(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - a:getHandler():com.intellij.refactoring.RefactoringActionHandler
 - getHandler(com.intellij.openapi.actionSystem.DataContext):com.intellij.refactoring.RefactoringActionHandler
