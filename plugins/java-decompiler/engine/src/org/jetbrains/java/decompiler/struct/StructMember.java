@@ -96,7 +96,6 @@ public abstract class StructMember {
           return attribute.getAnnotations().stream();
         }
       })
-      .filter(ta -> ta.isWrittenBeforeType(type))
       .collect(Collectors.toList());
   }
 

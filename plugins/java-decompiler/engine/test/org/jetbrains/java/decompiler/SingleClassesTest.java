@@ -258,4 +258,5 @@ public class SingleClassesTest extends SingleClassesTestBase {
   @Test public void testTryCatchFinallyMismatched() { doTest("pkg/TestTryCatchFinallyMismatched"); }
   @Test public void testNestedCalls() { doTest("pkg/TestNestedCalls"); }
   @Test public void testBreakpointsContextProvider() { doTest("com/intellij/tasks/context/java/BreakpointsContextProvider"); }
+  @Test public void testAnnotationsForParametersWithNestedClass() { doTest("pkg/TestAnnotationsForParametersWithNestedClass"); }
 }
