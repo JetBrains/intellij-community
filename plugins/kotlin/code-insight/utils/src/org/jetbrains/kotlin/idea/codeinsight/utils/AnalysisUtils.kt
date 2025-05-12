@@ -134,20 +134,24 @@ context(KaSession)
 @get:ApiStatus.Internal
 val KtTypeReference.typeIfSafeToResolve: KaType?
     get() {
-        val typeElement = this.typeElement?.unwrapNullability() ?: return null
+        if (!this.isSafeToResolve) return null
+
+        return this.type
+    }
+
+context(KaSession)
+private val KtTypeReference.isSafeToResolve: Boolean
+    get() {
+        val typeElement = this.typeElement?.unwrapNullability() ?: return false
 
         if (typeElement !is KtUserType) {
             // We currently do a generous assumption that only `KtUserType`s are really fragile.
             // If proved otherwise, this condition should become more restrictive.
-            return this.type
+            return true
         }
 
         val typeNameExpression = typeElement.referenceExpression
 
-        if (typeNameExpression?.mainReference?.resolveToSymbols().isNullOrEmpty()) {
-            // resolveToSymbols failed, no point in calling type, it may produce/log exceptions 
-            return null
-        }
-
-        return this.type
+        // resolveToSymbols failed, no point in calling type, it may produce/log exceptions
+        return typeNameExpression?.mainReference?.resolveToSymbols()?.isNotEmpty() == true
     }
