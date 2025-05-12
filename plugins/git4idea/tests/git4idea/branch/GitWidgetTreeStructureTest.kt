@@ -8,10 +8,12 @@ import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.assertions.Assertions
+import com.intellij.testFramework.utils.io.deleteRecursively
 import com.intellij.ui.SeparatorWithText
 import com.intellij.ui.tree.TreeTestUtil
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
+import git4idea.GitUtil
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
 import git4idea.test.*
@@ -176,6 +178,30 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
     }
 
     compareWithSnapshot(buildTestTree("group"))
+  }
+
+  fun testSingleFreshRepo() {
+    resetToFreshState(repo)
+    compareWithSnapshot(buildTestTree())
+  }
+
+  fun testMultipleFreshRepos() {
+    resetToFreshState(repo)
+    registerBroRepo().also { resetToFreshState(it) }
+    compareWithSnapshot(buildTestTree())
+  }
+
+  fun testMultipleFreshReposNoSync() {
+    settings.syncSetting = DvcsSyncSettings.Value.DONT_SYNC
+
+    resetToFreshState(repo)
+    registerBroRepo().also { resetToFreshState(it) }
+    compareWithSnapshot(buildTestTree())
+  }
+
+  private fun resetToFreshState(repo: GitRepository) {
+    repo.root.toNioPath().resolve(GitUtil.DOT_GIT).deleteRecursively()
+    repo.git("init")
   }
 
   private fun createRefs(repo: GitRepository, ensureTags: Boolean = false) {
