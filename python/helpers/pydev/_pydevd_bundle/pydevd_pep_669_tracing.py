@@ -1,4 +1,6 @@
-#  Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+# Copyright: Brainwy Software
+#
+# License: EPL
 
 import os
 import sys
@@ -15,7 +17,7 @@ from _pydevd_bundle.pydevd_comm_constants import (
     CMD_STEP_OVER, CMD_SMART_STEP_INTO, CMD_SET_BREAK, CMD_STEP_INTO,
     CMD_STEP_INTO_MY_CODE, CMD_STEP_INTO_COROUTINE, CMD_STEP_RETURN)
 from _pydevd_bundle.pydevd_constants import (
-    PYDEVD_TOOL_NAME, STATE_RUN, STATE_SUSPEND, GlobalDebuggerHolder, IS_CPYTHON)
+    PYDEVD_TOOL_NAME, STATE_RUN, STATE_SUSPEND, GlobalDebuggerHolder, IS_CPYTHON, IS_PY313_OR_GREATER)
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE, PYDEV_FILE
 from _pydevd_bundle.pydevd_trace_dispatch import (
     set_additional_thread_info, handle_breakpoint_condition,
@@ -23,12 +25,6 @@ from _pydevd_bundle.pydevd_trace_dispatch import (
     should_stop_on_exception, handle_exception, manage_return_values)
 from pydevd_file_utils import (
     NORM_PATHS_AND_BASE_CONTAINER, get_abs_path_real_path_and_base_from_frame)
-
-def get_current_thread():
-    try:
-        return threading.current_thread()
-    except:
-        return None
 
 get_file_type = DONT_TRACE.get
 
@@ -44,6 +40,169 @@ _EVENT_ACTIONS = {
     "ADD": lambda x, y: x | y,
     "REMOVE": lambda x, y: x & ~y,
 }
+
+try:
+    _thread_local_info = threading.local()
+    _get_ident = threading.get_ident
+    _thread_active = threading._active  # noqa
+except:
+    pass
+
+
+def _get_bootstrap_frame(depth):
+    try:
+        return _thread_local_info.f_bootstrap, _thread_local_info.is_bootstrap_frame_internal
+    except:
+        frame = _getframe(depth)
+        f_bootstrap = frame
+        # print('called at', f_bootstrap.f_code.co_name, f_bootstrap.f_code.co_filename, f_bootstrap.f_code.co_firstlineno)
+        is_bootstrap_frame_internal = False
+        while f_bootstrap is not None:
+            filename = f_bootstrap.f_code.co_filename
+            name = splitext(basename(filename))[0]
+
+            if name == "threading":
+                if f_bootstrap.f_code.co_name in ("__bootstrap", "_bootstrap"):
+                    # We need __bootstrap_inner, not __bootstrap.
+                    return None, False
+
+                elif f_bootstrap.f_code.co_name in ("__bootstrap_inner", "_bootstrap_inner", "is_alive"):
+                    # Note: be careful not to use threading.current_thread to avoid creating a dummy thread.
+                    is_bootstrap_frame_internal = True
+                    break
+
+            elif name == "pydev_monkey":
+                if f_bootstrap.f_code.co_name == "__call__":
+                    is_bootstrap_frame_internal = True
+                    break
+
+            elif name == "pydevd":
+                if f_bootstrap.f_code.co_name in ("run", "main"):
+                    # We need to get to _exec
+                    return None, False
+
+                if f_bootstrap.f_code.co_name == "_exec":
+                    is_bootstrap_frame_internal = True
+                    break
+
+            elif f_bootstrap.f_back is None:
+                break
+
+            f_bootstrap = f_bootstrap.f_back
+
+        if f_bootstrap is not None:
+            _thread_local_info.is_bootstrap_frame_internal = is_bootstrap_frame_internal
+            _thread_local_info.f_bootstrap = f_bootstrap
+            return _thread_local_info.f_bootstrap, _thread_local_info.is_bootstrap_frame_internal
+
+        return f_bootstrap, is_bootstrap_frame_internal
+
+
+class ThreadInfo:
+    def __init__(self, thread, thread_ident, trace, additional_info):
+        self.thread = thread
+        self.thread_ident = thread_ident
+        self.additional_info = additional_info
+        self.trace = trace
+        self._use_is_stopped = hasattr(thread, '_is_stopped')
+
+    def is_thread_alive(self):
+        if self._use_is_stopped:
+            return not self.thread._is_stopped
+        else:
+            return not self.thread._handle.is_done()
+
+
+class _DeleteDummyThreadOnDel:
+    """
+    Helper class to remove a dummy thread from threading._active on __del__.
+    """
+
+    def __init__(self, dummy_thread):
+        self._dummy_thread = dummy_thread
+        self._tident = dummy_thread.ident
+        # Put the thread on a thread local variable so that when
+        # the related thread finishes this instance is collected.
+        #
+        # Note: no other references to this instance may be created.
+        # If any client code creates a reference to this instance,
+        # the related _DummyThread will be kept forever!
+        _thread_local_info._track_dummy_thread_ref = self
+
+    def __del__(self):
+        with threading._active_limbo_lock:
+            if _thread_active.get(self._tident) is self._dummy_thread:
+                _thread_active.pop(self._tident, None)
+
+
+def _create_thread_info(depth):
+    # Don't call threading.currentThread because if we're too early in the process
+    # we may create a dummy thread.
+    thread_ident = _get_ident()
+
+    f_bootstrap_frame, is_bootstrap_frame_internal = _get_bootstrap_frame(depth + 1)
+    if f_bootstrap_frame is None:
+        return None  # Case for threading when it's still in bootstrap or early in pydevd.
+
+    if is_bootstrap_frame_internal:
+        t = None
+        if f_bootstrap_frame.f_code.co_name in ("__bootstrap_inner", "_bootstrap_inner", "is_alive"):
+            # Note: be careful not to use threading.current_thread to avoid creating a dummy thread.
+            t = f_bootstrap_frame.f_locals.get("self")
+            if not isinstance(t, threading.Thread):
+                t = None
+
+        elif f_bootstrap_frame.f_code.co_name in ("_exec", "__call__"):
+            # Note: be careful not to use threading.current_thread to avoid creating a dummy thread.
+            t = f_bootstrap_frame.f_locals.get("t")
+            if not isinstance(t, threading.Thread):
+                t = None
+
+    else:
+        # This means that the first frame is not in threading nor in pydevd.
+        # In practice this means it's some unmanaged thread, so, creating
+        # a dummy thread is ok in this use-case.
+        t = threading.current_thread()
+
+    if t is None:
+        t = _thread_active.get(thread_ident)
+
+    if isinstance(t, threading._DummyThread) and not IS_PY313_OR_GREATER:
+        _thread_local_info._ref = _DeleteDummyThreadOnDel(t)
+
+    if t is None:
+        return None
+
+    if getattr(t, "is_pydev_daemon_thread", False):
+        return ThreadInfo(t, thread_ident, False, None)
+    else:
+        try:
+            additional_info = t.additional_info
+            if additional_info is None:
+                raise AttributeError()
+        except:
+            additional_info = set_additional_thread_info(t)
+        return ThreadInfo(t, thread_ident, True, additional_info)
+
+def _get_thread_info(create, depth):
+    """
+    Provides thread-related info.
+
+    May return None if the thread is still not active.
+    """
+    try:
+        # Note: changing to a `dict[thread.ident] = thread_info` had almost no
+        # effect in the performance.
+        return _thread_local_info.thread_info
+    except:
+        if not create:
+            return None
+        thread_info = _create_thread_info(depth + 1)
+        if thread_info is None:
+            return None
+
+        _thread_local_info.thread_info = thread_info
+        return _thread_local_info.thread_info
 
 def _make_frame_cache_key(code):
     return code.co_firstlineno, code.co_name, code.co_filename
@@ -264,20 +423,28 @@ def call_callback(code, instruction_offset, callable, arg0):
     frame = _getframe(1)
     # print('ENTER: CALL ', code.co_filename, frame.f_lineno, code.co_name)
 
+
+
     try:
         if py_db._finish_debugging_session:
             return monitoring.DISABLE
 
-        thread = get_current_thread()
-        if thread is None:
-            return
+        try:
+            thread_info = _thread_local_info.thread_info
+        except:
+            thread_info = _get_thread_info(True, 1)
+            if thread_info is None:
+                return
+
+        thread = thread_info.thread
+
 
         if not is_thread_alive(thread):
             return
 
         frame_cache_key = _make_frame_cache_key(code)
 
-        info = _get_additional_info(thread)
+        info = thread_info.additional_info
         pydev_step_cmd = info.pydev_step_cmd
         is_stepping = pydev_step_cmd != -1
 
@@ -320,14 +487,19 @@ def py_start_callback(code, instruction_offset):
     # print('ENTER: PY_START ', code.co_filename, frame.f_lineno, code.co_name)
 
     try:
+        thread_info = _thread_local_info.thread_info
+    except:
+        thread_info = _get_thread_info(True, 1)
+        if thread_info is None:
+            return
+
+    try:
         if py_db._finish_debugging_session:
             return monitoring.DISABLE
 
-        thread = get_current_thread()
-        if thread is None:
-            return
-
-        if not is_thread_alive(thread):
+        if not thread_info.trace or not thread_info.is_thread_alive():
+            # For thread-related stuff we can't disable the code tracing because other
+            # threads may still want it...
             return
 
         if py_db.thread_analyser is not None:
@@ -338,7 +510,7 @@ def py_start_callback(code, instruction_offset):
 
         frame_cache_key = _make_frame_cache_key(code)
 
-        info = _get_additional_info(thread)
+        info = thread_info.additional_info
         pydev_step_cmd = info.pydev_step_cmd
         is_stepping = pydev_step_cmd != -1
 
@@ -367,7 +539,7 @@ def py_start_callback(code, instruction_offset):
             return
 
         if py_db.plugin and py_db.has_plugin_line_breaks:
-            args = (py_db, filename, info, thread)
+            args = (py_db, filename, info, thread_info.thread)
             result = py_db.plugin.get_breakpoint(py_db, frame, 'call', args)
             if result is not None:
                 flag, breakpoint, new_frame, bp_type = result
@@ -387,12 +559,12 @@ def py_start_callback(code, instruction_offset):
                         return
 
                 if flag:
-                    result = py_db.plugin.suspend(py_db, thread, frame, bp_type)
+                    result = py_db.plugin.suspend(py_db, thread_info.thread, frame, bp_type)
                     if result is not None:
                         frame = result
 
                 if info.pydev_state == STATE_SUSPEND:
-                    py_db.do_wait_suspend(thread, frame, 'call', None)
+                    py_db.do_wait_suspend(thread_info.thread, frame, 'call', None)
                     return
 
         if is_stepping:
@@ -413,7 +585,7 @@ def py_start_callback(code, instruction_offset):
 
             # Process plugins stepping
             stop_info = {}
-            args = (py_db, filename, info, thread)
+            args = (py_db, filename, info, thread_info.thread)
             stop_frame = info.pydev_step_stop
             plugin_stop = False
 
@@ -450,11 +622,19 @@ def py_start_callback(code, instruction_offset):
 
 def py_line_callback(code, line_number):
     frame = _getframe(1)
-    thread = get_current_thread()
+
+    try:
+        thread_info = _thread_local_info.thread_info
+    except:
+        thread_info = _get_thread_info(True, 1)
+        if thread_info is None:
+            return
+
+    thread = thread_info.thread
     if thread is None:
         return
 
-    info = _get_additional_info(thread)
+    info = thread_info.additional_info
 
     # print('LINE %s %s %s %s' % (frame.f_lineno, code.co_name, code.co_filename, info.pydev_step_cmd))
 
@@ -659,11 +839,18 @@ def py_raise_callback(code, instruction_offset, exception):
         return
 
     try:
-        thread = get_current_thread()
-        if thread is None:
+        try:
+            thread_info = _thread_local_info.thread_info
+        except:
+            thread_info = _get_thread_info(True, 1)
+            if thread_info is None:
+                return
+
+        thread = thread_info.thread
+        info = thread_info.additional_info
+        if info is None:
             return
 
-        info = _get_additional_info(thread)
         frame = _getframe(1)
         if frame is _get_top_level_frame():
             _stop_on_unhandled_exception(exc_info, py_db, thread)
@@ -707,10 +894,18 @@ def py_return_callback(code, instruction_offset, retval):
         return monitoring.DISABLE
 
     frame = _getframe(1)
-    thread = get_current_thread()
+    try:
+        thread_info = _thread_local_info.thread_info
+    except:
+        thread_info = _get_thread_info(True, 1)
+        if thread_info is None:
+            return
+
+    thread = thread_info.thread
     if thread is None:
         return
-    info = _get_additional_info(thread)
+
+    info = thread_info.additional_info
     stop_frame = info.pydev_step_stop
     filename = _get_abs_path_real_path_and_base_from_frame(frame)[1]
     plugin_stop = False
