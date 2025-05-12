@@ -4,6 +4,8 @@ package com.intellij.execution.ijent.nio
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil.toSystemIndependentName
 import com.intellij.platform.core.nio.fs.*
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
 import com.intellij.util.text.nullize
 import java.io.File
@@ -17,11 +19,16 @@ import kotlin.io.path.isSameFileAs
 import kotlin.io.path.pathString
 
 private fun Path.unwrap(): Path = if (this is MultiRoutingFsPath) delegate else this
-private fun Path.toIjentPath(): IjentNioPath = when (val path = unwrap()) {
+
+private fun Path.toIjentPathOrNull(): IjentNioPath? = when (val path = unwrap()) {
   is IjentEphemeralRootAwarePath -> path.originalPath
   is IjentNioPath -> path
-  else -> throw IllegalArgumentException("Unsupported path type: $path")
+  else -> null
 }
+
+private fun Path.toIjentPath(): IjentNioPath = toIjentPathOrNull() ?: throw IllegalArgumentException("Cannot convert $this to IjentNioPath")
+
+private fun Path.toOriginalPath(): Path = toIjentPathOrNull() ?: this
 
 /**
  * The `RootAwarePath `class delegates all operations to the original IjentNioPath.
@@ -156,6 +163,24 @@ internal class IjentEphemeralRootAwareFileSystemProvider(
     return when {
       SystemInfo.isWindows -> delegate.readAttributesUsingDosAttributesAdapter(path, path.toIjentPath(), type, *options)
       else -> super.readAttributes(path, type, *options)
+    }
+  }
+
+  override fun copy(source: Path, target: Path, vararg options: CopyOption?) {
+    if (source.getEelDescriptor() == target.getEelDescriptor()) {
+      super.copy(source, target, *options)
+    }
+    else {
+      EelPathUtils.walkingTransfer(source.toOriginalPath(), target.toOriginalPath(), removeSource = false, copyAttributes = StandardCopyOption.COPY_ATTRIBUTES in options)
+    }
+  }
+
+  override fun move(source: Path, target: Path, vararg options: CopyOption?) {
+    if (source.getEelDescriptor() == target.getEelDescriptor()) {
+      super.move(source, target, *options)
+    }
+    else {
+      EelPathUtils.walkingTransfer(source.toOriginalPath(), target.toOriginalPath(), removeSource = true, copyAttributes = StandardCopyOption.COPY_ATTRIBUTES in options)
     }
   }
 
