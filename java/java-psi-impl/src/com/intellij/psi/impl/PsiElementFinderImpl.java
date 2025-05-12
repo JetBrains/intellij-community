@@ -123,7 +123,10 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
     return list.toArray(PsiClass.EMPTY_ARRAY);
   }
 
-  private static List<PsiClass> processClasses(@Nullable String shortName, PsiClass[] classes, List<PsiClass> list, String packageName) {
+  private static @Nullable List<PsiClass> processClasses(@Nullable String shortName,
+                                                         PsiClass @NotNull [] classes,
+                                                         @Nullable List<PsiClass> list,
+                                                         @NotNull String packageName) {
     if (classes.length == 0) return list;
     if (list == null) list = new ArrayList<>();
     for (PsiClass aClass : classes) {
