@@ -147,6 +147,19 @@ public class UndoManagerImpl extends UndoManager {
       StringBuilder sb = new StringBuilder();
       sb.append(myClientId);
       sb.append("\n");
+      if (myCurrentMerger == null) {
+        sb.append("null CurrentMerger");
+        sb.append("\n");
+      } else {
+        sb.append("CurrentMerger");
+        sb.append("\n  ");
+        sb.append(myCurrentMerger.dumpState());
+        sb.append("\n");
+      }
+      sb.append("Merger");
+      sb.append("\n  ");
+      sb.append(myMerger.dumpState());
+      sb.append("\n");
       for (DocumentReference doc : docs) {
         sb.append(dumpStack(doc, true));
         sb.append("\n");
@@ -166,7 +179,7 @@ public class UndoManagerImpl extends UndoManager {
       Iterator<UndoableGroup> it = stack.descendingIterator();
       int i = 0;
       while (it.hasNext()) {
-        reversed.add("  %s {%s}".formatted(i, it.next().dumpState0()));
+        reversed.add("  %s %s".formatted(i, it.next().dumpState0()));
         i++;
       }
       return String.join("\n", reversed);

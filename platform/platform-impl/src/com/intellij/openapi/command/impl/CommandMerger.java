@@ -471,4 +471,24 @@ public final class CommandMerger {
       myValid = false;
     }
   }
+
+  @NotNull UndoRedoList<UndoableAction> getCurrentActions() {
+    return myCurrentActions;
+  }
+
+  boolean isValid() {
+    return myValid;
+  }
+
+  @NotNull Set<DocumentReference> getAllAffectedDocuments() {
+    return myAllAffectedDocuments;
+  }
+
+  @NotNull Set<DocumentReference> getAdditionalAffectedDocuments() {
+    return myAdditionalAffectedDocuments;
+  }
+
+  @NotNull String dumpState() {
+    return UndoUnit.fromMerger(this).toString();
+  }
 }
