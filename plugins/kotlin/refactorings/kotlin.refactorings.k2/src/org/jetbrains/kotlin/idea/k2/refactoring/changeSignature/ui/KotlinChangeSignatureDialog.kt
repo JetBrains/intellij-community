@@ -24,9 +24,12 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.AddQualifiersUtil
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.*
@@ -61,7 +64,10 @@ internal class KotlinChangeSignatureDialog(
         }
     }
 
-    override fun supportContextParameters(): Boolean = true
+    override fun supportContextParameters(parameter: KotlinParameterInfo): Boolean {
+        val languageVersionSettings = parameter.context.languageVersionSettings
+        return languageVersionSettings.supportsFeature(LanguageFeature.ContextParameters)
+    }
 
     override fun validateButtons() {
         validateButtonsAsync()
