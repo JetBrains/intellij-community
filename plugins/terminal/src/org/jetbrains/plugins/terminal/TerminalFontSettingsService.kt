@@ -45,16 +45,7 @@ class TerminalFontSettingsService : AppFontOptions<TerminalFontSettingsState>() 
 
   @ApiStatus.Internal // for Java
   @JvmName("getSettings")
-  internal fun getSettings(): TerminalFontSettings {
-    val preferences = fontPreferences
-    return TerminalFontSettings(
-      fontFamily = preferences.fontFamily,
-      fallbackFontFamily = preferences.effectiveFontFamilies.getOrNull(1) ?: FontPreferences.DEFAULT_FONT_NAME,
-      fontSize = TerminalFontSize.ofFloat(preferences.getSize2D(preferences.fontFamily)),
-      lineSpacing = TerminalLineSpacing.ofFloat(preferences.lineSpacing),
-      columnSpacing = columnSpacing,
-    )
-  }
+  internal fun getSettings(): TerminalFontSettings = TerminalFontSettings(fontPreferences, columnSpacing)
 
   internal fun setSettings(settings: TerminalFontSettings) {
     val oldSettings = getSettings()
@@ -63,22 +54,7 @@ class TerminalFontSettingsService : AppFontOptions<TerminalFontSettingsState>() 
     // start with the console preferences as the default
     AppConsoleFontOptions.getInstance().fontPreferences.copyTo(newPreferences)
     // then overwrite the subset that the terminal settings provide
-    newPreferences.clearFonts()
-    newPreferences.addFontFamily(settings.fontFamily)
-    // These two are not really used by the terminal at the moment,
-    // but are needed so that the families are saved,
-    // otherwise migration in com.intellij.openapi.editor.colors.impl.AppFontOptions.copyState
-    // will be triggered, and that can mess up the saved settings completely (IJPL-184027).
-    val regularSubFamily = FontFamilyService.getRecommendedSubFamily(settings.fontFamily)
-    newPreferences.regularSubFamily = regularSubFamily
-    val boldSubFamily = FontFamilyService.getRecommendedBoldSubFamily(settings.fontFamily, regularSubFamily)
-    newPreferences.boldSubFamily = boldSubFamily
-    newPreferences.setFontSize(settings.fontFamily, settings.fontSize.floatValue)
-    if (settings.fallbackFontFamily != settings.fontFamily) {
-      newPreferences.addFontFamily(settings.fallbackFontFamily)
-      newPreferences.setFontSize(settings.fallbackFontFamily, settings.fontSize.floatValue)
-    }
-    newPreferences.lineSpacing = settings.lineSpacing.floatValue
+    settings.copyTo(newPreferences)
     // then apply the settings that aren't a part of FontPreferences
     columnSpacing = settings.columnSpacing
     // apply the FontPreferences part, the last line because it invokes incModificationCount()
@@ -291,7 +267,51 @@ internal data class TerminalFontSettings(
   val fontSize: TerminalFontSize,
   val lineSpacing: TerminalLineSpacing,
   val columnSpacing: TerminalColumnSpacing,
-)
+) {
+  constructor(preferences: FontPreferences, columnSpacing: TerminalColumnSpacing) : this(
+    fontFamily = preferences.fontFamily,
+    fallbackFontFamily = preferences.effectiveFontFamilies.getOrNull(1) ?: FontPreferences.DEFAULT_FONT_NAME,
+    fontSize = TerminalFontSize.ofFloat(preferences.getSize2D(preferences.fontFamily)),
+    lineSpacing = TerminalLineSpacing.ofFloat(preferences.lineSpacing),
+    columnSpacing = columnSpacing,
+  )
+
+  fun copyTo(preferences: FontPreferencesImpl) {
+    preferences.clearFonts()
+    copyMainFont(this, preferences)
+    copyFallbackFont(this, preferences)
+    copyFontSize(this, preferences)
+    copyLineSpacing(this, preferences)
+  }
+}
+
+private fun copyMainFont(settings: TerminalFontSettings, preferences: FontPreferencesImpl) {
+  preferences.addFontFamily(settings.fontFamily)
+  // These two are not really used by the terminal at the moment,
+  // but are needed so that the families are saved,
+  // otherwise migration in com.intellij.openapi.editor.colors.impl.AppFontOptions.copyState
+  // will be triggered, and that can mess up the saved settings completely (IJPL-184027).
+  val regularSubFamily = FontFamilyService.getRecommendedSubFamily(settings.fontFamily)
+  preferences.regularSubFamily = regularSubFamily
+  val boldSubFamily = FontFamilyService.getRecommendedBoldSubFamily(settings.fontFamily, regularSubFamily)
+  preferences.boldSubFamily = boldSubFamily
+}
+
+private fun copyFallbackFont(settings: TerminalFontSettings, preferences: FontPreferencesImpl) {
+  if (settings.fallbackFontFamily != settings.fontFamily) {
+    preferences.addFontFamily(settings.fallbackFontFamily)
+  }
+}
+
+private fun copyFontSize(settings: TerminalFontSettings, preferences: FontPreferencesImpl) {
+  for (fontFamily in preferences.effectiveFontFamilies) {
+    preferences.setFontSize(fontFamily, settings.fontSize.floatValue)
+  }
+}
+
+private fun copyLineSpacing(settings: TerminalFontSettings, preferences: FontPreferencesImpl) {
+  preferences.lineSpacing = settings.lineSpacing.floatValue
+}
 
 @ApiStatus.Internal
 class TerminalFontSettingsState: AppEditorFontOptions.PersistentFontPreferences {
