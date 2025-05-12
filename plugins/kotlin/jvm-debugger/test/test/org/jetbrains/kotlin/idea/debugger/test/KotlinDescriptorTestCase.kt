@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.test
 
 import com.intellij.debugger.DebuggerManagerEx
 import com.intellij.debugger.DefaultDebugEnvironment
+import com.intellij.debugger.MockConfiguration
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.impl.DebuggerSession
 import com.intellij.debugger.impl.DescriptorTestCase
@@ -328,7 +329,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
 
         val environment = ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
             .runnerSettings(debuggerRunnerSettings)
-            .runProfile(MockConfiguration(myProject))
+            .runProfile(MockConfiguration(myProject, module))
             .build()
 
         environment.putUserData(DefaultDebugEnvironment.DEBUGGER_TRACE_MODE, traceMode)

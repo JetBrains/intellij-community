@@ -18,7 +18,6 @@ import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessEvent;
@@ -35,9 +34,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -189,7 +185,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
     ExecutionEnvironment environment = new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
       .runnerSettings(debuggerRunnerSettings)
-      .runProfile(new MockConfiguration(myProject))
+      .runProfile(new MockConfiguration(myProject, myModule))
       .build();
     myRunnableState = new JavaCommandLineState(environment) {
       @Override
@@ -205,7 +201,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     };
 
     myExecutionEnvironment = new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
-      .runProfile(new MockConfiguration(myProject))
+      .runProfile(new MockConfiguration(myProject, myModule))
       .build();
     DefaultDebugEnvironment debugEnvironment =
       new DefaultDebugEnvironment(myExecutionEnvironment, myRunnableState, debugParameters, false);
@@ -257,7 +253,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
     myExecutionEnvironment = new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
       .runnerSettings(debuggerRunnerSettings)
-      .runProfile(new MockConfiguration(myProject))
+      .runProfile(new MockConfiguration(myProject, myModule))
       .build();
     myRunnableState = new JavaCommandLineState(myExecutionEnvironment) {
       @Override
@@ -331,7 +327,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   protected DebuggerSession attachVM(final RemoteConnection remoteConnection, final boolean pollConnection) {
     RemoteState remoteState = new RemoteStateState(myProject, remoteConnection);
     ExecutionEnvironment environment = new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
-      .runProfile(new MockConfiguration(myProject))
+      .runProfile(new MockConfiguration(myProject, myModule))
       .build();
     DebuggerSession debuggerSession = null;
     try {
@@ -553,57 +549,6 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       }
     }, ModalityState.any());
     return debuggerSession;
-  }
-
-  public class MockConfiguration implements ModuleRunConfiguration {
-    private final Project project;
-
-    public MockConfiguration(Project project) {
-      this.project = project;
-    }
-
-    @Override
-    public Module @NotNull [] getModules() {
-      return myModule == null ? Module.EMPTY_ARRAY : new Module[]{myModule};
-    }
-
-    @Override
-    public Icon getIcon() {
-      return null;
-    }
-
-    @Override
-    public ConfigurationFactory getFactory() {
-      return UnknownConfigurationType.getInstance();
-    }
-
-    @Override
-    public void setName(@NotNull String name) { }
-
-    @Override
-    public @NotNull SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Project getProject() {
-      return project;
-    }
-
-    @Override
-    public RunConfiguration clone() {
-      return null;
-    }
-
-    @Override
-    public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
-      return null;
-    }
-
-    @Override
-    public @NotNull String getName() {
-      return "";
-    }
   }
 
   protected void disableRenderer(NodeRenderer renderer) {
