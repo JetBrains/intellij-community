@@ -35,7 +35,6 @@ import org.jetbrains.bazel.jvm.worker.core.BazelCompileContext
 import org.jetbrains.bazel.jvm.worker.core.BazelConfigurationHolder
 import org.jetbrains.bazel.jvm.worker.core.BazelModuleBuildTarget
 import org.jetbrains.bazel.jvm.worker.core.BazelStampStorage
-import org.jetbrains.bazel.jvm.worker.state.DependencyDescriptor
 import org.jetbrains.bazel.jvm.worker.storage.StorageInitializer
 import org.jetbrains.jps.dependency.BackDependencyIndex
 import org.jetbrains.jps.dependency.Delta

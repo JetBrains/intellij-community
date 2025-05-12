@@ -1,12 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UnstableApiUsage", "ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
-package org.jetbrains.bazel.jvm.worker.state
+package org.jetbrains.bazel.jvm.worker.dependencies
 
 import java.nio.file.Path
 
 // do not include state in equals/hashCode - DependencyDescriptor is used as a key for Caffeine cache
-data class DependencyDescriptor(
+internal data class DependencyDescriptor(
   @JvmField val file: Path,
   // we use DependencyDescriptor as a key for cache of diff between old and new versions, so we must include oldDigest in equals/hashCode
   @JvmField val oldDigest: ByteArray?,

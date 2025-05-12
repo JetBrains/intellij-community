@@ -19,7 +19,6 @@ import org.jetbrains.bazel.jvm.worker.core.output.NODE_INDEX_FILENAME
 import org.jetbrains.bazel.jvm.worker.core.output.NodeIndex
 import org.jetbrains.bazel.jvm.worker.core.output.NodeIndexEntry
 import org.jetbrains.bazel.jvm.worker.core.output.readNodeIndex
-import org.jetbrains.bazel.jvm.worker.state.DependencyDescriptor
 import org.jetbrains.jps.dependency.java.JvmClass
 import org.jetbrains.jps.dependency.storage.ByteBufferGraphDataInput
 import java.nio.ByteOrder
