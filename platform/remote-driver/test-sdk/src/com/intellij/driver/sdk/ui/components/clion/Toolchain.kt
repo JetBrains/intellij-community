@@ -26,7 +26,21 @@ sealed class Toolchain(
     compiler: Compiler = Compiler.CLANG,
     debugger: Debugger = Debugger.BUNDLED_LLDB,
     buildTool: Make = Make.DEFAULT,
-    name: ToolchainNames = ToolchainNames.CLang
+    name: ToolchainNames = ToolchainNames.CLANG
+  ) : Toolchain(name, compiler, debugger, buildTool)
+
+  class CustomGDB(
+    compiler: Compiler = Compiler.DEFAULT,
+    debugger: Debugger = Debugger.CUSTOM_GDB,
+    buildTool: Make = Make.DEFAULT,
+    name: ToolchainNames = ToolchainNames.CUSTOM_GDB
+  ) : Toolchain(name, compiler, debugger, buildTool)
+
+  class CustomLLDB(
+    compiler: Compiler = Compiler.DEFAULT,
+    debugger: Debugger = Debugger.CUSTOM_LLDB,
+    buildTool: Make = Make.DEFAULT,
+    name: ToolchainNames = ToolchainNames.CUSTOM_LLDB
   ) : Toolchain(name, compiler, debugger, buildTool)
 }
 
@@ -61,13 +75,26 @@ enum class Compiler {
 enum class Debugger {
   BUNDLED_GDB {
     override fun getDebuggerPath(): String = "Bundled GDB"
+    override fun getDebuggerFieldName(): String = "Bundled GDB"
   },
 
   BUNDLED_LLDB {
     override fun getDebuggerPath(): String = "Bundled LLDB"
+    override fun getDebuggerFieldName(): String = "Bundled LLDB"
+  },
+
+  CUSTOM_GDB {
+    override fun getDebuggerPath(): String = "/usr/bin/gdb"
+    override fun getDebuggerFieldName(): String = "Custom GDB executable"
+  },
+
+  CUSTOM_LLDB {
+    override fun getDebuggerPath(): String = "/usr/bin/lldb"
+    override fun getDebuggerFieldName(): String = "Custom LLDB executable"
   };
 
   abstract fun getDebuggerPath(): String
+  abstract fun getDebuggerFieldName(): String
 }
 
 
@@ -78,7 +105,7 @@ enum class ToolchainNames {
   GCC {
     override fun toString(): String = "GCC"
   },
-  CLang {
+  CLANG {
     override fun toString(): String = "CLang"
   },
   SYSTEM {
@@ -89,6 +116,12 @@ enum class ToolchainNames {
   },
   DOCKER {
     override fun toString(): String = "Docker"
+  },
+  CUSTOM_GDB {
+    override fun toString(): String = "Custom GDB executable"
+  },
+  CUSTOM_LLDB {
+    override fun toString(): String = "Custom LLDB executable"
   }
 }
 

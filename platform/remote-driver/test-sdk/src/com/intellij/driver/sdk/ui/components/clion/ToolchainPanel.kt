@@ -11,6 +11,9 @@ import java.awt.event.KeyEvent
 fun Finder.toolchainPanel(action: ToolchainPanel.() -> Unit = {}) = x(ToolchainPanel::class.java) { byClass("DialogRootPane") }.apply(action)
 
 class ToolchainPanel(data: ComponentData) : SettingsDialogUiComponent(data) {
+  fun ToolchainPanel.getToolchainField(name: String): JTextFieldUI =
+    textField("//div[@accessiblename='$name:' and @class='ExtendableTextField']")
+
   fun addNewToolchain(toolchain: Toolchain) {
     if (toolchain.name == ToolchainNames.DEFAULT) {
       jBlist(xQuery { byClass("JBList") }).clickItem(toolchain.name.toString())
@@ -34,23 +37,22 @@ class ToolchainPanel(data: ComponentData) : SettingsDialogUiComponent(data) {
 
   fun setupToolchains(toolchain: Toolchain) {
     if (toolchain.buildTool != Make.DEFAULT) {
-      writeTextField("Build Tool:", toolchain.buildTool.getMakePath())
+      getToolchainField("Build Tool").text = toolchain.buildTool.getMakePath()
     }
-    writeTextField("C Compiler:", toolchain.compiler.getCCompilerPath())
-    writeTextField("C++ Compiler:", toolchain.compiler.getCppCompilerPath())
+    getToolchainField("C Compiler").text = toolchain.compiler.getCCompilerPath()
+    getToolchainField("C++ Compiler").text = toolchain.compiler.getCppCompilerPath()
 
     if (toolchain !is Toolchain.Default) {
-      setDebugger(toolchain.debugger.getDebuggerPath())
+      setDebugger(toolchain.debugger)
     }
   }
 
-  private fun setDebugger(debugger: String) {
-    textField(xQuery { and(byAccessibleName("Debugger:"), byClass("ExtendableTextField")) }).click()
+  private fun setDebugger(debugger: Debugger) {
+    getToolchainField("Debugger").click()
     keyboard { key(KeyEvent.VK_DOWN) }
-    driver.ui.popup("//div[@class='CustomComboPopup']").waitFound().list().clickItem(debugger)
-  }
-
-  private fun writeTextField(accessibleName: String, text: String) {
-    textField(xQuery { and(byAccessibleName(accessibleName), byClass("ExtendableTextField")) }).text = text
+    driver.ui.popup("//div[@class='CustomComboPopup']").waitFound().list().clickItem(debugger.getDebuggerFieldName())
+    if (debugger.name.startsWith("CUSTOM")) {
+      getToolchainField("Debugger").text = debugger.getDebuggerPath()
+    }
   }
 }
