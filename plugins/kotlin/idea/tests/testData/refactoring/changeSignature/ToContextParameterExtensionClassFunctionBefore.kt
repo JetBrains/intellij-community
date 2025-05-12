@@ -26,6 +26,11 @@ class MyClass {
 }
 
 context(s: String)
+fun MyClass.caller() {
+    42.doSomething(s, "param")
+}
+
+context(s: String)
 fun withContext() {}
 
 fun MyClass.foo() {
