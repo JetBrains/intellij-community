@@ -5,10 +5,11 @@ import com.intellij.settingsSync.core.SettingsSyncRemoteCommunicator
 import com.intellij.settingsSync.core.auth.SettingsSyncAuthService
 import com.intellij.settingsSync.core.communicator.SettingsSyncCommunicatorProvider
 import com.intellij.settingsSync.jba.auth.JBAAuthService
+import kotlinx.coroutines.CoroutineScope
 
-class JbaCommunicatorProvider : SettingsSyncCommunicatorProvider, Disposable {
+class JbaCommunicatorProvider(cs: CoroutineScope) : SettingsSyncCommunicatorProvider, Disposable {
 
-  private val authServiceLazy = lazy<JBAAuthService> { JBAAuthService() }
+  private val authServiceLazy = lazy<JBAAuthService> { JBAAuthService(cs) }
 
   override val providerCode: String
     get() = "jba"
