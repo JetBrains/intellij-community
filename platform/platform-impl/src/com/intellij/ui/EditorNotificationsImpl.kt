@@ -239,7 +239,8 @@ class EditorNotificationsImpl(private val project: Project,
           if (project.isDisposed) {
             return@launch
           }
-          val provider = adapter.createInstance<EditorNotificationProvider>(project) ?: continue
+          // we use read action here to prevent project cancellation during instantiation
+          val provider = readAction { adapter.createInstance<EditorNotificationProvider>(project) } ?: continue
 
           coroutineContext.ensureActive()
 
