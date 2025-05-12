@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
 import com.intellij.collaboration.async.launchNow
@@ -27,6 +27,7 @@ import git4idea.branch.GitBranchSyncStatus
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitTextFilePatchWithHistory
 import git4idea.remote.hosting.localCommitsSyncStatus
+import git4idea.ui.branch.GitCurrentBranchPresenter
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
@@ -105,6 +106,12 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
     }
     if (!preferences.editorReviewEnabled) {
       setDiscussionsViewOption(DiscussionsViewOption.DONT_SHOW)
+    }
+
+    cs.launch {
+      actualChangesState.collectLatest {
+        project.messageBus.syncPublisher(GitCurrentBranchPresenter.PRESENTATION_UPDATED).presentationUpdated()
+      }
     }
   }
 

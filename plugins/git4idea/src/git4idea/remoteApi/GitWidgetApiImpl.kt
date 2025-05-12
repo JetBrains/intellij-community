@@ -4,6 +4,7 @@ package git4idea.remoteApi
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.virtualFile
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsMappingListener
 import com.intellij.platform.project.ProjectId
@@ -37,11 +38,24 @@ internal class GitWidgetApiImpl : GitWidgetApi {
         trySend(widgetState.toRpc())
       }
 
-      connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsMappingListener(::trySendNewState))
-      connection.subscribe(GitRepository.GIT_REPO_STATE_CHANGE, object : GitRepositoryStateChangeListener {
-        override fun repositoryChanged(repository: GitRepository, previousInfo: GitRepoInfo, info: GitRepoInfo) = trySendNewState()
+      connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsMappingListener {
+        LOG.debug("VCS mapping changed. Sending new value")
+        trySendNewState()
       })
-      connection.subscribe(GitBranchIncomingOutgoingManager.GIT_INCOMING_OUTGOING_CHANGED, GitIncomingOutgoingListener(::trySendNewState))
+      connection.subscribe(GitRepository.GIT_REPO_STATE_CHANGE, object : GitRepositoryStateChangeListener {
+        override fun repositoryChanged(repository: GitRepository, previousInfo: GitRepoInfo, info: GitRepoInfo) {
+          LOG.debug("Git repository state changed: $repository. Sending new value")
+          trySendNewState()
+        }
+      })
+      connection.subscribe(GitBranchIncomingOutgoingManager.GIT_INCOMING_OUTGOING_CHANGED, GitIncomingOutgoingListener {
+        LOG.debug("Git incoming outgoing state changed. Sending new value")
+        trySendNewState()
+      })
+      connection.subscribe(GitCurrentBranchPresenter.PRESENTATION_UPDATED, GitCurrentBranchPresenter.PresentationUpdatedListener {
+        LOG.debug("Branch presentation for the widget updated. Sending new value")
+        trySendNewState()
+      })
 
       trySendNewState()
     }
@@ -73,5 +87,9 @@ internal class GitWidgetApiImpl : GitWidgetApi {
         )
       )
     )
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(GitWidgetApiImpl::class.java)
   }
 }
