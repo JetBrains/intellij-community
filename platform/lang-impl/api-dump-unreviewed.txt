@@ -2266,13 +2266,10 @@ f:com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection
 - setRunAnnotators(Z):com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection
 - setRunVisitors(Z):com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection
 f:com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass
-- doAdditionalCodeBlockHighlighting():V
-- doCollectInformation(com.intellij.codeInsight.daemon.impl.HighlightingSession):V
 - s:getHighlightUsages(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,Z,java.util.Collection,java.util.Collection):V
 - s:getUsages(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,Z):java.util.Collection
 f:com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory
 - <init>():V
-- createHighlightingPass(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.openapi.util.TextRange):com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass
 - s:isEnabled():Z
 c:com.intellij.codeInsight.daemon.impl.IndentGuideRenderer
 - com.intellij.openapi.editor.markup.CustomHighlighterRenderer
@@ -3299,7 +3296,6 @@ a:com.intellij.codeInsight.highlighting.AbstractCodeBlockSupportHandler
 f:com.intellij.codeInsight.highlighting.BraceHighlightingHandler
 - sf:Companion:com.intellij.codeInsight.highlighting.BraceHighlightingHandler$Companion
 - sf:LAYER:I
-- f:clearBraceHighlighters():V
 - sf:getLazyParsableHighlighterIfAny(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.openapi.editor.highlighter.EditorHighlighter
 - f:highlightBraces(com.intellij.openapi.util.TextRange,com.intellij.openapi.util.TextRange,Z,Z,com.intellij.openapi.fileTypes.FileType):V
 - sf:lineMarkFragment(com.intellij.openapi.editor.ex.EditorEx,com.intellij.openapi.editor.Document,I,I,Z):V

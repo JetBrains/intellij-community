@@ -1,11 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting
 
+import com.intellij.application.options.editor.EditorOptionsListener
 import com.intellij.codeInsight.CodeInsightSettings
-import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
-import com.intellij.codeInsight.daemon.impl.HighlightingSessionImpl
-import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass
-import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory
+import com.intellij.codeInsight.daemon.impl.*
 import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateEditingAdapter
@@ -16,95 +14,56 @@ import com.intellij.find.FindManager
 import com.intellij.find.FindModel
 import com.intellij.find.FindResult
 import com.intellij.find.impl.livePreview.LivePreviewController
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.event.*
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.TextEditor
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry.Companion.intValue
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
+import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.ui.EDT
+import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.lang.Runnable
 import java.util.concurrent.Executor
-
-private val SELECTION_HIGHLIGHTS = Key<SelectionHighlights>("SELECTION_HIGHLIGHTS")
-private class SelectionHighlights(val text: String, val highlighters: Collection<RangeHighlighter>)
-
-private class HighlightIdentifiersKey
-private class HighlightSelectionKey
-
-private class BackgroundHighlighterProjectActivity : ProjectActivity {
-  init {
-    val app = ApplicationManager.getApplication()
-    if (app.isHeadlessEnvironment && !app.isUnitTestMode) {
-      throw ExtensionNotApplicableException.create()
-    }
-  }
-
-  override suspend fun execute(project: Project) {
-    if (IdentifierHighlighterPassFactory.isEnabled()) {
-      serviceAsync<BackgroundHighlighter>().runActivity(project)
-    }
-  }
-}
 
 /**
  * Listens for editor events and starts brace/identifier highlighting in the background
  */
 @Service
-internal class BackgroundHighlighter(coroutineScope: CoroutineScope) {
-  @JvmField val alarm = Alarm(coroutineScope, Alarm.ThreadToUse.SWING_THREAD)
+@ApiStatus.Internal
+class BackgroundHighlighter(coroutineScope: CoroutineScope) {
+  @JvmField val alarm: Alarm = Alarm(coroutineScope, Alarm.ThreadToUse.SWING_THREAD)
 
-  companion object {
-    @TestOnly
-    fun runWithEnabledListenersInTest(project: Project, r: Runnable) {
-      val d = project.service<BackgroundHighlighterPerProject>()
-      val parentDisposable = Disposer.newDisposable()
-      val coroutineScope = d.coroutineScope.childScope("Test Background Highlighter(disposable=$parentDisposable)")
-      Disposer.register(parentDisposable, Disposable {
-        coroutineScope.cancel()
-      })
-      service<BackgroundHighlighter>().registerListeners(project, parentDisposable, coroutineScope)
-      try {
-        r.run()
-      }
-      finally {
-        Disposer.dispose(parentDisposable)
-      }
-    }
-  }
-
-  suspend fun runActivity(project: Project) {
-    val perProjectDisposable = project.serviceAsync<BackgroundHighlighterPerProject>()
-    registerListeners(project, perProjectDisposable, perProjectDisposable.coroutineScope)
-  }
-
-  private fun registerListeners(
+  /**
+   * register a callback which runs whenever the caret/selection/whatever changes (see [registerListeners])
+   */
+  @ApiStatus.Internal
+  fun registerListeners(
     project: Project,
     parentDisposable: Disposable,
     coroutineScope: CoroutineScope,
@@ -121,18 +80,18 @@ internal class BackgroundHighlighter(coroutineScope: CoroutineScope) {
     eventMulticaster.addCaretListener(object : CaretListener {
       override fun caretPositionChanged(e: CaretEvent) {
         if (e.caret === e.editor.caretModel.primaryCaret) {
-          onCaretUpdate(e.editor, project, executor)
+          onCaretUpdate(e.editor, project, executor, coroutineScope)
         }
       }
 
       override fun caretAdded(e: CaretEvent) {
         if (e.caret === e.editor.caretModel.primaryCaret) {
-          onCaretUpdate(e.editor, project, executor)
+          onCaretUpdate(e.editor, project, executor, coroutineScope)
         }
       }
 
       override fun caretRemoved(e: CaretEvent) {
-        onCaretUpdate(e.editor, project, executor)
+        onCaretUpdate(e.editor, project, executor, coroutineScope)
       }
     }, parentDisposable)
 
@@ -144,9 +103,7 @@ internal class BackgroundHighlighter(coroutineScope: CoroutineScope) {
           return
         }
 
-        if (!highlightSelection(project, editor, executor)) {
-          removeSelectionHighlights(editor)
-        }
+        highlightSelection(project, editor, executor)
 
         val oldRange = e.oldRange
         val newRange = e.newRange
@@ -155,7 +112,7 @@ internal class BackgroundHighlighter(coroutineScope: CoroutineScope) {
           return
         }
 
-        updateHighlighted(project, editor, executor)
+        updateHighlighted(project, editor, coroutineScope)
       }
     }, parentDisposable)
 
@@ -163,10 +120,8 @@ internal class BackgroundHighlighter(coroutineScope: CoroutineScope) {
       override fun documentChanged(e: DocumentEvent) {
         alarm.cancelAllRequests()
         editorFactory.editors(e.document, project).forEach {
-          updateHighlighted(project, it, executor)
-          if (!highlightSelection(project, it, executor)) {
-            removeSelectionHighlights(it)
-          }
+          updateHighlighted(project, it, coroutineScope)
+          highlightSelection(project, it, executor)
         }
       }
     }, parentDisposable)
@@ -177,16 +132,14 @@ internal class BackgroundHighlighter(coroutineScope: CoroutineScope) {
         alarm.cancelAllRequests()
         val oldEditor = e.oldEditor
         if (oldEditor is TextEditor) {
-          clearBraces(project, oldEditor.editor)
+          BraceHighlightingHandler.clearBraceHighlighters(oldEditor.editor)
         }
 
         val newEditor = e.newEditor
         if (newEditor is TextEditor) {
           val editor = newEditor.editor
-          updateHighlighted(project, editor, executor)
-          if (!highlightSelection(project, editor, executor)) {
-            removeSelectionHighlights(editor)
-          }
+          updateHighlighted(project, editor, coroutineScope)
+          highlightSelection(project, editor, executor)
         }
       }
     })
@@ -196,116 +149,232 @@ internal class BackgroundHighlighter(coroutineScope: CoroutineScope) {
         return@TemplateManagerListener
       }
 
-      updateHighlighted(project, state.editor, executor)
+      updateHighlighted(project, state.editor, coroutineScope)
       state.addTemplateStateListener(object : TemplateEditingAdapter() {
         override fun templateFinished(template: Template, brokenOff: Boolean) {
-          updateHighlighted(project, state.editor, executor)
+          updateHighlighted(project, state.editor, coroutineScope)
         }
       })
     })
+    connection.subscribe(EditorOptionsListener.OPTIONS_PANEL_TOPIC, EditorOptionsListener {
+      clearAllIdentifierHighlighters()
+    })
+    DocumentAfterCommitListener.listen(project, parentDisposable) { document ->
+      editorFactory.editors(document, project).forEach {
+        updateHighlighted(project, it, coroutineScope)
+        highlightSelection(project, it, executor)
+      }
+    }
   }
-  private fun onCaretUpdate(editor: Editor, project: Project, executor: Executor) {
+
+  private fun clearAllIdentifierHighlighters() {
+    for (project in ProjectManager.getInstance().openProjects) {
+      for (fileEditor in FileEditorManager.getInstance(project).allEditors) {
+        if (fileEditor is TextEditor) {
+          val document = fileEditor.editor.document
+          IdentifierHighlighterUpdater.clearMyHighlights(document, project)
+        }
+      }
+    }
+  }
+
+  private fun onCaretUpdate(editor: Editor, project: Project, executor: Executor, coroutineScope: CoroutineScope) {
     alarm.cancelAllRequests()
     if (editor.project !== project) return
 
     // don't update braces in case of the active selection.
     if (!editor.selectionModel.hasSelection()) {
-      updateHighlighted(project, editor, executor)
+      updateHighlighted(project, editor, coroutineScope)
     }
-
-    if (!highlightSelection(project, editor, executor)) {
-      removeSelectionHighlights(editor)
-    }
+    highlightSelection(project, editor, executor)
   }
 
   @RequiresEdt
-  private fun updateHighlighted(project: Project, editor: Editor, executor: Executor) {
-    if (editor.document.isInBulkUpdate || !BackgroundHighlightingUtil.isValidEditor(editor)) {
+  private fun updateHighlighted(project: Project, hostEditor: Editor, coroutineScope: CoroutineScope) {
+    if (hostEditor.document.isInBulkUpdate || !BackgroundHighlightingUtil.isValidEditor(hostEditor)) {
       return
     }
-
-    BackgroundHighlightingUtil.lookForInjectedFileInOtherThread(
-      project, editor,
-      { newFile: PsiFile, newEditor: Editor ->
-        val offsetBefore = editor.caretModel.offset
-        submitIdentifierHighlighterPass(editor, offsetBefore, newFile, newEditor, executor)
+    val offsetBefore = hostEditor.caretModel.offset
+    val visibleRange = hostEditor.calculateVisibleRange()
+    val job = coroutineScope.launch {
+      val injected = readAction { BackgroundHighlightingUtil.findInjected(hostEditor, project, offsetBefore)} ?: return@launch
+      val newFile = injected.first
+      val newEditor = injected.second
+      val maybeMatch = readAction {
         HeavyBraceHighlighter.match(newFile, offsetBefore)
-      },
-      { newFile: PsiFile, newEditor: Editor, maybeMatch: Pair<TextRange, TextRange>? ->
-        val handler = BraceHighlightingHandler(project, newEditor, alarm, newFile)
-        if (maybeMatch == null) {
-          alarm.cancelAllRequests()
-          handler.updateBraces()
+      }
+      val modalityState = ModalityState.stateForComponent(hostEditor.component).asContextElement()
+      launch(Dispatchers.EDT + modalityState) {
+        val isEditorUpToDate = BackgroundHighlightingUtil.isValidEditor(hostEditor) && newFile.isValid
+        if (isEditorUpToDate) {
+          applyBraceMatching(project, newEditor, newFile, maybeMatch, alarm)
         }
-        else {
-          val codeInsightSettings = CodeInsightSettings.getInstance()
-          if (BackgroundHighlightingUtil.needMatching(newEditor, codeInsightSettings)) {
-            val fileType = PsiUtilBase.getPsiFileAtOffset(newFile, maybeMatch.first.startOffset).fileType
-            handler.clearBraceHighlighters()
-            handler.highlightBraces(maybeMatch.first, maybeMatch.second, true, false, fileType)
+      }
+
+      val identPass = readAction {
+        createPass(newFile, hostEditor, newEditor)
+      }
+      if (identPass != null) {
+        val indicator = DaemonProgressIndicator()
+        val session = HighlightingSessionImpl.getOrCreateHighlightingSession(identPass.hostPsiFile,
+                                                                             identPass.context,
+                                                                             indicator,
+                                                                             visibleRange,
+                                                                             TextRange.EMPTY_RANGE)
+        var markupInfos = EMPTY_RESULT
+        try {
+          markupInfos = identPass.doCollectInformation(session, newFile.project, hostEditor, visibleRange)
+        }
+        catch (_: IndexNotReadyException) {
+        }
+        launch(Dispatchers.EDT + modalityState) {
+          val isEditorUpToDate = BackgroundHighlightingUtil.isValidEditor(hostEditor) && hostEditor.caretModel.offset == offsetBefore && newFile.isValid
+          if (isEditorUpToDate) {
+            identPass.doAdditionalCodeBlockHighlighting(markupInfos)
           }
         }
-      })
+      }
+    }
+    val oldJob = (hostEditor as UserDataHolderEx).getAndUpdateUserData(BACKGROUND_TASK) {
+      job
+    }
+    oldJob?.cancel()
+    job.invokeOnCompletion {
+      (hostEditor as UserDataHolderEx).getAndUpdateUserData(BACKGROUND_TASK) {
+        oldJob -> if (oldJob == job) null else oldJob // remove my job, but don't touch the job if not mine because it might be the newest job
+      }
+    }
   }
 
-  private fun clearBraces(project: Project, editor: Editor) {
-    BackgroundHighlightingUtil.lookForInjectedFileInOtherThread<Any?>(
-      project,
-      editor,
-      { _: PsiFile?, _: Editor? -> null },
-      { foundFile: PsiFile, newEditor: Editor, _: Any? ->
-        val handler = BraceHighlightingHandler(
-          project,
-          newEditor, alarm,
-          foundFile,
-        )
-        handler.clearBraceHighlighters()
-      },
-    )
+  companion object {
+    @TestOnly
+    fun runWithEnabledListenersInTest(project: Project, r: Runnable) {
+      val perProjectDisposable = project.service<BackgroundHighlighterPerProject>()
+      val parentDisposable = Disposer.newDisposable()
+      val coroutineScope = perProjectDisposable.coroutineScope.childScope("Test Background Highlighter(disposable=$parentDisposable)")
+      Disposer.register(parentDisposable) {
+        coroutineScope.cancel()
+      }
+
+      service<BackgroundHighlighter>().registerListeners(project, parentDisposable, coroutineScope)
+      try {
+        r.run()
+      }
+      finally {
+        Disposer.dispose(parentDisposable)
+      }
+    }
+
+    @RequiresEdt
+    fun applyBraceMatching(
+      project: Project,
+      newEditor: Editor,
+      newFile: PsiFile,
+      maybeMatch: Pair<TextRange, TextRange>?,
+      alarm: Alarm,
+    ) {
+      val handler = BraceHighlightingHandler(project, newEditor, alarm, newFile)
+      if (maybeMatch == null) {
+        alarm.cancelAllRequests()
+        handler.updateBraces()
+      }
+      else {
+        val codeInsightSettings = CodeInsightSettings.getInstance()
+        if (BackgroundHighlightingUtil.needMatching(newEditor, codeInsightSettings)) {
+          val fileType = PsiUtilBase.getPsiFileAtOffset(newFile, maybeMatch.first.startOffset).fileType
+          BraceHighlightingHandler.clearBraceHighlighters(newEditor)
+          handler.highlightBraces(maybeMatch.first, maybeMatch.second, true, false, fileType)
+        }
+      }
+    }
+
+    @RequiresReadLock
+    fun createPass(newFile: PsiFile, hostEditor: Editor, newEditor: Editor): IdentifierHighlighterUpdater? {
+      if (newFile.isValid) {
+        val textLength = newFile.textLength
+        val factory = IdentifierHighlighterPassFactory()
+        val project = newFile.project
+        val hostPsiFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(newFile)
+        // sometimes some crazy stuff is returned (EA-248725)
+        if (textLength != -1 && !hostEditor.isDisposed && factory.shouldHighlightingIdentifiers(newFile, newEditor) && hostPsiFile != null) {
+          val context = EditorContextManager.getEditorContext(newEditor, project)
+          val pass = IdentifierHighlighterUpdater(newFile, newEditor, context, hostPsiFile)
+          return pass
+        }
+      }
+      return null
+    }
+
+    private val BACKGROUND_TASK: Key<Job> = Key.create("BACKGROUND_TASK")
+    @TestOnly
+    fun waitForIdentifierHighlighting(editor: Editor) {
+      val hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
+      val job = hostEditor.getUserData(BACKGROUND_TASK)
+      if (job != null) {
+        while (!job.isCompleted) {
+          if (EDT.isCurrentThreadEdt()) {
+            UIUtil.dispatchAllInvocationEvents()
+          }
+          else {
+            UIUtil.pump()
+          }
+        }
+      }
+      if (LOG.isDebugEnabled) {
+        LOG.debug("waitForIdentifierHighlighting($editor): waited $job")
+      }
+    }
   }
 }
 
+private val LOG: Logger = Logger.getInstance(BackgroundHighlighter::class.java)
+
 @Service(Service.Level.PROJECT)
-private class BackgroundHighlighterPerProject(@JvmField val coroutineScope: CoroutineScope): Disposable.Default
+@ApiStatus.Internal
+class BackgroundHighlighterPerProject(@JvmField val coroutineScope: CoroutineScope): Disposable.Default
+
+@RequiresEdt
+private fun selectionRangeToFind(editor: Editor): TextRange? {
+  val document = editor.document
+  if (document.isInBulkUpdate || !BackgroundHighlightingUtil.isValidEditor(editor)) {
+    return null
+  }
+
+  if (!editor.settings.isHighlightSelectionOccurrences) {
+    return null
+  }
+
+  if (TemplateManagerUtilBase.getTemplateState(editor) != null) {
+    // don't highlight selected text when template is active
+    return null
+  }
+
+  val caretModel = editor.caretModel
+  if (caretModel.caretCount > 1) {
+    return null
+  }
+
+  val caret = caretModel.primaryCaret
+  if (!caret.hasSelection()) {
+    return null
+  }
+  return caret.selectionRange
+}
 
 @RequiresEdt
 private fun highlightSelection(project: Project, editor: Editor, executor: Executor): Boolean {
   ThreadingAssertions.assertEventDispatchThread()
   val document = editor.document
-  val stamp = document.modificationStamp
-  if (document.isInBulkUpdate || !BackgroundHighlightingUtil.isValidEditor(editor)) {
-    return false
-  }
-
-  if (!editor.settings.isHighlightSelectionOccurrences) {
-    return false
-  }
-
-  if (TemplateManagerUtilBase.getTemplateState(editor) != null) {
-    // don't highlight selected text when template is active
-    return false
-  }
-
-  val caretModel = editor.caretModel
-  if (caretModel.caretCount > 1) {
-    return false
-  }
-
-  val caret = caretModel.primaryCaret
-  if (!caret.hasSelection()) {
-    return false
-  }
-
-  val start = caret.selectionStart
-  val end = caret.selectionEnd
+  val selectionRange = selectionRangeToFind(editor)
   val sequence = document.charsSequence
-  val toFind = sequence.subSequence(start, end).toString()
-  if (toFind.isBlank() || toFind.contains("\n")) {
+  val toFind = selectionRange?.subSequence(sequence)?.toString()
+  if (toFind == null || toFind.isBlank() || toFind.contains("\n")) {
+    removeSelectionHighlights(editor)
     return false
   }
+  val stamp = document.modificationStamp
 
-  val previous = editor.getUserData(SELECTION_HIGHLIGHTS)?.text
-  if (toFind == previous) {
+  if (toFind == editor.getUserData(SELECTION_HIGHLIGHTS)?.text) {
     return true
   }
 
@@ -316,14 +385,15 @@ private fun highlightSelection(project: Project, editor: Editor, executor: Execu
   findModel.stringToFind = toFind
   val threshold = intValue("editor.highlight.selected.text.max.occurrences.threshold", 50)
   ReadAction.nonBlocking<List<FindResult>> {
-    if (!BackgroundHighlightingUtil.isValidEditor(editor) || !caret.hasSelection()) return@nonBlocking emptyList<FindResult>()
+    if (!BackgroundHighlightingUtil.isValidEditor(editor)) return@nonBlocking emptyList()
+    val sequence = document.charsSequence
     var result = findManager.findString(sequence, 0, findModel, null)
     val results = ArrayList<FindResult>()
     var count = 0
     while (result.isStringFound && count < LivePreviewController.MATCHES_LIMIT) {
       count++
       if (count > threshold) {
-        return@nonBlocking emptyList<FindResult>()
+        return@nonBlocking emptyList()
       }
 
       results.add(result)
@@ -345,7 +415,7 @@ private fun highlightSelection(project: Project, editor: Editor, executor: Execu
       for (result in results) {
         val startOffset = result.startOffset
         val endOffset = result.endOffset
-        if (startOffset == start && endOffset == end) {
+        if (TextRange.areSegmentsEqual(selectionRange, result)) {
           continue
         }
 
@@ -360,61 +430,13 @@ private fun highlightSelection(project: Project, editor: Editor, executor: Execu
 }
 
 private fun removeSelectionHighlights(editor: Editor) {
-  val highlighters = editor.getUserData(SELECTION_HIGHLIGHTS)?.highlighters ?: return
-  editor.putUserData(SELECTION_HIGHLIGHTS, null)
+  val highlighters = (editor as UserDataHolderEx).getAndUpdateUserData(SELECTION_HIGHLIGHTS) { null }?.highlighters ?: return
   val markupModel = editor.markupModel
   for (highlighter in highlighters) {
     markupModel.removeHighlighter(highlighter)
   }
 }
 
-private fun submitIdentifierHighlighterPass(
-  hostEditor: Editor,
-  offsetBefore: Int,
-  newFile: PsiFile,
-  newEditor: Editor,
-  executor: Executor,
-) {
-  ReadAction.nonBlocking<IdentifierHighlighterPass?> {
-    if (!newFile.isValid) {
-      return@nonBlocking null
-    }
-
-    val textLength = newFile.textLength
-    if (textLength == -1 || hostEditor.isDisposed) {
-      // sometimes some crazy stuff is returned (EA-248725)
-      return@nonBlocking null
-    }
-
-    val visibleRange = ProperTextRange.from(0, textLength)
-    val pass = IdentifierHighlighterPassFactory().createHighlightingPass(newFile, newEditor, visibleRange)
-    val indicator = DaemonProgressIndicator()
-    @Suppress("DEPRECATION")
-    ProgressIndicatorUtils.runWithWriteActionPriority(
-      {
-        val project = newFile.project
-        val hostPsiFile = PsiDocumentManager.getInstance(project).getPsiFile(hostEditor.document)
-                          ?: return@runWithWriteActionPriority
-
-        val context = EditorContextManager.getEditorContext(hostEditor, project)
-        HighlightingSessionImpl.runInsideHighlightingSession(hostPsiFile,
-                                                             context,
-                                                             hostEditor.colorsScheme,
-                                                             ProperTextRange.create(hostPsiFile.textRange),
-                                                             false) {
-          try {
-            pass?.doCollectInformation(it)
-          }
-          catch (_: IndexNotReadyException) {
-          }
-        }
-      },
-      indicator,
-    )
-    pass
-  }
-    .expireWhen { !BackgroundHighlightingUtil.isValidEditor(hostEditor) || hostEditor.caretModel.offset != offsetBefore }
-    .coalesceBy(HighlightIdentifiersKey::class.java, hostEditor)
-    .finishOnUiThread(ModalityState.stateForComponent(hostEditor.component)) { it?.doAdditionalCodeBlockHighlighting() }
-    .submit(executor)
-}
+private class SelectionHighlights(val text: String, val highlighters: Collection<RangeHighlighter>)
+private val SELECTION_HIGHLIGHTS = Key<SelectionHighlights>("SELECTION_HIGHLIGHTS")
+private class HighlightSelectionKey

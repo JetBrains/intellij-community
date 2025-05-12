@@ -29,6 +29,8 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -124,7 +126,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   }
 
   @ApiStatus.Internal
-  public static void getOrCreateHighlightingSession(@NotNull PsiFile psiFile,
+  public static HighlightingSession getOrCreateHighlightingSession(@NotNull PsiFile psiFile,
                                                     @NotNull CodeInsightContext codeInsightContext,
                                                     @NotNull DaemonProgressIndicator progressIndicator,
                                                     @NotNull ProperTextRange visibleRange,
@@ -132,10 +134,14 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     Map<PsiFile, List<HighlightingSession>> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
     List<HighlightingSession> sessions = map == null ? null : map.get(psiFile);
     if (sessions == null) {
-      createHighlightingSession(psiFile, codeInsightContext, progressIndicator, null, visibleRange, CanISilentlyChange.Result.UH_UH, 0, compositeDocumentDirtyRange);
+      return createHighlightingSession(psiFile, codeInsightContext, progressIndicator, null, visibleRange, CanISilentlyChange.Result.UH_UH, 0, compositeDocumentDirtyRange);
+    }
+    else {
+      return sessions.get(0);
     }
   }
 
+  @RequiresEdt
   @ApiStatus.Internal
   public static @NotNull HighlightingSessionImpl createHighlightingSession(@NotNull PsiFile psiFile,
                                                                            @NotNull CodeInsightContext codeInsightContext,
@@ -166,8 +172,9 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     return session;
   }
 
+  @RequiresBackgroundThread
   @ApiStatus.Internal
-  public static void runInsideHighlightingSession(@NotNull PsiFile file,
+  public static void runInsideHighlightingSession(@NotNull PsiFile psiFile,
                                                   @NotNull CodeInsightContext codeInsightContext,
                                                   @Nullable EditorColorsScheme editorColorsScheme,
                                                   @NotNull ProperTextRange visibleRange,
@@ -175,16 +182,16 @@ public final class HighlightingSessionImpl implements HighlightingSession {
                                                   @NotNull Consumer<? super @NotNull HighlightingSession> runnable) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     DaemonProgressIndicator indicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
-    HighlightingSessionImpl session = createHighlightingSession(file, codeInsightContext, indicator, editorColorsScheme, visibleRange, canChangeFileSilently
-                                                                                                                 ? CanISilentlyChange.Result.UH_HUH
-                                                                                                                 : CanISilentlyChange.Result.UH_UH,
+    CanISilentlyChange.Result result = canChangeFileSilently ? CanISilentlyChange.Result.UH_HUH : CanISilentlyChange.Result.UH_UH;
+    HighlightingSessionImpl session = createHighlightingSession(psiFile, codeInsightContext, indicator, editorColorsScheme, visibleRange,
+                                                                result,
                                                                 0, TextRange.EMPTY_RANGE);
     try {
-      session.additionalSetupFromBackground(file);
+      session.additionalSetupFromBackground(psiFile);
       runnable.accept(session);
     }
     finally {
-      clearHighlightingSession(indicator, file, session);
+      clearHighlightingSession(indicator, psiFile, session);
     }
   }
 

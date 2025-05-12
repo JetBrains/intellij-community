@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -13,8 +13,8 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -26,17 +26,13 @@ import org.jetbrains.annotations.TestOnly;
 public final class IdentifierHighlighterPassFactory {
   private static final Key<Boolean> ourTestingIdentifierHighlighting = Key.create("TestingIdentifierHighlighting");
 
-  public IdentifierHighlighterPass createHighlightingPass(@NotNull PsiFile file,
-                                                          @NotNull Editor editor,
-                                                          @NotNull TextRange visibleRange) {
-    if (CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET &&
-        (!editor.isOneLineMode() || !((EditorEx)editor).isEmbeddedIntoDialogWrapper()) &&
-        checkDumbMode(file) &&
-        isEnabled() &&
-        (file.isPhysical() || file.getOriginalFile().isPhysical())) {
-      return new IdentifierHighlighterPass(file, editor, visibleRange);
-    }
-    return null;
+  @ApiStatus.Internal
+  public boolean shouldHighlightingIdentifiers(@NotNull PsiFile file, @NotNull Editor editor) {
+    return CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET &&
+           (!editor.isOneLineMode() || !((EditorEx)editor).isEmbeddedIntoDialogWrapper()) &&
+           checkDumbMode(file) &&
+           isEnabled() &&
+           (file.isPhysical() || file.getOriginalFile().isPhysical());
   }
 
   private static boolean checkDumbMode(@NotNull PsiFile file) {
@@ -73,5 +69,10 @@ public final class IdentifierHighlighterPassFactory {
     // wait for async "highlight identifier" computation to apply in com.intellij.codeInsight.highlighting.BackgroundHighlighter.updateHighlighted
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    Project project = editor.getProject();
+    if (project != null) {
+      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+    }
+    BackgroundHighlighter.Companion.waitForIdentifierHighlighting(editor);
   }
 }

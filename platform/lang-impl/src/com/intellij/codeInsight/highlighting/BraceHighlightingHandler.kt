@@ -5,7 +5,6 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.hint.EditorFragmentComponent
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
-import com.intellij.injected.editor.EditorWindow
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -34,6 +33,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiPlainTextFile
 import com.intellij.psi.SyntaxTraverser
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.tree.ILazyParseableElementType
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.psi.util.PsiUtilCore
@@ -46,6 +46,7 @@ import com.intellij.util.text.CharArrayUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.IntUnaryOperator
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.max
@@ -144,13 +145,41 @@ class BraceHighlightingHandler internal constructor(
       val key = if (matched) CodeInsightColors.MATCHED_BRACE_ATTRIBUTES else CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES
       return DefaultLineMarkerRenderer(key, 1, 0, LineMarkerRendererEx.Position.RIGHT, true)
     }
+
+    private fun getHighlightersList(editor: Editor): MutableList<RangeHighlighter> {
+      // braces are highlighted across the whole editor, not in each injected editor separately
+      val hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
+      var highlighters = hostEditor.getUserData(BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY)
+      if (highlighters == null) {
+        highlighters = ArrayList()
+        hostEditor.putUserData(BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY, highlighters)
+      }
+      return highlighters
+    }
+    @ApiStatus.Internal
+    @RequiresEdt
+    fun clearBraceHighlighters(editor: Editor) {
+      val highlighters = getHighlightersList(editor)
+      for (highlighter in highlighters) {
+        highlighter.dispose()
+      }
+      highlighters.clear()
+
+      editor.getUserData(HINT_IN_EDITOR_KEY)?.let { hint ->
+        hint.hide()
+        editor.putUserData(HINT_IN_EDITOR_KEY, null)
+      }
+      if (editor is EditorEx) {
+        removeLineMarkers(editor)
+      }
+    }
   }
 
   @RequiresEdt
   fun updateBraces() {
     ThreadingAssertions.assertEventDispatchThread()
 
-    clearBraceHighlighters()
+    clearBraceHighlighters(editor)
 
     if (!BackgroundHighlightingUtil.needMatching(editor, codeInsightSettings)) {
       return
@@ -331,18 +360,7 @@ class BraceHighlightingHandler internal constructor(
   }
 
   private fun registerHighlighter(highlighter: RangeHighlighter) {
-    getHighlightersList().add(highlighter)
-  }
-
-  private fun getHighlightersList(): MutableList<RangeHighlighter> {
-    // braces are highlighted across the whole editor, not in each injected editor separately
-    val editor = if (editor is EditorWindow) editor.delegate else editor
-    var highlighters = editor.getUserData(BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY)
-    if (highlighters == null) {
-      highlighters = ArrayList()
-      editor.putUserData(BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY, highlighters)
-    }
-    return highlighters
+    getHighlightersList(editor).add(highlighter)
   }
 
   @RequiresEdt
@@ -407,23 +425,6 @@ class BraceHighlightingHandler internal constructor(
           }
         }
       }
-    }
-  }
-
-  @RequiresEdt
-  fun clearBraceHighlighters() {
-    val highlighters = getHighlightersList()
-    for (highlighter in highlighters) {
-      highlighter.dispose()
-    }
-    highlighters.clear()
-
-    editor.getUserData(HINT_IN_EDITOR_KEY)?.let { hint ->
-      hint.hide()
-      editor.putUserData(HINT_IN_EDITOR_KEY, null)
-    }
-    if (editor is EditorEx) {
-      removeLineMarkers(editor)
     }
   }
 }

@@ -9,6 +9,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
 import com.intellij.codeInsight.navigation.GotoImplementationHandler;
 import com.intellij.codeInsight.navigation.GotoTargetHandler;
@@ -22,6 +23,7 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.ExternalAnnotator;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -342,7 +344,8 @@ public final class CodeInsightTestUtil {
   }
 
   public static void runIdentifierHighlighterPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
-    IdentifierHighlighterPass pass = new IdentifierHighlighterPassFactory().createHighlightingPass(psiFile, editor, psiFile.getTextRange());
+    IdentifierHighlighterUpdater pass = new IdentifierHighlighterUpdater(psiFile, editor, EditorContextManager.getEditorContext(editor, psiFile.getProject()),
+                                                                         InjectedLanguageManager.getInstance(psiFile.getProject()).getTopLevelFile(psiFile));
     assert pass != null;
     try {
       ReadAction.nonBlocking(() -> {
@@ -350,7 +353,7 @@ public final class CodeInsightTestUtil {
         ProgressManager.getInstance().runProcess(() -> {
           // todo IJPL-339 figure out what is the correct context here
           HighlightingSessionImpl.runInsideHighlightingSession(psiFile, FileViewProviderUtil.getCodeInsightContext(psiFile), editor.getColorsScheme(), ProperTextRange.create(psiFile.getTextRange()), false, session -> {
-            pass.doCollectInformation(session);
+            pass.doCollectInformationForTestsSynchronously(session);
           });
         }, indicator);
       }).submit(AppExecutorUtil.getAppExecutorService()).get();

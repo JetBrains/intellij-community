@@ -107,4 +107,9 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> implement
   public boolean highlightReferences() {
     return false;
   }
+
+  @Override
+  public String toString() {
+    return super.toString() +" myReadUsages="+myReadUsages+"; myWriteUsages="+myWriteUsages;
+  }
 }

@@ -13,7 +13,6 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.model.Symbol
 import com.intellij.model.psi.impl.targetSymbols
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
@@ -32,6 +31,9 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Computes identifier highlighting ranges by doing find usages/calling [com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase.computeUsages]
+ */
 @ApiStatus.Internal
 class IdentifierHighlightingComputer (
   private val myPsiFile: PsiFile,
@@ -56,7 +58,9 @@ class IdentifierHighlightingComputer (
   @ApiStatus.Internal
   fun computeRanges(): IdentifierHighlightingResult {
     if (myCaretOffset < 0 || !myEnabled || isInlinePromptShown(myEditor)) {
-      thisLogger().debug("IdentifierHighlightingComputer.computeRanges empty $myCaretOffset $myEnabled ${isInlinePromptShown(myEditor)}")
+      if (LOG.isDebugEnabled) {
+        LOG.debug("IdentifierHighlightingComputer.computeRanges empty $myCaretOffset $myEnabled ${isInlinePromptShown(myEditor)}")
+      }
       return EMPTY_RESULT
     }
     val myInfos: MutableCollection<IdentifierOccurrence> = LinkedHashSet()
@@ -69,6 +73,7 @@ class IdentifierHighlightingComputer (
       highlightUsagesHandler.computeUsages(targets)
       val readUsages = highlightUsagesHandler.readUsages
       for (readUsage in readUsages) {
+        @Suppress("SENSELESS_COMPARISON")
         LOG.assertTrue(readUsage != null, "null text range from " + highlightUsagesHandler)
       }
       myInfos.addAll(readUsages.map { u: TextRange ->
@@ -76,6 +81,7 @@ class IdentifierHighlightingComputer (
       })
       val writeUsages = highlightUsagesHandler.writeUsages
       for (writeUsage in writeUsages) {
+        @Suppress("SENSELESS_COMPARISON")
         LOG.assertTrue(writeUsage != null, "null text range from $highlightUsagesHandler")
       }
       myInfos.addAll(writeUsages.map { u: TextRange ->
@@ -106,22 +112,9 @@ class IdentifierHighlightingComputer (
       }
     }
     val result = IdentifierHighlightingResult(myInfos, myTargets)
-    val injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myPsiFile, myCaretOffset)
-    val injectedFile = PsiDocumentManager.getInstance(myPsiFile.getProject()).getPsiFile(injectedEditor!!.getDocument())!!
-    val injectedOffset = injectedEditor.getCaretModel().offset
-    val injTargetSymbols = targetSymbols(injectedFile, injectedOffset)
-    thisLogger().debug("IdentifierHighlightingComputer.computeRanges result $result; " +
-                       "highlightUsagesHandler=$highlightUsagesHandler " +
-                       "runFindUsages=$runFindUsages " +
-                       "getTargetSymbols()=${getTargetSymbols()}; " +
-                       "myPsiFile=$myPsiFile; " +
-                       "myPsiFile.getViewProvider=${myPsiFile.getViewProvider()}; " +
-                       "myCaretOffset=$myCaretOffset; " +
-                       "hostTargetSymbols=${targetSymbols(myPsiFile, myCaretOffset)}; " +
-                       "injectedEditor=${InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myPsiFile, myCaretOffset)}; " +
-                       "injectedFile == myFile: ${injectedFile == myPsiFile}; " +
-                       "injectedOffset=${injectedOffset}; " +
-                       "injTargetSymbols=$injTargetSymbols")
+    if (LOG.isDebugEnabled) {
+      LOG.debug("IdentifierHighlightingComputer.computeRanges($myPsiFile, $myCaretOffset) = $result")
+    }
     return result
   }
 

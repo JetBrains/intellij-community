@@ -1194,6 +1194,9 @@
     <pathMacroFilter implementation="com.intellij.openapi.application.PathMappingsMacroFilter"/>
 
     <postStartupActivity implementation="com.intellij.codeInsight.highlighting.BackgroundHighlighterProjectActivity"/>
+    <projectService serviceInterface="com.intellij.codeInsight.daemon.impl.IdentifierHighlightingManager"
+                    serviceImplementation="com.intellij.codeInsight.daemon.impl.IdentifierHighlightingManagerImpl"/>
+
     <registryKey defaultValue="true" description="Enables Usage highlighting under caret in dumb mode"
                  key="identifier.highlighter.pass.in.dumb.mode"/>
     <registryKey defaultValue="true" description="Enables inspections in dumb mode" key="ide.dumb.aware.inspections"/>

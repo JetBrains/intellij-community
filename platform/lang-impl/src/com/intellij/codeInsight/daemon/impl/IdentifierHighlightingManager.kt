@@ -1,8 +1,27 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ProperTextRange
 import com.intellij.openapi.util.Segment
 import org.jetbrains.annotations.ApiStatus
+
+/**
+ * Identifier highlighting model main entry point: [getMarkupData]
+ * Obtains the identifier highlighting (from cached ranges, or by calling [IdentifierHighlightingAccessor]).
+ */
+@ApiStatus.Internal
+interface IdentifierHighlightingManager {
+
+  suspend fun getMarkupData(editor: Editor, visibleRange: ProperTextRange): IdentifierHighlightingResult
+
+  companion object {
+    fun getInstance(project: Project): IdentifierHighlightingManager {
+      return project.getService(IdentifierHighlightingManager::class.java)
+    }
+  }
+}
 
 @ApiStatus.Internal
 @JvmRecord
