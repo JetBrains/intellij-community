@@ -138,8 +138,6 @@ class SePopupContentPane(private val vm: SePopupVm) : JPanel(), Disposable {
               if (!resultListModel.isValid) resultListModel.reset()
             }
           }.collect { event ->
-            //SeLog.log(SeLog.THROTTLING) { "Collected throttled event ${event}" }
-
             withContext(Dispatchers.EDT) {
               textField.setSearchInProgress(false)
               val wasFrozen = resultListModel.freezer.isEnabled
@@ -150,9 +148,10 @@ class SePopupContentPane(private val vm: SePopupVm) : JPanel(), Disposable {
               if (wasFrozen) resultListModel.freezer.enable()
               resultListModel.freezer.freezeIfEnabled(indexToFreezeFromListOffset())
 
-              //if (oldSize == 0 && resultListModel.size() > 0) {
-              //  resultList.selectedIndex = 0
-              //}
+              // Autoselect the first element if there were no selection preserved during the update
+              if (resultListModel.size > 0 && resultList.selectedIndices.isEmpty()) {
+                resultList.selectedIndex = 0
+              }
             }
           }
         }
