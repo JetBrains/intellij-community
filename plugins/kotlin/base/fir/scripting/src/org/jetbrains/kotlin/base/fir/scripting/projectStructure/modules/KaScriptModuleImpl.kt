@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.jps.entities.LibraryDependency
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.idea.base.scripting.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.scripting.getPlatform
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.scriptModuleEntity
 import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
+import org.jetbrains.kotlin.idea.core.script.dependencies.K2IdeScriptAdditionalIdeaDependenciesProvider
 import org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptSearchScope
 import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -63,7 +65,10 @@ internal class KaScriptModuleImpl(
     override val transitiveDependsOnDependencies: List<KaModule> get() = emptyList()
 
     override val directFriendDependencies: List<KaModule> by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        ScriptAdditionalIdeaDependenciesProvider.getRelatedModules(scriptFile, project)
+        K2IdeScriptAdditionalIdeaDependenciesProvider.getRelatedModules(scriptFile, project)
+            .mapNotNull { moduleEntity ->
+                moduleEntity.entitySource.virtualFileUrl?.virtualFile?.let { KaScriptModuleImpl(project, it) }
+            } + ScriptAdditionalIdeaDependenciesProvider.getRelatedModules(scriptFile, project)
             .mapNotNull { it.toKaSourceModuleForProduction() }
     }
 
@@ -74,7 +79,7 @@ internal class KaScriptModuleImpl(
         }
 
     override val directRegularDependencies: List<KaModule> by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        buildSet<KaModule> {
+        buildSet {
             val scriptDependencyLibraries = ScriptAdditionalIdeaDependenciesProvider.getRelatedLibraries(scriptFile, project)
             scriptDependencyLibraries.forEach {
                 addAll(it.toKaLibraryModules(project))
@@ -87,6 +92,10 @@ internal class KaScriptModuleImpl(
             }
 
             scriptFile.scriptLibraryDependencies(project).forEach(::add)
+
+            K2IdeScriptAdditionalIdeaDependenciesProvider.getRelatedLibraries(scriptFile, project).forEach {
+                addAll(it.library.toKaLibraryModules(project))
+            }
 
             val sdk = ScriptDependencyAware.getInstance(project).getScriptSdk(scriptFile)
             sdk?.let { add(it.toKaLibraryModule(project)) }
@@ -116,7 +125,7 @@ internal class KaScriptModuleImpl(
 }
 
 
-private fun VirtualFile.scriptLibraryDependencies(project: Project): Sequence<KaLibraryModule> {
+fun VirtualFile.scriptLibraryDependencies(project: Project): Sequence<KaLibraryModule> {
     val storage = WorkspaceModel.getInstance(project).currentSnapshot
 
     val dependencies = scriptModuleEntity(project, storage)?.dependencies ?: emptyList()

@@ -6,16 +6,16 @@ public class <6><8>ArrayList<E> extends AbstractList<E> implements List<E>, Rand
 
 package testData.libraries
 
-public val <T> java.util.List<T>.<13>exProp: kotlin.String /* compiled code */
+public val <T> java.util.List<T>.<13>exProp: kotlin.String /* compiled code */ /* hasBackingField: false */
     public final get
 
-public val kotlin.Int.exProp: kotlin.Int /* compiled code */
+public val kotlin.Int.exProp: kotlin.Int /* compiled code */ /* hasBackingField: false */
     public final get
 
-public val kotlin.String.<5>exProp: kotlin.String /* compiled code */
+public val kotlin.String.<5>exProp: kotlin.String /* compiled code */ /* hasBackingField: false */
     public final get
 
-context(kotlin.String) public val <T> java.util.List<T>.<18>exPropWithContextReceiver: kotlin.String /* compiled code */
+context(kotlin.String) public val <T> java.util.List<T>.<18>exPropWithContextReceiver: kotlin.String /* compiled code */ /* hasBackingField: false */
  PrintStream.class
     public void <3><11><16>println(String var1) {
  String.class

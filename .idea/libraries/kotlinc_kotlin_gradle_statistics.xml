@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-gradle-statistics" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-gradle-statistics-for-ide:2.2.20-dev-2603">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-gradle-statistics-for-ide:2.2.20-dev-2969">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/2.2.20-dev-2603/kotlin-gradle-statistics-for-ide-2.2.20-dev-2603.jar">
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/2.2.20-dev-2969/kotlin-gradle-statistics-for-ide-2.2.20-dev-2969.jar">
           <sha256sum>075c65e1d89b61c7889ea26f855c97ac54a143be165320579c772c80e7d8a82d</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/2.2.20-dev-2603/kotlin-gradle-statistics-for-ide-2.2.20-dev-2603.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/2.2.20-dev-2969/kotlin-gradle-statistics-for-ide-2.2.20-dev-2969.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/2.2.20-dev-2603/kotlin-gradle-statistics-for-ide-2.2.20-dev-2603-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/2.2.20-dev-2969/kotlin-gradle-statistics-for-ide-2.2.20-dev-2969-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

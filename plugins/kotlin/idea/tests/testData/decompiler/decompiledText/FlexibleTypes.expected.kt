@@ -4,7 +4,7 @@
 package test
 
 public abstract class FlexibleTypes public constructor() {
-    public abstract val p: kotlin.Int /* platform type */
+    public abstract val p: kotlin.Int /* platform type */ /* hasBackingField: false */
 
     public abstract fun collection(): kotlin.collections.List<kotlin.Int> /* platform type */
 
