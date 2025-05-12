@@ -35,7 +35,7 @@ val FILE: IFileElementType = object : IFileElementType(JsonLanguage.INSTANCE) {
       getSyntaxParserRuntimeFactory(language).buildParserRuntime(syntaxBuilder.getSyntaxTreeBuilder())
     val convertedElement = getConverter(language).convert(elementType)
     assert(convertedElement != null)
-    JsonParser().parse(convertedElement!!, runtimeParserRuntime)
+    JsonSyntaxParser().parse(convertedElement!!, runtimeParserRuntime)
     return syntaxBuilder.getTreeBuilt().getFirstChildNode()
   }
 }

@@ -5,9 +5,13 @@ import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder.Marker
 import com.intellij.platform.syntax.util.runtime.*
+import com.intellij.platform.syntax.util.runtime.Modifiers.Companion._AND_
+import com.intellij.platform.syntax.util.runtime.Modifiers.Companion._COLLAPSE_
+import com.intellij.platform.syntax.util.runtime.Modifiers.Companion._NONE_
+import com.intellij.platform.syntax.util.runtime.Modifiers.Companion._NOT_
 
 @Suppress("unused", "FunctionName", "JoinDeclarationAndAssignment")
-open class JsonParser {
+open class JsonSyntaxParser {
 
   fun parse(t: SyntaxElementType, s: SyntaxGeneratedParserRuntime) {
     var r: Boolean
@@ -69,7 +73,7 @@ open class JsonParser {
       r = `value_$`(s, l + 1)
       p = r // pin = 1
       r = r && array_element_1(s, l + 1)
-      s.exit_section_(l, m, r, p, JsonParser::not_bracket_or_next_value)
+      s.exit_section_(l, m, r, p, JsonSyntaxParser::not_bracket_or_next_value)
       return r || p
     }
 
@@ -234,7 +238,7 @@ open class JsonParser {
       r = `property_$`(s, l + 1)
       p = r // pin = 1
       r = r && object_element_1(s, l + 1)
-      s.exit_section_(l, m, r, p, JsonParser::not_brace_or_next_value)
+      s.exit_section_(l, m, r, p, JsonSyntaxParser::not_brace_or_next_value)
       return r || p
     }
 

@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.jsonLines
 
-import com.intellij.json.JsonParser
+import com.intellij.json.JsonSyntaxParser
 import com.intellij.json.JsonParserDefinition
 import com.intellij.json.json5.Json5Language
 import com.intellij.json.psi.impl.JsonFileImpl
@@ -36,7 +36,7 @@ internal class JsonLinesParserDefinition : JsonParserDefinition() {
         val runtimeParserRuntime =
           getSyntaxParserRuntimeFactory(Json5Language.INSTANCE).buildParserRuntime(syntaxBuilder as SyntaxTreeBuilder)
 
-        JsonParser().parse(ElementTypeConverters.getConverter(language).convert(elementType)!!, runtimeParserRuntime)
+        JsonSyntaxParser().parse(ElementTypeConverters.getConverter(language).convert(elementType)!!, runtimeParserRuntime)
         return syntaxBuilder.getTreeBuilt().getFirstChildNode()
       }
     }

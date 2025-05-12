@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.json5
 
-import com.intellij.json.JsonParser
+import com.intellij.json.JsonSyntaxParser
 import com.intellij.json.JsonParserDefinition
 import com.intellij.json.psi.impl.JsonFileImpl
 import com.intellij.lang.ASTNode
@@ -34,13 +34,13 @@ val FILE: IFileElementType = object : IFileElementType(Json5Language.INSTANCE) {
       getSyntaxParserRuntimeFactory(Json5Language.INSTANCE).buildParserRuntime(syntaxBuilder.getSyntaxTreeBuilder())
     val convertedElement = getConverter(language).convert(elementType)
     assert(convertedElement != null)
-    JsonParser().parse(convertedElement!!, runtimeParserRuntime)
+    JsonSyntaxParser().parse(convertedElement!!, runtimeParserRuntime)
     
     return syntaxBuilder.getTreeBuilt().getFirstChildNode()
   }
 }
 
-class Json5ParserDefinition : JsonParserDefinition() {
+open class Json5ParserDefinition : JsonParserDefinition() {
   
   public override fun createLexer(project: Project?): Lexer {
     return LexerAdapter(Json5Lexer(), getConverter(Json5Language.INSTANCE))
