@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.backend
 
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.session.*
 import com.intellij.terminal.session.dto.toDto
 import com.intellij.util.asDisposable
@@ -223,6 +224,14 @@ internal fun createTerminalOutputFlow(
       collectAndSendEvents(contentUpdate = null, otherEvent = TerminalPromptFinishedEvent)
     }
   })
+
+  val workingDirectoryTrackingScope = coroutineScope.childScope("Working directory tracking")
+  addWorkingDirectoryListener(services.ttyConnector, workingDirectoryTrackingScope) { directory ->
+    textBuffer.withLock {
+      curState = curState.copy(currentDirectory = directory)
+      collectAndSendEvents(contentUpdate = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
+    }
+  }
 
   return outputFlow
 }
