@@ -10,7 +10,7 @@
   <action id="GotoClass"/>
   <action id="GotoChangedFile"/>
   <action id="GotoFile"/>
-  <action id="CPP.CreateCMakeProject">
+  <action id="CPP.CreateNewCLionProject">
     <keyboard-shortcut first-keystroke="control shift N"/>
   </action>
   <action id="$SelectAll">
