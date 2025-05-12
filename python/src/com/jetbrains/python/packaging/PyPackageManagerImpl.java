@@ -18,7 +18,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.PyLazySdk;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -152,10 +151,6 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
 
   @Override
   protected @NotNull List<PyPackage> collectPackages() throws ExecutionException {
-    if (getSdk() instanceof PyLazySdk) {
-      return List.of();
-    }
-
     try {
       LOG.debug("Collecting installed packages for the SDK " + getSdk().getName(), new Throwable());
       String output = getHelperResult(List.of("list"), false, false);

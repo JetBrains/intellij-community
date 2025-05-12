@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.newProject
 
 import com.intellij.ide.highlighter.ModuleFileType
@@ -19,7 +19,6 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonModuleTypeBase
-import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
 import com.jetbrains.python.newProject.steps.PyAddExistingSdkPanel
 import com.jetbrains.python.sdk.PySdkProvider
 import com.jetbrains.python.sdk.PySdkSettings
@@ -237,5 +236,5 @@ private fun existingSdks(context: WizardContext): List<Sdk> {
       disposeUIResources()
     })
   }
-  return ProjectSpecificSettingsStep.getValidPythonSdks(sdksModel.sdks.toList())
+  return DeprecatedUtils.getValidPythonSdks(sdksModel.sdks.toList())
 }

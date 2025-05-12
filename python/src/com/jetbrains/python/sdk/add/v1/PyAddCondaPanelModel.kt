@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v1
 
 import com.intellij.execution.target.FullPathOnTarget
@@ -172,8 +172,6 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
 
   private fun condaPathIsValid(path: FullPathOnTarget): Boolean = path.matches(condaPathRegex)
 
-  fun isCondaPathValid() = condaPathIsValid(condaPathTextBoxRwProp.get())
-
 
   /**
    * Detects condas in well-known locations so user doesn't have to provide conda path
@@ -209,15 +207,6 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
     else {
       null
     }
-  }
-
-  /**
-   * This method ignores the error if condaEnvs are not loaded yet
-   * @return either null (if no error in name validation) or localized error string
-   */
-  fun getEnvIdentitiesNameValidationError(): @Nls String? {
-    val envIdentities = getEnvIdentities().getOrElse { return null }
-    return validateEnvIdentitiesName(envIdentities)
   }
 
   /**

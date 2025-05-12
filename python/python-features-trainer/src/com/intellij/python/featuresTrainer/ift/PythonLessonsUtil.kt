@@ -8,7 +8,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.inspections.PyInterpreterInspection
-import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
+import com.jetbrains.python.newProject.DeprecatedUtils
 import com.jetbrains.python.sdk.findBaseSdks
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.pythonSdk
@@ -59,7 +59,7 @@ object PythonLessonsUtil {
     }
 
     val allExistingSdks = listOf(*PyConfigurableInterpreterList.getInstance(null).model.sdks)
-    val existingSdks = ProjectSpecificSettingsStep.getValidPythonSdks(allExistingSdks)
+    val existingSdks = DeprecatedUtils.getValidPythonSdks(allExistingSdks)
 
     val interpreterVersions = CompletableFuture<List<String>>()
     ApplicationManager.getApplication().executeOnPooledThread {

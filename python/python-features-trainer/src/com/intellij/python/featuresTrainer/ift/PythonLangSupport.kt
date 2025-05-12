@@ -24,7 +24,7 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.inspections.PyInterpreterInspection
-import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
+import com.jetbrains.python.newProject.DeprecatedUtils
 import com.jetbrains.python.projectCreation.createVenvAndSdk
 import com.jetbrains.python.sdk.PySdkToInstall
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
@@ -111,7 +111,7 @@ internal class PythonLangSupport(private val errorSink: ErrorSink = ShowingMessa
 
   override fun startFromWelcomeFrame(startCallback: (Sdk?) -> Unit) {
     val allExistingSdks = listOf(*PyConfigurableInterpreterList.getInstance(null).model.sdks)
-    val existingSdks = ProjectSpecificSettingsStep.getValidPythonSdks(allExistingSdks)
+    val existingSdks = DeprecatedUtils.getValidPythonSdks(allExistingSdks)
 
     ApplicationManager.getApplication().executeOnPooledThread {
       val context = UserDataHolderBase()

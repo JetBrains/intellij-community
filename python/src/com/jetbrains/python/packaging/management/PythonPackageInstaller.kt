@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyPackage
 import com.jetbrains.python.packaging.PyRequirement
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.ApiStatus
 class PythonPackagesInstaller {
   companion object {
     @JvmStatic
+    @RequiresBackgroundThread
     fun installPackages(
       project: Project,
       sdk: Sdk,

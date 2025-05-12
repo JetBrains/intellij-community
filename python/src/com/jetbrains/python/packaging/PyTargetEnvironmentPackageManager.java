@@ -33,7 +33,6 @@ import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory;
 import com.jetbrains.python.run.PythonScriptExecution;
 import com.jetbrains.python.run.PythonScripts;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
-import com.jetbrains.python.sdk.PyLazySdk;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.venvReader.VirtualEnvReader;
 import org.jetbrains.annotations.ApiStatus;
@@ -181,10 +180,6 @@ public final class PyTargetEnvironmentPackageManager extends PyPackageManagerImp
 
   @Override
   protected @NotNull List<PyPackage> collectPackages() throws ExecutionException {
-    if (getSdk() instanceof PyLazySdk) {
-      return List.of();
-    }
-
     HelpersAwareTargetEnvironmentRequest helpersAwareRequest = getPythonTargetInterpreter();
     TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareRequest.getTargetEnvironmentRequest();
     final String output;
