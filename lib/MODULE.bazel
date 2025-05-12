@@ -4661,38 +4661,31 @@ http_file(
 )
 
 http_file(
-  name = "dependency-resolution-0_7_0-dev-2678_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper/org/jetbrains/amper/dependency-resolution/0.7.0-dev-2678/dependency-resolution-0.7.0-dev-2678.jar",
-  sha256 = "16047f49ff3960e4b29ca613eb09685484c20d8f105c4ed59b5a2ed1cb5e7f06",
-  downloaded_file_path = "dependency-resolution-0.7.0-dev-2678.jar"
+  name = "dependency-resolution-0_7_0-dev-2763_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper/org/jetbrains/amper/dependency-resolution/0.7.0-dev-2763/dependency-resolution-0.7.0-dev-2763.jar",
+  sha256 = "e07129c97d9f369f38f4b7908bac932fc34ccdba3a4a738d79f7f418592afaab",
+  downloaded_file_path = "dependency-resolution-0.7.0-dev-2763.jar"
 )
 
 http_file(
-  name = "concurrency-0_7_0-dev-2678_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper/org/jetbrains/amper/concurrency/0.7.0-dev-2678/concurrency-0.7.0-dev-2678.jar",
-  sha256 = "852c4fe4d73514ac88358f1e9cb9709f5e3dbd75b2374a278d1002132ba0423b",
-  downloaded_file_path = "concurrency-0.7.0-dev-2678.jar"
+  name = "concurrency-0_7_0-dev-2763_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper/org/jetbrains/amper/concurrency/0.7.0-dev-2763/concurrency-0.7.0-dev-2763.jar",
+  sha256 = "002bf7d295aae9a7ef3166b7e066e00956369e5626714647afe1c5705fb26bbe",
+  downloaded_file_path = "concurrency-0.7.0-dev-2763.jar"
 )
 
 http_file(
-  name = "slf4j-api-2_0_16_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/slf4j/slf4j-api/2.0.16/slf4j-api-2.0.16.jar",
-  sha256 = "a12578dde1ba00bd9b816d388a0b879928d00bab3c83c240f7013bf4196c579a",
-  downloaded_file_path = "slf4j-api-2.0.16.jar"
+  name = "nio-filechannels-0_7_0-dev-2763_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper/org/jetbrains/amper/nio-filechannels/0.7.0-dev-2763/nio-filechannels-0.7.0-dev-2763.jar",
+  sha256 = "6b762f54c05c5b820da3ae6db43e82ee342701d3cacf9ed8dfe0ea10909f0412",
+  downloaded_file_path = "nio-filechannels-0.7.0-dev-2763.jar"
 )
 
 http_file(
-  name = "nio-filechannels-0_7_0-dev-2678_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper/org/jetbrains/amper/nio-filechannels/0.7.0-dev-2678/nio-filechannels-0.7.0-dev-2678.jar",
-  sha256 = "a01977ce7cae056f2ced5787780ed66f3a32a8f86789e2c0c3807ae7cf6d46c9",
-  downloaded_file_path = "nio-filechannels-0.7.0-dev-2678.jar"
-)
-
-http_file(
-  name = "telemetry-0_7_0-dev-2678_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper/org/jetbrains/amper/telemetry/0.7.0-dev-2678/telemetry-0.7.0-dev-2678.jar",
-  sha256 = "21c7012670116bf3cf30823bf69f9af3ec5bfd84d47aa8b1c6491824b52ac3c5",
-  downloaded_file_path = "telemetry-0.7.0-dev-2678.jar"
+  name = "telemetry-0_7_0-dev-2763_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper/org/jetbrains/amper/telemetry/0.7.0-dev-2763/telemetry-0.7.0-dev-2763.jar",
+  sha256 = "e3037ae8f918d6d1733d7e40194d7e84373f2e9452660256a95c23252637de96",
+  downloaded_file_path = "telemetry-0.7.0-dev-2763.jar"
 )
 
 http_file(
@@ -4717,38 +4710,31 @@ http_file(
 )
 
 http_file(
-  name = "dependency-resolution-0_7_0-dev-2678-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper/org/jetbrains/amper/dependency-resolution/0.7.0-dev-2678/dependency-resolution-0.7.0-dev-2678-sources.jar",
-  sha256 = "651398401a3096022203269d4e2ef34fbcb1282c7b0e0165e7a3e9f9352e1544",
-  downloaded_file_path = "dependency-resolution-0.7.0-dev-2678-sources.jar"
+  name = "dependency-resolution-0_7_0-dev-2763-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper/org/jetbrains/amper/dependency-resolution/0.7.0-dev-2763/dependency-resolution-0.7.0-dev-2763-sources.jar",
+  sha256 = "7f066af164996c3b4fb4c27513384bbb801405a88a3be78520a2982c3c765f85",
+  downloaded_file_path = "dependency-resolution-0.7.0-dev-2763-sources.jar"
 )
 
 http_file(
-  name = "concurrency-0_7_0-dev-2678-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper/org/jetbrains/amper/concurrency/0.7.0-dev-2678/concurrency-0.7.0-dev-2678-sources.jar",
-  sha256 = "7bf30ac6bd72a09c58c9caf8f72a109ac42874fb2355652038666880b21e7479",
-  downloaded_file_path = "concurrency-0.7.0-dev-2678-sources.jar"
+  name = "concurrency-0_7_0-dev-2763-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper/org/jetbrains/amper/concurrency/0.7.0-dev-2763/concurrency-0.7.0-dev-2763-sources.jar",
+  sha256 = "acbdd6a4e88f1d4dc1427c36a133de2b8366415d7ce5544e1a0139eb44f51742",
+  downloaded_file_path = "concurrency-0.7.0-dev-2763-sources.jar"
 )
 
 http_file(
-  name = "slf4j-api-2_0_16-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/slf4j/slf4j-api/2.0.16/slf4j-api-2.0.16-sources.jar",
-  sha256 = "d938ad56953d65bd0806f75d17535fa32b1fc5078051212e0b010f69ec43f8cb",
-  downloaded_file_path = "slf4j-api-2.0.16-sources.jar"
+  name = "nio-filechannels-0_7_0-dev-2763-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper/org/jetbrains/amper/nio-filechannels/0.7.0-dev-2763/nio-filechannels-0.7.0-dev-2763-sources.jar",
+  sha256 = "9abb87175595cd53560defc9a343b1bec1bc721c91cee1dce19aba27e8c431bf",
+  downloaded_file_path = "nio-filechannels-0.7.0-dev-2763-sources.jar"
 )
 
 http_file(
-  name = "nio-filechannels-0_7_0-dev-2678-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper/org/jetbrains/amper/nio-filechannels/0.7.0-dev-2678/nio-filechannels-0.7.0-dev-2678-sources.jar",
-  sha256 = "681284a3c33e5ac6676c9216dd2b75a7fe17ffd75cc795a3fa058af1021342a3",
-  downloaded_file_path = "nio-filechannels-0.7.0-dev-2678-sources.jar"
-)
-
-http_file(
-  name = "telemetry-0_7_0-dev-2678-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper/org/jetbrains/amper/telemetry/0.7.0-dev-2678/telemetry-0.7.0-dev-2678-sources.jar",
-  sha256 = "3fed323851715e7d8fe76ff236b2409934e383a5945bd4d55148d70884effe3a",
-  downloaded_file_path = "telemetry-0.7.0-dev-2678-sources.jar"
+  name = "telemetry-0_7_0-dev-2763-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper/org/jetbrains/amper/telemetry/0.7.0-dev-2763/telemetry-0.7.0-dev-2763-sources.jar",
+  sha256 = "9005f1384f0c7454fb92981fd4d6484405a2b657382dea6e5d318ac3ca5774ac",
+  downloaded_file_path = "telemetry-0.7.0-dev-2763-sources.jar"
 )
 
 http_file(

@@ -3343,11 +3343,10 @@ jvm_import(
 java_library(
   name = "kotlin-base-scripting-amper-dependency-resolution-kotlin-base-scripting",
   exports = [
-    ":dependency-resolution-0_7_0-dev-2678_http_import",
-    ":concurrency-0_7_0-dev-2678_http_import",
-    ":slf4j-api-2_0_16_http_import",
-    ":nio-filechannels-0_7_0-dev-2678_http_import",
-    ":telemetry-0_7_0-dev-2678_http_import",
+    ":dependency-resolution-0_7_0-dev-2763_http_import",
+    ":concurrency-0_7_0-dev-2763_http_import",
+    ":nio-filechannels-0_7_0-dev-2763_http_import",
+    ":telemetry-0_7_0-dev-2763_http_import",
     ":serialization-jvm-0_86_2_http_import",
     ":core-jvm-0_86_2_http_import",
     ":maven-artifact-3_9_9_http_import",
@@ -3356,33 +3355,27 @@ java_library(
 )
 
 jvm_import(
-  name = "dependency-resolution-0_7_0-dev-2678_http_import",
-  jar = "@dependency-resolution-0_7_0-dev-2678_http//file",
-  source_jar = "@dependency-resolution-0_7_0-dev-2678-sources_http//file"
+  name = "dependency-resolution-0_7_0-dev-2763_http_import",
+  jar = "@dependency-resolution-0_7_0-dev-2763_http//file",
+  source_jar = "@dependency-resolution-0_7_0-dev-2763-sources_http//file"
 )
 
 jvm_import(
-  name = "concurrency-0_7_0-dev-2678_http_import",
-  jar = "@concurrency-0_7_0-dev-2678_http//file",
-  source_jar = "@concurrency-0_7_0-dev-2678-sources_http//file"
+  name = "concurrency-0_7_0-dev-2763_http_import",
+  jar = "@concurrency-0_7_0-dev-2763_http//file",
+  source_jar = "@concurrency-0_7_0-dev-2763-sources_http//file"
 )
 
 jvm_import(
-  name = "slf4j-api-2_0_16_http_import",
-  jar = "@slf4j-api-2_0_16_http//file",
-  source_jar = "@slf4j-api-2_0_16-sources_http//file"
+  name = "nio-filechannels-0_7_0-dev-2763_http_import",
+  jar = "@nio-filechannels-0_7_0-dev-2763_http//file",
+  source_jar = "@nio-filechannels-0_7_0-dev-2763-sources_http//file"
 )
 
 jvm_import(
-  name = "nio-filechannels-0_7_0-dev-2678_http_import",
-  jar = "@nio-filechannels-0_7_0-dev-2678_http//file",
-  source_jar = "@nio-filechannels-0_7_0-dev-2678-sources_http//file"
-)
-
-jvm_import(
-  name = "telemetry-0_7_0-dev-2678_http_import",
-  jar = "@telemetry-0_7_0-dev-2678_http//file",
-  source_jar = "@telemetry-0_7_0-dev-2678-sources_http//file"
+  name = "telemetry-0_7_0-dev-2763_http_import",
+  jar = "@telemetry-0_7_0-dev-2763_http//file",
+  source_jar = "@telemetry-0_7_0-dev-2763-sources_http//file"
 )
 
 jvm_import(

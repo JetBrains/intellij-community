@@ -67,8 +67,12 @@ jvm_library(
     "@lib//:kotlinc-kotlin-scripting-dependencies",
     "//plugins/kotlin/scripting",
     "@lib//:kotlin-base-scripting-amper-dependency-resolution-kotlin-base-scripting",
+    "@lib//:slf4j-api",
   ],
-  exports = ["@lib//:kotlin-base-scripting-amper-dependency-resolution-kotlin-base-scripting"],
+  exports = [
+    "@lib//:kotlin-base-scripting-amper-dependency-resolution-kotlin-base-scripting",
+    "@lib//:slf4j-api",
+  ],
   runtime_deps = [":scripting_resources"]
 )
 
@@ -128,6 +132,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-scripting-dependencies",
     "//plugins/kotlin/scripting",
     "@lib//:kotlin-base-scripting-amper-dependency-resolution-kotlin-base-scripting",
+    "@lib//:slf4j-api",
   ],
   runtime_deps = [":scripting_resources"]
 )
