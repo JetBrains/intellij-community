@@ -28,6 +28,7 @@ import kotlinx.coroutines.launch
 import java.lang.management.ManagementFactory
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 internal class IdeHeartbeatEventReporter : ProjectActivity {
@@ -41,6 +42,21 @@ internal class IdeHeartbeatEventReporter : ProjectActivity {
     serviceAsync<IdeHeartbeatEventReporterService>()
   }
 }
+
+internal data class EventDurationHistogram(
+  val totalCount: Int,
+  /**
+   * sum of measurements for all events
+   */
+  val totalDuration: Duration,
+  /**
+   * Median duration of an event
+   */
+  val p50: Duration,
+  // higher percentiles of duration
+  val p95: Duration,
+  val p99: Duration,
+)
 
 /**
  * This is an app service because the routine should be shared between projects.
@@ -127,7 +143,7 @@ private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
 }
 
 internal object UILatencyLogger : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("performance", 77)
+  private val GROUP = EventLogGroup("performance", 78)
 
   internal val SYSTEM_CPU_LOAD: IntEventField = Int("system_cpu_load")
   internal val SWAP_LOAD: IntEventField = Int("swap_load")
@@ -214,6 +230,136 @@ internal object UILatencyLogger : CounterUsagesCollector() {
     P99_TO_P50, P999_TO_P50, MAX_TO_P50,
     SAMPLES_COUNT
   )
+
+  // ==== Detailed UI Thread statistics: information about latency and throughput of UI Event Queue
+
+  val UI_EVENTS_COUNT: IntEventField = Int("ui_execution_events_count", description = "Total number of UI events executed by the AWT EventQueue.")
+
+  val WINDOW_LENGTH_MS: IntEventField = Int("window_length_ms", description = "The duration of measurement window.")
+
+  val UI_EXECUTION_TIME_TOTAL_MS: IntEventField = Int("ui_execution_total_ms", description = "Total time spent on executing UI events.")
+  val UI_EXECUTION_TIME_50_US: IntEventField = Int("ui_execution_p50_us", description = "Median duration of execution of a UI event")
+  val UI_EXECUTION_TIME_95_TO_50: FloatEventField = FloatEventField("ui_execution_p95_to_p50", description = "Relation of 95-th percentile of a UI event execution to the median")
+  val UI_EXECUTION_TIME_99_TO_50: FloatEventField = FloatEventField("ui_execution_p99_to_p50", description = "Relation of 99-th percentile of a UI event execution to the median")
+
+  val INVOCATION_EVENTS_COUNT: IntEventField = Int("invocation_events_count", description = "Number of executed invocation events. Events skipped because of modality mismatch are not counted.")
+
+  val INVOCATION_WAITING_TIME_TOTAL_MS: IntEventField = Int("invocation_waiting_total_ms", description = "Sum over times of each invocation event spending in the event queue")
+  val INVOCATION_WAITING_TIME_50_US: IntEventField = Int("invocation_waiting_p50_us", description = "Median waiting time of an invocation event")
+  val INVOCATION_WAITING_TIME_95_TO_50: FloatEventField = FloatEventField("invocation_waiting_p95_to_p50", description = "Relation of 95-th percentile of an invocation event waiting to the median")
+  val INVOCATION_WAITING_TIME_99_TO_50: FloatEventField = FloatEventField("invocation_waiting_p99_to_p50", description = "Relation of 99-th percentile of an invocation event waiting to the median")
+
+  val INVOCATION_EXECUTION_TIME_TOTAL_MS: IntEventField = Int("invocation_execution_total_ms", description = "Total time spent on executing invocation events")
+  val INVOCATION_EXECUTION_TIME_50_US: IntEventField = Int("invocation_execution_p50_us", description = "Median execution time of an invocation events")
+  val INVOCATION_EXECUTION_TIME_95_TO_50: FloatEventField = FloatEventField("invocation_execution_p95_to_p50", description = "Relation of 95-th percentile of an invocation event execution to the median")
+  val INVOCATION_EXECUTION_TIME_99_TO_50: FloatEventField = FloatEventField("invocation_execution_p99_to_p50", description = "Relation of 99-th percentile of an invocation event execution to the median")
+
+  val WRITE_LOCK_EVENTS: IntEventField = Int("write_lock_events_count", description = "Number of requests for write lock")
+
+  val WRITE_LOCK_WAITING_TIME_TOTAL_MS: IntEventField = Int("write_lock_waiting_ms", description = "Total time spent on waiting for acquisition of the write lock")
+  val WRITE_LOCK_WAITING_TIME_50_US: IntEventField = Int("write_lock_waiting_p50_us", description = "Median waiting time for the write lock")
+  val WRITE_LOCK_WAITING_TIME_95_TO_50: FloatEventField = FloatEventField("write_lock_waiting_p95_to_p50", description = "Relation of 95-th percentile of a write lock acquisition to the median")
+  val WRITE_LOCK_WAITING_TIME_99_TO_50: FloatEventField = FloatEventField("write_lock_waiting_p99_to_p50", description = "Relation of 99-th percentile of a write lock acquisition to the median")
+
+  val WRITE_LOCK_EXECUTION_TIME_TOTAL_MS: IntEventField = Int("write_lock_execution_ms", description = "Total time spent on execution of write actions")
+  val WRITE_LOCK_EXECUTION_TIME_50_US: IntEventField = Int("write_lock_execution_p50_us", description = "Median execution time of write actions")
+  val WRITE_LOCK_EXECUTION_TIME_95_TO_50: FloatEventField = FloatEventField("write_lock_execution_p95_to_p50", description = "Relation of 95-th percentile of a write action execution time to the median")
+  val WRITE_LOCK_EXECUTION_TIME_99_TO_50: FloatEventField = FloatEventField("write_lock_execution_p99_to_p50", description = "Relation of 99-th percentile of a write action execution time to the median")
+
+  val READING_LOCK_EVENTS: IntEventField = Int("reading_lock_events_count", description = "Number of events for read and write-intent locks")
+
+  val READING_LOCK_WAITING_TIME_TOTAL_MS: IntEventField = Int("reading_lock_waiting_ms", description = "Total time spent on waiting for read and write-intent locks")
+  val READING_LOCK_WAITING_TIME_50_US: IntEventField = Int("reading_lock_waiting_p50_us", description = "Median waiting time for the read and write-intent locks")
+  val READING_LOCK_WAITING_TIME_95_TO_50: FloatEventField = FloatEventField("reading_lock_waiting_p95_to_p50", description = "Relation of 95-th percentile of read and write-intent locks waiting to the median")
+  val READING_LOCK_WAITING_TIME_99_TO_50: FloatEventField = FloatEventField("reading_lock_waiting_p99_to_p50", description = "Relation of 99-th percentile of read and write-intent locks waiting to the median")
+
+  val READING_LOCK_EXECUTION_TIME_TOTAL_MS: IntEventField = Int("reading_lock_execution_ms", description = "Total time spent on execution of read and write-intent actions")
+  val READING_LOCK_EXECUTION_TIME_50_US: IntEventField = Int("reading_lock_execution_p50_us", description = "Median execution time of read and write-intent actions")
+  val READING_LOCK_EXECUTION_TIME_95_TO_50: FloatEventField = FloatEventField("reading_lock_execution_p95_to_p50", description = "Relation of 95-th percentile of read and write-intent actions execution time to the median")
+  val READING_LOCK_EXECUTION_TIME_99_TO_50: FloatEventField = FloatEventField("reading_lock_execution_p99_to_p50", description = "Relation of 99-th percentile of read and write-intent actions execution time to the median")
+
+  private val UI_RESPONSIVENESS: VarargEventId = GROUP.registerVarargEvent(
+    "ui.responsiveness",
+    UI_EVENTS_COUNT,
+    WINDOW_LENGTH_MS,
+    UI_EXECUTION_TIME_TOTAL_MS,
+    UI_EXECUTION_TIME_50_US,
+    UI_EXECUTION_TIME_95_TO_50,
+    UI_EXECUTION_TIME_99_TO_50,
+    INVOCATION_EVENTS_COUNT,
+    INVOCATION_WAITING_TIME_TOTAL_MS,
+    INVOCATION_WAITING_TIME_50_US,
+    INVOCATION_WAITING_TIME_95_TO_50,
+    INVOCATION_WAITING_TIME_99_TO_50,
+    INVOCATION_EXECUTION_TIME_TOTAL_MS,
+    INVOCATION_EXECUTION_TIME_50_US,
+    INVOCATION_EXECUTION_TIME_95_TO_50,
+    INVOCATION_EXECUTION_TIME_99_TO_50,
+    WRITE_LOCK_EVENTS,
+    WRITE_LOCK_WAITING_TIME_TOTAL_MS,
+    WRITE_LOCK_WAITING_TIME_50_US,
+    WRITE_LOCK_WAITING_TIME_95_TO_50,
+    WRITE_LOCK_WAITING_TIME_99_TO_50,
+    WRITE_LOCK_EXECUTION_TIME_TOTAL_MS,
+    WRITE_LOCK_EXECUTION_TIME_50_US,
+    WRITE_LOCK_EXECUTION_TIME_95_TO_50,
+    WRITE_LOCK_EXECUTION_TIME_99_TO_50,
+    READING_LOCK_EVENTS,
+    READING_LOCK_WAITING_TIME_TOTAL_MS,
+    READING_LOCK_WAITING_TIME_50_US,
+    READING_LOCK_WAITING_TIME_95_TO_50,
+    READING_LOCK_WAITING_TIME_99_TO_50,
+    READING_LOCK_EXECUTION_TIME_TOTAL_MS,
+    READING_LOCK_EXECUTION_TIME_50_US,
+    READING_LOCK_EXECUTION_TIME_95_TO_50,
+    READING_LOCK_EXECUTION_TIME_99_TO_50,
+  )
+
+  fun reportUiResponsiveness(
+    windowLength: Duration,
+    totalExecution: EventDurationHistogram,
+    invocationEventsWaiting: EventDurationHistogram,
+    invocationEventsExecution: EventDurationHistogram,
+    writeLockWaiting: EventDurationHistogram,
+    writeLockExecution: EventDurationHistogram,
+    readingLockWaiting: EventDurationHistogram,
+    readingLockExecution: EventDurationHistogram,
+  ) {
+    UI_RESPONSIVENESS.log(
+      UI_EVENTS_COUNT.with(totalExecution.totalCount),
+      WINDOW_LENGTH_MS.with(windowLength.inWholeMilliseconds.toInt()),
+      *reportDurationHistograms(totalExecution, UI_EXECUTION_TIME_TOTAL_MS, UI_EXECUTION_TIME_50_US, UI_EXECUTION_TIME_95_TO_50, UI_EXECUTION_TIME_99_TO_50),
+      INVOCATION_EVENTS_COUNT.with(invocationEventsWaiting.totalCount),
+      *reportDurationHistograms(invocationEventsWaiting, INVOCATION_WAITING_TIME_TOTAL_MS, INVOCATION_WAITING_TIME_50_US, INVOCATION_WAITING_TIME_95_TO_50, INVOCATION_WAITING_TIME_99_TO_50),
+      *reportDurationHistograms(invocationEventsExecution, INVOCATION_EXECUTION_TIME_TOTAL_MS, INVOCATION_EXECUTION_TIME_50_US, INVOCATION_EXECUTION_TIME_95_TO_50, INVOCATION_EXECUTION_TIME_99_TO_50),
+      // some write lock requests may be upgraded from write-intent lock
+      // we don't think it is useful to know the exact number of events that are blocked on write lock acquisition
+      WRITE_LOCK_EVENTS.with(writeLockExecution.totalCount),
+      *reportDurationHistograms(writeLockWaiting, WRITE_LOCK_WAITING_TIME_TOTAL_MS, WRITE_LOCK_WAITING_TIME_50_US, WRITE_LOCK_WAITING_TIME_95_TO_50, WRITE_LOCK_WAITING_TIME_99_TO_50),
+      *reportDurationHistograms(writeLockExecution, WRITE_LOCK_EXECUTION_TIME_TOTAL_MS, WRITE_LOCK_EXECUTION_TIME_50_US, WRITE_LOCK_EXECUTION_TIME_95_TO_50, WRITE_LOCK_EXECUTION_TIME_99_TO_50),
+      READING_LOCK_EVENTS.with(readingLockExecution.totalCount),
+      *reportDurationHistograms(readingLockWaiting, READING_LOCK_WAITING_TIME_TOTAL_MS, READING_LOCK_WAITING_TIME_50_US, READING_LOCK_WAITING_TIME_95_TO_50, READING_LOCK_WAITING_TIME_99_TO_50),
+      *reportDurationHistograms(readingLockExecution, READING_LOCK_EXECUTION_TIME_TOTAL_MS, READING_LOCK_EXECUTION_TIME_50_US, READING_LOCK_EXECUTION_TIME_95_TO_50, READING_LOCK_EXECUTION_TIME_99_TO_50),
+    )
+  }
+
+  private fun reportDurationHistograms(
+    histogram: EventDurationHistogram,
+    totalDuration: IntEventField,
+    p50: IntEventField,
+    p95_to_50: FloatEventField,
+    p99_to_50: FloatEventField,
+  ): Array<out EventPair<out Any>> {
+    val median = histogram.p50.inWholeMicroseconds.toInt()
+    val p95 = if (median == 0) 0f else histogram.p95.inWholeMicroseconds.toFloat() / median.toFloat()
+    val p99 = if (median == 0) 0f else histogram.p95.inWholeMicroseconds.toFloat() / median.toFloat()
+    return arrayOf(
+      totalDuration.with(histogram.totalDuration.inWholeMilliseconds.toInt()),
+      p50.with(median),
+      p95_to_50.with(p95),
+      p99_to_50.with(p99),
+    )
+  }
 
   private val MEM_HISTOGRAM_BUCKETS = longArrayOf(
     1*1024, // 1g
