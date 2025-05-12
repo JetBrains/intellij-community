@@ -68,6 +68,7 @@ import javax.swing.event.HyperlinkListener
 class FrontendXDebuggerSession private constructor(
   override val project: Project,
   scope: CoroutineScope,
+  private val manager: FrontendXDebuggerManager,
   sessionDto: XDebugSessionDto,
   override val processHandler: ProcessHandler,
   override val consoleView: ConsoleView?,
@@ -384,6 +385,7 @@ class FrontendXDebuggerSession private constructor(
   override fun muteBreakpoints(value: Boolean) {
     // Optimistic update
     sessionData.isBreakpointsMuted = value
+    manager.breakpointsManager.getLineBreakpointManager().queueAllBreakpointsUpdate()
   }
 
   override fun isInactiveSlaveBreakpoint(breakpoint: XBreakpointProxy): Boolean {
@@ -403,12 +405,13 @@ class FrontendXDebuggerSession private constructor(
     suspend fun create(
       project: Project,
       scope: CoroutineScope,
+      manager: FrontendXDebuggerManager,
       sessionDto: XDebugSessionDto,
     ): FrontendXDebuggerSession {
       val processHandler = createFrontendProcessHandler(project, sessionDto.processHandlerDto)
       val consoleView = sessionDto.consoleViewData?.consoleView(processHandler)
 
-      return FrontendXDebuggerSession(project, scope, sessionDto, processHandler, consoleView)
+      return FrontendXDebuggerSession(project, scope, manager, sessionDto, processHandler, consoleView)
     }
   }
 }
