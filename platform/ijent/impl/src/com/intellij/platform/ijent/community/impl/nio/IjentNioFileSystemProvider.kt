@@ -329,7 +329,11 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
   }
 
   override fun isHidden(path: Path): Boolean {
-    TODO("Not yet implemented")
+    ensureAbsoluteIjentNioPath(path)
+    return when (path.nioFs.ijentFs) {
+      is IjentFileSystemPosixApi -> path.normalize().fileName.toString().startsWith(".")
+      is IjentFileSystemWindowsApi -> TODO("Not implemented for Windows")
+    }
   }
 
   override fun getFileStore(path: Path): FileStore {
