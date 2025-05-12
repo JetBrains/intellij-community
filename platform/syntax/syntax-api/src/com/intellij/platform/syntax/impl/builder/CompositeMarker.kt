@@ -61,7 +61,7 @@ internal class CompositeMarker(
   }
 
   override fun done(type: SyntaxElementType) {
-    if (type == SyntaxTokenTypes.ERROR_ELEMENT) {
+    if (type === SyntaxTokenTypes.ERROR_ELEMENT) {
       builder.logger.warn("Error elements with empty message are discouraged. Please use builder.error() instead", RuntimeException())
     }
     this@CompositeMarker.type = type
@@ -74,7 +74,7 @@ internal class CompositeMarker(
   }
 
   override fun doneBefore(type: SyntaxElementType, before: SyntaxTreeBuilder.Marker) {
-    if (type == SyntaxTokenTypes.ERROR_ELEMENT) {
+    if (type === SyntaxTokenTypes.ERROR_ELEMENT) {
       builder.logger.warn("Error elements with empty message are discouraged. Please use builder.errorBefore() instead", RuntimeException())
     }
     this@CompositeMarker.type = type
