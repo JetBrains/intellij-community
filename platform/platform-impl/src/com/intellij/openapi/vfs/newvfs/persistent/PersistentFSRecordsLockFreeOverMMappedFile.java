@@ -398,7 +398,6 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
   // ==== records operations:  ================================================================ //
 
-
   @Override
   public int allocateRecord() throws IOException {
     Page headerPage = headerPage();
@@ -805,7 +804,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
   /** Without recordId bounds checking */
   @VisibleForTesting
-  long recordOffsetInFileUnchecked(int recordId) {
+  public long recordOffsetInFileUnchecked(int recordId) {
     //recordId is 1-based, convert to 0-based recordNo:
     int recordNo = recordId - 1;
 

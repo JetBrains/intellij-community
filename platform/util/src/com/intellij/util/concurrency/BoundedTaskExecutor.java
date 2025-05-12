@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
 import com.intellij.concurrency.ContextAwareRunnable;
@@ -9,10 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Async;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -69,7 +66,9 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
   }
 
   // for diagnostics
-  static Object info(Runnable info) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static Object info(Runnable info) {
     Object task = info;
     String extra = null;
     if (task instanceof FutureTask) {

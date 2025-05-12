@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk;
 
 import com.intellij.execution.ExecutionException;
@@ -61,8 +61,8 @@ import java.lang.ref.WeakReference;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.execution.target.TargetBasedSdks.loadTargetConfiguration;
@@ -316,7 +316,9 @@ public final class PythonSdkType extends SdkType {
    * @return whether provided Python interpreter path corresponds to custom Python SDK
    */
   @Contract(pure = true)
-  static boolean isCustomPythonSdkHomePath(@NotNull String homePath) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static boolean isCustomPythonSdkHomePath(@NotNull String homePath) {
     return CustomSdkHomePattern.isCustomPythonSdkHomePath(homePath);
   }
 

@@ -1,21 +1,21 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Pair;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.function.Consumer;
 
 @ApiStatus.Internal
@@ -143,7 +143,8 @@ public class EnvReader extends EnvironmentUtil.ShellEnvReader {
 
   }
 
-  @NotNull Map<String, String> readPs1Env(Path ps1Path, List<String> args) throws IOException {
+  @VisibleForTesting
+  public @NotNull Map<String, String> readPs1Env(Path ps1Path, List<String> args) throws IOException {
     return readPs1OutputAndEnv(ps1Path, args, (it) -> {}).second;
   }
 

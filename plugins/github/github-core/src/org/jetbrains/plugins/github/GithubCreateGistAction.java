@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github;
 
 import com.intellij.ide.BrowserUtil;
@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor;
 import org.jetbrains.plugins.github.api.GithubApiRequests;
 import org.jetbrains.plugins.github.api.GithubServerPath;
@@ -155,14 +156,15 @@ public class GithubCreateGistAction extends DumbAwareAction {
     }.queue();
   }
 
-  static @Nullable String createGist(@NotNull Project project,
-                                     @NotNull GithubApiRequestExecutor executor,
-                                     @NotNull ProgressIndicator indicator,
-                                     @NotNull GithubServerPath server,
-                                     @NotNull List<? extends FileContent> contents,
-                                     final boolean isSecret,
-                                     final @NotNull String description,
-                                     @Nullable String filename) {
+  @VisibleForTesting
+  public static @Nullable String createGist(@NotNull Project project,
+                                            @NotNull GithubApiRequestExecutor executor,
+                                            @NotNull ProgressIndicator indicator,
+                                            @NotNull GithubServerPath server,
+                                            @NotNull List<? extends FileContent> contents,
+                                            final boolean isSecret,
+                                            final @NotNull String description,
+                                            @Nullable String filename) {
     if (contents.isEmpty()) {
       GithubNotifications.showWarning(project,
                                       GithubNotificationIdsHolder.GIST_CANNOT_CREATE,

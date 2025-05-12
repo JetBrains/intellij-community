@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.concurrency.JobSchedulerImpl;
@@ -50,7 +50,7 @@ public final class EncodingManagerImpl extends EncodingManager implements Persis
   private static final Logger LOG = Logger.getInstance(EncodingManagerImpl.class);
 
   @ApiStatus.Internal
-  static final class State {
+  public static final class State {
     private @NotNull EncodingReference myDefaultEncoding = new EncodingReference(StandardCharsets.UTF_8);
     private @NotNull EncodingReference myDefaultConsoleEncoding = EncodingReference.DEFAULT;
 
@@ -146,7 +146,9 @@ public final class EncodingManagerImpl extends EncodingManager implements Persis
     firePropertyChange(document, PROP_CACHED_ENCODING_CHANGED, oldCached, charset);
   }
 
-  static @Nullable("returns null if charset set cannot be determined from content") Charset computeCharsetFromContent(final @NotNull VirtualFile virtualFile) {
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static @Nullable("returns null if charset set cannot be determined from content") Charset computeCharsetFromContent(final @NotNull VirtualFile virtualFile) {
     final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
     if (document == null) {
       return null;
@@ -182,7 +184,8 @@ public final class EncodingManagerImpl extends EncodingManager implements Persis
     return data.addAndGet(delta);
   }
 
-  void queueUpdateEncodingFromContent(@NotNull Document document) {
+  @VisibleForTesting
+  public void queueUpdateEncodingFromContent(@NotNull Document document) {
     if (myDisposed.get()) return; // ignore re-detect requests on app close
     if (addNumberOfRequestedRedetects(document, 1) == 1) {
       changedDocumentExecutor.execute(new DocumentEncodingDetectRequest(document, myDisposed));
@@ -257,7 +260,7 @@ public final class EncodingManagerImpl extends EncodingManager implements Persis
   }
 
   @TestOnly
-  void waitAllTasksExecuted() {
+  public void waitAllTasksExecuted() {
     try {
       changedDocumentExecutor.waitAllTasksExecuted(1, TimeUnit.MINUTES);
     }

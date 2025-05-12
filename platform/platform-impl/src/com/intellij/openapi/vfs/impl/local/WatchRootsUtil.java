@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -80,7 +81,8 @@ public final class WatchRootsUtil {
     return result;
   }
 
-  static @NotNull NavigableSet<String> createFileNavigableSet() {
+  @VisibleForTesting
+  public static @NotNull NavigableSet<String> createFileNavigableSet() {
     return new TreeSet<>(OSAgnosticPathUtil.COMPARATOR);
   }
 
@@ -88,7 +90,8 @@ public final class WatchRootsUtil {
     return new TreeMap<>(OSAgnosticPathUtil.COMPARATOR);
   }
 
-  static @NotNull NavigableSet<Pair<String, String>> createMappingsNavigableSet() {
+  @VisibleForTesting
+  public static @NotNull NavigableSet<Pair<String, String>> createMappingsNavigableSet() {
     return new TreeSet<>((a,b) -> OSAgnosticPathUtil.COMPARATOR.compare(a.first, b.first));
   }
 

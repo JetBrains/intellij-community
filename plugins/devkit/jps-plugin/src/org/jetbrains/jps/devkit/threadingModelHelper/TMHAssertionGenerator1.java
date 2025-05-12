@@ -88,7 +88,8 @@ public class TMHAssertionGenerator1 implements TMHAssertionGenerator {
       this(DEFAULT_ANNOTATION_CLASS_NAME, DEFAULT_APPLICATION_MANAGER_CLASS_NAME, DEFAULT_APPLICATION_CLASS_NAME);
     }
 
-    AssertEdt(String annotationClassName, String applicationManagerClassName, String applicationClassName) {
+    @VisibleForTesting
+    public AssertEdt(String annotationClassName, String applicationManagerClassName, String applicationClassName) {
       this(Type.getType("L" + annotationClassName + ";"),
           Type.getType("L" + applicationManagerClassName + ";"),
           Type.getType("L" + applicationClassName + ";"));

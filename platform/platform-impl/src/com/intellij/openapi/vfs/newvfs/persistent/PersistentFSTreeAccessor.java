@@ -17,6 +17,7 @@ import com.intellij.util.io.DataOutputStream;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -48,9 +49,9 @@ public class PersistentFSTreeAccessor {
 
   protected final @Nullable FsRootDataLoader fsRootDataLoader;
 
-  PersistentFSTreeAccessor(@NotNull PersistentFSAttributeAccessor attributeAccessor,
-                           @NotNull PersistentFSRecordAccessor recordAccessor,
-                           @NotNull PersistentFSConnection connection) {
+  public PersistentFSTreeAccessor(@NotNull PersistentFSAttributeAccessor attributeAccessor,
+                                  @NotNull PersistentFSRecordAccessor recordAccessor,
+                                  @NotNull PersistentFSConnection connection) {
     this.attributeAccessor = attributeAccessor;
     this.recordAccessor = recordAccessor;
     this.connection = connection;
@@ -59,7 +60,8 @@ public class PersistentFSTreeAccessor {
                        : null;
   }
 
-  void doSaveChildren(int parentId, @NotNull ListResult toSave) throws IOException {
+  @VisibleForTesting
+  public void doSaveChildren(int parentId, @NotNull ListResult toSave) throws IOException {
     if (parentId == SUPER_ROOT_ID) {
       throw new AssertionError(
         "Incorrect call .doSaveChildren() with a super-root record id(=" + SUPER_ROOT_ID + "). " +
@@ -92,8 +94,7 @@ public class PersistentFSTreeAccessor {
     }
   }
 
-  @NotNull
-  ListResult doLoadChildren(int parentId) throws IOException {
+  public @NotNull ListResult doLoadChildren(int parentId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(parentId);
     if (parentId == SUPER_ROOT_ID) {
       throw new AssertionError(
@@ -161,7 +162,8 @@ public class PersistentFSTreeAccessor {
    * @return array if children fileIds for the given fileId
    * MAYBE rename to childrenIds()?
    */
-  int @NotNull [] listIds(int fileId) throws IOException {
+  @VisibleForTesting
+  public int @NotNull [] listIds(int fileId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
     if (fileId == SUPER_ROOT_ID) {
       throw new AssertionError(

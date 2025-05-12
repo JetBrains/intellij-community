@@ -1261,7 +1261,6 @@ f:com.intellij.execution.impl.EditorHyperlinkSupport
 - highlightHyperlinks(com.intellij.execution.filters.Filter,I,I):V
 - highlightHyperlinksLater(com.intellij.execution.filters.Filter,I,I,com.intellij.openapi.util.Expirable):V
 - removeHyperlink(com.intellij.openapi.editor.markup.RangeHighlighter):V
-- waitForPendingFilters(J):V
 c:com.intellij.execution.impl.ExpirableTokenProvider
 - <init>():V
 - createExpirable():com.intellij.openapi.util.Expirable
@@ -6065,18 +6064,6 @@ f:com.intellij.openapi.application.impl.AsyncExecutionServiceImpl
 - buildNonBlockingReadAction(java.util.concurrent.Callable):com.intellij.openapi.application.NonBlockingReadAction
 f:com.intellij.openapi.application.impl.ExpirableExecutorImplKt
 - sf:coroutineDispatchingContext(com.intellij.openapi.application.ExpirableExecutor):kotlin.coroutines.ContinuationInterceptor
-f:com.intellij.openapi.application.impl.NonBlockingReadActionImpl
-- com.intellij.openapi.application.NonBlockingReadAction
-- coalesceBy(java.lang.Object[]):com.intellij.openapi.application.NonBlockingReadAction
-- executeSynchronously():java.lang.Object
-- expireWhen(java.util.function.BooleanSupplier):com.intellij.openapi.application.NonBlockingReadAction
-- expireWith(com.intellij.openapi.Disposable):com.intellij.openapi.application.NonBlockingReadAction
-- finishOnUiThread(com.intellij.openapi.application.ModalityState,java.util.function.Consumer):com.intellij.openapi.application.NonBlockingReadAction
-- inSmartMode(com.intellij.openapi.project.Project):com.intellij.openapi.application.NonBlockingReadAction
-- submit(java.util.concurrent.Executor):org.jetbrains.concurrency.CancellablePromise
-- s:waitForAsyncTaskCompletion():V
-- withDocumentsCommitted(com.intellij.openapi.project.Project):com.intellij.openapi.application.NonBlockingReadAction
-- wrapProgress(com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.application.NonBlockingReadAction
 f:com.intellij.openapi.command.impl.DocumentReferenceManagerImpl
 - com.intellij.openapi.command.undo.DocumentReferenceManager
 - cleanupForNextTest():V
@@ -8900,15 +8887,10 @@ c:com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 - com.intellij.openapi.extensions.ExtensionPointListener
 - p:<init>(kotlinx.coroutines.CoroutineScope):V
 - associate(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.fileTypes.FileNameMatcher):V
-- drainReDetectQueue():V
-- extensionAdded(com.intellij.openapi.fileTypes.impl.FileTypeBean,com.intellij.openapi.extensions.PluginDescriptor):V
-- extensionRemoved(com.intellij.openapi.fileTypes.impl.FileTypeBean,com.intellij.openapi.extensions.PluginDescriptor):V
 - findFileTypeByLanguage(com.intellij.lang.Language):com.intellij.openapi.fileTypes.LanguageFileType
 - findFileTypeByName(java.lang.String):com.intellij.openapi.fileTypes.FileType
-- findPluginDescriptor(com.intellij.openapi.fileTypes.FileType):com.intellij.openapi.extensions.PluginDescriptor
 - fireBeforeFileTypesChanged():V
 - fireFileTypesChanged():V
-- freezeFileTypeTemporarilyIn(com.intellij.openapi.vfs.VirtualFile,java.lang.Runnable):V
 - getAssociations(com.intellij.openapi.fileTypes.FileType):java.util.List
 - getExtension(java.lang.String):java.lang.String
 - getFileTypeByExtension(java.lang.String):com.intellij.openapi.fileTypes.FileType
@@ -8919,9 +8901,7 @@ c:com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 - getIgnoredFilesList():java.lang.String
 - getKnownFileTypeOrAssociate(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.openapi.fileTypes.FileType
 - getRegisteredFileTypes():com.intellij.openapi.fileTypes.FileType[]
-- getState():org.jdom.Element
 - getStdFileType(java.lang.String):com.intellij.openapi.fileTypes.FileType
-- initializeComponent():V
 - isFileIgnored(com.intellij.openapi.vfs.VirtualFile):Z
 - isFileIgnored(java.lang.String):Z
 - isFileOfType(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.fileTypes.FileType):Z
@@ -15517,11 +15497,6 @@ f:com.intellij.ui.list.TargetPopup
 - sf:buildTargetPopupWithMultiSelect(java.util.List,java.util.function.Function,java.util.function.Predicate):com.intellij.openapi.ui.popup.IPopupChooserBuilder
 - sf:createTargetPopup(java.lang.String,java.util.List,java.util.List,java.util.function.Consumer):com.intellij.openapi.ui.popup.JBPopup
 - sf:createTargetPresentationRenderer(java.util.function.Function):javax.swing.ListCellRenderer
-f:com.intellij.ui.mac.touchbar.Helpers
-- <init>():V
-- s:getAppId():java.lang.String
-- s:isPhisycalEsc():Z
-- s:restartTouchBarServer():Z
 f:com.intellij.ui.mac.touchbar.TouchbarSupport
 - <init>():V
 - s:enable(Z):V

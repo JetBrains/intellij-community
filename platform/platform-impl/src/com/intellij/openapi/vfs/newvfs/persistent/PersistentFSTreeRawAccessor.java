@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
@@ -8,6 +8,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,7 +22,8 @@ import java.util.List;
  */
 @ApiStatus.Internal
 public final class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor {
-  PersistentFSTreeRawAccessor(@NotNull PersistentFSAttributeAccessor attributeAccessor,
+  @VisibleForTesting
+  public PersistentFSTreeRawAccessor(@NotNull PersistentFSAttributeAccessor attributeAccessor,
                               @NotNull PersistentFSRecordAccessor recordAccessor,
                               @NotNull PersistentFSConnection connection) {
     super(attributeAccessor, recordAccessor, connection);
@@ -32,7 +34,7 @@ public final class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor 
   }
 
   @Override
-  @NotNull ListResult doLoadChildren(int parentId) throws IOException {
+  public @NotNull ListResult doLoadChildren(int parentId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(parentId);
     if (parentId == SUPER_ROOT_ID) {
       throw new AssertionError(
@@ -82,7 +84,7 @@ public final class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor 
   }
 
   @Override
-  int @NotNull [] listIds(int fileId) throws IOException {
+  public int @NotNull [] listIds(int fileId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
     if (fileId == SUPER_ROOT_ID) {
       throw new AssertionError(

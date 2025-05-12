@@ -4,6 +4,7 @@ package com.intellij.util.diff;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.Arrays;
 
@@ -17,7 +18,8 @@ public final class UniqueLCS {
   private final int myCount1;
   private final int myCount2;
 
-  UniqueLCS(int[] first, int[] second) {
+  @VisibleForTesting
+  public UniqueLCS(int[] first, int[] second) {
     this(first, second, 0, first.length, 0, second.length);
   }
 

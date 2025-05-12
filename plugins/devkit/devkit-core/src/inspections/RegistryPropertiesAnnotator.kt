@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.idea.devkit.inspections
 
@@ -34,18 +34,19 @@ internal const val DESCRIPTION_SUFFIX = ".description"
 @NonNls
 internal const val RESTART_REQUIRED_SUFFIX = ".restartRequired"
 
-internal fun isImplicitUsageKey(keyName: String): Boolean =
-  keyName.endsWith(DESCRIPTION_SUFFIX) ||
-  keyName.endsWith(RESTART_REQUIRED_SUFFIX)
+internal fun isImplicitUsageKey(keyName: String): Boolean {
+  return keyName.endsWith(DESCRIPTION_SUFFIX) ||
+         keyName.endsWith(RESTART_REQUIRED_SUFFIX)
+}
 
-internal fun isRegistryPropertiesFile(psiFile: PsiFile): Boolean =
-  IntelliJProjectUtil.isIntelliJPlatformProject(psiFile.project) && psiFile.name == REGISTRY_PROPERTIES_FILENAME
+internal fun isRegistryPropertiesFile(psiFile: PsiFile): Boolean {
+  return IntelliJProjectUtil.isIntelliJPlatformProject(psiFile.project) && psiFile.name == REGISTRY_PROPERTIES_FILENAME
+}
 
 /**
  * Highlights key in `registry.properties` without matching `key.description` entry + corresponding quickfix.
  */
-internal class RegistryPropertiesAnnotator : Annotator, DumbAware {
-
+private class RegistryPropertiesAnnotator : Annotator, DumbAware {
   @NonNls
   private val PLUGIN_GROUP_NAMES = setOf(
     "appcode", "cidr", "clion",

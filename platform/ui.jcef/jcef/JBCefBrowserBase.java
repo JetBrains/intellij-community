@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.credentialStore.Credentials;
@@ -25,13 +25,18 @@ import com.intellij.util.ui.UIUtil;
 import org.cef.CefBrowserSettings;
 import org.cef.CefClient;
 import org.cef.browser.*;
-import org.cef.callback.*;
+import org.cef.callback.CefAuthCallback;
+import org.cef.callback.CefCallback;
+import org.cef.callback.CefContextMenuParams;
+import org.cef.callback.CefMenuModel;
 import org.cef.handler.*;
 import org.cef.network.CefCookieManager;
 import org.cef.network.CefRequest;
 import org.cef.security.CefSSLInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -553,7 +558,9 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     return myIsOffScreenRendering;
   }
 
-  final boolean isCefBrowserCreated() {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public final boolean isCefBrowserCreated() {
     return isCefBrowserCreated(myCefBrowser);
   }
 

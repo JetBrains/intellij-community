@@ -16,6 +16,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -101,7 +102,8 @@ public final class EnterAfterJavadocTagHandler implements EnterHandlerDelegate {
    * @param offset        interested offset
    * @return              object that encapsulates information about javadoc tags within the given text and offset
    */
-  static @NotNull Context parse(@NotNull CharSequence text, int startOffset, int endOffset, int offset) {
+  @VisibleForTesting
+  public static @NotNull Context parse(@NotNull CharSequence text, int startOffset, int endOffset, int offset) {
     int asteriskOffset = StringUtil.indexOf(text, '*', startOffset, endOffset);
     if (asteriskOffset < 0) {
       return NOT_MATCHED_CONTEXT;

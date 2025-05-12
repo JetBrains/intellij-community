@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.gdpr;
 
 import com.intellij.diagnostic.LoadingState;
@@ -140,7 +140,8 @@ public final class ConsentOptions implements ModificationTracker {
 
   private final IOBackend myBackend;
 
-  ConsentOptions(IOBackend backend, boolean isEap) {
+  @VisibleForTesting
+  public ConsentOptions(IOBackend backend, boolean isEap) {
     myBackend = backend;
     myIsEap = () -> isEap;
   }
@@ -588,7 +589,7 @@ public final class ConsentOptions implements ModificationTracker {
     return getConfirmedConsentsFile();
   }
 
-  protected interface IOBackend {
+  public interface IOBackend {
     void writeDefaultConsents(@NotNull String data) throws IOException;
     @NotNull
     String readDefaultConsents() throws IOException;

@@ -16,10 +16,7 @@ import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import kotlin.coroutines.CoroutineContext;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,9 +35,11 @@ public final class JobLauncherImpl extends JobLauncher {
   private final boolean logAllExceptions = System.getProperty("idea.job.launcher.log.all.exceptions", "false").equals("true");
   private final ForkJoinPool myForkJoinPool;
 
-  JobLauncherImpl(@NotNull ForkJoinPool pool) {
+  @VisibleForTesting
+  public JobLauncherImpl(@NotNull ForkJoinPool pool) {
     myForkJoinPool = pool;
   }
+
   JobLauncherImpl() {
     this(ForkJoinPool.commonPool());
   }

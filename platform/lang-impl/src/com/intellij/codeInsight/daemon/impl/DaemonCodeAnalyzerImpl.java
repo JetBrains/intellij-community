@@ -85,11 +85,11 @@ import kotlinx.coroutines.CoroutineScope;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
-import javax.swing.JComponent;
-import javax.swing.SwingUtilities;
-import java.awt.Window;
+import javax.swing.*;
+import java.awt.*;
 import java.lang.ref.Reference;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -1217,8 +1217,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     return result;
   }
 
-  @Nullable
-  IntentionHintComponent getLastIntentionHint() {
+  @VisibleForTesting
+  public @Nullable IntentionHintComponent getLastIntentionHint() {
     return ((IntentionsUIImpl)IntentionsUI.getInstance(myProject)).getLastIntentionHint();
   }
 
@@ -1643,7 +1643,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   }
 
   @TestOnly
-  synchronized @Unmodifiable @NotNull Map<FileEditor, DaemonProgressIndicator> getUpdateProgress() {
+  public synchronized @Unmodifiable @NotNull Map<FileEditor, DaemonProgressIndicator> getUpdateProgress() {
     return Map.copyOf(myUpdateProgress);
   }
 

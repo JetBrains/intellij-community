@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.platform.util.io.storages.blobstorage.RecordAlreadyDeletedException;
-import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
 import com.intellij.util.IntPair;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.io.StorageLockContext;
+import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
@@ -22,9 +22,9 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfBlobStorageTestBase.AttributeRecord.newAttributeRecord;
 import static com.intellij.openapi.vfs.newvfs.persistent.VFSAttributesStorage.INLINE_ATTRIBUTE_SMALLER_THAN;
 import static com.intellij.openapi.vfs.newvfs.persistent.VFSAttributesStorage.NON_EXISTENT_ATTRIBUTE_RECORD_ID;
-import static com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfBlobStorageTestBase.AttributeRecord.newAttributeRecord;
 import static org.junit.Assert.*;
 
 public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
@@ -565,26 +565,25 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
   //TODO RC: make AttributeRecord inner class of Attributes, hence methods .store() and .delete()
   //         could be invoked through AttributeRecord itself
   //@Immutable
-  public static class AttributeRecord {
+  public static final class AttributeRecord {
     private final int attributesRecordId;
     private final int fileId;
     private final int attributeId;
     private final byte[] attributeBytes;
     private final int attributeBytesLength;
 
-    @NotNull
-    public static AttributeRecord newAttributeRecord(final int fileId,
-                                                     final int attributeId) {
+    public static @NotNull AttributeRecord newAttributeRecord(final int fileId,
+                                                              final int attributeId) {
       return new AttributeRecord(NON_EXISTENT_ATTRIBUTE_RECORD_ID, fileId, attributeId);
     }
 
-    protected AttributeRecord(final int attributesRecordId,
+    AttributeRecord(final int attributesRecordId,
                               final int fileId,
                               final int attributeId) {
       this(attributesRecordId, fileId, attributeId, new byte[0], 0);
     }
 
-    protected AttributeRecord(final int attributesRecordId,
+    AttributeRecord(final int attributesRecordId,
                               final int fileId,
                               final int attributeId,
                               final byte[] attributeBytes,

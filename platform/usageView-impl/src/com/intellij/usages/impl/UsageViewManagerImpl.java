@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.find.SearchInBackgroundOption;
@@ -38,10 +38,7 @@ import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.ui.UIUtil;
 import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.CoroutineScope;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -215,7 +212,9 @@ public class UsageViewManagerImpl extends UsageViewManager {
     return usageViewRef.get();
   }
 
-  @NotNull Supplier<SearchScope> getMaxSearchScopeToWarnOfFallingOutOf(UsageTarget @NotNull [] searchFor) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public @NotNull Supplier<SearchScope> getMaxSearchScopeToWarnOfFallingOutOf(UsageTarget @NotNull [] searchFor) {
     UsageTarget target = searchFor.length > 0 ? searchFor[0] : null;
     DataContext dataContext = CustomizedDataContext.withSnapshot(DataContext.EMPTY_CONTEXT, sink ->
       DataSink.uiDataSnapshot(sink, target));

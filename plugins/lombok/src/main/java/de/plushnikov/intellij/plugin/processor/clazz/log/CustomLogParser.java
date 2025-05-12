@@ -4,6 +4,7 @@ import de.plushnikov.intellij.plugin.processor.clazz.log.AbstractLogProcessor.Lo
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,7 +24,8 @@ public final class CustomLogParser {
     private final List<LoggerInitializerParameter> withTopic;
     private final List<LoggerInitializerParameter> withoutTopic;
 
-    LoggerInitializerDeclaration(List<LoggerInitializerParameter> withTopic, List<LoggerInitializerParameter> withoutTopic) {
+    @VisibleForTesting
+    public LoggerInitializerDeclaration(List<LoggerInitializerParameter> withTopic, List<LoggerInitializerParameter> withoutTopic) {
       this.withTopic = withTopic;
       this.withoutTopic = withoutTopic;
     }
@@ -71,7 +73,8 @@ public final class CustomLogParser {
     throw new UnsupportedOperationException("Utility class");
   }
 
-  static @Nullable String parseLoggerType(@NotNull String customDeclaration) {
+  @VisibleForTesting
+  public static @Nullable String parseLoggerType(@NotNull String customDeclaration) {
     final Matcher declarationMatcher = DECLARATION_PATTERN.matcher(customDeclaration);
     if (!declarationMatcher.matches()) {
       return null;
@@ -83,7 +86,7 @@ public final class CustomLogParser {
     return loggerType;
   }
 
-  static @Nullable String parseLoggerInitializer(@NotNull String customDeclaration) {
+  public static @Nullable String parseLoggerInitializer(@NotNull String customDeclaration) {
     final Matcher declarationMatcher = DECLARATION_PATTERN.matcher(customDeclaration);
     if (!declarationMatcher.matches()) {
       return null;
@@ -96,7 +99,8 @@ public final class CustomLogParser {
    *
    * @return null if declaration is invalid
    */
-  static @Nullable LoggerInitializerDeclaration parseInitializerParameters(@NotNull String customDeclaration) {
+  @VisibleForTesting
+  public static @Nullable LoggerInitializerDeclaration parseInitializerParameters(@NotNull String customDeclaration) {
     final Matcher declarationMatcher = DECLARATION_PATTERN.matcher(customDeclaration);
     if (!declarationMatcher.matches()) {
       return null;

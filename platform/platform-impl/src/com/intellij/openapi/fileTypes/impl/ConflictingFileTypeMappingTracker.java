@@ -58,7 +58,7 @@ public final class ConflictingFileTypeMappingTracker {
   }
 
   @VisibleForTesting
-  static @NotNull ResolveConflictResult resolveConflict(@NotNull FileNameMatcher matcher,
+  public static @NotNull ResolveConflictResult resolveConflict(@NotNull FileNameMatcher matcher,
                                                         @NotNull FileTypeManagerImpl.FileTypeWithDescriptor oldFtd,
                                                         @NotNull FileTypeManagerImpl.FileTypeWithDescriptor newFtd) {
     assert !oldFtd.equals(newFtd) : oldFtd;

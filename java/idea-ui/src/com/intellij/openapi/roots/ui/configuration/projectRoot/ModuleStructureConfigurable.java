@@ -56,10 +56,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.tree.*;
@@ -1020,7 +1017,8 @@ public final class ModuleStructureConfigurable extends BaseStructureConfigurable
     private final @NotNull Path myComponentPath;
     private final @NotNull Project myProject;
 
-    CopiedModuleBuilder(@NotNull ModifiableRootModel rootModel, @NotNull Path componentPath, @NotNull Project project) {
+    @VisibleForTesting
+    public CopiedModuleBuilder(@NotNull ModifiableRootModel rootModel, @NotNull Path componentPath, @NotNull Project project) {
       this.myRootModel = rootModel;
       this.myComponentPath = componentPath;
       this.myProject = project;

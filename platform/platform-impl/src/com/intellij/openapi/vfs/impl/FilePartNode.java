@@ -290,7 +290,8 @@ public class FilePartNode {
   }
 
   // update myFileOrUrl to a VirtualFile and replace UrlPartNode with FilePartNode if the file exists, including all sub-nodes
-  void update(@NotNull FilePartNode parent,
+  @VisibleForTesting
+  public void update(@NotNull FilePartNode parent,
               @NotNull FilePartNodeRoot root,
               @NotNull String debugSource,
               @Nullable Object debugInvalidationReason) {

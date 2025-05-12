@@ -235,7 +235,8 @@ public final class VfsData {
     /** the reference is synchronized by read-write lock; clients outside read-action deserve to get outdated result */
     @Nullable Segment replacement;
 
-    Segment(@NotNull VfsData owningVfsData) {
+    @VisibleForTesting
+    public Segment(@NotNull VfsData owningVfsData) {
       this(owningVfsData, new AtomicReferenceArray<>(SEGMENT_SIZE), new AtomicIntegerArray(SEGMENT_SIZE * INT_FIELDS_COUNT));
     }
 

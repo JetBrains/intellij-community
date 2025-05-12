@@ -16,6 +16,7 @@ import com.intellij.psi.SmartPsiFileRange;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 @ApiStatus.Internal
 public final class FindResultUsageInfo extends UsageInfo {
@@ -28,7 +29,8 @@ public final class FindResultUsageInfo extends UsageInfo {
 
   private static final Key<Long> DOCUMENT_TIMESTAMP_KEY = Key.create("FindResultUsageInfo.DOCUMENT_TIMESTAMP_KEY");
 
-  FindResultUsageInfo(@NotNull FindManager finder,
+  @VisibleForTesting
+  public FindResultUsageInfo(@NotNull FindManager finder,
                              @NotNull PsiFile file,
                              int offset,
                              @NotNull FindModel findModel,

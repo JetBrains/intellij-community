@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.openapi.application.ReadAction;
@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.evaluation.SimpleEvaluatorExtension;
 import org.jetbrains.uast.evaluation.UEvaluationContextKt;
@@ -35,7 +36,8 @@ public class TestDataReferenceCollector {
     myTestName = testName;
   }
 
-  @NotNull List<TestDataFile> collectTestDataReferences(@NotNull PsiMethod method) {
+  @VisibleForTesting
+  public @NotNull List<TestDataFile> collectTestDataReferences(@NotNull PsiMethod method) {
     return collectTestDataReferences(method, true);
   }
 

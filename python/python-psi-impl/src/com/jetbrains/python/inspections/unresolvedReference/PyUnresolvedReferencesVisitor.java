@@ -47,6 +47,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
 
@@ -775,7 +776,8 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     return false;
   }
 
-  void getPluginQuickFixes(List<LocalQuickFix> fixes, PsiReference reference) {
+  @VisibleForTesting
+  public void getPluginQuickFixes(List<LocalQuickFix> fixes, PsiReference reference) {
     // Nothing.
   }
 }

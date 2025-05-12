@@ -227,7 +227,8 @@ public final class DirectoryLock {
     throw cae;
   }
 
-  void dispose() {
+  @VisibleForTesting
+  public void dispose() {
     dispose(true);
   }
 
@@ -399,7 +400,7 @@ public final class DirectoryLock {
 
   //<editor-fold desc="Helpers">
   @VisibleForTesting
-  @Nullable Path getRedirectedPortFile() {
+  public @Nullable Path getRedirectedPortFile() {
     return myRedirectedPortFile;
   }
 

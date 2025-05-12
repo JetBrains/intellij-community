@@ -512,14 +512,14 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
   }
 
   @TestOnly
-  static void forceNoDuplicateCheckInTests(@NotNull Disposable parent) {
+  public static void forceNoDuplicateCheckInTests(@NotNull Disposable parent) {
     Disposer.register(parent, () -> runDuplicateCheck = true);
     runDuplicateCheck = false;
   }
 
   private static boolean runDuplicateCheck = true;
 
-  private static class DumbToolWrapperCondition implements Condition<LocalInspectionToolWrapper> {
+  private static final class DumbToolWrapperCondition implements Condition<LocalInspectionToolWrapper> {
     private final boolean myDumbMode;
     private final Set<String> myInactiveIds = ConcurrentHashMap.newKeySet();
 

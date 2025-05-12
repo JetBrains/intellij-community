@@ -1,11 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.reference.SoftReference;
-import org.jetbrains.annotations.Debug;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.*;
 
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
@@ -55,7 +52,9 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
     myList = new ArrayList<>(capacity);
   }
 
-  boolean processQueue() {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public boolean processQueue() {
     boolean processed = false;
     MyReference<T> reference;
     //noinspection unchecked
@@ -135,7 +134,8 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
   }
 
   @TestOnly
-  int listSize() {
+  @ApiStatus.Internal
+  public int listSize() {
     return myList.size();
   }
 

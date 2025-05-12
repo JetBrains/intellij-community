@@ -262,11 +262,13 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   @TestOnly
+  @ApiStatus.Internal
   public boolean stripTrailingSpaces(Project project) {
     return stripTrailingSpaces(project, false);
   }
 
   @TestOnly
+  @ApiStatus.Internal
   public boolean stripTrailingSpaces(Project project, boolean inChangedLinesOnly) {
     return stripTrailingSpaces(project, inChangedLinesOnly, null);
   }
@@ -422,6 +424,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   private RangeMarkerTree<RangeMarkerEx> treeFor(@NotNull RangeMarkerEx rangeMarker) {
     return rangeMarker instanceof PersistentRangeMarker ? myPersistentRangeMarkers : myRangeMarkers;
   }
+
   @Override
   public boolean removeRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
     return treeFor(rangeMarker).removeInterval(rangeMarker);
@@ -438,12 +441,14 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   @TestOnly
-  int getRangeMarkersSize() {
+  @ApiStatus.Internal
+  public int getRangeMarkersSize() {
     return myRangeMarkers.size() + myPersistentRangeMarkers.size();
   }
 
   @TestOnly
-  int getRangeMarkersNodeSize() {
+  @ApiStatus.Internal
+  public int getRangeMarkersNodeSize() {
     return myRangeMarkers.nodeSize()+myPersistentRangeMarkers.nodeSize();
   }
 

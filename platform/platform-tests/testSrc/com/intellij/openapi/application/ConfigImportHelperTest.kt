@@ -5,7 +5,6 @@ import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
 import com.intellij.diagnostic.VMOptions
 import com.intellij.ide.SpecialConfigFiles
 import com.intellij.ide.plugins.DisabledPluginsState.Companion.saveDisabledPluginsAndInvalidate
-import com.intellij.platform.testFramework.PluginBuilder
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService
@@ -25,6 +24,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.testFramework.PluginBuilder
 import com.intellij.testFramework.PlatformTestUtil.useAppConfigDir
 import com.intellij.testFramework.junit5.http.url
 import com.intellij.testFramework.replaceService
@@ -616,7 +616,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
       override fun getPluginManagerUrl(): String = server.url
       override fun getPluginDownloadUrl(): String = server.url + "/404"
       override fun getPluginsListUrl(): String  = throw AssertionError("unexpected")
-      override fun getPluginHomepageUrl(pluginId: PluginId): String?  = throw AssertionError("unexpected")
+      override fun getPluginHomepageUrl(pluginId: PluginId): String  = throw AssertionError("unexpected")
     }, testRootDisposable)
 
     configImportMarketplaceStub.unset() // enable marketplace fetching
@@ -688,7 +688,7 @@ class ConfigImportHelperPluginUpdateModeTest(val updateIncompatibleOnly: Boolean
       override fun getPluginManagerUrl(): String = server.url
       override fun getPluginDownloadUrl(): String = server.url.trimEnd('/') + "/download"
       override fun getPluginsListUrl(): String  = throw AssertionError("unexpected")
-      override fun getPluginHomepageUrl(pluginId: PluginId): String?  = throw AssertionError("unexpected")
+      override fun getPluginHomepageUrl(pluginId: PluginId): String  = throw AssertionError("unexpected")
     }, testRootDisposable)
 
     configImportMarketplaceStub.unset() // enable marketplace fetching

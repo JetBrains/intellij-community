@@ -754,8 +754,6 @@ f:com.intellij.execution.impl.ExecutionManagerImpl$Companion
 - f:isProcessRunning(com.intellij.execution.ui.RunContentDescriptor):Z
 - f:stopProcess(com.intellij.execution.process.ProcessHandler):V
 - f:stopProcess(com.intellij.execution.ui.RunContentDescriptor):V
-c:com.intellij.execution.impl.ProcessStreamsSynchronizer
-- s:redirectErrorStreamIfNeeded(com.intellij.execution.configurations.GeneralCommandLine):V
 c:com.intellij.execution.impl.ProjectRunConfigurationConfigurable
 - com.intellij.execution.impl.RunConfigurable
 - <init>(com.intellij.openapi.project.Project):V

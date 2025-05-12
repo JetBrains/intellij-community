@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
@@ -261,7 +261,7 @@ public class DisposerTest  {
     UsefulTestCase.assertOrderedEquals(myDisposeActions, expected);
   }
 
-  private void assertDisposed(MyLoggingDisposable disposable) {
+  private static void assertDisposed(MyLoggingDisposable disposable) {
     assertTrue(disposable.isDisposed());
 
     Disposer.getTree().assertNoReferenceKeptInTree(disposable);

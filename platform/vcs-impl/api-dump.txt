@@ -2111,11 +2111,6 @@ f:com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 - unshelveSilentlyAsynchronously(com.intellij.openapi.project.Project,java.util.List,java.util.List,java.util.List,com.intellij.openapi.vcs.changes.LocalChangeList):V
 - unshelveSilentlyAsynchronously(com.intellij.openapi.project.Project,java.util.List,java.util.List,java.util.List,com.intellij.openapi.vcs.changes.LocalChangeList,Z):V
 - updateListAfterUnshelve(com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList,java.util.List,java.util.List,com.intellij.openapi.vcs.changes.CommitContext):V
-f:com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager$State
-- groupingKeys:java.util.TreeSet
-- myRemoveFilesFromShelf:Z
-- myShowRecycled:Z
-- <init>():V
 f:com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch
 - com.intellij.openapi.diff.impl.patch.FilePatch
 - getAfterFileName():java.lang.String

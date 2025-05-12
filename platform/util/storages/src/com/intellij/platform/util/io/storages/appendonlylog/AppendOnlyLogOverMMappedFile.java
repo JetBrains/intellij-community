@@ -1090,7 +1090,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
   //          converting it to the id -> this way we could address wider offsets range with int id
 
   @VisibleForTesting
-  static long recordOffsetToId(long recordOffset) {
+  public static long recordOffsetToId(long recordOffset) {
     AlignmentUtils.assert32bAligned(recordOffset, "recordOffsetInFile");
     //recordOffset is int32-aligned, 2 lowest bits are 0, we could drop them, and make recordId smaller
     //0 is considered invalid id (NULL_ID) everywhere in our code, so '+1' for first id to be 1
@@ -1098,7 +1098,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
   }
 
   @VisibleForTesting
-  static long recordIdToOffset(long recordId) {
+  public static long recordIdToOffset(long recordId) {
     if (recordId <= 0) {
       throw new IllegalArgumentException("recordId(=" + recordId + ") is negative or NULL_ID -- can't be read");
     }
@@ -1112,7 +1112,6 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
   private static long recordIdToOffsetUnchecked(long recordId) {
     return ((recordId - 1) << 2) + HeaderLayout.HEADER_SIZE;
   }
-
 
   private ByteBuffer headerPageBuffer() throws IOException {
     MMappedFileStorage.Page _headerPage = headerPage;

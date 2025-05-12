@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit5;
 
 import com.intellij.junit4.ExpectedPatterns;
@@ -295,7 +295,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     myPresentableName = presentableName;
   }
 
-  void setSendTree() {
+  public void setSendTree() {
     mySendTree = true;
   }
 
@@ -322,7 +322,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     return getLocationHint(root, myTestPlan.getParent(root).orElse(null));
   }
 
-  static String getLocationHint(TestIdentifier root, TestIdentifier rootParent) {
+  public static String getLocationHint(TestIdentifier root, TestIdentifier rootParent) {
     return root.getSource()
       .map(testSource -> getLocationHintValue(testSource, rootParent != null ? rootParent.getSource().orElse(null) : null))
       .filter(maybeLocationHintValue -> !NO_LOCATION_HINT_VALUE.equals(maybeLocationHintValue))
@@ -352,7 +352,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       .orElse(NO_LOCATION_HINT);
   }
 
-  static String getLocationHintValue(TestSource testSource, TestSource parentSource) {
+  public static String getLocationHintValue(TestSource testSource, TestSource parentSource) {
 
     if (testSource instanceof CompositeTestSource) {
       CompositeTestSource compositeTestSource = ((CompositeTestSource)testSource);
@@ -402,7 +402,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     return MapSerializerUtil.escapeStr(str, MapSerializerUtil.STD_ESCAPER);
   }
 
-  static String getClassName(TestIdentifier description) {
+  public static String getClassName(TestIdentifier description) {
     return description.getSource().map(source -> {
       if (source instanceof MethodSource) {
         return ((MethodSource)source).getClassName();
@@ -414,7 +414,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     }).orElse(null);
   }
 
-  static String getMethodName(TestIdentifier testIdentifier) {
+  public static String getMethodName(TestIdentifier testIdentifier) {
     return testIdentifier.getSource().map((source) -> {
       if (source instanceof MethodSource) {
         return ((MethodSource)source).getMethodName();

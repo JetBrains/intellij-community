@@ -224,6 +224,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private FileTypeOverrider[] fileTypeOverriderCache;
 
   @Override
+  @ApiStatus.Internal
   public void extensionAdded(@NotNull FileTypeBean fileTypeBean, @NotNull PluginDescriptor pluginDescriptor) {
     fireBeforeFileTypesChanged();
     initializeMatchers(pluginDescriptor, fileTypeBean);
@@ -237,6 +238,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @Override
+  @ApiStatus.Internal
   public void extensionRemoved(@NotNull FileTypeBean extension, @NotNull PluginDescriptor pluginDescriptor) {
     if (extension.implementationClass != null) {
       FileType fileType = findFileTypeByName(extension.name);
@@ -253,7 +255,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @TestOnly
-  void listenAsyncVfsEvents() {
+  @ApiStatus.Internal
+  public void listenAsyncVfsEvents() {
     VirtualFileManager.getInstance().addAsyncFileListener(detectionService::prepareChange, this);
   }
 
@@ -383,7 +386,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @TestOnly
-  void clearStandardFileTypesBeforeTest() {
+  @ApiStatus.Internal
+  public void clearStandardFileTypesBeforeTest() {
     assert ApplicationManager.getApplication().isUnitTestMode();
     myPendingInitializationLock.writeLock().lock();
     try {
@@ -645,17 +649,20 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @TestOnly
+  @ApiStatus.Internal
   public void drainReDetectQueue() {
     detectionService.drainReDetectQueue();
   }
 
   @TestOnly
-  @NotNull Collection<VirtualFile> dumpReDetectQueue() {
+  @ApiStatus.Internal
+  public @NotNull Collection<VirtualFile> dumpReDetectQueue() {
     return detectionService.dumpReDetectQueue();
   }
 
   @TestOnly
-  void reDetectAsync(boolean enable) {
+  @ApiStatus.Internal
+  public void reDetectAsync(boolean enable) {
     detectionService.reDetectAsync(enable);
   }
 
@@ -680,6 +687,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @Override
+  @ApiStatus.Internal
   public void initializeComponent() {
     initStandardFileTypes();
 
@@ -755,6 +763,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @Override
+  @ApiStatus.Internal
   public void freezeFileTypeTemporarilyIn(@NotNull VirtualFile file, @NotNull Runnable runnable) {
     freezeFileTypeTemporarilyWithProvidedValueIn(file, null, runnable);
   }
@@ -826,6 +835,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private record CachedFileTypes(@NotNull ConcurrentIntObjectMap<FileType> fileTypes, @NotNull AtomicInteger useCount) {}
+
   @ApiStatus.Internal
   public void cacheFileTypesInside(@NotNull Runnable runnable) {
     CachedFileTypes cached;
@@ -1357,6 +1367,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @Override
+  @ApiStatus.Internal
   public @NotNull Element getState() {
     return withReadLock(() -> {
       Element state = new Element("state");
@@ -1841,11 +1852,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return ConcurrencyUtil.withLock(myPendingInitializationLock.readLock(), computable);
   }
 
-  @NotNull
-  RemovedMappingTracker getRemovedMappingTracker() {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public @NotNull RemovedMappingTracker getRemovedMappingTracker() {
     return removedMappingTracker;
   }
 
+  @ApiStatus.Internal
   public PluginDescriptor findPluginDescriptor(@NotNull FileType fileType) {
     for (FileTypeWithDescriptor ftd : getAllFileTypeWithDescriptors()) {
       if (ftd.fileType().equals(fileType)) {
@@ -1915,12 +1928,14 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @TestOnly
-  void setConflictResultConsumer(@Nullable Consumer<? super ConflictingFileTypeMappingTracker.ResolveConflictResult> consumer) {
+  @ApiStatus.Internal
+  public void setConflictResultConsumer(@Nullable Consumer<? super ConflictingFileTypeMappingTracker.ResolveConflictResult> consumer) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) throw new IllegalStateException();
     conflictResultConsumer = consumer;
   }
 
   @Override
+  @ApiStatus.Internal
   public String toString() {
     return super.toString() + " FileTypeManagerImpl{" +
            "myDetectionService=" + detectionService +

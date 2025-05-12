@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.fileTemplates.impl;
 
@@ -38,15 +38,13 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
 import java.text.MessageFormat;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Supplier;
 
 public final class AllFileTemplatesConfigurable implements SearchableConfigurable, Configurable.NoMargin, Configurable.NoScroll,
@@ -116,8 +114,9 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
     }
   }
 
-  @NotNull
-  FileTemplate createTemplate(@NotNull String prefName, @NotNull String extension, @NotNull String content, boolean child) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public @NotNull FileTemplate createTemplate(@NotNull String prefName, @NotNull String extension, @NotNull String content, boolean child) {
     List<FileTemplate> templates = currentTab.getTemplates();
     FileTemplate newTemplate = FileTemplateUtil.createTemplate(prefName, extension, content, templates);
     if (child) {
@@ -709,7 +708,9 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
     });
   }
 
-  void changeScheme(@NotNull FileTemplatesScheme scheme) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public void changeScheme(@NotNull FileTemplatesScheme scheme) {
     if (editor != null && editor.isModified()) {
       isModified = true;
       try {
@@ -749,7 +750,8 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
   }
 
   @TestOnly
-  FileTemplateTab[] getTabs() {
+  @ApiStatus.Internal
+  public FileTemplateTab[] getTabs() {
     return myTabs;
   }
 

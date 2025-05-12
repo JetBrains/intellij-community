@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -137,7 +137,7 @@ public class FileTypeIndexTest extends BasePlatformTestCase {
     FileBasedIndex.getInstance().ensureUpToDate(FileTypeIndex.NAME, getProject(), GlobalSearchScope.allScope(getProject()));
   }
 
-  private void flushNotifications() {
+  private static void flushNotifications() {
     var index = ((FileBasedIndexEx)FileBasedIndex.getInstance()).getIndex(FileTypeIndex.NAME);
     ((FileTypeIndexImplBase)index).processPendingNotifications();
   }
@@ -166,7 +166,7 @@ public class FileTypeIndexTest extends BasePlatformTestCase {
   /**
    * @param extension filetype extension without preceding dot (e.g. "test" to match *.test files)
    */
-  static @NotNull FileType registerFakeFileType(@NotNull String name, @NotNull String extension, @NotNull Disposable parent) {
+  public static @NotNull FileType registerFakeFileType(@NotNull String name, @NotNull String extension, @NotNull Disposable parent) {
     FileType foo = new FakeFileType() {
       @Override
       public boolean isMyFileType(@NotNull VirtualFile file) { return file.getName().endsWith("." + extension); }

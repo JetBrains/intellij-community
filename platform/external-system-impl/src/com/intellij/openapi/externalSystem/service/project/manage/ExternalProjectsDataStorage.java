@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -212,7 +212,7 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
     }
   }
 
-  void update(@NotNull ExternalProjectInfo externalProjectInfo) {
+  public void update(@NotNull ExternalProjectInfo externalProjectInfo) {
     ProjectSystemId projectSystemId = externalProjectInfo.getProjectSystemId();
     String projectPath = externalProjectInfo.getExternalProjectPath();
     InternalExternalProjectInfo newInfo = new InternalExternalProjectInfo(

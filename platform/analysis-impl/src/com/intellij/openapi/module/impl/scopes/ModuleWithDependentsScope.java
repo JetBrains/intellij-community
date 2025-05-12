@@ -24,10 +24,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSetQueue;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -43,7 +40,8 @@ public final class ModuleWithDependentsScope extends GlobalSearchScope implement
   private static final Key<CachedValue<VirtualFileEnumeration>> CACHED_FILE_ID_ENUMERATIONS_KEY =
     Key.create("CACHED_FILE_ID_ENUMERATIONS");
 
-  ModuleWithDependentsScope(@NotNull Module module) {
+  @VisibleForTesting
+  public ModuleWithDependentsScope(@NotNull Module module) {
     this(module.getProject(), Collections.singleton(module));
   }
 

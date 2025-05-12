@@ -46,10 +46,7 @@ import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.lang.JavaVersion;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 import org.jetbrains.jps.model.java.impl.JavaSdkUtil;
@@ -401,7 +398,9 @@ public final class JavaSdkImpl extends JavaSdk {
     LOG.warn("Internal jdk annotation root " + root + " seems corrupted: " + reason);
   }
 
-  static VirtualFile internalJdkAnnotationsPath(@NotNull List<? super String> pathsChecked, boolean refresh) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static VirtualFile internalJdkAnnotationsPath(@NotNull List<? super String> pathsChecked, boolean refresh) {
     Path javaPluginClassesRootPath = PathManager.getJarForClass(JavaSdkImpl.class);
     LOG.assertTrue(javaPluginClassesRootPath != null);
     javaPluginClassesRootPath = javaPluginClassesRootPath.toAbsolutePath();

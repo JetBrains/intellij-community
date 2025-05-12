@@ -2,6 +2,7 @@
 package com.intellij.util.diff;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.BitSet;
 
@@ -18,11 +19,12 @@ public final class PatienceIntLCS {
   private final BitSet myChanges1;
   private final BitSet myChanges2;
 
-  PatienceIntLCS(int[] first, int[] second) {
+  public PatienceIntLCS(int[] first, int[] second) {
     this(first, second, 0, first.length, 0, second.length, new BitSet(first.length), new BitSet(second.length));
   }
 
-  PatienceIntLCS(int[] first, int[] second, int start1, int count1, int start2, int count2, BitSet changes1, BitSet changes2) {
+  @VisibleForTesting
+  public PatienceIntLCS(int[] first, int[] second, int start1, int count1, int start2, int count2, BitSet changes1, BitSet changes2) {
     myFirst = first;
     mySecond = second;
     myStart1 = start1;

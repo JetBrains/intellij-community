@@ -486,7 +486,7 @@ public final class FSRecordsImpl implements Closeable {
   //========== FS records persistence: ========================================
 
   @TestOnly
-  void force() {
+  public void force() {
     checkNotClosed();
     try {
       connection.force();
@@ -497,14 +497,15 @@ public final class FSRecordsImpl implements Closeable {
   }
 
   @TestOnly
-  boolean isDirty() {
+  public boolean isDirty() {
     checkNotClosed();
     return connection.isDirty();
   }
 
   //========== record allocations: ========================================
 
-  int createRecord() {
+  @VisibleForTesting
+  public int createRecord() {
     checkNotClosed();
     try {
       return recordAccessor.createRecord(fileIdIndexedStorages);
@@ -580,7 +581,8 @@ public final class FSRecordsImpl implements Closeable {
 
   //========== FS roots manipulation: ========================================
 
-  int @NotNull [] listRoots() {
+  @VisibleForTesting
+  public int @NotNull [] listRoots() {
     checkNotClosed();
     try {
       return withRecordReadLock(PersistentFSTreeAccessor.SUPER_ROOT_ID, treeAccessor::listRoots);
@@ -748,9 +750,10 @@ public final class FSRecordsImpl implements Closeable {
 
   /** Perform operation on children and save the list atomically */
   @NotNull
-  ListResult update(@NotNull VirtualFile parent,
+  @VisibleForTesting
+  public ListResult update(@NotNull VirtualFile parent,
                     int parentId,
-                    @NotNull Function<? super ListResult, ? extends ListResult> childrenConvertor) {
+                    @NotNull Function<? super ListResult, ListResult> childrenConvertor) {
     SlowOperations.assertSlowOperationsAreAllowed();
     PersistentFSConnection.ensureIdIsValid(parentId);
 
@@ -979,7 +982,7 @@ public final class FSRecordsImpl implements Closeable {
   //========== symlink manipulation: ========================================
 
   @VisibleForTesting
-  void updateSymlinksForNewChildren(@NotNull VirtualFile parent,
+  public void updateSymlinksForNewChildren(@NotNull VirtualFile parent,
                                     @NotNull ListResult oldChildren,
                                     @NotNull ListResult newChildren) {
     // find children which are added to the list and call updateSymlinkInfoForNewChild() on them (once)
@@ -1092,7 +1095,7 @@ public final class FSRecordsImpl implements Closeable {
   //========== file record fields accessors: ========================================
 
   @PersistentFS.Attributes
-  int getFlags(int fileId) {
+  public int getFlags(int fileId) {
     checkNotClosed();
     try {
       return connection.records().getFlags(fileId);
@@ -1112,7 +1115,7 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  int getModCount(int fileId) {
+  public int getModCount(int fileId) {
     checkNotClosed();
     try {
       return connection.records().getModCount(fileId);
@@ -1140,8 +1143,8 @@ public final class FSRecordsImpl implements Closeable {
 
   /** Consider {@link #updateRecordFields(int, RecordUpdater)} for everything except for (probably) single-field updates */
   @ApiStatus.Obsolete
-  void setParent(int fileId,
-                 int parentId) {
+  @VisibleForTesting
+  public void setParent(int fileId, int parentId) {
     if (fileId == parentId) {
       LOG.error("Cyclic parent/child relations");
       return;
@@ -1227,8 +1230,8 @@ public final class FSRecordsImpl implements Closeable {
 
   /** Consider {@link #updateRecordFields(int, RecordUpdater)} for everything except for (probably) single-field updates */
   @ApiStatus.Obsolete
-  void setFlags(int fileId,
-                @PersistentFS.Attributes int flags) {
+  @VisibleForTesting
+  public void setFlags(int fileId, @PersistentFS.Attributes int flags) {
     checkNotClosed();
     try {
       connection.records().setFlags(fileId, flags);
@@ -1238,7 +1241,8 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  long getLength(int fileId) {
+  @VisibleForTesting
+  public long getLength(int fileId) {
     checkNotClosed();
     try {
       return connection.records().getLength(fileId);
@@ -1250,8 +1254,8 @@ public final class FSRecordsImpl implements Closeable {
 
   /** Consider {@link #updateRecordFields(int, RecordUpdater)} for everything except for (probably) single-field updates */
   @ApiStatus.Obsolete
-  void setLength(int fileId,
-                 long len) {
+  @VisibleForTesting
+  public void setLength(int fileId, long len) {
     checkNotClosed();
     try {
       connection.records().setLength(fileId, len);
@@ -1261,7 +1265,8 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  long getTimestamp(int fileId) {
+  @VisibleForTesting
+  public long getTimestamp(int fileId) {
     checkNotClosed();
     try {
       return connection.records().getTimestamp(fileId);
@@ -1273,8 +1278,8 @@ public final class FSRecordsImpl implements Closeable {
 
   /** Consider {@link #updateRecordFields(int, RecordUpdater)} for everything except for (probably) single-field updates */
   @ApiStatus.Obsolete
-  void setTimestamp(int fileId,
-                    long value) {
+  @VisibleForTesting
+  public void setTimestamp(int fileId, long value) {
     checkNotClosed();
     try {
       connection.records().setTimestamp(fileId, value);
@@ -1294,7 +1299,8 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  int getAttributeRecordId(int fileId) {
+  @VisibleForTesting
+  public int getAttributeRecordId(int fileId) {
     checkNotClosed();
     try {
       return connection.records().getAttributeRecordId(fileId);
@@ -1307,11 +1313,11 @@ public final class FSRecordsImpl implements Closeable {
   /**
    * @return nameId > 0
    */
-  int updateRecordFields(int fileId,
-                         int parentId,
-                         @NotNull FileAttributes attributes,
-                         @NotNull String name,
-                         boolean cleanAttributeRef) {
+  public int updateRecordFields(int fileId,
+                                int parentId,
+                                @NotNull FileAttributes attributes,
+                                @NotNull String name,
+                                boolean cleanAttributeRef) {
     checkNotClosed();
 
     int nameId = getNameId(name);
@@ -1429,8 +1435,8 @@ public final class FSRecordsImpl implements Closeable {
   //    So beware: if you change the attribute storage implementation, re-view the locking below
 
 
-  @Nullable AttributeInputStream readAttribute(int fileId,
-                                               @NotNull FileAttribute attribute) {
+  @VisibleForTesting
+  public @Nullable AttributeInputStream readAttribute(int fileId, @NotNull FileAttribute attribute) {
     StampedLock lock = fileRecordLock.lockFor(fileId);
     long lockStamp = lock.readLock();
     try {
@@ -1444,8 +1450,8 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  @NotNull AttributeOutputStream writeAttribute(int fileId,
-                                                @NotNull FileAttribute attribute) {
+  @VisibleForTesting
+  public @NotNull AttributeOutputStream writeAttribute(int fileId, @NotNull FileAttribute attribute) {
     StampedLock lock = fileRecordLock.lockFor(fileId);
     long lockStamp = lock.writeLock();
     try {
@@ -1525,8 +1531,8 @@ public final class FSRecordsImpl implements Closeable {
 
   //========== file content accessors: ========================================
 
-  @Nullable
-  InputStream readContent(int fileId) {
+  @VisibleForTesting
+  public @Nullable InputStream readContent(int fileId) {
     try {
       return contentAccessor.readContent(fileId);
     }
@@ -1589,8 +1595,8 @@ public final class FSRecordsImpl implements Closeable {
   }
 
   @NotNull
-  DataOutputStream writeContent(int fileId,
-                                boolean fixedSize) {
+  @VisibleForTesting
+  public DataOutputStream writeContent(int fileId, boolean fixedSize) {
     return new DataOutputStream(contentAccessor.new ContentOutputStream(fileId, fixedSize)) {
       @Override
       public void close() {
@@ -1604,9 +1610,8 @@ public final class FSRecordsImpl implements Closeable {
     };
   }
 
-  void writeContent(int fileId,
-                    @NotNull ByteArraySequence bytes,
-                    boolean fixedSize) {
+  @VisibleForTesting
+  public void writeContent(int fileId, @NotNull ByteArraySequence bytes, boolean fixedSize) {
     try {
       contentAccessor.writeContent(fileId, bytes, fixedSize);
     }
@@ -1758,15 +1763,18 @@ public final class FSRecordsImpl implements Closeable {
     return contentAccessor;
   }
 
-  PersistentFSAttributeAccessor attributeAccessor() {
+  @VisibleForTesting
+  public PersistentFSAttributeAccessor attributeAccessor() {
     return attributeAccessor;
   }
 
-  PersistentFSTreeAccessor treeAccessor() {
+  @VisibleForTesting
+  public PersistentFSTreeAccessor treeAccessor() {
     return treeAccessor;
   }
 
-  PersistentFSRecordAccessor recordAccessor() {
+  @VisibleForTesting
+  public PersistentFSRecordAccessor recordAccessor() {
     return recordAccessor;
   }
 
@@ -1798,7 +1806,6 @@ public final class FSRecordsImpl implements Closeable {
       }
     };
   }
-
 
   public interface ErrorHandler {
 

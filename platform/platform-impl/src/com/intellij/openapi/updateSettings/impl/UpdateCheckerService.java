@@ -182,7 +182,7 @@ public class UpdateCheckerService {
   }
 
   @VisibleForTesting
-  static boolean shouldShowWhatsNew(@NotNull BuildNumber current, boolean majorEap) {
+  public static boolean shouldShowWhatsNew(@NotNull BuildNumber current, boolean majorEap) {
     if (ExperimentalUI.Companion.getForcedSwitchedUi()) {
       return false;
     }

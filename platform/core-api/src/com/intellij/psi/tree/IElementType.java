@@ -50,7 +50,9 @@ public class IElementType {
     push(init);
   }
 
-  static IElementType @NotNull [] push(IElementType @NotNull [] types) {
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static IElementType @NotNull [] push(IElementType @NotNull [] types) {
     synchronized (lock) {
       IElementType[] oldRegistry = ourRegistry;
       ourRegistry = types;
@@ -221,7 +223,8 @@ public class IElementType {
   }
 
   @TestOnly
-  static short getAllocatedTypesCount() {
+  @ApiStatus.Internal
+  public static short getAllocatedTypesCount() {
     synchronized (lock) {
       return size;
     }

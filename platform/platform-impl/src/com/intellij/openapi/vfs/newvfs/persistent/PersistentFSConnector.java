@@ -97,7 +97,7 @@ public final class PersistentFSConnector {
   }
 
   @VisibleForTesting
-  static @NotNull PersistentFSConnection tryInit(@NotNull Path cachesDir,
+  public static @NotNull PersistentFSConnection tryInit(@NotNull Path cachesDir,
                                                  int currentImplVersion,
                                                  @NotNull List<VFSRecoverer> recoverers) throws IOException {
     //RC: Mental model behind VFS initialization:

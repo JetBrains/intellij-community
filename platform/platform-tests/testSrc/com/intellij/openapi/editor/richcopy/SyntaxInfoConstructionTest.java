@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.richcopy;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
@@ -342,7 +342,7 @@ public class SyntaxInfoConstructionTest extends BasePlatformTestCase {
 
     TextWithMarkupProcessor processor = new TextWithMarkupProcessor() {
       @Override
-      void createResult(SyntaxInfo syntaxInfo, Editor editor) {
+      protected void createResult(SyntaxInfo syntaxInfo, Editor editor) {
         final ColorRegistry colorRegistry = syntaxInfo.getColorRegistry();
         assertEquals(JBColor.BLACK, colorRegistry.dataById(syntaxInfo.getDefaultForeground()));
         assertEquals(JBColor.WHITE, colorRegistry.dataById(syntaxInfo.getDefaultBackground()));

@@ -69,7 +69,8 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
   private @Nullable SetStorage storage;
   private boolean frozen;
 
-  CompactVirtualFileSet() {
+  @VisibleForTesting
+  public CompactVirtualFileSet() {
   }
 
   CompactVirtualFileSet(@NotNull Collection<? extends VirtualFile> files) {

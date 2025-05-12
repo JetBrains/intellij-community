@@ -65,7 +65,7 @@ public final class JVMResponsivenessMonitor implements Disposable, AutoCloseable
 
   private final Thread samplingThread = new Thread(this::samplingLoop, MONITOR_THREAD_NAME);
 
-  JVMResponsivenessMonitor() {
+  public JVMResponsivenessMonitor() {
     samplingThread.setDaemon(true);
     samplingThread.start();
   }

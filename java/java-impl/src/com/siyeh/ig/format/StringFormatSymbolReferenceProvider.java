@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.format;
 
 import com.intellij.find.usages.api.SearchTarget;
@@ -192,7 +192,7 @@ public final class StringFormatSymbolReferenceProvider implements PsiSymbolRefer
       return List.of(SymbolNavigationService.getInstance().psiElementNavigationTarget(myExpression));
     }
 
-    @NotNull PsiExpression getExpression() {
+    public @NotNull PsiExpression getExpression() {
       return myExpression;
     }
 
@@ -200,7 +200,7 @@ public final class StringFormatSymbolReferenceProvider implements PsiSymbolRefer
       return myExpression.getText();
     }
 
-    @Nullable PsiExpression getFormatString() {
+    public @Nullable PsiExpression getFormatString() {
       if (!(myExpression.getParent() instanceof PsiExpressionList list) ||
           !(list.getParent() instanceof PsiCallExpression call)) {
         return null;

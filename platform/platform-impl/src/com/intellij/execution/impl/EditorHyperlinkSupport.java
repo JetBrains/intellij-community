@@ -28,10 +28,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -163,7 +160,9 @@ public final class EditorHyperlinkSupport {
   /**
    * Retrieves the inlays within the specified range in the editor (both offsets are inclusive).
    */
-  List<Inlay<?>> getInlays(int startOffset, int endOffset) {
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public List<Inlay<?>> getInlays(int startOffset, int endOffset) {
     return myEditor.getInlayModel().getInlineElementsInRange(startOffset, endOffset).stream().filter(INLAY::isIn).toList();
   }
 
@@ -174,6 +173,7 @@ public final class EditorHyperlinkSupport {
   }
 
   @TestOnly
+  @ApiStatus.Internal
   public void waitForPendingFilters(long timeoutMs) {
     myFilterRunner.waitForPendingFilters(timeoutMs);
   }
@@ -276,7 +276,9 @@ public final class EditorHyperlinkSupport {
   /**
    * Retrieves hyperlinks / highlightings within the specified range in the editor (both offsets are inclusive).
    */
-  static @NotNull List<RangeHighlighter> getRangeHighlighters(int startOffset, int endOffset,
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @NotNull List<RangeHighlighter> getRangeHighlighters(int startOffset, int endOffset,
                                                               boolean hyperlinks,
                                                               boolean highlightings,
                                                               @NotNull Editor editor) {

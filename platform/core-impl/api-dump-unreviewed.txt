@@ -1358,8 +1358,6 @@ f:com.intellij.openapi.editor.impl.DocumentImpl
 - setText(java.lang.CharSequence):V
 - startGuardedBlockChecking():V
 - stopGuardedBlockChecking():V
-- stripTrailingSpaces(com.intellij.openapi.project.Project):Z
-- stripTrailingSpaces(com.intellij.openapi.project.Project,Z):Z
 - suppressGuardedExceptions():V
 - unSuppressGuardedExceptions():V
 c:com.intellij.openapi.editor.impl.EditorTextFieldRendererDocument
@@ -1391,14 +1389,6 @@ c:com.intellij.openapi.editor.impl.EditorTextFieldRendererDocument
 com.intellij.openapi.editor.impl.Interval
 - a:intervalEnd():I
 - a:intervalStart():I
-f:com.intellij.openapi.editor.impl.LineSet
-- createIterator():com.intellij.openapi.editor.ex.LineIterator
-- s:createLineSet(java.lang.CharSequence):com.intellij.openapi.editor.impl.LineSet
-- findLineIndex(I):I
-- getLength():I
-- getLineCount():I
-- getLineEnd(I):I
-- getLineStart(I):I
 a:com.intellij.openapi.editor.impl.PsiBasedStripTrailingSpacesFilter
 - com.intellij.openapi.editor.StripTrailingSpacesFilter
 - p:<init>(com.intellij.openapi.editor.Document):V
@@ -1412,34 +1402,6 @@ a:com.intellij.openapi.editor.impl.PsiBasedStripTrailingSpacesFilter$Factory
 - pa:createFilter(com.intellij.openapi.editor.Document):com.intellij.openapi.editor.impl.PsiBasedStripTrailingSpacesFilter
 - f:createFilter(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document):com.intellij.openapi.editor.StripTrailingSpacesFilter
 - pa:isApplicableTo(com.intellij.lang.Language):Z
-c:com.intellij.openapi.editor.impl.RangeMarkerImpl
-- com.intellij.openapi.util.UserDataHolderBase
-- com.intellij.openapi.editor.ex.RangeMarkerEx
-- p:changedUpdateImpl(com.intellij.openapi.editor.event.DocumentEvent):V
-- dispose():V
-- f:documentChanged(com.intellij.openapi.editor.event.DocumentEvent):V
-- findRangeMarkerAfter():com.intellij.openapi.editor.RangeMarker
-- findRangeMarkerBefore():com.intellij.openapi.editor.RangeMarker
-- f:getDocument():com.intellij.openapi.editor.ex.DocumentEx
-- getEndOffset():I
-- getId():J
-- getLayer():I
-- getStartOffset():I
-- getTextRange():com.intellij.openapi.util.TextRange
-- intervalEnd():I
-- intervalStart():I
-- isGreedyToLeft():Z
-- isGreedyToRight():Z
-- isStickingToRight():Z
-- isValid():Z
-- p:onReTarget(com.intellij.openapi.editor.event.DocumentEvent):V
-- p:persistentHighlighterUpdate(com.intellij.openapi.editor.event.DocumentEvent,Z):V
-- s:runAssertingInternalInvariants(com.intellij.util.ThrowableRunnable):V
-- setGreedyToLeft(Z):V
-- setGreedyToRight(Z):V
-- setStickingToRight(Z):V
-- p:setValid(Z):Z
-- p:unregisterInTree():V
 c:com.intellij.openapi.editor.impl.TextRangeInterval
 - com.intellij.openapi.util.ProperTextRange
 - com.intellij.openapi.editor.impl.Interval

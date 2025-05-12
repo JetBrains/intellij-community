@@ -1,10 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.vcs.log.VcsUser;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.Objects;
 
@@ -13,7 +15,9 @@ public final class PatchFileHeaderInfo {
   private final @Nullable VcsUser myAuthor;
   private final @Nullable String myBaseRevision;
 
-  PatchFileHeaderInfo(@NotNull @NlsSafe String message, @Nullable VcsUser author, @Nullable String revision) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public PatchFileHeaderInfo(@NotNull @NlsSafe String message, @Nullable VcsUser author, @Nullable String revision) {
     myMessage = message;
     myAuthor = author;
     myBaseRevision = revision;

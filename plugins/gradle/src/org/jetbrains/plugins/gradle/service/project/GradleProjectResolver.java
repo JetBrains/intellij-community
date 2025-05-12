@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
@@ -87,7 +87,7 @@ import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
 /**
  * @author Vladislav Soroka
  */
-public class GradleProjectResolver implements ExternalSystemProjectResolver<GradleExecutionSettings> {
+public final class GradleProjectResolver implements ExternalSystemProjectResolver<GradleExecutionSettings> {
 
   private static final Logger LOG = Logger.getInstance(GradleProjectResolver.class);
 
@@ -217,7 +217,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
   }
 
-  protected static <R> R executeProjectResolverTask(
+  static <R> R executeProjectResolverTask(
     @NotNull DefaultProjectResolverContext resolverContext,
     @NotNull GradleProjectResolverExtension projectResolverChain,
     @NotNull Function<ProjectConnection, R> task
@@ -256,7 +256,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     });
   }
 
-  protected @NotNull DataNode<ProjectData> doResolveProjectInfo(
+  @NotNull DataNode<ProjectData> doResolveProjectInfo(
     @NotNull ProjectConnection connection,
     @NotNull DefaultProjectResolverContext resolverContext,
     @NotNull GradleProjectResolverExtension projectResolverChain
@@ -828,7 +828,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
    */
   @VisibleForTesting
   @ApiStatus.Internal
-  static void mergeSourceSetContentRootsInModulePerSourceSetMode(
+  public static void mergeSourceSetContentRootsInModulePerSourceSetMode(
     @NotNull ProjectResolverContext resolverContext,
     @NotNull @Unmodifiable Map<? extends ProjectModel, DataNode<ModuleData>> moduleMap
   ) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -412,7 +412,8 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     myPatterns.addAll(manager.getPatterns());
   }
 
-  static void convert(@NotNull Element element, @NotNull Map<? super String, ? super SmartRefElementPointer> persistentEntryPoints) {
+  @ApiStatus.Internal
+  public static void convert(@NotNull Element element, @NotNull Map<? super String, ? super SmartRefElementPointer> persistentEntryPoints) {
     List<Element> content = element.getChildren();
     for (Element entryElement : content) {
       if (ENTRY_POINT_ATTR.equals(entryElement.getName())) {

@@ -11,6 +11,7 @@ import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 @ApiStatus.Internal
 public final class JLinkArtifactProperties extends ArtifactProperties<JLinkArtifactProperties> {
@@ -18,10 +19,12 @@ public final class JLinkArtifactProperties extends ArtifactProperties<JLinkArtif
   public CompressionLevel compressionLevel = CompressionLevel.ZERO;
   public boolean verbose;
 
-  JLinkArtifactProperties() {
+  @VisibleForTesting
+  public JLinkArtifactProperties() {
   }
 
-  JLinkArtifactProperties(@NotNull CompressionLevel compressionLevel, boolean verbose) {
+  @VisibleForTesting
+  public JLinkArtifactProperties(@NotNull CompressionLevel compressionLevel, boolean verbose) {
     this.compressionLevel = compressionLevel;
     this.verbose = verbose;
   }

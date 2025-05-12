@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.diagnostic.LoadingState;
@@ -21,8 +21,10 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -293,7 +295,9 @@ public final class PluginDownloader {
     return appliedWithoutRestart;
   }
 
-  @NotNull Path tryDownloadPlugin(@Nullable ProgressIndicator indicator) throws IOException {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public @NotNull Path tryDownloadPlugin(@Nullable ProgressIndicator indicator) throws IOException {
     ThreadingAssertions.assertBackgroundThread();
     if (indicator != null) {
       indicator.checkCanceled();

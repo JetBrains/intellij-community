@@ -409,7 +409,8 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
     return file;
   }
 
-  static @NotNull Path getDataFile(@NotNull Path file) { // made public for testing
+  @VisibleForTesting
+  public static @NotNull Path getDataFile(@NotNull Path file) { // made public for testing
     return file.resolveSibling(file.getFileName() + DATA_FILE_EXTENSION);
   }
 

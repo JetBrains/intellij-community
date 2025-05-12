@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import com.intellij.internal.statistic.StructuredIdeActivity;
@@ -14,6 +14,7 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -81,7 +82,8 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
 
   // This method is not public because it cannot cancel tasks paused by ProgressSuspender.
   // Use methods from appropriate executor instead (e.g. MergingQueueGuiExecutor#cancelAllTasks)
-  void cancelAllTasks() {
+  @VisibleForTesting
+  public void cancelAllTasks() {
     List<ProgressIndicatorEx> tasks;
     synchronized (myLock) {
       tasks = new ArrayList<>(myProgresses.values());

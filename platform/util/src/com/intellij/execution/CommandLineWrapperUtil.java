@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -90,7 +90,7 @@ public final class CommandLineWrapperUtil {
    * WARNING: Due to compatibility reasons, this method has duplicate: {@link com.intellij.rt.execution.testFrameworks.ForkedByModuleSplitter#quoteArg(String)}
    * If you modify this method, consider also changing its copy.
    */
-  static String quoteArg(String arg) {
+  public static String quoteArg(String arg) {
     String specials = " #'\"\n\r\t\f";
     if (!StringUtil.containsAnyChar(arg, specials)) {
       return arg;

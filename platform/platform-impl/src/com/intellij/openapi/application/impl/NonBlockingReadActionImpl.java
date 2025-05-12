@@ -60,6 +60,7 @@ import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 @VisibleForTesting
+@ApiStatus.Internal
 public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
   private static final Logger LOG = Logger.getInstance(NonBlockingReadActionImpl.class);
   private static final Executor SYNC_DUMMY_EXECUTOR = __ -> {
@@ -813,7 +814,8 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   }
 
   @TestOnly
-  static @NotNull Map<List<?>, Submission<?>> getTasksByEquality() {
+  @VisibleForTesting
+  public static @NotNull Map<List<?>, Submission<?>> getTasksByEquality() {
     return ourTasksByEquality;
   }
 

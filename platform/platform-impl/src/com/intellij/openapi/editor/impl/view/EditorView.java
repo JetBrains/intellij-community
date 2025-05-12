@@ -22,10 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.intellij.lang.annotations.JdkConstants;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.awt.*;
 import java.awt.event.HierarchyEvent;
@@ -654,7 +651,8 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return myTabFragment;
   }
 
-  LogicalPositionCache getLogicalPositionCache() {
+  @VisibleForTesting
+  public LogicalPositionCache getLogicalPositionCache() {
     return myLogicalPositionCache;
   }
 

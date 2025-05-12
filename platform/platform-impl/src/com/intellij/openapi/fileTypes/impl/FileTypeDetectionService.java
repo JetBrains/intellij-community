@@ -36,10 +36,7 @@ import com.intellij.util.xmlb.Constants;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.JobKt;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.nio.channels.FileChannel;
@@ -502,7 +499,8 @@ public final class FileTypeDetectionService {
     }
   }
 
-  boolean wasAutoDetectedBefore(@NotNull VirtualFile file) {
+  @VisibleForTesting
+  public boolean wasAutoDetectedBefore(@NotNull VirtualFile file) {
     if (file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY) != null) {
       return true;
     }
@@ -733,7 +731,7 @@ public final class FileTypeDetectionService {
   }
 
   @TestOnly
-  void drainReDetectQueue() {
+  public void drainReDetectQueue() {
     reDetectExecutor.waitAllTasksExecuted(1, TimeUnit.MINUTES);
   }
 

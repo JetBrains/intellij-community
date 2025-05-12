@@ -25,6 +25,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
@@ -92,7 +93,8 @@ public class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPo
     return element;
   }
 
-  void cacheElement(@Nullable E element) {
+  @VisibleForTesting
+  public void cacheElement(@Nullable E element) {
     myElement = element == null ? null :
                 PsiManagerEx.getInstanceEx(getProject()).isBatchFilesProcessingMode() ? new WeakReference<>(element) :
                 new SoftReference<>(element);
@@ -285,7 +287,8 @@ public class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPo
     return Comparing.equal(pointer1.getElement(), pointer2.getElement());
   }
 
-  synchronized int incrementAndGetReferenceCount(int delta) {
+  @VisibleForTesting
+  public synchronized int incrementAndGetReferenceCount(int delta) {
     if (myReferenceCount == Byte.MAX_VALUE) return Byte.MAX_VALUE; // saturated
     if (myReferenceCount == 0) return -1; // disposed, not to be reused again
     return myReferenceCount += delta;

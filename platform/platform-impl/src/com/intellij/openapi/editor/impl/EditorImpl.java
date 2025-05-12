@@ -1437,7 +1437,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return true;
   }
 
-  void processKeyTypedImmediately(char c, @NotNull Graphics graphics, @NotNull DataContext dataContext) {
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public void processKeyTypedImmediately(char c, @NotNull Graphics graphics, @NotNull DataContext dataContext) {
     EditorActionPlan plan = new EditorActionPlan(this);
     EditorActionManager.getInstance();
     TypedAction.getInstance().beforeActionPerformed(this, c, dataContext, plan);
@@ -1446,7 +1448,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  void processKeyTypedNormally(char c, @NotNull DataContext dataContext) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public void processKeyTypedNormally(char c, @NotNull DataContext dataContext) {
     EditorActionManager.getInstance();
     TypedAction.getInstance().actionPerformed(this, c, dataContext);
   }
@@ -5678,7 +5682,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @TestOnly
-  void validateState() {
+  @ApiStatus.Internal
+  public void validateState() {
     myView.validateState();
     mySoftWrapModel.validateState();
     myFoldingModel.validateState();

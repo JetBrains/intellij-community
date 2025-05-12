@@ -1859,7 +1859,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @VisibleForTesting
-  static @Nullable NewVirtualFileSystem detectFileSystem(@NotNull String rootUrl,
+  @ApiStatus.Internal
+  public static @Nullable NewVirtualFileSystem detectFileSystem(@NotNull String rootUrl,
                                                          @NotNull String rootPath) {
 
     if (rootUrl.endsWith(":")) {
@@ -1895,7 +1896,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
     return null;
   }
-
 
   /**
    * We climb up from fileId, collecting parentIds (=path), until find a parent which is already cached
@@ -2516,10 +2516,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     childByName.incrementAndGet();
   }
 
-
   @TestOnly
-  @NotNull
-  Iterable<? extends VirtualFileSystemEntry> getDirCache() {
+  @ApiStatus.Internal
+  public @NotNull Iterable<? extends VirtualFileSystemEntry> getDirCache() {
     return dirByIdCache.getCachedDirs();
   }
 

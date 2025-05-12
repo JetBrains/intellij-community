@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.core.CoreBundle;
@@ -24,12 +24,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.awt.datatransfer.DataFlavor;
 
-
+@ApiStatus.Internal
 public final class JavaFilePasteProvider implements PasteProvider {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -126,7 +128,8 @@ public final class JavaFilePasteProvider implements PasteProvider {
     return pasteText != null && getPastedClasses(project, pasteText).length >= 1;
   }
 
-  static @Nullable String detectClassName(@NotNull Project project, @NotNull String fileText) {
+  @VisibleForTesting
+  public static @Nullable String detectClassName(@NotNull Project project, @NotNull String fileText) {
     final PsiClass[] classes = getPastedClasses(project, fileText);
     if (classes.length < 1) return null;
     for (PsiClass aClass : classes) {

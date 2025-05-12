@@ -634,7 +634,7 @@ public final class FormatDecode {
 
   }
 
-  public static class FormatArgument {
+  public static final class FormatArgument {
     private final int myIndex;
     private final PsiExpression myExpression;
 

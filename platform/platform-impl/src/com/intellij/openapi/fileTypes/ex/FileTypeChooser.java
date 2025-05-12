@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.ex;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,8 +21,10 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.awt.event.ActionListener;
@@ -186,7 +188,9 @@ public final class FileTypeChooser extends DialogWrapper {
     return (String)myPattern.getSelectedItem();
   }
 
-  static @NotNull List<String> suggestPatterns(@NotNull String fileName) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @NotNull List<String> suggestPatterns(@NotNull String fileName) {
     var patterns = new LinkedList<String>();
 
     var i = -1;

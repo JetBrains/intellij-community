@@ -1,12 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.SystemInfoRt;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.*;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -224,9 +222,11 @@ public final class CollectionFactory {
     return new ConcurrentSoftKeySoftValueHashMap<>(initialCapacity, loadFactor, concurrencyLevel, HashingStrategy.canonical());
   }
 
+  @ApiStatus.Internal
+  @VisibleForTesting
   @Contract(value = "_,_,_ -> new", pure = true)
   @SuppressWarnings("SameParameterValue")
-  static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftKeySoftValueIdentityMap(int initialCapacity,
+  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftKeySoftValueIdentityMap(int initialCapacity,
                                                                                          float loadFactor,
                                                                                          int concurrencyLevel) {
     return new ConcurrentSoftKeySoftValueHashMap<>(initialCapacity, loadFactor, concurrencyLevel, HashingStrategy.identity());
@@ -387,7 +387,9 @@ public final class CollectionFactory {
   }
 
   @Contract(value = "_ -> new", pure = true)
-  static @NotNull <K,V> Map<@NotNull K,V> createSoftMap(@NotNull HashingStrategy<? super K> strategy) {
+  @TestOnly
+  @ApiStatus.Internal
+  public static @NotNull <K,V> Map<@NotNull K,V> createSoftMap(@NotNull HashingStrategy<? super K> strategy) {
     return new SoftHashMap<>(strategy);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.detection;
 
 import com.intellij.facet.*;
@@ -8,9 +8,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.EmptyIcon;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -75,7 +73,9 @@ public abstract class FacetBasedFrameworkDetector<F extends Facet, C extends Fac
     return createFrameworkType(type);
   }
 
-  static FrameworkType createFrameworkType(final FacetType<?, ?> facetType) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static FrameworkType createFrameworkType(final FacetType<?, ?> facetType) {
     return new FacetBasedFrameworkType(facetType);
   }
 
@@ -89,7 +89,7 @@ public abstract class FacetBasedFrameworkDetector<F extends Facet, C extends Fac
     return true;
   }
 
-  private static class FacetBasedFrameworkType extends FrameworkType {
+  private static final class FacetBasedFrameworkType extends FrameworkType {
     private final FacetType<?, ?> myFacetType;
 
     FacetBasedFrameworkType(@NotNull FacetType<?, ?> facetType) {

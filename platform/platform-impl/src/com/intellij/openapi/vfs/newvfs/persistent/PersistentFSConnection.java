@@ -112,7 +112,8 @@ public final class PersistentFSConnection {
     recoveryInfo = info;
   }
 
-  @NotNull DataEnumerator<String> attributesEnumerator() {
+  @VisibleForTesting
+  public @NotNull DataEnumerator<String> attributesEnumerator() {
     return enumeratedAttributes;
   }
 
@@ -128,11 +129,13 @@ public final class PersistentFSConnection {
     return enumeratedAttributeId;
   }
 
-  @NotNull VFSContentStorage contents() {
+  @VisibleForTesting
+  public @NotNull VFSContentStorage contents() {
     return contentStorage;
   }
 
-  @NotNull VFSAttributesStorage attributes() {
+  @VisibleForTesting
+  public @NotNull VFSAttributesStorage attributes() {
     return attributesStorage;
   }
 
@@ -182,7 +185,8 @@ public final class PersistentFSConnection {
            || contentStorage.isDirty();
   }
 
-  void force() throws IOException {
+  @VisibleForTesting
+  public void force() throws IOException {
     ((Forceable)namesEnumerator).force();//checked to be a Forceable in ctor
     attributesStorage.force();
     contentStorage.force();
@@ -217,7 +221,6 @@ public final class PersistentFSConnection {
       closed = true;
     }
   }
-
 
   public @NotNull PersistentFSPaths paths() {
     return persistentFSPaths;
@@ -277,7 +280,8 @@ public final class PersistentFSConnection {
     }
   }
 
-  static void scheduleVFSRebuild(@NotNull Path corruptionMarkerFile,
+  @VisibleForTesting
+  public static void scheduleVFSRebuild(@NotNull Path corruptionMarkerFile,
                                  @Nullable String message,
                                  @Nullable Throwable errorCause) {
     VFSCorruptedException corruptedException = new VFSCorruptedException(
@@ -310,7 +314,8 @@ public final class PersistentFSConnection {
     }
   }
 
-  void scheduleVFSRebuild(@Nullable String message,
+  @VisibleForTesting
+  public void scheduleVFSRebuild(@Nullable String message,
                           @Nullable Throwable errorCause) {
     scheduleVFSRebuild(persistentFSPaths.getCorruptionMarkerFile(), message, errorCause);
   }
@@ -414,7 +419,7 @@ public final class PersistentFSConnection {
    * <p>
    * More details in a {@link GentleFlusherBase} javadocs
    */
-  private static class GentleVFSFlusher extends GentleFlusherBase {
+  private static final class GentleVFSFlusher extends GentleFlusherBase {
     /** How often, on average, flush each index to the disk */
     private static final long FLUSHING_PERIOD_MS = SECONDS.toMillis(FlushingDaemon.FLUSHING_PERIOD_IN_SECONDS);
 

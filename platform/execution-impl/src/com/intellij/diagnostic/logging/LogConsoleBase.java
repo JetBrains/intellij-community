@@ -1,5 +1,4 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.diagnostic.logging;
 
 import com.intellij.execution.ExecutionBundle;
@@ -48,9 +47,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import org.jetbrains.annotations.CalledInAny;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -462,7 +459,9 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     return myOriginalDocument;
   }
 
-  static void resizeBuffer(@NotNull StringBuffer buffer, int size) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static void resizeBuffer(@NotNull StringBuffer buffer, int size) {
     final int toRemove = buffer.length() - size;
     if (toRemove > 0) {
 

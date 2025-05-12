@@ -22,6 +22,7 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.*;
 
+@ApiStatus.Internal
 public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx {
   private static final Logger LOG = Logger.getInstance(RangeMarkerImpl.class);
 
@@ -155,7 +156,8 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     return document;
   }
 
-  DocumentEx getCachedDocument() {
+  @VisibleForTesting
+  public DocumentEx getCachedDocument() {
     Object file = myDocumentOrFile;
     return file instanceof VirtualFile ? (DocumentEx)FileDocumentManager.getInstance().getCachedDocument((VirtualFile)file) : (DocumentEx)file;
   }

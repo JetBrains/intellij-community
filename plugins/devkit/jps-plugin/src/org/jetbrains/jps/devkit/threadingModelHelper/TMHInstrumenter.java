@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.devkit.threadingModelHelper;
 
 import com.intellij.compiler.instrumentation.FailSafeMethodVisitor;
@@ -9,10 +9,10 @@ import java.util.Map;
 import java.util.Set;
 
 public final class TMHInstrumenter {
-  static boolean instrument(ClassReader classReader,
-                            ClassVisitor classWriter,
-                            Set<? extends TMHAssertionGenerator> generators,
-                            boolean generateLineNumbers) {
+  public static boolean instrument(ClassReader classReader,
+                                   ClassVisitor classWriter,
+                                   Set<? extends TMHAssertionGenerator> generators,
+                                   boolean generateLineNumbers) {
     AnnotatedMethodsCollector collector = new AnnotatedMethodsCollector(generators);
     int options = ClassReader.SKIP_FRAMES;
     if (!generateLineNumbers) {
@@ -27,7 +27,7 @@ public final class TMHInstrumenter {
     return true;
   }
 
-  private static class AnnotatedMethodsCollector extends ClassVisitor {
+  private static final class AnnotatedMethodsCollector extends ClassVisitor {
     final Set<? extends TMHAssertionGenerator> assertionGenerators;
     final Map<MethodKey, InstrumentationInfo> annotatedMethods = new HashMap<>();
 
@@ -68,7 +68,7 @@ public final class TMHInstrumenter {
     }
   }
 
-  private static class Instrumenter extends ClassVisitor {
+  private static final class Instrumenter extends ClassVisitor {
     private final Map<MethodKey, InstrumentationInfo> myAnnotatedMethods;
 
     Instrumenter(ClassVisitor writer, Map<MethodKey, InstrumentationInfo> annotatedMethods) {
@@ -92,7 +92,7 @@ public final class TMHInstrumenter {
     }
   }
 
-  private static class MethodKey {
+  private static final class MethodKey {
     final String name;
     final String descriptor;
 
@@ -116,7 +116,7 @@ public final class TMHInstrumenter {
     }
   }
 
-  private static class InstrumentationInfo {
+  private static final class InstrumentationInfo {
     final TMHAssertionGenerator assertionGenerator;
     int methodStartLineNumber = -1;
 

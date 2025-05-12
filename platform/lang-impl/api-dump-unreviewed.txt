@@ -1479,13 +1479,6 @@ a:com.intellij.codeInsight.actions.MultiCaretCodeInsightActionHandler
 - <init>():V
 - a:invoke(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.psi.PsiFile):V
 - postInvoke():V
-f:com.intellij.codeInsight.actions.OptimizeImportsAction
-- com.intellij.openapi.actionSystem.AnAction
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- s:actionPerformedImpl(com.intellij.openapi.actionSystem.DataContext):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.codeInsight.actions.OptimizeImportsProcessor
 - com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor
 - <init>(com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor):V

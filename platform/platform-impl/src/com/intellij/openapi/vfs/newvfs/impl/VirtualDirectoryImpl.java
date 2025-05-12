@@ -54,7 +54,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   final VfsData.DirectoryData myData;
   private final NewVirtualFileSystem myFs;
 
-  VirtualDirectoryImpl(int id,
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public VirtualDirectoryImpl(int id,
                        @NotNull VfsData.Segment segment,
                        @NotNull VfsData.DirectoryData data,
                        @Nullable VirtualDirectoryImpl parent,

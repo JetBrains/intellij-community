@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository;
 
 import com.intellij.CommonBundle;
@@ -12,7 +12,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
@@ -45,10 +44,7 @@ import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.transfer.RepositoryOfflineException;
 import org.eclipse.aether.transfer.TransferCancelledException;
 import org.eclipse.aether.version.Version;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.aether.ArtifactDependencyNode;
@@ -79,7 +75,6 @@ import static com.intellij.jarRepository.JarRepositoryAuthenticationDataProvider
 
 public final class JarRepositoryManager {
   private static final Logger LOG = Logger.getInstance(JarRepositoryManager.class);
-
 
   /**
    * * @deprecated Do not use it. See description for getLocalRepositoryPath
@@ -362,7 +357,9 @@ public final class JarRepositoryManager {
    * @param repositories Repositories to override any other values
    * @return Collection of remote repositories chosen from params.
    */
-  static List<RemoteRepositoryDescription> selectRemoteRepositories(@NotNull Project project,
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static List<RemoteRepositoryDescription> selectRemoteRepositories(@NotNull Project project,
                                                                     @Nullable JpsMavenRepositoryLibraryDescriptor desc,
                                                                     @Nullable Collection<RemoteRepositoryDescription> repositories) {
     if (repositories != null && !repositories.isEmpty()) {

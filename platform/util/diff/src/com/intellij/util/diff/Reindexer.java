@@ -21,7 +21,7 @@ public final class Reindexer {
   }
 
   @TestOnly
-  void idInit(int length1, int length2) {
+  public void idInit(int length1, int length2) {
     myOriginalLengths[0] = length1;
     myOriginalLengths[1] = length2;
     myDiscardedLengths[0] = length1;
@@ -36,7 +36,7 @@ public final class Reindexer {
   }
 
   @TestOnly
-  int restoreIndex(int index, int array) {
+  public int restoreIndex(int index, int array) {
     return myOldIndices[array][index];
   }
 

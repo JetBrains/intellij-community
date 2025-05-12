@@ -575,7 +575,7 @@ public final class ConfigImportHelper {
     }
 
     @Unmodifiable
-    @NotNull List<Path> getPaths() {
+    public @NotNull List<Path> getPaths() {
       return ContainerUtil.map(directories, it -> it.first);
     }
 
@@ -591,7 +591,7 @@ public final class ConfigImportHelper {
       return getNameWithVersion(config);
     }
 
-    @NotNull List<Path> findRelatedDirectories(@NotNull Path config, boolean forAutoClean) {
+    public @NotNull List<Path> findRelatedDirectories(@NotNull Path config, boolean forAutoClean) {
       return getRelatedDirectories(config, forAutoClean);
     }
   }
@@ -602,11 +602,14 @@ public final class ConfigImportHelper {
     return directories.fromSameProduct && directories.directories.size() > 1;
   }
 
-  static @NotNull ConfigDirsSearchResult findConfigDirectories(@NotNull Path newConfigDir) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @NotNull ConfigDirsSearchResult findConfigDirectories(@NotNull Path newConfigDir) {
     return findConfigDirectories(newConfigDir, null, List.of());
   }
 
-  static @NotNull ConfigDirsSearchResult findConfigDirectories(@NotNull Path newConfigDir,
+  @VisibleForTesting
+  public static @NotNull ConfigDirsSearchResult findConfigDirectories(@NotNull Path newConfigDir,
                                                                @Nullable ConfigImportSettings settings,
                                                                @NotNull List<String> otherProductPrefixes) {
     // looking for existing config directories ...
@@ -989,12 +992,12 @@ public final class ConfigImportHelper {
   }
 
   @VisibleForTesting
-  static void doImport(@NotNull Path oldConfigDir,
-                       @NotNull Path newConfigDir,
-                       @Nullable Path oldIdeHome,
-                       @NotNull Path oldPluginsDir,
-                       @NotNull Path newPluginsDir,
-                       @NotNull ConfigImportOptions options) throws IOException {
+  public static void doImport(@NotNull Path oldConfigDir,
+                              @NotNull Path newConfigDir,
+                              @Nullable Path oldIdeHome,
+                              @NotNull Path oldPluginsDir,
+                              @NotNull Path newPluginsDir,
+                              @NotNull ConfigImportOptions options) throws IOException {
     Logger log = options.log;
     if (Files.isRegularFile(oldConfigDir)) {
       new Decompressor.Zip(oldConfigDir).extract(newConfigDir);
@@ -1006,7 +1009,9 @@ public final class ConfigImportHelper {
     Files.walkFileTree(oldConfigDir, new SimpleFileVisitor<>() {
       @Override
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-        return blockImport(dir, oldConfigDir, newConfigDir, oldPluginsDir, options.importSettings) ? FileVisitResult.SKIP_SUBTREE : FileVisitResult.CONTINUE;
+        return blockImport(dir, oldConfigDir, newConfigDir, oldPluginsDir, options.importSettings)
+               ? FileVisitResult.SKIP_SUBTREE
+               : FileVisitResult.CONTINUE;
       }
 
       @Override
@@ -1488,7 +1493,8 @@ public final class ConfigImportHelper {
     return true;
   }
 
-  static void setKeymapIfNeeded(@NotNull Path oldConfigDir, @NotNull Path newConfigDir, @NotNull Logger log) {
+  @VisibleForTesting
+  public static void setKeymapIfNeeded(@NotNull Path oldConfigDir, @NotNull Path newConfigDir, @NotNull Logger log) {
     String nameWithVersion = getNameWithVersion(oldConfigDir);
     Matcher m = matchNameWithVersion(nameWithVersion);
     if (m.matches() && VersionComparatorUtil.compare("2019.1", m.group(1)) >= 0) {

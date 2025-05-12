@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.grape;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -49,6 +49,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -213,7 +214,8 @@ public final class GrabDependencies implements IntentionAction {
     });
   }
 
-  static Map<@NlsSafe String, String> prepareQueries(PsiFile file) {
+  @VisibleForTesting
+  public static Map<@NlsSafe String, String> prepareQueries(PsiFile file) {
     final Set<GrAnnotation> grabs = new LinkedHashSet<>();
     final Set<GrAnnotation> excludes = new HashSet<>();
     final Set<GrAnnotation> resolvers = new HashSet<>();
@@ -245,7 +247,7 @@ public final class GrabDependencies implements IntentionAction {
     return false;
   }
 
-  private static class GrapeProcessHandler extends OSProcessHandler {
+  private static final class GrapeProcessHandler extends OSProcessHandler {
     private final @NlsSafe StringBuilder myStdOut = new StringBuilder();
     private final @NlsSafe StringBuilder myStdErr = new StringBuilder();
     private final Module myModule;

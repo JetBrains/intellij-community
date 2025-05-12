@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit;
 
 import com.intellij.ide.AppLifecycleListener;
@@ -140,7 +140,7 @@ public final class LightEditServiceImpl implements LightEditService,
     return lightEditProjectManager.getProject();
   }
 
-  @NotNull Project getOrCreateProject() {
+  public @NotNull Project getOrCreateProject() {
     return lightEditProjectManager.getOrCreateProject();
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.testIntegration;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,6 +20,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.testing.PythonUnitTestDetectorsBasedOnSettings;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.List;
 
@@ -76,7 +77,8 @@ public final class PyTestCreator implements TestCreator {
    *
    * @return newly created test class
    */
-  static @NotNull PyElement generateTest(final @NotNull PsiElement anchor, final @NotNull PyTestCreationModel model) {
+  @VisibleForTesting
+  public static @NotNull PyElement generateTest(final @NotNull PsiElement anchor, final @NotNull PyTestCreationModel model) {
     final Project project = anchor.getProject();
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 

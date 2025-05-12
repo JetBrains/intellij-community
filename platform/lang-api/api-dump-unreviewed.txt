@@ -1606,7 +1606,6 @@ c:com.intellij.execution.filters.CompositeFilter
 - applyHeavyFilter(com.intellij.openapi.editor.Document,I,I,com.intellij.util.Consumer):V
 - getFilters():java.util.List
 - getUpdateMessage():java.lang.String
-- ps:intersects(java.util.List,com.intellij.execution.filters.Filter$ResultItem):Z
 - isAnyHeavy():Z
 - isEmpty():Z
 - setForceUseAllFilters(Z):V

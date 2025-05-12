@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent
 
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -6,7 +6,7 @@ import java.nio.file.Path
 import java.util.*
 import kotlin.collections.ArrayDeque
 
-object VfsDiffBuilder {
+internal object VfsDiffBuilder {
   class FileFlags(val flags: Int) {
     enum class FileStatus(val bit: Int) {
       CHILDREN_CACHED(PersistentFS.Flags.CHILDREN_CACHED),
@@ -59,7 +59,7 @@ object VfsDiffBuilder {
     }
   }
 
-  data class DiffResult(val filesVisited: Int, val attributesChecked: Int, val elements: List<DiffElement>) {
+  internal data class DiffResult(val filesVisited: Int, val attributesChecked: Int, val elements: List<DiffElement>) {
     override fun toString(): String {
       return "visited $filesVisited files and checked $attributesChecked attributes\n" +
              if (elements.isEmpty()) {
@@ -72,7 +72,7 @@ object VfsDiffBuilder {
     }
   }
 
-  fun buildDiff(baseVfs: FSRecordsImpl, targetVfs: FSRecordsImpl, maxDiffElements: Int = 10_000): DiffResult {
+  internal fun buildDiff(baseVfs: FSRecordsImpl, targetVfs: FSRecordsImpl, maxDiffElements: Int = 10_000): DiffResult {
     val diff = mutableListOf<DiffElement>()
     var idsVisited = 0
 

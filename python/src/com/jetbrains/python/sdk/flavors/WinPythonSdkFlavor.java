@@ -146,8 +146,9 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
     myAppxCache.drop();
   }
 
-
-  void findInRegistry(final @NotNull Collection<String> candidates) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public void findInRegistry(final @NotNull Collection<String> candidates) {
     candidates.addAll(myRegistryCache.getValue());
   }
 

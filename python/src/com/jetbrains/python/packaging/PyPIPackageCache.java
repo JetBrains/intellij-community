@@ -30,7 +30,7 @@ public class PyPIPackageCache extends PyAbstractPackageCache {
   }
 
   @VisibleForTesting
-  static synchronized @NotNull PyPIPackageCache getInstance(@NotNull Path pathToCache) {
+  public static synchronized @NotNull PyPIPackageCache getInstance(@NotNull Path pathToCache) {
     if (ourInstance == null) {
       ourInstance = PyAbstractPackageCache.load(PyPIPackageCache.class, new PyPIPackageCache(), pathToCache);
     }
@@ -44,7 +44,7 @@ public class PyPIPackageCache extends PyAbstractPackageCache {
   }
 
   @TestOnly
-  static synchronized void reset() {
+  public static synchronized void reset() {
     ourInstance = null;
   }
 

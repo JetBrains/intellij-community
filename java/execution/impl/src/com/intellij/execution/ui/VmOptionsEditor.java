@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.ExecutionBundle;
@@ -8,6 +8,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.*;
 import com.intellij.util.execution.ParametersListUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -22,7 +23,8 @@ public class VmOptionsEditor extends JPanel implements FragmentWrapper, Expandab
   private LanguageTextField myPopupEditor;
   private final ExpandableEditorSupport mySupport;
 
-  VmOptionsEditor(JavaRunConfigurationBase settings) {
+  @ApiStatus.Internal
+  public VmOptionsEditor(JavaRunConfigurationBase settings) {
     super(new BorderLayout());
     myEditor = new LanguageTextField(FileTypes.PLAIN_TEXT.getLanguage(), settings.getProject(), "", true);
     String message = ExecutionBundle.message("run.configuration.java.vm.parameters.empty.text");

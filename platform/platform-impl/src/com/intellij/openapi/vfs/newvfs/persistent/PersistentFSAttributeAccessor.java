@@ -67,9 +67,9 @@ public final class PersistentFSAttributeAccessor {
    *
    * @return null if an appropriate attribute record does not exist
    */
-  <R> @Nullable R readAttributeRaw(int fileId,
-                                   @NotNull FileAttribute attribute,
-                                   ByteBufferReader<R> reader) throws IOException {
+  public <R> @Nullable R readAttributeRaw(int fileId,
+                                          @NotNull FileAttribute attribute,
+                                          ByteBufferReader<R> reader) throws IOException {
     if (!(attributesStorage instanceof AttributesStorageOverBlobStorage newAttributesStorage)) {
       throw new UnsupportedOperationException("Raw attribute access is not implemented for " + attributesStorage.getClass().getName());
     }

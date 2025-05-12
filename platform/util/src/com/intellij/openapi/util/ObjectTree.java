@@ -204,14 +204,13 @@ public final class ObjectTree {
   }
 
   @TestOnly
-  void assertNoReferenceKeptInTree(@NotNull Disposable disposable) {
+  public void assertNoReferenceKeptInTree(@NotNull Disposable disposable) {
     synchronized (getTreeLock()) {
       for (ObjectNode node : myObject2ParentNode.values()) {
         node.assertNoReferencesKept(disposable);
       }
     }
   }
-
 
   @TestOnly
   public void assertNoReferenceKeptInTree(@NotNull Class<Disposable> disposableClass) {

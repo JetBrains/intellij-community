@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.icons.AllIcons;
@@ -341,7 +341,8 @@ public final class ScopeEditorPanel implements Disposable {
   }
 
   @ApiStatus.Internal
-  static @Nullable PackageSet doExcludeSelected(@NotNull PackageSet set, @Nullable PackageSet current) {
+  @VisibleForTesting
+  public static @Nullable PackageSet doExcludeSelected(@NotNull PackageSet set, @Nullable PackageSet current) {
     if (current == null) {
       current = new ComplementPackageSet(set);
     }
@@ -378,7 +379,8 @@ public final class ScopeEditorPanel implements Disposable {
   }
 
   @ApiStatus.Internal
-  static @Nullable PackageSet doIncludeSelected(@NotNull PackageSet set, @Nullable PackageSet current) {
+  @VisibleForTesting
+  public static @Nullable PackageSet doIncludeSelected(@NotNull PackageSet set, @Nullable PackageSet current) {
     if (current == null) {
       current = set;
     }

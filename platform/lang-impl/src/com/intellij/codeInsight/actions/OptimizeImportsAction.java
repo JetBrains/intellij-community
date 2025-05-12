@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -17,13 +17,11 @@ import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public final class OptimizeImportsAction extends AnAction {
   private static final @NonNls String HELP_ID = "editing.manageImports";
   private static boolean myProcessVcsChangedFilesInTests;
@@ -232,7 +230,7 @@ public final class OptimizeImportsAction extends AnAction {
   }
 
   @TestOnly
-  static void setProcessVcsChangedFilesInTests(boolean value) {
+  public static void setProcessVcsChangedFilesInTests(boolean value) {
     myProcessVcsChangedFilesInTests = value;
   }
 

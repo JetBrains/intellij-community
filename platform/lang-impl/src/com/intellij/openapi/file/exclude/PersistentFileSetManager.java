@@ -17,6 +17,7 @@ import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.File;
 import java.util.*;
@@ -64,7 +65,7 @@ public abstract class PersistentFileSetManager implements PersistentStateCompone
     return isAdded;
   }
 
-  boolean removeFile(@NotNull VirtualFile file) {
+  public boolean removeFile(@NotNull VirtualFile file) {
     boolean isRemoved = myMap.remove(file) != null;
     if (isRemoved) {
       onFileSettingsChanged(Collections.singleton(file));
@@ -72,7 +73,8 @@ public abstract class PersistentFileSetManager implements PersistentStateCompone
     return isRemoved;
   }
 
-  String getFileValue(@NotNull VirtualFile file) {
+  @VisibleForTesting
+  public String getFileValue(@NotNull VirtualFile file) {
     return myMap.get(file);
   }
 

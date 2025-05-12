@@ -107,14 +107,14 @@ public final class LazyQuickFixUpdaterImpl implements LazyQuickFixUpdater {
   }
 
   @TestOnly
-  void stopUntil(@NotNull Disposable disposable) {
+  public void stopUntil(@NotNull Disposable disposable) {
     enabled = false;
     Disposer.register(disposable, ()->enabled=true);
   }
 
   @TestOnly
   @RequiresEdt
-  void waitForBackgroundJobIfStartedInTests(@NotNull PsiFile file, @NotNull Editor editor, @NotNull HighlightInfo info, long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+  public void waitForBackgroundJobIfStartedInTests(@NotNull PsiFile file, @NotNull Editor editor, @NotNull HighlightInfo info, long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
     ApplicationManager.getApplication().assertIsDispatchThread();
     AppExecutorUtil.getAppExecutorService().submit(() -> waitQuickFixesSynchronously(file, editor, info))
     .get(timeout, unit);

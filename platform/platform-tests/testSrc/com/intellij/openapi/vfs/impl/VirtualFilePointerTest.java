@@ -1336,6 +1336,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertTrue(pointer.getUrl(), pointer.getUrl().endsWith(path));
     assertEquals("allopen-compiler-plugin.jar", pointer.getFileName());
   }
+
   @Test
   public void testJarUrlContainingInvalidExclamationInTheMiddleMustNotCrashAnything() {
     File root = tempDir.getRoot();

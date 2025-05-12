@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.ObjectUtils;
 import com.pty4j.PtyProcess;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -128,8 +129,8 @@ public final class ConsoleViewRunningState extends ConsoleState {
   }
 
   @TestOnly
-  @Nullable
-  ProcessStreamsSynchronizer getStreamsSynchronizer() {
+  @ApiStatus.Internal
+  public @Nullable ProcessStreamsSynchronizer getStreamsSynchronizer() {
     return myStreamsSynchronizer;
   }
 

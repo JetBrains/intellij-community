@@ -15,6 +15,7 @@ import com.sun.jna.win32.W32APIOptions;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -92,7 +93,7 @@ public final class FileSystemUtil {
   private static @Nullable FileAttributes getAttributes(Path path) {
     try {
       BasicFileAttributes attributes = NioFiles.readAttributes(path);
-      return attributes == NioFiles.BROKEN_SYMLINK ? FileAttributes.BROKEN_SYMLINK : FileAttributes.fromNio(path, attributes);
+      return attributes == NioFiles.BROKEN_SYMLINK ? com.intellij.openapi.util.io.FileAttributes.BROKEN_SYMLINK : com.intellij.openapi.util.io.FileAttributes.fromNio(path, attributes);
     }
     catch (NoSuchFileException e) {
       LOG.trace(e.getClass().getName() + ": " + path);
@@ -128,12 +129,14 @@ public final class FileSystemUtil {
   @ApiStatus.Internal
   public static @NotNull FileAttributes.CaseSensitivity readParentCaseSensitivity(@NotNull java.io.File anyChild) {
     FileAttributes.CaseSensitivity detected = readCaseSensitivityByNativeAPI(anyChild);
-    if (detected != FileAttributes.CaseSensitivity.UNKNOWN) return detected;
+    if (detected != com.intellij.openapi.util.io.FileAttributes.CaseSensitivity.UNKNOWN) return detected;
     // native queries failed, fallback to the Java I/O:
     return readParentCaseSensitivityByJavaIO(anyChild);
   }
 
-  static @NotNull FileAttributes.CaseSensitivity readParentCaseSensitivityByJavaIO(@NotNull java.io.File anyChild) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @NotNull FileAttributes.CaseSensitivity readParentCaseSensitivityByJavaIO(@NotNull java.io.File anyChild) {
     // try to query this path by different-case strings and deduce case sensitivity from the answers
     if (!anyChild.exists()) {
       if (LOG.isDebugEnabled()) {
@@ -207,13 +210,15 @@ public final class FileSystemUtil {
     return FileAttributes.CaseSensitivity.SENSITIVE;
   }
 
-  static @NotNull FileAttributes.CaseSensitivity readCaseSensitivityByNativeAPI(@NotNull java.io.File anyChild) {
-    FileAttributes.CaseSensitivity detected = FileAttributes.CaseSensitivity.UNKNOWN;
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @NotNull FileAttributes.CaseSensitivity readCaseSensitivityByNativeAPI(@NotNull java.io.File anyChild) {
+    FileAttributes.CaseSensitivity detected = com.intellij.openapi.util.io.FileAttributes.CaseSensitivity.UNKNOWN;
     if (JnaLoader.isLoaded()) {
       java.io.File parent = anyChild.getParentFile();
       String path = (parent != null ? parent : anyChild).getAbsolutePath();
       if (SystemInfo.isWin10OrNewer && WINDOWS_CS_API_AVAILABLE) {
-        detected = OSAgnosticPathUtil.isAbsoluteDosPath(path) ? getNtfsCaseSensitivity(path) : FileAttributes.CaseSensitivity.UNKNOWN;
+        detected = OSAgnosticPathUtil.isAbsoluteDosPath(path) ? getNtfsCaseSensitivity(path) : com.intellij.openapi.util.io.FileAttributes.CaseSensitivity.UNKNOWN;
       }
       else if (SystemInfo.isMac && MAC_CS_API_AVAILABLE) {
         detected = getMacOsCaseSensitivity(path);
@@ -268,14 +273,14 @@ public final class FileSystemUtil {
     catch (Throwable t) {
       LOG.warn(t);
       WINDOWS_CS_API_AVAILABLE = false;
-      return FileAttributes.CaseSensitivity.UNKNOWN;
+      return com.intellij.openapi.util.io.FileAttributes.CaseSensitivity.UNKNOWN;
     }
     try {
       String name = "\\\\?\\" + path;
       WinNT.HANDLE handle = kernel32.CreateFile(name, 0, NtOsKrnl.FILE_SHARE_ALL, null, WinNT.OPEN_EXISTING, WinNT.FILE_FLAG_BACKUP_SEMANTICS, null);
       if (handle == WinBase.INVALID_HANDLE_VALUE) {
         if (LOG.isDebugEnabled()) LOG.debug("CreateFile(" + path + "): 0x" + Integer.toHexString(kernel32.GetLastError()));
-        return FileAttributes.CaseSensitivity.UNKNOWN;
+        return com.intellij.openapi.util.io.FileAttributes.CaseSensitivity.UNKNOWN;
       }
 
       NtOsKrnl.FILE_CASE_SENSITIVE_INFORMATION_P fileInformation = new NtOsKrnl.FILE_CASE_SENSITIVE_INFORMATION_P();
@@ -294,10 +299,10 @@ public final class FileSystemUtil {
         if (LOG.isDebugEnabled()) LOG.debug("NtQueryInformationFile(" + path + "): 0x" + Integer.toHexString(result));
       }
       else if (fileInformation.Flags == 0) {
-        return FileAttributes.CaseSensitivity.INSENSITIVE;
+        return com.intellij.openapi.util.io.FileAttributes.CaseSensitivity.INSENSITIVE;
       }
       else if (fileInformation.Flags == 1) {
-        return FileAttributes.CaseSensitivity.SENSITIVE;
+        return com.intellij.openapi.util.io.FileAttributes.CaseSensitivity.SENSITIVE;
       }
       else {
         LOG.warn("NtQueryInformationFile(" + path + "): unexpected 'FileCaseSensitiveInformation' value " + fileInformation.Flags);
@@ -307,7 +312,7 @@ public final class FileSystemUtil {
       LOG.warn("path: " + path, t);
     }
 
-    return FileAttributes.CaseSensitivity.UNKNOWN;
+    return com.intellij.openapi.util.io.FileAttributes.CaseSensitivity.UNKNOWN;
   }
 
   @SuppressWarnings("SpellCheckingInspection")
@@ -352,7 +357,7 @@ public final class FileSystemUtil {
     catch (Throwable t) {
       LOG.warn(t);
       MAC_CS_API_AVAILABLE = false;
-      return FileAttributes.CaseSensitivity.UNKNOWN;
+      return com.intellij.openapi.util.io.FileAttributes.CaseSensitivity.UNKNOWN;
     }
     try {
       byte[] buffer = path.getBytes(StandardCharsets.UTF_8);
@@ -374,7 +379,7 @@ public final class FileSystemUtil {
         }
         else {
           boolean value = new CoreFoundation.CFBooleanRef(result).booleanValue();
-          return value ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE;
+          return value ? com.intellij.openapi.util.io.FileAttributes.CaseSensitivity.SENSITIVE : com.intellij.openapi.util.io.FileAttributes.CaseSensitivity.INSENSITIVE;
         }
       }
       finally {
@@ -385,7 +390,7 @@ public final class FileSystemUtil {
       LOG.warn("path: " + path, t);
     }
 
-    return FileAttributes.CaseSensitivity.UNKNOWN;
+    return com.intellij.openapi.util.io.FileAttributes.CaseSensitivity.UNKNOWN;
   }
 
   private interface CoreFoundation extends com.sun.jna.platform.mac.CoreFoundation {
@@ -412,7 +417,7 @@ public final class FileSystemUtil {
     catch (Throwable t) {
       LOG.warn(t);
       LINUX_CS_API_AVAILABLE = false;
-      return FileAttributes.CaseSensitivity.UNKNOWN;
+      return com.intellij.openapi.util.io.FileAttributes.CaseSensitivity.UNKNOWN;
     }
     try {
       Memory buf = new Memory(256);
@@ -423,11 +428,11 @@ public final class FileSystemUtil {
         long fs = Native.LONG_SIZE == 4 ? ((long)buf.getInt(0)) & 0xFFFFFFFFL : buf.getLong(0);
         // Btrfs, XFS
         if (fs == 0x9123683EL || fs == 0x58465342L) {
-          return FileAttributes.CaseSensitivity.SENSITIVE;
+          return com.intellij.openapi.util.io.FileAttributes.CaseSensitivity.SENSITIVE;
         }
         // VFAT
         if (fs == 0x4D44L) {
-          return FileAttributes.CaseSensitivity.INSENSITIVE;
+          return com.intellij.openapi.util.io.FileAttributes.CaseSensitivity.INSENSITIVE;
         }
         // Ext*, F2FS
         if ((fs == 0xEF53L || fs == 0xF2F52010L) && ourLibExt2FsPresent) {
@@ -438,7 +443,7 @@ public final class FileSystemUtil {
           catch (Throwable t) {
             LOG.warn(t);
             ourLibExt2FsPresent = false;
-            return FileAttributes.CaseSensitivity.UNKNOWN;
+            return com.intellij.openapi.util.io.FileAttributes.CaseSensitivity.UNKNOWN;
           }
           LongByReference flags = new LongByReference();
           if (e2P.fgetflags(path, flags) != 0) {
@@ -447,7 +452,7 @@ public final class FileSystemUtil {
           else {
             // Ext4/F2FS inodes on file systems with the "casefold" option enable may have EXT4_CASEFOLD_FL (F2FS_CASEFOLD_FL) attribute
             // (like https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=b886ee3e778ec2ad43e276fd378ab492cf6819b7)
-            return (flags.getValue() & E2P.EXT4_CASEFOLD_FL) == 0 ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE;
+            return (flags.getValue() & E2P.EXT4_CASEFOLD_FL) == 0 ? com.intellij.openapi.util.io.FileAttributes.CaseSensitivity.SENSITIVE : com.intellij.openapi.util.io.FileAttributes.CaseSensitivity.INSENSITIVE;
           }
         }
       }
@@ -456,7 +461,7 @@ public final class FileSystemUtil {
       LOG.warn("path: " + path, t);
     }
 
-    return FileAttributes.CaseSensitivity.UNKNOWN;
+    return com.intellij.openapi.util.io.FileAttributes.CaseSensitivity.UNKNOWN;
   }
 
   private interface LibC extends Library {

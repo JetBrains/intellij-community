@@ -494,7 +494,9 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
     return Collections.unmodifiableSet(blackList);
   }
 
-  static @NotNull @Unmodifiable Collection<String> getBlackList() {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @NotNull @Unmodifiable Collection<String> getBlackList() {
     Set<String> blackList = ourBlackList;
     if (blackList == null) {
       synchronized (BLACK_LIST_LOCK) {

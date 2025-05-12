@@ -23,7 +23,10 @@ import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.AppUIExecutor;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
@@ -889,7 +892,9 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
    * @param debuggerScript     the debugger script
    * @param serverPortOnTarget the server
    */
-  static void configureServerModeDebugConnectionParameters(@NotNull PythonExecution debuggerScript,
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static void configureServerModeDebugConnectionParameters(@NotNull PythonExecution debuggerScript,
                                                            @NotNull Function<TargetEnvironment, HostPort> serverPortOnTarget) {
     // --port
     debuggerScript.addParameter(PORT_PARAM);

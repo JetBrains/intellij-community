@@ -34,6 +34,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -72,7 +73,8 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     }, project);
   }
 
-  void reRegisterFactories() {
+  @VisibleForTesting
+  public void reRegisterFactories() {
     synchronized (this) {
       myRegisteredPassFactories.clear();
       myFrozenPassConfigs = null;

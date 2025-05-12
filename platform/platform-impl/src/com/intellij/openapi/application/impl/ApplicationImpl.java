@@ -183,7 +183,8 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   @TestOnly
-  ThreadingSupport getRwLock() {
+  @ApiStatus.Internal
+  public ThreadingSupport getRwLock() {
     return getThreadingSupport();
   }
 
@@ -1326,7 +1327,8 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   @TestOnly
-  void disableEventsUntil(@NotNull Disposable disposable) {
+  @ApiStatus.Internal
+  public void disableEventsUntil(@NotNull Disposable disposable) {
     myDispatcher.neuterMultiCasterWhilePerformanceTestIsRunningUntil(disposable);
   }
 

@@ -257,7 +257,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @VisibleForTesting
-  void doClearIndices(@NotNull Predicate<? super ID<?, ?>> filter) {
+  public void doClearIndices(@NotNull Predicate<? super ID<?, ?>> filter) {
     try {
       waitUntilIndicesAreInitialized();
     }

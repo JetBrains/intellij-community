@@ -16,10 +16,7 @@ import com.intellij.util.PathUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.URLUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,7 +39,6 @@ public final class FilePartNodeRoot extends FilePartNode {
   CharSequence getName() {
     return "";
   }
-
 
   @NotNull
   NodeToUpdate findOrCreateByFile(@NotNull VirtualFile file) {
@@ -350,7 +346,8 @@ public final class FilePartNodeRoot extends FilePartNode {
     }
   }
 
-  static @NotNull FilePartNodeRoot createFakeRoot(@NotNull NewVirtualFileSystem fs) {
+  @VisibleForTesting
+  public static @NotNull FilePartNodeRoot createFakeRoot(@NotNull NewVirtualFileSystem fs) {
     return new FilePartNodeRoot(fs);
   }
 }

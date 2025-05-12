@@ -213,7 +213,8 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
       notAllowedMethodCall();
     }
 
-    void superSetKeepAliveTime(long time, TimeUnit unit) {
+    @VisibleForTesting
+    public void superSetKeepAliveTime(long time, TimeUnit unit) {
       super.setKeepAliveTime(time, unit);
     }
 
@@ -228,7 +229,7 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
   }
 
   @TestOnly
-  void waitForLowMemoryWatcherManagerInit(int timeout, @NotNull TimeUnit unit)
+  public void waitForLowMemoryWatcherManagerInit(int timeout, @NotNull TimeUnit unit)
     throws InterruptedException, ExecutionException, TimeoutException {
     myLowMemoryWatcherManager.waitForInitComplete(timeout, unit);
   }
@@ -243,7 +244,6 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
   /**
    * This function intentionally has a scary name so that no one would try to use it.
    */
-  @ApiStatus.Internal
   public static @NotNull Runnable captureContextCancellationForRunnableThatDoesNotOutliveContextScope(@NotNull Runnable r) {
     return Propagation.capturePropagationContext(r, true);
   }

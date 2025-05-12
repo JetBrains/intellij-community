@@ -10,11 +10,13 @@ import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.Presentation;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
+@ApiStatus.Internal
 public final class CopyPropertyValueToClipboardIntention implements ModCommandAction {
-
   @Override
   public @NotNull String getFamilyName() {
     return PropertiesBundle.message("copy.property.value.to.clipboard.intention.family.name");
@@ -29,7 +31,8 @@ public final class CopyPropertyValueToClipboardIntention implements ModCommandAc
     return Presentation.of(getFamilyName()).withPriority(PriorityAction.Priority.LOW);
   }
 
-  static @Nullable Property getProperty(@NotNull ActionContext context) {
+  @VisibleForTesting
+  public static @Nullable Property getProperty(@NotNull ActionContext context) {
     return PsiTreeUtil.getParentOfType(context.findLeaf(), Property.class);
   }
 
