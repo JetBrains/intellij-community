@@ -11,25 +11,6 @@
 - name: lib/evaluationPlugin.jar
   modules:
   - name: intellij.evaluationPlugin
-  - name: intellij.evaluationPlugin.languages.cpp
-  - name: intellij.evaluationPlugin.languages.csharp
-  - name: intellij.evaluationPlugin.languages.go
-  - name: intellij.evaluationPlugin.languages.js
-  - name: intellij.evaluationPlugin.languages.php
-  - name: intellij.evaluationPlugin.languages.pythonDocker
-  - name: intellij.evaluationPlugin.languages.ruby
-  - name: intellij.evaluationPlugin.languages.rust
-  - name: intellij.evaluationPlugin.languages.sql
-  - name: intellij.evaluationPlugin.languages.terraform
-  - name: intellij.evaluationPlugin.languages.yaml
-  - name: intellij.evaluationPlugin.languages.markdown
-  - name: intellij.evaluationPlugin.languages.json
-  - name: intellij.evaluationPlugin.inlineCompletion
-  - name: intellij.evaluationPlugin.agent
-  - name: intellij.evaluationPlugin.fullLine
-  - name: intellij.evaluationPlugin.llm
-  - name: intellij.evaluationPlugin.ultimate
-  - name: intellij.evaluationPlugin.ijnext
   - name: intellij.tools.ide.metrics.collector
   - name: intellij.evaluationPlugin.languages
     reason: <- intellij.evaluationPlugin
@@ -39,6 +20,24 @@
   - name: intellij.evaluationPlugin.languages.java
   - name: intellij.evaluationPlugin.languages.python
   - name: intellij.evaluationPlugin.languages.kotlin
+  - name: intellij.evaluationPlugin.languages.cpp
+  - name: intellij.evaluationPlugin.languages.csharp
+  - name: intellij.evaluationPlugin.languages.go
+  - name: intellij.evaluationPlugin.languages.js
+  - name: intellij.evaluationPlugin.languages.json
+  - name: intellij.evaluationPlugin.languages.markdown
+  - name: intellij.evaluationPlugin.languages.php
+  - name: intellij.evaluationPlugin.languages.pythonDocker
+  - name: intellij.evaluationPlugin.languages.ruby
+  - name: intellij.evaluationPlugin.languages.rust
+  - name: intellij.evaluationPlugin.languages.sql
+  - name: intellij.evaluationPlugin.languages.terraform
+  - name: intellij.evaluationPlugin.languages.yaml
+  - name: intellij.evaluationPlugin.inlineCompletion
+  - name: intellij.evaluationPlugin.fullLine
+  - name: intellij.evaluationPlugin.agent
+  - name: intellij.evaluationPlugin.llm
+  - name: intellij.evaluationPlugin.ijnext
 - name: lib/jerolba.carpet.record.jar
   library: jerolba.carpet.record
   files:

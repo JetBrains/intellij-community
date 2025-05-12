@@ -1,4 +1,4 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="com.intellij.cce">
+<idea-plugin package="com.intellij.cce">
   <id>com.intellij.completion.evaluation</id>
   <!--suppress PluginXmlValidity -->
   <name>Evaluation Plugin</name>
@@ -13,11 +13,26 @@
     <module name="intellij.evaluationPlugin.languages.java"/>
     <module name="intellij.evaluationPlugin.languages.python"/>
     <module name="intellij.evaluationPlugin.languages.kotlin"/>
-  </content>
 
-  <xi:include href="/META-INF/eval-ultimate.xml">
-    <xi:fallback/>
-  </xi:include>
+    <module name="intellij.evaluationPlugin.languages.cpp"/>
+    <module name="intellij.evaluationPlugin.languages.csharp"/>
+    <module name="intellij.evaluationPlugin.languages.go"/>
+    <module name="intellij.evaluationPlugin.languages.js"/>
+    <module name="intellij.evaluationPlugin.languages.json"/>
+    <module name="intellij.evaluationPlugin.languages.markdown"/>
+    <module name="intellij.evaluationPlugin.languages.php"/>
+    <module name="intellij.evaluationPlugin.languages.pythonDocker"/>
+    <module name="intellij.evaluationPlugin.languages.ruby"/>
+    <module name="intellij.evaluationPlugin.languages.rust"/>
+    <module name="intellij.evaluationPlugin.languages.sql"/>
+    <module name="intellij.evaluationPlugin.languages.terraform"/>
+    <module name="intellij.evaluationPlugin.languages.yaml"/>
+    <module name="intellij.evaluationPlugin.inlineCompletion"/>
+    <module name="intellij.evaluationPlugin.fullLine"/>
+    <module name="intellij.evaluationPlugin.agent"/>
+    <module name="intellij.evaluationPlugin.llm"/>
+    <module name="intellij.evaluationPlugin.ijnext"/>
+  </content>
 
   <dependencies>
     <plugin id="com.intellij.completion.ml.ranking"/>
