@@ -13,9 +13,9 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.PyKnownDecorator
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.StubAwareComputation
+import com.jetbrains.python.psi.impl.mapArguments
 import com.jetbrains.python.psi.impl.stubs.PyDataclassFieldStubImpl
 import com.jetbrains.python.psi.impl.stubs.PyDataclassStubImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
@@ -243,8 +243,7 @@ private fun parseDataclassParametersFromAST(cls: PyClass, context: TypeEvalConte
         val types = decoratorAndTypeAndMarkedCallee(cls.project)
         val decoratorAndTypeAndMarkedCallee = types.firstOrNull { it.first == decoratorQualifiedName } ?: continue
   
-        val mapping = PyCallExpressionHelper.mapArguments(
-          decorator,
+        val mapping = decorator.mapArguments(
           PyCallableTypeImpl(decoratorAndTypeAndMarkedCallee.third, null),
           context ?: TypeEvalContext.codeInsightFallback(cls.project)
         )
