@@ -45,7 +45,7 @@ public fun IconActionButton(
     colorFilter: ColorFilter? = null,
     hint: PainterHint? = null,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    iconClass: Class<*> = key::class.java,
+    iconClass: Class<*> = key.iconClass,
 ) {
     BaseIconActionButton(
         key = key,
@@ -79,7 +79,7 @@ public fun IconActionButton(
     tooltipModifier: Modifier = Modifier,
     tooltipPlacement: TooltipPlacement = FixedCursorPoint(offset = DpOffset(0.dp, 16.dp)),
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    iconClass: Class<*> = key::class.java,
+    iconClass: Class<*> = key.iconClass,
     tooltip: @Composable () -> Unit,
 ) {
     Tooltip(tooltip, style = tooltipStyle, modifier = tooltipModifier, tooltipPlacement = tooltipPlacement) {
@@ -113,7 +113,7 @@ public fun IconActionButton(
     style: IconButtonStyle = JewelTheme.iconButtonStyle,
     colorFilter: ColorFilter? = null,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    iconClass: Class<*> = key::class.java,
+    iconClass: Class<*> = key.iconClass,
 ) {
     CoreIconActionButton(
         key = key,
@@ -147,7 +147,7 @@ public fun IconActionButton(
     tooltipModifier: Modifier = Modifier,
     tooltipPlacement: TooltipPlacement = FixedCursorPoint(offset = DpOffset(0.dp, 16.dp)),
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    iconClass: Class<*> = key::class.java,
+    iconClass: Class<*> = key.iconClass,
     tooltip: @Composable () -> Unit,
 ) {
     Tooltip(tooltip, style = tooltipStyle, modifier = tooltipModifier, tooltipPlacement = tooltipPlacement) {
