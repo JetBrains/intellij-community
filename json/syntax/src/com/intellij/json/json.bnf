@@ -1,5 +1,6 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 {
-  parserClass = 'com.intellij.json.JsonParser'
+  parserClass = 'com.intellij.json.JsonSyntaxParser'
   parserUtilClass = "com.intellij.json.psi.JsonParserUtil"
   psiPackage = 'com.intellij.json.psi'
   psiImplPackage = 'com.intellij.json.psi.impl'
