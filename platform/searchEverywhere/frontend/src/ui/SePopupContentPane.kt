@@ -142,9 +142,12 @@ class SePopupContentPane(private val vm: SePopupVm) : JPanel(), Disposable {
 
             withContext(Dispatchers.EDT) {
               textField.setSearchInProgress(false)
-              //val oldSize = resultListModel.size()
+              val wasFrozen = resultListModel.freezer.isEnabled
 
               resultListModel.addFromThrottledEvent(event)
+
+              // Freeze back if it was frozen before
+              if (wasFrozen) resultListModel.freezer.enable()
               resultListModel.freezer.freezeIfEnabled(indexToFreezeFromListOffset())
 
               //if (oldSize == 0 && resultListModel.size() > 0) {
