@@ -2,6 +2,7 @@
 
   <dependencies>
     <plugin id="com.intellij.java"/>
+    <module name="intellij.devkit.apiDump"/>
   </dependencies>
 
   <resource-bundle>messages.ApiDumpLangBundle</resource-bundle>
