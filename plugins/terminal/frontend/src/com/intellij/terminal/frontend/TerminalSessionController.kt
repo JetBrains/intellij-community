@@ -129,7 +129,7 @@ internal class TerminalSessionController(
         withContext(edtContext) {
           blocksModel.commandFinished(event.exitCode)
         }
-        shellIntegrationEventDispatcher.multicaster.commandFinished(event.command, event.exitCode)
+        shellIntegrationEventDispatcher.multicaster.commandFinished(event.command, event.exitCode, event.currentDirectory)
       }
     }
   }

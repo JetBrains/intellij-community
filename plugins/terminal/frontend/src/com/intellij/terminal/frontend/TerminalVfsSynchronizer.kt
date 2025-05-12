@@ -18,7 +18,7 @@ internal class TerminalVfsSynchronizer private constructor() {
       parentDisposable: Disposable,
     ) {
       sessionController.addShellIntegrationListener(parentDisposable, object : TerminalShellIntegrationEventsListener {
-        override fun commandFinished(command: String, exitCode: Int) {
+        override fun commandFinished(command: String, exitCode: Int, currentDirectory: String) {
           SaveAndSyncHandler.getInstance().scheduleRefresh()
         }
       })
