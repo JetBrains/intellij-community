@@ -103,7 +103,7 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
       preferences.highlightDiffLinesInEditorState.collect {
         listener()
       }
-    }.cancelOnDispose(disposable, false)
+    }.cancelOnDispose(disposable)
   }
 
   fun setPostReviewChanges(changedRanges: List<Range>) {

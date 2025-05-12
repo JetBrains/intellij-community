@@ -87,7 +87,7 @@ internal class GHPRReviewFileEditorModel internal constructor(
       settings.highlightDiffLinesInEditorState.collect {
         listener()
       }
-    }.cancelOnDispose(disposable, false)
+    }.cancelOnDispose(disposable)
   }
 
   fun setPostReviewChanges(changedRanges: List<Range>) {

@@ -191,7 +191,7 @@ private class PluginsAutoUpdateRepositoryViewAction : AnAction() {
               )
             }
           }
-        }.cancelOnDispose(disposable, false)
+        }.cancelOnDispose(disposable)
       }
       separator()
       row {

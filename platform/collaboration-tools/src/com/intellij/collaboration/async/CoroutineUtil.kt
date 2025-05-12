@@ -11,7 +11,6 @@ import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.Disposer
-import com.intellij.ui.CollectionListModel
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.containers.toArray
@@ -21,7 +20,6 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.ListModel
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -68,7 +66,7 @@ fun CoroutineScope.nestedDisposable(): Disposable {
 fun CoroutineScope.cancelledWith(disposable: Disposable): CoroutineScope = apply {
   val job = coroutineContext[Job]
   requireNotNull(job) { "Coroutine scope without a parent job $this" }
-  job.cancelOnDispose(disposable, false)
+  job.cancelOnDispose(disposable)
 }
 
 fun CoroutineScope.launchNow(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> Unit): Job =
