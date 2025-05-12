@@ -47,7 +47,10 @@ __jetbrains_intellij_command_precmd() {
     __jetbrains_intellij_initialized="1"
     builtin printf '\e]1341;initialized\a'
   elif [[ -n "$__jetbrains_intellij_command_running" ]]; then
-    builtin printf '\e]1341;command_finished;exit_code=%s\a' "$LAST_EXIT_CODE"
+    builtin local current_directory="$PWD"
+    builtin printf '\e]1341;command_finished;exit_code=%s;current_directory=%s\a' \
+      "$LAST_EXIT_CODE" \
+      "$(__jetbrains_intellij_encode "$current_directory")"
   fi
 
   if [ -n "$__jetbrains_intellij_should_update_prompt" ]; then
