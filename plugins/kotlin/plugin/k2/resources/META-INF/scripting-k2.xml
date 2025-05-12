@@ -6,6 +6,11 @@
 
   <extensionPoints>
     <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.k2IdeScriptAdditionalIdeaDependenciesProvider"
+            interface="org.jetbrains.kotlin.idea.core.script.dependencies.K2IdeScriptAdditionalIdeaDependenciesProvider"
+            dynamic="true"/>
+
+    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.scriptDefinitionsProvider"
             interface="kotlin.script.experimental.intellij.ScriptDefinitionsProvider"
             area="IDEA_PROJECT"
@@ -116,6 +121,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <k2IdeScriptAdditionalIdeaDependenciesProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.MainKtsScriptDependenciesProvider"/>
     <scriptDefinitionsSource
             id="BridgeScriptDefinitionsContributor"
             implementation="org.jetbrains.kotlin.idea.core.script.BridgeScriptDefinitionsContributor"/>

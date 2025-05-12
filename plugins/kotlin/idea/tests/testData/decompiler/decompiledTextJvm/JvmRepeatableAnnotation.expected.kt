@@ -4,5 +4,5 @@
 package one.two
 
 @java.lang.annotation.Repeatable public final annotation class JvmRepeatableAnnotation public constructor(value: kotlin.Int) : kotlin.Annotation {
-    public final val value: kotlin.Int /* compiled code */
+    public final val value: kotlin.Int /* compiled code */ /* hasBackingField: false */
 }

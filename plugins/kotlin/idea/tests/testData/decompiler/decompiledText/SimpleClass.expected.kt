@@ -4,11 +4,11 @@
 package test
 
 public abstract class SimpleClass public constructor() : dependency.D<dependency.Tr, kotlin.Int>, dependency.Tr, kotlin.collections.List<kotlin.String> {
-    public final val a: dependency.A /* compiled code */
+    public final val a: dependency.A /* compiled code */ /* hasBackingField: true */
 
-    public final var b: dependency.B /* compiled code */
+    public final var b: dependency.B /* compiled code */ /* hasBackingField: true */
 
-    public final val kotlin.Int.g: kotlin.Int /* compiled code */
+    public final val kotlin.Int.g: kotlin.Int /* compiled code */ /* hasBackingField: false */
         public final get
 
     public final fun <T, K, G> complexFun(a: T, b: K, c: G): G { /* compiled code */ }

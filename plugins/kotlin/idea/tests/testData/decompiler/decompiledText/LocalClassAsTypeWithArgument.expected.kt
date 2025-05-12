@@ -4,5 +4,5 @@
 package test
 
 public final class LocalClassAsTypeWithArgument<E> public constructor() {
-    private final val z: kotlin.Any /* compiled code */
+    private final val z: kotlin.Any /* compiled code */ /* hasBackingField: true */
 }

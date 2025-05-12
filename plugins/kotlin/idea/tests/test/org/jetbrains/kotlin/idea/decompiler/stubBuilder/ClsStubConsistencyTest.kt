@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.decompiler.stubBuilder
 
@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinder
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.stubs.elements.KtFileStubBuilder
 import org.junit.Assert
@@ -24,7 +25,8 @@ class ClsStubConsistencyTest : KotlinLightCodeInsightFixtureTestCase() {
             ?: throw AssertionError("File not found for id: $id")
         val decompiledText = buildDecompiledTextForClassFile(packageFile).text
         val fileWithDecompiledText = KtPsiFactory(project).createFile(decompiledText)
-        val stubTreeFromDecompiledText = KtFileStubBuilder().buildStubTree(fileWithDecompiledText)
+        val compiledFile = KtFile(fileWithDecompiledText.viewProvider, isCompiled = true)
+        val stubTreeFromDecompiledText = KtFileStubBuilder().buildStubTree(compiledFile)
         val expectedText = stubTreeFromDecompiledText.serializeToString()
 
         val fileStub = KotlinClsStubBuilder().buildFileStub(FileContentImpl.createByFile(packageFile))!!
