@@ -29,7 +29,8 @@ import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
-open class ModuleImpl @ApiStatus.Internal constructor(
+@ApiStatus.Internal
+open class ModuleImpl(
   name: String,
   project: Project,
   val componentManager: ComponentManager,
@@ -43,7 +44,6 @@ open class ModuleImpl @ApiStatus.Internal constructor(
   private var name: String? = null
   private val moduleScopeProvider: ModuleScopeProvider
 
-  @ApiStatus.Internal
   constructor(
     name: String,
     project: Project,
@@ -88,7 +88,6 @@ open class ModuleImpl @ApiStatus.Internal constructor(
   private val isPersistent: Boolean
     get() = imlFilePointer != null
 
-  @get:ApiStatus.Internal
   override val delegateComponentManager: ComponentManagerEx
     get() = componentManager as ComponentManagerEx
 
