@@ -49,6 +49,7 @@ class TerminalFontSettingsService : AppFontOptions<TerminalFontSettingsState>() 
     val preferences = fontPreferences
     return TerminalFontSettings(
       fontFamily = preferences.fontFamily,
+      fallbackFontFamily = preferences.effectiveFontFamilies.getOrNull(1) ?: FontPreferences.DEFAULT_FONT_NAME,
       fontSize = TerminalFontSize.ofFloat(preferences.getSize2D(preferences.fontFamily)),
       lineSpacing = TerminalLineSpacing.ofFloat(preferences.lineSpacing),
       columnSpacing = columnSpacing,
@@ -73,6 +74,10 @@ class TerminalFontSettingsService : AppFontOptions<TerminalFontSettingsState>() 
     val boldSubFamily = FontFamilyService.getRecommendedBoldSubFamily(settings.fontFamily, regularSubFamily)
     newPreferences.boldSubFamily = boldSubFamily
     newPreferences.setFontSize(settings.fontFamily, settings.fontSize.floatValue)
+    if (settings.fallbackFontFamily != settings.fontFamily) {
+      newPreferences.addFontFamily(settings.fallbackFontFamily)
+      newPreferences.setFontSize(settings.fallbackFontFamily, settings.fontSize.floatValue)
+    }
     newPreferences.lineSpacing = settings.lineSpacing.floatValue
     // then apply the settings that aren't a part of FontPreferences
     columnSpacing = settings.columnSpacing
@@ -82,6 +87,16 @@ class TerminalFontSettingsService : AppFontOptions<TerminalFontSettingsState>() 
     if (settings != oldSettings) {
       fireListeners()
     }
+  }
+
+  override fun getFontPreferences(): FontPreferences {
+    val result = super.getFontPreferences()
+    // The default fallback family isn't serialized, but we need to explicitly add it anyway if we're not using the default font.
+    // Otherwise, if the explicitly set font is missing some characters, the default font won't be used as a fallback.
+    if (result.effectiveFontFamilies.size == 1 && result.fontFamily != FontPreferences.DEFAULT_FONT_NAME) {
+      (result as FontPreferencesImpl).register(FontPreferences.DEFAULT_FONT_NAME, result.getSize2D(result.fontFamily))
+    }
+    return result
   }
 
   override fun createFontState(fontPreferences: FontPreferences): TerminalFontSettingsState =
@@ -272,6 +287,7 @@ interface TerminalFontSettingsListener {
 
 internal data class TerminalFontSettings(
   val fontFamily: String,
+  val fallbackFontFamily: String,
   val fontSize: TerminalFontSize,
   val lineSpacing: TerminalLineSpacing,
   val columnSpacing: TerminalColumnSpacing,
@@ -282,6 +298,7 @@ class TerminalFontSettingsState: AppEditorFontOptions.PersistentFontPreferences 
   @Suppress("unused") // for serialization
   constructor(): super() {
     LINE_SPACING = DEFAULT_TERMINAL_LINE_SPACING.floatValue // to ensure that values different from OUR default are saved
+    SECONDARY_FONT_FAMILY = FontPreferences.DEFAULT_FONT_NAME
   }
 
   constructor(fontPreferences: FontPreferences): super(fontPreferences)

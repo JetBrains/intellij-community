@@ -148,6 +148,16 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
                 setter = { fontSettings = fontSettings.copy(fontFamily = it) },
               ).toNullableProperty()
             )
+          cell(fontComboBox())
+            .label(message("settings.fallback.font.name"))
+            .bind(
+              componentGet = { comboBox -> comboBox.fontName },
+              componentSet = {comboBox, value -> comboBox.fontName = value },
+              MutableProperty(
+                getter = { fontSettings.fallbackFontFamily },
+                setter = { fontSettings = fontSettings.copy(fallbackFontFamily = it) },
+              ).toNullableProperty()
+            )
         }
 
         row {

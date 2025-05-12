@@ -56,6 +56,7 @@ import com.jediterm.terminal.ui.AwtTransformers
 import com.jediterm.terminal.util.CharUtils
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.TerminalFontSettingsService
 import org.jetbrains.plugins.terminal.block.output.TextAttributesProvider
 import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
 import org.jetbrains.plugins.terminal.block.session.TerminalModel
@@ -294,9 +295,7 @@ object TerminalUiUtils {
 
 fun EditorImpl.applyFontSettings(newSettings: JBTerminalSystemSettingsProviderBase) {
   colorsScheme.apply {
-    editorFontName = newSettings.terminalFont.fontName
-    setEditorFontSize(newSettings.terminalFont.size2D)
-    lineSpacing = newSettings.lineSpacing
+    fontPreferences = newSettings.fontPreferences
   }
   settings.apply {
     characterGridWidthMultiplier = newSettings.columnSpacing
