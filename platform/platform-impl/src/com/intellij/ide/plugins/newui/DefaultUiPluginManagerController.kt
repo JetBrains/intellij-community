@@ -23,6 +23,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.io.HttpRequests
 import java.io.IOException
 import java.nio.file.Paths
+import java.util.UUID
 import kotlin.jvm.Throws
 
 @ApiStatus.Internal
@@ -84,6 +85,14 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       .connect {
         objectMapper.readValue(it.inputStream, object : TypeReference<List<PluginReviewComment>>() {})
       }
+  }
+
+  override fun createSession(sessionId: String) {
+    PluginManagerSessionService.getInstance().createSession(sessionId)
+  }
+
+  override fun closeSession(sessionId: String) {
+    PluginManagerSessionService.getInstance().removeSession(sessionId)
   }
 }
 

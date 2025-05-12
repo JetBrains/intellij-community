@@ -13,6 +13,7 @@ import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
 import org.jetbrains.annotations.ApiStatus
+import java.util.UUID
 
 @Rpc
 @ApiStatus.Internal
@@ -24,6 +25,8 @@ interface PluginManagerApi: RemoteApi<Unit> {
   suspend fun isPluginDisabled(pluginId: PluginId): Boolean
   suspend fun loadMetadata(xmlId: String, ideCompatibleUpdate: IdeCompatibleUpdate): IntellijUpdateMetadata
   suspend fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>?
+  suspend fun createSession(sessionId: String)
+  suspend fun closeSession(sessionId: String)
 
   companion object {
     suspend fun getInstance(): PluginManagerApi {

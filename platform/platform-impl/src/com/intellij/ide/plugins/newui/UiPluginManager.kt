@@ -11,6 +11,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
+import java.util.UUID
 
 /*
   Executes operations on plugins. Will have several implementations depending on registry option/rem dev mode.
@@ -21,6 +22,14 @@ import org.jetbrains.annotations.ApiStatus
 class UiPluginManager {
   fun getPlugins(): List<PluginUiModel> {
     return getController().getPlugins()
+  }
+
+  fun createSession(uuid: UUID) {
+    getController().createSession(uuid.toString())
+  }
+
+  fun closeSession(uuid: UUID) {
+    getController().closeSession(uuid.toString())
   }
 
   fun executeMarketplaceQuery(query: String, count: Int, includeUpgradeToCommercialIde: Boolean): List<MarketplaceSearchPluginData> {

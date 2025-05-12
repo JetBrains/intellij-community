@@ -18,6 +18,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
+import java.util.UUID
 
 @ApiStatus.Internal
 class BackendUiPluginManagerController() : UiPluginManagerController {
@@ -47,6 +48,18 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
 
   override fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>? {
     return awaitForResult { PluginManagerApi.getInstance().loadPluginReviews(pluginId, page) }
+  }
+
+  override fun createSession(sessionId: String) {
+    awaitForResult {
+      PluginManagerApi.getInstance().createSession(sessionId)
+    }
+  }
+
+  override fun closeSession(sessionId: String) {
+    service<BackendRpcCoroutineContext>().coroutineScope.launch {
+      PluginManagerApi.getInstance().closeSession(sessionId)
+    }
   }
 
   @Deprecated("Test method ")

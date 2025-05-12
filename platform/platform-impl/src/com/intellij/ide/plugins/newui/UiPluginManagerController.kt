@@ -9,6 +9,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.annotations.ApiStatus
+import java.util.UUID
 
 /*
  A controller that executes operations on plugins. There will be several implementations. It serves the same purpose as PluginModelFacade but is stateless.
@@ -22,6 +23,8 @@ interface UiPluginManagerController {
   fun executeMarketplaceQuery(query: String, count: Int, includeIncompatible: Boolean): List<MarketplaceSearchPluginData>
   fun loadUpdateMetadata(xmlId: String, ideCompatibleUpdate: IdeCompatibleUpdate, indicator: ProgressIndicator? = null): IntellijUpdateMetadata
   fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>?
+  fun createSession(sessionId: String)
+  fun closeSession(sessionId: String)
 
   companion object {
     val EP_NAME: ExtensionPointName<UiPluginManagerController> = ExtensionPointName<UiPluginManagerController>("com.intellij.uiPluginManagerController")

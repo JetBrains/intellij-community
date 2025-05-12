@@ -14,6 +14,7 @@ import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus
+import java.util.UUID
 
 @ApiStatus.Internal
 class BackendPluginManagerApi : PluginManagerApi {
@@ -27,6 +28,14 @@ class BackendPluginManagerApi : PluginManagerApi {
 
   override suspend fun getInstalledPlugins(): List<PluginDto> {
     return InstalledPluginsState.getInstance().installedPlugins.map(PluginDescriptorConverter::toPluginDto)
+  }
+
+  override suspend fun closeSession(sessionId: String) {
+    DefaultUiPluginManagerController.closeSession(sessionId)
+  }
+
+  override suspend fun createSession(sessionId: String) {
+    DefaultUiPluginManagerController.createSession(sessionId)
   }
 
   override suspend fun executeMarketplaceQuery(query: String, count: Int, includeIncompatible: Boolean): List<MarketplaceSearchPluginData> {
