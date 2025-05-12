@@ -683,6 +683,7 @@ public final class ImportUtils {
     private final @NotNull Set<PsiImportModuleStatement> myModulesStatements = new HashSet<>();
     private final @NotNull Map<String, PsiImportStatement> myPackageStatements = new HashMap<>();
 
+    private final @NotNull Map<ImplicitCacheItem, Boolean> myCache = new HashMap<>();
     private ImplicitImportChecker(@NotNull PsiJavaFile file) {
       for (PsiImportStatementBase anImport : getAllImplicitImports(file)) {
         if(anImport instanceof PsiImportStaticStatement staticStatement) {
@@ -703,12 +704,18 @@ public final class ImportUtils {
       }
     }
 
+    record ImplicitCacheItem(String qName, boolean isStatic,
+                             @NotNull ImportUtils.OnDemandImportConflict conflicts) { }
+
     public boolean isImplicitlyImported(String qName, boolean isStatic) {
       return isImplicitlyImported(qName, isStatic, OnDemandImportConflict.NO_CONFLICTS);
     }
 
     public boolean isImplicitlyImported(String qName, boolean isStatic,
                                         @NotNull ImportUtils.OnDemandImportConflict conflicts) {
+      ImplicitCacheItem cacheItem = new ImplicitCacheItem(qName, isStatic, conflicts);
+      Boolean result = myCache.get(cacheItem);
+      if (result != null) return result;
       String packageOrClassName = StringUtil.getPackageName(qName);
       String className = ClassUtil.extractClassName(qName);
       if (!isStatic) {
@@ -720,24 +727,39 @@ public final class ImportUtils {
             if (reference == null) continue;
             PsiElement resolved = reference.resolve();
             if (resolved instanceof PsiPackage psiPackage) {
-              if (psiPackage.containsClassNamed(className)) return true;
+              if (psiPackage.containsClassNamed(className)) {
+                myCache.put(cacheItem, true);
+                return true;
+              }
             }
           }
         }
-        if (!conflicts.hasConflictForOnDemand() && myPackageStatements.containsKey(packageOrClassName)) return true;
+        if (!conflicts.hasConflictForOnDemand() && myPackageStatements.containsKey(packageOrClassName)) {
+          myCache.put(cacheItem, true);
+          return true;
+        }
       }
       else {
         if (!conflicts.hasConflictForOnDemand()) {
           PsiImportStaticStatement psiImportStaticStatement = myStaticImportStatements.get(packageOrClassName);
           if (psiImportStaticStatement != null) {
-            if (psiImportStaticStatement.isOnDemand()) return true;
+            if (psiImportStaticStatement.isOnDemand()) {
+              myCache.put(cacheItem, true);
+              return true;
+            }
             PsiJavaCodeReferenceElement reference = psiImportStaticStatement.getImportReference();
-            if (reference == null) return false;
+            if (reference == null) {
+              myCache.put(cacheItem, false);
+              return false;
+            }
             String qualifiedName = reference.getQualifiedName();
-            return qName.equals(qualifiedName);
+            boolean equals = qName.equals(qualifiedName);
+            myCache.put(cacheItem, equals);
+            return equals;
           }
         }
       }
+      myCache.put(cacheItem, false);
       return false;
     }
   }

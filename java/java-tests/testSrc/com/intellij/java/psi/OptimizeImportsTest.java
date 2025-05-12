@@ -63,11 +63,15 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
     boolean preserveModuleImports = javaSettings.isPreserveModuleImports();
     PackageEntryTable table = javaSettings.IMPORT_LAYOUT_TABLE;
+    int classOnDemand = javaSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND;
+    int NamesOnDemand = javaSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND;
     Disposer.register(getTestRootDisposable(), new Disposable() {
       @Override
       public void dispose() {
         javaSettings.setPreserveModuleImports(preserveModuleImports);
         javaSettings.IMPORT_LAYOUT_TABLE = table;
+        javaSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = classOnDemand;
+        javaSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = NamesOnDemand;
       }
     });
     myFixture.enableInspections(new UnusedDeclarationInspection());
@@ -218,6 +222,17 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
       myFixture.addClass("package p1; public class A5 {}");
       doTest();
     });
+  }
+
+
+  public void testDontShowOnDemandIfAllSingles() {
+    myFixture.addClass("package p1; public class List<T> {}");
+    myFixture.addClass("package p2; public class List<T> {}");
+    myFixture.addClass("package p2; public class Something {}");
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+    javaSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 1;
+    javaSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 1;
+    doTest();
   }
 
   public void testConflictStaticImport(){

@@ -128,6 +128,8 @@ public final class ImportHelper extends ImportHelperBase {
                                                               moduleStatementMap.keySet());
     classesToUseSingle.addAll(toReimport);
 
+    deleteOnDemandIfAllIsSingle(classesOrPackagesToImportOnDemand, resultList, classesToUseSingle, checker);
+
     try {
       boolean onDemandFirst = mySettings.isLayoutOnDemandImportFromSamePackageFirst();
       StringBuilder text =
@@ -160,6 +162,33 @@ public final class ImportHelper extends ImportHelperBase {
   }
 
   /**
+   * Removes on-demand imports from the given map if all corresponding elements are present in the singles set
+   * (individually imported) or implicitly imported.
+   *
+   * @param onDemand a map of package or class names (keys) and boolean values associating them with on-demand imports.
+   * @param allList a list of Import objects representing all current imports in the file.
+   * @param singles a set of individual imports to retain.
+   * @param checker an ImplicitImportChecker used to determine if a name is implicitly imported.
+   */
+  private static void deleteOnDemandIfAllIsSingle(@NotNull Map<String, Boolean> onDemand,
+                                                  @NotNull List<Import> allList,
+                                                  @NotNull Set<String> singles,
+                                                  @NotNull ImportUtils.ImplicitImportChecker checker) {
+    Set<String> save = new HashSet<>();
+    if (singles.isEmpty()) return;
+    for (Import anImport : allList) {
+      String name = anImport.name();
+      boolean isStatic = anImport.isStatic();
+      String packageOrClassName = StringUtil.getPackageName(name);
+      boolean implicitlyImported = checker.isImplicitlyImported(name, isStatic);
+      if (!singles.contains(name) && !implicitlyImported && onDemand.containsKey(packageOrClassName)) {
+        save.add(packageOrClassName);
+      }
+    }
+    onDemand.keySet().retainAll(save);
+  }
+
+  /**
    * Collects the names of classes that are imported by modules specified implicitly in the given Java file and in the import list.
    *
    * @param file       the Java file for which imported class names are being collected.
@@ -168,8 +197,8 @@ public final class ImportHelper extends ImportHelperBase {
    * @return a map of class names and used module imports.
    */
   private static @NotNull Map<String, PsiImportModuleStatement> collectNamesImportedByModules(@NotNull PsiJavaFile file,
-                                                                                     @NotNull List<PsiImportModuleStatement> statements,
-                                                                                     @NotNull List<Import> list) {
+                                                                                              @NotNull List<PsiImportModuleStatement> statements,
+                                                                                              @NotNull List<Import> list) {
     List<PsiImportStatementBase> implicitImports = ImportsUtil.getAllImplicitImports(file);
     List<PsiImportModuleStatement> moduleImports =
       new ArrayList<>(ContainerUtil.filterIsInstance(implicitImports, PsiImportModuleStatement.class));
@@ -986,11 +1015,11 @@ public final class ImportHelper extends ImportHelperBase {
   }
 
   private static boolean isOnDemandStaticImported(@NotNull PsiJavaFile file, @NotNull Import anImport) {
-    if(!anImport.isStatic()) return false;
+    if (!anImport.isStatic()) return false;
     PsiImportList importList = file.getImportList();
-    if(importList==null)return false;
+    if (importList == null) return false;
     for (PsiImportStaticStatement statement : importList.getImportStaticStatements()) {
-      if(!statement.isOnDemand()) return false;
+      if (!statement.isOnDemand()) return false;
       String packageName = StringUtil.getPackageName(anImport.name);
       if (statement.getImportReference() != null &&
           packageName.equals(statement.getImportReference().getQualifiedName())) {
