@@ -7,9 +7,11 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.session.TerminalCloseEvent
+import com.intellij.terminal.session.TerminalStateChangedEvent
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.terminal.ShellStartupOptions
@@ -43,6 +45,7 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       name = null,
       isUserDefinedName = false,
       shellCommand = null,
+      workingDirectory = null,
       sessionId = null,
       portForwardingId = null,
     )
@@ -61,15 +64,18 @@ internal class TerminalTabsManager(private val project: Project, private val cor
         return@updateTabsAndStore tab
       }
 
-      val scope = coroutineScope.childScope("TerminalSession")
+      val scope = coroutineScope.childScope("TerminalSession#${tabId}")
       val result = TerminalSessionsManager.getInstance().startSession(options, project, scope)
 
       val updatedTab = tab.copy(
         shellCommand = result.configuredOptions.shellCommand,
+        workingDirectory = result.configuredOptions.workingDirectory,
         sessionId = result.sessionId,
         portForwardingId = result.portForwardingId,
       )
       tabs[tabId] = updatedTab
+
+      trackWorkingDirectory(updatedTab, scope.childScope("Working directory tracking"))
 
       scope.awaitCancellationAndInvoke {
         updateTabsAndStore { tabs ->
@@ -112,6 +118,34 @@ internal class TerminalTabsManager(private val project: Project, private val cor
     }
   }
 
+  /**
+   * Updates the [TerminalSessionTab.workingDirectory] field of the given [tab]
+   * once the working directory is changed in the started terminal session.
+   * So, the working directory is persisted in the [TerminalTabsStorage]
+   * and can be used to start the new session on the next IDE launch.
+   */
+  private fun trackWorkingDirectory(tab: TerminalSessionTab, coroutineScope: CoroutineScope) {
+    val sessionId = tab.sessionId ?: error("This method should be called only for tabs with started sessions: $tab")
+    val session = TerminalSessionsManager.getInstance().getSession(sessionId) ?: error("No session for tab $tab")
+
+    coroutineScope.launch {
+      val outputFlow = session.getOutputFlow()
+
+      var currentDirectory: String? = tab.workingDirectory
+      outputFlow.collect { events ->
+        for (event in events) {
+          if (event is TerminalStateChangedEvent && event.state.currentDirectory != currentDirectory) {
+            currentDirectory = event.state.currentDirectory
+            updateTabsAndStore { tabs ->
+              val updatedTab = tabs[tab.id]?.copy(workingDirectory = currentDirectory) ?: return@updateTabsAndStore
+              tabs[tab.id] = updatedTab
+            }
+          }
+        }
+      }
+    }
+  }
+
   private suspend fun <T> updateTabsAndStore(action: suspend (MutableMap<Int, TerminalSessionTab>) -> T): T {
     return tabsLock.withLock {
       try {
@@ -129,6 +163,7 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       name = name,
       isUserDefinedName = isUserDefinedName,
       shellCommand = shellCommand,
+      workingDirectory = workingDirectory,
     )
   }
 
@@ -138,6 +173,7 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       name = name,
       isUserDefinedName = isUserDefinedName,
       shellCommand = shellCommand,
+      workingDirectory = workingDirectory,
       sessionId = null,
       portForwardingId = null,
     )
