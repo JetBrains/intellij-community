@@ -168,13 +168,12 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
           val testClass = Class.forName(testQualifiedClassName, true, testPlugin.pluginClassLoader)
           val testClassObject = testClass.kotlin.createInstance() as DistributedTestPlayer
+          val testMethod = testClass.getMethod(testMethodNonParameterizedName)
 
           // Tell test we are running it inside an agent
-          val (actionsMap, getComponentDataRequests) = testClassObject.initAgent(session.rdAgentInfo)
+          val (actionsMap, getComponentDataRequests) = testClassObject.initAgent(session.rdAgentInfo, testMethod)
 
           // Play test method
-          val testMethod = testClass.getMethod(testMethodNonParameterizedName)
-          testClassObject.performInit(testMethodNonParameterizedName)
           testMethod.invoke(testClassObject)
 
           suspend fun <T> runNext(
