@@ -212,8 +212,8 @@ internal fun createTerminalOutputFlow(
       collectAndSendEvents(contentUpdate = null, otherEvent = TerminalCommandStartedEvent(command))
     }
 
-    override fun commandFinished(command: String, exitCode: Int) {
-      collectAndSendEvents(contentUpdate = null, otherEvent = TerminalCommandFinishedEvent(command, exitCode))
+    override fun commandFinished(command: String, exitCode: Int, currentDirectory: String) {
+      collectAndSendEvents(contentUpdate = null, otherEvent = TerminalCommandFinishedEvent(command, exitCode, currentDirectory))
     }
 
     override fun promptStarted() {
@@ -226,7 +226,11 @@ internal fun createTerminalOutputFlow(
   })
 
   val workingDirectoryTrackingScope = coroutineScope.childScope("Working directory tracking")
-  addWorkingDirectoryListener(services.ttyConnector, workingDirectoryTrackingScope) { directory ->
+  addWorkingDirectoryListener(
+    services.ttyConnector,
+    shellIntegrationController,
+    workingDirectoryTrackingScope
+  ) { directory ->
     textBuffer.withLock {
       curState = curState.copy(currentDirectory = directory)
       collectAndSendEvents(contentUpdate = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))

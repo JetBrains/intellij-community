@@ -28,11 +28,13 @@ internal object TerminalSessionTestUtil {
     coroutineScope: CoroutineScope,
     size: TermSize = TermSize(80, 24),
     extraEnvVariables: Map<String, String> = emptyMap(),
+    workingDirectory: String = System.getProperty("user.home"),
   ): TerminalSession {
     TerminalTestUtil.setTerminalEngineForTest(TerminalEngine.REWORKED, coroutineScope.asDisposable())
 
     val options = ShellStartupOptions.Builder()
       .shellCommand(listOf(shellPath))
+      .workingDirectory(workingDirectory)
       .initialTermSize(size)
       .envVariables(mapOf(EnvironmentUtil.DISABLE_OMZ_AUTO_UPDATE to "true", "HISTFILE" to "/dev/null") + extraEnvVariables)
       .build()

@@ -1,18 +1,44 @@
 package com.intellij.terminal.backend
 
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.asDisposable
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.ShellTerminalWidget
 import org.jetbrains.plugins.terminal.arrangement.ProcessInfoUtil
+import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
 
-@OptIn(FlowPreview::class)
 internal fun addWorkingDirectoryListener(
+  ttyConnector: ObservableTtyConnector,
+  shellIntegrationController: TerminalShellIntegrationController,
+  coroutineScope: CoroutineScope,
+  listener: (String) -> Unit,
+) {
+  val heuristicBasedTrackerScope = coroutineScope.childScope("Heuristic based working directory tracker")
+  addHeuristicBasedCwdListener(ttyConnector, heuristicBasedTrackerScope, listener)
+
+  shellIntegrationController.addListener(object : TerminalShellIntegrationEventsListener {
+    override fun initialized() {
+      // Stop heuristic-based working directory tracking if there is a shell integration.
+      // We will receive the current directory from the shell integration.
+      heuristicBasedTrackerScope.cancel()
+    }
+
+    override fun commandFinished(command: String, exitCode: Int, currentDirectory: String) {
+      listener(currentDirectory)
+    }
+  })
+}
+
+/**
+ * Tries to track the current working directory by checking the terminal process in an OS dependent way.
+ * The checks are triggered on user actions: pressing Enter.
+ * So, the listener can be triggered with a delay after the actual directory change.
+ */
+@OptIn(FlowPreview::class)
+private fun addHeuristicBasedCwdListener(
   ttyConnector: ObservableTtyConnector,
   coroutineScope: CoroutineScope,
   listener: (String) -> Unit,

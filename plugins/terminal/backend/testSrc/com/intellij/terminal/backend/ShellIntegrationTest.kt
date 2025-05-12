@@ -52,7 +52,8 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
   @Test
   fun `shell integration send correct events on command invocation`() = timeoutRunBlocking(30.seconds) {
-    val events = startSessionAndCollectOutputEvents { input ->
+    val cwd = System.getProperty("user.home")
+    val events = startSessionAndCollectOutputEvents(workingDirectory = cwd) { input ->
       input.send(TerminalWriteBytesEvent("pwd".toByteArray() + ENTER_BYTES))
     }
 
@@ -61,7 +62,7 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
       TerminalPromptStartedEvent,
       TerminalPromptFinishedEvent,
       TerminalCommandStartedEvent("pwd"),
-      TerminalCommandFinishedEvent("pwd", 0),
+      TerminalCommandFinishedEvent("pwd", 0, cwd),
       TerminalPromptStartedEvent,
       TerminalPromptFinishedEvent,
     )
@@ -127,8 +128,9 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
     Assume.assumeTrue(shellPath.toString().contains("bash"))
 
     val bindCommand = "bind 'set show-all-if-ambiguous on'"
+    val cwd = System.getProperty("user.home")
 
-    val events = startSessionAndCollectOutputEvents(TermSize(80, 100)) { input ->
+    val events = startSessionAndCollectOutputEvents(TermSize(80, 100), workingDirectory = cwd) { input ->
       // Configure the shell to show completion items on the first Tab key press.
       input.send(TerminalWriteBytesEvent(bindCommand.toByteArray() + ENTER_BYTES))
       delay(1000)
@@ -142,7 +144,7 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
       TerminalPromptFinishedEvent,
       // Bind command execution
       TerminalCommandStartedEvent(bindCommand),
-      TerminalCommandFinishedEvent(bindCommand, 0),
+      TerminalCommandFinishedEvent(bindCommand, 0, cwd),
       TerminalPromptStartedEvent,
       TerminalPromptFinishedEvent,
       // Prompt redraw after completion
@@ -222,6 +224,7 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
   private suspend fun startSessionAndCollectOutputEvents(
     size: TermSize = TermSize(80, 24),
     extraEnvVariables: Map<String, String> = emptyMap(),
+    workingDirectory: String = System.getProperty("user.home"),
     block: suspend (SendChannel<TerminalInputEvent>) -> Unit,
   ): List<TerminalOutputEvent> {
     return coroutineScope {
@@ -230,7 +233,8 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
         projectRule.project,
         childScope("TerminalSession"),
         size,
-        extraEnvVariables
+        extraEnvVariables,
+        workingDirectory,
       )
       val inputChannel = session.getInputChannel()
 
