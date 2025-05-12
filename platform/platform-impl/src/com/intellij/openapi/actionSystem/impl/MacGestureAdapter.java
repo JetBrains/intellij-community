@@ -4,6 +4,8 @@ package com.intellij.openapi.actionSystem.impl;
 import com.apple.eawt.event.*;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.components.Magnificator;
 import com.intellij.ui.components.ZoomableViewport;
@@ -55,7 +57,14 @@ final class MacGestureAdapter extends GestureAdapter {
   @Override
   public void gestureEnded(GesturePhaseEvent event) {
     if (myMagnifyingViewport != null) {
-      myMagnifyingViewport.magnificationFinished(magnification);
+      var viewportCopy = myMagnifyingViewport;
+      var magnificationCopy = magnification;
+      // For write-safe context we need an explicit modality here
+      // because some implementations perform write actions (EditorColorsManagerImpl.dropPsiCaches).
+      ApplicationManager.getApplication().invokeLater(
+        () -> viewportCopy.magnificationFinished(magnificationCopy),
+        ModalityState.stateForComponent((Component)viewportCopy)
+      );
       myMagnifyingViewport = null;
       magnification = 0;
     }
