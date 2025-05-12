@@ -9,6 +9,7 @@ import org.junit.jupiter.api.assertAll
 import org.junit.jupiter.api.function.Executable
 import org.opentest4j.AssertionFailedError
 import org.opentest4j.IncompleteExecutionException
+import org.opentest4j.MultipleFailuresError
 import org.opentest4j.TestAbortedException
 
 /**
@@ -17,6 +18,14 @@ import org.opentest4j.TestAbortedException
 data class NamedFailure(val name: String, val error: Throwable) {
   constructor(name: String, errorMessage: String) : this(name, AssertionFailedError(errorMessage))
 }
+
+/**
+ * Groups multiple exception using presentable names obtained via [naming] function.
+ */
+fun <T : Throwable> Collection<T>.groupFailures(naming: (T) -> String): List<NamedFailure> =
+  groupBy { naming(it) }.map { (name, errors) ->
+    NamedFailure(name, errors.singleOrNull() ?: MultipleFailuresError("${errors.size} failures", errors))
+  }
 
 /**
  * Converts multiple failures to separate tests.

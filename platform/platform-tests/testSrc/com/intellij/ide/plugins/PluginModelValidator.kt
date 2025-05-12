@@ -15,6 +15,7 @@ import com.intellij.platform.plugins.testFramework.ValidationReadModuleContext
 import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.NamedFailure
+import com.intellij.testFramework.junit5.groupFailures
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
@@ -93,9 +94,7 @@ class PluginValidationResult internal constructor(
 
   val namedFailures: List<NamedFailure>
     get() {
-      return validationErrors.groupBy { it.sourceModule.name }.map { (name, errors) ->
-        NamedFailure(name, errors.singleOrNull() ?: MultipleFailuresError("${errors.size} failures", errors))
-      }
+      return validationErrors.groupFailures { it.sourceModule.name }
     }
 
   fun graphAsString(projectHomePath: Path): CharSequence {
