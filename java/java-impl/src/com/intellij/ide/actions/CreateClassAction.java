@@ -8,9 +8,14 @@ import com.intellij.ide.fileTemplates.*;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.PackageIndex;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -55,9 +60,12 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
                     JavaTemplateUtil.INTERNAL_EXCEPTION_TYPE_TEMPLATE_NAME);
 
     if (JavaFeature.IMPLICIT_CLASSES.isSufficient(level)) {
-      builder.addKind(JavaPsiBundle.message("node.simple.source.file.tooltip"),
-                      IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.JavaFileType),
-                      JavaTemplateUtil.INTERNAL_SIMPLE_SOURCE_FILE);
+      String packageNameByDirectory = PackageIndex.getInstance(project).getPackageNameByDirectory(directory.getVirtualFile());
+      if("".equals(packageNameByDirectory)) {
+        builder.addKind(JavaPsiBundle.message("node.simple.source.file.tooltip"),
+                        IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.JavaFileType),
+                        JavaTemplateUtil.INTERNAL_SIMPLE_SOURCE_FILE);
+      }
     }
 
     PsiDirectory[] dirs = {directory};
