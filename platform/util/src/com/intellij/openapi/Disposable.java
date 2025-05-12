@@ -2,8 +2,6 @@
 package com.intellij.openapi;
 
 import com.intellij.openapi.util.Disposer;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * A marker for classes that require some work done for cleaning up.
@@ -33,6 +31,9 @@ import org.jetbrains.annotations.NotNull;
 public interface Disposable {
   /**
    * Usually not invoked directly, see class javadoc.
+   *
+   * The method shall not throw {@link com.intellij.openapi.progress.ProcessCanceledException} or {@link java.util.concurrent.CancellationException}.
+   * This is considered an error.
    */
   void dispose();
 

@@ -3,7 +3,6 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -192,10 +191,10 @@ public final class ObjectTree {
     }
 
     for (Throwable exception : exceptions) {
-      if (exception instanceof ProcessCanceledException) {
+      if (Logger.shouldRethrow(exception)) {
         // wrap with RuntimeException to avoid logger warning about logging ControlFlowException
         // we don't want to rethrow PCEs as well because it may fail a pipeline of disposals
-        getLogger().error(new RuntimeException("PCE must not be thrown from a dispose() implementation", exception));
+        getLogger().error(new RuntimeException("CE must not be thrown from a dispose() implementation", exception));
       }
       else {
         getLogger().error(exception);
