@@ -84,7 +84,6 @@ internal object OptInFileLevelFixFactories {
     }
 
     // Find the existing file-level annotation of the specified class if it exists
-    context (KaSession)
     private fun findFileAnnotation(file: KtFile, optInFqName: FqName): KtAnnotationEntry? =
         file.fileAnnotationList?.findAnnotation(ClassId.topLevel(optInFqName))
 }
