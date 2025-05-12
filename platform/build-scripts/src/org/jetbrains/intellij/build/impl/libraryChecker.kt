@@ -14,6 +14,7 @@ import org.jetbrains.intellij.build.LibraryLicense
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import java.net.HttpURLConnection
+import java.net.MalformedURLException
 import java.net.URI
 import java.net.URL
 import java.net.http.HttpClient
@@ -25,12 +26,16 @@ import java.util.Collections
 private val CONNECT_TIMEOUT = Duration.ofMillis(System.getProperty("idea.connection.timeout")?.toLong() ?: 30_000)
 private val READ_TIMEOUT = Duration.ofMillis(System.getProperty("idea.read.timeout")?.toLong() ?: 60_000)
 
-suspend fun checkLibraryUrls(context: BuildContext) {
+internal suspend fun checkLibraryUrls(context: BuildContext, licenses: List<LibraryLicense>) {
   context.executeStep(spanBuilder("checking library URLs"), BuildOptions.LIBRARY_URL_CHECK_STEP) {
-    val licenses = context.productProperties.allLibraryLicenses
     val errors = Collections.synchronizedList(ArrayList<String>())
-    checkLicenseUrls(licenses, errors)
-    checkWebsiteUrls(licenses, errors)
+    try {
+      checkLicenseUrls(licenses, errors)
+      checkWebsiteUrls(licenses, errors)
+    }
+    catch (e: Exception) {
+      errors += "Unhandled exception: ${e.message}"
+    }
     if (errors.isNotEmpty()) {
       context.messages.error("Library URLs check failed. Errors:\n${errors.joinToString("\n")}")
     }
@@ -69,23 +74,31 @@ private fun checkWebsiteUrls(licenses: List<LibraryLicense>, errors: MutableList
 }
 
 private fun checkUrls(type: String, urls: Map<String, List<LibraryLicense>>, errors: MutableList<String>) {
+  fun usedIn(libs: List<LibraryLicense>): String = "Used in: ${libs.joinToString { "'${it.presentableName}'" }}"
   val maxParallelPerHosts = 4
   val span = Span.current()
 
   // to run parallel requests to different hosts, we need to group URLs by host
-  val urlsAndLicensesGroupedByHost = urls.entries.groupBy { URL(it.key).host }
+  val urlsAndLicensesGroupedByHost = urls.entries.groupBy {
+    try {
+      URL(it.key).host
+    }
+    catch (e: MalformedURLException) {
+      errors += "${type} URL '${it.key}': ${e.javaClass.name}: ${e.message}. ${usedIn(it.value)}"
+      null
+    }
+  }.filterKeys { it != null }
 
   val builder = Attributes.builder()
   builder.put("__TOTAL__", urls.size.toLong())
   urlsAndLicensesGroupedByHost.entries
-    .map { it.key to it.value.size }
+    .asSequence()
+    .map { checkNotNull(it.key) to it.value.size }
     .sortedByDescending { it.second }
     .forEach {
       builder.put(it.first, it.second.toLong())
     }
   span.addEvent("Number of ${type} URLs", builder.build())
-
-  fun usedIn(libs: List<LibraryLicense>): String = "Used in: ${libs.joinToString { "'${it.presentableName}'" }}"
 
   val client = HttpClient.newBuilder()
     .executor(Dispatchers.IO.asExecutor())

@@ -902,7 +902,7 @@ private fun CoroutineScope.createBuildThirdPartyLibraryListJob(entries: Sequence
   return createSkippableJob(spanBuilder("generate table of licenses for used third-party libraries"),
                             BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP, context) {
     val generator = createLibraryLicensesListGenerator(
-      project = context.project,
+      context = context,
       licenseList = context.productProperties.allLibraryLicenses,
       usedModulesNames = getIncludedModules(entries).toHashSet(),
     )

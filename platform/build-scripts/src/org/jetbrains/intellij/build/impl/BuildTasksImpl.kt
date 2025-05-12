@@ -428,7 +428,6 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
   context.reportDistributionBuildNumber()
 
   checkProductProperties(context)
-  checkLibraryUrls(context)
 
   copyDependenciesFile(context)
 
