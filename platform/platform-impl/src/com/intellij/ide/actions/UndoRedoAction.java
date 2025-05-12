@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -16,7 +17,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions.ActionDescription;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ClientProperty;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus.Internal;
@@ -91,11 +91,9 @@ public abstract class UndoRedoAction extends DumbAwareAction implements ActionRe
   @Internal
   @Override
   public @NotNull ActionRemoteBehavior getBehavior() {
-    if (Registry.is("ide.undo.frontend.if.possible", false)) {
-      // see `com.jetbrains.rdclient.command.FrontendUndoManager`
-      return ActionRemoteBehavior.FrontendOtherwiseBackend;
-    }
-    return ActionRemoteBehavior.BackendOnly;
+    return UndoUtil.isExperimentalFrontendUndoEnabled()
+      ? ActionRemoteBehavior.FrontendOtherwiseBackend // see `com.jetbrains.rdclient.command.FrontendUndoManager`
+      : ActionRemoteBehavior.BackendOnly;
   }
 
   private @Nullable UndoManager getUndoManager(@Nullable FileEditor editor, DataContext dataContext, boolean isActionPerformed) {
