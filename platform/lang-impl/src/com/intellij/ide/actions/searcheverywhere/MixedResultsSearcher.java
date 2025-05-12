@@ -107,11 +107,11 @@ public final class MixedResultsSearcher implements SESearcher {
 
     Map<SearchEverywhereContributor<?>, Integer> res = new LinkedHashMap<>();
     var wrapperOrig = new CorrectionWrapper<>((ActionSearchEverywhereContributor) base, SearchEverywhereSpellCheckResult.NoCorrection.INSTANCE);
-    res.put(wrapperOrig, wrapperOrig.growLimit());
+    res.put(wrapperOrig, wrapperOrig.getLimit());
 
     for (var f : fixes) {
       var wrapper = new CorrectionWrapper<>((ActionSearchEverywhereContributor) base, f);
-      res.put(wrapper, wrapper.growLimit());
+      res.put(wrapper, wrapper.getLimit());
     }
     return res;
   }
@@ -127,7 +127,7 @@ public final class MixedResultsSearcher implements SESearcher {
 
     Map<SearchEverywhereContributor<?>, Integer> res = new LinkedHashMap<>();
     original.forEach((c, oldLimit) -> {
-      int newLimit = ((CorrectionWrapper<?>) c).growLimit();
+      int newLimit = ((CorrectionWrapper<?>) c).increaseAndGetLimit();
       res.put(c, newLimit);
     });
     return res;
