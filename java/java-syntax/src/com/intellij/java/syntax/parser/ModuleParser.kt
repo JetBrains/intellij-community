@@ -5,7 +5,6 @@ import com.intellij.java.syntax.JavaSyntaxBundle.message
 import com.intellij.java.syntax.element.JavaSyntaxElementType
 import com.intellij.java.syntax.element.JavaSyntaxTokenType
 import com.intellij.java.syntax.element.SyntaxElementTypes
-import com.intellij.java.syntax.element.WhiteSpaceAndCommentSetHolder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
@@ -29,7 +28,7 @@ class ModuleParser(private val myParser: JavaParser) {
       mapAndAdvance(builder, JavaSyntaxTokenType.OPEN_KEYWORD)
       text = builder.tokenText
     }
-    JavaParserUtil.done(modifierList, JavaSyntaxElementType.MODIFIER_LIST, myParser.languageLevel, WhiteSpaceAndCommentSetHolder)
+    JavaParserUtil.done(modifierList, JavaSyntaxElementType.MODIFIER_LIST, myParser.languageLevel)
 
     if (JavaKeywords.MODULE == text) {
       mapAndAdvance(builder, JavaSyntaxTokenType.MODULE_KEYWORD)
@@ -63,7 +62,7 @@ class ModuleParser(private val myParser: JavaParser) {
       parseModuleContent(builder)
     }
 
-    JavaParserUtil.done(module, JavaSyntaxElementType.MODULE, myParser.languageLevel, WhiteSpaceAndCommentSetHolder)
+    JavaParserUtil.done(module, JavaSyntaxElementType.MODULE, myParser.languageLevel)
 
     if (builder.tokenType != null) {
       parseExtras(builder, message("unexpected.tokens"))
@@ -162,7 +161,7 @@ class ModuleParser(private val myParser: JavaParser) {
       }
       break
     }
-    JavaParserUtil.done(modifierList, JavaSyntaxElementType.MODIFIER_LIST, myParser.languageLevel, WhiteSpaceAndCommentSetHolder)
+    JavaParserUtil.done(modifierList, JavaSyntaxElementType.MODIFIER_LIST, myParser.languageLevel)
 
     if (parseNameRef(builder) != null) {
       JavaParserUtil.semicolon(builder)

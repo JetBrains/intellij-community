@@ -9,7 +9,6 @@ import com.intellij.java.syntax.element.SyntaxElementTypes.CLASS_KEYWORD_BIT_SET
 import com.intellij.java.syntax.element.SyntaxElementTypes.KEYWORD_BIT_SET
 import com.intellij.java.syntax.element.SyntaxElementTypes.MODIFIER_BIT_SET
 import com.intellij.java.syntax.element.SyntaxElementTypes.PRIMITIVE_TYPE_BIT_SET
-import com.intellij.java.syntax.element.WhiteSpaceAndCommentSetHolder
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
@@ -31,8 +30,6 @@ open class DeclarationParser(private val myParser: JavaParser) {
   enum class Context {
     FILE, CLASS, CODE_BLOCK, ANNOTATION_INTERFACE, JSHELL
   }
-  
-  private val myWhiteSpaceAndCommentSetHolder = WhiteSpaceAndCommentSetHolder
 
   private val languageLevel: LanguageLevel
     get() = myParser.languageLevel
@@ -117,7 +114,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
       parseClassBodyWithBraces(builder, isAnnotation, isEnum)
     }
 
-    JavaParserUtil.done(declaration, JavaSyntaxElementType.CLASS, languageLevel, myWhiteSpaceAndCommentSetHolder)
+    JavaParserUtil.done(declaration, JavaSyntaxElementType.CLASS, languageLevel)
     return declaration
   }
 
@@ -174,10 +171,10 @@ open class DeclarationParser(private val myParser: JavaParser) {
       if (builder.tokenType === JavaSyntaxTokenType.LBRACE) {
         val constantInit = builder.mark()
         parseClassBodyWithBraces(builder, false, false)
-        JavaParserUtil.done(constantInit, JavaSyntaxElementType.ENUM_CONSTANT_INITIALIZER, languageLevel, myWhiteSpaceAndCommentSetHolder)
+        JavaParserUtil.done(constantInit, JavaSyntaxElementType.ENUM_CONSTANT_INITIALIZER, languageLevel)
       }
 
-      JavaParserUtil.done(constant, JavaSyntaxElementType.ENUM_CONSTANT, languageLevel, myWhiteSpaceAndCommentSetHolder)
+      JavaParserUtil.done(constant, JavaSyntaxElementType.ENUM_CONSTANT, languageLevel)
       return constant
     }
     else {
@@ -282,7 +279,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
         error.errorBefore(message("unexpected.token"), codeBlock)
       }
 
-      JavaParserUtil.done(declaration, JavaSyntaxElementType.CLASS_INITIALIZER, languageLevel, myWhiteSpaceAndCommentSetHolder)
+      JavaParserUtil.done(declaration, JavaSyntaxElementType.CLASS_INITIALIZER, languageLevel)
       return declaration
     }
 
@@ -456,7 +453,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
       }
     }
 
-    JavaParserUtil.done(modList, JavaSyntaxElementType.MODIFIER_LIST, languageLevel, myWhiteSpaceAndCommentSetHolder)
+    JavaParserUtil.done(modList, JavaSyntaxElementType.MODIFIER_LIST, languageLevel)
     return modList to isEmpty
   }
 
@@ -513,8 +510,8 @@ open class DeclarationParser(private val myParser: JavaParser) {
 
     JavaParserUtil.done(marker = declaration,
                         type = if (anno) JavaSyntaxElementType.ANNOTATION_METHOD else JavaSyntaxElementType.METHOD,
-                        languageLevel = languageLevel,
-                        commentSetHolder = myWhiteSpaceAndCommentSetHolder)
+                        languageLevel = languageLevel
+    )
     return declaration
   }
 
@@ -634,7 +631,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
       marker.error(error)
     }
 
-    JavaParserUtil.done(elementList, type.nodeType, languageLevel, myWhiteSpaceAndCommentSetHolder)
+    JavaParserUtil.done(elementList, type.nodeType, languageLevel)
   }
 
   fun parseParameter(
@@ -729,7 +726,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
         val expr = myParser.expressionParser.parse(builder)
         if (expr != null && JavaParserUtil.exprType(expr) === JavaSyntaxElementType.THIS_EXPRESSION) {
           mark.drop()
-          JavaParserUtil.done(param, JavaSyntaxElementType.RECEIVER_PARAMETER, languageLevel, myWhiteSpaceAndCommentSetHolder)
+          JavaParserUtil.done(param, JavaSyntaxElementType.RECEIVER_PARAMETER, languageLevel)
           return param
         }
 
@@ -740,7 +737,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
     if (builder.expect(JavaSyntaxTokenType.IDENTIFIER)) {
       if (type === JavaSyntaxElementType.PARAMETER || type === JavaSyntaxElementType.RECORD_COMPONENT) {
         eatBrackets(builder, null)
-        JavaParserUtil.done(param, type, languageLevel, myWhiteSpaceAndCommentSetHolder)
+        JavaParserUtil.done(param, type, languageLevel)
         return param
       }
     }
@@ -756,7 +753,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
       }
     }
 
-    JavaParserUtil.done(param, JavaSyntaxElementType.RESOURCE_VARIABLE, languageLevel, myWhiteSpaceAndCommentSetHolder)
+    JavaParserUtil.done(param, JavaSyntaxElementType.RESOURCE_VARIABLE, languageLevel)
     return param
   }
 
@@ -803,7 +800,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
       if (builder.tokenType !== JavaSyntaxTokenType.COMMA) {
         break
       }
-      JavaParserUtil.done(variable, varType, languageLevel, myWhiteSpaceAndCommentSetHolder)
+      JavaParserUtil.done(variable, varType, languageLevel)
       builder.advanceLexer()
 
       if (builder.tokenType !== JavaSyntaxTokenType.IDENTIFIER) {
@@ -842,7 +839,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
     }
 
     if (openMarker) {
-      JavaParserUtil.done(variable, varType, languageLevel, myWhiteSpaceAndCommentSetHolder)
+      JavaParserUtil.done(variable, varType, languageLevel)
     }
 
     return declaration
@@ -917,7 +914,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
 
     parseAnnotationParameterList(builder)
 
-    JavaParserUtil.done(anno, JavaSyntaxElementType.ANNOTATION, languageLevel, myWhiteSpaceAndCommentSetHolder)
+    JavaParserUtil.done(anno, JavaSyntaxElementType.ANNOTATION, languageLevel)
     return anno
   }
 
@@ -927,13 +924,13 @@ open class DeclarationParser(private val myParser: JavaParser) {
     if (!builder.expect(JavaSyntaxTokenType.LPARENTH) ||
         builder.expect(JavaSyntaxTokenType.RPARENTH)
     ) {
-      JavaParserUtil.done(list, JavaSyntaxElementType.ANNOTATION_PARAMETER_LIST, languageLevel, myWhiteSpaceAndCommentSetHolder)
+      JavaParserUtil.done(list, JavaSyntaxElementType.ANNOTATION_PARAMETER_LIST, languageLevel)
       return
     }
 
     if (builder.tokenType == null) {
       JavaParserUtil.error(builder, message("expected.parameter.or.rparen"))
-      JavaParserUtil.done(list, JavaSyntaxElementType.ANNOTATION_PARAMETER_LIST, languageLevel, myWhiteSpaceAndCommentSetHolder)
+      JavaParserUtil.done(list, JavaSyntaxElementType.ANNOTATION_PARAMETER_LIST, languageLevel)
       return
     }
     var elementMarker = parseAnnotationElement(builder)
@@ -970,7 +967,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
       }
     }
 
-    JavaParserUtil.done(list, JavaSyntaxElementType.ANNOTATION_PARAMETER_LIST, languageLevel, myWhiteSpaceAndCommentSetHolder)
+    JavaParserUtil.done(list, JavaSyntaxElementType.ANNOTATION_PARAMETER_LIST, languageLevel)
   }
 
   private fun parseAnnotationElement(builder: SyntaxTreeBuilder): SyntaxTreeBuilder.Marker? {
@@ -982,7 +979,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
       return null
     }
     if (builder.tokenType !== JavaSyntaxTokenType.EQ) {
-      JavaParserUtil.done(pair, JavaSyntaxElementType.NAME_VALUE_PAIR, languageLevel, myWhiteSpaceAndCommentSetHolder)
+      JavaParserUtil.done(pair, JavaSyntaxElementType.NAME_VALUE_PAIR, languageLevel)
       return pair
     }
 
@@ -994,7 +991,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
     valueMarker = parseAnnotationValue(builder)
     if (valueMarker == null) JavaParserUtil.error(builder, message("expected.value"))
 
-    JavaParserUtil.done(pair, JavaSyntaxElementType.NAME_VALUE_PAIR, languageLevel, myWhiteSpaceAndCommentSetHolder)
+    JavaParserUtil.done(pair, JavaSyntaxElementType.NAME_VALUE_PAIR, languageLevel)
     return pair
   }
 

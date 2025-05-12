@@ -70,13 +70,18 @@ open class FileParser(private val myParser: JavaParser) {
     invalidElements?.error(bundle.message(errorMessageKey))
 
     if (impListInfo.second && firstDeclarationOk == true) {
-      impListInfo.first.setCustomEdgeTokenBinders(myWhiteSpaceAndCommentSetHolder.getPrecedingCommentBinder(myParser.languageLevel),
-                                                  null) // pass comments behind fake import list
-      firstDeclaration!!.setCustomEdgeTokenBinders(myWhiteSpaceAndCommentSetHolder.getSpecialPrecedingCommentBinder(myParser.languageLevel), null)
+      impListInfo.first.setCustomEdgeTokenBinders( // pass comments behind fake import list
+        left = WhiteSpaceAndCommentSetHolder.getPrecedingCommentBinder(myParser.languageLevel),
+        right = null
+      )
+      firstDeclaration!!.setCustomEdgeTokenBinders(
+        left = WhiteSpaceAndCommentSetHolder.getSpecialPrecedingCommentBinder(myParser.languageLevel),
+        right = null
+      )
     }
     if (isImplicitClass) {
       val beforeFirst = firstDeclaration!!.precede()
-      JavaParserUtil.done(beforeFirst, JavaSyntaxElementType.IMPLICIT_CLASS, myParser.languageLevel, myWhiteSpaceAndCommentSetHolder)
+      JavaParserUtil.done(beforeFirst, JavaSyntaxElementType.IMPLICIT_CLASS, myParser.languageLevel)
     }
   }
 
@@ -100,7 +105,7 @@ open class FileParser(private val myParser: JavaParser) {
     if (!builder.expect(JavaSyntaxTokenType.PACKAGE_KEYWORD)) {
       val modList = builder.mark()
       myParser.declarationParser.parseAnnotations(builder)
-      JavaParserUtil.done(modList, JavaSyntaxElementType.MODIFIER_LIST, myParser.languageLevel, myWhiteSpaceAndCommentSetHolder)
+      JavaParserUtil.done(modList, JavaSyntaxElementType.MODIFIER_LIST, myParser.languageLevel)
       if (!builder.expect(JavaSyntaxTokenType.PACKAGE_KEYWORD)) {
         statement.rollbackTo()
         return
@@ -115,7 +120,7 @@ open class FileParser(private val myParser: JavaParser) {
 
     JavaParserUtil.semicolon(builder)
 
-    JavaParserUtil.done(statement, JavaSyntaxElementType.PACKAGE_STATEMENT, myParser.languageLevel, myWhiteSpaceAndCommentSetHolder)
+    JavaParserUtil.done(statement, JavaSyntaxElementType.PACKAGE_STATEMENT, myParser.languageLevel)
   }
 
   protected fun parseImportList(
@@ -159,7 +164,7 @@ open class FileParser(private val myParser: JavaParser) {
       list = precede
     }
 
-    JavaParserUtil.done(list, JavaSyntaxElementType.IMPORT_LIST, myParser.languageLevel, myWhiteSpaceAndCommentSetHolder)
+    JavaParserUtil.done(list, JavaSyntaxElementType.IMPORT_LIST, myParser.languageLevel)
     return Pair(list, isEmpty)
   }
 
@@ -191,7 +196,7 @@ open class FileParser(private val myParser: JavaParser) {
       JavaParserUtil.semicolon(builder)
     }
 
-    JavaParserUtil.done(statement, type, myParser.languageLevel, myWhiteSpaceAndCommentSetHolder)
+    JavaParserUtil.done(statement, type, myParser.languageLevel)
     return statement
   }
 
@@ -220,4 +225,3 @@ val IMPORT_LIST_STOPPER_SET: SyntaxElementTypeSet =
 
 private val IMPLICIT_CLASS_INDICATORS: SyntaxElementTypeSet = syntaxElementTypeSetOf(JavaSyntaxElementType.METHOD, JavaSyntaxElementType.FIELD, JavaSyntaxElementType.CLASS_INITIALIZER)
 
-private val myWhiteSpaceAndCommentSetHolder = WhiteSpaceAndCommentSetHolder

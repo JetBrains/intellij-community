@@ -22,18 +22,17 @@ object JavaParserUtil {
     marker: SyntaxTreeBuilder.Marker,
     type: SyntaxElementType,
     languageLevel: LanguageLevel,
-    commentSetHolder: WhiteSpaceAndCommentSetHolder,
   ) {
     marker.done(type)
     val left =
-      if (commentSetHolder.precedingCommentSet.contains(type))
-        commentSetHolder.getPrecedingCommentBinder(languageLevel)
+      if (WhiteSpaceAndCommentSetHolder.precedingCommentSet.contains(type))
+        WhiteSpaceAndCommentSetHolder.getPrecedingCommentBinder(languageLevel)
       else
         null
 
     val right =
-      if (commentSetHolder.trailingCommentSet.contains(type))
-        commentSetHolder.trailingCommentBinder
+      if (WhiteSpaceAndCommentSetHolder.trailingCommentSet.contains(type))
+        WhiteSpaceAndCommentSetHolder.trailingCommentBinder
       else
         null
 

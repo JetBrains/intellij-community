@@ -4,7 +4,6 @@ package com.intellij.java.syntax.parser
 import com.intellij.java.syntax.JavaSyntaxBundle.message
 import com.intellij.java.syntax.element.JavaSyntaxElementType
 import com.intellij.java.syntax.element.JavaSyntaxTokenType
-import com.intellij.java.syntax.element.WhiteSpaceAndCommentSetHolder
 import com.intellij.java.syntax.parser.JavaParserUtil.done
 import com.intellij.java.syntax.parser.JavaParserUtil.emptyElement
 import com.intellij.java.syntax.parser.JavaParserUtil.error
@@ -16,7 +15,6 @@ import com.intellij.platform.syntax.util.parser.SyntaxBuilderUtil.expect
 import org.jetbrains.annotations.Contract
 
 class PatternParser(private val myParser: JavaParser) {
-  private val myWhiteSpaceAndCommentSetHolder = WhiteSpaceAndCommentSetHolder
 
   /**
    * Checks whether given token sequence can be parsed as a pattern.
@@ -34,7 +32,7 @@ class PatternParser(private val myParser: JavaParser) {
     if (builder.tokenType === JavaSyntaxTokenType.IDENTIFIER && "_" == builder.tokenText) {
       emptyElement(builder, JavaSyntaxElementType.TYPE)
       builder.advanceLexer()
-      done(patternStart, JavaSyntaxElementType.UNNAMED_PATTERN, myParser.languageLevel, myWhiteSpaceAndCommentSetHolder)
+      done(patternStart, JavaSyntaxElementType.UNNAMED_PATTERN, myParser.languageLevel)
       return true
     }
     patternStart.rollbackTo()
@@ -145,16 +143,16 @@ class PatternParser(private val myParser: JavaParser) {
 
     if (isRecord) {
       patternVariable.drop()
-      done(pattern, JavaSyntaxElementType.DECONSTRUCTION_PATTERN, myParser.languageLevel, myWhiteSpaceAndCommentSetHolder)
+      done(pattern, JavaSyntaxElementType.DECONSTRUCTION_PATTERN, myParser.languageLevel)
     }
     else {
       if (hasIdentifier) {
-        done(patternVariable, JavaSyntaxElementType.PATTERN_VARIABLE, myParser.languageLevel, myWhiteSpaceAndCommentSetHolder)
+        done(patternVariable, JavaSyntaxElementType.PATTERN_VARIABLE, myParser.languageLevel)
       }
       else {
         patternVariable.drop()
       }
-      done(pattern, JavaSyntaxElementType.TYPE_TEST_PATTERN, myParser.languageLevel, myWhiteSpaceAndCommentSetHolder)
+      done(pattern, JavaSyntaxElementType.TYPE_TEST_PATTERN, myParser.languageLevel)
     }
     return pattern
   }

@@ -8,7 +8,6 @@ import com.intellij.java.syntax.element.JavaSyntaxTokenType
 import com.intellij.java.syntax.element.SyntaxElementTypes
 import com.intellij.java.syntax.element.SyntaxElementTypes.MODIFIER_BIT_SET
 import com.intellij.java.syntax.element.SyntaxElementTypes.PRIMITIVE_TYPE_BIT_SET
-import com.intellij.java.syntax.element.WhiteSpaceAndCommentSetHolder
 import com.intellij.java.syntax.parser.ExpressionParser.Companion.FORBID_LAMBDA_MASK
 import com.intellij.java.syntax.parser.JavaParserUtil.done
 import com.intellij.java.syntax.parser.JavaParserUtil.emptyElement
@@ -32,7 +31,6 @@ import org.jetbrains.annotations.PropertyKey
 @ApiStatus.Experimental
 class PrattExpressionParser(private val myParser: JavaParser) {
   private val ourInfixParsers: MutableMap<SyntaxElementType?, ParserData?>
-  private val myWhiteSpaceAndCommentSetHolder = WhiteSpaceAndCommentSetHolder
 
   init {
     ourInfixParsers = HashMap<SyntaxElementType?, ParserData?>()
@@ -875,7 +873,7 @@ class PrattExpressionParser(private val myParser: JavaParser) {
       if (right == null) {
         error(builder, message("expected.expression"))
       }
-      done(beforeLhs, JavaSyntaxElementType.ASSIGNMENT_EXPRESSION, myParser.languageLevel, myWhiteSpaceAndCommentSetHolder)
+      done(beforeLhs, JavaSyntaxElementType.ASSIGNMENT_EXPRESSION, myParser.languageLevel)
     }
   }
 
@@ -904,7 +902,7 @@ class PrattExpressionParser(private val myParser: JavaParser) {
       done(beforeLhs, if (operandCount > 2)
         JavaSyntaxElementType.POLYADIC_EXPRESSION
       else
-        JavaSyntaxElementType.BINARY_EXPRESSION, myParser.languageLevel, myWhiteSpaceAndCommentSetHolder)
+        JavaSyntaxElementType.BINARY_EXPRESSION, myParser.languageLevel)
     }
   }
 
