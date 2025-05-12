@@ -4,6 +4,7 @@ package com.jetbrains.python.projectModel.uv
 import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.testFramework.fixtures.multiProjectFixture
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ContentRootAssertions
 import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -71,6 +72,33 @@ class PyUvOpenIntegrationTest {
     multiprojectFixture.openProject(projectPath).useProjectAsync { project ->
       ModuleAssertions.assertModules(project, "project")
       CollectionAssertions.assertEqualsUnordered(emptyList(), project.service<UvSettings>().getLinkedProjects())
+    }
+  }
+
+  @Test
+  fun `manually syncing a not recognized project removes its fake top-level module`() = timeoutRunBlocking(timeout = 20.seconds) {
+    val projectPath = testRoot.resolve("project")
+
+    projectPath.createFile("pyproject.toml").writeText("""
+      [project]
+      name = "myproject"
+    """.trimIndent())
+
+    multiprojectFixture.openProject(projectPath).useProjectAsync { project ->
+      // Nothing was linked automatically. There is only the module created by PlatformProjectConfigurator.
+      ModuleAssertions.assertModules(project, "project")
+      ContentRootAssertions.assertContentRoots(project, "project", listOf(projectPath))
+      CollectionAssertions.assertEqualsUnordered(emptyList(), project.service<UvSettings>().getLinkedProjects())
+
+      multiprojectFixture.awaitProjectConfiguration(project) {
+        UvProjectModelService.linkAllProjectModelRoots(project, project.basePath!!)
+        UvProjectModelService.syncAllProjectModelRoots(project)
+      }
+
+      // Now there is only the module owned by Uv
+      ModuleAssertions.assertModules(project, "myproject")
+      CollectionAssertions.assertEqualsUnordered(listOf(projectPath), project.service<UvSettings>().getLinkedProjects())
+      ContentRootAssertions.assertContentRoots(project, "myproject", listOf(projectPath))
     }
   }
 
