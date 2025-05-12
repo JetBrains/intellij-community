@@ -50,7 +50,7 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
     getSwitchConsoleActionPresentation().setText(PyBundle.messagePointer("run.configuration.show.command.line.action.name"));
 
     List<AnAction> actions = List.of(PyConsoleUtil.createTabCompletionAction(getPydevConsoleView()),
-    PyConsoleUtil.createInterruptAction(getPydevConsoleView()));
+                                     PyConsoleUtil.createInterruptAction(getPydevConsoleView()));
     AbstractConsoleRunnerWithHistory.registerActionShortcuts(actions, getPydevConsoleView().getEditor().getComponent());
     boolean isUseSoftWraps = EditorSettingsExternalizable.getInstance().isUseSoftWraps(SoftWrapAppliancePlaces.CONSOLE);
     getPydevConsoleView().getEditor().getSettings().setUseSoftWraps(isUseSoftWraps);
@@ -65,7 +65,8 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
     enableConsole(false);
     if (code != null) {
       getPydevConsoleView().executeInConsole(code);
-    } else {
+    }
+    else {
       IdeFocusManager.findInstance().doWhenFocusSettlesDown(() -> getPydevConsoleView().requestFocus());
     }
   }
