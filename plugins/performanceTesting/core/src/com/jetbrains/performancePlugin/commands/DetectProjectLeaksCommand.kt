@@ -59,7 +59,7 @@ class DetectProjectLeaksCommand(text: String, line: Int) : PlaybackCommandCorout
 
   private fun analyzeSnapshot(openProjectsNames: List<String>) {
     val snapshotDate = SimpleDateFormat("dd.MM.yyyy_HH.mm.ss").format(Date())
-    val snapshotFileName = "reopen-project-$snapshotDate.hprof"
+    val snapshotFileName = "close-project-$snapshotDate.hprof"
     val snapshotPath = System.getProperty("memory.snapshots.path", SystemProperties.getUserHome()) + "/" + snapshotFileName
 
     MemoryDumpHelper.captureMemoryDump(snapshotPath)
