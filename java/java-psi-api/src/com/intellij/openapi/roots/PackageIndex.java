@@ -60,7 +60,8 @@ public abstract class PackageIndex {
   /**
    * Returns the name of the package corresponding to the specified directory or a specific file if the file is a single-file root.
    *
-   * @return the package name, or null if the directory does not correspond to any package.
+   * @return the package name, or null if the supplied directory does not correspond to any package, 
+   * or the supplied file is not a single-file root.
    */
   public abstract @Nullable String getPackageNameByDirectory(@NotNull VirtualFile dir);
 }
