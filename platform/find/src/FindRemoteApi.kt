@@ -31,6 +31,22 @@ interface FindRemoteApi : RemoteApi<Unit> {
   }
 }
 
+/**
+ * Represents the result of a "Find in files" operation, encapsulating information about the search result's presentation,
+ * location, and attributes.
+ *
+ * @property presentation A list of [SerializableTextChunk] containing formatted text and its visual attributes.
+ * @property line The line number where the search result was found, starting from 0.
+ * @property navigationOffset The character offset from the start of the file to the result's location.
+ * @property mergedOffsets A list of integer offsets that indicate additional positions related to the search result.
+ * @property length The length of the search result in characters.
+ * @property originalLength The original length of the search result text before the merging results, if applicable.
+ * @property fileId The unique identifier of the file containing the search result.
+ * @property presentablePath A user-readable path to the file containing the search result.
+ * @property backgroundColor The background color depends on the search scope.
+ * @property tooltipText The tooltip text to be displayed when hovering over the result, if available.
+ * @property iconId The identifier for an icon, if any.
+ */
 @Serializable
 data class FindInFilesResult(
   val presentation: List<SerializableTextChunk>,
