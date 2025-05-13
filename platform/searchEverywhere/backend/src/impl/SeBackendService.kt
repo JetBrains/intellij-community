@@ -162,11 +162,13 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
     providerIds: List<SeProviderId>,
   ): Map<SeProviderId, @Nls String> {
     val allProviders = getProviders(sessionRef, dataContextId)
-    return allProviders.filter { providerIds.contains(it.key) }.mapValues { it.value.displayName}
+    return allProviders.filter { providerIds.contains(it.key) }.mapValues { it.value.displayName }
   }
 
-  suspend fun isExtendedInfoAvailable(sessionRef: DurableRef<SeSessionEntity>,
-                                      dataContextId: DataContextId): Boolean {
+  suspend fun isExtendedInfoAvailable(
+    sessionRef: DurableRef<SeSessionEntity>,
+    dataContextId: DataContextId,
+  ): Boolean {
     val allProviders = getProviders(sessionRef, dataContextId)
     return allProviders.values.any { it.isExtendedInfoAvailable() }
   }

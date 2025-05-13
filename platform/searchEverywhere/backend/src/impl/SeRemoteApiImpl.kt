@@ -57,7 +57,7 @@ class SeRemoteApiImpl: SeRemoteApi {
     projectId: ProjectId,
     sessionRef: DurableRef<SeSessionEntity>,
     dataContextId: DataContextId,
-    providerIds: List<SeProviderId>
+    providerIds: List<SeProviderId>,
   ): Map<SeProviderId, @Nls String> {
     return SeBackendService.getInstance(projectId.findProject()).getDisplayNameForProvider(sessionRef, dataContextId, providerIds)
   }

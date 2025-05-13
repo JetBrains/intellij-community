@@ -2,9 +2,10 @@
 package com.intellij.platform.searchEverywhere.frontend.ui
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI
 import com.intellij.ide.actions.searcheverywhere.ExtendedInfo
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoComponent
+import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
@@ -70,7 +71,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
   private val resultList: JBList<SeResultListRow> = JBList(resultListModel)
   private val resultsScrollPane = createListPane(resultList)
 
-  private var extendedInfoPanel: JComponent = JPanel(BorderLayout())
+  private val extendedInfoPanel: JComponent = JPanel(BorderLayout())
   private var extendedInfoComponent: ExtendedInfoComponent? = null
 
   init {
@@ -98,10 +99,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
 
     resultList.setFocusable(false)
 
-    extendedInfoComponent = createExtendedInfoComponent()
-    if (extendedInfoComponent != null) {
-      extendedInfoPanel.add(extendedInfoComponent!!.component)
-    }
+    updateExtendedInfoPanel()
 
     RowsGridBuilder(this)
       .row().cell(headerPane, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
@@ -312,10 +310,8 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     resultList.addListSelectionListener { e: ListSelectionEvent ->
       val index = resultList.selectedIndex
       if (index != -1) {
-        val firstItem = (resultListModel[index] as? SeResultListItemRow)?.item
-        if (firstItem != null) {
-          extendedInfoComponent?.updateElement(firstItem, this@SePopupContentPane)
-        }
+        val selectedItem = (resultList.selectedValue as? SeResultListItemRow)?.item
+        selectedItem?.let { extendedInfoComponent?.updateElement(it, this@SePopupContentPane) }
       }
     }
   }
@@ -353,9 +349,11 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
 
     val nextTabAction: (AnActionEvent) -> Unit = { _ ->
       vm.selectNextTab()
+      updateExtendedInfoPanel()
     }
     val prevTabAction: (AnActionEvent) -> Unit = { _ ->
       vm.selectPreviousTab()
+      updateExtendedInfoPanel()
     }
 
     registerAction(SeActions.SWITCH_TO_NEXT_TAB, nextTabAction)
@@ -364,10 +362,10 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     registerAction(IdeActions.ACTION_PREVIOUS_TAB, prevTabAction)
     registerAction(IdeActions.ACTION_SWITCHER) { e ->
       if (e.inputEvent?.isShiftDown == true) {
-        vm.selectPreviousTab()
+        prevTabAction
       }
       else {
-        vm.selectNextTab()
+        nextTabAction
       }
     }
     registerAction(SeActions.NAVIGATE_TO_NEXT_GROUP) { _ ->
@@ -501,20 +499,25 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
       .show(relativePoint)
   }
 
-  private fun closePopup() {
-    vm.closePopup()
+  private suspend fun createExtendedInfoComponent(): ExtendedInfoComponent? {
+    if (isExtendedInfoEnabled() && (SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID == vm.currentTab.tabId
+                                    || vm.isExtendedInfoAvailable())) {
+      val leftText = fun(element: Any): String? = (element as? SeItemData)?.presentation?.extendedDescription
+      return ExtendedInfoComponent(project, ExtendedInfo(leftText) { null })
+    }
+    return null
   }
 
-  private fun createExtendedInfoComponent(): ExtendedInfoComponent? {
-    val leftText = fun(element: Any): String? {
-      if (element is SeItemData) {
-        return element.presentation.extendedDescription
-      }
-      return null
+  private fun updateExtendedInfoPanel() {
+    extendedInfoPanel.removeAll()
+    vm.coroutineScope.launch {
+      extendedInfoComponent = createExtendedInfoComponent()
+      extendedInfoComponent?.let { extendedInfoPanel.add(it.component) }
     }
+  }
 
-    // or should be in another place?
-    return ExtendedInfoComponent(project, ExtendedInfo(leftText) { null })
+  private fun closePopup() {
+    vm.closePopup()
   }
 
   override fun dispose() {}

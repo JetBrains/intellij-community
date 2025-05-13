@@ -3,7 +3,6 @@ package com.intellij.platform.searchEverywhere.backend.providers.text
 
 import com.intellij.find.impl.SearchEverywhereItem
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoProvider
 import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.application.EDT
@@ -72,8 +71,9 @@ class SeTextItemsProvider(private val contributorWrapper: SeAsyncWeightedContrib
     return contributorWrapper.contributor.isExtendedInfoAvailable()
   }
 
-  fun getInfoLeftText(item: SearchEverywhereItem): String? =
-    contributorWrapper.contributor.getExtendedDescription(item)
+  fun getInfoLeftText(item: SearchEverywhereItem): String? {
+    return contributorWrapper.contributor.getExtendedDescription(item)
+  }
 
   override fun dispose() {
     Disposer.dispose(contributorWrapper)

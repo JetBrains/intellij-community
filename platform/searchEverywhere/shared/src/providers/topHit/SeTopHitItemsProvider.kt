@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.providers.topHit
 
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoProvider
 import com.intellij.ide.actions.searcheverywhere.TopHitSEContributor
 import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.application.EDT
@@ -60,11 +59,13 @@ open class SeTopHitItemsProvider(
     }
   }
 
-  fun getExtendedDescription(item: Any): String? =
-    contributorWrapper.contributor.getExtendedDescription(item)
+  fun getExtendedDescription(item: Any): String? {
+    return contributorWrapper.contributor.getExtendedDescription(item)
+  }
 
-  override fun isExtendedInfoAvailable(): Boolean =
-    contributorWrapper.contributor.isExtendedInfoAvailable()
+  override fun isExtendedInfoAvailable(): Boolean {
+    return contributorWrapper.contributor.isExtendedInfoAvailable()
+  }
 
   override fun dispose() {
     Disposer.dispose(contributorWrapper)

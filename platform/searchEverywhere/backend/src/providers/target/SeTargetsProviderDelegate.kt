@@ -69,8 +69,9 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncWeightedC
     return contributorWrapper.contributor.isExtendedInfoAvailable()
   }
 
-  fun getExtendedDescription(legacyItem: ItemWithPresentation<*>): String? =
-    contributorWrapper.contributor.getExtendedDescription(legacyItem)
+  fun getExtendedDescription(legacyItem: ItemWithPresentation<*>): String? {
+    return contributorWrapper.contributor.getExtendedDescription(legacyItem)
+  }
 
   private fun createDefaultMatchers(rawPattern: String): ItemMatchers {
     val namePattern = contributorWrapper.contributor.filterControlSymbols(rawPattern)

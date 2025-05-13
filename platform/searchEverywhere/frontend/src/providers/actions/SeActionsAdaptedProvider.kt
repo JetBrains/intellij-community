@@ -47,8 +47,9 @@ class SeActionsAdaptedProvider(private val legacyContributor: ActionSearchEveryw
     return legacyContributor.isExtendedInfoAvailable()
   }
 
-  fun getExtendedDescription(item: MatchedValue): String? =
-    legacyContributor.getExtendedDescription(item)
+  fun getExtendedDescription(item: MatchedValue): String? {
+    return legacyContributor.getExtendedDescription(item)
+  }
 
   override fun dispose() {
     Disposer.dispose(legacyContributor)
