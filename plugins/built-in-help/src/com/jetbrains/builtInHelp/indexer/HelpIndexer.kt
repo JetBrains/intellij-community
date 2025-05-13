@@ -17,7 +17,6 @@ import java.nio.file.Paths
 import java.util.*
 import kotlin.io.path.extension
 import kotlin.io.path.isRegularFile
-import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 
 class HelpIndexer
@@ -105,33 +104,6 @@ internal constructor(indexDir: String) {
     @Throws(IOException::class)
     @JvmStatic
     fun main(args: Array<String>) {
-      @Suppress("SpellCheckingInspection")
-      val tokens = listOf(
-        "<noscript><iframe src=\"//www.googletagmanager.com/ns.html?id=GTM-5P98\" height=\"0\" width=\"0\" style=\"display:none;visibility:hidden\"></iframe></noscript>",
-        "</script><script src=\"/help/app/v2/analytics.js\"></script>",
-        "<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':",
-        "new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],",
-        "j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=",
-        "'//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);",
-        "})(window,document,'script','dataLayer','GTM-5P98');")
-
-      val files = Paths.get(args[1]).listDirectoryEntries("*.html")
-      files.forEach {
-        val original = Files.readString(it, Charsets.UTF_8)
-        var contents = original
-        for (token in tokens) {
-          contents = contents.replace(token, "")
-        }
-        contents = contents.replace("//resources.jetbrains.com/storage/help-app/", "/help/")
-        if (contents != original) {
-          println("Removed analytics code from ${it.name}")
-          Files.writeString(it, contents, Charsets.UTF_8)
-        }
-        else {
-          println("No analytics code to remove from ${it.name}")
-        }
-      }
-
       doIndex(args[0], args[1])
     }
   }
