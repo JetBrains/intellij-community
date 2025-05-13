@@ -11,14 +11,14 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.flattenConcat
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.fus.*
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.TimeSource
 
@@ -37,8 +37,11 @@ internal class StateAwareTerminalSession(
   private val delegate: TerminalSession,
   coroutineScope: CoroutineScope,
 ) : TerminalSession {
-  private val outputFlow = MutableSharedFlow<List<TerminalOutputEvent>>()
+  private val outputFlow = MutableSharedFlow<VersionedEvents>(replay = 1)
   private val modelsLock = Mutex()
+
+  /** Requires [modelsLock] */
+  private var modelsVersion: Long = -1L
 
   private val sessionModel: TerminalSessionModel = TerminalSessionModelImpl()
   private val outputModel: TerminalOutputModel
@@ -76,11 +79,12 @@ internal class StateAwareTerminalSession(
     coroutineScope.launch {
       val originalOutputFlow = delegate.getOutputFlow()
       originalOutputFlow.collect { events ->
+        val versionedEvents = VersionedEvents(events)
         modelsLock.withLock {
-          // Update the backend models and then forward the events to the frontend.
           doHandleEvents(events)
-          outputFlow.emit(events)
+          modelsVersion = versionedEvents.version
         }
+        outputFlow.emit(versionedEvents)
       }
     }
   }
@@ -90,11 +94,21 @@ internal class StateAwareTerminalSession(
   }
 
   override suspend fun getOutputFlow(): Flow<List<TerminalOutputEvent>> {
-    return modelsLock.withLock {
-      val initialStateEvent = createInitialStateEvent()
-      val initialStateEventFlow = flowOf(listOf(initialStateEvent))
+    return flow {
+      var initialStateVersion: Long = -1
+      outputFlow.collect {
+        if (initialStateVersion == -1L) {
+          val initialState: VersionedEvents = modelsLock.withLock {
+            createInitialStateEvents()
+          }
+          emit(initialState.events)
+          initialStateVersion = initialState.version
+        }
 
-      flowOf(initialStateEventFlow, outputFlow).flattenConcat()
+        if (it.version > initialStateVersion) {
+          emit(it.events)
+        }
+      }
     }
   }
 
@@ -152,13 +166,14 @@ internal class StateAwareTerminalSession(
     }
   }
 
-  private fun createInitialStateEvent(): TerminalInitialStateEvent {
-    return TerminalInitialStateEvent(
+  private fun createInitialStateEvents(): VersionedEvents {
+    val event = TerminalInitialStateEvent(
       sessionState = sessionModel.terminalState.value.toDto(),
       outputModelState = outputModel.dumpState().toDto(),
       alternateBufferState = alternateBufferModel.dumpState().toDto(),
       blocksModelState = blocksModel.dumpState().toDto(),
     )
+    return VersionedEvents(listOf(event), modelsVersion)
   }
 
   private fun getCurrentOutputModel(): TerminalOutputModel {
@@ -173,5 +188,14 @@ internal class StateAwareTerminalSession(
 
     val latencyData = DurationAndTextLength(duration = startTime.elapsedNow(), textLength = event.text.length)
     documentUpdateLatencyReporter.update(latencyData)
+  }
+
+  private data class VersionedEvents(
+    val events: List<TerminalOutputEvent>,
+    val version: Long = eventsVersionCounter.getAndIncrement(),
+  )
+
+  companion object {
+    private val eventsVersionCounter = AtomicLong(0)
   }
 }
