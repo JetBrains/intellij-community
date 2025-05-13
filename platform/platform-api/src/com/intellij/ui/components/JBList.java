@@ -256,7 +256,7 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
       Action newCopy = new AbstractAction() {
         @Override
         public boolean isEnabled() {
-          return getSelectedIndex() != -1;
+          return CopyPasteManager.isCopyEnabled(JBList.this) && getSelectedIndex() != -1;
         }
 
         @Override

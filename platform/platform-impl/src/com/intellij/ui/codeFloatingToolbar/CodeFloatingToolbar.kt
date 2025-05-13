@@ -20,6 +20,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.VisualPosition
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener
@@ -212,6 +213,7 @@ class CodeFloatingToolbar(
 
       override fun beforeShown(event: LightweightWindowEvent) {
         activeMenuPopup = popup
+        CopyPasteManager.disableCopy(popup.content)
         Toggleable.setSelected(button, true)
         alignButtonPopup(popup)
         HelpTooltip.setMasterPopupOpenCondition(button) { true }
