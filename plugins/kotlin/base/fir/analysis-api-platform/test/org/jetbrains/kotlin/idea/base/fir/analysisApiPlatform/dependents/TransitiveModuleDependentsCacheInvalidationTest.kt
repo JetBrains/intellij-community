@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.dependents
 
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleDependentsProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModules
@@ -17,7 +16,6 @@ import java.io.File
  * This test ensures that cached transitive dependents of the IDE's [KotlinModuleDependentsProvider] are properly invalidated.
  */
 class TransitiveModuleDependentsCacheInvalidationTest : AbstractMultiModuleTest() {
-
     override fun getTestDataDirectory(): File = error("Should not be called")
 
     override val pluginMode: KotlinPluginMode
@@ -74,5 +72,5 @@ class TransitiveModuleDependentsCacheInvalidationTest : AbstractMultiModuleTest(
     }
 
     private fun KaModule.getTransitiveDependentNames(): Set<String> =
-        moduleDependentsProvider.getTransitiveDependents(this).mapTo(mutableSetOf()) { (it as KaSourceModule).name }
+        moduleDependentsProvider.getTransitiveDependents(this).mapTo(mutableSetOf()) { renderModuleName(it) }
 }

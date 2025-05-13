@@ -10,20 +10,8 @@
     { "name": "C", "dependencies": ["L3"] }
   ],
   "targets": [
-    {
-      "library": "L1",
-      "directDependents": ["A"],
-      "transitiveDependents": ["A"]
-    },
-    {
-      "library": "L2",
-      "directDependents": ["B"],
-      "transitiveDependents": ["B"]
-    },
-    {
-      "library": "L3",
-      "directDependents": ["A", "C"],
-      "transitiveDependents": ["A", "C"]
-    }
+    { "library": "L1" },
+    { "library": "L2" },
+    { "library": "L3" }
   ]
 }
