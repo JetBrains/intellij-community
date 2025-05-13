@@ -8,7 +8,7 @@ Process finished with exit code 1
 Exception in thread "main" java.lang.IllegalStateException: This exception should be thrown
 	at StepOutWithExceptionKt.funWithSuspendLast(stepOutWithException.kt:25)
 	at StepOutWithExceptionKt$funWithSuspendLast$1.invokeSuspend(stepOutWithException.kt)
-	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
 	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:108)
 	at kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:584)
 	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:793)
