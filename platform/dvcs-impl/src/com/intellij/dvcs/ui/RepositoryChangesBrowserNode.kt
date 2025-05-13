@@ -22,7 +22,7 @@ import com.intellij.util.ui.JBUI.insets
 import com.intellij.util.ui.UIUtil.getTreeBackground
 import com.intellij.vcs.branch.BranchPresentation.getPresentableText
 import com.intellij.vcs.branch.BranchPresentation.getSingleTooltip
-import com.intellij.vcs.log.impl.VcsLogManager.findLogProviders
+import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.VcsLogColorManagerFactory
@@ -75,7 +75,7 @@ open class RepositoryChangesBrowserNode(repository: Repository,
       val colorManager = VcsProjectLog.getInstance(project).logManager?.colorManager
       if (colorManager != null) return colorManager
 
-      val roots = findLogProviders(ProjectLevelVcsManager.getInstance(project).allVcsRoots.asList(), project).keys
+      val roots = VcsLogManager.findLogProviders(ProjectLevelVcsManager.getInstance(project).allVcsRoots.asList(), project).keys
       return VcsLogColorManagerFactory.create(roots)
     }
 

@@ -517,26 +517,20 @@ com.intellij.vcs.log.impl.VcsLogIndexer$PathsEncoder
 - a:encode(com.intellij.openapi.vfs.VirtualFile,java.lang.String,Z):I
 c:com.intellij.vcs.log.impl.VcsLogManager
 - com.intellij.openapi.Disposable
-- pf:myProject:com.intellij.openapi.project.Project
-- <init>(com.intellij.openapi.project.Project,com.intellij.vcs.log.impl.VcsLogTabsProperties,java.util.Collection):V
-- <init>(com.intellij.openapi.project.Project,com.intellij.vcs.log.impl.VcsLogTabsProperties,java.util.Map,java.lang.String,Z,Z,java.util.function.BiConsumer):V
+- sf:Companion:com.intellij.vcs.log.impl.VcsLogManager$Companion
 - dispose():V
-- dispose(java.lang.Runnable):V
-- s:findLogProviders(java.util.Collection,com.intellij.openapi.project.Project):java.util.Map
-- getColorManager():com.intellij.vcs.log.ui.VcsLogColorManager
-- getDataManager():com.intellij.vcs.log.data.VcsLogData
-- getLogUis():java.util.List
-- getName():java.lang.String
-- getUiProperties():com.intellij.vcs.log.impl.VcsLogTabsProperties
-- isDisposed():Z
-- isLogVisible():Z
-a:com.intellij.vcs.log.impl.VcsLogManager$BaseVcsLogUiFactory
-- com.intellij.vcs.log.impl.VcsLogManager$VcsLogUiFactory
-- <init>(java.lang.String,com.intellij.vcs.log.VcsLogFilterCollection,com.intellij.vcs.log.impl.VcsLogTabsProperties,com.intellij.vcs.log.ui.VcsLogColorManager):V
-- createLogUi(com.intellij.openapi.project.Project,com.intellij.vcs.log.data.VcsLogData):com.intellij.vcs.log.ui.VcsLogUiImpl
-- pa:createVcsLogUiImpl(java.lang.String,com.intellij.vcs.log.data.VcsLogData,com.intellij.vcs.log.impl.MainVcsLogUiProperties,com.intellij.vcs.log.ui.VcsLogColorManager,com.intellij.vcs.log.visible.VisiblePackRefresherImpl,com.intellij.vcs.log.VcsLogFilterCollection):com.intellij.vcs.log.ui.VcsLogUiImpl
-com.intellij.vcs.log.impl.VcsLogManager$VcsLogUiFactory
-- a:createLogUi(com.intellij.openapi.project.Project,com.intellij.vcs.log.data.VcsLogData):com.intellij.vcs.log.ui.VcsLogUiEx
+- f:dispose(java.lang.Runnable):V
+- sf:findLogProviders(java.util.Collection,com.intellij.openapi.project.Project):java.util.Map
+- f:getColorManager():com.intellij.vcs.log.ui.VcsLogColorManager
+- f:getDataManager():com.intellij.vcs.log.data.VcsLogData
+- f:getLogUis():java.util.List
+- pf:getProject():com.intellij.openapi.project.Project
+- f:getUiProperties():com.intellij.vcs.log.impl.VcsLogTabsProperties
+- f:isDisposed():Z
+- f:isLogUpToDate():Z
+- f:isLogVisible():Z
+f:com.intellij.vcs.log.impl.VcsLogManager$Companion
+- f:findLogProviders(java.util.Collection,com.intellij.openapi.project.Project):java.util.Map
 f:com.intellij.vcs.log.impl.VcsLogNavigationUtil
 - sf:INSTANCE:com.intellij.vcs.log.impl.VcsLogNavigationUtil
 - sf:jumpToBranch(com.intellij.vcs.log.ui.VcsLogUiEx,java.lang.String,Z,Z):V

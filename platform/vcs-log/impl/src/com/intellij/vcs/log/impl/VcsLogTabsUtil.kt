@@ -35,7 +35,7 @@ object VcsLogTabsUtil {
   }
 
   fun generateTabId(manager: VcsLogManager): @NonNls String {
-    val existingIds = manager.logUis.map { it.id }.toSet()
+    val existingIds = manager.getLogUis().map { it.id }.toSet()
     var newId: String
     do {
       newId = UUID.randomUUID().toString()
