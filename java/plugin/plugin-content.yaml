@@ -25,6 +25,7 @@
   - name: intellij.java.frontback.psi.impl
   - name: intellij.java.frontback.impl
   - name: intellij.java.debugger.impl.shared
+  - name: intellij.java.execution.impl.shared
   - name: intellij.java.syntax
   - name: intellij.java.psi.impl
   - name: intellij.java.psi
@@ -145,6 +146,12 @@
 - name: lib/modules/intellij.java.debugger.impl.frontend.jar
   contentModules:
   - name: intellij.java.debugger.impl.frontend
+- name: lib/modules/intellij.java.execution.impl.backend.jar
+  contentModules:
+  - name: intellij.java.execution.impl.backend
+- name: lib/modules/intellij.java.execution.impl.frontend.jar
+  contentModules:
+  - name: intellij.java.execution.impl.frontend
 - name: lib/modules/intellij.java.featuresTrainer.jar
   contentModules:
   - name: intellij.java.featuresTrainer
