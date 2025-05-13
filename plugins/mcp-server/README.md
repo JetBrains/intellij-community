@@ -10,45 +10,9 @@ JetBrains MCP (Model Context Protocol) Server Plugin enables seamless integratio
 
 ## Custom Tools Implementation
 
-The plugin provides an extension point system that allows third-party plugins to implement their own MCP tools. Here's how to implement and register your custom tools:
+The plugin provides an extension point system that allows third-party plugins to implement their own MCP tools. Here's how to implement and register your custom tools.
 
-### 1. Creating a Custom Tool
-
-Create a class that extends `AbstractMcpTool`:
-
-```kotlin
-class MyCustomTool : AbstractMcpTool<MyArgs>() {
-    override val name: String = "myCustomTool"
-    override val description: String = "Description of what your tool does"
-
-    override fun handle(project: Project, args: MyArgs): Response {
-        // Implement your tool's logic here
-        return Response.ok("Result")
-    }
-}
-
-// Define your arguments data class
-@Serializable
-data class MyArgs(
-    val param1: String,
-    val param2: Int
-)
-```
-
-### 2. Registering Your Tool
-
-To register your tool, add it as an extension in your plugin.xml:
-
-```xml
-<idea-plugin>
-    <!-- Your plugin config -->
-    <depends>com.intellij.mcpServer</depends>
-    
-    <extensions defaultExtensionNs="com.intellij.mcpServer">
-        <mcpTool implementation="com.example.MyCustomTool"/>
-    </extensions>
-</idea-plugin>
-```
+Refer to the [demo plugin](https://github.com/MaXal/mcpExtensionPlugin) to get started.
 
 ### 3. Tool Implementation Guidelines
 
