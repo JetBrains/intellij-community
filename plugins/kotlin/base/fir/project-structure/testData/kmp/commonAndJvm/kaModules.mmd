@@ -8,8 +8,11 @@ graph TD
   KaLibraryModule_6(["KaLibraryModule(org.jetbrains:annotations-java5:24.0.0)"])
   KaLibraryModule_7(["KaLibraryModule(org.jetbrains:annotations:23.0.0)"])
   KaSourceModule_8["KaSourceModule(Common)<br />production<br />JS/JVM (1.8)"]
-  KaSourceModule_9["KaSourceModule(Jvm)<br />production<br />JVM (1.8)"]
-  KaSourceModule_10["KaSourceModule(light_idea_test_case)<br />production<br />JVM (1.8)"]
+  KaSourceModule_9["KaSourceModule(Common)<br />test<br />JS/JVM (1.8)"]
+  KaSourceModule_10["KaSourceModule(Jvm)<br />production<br />JVM (1.8)"]
+  KaSourceModule_11["KaSourceModule(Jvm)<br />test<br />JVM (1.8)"]
+  KaSourceModule_12["KaSourceModule(light_idea_test_case)<br />production<br />JVM (1.8)"]
+  KaSourceModule_13["KaSourceModule(light_idea_test_case)<br />test<br />JVM (1.8)"]
   style KaLibraryModule_0 fill:#CC2B52
   style KaLibraryModule_1 fill:#CC2B52
   style KaLibraryModule_2 fill:#CB6040
@@ -19,8 +22,11 @@ graph TD
   style KaLibraryModule_6 fill:#CB6040
   style KaLibraryModule_7 fill:#CB6040
   style KaSourceModule_8 fill:#608BC1
-  style KaSourceModule_9 fill:#608BC1
+  style KaSourceModule_9 fill:#31511E
   style KaSourceModule_10 fill:#608BC1
+  style KaSourceModule_11 fill:#31511E
+  style KaSourceModule_12 fill:#608BC1
+  style KaSourceModule_13 fill:#31511E
   KaLibraryModule_2 --> KaLibraryFallbackDependenciesModule_2
   KaLibraryModule_3 --> KaLibraryFallbackDependenciesModule_3
   KaLibraryModule_4 --> KaLibraryFallbackDependenciesModule_4
@@ -28,16 +34,35 @@ graph TD
   KaLibraryModule_6 --> KaLibraryFallbackDependenciesModule_6
   KaLibraryModule_7 --> KaLibraryFallbackDependenciesModule_7
   KaSourceModule_10 --> KaLibraryModule_1
-  KaSourceModule_10 --> KaLibraryModule_6
+  KaSourceModule_10 --> KaLibraryModule_2
+  KaSourceModule_10 --> KaLibraryModule_4
+  KaSourceModule_10 --> KaLibraryModule_7
+  KaSourceModule_10 --> KaSourceModule_8
+  KaSourceModule_11 --> KaLibraryModule_1
+  KaSourceModule_11 --> KaLibraryModule_2
+  KaSourceModule_11 --> KaLibraryModule_4
+  KaSourceModule_11 --> KaLibraryModule_7
+  KaSourceModule_11 --> KaSourceModule_10
+  KaSourceModule_11 --> KaSourceModule_8
+  KaSourceModule_11 --> KaSourceModule_9
+  KaSourceModule_12 --> KaLibraryModule_1
+  KaSourceModule_12 --> KaLibraryModule_6
+  KaSourceModule_13 --> KaLibraryModule_1
+  KaSourceModule_13 --> KaLibraryModule_6
+  KaSourceModule_13 --> KaSourceModule_12
   KaSourceModule_8 --> KaLibraryModule_0
   KaSourceModule_8 --> KaLibraryModule_3
   KaSourceModule_8 --> KaLibraryModule_5
-  KaSourceModule_9 --> KaLibraryModule_1
-  KaSourceModule_9 --> KaLibraryModule_2
-  KaSourceModule_9 --> KaLibraryModule_4
-  KaSourceModule_9 --> KaLibraryModule_7
+  KaSourceModule_9 --> KaLibraryModule_0
+  KaSourceModule_9 --> KaLibraryModule_3
+  KaSourceModule_9 --> KaLibraryModule_5
   KaSourceModule_9 --> KaSourceModule_8
-  KaSourceModule_9 --dependsOn--> KaSourceModule_8
+  KaSourceModule_11 --friend--> KaSourceModule_10
+  KaSourceModule_11 --friend--> KaSourceModule_8
+  KaSourceModule_13 --friend--> KaSourceModule_12
+  KaSourceModule_9 --friend--> KaSourceModule_8
+  KaSourceModule_10 --dependsOn--> KaSourceModule_8
+  KaSourceModule_11 --dependsOn--> KaSourceModule_9
   linkStyle 0 stroke:black
   linkStyle 1 stroke:black
   linkStyle 2 stroke:black
@@ -54,4 +79,23 @@ graph TD
   linkStyle 13 stroke:black
   linkStyle 14 stroke:black
   linkStyle 15 stroke:black
-  linkStyle 16 stroke:#8967B3
+  linkStyle 16 stroke:black
+  linkStyle 17 stroke:black
+  linkStyle 18 stroke:black
+  linkStyle 19 stroke:black
+  linkStyle 20 stroke:black
+  linkStyle 21 stroke:black
+  linkStyle 22 stroke:black
+  linkStyle 23 stroke:black
+  linkStyle 24 stroke:black
+  linkStyle 25 stroke:black
+  linkStyle 26 stroke:black
+  linkStyle 27 stroke:black
+  linkStyle 28 stroke:black
+  linkStyle 29 stroke:black
+  linkStyle 30 stroke:#E6C767
+  linkStyle 31 stroke:#E6C767
+  linkStyle 32 stroke:#E6C767
+  linkStyle 33 stroke:#E6C767
+  linkStyle 34 stroke:#8967B3
+  linkStyle 35 stroke:#8967B3

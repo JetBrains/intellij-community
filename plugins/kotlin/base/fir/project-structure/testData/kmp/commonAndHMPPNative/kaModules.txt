@@ -170,6 +170,22 @@ KaSourceModule:
     <empty>
 
 KaSourceModule:
+  description: Sources of Common
+  targetPlatform: JS/JVM (1.8)
+  name: Common
+  sourceModuleKind: TEST
+  stableModuleName: <Common>
+  regularDependencies:
+    KaLibraryModule(SDK)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.2.0-dev-15683)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
+    KaSourceModule(Common, production)
+  friendDependencies:
+    KaSourceModule(Common, production)
+  dependsOnDependencies:
+    <empty>
+
+KaSourceModule:
   description: Sources of Linux
   targetPlatform: Native (linux_arm64)/Native (linux_x64)
   name: Linux
@@ -194,6 +210,35 @@ KaSourceModule:
     KaSourceModule(Native, production)
 
 KaSourceModule:
+  description: Sources of Linux
+  targetPlatform: Native (linux_arm64)/Native (linux_x64)
+  name: Linux
+  sourceModuleKind: TEST
+  stableModuleName: <Linux>
+  regularDependencies:
+    KaLibraryModule(NativePrebuiltKmpCoordinates(libraryPart=klib/common/stdlib, version=2.2.0-dev-15683))
+    KaLibraryModule(SDK)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.2.0-dev-15683)
+    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:commonMain:0.23.1)
+    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:nativeMain:0.23.1)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:concurrentMain:1.8.0)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeMain:1.8.0)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeOtherMain:1.8.0)
+    KaSourceModule(Common, production)
+    KaSourceModule(Common, test)
+    KaSourceModule(Linux, production)
+    KaSourceModule(Native, production)
+    KaSourceModule(Native, test)
+  friendDependencies:
+    KaSourceModule(Common, production)
+    KaSourceModule(Linux, production)
+    KaSourceModule(Native, production)
+  dependsOnDependencies:
+    KaSourceModule(Common, test)
+    KaSourceModule(Native, test)
+
+KaSourceModule:
   description: Sources of MinGW
   targetPlatform: Native (mingw_x64)
   name: MinGW
@@ -211,6 +256,30 @@ KaSourceModule:
   dependsOnDependencies:
     KaSourceModule(Common, production)
     KaSourceModule(Native, production)
+
+KaSourceModule:
+  description: Sources of MinGW
+  targetPlatform: Native (mingw_x64)
+  name: MinGW
+  sourceModuleKind: TEST
+  stableModuleName: <MinGW>
+  regularDependencies:
+    KaLibraryModule(NativePrebuiltKmpCoordinates(libraryPart=klib/common/stdlib, version=2.2.0-dev-15683))
+    KaLibraryModule(SDK)
+    KaLibraryModule(org.jetbrains.kotlinx:atomicfu-mingwx64:0.23.1)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core-mingwx64:1.8.0)
+    KaSourceModule(Common, production)
+    KaSourceModule(Common, test)
+    KaSourceModule(MinGW, production)
+    KaSourceModule(Native, production)
+    KaSourceModule(Native, test)
+  friendDependencies:
+    KaSourceModule(Common, production)
+    KaSourceModule(MinGW, production)
+    KaSourceModule(Native, production)
+  dependsOnDependencies:
+    KaSourceModule(Common, test)
+    KaSourceModule(Native, test)
 
 KaSourceModule:
   description: Sources of Native
@@ -234,6 +303,30 @@ KaSourceModule:
     KaSourceModule(Common, production)
 
 KaSourceModule:
+  description: Sources of Native
+  targetPlatform: Native (linux_arm64)/Native (linux_x64)/Native (mingw_x64)
+  name: Native
+  sourceModuleKind: TEST
+  stableModuleName: <Native>
+  regularDependencies:
+    KaLibraryModule(NativePrebuiltKmpCoordinates(libraryPart=klib/common/stdlib, version=2.2.0-dev-15683))
+    KaLibraryModule(SDK)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.2.0-dev-15683)
+    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:commonMain:0.23.1)
+    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:nativeMain:0.23.1)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:concurrentMain:1.8.0)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeMain:1.8.0)
+    KaSourceModule(Common, production)
+    KaSourceModule(Common, test)
+    KaSourceModule(Native, production)
+  friendDependencies:
+    KaSourceModule(Common, production)
+    KaSourceModule(Native, production)
+  dependsOnDependencies:
+    KaSourceModule(Common, test)
+
+KaSourceModule:
   description: Sources of light_idea_test_case
   targetPlatform: JVM (1.8)
   name: light_idea_test_case
@@ -244,5 +337,20 @@ KaSourceModule:
     KaLibraryModule(org.jetbrains:annotations-java5:24.0.0)
   friendDependencies:
     <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaSourceModule:
+  description: Sources of light_idea_test_case
+  targetPlatform: JVM (1.8)
+  name: light_idea_test_case
+  sourceModuleKind: TEST
+  stableModuleName: <light_idea_test_case>
+  regularDependencies:
+    KaLibraryModule(SDK)
+    KaLibraryModule(org.jetbrains:annotations-java5:24.0.0)
+    KaSourceModule(light_idea_test_case, production)
+  friendDependencies:
+    KaSourceModule(light_idea_test_case, production)
   dependsOnDependencies:
     <empty>

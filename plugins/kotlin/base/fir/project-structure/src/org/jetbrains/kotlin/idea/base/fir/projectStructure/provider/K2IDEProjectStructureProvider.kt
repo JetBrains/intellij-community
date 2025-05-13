@@ -166,12 +166,8 @@ class K2IDEProjectStructureProvider(private val project: Project) : IDEProjectSt
         return getKaSourceModule(moduleEntity, kind)
     }
 
-    override fun getKaSourceModule(moduleEntity: ModuleEntity, kind: KaSourceModuleKind): KaSourceModule? {
-        if (moduleEntity.sourceRoots.any { it.getKind() == kind }) {
-            return cache.cachedKaSourceModule(moduleEntity.symbolicId, kind)
-        }
-        return null
-    }
+    override fun getKaSourceModule(moduleEntity: ModuleEntity, kind: KaSourceModuleKind): KaSourceModule? =
+        cache.cachedKaSourceModule(moduleEntity.symbolicId, kind)
 
     override fun getKaSourceModules(moduleId: ModuleId): List<KaSourceModule> {
         val moduleEntity = moduleId.resolve(project.workspaceModel.currentSnapshot) ?: return emptyList()

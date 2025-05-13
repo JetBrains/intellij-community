@@ -1,5 +1,8 @@
 graph TD
   KaScriptModule_56{{"KaScriptModule(build.gradle.kts)"}}
+  KaSourceModule_58["KaSourceModule(GradleKotlinFixture)<br />production<br />JVM (1.8)"]
+  KaLibraryModule_0(["KaLibraryModule(SDK)"])
+  KaSourceModule_59["KaSourceModule(GradleKotlinFixture)<br />test<br />JVM (1.8)"]
   KaLibraryModule_1(["KaLibraryModule(annotations-13.0.jar)<br />scriptDependency"])
   KaLibraryModule_2(["KaLibraryModule(dependencies-accessors/932b97c9e0ae61a950d0c442ab66fbe219f5f218/classes)<br />scriptDependency"])
   KaLibraryModule_3(["KaLibraryModule(gradle-api-8.11.jar)<br />scriptDependency"])
@@ -54,9 +57,11 @@ graph TD
   KaLibraryModule_53(["KaLibraryModule(kotlin-util-klib-2.0.20.jar)<br />scriptDependency"])
   KaLibraryModule_54(["KaLibraryModule(kotlinx-coroutines-core-jvm-1.6.4.jar)<br />scriptDependency"])
   KaLibraryModule_55(["KaLibraryModule(trove4j-1.0.20200330.jar)<br />scriptDependency"])
-  KaLibraryModule_0(["KaLibraryModule(SDK)"])
   KaScriptModule_57{{"KaScriptModule(settings.gradle.kts)"}}
   KaLibraryModule_36(["KaLibraryModule(kotlin-dsl/accessors/045fae15c156631da085875c7a614413/classes)<br />scriptDependency"])
+  style KaSourceModule_58 fill:#608BC1
+  style KaLibraryModule_0 fill:#CC2B52
+  style KaSourceModule_59 fill:#31511E
   style KaLibraryModule_1 fill:#CB6040
   style KaLibraryModule_2 fill:#CB6040
   style KaLibraryModule_3 fill:#CB6040
@@ -111,7 +116,6 @@ graph TD
   style KaLibraryModule_53 fill:#CB6040
   style KaLibraryModule_54 fill:#CB6040
   style KaLibraryModule_55 fill:#CB6040
-  style KaLibraryModule_0 fill:#CC2B52
   style KaLibraryModule_36 fill:#CB6040
   KaScriptModule_56 --> KaLibraryModule_0
   KaScriptModule_56 --> KaLibraryModule_1
@@ -168,6 +172,8 @@ graph TD
   KaScriptModule_56 --> KaLibraryModule_7
   KaScriptModule_56 --> KaLibraryModule_8
   KaScriptModule_56 --> KaLibraryModule_9
+  KaScriptModule_56 --> KaSourceModule_58
+  KaScriptModule_56 --> KaSourceModule_59
   KaScriptModule_57 --> KaLibraryModule_0
   KaScriptModule_57 --> KaLibraryModule_10
   KaScriptModule_57 --> KaLibraryModule_12
@@ -196,6 +202,14 @@ graph TD
   KaScriptModule_57 --> KaLibraryModule_7
   KaScriptModule_57 --> KaLibraryModule_8
   KaScriptModule_57 --> KaLibraryModule_9
+  KaScriptModule_57 --> KaSourceModule_58
+  KaScriptModule_57 --> KaSourceModule_59
+  KaSourceModule_58 --> KaLibraryModule_0
+  KaSourceModule_59 --> KaLibraryModule_0
+  KaSourceModule_59 --> KaSourceModule_58
+  KaScriptModule_56 --friend--> KaSourceModule_58
+  KaScriptModule_57 --friend--> KaSourceModule_58
+  KaSourceModule_59 --friend--> KaSourceModule_58
   linkStyle 0 stroke:black
   linkStyle 1 stroke:black
   linkStyle 2 stroke:black
@@ -279,3 +293,13 @@ graph TD
   linkStyle 80 stroke:black
   linkStyle 81 stroke:black
   linkStyle 82 stroke:black
+  linkStyle 83 stroke:black
+  linkStyle 84 stroke:black
+  linkStyle 85 stroke:black
+  linkStyle 86 stroke:black
+  linkStyle 87 stroke:black
+  linkStyle 88 stroke:black
+  linkStyle 89 stroke:black
+  linkStyle 90 stroke:#E6C767
+  linkStyle 91 stroke:#E6C767
+  linkStyle 92 stroke:#E6C767

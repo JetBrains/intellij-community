@@ -1,1 +1,2 @@
 E (production)
+E (test)

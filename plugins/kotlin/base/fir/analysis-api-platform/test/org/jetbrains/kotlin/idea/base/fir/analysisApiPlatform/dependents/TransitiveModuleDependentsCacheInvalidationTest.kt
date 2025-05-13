@@ -35,14 +35,14 @@ class TransitiveModuleDependentsCacheInvalidationTest : AbstractMultiModuleTest(
         val ktModuleA = moduleA.toKaSourceModuleForProduction()!!
 
         Assert.assertEquals(
-            setOf("b (production)", "c (production)"),
+            setOf("a (test)", "b (production)", "b (test)", "c (production)", "c (test)"),
             ktModuleA.getTransitiveDependentNames(),
         )
 
         moduleD.addDependency(moduleA)
 
         Assert.assertEquals(
-            setOf("b (production)", "c (production)", "d (production)"),
+            setOf("a (test)", "b (production)", "b (test)", "c (production)", "c (test)", "d (production)", "d (test)"),
             ktModuleA.getTransitiveDependentNames(),
         )
     }
@@ -59,14 +59,14 @@ class TransitiveModuleDependentsCacheInvalidationTest : AbstractMultiModuleTest(
         val ktModuleA = libraryA.toKaLibraryModules(project).first()
 
         Assert.assertEquals(
-            setOf("b (production)", "c (production)"),
+            setOf("b (production)", "b (test)", "c (production)", "c (test)"),
             ktModuleA.getTransitiveDependentNames(),
         )
 
         moduleD.addDependency(libraryA)
 
         Assert.assertEquals(
-            setOf("b (production)", "c (production)", "d (production)"),
+            setOf("b (production)", "b (test)", "c (production)", "c (test)", "d (production)", "d (test)"),
             ktModuleA.getTransitiveDependentNames(),
         )
     }

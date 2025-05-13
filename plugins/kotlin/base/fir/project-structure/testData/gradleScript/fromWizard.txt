@@ -57,8 +57,49 @@ KaScriptModule:
     KaLibraryModule(kotlin-util-klib-2.0.20.jar, scriptDependency)
     KaLibraryModule(kotlinx-coroutines-core-jvm-1.6.4.jar, scriptDependency)
     KaLibraryModule(trove4j-1.0.20200330.jar, scriptDependency)
+    KaSourceModule(GradleKotlinFixture, production)
+    KaSourceModule(GradleKotlinFixture, test)
+  friendDependencies:
+    KaSourceModule(GradleKotlinFixture, production)
+  dependsOnDependencies:
+    <empty>
+
+KaSourceModule:
+  description: Sources of GradleKotlinFixture
+  targetPlatform: JVM (1.8)
+  name: GradleKotlinFixture
+  sourceModuleKind: PRODUCTION
+  stableModuleName: <GradleKotlinFixture>
+  regularDependencies:
+    KaLibraryModule(SDK)
   friendDependencies:
     <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: SDK
+  targetPlatform: JVM (1.8)
+  libraryName: SDK
+  isSdk: true
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaSourceModule:
+  description: Sources of GradleKotlinFixture
+  targetPlatform: JVM (1.8)
+  name: GradleKotlinFixture
+  sourceModuleKind: TEST
+  stableModuleName: <GradleKotlinFixture>
+  regularDependencies:
+    KaLibraryModule(SDK)
+    KaSourceModule(GradleKotlinFixture, production)
+  friendDependencies:
+    KaSourceModule(GradleKotlinFixture, production)
   dependsOnDependencies:
     <empty>
 
@@ -710,18 +751,6 @@ KaLibraryModule:
   dependsOnDependencies:
     <empty>
 
-KaLibraryModule:
-  description: SDK
-  targetPlatform: JVM (1.8)
-  libraryName: SDK
-  isSdk: true
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
 KaScriptModule:
   description: Script settings.gradle.kts
   targetPlatform: JVM (1.8)
@@ -754,8 +783,10 @@ KaScriptModule:
     KaLibraryModule(kotlin-dsl/accessors/045fae15c156631da085875c7a614413/classes, scriptDependency)
     KaLibraryModule(kotlin-reflect-2.0.20.jar, scriptDependency)
     KaLibraryModule(kotlin-stdlib dependencies, scriptDependency)
+    KaSourceModule(GradleKotlinFixture, production)
+    KaSourceModule(GradleKotlinFixture, test)
   friendDependencies:
-    <empty>
+    KaSourceModule(GradleKotlinFixture, production)
   dependsOnDependencies:
     <empty>
 

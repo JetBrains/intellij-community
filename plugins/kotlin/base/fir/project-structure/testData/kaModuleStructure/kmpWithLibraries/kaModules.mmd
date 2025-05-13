@@ -2,20 +2,54 @@ graph TD
   KaLibraryModule_0(["KaLibraryModule(SDK)"])
   KaLibraryModule_1(["KaLibraryModule(library)"])
   KaSourceModule_2["KaSourceModule(common)<br />production<br />JS/JVM (1.8)/Native (general)/wasm-js (JS)/wasm-wasi (WASI)"]
-  KaSourceModule_3["KaSourceModule(jvm)<br />production<br />JVM (1.8)"]
-  KaSourceModule_4["KaSourceModule(native)<br />production<br />Native (general)"]
+  KaSourceModule_3["KaSourceModule(common)<br />test<br />JS/JVM (1.8)/Native (general)/wasm-js (JS)/wasm-wasi (WASI)"]
+  KaSourceModule_4["KaSourceModule(jvm)<br />production<br />JVM (1.8)"]
+  KaSourceModule_5["KaSourceModule(jvm)<br />test<br />JVM (1.8)"]
+  KaSourceModule_6["KaSourceModule(native)<br />production<br />Native (general)"]
+  KaSourceModule_7["KaSourceModule(native)<br />test<br />Native (general)"]
   style KaLibraryModule_0 fill:#CC2B52
   style KaLibraryModule_1 fill:#CB6040
   style KaSourceModule_2 fill:#608BC1
-  style KaSourceModule_3 fill:#608BC1
+  style KaSourceModule_3 fill:#31511E
   style KaSourceModule_4 fill:#608BC1
+  style KaSourceModule_5 fill:#31511E
+  style KaSourceModule_6 fill:#608BC1
+  style KaSourceModule_7 fill:#31511E
   KaLibraryModule_1 --> KaLibraryFallbackDependenciesModule_1
   KaSourceModule_3 --> KaSourceModule_2
   KaSourceModule_4 --> KaSourceModule_2
-  KaSourceModule_3 --dependsOn--> KaSourceModule_2
+  KaSourceModule_5 --> KaSourceModule_2
+  KaSourceModule_5 --> KaSourceModule_3
+  KaSourceModule_5 --> KaSourceModule_4
+  KaSourceModule_6 --> KaSourceModule_2
+  KaSourceModule_7 --> KaSourceModule_2
+  KaSourceModule_7 --> KaSourceModule_3
+  KaSourceModule_7 --> KaSourceModule_6
+  KaSourceModule_3 --friend--> KaSourceModule_2
+  KaSourceModule_5 --friend--> KaSourceModule_2
+  KaSourceModule_5 --friend--> KaSourceModule_4
+  KaSourceModule_7 --friend--> KaSourceModule_2
+  KaSourceModule_7 --friend--> KaSourceModule_6
   KaSourceModule_4 --dependsOn--> KaSourceModule_2
+  KaSourceModule_5 --dependsOn--> KaSourceModule_3
+  KaSourceModule_6 --dependsOn--> KaSourceModule_2
+  KaSourceModule_7 --dependsOn--> KaSourceModule_3
   linkStyle 0 stroke:black
   linkStyle 1 stroke:black
   linkStyle 2 stroke:black
-  linkStyle 3 stroke:#8967B3
-  linkStyle 4 stroke:#8967B3
+  linkStyle 3 stroke:black
+  linkStyle 4 stroke:black
+  linkStyle 5 stroke:black
+  linkStyle 6 stroke:black
+  linkStyle 7 stroke:black
+  linkStyle 8 stroke:black
+  linkStyle 9 stroke:black
+  linkStyle 10 stroke:#E6C767
+  linkStyle 11 stroke:#E6C767
+  linkStyle 12 stroke:#E6C767
+  linkStyle 13 stroke:#E6C767
+  linkStyle 14 stroke:#E6C767
+  linkStyle 15 stroke:#8967B3
+  linkStyle 16 stroke:#8967B3
+  linkStyle 17 stroke:#8967B3
+  linkStyle 18 stroke:#8967B3
