@@ -1,20 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.pullUp
 
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.lightElementForMemberInfo
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtParameter
-import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.*
 
 @ApiStatus.Internal
 fun KtProperty.mustBeAbstractInInterface(): Boolean =
@@ -48,3 +44,64 @@ fun getInterfaceContainmentVerifier(getMemberInfos: () -> List<KotlinMemberInfo>
         psiSuperInterface?.findMethodBySignature(psiMethodToCheck, true) != null
     }
 }
+
+fun addMemberToTarget(targetMember: KtNamedDeclaration, targetClass: KtClassOrObject): KtNamedDeclaration {
+    if (targetClass is KtClass && targetClass.isInterface()) {
+        targetMember.removeModifier(KtTokens.FINAL_KEYWORD)
+    }
+
+    if (targetMember is KtParameter) {
+        val parameterList = (targetClass as KtClass).createPrimaryConstructorIfAbsent().valueParameterList!!
+        val anchor = parameterList.parameters.firstOrNull { it.isVarArg || it.hasDefaultValue() }
+        return parameterList.addParameterBefore(targetMember, anchor)
+    }
+
+    val anchor = targetClass.declarations.asSequence().filterIsInstance(targetMember::class.java).lastOrNull()
+    return when {
+        anchor == null && targetMember is KtProperty -> targetClass.addDeclarationBefore(targetMember, null)
+        else -> targetClass.addDeclarationAfter(targetMember, anchor)
+    }
+}
+
+fun doAddCallableMember(
+    memberCopy: KtCallableDeclaration,
+    clashingSuper: KtCallableDeclaration?,
+    targetClass: KtClassOrObject
+): KtCallableDeclaration {
+    val memberToAdd = if (memberCopy is KtParameter && memberCopy.needToBeAbstract(targetClass)) memberCopy.toProperty() else memberCopy
+
+    if (clashingSuper != null && clashingSuper.hasModifier(KtTokens.ABSTRACT_KEYWORD)) {
+        return clashingSuper.replaced(if (memberToAdd is KtParameter && clashingSuper is KtProperty) memberToAdd.toProperty() else memberToAdd)
+    }
+
+    return addMemberToTarget(memberToAdd, targetClass) as KtCallableDeclaration
+}
+
+// TODO: Formatting rules don't apply here for some reason
+fun KtNamedDeclaration.addAnnotationWithSpace(annotationEntry: KtAnnotationEntry): KtAnnotationEntry {
+    val result = addAnnotationEntry(annotationEntry)
+    addAfter(KtPsiFactory(project).createWhiteSpace(), modifierList)
+    return result
+}
+
+fun KtClass.makeAbstract() {
+    if (!isInterface()) {
+        addModifier(KtTokens.ABSTRACT_KEYWORD)
+    }
+}
+
+private fun KtParameter.needToBeAbstract(targetClass: KtClassOrObject): Boolean {
+    return hasModifier(KtTokens.ABSTRACT_KEYWORD) || targetClass is KtClass && targetClass.isInterface()
+}
+
+private fun KtParameter.toProperty(): KtProperty =
+    KtPsiFactory(project)
+        .createProperty(text)
+        .also {
+            val originalTypeRef = typeReference
+            val generatedTypeRef = it.typeReference
+            if (originalTypeRef != null && generatedTypeRef != null) {
+                // Preserve copyable user data of original type reference
+                generatedTypeRef.replace(originalTypeRef)
+            }
+        }
