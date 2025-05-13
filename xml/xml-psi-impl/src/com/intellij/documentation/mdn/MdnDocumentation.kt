@@ -281,7 +281,7 @@ class MdnSymbolDocumentationAdapter(
       result.append("<details><summary>")
     }
     result.append("<table style='margin:0px;padding:0px'><tr><td width=2 valign=top style='margin:0px;padding:0px ${JBUIScale.scale(4)}px 0px 0px'>" +
-                  "<icon src='com.intellij.xml.psi.impl.icons.XmlPsiImplIcons.Baseline${baseline.level.name.lowercase().capitalize()}'></icon>\n" +
+                  "<icon src='" + XmlFrontbackImplIcons::class.java.name +".Baseline${baseline.level.name.lowercase().capitalize()}'></icon>\n" +
                   "<td style='margin:0px;padding:0px'>")
     when (baseline.level) {
       BaselineLevel.NONE -> {
@@ -556,7 +556,7 @@ enum class MdnJavaScriptRuntime(displayName: String? = null, mdnId: String? = nu
 
 }
 
-val BASELINE_BROWSERS = setOf(
+internal val BASELINE_BROWSERS: Set<MdnJavaScriptRuntime> = setOf(
   MdnJavaScriptRuntime.Chrome,
   MdnJavaScriptRuntime.ChromeAndroid,
   MdnJavaScriptRuntime.Firefox,
