@@ -54,7 +54,7 @@ class SeTextItemsProvider(private val contributorWrapper: SeAsyncWeightedContrib
           val weight = t.weight
           val legacyItem = t.item as? SearchEverywhereItem ?: return true
 
-          return collector.put(SeTextSearchItem(legacyItem, weight, getInfoLeftText(legacyItem)))
+          return collector.put(SeTextSearchItem(legacyItem, weight, getExtendedDescription(legacyItem)))
         }
       })
     }
@@ -71,7 +71,7 @@ class SeTextItemsProvider(private val contributorWrapper: SeAsyncWeightedContrib
     return contributorWrapper.contributor.isExtendedInfoAvailable()
   }
 
-  fun getInfoLeftText(item: SearchEverywhereItem): String? {
+  fun getExtendedDescription(item: SearchEverywhereItem): String? {
     return contributorWrapper.contributor.getExtendedDescription(item)
   }
 

@@ -71,7 +71,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
   private val resultList: JBList<SeResultListRow> = JBList(resultListModel)
   private val resultsScrollPane = createListPane(resultList)
 
-  private val extendedInfoPanel: JComponent = JPanel(BorderLayout())
+  private val extendedInfoContainer: JComponent = JPanel(BorderLayout())
   private var extendedInfoComponent: ExtendedInfoComponent? = null
 
   init {
@@ -99,13 +99,13 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
 
     resultList.setFocusable(false)
 
-    updateExtendedInfoPanel()
+    updateExtendedInfoContainer()
 
     RowsGridBuilder(this)
       .row().cell(headerPane, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
       .row().cell(textField, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
       .row(resizable = true).cell(resultsScrollPane, horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.FILL, resizableColumn = true)
-      .row().cell(extendedInfoPanel, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
+      .row().cell(extendedInfoContainer, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
 
     textField.launchOnShow("Search Everywhere text field text binding") {
       withContext(Dispatchers.EDT) {
@@ -310,8 +310,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     resultList.addListSelectionListener { e: ListSelectionEvent ->
       val index = resultList.selectedIndex
       if (index != -1) {
-        val selectedItem = (resultList.selectedValue as? SeResultListItemRow)?.item
-        selectedItem?.let { extendedInfoComponent?.updateElement(it, this@SePopupContentPane) }
+        extendedInfoComponent?.updateElement(resultList.selectedValue, this@SePopupContentPane)
       }
     }
   }
@@ -349,11 +348,11 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
 
     val nextTabAction: (AnActionEvent) -> Unit = { _ ->
       vm.selectNextTab()
-      updateExtendedInfoPanel()
+      updateExtendedInfoContainer()
     }
     val prevTabAction: (AnActionEvent) -> Unit = { _ ->
       vm.selectPreviousTab()
-      updateExtendedInfoPanel()
+      updateExtendedInfoContainer()
     }
 
     registerAction(SeActions.SWITCH_TO_NEXT_TAB, nextTabAction)
@@ -502,17 +501,19 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
   private suspend fun createExtendedInfoComponent(): ExtendedInfoComponent? {
     if (isExtendedInfoEnabled() && (SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID == vm.currentTab.tabId
                                     || vm.isExtendedInfoAvailable())) {
-      val leftText = fun(element: Any): String? = (element as? SeItemData)?.presentation?.extendedDescription
+      val leftText = fun(element: Any): String? {
+        return (element as? SeResultListItemRow)?.item?.presentation?.extendedDescription
+      }
       return ExtendedInfoComponent(project, ExtendedInfo(leftText) { null })
     }
     return null
   }
 
-  private fun updateExtendedInfoPanel() {
-    extendedInfoPanel.removeAll()
-    vm.coroutineScope.launch {
+  private fun updateExtendedInfoContainer() {
+    extendedInfoContainer.removeAll()
+    vm.coroutineScope.launch(Dispatchers.EDT) {
       extendedInfoComponent = createExtendedInfoComponent()
-      extendedInfoComponent?.let { extendedInfoPanel.add(it.component) }
+      extendedInfoComponent?.let { extendedInfoContainer.add(it.component) }
     }
   }
 
