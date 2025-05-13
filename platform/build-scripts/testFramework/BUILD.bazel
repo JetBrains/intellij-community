@@ -14,7 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   deps = [
-    "//platform/build-scripts",
+    "//platform/build-scripts:buildScripts",
     "@lib//:kotlin-stdlib",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",

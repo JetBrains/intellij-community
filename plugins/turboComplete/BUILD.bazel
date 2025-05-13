@@ -20,7 +20,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/lang-api:lang",
     "//platform/statistics",
-    "//plugins/completion-ml-ranking",
+    "//plugins/completion-ml-ranking:completionMlRanking",
     "//platform/lang-impl",
     "//platform/ml-impl",
     "//platform/platform-impl/internal",

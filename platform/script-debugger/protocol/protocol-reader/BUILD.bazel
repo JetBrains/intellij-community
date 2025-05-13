@@ -2,17 +2,17 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "protocol-reader",
+  name = "javascript-protocolReader",
   module_name = "intellij.javascript.protocolReader",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:gson",
-    "//platform/script-debugger/protocol/protocol-reader-runtime",
+    "//platform/script-debugger/protocol/protocol-reader-runtime:scriptDebugger-protocolReaderRuntime",
     "//platform/platform-impl:ide-impl",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-reflect",
   ],
-  exports = ["//platform/script-debugger/protocol/protocol-reader-runtime"]
+  exports = ["//platform/script-debugger/protocol/protocol-reader-runtime:scriptDebugger-protocolReaderRuntime"]
 )
 ### auto-generated section `build intellij.javascript.protocolReader` end

@@ -15,10 +15,10 @@ jvm_library(
   deps = [
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
-    "//platform/new-ui-onboarding",
+    "//platform/new-ui-onboarding:ide-newUiOnboarding",
     "//plugins/ide-features-trainer:featuresTrainer",
     "//platform/core-ui",
-    "//platform/new-users-onboarding",
+    "//platform/new-users-onboarding:ide-newUsersOnboarding",
   ],
   runtime_deps = [":onboarding_resources"]
 )

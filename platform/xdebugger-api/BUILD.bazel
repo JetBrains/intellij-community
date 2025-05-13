@@ -22,6 +22,7 @@ jvm_library(
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
     "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
   ],
   exports = [
     "//platform/lang-api:lang",

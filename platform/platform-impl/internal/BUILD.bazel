@@ -31,7 +31,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/statistics/uploader",
     "//platform/util/jdom",
-    "//platform/service-container",
+    "//platform/service-container:serviceContainer",
     "@lib//:guava",
     "@lib//:miglayout-swing",
     "@lib//:kotlinx-serialization-json",

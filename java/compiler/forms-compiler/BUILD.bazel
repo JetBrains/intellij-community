@@ -12,10 +12,10 @@ jvm_library(
     "//platform/forms_rt:java-guiForms-rt",
     "@lib//:asm",
     "@lib//:jgoodies-forms",
-    "//java/compiler/instrumentation-util",
+    "//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
     "@lib//:jetbrains-annotations",
   ],
-  exports = ["//java/compiler/instrumentation-util"]
+  exports = ["//java/compiler/instrumentation-util:java-compiler-instrumentationUtil"]
 )
 
 jvm_library(
@@ -29,7 +29,7 @@ jvm_library(
     "//platform/forms_rt:java-guiForms-rt",
     "@lib//:asm",
     "@lib//:jgoodies-forms",
-    "//java/compiler/instrumentation-util",
+    "//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
     "//platform/util",
     "@lib//:jetbrains-annotations",
     "@lib//:junit4",

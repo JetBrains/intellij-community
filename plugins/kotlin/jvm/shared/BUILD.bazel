@@ -52,7 +52,6 @@ jvm_library(
     "//plugins/kotlin/run-configurations/jvm",
     "//platform/external-system-api:externalSystem",
     "//java/idea-ui:ui",
-    "//plugins/IntelliLang:langInjection",
     "//platform/boot",
     "//platform/diff-impl",
     "//platform/vcs-impl",

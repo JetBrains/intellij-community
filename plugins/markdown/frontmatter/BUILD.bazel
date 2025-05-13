@@ -18,9 +18,11 @@ jvm_library(
     "//plugins/IntelliLang:langInjection",
     "//plugins/markdown/core:markdown",
     "//json/backend",
-    "//platform/backend",
     "@lib//:kotlin-stdlib",
   ],
-  runtime_deps = [":frontmatter_resources"]
+  runtime_deps = [
+    ":frontmatter_resources",
+    "//platform/backend",
+  ]
 )
 ### auto-generated section `build intellij.markdown.frontmatter` end

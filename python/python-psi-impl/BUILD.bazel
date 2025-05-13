@@ -25,7 +25,7 @@ jvm_library(
     "@lib//:stream_ex",
     "//platform/projectModel-impl",
     "//platform/analysis-impl",
-    "//platform/service-container",
+    "//platform/service-container:serviceContainer",
     "@lib//:fastutil-min",
     "//platform/core-ui",
     "//platform/code-style-api:codeStyle",

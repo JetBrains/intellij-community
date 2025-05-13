@@ -14,7 +14,7 @@ jvm_library(
     "//platform/util",
     "@lib//:cli-parser",
     "//jps/model-serialization",
-    "//jps/jps-builders-6:build-javac-rt",
+    "@rules_jvm//jps-builders-6:build-javac-rt",
     "@lib//:protobuf",
   ]
 )

@@ -18,8 +18,10 @@ jvm_library(
     "//platform/util",
     "//platform/core-impl",
     "//spellchecker",
-    "//platform/backend",
   ],
-  runtime_deps = [":spellchecker_resources"]
+  runtime_deps = [
+    ":spellchecker_resources",
+    "//platform/backend",
+  ]
 )
 ### auto-generated section `build intellij.markdown.spellchecker` end
