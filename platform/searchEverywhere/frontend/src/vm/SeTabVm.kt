@@ -17,8 +17,10 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import kotlin.concurrent.atomics.AtomicBoolean
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
-@OptIn(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class, ExperimentalAtomicApi::class)
 @ApiStatus.Internal
 class SeTabVm(
   project: Project?,
@@ -64,7 +66,7 @@ class SeTabVm(
       }.collectLatest { isActive ->
         if (!isActive) return@collectLatest
 
-        var shouldThrottle = false
+        val shouldThrottle = AtomicBoolean(false)
 
         combine(searchPattern, filterEditor.getValue()?.resultFlow ?: flowOf(null)) { searchPattern, filterData ->
           Pair(searchPattern, filterData ?: SeFilterState.Empty)
@@ -72,16 +74,14 @@ class SeTabVm(
           val params = SeParams(searchPattern, filterData)
 
           val resultsFlow = tab.getItems(params).let {
-            //if (shouldThrottle)
-              it.throttledWithAccumulation()
-            //else
-            //  it.map { event -> SeThrottledOneItem(event) }
+            if (shouldThrottle.load()) it.throttledWithAccumulation()
+            else it.map { event -> SeThrottledOneItem(event) }
           }.map { item ->
             shouldLoadMoreFlow.first { it }
             item
           }
 
-          shouldThrottle = true
+          shouldThrottle.store(true)
           resultsFlow
         }.collect {
           _searchResults.value = it
