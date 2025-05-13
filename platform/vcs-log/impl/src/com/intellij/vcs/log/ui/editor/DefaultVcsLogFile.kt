@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.ui.components.JBPanelWithEmptyText
+import com.intellij.util.asSafely
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogFilterCollection
@@ -41,7 +42,7 @@ internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.Vcs
     val panel = JBPanelWithEmptyText(BorderLayout()).withEmptyText(VcsLogBundle.message("vcs.log.is.loading"))
     VcsLogUtil.runWhenVcsAndLogIsReady(project) { logManager ->
       val projectLog = VcsProjectLog.getInstance(project)
-      val tabsManager = projectLog.tabManager ?: return@runWhenVcsAndLogIsReady
+      val tabsManager = projectLog.logManager.asSafely<VcsProjectLogManager>()?.tabsManager ?: return@runWhenVcsAndLogIsReady
 
       try {
         val factory = tabsManager.getPersistentVcsLogUiFactory(tabId, VcsLogTabLocation.EDITOR, filters)

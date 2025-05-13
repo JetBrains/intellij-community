@@ -14,6 +14,7 @@ import org.jetbrains.annotations.ApiStatus
  * @see VcsLogTabsWatcher
  * @see VcsLogTabsWatcherExtension
  */
+@ApiStatus.Internal
 enum class VcsLogTabLocation {
   TOOL_WINDOW,
 

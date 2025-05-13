@@ -136,6 +136,7 @@ public class VcsLogManager implements Disposable {
     return myUiProperties;
   }
 
+  @ApiStatus.Internal
   public @NotNull MainVcsLogUi createLogUi(@NotNull String logId, @NotNull VcsLogTabLocation location) {
     return createLogUi(getMainLogUiFactory(logId, null), location, true);
   }
@@ -145,6 +146,7 @@ public class VcsLogManager implements Disposable {
     return createLogUi(getMainLogUiFactory(logId, null), location, isClosedOnDispose);
   }
 
+  @ApiStatus.Internal
   public @NotNull VcsLogUiFactory<? extends MainVcsLogUi> getMainLogUiFactory(@NotNull String logId, @Nullable VcsLogFilterCollection filters) {
     CustomVcsLogUiFactoryProvider factoryProvider = LOG_CUSTOM_UI_FACTORY_PROVIDER_EP.findFirstSafe(myProject, p -> {
       return p.isActive(myLogData.getLogProviders());
@@ -161,6 +163,7 @@ public class VcsLogManager implements Disposable {
     return myTabsWatcher;
   }
 
+  @ApiStatus.Internal
   public @NotNull <U extends VcsLogUiEx> U createLogUi(@NotNull VcsLogUiFactory<U> factory, @NotNull VcsLogTabLocation location) {
     return createLogUi(factory, location, true);
   }
@@ -190,11 +193,13 @@ public class VcsLogManager implements Disposable {
     return getTabsWatcher().getTabs();
   }
 
+  @ApiStatus.Internal
   public @NotNull List<? extends VcsLogUi> getLogUis(@NotNull VcsLogTabLocation location) {
     if (myTabsWatcher == null) return Collections.emptyList();
     return getTabsWatcher().getTabs(location);
   }
 
+  @ApiStatus.Internal
   public @NotNull List<? extends VcsLogUi> getVisibleLogUis(@NotNull VcsLogTabLocation location) {
     if (myTabsWatcher == null) return Collections.emptyList();
     return getTabsWatcher().getVisibleTabs(location);

@@ -18,6 +18,7 @@ import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogUi
 import com.intellij.vcs.log.impl.VcsLogManager.VcsLogUiFactory
 import com.intellij.vcs.log.ui.*
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.JComponent
@@ -44,10 +45,11 @@ object VcsLogContentUtil {
     return ContentUtilEx.selectContent(manager, component, requestFocus)
   }
 
-  fun getId(content: Content): String? {
+  internal fun getId(content: Content): String? {
     return getLogUi(content.component)?.id
   }
 
+  @Internal
   @JvmStatic
   fun <U : VcsLogUiEx> openLogTab(project: Project,
                                   logManager: VcsLogManager,
@@ -74,7 +76,7 @@ object VcsLogContentUtil {
     return logUi
   }
 
-  fun closeLogTab(manager: ContentManager, tabId: String): Boolean {
+  internal fun closeLogTab(manager: ContentManager, tabId: String): Boolean {
     return ContentUtilEx.closeContentTab(manager) { c: JComponent ->
       getLogUi(c)?.id == tabId
     }
@@ -97,7 +99,7 @@ object VcsLogContentUtil {
     }
   }
 
-  @RequiresEdt
+  @Internal
   fun showLogIsNotAvailableMessage(project: Project) {
     VcsNotifier.getInstance(project).notifyWarning(VcsLogNotificationIdsHolder.LOG_NOT_AVAILABLE, "",
                                                    VcsLogBundle.message("vcs.log.is.not.available"))
@@ -120,6 +122,7 @@ object VcsLogContentUtil {
     return selectMainLog(toolWindow.contentManager)
   }
 
+  @Internal
   @JvmStatic
   fun updateLogUiName(project: Project, ui: VcsLogUi) {
     val toolWindow = getToolWindow(project) ?: return

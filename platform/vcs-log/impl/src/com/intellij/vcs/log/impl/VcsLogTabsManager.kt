@@ -13,6 +13,7 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.content.TabGroupId
+import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogFilterCollection
@@ -24,21 +25,23 @@ import com.intellij.vcs.log.impl.VcsLogEditorUtil.findVcsLogUi
 import com.intellij.vcs.log.impl.VcsLogManager.VcsLogUiFactory
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.editor.VcsLogVirtualFileSystem
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.CompletableFuture
 
-class VcsLogTabsManager internal constructor(private val project: Project,
-                                             private val uiProperties: VcsLogProjectTabsProperties,
-                                             private val logManager: VcsLogManager) {
+@Internal
+class VcsLogTabsManager(
+  private val project: Project,
+  private val uiProperties: VcsLogProjectTabsProperties,
+  private val logManager: VcsLogManager,
+) {
   private var isLogDisposing = false
 
   private val futureToolWindow: CompletableFuture<ToolWindow> = CompletableFuture()
 
   // for statistics
-  @get:ApiStatus.Internal
   val tabs: Set<String> get() = uiProperties.tabs.keys
 
-  internal fun createTabs() {
+  fun createTabs() {
     val savedTabs = uiProperties.tabs
     if (savedTabs.isEmpty()) return
 
@@ -79,11 +82,11 @@ class VcsLogTabsManager internal constructor(private val project: Project,
     }
   }
 
-  internal fun disposeTabs() {
+  fun disposeTabs() {
     isLogDisposing = true
   }
 
-  internal fun toolWindowShown(toolWindow: ToolWindow) {
+  fun toolWindowShown(toolWindow: ToolWindow) {
     futureToolWindow.complete(toolWindow)
   }
 
@@ -116,7 +119,6 @@ class VcsLogTabsManager internal constructor(private val project: Project,
   }
 
   @RequiresEdt
-  @ApiStatus.Internal
   fun getPersistentVcsLogUiFactory(tabId: String,
                                    location: VcsLogTabLocation,
                                    filters: VcsLogFilterCollection?): VcsLogUiFactory<MainVcsLogUi> {
@@ -138,7 +140,7 @@ class VcsLogTabsManager internal constructor(private val project: Project,
 
   companion object {
     private val LOG = Logger.getInstance(VcsLogTabsManager::class.java)
-    val TAB_GROUP_ID = TabGroupId(VcsLogContentProvider.TAB_NAME, { VcsLogBundle.message("vcs.log.tab.name") }, true)
+    val TAB_GROUP_ID: TabGroupId = TabGroupId(VcsLogContentProvider.TAB_NAME, { VcsLogBundle.message("vcs.log.tab.name") }, true)
 
     fun MainVcsLogUi.onDisplayNameChange(block: () -> Unit) {
       filterUi.addFilterListener { block() }
@@ -154,7 +156,7 @@ internal class VcsLogToolwindowManagerListener(private val project: Project) : T
     if (toolWindow.id == ChangesViewContentManager.TOOLWINDOW_ID) {
       val projectLog = VcsProjectLog.getInstance(project)
       projectLog.createLogInBackground(true)
-      projectLog.tabManager?.toolWindowShown(toolWindow)
+      projectLog.logManager?.asSafely<VcsProjectLogManager>()?.tabsManager?.toolWindowShown(toolWindow)
     }
   }
 }

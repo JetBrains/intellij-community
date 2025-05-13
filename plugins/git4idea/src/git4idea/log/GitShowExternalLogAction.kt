@@ -48,13 +48,14 @@ import git4idea.config.GitExecutableManager
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepositoryImpl
 import git4idea.repo.GitRepositoryManager
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.io.File
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-class GitShowExternalLogAction : DumbAwareAction() {
+internal class GitShowExternalLogAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }
@@ -85,6 +86,7 @@ class GitShowExternalLogAction : DumbAwareAction() {
   }
 }
 
+@Internal
 fun showExternalGitLogInToolwindow(project: Project,
                                    toolWindow: ToolWindow,
                                    vcs: GitVcs,
@@ -94,6 +96,7 @@ fun showExternalGitLogInToolwindow(project: Project,
   showExternalGitLogInToolwindow(project, toolWindow, { it.getMainLogUiFactory(calcLogId(roots), null) }, vcs, roots, tabTitle, tabDescription)
 }
 
+@Internal
 fun <T : VcsLogUiEx> showExternalGitLogInToolwindow(project: Project,
                                                     toolWindow: ToolWindow,
                                                     uiFactory: (VcsLogManager) -> VcsLogManager.VcsLogUiFactory<T>,

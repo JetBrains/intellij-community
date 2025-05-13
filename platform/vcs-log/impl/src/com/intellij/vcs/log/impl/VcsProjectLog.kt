@@ -71,10 +71,7 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
 
   val logManager: VcsLogManager? get() = cachedLogManager
 
-  @get:ApiStatus.Internal
-  val projectLogManager: VcsProjectLogManager? get() = cachedLogManager
   val dataManager: VcsLogData? get() = cachedLogManager?.dataManager
-  val tabManager: VcsLogTabsManager? get() = cachedLogManager?.tabsManager
 
   val isDisposing: Boolean get() = disposeStarted.get()
 
@@ -150,12 +147,13 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
     return openLogTab(filters = filters, location = VcsLogTabLocation.TOOL_WINDOW)
   }
 
+  @ApiStatus.Internal
   @RequiresEdt
   fun openLogTab(filters: VcsLogFilterCollection, location: VcsLogTabLocation): MainVcsLogUi? {
-    return tabManager?.openAnotherLogTab(filters = filters, location = location)
+    return cachedLogManager?.tabsManager?.openAnotherLogTab(filters = filters, location = location)
   }
 
-  fun createLogInBackground(forceInit: Boolean) {
+  internal fun createLogInBackground(forceInit: Boolean) {
     launchCreateLog(forceInit)
   }
 

@@ -8,18 +8,19 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.data.VcsLogStorageImpl
 import com.intellij.vcs.log.util.VcsLogUtil
-import org.jetbrains.annotations.ApiStatus
 import java.util.function.BiConsumer
 
-@ApiStatus.Internal
-class VcsProjectLogManager(project: Project, uiProperties: VcsLogProjectTabsProperties, logProviders: Map<VirtualFile, VcsLogProvider>,
-                           recreateHandler: BiConsumer<in VcsLogErrorHandler.Source, in Throwable>) :
-  VcsLogManager(project, uiProperties, logProviders, getProjectLogName(logProviders), false,
-                VcsLogSharedSettings.isIndexSwitchedOn(project), recreateHandler) {
+internal class VcsProjectLogManager(
+  project: Project,
+  uiProperties: VcsLogProjectTabsProperties,
+  logProviders: Map<VirtualFile, VcsLogProvider>,
+  recreateHandler: BiConsumer<in VcsLogErrorHandler.Source, in Throwable>,
+) : VcsLogManager(project, uiProperties, logProviders, getProjectLogName(logProviders), false,
+                  VcsLogSharedSettings.isIndexSwitchedOn(project), recreateHandler) {
 
   val tabsManager = VcsLogTabsManager(project, uiProperties, this)
 
-  internal fun createUi() {
+  fun createUi() {
     getVcsLogContentProvider(myProject)?.addMainUi(this)
     tabsManager.createTabs()
   }
