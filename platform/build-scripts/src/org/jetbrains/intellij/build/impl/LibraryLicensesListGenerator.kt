@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package org.jetbrains.intellij.build.impl
@@ -33,8 +33,12 @@ fun createLibraryLicensesListGenerator(
 fun getLibraryFilename(lib: JpsLibrary): String {
   val name = lib.name
   if (name.startsWith('#')) {
-    // unnamed module libraries in IntelliJ project may have only one root
-    return lib.getPaths(JpsOrderRootType.COMPILED).first().name
+    // unnamed module libraries in the IntelliJ project may have only one root
+    val paths = lib.getPaths(JpsOrderRootType.COMPILED)
+    require(paths.size == 1) {
+      "Unnamed module library has more than one element: ${paths}"
+    }
+    return paths[0].name
   }
   return name
 }
