@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.tools.build.bazel.jvmIncBuilder.*;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.CompilerDataSink;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.CompilerRunner;
@@ -29,8 +30,10 @@ import org.jetbrains.kotlin.incremental.components.EnumWhenTracker;
 import org.jetbrains.kotlin.incremental.components.ImportTracker;
 import org.jetbrains.kotlin.incremental.components.InlineConstTracker;
 import org.jetbrains.kotlin.incremental.components.LookupTracker;
+import org.jetbrains.kotlin.load.kotlin.incremental.components.IncrementalCache;
 import org.jetbrains.kotlin.load.kotlin.incremental.components.IncrementalCompilationComponents;
 import org.jetbrains.kotlin.metadata.deserialization.MetadataVersion;
+import org.jetbrains.kotlin.progress.CompilationCanceledException;
 import org.jetbrains.kotlin.progress.CompilationCanceledStatus;
 
 import java.io.File;
@@ -38,9 +41,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import static com.intellij.tools.build.bazel.jvmIncBuilder.impl.KotlinPluginsKt.configurePlugins;
-import static org.jetbrains.jps.javac.Iterators.collect;
+import static org.jetbrains.jps.javac.Iterators.flat;
 import static org.jetbrains.jps.javac.Iterators.map;
 import static org.jetbrains.kotlin.cli.common.ExitCode.OK;
 import static org.jetbrains.kotlin.cli.common.arguments.ParseCommandLineArgumentsKt.parseCommandLineArguments;
@@ -76,37 +80,55 @@ public class KotlinCompilerRunner implements CompilerRunner {
   }
 
   @Override
-  public ExitCode compile(Iterable<NodeSource> sources, DiagnosticSink diagnostic, OutputSink out) {
+  public ExitCode compile(Iterable<NodeSource> sources, Iterable<NodeSource> deletedSources, DiagnosticSink diagnostic, OutputSink out) {
     try {
       K2JVMCompilerArguments kotlinCompilerArgs = buildKotlinCompilerArguments(myContext);
-      Services services = buildServices(kotlinCompilerArgs.getModuleName());
+      KotlinIncrementalCacheImpl incCache = new KotlinIncrementalCacheImpl(myStorageManager, flat(deletedSources, sources));
+      Services services = buildServices(kotlinCompilerArgs.getModuleName(), incCache);
       MessageCollector messageCollector = new KotlinMessageCollector(diagnostic, this);
-      ArrayList<GeneratedFile> outputItemCollector = new ArrayList<>();
-      AbstractCliPipeline<K2JVMCompilerArguments> pipeline = createPipeline(out, outputItemCollector);
-      org.jetbrains.kotlin.cli.common.ExitCode exitCode = pipeline.execute(kotlinCompilerArgs, services, messageCollector);
+      List<GeneratedJvmClass> generatedClasses = new ArrayList<>(); // todo: make sure if we really need to process generated outputs after the compilation and not "in place"
+      AbstractCliPipeline<K2JVMCompilerArguments> pipeline = createPipeline(out, generatedFile -> {
+        if (generatedFile instanceof GeneratedJvmClass jvmClass) {
+          generatedClasses.add(jvmClass);
+        }
+      });
 
-      processTrackers(out, outputItemCollector);
-      if (exitCode != OK) {
-        return ExitCode.ERROR;
+      boolean completedOk = false;
+      try {
+        org.jetbrains.kotlin.cli.common.ExitCode exitCode = pipeline.execute(kotlinCompilerArgs, services, messageCollector);
+        completedOk = exitCode == OK;
+        return completedOk? ExitCode.OK : ExitCode.ERROR;
       }
+      finally {
+        processTrackers(out, generatedClasses);
+        if (!completedOk || diagnostic.hasErrors()) {
+          String moduleEntryPath = incCache.getModuleEntryPath();
+          if (moduleEntryPath != null) {
+            // ensure the output contains last known good value
+            byte[] lastGoodModuleData = incCache.getModuleMappingData();
+            myStorageManager.getOutputBuilder().putEntry(moduleEntryPath, lastGoodModuleData);
+          }
+        }
+      }
+      
     }
-    catch (Exception e) {
+    catch (ProcessCanceledException ce) {
+      throw ce;
+    }
+    catch (Throwable e) {
       diagnostic.report(Message.create(this, e));
       return ExitCode.ERROR;
     }
-    return ExitCode.OK;
   }
 
-  private void processTrackers(OutputSink out, ArrayList<GeneratedFile> outputItemCollector) {
+  private void processTrackers(OutputSink out, List<GeneratedJvmClass> generated) {
     ensureTrackersInitialized();
     processLookupTracker(lookupTracker, out);
 
-    for (GeneratedFile generatedFile : outputItemCollector) {
-      if (generatedFile instanceof GeneratedJvmClass jvmClass) {
-        for (File sourceFile : jvmClass.getSourceFiles()) {
-          processInlineConstTracker(inlineConstTracker, sourceFile, jvmClass, out);
-          processBothEnumWhenAndImportTrackers(enumWhenTracker, importTracker, sourceFile, jvmClass, out);
-        }
+    for (GeneratedJvmClass jvmClass : generated) {
+      for (File sourceFile : jvmClass.getSourceFiles()) {
+        processInlineConstTracker(inlineConstTracker, sourceFile, jvmClass, out);
+        processBothEnumWhenAndImportTrackers(enumWhenTracker, importTracker, sourceFile, jvmClass, out);
       }
     }
   }
@@ -177,7 +199,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
     }
   }
 
-  private Services buildServices(String moduleName) {
+  private Services buildServices(String moduleName, IncrementalCache cacheImpl) {
     Services.Builder builder = new Services.Builder();
     lookupTracker = new LookupTrackerImpl(LookupTracker.DO_NOTHING.INSTANCE);
     inlineConstTracker = new InlineConstTrackerImpl();
@@ -188,20 +210,24 @@ public class KotlinCompilerRunner implements CompilerRunner {
     builder.register(InlineConstTracker.class, inlineConstTracker);
     builder.register(EnumWhenTracker.class, enumWhenTracker);
     builder.register(ImportTracker.class, importTracker);
-    builder.register(IncrementalCompilationComponents.class,
-                     new KotlinIncrementalCompilationComponents(moduleName, new KotlinIncrementalCacheImpl(myStorageManager)));
+    builder.register(
+      IncrementalCompilationComponents.class,
+      new KotlinIncrementalCompilationComponents(moduleName, cacheImpl)
+    );
 
     builder.register(CompilationCanceledStatus.class, new CompilationCanceledStatus() {
       @Override
       public void checkCanceled() {
-        //if (myContext.isCanceled()) throw new CompilationCanceledException();
+        if (myContext.isCanceled()) {
+          throw new CompilationCanceledException();
+        }
       }
     });
 
     return builder.build();
   }
 
-  private AbstractCliPipeline<K2JVMCompilerArguments> createPipeline(OutputSink out, ArrayList<GeneratedFile> outputItemCollector) {
+  private AbstractCliPipeline<K2JVMCompilerArguments> createPipeline(OutputSink out, Consumer<GeneratedFile> outputItemCollector) {
     return new BazelJvmCliPipeline(createCompilerConfigurationUpdater(out), createOutputConsumer(out, outputItemCollector));
   }
 
@@ -222,7 +248,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
     };
   }
 
-  private @NotNull Function1<? super @NotNull OutputFileCollection, @NotNull Unit> createOutputConsumer(OutputSink outputSink, ArrayList<GeneratedFile> outputItemCollector) {
+  private @NotNull Function1<? super @NotNull OutputFileCollection, @NotNull Unit> createOutputConsumer(OutputSink outputSink, Consumer<GeneratedFile> clsCollector) {
     return outputCollection -> {
       outputCollection.asList().iterator().forEachRemaining(
         generatedOutput -> {
@@ -244,13 +270,14 @@ public class KotlinCompilerRunner implements CompilerRunner {
               new File(relativePath)
             );
           }
-          outputItemCollector.add(file);
+          clsCollector.accept(file);
 
-          OutputSink.OutputFile.Kind kind = relativePath.endsWith(".class") ?
-                                            OutputSink.OutputFile.Kind.bytecode : OutputSink.OutputFile.Kind.other;
+          OutputSink.OutputFile.Kind kind =
+            relativePath.endsWith(".class")? OutputSink.OutputFile.Kind.bytecode : OutputSink.OutputFile.Kind.other;
 
-          outputSink.addFile(new OutputFileImpl(relativePath, kind, outputByteArray, false),
-                             collect(map(generatedOutput.getSourceFiles(), pathMapper::toNodeSource), new ArrayList<>()));
+          outputSink.addFile(
+            new OutputFileImpl(relativePath, kind, outputByteArray, false), map(generatedOutput.getSourceFiles(), pathMapper::toNodeSource)
+          );
         }
       );
 

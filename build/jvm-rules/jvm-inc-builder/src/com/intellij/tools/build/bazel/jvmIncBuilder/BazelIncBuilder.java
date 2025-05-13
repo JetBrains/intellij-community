@@ -26,7 +26,6 @@ import static org.jetbrains.jps.javac.Iterators.*;
 public class BazelIncBuilder {
 
   private static final List<RunnerFactory<? extends CompilerRunner>> ourCompilers = List.of(
-    ResourcesCopy::new
   );
   private static final List<RunnerFactory<? extends CompilerRunner>> ourRoundCompilers = List.of(
     KotlinCompilerRunner::new, JavaCompilerRunner::new
@@ -147,7 +146,7 @@ public class BazelIncBuilder {
               continue;
             }
 
-            runner.compile(toCompile, diagnostic, outSink);
+            runner.compile(toCompile, filter(srcSnapshotDelta.getDeleted(), runner::canCompile), diagnostic, outSink);
 
             if (diagnostic.hasErrors()) {
               break;
@@ -166,7 +165,7 @@ public class BazelIncBuilder {
             if (toCompile.isEmpty()) {
               continue;
             }
-            ExitCode code = runner.compile(toCompile, diagnostic, outSink);
+            ExitCode code = runner.compile(toCompile, filter(srcSnapshotDelta.getModified(), runner::canCompile), diagnostic, outSink);
             if (code == ExitCode.CANCEL) {
               return code;
             }

@@ -18,7 +18,9 @@ import org.jetbrains.jps.javac.ast.api.JavacFileData;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
 
 import javax.lang.model.element.Modifier;
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileManager;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -95,7 +97,7 @@ public class JavaCompilerRunner implements CompilerRunner {
   // todo: implement JavaCompilerToolExtension to listen to javac constants and registering them into outputConsumer
   // todo: install javac ast listener and consume data like in JpsReferenceDependenciesRegistrar
   @Override
-  public ExitCode compile(Iterable<NodeSource> sources, DiagnosticSink diagnosticSink, OutputSink outSink) {
+  public ExitCode compile(Iterable<NodeSource> sources, Iterable<NodeSource> deletedSources, DiagnosticSink diagnosticSink, OutputSink outSink) {
     NodeSourcePathMapper pathMapper = myContext.getPathMapper();
     OutputCollector outCollector = new OutputCollector(this, pathMapper, diagnosticSink, outSink);
     JavacCompilerTool javacTool = new JavacCompilerTool();
