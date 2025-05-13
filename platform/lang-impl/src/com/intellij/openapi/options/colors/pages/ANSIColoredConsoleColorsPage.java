@@ -263,6 +263,11 @@ public final class ANSIColoredConsoleColorsPage implements ColorSettingsPage, Di
     return OptionsBundle.message("color.settings.terminal.black");
   }
 
+  @ApiStatus.Internal
+  public static @Nls @NotNull String getSearchableClassicTerminalName() {
+    return OptionsBundle.message("color.settings.console.black");
+  }
+
   @Override
   public @NotNull Icon getIcon() {
     return PlainTextFileType.INSTANCE.getIcon();
