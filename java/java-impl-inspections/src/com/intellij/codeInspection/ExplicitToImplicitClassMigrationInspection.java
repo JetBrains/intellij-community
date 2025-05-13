@@ -18,6 +18,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -125,7 +126,7 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
           return;
         }
 
-        GlobalSearchScope scope;
+        SearchScope scope;
         if (underRoot) {
           PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage("");
           if (aPackage == null) {
@@ -134,14 +135,15 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
           scope = new PackageScope(aPackage, false, false);
         }
         else {
-          scope = aClass.getResolveScope();
+          scope = aClass.getUseScope();
         }
 
-        if (isOnTheFly) {
+        if (isOnTheFly && scope instanceof GlobalSearchScope globalSearchScope) {
           final PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(project);
           final PsiSearchHelper.SearchCostResult cost =
-            searchHelper.isCheapEnoughToSearch(className, scope, null);
+            searchHelper.isCheapEnoughToSearch(className, globalSearchScope, null);
           if (cost == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) {
+            holder.registerPossibleProblem(aClass);
             return;
           }
         }
