@@ -1,12 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.bazel
 
 import com.intellij.openapi.util.NlsSafe
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jetbrains.jps.model.JpsProject
-import org.jetbrains.jps.model.java.*
+import org.jetbrains.jps.model.java.JavaResourceRootType
+import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.java.JpsJavaDependencyScope
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.java.LanguageLevel
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
@@ -16,7 +20,8 @@ import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.kotlin.jps.model.JpsKotlinFacetModuleExtension
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.IdentityHashMap
+import java.util.TreeMap
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.invariantSeparatorsPathString
@@ -745,17 +750,19 @@ private fun isUsed(
 }
 
 private fun jpsModuleNameToBazelBuildName(module: JpsModule, baseBuildDir: Path, projectDir: Path): @NlsSafe String {
-  val customModule = customModules[module.name]
+  val moduleName = module.name
+  val customModule = customModules.get(moduleName)
   if (customModule != null) {
     return customModule.bazelTargetName
   }
 
   val baseDirFilename = baseBuildDir.fileName.toString()
-  if (baseDirFilename != "resources" && module.name.endsWith(".$baseDirFilename")) {
+  if (baseDirFilename != "resources" &&
+      (moduleName.endsWith(".$baseDirFilename") || (camelToSnakeCase(moduleName, '-')).endsWith(".$baseDirFilename"))) {
     return baseDirFilename
   }
 
-  val result = module.name
+  val result = moduleName
     .removePrefix("intellij.platform.")
     .removePrefix("intellij.idea.community.")
     .removePrefix("intellij.")
