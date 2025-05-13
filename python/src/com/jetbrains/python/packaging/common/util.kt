@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.common
 
 import com.intellij.openapi.application.EDT
@@ -25,7 +25,7 @@ interface PythonPackageManagementListener {
   fun packagesChanged(sdk: Sdk)
 }
 
-class PythonRankingAwarePackageNameComparator : Comparator<String> {
+internal class PythonRankingAwarePackageNameComparator : Comparator<String> {
   val ranking = service<PyPIPackageRanking>().packageRank
   override fun compare(name1: String, name2: String): Int {
     val rank1 = ranking[name1.lowercase()]
@@ -39,7 +39,7 @@ class PythonRankingAwarePackageNameComparator : Comparator<String> {
   }
 }
 
-suspend fun <T> runPackagingOperationOrShowErrorDialog(
+internal suspend fun <T> runPackagingOperationOrShowErrorDialog(
   sdk: Sdk,
   @NlsContexts.DialogTitle title: String,
   packageName: String? = null,
