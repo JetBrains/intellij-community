@@ -1,12 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.execution.backend
+package com.intellij.java.execution.impl.backend
 
 import com.intellij.build.BuildView
 import com.intellij.execution.ExecutionListener
 import com.intellij.execution.ExecutionManager
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.shared.JavaAutoRunFloatingToolbarStatus
 import com.intellij.execution.testDiscovery.JavaAutoRunManager
 import com.intellij.execution.testframework.TestConsoleProperties
 import com.intellij.execution.testframework.autotest.AutoTestListener
@@ -16,6 +15,7 @@ import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.execution.ui.RunContentManager.getInstanceIfCreated
+import com.intellij.java.execution.impl.shared.JavaAutoRunFloatingToolbarStatus
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service

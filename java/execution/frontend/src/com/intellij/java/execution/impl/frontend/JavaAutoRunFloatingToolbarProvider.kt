@@ -1,9 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.execution.frontend
+package com.intellij.java.execution.impl.frontend
 
-import com.intellij.execution.shared.JavaAutoRunFloatingToolbarApi
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.java.execution.impl.shared.JavaAutoRunFloatingToolbarApi
 import com.intellij.java.frontback.impl.JavaFrontbackBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
