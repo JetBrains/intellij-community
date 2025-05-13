@@ -944,19 +944,21 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
       setLayout(object : AbstractLayoutManager() {
         override fun preferredLayoutSize(parent: Container): Dimension {
           val result = Dimension()
-          if (indicator != null) {
-            val component = indicator!!.component
+          fun addVisibleToPreferred(component: JComponent, withGap: Boolean) {
             if (component.isVisible) {
+              if (withGap && result.width > 0) {
+                result.width += gap
+              }
               val size = component.getPreferredSize()
               result.width += size.width
               result.height = max(result.height, size.height)
             }
           }
-          if (multiProcessLink.isVisible) {
-            val size = multiProcessLink.getPreferredSize()
-            result.width += (if (result.width > 0) gap else 0) + size.width
-            result.height = max(result.height, size.height)
+
+          if (indicator != null) {
+            addVisibleToPreferred(indicator!!.component, false)
           }
+          addVisibleToPreferred(multiProcessLink, true)
           if (progressIcon.isVisible) {
             result.height = max(result.height, progressIcon.getPreferredSize().height)
           }
