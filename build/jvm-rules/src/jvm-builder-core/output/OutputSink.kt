@@ -49,7 +49,7 @@ class OutputSink internal constructor(
   @Synchronized
   fun registerKotlincOutput(outputFiles: List<OutputFile>) {
     for (file in outputFiles) {
-      // not clear - is path system-independent or not?
+      // not clear - is the path system-independent or not?
       fileToData.put(file.relativePath.replace(File.separatorChar, '/'), file.asByteArray())
     }
     isChanged = true
@@ -102,7 +102,7 @@ class OutputSink internal constructor(
   }
 
   @Synchronized
-  fun registerJavacOutput(outputs: List<InMemoryJavaOutputFileObject>) {
+  fun registerJavacOutput(outputs: List<InMemoryJavaOutputFileObject>, abiErrorConsumer: (File, String) -> Unit) {
     var isChanged = isChanged
     val abiHelper = abiHelper
     for (output in outputs) {
@@ -114,7 +114,10 @@ class OutputSink internal constructor(
         isChanged = true
       }
 
-      abiHelper?.createAbiForJava(path, newContent)
+      val source = output.source
+      abiHelper?.createAbiForJava(path, newContent, abiErrorConsumer = {
+        abiErrorConsumer(source, it)
+      })
     }
 
     if (isChanged) {
@@ -183,7 +186,7 @@ class OutputSink internal constructor(
       )
 
       fileToData.clear()
-      // now, close the old file, before writing to it
+      // now, close the old file before writing to it
       oldZipFile?.close()
     }
   }

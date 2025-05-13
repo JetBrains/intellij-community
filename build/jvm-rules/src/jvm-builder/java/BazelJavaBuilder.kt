@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "UnstableApiUsage", "HardCodedStringLiteral", "ReplaceGetOrSet", "SSBasedInspection", "LoggingSimilarMessage")
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "UnstableApiUsage", "HardCodedStringLiteral", "ReplaceGetOrSet", "SSBasedInspection", "LoggingSimilarMessage", "DialogTitleCapitalization")
 
 package org.jetbrains.bazel.jvm.worker.java
 
@@ -159,8 +159,7 @@ internal class BazelJavaBuilder(
       target.sources.asSequence().filter { it.toString().endsWith(".java") }
     }
 
-    val hasSourcesToCompile = filesToCompile.any()
-    if (!hasSourcesToCompile && !dirtyFilesHolder.hasRemovedFiles()) {
+    if (filesToCompile.none()) {
       return ExitCode.NOTHING_DONE
     }
 
@@ -170,47 +169,46 @@ internal class BazelJavaBuilder(
       outputConsumer = outputConsumer,
       mappingsCallback = if (isIncremental) JavaBuilderUtil.getDependenciesRegistrar(context) else null,
     )
+
     var filesWithErrors: Collection<File>? = null
     try {
-      if (hasSourcesToCompile) {
-        val classpath = module.container.getChild(BazelConfigurationHolder.KIND).classPath
-        val diagnosticSink = JavaDiagnosticSink(context = context, registrars = refRegistrars, out = out)
-        val compiledOk = tracer.spanBuilder("compile java files")
-          .also { spanBuilder ->
-            if (isDebugEnabled) {
-              spanBuilder.setAttribute(AttributeKey.stringArrayKey("files"), filesToCompile.map { it.toString() }.toList())
-              spanBuilder.setAttribute(AttributeKey.stringArrayKey("classpath"), classpath.map { it.toString() })
-            }
+      val classpath = module.container.getChild(BazelConfigurationHolder.KIND).classPath
+      val diagnosticSink = JavaDiagnosticSink(context = context, registrars = refRegistrars, out = out)
+      val compiledOk = tracer.spanBuilder("compile java files")
+        .also { spanBuilder ->
+          if (isDebugEnabled) {
+            spanBuilder.setAttribute(AttributeKey.stringArrayKey("files"), filesToCompile.map { it.toString() }.toList())
+            spanBuilder.setAttribute(AttributeKey.stringArrayKey("classpath"), classpath.map { it.toString() })
           }
-          .use {
-            try {
-              compileJava(
-                context = context,
-                module = module,
-                chunk = chunk,
-                target = target,
-                files = filesToCompile,
-                originalClassPath = classpath,
-                diagnosticSink = diagnosticSink,
-                jpsJavaFileProvider = jpsJavaFileProvider,
-                span = it,
-              )
-            }
-            finally {
-              filesWithErrors = diagnosticSink.getFilesWithErrors()
-            }
+        }
+        .use {
+          try {
+            compileJava(
+              context = context,
+              module = module,
+              chunk = chunk,
+              target = target,
+              files = filesToCompile,
+              originalClassPath = classpath,
+              diagnosticSink = diagnosticSink,
+              jpsJavaFileProvider = jpsJavaFileProvider,
+              span = it,
+            )
           }
-
-        coroutineContext.ensureActive()
-
-        if (!compiledOk && diagnosticSink.errorCount == 0) {
-          // unexpected exception occurred or compiler did not output any errors for some reason
-          diagnosticSink.report(PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Compilation failed: internal java compiler error"))
+          finally {
+            filesWithErrors = diagnosticSink.getFilesWithErrors()
+          }
         }
 
-        if (diagnosticSink.errorCount > 0 && !Utils.PROCEED_ON_ERROR_KEY.get(context, false)) {
-          throw StopBuildException("Compilation failed: errors: ${diagnosticSink.errorCount}; warnings: ${diagnosticSink.warningCount}")
-        }
+      coroutineContext.ensureActive()
+
+      if (!compiledOk && diagnosticSink.errorCount == 0) {
+        // unexpected exception occurred or compiler did not output any errors for some reason
+        diagnosticSink.report(PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Compilation failed: internal java compiler error"))
+      }
+
+      if (diagnosticSink.errorCount > 0) {
+        throw StopBuildException("Compilation failed: errors: ${diagnosticSink.errorCount}; warnings: ${diagnosticSink.warningCount}")
       }
     }
     finally {
@@ -218,9 +216,11 @@ internal class BazelJavaBuilder(
       if (filesWithErrors != null) {
         JavaBuilderUtil.registerFilesWithErrors(context, filesWithErrors)
       }
-      jpsJavaFileProvider.registerOutputs(context)
+      if (jpsJavaFileProvider.registerOutputs(context)) {
+        throw StopBuildException("Compilation failed")
+      }
     }
-    return if (hasSourcesToCompile) ExitCode.OK else ExitCode.NOTHING_DONE
+    return ExitCode.OK
   }
 
   private fun compileJava(
@@ -375,7 +375,7 @@ internal class BazelJavaBuilder(
 private class ExplodedModuleNameFinder(context: CompileContext) : Function<File?, String?> {
   private val moduleTarget = (context.projectDescriptor.buildTargetIndex as BazelBuildTargetIndex).moduleTarget
 
-  override fun apply(outputDir: File?): String? = moduleTarget.module.name.trim()
+  override fun apply(outputDir: File?): String = moduleTarget.module.name.trim()
 }
 
 private fun logJavacCall(options: Iterable<String>, mode: String, span: Span) {

@@ -46,8 +46,8 @@ internal class IncrementalAbiHelper(
     }
   }
 
-  fun createAbiForJava(path: String, data: ByteArray) {
-    val abiData = org.jetbrains.bazel.jvm.abi.createAbiForJava(data, classesToBeDeleted) ?: return
+  fun createAbiForJava(path: String, data: ByteArray, abiErrorConsumer: (String) -> Unit) {
+    val abiData = org.jetbrains.bazel.jvm.abi.createAbiForJava(data, classesToBeDeleted, abiErrorConsumer) ?: return
     abiFileToData.put(path, abiData)
   }
 
@@ -56,7 +56,7 @@ internal class IncrementalAbiHelper(
     var isChanged = isAlreadyMarkedAsChanged
     val abiFileToData = abiFileToData
     for (file in outputFiles) {
-      // not clear - is path system-independent or not?
+      // not clear - is the path system-independent or not?
       val path = file.relativePath.replace(File.separatorChar, '/')
       val newContent = file.asByteArray()
       val oldContent = abiFileToData.put(path, newContent) as? ByteArray
@@ -111,7 +111,7 @@ internal class IncrementalAbiHelper(
           val reader = ClassReader(data)
           val node = JvmClassNodeBuilder.createForLibrary(filePath = path, classReader = reader).build(
             isLibraryMode = true,
-            // here path to class, not to the node
+            // here path to the class, not to the node
             outFilePathHash = pathHash,
             skipPrivateMethodsAndFields = false,
           )

@@ -5,12 +5,13 @@ package org.jetbrains.bazel.jvm.worker.java
 
 import com.intellij.compiler.instrumentation.FailSafeClassReader
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
+import org.jetbrains.bazel.jvm.worker.core.BazelCompileContext
 import org.jetbrains.bazel.jvm.worker.core.BazelTargetBuildOutputConsumer
 import org.jetbrains.bazel.jvm.worker.core.output.InMemoryJavaOutputFileObject
 import org.jetbrains.bazel.jvm.worker.core.output.OutputSink
 import org.jetbrains.jps.builders.java.JavaBuilderUtil
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks.Backend
-import org.jetbrains.jps.incremental.CompileContext
+import org.jetbrains.jps.incremental.messages.BuildMessage.Kind
 import org.jetbrains.jps.javac.InputFileObject
 import org.jetbrains.jps.javac.JpsJavacFileProvider
 import java.io.ByteArrayInputStream
@@ -36,7 +37,7 @@ internal class BazelJpsJavacFileProvider(
 ) : JpsJavacFileProvider {
   private val outputs = ArrayList<InMemoryJavaOutputFileObject>(expectedOutputFileCount)
 
-  fun registerOutputs(context: CompileContext) {
+  fun registerOutputs(context: BazelCompileContext): Boolean {
     val successfullyCompiled = ObjectLinkedOpenHashSet<File>(outputs.size)
     for (fileObject in outputs) {
       val content = fileObject.content
@@ -50,7 +51,7 @@ internal class BazelJpsJavacFileProvider(
         successfullyCompiled.add(sourceIoFile)
       }
 
-      // first, handle [src->output] mapping and register paths for files_generated event
+      // first, handle [src->output] mapping and register paths for `files_generated` event
       outputConsumer.registerJavacCompiledClass(
         relativeOutputPath = fileObject.path,
         compiled = null,
@@ -63,10 +64,21 @@ internal class BazelJpsJavacFileProvider(
         mappingsCallback.associate(fileObject.path, listOf(sourceIoFile.invariantSeparatorsPath), reader, false)
       }
     }
-    outputSink.registerJavacOutput(outputs)
 
-    outputConsumer.addRegisteredSourceCount(successfullyCompiled.size)
-    JavaBuilderUtil.registerSuccessfullyCompiled(context, successfullyCompiled)
+    var hasErrors = false
+    outputSink.registerJavacOutput(outputs) { file, message ->
+      context.compilerMessage(kind = Kind.ERROR, message = message)
+      successfullyCompiled.remove(file)
+      JavaBuilderUtil.registerFilesWithErrors(context, listOf(file))
+      hasErrors = true
+    }
+
+    if (successfullyCompiled.isNotEmpty()) {
+      outputConsumer.addRegisteredSourceCount(successfullyCompiled.size)
+      JavaBuilderUtil.registerSuccessfullyCompiled(context, successfullyCompiled)
+    }
+
+    return hasErrors
   }
 
   override fun list(
@@ -93,7 +105,7 @@ internal class BazelJpsJavacFileProvider(
     return null
   }
 
-  override fun getFileForOutput(fileName: String, className: String, sibling: FileObject): JavaFileObject? {
+  override fun getFileForOutput(fileName: String, className: String, sibling: FileObject): JavaFileObject {
     val result = InMemoryJavaOutputFileObject(
       path = fileName.replace(File.separatorChar, '/'),
       source = (sibling as InputFileObject).file!!,
@@ -119,7 +131,7 @@ private class InMemoryJavaInputFileObject(
 
   override fun getAccessLevel(): Modifier? = null
 
-  override fun toUri(): URI? = throw UnsupportedOperationException()
+  override fun toUri(): URI = throw UnsupportedOperationException()
 
   override fun getName(): String = path
 

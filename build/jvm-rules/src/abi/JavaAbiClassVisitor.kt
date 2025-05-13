@@ -12,6 +12,7 @@ import org.jetbrains.org.objectweb.asm.tree.MethodNode
 internal class JavaAbiClassVisitor(
   classVisitor: ClassVisitor,
   private val classesToBeDeleted: MutableScatterSet<String>,
+  private val abiErrorConsumer: (String) -> Unit,
 ) : ClassVisitor(Opcodes.API_VERSION, classVisitor) {
   private var stripNonPublicMethods = true
 
@@ -25,6 +26,9 @@ internal class JavaAbiClassVisitor(
     isApiClass = (access and (Opcodes.ACC_PUBLIC or Opcodes.ACC_PROTECTED)) != 0
     if (isApiClass) {
       stripNonPublicMethods = !name.contains("android")
+      if (superName != null && superName != "java/lang/Object" && classesToBeDeleted.contains(superName)) {
+        abiErrorConsumer("Class ${formatClassName(name)} extends ${formatClassName(superName)} which is not public")
+      }
       super.visit(version, access, name, signature, superName, interfaces)
     }
     else {
@@ -100,3 +104,5 @@ internal class JavaAbiClassVisitor(
     }
   }
 }
+
+private fun formatClassName(s: String): String = s.replace('/', '.')

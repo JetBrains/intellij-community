@@ -30,7 +30,7 @@ class InMemoryJavaOutputFileObject(
 
   override fun getAccessLevel(): Modifier? = null
 
-  override fun toUri(): URI? = throw UnsupportedOperationException()
+  override fun toUri(): URI = throw UnsupportedOperationException()
 
   override fun getName(): String = path
 

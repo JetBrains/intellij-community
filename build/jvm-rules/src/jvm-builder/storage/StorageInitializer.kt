@@ -43,7 +43,7 @@ private fun createConfigurationDigestMapBuilder(): MVMap.Builder<Int, Long> {
   return MVMap.Builder<Int, Long>().keyType(VarIntDataType).valueType(LongDataType)
 }
 
-private const val TOOL_VERSION: Int = 1
+private const val TOOL_VERSION: Int = 2
 
 internal class StorageInitializer(private val dataDir: Path, private val dbFile: Path) {
   companion object {
