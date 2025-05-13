@@ -20,4 +20,5 @@ interface SeItemDataProvider: Disposable {
 
   suspend fun getSearchScopesInfo(): SeSearchScopesInfo?
   suspend fun getTypeVisibilityStates(): List<SeTypeVisibilityStatePresentation>?
+  suspend fun isExtendedInfoAvailable(): Boolean
 }

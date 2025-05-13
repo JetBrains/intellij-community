@@ -67,6 +67,10 @@ class SeTabDelegate(val project: Project?,
     return provider.itemSelected(itemData, modifiers, searchText)
   }
 
+  suspend fun isExtendedInfoAvailable(): Boolean {
+    return providers.getValue().values.any { it.isExtendedInfoAvailable() }
+  }
+
   override fun dispose() {}
 
   companion object {

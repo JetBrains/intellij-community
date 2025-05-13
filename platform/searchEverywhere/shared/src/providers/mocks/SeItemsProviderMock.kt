@@ -56,6 +56,10 @@ class SeItemsProviderMock(
   override fun dispose() {
     SeLog.log(LIFE_CYCLE, "Provider mock ${id} disposed")
   }
+
+  override fun isExtendedInfoAvailable(): Boolean {
+    return false
+  }
 }
 
 @ApiStatus.Internal

@@ -16,6 +16,7 @@ import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
 import com.intellij.platform.searchEverywhere.providers.getExtendedDescription
+import com.intellij.platform.searchEverywhere.providers.isExtendedInfoAvailable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -46,7 +47,7 @@ open class SeTopHitItemsProvider(
 
       contributorWrapper.fetchElements(inputQuery, indicator, object : AsyncProcessor<Any> {
         override suspend fun process(t: Any): Boolean {
-          return collector.put(SeTopHitItem(t, weight, project, getInfoLeftText(t)))
+          return collector.put(SeTopHitItem(t, weight, project, getExtendedDescription(t)))
         }
       })
     }
@@ -59,8 +60,11 @@ open class SeTopHitItemsProvider(
     }
   }
 
-  fun getInfoLeftText(item: Any): String? =
+  fun getExtendedDescription(item: Any): String? =
     contributorWrapper.contributor.getExtendedDescription(item)
+
+  override fun isExtendedInfoAvailable(): Boolean =
+    contributorWrapper.contributor.isExtendedInfoAvailable()
 
   override fun dispose() {
     Disposer.dispose(contributorWrapper)

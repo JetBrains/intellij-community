@@ -29,6 +29,12 @@ class SeAsyncContributorWrapper<I : Any>(val contributor: SearchEverywhereContri
   }
 }
 
+@ApiStatus.Internal
 fun SearchEverywhereContributor<*>.getExtendedDescription(item: Any): String? {
-  return (this as SearchEverywhereExtendedInfoProvider).createExtendedInfo()?.leftText?.invoke(item)
+  return (this as? SearchEverywhereExtendedInfoProvider)?.createExtendedInfo()?.leftText?.invoke(item)
+}
+
+@ApiStatus.Internal
+fun SearchEverywhereContributor<*>.isExtendedInfoAvailable(): Boolean {
+  return (this as? SearchEverywhereExtendedInfoProvider)?.createExtendedInfo() != null
 }

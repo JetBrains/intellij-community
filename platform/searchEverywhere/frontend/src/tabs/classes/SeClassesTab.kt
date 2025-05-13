@@ -31,6 +31,10 @@ class SeClassesTab(private val delegate: SeTabDelegate) : SeTab {
     return delegate.itemSelected(item, modifiers, searchText)
   }
 
+  override suspend fun isExtendedInfoAvailable(): Boolean {
+    return delegate.isExtendedInfoAvailable()
+  }
+
   override fun dispose() {
     Disposer.dispose(delegate)
   }

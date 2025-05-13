@@ -61,4 +61,12 @@ class SeRemoteApiImpl: SeRemoteApi {
   ): Map<SeProviderId, @Nls String> {
     return SeBackendService.getInstance(projectId.findProject()).getDisplayNameForProvider(sessionRef, dataContextId, providerIds)
   }
+
+  override suspend fun isExtendedInfoAvailable(
+    projectId: ProjectId,
+    sessionRef: DurableRef<SeSessionEntity>,
+    dataContextId: DataContextId,
+  ): Boolean {
+    return SeBackendService.getInstance(projectId.findProject()).isExtendedInfoAvailable(sessionRef, dataContextId)
+  }
 }

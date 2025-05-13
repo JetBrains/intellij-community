@@ -28,6 +28,10 @@ class SeFilesProvider(private val contributorWrapper: SeAsyncWeightedContributor
     return targetsProviderDelegate.itemSelected(item, modifiers, searchText)
   }
 
+  override fun isExtendedInfoAvailable(): Boolean {
+    return targetsProviderDelegate.isExtendedInfoAvailable()
+  }
+
   override fun dispose() {
     Disposer.dispose(contributorWrapper)
   }

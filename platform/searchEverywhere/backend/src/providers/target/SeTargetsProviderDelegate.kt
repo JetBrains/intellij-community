@@ -5,7 +5,6 @@ import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper.ItemWithPresentation
 import com.intellij.ide.actions.searcheverywhere.ScopeChooserAction
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoProvider
 import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.ide.util.PsiElementListCellRenderer.ItemMatchers
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
@@ -17,6 +16,7 @@ import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
 import com.intellij.platform.searchEverywhere.providers.SeAsyncWeightedContributorWrapper
 import com.intellij.platform.searchEverywhere.providers.SeTypeVisibilityStateProviderDelegate
 import com.intellij.platform.searchEverywhere.providers.getExtendedDescription
+import com.intellij.platform.searchEverywhere.providers.isExtendedInfoAvailable
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetsFilter
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import com.intellij.psi.codeStyle.NameUtil
@@ -54,7 +54,7 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncWeightedC
           val matchers = (contributorWrapper.contributor as? PSIPresentationBgRendererWrapper)
             ?.getNonComponentItemMatchers({ _ -> defaultMatchers }, t.item)
 
-          return collector.put(SeTargetItem(legacyItem, matchers, weight, getInfoLeftText(legacyItem)))
+          return collector.put(SeTargetItem(legacyItem, matchers, weight, getExtendedDescription(legacyItem)))
         }
       })
     }
@@ -65,7 +65,11 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncWeightedC
     return contributorWrapper.contributor.processSelectedItem(legacyItem, modifiers, searchText)
   }
 
-  fun getInfoLeftText(legacyItem: ItemWithPresentation<*>): String? =
+  fun isExtendedInfoAvailable(): Boolean {
+    return contributorWrapper.contributor.isExtendedInfoAvailable()
+  }
+
+  fun getExtendedDescription(legacyItem: ItemWithPresentation<*>): String? =
     contributorWrapper.contributor.getExtendedDescription(legacyItem)
 
   private fun createDefaultMatchers(rawPattern: String): ItemMatchers {

@@ -10,6 +10,7 @@ import com.intellij.platform.searchEverywhere.SeItem
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.providers.getExtendedDescription
+import com.intellij.platform.searchEverywhere.providers.isExtendedInfoAvailable
 import kotlinx.coroutines.coroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
@@ -32,7 +33,7 @@ class SeActionsAdaptedProvider(private val legacyContributor: ActionSearchEveryw
 
     coroutineScope {
       legacyContributor.fetchWeightedElements(this, inputQuery) {
-        collector.put(SeActionItem(it.item, getInfoLeftText(it.item)))
+        collector.put(SeActionItem(it.item, getExtendedDescription(it.item)))
       }
     }
   }
@@ -42,7 +43,11 @@ class SeActionsAdaptedProvider(private val legacyContributor: ActionSearchEveryw
     return legacyContributor.processSelectedItem(legacyItem, modifiers, searchText)
   }
 
-  fun getInfoLeftText(item: MatchedValue): String? =
+  override fun isExtendedInfoAvailable(): Boolean {
+    return legacyContributor.isExtendedInfoAvailable()
+  }
+
+  fun getExtendedDescription(item: MatchedValue): String? =
     legacyContributor.getExtendedDescription(item)
 
   override fun dispose() {

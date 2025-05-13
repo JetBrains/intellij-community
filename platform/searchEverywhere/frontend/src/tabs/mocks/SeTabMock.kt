@@ -29,6 +29,10 @@ class SeTabMock(override val name: String,
     return true
   }
 
+  override suspend fun isExtendedInfoAvailable(): Boolean {
+    return false
+  }
+
   override fun dispose() {
     Disposer.dispose(delegate)
   }
