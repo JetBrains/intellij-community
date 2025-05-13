@@ -339,10 +339,11 @@ c:com.intellij.vcs.log.history.FileHistoryUi
 - p:onVisiblePackUpdated(Z):V
 - setVisiblePack(com.intellij.vcs.log.visible.VisiblePack):V
 f:com.intellij.vcs.log.history.FileHistoryUtil
-- <init>():V
-- s:affectsDirectory(com.intellij.openapi.vcs.changes.Change,com.intellij.openapi.vcs.FilePath):Z
-- s:affectsFile(com.intellij.openapi.vcs.changes.Change,com.intellij.openapi.vcs.FilePath,Z):Z
-- s:createVcsVirtualFile(com.intellij.openapi.vcs.history.VcsFileRevision):com.intellij.openapi.vfs.VirtualFile
+- sf:INSTANCE:com.intellij.vcs.log.history.FileHistoryUtil
+- f:affectsDirectory(com.intellij.openapi.vcs.changes.Change,com.intellij.openapi.vcs.FilePath):Z
+- f:affectsFile(com.intellij.openapi.vcs.changes.Change,com.intellij.openapi.vcs.FilePath,Z):Z
+- sf:createChangeToParents(I,java.util.List,com.intellij.vcs.log.visible.VisiblePack,com.intellij.vcs.log.VcsLogDiffHandler,com.intellij.vcs.log.data.VcsLogData):com.intellij.openapi.vcs.changes.Change
+- sf:createVcsVirtualFile(com.intellij.openapi.vcs.history.VcsFileRevision):com.intellij.openapi.vfs.VirtualFile
 f:com.intellij.vcs.log.impl.CommonUiProperties
 - sf:COLUMN_ID_ORDER:com.intellij.vcs.log.impl.VcsLogUiProperties$VcsLogUiProperty
 - sf:COMPACT_REFERENCES_VIEW:com.intellij.vcs.log.impl.VcsLogUiProperties$VcsLogUiProperty

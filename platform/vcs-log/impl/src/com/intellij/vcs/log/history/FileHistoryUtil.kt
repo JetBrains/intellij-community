@@ -1,110 +1,109 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.log.history;
+package com.intellij.vcs.log.history
 
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
-import com.intellij.openapi.vcs.history.VcsHistoryUtil;
-import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
-import com.intellij.openapi.vcs.vfs.VcsVirtualFolder;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsLogDataPack;
-import com.intellij.vcs.log.VcsLogDiffHandler;
-import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.impl.VcsChangesMerger;
-import com.intellij.vcs.log.visible.VisiblePack;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ContentRevision
+import com.intellij.openapi.vcs.history.VcsFileRevision
+import com.intellij.openapi.vcs.history.VcsFileRevisionEx
+import com.intellij.openapi.vcs.history.VcsHistoryUtil
+import com.intellij.openapi.vcs.vfs.VcsVirtualFile
+import com.intellij.openapi.vcs.vfs.VcsVirtualFolder
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsLogDataPack
+import com.intellij.vcs.log.VcsLogDiffHandler
+import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.history.FileHistoryPaths.filePath
+import com.intellij.vcs.log.history.FileHistoryPaths.isDeletedInCommit
+import com.intellij.vcs.log.impl.VcsChangesMerger
+import com.intellij.vcs.log.visible.VisiblePack
 
-import java.util.List;
-import java.util.Objects;
-
-import static com.intellij.util.containers.ContainerUtil.*;
-
-public final class FileHistoryUtil {
-  public static @Nullable VirtualFile createVcsVirtualFile(@Nullable VcsFileRevision revision) {
+object FileHistoryUtil {
+  @JvmStatic
+  fun createVcsVirtualFile(revision: VcsFileRevision?): VirtualFile? {
     if (!VcsHistoryUtil.isEmpty(revision)) {
-      if (revision instanceof VcsFileRevisionEx) {
-        FilePath path = ((VcsFileRevisionEx)revision).getPath();
-        return path.isDirectory()
-               ? new VcsVirtualFolder(path, null)
-               : new VcsVirtualFile(path, revision);
+      if (revision is VcsFileRevisionEx) {
+        val path = revision.path
+        return if (path.isDirectory)
+          VcsVirtualFolder(path, null)
+        else
+          VcsVirtualFile(path, revision)
       }
     }
-    return null;
+    return null
   }
 
-  public static boolean affectsFile(@NotNull Change change, @NotNull FilePath file, boolean isDeleted) {
-    ContentRevision revision = isDeleted ? change.getBeforeRevision() : change.getAfterRevision();
-    if (revision == null) return false;
-    return file.equals(revision.getFile());
+  fun affectsFile(change: Change, file: FilePath, isDeleted: Boolean): Boolean {
+    val revision = if (isDeleted) change.beforeRevision else change.afterRevision
+    if (revision == null) return false
+    return file == revision.file
   }
 
-  public static boolean affectsDirectory(@NotNull Change change, @NotNull FilePath directory) {
-    return affectsDirectory(directory, change.getAfterRevision()) || affectsDirectory(directory, change.getBeforeRevision());
+  fun affectsDirectory(change: Change, directory: FilePath): Boolean {
+    return affectsDirectory(directory, change.afterRevision) || affectsDirectory(directory, change.beforeRevision)
   }
 
-  private static boolean affectsDirectory(@NotNull FilePath directory, @Nullable ContentRevision revision) {
-    if (revision == null) return false;
-    return VfsUtilCore.isAncestor(directory.getIOFile(), revision.getFile().getIOFile(), false);
+  private fun affectsDirectory(directory: FilePath, revision: ContentRevision?): Boolean {
+    if (revision == null) return false
+    return VfsUtilCore.isAncestor(directory.ioFile, revision.file.ioFile, false)
   }
 
-  static @Nullable Change createChangeToParents(int commitRow, @NotNull List<Integer> parentRows,
-                                                @NotNull VisiblePack visiblePack, @NotNull VcsLogDiffHandler diffHandler,
-                                                @NotNull VcsLogData logData) {
-    int commitIndex = visiblePack.getVisibleGraph().getRowInfo(commitRow).getCommit();
-    FilePath path = FileHistoryPaths.filePath(visiblePack, commitIndex);
-    if (path == null) return null;
-    Hash commitHash = logData.getCommitId(commitIndex).getHash();
-    ContentRevision afterRevision = createContentRevision(commitHash, commitIndex, visiblePack, diffHandler);
+  @JvmStatic
+  fun createChangeToParents(
+    commitRow: Int, parentRows: List<Int>,
+    visiblePack: VisiblePack, diffHandler: VcsLogDiffHandler,
+    logData: VcsLogData,
+  ): Change? {
+    val commitIndex = visiblePack.visibleGraph.getRowInfo(commitRow).commit
+    val path = visiblePack.filePath(commitIndex)
+    if (path == null) return null
+    val commitHash = logData.getCommitId(commitIndex)!!.hash
+    val afterRevision = createContentRevision(commitHash, commitIndex, visiblePack, diffHandler)
 
     if (parentRows.isEmpty()) {
-      if (afterRevision == null) return null;
-      return new Change(null, afterRevision);
+      if (afterRevision == null) return null
+      return Change(null, afterRevision)
     }
 
-    List<Integer> parentCommits = map(parentRows, r -> visiblePack.getVisibleGraph().getRowInfo(r).getCommit());
-    List<Hash> parentHashes = map(parentCommits, c -> logData.getCommitId(c).getHash());
-    List<Change> parentChanges = mapNotNull(toCollection(zip(parentCommits, parentHashes)), parent -> {
-      ContentRevision beforeRevision = createContentRevision(parent.second, parent.first, visiblePack, diffHandler);
-      if (afterRevision == null && beforeRevision == null) return null;
-      return new Change(beforeRevision, afterRevision);
-    });
-    if (parentChanges.size() <= 1) {
-      return getFirstItem(parentChanges);
+    val parentCommits = parentRows.map { visiblePack.visibleGraph.getRowInfo(it).commit }
+    val parentHashes = parentCommits.map { logData.getCommitId(it)!!.hash }
+
+    val parentChanges = parentCommits.zip(parentHashes).mapNotNull { (index, hash) ->
+      val beforeRevision = createContentRevision(hash, index, visiblePack, diffHandler)
+      if (afterRevision == null && beforeRevision == null) return@mapNotNull null
+      Change(beforeRevision, afterRevision)
     }
-    return new MyVcsChangesMerger(commitHash, parentHashes, diffHandler).mergedChange(path, parentChanges);
+
+    if (parentChanges.size <= 1) {
+      return parentChanges.firstOrNull()
+    }
+    return MyVcsChangesMerger(commitHash, parentHashes, diffHandler).mergedChange(path, parentChanges)
   }
 
-  private static @Nullable ContentRevision createContentRevision(@NotNull Hash commitHash, int commitIndex, @NotNull VcsLogDataPack visiblePack,
-                                                                 @NotNull VcsLogDiffHandler diffHandler) {
-    boolean isDeleted = FileHistoryPaths.isDeletedInCommit(visiblePack, commitIndex);
-    if (isDeleted) return null;
-    FilePath path = FileHistoryPaths.filePath(visiblePack, commitIndex);
-    if (path == null) return null;
-    return diffHandler.createContentRevision(path, commitHash);
+  private fun createContentRevision(
+    commitHash: Hash, commitIndex: Int, visiblePack: VcsLogDataPack,
+    diffHandler: VcsLogDiffHandler,
+  ): ContentRevision? {
+    val isDeleted = visiblePack.isDeletedInCommit(commitIndex)
+    if (isDeleted) return null
+    val path = visiblePack.filePath(commitIndex)
+    if (path == null) return null
+    return diffHandler.createContentRevision(path, commitHash)
   }
 
-  private static final class MyVcsChangesMerger extends VcsChangesMerger {
-    private final @NotNull Hash myCommit;
-    private final @NotNull Hash myFirstParent;
-    private final @NotNull VcsLogDiffHandler myDiffHandler;
+  private class MyVcsChangesMerger(
+    private val commit: Hash,
+    parentCommits: List<Hash>,
+    private val diffHandler: VcsLogDiffHandler,
+  ) : VcsChangesMerger() {
+    private val firstParent: Hash = parentCommits.first()
 
-    private MyVcsChangesMerger(@NotNull Hash commit, @NotNull List<Hash> parentCommits, @NotNull VcsLogDiffHandler diffHandler) {
-      myCommit = commit;
-      myFirstParent = Objects.requireNonNull(getFirstItem(parentCommits));
-      myDiffHandler = diffHandler;
-    }
-
-    @Override
-    protected @NotNull Change createChange(@NotNull Change.Type type, @Nullable FilePath beforePath, @Nullable FilePath afterPath) {
-      ContentRevision beforeRevision = beforePath == null ? null : myDiffHandler.createContentRevision(beforePath, myFirstParent);
-      ContentRevision afterRevision = afterPath == null ? null : myDiffHandler.createContentRevision(afterPath, myCommit);
-      return new Change(beforeRevision, afterRevision);
+    override fun createChange(type: Change.Type, beforePath: FilePath?, afterPath: FilePath?): Change {
+      val beforeRevision = if (beforePath == null) null else diffHandler.createContentRevision(beforePath, firstParent)
+      val afterRevision = if (afterPath == null) null else diffHandler.createContentRevision(afterPath, commit)
+      return Change(beforeRevision, afterRevision)
     }
   }
 }
