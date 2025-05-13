@@ -9,7 +9,6 @@ import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.parser.WhitespacesBinders
 import com.intellij.util.text.CharSequenceSubSequence
 import org.jetbrains.annotations.ApiStatus
-import kotlin.jvm.JvmStatic
 
 @ApiStatus.Experimental
 object SyntaxBuilderUtil {
@@ -35,7 +34,7 @@ object SyntaxBuilderUtil {
    * @return true if token matches, false otherwise.
    */
   fun SyntaxTreeBuilder.expect(expectedType: SyntaxElementType?): Boolean {
-    if (tokenType == expectedType) {
+    if (tokenType === expectedType) {
       advanceLexer()
       return true
     }
@@ -85,7 +84,7 @@ object SyntaxBuilderUtil {
     rightBrace: SyntaxElementType,
     codeBlock: SyntaxElementType,
   ): SyntaxTreeBuilder.Marker? {
-    if (tokenType != leftBrace) return null
+    if (tokenType !== leftBrace) return null
 
     val marker = mark()
 
@@ -95,10 +94,10 @@ object SyntaxBuilderUtil {
 
     while (braceCount > 0 && !eof()) {
       val tokenType = tokenType
-      if (tokenType == leftBrace) {
+      if (tokenType === leftBrace) {
         braceCount++
       }
-      else if (tokenType == rightBrace) {
+      else if (tokenType === rightBrace) {
         braceCount--
       }
       advanceLexer()
@@ -136,7 +135,7 @@ object SyntaxBuilderUtil {
   ): Boolean {
     lexer.start(text)
 
-    if (lexer.getTokenType() != leftBrace) return false
+    if (lexer.getTokenType() !== leftBrace) return false
 
     lexer.advance()
     var balance = 1
@@ -155,10 +154,10 @@ object SyntaxBuilderUtil {
         return false
       }
 
-      if (type == leftBrace) {
+      if (type === leftBrace) {
         balance++
       }
-      else if (type == rightBrace) {
+      else if (type === rightBrace) {
         balance--
       }
 

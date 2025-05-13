@@ -25,9 +25,6 @@ import com.intellij.util.containers.LimitedPool
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.NonNls
-import kotlin.jvm.JvmField
-import kotlin.jvm.JvmInline
-import kotlin.jvm.JvmOverloads
 import kotlin.math.min
 
 /**
@@ -1134,7 +1131,7 @@ fun SyntaxGeneratedParserRuntime.parseAsTree(
   if (lBrace != null) {
     var tokenIdx = -1
     while (syntaxBuilder.rawLookup(tokenIdx) === SyntaxTokenTypes.WHITE_SPACE) tokenIdx--
-    val doneMarker = if (syntaxBuilder.rawLookup(tokenIdx) == lBrace) syntaxBuilder.lastDoneMarker else null
+    val doneMarker = if (syntaxBuilder.rawLookup(tokenIdx) === lBrace) syntaxBuilder.lastDoneMarker else null
     if (doneMarker != null && doneMarker.getStartOffset() == syntaxBuilder.rawTokenTypeStart(tokenIdx) && doneMarker.getNodeType() === SyntaxTokenTypes.ERROR_ELEMENT) {
       parens.add(Pair(doneMarker.precede(), null))
     }
@@ -1142,20 +1139,20 @@ fun SyntaxGeneratedParserRuntime.parseAsTree(
   var c: Int = current_position_()
   while (true) {
     val tokenType: SyntaxElementType? = syntaxBuilder.tokenType
-    if (lBrace != null && (tokenType == lBrace || tokenType == rBrace && !parens.isEmpty())) {
+    if (lBrace != null && (tokenType === lBrace || tokenType === rBrace && !parens.isEmpty())) {
       if (marker != null) {
         marker.done(chunkType)
         siblings.addFirst(Pair(marker, 1))
         marker = null
         tokenCount = 0
       }
-      if (tokenType == lBrace) {
+      if (tokenType === lBrace) {
         val prev = siblings.firstOrNull()
         parens.addFirst(Pair(syntaxBuilder.mark(), prev?.first))
       }
       checkSiblings(chunkType, parens, siblings)
       TOKEN_ADVANCER.parse(this, level)
-      if (tokenType == rBrace) {
+      if (tokenType === rBrace) {
         val pair: Pair<SyntaxTreeBuilder.Marker, SyntaxTreeBuilder.Marker?> = parens.removeFirst()
         pair.first.done(chunkType)
         while (!siblings.isEmpty() && siblings.first().first != pair.second) {

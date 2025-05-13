@@ -18,7 +18,7 @@ open class MergingLexerAdapter(
 
     while (true) {
       val token = lexer.getTokenType()
-      if (token != tokenType) break
+      if (token !== tokenType) break
       lexer.advance()
     }
     return tokenType
