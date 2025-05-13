@@ -13,7 +13,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
-    "//platform/credential-store:credentialStore",
+    "//platform/credential-store",
     "//platform/ide-core",
     "//platform/ide-core-impl",
     "//platform/util/jdom",
@@ -43,7 +43,7 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   associates = [":credentialStore-impl"],
   deps = [
-    "//platform/credential-store:credentialStore",
+    "//platform/credential-store",
     "//platform/ide-core",
     "//platform/ide-core-impl",
     "//platform/util/jdom",

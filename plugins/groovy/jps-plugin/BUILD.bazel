@@ -21,7 +21,7 @@ jvm_library(
     "//plugins/groovy/rt-constants:constants-rt",
     "//jps/model-serialization",
     "//jps/model-impl",
-    "//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
+    "//java/compiler/instrumentation-util",
     "@lib//:ecj-4-25-provided",
     "//platform/util-class-loader:util-classLoader",
     "@lib//:asm",

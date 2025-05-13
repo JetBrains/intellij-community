@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "apiDump_resources",
+  name = "api-dump_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "apiDump",
+  name = "api-dump",
   module_name = "intellij.devkit.apiDump",
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -22,6 +22,6 @@ jvm_library(
     "//platform/util",
     "//platform/projectModel-impl",
   ],
-  runtime_deps = [":apiDump_resources"]
+  runtime_deps = [":api-dump_resources"]
 )
 ### auto-generated section `build intellij.devkit.apiDump` end

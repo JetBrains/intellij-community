@@ -15,7 +15,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
-    "//platform/script-debugger/protocol/protocol-reader-runtime:scriptDebugger-protocolReaderRuntime",
+    "//platform/script-debugger/protocol/protocol-reader-runtime",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
     "@lib//:netty-codec-http",

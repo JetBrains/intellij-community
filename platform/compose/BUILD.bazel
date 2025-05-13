@@ -21,11 +21,11 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//platform/core-ui",
     "//platform/platform-impl:ide-impl",
-    "//platform/jewel/ide-laf-bridge:ideLafBridge",
+    "//platform/jewel/ide-laf-bridge",
     "//libraries/compose-foundation-desktop",
     "@lib//:kotlinx-coroutines-core",
   ],
-  exports = ["//platform/jewel/ide-laf-bridge:ideLafBridge"],
+  exports = ["//platform/jewel/ide-laf-bridge"],
   runtime_deps = [":compose_resources"],
   plugins = ["@lib//:compose-plugin"]
 )

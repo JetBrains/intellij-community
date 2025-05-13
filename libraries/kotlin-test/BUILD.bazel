@@ -3,17 +3,17 @@ load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_resources")
 
 jvm_resources(
-  name = "kotlinTest_resources",
+  name = "kotlin-test_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 java_library(
-  name = "kotlinTest",
+  name = "kotlin-test",
   visibility = ["//visibility:public"],
   exports = ["@lib//:kotlin-test"],
   runtime_deps = [
-    ":kotlinTest_resources",
+    ":kotlin-test_resources",
     "@lib//:kotlin-test",
   ]
 )

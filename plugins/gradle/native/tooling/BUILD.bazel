@@ -44,8 +44,8 @@ jvm_library(
     "@lib//:junit4",
     "//plugins/gradle/native/tooling",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
-    "//platform/object-serializer:objectSerializer",
-    "//platform/object-serializer:objectSerializer_test_lib",
+    "//platform/object-serializer",
+    "//platform/object-serializer:object-serializer_test_lib",
     "//plugins/gradle/tooling-extension-api:toolingExtension",
   ]
 )

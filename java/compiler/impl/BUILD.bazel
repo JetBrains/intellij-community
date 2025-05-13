@@ -16,7 +16,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//java/java-runtime:rt",
     "//platform/ide-core/plugins",
-    "//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
+    "//java/compiler/instrumentation-util",
     "//platform/vcs-api:vcs",
     "//platform/platform-api:ide",
     "//platform/lang-impl",

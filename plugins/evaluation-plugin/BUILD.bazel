@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "evaluationPlugin_resources",
+  name = "evaluation-plugin_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "evaluationPlugin",
+  name = "evaluation-plugin",
   module_name = "intellij.evaluationPlugin",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -16,16 +16,16 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//plugins/evaluation-plugin/languages",
     "//plugins/evaluation-plugin/core",
-    "//plugins/completion-ml-ranking:completionMlRanking",
+    "//plugins/completion-ml-ranking",
     "//libraries/ktor-client",
     "//platform/editor-ui-api:editor-ui",
-    "//plugins/stats-collector:statsCollector",
+    "//plugins/stats-collector",
     "//platform/ide-core-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
     "//platform/core-ui",
     "//platform/vcs-api:vcs",
-    "//platform/service-container:serviceContainer",
+    "//platform/service-container",
     "//platform/ml-api:ml",
     "@lib//:clikt",
     "@lib//:gson",
@@ -36,7 +36,7 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "@lib//:ktor-client-logging",
   ],
-  runtime_deps = [":evaluationPlugin_resources"]
+  runtime_deps = [":evaluation-plugin_resources"]
 )
 ### auto-generated section `build intellij.evaluationPlugin` end
 
@@ -51,7 +51,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/evaluation-plugin/core",
-    "//plugins/evaluation-plugin:evaluationPlugin",
+    "//plugins/evaluation-plugin",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
     "@lib//:mockito",

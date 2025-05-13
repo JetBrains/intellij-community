@@ -3,7 +3,7 @@ load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 jvm_library(
-  name = "kotlin-gradle-multiplatformTests_test_lib",
+  name = "multiplatform-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
@@ -45,7 +45,7 @@ jvm_library(
 )
 
 jvm_test(
-  name = "kotlin-gradle-multiplatformTests_test",
-  runtime_deps = [":kotlin-gradle-multiplatformTests_test_lib"]
+  name = "multiplatform-tests_test",
+  runtime_deps = [":multiplatform-tests_test_lib"]
 )
 ### auto-generated section `build intellij.kotlin.gradle.multiplatformTests` end

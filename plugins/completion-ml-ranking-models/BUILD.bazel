@@ -2,19 +2,19 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "completionMlRankingModels_resources",
+  name = "completion-ml-ranking-models_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "completionMlRankingModels",
+  name = "completion-ml-ranking-models",
   module_name = "intellij.completionMlRankingModels",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
-    "//plugins/completion-ml-ranking:completionMlRanking",
+    "//plugins/completion-ml-ranking",
     "//platform/platform-impl/internal",
     "@lib//:completion_ml_ranking_models-completion-ranking-java-exp",
     "@lib//:completion_ml_ranking_models-completion-ranking-java-exp2",
@@ -35,7 +35,7 @@ jvm_library(
     "@lib//:completion_ml_ranking_models-completion-ranking-css-exp",
     "@lib//:completion_ml_ranking_models-completion-ranking-sh-exp",
   ],
-  runtime_deps = [":completionMlRankingModels_resources"]
+  runtime_deps = [":completion-ml-ranking-models_resources"]
 )
 ### auto-generated section `build intellij.completionMlRankingModels` end
 
@@ -50,8 +50,8 @@ jvm_library(
   deps = [
     "//java/testFramework",
     "@lib//:junit4",
-    "//plugins/completion-ml-ranking-models:completionMlRankingModels",
-    "//plugins/completion-ml-ranking:completionMlRanking",
+    "//plugins/completion-ml-ranking-models",
+    "//plugins/completion-ml-ranking",
     "//platform/platform-impl/internal",
   ]
 )

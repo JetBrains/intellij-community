@@ -21,7 +21,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/lang-api:lang",
     "//platform/platform-impl:ide-impl",
-    "//plugins/completion-ml-ranking:completionMlRanking",
+    "//plugins/completion-ml-ranking",
     "//platform/platform-impl/internal",
     "@lib//:kotlin-ml-completion-completion-ranking-kotlin",
     "//plugins/kotlin/base/code-insight",

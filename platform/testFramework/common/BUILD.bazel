@@ -35,7 +35,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/ide-core-impl",
     "//platform/analysis-impl",
-    "//platform/service-container:serviceContainer",
+    "//platform/service-container",
     "//platform/indexing-api:indexing",
     "//platform/lang-impl",
     "//platform/platform-util-netty:ide-util-netty",

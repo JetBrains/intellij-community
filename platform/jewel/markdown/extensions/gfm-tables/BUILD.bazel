@@ -14,13 +14,13 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "jewel-markdown-extensions-gfmTables_resources",
+  name = "gfm-tables_resources",
   files = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
 jvm_library(
-  name = "jewel-markdown-extensions-gfmTables",
+  name = "gfm-tables",
   module_name = "intellij.platform.jewel.markdown.extensions.gfmTables",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
@@ -35,7 +35,7 @@ jvm_library(
     "//libraries/compose-foundation-desktop",
     "@lib//:platform-jewel-markdown-extensions-gfm_tables-commonmark-ext-gfm-tables",
   ],
-  runtime_deps = [":jewel-markdown-extensions-gfmTables_resources"],
+  runtime_deps = [":gfm-tables_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
 ### auto-generated section `build intellij.platform.jewel.markdown.extensions.gfmTables` end

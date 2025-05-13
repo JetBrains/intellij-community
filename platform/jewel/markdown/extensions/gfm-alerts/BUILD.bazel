@@ -14,13 +14,13 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "jewel-markdown-extensions-gfmAlerts_resources",
+  name = "gfm-alerts_resources",
   files = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
 jvm_library(
-  name = "jewel-markdown-extensions-gfmAlerts",
+  name = "gfm-alerts",
   module_name = "intellij.platform.jewel.markdown.extensions.gfmAlerts",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
@@ -34,16 +34,16 @@ jvm_library(
     "//platform/jewel/foundation",
     "//libraries/compose-foundation-desktop",
   ],
-  runtime_deps = [":jewel-markdown-extensions-gfmAlerts_resources"],
+  runtime_deps = [":gfm-alerts_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
 
 jvm_library(
-  name = "jewel-markdown-extensions-gfmAlerts_test_lib",
+  name = "gfm-alerts_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
-  associates = [":jewel-markdown-extensions-gfmAlerts"],
+  associates = [":gfm-alerts"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
@@ -57,12 +57,12 @@ jvm_library(
     "//libraries/compose-foundation-desktop",
     "//libraries/compose-foundation-desktop-junit",
   ],
-  runtime_deps = [":jewel-markdown-extensions-gfmAlerts_resources"],
+  runtime_deps = [":gfm-alerts_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
 
 jvm_test(
-  name = "jewel-markdown-extensions-gfmAlerts_test",
-  runtime_deps = [":jewel-markdown-extensions-gfmAlerts_test_lib"]
+  name = "gfm-alerts_test",
+  runtime_deps = [":gfm-alerts_test_lib"]
 )
 ### auto-generated section `build intellij.platform.jewel.markdown.extensions.gfmAlerts` end

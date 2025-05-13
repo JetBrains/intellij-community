@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "completionMlRanking_resources",
+  name = "completion-ml-ranking_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "completionMlRanking",
+  name = "completion-ml-ranking",
   module_name = "intellij.completionMlRanking",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -41,7 +41,7 @@ jvm_library(
     "//platform/vcs-impl",
     "//platform/diff-impl",
   ],
-  runtime_deps = [":completionMlRanking_resources"]
+  runtime_deps = [":completion-ml-ranking_resources"]
 )
 ### auto-generated section `build intellij.completionMlRanking` end
 
@@ -56,7 +56,7 @@ jvm_library(
   deps = [
     "//java/testFramework",
     "@lib//:assert_j",
-    "//plugins/completion-ml-ranking:completionMlRanking",
+    "//plugins/completion-ml-ranking",
     "//platform/editor-ui-api:editor-ui",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

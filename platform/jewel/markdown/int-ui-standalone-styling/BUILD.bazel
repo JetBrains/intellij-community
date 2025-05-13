@@ -14,13 +14,13 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "jewel-markdown-intUiStandaloneStyling_resources",
+  name = "int-ui-standalone-styling_resources",
   files = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
 jvm_library(
-  name = "jewel-markdown-intUiStandaloneStyling",
+  name = "int-ui-standalone-styling",
   module_name = "intellij.platform.jewel.markdown.intUiStandaloneStyling",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
@@ -33,11 +33,11 @@ jvm_library(
     "//platform/jewel/ui",
     "//platform/jewel/foundation",
     "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
-    "//platform/jewel/markdown/extensions/gfm-alerts:jewel-markdown-extensions-gfmAlerts",
-    "//platform/jewel/markdown/extensions/gfm-tables:jewel-markdown-extensions-gfmTables",
+    "//platform/jewel/markdown/extensions/gfm-alerts",
+    "//platform/jewel/markdown/extensions/gfm-tables",
     "//libraries/compose-foundation-desktop",
   ],
-  runtime_deps = [":jewel-markdown-intUiStandaloneStyling_resources"],
+  runtime_deps = [":int-ui-standalone-styling_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
 ### auto-generated section `build intellij.platform.jewel.markdown.intUiStandaloneStyling` end

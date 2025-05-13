@@ -10,7 +10,7 @@ jvm_library(
     "//platform/util",
     "//platform/util-class-loader:util-classLoader",
     "@lib//:kotlinx-coroutines-core",
-    "//platform/service-container:serviceContainer",
+    "//platform/service-container",
     "//platform/core-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl/bootstrap",

@@ -22,7 +22,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
-    "//platform/service-container:serviceContainer",
+    "//platform/service-container",
     "//platform/backend/workspace",
     "//platform/workspace/jps",
     "//java/java-impl:impl",

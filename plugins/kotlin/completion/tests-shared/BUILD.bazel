@@ -34,8 +34,8 @@ jvm_library(
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//platform/analysis-impl",
-    "//platform/service-container:serviceContainer",
-    "//platform/service-container:serviceContainer_test_lib",
+    "//platform/service-container",
+    "//platform/service-container:service-container_test_lib",
   ]
 )
 

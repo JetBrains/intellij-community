@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
-  name = "externalProcessAuthHelper_resources",
+  name = "external-process-auth-helper_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "externalProcessAuthHelper",
+  name = "external-process-auth-helper",
   module_name = "intellij.platform.externalProcessAuthHelper",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -26,14 +26,14 @@ jvm_library(
     "@lib//:netty-buffer",
   ],
   exports = ["//platform/built-in-server:builtInServer-impl"],
-  runtime_deps = [":externalProcessAuthHelper_resources"]
+  runtime_deps = [":external-process-auth-helper_resources"]
 )
 
 jvm_library(
-  name = "externalProcessAuthHelper_test_lib",
+  name = "external-process-auth-helper_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
-  associates = [":externalProcessAuthHelper"],
+  associates = [":external-process-auth-helper"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
@@ -49,11 +49,11 @@ jvm_library(
     "@lib//:netty-buffer",
     "@lib//:junit5",
   ],
-  runtime_deps = [":externalProcessAuthHelper_resources"]
+  runtime_deps = [":external-process-auth-helper_resources"]
 )
 
 jvm_test(
-  name = "externalProcessAuthHelper_test",
-  runtime_deps = [":externalProcessAuthHelper_test_lib"]
+  name = "external-process-auth-helper_test",
+  runtime_deps = [":external-process-auth-helper_test_lib"]
 )
 ### auto-generated section `build intellij.platform.externalProcessAuthHelper` end

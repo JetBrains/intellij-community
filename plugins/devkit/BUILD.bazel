@@ -51,7 +51,7 @@ java_library(
     "//plugins/devkit/jps-plugin:jps",
     "//plugins/devkit/runtimeModuleRepository/jps",
     "//plugins/devkit/intellij.devkit.stacktrace:stacktrace",
-    "//plugins/devkit/api-dump:apiDump",
+    "//plugins/devkit/api-dump",
     "//plugins/devkit/api-dump-lang:apiDump-lang",
   ]
 )

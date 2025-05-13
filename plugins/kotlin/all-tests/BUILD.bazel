@@ -48,7 +48,7 @@ java_library(
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/test-framework",
     "//plugins/kotlin/tests-common",
-    "//plugins/kotlin/tests-from-compiler:testsFromCompiler",
+    "//plugins/kotlin/tests-from-compiler",
     "//plugins/kotlin/util/test-generator-api",
     "//plugins/kotlin/util/test-generator-fe10",
     "//plugins/kotlin/code-insight/intentions-shared/tests/k1",

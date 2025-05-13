@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "statsCollector_resources",
+  name = "stats-collector_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "statsCollector",
+  name = "stats-collector",
   module_name = "intellij.statsCollector",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -17,7 +17,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
     "//platform/lang-impl",
-    "//plugins/completion-ml-ranking:completionMlRanking",
+    "//plugins/completion-ml-ranking",
     "@lib//:http-client",
     "//platform/platform-impl:ide-impl",
     "@lib//:guava",
@@ -26,7 +26,7 @@ jvm_library(
     "//platform/statistics",
     "//platform/core-ui",
   ],
-  runtime_deps = [":statsCollector_resources"]
+  runtime_deps = [":stats-collector_resources"]
 )
 ### auto-generated section `build intellij.statsCollector` end
 
@@ -48,8 +48,8 @@ jvm_library(
     "@lib//:mockito",
     "@lib//:assert_j",
     "//platform/editor-ui-api:editor-ui",
-    "//plugins/stats-collector:statsCollector",
-    "//plugins/completion-ml-ranking:completionMlRanking",
+    "//plugins/stats-collector",
+    "//plugins/completion-ml-ranking",
     "@lib//:stats_collector-tests-completion-log-events",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

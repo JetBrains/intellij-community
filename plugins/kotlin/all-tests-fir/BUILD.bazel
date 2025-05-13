@@ -19,7 +19,7 @@ java_library(
     "//plugins/kotlin/gradle/gradle-java",
     "//plugins/kotlin/gradle/gradle-tooling",
     "//plugins/kotlin/gradle/gradle-tooling/impl",
-    "//plugins/kotlin/tests-from-compiler:testsFromCompiler",
+    "//plugins/kotlin/tests-from-compiler",
     "//plugins/kotlin/util/test-generator-api",
     "//plugins/kotlin/tests-common",
     "//plugins/kotlin/code-insight/intentions-shared/tests/k2",

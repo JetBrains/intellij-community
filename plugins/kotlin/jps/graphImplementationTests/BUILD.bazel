@@ -32,7 +32,7 @@ jvm_library(
     "//jps/model-api:model",
     "//platform/core-api:core",
     "@lib//:kotlin-reflect",
-    "//plugins/kotlin/tests-from-compiler:testsFromCompiler_test_lib",
+    "//plugins/kotlin/tests-from-compiler:tests-from-compiler_test_lib",
   ],
   runtime_deps = ["//platform/util/trove"]
 )

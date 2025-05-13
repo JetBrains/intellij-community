@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
-  name = "collaborationTools_resources",
+  name = "collaboration-tools_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "collaborationTools",
+  name = "collaboration-tools",
   module_name = "intellij.platform.collaborationTools",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
@@ -44,14 +44,14 @@ jvm_library(
     "//platform/dvcs-impl/shared",
     "@lib//:http-client",
   ],
-  runtime_deps = [":collaborationTools_resources"]
+  runtime_deps = [":collaboration-tools_resources"]
 )
 
 jvm_library(
-  name = "collaborationTools_test_lib",
+  name = "collaboration-tools_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
-  associates = [":collaborationTools"],
+  associates = [":collaboration-tools"],
   deps = [
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
@@ -99,11 +99,11 @@ jvm_library(
     "@lib//:app-cash-turbine-jvm",
     "@lib//:assert_j",
   ],
-  runtime_deps = [":collaborationTools_resources"]
+  runtime_deps = [":collaboration-tools_resources"]
 )
 
 jvm_test(
-  name = "collaborationTools_test",
-  runtime_deps = [":collaborationTools_test_lib"]
+  name = "collaboration-tools_test",
+  runtime_deps = [":collaboration-tools_test_lib"]
 )
 ### auto-generated section `build intellij.platform.collaborationTools` end

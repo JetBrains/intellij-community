@@ -36,7 +36,7 @@ jvm_library(
     "@lib//:fastutil-min",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
-    "//platform/external-process-auth-helper:externalProcessAuthHelper",
+    "//platform/external-process-auth-helper",
   ],
   runtime_deps = [
     ":vcs-svn_resources",

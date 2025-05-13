@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
-  name = "serviceContainer_resources",
+  name = "service-container_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "serviceContainer",
+  name = "service-container",
   module_name = "intellij.platform.serviceContainer",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -25,14 +25,14 @@ jvm_library(
     "//platform/diagnostic",
     "//platform/util/coroutines",
   ],
-  runtime_deps = [":serviceContainer_resources"]
+  runtime_deps = [":service-container_resources"]
 )
 
 jvm_library(
-  name = "serviceContainer_test_lib",
+  name = "service-container_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
-  associates = [":serviceContainer"],
+  associates = [":service-container"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
@@ -48,11 +48,11 @@ jvm_library(
     "//platform/diagnostic",
     "//platform/util/coroutines",
   ],
-  runtime_deps = [":serviceContainer_resources"]
+  runtime_deps = [":service-container_resources"]
 )
 
 jvm_test(
-  name = "serviceContainer_test",
-  runtime_deps = [":serviceContainer_test_lib"]
+  name = "service-container_test",
+  runtime_deps = [":service-container_test_lib"]
 )
 ### auto-generated section `build intellij.platform.serviceContainer` end

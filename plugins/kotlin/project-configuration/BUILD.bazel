@@ -45,7 +45,7 @@ jvm_library(
     "//java/idea-ui:ui",
     "//java/java-impl:impl",
     "//java/compiler/openapi:java-compiler",
-    "//aether-dependency-resolver:java-aetherDependencyResolver",
+    "//aether-dependency-resolver",
     "//platform/vcs-impl",
     "//platform/diff-impl",
     "//platform/core-api:core",

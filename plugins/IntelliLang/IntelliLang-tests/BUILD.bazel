@@ -26,7 +26,7 @@ jvm_library(
     "//plugins/yaml",
     "//plugins/yaml:yaml_test_lib",
     "//jps/model-api:model",
-    "//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
+    "//java/compiler/instrumentation-util",
     "@lib//:assert_j",
     "//plugins/IntelliLang/intellilang-jps-plugin:java-langInjection-jps",
     "@lib//:asm",

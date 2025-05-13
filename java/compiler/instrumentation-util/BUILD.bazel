@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "java-compiler-instrumentationUtil",
+  name = "instrumentation-util",
   module_name = "intellij.java.compiler.instrumentationUtil",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),

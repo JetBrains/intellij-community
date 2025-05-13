@@ -44,7 +44,7 @@ jvm_library(
     "//platform/lang-impl",
     "//plugins/devkit/devkit-core:core",
     "//java/idea-ui:ui",
-    "//aether-dependency-resolver:java-aetherDependencyResolver",
+    "//aether-dependency-resolver",
     "//java/openapi:java",
     "//platform/util-class-loader:util-classLoader",
     "//plugins/kotlin/base/facet",
