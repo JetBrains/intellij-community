@@ -146,7 +146,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
                     boolean showShortcut,
                     @NotNull JComponent uiParent,
                     @NotNull List<? extends C> selection,
-                    @NotNull Function<? super C, ? extends PluginUiModel> pluginModelGetter,
+                    @NotNull Function<? super C, PluginUiModel> pluginModelGetter,
                     @NotNull Runnable onFinishAction) {
       //noinspection unchecked
       super(IdeBundle.message(isBundledUpdate(selection, (Function<Object, PluginUiModel>)pluginModelGetter, pluginModelFacade)
@@ -155,8 +155,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
             pluginModelFacade,
             showShortcut,
             selection,
-            pluginModelGetter.andThen(model -> PluginUiModel.getDescriptorOrNull(model) instanceof IdeaPluginDescriptorImpl ?
-                                               model : null));
+            pluginModelGetter);
 
       myUiParent = uiParent;
       myOnFinishAction = onFinishAction;
