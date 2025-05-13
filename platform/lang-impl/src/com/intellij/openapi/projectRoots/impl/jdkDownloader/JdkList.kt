@@ -9,6 +9,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -39,6 +40,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
+import kotlin.io.path.readText
 
 /** describes vendor + product part of the UI **/
 @Internal
@@ -418,6 +420,15 @@ data class JdkPredicate(
   }
 }
 
+
+//we need this to install JDK on WSL agents on buildserver
+@Internal
+object ReadJdkItemsForWSL {
+  fun readJdkItems(file: Path): List<JdkItem> {
+    return JdkListParser.parseJdkList(JdkListParser.readTree(file.readText(Charsets.UTF_8)), JdkPredicate.forWSL())
+  }
+
+}
 @Internal
 object JdkListParser {
   fun readTree(rawData: String): JsonObject = Json.decodeFromString<JsonElement>(rawData).jsonObject

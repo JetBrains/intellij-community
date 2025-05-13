@@ -5,6 +5,7 @@ import com.intellij.UtilBundle
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.ide.DataManager
+import com.intellij.maven.testFramework.wsl2.JdkWslTestInstaller
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.*
@@ -195,6 +196,13 @@ abstract class MavenTestCase : UsefulTestCase() {
       jdkPath = getEelFixtureEngineJavaHome()
     }
     if (myJdk == null && jdkPath != null) {
+      if (isProjectInWslEelEnvironment()) {
+        val definition = getTeamcityJavaItemDefinition()
+        if(definition!= null) {
+          val jdkToInstall = JdkWslTestInstaller.readJdkItem(Path.of(definition))
+          JdkWslTestInstaller(Path.of(jdkPath), jdkToInstall).checkOrInstallJDK()
+        }
+      }
       myJdk = JavaSdk.getInstance().createJdk("Maven Test JDK", jdkPath)
       val jdkTable = ProjectJdkTable.getInstance()
       WriteAction.runAndWait<RuntimeException> { jdkTable.addJdk(myJdk!!) }
@@ -218,8 +226,16 @@ abstract class MavenTestCase : UsefulTestCase() {
     return System.getenv("EEL_FIXTURE_ENGINE") != null
   }
 
+  private fun isProjectInWslEelEnvironment(): Boolean {
+    return "wsl".equals(System.getenv("EEL_FIXTURE_ENGINE"), true)
+  }
+
   private fun getEelFixtureEngineJavaHome(): String {
     return System.getenv("EEL_FIXTURE_ENGINE_JAVA_HOME") ?: throw IllegalArgumentException("The system environment variable EEL_FIXTURE_ENGINE_JAVA_HOME should be explicitly specified")
+  }
+
+  private fun getTeamcityJavaItemDefinition(): String? {
+    return System.getenv("TEAMCITY_WLS_JDK_DEFINITION")
   }
 
   protected fun waitForMavenUtilRunnablesComplete() {
