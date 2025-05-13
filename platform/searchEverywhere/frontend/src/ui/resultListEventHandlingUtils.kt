@@ -132,16 +132,10 @@ class SeResultListCollection : SeResultList {
     list[index]
 
   override fun addRow(index: Int, row: SeResultListRow) {
-    (row as? SeResultListItemRow)?.let {
-      //SeLog.log(SeLog.THROTTLING) { "Will add throttled row ${it.item.presentation.text}" }
-    }
     list.add(index, row)
   }
 
   override fun addRow(row: SeResultListRow) {
-    (row as? SeResultListItemRow)?.let {
-      //SeLog.log(SeLog.THROTTLING) { "Will add throttled row ${it.item.presentation.text}" }
-    }
     list.add(row)
   }
 

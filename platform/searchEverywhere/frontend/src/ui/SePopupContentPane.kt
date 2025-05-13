@@ -20,11 +20,8 @@ import com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionItem
 import com.intellij.platform.searchEverywhere.frontend.tabs.files.SeTargetItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.tabs.text.SeTextSearchItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.vm.SePopupVm
-import com.intellij.platform.searchEverywhere.frontend.vm.SeResultListStopEvent
-import com.intellij.platform.searchEverywhere.frontend.vm.SeResultListUpdateEvent
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
-import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.WindowMoveListener
@@ -36,7 +33,6 @@ import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
-import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.popup.list.GroupedItemsListRenderer
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.bindTextIn

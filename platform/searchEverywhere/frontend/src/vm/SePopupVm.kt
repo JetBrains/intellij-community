@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.ApiStatus
-import kotlin.text.isNotEmpty
 
 @ApiStatus.Internal
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -34,9 +33,6 @@ class SePopupVm(
   private val historyList: SearchHistoryList,
   private val closePopupHandler: () -> Unit,
 ) {
-
-  val currentTabFlow: Flow<SeTabVm>
-
   val searchPattern: MutableStateFlow<String> = MutableStateFlow("")
 
   val tabVms: List<SeTabVm> = tabs.map {
