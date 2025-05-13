@@ -10,6 +10,7 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import org.jetbrains.annotations.CheckReturnValue
 import java.io.IOException
+import kotlin.jvm.Throws
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -43,7 +44,6 @@ sealed interface EelTunnelsApi {
    * }
    * ```
    */
-  @CheckReturnValue
   suspend fun listenOnUnixSocket(path: CreateFilePath = CreateFilePath.MkTemp()): ListenOnUnixSocketResult
 
   data class ListenOnUnixSocketResult(
@@ -64,8 +64,8 @@ sealed interface EelTunnelsApi {
    *
    * Creates a connection to a TCP socket to a named host specified by [address].
    *
-   * If the result is [EelNetworkResult.Error], then there was an error during establishment of the connection.
-   * Otherwise, the result is [EelNetworkResult.Ok], which means that the connection is ready to use.
+   * If an error occurs during establishment of the connection, an [EelConnectionError] will be thrown.
+   * Otherwise, a [Connection] object is returned, which means that the connection is ready to use.
    *
    * The connection exists as a pair of channels [Connection.sendChannel] and [Connection.receiveChannel],
    * which allow communicating to a remote server from the IDE side.
@@ -84,8 +84,8 @@ sealed interface EelTunnelsApi {
    *
    * To configure a socket before connection use [configureSocketBeforeConnection]. After that, use [Connection.configureSocket]
    */
-  @CheckReturnValue
-  suspend fun getConnectionToRemotePort(@GeneratedBuilder args: GetConnectionToRemotePortArgs): EelResult<Connection, EelConnectionError>
+  @Throws(EelConnectionError::class)
+  suspend fun getConnectionToRemotePort(@GeneratedBuilder args: GetConnectionToRemotePortArgs): Connection
 
   interface GetConnectionToRemotePortArgs : HostAddress {
     val configureSocketBeforeConnection: ConfigurableClientSocket.() -> Unit get() = {}
@@ -154,8 +154,8 @@ sealed interface EelTunnelsApi {
 
       /**
        * Sets timeout for connecting to remote host.
-       * If the connection could not be established before [timeout], then [EelConnectionError.ConnectionTimeout] would be returned
-       * in [EelTunnelsApi.getConnectionToRemotePort].
+       * If the connection could not be established before [timeout], then [EelConnectionError.ConnectionTimeout] would be thrown
+       * by [EelTunnelsApi.getConnectionToRemotePort].
        *
        * Default value: 10 seconds.
        * The recognizable granularity is milliseconds.
@@ -221,8 +221,8 @@ sealed interface EelTunnelsApi {
    *
    * Accepts remote connections to a named host specified by [address].
    *
-   * If the result is [EelNetworkResult.Error], then there was an error during creation of the server.
-   * Otherwise, the result is [EelNetworkResult.Ok], which means that the server was created successfully.
+   * If an error occurs during creation of the server, an [EelConnectionError] will be thrown.
+   * Otherwise, a [ConnectionAcceptor] object is returned, which means that the server was created successfully.
    *
    * Locally, the server exists as a channel of [Connection]s, which allows imitating a server on the IDE side.
    *
@@ -238,8 +238,8 @@ sealed interface EelTunnelsApi {
    *
    * One should not forget to invoke [Connection.close] when the connection is not needed.
    */
-  @CheckReturnValue
-  suspend fun getAcceptorForRemotePort(@GeneratedBuilder args: GetAcceptorForRemotePort): EelResult<ConnectionAcceptor, EelConnectionError>
+  @Throws(EelConnectionError::class)
+  suspend fun getAcceptorForRemotePort(@GeneratedBuilder args: GetAcceptorForRemotePort): ConnectionAcceptor
 
   interface GetAcceptorForRemotePort : HostAddress {
     // TODO Make it look and feel like all other builders.
@@ -334,11 +334,14 @@ interface EelTunnelsWindowsApi : EelTunnelsApi
 suspend fun <T> EelTunnelsApiHelpers.GetConnectionToRemotePort.withConnectionToRemotePort(
   errorHandler: suspend (EelConnectionError) -> T,
   action: suspend CoroutineScope.(Connection) -> T,
-): T =
-  when (val connectionResult = eelIt()) {
-    is EelResult.Error -> errorHandler(connectionResult.error)
-    is EelResult.Ok -> closeWithExceptionHandling({ action(connectionResult.value) }, { connectionResult.value.close() })
+): T {
+  return try {
+    val connectionResult = eelIt()
+    closeWithExceptionHandling({ action(connectionResult) }, { connectionResult.close() })
+  } catch (e: EelConnectionError) {
+    errorHandler(e)
   }
+}
 
 private suspend fun <T> closeWithExceptionHandling(action: suspend CoroutineScope.() -> T, close: suspend () -> Unit): T {
   var original: Throwable? = null
@@ -387,11 +390,14 @@ suspend fun <T> EelTunnelsApi.withConnectionToRemotePort(
 suspend fun <T> EelTunnelsApiHelpers.GetAcceptorForRemotePort.withAcceptorForRemotePort(
   errorHandler: suspend (EelConnectionError) -> T,
   action: suspend CoroutineScope.(EelTunnelsApi.ConnectionAcceptor) -> T,
-): T =
-  when (val connectionResult = eelIt()) {
-    is EelResult.Error -> errorHandler(connectionResult.error)
-    is EelResult.Ok -> closeWithExceptionHandling({ action(connectionResult.value) }, { connectionResult.value.close() })
+): T {
+  return try {
+    val connectionResult = eelIt()
+    closeWithExceptionHandling({ action(connectionResult) }, { connectionResult.close() })
+  } catch (e: EelConnectionError) {
+    errorHandler(e)
   }
+}
 
 fun EelTunnelsApiHelpers.GetAcceptorForRemotePort.hostAddress(
   addr: EelTunnelsApi.HostAddress,
@@ -406,28 +412,27 @@ sealed interface EelNetworkError : EelError
 /**
  * An error that can happen during the creation of a connection to a remote server
  */
-interface EelConnectionError : EelNetworkError {
-  val message: String
+sealed class EelConnectionError(override val message: String) : EelNetworkError, IOException() {
 
   /**
    * Returned when the remote host cannot create an object of a socket.
    */
-  interface SocketAllocationError : EelConnectionError
+  open class SocketAllocationError(override val message: String) : EelConnectionError(message)
 
   /**
    * Returned when there is a problem with resolve of the hostname.
    */
-  interface ResolveFailure : EelConnectionError
+  open class ResolveFailure(override val message: String) : EelConnectionError(message)
 
   /**
    * Returned when there was a problem with establishing a connection to a resolved server
    */
-  interface ConnectionProblem : EelConnectionError
+  open class ConnectionProblem(override val message: String) : EelConnectionError(message)
 
   /**
    * Unknown failure during a connection establishment
    */
-  interface UnknownFailure : EelConnectionError
+  open class UnknownFailure(override val message: String) : EelConnectionError(message)
 }
 
 

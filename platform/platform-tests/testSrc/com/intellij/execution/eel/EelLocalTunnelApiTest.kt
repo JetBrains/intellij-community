@@ -48,9 +48,11 @@ class EelLocalTunnelApiTest {
 
   @Test
   fun testCheckFailureConnection(): Unit = timeoutRunBlocking(5.minutes) {
-    when (localEel.tunnels.getConnectionToRemotePort().port(22U).hostname("google.com").timeout(5.seconds).eelIt()) {
-      is EelResult.Error -> Unit
-      is EelResult.Ok -> Assertions.fail("Connection should fail")
+    try {
+      localEel.tunnels.getConnectionToRemotePort().port(22U).hostname("google.com").timeout(5.seconds).eelIt()
+      Assertions.fail("Connection should fail")
+    } catch (_: EelConnectionError) {
+      // ok
     }
   }
 
@@ -68,7 +70,7 @@ class EelLocalTunnelApiTest {
   @Test
   fun testServerListensForConnection(): Unit = timeoutRunBlocking(1.minutes) {
     val helper = clientExecutor.createBuilderToExecuteMain(localEel.exec).eelIt()
-    val acceptor = localEel.tunnels.getAcceptorForRemotePort().getOrThrow()
+    val acceptor = localEel.tunnels.getAcceptorForRemotePort().eelIt()
     helper.stdin.sendWholeText(acceptor.boundAddress.port.toString() + "\n").getOrThrow()
     val conn = acceptor.incomingConnections.receive()
     try {
@@ -126,7 +128,7 @@ class EelLocalTunnelApiTest {
     val helper = serverExecutor.createBuilderToExecuteMain(localEel.exec).eelIt()
     try {
       val port = helper.stdout.consumeAsInputStream().bufferedReader().readLine().trim().toInt()
-      val connection = localEel.tunnels.getConnectionToRemotePort().port(port.toUShort()).preferV4().getOrThrow()
+      val connection = localEel.tunnels.getConnectionToRemotePort().port(port.toUShort()).preferV4().eelIt()
       coroutineScope {
         block(connection, helper)
       }

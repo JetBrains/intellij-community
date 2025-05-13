@@ -7,7 +7,6 @@ package com.intellij.platform.eel
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.EelTunnelsApi.Connection
 import kotlinx.coroutines.channels.SendChannel
-import org.jetbrains.annotations.CheckReturnValue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -17,8 +16,8 @@ import kotlin.time.Duration.Companion.seconds
  *
  * Accepts remote connections to a named host specified by [address].
  *
- * If the result is [EelNetworkResult.Error], then there was an error during creation of the server.
- * Otherwise, the result is [EelNetworkResult.Ok], which means that the server was created successfully.
+ * If an error occurs during creation of the server, an [EelConnectionError] will be thrown.
+ * Otherwise, a [ConnectionAcceptor] object is returned, which means that the server was created successfully.
  *
  * Locally, the server exists as a channel of [Connection]s, which allows imitating a server on the IDE side.
  *
@@ -45,8 +44,8 @@ fun EelTunnelsApi.getAcceptorForRemotePort(): EelTunnelsApiHelpers.GetAcceptorFo
  *
  * Creates a connection to a TCP socket to a named host specified by [address].
  *
- * If the result is [EelNetworkResult.Error], then there was an error during establishment of the connection.
- * Otherwise, the result is [EelNetworkResult.Ok], which means that the connection is ready to use.
+ * If an error occurs during establishment of the connection, an [EelConnectionError] will be thrown.
+ * Otherwise, a [Connection] object is returned, which means that the connection is ready to use.
  *
  * The connection exists as a pair of channels [Connection.sendChannel] and [Connection.receiveChannel],
  * which allow communicating to a remote server from the IDE side.
@@ -78,7 +77,7 @@ object EelTunnelsApiHelpers {
   @GeneratedBuilder.Result
   class GetAcceptorForRemotePort(
     private val owner: EelTunnelsApi,
-  ) : OwnedBuilder<EelResult<EelTunnelsApi.ConnectionAcceptor, EelConnectionError>> {
+  ) : OwnedBuilder<EelTunnelsApi.ConnectionAcceptor> {
     private var configureServerSocket: @ExtensionFunctionType Function1<ConfigurableSocket, Unit> = {}
 
     private var hostname: String = "localhost"
@@ -128,8 +127,7 @@ object EelTunnelsApiHelpers {
      * Complete the builder and call [com.intellij.platform.eel.EelTunnelsApi.getAcceptorForRemotePort]
      * with an instance of [com.intellij.platform.eel.EelTunnelsApi.GetAcceptorForRemotePort].
      */
-    @CheckReturnValue
-    override suspend fun eelIt(): EelResult<EelTunnelsApi.ConnectionAcceptor, EelConnectionError> =
+    override suspend fun eelIt(): EelTunnelsApi.ConnectionAcceptor =
       owner.getAcceptorForRemotePort(
         GetAcceptorForRemotePortImpl(
           configureServerSocket = configureServerSocket,
@@ -147,7 +145,7 @@ object EelTunnelsApiHelpers {
   @GeneratedBuilder.Result
   class GetConnectionToRemotePort(
     private val owner: EelTunnelsApi,
-  ) : OwnedBuilder<EelResult<Connection, EelConnectionError>> {
+  ) : OwnedBuilder<Connection> {
     private var configureSocketBeforeConnection: @ExtensionFunctionType Function1<ConfigurableClientSocket, Unit> = {}
 
     private var hostname: String = "localhost"
@@ -198,8 +196,7 @@ object EelTunnelsApiHelpers {
      * Complete the builder and call [com.intellij.platform.eel.EelTunnelsApi.getConnectionToRemotePort]
      * with an instance of [com.intellij.platform.eel.EelTunnelsApi.GetConnectionToRemotePortArgs].
      */
-    @CheckReturnValue
-    override suspend fun eelIt(): EelResult<Connection, EelConnectionError> =
+    override suspend fun eelIt(): Connection =
       owner.getConnectionToRemotePort(
         GetConnectionToRemotePortArgsImpl(
           configureSocketBeforeConnection = configureSocketBeforeConnection,
