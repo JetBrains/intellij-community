@@ -39,7 +39,7 @@
     <orderEntry type="module" module-name="kotlin.base.facet" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.java.impl" />
-    <orderEntry type="module" module-name="intellij.gradle.common" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem" />
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
   </component>
