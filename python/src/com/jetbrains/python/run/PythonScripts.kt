@@ -34,6 +34,7 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.fixCondaPathEnvIfNeeded
 import com.jetbrains.python.sdk.targetAdditionalData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData.Companion.pathsAddedByUser
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
@@ -139,6 +140,7 @@ fun prepareHelperScriptExecution(helperPackage: HelperPackage,
     pythonScriptPath = resolveUploadPath(helperPackage.asParamString(), uploads)
   }
 
+@ApiStatus.Internal
 fun prepareHelperScriptViaToolExecution(
   helperPackage: HelperPackage,
   helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest,

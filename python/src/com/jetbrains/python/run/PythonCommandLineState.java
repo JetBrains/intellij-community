@@ -71,6 +71,7 @@ import com.jetbrains.python.run.target.PythonCommandLineTargetEnvironmentProvide
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.conda.CondaPythonExecKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1070,6 +1071,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
    * @return Returns `true` if the configuration should be allowed to run, `false` otherwise.
    */
   @RequiresEdt
+  @ApiStatus.Internal
   public boolean canRun() {
     return true;
   }

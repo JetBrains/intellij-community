@@ -7,7 +7,6 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.errorProcessing.PyExecResult
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.asPythonResult
 import com.jetbrains.python.pathValidation.PlatformAndRoot
