@@ -18,6 +18,7 @@ import java.util.*
 import kotlin.io.path.extension
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
+import kotlin.streams.asSequence
 
 class HelpIndexer
 @Throws(IOException::class)
@@ -32,58 +33,53 @@ internal constructor(indexDir: String) {
   }
 
   @Throws(IOException::class)
-  fun indexFileOrDirectory(fileName: String) {
-    val file = Path.of(fileName)
-    val queue = if (Files.isRegularFile(file)) {
-      if (file.extension.lowercase(Locale.getDefault()) in setOf("htm", "html")) listOf(file)
-      else return
-    }
-    else if (Files.isDirectory(file)) {
-      Files.walk(file).use { stream ->
-        stream
-          .filter { it.isRegularFile() }
-          .filter { it.extension.lowercase(Locale.getDefault()) in setOf("htm", "html") }
-          .toList()
-      }
-    }
-    else return
-
-    for (f in queue) {
-      try {
-        val doc = Document()
-        val parsedDocument = Jsoup.parse(f, "UTF-8")
-
-        val content = StringBuilder()
-        val lineSeparator = System.lineSeparator()
-        val articles = parsedDocument.body().getElementsByClass("article")
-        val title = parsedDocument.title()
-        if (articles.isEmpty()) {
-          if (title.contains("You will be redirected shortly")) {
-            println("Skipping redirect page: $f ")
-          }
-          else if (parsedDocument.body().attr("data-template") == "section-page") {
-            println("Skipping section page: $f")
-          }
-          else {
-            System.err.println("Could not add: $f because no `<article>` found. Title is '$title'")
-          }
-          continue
+  fun indexDirectory(dirName: String) {
+    //It's always a directory, there is no chance that the method is called on a file
+    Files.walk(Path.of(dirName)).use { stream ->
+      stream
+        .filter {
+          it.isRegularFile() &&
+          it.extension.lowercase(Locale.getDefault()) in setOf("htm", "html")
         }
-        @Suppress("SpellCheckingInspection")
-        articles[0].children()
-          .filterNot { it.hasAttr("data-swiftype-index") }
-          .forEach { content.append(it.text()).append(lineSeparator) }
+        .asSequence()
+        .forEach { file ->
+          try {
+            val docIndex = Document()
+            val parsedDocument = Jsoup.parse(file, "UTF-8")
 
-        doc.add(TextField("contents", content.toString(), Field.Store.YES))
-        doc.add(StringField("filename", f.name, Field.Store.YES))
-        doc.add(StringField("title", title, Field.Store.YES))
+            val content = StringBuilder()
+            val lineSeparator = System.lineSeparator()
+            val articles = parsedDocument.body().getElementsByClass("article")
+            val title = parsedDocument.title()
 
-        writer.addDocument(doc)
-        println("Added: $f")
-      }
-      catch (e: Throwable) {
-        System.err.println("Could not add: $f because ${e.message}")
-      }
+            if (articles.isEmpty()) {
+              if (parsedDocument.select("meta[http-equiv=refresh]").isNotEmpty() ||
+                  title.contains("You will be redirected shortly")) {
+                println("Skipping redirect page: $file ")
+              }
+              else if (parsedDocument.body().attr("data-template") == "section-page") {
+                println("Skipping section page: $file")
+              }
+              else {
+                System.err.println("Could not add: $file because no `<article>` elements are found. Title is '$title'")
+              }
+            }
+            else {
+              articles.first()?.children()
+                ?.forEach { content.append(it.text()).append(lineSeparator) }
+
+              docIndex.add(TextField("contents", content.toString(), Field.Store.YES))
+              docIndex.add(StringField("filename", file.name, Field.Store.YES))
+              docIndex.add(StringField("title", title, Field.Store.YES))
+
+              writer.addDocument(docIndex)
+              println("Added: $file")
+            }
+          }
+          catch (e: Throwable) {
+            System.err.println("Could not add: $file because ${e.message}")
+          }
+        }
     }
   }
 
@@ -97,7 +93,7 @@ internal constructor(indexDir: String) {
 
     private fun doIndex(dirToStore: String, dirToIndex: String) {
       val indexer = HelpIndexer(dirToStore)
-      indexer.indexFileOrDirectory(dirToIndex)
+      indexer.indexDirectory(dirToIndex)
       indexer.closeIndex()
     }
 
