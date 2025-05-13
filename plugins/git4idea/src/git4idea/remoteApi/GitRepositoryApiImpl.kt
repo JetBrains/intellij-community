@@ -104,10 +104,15 @@ class GitRepositoryApiImpl : GitRepositoryApi {
         return
       }
 
-      LOG.debug("Tags were loaded for ${repository.root}. Updating state")
+      LOG.debug("Tags were loaded for ${repository.root}. Updating tags state")
 
-      val repositoryState = GitRepositoryToDtoConverter.convertRepositoryState(repository)
-      channel.trySend(GitRepositoryEvent.TagsLoaded(repository.rpcId, repositoryState))
+      val tagsState = repository.tagHolder.getTags().keys
+      channel.trySend(GitRepositoryEvent.TagsLoaded(repository.rpcId, tagsState))
+    }
+
+    override fun tagsHidden() {
+      LOG.debug("Tags were hidden")
+      channel.trySend(GitRepositoryEvent.TagsHidden)
     }
 
     override fun favoriteRefsUpdated(repository: GitRepository?) {

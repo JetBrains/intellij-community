@@ -40,6 +40,8 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.vcs.git.shared.widget.GitWidgetUpdate
+import com.intellij.vcs.git.shared.widget.GitWidgetUpdatesNotifier
 import git4idea.GitBranch
 import git4idea.GitDisposable
 import git4idea.GitReference
@@ -48,22 +50,22 @@ import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.branch.GitBranchType
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
-import git4idea.repo.*
-import git4idea.ui.branch.tree.*
+import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.tree.GitBranchesTreeModel.*
+import git4idea.ui.branch.tree.GitBranchesTreeRenderer
+import git4idea.ui.branch.tree.GitBranchesTreeSingleRepoModel
+import git4idea.ui.branch.tree.GitBranchesTreeUtil
 import git4idea.ui.branch.tree.GitBranchesTreeUtil.overrideBuiltInAction
 import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectFirst
 import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectLast
 import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectNext
 import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectPrev
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
+import git4idea.ui.branch.tree.recentCheckoutBranches
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -121,9 +123,7 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
     if (!isNestedPopup()) {
       setSpeedSearchAlwaysShown()
       if (!isNewUI) installTitleToolbar()
-      installRepoListener()
       installResizeListener()
-      installTagsListener(step.treeModel)
       DvcsBranchSyncPolicyUpdateNotifier(project, GitVcs.getInstance(project),
                                          GitVcsSettings.getInstance(project), GitRepositoryManager.getInstance(project))
         .initBranchSyncPolicyIfNotInitialized()
@@ -134,14 +134,17 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
       sink[GitBranchActionsDataKeys.AFFECTED_REPOSITORIES] = treeStep.repositories
     }
 
-    GitDisposable.getInstance(project).childScope("Git Branches Tree Popup")
-      .cancelledWith(this).launch {
+    GitDisposable.getInstance(project).childScope("Git Branches Tree Popup").cancelledWith(this).also { scope ->
+      scope.launch {
         searchPatternStateFlow.drop(1).debounce(GitBranchesTreeUtil.FILTER_DEBOUNCE_MS).collectLatest { pattern ->
           withContext(Dispatchers.EDT) {
             applySearchPattern(pattern)
           }
         }
       }
+
+      subscribeOnUpdates(scope, project, step)
+    }
   }
 
   protected abstract fun getSearchFiledEmptyText(): @Nls String
@@ -239,7 +242,7 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
 
   protected fun isNestedPopup() = parent != null
 
-  private fun applySearchPattern(pattern: String? = speedSearch.enteredPrefix.nullize(true)) {
+  private fun applySearchPattern(pattern: String?) {
     treeStep.updateTreeModelIfNeeded(tree, pattern)
     treeStep.setSearchPattern(pattern)
     val haveBranches = traverseNodesAndExpand()
@@ -298,28 +301,6 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
     pack(true, true)
   }
 
-  private fun installRepoListener() {
-    project.messageBus.connect(this).subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener {
-      runInEdt {
-        if (isDisposed) return@runInEdt
-
-        val state = TreeState.createOn(tree)
-        applySearchPattern()
-        state.applyTo(tree)
-      }
-    })
-  }
-
-  private fun installTagsListener(treeModel: GitBranchesTreeModel) {
-    project.messageBus.connect(this).subscribe(GitTagHolder.GIT_TAGS_LOADED, GitTagLoaderListener {
-      runInEdt {
-        val state = GitBranchesPopupTreeStateHolder.createStateForTree(tree)
-        treeModel.updateTags()
-        state?.applyTo(tree)
-      }
-    })
-  }
-
   private fun installResizeListener() {
     addResizeListener({ userResized = true }, this)
   }
@@ -332,16 +313,6 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
                      runInEdt {
                        treeStep.setPrefixGrouping(state)
                      }
-                   }
-
-                   override fun branchFavoriteSettingsChanged() {
-                     runInEdt {
-                       tree.repaint()
-                     }
-                   }
-
-                   override fun showTagsSettingsChanged(state: Boolean) {
-                     refresh()
                    }
                  })
   }
@@ -716,8 +687,30 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
   }
 
   fun refresh() {
-    applySearchPattern()
+    applySearchPattern(speedSearch.enteredPrefix.nullize(true))
     mySpeedSearchPatternField.textEditor.emptyText.text = getSearchFiledEmptyText()
+  }
+
+  private fun subscribeOnUpdates(scope: CoroutineScope, project: Project, step: T) {
+    scope.launch(context = Dispatchers.EDT) {
+      GitWidgetUpdatesNotifier.getInstance(project).updates.collect {
+        when (it) {
+          GitWidgetUpdate.REFRESH_TAGS -> runPreservingTreeState {
+            step.treeModel.updateTags()
+          }
+          GitWidgetUpdate.REPAINT -> tree.repaint()
+          GitWidgetUpdate.REFRESH -> runPreservingTreeState {
+            refresh()
+          }
+        }
+      }
+    }
+  }
+
+  private fun runPreservingTreeState(action: () -> Unit) {
+    val state = TreeState.createOn(tree)
+    action()
+    state.applyTo(tree)
   }
 
   private inner class BranchesTree(model: TreeModel) : Tree(model) {

@@ -9,13 +9,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
+import com.intellij.util.messages.Topic
 import com.intellij.vcs.git.shared.ref.GitFavoriteRefs
 import com.intellij.vcs.git.shared.rpc.GitRepositoryApi
 import com.intellij.vcs.git.shared.rpc.GitRepositoryDto
 import com.intellij.vcs.git.shared.rpc.GitRepositoryEvent
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -30,7 +29,6 @@ class GitRepositoriesFrontendHolder(
   private val cs: CoroutineScope,
 ) {
   private val repositories: MutableMap<RepositoryId, GitRepositoryFrontendModelImpl> = ConcurrentHashMap()
-  private val widgetUpdateFlow = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   @Volatile
   var initialized: Boolean = false
@@ -87,14 +85,15 @@ class GitRepositoriesFrontendHolder(
             }
             is GitRepositoryEvent.TagsLoaded -> {
               repositories.computeIfPresent(event.repositoryId) { k, info ->
-                info.state = event.newState
+                val refsSet = info.state.refs.copy(tags = event.tags)
+                info.state = info.state.copy(refs = refsSet)
                 info
               }
             }
+            GitRepositoryEvent.TagsHidden -> {}
           }
 
-          // TODO better more granular update
-          widgetUpdateFlow.tryEmit(Unit)
+          project.messageBus.syncPublisher(UPDATES).afterUpdate(getUpdateType(event))
         }
       }
 
@@ -106,9 +105,11 @@ class GitRepositoriesFrontendHolder(
       initialized = true
     }
   }
-
+  
   companion object {
     fun getInstance(project: Project): GitRepositoriesFrontendHolder = project.getService(GitRepositoriesFrontendHolder::class.java)
+
+    internal val UPDATES = Topic(UpdatesListener::class.java, Topic.BroadcastDirection.NONE)
 
     private val LOG = Logger.getInstance(GitRepositoriesFrontendHolder::class.java)
 
@@ -119,6 +120,23 @@ class GitRepositoriesFrontendHolder(
         state = repositoryDto.state,
         favoriteRefs = repositoryDto.favoriteRefs,
       )
+
+    private fun getUpdateType(rpcEvent: GitRepositoryEvent): UpdateType = when (rpcEvent) {
+      is GitRepositoryEvent.FavoriteRefsUpdated -> UpdateType.FAVORITE_REFS_UPDATED
+      is GitRepositoryEvent.RepositoryCreated -> UpdateType.REPOSITORY_CREATED
+      is GitRepositoryEvent.RepositoryDeleted -> UpdateType.REPOSITORY_DELETED
+      is GitRepositoryEvent.RepositoryStateUpdated -> UpdateType.REPOSITORY_STATE_UPDATED
+      GitRepositoryEvent.TagsHidden -> UpdateType.TAGS_HIDDEN
+      is GitRepositoryEvent.TagsLoaded -> UpdateType.TAGS_LOADED
+    }
+  }
+
+  internal fun interface UpdatesListener {
+    fun afterUpdate(updateType: UpdateType)
+  }
+
+  internal enum class UpdateType {
+    REPOSITORY_CREATED, REPOSITORY_DELETED, FAVORITE_REFS_UPDATED, REPOSITORY_STATE_UPDATED, TAGS_LOADED, TAGS_HIDDEN
   }
 }
 

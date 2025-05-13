@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nls
 
 @Serializable
 @ApiStatus.Internal
-class GitRepositoryState(
+data class GitRepositoryState(
   val currentRef: GitCurrentRef?,
   @NlsSafe
   val revision: GitHash?,

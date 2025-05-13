@@ -12,6 +12,7 @@ import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
 import git4idea.GitDisposable
+import git4idea.GitTag
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -54,8 +55,14 @@ sealed interface GitRepositoryEvent {
 
   @Serializable
   @ApiStatus.Internal
-  class TagsLoaded(val repositoryId: RepositoryId, val newState: GitRepositoryState) : GitRepositoryEvent {
+  class TagsLoaded(val repositoryId: RepositoryId, val tags: Set<GitTag>) : GitRepositoryEvent {
     override fun toString(): String = "Tags loaded in ${repositoryId}"
+  }
+
+  @Serializable
+  @ApiStatus.Internal
+  data object TagsHidden : GitRepositoryEvent {
+    override fun toString(): String = "Tags hidden"
   }
 
   @Serializable
