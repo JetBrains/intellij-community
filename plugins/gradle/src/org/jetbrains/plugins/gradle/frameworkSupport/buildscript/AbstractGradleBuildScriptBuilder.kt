@@ -237,7 +237,9 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
   override fun ScriptTreeBuilder.mavenCentral(): ScriptTreeBuilder = applyKt {
     val mavenRepositoryUrl = GradleEnvironment.Urls.getMavenRepositoryUrl()
     if (mavenRepositoryUrl != null) {
-      mavenRepository(mavenRepositoryUrl)
+      call("mavenCentral") {
+        assign("url", call("uri", mavenRepositoryUrl))
+      }
     }
     else {
       call("mavenCentral")
