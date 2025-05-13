@@ -7,6 +7,7 @@ import com.intellij.notification.NotificationListener
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
@@ -29,6 +30,7 @@ import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.i18n.GitBundle
+import git4idea.remote.hosting.ui.ShareProjectExistingRemotesDialog
 import git4idea.remote.hosting.ui.ShareProjectUntrackedFilesDialog
 import git4idea.repo.GitRepository
 import git4idea.util.GitFileUtils
@@ -50,6 +52,29 @@ class GitShareProjectService(
     private val LOG = logger<GitShareProjectService>()
   }
 
+  /**
+   * @return `true` only when the user has chosen to continue with sharing the project.
+   */
+  fun showExistingRemotesDialog(
+    hostServiceName: @NlsContexts.ConfigurableName String,
+    gitRepository: GitRepository?,
+    knownRepositories: Set<HostedGitRepositoryMapping>,
+  ): Boolean {
+    FileDocumentManager.getInstance().saveAllDocuments()
+
+    val possibleRemotes = gitRepository
+      ?.let { repository -> knownRepositories.filter { it.remote.repository == repository } }
+      ?.map { it.remote.url }.orEmpty()
+
+    if (possibleRemotes.isNotEmpty()) {
+      val existingRemotesDialog = ShareProjectExistingRemotesDialog(project, hostServiceName, possibleRemotes)
+      DialogManager.show(existingRemotesDialog)
+      return existingRemotesDialog.isOK
+    }
+
+    return true
+  }
+
   // get gitRepository
   // check for existing git repo
   // check available repos and privateRepo access (net)
@@ -59,24 +84,26 @@ class GitShareProjectService(
   // add GitHub as a remote host
   // make first commit
   // push everything (net)
-  fun performShareProject(
+  fun <RepoResult> performShareProject(
     hostServiceName: @NlsContexts.ConfigurableName String,
     gitRepository: GitRepository?,
     root: VirtualFile,
     repositoryName: @Nls String,
     remoteName: String,
-    createRepo: suspend () -> String,
-    retrieveRepoRemoteUrl: suspend () -> String,
+    createRepo: suspend () -> RepoResult,
+    extractRepoWebUrl: (RepoResult) -> String,
+    extractRepoRemoteUrl: (RepoResult) -> String,
   ) {
     cs.launch(Dispatchers.Default) {
       withBackgroundProgress(project, GitBundle.message("share.process", hostServiceName), false) {
         try {
           reportSequentialProgress(size = 7) { reporter ->
             // create GitHub repo (network)
-            val url = reporter.itemStep(GitBundle.message("share.process.creating.repository", hostServiceName)) {
+            val repoResult = reporter.itemStep(GitBundle.message("share.process.creating.repository", hostServiceName)) {
               LOG.info("Creating GitHub repository")
               createRepo()
             }
+            val url = extractRepoWebUrl(repoResult)
             LOG.info("Successfully created GitHub repository")
 
             // creating empty git repo if git is not initialized
@@ -87,7 +114,7 @@ class GitShareProjectService(
 
             // retrieve remote URL
             val remoteUrl = reporter.itemStep(GitBundle.message("share.process.retrieving.username")) {
-              retrieveRepoRemoteUrl()
+              extractRepoRemoteUrl(repoResult)
             }
 
             // git remote add origin git@github.com:login/name.git
@@ -103,8 +130,7 @@ class GitShareProjectService(
 
             // git push origin master
             if (!reporter.itemStep(
-                GitBundle.message("share.process.pushing.to.github.master", hostServiceName, repository.currentBranch?.name
-                                                                                             ?: "")) {
+                GitBundle.message("share.process.pushing.to.github.master", hostServiceName, repository.currentBranch?.name ?: "")) {
                 LOG.info("Pushing to github master")
                 pushCurrentBranch(hostServiceName, repository, remoteName, remoteUrl, repositoryName, url)
               }

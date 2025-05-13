@@ -4,7 +4,6 @@ package org.jetbrains.plugins.github
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.workspace.SubprojectInfoProvider
 import com.intellij.openapi.util.NlsSafe
@@ -17,25 +16,25 @@ import com.intellij.util.containers.mapSmartSet
 import git4idea.DialogManager
 import git4idea.i18n.GitBundle
 import git4idea.remote.hosting.GitShareProjectService
-import git4idea.remote.hosting.findKnownRepositories
+import git4idea.remote.hosting.knownRepositories
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
+import org.jetbrains.plugins.github.api.data.GithubRepo
 import org.jetbrains.plugins.github.api.data.request.Type
 import org.jetbrains.plugins.github.api.executeSuspend
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
-import org.jetbrains.plugins.github.authentication.accounts.GHCachingAccountInformationProvider
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
-import git4idea.remote.hosting.ui.ShareProjectExistingRemotesDialog
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.GithubShareDialog
 import org.jetbrains.plugins.github.util.GHCompatibilityUtil
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 import org.jetbrains.plugins.github.util.GithubGitHelper
+import org.jetbrains.plugins.github.util.GithubSettings
 import java.awt.Component
 import java.util.*
 
@@ -54,54 +53,42 @@ object GHShareProjectUtil {
     root: VirtualFile,
     projectName: @NlsSafe String,
   ) {
-    FileDocumentManager.getInstance().saveAllDocuments()
+    val githubServiceName = GithubBundle.message("settings.configurable.display.name")
 
-    val possibleRemotes = gitRepository
-      ?.let(project.service<GHHostedRepositoriesManager>()::findKnownRepositories)
-      ?.map { it.remote.url }.orEmpty()
-    if (possibleRemotes.isNotEmpty()) {
-      val existingRemotesDialog = ShareProjectExistingRemotesDialog(project, GithubBundle.message("settings.configurable.display.name"), possibleRemotes)
-      DialogManager.show(existingRemotesDialog)
-      if (!existingRemotesDialog.isOK) {
-        return
-      }
-    }
+    val gitSpService = project.service<GitShareProjectService>()
+    val projectManager = project.service<GHHostedRepositoriesManager>()
+    if (!gitSpService.showExistingRemotesDialog(githubServiceName, gitRepository, projectManager.knownRepositories))
+      return
 
-    val spService = project.service<GHShareProjectService>()
-
-    val shareDialogResult = spService.showShareProjectDialog(gitRepository, projectName) ?: return
+    val shareDialogResult = project.service<GHShareProjectService>()
+                              .showShareProjectDialog(gitRepository, projectName) ?: return
 
     val account: GithubAccount = shareDialogResult.account!!
 
     val token = GHCompatibilityUtil.getOrRequestToken(account, project) ?: return
     val requestExecutor = GithubApiRequestExecutor.Factory.getInstance().create(account.server, token)
 
-    project.service<GitShareProjectService>().performShareProject(
-      GithubBundle.message("settings.configurable.display.name"), gitRepository, root, shareDialogResult.repositoryName, shareDialogResult.remoteName,
+    gitSpService.performShareProject(
+      githubServiceName, gitRepository, root, shareDialogResult.repositoryName, shareDialogResult.remoteName,
       createRepo = { createRepo(requestExecutor, shareDialogResult) },
-      retrieveRepoRemoteUrl = { retrieveRepoRemoteUrl(requestExecutor, account, shareDialogResult.repositoryName) }
+      extractRepoWebUrl = { it.htmlUrl },
+      extractRepoRemoteUrl = {
+        val sshUrl = it.sshUrl
+        if (GithubSettings.getInstance().isCloneGitUsingSsh && sshUrl != null) sshUrl else it.cloneUrl
+      }
     )
   }
 
   private suspend fun createRepo(
     requestExecutor: GithubApiRequestExecutor,
     shareDialogResult: GithubShareDialog.Result,
-  ): String {
+  ): GithubRepo {
     val name: String = shareDialogResult.repositoryName
     val description: String = shareDialogResult.description
     val isPrivate: Boolean = shareDialogResult.isPrivate
     val account: GithubAccount = shareDialogResult.account!!
 
-    return requestExecutor.executeSuspend(GithubApiRequests.CurrentUser.Repos.create(account.server, name, description, isPrivate)).htmlUrl
-  }
-
-  private suspend fun retrieveRepoRemoteUrl(
-    requestExecutor: GithubApiRequestExecutor,
-    account: GithubAccount,
-    name: String,
-  ): String {
-    val username = GHCachingAccountInformationProvider.getInstance().loadInformation(requestExecutor, account).login
-    return GithubGitHelper.getInstance().getRemoteUrl(account.server, username, name)
+    return requestExecutor.executeSuspend(GithubApiRequests.CurrentUser.Repos.create(account.server, name, description, isPrivate))
   }
 }
 
