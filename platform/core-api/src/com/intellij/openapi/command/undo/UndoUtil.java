@@ -73,4 +73,17 @@ public final class UndoUtil {
   public static boolean isExperimentalFrontendUndoEnabled() {
     return Registry.is("ide.undo.frontend.if.possible", false);
   }
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public static boolean isSpeculativeUndoableCommand(@NotNull String commandName) {
+    return commandName.equals("Typing") ||
+           commandName.equals("Backspace") ||
+           commandName.equals("Delete Line") ||
+           commandName.equals("Move Line Up") ||
+           commandName.equals("Move Line Down") ||
+           commandName.equals("Move Statement Up") ||
+           commandName.equals("Move Statement Down") ||
+           commandName.equals("Move Caret to Line End");
+  }
 }

@@ -5,7 +5,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
@@ -495,7 +494,7 @@ public final class CommandMerger {
 
   boolean isSpeculativeUndoPossible() {
     if (!isGlobal() && myValid && !isTransparent() && myUndoConfirmationPolicy == UndoConfirmationPolicy.DEFAULT) {
-      if (EditorBundle.message("typing.in.editor.command.name").equals(getCommandName()) && !myCurrentActions.isEmpty()) {
+      if (UndoUtil.isSpeculativeUndoableCommand(getCommandName()) && !myCurrentActions.isEmpty()) {
         return ContainerUtil.and(
           myCurrentActions,
           a -> a instanceof EditorChangeAction
