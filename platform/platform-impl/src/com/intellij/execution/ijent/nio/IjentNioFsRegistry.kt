@@ -2,7 +2,6 @@
 package com.intellij.execution.ijent.nio
 
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.platform.core.nio.fs.DelegatingFileSystem
 import com.intellij.platform.core.nio.fs.DelegatingFileSystemProvider
 import com.intellij.platform.eel.provider.EelNioBridgeService
 import com.intellij.platform.eel.provider.LocalEelDescriptor
@@ -13,7 +12,6 @@ import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI
-import java.nio.file.FileSystem
 import java.nio.file.FileSystemAlreadyExistsException
 import java.nio.file.Path
 import java.nio.file.spi.FileSystemProvider
@@ -59,7 +57,9 @@ fun CoroutineScope.registerIjentNioFs(
 
     IjentEphemeralRootAwareFileSystemProvider(
       root = localPath,
-      delegate = TracingFileSystemProvider(IjentNioFileSystemProvider.getInstance())
+      ijentFsProvider = TracingFileSystemProvider(IjentNioFileSystemProvider.getInstance()),
+      originalFsProvider = TracingFileSystemProvider(underlyingProvider),
+      useRootDirectoriesFromOriginalFs = false
     ).let { wrapFileSystemProvider?.invoke(it) ?: it }.getFileSystem(uri)
   }
 

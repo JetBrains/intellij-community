@@ -2,9 +2,11 @@
 package com.intellij.platform.ide.impl.wsl
 
 import com.intellij.execution.eel.MultiRoutingFileSystemUtils
+import com.intellij.execution.ijent.nio.IjentEphemeralRootAwareFileSystemProvider
 import com.intellij.execution.wsl.*
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelPlatform
@@ -24,6 +26,8 @@ import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.nio.file.FileSystemAlreadyExistsException
 import java.nio.file.Path
+import java.nio.file.spi.FileSystemProvider
+import kotlin.io.path.Path
 
 private val WSLDistribution.roots: Set<String>
   get() {
@@ -41,7 +45,7 @@ private suspend fun WSLDistribution.getIjent(): IjentPosixApi {
 
 @ApiStatus.Internal
 class WslEelProvider(private val coroutineScope: CoroutineScope) : EelProvider {
-  private val providersCache = ContainerUtil.createConcurrentWeakMap<String, IjentWslNioFileSystemProvider>()
+  private val providersCache = ContainerUtil.createConcurrentWeakMap<String, FileSystemProvider>()
 
   companion object {
     private val LOG = logger<WslEelProvider>()
@@ -107,11 +111,31 @@ class WslEelProvider(private val coroutineScope: CoroutineScope) : EelProvider {
     descriptor.distribution.roots.forEachGuaranteed { localRoot ->
       register(localRoot, descriptor, descriptor.distribution.id, false, false) { underlyingProvider, _ ->
         val fileSystemProvider = providersCache.computeIfAbsent(distro.id) {
-          IjentWslNioFileSystemProvider(
-            wslDistribution = distro,
-            ijentFsProvider = ijentFsProvider,
-            originalFsProvider = TracingFileSystemProvider(underlyingProvider),
-          )
+          if (Registry.`is`("wsl.use.new.filesystem")) {
+            IjentEphemeralRootAwareFileSystemProvider(
+              root = Path(localRoot),
+              ijentFsProvider = ijentFsProvider,
+              originalFsProvider = TracingFileSystemProvider(underlyingProvider),
+              // FIXME: is this behavior really correct?
+              //
+              // It is known that `originalFs.rootDirectories` always returns all WSL drives.
+              // Also, it is known that `ijentFs.rootDirectories` returns a single WSL drive,
+              // which is already mentioned in `originalFs.rootDirectories`.
+              //
+              // `ijentFs` is usually represented by `IjentFailSafeFileSystemPosixApi`,
+              // which launches IJent and the corresponding WSL containers lazily.
+              //
+              // This function avoids fetching root directories directly from IJent.
+              // This way, various UI file trees don't start all WSL containers during loading the file system root.
+              useRootDirectoriesFromOriginalFs = true,
+            )
+          } else {
+            IjentWslNioFileSystemProvider(
+              wslDistribution = distro,
+              ijentFsProvider = ijentFsProvider,
+              originalFsProvider = TracingFileSystemProvider(underlyingProvider),
+            )
+          }
         }
         val fileSystem = fileSystemProvider.getFileSystem(distro.getUNCRootPath().toUri())
         LOG.info("Switching $distro to IJent WSL nio.FS: $fileSystem")

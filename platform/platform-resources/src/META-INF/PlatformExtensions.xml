@@ -200,6 +200,11 @@
     <eelProvider implementation="com.intellij.platform.ide.impl.wsl.WslEelProvider" os="windows"/>
 
     <executionTargetType implementation="com.intellij.execution.wsl.target.WslTargetType" os="windows"/>
+
+    <registryKey defaultValue="false" description="Use new filesystem for containerized environments." os="windows"
+                 key="wsl.use.new.filesystem"
+                 restartRequired="true"/>
+
     <registryKey key="wsl.obtain.windows.host.ip.alternatively" os="windows" defaultValue="true" restartRequired="true"
                  description="Obtain Windows host machine IP alternatively (not using the recommended 'cat /etc/resolv.conf | grep nameserver')."/>
 
