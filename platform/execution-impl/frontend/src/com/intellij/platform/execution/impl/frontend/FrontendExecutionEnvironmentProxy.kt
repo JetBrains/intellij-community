@@ -75,7 +75,7 @@ private class FrontendExecutionEnvironmentProxy(
   }
 
   override fun getExecutionEnvironment(): ExecutionEnvironment? {
-    return null
+    return dto.executionEnvironment
   }
 }
 

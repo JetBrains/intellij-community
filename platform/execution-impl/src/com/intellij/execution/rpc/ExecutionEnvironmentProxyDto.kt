@@ -15,6 +15,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
 
 @Serializable
@@ -25,6 +26,8 @@ data class ExecutionEnvironmentProxyDto(
   val isStartingInitial: Boolean,
   val isStarting: RpcFlow<Boolean>,
   @Serializable(with = SendChannelSerializer::class) val restartRequest: SendChannel<Unit>,
+  // TODO: this is only for backward compatibility for Monolith. Should be migrated to Proxies
+  @Transient val executionEnvironment: ExecutionEnvironment? = null,
 )
 
 @ApiStatus.Internal
@@ -40,6 +43,7 @@ fun ExecutionEnvironment.toDto(cs: CoroutineScope): ExecutionEnvironmentProxyDto
   return ExecutionEnvironmentProxyDto(
     proxy.getRunProfileName(), proxy.getIcon().rpcId(), proxy.getRerunIcon().rpcId(),
     proxy.isStarting(), proxy.isStartingFlow().toRpc(cs.coroutineContext),
-    restartRequestChannel
+    restartRequestChannel,
+    this
   )
 }
