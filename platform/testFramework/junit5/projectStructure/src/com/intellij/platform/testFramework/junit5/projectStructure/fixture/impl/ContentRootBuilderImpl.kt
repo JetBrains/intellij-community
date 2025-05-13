@@ -33,7 +33,10 @@ internal class ContentRootBuilderImpl(
   override fun sharedSourceRoot(sourceRootId: String) {
     val sharedSourceRootBuilder = projectStructure.findSourceRoot(sourceRootId)
                                   ?: throw IllegalArgumentException("Source root ID '$sourceRootId' does not exist in the registry!")
-
-    _sourceRoots.add(sharedSourceRootBuilder)
+    val newSourceRoot = SourceRootBuilderImpl(name = sharedSourceRootBuilder.name,
+                                              path = sharedSourceRootBuilder.path,
+                                              projectStructure = projectStructure,
+                                              isExisting = true)
+    _sourceRoots.add(newSourceRoot)
   }
 }
