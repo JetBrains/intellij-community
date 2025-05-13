@@ -8,12 +8,14 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
     "//platform/core-impl",
     "//platform/util-class-loader:util-classLoader",
     "//platform/diagnostic",
     "//platform/plugins/parser/impl",
     "//platform/util-ex",
     "//platform/platform-impl/bootstrap",
+    "//platform/util/xmlDom",
   ]
 )
 ### auto-generated section `build intellij.platform.plugins.testFramework` end

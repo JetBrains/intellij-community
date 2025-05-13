@@ -80,6 +80,13 @@ jvm_library(
     "//platform/core-ui",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
+    "//plugins/gradle:gradle-tests_test_lib",
+    "//platform/external-system-impl:externalSystem-tests_test_lib",
+    "//platform/external-system-api/testFramework",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
   ],
   runtime_deps = [":ide-plugin-resources_resources"]
 )
