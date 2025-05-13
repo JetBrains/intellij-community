@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethodObject.reflect;
 
 import com.intellij.psi.*;
@@ -20,7 +20,7 @@ public class ParameterDescriptor implements ItemToReplaceDescriptor {
     if (typeElement != null) {
       PsiType parameterType = typeElement.getType();
       if (!PsiReflectionAccessUtil.isAccessibleType(parameterType)) {
-        return new ParameterDescriptor(typeElement, PsiReflectionAccessUtil.nearestAccessibleType(parameterType));
+        return new ParameterDescriptor(typeElement, PsiReflectionAccessUtil.nearestAccessibleType(parameterType, parameter));
       }
     }
 

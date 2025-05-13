@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethodObject.reflect;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -93,7 +92,7 @@ final class PsiReflectionAccessUtil {
     String expectedType = tryGetWeakestAccessibleExpectedType(expression);
     if (expectedType != null) return expectedType;
 
-    return type != null ? nearestAccessibleType(type).getCanonicalText() : null;
+    return type != null ? nearestAccessibleType(type, expression).getCanonicalText() : null;
   }
 
   public static @Nullable String getAccessibleReturnType(@NotNull PsiExpression expression, @Nullable PsiClass psiClass) {
@@ -168,7 +167,7 @@ final class PsiReflectionAccessUtil {
     return isAccessible(psiClass) && !hasInaccessibleGenerics(type);
   }
 
-  public static @NotNull PsiType nearestAccessibleType(@NotNull PsiType type) {
+  public static @NotNull PsiType nearestAccessibleType(@NotNull PsiType type, @NotNull PsiElement context) {
     while (!isAccessibleType(type)) {
       PsiClass psiClass = PsiTypesUtil.getPsiClass(type);
       boolean isAccessible = isAccessible(psiClass);
@@ -178,7 +177,7 @@ final class PsiReflectionAccessUtil {
 
       PsiType[] types = type.getSuperTypes();
       if (types.length == 0) {
-        Logger.getInstance(PsiReflectionAccessUtil.class).error("Empty super types for " + type);
+        return PsiType.getJavaLangObject(context.getManager(), context.getResolveScope());
       }
       type = types[0];
     }
