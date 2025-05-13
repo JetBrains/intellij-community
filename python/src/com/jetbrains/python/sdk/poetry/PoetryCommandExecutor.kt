@@ -16,6 +16,7 @@ import com.intellij.python.community.execService.WhatToExec
 import com.intellij.python.community.impl.poetry.poetryPath
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.errorProcessing.asKotlinResult
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.PyPackage
 import com.jetbrains.python.packaging.PyRequirement
@@ -49,7 +50,7 @@ private val VERSION_2 = "2.0.0".toVersion()
 @Internal
 suspend fun runPoetry(projectPath: Path?, vararg args: String): Result<String> {
   val executable = getPoetryExecutable().getOrElse { return Result.failure(it) }
-  return runExecutable(executable, projectPath, *args)
+  return runExecutableWithProgress(executable, projectPath, *args).asKotlinResult()
 }
 
 

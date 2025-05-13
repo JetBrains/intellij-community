@@ -16,11 +16,9 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -169,13 +167,13 @@ internal abstract class CustomNewEnvironmentCreator(
     val pythonExecutable = Path.of(installedSdk?.homePath ?: model.state.baseInterpreter.get()?.homePath ?: getPythonExecutableString())
 
     runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.install.fix.title", name, "via pip")) {
-      if (installationScript != null) {
-        val versionArgs: List<String> = installationVersion?.let { listOf("-v", it) } ?: emptyList()
-        val executablePath = installExecutableViaPythonScript(installationScript, pythonExecutable, "-n", name, *versionArgs.toTypedArray())
-        executablePath.onSuccess {
-          savePathToExecutableToProperties(it)
-        }.onFailure {
-          errorSink.emit(it.localizedMessage)
+      val versionArgs: List<String> = installationVersion?.let { listOf("-v", it) } ?: emptyList()
+      when (val r = installExecutableViaPythonScript(pythonExecutable, "-n", name, *versionArgs.toTypedArray())) {
+        is Result.Success -> {
+          savePathToExecutableToProperties(r.result)
+        }
+        is Result.Failure -> {
+          errorSink.emit(r.error)
         }
       }
     }
@@ -187,12 +185,6 @@ internal abstract class CustomNewEnvironmentCreator(
 
   internal abstract val installationVersion: String?
 
-  /**
-   * The `installationScript` specifies a custom script for installing an executable in the Python environment.
-   *
-   * If this property is not null, the provided script will be used for installation instead of the default pip installation.
-   */
-  private val installationScript: Path? = PythonHelpersLocator.findPathInHelpers("pycharm_package_installer.py")
 
   /**
    * Saves the provided path to an executable in the properties of the environment

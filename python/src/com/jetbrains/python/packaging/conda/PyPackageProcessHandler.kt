@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.conda
 
-import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingAnsiEscapesAwareProcessHandler
 import com.intellij.execution.process.CapturingProcessAdapter
 import com.intellij.execution.process.ProcessOutput
@@ -9,7 +8,6 @@ import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.util.Key
 
 internal class PyPackageProcessHandler : CapturingAnsiEscapesAwareProcessHandler {
-  constructor(commandLine: GeneralCommandLine) : super(commandLine)
   constructor(process: Process, commandLine: String) : super(process, commandLine)
 
   var lastLine: String = ""

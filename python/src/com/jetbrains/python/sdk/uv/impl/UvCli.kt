@@ -7,12 +7,13 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.errorProcessing.asPythonResult
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateExecutableFile
-import com.jetbrains.python.sdk.runExecutable
+import com.jetbrains.python.sdk.runExecutableWithProgress
 import com.jetbrains.python.sdk.uv.UvCli
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -40,8 +41,8 @@ private fun validateUvExecutable(uvPath: Path?): ValidationInfo? {
   ))
 }
 
-private suspend fun runUv(uv: Path, workingDir: Path, vararg args: String): PyResult<String> {
-  return runExecutable(uv, workingDir, *args).asPythonResult()
+private suspend fun runUv(uv: Path, workingDir: Path, vararg args: String): Result<String, ExecError> {
+  return runExecutableWithProgress(uv, workingDir, *args)
 }
 
 private class UvCliImpl(val dispatcher: CoroutineDispatcher, uvPath: Path?) : UvCli {
