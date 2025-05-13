@@ -30,8 +30,8 @@ import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
 import org.jetbrains.kotlin.idea.base.projectStructure.openapiModule
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleKind
 import org.jetbrains.kotlin.idea.base.projectStructure.symbolicId
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProductionOrTest
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForTest
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModules
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addIfNotNull
 
@@ -100,10 +100,7 @@ abstract class IdeKotlinModuleDependentsProvider(protected val project: Project)
                 // The set of dependents should not include `module` itself.
                 if (moduleEntity.symbolicId == symbolicId) return@forEach
 
-                // We can skip the module entity if `findModule` returns `null` because the module won't have been added to the project
-                // model yet and thus cannot be a proper `KaModule`. If there is a production source `KaModule`, we only need to add that
-                // because the test source `KaModule` will be a direct friend dependent of the production source `KaModule`.
-                addIfNotNull(moduleEntity.symbolicId.toKaSourceModuleForProductionOrTest(project))
+                addAll(moduleEntity.symbolicId.toKaSourceModules(project))
             }
     }
 
@@ -137,6 +134,6 @@ abstract class IdeKotlinModuleDependentsProvider(protected val project: Project)
     override fun getRefinementDependents(module: KaModule): Set<KaModule> {
         if (module !is KaSourceModule) return emptySet()
         val implementingModules = module.openapiModule.implementingModules
-        return implementingModules.mapNotNullTo(mutableSetOf()) { it.toKaSourceModuleForProductionOrTest() }.ifEmpty { emptySet() }
+        return implementingModules.flatMapTo(mutableSetOf()) { it.toKaSourceModules() }.ifEmpty { emptySet() }
     }
 }

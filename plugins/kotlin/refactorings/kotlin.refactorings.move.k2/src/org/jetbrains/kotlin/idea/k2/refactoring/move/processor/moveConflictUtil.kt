@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRend
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.descriptors.Visibilities
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProductionOrTest
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleContainingElement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeinsight.utils.toVisibility
@@ -82,7 +82,7 @@ internal fun findAllMoveConflicts(
     target: K2MoveTargetDescriptor.Declaration<*>? = null
 ): MultiMap<PsiElement, String> {
     val targetIdeaModule = targetDir.module ?: return MultiMap.empty()
-    val targetKaModule = targetIdeaModule.toKaSourceModuleForProductionOrTest() ?: return MultiMap.empty()
+    val targetKaModule = targetIdeaModule.toKaSourceModuleContainingElement(targetDir) ?: return MultiMap.empty()
     return MultiMap<PsiElement, String>().apply {
         putAllValues(checkMoveExpectedDeclarationIntoPlatformCode(topLevelDeclarationsToMove, targetKaModule))
         putAllValues(checkMoveActualDeclarationIntoCommonModule(topLevelDeclarationsToMove, targetKaModule))

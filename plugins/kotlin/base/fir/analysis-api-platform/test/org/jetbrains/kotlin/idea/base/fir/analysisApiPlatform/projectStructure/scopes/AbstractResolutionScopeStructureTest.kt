@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaResolutionScopeProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModules
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProductionOrTest
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.projectStructureTest.*
@@ -35,7 +35,7 @@ abstract class AbstractResolutionScopeStructureTest : AbstractProjectStructureTe
 
         testProjectStructure.modules.forEach { module ->
             val intellijModule = modulesByName[module.name] ?: error("Module '${module.name}' not found.")
-            val kaModule = intellijModule.toKaSourceModuleForProductionOrTest() ?: error("Could not get `KaModule` for '${module.name}'.")
+            val kaModule = intellijModule.toKaSourceModuleForProduction() ?: error("Could not get `KaModule` for '${module.name}'.")
 
             checkResolutionScope(kaModule, testDirectory, module.name)
         }

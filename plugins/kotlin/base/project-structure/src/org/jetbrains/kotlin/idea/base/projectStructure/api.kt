@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.library.KotlinLibrary
+import org.jetbrains.kotlin.psi.psiUtil.contains
 import com.intellij.openapi.projectRoots.Sdk as OpenapiSdk
 import com.intellij.openapi.roots.libraries.Library as OpenapiLibrary
 
@@ -72,11 +73,19 @@ fun ModuleEntity.toKaSourceModule(project: Project, kind: KaSourceModuleKind): K
  *
  * @return The corresponding production or test [KaSourceModule] if it exists, or `null` if not found. If both exist, the production one is returned.
  */
+@Deprecated("Semantics have changed (KTIJ-34177). Use other `toKaSourceModule*` functions instead.", level = DeprecationLevel.ERROR)
 fun ModuleId.toKaSourceModuleForProductionOrTest(project: Project): KaSourceModule? {
     val projectStructureProvider = project.ideProjectStructureProvider
     return projectStructureProvider.getKaSourceModule(this, KaSourceModuleKind.PRODUCTION)
         ?: projectStructureProvider.getKaSourceModule(this, KaSourceModuleKind.TEST)
 }
+
+/**
+ * Converts the [ModuleId] to a list of [KaSourceModule]s containing both production and test modules. If a module doesn't exist, it's not
+ * included in the list.
+ */
+fun ModuleId.toKaSourceModules(project: Project): List<KaSourceModule> =
+    project.ideProjectStructureProvider.getKaSourceModules(this)
 
 /**
  * Converts the [Module] to a [KaSourceModule] of the given [kind].
@@ -111,11 +120,41 @@ fun Module.toKaSourceModuleForProduction(): KaSourceModule? =
  *
  * @return The corresponding production or test [KaSourceModule] if it exists, or `null` if not found. If both exist, the production one is returned.
  */
+@Deprecated("Semantics have changed (KTIJ-34177). Use other `toKaSourceModule*` functions instead.", level = DeprecationLevel.ERROR)
 fun Module.toKaSourceModuleForProductionOrTest(): KaSourceModule? {
     val provider = project.ideProjectStructureProvider
     return provider.getKaSourceModule(this, KaSourceModuleKind.PRODUCTION)
         ?: provider.getKaSourceModule(this, KaSourceModuleKind.TEST)
 }
+
+/**
+ * Converts the [Module] to a list of [KaSourceModule] containing both production and test modules. If a module doesn't exist, it's not
+ * included in the list.
+ */
+fun Module.toKaSourceModules(): List<KaSourceModule> =
+    project.ideProjectStructureProvider.getKaSourceModules(this)
+
+/**
+ * Converts the [Module] to a [KaSourceModule] of the same kind as the [KaSourceModule] of the given [contextElement].
+ *
+ * If [contextElement] is not contained in a [KaSourceModule], this function returns the production source module.
+ */
+fun Module.toKaSourceModuleWithElementSourceModuleKindOrProduction(contextElement: PsiElement): KaSourceModule? {
+    val contextSourceModule =
+        contextElement.getKaModuleOfTypeSafe<KaSourceModule>(project, useSiteModule = null)
+            ?: return toKaSourceModuleForProduction()
+
+    return toKaSourceModule(contextSourceModule.sourceModuleKind)
+}
+
+/**
+ * Converts the [Module] to the production or test [KaSourceModule] which contains [element].
+ *
+ * In contrast to [KaModuleProvider.getModule] and [getKaModule], this function works for [PSI directories][com.intellij.psi.PsiDirectory]
+ * and should generally be more efficient when the [Module] is already known.
+ */
+fun Module.toKaSourceModuleContainingElement(element: PsiElement): KaSourceModule? =
+    toKaSourceModules().firstOrNull { it.contentScope.contains(element) }
 
 /**
  * Converts the [LibraryId] to a list of [KaLibraryModule] in the specified [project].

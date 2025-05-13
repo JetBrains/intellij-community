@@ -162,10 +162,7 @@ class K2IDEProjectStructureProvider(private val project: Project) : IDEProjectSt
         openapiModule: Module,
         kind: KaSourceModuleKind,
     ): KaSourceModule? {
-        require(openapiModule is ModuleBridge) {
-            "Expected ${ModuleBridge::class}, but got ${openapiModule::class} instead"
-        }
-        val moduleEntity = openapiModule.findModuleEntity(project.workspaceModel.currentSnapshot) ?: return null
+        val moduleEntity = getModuleEntity(openapiModule) ?: return null
         return getKaSourceModule(moduleEntity, kind)
     }
 
@@ -174,6 +171,22 @@ class K2IDEProjectStructureProvider(private val project: Project) : IDEProjectSt
             return cache.cachedKaSourceModule(moduleEntity.symbolicId, kind)
         }
         return null
+    }
+
+    override fun getKaSourceModules(moduleId: ModuleId): List<KaSourceModule> {
+        val moduleEntity = moduleId.resolve(project.workspaceModel.currentSnapshot) ?: return emptyList()
+        return getKaSourceModules(moduleEntity)
+    }
+
+    override fun getKaSourceModules(moduleEntity: ModuleEntity): List<KaSourceModule> {
+        val productionModule = getKaSourceModule(moduleEntity, KaSourceModuleKind.PRODUCTION)
+        val testModule = getKaSourceModule(moduleEntity, KaSourceModuleKind.TEST)
+        return listOfNotNull(productionModule, testModule)
+    }
+
+    override fun getKaSourceModules(openapiModule: Module): List<KaSourceModule> {
+        val moduleEntity = getModuleEntity(openapiModule) ?: return emptyList()
+        return getKaSourceModules(moduleEntity)
     }
 
     override fun getKaSourceModuleKind(module: KaSourceModule): KaSourceModuleKind {
@@ -252,6 +265,13 @@ class K2IDEProjectStructureProvider(private val project: Project) : IDEProjectSt
         else -> null
     }
 
+    private fun getModuleEntity(openapiModule: Module): ModuleEntity? {
+        require(openapiModule is ModuleBridge) {
+            "Expected ${ModuleBridge::class}, but got ${openapiModule::class} instead"
+        }
+        return openapiModule.findModuleEntity(project.workspaceModel.currentSnapshot)
+    }
+
     companion object {
         fun getInstance(project: Project): K2IDEProjectStructureProvider =
             project.ideProjectStructureProvider.self as K2IDEProjectStructureProvider
@@ -297,5 +317,3 @@ private fun <T> cachedKaModule(
         withEntry("contextualModule", useSiteModule.toString())
     }
 }
-
-
