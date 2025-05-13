@@ -29,6 +29,7 @@ import com.intellij.ui.jcef.JBCefApp
 import com.intellij.util.application
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -38,7 +39,9 @@ import java.net.URL
 internal abstract class WhatsNewContent() {
   companion object {
     suspend fun getWhatsNewContent(): WhatsNewContent? {
-      return if (WhatsNewInVisionContentProvider.getInstance().isAvailable()) {
+      return if (WhatsNewInVisionContentProvider.getInstance().isAvailable() &&
+                 // JCEF is not accessible for screen readers (IJPL-59438), so also need to open the page in the browser
+                 !ScreenReader.isActive()) {
         val provider = WhatsNewInVisionContentProvider.getInstance()
         WhatsNewVisionContent(provider, provider.getContent().entities.first())
       } else {
