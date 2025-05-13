@@ -31,6 +31,25 @@ else
   fi
 fi
 
+function disable_posix() {
+  if shopt -qo posix
+  then
+    set +o posix
+    __jetbrains_intellij_restore_posix_flag=1
+  fi
+}
+
+function restore_posix() {
+  if [ -n "${__jetbrains_intellij_restore_posix_flag-}" ]
+  then
+    set -o posix
+    unset __jetbrains_intellij_restore_posix_flag
+  fi
+}
+
+# Disable posix for overriding ENV
+disable_posix
+
 function override_jb_variables {
   while read VARIABLE
   do
@@ -64,11 +83,17 @@ bind '"\e\e[D": backward-word'
 bind '"\e\O[C":forward-word'
 bind '"\e\O[D": backward-word'
 
+# Restore posix again, as we are going to source user RC file next
+restore_posix
+
 if [ -n "${JEDITERM_USER_RCFILE-}" ]
 then
   source "$JEDITERM_USER_RCFILE"
   unset JEDITERM_USER_RCFILE
 fi
+
+# Disable posix for the rest of the script
+disable_posix
 
 if [ -n "${JEDITERM_SOURCE-}" ]
 then # JEDITERM_SOURCE_ARGS might be either list of args or one arg depending on JEDITERM_SOURCE_SINGLE_ARG
@@ -103,3 +128,8 @@ if [ -r "${JETBRAINS_INTELLIJ_BASH_DIR}/command-block-support-reworked.bash" ]; 
   source "${JETBRAINS_INTELLIJ_BASH_DIR}/command-block-support-reworked.bash"
 fi
 unset JETBRAINS_INTELLIJ_BASH_DIR
+
+# Should be the last lines!
+restore_posix
+unset -f disable_posix
+unset -f restore_posix
