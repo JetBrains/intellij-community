@@ -62,6 +62,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCase {
   protected static final int DEFAULT_ADDRESS = 3456;
@@ -71,6 +72,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   private RunProfileState myRunnableState;
   private final List<ThrowableRunnable<Throwable>> myTearDownRunnables = new ArrayList<>();
   private CompilerManagerImpl myCompilerManager;
+  private final AtomicBoolean myProcessStarted = new AtomicBoolean();
 
   @Override
   protected void setUp() throws Exception {
@@ -134,7 +136,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     super.runTestRunnable(testRunnable);
     if (getDebugProcess() != null) {
-      getDebugProcess().getProcessHandler().startNotify();
+      runProcess();
       waitProcess(getDebugProcess().getProcessHandler());
       waitForCompleted();
       //disposeSession(myDebuggerSession);
@@ -144,6 +146,12 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
     throwExceptionsIfAny();
     checkTestOutput();
+  }
+
+  protected final void runProcess() {
+    if (getDebugProcess() != null && myProcessStarted.compareAndSet(false, true)) {
+      getDebugProcess().getProcessHandler().startNotify();
+    }
   }
 
   /**
