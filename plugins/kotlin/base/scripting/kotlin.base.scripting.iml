@@ -71,19 +71,19 @@
     <orderEntry type="module" module-name="kotlin.scripting" />
     <orderEntry type="module-library" exported="">
       <library name="amper.dependency.resolution.kotlin.base.scripting" type="repository">
-        <properties maven-id="org.jetbrains.amper:dependency-resolution:0.7.0-dev-2763">
+        <properties maven-id="org.jetbrains.amper:dependency-resolution:0.7.0-dev-2798">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/amper/dependency-resolution/0.7.0-dev-2763/dependency-resolution-0.7.0-dev-2763.jar">
-              <sha256sum>e07129c97d9f369f38f4b7908bac932fc34ccdba3a4a738d79f7f418592afaab</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/amper/dependency-resolution/0.7.0-dev-2798/dependency-resolution-0.7.0-dev-2798.jar">
+              <sha256sum>96c438673a54ec342737642b957f2620d68690a6320a6e368743219292da94c3</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/amper/concurrency/0.7.0-dev-2763/concurrency-0.7.0-dev-2763.jar">
-              <sha256sum>002bf7d295aae9a7ef3166b7e066e00956369e5626714647afe1c5705fb26bbe</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/amper/concurrency/0.7.0-dev-2798/concurrency-0.7.0-dev-2798.jar">
+              <sha256sum>503e5a2d563e16a4258527113215dfbf7e18b2c46db979e173b106ef01b18cdc</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/amper/nio-filechannels/0.7.0-dev-2763/nio-filechannels-0.7.0-dev-2763.jar">
-              <sha256sum>6b762f54c05c5b820da3ae6db43e82ee342701d3cacf9ed8dfe0ea10909f0412</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/amper/nio-filechannels/0.7.0-dev-2798/nio-filechannels-0.7.0-dev-2798.jar">
+              <sha256sum>3cf45155a7913e2c28d9827a354f5136cf21a47ba8d4a308761b4e36f814a8ef</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/amper/telemetry/0.7.0-dev-2763/telemetry-0.7.0-dev-2763.jar">
-              <sha256sum>e3037ae8f918d6d1733d7e40194d7e84373f2e9452660256a95c23252637de96</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/amper/telemetry/0.7.0-dev-2798/telemetry-0.7.0-dev-2798.jar">
+              <sha256sum>944a80fb6f1c5a0231e4a7d335508c5042968e2cf9a293fd5fb9ae55ea8d7d45</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/serialization-jvm/0.86.2/serialization-jvm-0.86.2.jar">
               <sha256sum>06b644a2b65fbf798f49fb7666d718f1123ee98ef7199edcbe23e8aaa4300c51</sha256sum>
@@ -110,20 +110,20 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/dependency-resolution/0.7.0-dev-2763/dependency-resolution-0.7.0-dev-2763.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/concurrency/0.7.0-dev-2763/concurrency-0.7.0-dev-2763.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/nio-filechannels/0.7.0-dev-2763/nio-filechannels-0.7.0-dev-2763.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/telemetry/0.7.0-dev-2763/telemetry-0.7.0-dev-2763.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/dependency-resolution/0.7.0-dev-2798/dependency-resolution-0.7.0-dev-2798.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/concurrency/0.7.0-dev-2798/concurrency-0.7.0-dev-2798.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/nio-filechannels/0.7.0-dev-2798/nio-filechannels-0.7.0-dev-2798.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/telemetry/0.7.0-dev-2798/telemetry-0.7.0-dev-2798.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/serialization-jvm/0.86.2/serialization-jvm-0.86.2.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/core-jvm/0.86.2/core-jvm-0.86.2.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/3.9.9/maven-artifact-3.9.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/dependency-resolution/0.7.0-dev-2763/dependency-resolution-0.7.0-dev-2763-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/concurrency/0.7.0-dev-2763/concurrency-0.7.0-dev-2763-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/nio-filechannels/0.7.0-dev-2763/nio-filechannels-0.7.0-dev-2763-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/telemetry/0.7.0-dev-2763/telemetry-0.7.0-dev-2763-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/dependency-resolution/0.7.0-dev-2798/dependency-resolution-0.7.0-dev-2798-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/concurrency/0.7.0-dev-2798/concurrency-0.7.0-dev-2798-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/nio-filechannels/0.7.0-dev-2798/nio-filechannels-0.7.0-dev-2798-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/telemetry/0.7.0-dev-2798/telemetry-0.7.0-dev-2798-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/serialization-jvm/0.86.2/serialization-jvm-0.86.2-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/core-jvm/0.86.2/core-jvm-0.86.2-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/3.9.9/maven-artifact-3.9.9-sources.jar!/" />
