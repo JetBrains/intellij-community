@@ -112,7 +112,7 @@ __jetbrains_intellij_debug_trap() {
 }
 
 __jetbrains_intellij_run_original_debug_trap() {
-  if [[ -n "$__jetbrains_intellij_original_debug_trap" ]]; then
+  if [[ -n "$__jetbrains_intellij_original_debug_trap" && "$__jetbrains_intellij_original_debug_trap" != "-" ]]; then
     builtin eval "${__jetbrains_intellij_original_debug_trap}"
   fi
 }
