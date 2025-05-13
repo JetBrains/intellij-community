@@ -43,13 +43,13 @@ class SeResultListModel: DefaultListModel<SeResultListRow>() {
     when (throttledEvent) {
       is SeThrottledAccumulatedItems<SeResultEvent> -> {
         val accumulatedList = SeResultListCollection()
-        throttledEvent.events.forEach {
+        throttledEvent.items.forEach {
           accumulatedList.handleEvent(it)
         }
         addAll(accumulatedList.list)
       }
       is SeThrottledOneItem<SeResultEvent> -> {
-        SeResultListModelAdapter(this).handleEvent(throttledEvent.event)
+        SeResultListModelAdapter(this).handleEvent(throttledEvent.item)
       }
     }
   }

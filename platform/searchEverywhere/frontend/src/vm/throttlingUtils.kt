@@ -80,6 +80,6 @@ inline fun <reified T> Flow<T>.throttledWithAccumulation(): Flow<SeThrottledItem
 @ApiStatus.Internal
 sealed interface SeThrottledItems<T>
 @ApiStatus.Internal
-class SeThrottledAccumulatedItems<T>(val events: List<T>) : SeThrottledItems<T>
+class SeThrottledAccumulatedItems<T>(val items: List<T>) : SeThrottledItems<T>
 @ApiStatus.Internal
-class SeThrottledOneItem<T>(val event: T) : SeThrottledItems<T>
+class SeThrottledOneItem<T>(val item: T) : SeThrottledItems<T>
