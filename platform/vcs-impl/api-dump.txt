@@ -5000,7 +5000,6 @@ a:com.intellij.vcs.commit.NonModalCommitPanel
 - pf:getCenterPanel():com.intellij.util.ui.components.BorderLayoutPanel
 - f:getCommitActionsPanel():com.intellij.vcs.commit.CommitActionsPanel
 - getCommitAuthor():com.intellij.vcs.log.VcsUser
-- f:getCommitAuthorComponent():com.intellij.vcs.commit.CommitAuthorComponent
 - getCommitAuthorDate():java.util.Date
 - f:getCommitMessage():com.intellij.openapi.vcs.ui.CommitMessage
 - getCommitMessageUi():com.intellij.vcs.commit.CommitMessageUi

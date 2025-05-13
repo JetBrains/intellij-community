@@ -60,7 +60,7 @@ class GitStageCommitPanel(project: Project, private val settings: GitStageUiSett
     Disposer.register(this, commitMessage)
 
     commitMessage.setChangesSupplier { state.changesToCommit }
-    progressPanel.setup(this, commitMessage.editorField, empty(6))
+    progressPanel.setup(this, commitMessage.editorField, empty())
 
     setProgressComponent(progressPanel)
 

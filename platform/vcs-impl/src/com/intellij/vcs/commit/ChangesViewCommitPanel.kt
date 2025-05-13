@@ -19,7 +19,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.g
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.ui.EditorTextComponent
-import com.intellij.util.ui.JBUI.Borders.empty
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil.*
 import com.intellij.vcsUtil.VcsUtil.getFilePath
@@ -184,7 +184,7 @@ private class ChangesViewCommitProgressPanel(
   private var oldInclusion: Set<Any> = emptySet()
 
   init {
-    setup(commitWorkflowUi, commitMessage, empty(6))
+    setup(commitWorkflowUi, commitMessage, JBUI.Borders.empty())
   }
 
   override fun inclusionChanged() {
