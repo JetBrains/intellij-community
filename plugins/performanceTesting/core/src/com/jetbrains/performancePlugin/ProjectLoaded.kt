@@ -58,7 +58,6 @@ import java.net.ConnectException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import java.util.Collections
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
@@ -220,9 +219,9 @@ private fun runScriptDuringIndexing(project: Project, alarm: Alarm) {
 @Internal
 class ProjectLoaded : ApplicationInitializedListener {
   override suspend fun execute() {
-    // Under flag since a proper solution should be implemented in the platform later
-    // https://youtrack.jetbrains.com/issue/IJPL-176231/ProductionWslIjentAvailabilityService-Registry-key-wsl.use.remote.agent.for.nio.filesystem-is-not-defined
-    if (System.getenv("STARTER_TESTS_SUPPORT_TARGETS").toBoolean()) {
+    // TODO: Under flag since a proper solution should be implemented in the platform later
+    if (SystemProperties.getBooleanProperty("STARTER_TESTS_SUPPORT_TARGETS", false)
+        || System.getenv("STARTER_TESTS_SUPPORT_TARGETS").toBoolean()) {
       IntegrationTestApplicationLoadListener.projectPathFromCommandLine?.run {
         EelInitialization.runEelInitialization(this)
       }
