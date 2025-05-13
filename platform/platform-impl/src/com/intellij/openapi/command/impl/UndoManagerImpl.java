@@ -1051,6 +1051,27 @@ public class UndoManagerImpl extends UndoManager {
     return  "\n" + undoStatus + "\n" + redoStatus + "\n" + stacks;
   }
 
+  @ApiStatus.Internal
+  protected boolean isSpeculativeUndoPossible(@Nullable FileEditor editor, boolean isUndo) {
+    ClientState clientState = getClientState(editor);
+    if (clientState != null && clientState.myMerger.hasActions()) {
+      return clientState.myMerger.isSpeculativeUndoPossible();
+    }
+    UndoableGroup action = getLastAction(editor, isUndo);
+    return action != null && action.isSpeculativeUndoPossible();
+  }
+
+  private @Nullable UndoableGroup getLastAction(@Nullable FileEditor editor, boolean isUndo) {
+    ClientState clientState = getClientState(editor);
+    Collection<DocumentReference> references = getDocRefs(editor);
+    if (clientState == null || references == null) {
+      return null;
+    }
+    UndoRedoStacksHolder stacksHolder = getStackHolder(clientState, isUndo);
+    UndoableGroup action = stacksHolder.getLastAction(references);
+    return action;
+  }
+
   @Override
   public String toString() {
     return "UndoManager for " + ObjectUtils.notNull(myProject, "application");

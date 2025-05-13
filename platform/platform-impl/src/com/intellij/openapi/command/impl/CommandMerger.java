@@ -5,6 +5,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
@@ -490,5 +491,17 @@ public final class CommandMerger {
 
   @NotNull String dumpState() {
     return UndoUnit.fromMerger(this).toString();
+  }
+
+  boolean isSpeculativeUndoPossible() {
+    if (!isGlobal() && myValid && !isTransparent() && myUndoConfirmationPolicy == UndoConfirmationPolicy.DEFAULT) {
+      if (EditorBundle.message("typing.in.editor.command.name").equals(getCommandName()) && !myCurrentActions.isEmpty()) {
+        return ContainerUtil.and(
+          myCurrentActions,
+          a -> a instanceof EditorChangeAction
+        );
+      }
+    }
+    return false;
   }
 }

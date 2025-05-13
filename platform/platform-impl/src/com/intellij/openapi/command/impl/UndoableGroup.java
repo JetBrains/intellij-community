@@ -12,6 +12,7 @@ import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -399,6 +400,18 @@ final class UndoableGroup implements Dumpable {
 
   @NotNull String dumpState0() {
     return UndoUnit.fromGroup(this).toString();
+  }
+
+  boolean isSpeculativeUndoPossible() {
+    if (!isGlobal() && isValid() && !isTransparent() && !isTemporary() && getConfirmationPolicy() == UndoConfirmationPolicy.DEFAULT) {
+      if (EditorBundle.message("typing.in.editor.command.name").equals(getCommandName()) && !getActions().isEmpty()) {
+        return ContainerUtil.and(
+          getActions(),
+          a -> a instanceof EditorChangeAction
+        );
+      }
+    }
+    return false;
   }
 
   static final class UndoableGroupOriginalContext {
