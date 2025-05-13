@@ -277,6 +277,11 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/contextReceiver.kt");
         }
 
+        @TestMetadata("dataClassByPrimaryConstructor.kt")
+        public void testDataClassByPrimaryConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/dataClassByPrimaryConstructor.kt");
+        }
+
         @TestMetadata("dataInlineClassDeclarationk1.kt")
         public void testDataInlineClassDeclarationk1() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/dataInlineClassDeclarationk1.kt");
