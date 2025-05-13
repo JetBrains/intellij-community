@@ -254,7 +254,7 @@ internal class JpsTargetBuilder(
             }
             else if (buildResult == ModuleLevelBuilder.ExitCode.CHUNK_REBUILD_REQUIRED) {
               if (!rebuildFromScratchRequested && !context.scope.isRebuild) {
-                var infoMessage = "Builder \"${builder.presentableName}\" requested rebuild of module chunk \"${chunk.name}\""
+                var infoMessage = "Builder \"${builder.presentableName}\" requested rebuild of module chunk \"${target.targetLabel}\""
                 infoMessage += ".\n"
                 infoMessage += "Consider building whole project or rebuilding the module."
                 context.compilerMessage(kind = Kind.INFO, message = infoMessage)
@@ -270,7 +270,7 @@ internal class JpsTargetBuilder(
               }
               else {
                 parentSpan.addEvent("builder requested second chunk rebuild", Attributes.of(
-                  AttributeKey.stringKey("builder"), builder.presentableName,
+                  AttributeKey.stringKey("builder"), target.targetLabel,
                 ))
               }
             }
@@ -293,7 +293,7 @@ internal class JpsTargetBuilder(
         builder.chunkBuildFinished(context, chunk)
       }
       if (Utils.errorsDetected(context)) {
-        context.compilerMessage(kind = Kind.JPS_INFO, message = "Errors occurred while compiling module ${chunk.presentableShortName}")
+        context.compilerMessage(kind = Kind.JPS_INFO, message = "Errors occurred while compiling ${target.targetLabel}")
       }
     }
 

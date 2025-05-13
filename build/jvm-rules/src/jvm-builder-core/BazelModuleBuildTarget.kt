@@ -5,6 +5,7 @@ package org.jetbrains.bazel.jvm.worker.core
 
 import com.dynatrace.hash4j.hashing.HashSink
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.bazel.jvm.util.emptyList
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.builders.BuildTargetRegistry
 import org.jetbrains.jps.builders.TargetOutputIndex
@@ -25,6 +26,7 @@ class BazelModuleBuildTarget(
   module: JpsModule,
   @JvmField val sources: List<Path>,
   @JvmField val javaFileCount: Int,
+  @JvmField val targetLabel: String,
 ) : ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION) {
   // org.jetbrains.kotlin.incremental.IncrementalJvmCache allows `null`
   override fun getOutputDir(): File? = null
@@ -34,7 +36,7 @@ class BazelModuleBuildTarget(
   override fun isTests() = false
 
   override fun computeDependencies(targetRegistry: BuildTargetRegistry, outputIndex: TargetOutputIndex): Collection<BuildTarget<*>> {
-    return java.util.List.of()
+    return emptyList()
   }
 
   override fun computeRootDescriptors(
