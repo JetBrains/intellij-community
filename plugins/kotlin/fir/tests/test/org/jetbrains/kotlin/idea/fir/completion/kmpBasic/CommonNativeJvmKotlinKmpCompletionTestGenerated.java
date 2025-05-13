@@ -3751,6 +3751,16 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
             runTest("../../completion/testData/basic/common/InnerClass.kt");
         }
 
+        @TestMetadata("InnerClassWithParameters.kt")
+        public void testInnerClassWithParameters() throws Exception {
+            runTest("../../completion/testData/basic/common/InnerClassWithParameters.kt");
+        }
+
+        @TestMetadata("InnerClassWithParameters2.kt")
+        public void testInnerClassWithParameters2() throws Exception {
+            runTest("../../completion/testData/basic/common/InnerClassWithParameters2.kt");
+        }
+
         @TestMetadata("InnerInBaseClass.kt")
         public void testInnerInBaseClass() throws Exception {
             runTest("../../completion/testData/basic/common/InnerInBaseClass.kt");

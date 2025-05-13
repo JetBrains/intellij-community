@@ -3557,6 +3557,16 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/InnerClass.kt");
             }
 
+            @TestMetadata("InnerClassWithParameters.kt")
+            public void testInnerClassWithParameters() throws Exception {
+                runTest("../testData/basic/common/InnerClassWithParameters.kt");
+            }
+
+            @TestMetadata("InnerClassWithParameters2.kt")
+            public void testInnerClassWithParameters2() throws Exception {
+                runTest("../testData/basic/common/InnerClassWithParameters2.kt");
+            }
+
             @TestMetadata("InnerInBaseClass.kt")
             public void testInnerInBaseClass() throws Exception {
                 runTest("../testData/basic/common/InnerInBaseClass.kt");
