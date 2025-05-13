@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethodObject.reflect;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,7 +9,6 @@ import com.intellij.refactoring.extractMethodObject.ItemToReplaceDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Array;
 import java.util.Objects;
 
 /**
@@ -39,7 +38,6 @@ public final class FieldDescriptor implements ItemToReplaceDescriptor {
       PsiClass containingClass = field.getContainingClass();
 
       if (!Objects.equals(containingClass, outerClass) && needReplace(outerClass, field, expression)) {
-        Array.getLength(new int[3]);
         return new FieldDescriptor(field, expression);
       }
     }

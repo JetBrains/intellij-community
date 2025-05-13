@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethodObject.reflect;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,6 +28,10 @@ final class PsiReflectionAccessUtil {
                                            @Nullable PsiExpression qualifier) {
     if (!isPublicMember(classMember)) {
       return false;
+    }
+
+    if (PsiUtil.isArrayClass(classMember.getContainingClass())) {
+      return true; // all public arrays members are accessible
     }
 
     if (qualifier != null) {
