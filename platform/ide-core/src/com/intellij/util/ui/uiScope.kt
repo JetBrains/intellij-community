@@ -33,7 +33,16 @@ import kotlin.coroutines.EmptyCoroutineContext
  * because it has to wait for the proper modality.
  *
  * The [block] may be executed at most **one time**.
- * It will not be restarted if canceled by the component becoming hidden.
+ * Once it starts executing, it will not be restarted if canceled by the component becoming hidden,
+ * regardless of whether the block completed normally or at all.
+ * But if the component is hidden before the block starts executing, it will be restarted
+ * the next time the component is shown again.
+ * This behavior covers a common case when a component is added to a showing parent,
+ * then immediately removed and added again.
+ * It often happens when several components are added to a single parent,
+ * and that parent is designed to remove everything and rebuild the entire layout on every child addition.
+ * All those removals and additions typically happen in a single EDT event, so the block never even gets a chance to start.
+ * For such use cases, this function can be thought of as "launch once when it finally shows."
  *
  * @param debugName name to use as [CoroutineName]
  * @param context additional context of the coroutine.
@@ -51,18 +60,25 @@ fun <C : Component> C.launchOnceOnShow(
 
   @OptIn(DelicateCoroutinesApi::class)
   return GlobalScope.launch(Dispatchers.Unconfined + CoroutineName(debugName)) {
+    var started = false
     showingAsChannel(component) { channel ->
-      while (!channel.receive()) Unit // await showing
-      val uiCoroutine = launchUiCoroutine(component, context, block)
-      val waitingForHidden = launch {
-        while (channel.receive()) Unit // await hidden
-      }
-      select {
-        uiCoroutine.onJoin {
-          waitingForHidden.cancel()
+      while (!started) {
+        while (!channel.receive()) Unit // await showing
+        val uiCoroutine = launchUiCoroutine(component, context) {
+          started = true
+          block()
         }
-        waitingForHidden.onJoin {
-          uiCoroutine.cancel()
+        val waitingForHidden = launch {
+          while (channel.receive()) Unit // await hidden
+        }
+        select {
+          uiCoroutine.onJoin {
+            waitingForHidden.cancel()
+          }
+          waitingForHidden.onJoin {
+            // need to cancel AND join, so the while(!started) check works correctly
+            uiCoroutine.cancelAndJoin()
+          }
         }
       }
     }
