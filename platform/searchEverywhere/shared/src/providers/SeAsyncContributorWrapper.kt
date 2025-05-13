@@ -2,6 +2,7 @@
 package com.intellij.platform.searchEverywhere.providers
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoProvider
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -9,11 +10,11 @@ import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class SeAsyncContributorWrapper<I: Any>(val contributor: SearchEverywhereContributor<I>) : Disposable {
+class SeAsyncContributorWrapper<I : Any>(val contributor: SearchEverywhereContributor<I>) : Disposable {
   fun fetchElements(
     pattern: String,
     progressIndicator: ProgressIndicator,
-    consumer: AsyncProcessor<I>
+    consumer: AsyncProcessor<I>,
   ) {
     contributor.fetchElements(pattern, progressIndicator) { t ->
       runBlockingCancellable {
@@ -26,4 +27,8 @@ class SeAsyncContributorWrapper<I: Any>(val contributor: SearchEverywhereContrib
   override fun dispose() {
     Disposer.dispose(contributor)
   }
+}
+
+fun SearchEverywhereContributor<*>.getExtendedDescription(item: Any): String? {
+  return (this as SearchEverywhereExtendedInfoProvider).createExtendedInfo()?.leftText?.invoke(item)
 }

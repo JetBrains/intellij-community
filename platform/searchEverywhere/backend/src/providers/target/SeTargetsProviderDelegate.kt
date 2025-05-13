@@ -16,6 +16,7 @@ import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
 import com.intellij.platform.searchEverywhere.providers.SeAsyncWeightedContributorWrapper
 import com.intellij.platform.searchEverywhere.providers.SeTypeVisibilityStateProviderDelegate
+import com.intellij.platform.searchEverywhere.providers.getExtendedDescription
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetsFilter
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import com.intellij.psi.codeStyle.NameUtil
@@ -25,9 +26,9 @@ import java.util.concurrent.ConcurrentHashMap
 
 
 @Internal
-class SeTargetItem(val legacyItem: ItemWithPresentation<*>, private val matchers: ItemMatchers?, private val weight: Int, val itemDescription: String?) : SeItem {
+class SeTargetItem(val legacyItem: ItemWithPresentation<*>, private val matchers: ItemMatchers?, private val weight: Int, val extendedDescription: String?) : SeItem {
   override fun weight(): Int = weight
-  override suspend fun presentation(): SeItemPresentation = SeTargetItemPresentation.create(legacyItem.presentation, matchers, itemDescription)
+  override suspend fun presentation(): SeItemPresentation = SeTargetItemPresentation.create(legacyItem.presentation, matchers, extendedDescription)
 }
 
 @Internal
@@ -65,10 +66,7 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncWeightedC
   }
 
   fun getInfoLeftText(legacyItem: ItemWithPresentation<*>): String? =
-    (contributorWrapper.contributor as? SearchEverywhereExtendedInfoProvider)
-      ?.createExtendedInfo()
-      ?.leftText
-      ?.invoke(legacyItem)
+    contributorWrapper.contributor.getExtendedDescription(legacyItem)
 
   private fun createDefaultMatchers(rawPattern: String): ItemMatchers {
     val namePattern = contributorWrapper.contributor.filterControlSymbols(rawPattern)

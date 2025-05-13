@@ -15,15 +15,16 @@ import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
+import com.intellij.platform.searchEverywhere.providers.getExtendedDescription
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
-class SeTopHitItem(val item: Any, private val weight: Int, private val project: Project, val itemDescription: String?) : SeItem {
+class SeTopHitItem(val item: Any, private val weight: Int, private val project: Project, val extendedDescription: String?) : SeItem {
   override fun weight(): Int = weight
-  override suspend fun presentation(): SeItemPresentation = SeTopHitItemPresentationProvider.getPresentation(item, project, itemDescription)
+  override suspend fun presentation(): SeItemPresentation = SeTopHitItemPresentationProvider.getPresentation(item, project, extendedDescription)
 }
 
 @ApiStatus.Internal
@@ -59,10 +60,7 @@ open class SeTopHitItemsProvider(
   }
 
   fun getInfoLeftText(item: Any): String? =
-    (contributorWrapper.contributor as? SearchEverywhereExtendedInfoProvider)
-      ?.createExtendedInfo()
-      ?.leftText
-      ?.invoke(item)
+    contributorWrapper.contributor.getExtendedDescription(item)
 
   override fun dispose() {
     Disposer.dispose(contributorWrapper)

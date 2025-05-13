@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeItem
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.providers.getExtendedDescription
 import kotlinx.coroutines.coroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
@@ -42,7 +43,7 @@ class SeActionsAdaptedProvider(private val legacyContributor: ActionSearchEveryw
   }
 
   fun getInfoLeftText(item: MatchedValue): String? =
-    legacyContributor.createExtendedInfo()?.leftText?.invoke(item)
+    legacyContributor.getExtendedDescription(item)
 
   override fun dispose() {
     Disposer.dispose(legacyContributor)

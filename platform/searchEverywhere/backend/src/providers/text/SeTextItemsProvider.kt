@@ -13,18 +13,19 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
 import com.intellij.platform.searchEverywhere.providers.SeAsyncWeightedContributorWrapper
+import com.intellij.platform.searchEverywhere.providers.getExtendedDescription
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
-class SeTextSearchItem(val item: SearchEverywhereItem, private val weight: Int, val itemDescription: String?) : SeItem {
+class SeTextSearchItem(val item: SearchEverywhereItem, private val weight: Int, val extendedDescription: String?) : SeItem {
   override fun weight(): Int = weight
 
   override suspend fun presentation(): SeItemPresentation =
     SeTextSearchItemPresentation(item.presentableText,
-                                 itemDescription,
+                                 extendedDescription,
                                  item.presentation.text.map { chunk ->
                                    SerializableTextChunk(
                                      chunk.text,
@@ -37,7 +38,7 @@ class SeTextSearchItem(val item: SearchEverywhereItem, private val weight: Int, 
 }
 
 @ApiStatus.Internal
-class SeTextItemsProvider(private val contributorWrapper: SeAsyncWeightedContributorWrapper<Any>): SeItemsProvider {
+class SeTextItemsProvider(private val contributorWrapper: SeAsyncWeightedContributorWrapper<Any>) : SeItemsProvider {
   override val id: String get() = ID
   override val displayName: @Nls String
     get() = contributorWrapper.contributor.fullGroupName
@@ -48,7 +49,7 @@ class SeTextItemsProvider(private val contributorWrapper: SeAsyncWeightedContrib
     coroutineToIndicator {
       val indicator = DelegatingProgressIndicator(ProgressManager.getGlobalProgressIndicator())
 
-      contributorWrapper.fetchWeightedElements(inputQuery, indicator, object: AsyncProcessor<FoundItemDescriptor<Any>> {
+      contributorWrapper.fetchWeightedElements(inputQuery, indicator, object : AsyncProcessor<FoundItemDescriptor<Any>> {
         override suspend fun process(t: FoundItemDescriptor<Any>): Boolean {
           val weight = t.weight
           val legacyItem = t.item as? SearchEverywhereItem ?: return true
@@ -62,15 +63,12 @@ class SeTextItemsProvider(private val contributorWrapper: SeAsyncWeightedContrib
   override suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {
     val legacyItem = (item as? SeTextSearchItem)?.item ?: return false
     return withContext(Dispatchers.EDT) {
-      contributorWrapper.contributor.processSelectedItem (legacyItem, modifiers, searchText)
+      contributorWrapper.contributor.processSelectedItem(legacyItem, modifiers, searchText)
     }
   }
 
   fun getInfoLeftText(item: SearchEverywhereItem): String? =
-    (contributorWrapper.contributor as? SearchEverywhereExtendedInfoProvider)
-      ?.createExtendedInfo()
-      ?.leftText
-      ?.invoke(item)
+    contributorWrapper.contributor.getExtendedDescription(item)
 
   override fun dispose() {
     Disposer.dispose(contributorWrapper)

@@ -508,7 +508,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
   private fun createExtendedInfoComponent(): ExtendedInfoComponent? {
     val leftText = fun(element: Any): String? {
       if (element is SeItemData) {
-        return element.presentation.itemDescription
+        return element.presentation.extendedDescription
       }
       return null
     }

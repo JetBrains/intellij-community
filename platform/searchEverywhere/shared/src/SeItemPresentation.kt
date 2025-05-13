@@ -23,7 +23,7 @@ import javax.swing.Icon
 @Serializable
 sealed interface SeItemPresentation {
   val text: String
-  val itemDescription: String? get() = null
+  val extendedDescription: String? get() = null
 }
 
 @ApiStatus.Internal
@@ -33,16 +33,16 @@ class SeSimpleItemPresentation(
   val textChunk: SerializableTextChunk? = null,
   val selectedTextChunk: SerializableTextChunk? = null,
   val description: @NlsSafe String? = null,
-  override val itemDescription: String? = null,
+  override val extendedDescription: String? = null,
 ) : SeItemPresentation {
   override val text: @Nls String get() = textChunk?.text ?: ""
 
-  constructor(iconId: IconId? = null, text: @NlsSafe String? = null, description: @NlsSafe String? = null, itemDescription: String? = null) : this(
+  constructor(iconId: IconId? = null, text: @NlsSafe String? = null, description: @NlsSafe String? = null, extendedDescription: String? = null) : this(
     iconId,
     text?.let { SerializableTextChunk(it, null, 0) },
     null,
     description,
-    itemDescription)
+    extendedDescription)
 }
 
 @ApiStatus.Internal
@@ -55,7 +55,7 @@ sealed interface SeActionItemPresentation : SeItemPresentation {
     val text: @Nls String,
     val location: @Nls String? = null,
     private var _switcherState: Boolean? = null,
-    val itemDescription: String? = null,
+    val extendedDescription: String? = null,
   ) {
     val switcherState: Boolean? get() = _switcherState
     fun toggleStateIfSwitcher() {
@@ -77,7 +77,7 @@ data class SeRunnableActionItemPresentation(
   val selectedIconId: IconId? = null,
 ) : SeActionItemPresentation {
   override val text: String get() = commonData.text
-  override val itemDescription: String? get() = commonData.itemDescription
+  override val extendedDescription: String? get() = commonData.extendedDescription
 
   @ApiStatus.Internal
   @Serializable
@@ -95,7 +95,7 @@ data class SeOptionActionItemPresentation(
   val isBooleanOption: Boolean = false,
 ) : SeActionItemPresentation {
   override val text: String get() = commonData.text
-  override val itemDescription: String? get() = commonData.itemDescription
+  override val extendedDescription: String? get() = commonData.extendedDescription
 }
 
 @ApiStatus.Internal
@@ -110,10 +110,9 @@ class SeTargetItemPresentation(
   val containerTextMatchedRanges: List<SerializableRange>?,
   val locationText: @NlsSafe String?,
   private val locationIconId: IconId?,
-  val presentableDescription: @NlsSafe String?,
+  override val extendedDescription: @NlsSafe String?,
 ) : SeItemPresentation {
   override val text: String get() = presentableText
-  override val itemDescription: String? get() = presentableDescription
 
   val backgroundColor: Color? get() = backgroundColorId?.color()
   val icon: Icon? get() = iconId?.icon()
@@ -128,7 +127,7 @@ class SeTargetItemPresentation(
   }
 
   companion object {
-    fun create(tp: TargetPresentation, matchers: ItemMatchers?, itemDescription: String?): SeTargetItemPresentation =
+    fun create(tp: TargetPresentation, matchers: ItemMatchers?, extendedDescription: String?): SeTargetItemPresentation =
       SeTargetItemPresentation(backgroundColorId = tp.backgroundColor?.rpcId(),
                                iconId = tp.icon?.rpcId(),
                                presentableText = tp.presentableText,
@@ -138,7 +137,7 @@ class SeTargetItemPresentation(
                                containerTextMatchedRanges = matchers?.calcMatchedRanges(tp.containerText),
                                locationText = tp.locationText,
                                locationIconId = tp.locationIcon?.rpcId(),
-                               presentableDescription = itemDescription)
+                               extendedDescription = extendedDescription)
 
     private fun ItemMatchers.calcMatchedRanges(text: String?): List<SerializableRange>? {
       text ?: return null
@@ -151,7 +150,7 @@ class SeTargetItemPresentation(
 @Serializable
 class SeTextSearchItemPresentation(
   override val text: @NlsSafe String,
-  override val itemDescription: @NlsSafe String?,
+  override val extendedDescription: @NlsSafe String?,
   val textChunks: List<SerializableTextChunk>,
   private val backgroundColorId: ColorId?,
   val fileString: @NlsSafe String,

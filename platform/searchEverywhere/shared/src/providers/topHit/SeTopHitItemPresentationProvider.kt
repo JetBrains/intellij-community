@@ -25,7 +25,7 @@ import org.jetbrains.annotations.ApiStatus
 object SeTopHitItemPresentationProvider {
   private val iconSize get() = JBUIScale.scale(16)
 
-  suspend fun getPresentation(item: Any, project: Project, itemDescription: String?): SeItemPresentation =
+  suspend fun getPresentation(item: Any, project: Project, extendedDescription: String?): SeItemPresentation =
     readAction {
       when (item) {
          is AnAction -> {
@@ -45,7 +45,7 @@ object SeTopHitItemPresentationProvider {
 
            SeSimpleItemPresentation(iconId = (icon ?: EmptyIcon.ICON_16).rpcId(),
                                     text = text,
-                                    itemDescription = itemDescription)
+                                    extendedDescription = extendedDescription)
          }
         is OptionDescription -> {
           val text = TopHitSEContributor.getSettingText(item)
@@ -69,14 +69,14 @@ object SeTopHitItemPresentationProvider {
           else SeSimpleItemPresentation(iconId = EmptyIcon.ICON_16.rpcId(),
                                         textChunk = textChunk,
                                         selectedTextChunk = selectedTextChunk,
-                                        itemDescription = itemDescription)
+                                        extendedDescription = extendedDescription)
         }
         else -> {
           val presentation: ItemPresentation? = item as? ItemPresentation ?: (item as? NavigationItem)?.presentation
 
           SeSimpleItemPresentation(iconId = (presentation?.getIcon(false) ?: EmptyIcon.ICON_16).rpcId(),
                                    text = presentation?.presentableText ?: item.toString(),
-                                   itemDescription = itemDescription)
+                                   extendedDescription = extendedDescription)
         }
       }
     }
