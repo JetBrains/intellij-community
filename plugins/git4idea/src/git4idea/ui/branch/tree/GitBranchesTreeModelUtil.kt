@@ -18,7 +18,6 @@ import git4idea.branch.GitBranchType
 import git4idea.branch.GitRefType
 import git4idea.branch.GitTagType
 import git4idea.config.GitVcsSettings
-import git4idea.repo.GitRepository
 import git4idea.telemetry.GitBackendTelemetrySpan
 import git4idea.ui.branch.popup.GitBranchesTreePopupFilterByAction
 import git4idea.ui.branch.popup.GitBranchesTreePopupFilterByRepository
@@ -28,12 +27,6 @@ private typealias PathAndRef = Pair<List<String>, GitReference>
 private typealias BranchSubtree = Any /* GitBranch | Map<String, BranchSubtree> */
 
 internal class MatchResult<Node>(val matchedNodes: Collection<Node>, val topMatch: Node?)
-
-internal val GitRepository.localBranchesOrCurrent get() = branches.localBranches.ifEmpty { currentBranch?.let(::setOf) ?: emptySet() }
-internal val GitRepository.recentCheckoutBranches
-  get() =
-    if (!GitVcsSettings.getInstance(project).showRecentBranches()) emptyList()
-    else branches.recentCheckoutBranches
 
 internal val emptyBranchComparator = Comparator<GitReference> { _, _ -> 0 }
 

@@ -3,8 +3,7 @@ package git4idea.ui.branch.tree
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.MinusculeMatcher
-import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
-import git4idea.repo.GitRepository
+import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
 import git4idea.ui.branch.popup.GitBranchesTreePopupBase
 import javax.swing.tree.TreePath
 
@@ -17,13 +16,13 @@ import javax.swing.tree.TreePath
  */
 internal class GitBranchesTreeSelectedRepoModel(
   project: Project,
-  selectedRepository: GitRepository,
+  selectedRepository: GitRepositoryFrontendModel,
   /**
    * Note that it isn't the same as [repositories].
    * [allProjectRepositories] contains a list of repositories to be displayed as repo-level nodes in this tree,
    * while [repositories] is used to specify repositories which refs should be displayed
    */
-  private val allProjectRepositories: List<GitRepository>,
+  private val allProjectRepositories: List<GitRepositoryFrontendModel>,
   topLevelActions: List<Any>
 ) : GitBranchesTreeSingleRepoModel(project, selectedRepository, topLevelActions) {
   private val actionsSeparator = GitBranchesTreePopupBase.createTreeSeparator()
@@ -33,9 +32,7 @@ internal class GitBranchesTreeSelectedRepoModel(
 
   override fun rebuild(matcher: MinusculeMatcher?) {
     super.rebuild(matcher)
-    val holder = GitRepositoriesFrontendHolder.getInstance(project)
-    val allProjectRepositoriesFrontendModel = allProjectRepositories.map { holder.get(it.rpcId) }
-    repositoriesTree = LazyRepositoryHolder(project, allProjectRepositoriesFrontendModel, matcher, canHaveChildren = false)
+    repositoriesTree = LazyRepositoryHolder(project, allProjectRepositories, matcher, canHaveChildren = false)
   }
 
   override fun getTopLevelNodes(): List<Any> {

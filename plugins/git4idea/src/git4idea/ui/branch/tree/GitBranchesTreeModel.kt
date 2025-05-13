@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.util.ui.tree.AbstractTreeModel
-import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
 import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
 import com.intellij.vcsUtil.Delegates.equalVetoingObservable
 import git4idea.GitReference
@@ -19,14 +18,13 @@ import git4idea.branch.GitBranchType
 import git4idea.branch.GitRefType
 import git4idea.branch.GitTagType
 import git4idea.config.GitVcsSettings
-import git4idea.repo.GitRepository
 import javax.swing.Icon
 import javax.swing.tree.TreePath
 
 internal abstract class GitBranchesTreeModel(
   protected val project: Project,
   private val actions: List<Any>,
-  protected val repositories: List<GitRepository>,
+  protected val repositories: List<GitRepositoryFrontendModel>,
 ) : AbstractTreeModel() {
   protected var actionsTree: LazyActionsHolder = LazyActionsHolder(project, emptyList(), null)
   protected var localBranchesTree: LazyRefsSubtreeHolder<GitStandardLocalBranch> = LazyRefsSubtreeHolder.emptyHolder()
@@ -38,11 +36,6 @@ internal abstract class GitBranchesTreeModel(
 
   protected var nameMatcher: MinusculeMatcher? = null
     private set
-
-  protected val repositoriesFrontendModel by lazy {
-    val holder = GitRepositoriesFrontendHolder.getInstance(project)
-    repositories.map { holder.get(it.rpcId) }
-  }
 
   var isPrefixGrouping: Boolean by equalVetoingObservable(GitVcsSettings.getInstance(project).branchSettings.isGroupingEnabled(GROUPING_BY_DIRECTORY)) {
     applyFilterAndRebuild(null)
@@ -127,7 +120,7 @@ internal abstract class GitBranchesTreeModel(
       else LazyRefsSubtreeHolder.emptyHolder()
   }
 
-  protected fun getRefComparator(affectedRepositories: List<GitRepositoryFrontendModel> = repositoriesFrontendModel): Comparator<GitReference> {
+  protected fun getRefComparator(affectedRepositories: List<GitRepositoryFrontendModel> = repositories): Comparator<GitReference> {
     return compareBy<GitReference> {
       !it.isCurrentRefInAny(affectedRepositories)
     } then compareBy {
@@ -139,7 +132,7 @@ internal abstract class GitBranchesTreeModel(
 
   protected fun getSubTreeComparator(): Comparator<Any> {
     return compareBy<Any> {
-      it is GitReference && !it.isCurrentRefInAny(repositoriesFrontendModel) && !it.isFavoriteInAll(repositoriesFrontendModel)
+      it is GitReference && !it.isCurrentRefInAny(repositories) && !it.isFavoriteInAll(repositories)
     } then compareBy {
       it is BranchesPrefixGroup
     }

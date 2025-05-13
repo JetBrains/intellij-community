@@ -18,6 +18,7 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.popup.ActionPopupOptions
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
+import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
 import git4idea.GitBranch
 import git4idea.GitReference
 import git4idea.GitTag
@@ -67,15 +68,18 @@ internal class GitBranchesTreePopupStep(
     private set
 
   override fun createTreeModel(filterActive: Boolean): GitBranchesTreeModel {
+    val holder = GitRepositoriesFrontendHolder.getInstance(project)
+    val repositoriesFrontendModel = repositories.map { holder.get(it.rpcId) }
+
     val model = when {
       !filterActive && repositories.size > 1 && !userWantsSyncControl(project) && selectedRepository != null -> {
-        GitBranchesTreeSelectedRepoModel(project, selectedRepository, repositories, topLevelItems)
+        GitBranchesTreeSelectedRepoModel(project, holder.get(selectedRepository.rpcId), repositoriesFrontendModel, topLevelItems)
       }
       filterActive && repositories.size > 1 -> {
-        GitBranchesTreeMultiRepoFilteringModel(project, repositories, topLevelItems)
+        GitBranchesTreeMultiRepoFilteringModel(project, repositoriesFrontendModel, topLevelItems)
       }
-      !filterActive && repositories.size > 1 -> GitBranchesTreeMultiRepoModel(project, repositories, topLevelItems)
-      else -> GitBranchesTreeSingleRepoModel(project, repositories.first(), topLevelItems)
+      !filterActive && repositories.size > 1 -> GitBranchesTreeMultiRepoModel(project, repositoriesFrontendModel, topLevelItems)
+      else -> GitBranchesTreeSingleRepoModel(project, repositoriesFrontendModel.first(), topLevelItems)
     }
     return model.apply(GitBranchesTreeModel::init)
   }

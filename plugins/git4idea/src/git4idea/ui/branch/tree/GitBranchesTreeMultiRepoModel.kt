@@ -2,29 +2,29 @@
 package git4idea.ui.branch.tree
 
 import com.intellij.openapi.project.Project
+import com.intellij.vcs.git.shared.ref.GitRefUtil
+import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
 import git4idea.GitReference
 import git4idea.branch.GitBranchType
-import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitRefType
 import git4idea.branch.GitTagType
-import git4idea.repo.GitRepository
 import git4idea.ui.branch.popup.GitBranchesTreePopupBase
 import javax.swing.tree.TreePath
 
 internal class GitBranchesTreeMultiRepoModel(
   project: Project,
-  repositories: List<GitRepository>,
+  repositories: List<GitRepositoryFrontendModel>,
   topLevelActions: List<Any>
 ) : GitBranchesTreeModel(project, topLevelActions, repositories) {
-  private val repositoriesNodes = repositoriesFrontendModel.map { RepositoryNode(it, isLeaf = true) }
+  private val repositoriesNodes = this.repositories.map { RepositoryNode(it, isLeaf = true) }
 
   private val branchesSubtreeSeparator = GitBranchesTreePopupBase.createTreeSeparator()
 
-  override fun getLocalBranches() = GitBranchUtil.getCommonLocalBranches(repositories)
+  override fun getLocalBranches() = GitRefUtil.getCommonLocalBranches(repositories)
 
-  override fun getRemoteBranches() = GitBranchUtil.getCommonRemoteBranches(repositories)
+  override fun getRemoteBranches() = GitRefUtil.getCommonRemoteBranches(repositories)
 
-  override fun getTags() = GitBranchUtil.getCommonTags(repositories)
+  override fun getTags() = GitRefUtil.getCommonTags(repositories)
 
   override fun getChildren(parent: Any?): List<Any> {
     if (parent == null) return emptyList()
@@ -63,5 +63,5 @@ internal class GitBranchesTreeMultiRepoModel(
   override fun getPreferredSelection(): TreePath? = getPreferredBranch()?.let { createTreePathFor(this, it) }
 
   private fun getPreferredBranch(): GitReference? =
-    getPreferredBranch(project, repositoriesFrontendModel, null, localBranchesTree, remoteBranchesTree, tagsTree)
+    getPreferredBranch(project, repositories, null, localBranchesTree, remoteBranchesTree, tagsTree)
 }

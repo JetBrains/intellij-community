@@ -4,6 +4,7 @@ package com.intellij.vcs.git.shared.ref
 import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
 import git4idea.GitBranch
 import git4idea.GitStandardLocalBranch
+import git4idea.GitStandardRemoteBranch
 import git4idea.GitTag
 import org.jetbrains.annotations.NonNls
 
@@ -21,4 +22,19 @@ object GitRefUtil {
 
   fun getCommonCurrentBranch(repositories: Collection<GitRepositoryFrontendModel>): GitStandardLocalBranch? =
     repositories.map { it.state.currentBranch }.distinct().singleOrNull()
+
+  fun getCommonLocalBranches(repositories: Collection<GitRepositoryFrontendModel>): Collection<GitStandardLocalBranch> {
+    return findCommon(repositories.asSequence().map { repository -> repository.state.refs.localBranches })
+  }
+
+  fun getCommonRemoteBranches(repositories: Collection<GitRepositoryFrontendModel>): Collection<GitStandardRemoteBranch> {
+    return findCommon(repositories.asSequence().map { repository -> repository.state.refs.remoteBranches })
+  }
+
+  fun getCommonTags(repositories: Collection<GitRepositoryFrontendModel>): Collection<GitTag> {
+    return findCommon(repositories.asSequence().map { repository -> repository.state.refs.tags })
+  }
+
+  private fun <T> findCommon(collections: Sequence<Collection<T>>): Collection<T> =
+    if (collections.none()) emptyList() else collections.reduce { acc, set -> acc.intersect(set) }
 }

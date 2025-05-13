@@ -7,6 +7,8 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.util.ui.JBDimension
+import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
+import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
 import git4idea.GitReference
 import git4idea.GitStandardLocalBranch
 import git4idea.i18n.GitBundle
@@ -32,7 +34,7 @@ internal class GitCompareWithBranchPopupStep(
     private set
 
   override fun createTreeModel(filterActive: Boolean): GitBranchesTreeModel {
-    return GitCompareWithBranchesTreeModel(project, repository).apply(GitBranchesTreeSingleRepoModel::init)
+    return GitCompareWithBranchesTreeModel(project, GitRepositoriesFrontendHolder.getInstance(project).get(repository.rpcId)).apply(GitBranchesTreeSingleRepoModel::init)
   }
 
   override fun setTreeModel(treeModel: GitBranchesTreeModel) {
@@ -53,14 +55,12 @@ internal class GitCompareWithBranchPopupStep(
   override fun getTitle(): String = DvcsBundle.message("popup.title.select.branch.to.compare")
 }
 
-private class GitCompareWithBranchesTreeModel(project: Project, repository: GitRepository) : GitBranchesTreeSingleRepoModel(project, repository, emptyList()) {
-  override fun getLocalBranches(): Collection<GitStandardLocalBranch> = repository.branches.localBranches.skipCurrentBranch()
+private class GitCompareWithBranchesTreeModel(project: Project, repository: GitRepositoryFrontendModel) : GitBranchesTreeSingleRepoModel(project, repository, emptyList()) {
+  override fun getLocalBranches(): Collection<GitStandardLocalBranch> = repository.state.refs.localBranches.skipCurrentBranch()
   override fun getRecentBranches(): Collection<GitStandardLocalBranch> = super.getRecentBranches().skipCurrentBranch()
 
-  private fun Collection<GitStandardLocalBranch>.skipCurrentBranch(): Collection<GitStandardLocalBranch> {
-    val currentBranch = repository.currentBranch
-    return this.filter { it != currentBranch }
-  }
+  private fun Collection<GitStandardLocalBranch>.skipCurrentBranch(): Collection<GitStandardLocalBranch> =
+    filter { repository.state.currentRef?.matches(it) == false }
 
   override fun getPreferredSelection(): TreePath? {
     return getPreferredBranch()?.let { createTreePathFor(this, it) }

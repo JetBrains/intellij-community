@@ -28,6 +28,13 @@ data class GitRepositoryState(
 ) {
   val currentBranch: GitStandardLocalBranch? get() = (currentRef as? GitCurrentRef.LocalBranch)?.branch
 
+  /**
+   * For a fresh repository a list of local branches is empty.
+   * However, it still makes sense to show the current branch in the UI.
+   */
+  val localBranchesOrCurrent: Set<GitStandardLocalBranch>
+    get() = refs.localBranches.ifEmpty { setOfNotNull(currentBranch) }
+
   fun isCurrentRef(ref: GitReference): Boolean = currentRef != null && currentRef.matches(ref)
 
   fun getDisplayableBranchText(): @Nls String {

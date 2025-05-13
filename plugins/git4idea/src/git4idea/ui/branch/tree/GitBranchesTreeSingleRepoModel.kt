@@ -3,18 +3,19 @@ package git4idea.ui.branch.tree
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.MinusculeMatcher
+import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
 import git4idea.GitReference
 import git4idea.GitRemoteBranch
 import git4idea.GitStandardLocalBranch
 import git4idea.GitTag
 import git4idea.branch.GitRefType
-import git4idea.repo.GitRepository
+import git4idea.config.GitVcsSettings
 import git4idea.ui.branch.popup.GitBranchesTreePopupBase
 import javax.swing.tree.TreePath
 
 internal open class GitBranchesTreeSingleRepoModel(
   project: Project,
-  val repository: GitRepository,
+  val repository: GitRepositoryFrontendModel,
   topLevelActions: List<Any>,
 ) : GitBranchesTreeModel(project, topLevelActions, listOf(repository)) {
   private val actionsSeparator = GitBranchesTreePopupBase.createTreeSeparator()
@@ -27,13 +28,14 @@ internal open class GitBranchesTreeSingleRepoModel(
                                                        refComparatorGetter = ::emptyBranchComparator)
   }
 
-  override fun getLocalBranches(): Collection<GitStandardLocalBranch> = repository.localBranchesOrCurrent
+  override fun getLocalBranches(): Collection<GitStandardLocalBranch> = repository.state.localBranchesOrCurrent
 
-  override fun getRecentBranches(): Collection<GitStandardLocalBranch> = repository.recentCheckoutBranches
+  override fun getRecentBranches(): Collection<GitStandardLocalBranch> =
+    if (GitVcsSettings.getInstance(project).showRecentBranches()) repository.state.recentBranches else emptyList()
 
-  override fun getRemoteBranches(): Collection<GitRemoteBranch> = repository.branches.remoteBranches
+  override fun getRemoteBranches(): Collection<GitRemoteBranch> = repository.state.refs.remoteBranches
 
-  override fun getTags(): Set<GitTag> = repository.tagHolder.getTags().keys
+  override fun getTags(): Set<GitTag> = repository.state.refs.tags
 
   override fun getChildren(parent: Any?): List<Any> {
     if (parent == null || notHaveFilteredNodes()) return emptyList()
@@ -69,7 +71,7 @@ internal open class GitBranchesTreeSingleRepoModel(
     (actionsTree.topMatch ?: getPreferredBranch())?.let { createTreePathFor(this, it) }
 
   protected fun getPreferredBranch(): GitReference? =
-    getPreferredBranch(project, repositoriesFrontendModel, nameMatcher, localBranchesTree, remoteBranchesTree, tagsTree, recentCheckoutBranchesTree)
+    getPreferredBranch(project, repositories, nameMatcher, localBranchesTree, remoteBranchesTree, tagsTree, recentCheckoutBranchesTree)
 
   protected open fun notHaveFilteredNodes(): Boolean {
     return nameMatcher != null
