@@ -93,13 +93,22 @@ private class LockStateContextElement(val threadState: ThreadState): CoroutineCo
   }
 }
 
+@ApiStatus.Internal
+fun newAnyThreadWriteThreadingSupport(): ThreadingSupport = 
+  AnyThreadWriteThreadingSupport()
 
 @Suppress("SSBasedInspection")
 @ApiStatus.Internal
-internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
-  private val logger = Logger.getInstance(AnyThreadWriteThreadingSupport::class.java)
-
-  private const val SPIN_TO_WAIT_FOR_LOCK: Int = 100
+internal class AnyThreadWriteThreadingSupport: ThreadingSupport {
+  
+  @ApiStatus.Internal
+  companion object {
+    private val logger = Logger.getInstance(AnyThreadWriteThreadingSupport::class.java)
+    private const val SPIN_TO_WAIT_FOR_LOCK: Int = 100
+    
+    val defaultInstance: AnyThreadWriteThreadingSupport = AnyThreadWriteThreadingSupport()
+  }
+  
 
   @JvmField
   internal val lock = RWMutexIdea()
@@ -976,7 +985,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   }
 
   @Deprecated("")
-  private class ReadAccessToken : AccessToken() {
+  private inner class ReadAccessToken() : AccessToken() {
     private val capturedListener = myReadActionListener
     private val myPermit = run {
       fireBeforeReadActionStart(capturedListener, javaClass)
@@ -993,7 +1002,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   }
 
   @Deprecated("")
-  private class WriteAccessToken(private val clazz: Class<*>) : AccessToken() {
+  private inner class WriteAccessToken(private val clazz: Class<*>) : AccessToken() {
     val ts = getThreadState()
     val releases = startWrite(ts, clazz)
 

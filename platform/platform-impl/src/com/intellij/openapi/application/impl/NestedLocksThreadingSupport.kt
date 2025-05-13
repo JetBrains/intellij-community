@@ -7,8 +7,6 @@ import com.intellij.concurrency.withThreadLocal
 import com.intellij.core.rwmutex.*
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.ComputationState.Companion.thisLevelPermit
-import com.intellij.openapi.application.impl.NestedLocksThreadingSupport.isWriteActionPending
-import com.intellij.openapi.application.impl.NestedLocksThreadingSupport.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.util.text.StringUtil
@@ -377,10 +375,14 @@ private data class ExposedWritePermitData(
  * It actually helps to resolve certain kind of deadlocks.
  */
 @ApiStatus.Internal
-internal object NestedLocksThreadingSupport : ThreadingSupport {
-  private val logger = Logger.getInstance(NestedLocksThreadingSupport::class.java)
+internal class NestedLocksThreadingSupport : ThreadingSupport {
+  companion object {
+    private const val SPIN_TO_WAIT_FOR_LOCK: Int = 100
+    private val logger = Logger.getInstance(NestedLocksThreadingSupport::class.java)
+    
+    val defaultInstance: NestedLocksThreadingSupport = NestedLocksThreadingSupport()
+  }
 
-  private const val SPIN_TO_WAIT_FOR_LOCK: Int = 100
 
   /**
    * The global lock that is a default choice when lock parallelization is absent
@@ -996,7 +998,7 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
     myWriteActionsStack.add(clazz)
     fireWriteActionStarted(preparatoryWriteIntent.listener, clazz)
 
-    return WriteLockInitResult(shouldRelease, currentReadState, preparatoryWriteIntent.listener, state, clazz)
+    return WriteLockInitResult(shouldRelease, currentReadState, preparatoryWriteIntent.listener, state, clazz, this)
   }
 
   private fun startPendingWriteAction(state: ComputationState) {
@@ -1015,18 +1017,19 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
     val listener: WriteActionListener?,
     val state: ComputationState,
     val clazz: Class<*>,
+    val support: NestedLocksThreadingSupport,
   ) {
     fun release() {
-      fireWriteActionFinished(listener, clazz)
-      myWriteActionsStack.removeLast()
+      support.fireWriteActionFinished(listener, clazz)
+      support.myWriteActionsStack.removeLast()
       if (shouldRelease) {
-        myWriteAcquired = null
+        support.myWriteAcquired = null
         state.releaseWritePermit()
       }
-      myTopmostReadAction.set(currentReadState)
+      support.myTopmostReadAction.set(currentReadState)
       if (shouldRelease) {
-        fireAfterWriteActionFinished(listener, clazz)
-        drainWriteActionFollowups()
+        support.fireAfterWriteActionFinished(listener, clazz)
+        support.drainWriteActionFollowups()
       }
     }
   }
@@ -1295,7 +1298,7 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
   }
 
   @Deprecated("")
-  private class WriteAccessToken(private val clazz: Class<*>) : AccessToken() {
+  private inner class WriteAccessToken(private val clazz: Class<*>) : AccessToken() {
     val compState = getComputationState()
     val writeIntentPreparatoryData: PreparatoryWriteIntent
     val writeLockInitResult: WriteLockInitResult

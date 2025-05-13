@@ -94,10 +94,10 @@ internal fun rethrowExceptions(transformer: (Runnable) -> Runnable, actual: Runn
 @ApiStatus.Internal
 fun getGlobalThreadingSupport(): ThreadingSupport {
   if (useNestedLocking) {
-    return NestedLocksThreadingSupport
+    return NestedLocksThreadingSupport.defaultInstance
   }
   else {
-    return AnyThreadWriteThreadingSupport
+    return AnyThreadWriteThreadingSupport.defaultInstance
   }
 }
 
