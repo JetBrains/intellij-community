@@ -254,6 +254,9 @@ class IdeEventQueue private constructor() : EventQueue() {
       if (event.id == WindowEvent.WINDOW_ACTIVATED || event.id == WindowEvent.WINDOW_DEICONIFIED || event.id == WindowEvent.WINDOW_OPENED) {
         ActiveWindowsWatcher.addActiveWindow(event.source as Window)
       }
+      else if (event.id == WindowEvent.WINDOW_CLOSED) {
+        ActiveWindowsWatcher.updateActivatedWindowSet()
+      }
 
       if (isMetaKeyPressedOnLinux(event)) {
         return
