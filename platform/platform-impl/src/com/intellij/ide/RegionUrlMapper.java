@@ -51,7 +51,7 @@ public final class RegionUrlMapper {
   );
 
   private static final Map<Region, String> OVERRIDE_CONFIG_URL_TABLE = new HashMap<>();  // for testing
-  public static final String FORCE_REGION_MAPPINGS_LOAD = "force.region.mappings.load";
+  private static final boolean FORCE_REGION_MAPPINGS_LOAD = Boolean.getBoolean("force.region.mappings.load");
 
   static {
     for (Region reg : Region.values()) {
@@ -118,13 +118,8 @@ public final class RegionUrlMapper {
     }
     catch (Throwable e) {
       // tryMapUrl() should have already swallowed any failures, so this shouldn't ever happen
-      if (Boolean.valueOf(System.getProperty(FORCE_REGION_MAPPINGS_LOAD)).booleanValue()) {
-        throw new RuntimeException(IdeBundle.message("failed.to.load.regional.url.mappings", e.getCause()));
-      }
-      else {
-        LOG.warn("Unexpected exception when mapping region-specific url", e);
-        return url;
-      }
+      LOG.warn("Unexpected exception when mapping region-specific url", e);
+      return url;
     }
   }
 
@@ -159,9 +154,8 @@ public final class RegionUrlMapper {
       if (t instanceof CancellationException || t instanceof ControlFlowException) {
         LOG.debug("Loading regional URL mappings interrupted (using non-regional URL as fallback): " + t);
       }
-      else if (Boolean.valueOf(System.getProperty(FORCE_REGION_MAPPINGS_LOAD)).booleanValue()) {
-        LOG.warn("Failed to load regional URL mappings: " + t);
-        throw new CompletionException(t);
+      else if (FORCE_REGION_MAPPINGS_LOAD) {
+        LOG.error("Failed to load URL mappings for " + region + ", URL=" + getConfigUrl(region), t);
       }
       else if (t instanceof IOException) {
         // legitimate failure when using the IDE offline; just log it without the stack trace
