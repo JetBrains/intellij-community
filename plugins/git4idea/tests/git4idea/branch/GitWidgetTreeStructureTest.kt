@@ -162,13 +162,10 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
 
 
   fun testMultiRepoWithFilterMatchingRepo() {
-    createRefs(repo)
-    registerBroRepo().also {
-      createRefs(it)
-    }
-    repo.branch("bro")
+    registerBroRepo()
+    repo.branch("project-branch")
 
-    compareWithSnapshot(buildTestTree("bro"))
+    compareWithSnapshot(buildTestTree("ro"))
   }
 
   fun testMultiRepoWithFilter() {

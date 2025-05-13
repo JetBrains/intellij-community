@@ -220,7 +220,7 @@ internal open class LazyRepositoryHolder(
   matcher: MinusculeMatcher?,
   canHaveChildren: Boolean,
 ) : LazyHolder<GitBranchesTreeModel.RepositoryNode>(
-  repositories.map { GitBranchesTreeModel.RepositoryNode(it, canHaveChildren) },
+  repositories.map { GitBranchesTreeModel.RepositoryNode(it, !canHaveChildren) },
   matcher,
   nodeNameSupplier = { DvcsUtil.getShortRepositoryName(it.repository) },
   needFilter = { GitBranchesTreePopupFilterByRepository.isSelected(project) })
