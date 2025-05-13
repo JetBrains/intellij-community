@@ -4,10 +4,12 @@ package org.jetbrains.yaml.meta.impl
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.yaml.YAMLBundle
 import org.jetbrains.yaml.meta.model.YamlEnumType
 import org.jetbrains.yaml.psi.YAMLKeyValue
 
+@ApiStatus.Internal
 abstract class YamlDeprecatedValuesInspectionBase : YamlMetaTypeInspectionBase() {
 
   override fun doBuildVisitor(holder: ProblemsHolder, metaTypeProvider: YamlMetaTypeProvider): PsiElementVisitor = StructureChecker(holder, metaTypeProvider)
