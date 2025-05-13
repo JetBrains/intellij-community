@@ -1,0 +1,42 @@
+### auto-generated section `build intellij.platform.identifiers.highlighting.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "backend_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.platform.identifiers.highlighting.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/identifiers/shared",
+    "//platform/kernel/rpc.backend",
+    "//platform/project/shared:project",
+    "//platform/platform-impl:ide-impl",
+    "//platform/util",
+    "//platform/lang-api:lang",
+    "//platform/platform-api:ide",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/core-ui",
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-impl",
+    "//platform/util/jdom",
+    "//platform/ide-core-impl",
+    "//platform/kernel/backend",
+    "//platform/statistics",
+    "//platform/platform-impl/rpc",
+    "//platform/util/coroutines",
+    "//platform/lang-impl",
+    "@lib//:rd-core",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/editor-ui-api:editor-ui",
+  ],
+  exports = ["//platform/identifiers/shared"],
+  runtime_deps = [":backend_resources"]
+)
+### auto-generated section `build intellij.platform.identifiers.highlighting.backend` end

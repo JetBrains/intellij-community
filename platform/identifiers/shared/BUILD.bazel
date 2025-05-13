@@ -1,0 +1,36 @@
+### auto-generated section `build intellij.platform.identifiers.highlighting.shared` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "shared_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "shared",
+  module_name = "intellij.platform.identifiers.highlighting.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/project/shared:project",
+    "//platform/object-serializer",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//platform/kernel/shared:kernel",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/platform-impl/rpc",
+    "//platform/platform-api:ide",
+    "//platform/core-ui",
+    "//platform/util:util-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/ide-core-impl",
+    "//platform/analysis-impl",
+    "@lib//:rd-core",
+  ],
+  runtime_deps = [":shared_resources"]
+)
+### auto-generated section `build intellij.platform.identifiers.highlighting.shared` end

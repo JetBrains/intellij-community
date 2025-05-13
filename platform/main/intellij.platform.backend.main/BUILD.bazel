@@ -19,6 +19,7 @@ java_library(
     "//platform/execution-impl/backend",
     "//platform/execution.serviceView/backend",
     "//platform/execution.dashboard/backend",
+    "//platform/identifiers/backend",
   ]
 )
 ### auto-generated section `build intellij.platform.backend.main` end

@@ -54,6 +54,7 @@ jvm_library(
     "//plugins/performanceTesting/core:performanceTesting_test_lib",
     "@lib//:mockito",
     "//platform/util/progress",
+    "@lib//:kotlinx-coroutines-test",
   ],
   runtime_deps = [":settingsSync_resources"]
 )
