@@ -15,6 +15,7 @@ import com.jetbrains.python.PythonRuntimeService
 import com.jetbrains.python.ast.PyAstFunction
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.isPrivate
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.PyCallExpression.PyArgumentsMapping
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl
@@ -905,7 +906,9 @@ fun analyzeArguments(
   parameters: List<PyCallableParameter>,
   context: TypeEvalContext,
 ): ArgumentMappingResults {
-  var positionalOnlyMode = parameters.any { it.parameter is PySlashParameter }
+  val hasSlashParameter = parameters.any { it.parameter is PySlashParameter }
+  var positionalOnlyMode = hasSlashParameter
+  var seenStarArgs = false
   var seenSingleStar = false
   var mappedVariadicArgumentsToParameters = false
   val mappedParameters = LinkedHashMap<PyExpression?, PyCallableParameter?>()
@@ -943,6 +946,7 @@ fun analyzeArguments(
         }
         allPositionalArguments.clear()
         variadicPositionalArguments.clear()
+        seenStarArgs = true
       }
       else if (parameter.isKeywordContainer()) {
         for (argument in keywordArguments) {
@@ -991,7 +995,7 @@ fun analyzeArguments(
         }
         else if (allPositionalArguments.isEmpty()) {
           val keywordArgument = keywordArguments.removeKeywordArgument(parameterName)
-          if (keywordArgument != null) {
+          if (keywordArgument != null && !(!hasSlashParameter && !seenStarArgs && parameterName != null && isPrivate(parameterName))) {
             mappedParameters.put(keywordArgument, parameter)
           }
           else if (variadicPositionalArguments.isEmpty() && variadicKeywordArguments.isEmpty() && !parameter.hasDefaultValue()) {
@@ -1195,6 +1199,7 @@ private fun mapComponentsOfTupleParameter(argument: PyExpression?, parameter: Py
 }
 
 private fun MutableList<PyKeywordArgument>.removeKeywordArgument(name: String?): PyKeywordArgument? {
+  name ?: return null
   var result: PyKeywordArgument? = null
   for (argument in this) {
     val keyword = argument.keyword

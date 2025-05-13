@@ -765,6 +765,14 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     return getStubOrPsiChild(PyStubElementTypes.ANNOTATION);
   }
 
+  /**
+   * is `function` a method or a classmethod
+   */
+  public static boolean isMethod(PyFunction function) {
+    final var isMethod = ScopeUtil.getScopeOwner(function) instanceof PyClass;
+    final var modifier = function.getModifier();
+    return (isMethod && modifier == null) || modifier == CLASSMETHOD;
+  }
 
   /**
    * @param self should be this

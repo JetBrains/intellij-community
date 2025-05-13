@@ -41,7 +41,6 @@ generics_typevartuple_overloads.py
 generics_typevartuple_specialization.py
 generics_variance.py
 generics_variance_inference.py
-historical_positional.py
 literals_literalstring.py
 literals_semantics.py
 namedtuples_define_class.py
