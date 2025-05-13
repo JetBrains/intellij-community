@@ -9,7 +9,6 @@ import com.intellij.ide.fileTemplates.JavaTemplateUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.LangDataKeys
-import com.intellij.openapi.actionSystem.ex.ActionUtil.updateAction
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
@@ -95,15 +94,14 @@ class CreateClassActionAvailabilityTest : JavaCodeInsightFixtureTestCase() {
     val projectDir = PsiManager.getInstance(project).findDirectory(baseDir)!!
     val action = CreateClassAction()
     val e: AnActionEvent = TestActionEvent.createTestEvent(context(projectDir))
-    updateAction(action, e)
-    val enabledAndVisible = e.presentation.isEnabledAndVisible
-    return enabledAndVisible
+    action.update(e)
+    return e.presentation.isEnabledAndVisible
   }
 
   private fun context(projectDir: PsiDirectory): DataContext {
     return SimpleDataContext.builder().add(LangDataKeys.IDE_VIEW, object : IdeView {
       override fun getDirectories(): Array<out PsiDirectory> = arrayOf(projectDir)
-      override fun getOrChooseDirectory(): PsiDirectory? = projectDir
+      override fun getOrChooseDirectory(): PsiDirectory = projectDir
     }).add(LangDataKeys.PROJECT, this.project).build()
   }
 }
