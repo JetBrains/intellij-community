@@ -1306,17 +1306,6 @@ public class XMLOutputter implements Cloneable {
     );
   }
 
-  /**
-   * Our own null subclass of NamespaceStack.  This plays a little
-   * trick with Java access protection.  We want subclasses of
-   * XMLOutputter to be able to override protected methods that
-   * declare a NamespaceStack parameter, but we don't want to
-   * declare the parent NamespaceStack class as public.
-   */
-  @SuppressWarnings("WeakerAccess")
-  protected static final class NamespaceStack extends org.jdom.output.NamespaceStack {
-  }
-
   // Support method to print a name without using elt.getQualifiedName()
   // and thus avoiding a StringBuffer creation and memory churn
   private static void printQualifiedName(Writer out, Element e) throws IOException {
