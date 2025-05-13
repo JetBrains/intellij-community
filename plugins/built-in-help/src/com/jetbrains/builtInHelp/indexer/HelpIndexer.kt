@@ -35,11 +35,14 @@ internal constructor(indexDir: String) {
   @Throws(IOException::class)
   fun indexDirectory(dirName: String) {
     //It's always a directory, there is no chance that the method is called on a file
+    val lineSeparator = System.lineSeparator()
+    val acceptedFiles = setOf("htm", "html")
+
     Files.walk(Path.of(dirName)).use { stream ->
       stream
         .filter {
           it.isRegularFile() &&
-          it.extension.lowercase(Locale.getDefault()) in setOf("htm", "html")
+          it.extension.lowercase(Locale.getDefault()) in acceptedFiles
         }
         .asSequence()
         .forEach { file ->
@@ -47,34 +50,32 @@ internal constructor(indexDir: String) {
             val docIndex = Document()
             val parsedDocument = Jsoup.parse(file, "UTF-8")
 
+            if (parsedDocument.select("meta[http-equiv=refresh]").isNotEmpty()) {
+              println("Skipping redirect page: $file ")
+              return@forEach
+            }
+
+            if (parsedDocument.body().attr("data-template") == "section-page") {
+              println("Skipping section page: $file")
+              return@forEach
+            }
+
             val content = StringBuilder()
-            val lineSeparator = System.lineSeparator()
-            val articles = parsedDocument.body().getElementsByClass("article")
-            val title = parsedDocument.title()
+            val article = parsedDocument.body().getElementsByClass("article").first()
 
-            if (articles.isEmpty()) {
-              if (parsedDocument.select("meta[http-equiv=refresh]").isNotEmpty() ||
-                  title.contains("You will be redirected shortly")) {
-                println("Skipping redirect page: $file ")
-              }
-              else if (parsedDocument.body().attr("data-template") == "section-page") {
-                println("Skipping section page: $file")
-              }
-              else {
-                System.err.println("Could not add: $file because no `<article>` elements are found. Title is '$title'")
-              }
+            if (article == null) {
+              println("Skipping: $file because no `<article>` elements are found.")
+              return@forEach
             }
-            else {
-              articles.first()?.children()
-                ?.forEach { content.append(it.text()).append(lineSeparator) }
 
-              docIndex.add(TextField("contents", content.toString(), Field.Store.YES))
-              docIndex.add(StringField("filename", file.name, Field.Store.YES))
-              docIndex.add(StringField("title", title, Field.Store.YES))
+            article.children().forEach { content.append(it.text()).append(lineSeparator) }
 
-              writer.addDocument(docIndex)
-              println("Added: $file")
-            }
+            docIndex.add(TextField("contents", content.toString(), Field.Store.YES))
+            docIndex.add(StringField("filename", file.name, Field.Store.YES))
+            docIndex.add(StringField("title", parsedDocument.title(), Field.Store.YES))
+
+            writer.addDocument(docIndex)
+            println("Added: $file")
           }
           catch (e: Throwable) {
             System.err.println("Could not add: $file because ${e.message}")
