@@ -124,7 +124,11 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
         EditorComponentImpl.this.editor.setFontSize(size);
         if (isChangePersistent) {
-          EditorComponentImpl.this.editor.adjustGlobalFontSize(UISettingsUtils.scaleFontSize(size, 1 / UISettingsUtils.getInstance().getCurrentIdeScale()));
+          // Has to be performed with the correct modality because there's an
+          // EditorColorsManagerImpl.dropPsiCaches call inside, and it requires a write-safe context.
+          ApplicationManager.getApplication().invokeLater(() -> {
+            EditorComponentImpl.this.editor.adjustGlobalFontSize(UISettingsUtils.scaleFontSize(size, 1 / UISettingsUtils.getInstance().getCurrentIdeScale()));
+          }, ModalityState.stateForComponent(EditorComponentImpl.this));
         }
 
         return EditorComponentImpl.this.editor.visualPositionToXY(magnificationPosition);
