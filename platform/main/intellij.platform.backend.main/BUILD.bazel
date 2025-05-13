@@ -17,7 +17,6 @@ java_library(
     "//platform/recentFiles/backend",
     "//platform/editor/backend",
     "//platform/execution-impl/backend",
-    "//platform/execution.serviceView/backend",
     "//platform/execution.dashboard/backend",
     "//platform/identifiers/backend",
   ]

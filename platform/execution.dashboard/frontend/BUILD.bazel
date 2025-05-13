@@ -11,6 +11,9 @@ jvm_resources(
 java_library(
   name = "frontend",
   visibility = ["//visibility:public"],
-  runtime_deps = [":frontend_resources"]
+  runtime_deps = [
+    ":frontend_resources",
+    "@lib//:kotlin-stdlib",
+  ]
 )
 ### auto-generated section `build intellij.platform.execution.dashboard.frontend` end
