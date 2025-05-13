@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion;
 
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.pom.java.JavaFeature;
@@ -29,6 +30,19 @@ public class JavaMainStringArgsContributorTest extends NormalCompletionTestCase 
       assertNotNull(item);
       getLookup().setCurrentItem(item);
       type("\n");
+      myFixture.checkResult("""
+                              void main(String[] args){}
+                              """);
+    });
+  }
+
+  @NeedsIndex.Full
+  public void testSimpleParametersImplicitClassSmartCompletion() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getMinimumLevel(), () -> {
+      myFixture.configureByText("Test.java", """
+        void main(<caret>){}
+        """);
+      myFixture.complete(CompletionType.SMART);
       myFixture.checkResult("""
                               void main(String[] args){}
                               """);

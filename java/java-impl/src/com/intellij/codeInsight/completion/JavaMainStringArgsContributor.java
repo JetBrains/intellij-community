@@ -11,29 +11,23 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ProcessingContext;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.patterns.PlatformPatterns.psiElement;
-
 @ApiStatus.Experimental
 public final class JavaMainStringArgsContributor extends CompletionContributor implements DumbAware {
-  public JavaMainStringArgsContributor() {
-    extend(CompletionType.BASIC, psiElement(), new CompletionProvider<>() {
-      @Override
-      protected void addCompletions(@NotNull CompletionParameters parameters,
-                                    @NotNull ProcessingContext context,
-                                    @NotNull CompletionResultSet result) {
-        FileType fileType = parameters.getOriginalFile().getFileType();
-        if (!(fileType instanceof JavaFileType)) {
-          return;
-        }
-        tryAddArgsParameter(parameters, result);
-        tryAddArgsVariable(parameters, result);
-      }
-    });
+
+  @Override
+  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
+    CompletionType completionType = parameters.getCompletionType();
+    if (completionType != CompletionType.BASIC && completionType != CompletionType.SMART) return;
+    FileType fileType = parameters.getOriginalFile().getFileType();
+    if (!(fileType instanceof JavaFileType)) {
+      return;
+    }
+    tryAddArgsParameter(parameters, result);
+    tryAddArgsVariable(parameters, result);
   }
 
   private static void tryAddArgsVariable(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {

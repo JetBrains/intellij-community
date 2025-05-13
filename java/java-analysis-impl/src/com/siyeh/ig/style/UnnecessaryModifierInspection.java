@@ -6,6 +6,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
@@ -182,14 +183,17 @@ public final class UnnecessaryModifierInspection extends BaseInspection implemen
               final PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(method.getProject());
               PsiClass containingClass = method.getContainingClass();
               if (containingClass == null || containingClass.getName() == null) return;
-              final PsiSearchHelper.SearchCostResult cost =
-                searchHelper.isCheapEnoughToSearch(containingClass.getName(), containingClass.getResolveScope(), null);
-              if (cost == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) {
-                continue;
+              if (containingClass.getUseScope() instanceof GlobalSearchScope globalSearchScope) {
+                final PsiSearchHelper.SearchCostResult cost =
+                  searchHelper.isCheapEnoughToSearch(containingClass.getName(), globalSearchScope, null);
+                if (cost == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) {
+                  registerPossibleProblem(modifier);
+                  continue;
+                }
               }
             }
 
-            PsiReference first = ReferencesSearch.search(method, method.getResolveScope()).findFirst();
+            PsiReference first = ReferencesSearch.search(method, method.getUseScope()).findFirst();
             if (first != null) {
               continue;
             }

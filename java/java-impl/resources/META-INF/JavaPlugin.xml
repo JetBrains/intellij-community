@@ -1242,6 +1242,7 @@
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CurrentPackageMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.RightSideTypeMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CastToLeftSideTypeMacro"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.StringArgsMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.IterableVariableMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.IterableComponentTypeMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.TypeParameterOfMacro"/>

@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templateSet group="Java//Instance 'main' methods for normal classes">
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.short.psvm"
-            name="psvm" toReformat="true" toShortenFQNames="true" value="static void main($END$){&#13;&#10;  &#13;&#10;}">
+            name="psvm" toReformat="true" toShortenFQNames="true" value="static void main($STRING_ARGS$){&#13;&#10;  $END$&#13;&#10;}">
+    <variable name="STRING_ARGS" expression="stringArgs()" defaultValue="" alwaysStopAt="false" />
     <context>
       <option name="JAVA_NORMAL_CLASS_DECLARATION_WITH_INSTANCE_MAIN" value="true" />
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.short.psvm"
-            name="main" toReformat="true" toShortenFQNames="true" value="static void main($END$){&#13;&#10;  &#13;&#10;}">
+            name="main" toReformat="true" toShortenFQNames="true" value="static void main($STRING_ARGS$){&#13;&#10;  $END$&#13;&#10;}">
+    <variable name="STRING_ARGS" expression="stringArgs()" defaultValue="" alwaysStopAt="false" />
     <context>
       <option name="JAVA_NORMAL_CLASS_DECLARATION_WITH_INSTANCE_MAIN" value="true" />
     </context>

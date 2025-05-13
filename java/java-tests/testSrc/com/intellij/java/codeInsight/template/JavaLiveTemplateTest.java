@@ -5,6 +5,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression;
 import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.actions.SaveAsTemplateAction;
 import com.intellij.codeInsight.template.impl.*;
@@ -365,7 +366,7 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
   }
 
   public void testImplicitClassDeclarationContext() {
-    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("psvm", "Java//Implicitly declared classes");
+    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("psvm", "Java//Instance 'main' methods for implicitly declared classes");
     IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getMinimumLevel(), ()->{
       assertFalse(isApplicable("class Foo { <caret>xxx }", template));
       assertFalse(isApplicable("class Foo { <caret>xxx String[] foo(String[] bar) {} }", template));
@@ -807,6 +808,60 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
           }
         }
         """);
+  }
+
+  public void testPsvmWithString() {
+    IdeaTestUtil.withLevel(
+      getModule(),
+      JavaFeature.IMPLICIT_CLASSES.getMinimumLevel(),
+      () -> {
+        myFixture.configureByText(
+          "a.java",
+            """
+            <caret>
+            """);
+        final TemplateImpl template =
+          TemplateSettings.getInstance().getTemplate("psvm", "Java//Instance 'main' methods for implicitly declared classes");
+        startTemplate(template);
+        LookupElement[] elements = myFixture.getLookupElements();
+        LookupElement last = elements[elements.length - 1];
+        myFixture.getLookup().setCurrentItem(last);
+        myFixture.finishLookup(Lookup.NORMAL_SELECT_CHAR);
+        myFixture.checkResult(
+            """
+            void main(String[] args) {
+                <caret>
+            }
+            """);
+      }
+    );
+  }
+
+  public void testPsvmWithoutString() {
+    IdeaTestUtil.withLevel(
+      getModule(),
+      JavaFeature.IMPLICIT_CLASSES.getMinimumLevel(),
+      () -> {
+        myFixture.configureByText(
+          "a.java",
+            """
+            class A{
+            <caret>
+            }
+            """);
+        final TemplateImpl template = TemplateSettings.getInstance().getTemplate("main", "Java//Instance 'main' methods for normal classes");
+        startTemplate(template);
+        myFixture.type("\n");
+        myFixture.checkResult(
+            """
+            class A{
+                static void main() {
+                    <caret>
+                }
+            }
+            """);
+      }
+    );
   }
 
   @Override
