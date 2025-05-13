@@ -1,4 +1,4 @@
-package com.intellij.json.json5
+package com.intellij.json.syntax.json5
 
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.util.lexer.FlexLexer

@@ -1,4 +1,4 @@
-package com.intellij.json
+package com.intellij.json.syntax
 
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.util.lexer.FlexLexer

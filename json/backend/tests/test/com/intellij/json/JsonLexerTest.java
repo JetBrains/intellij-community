@@ -2,6 +2,7 @@ package com.intellij.json;
 
 import com.intellij.json.psi.JsonElementTypeConverterFactory;
 
+import com.intellij.json.syntax.JsonSyntaxLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.platform.syntax.psi.CommonElementTypeConverterFactory;
 import com.intellij.platform.syntax.psi.lexer.LexerAdapter;

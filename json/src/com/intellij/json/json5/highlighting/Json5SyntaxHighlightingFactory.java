@@ -3,7 +3,7 @@ package com.intellij.json.json5.highlighting;
 
 import com.intellij.json.highlighting.JsonSyntaxHighlighterFactory;
 import com.intellij.json.json5.Json5Language;
-import com.intellij.json.json5.Json5SyntaxLexer;
+import com.intellij.json.syntax.json5.Json5SyntaxLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.platform.syntax.psi.lexer.LexerAdapter;
 import org.jetbrains.annotations.NotNull;

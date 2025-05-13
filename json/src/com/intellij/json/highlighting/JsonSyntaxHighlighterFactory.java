@@ -4,7 +4,7 @@ package com.intellij.json.highlighting;
 import com.intellij.json.JsonElementTypes;
 import com.intellij.json.JsonFileType;
 import com.intellij.json.JsonLanguage;
-import com.intellij.json.JsonSyntaxLexer;
+import com.intellij.json.syntax.JsonSyntaxLexer;
 import com.intellij.lang.Language;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.HighlighterColors;

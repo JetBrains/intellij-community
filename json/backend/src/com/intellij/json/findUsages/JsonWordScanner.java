@@ -3,7 +3,7 @@ package com.intellij.json.findUsages;
 
 import com.intellij.json.JsonElementTypes;
 import com.intellij.json.JsonLanguage;
-import com.intellij.json.JsonSyntaxLexer;
+import com.intellij.json.syntax.JsonSyntaxLexer;
 import com.intellij.lang.cacheBuilder.DefaultWordsScanner;
 import com.intellij.platform.syntax.psi.lexer.LexerAdapter;
 import com.intellij.psi.tree.TokenSet;

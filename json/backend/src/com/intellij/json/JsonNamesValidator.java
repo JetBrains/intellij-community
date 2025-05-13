@@ -5,6 +5,7 @@
  */
 package com.intellij.json;
 
+import com.intellij.json.syntax.JsonSyntaxLexer;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;

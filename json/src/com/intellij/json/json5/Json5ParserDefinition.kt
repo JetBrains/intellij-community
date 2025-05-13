@@ -4,6 +4,7 @@ package com.intellij.json.json5
 import com.intellij.json.JsonSyntaxParser
 import com.intellij.json.JsonParserDefinition
 import com.intellij.json.psi.impl.JsonFileImpl
+import com.intellij.json.syntax.json5.Json5SyntaxLexer
 import com.intellij.lang.ASTNode
 import com.intellij.lexer.Lexer
 import com.intellij.openapi.project.Project

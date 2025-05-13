@@ -1,6 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 {
-  parserClass = 'com.intellij.json.JsonSyntaxParser'
+  parserClass = 'com.intellij.json.syntax.JsonSyntaxParser'
   parserUtilClass = "com.intellij.json.psi.JsonParserUtil"
   psiPackage = 'com.intellij.json.psi'
   psiImplPackage = 'com.intellij.json.psi.impl'
@@ -11,8 +11,8 @@
   psiVisitorName = "JsonElementVisitor"
   
   psiOutputPath="community/json"
-  syntaxElementTypeHolderClass="JsonSyntaxElementTypes"
-  elementTypeConverterFactoryClass="JsonElementTypeConverterFactory"
+  syntaxElementTypeHolderClass="com.intellij.json.syntax.JsonSyntaxElementTypes"
+  elementTypeConverterFactoryClass="com.intellij.json.psi.JsonElementTypeConverterFactory"
 
   psiImplUtilClass = 'com.intellij.json.psi.impl.JsonPsiImplUtils'
   tokenTypeClass = 'com.intellij.json.JsonTokenType'
