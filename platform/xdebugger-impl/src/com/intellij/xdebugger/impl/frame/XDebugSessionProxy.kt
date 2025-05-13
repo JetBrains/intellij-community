@@ -104,7 +104,7 @@ interface XDebugSessionProxy {
       if (testProperty != null) {
         return testProperty.toBoolean()
       }
-      return Registry.`is`("xdebugger.toolwindow.split")
+      return useFeProxyCachedValue
     }
 
     @JvmStatic
@@ -276,3 +276,5 @@ interface XDebugSessionProxy {
 interface XSmartStepIntoHandlerEntry {
   val popupTitle: String
 }
+
+private val useFeProxyCachedValue = Registry.`is`("xdebugger.toolwindow.split")
