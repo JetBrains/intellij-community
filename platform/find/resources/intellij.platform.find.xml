@@ -4,8 +4,8 @@
     <usagePresentationProvider implementation="com.intellij.platform.find.UsageInfoModelPresentationProvider"/>
 
     <!--suppress PluginXmlRegistrationCheck -->
-    <applicationService serviceInterface="com.intellij.find.impl.FindInProjectExecutor"
-                        serviceImplementation="com.intellij.platform.find.FindInProjectExecutorImpl"/>
+    <applicationService serviceInterface="com.intellij.find.impl.FindAndReplaceExecutor"
+                        serviceImplementation="com.intellij.platform.find.FindAndReplaceExecutorImpl"/>
   </extensions>
 
 </idea-plugin>

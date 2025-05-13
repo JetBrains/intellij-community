@@ -2,7 +2,7 @@
 package com.intellij.platform.find
 
 import com.intellij.find.FindModel
-import com.intellij.find.impl.FindInProjectExecutor
+import com.intellij.find.impl.FindAndReplaceExecutor
 import com.intellij.find.impl.FindInProjectUtil
 import com.intellij.find.impl.FindKey
 import com.intellij.ide.vfs.rpcId
@@ -16,10 +16,10 @@ import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageInfoAdapter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.*
 
-@ApiStatus.Internal
-open class FindInProjectExecutorImpl(val coroutineScope: CoroutineScope): FindInProjectExecutor() {
+@Internal
+open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : FindAndReplaceExecutor {
 
   override fun findUsages(
     project: Project,
@@ -34,7 +34,6 @@ open class FindInProjectExecutorImpl(val coroutineScope: CoroutineScope): FindIn
       coroutineScope.launch {
         val filesToScanInitially = previousUsages.mapNotNull { (it as? UsageInfoModel)?.model?.fileId?.virtualFile() }.toSet()
 
-        //TODO provide custom scope and search context (it's not serializable in FindModel)
         FindRemoteApi.getInstance().findByModel(findModel, project.projectId(), filesToScanInitially.map { it.rpcId() }).collect { findResult ->
           val usage = readAction {
             UsageInfoModel(project, findResult, coroutineScope)
@@ -54,6 +53,12 @@ open class FindInProjectExecutorImpl(val coroutineScope: CoroutineScope): FindIn
         onResult(usage)
       }
       onFinish()
+    }
+  }
+
+  override fun performFindAllOrReplaceAll(findModel: FindModel, project: Project) {
+    coroutineScope.launch {
+      FindRemoteApi.getInstance().performFindAllOrReplaceAll(findModel, project.projectId())
     }
   }
 }

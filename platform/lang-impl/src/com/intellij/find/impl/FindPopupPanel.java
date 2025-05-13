@@ -1142,7 +1142,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       return;
     }
 
-    FindInProjectExecutor projectExecutor = FindInProjectExecutor.Companion.getInstance();
+    FindAndReplaceExecutor projectExecutor = FindAndReplaceExecutor.Companion.getInstance();
     TableCellRenderer renderer = projectExecutor.createTableCellRenderer();
     if (renderer == null) renderer = new UsageTableCellRenderer();
     myResultsPreviewTable.getColumnModel().getColumn(0).setCellRenderer(renderer);

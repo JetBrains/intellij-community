@@ -15,13 +15,23 @@ import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 
-@ApiStatus.Internal
+@Internal
 @Rpc
+//TODO provide custom scope and search context (it's not serializable in FindModel)
 interface FindRemoteApi : RemoteApi<Unit> {
-
+  /**
+   * Searches for matches based on the specified find model within a given project and initial set of files.
+   *
+   * @param findModel the model containing search parameters and criteria
+   * @param projectId the identifier of the project where the search is performed
+   * @param filesToScanInitially a list of file identifiers to be scanned initially as part of the search
+   * @return a flow emitting search results as instances of [FindInFilesResult]
+   */
   suspend fun findByModel(findModel: FindModel, projectId: ProjectId, filesToScanInitially: List<VirtualFileId>): Flow<FindInFilesResult>
+
+  suspend fun performFindAllOrReplaceAll(findModel: FindModel, projectId: ProjectId)
 
   companion object {
     @JvmStatic

@@ -3,8 +3,10 @@ package com.intellij.platform.find.backend
 
 import com.intellij.find.FindModel
 import com.intellij.find.actions.ShowUsagesAction
+import com.intellij.find.findInProject.FindInProjectManager
 import com.intellij.find.impl.FindInProjectUtil
 import com.intellij.find.impl.getPresentableFilePath
+import com.intellij.find.replaceInProject.ReplaceInProjectManager
 import com.intellij.ide.ui.SerializableTextChunk
 import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.ui.icons.rpcId
@@ -22,7 +24,6 @@ import com.intellij.platform.project.findProjectOrNull
 import com.intellij.usages.FindUsagesProcessPresentation
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageViewPresentation
-import fleet.multiplatform.shims.ConcurrentHashMap
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -69,7 +70,7 @@ class FindRemoteApiImpl : FindRemoteApi {
           previousResult.set(adapter)
 
           val textChunks = adapter.text.map {
-            SerializableTextChunk(it.text,it.attributes)
+            SerializableTextChunk(it.text, it.attributes)
           }
           val bgColor = VfsPresentationUtil.getFileBackgroundColor(project, virtualFile)?.rpcId()
           val presentablePath = getPresentableFilePath(project, scope, virtualFile)
@@ -93,6 +94,19 @@ class FindRemoteApiImpl : FindRemoteApi {
           usagesCount.get() <= maxUsages
         }
       }
+    }
+  }
+
+  override suspend fun performFindAllOrReplaceAll(findModel: FindModel, projectId: ProjectId) {
+    val project = projectId.findProjectOrNull()
+    if (project == null) {
+      LOG.warn("Project not found for id ${projectId}. FindAll/ReplaceAll operation skipped")
+      return
+    }
+    if (findModel.isReplaceState) {
+      ReplaceInProjectManager.getInstance(project).replaceInPath(findModel)
+    } else {
+      FindInProjectManager.getInstance(project).findInPath(findModel)
     }
   }
 }

@@ -4,6 +4,7 @@ package com.intellij.find.replaceInProject;
 import com.intellij.find.*;
 import com.intellij.find.actions.FindInPathAction;
 import com.intellij.find.findInProject.FindInProjectManager;
+import com.intellij.find.impl.FindAndReplaceExecutor;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.history.LocalHistory;
@@ -131,11 +132,7 @@ public class ReplaceInProjectManager {
     }
 
     findManager.showFindDialog(findModel, () -> {
-      if (findModel.isReplaceState()) {
-        replaceInPath(findModel);
-      } else {
-        FindInProjectManager.getInstance(myProject).findInPath(findModel);
-      }
+      FindAndReplaceExecutor.getInstance().performFindAllOrReplaceAll(findModel, myProject);
     });
   }
 
