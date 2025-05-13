@@ -30,15 +30,6 @@ internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): Plug
     spec.mainJarName = "$productLowerCase-help.jar"
     spec.directoryName = "${productName.replace(" ", "")}Help"
     spec.excludeFromModule(BUILT_IN_HELP_MODULE_NAME, "com/jetbrains/builtInHelp/indexer/**")
-    spec.withGeneratedResources { targetDir, buildContext ->
-      val assetJar = targetDir.resolve("lib/help-$productLowerCase-assets.jar")
-      buildResourcesForHelpPlugin(
-        resourceRoot = resourceRoot,
-        classPath = buildContext.getModuleRuntimeClasspath(buildContext.findRequiredModule(BUILT_IN_HELP_MODULE_NAME), false),
-        assetJar = assetJar,
-        context = context,
-      )
-    }
     spec.withPatch { patcher, buildContext ->
       patcher.patchModuleOutput(
         moduleName = BUILT_IN_HELP_MODULE_NAME,
@@ -50,6 +41,15 @@ internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): Plug
         path = "META-INF/plugin.xml",
         content = pluginXml(buildContext, pluginVersion),
         overwrite = PatchOverwriteMode.TRUE
+      )
+    }
+    spec.withGeneratedResources { targetDir, buildContext ->
+      val assetJar = targetDir.resolve("lib/help-$productLowerCase-assets.jar")
+      buildResourcesForHelpPlugin(
+        resourceRoot = resourceRoot,
+        classPath = buildContext.getModuleRuntimeClasspath(buildContext.findRequiredModule(BUILT_IN_HELP_MODULE_NAME), false),
+        assetJar = assetJar,
+        context = context,
       )
     }
   }
