@@ -152,25 +152,29 @@ fun getThisQualifier(receiverValue: KaImplicitReceiverValue): String {
  *
  * @param callableSignature The signature of the callable to be found, which includes
  * the symbol name, return type, receiver type, and value parameters.
+ * @param ignoreReturnType If true, the return type is not used for comparison.
  *
  * @return The matching callable symbol if found, null otherwise.
  */
 context(KaSession)
 fun KaDeclarationContainerSymbol.findCallableMemberBySignature(
-    callableSignature: KaCallableSignature<KaCallableSymbol>
-): KaCallableSymbol? = declaredMemberScope.findCallableMemberBySignature(callableSignature)
+    callableSignature: KaCallableSignature<KaCallableSymbol>,
+    ignoreReturnType: Boolean = false,
+): KaCallableSymbol? = declaredMemberScope.findCallableMemberBySignature(callableSignature, ignoreReturnType)
 
 /**
  * Finds a callable member of the class by its signature in the scope.
  *
  * @param callableSignature The signature of the callable to be found, which includes
  * the symbol name, return type, receiver type, and value parameters.
+ * @param ignoreReturnType If true, the return type is not used for comparison
  *
  * @return The matching callable symbol if found, null otherwise.
  */
 context(KaSession)
 fun KaScope.findCallableMemberBySignature(
-    callableSignature: KaCallableSignature<KaCallableSymbol>
+    callableSignature: KaCallableSignature<KaCallableSymbol>,
+    ignoreReturnType: Boolean = false,
 ): KaCallableSymbol? {
     fun KaType?.eq(anotherType: KaType?): Boolean {
         if (this == null || anotherType == null) return this == anotherType
@@ -191,6 +195,6 @@ fun KaScope.findCallableMemberBySignature(
 
         callable.receiverType.eq(callableSignature.receiverType) &&
                 parametersMatch() &&
-                callable.returnType.semanticallyEquals(callableSignature.returnType)
+                (ignoreReturnType || callable.returnType.semanticallyEquals(callableSignature.returnType))
     }
 }
