@@ -145,9 +145,9 @@ class TabInfo(var component: JComponent) : Queryable, PlaceProvider {
 
   fun setText(text: @NlsContexts.TabTitle String): TabInfo {
     val attributes = coloredText.attributes
-    val textAttributes = attributes.singleOrNull()?.toTextAttributes()
+    val textAttributes = attributes.singleOrNull()
     val defaultAttributes = getDefaultAttributes()
-    if (coloredText.toString() != text || textAttributes != defaultAttributes.toTextAttributes()) {
+    if (coloredText.toString() != text || textAttributes != defaultAttributes) {
       clearText(false)
       @Suppress("DialogTitleCapitalization")
       append(text, defaultAttributes)

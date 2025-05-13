@@ -953,7 +953,7 @@ class EditorWindow internal constructor(
 
   fun getComposite(inputFile: VirtualFile): EditorComposite? = findTabByFile(inputFile)?.composite
 
-  internal fun findCompositeAndTab(inputFile: VirtualFile): Pair<EditorComposite, TabInfo>? {
+  fun findCompositeAndTab(inputFile: VirtualFile): Pair<EditorComposite, TabInfo>? {
     val file = (inputFile as? BackedVirtualFile)?.originFile ?: inputFile
     for (tab in tabbedPane.tabs.tabs) {
       val composite = tab.composite

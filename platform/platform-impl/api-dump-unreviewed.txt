@@ -8486,6 +8486,7 @@ f:com.intellij.openapi.fileEditor.impl.EditorWindow
 - bs:closeFile$default(com.intellij.openapi.fileEditor.impl.EditorWindow,com.intellij.openapi.vfs.VirtualFile,Z,I,java.lang.Object):V
 - bs:closeFile$default(com.intellij.openapi.fileEditor.impl.EditorWindow,com.intellij.openapi.vfs.VirtualFile,Z,Z,I,java.lang.Object):V
 - f:composites():kotlin.sequences.Sequence
+- f:findCompositeAndTab(com.intellij.openapi.vfs.VirtualFile):kotlin.Pair
 - f:findFileComposite(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite
 - f:findSiblings():com.intellij.openapi.fileEditor.impl.EditorWindow[]
 - f:getAllComposites():java.util.List
