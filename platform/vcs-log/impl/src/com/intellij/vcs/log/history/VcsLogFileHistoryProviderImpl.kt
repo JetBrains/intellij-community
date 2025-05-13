@@ -7,10 +7,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToGraphRow
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToHash
 import com.intellij.vcs.log.impl.VcsLogTabLocation.Companion.findLogUi
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.MainVcsLogUi
@@ -20,25 +22,32 @@ import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcs.log.visible.filters.matches
 import com.intellij.vcsUtil.VcsUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.guava.await
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
-internal class VcsLogFileHistoryProviderImpl(private val project: Project) : VcsLogFileHistoryProvider {
+internal class VcsLogFileHistoryProviderImpl(private val project: Project, private val cs: CoroutineScope) : VcsLogFileHistoryProvider {
 
   override fun canShowFileHistory(paths: Collection<FilePath>, revisionNumber: String?): Boolean {
-    return canShowFileHistory(project, paths, revisionNumber)
+    return selectProvider(project, paths, revisionNumber) != null
   }
 
   override fun showFileHistory(paths: Collection<FilePath>, revisionNumber: String?) {
     selectProvider(project, paths, revisionNumber)?.showFileHistoryUi(project, paths, revisionNumber)
   }
-}
 
-internal fun canShowFileHistory(project: Project, paths: Collection<FilePath>, revisionNumber: String?): Boolean {
-  return selectProvider(project, paths, revisionNumber) != null
-}
+  override fun showFileHistory(paths: Collection<FilePath>, revisionNumber: String?, revisionToSelect: String) {
+    val ui = selectProvider(project, paths, revisionNumber)?.showFileHistoryUi(project, paths, revisionNumber, false) ?: return
+    val future = ui.jumpToHash(revisionToSelect, false, true)
 
-internal fun showFileHistoryUi(project: Project, paths: Collection<FilePath>, revisionNumber: String?, selectRow: Boolean = false): VcsLogUiEx? {
-  return selectProvider(project, paths, revisionNumber)?.showFileHistoryUi(project, paths, revisionNumber, selectRow)
+    cs.launch {
+      val title = VcsLogBundle.message("file.history.show.commit.in.history.process", VcsLogUtil.getShortHash(revisionToSelect))
+      withBackgroundProgress(project, title, true) {
+        future.await()
+      }
+    }
+  }
 }
 
 private fun selectProvider(project: Project, paths: Collection<FilePath>, revisionNumber: String?): FileHistoryLogUiProvider? {
@@ -47,7 +56,7 @@ private fun selectProvider(project: Project, paths: Collection<FilePath>, revisi
   }
 }
 
-internal interface FileHistoryLogUiProvider {
+private interface FileHistoryLogUiProvider {
   fun canShowFileHistory(project: Project, paths: Collection<FilePath>, revisionNumber: String?): Boolean
   fun showFileHistoryUi(project: Project, paths: Collection<FilePath>, revisionNumber: String?, selectRow: Boolean = true): VcsLogUiEx?
 }

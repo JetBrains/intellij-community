@@ -9,4 +9,6 @@ interface VcsLogFileHistoryProvider {
   fun canShowFileHistory(paths: Collection<FilePath>, revisionNumber: String?): Boolean
 
   fun showFileHistory(paths: Collection<FilePath>, revisionNumber: String?)
+
+  fun showFileHistory(paths: Collection<FilePath>, revisionNumber: String?, revisionToSelect: String)
 }
