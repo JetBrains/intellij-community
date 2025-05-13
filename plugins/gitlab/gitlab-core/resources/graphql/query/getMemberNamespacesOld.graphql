@@ -1,0 +1,17 @@
+query($pageSize: Int! = 100, $cursor: String = null) {
+  currentUser {
+    namespace {
+      ...namespace
+    }
+
+    # Doesn't fetch subgroups, but there's no good flat way of doing that pre-allAvailable
+    groups(first: $pageSize, after: $cursor) {
+      pageInfo {
+        ...pageInfo
+      }
+      nodes {
+        ...group
+      }
+    }
+  }
+}

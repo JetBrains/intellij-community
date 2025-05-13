@@ -15,14 +15,19 @@ import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.observable.util.addDocumentListener
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.CollectionListModel
+import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.components.JBList
+import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.Cell
+import com.intellij.util.asDisposable
 import com.intellij.util.ui.launchOnShow
 import com.intellij.util.ui.showingScope
 import com.intellij.util.ui.update.Activatable
@@ -32,6 +37,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
@@ -470,7 +476,19 @@ fun <T> ComboBoxModel<T>.bindSelectedItemIn(scope: CoroutineScope, flow: Mutable
   }
 }
 
-fun <T> Cell<ComboBox<T>>.bindSelectedItemIn(scope: CoroutineScope, flow: MutableStateFlow<T?>) = applyToComponent {
+fun Cell<JBTextField>.bindTextIn(cs: CoroutineScope, flow: MutableStateFlow<String>): Cell<JBTextField> = applyToComponent {
+  // flow -> component
+  this@applyToComponent.bindTextIn(cs, flow)
+
+  // component -> flow
+  this@applyToComponent.document.addDocumentListener(cs.asDisposable(), object : DocumentAdapter() {
+    override fun textChanged(e: javax.swing.event.DocumentEvent) {
+      flow.value = text
+    }
+  })
+}
+
+fun <T> Cell<ComboBox<T>>.bindSelectedItemIn(scope: CoroutineScope, flow: MutableStateFlow<T?>): Cell<ComboBox<T>> = applyToComponent {
   model.bindSelectedItemIn(scope, flow)
 }
 
@@ -520,8 +538,14 @@ class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineCont
 }
 
 @ApiStatus.Internal
+fun <T> StateFlow<Iterable<T>>.toComboBoxModelIn(cs: CoroutineScope): ComboBoxModel<T> =
+  MutableCollectionComboBoxModel(mutableListOf<T>()).also { model ->
+    model.bindChangesIn(cs, this.changesFlow())
+  }
+
+@ApiStatus.Internal
 fun <T> StateFlow<Iterable<T>>.toListModelIn(cs: CoroutineScope): ListModel<T> =
-  CollectionListModel(value.toList()).also { model ->
+  CollectionListModel(mutableListOf<T>()).also { model ->
     model.bindChangesIn(cs, this.changesFlow())
   }
 
@@ -538,4 +562,45 @@ private fun <T> CollectionListModel<T>.bindChangesIn(cs: CoroutineScope, changes
       }
     }
   }
+}
+
+@ApiStatus.Internal
+interface ValidationBinding<T> {
+  val valueFlow: MutableStateFlow<T>
+  var value: T
+    get() = valueFlow.value
+    set(v) {
+      valueFlow.value = v
+    }
+
+  val validationError: String?
+  val validationRequests: Flow<Unit>?
+}
+
+@ApiStatus.Internal
+fun <T> MutableStateFlow<T>.validationBinding(
+  errorFlow: StateFlow<String?>,
+): ValidationBinding<T> = validationBinding(validationError = { errorFlow.value }, validationRequests = errorFlow.map { })
+
+@ApiStatus.Internal
+fun <T> MutableStateFlow<T>.validationBinding(
+  validationError: ((T) -> @NlsContexts.DialogMessage String?)? = null,
+  validationRequests: Flow<Unit>? = null,
+): ValidationBinding<T> = object : ValidationBinding<T> {
+  override var valueFlow: MutableStateFlow<T> = this@validationBinding
+
+  override val validationError: String?
+    get() = validationError?.invoke(value)
+  override val validationRequests: Flow<Unit>?
+    get() = validationRequests
+}
+
+@ApiStatus.Internal
+fun <JC : JComponent> Cell<JC>.bindValidationOnApplyIn(cs: CoroutineScope, binding: ValidationBinding<*>): Cell<JC> {
+  validationOnApply { binding.validationError?.let(::error) }
+
+  if (binding.validationRequests != null)
+    validationRequestor { callback -> cs.launchNow { binding.validationRequests?.collect { callback() } } }
+
+  return this
 }

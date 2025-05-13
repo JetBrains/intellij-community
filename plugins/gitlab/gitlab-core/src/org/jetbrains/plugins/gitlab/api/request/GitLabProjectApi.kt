@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.api.request
 
+import com.intellij.collaboration.api.data.GraphQLRequestPagination
 import com.intellij.collaboration.api.data.asParameters
 import com.intellij.collaboration.api.dto.GraphQLConnectionDTO
 import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
@@ -17,6 +18,7 @@ import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import java.net.URI
+import java.net.http.HttpRequest.BodyPublishers
 import java.net.http.HttpResponse
 
 @SinceGitLab("12.0")
@@ -27,6 +29,23 @@ suspend fun GitLabApi.GraphQL.findProject(project: GitLabProjectCoordinates): Ht
   val request = gitLabQuery(GitLabGQLQuery.GET_PROJECT, parameters)
   return withErrorStats(GitLabGQLQuery.GET_PROJECT) {
     loadResponse<GitLabProjectDTO>(request, "project")
+  }
+}
+
+suspend fun GitLabApi.Rest.createProject(
+  namespaceId: GitLabId?, name: String,
+  isPrivate: Boolean, description: String,
+): HttpResponse<out GitLabRepositoryCreationRestDTO> {
+  val uri = server.restApiUri.resolveRelative("projects")
+    .withParams(listOfNotNull(
+      namespaceId?.guessRestId()?.let { "namespace_id" to it },
+      "name" to name,
+      "visibility" to if (isPrivate) "private" else "public",
+      "description" to description,
+    ).toMap())
+  val request = request(uri).POST(BodyPublishers.noBody()).build()
+  return withErrorStats(GitLabApiRequestName.REST_CREATE_PROJECT) {
+    loadJsonValue<GitLabRepositoryCreationRestDTO>(request)
   }
 }
 
@@ -57,6 +76,7 @@ suspend fun GitLabApi.isProjectForked(project: GitLabProjectCoordinates): Boolea
   else {
     graphQL.isProjectForked(project).body()
   }
+
 
 @SinceGitLab("13.1", note = "No exact version")
 fun GitLabApi.GraphQL.createAllProjectLabelsFlow(project: GitLabProjectCoordinates): Flow<List<GitLabLabelDTO>> =
@@ -111,6 +131,38 @@ suspend fun GitLabApi.Rest.getProjectNamespace(namespaceId: String): HttpRespons
   return withErrorStats(GitLabApiRequestName.REST_GET_PROJECT_NAMESPACE) {
     loadJsonValue(request)
   }
+}
+
+@ApiStatus.Internal
+@SinceGitLab("14.3", note = "Doesn't fetch subgroups before 17.10")
+fun GitLabApi.GraphQL.getMemberNamespacesForShare(glMetadata: GitLabServerMetadata): Flow<List<WithGitLabNamespace>> =
+  ApiPageUtil.createGQLPagesFlow { initialPage ->
+    val page = GraphQLRequestPagination(initialPage.afterCursor, 10)
+
+    val parameters = page.asParameters()
+
+    val result = if (glMetadata.version < GitLabVersion(17, 10)) {
+      val request = gitLabQuery(GitLabGQLQuery.GET_MEMBER_NAMESPACES_OLD, parameters)
+      withErrorStats(GitLabGQLQuery.GET_MEMBER_NAMESPACES_OLD) {
+        loadResponse<GitLabUserNamespacesResult>(request)
+      }
+    } else {
+      val request = gitLabQuery(GitLabGQLQuery.GET_MEMBER_NAMESPACES, parameters)
+      withErrorStats(GitLabGQLQuery.GET_MEMBER_NAMESPACES) {
+        loadResponse<GitLabUserNamespacesResult>(request)
+      }
+    }.body()
+
+    val namespaces = (if (page.afterCursor == null) listOf(result.currentUser.namespace) else listOf()) +
+                     result.groups.nodes.filter { it.userPermissions.createProjects }
+    GraphQLConnectionDTO<WithGitLabNamespace>(result.groups.pageInfo, namespaces)
+  }.map { it.nodes }
+
+private data class GitLabUserNamespacesResult(
+  val currentUser: CurrentUser,
+  val groups: GraphQLConnectionDTO<GitLabGroupDTO>,
+) {
+  data class CurrentUser(val namespace: GitLabNamespaceDTO)
 }
 
 @SinceGitLab("13.1")

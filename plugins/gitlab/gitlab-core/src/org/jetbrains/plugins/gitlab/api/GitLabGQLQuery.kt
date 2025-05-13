@@ -29,6 +29,10 @@ enum class GitLabGQLQuery(val filePath: String) {
   GET_MEMBER_PROJECTS_FOR_SNIPPETS("graphql/query/getMemberProjectsForSnippets.graphql"),
   @SinceGitLab("13.0")
   GET_MEMBER_PROJECTS_FOR_CLONE("graphql/query/getMemberProjectsForClone.graphql"),
+  @SinceGitLab("17.10")
+  GET_MEMBER_NAMESPACES("graphql/query/getMemberNamespaces.graphql"),
+  @SinceGitLab("14.3")
+  GET_MEMBER_NAMESPACES_OLD("graphql/query/getMemberNamespacesOld.graphql"),
 
   @SinceGitLab("13.1", note = "Different ID type until 13.6, should work")
   TOGGLE_MERGE_REQUEST_DISCUSSION_RESOLVE("graphql/query/toggleMergeRequestDiscussionResolve.graphql"),

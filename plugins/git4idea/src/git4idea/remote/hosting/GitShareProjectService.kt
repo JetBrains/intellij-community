@@ -7,7 +7,6 @@ import com.intellij.notification.NotificationListener
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
@@ -60,8 +59,6 @@ class GitShareProjectService(
     gitRepository: GitRepository?,
     knownRepositories: Set<HostedGitRepositoryMapping>,
   ): Boolean {
-    FileDocumentManager.getInstance().saveAllDocuments()
-
     val possibleRemotes = gitRepository
       ?.let { repository -> knownRepositories.filter { it.remote.repository == repository } }
       ?.map { it.remote.url }.orEmpty()

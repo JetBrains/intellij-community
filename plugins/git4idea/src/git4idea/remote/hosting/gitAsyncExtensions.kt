@@ -43,6 +43,9 @@ fun GitRepository.infoFlow(): Flow<GitRepoInfo> = channelFlow {
   awaitClose()
 }
 
+fun gitRemotesStateIn(project: Project, cs: CoroutineScope, started: SharingStarted = SharingStarted.Lazily): StateFlow<Set<GitRemoteUrlCoordinates>> =
+  gitRemotesFlow(project).stateIn(cs, started, GitRepositoryManager.getInstance(project).collectRemotes())
+
 fun gitRemotesFlow(project: Project): Flow<Set<GitRemoteUrlCoordinates>> =
   callbackFlow {
     val repoManager = project.serviceAsync<GitRepositoryManager>()
@@ -64,7 +67,7 @@ private fun GitRepositoryManager.collectRemotes(): Set<GitRemoteUrlCoordinates> 
 
   return repositories.flatMap { repo ->
     repo.remotes.flatMap { remote ->
-      remote.urls.mapNotNull { url ->
+      remote.urls.map { url ->
         GitRemoteUrlCoordinates(url, remote, repo)
       }
     }
@@ -106,19 +109,21 @@ private suspend fun checkSyncState(repository: GitRepository, currentRev: String
   return GitBranchSyncStatus(true, true)
 }
 
-fun <S : ServerPath, M : HostedGitRepositoryMapping> GitRemotesFlow.mapToServers(serversState: Flow<Set<S>>,
-                                                                                 mapper: (S, GitRemoteUrlCoordinates) -> M?)
-  : Flow<Set<M>> =
+fun <S : ServerPath, M : HostedGitRepositoryMapping> GitRemotesFlow.mapToServers(
+  serversState: Flow<Set<S>>,
+  mapper: (S, GitRemoteUrlCoordinates) -> M?,
+): Flow<Set<M>> =
   combine(serversState) { remotes, servers ->
     remotes.asSequence().mapNotNull { remote ->
       servers.find { GitHostingUrlUtil.match(it.toURI(), remote.url) }?.let { mapper(it, remote) }
     }.toSet()
   }
 
-fun <S : ServerPath> GitRemotesFlow.discoverServers(knownServersFlow: Flow<Set<S>>,
-                                                    parallelism: Int = 10,
-                                                    checkForDedicatedServer: suspend (GitRemoteUrlCoordinates) -> S?)
-  : Flow<S> {
+fun <S : ServerPath> GitRemotesFlow.discoverServers(
+  knownServersFlow: Flow<Set<S>>,
+  parallelism: Int = 10,
+  checkForDedicatedServer: suspend (GitRemoteUrlCoordinates) -> S?,
+): Flow<S> {
   val remotesFlow = this
   return channelFlow {
     remotesFlow.combine(knownServersFlow) { remotes, servers ->

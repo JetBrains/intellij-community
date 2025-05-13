@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.workspace.SubprojectInfoProvider
 import com.intellij.openapi.util.NlsSafe
@@ -51,6 +52,8 @@ object GHShareProjectUtil {
     root: VirtualFile,
     projectName: @NlsSafe String,
   ) {
+    FileDocumentManager.getInstance().saveAllDocuments()
+
     val githubServiceName = GithubBundle.message("settings.configurable.display.name")
 
     val gitSpService = project.service<GitShareProjectService>()

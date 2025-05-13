@@ -41,6 +41,7 @@
 
   <content>
     <module name="intellij.vcs.gitlab" loading="embedded"/>
+    <module name="intellij.vcs.gitlab.git"/>
     <module name="intellij.vcs.gitlab.yaml"/>
   </content>
 

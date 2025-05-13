@@ -1,0 +1,16 @@
+query($pageSize: Int! = 100, $cursor: String = null) {
+  currentUser {
+    namespace {
+      ...namespace
+    }
+  }
+
+  groups(allAvailable: false, first: $pageSize, after: $cursor) {
+    pageInfo {
+      ...pageInfo
+    }
+    nodes {
+      ...group
+    }
+  }
+}

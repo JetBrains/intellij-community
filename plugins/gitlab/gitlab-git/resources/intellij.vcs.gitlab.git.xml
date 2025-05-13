@@ -1,0 +1,14 @@
+<idea-plugin package="org.jetbrains.plugins.gitlab.git">
+  <resource-bundle>messages.GitLabBundle</resource-bundle>
+
+  <dependencies>
+    <plugin id="Git4Idea"/>
+  </dependencies>
+
+  <actions>
+    <action id="GitLab.Share" class="org.jetbrains.plugins.gitlab.git.share.GitLabShareProjectAction"
+            icon="com.intellij.vcs.gitlab.icons.GitlabIcons.GitLabLogo">
+      <add-to-group group-id="GitLab.Main.Group"/>
+    </action>
+  </actions>
+</idea-plugin>
