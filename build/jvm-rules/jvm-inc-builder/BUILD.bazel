@@ -1,0 +1,116 @@
+load("@rules_jvm//:jvm.bzl", "jvm_import", "jvm_library", "jvm_test")
+
+jvm_library(
+  name = "jvm-inc-builder",
+  module_name = "intellij.tools.build.bazel.jvmIncBuilder",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@rules_jvm//dependency-graph",
+    "//:jps-javac-extension",
+    "//:annotations",
+    "//:h2-mvstore",
+    "//:hash4j",
+    "//:asm-all",
+    "//:kotlin-metadata",
+    "//:caffeine",
+    "//:intellij-deps-fastutil",
+    "//:qdox",
+    "@rules_jvm//jps-builders-6:build-javac-rt",
+    "//:jps",    # for instrumentation-util and instrumenters
+    "//:kotlin-compose-compiler-plugin",
+    "//:kotlin-serialization-compiler-plugin",
+    "patched-kotlin-compiler-for-bazel",
+  ]
+)
+
+# todo: temporarily commented
+#jvm_library(
+#  name = "jvm-inc-builder_test_lib",
+#  visibility = ["//visibility:public"],
+#  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+#  associates = [":jvm-inc-builder"],
+#  deps = [
+    #"//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
+    #"//jps/jps-builders-6:build-javac-rt",
+    #"@rules_jvm//dependency-graph",
+    #"//platform/util-rt",
+    #"//platform/util-rt:util-rt_test_lib",
+    #"@lib//:jps-javac-extension",
+    #"@lib//:jetbrains-annotations",
+    #"@lib//:mvstore",
+    #"@lib//:hash4j",
+    #"@lib//:asm",
+    #"@lib//:kotlin-metadata",
+    #"@lib//:caffeine",
+    #"@lib//:fastutil-min",
+    #"@lib//:platform-jps-build-jvm_inc_builder-qdox-java-parser",
+    #"@lib//:junit3",
+    #"@lib//:kotlinc-kotlin-compiler-common-provided",
+    #"@lib//:kotlinc-kotlin-compiler-cli-provided",
+#  ]
+#)
+
+#jvm_test(
+#  name = "jvm-inc-builder_test",
+#  runtime_deps = [":jvm-inc-builder_test_lib"]
+#)
+
+java_library(
+  name = "patched-kotlin-compiler-for-bazel",
+  exports = [
+    ":kotlin-compiler-2_2_20-dev-2951_http_import",
+    ":kotlin-stdlib-jdk8-2_2_20-dev-2951_http_import",
+    ":kotlin-stdlib-2_2_20-dev-2951_http_import",
+    ":kotlin-stdlib-jdk7-2_2_20-dev-2951_http_import",
+    ":kotlin-script-runtime-2_2_20-dev-2951_http_import",
+    ":kotlin-reflect-1_6_10_http_import",
+    #":kotlinx-coroutines-core-jvm-1_8_0_http_import",
+    #":annotations-23_0_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "kotlin-compiler-2_2_20-dev-2951_http_import",
+  jar = "@kotlin-compiler-2_2_20-dev-2951_http//file"
+)
+
+jvm_import(
+  name = "kotlin-stdlib-jdk8-2_2_20-dev-2951_http_import",
+  jar = "@kotlin-stdlib-jdk8-2_2_20-dev-2951_http//file"
+)
+
+jvm_import(
+  name = "kotlin-stdlib-2_2_20-dev-2951_http_import",
+  jar = "@kotlin-stdlib-2_2_20-dev-2951_http//file"
+)
+
+jvm_import(
+  name = "kotlin-stdlib-jdk7-2_2_20-dev-2951_http_import",
+  jar = "@kotlin-stdlib-jdk7-2_2_20-dev-2951_http//file"
+)
+
+jvm_import(
+  name = "kotlin-script-runtime-2_2_20-dev-2951_http_import",
+  jar = "@kotlin-script-runtime-2_2_20-dev-2951_http//file"
+)
+
+jvm_import(
+  name = "kotlin-reflect-1_6_10_http_import",
+  jar = "@kotlin-reflect-1_6_10_http//file"
+)
+
+#jvm_import(
+#  name = "kotlinx-coroutines-core-jvm-1_8_0_http_import",
+#  jar = "@kotlinx-coroutines-core-jvm-1_8_0_http//file"
+#)
+
+#jvm_import(
+#  name = "annotations-23_0_0_http_import",
+#  jar = "@annotations-23_0_0_http//file"
+#)
+
+
+
+### skip generation section `build intellij.tools.build.bazel.jvmIncBuilder`

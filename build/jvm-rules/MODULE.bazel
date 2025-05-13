@@ -43,6 +43,13 @@ http_file(
     url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/jps/jps-19.03.25.jar",
 )
 
+http_file(
+  name = "javax_annotation-api-1_3_2_http",
+  downloaded_file_path = "javax.annotation-api-1.3.2.jar",
+  sha256 = "e04ba5195bcd555dc95650f7cc614d151e4bcd52d29a10b8aa2197f3ab89ab9b",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/javax/annotation/javax.annotation-api/1.3.2/javax.annotation-api-1.3.2.jar",
+)
+
 http_archive(
     name = "kotlin-compiler_http",
     build_file = "//:BUILD.kotlinc.bazel",
@@ -56,6 +63,61 @@ http_file(
     sha256 = "1a682b5f992b641456a7b9bf03f2bd60731e47cdc297dd825db0683e6367dbe4",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compiler/2.1.20/kotlin-compiler-2.1.20-sources.jar",
 )
+
+
+# ------------------------patched kotlin compiler fork for jvm-inc-builder
+
+http_file(
+  name = "kotlin-compiler-2_2_20-dev-2951_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler/2.2.20-dev-2951/kotlin-compiler-2.2.20-dev-2951.jar",
+  sha256 = "3b2914a13d42b61549c42c0a1749fb9f4d973bc39cbcbf82dc7574d04d6c5d69",
+  downloaded_file_path = "kotlin-compiler-2.2.20-dev-2951.jar"
+)
+
+http_file(
+  name = "kotlin-stdlib-jdk8-2_2_20-dev-2951_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-stdlib-jdk8/2.2.20-dev-2951/kotlin-stdlib-jdk8-2.2.20-dev-2951.jar",
+  sha256 = "8b6cecbc7d26497c9ea8bf242f13abcbc0920a9cdb7913013373331cd0572d87",
+  downloaded_file_path = "kotlin-stdlib-jdk8-2.2.20-dev-2951.jar"
+)
+
+http_file(
+  name = "kotlin-stdlib-2_2_20-dev-2951_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-stdlib/2.2.20-dev-2951/kotlin-stdlib-2.2.20-dev-2951.jar",
+  sha256 = "9d7798df2dbc4274b64ff8e3da327641ebe84c03a1a17fd4a97bef0f79b8f110",
+  downloaded_file_path = "kotlin-stdlib-2.2.20-dev-2951.jar"
+)
+
+http_file(
+  name = "kotlin-stdlib-jdk7-2_2_20-dev-2951_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-stdlib-jdk7/2.2.20-dev-2951/kotlin-stdlib-jdk7-2.2.20-dev-2951.jar",
+  sha256 = "7e3a8231bdf77a256d3d6086114b8aae6faefa675091c5c8a0653c32f3582895",
+  downloaded_file_path = "kotlin-stdlib-jdk7-2.2.20-dev-2951.jar"
+)
+
+http_file(
+  name = "kotlin-script-runtime-2_2_20-dev-2951_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-script-runtime/2.2.20-dev-2951/kotlin-script-runtime-2.2.20-dev-2951.jar",
+  sha256 = "0a8c8e7e55c6353cd5aad03d7320628480e1eea74f8d744e22e17db63a424890",
+  downloaded_file_path = "kotlin-script-runtime-2.2.20-dev-2951.jar"
+)
+
+http_file(
+  name = "kotlin-reflect-1_6_10_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-reflect/1.6.10/kotlin-reflect-1.6.10.jar",
+  sha256 = "3277ac102ae17aad10a55abec75ff5696c8d109790396434b496e75087854203",
+  downloaded_file_path = "kotlin-reflect-1.6.10.jar"
+)
+
+http_file(
+  name = "kotlinx-coroutines-core-jvm-1_8_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.8.0/kotlinx-coroutines-core-jvm-1.8.0.jar",
+  sha256 = "9860906a1937490bf5f3b06d2f0e10ef451e65b95b269f22daf68a3d1f5065c5",
+  downloaded_file_path = "kotlinx-coroutines-core-jvm-1.8.0.jar"
+)
+
+#-----------------------------------------------------
+
 
 ### auto-generated section `libraries` start
 http_file(
@@ -729,6 +791,20 @@ http_file(
     sha256 = "fa21f27635dabbfe9b1019056683398ac363ba231a609ddedc72a46204ae0424",
     url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/io/netty/netty-buffer/4.2.2.Final-SNAPSHOT/netty-buffer-4.2.2.Final-20250508.062804-10-sources.jar",
 )
+
+http_file(
+  name = "netty-transport-jps_http",
+  downloaded_file_path = "netty-transport-4.1.117.Final.jar",
+  sha256 = "c07aac2ea55aa42c34fc6b53fbee661e0de077f45483133b6ca297c70a67a44a",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-transport/4.1.117.Final/netty-transport-4.1.117.Final.jar",
+)
+http_file(
+  name = "netty-codec-jps_http",
+  downloaded_file_path = "netty-codec-4.1.117.Final.jar",
+  sha256 = "0b93f01cff5bc2a64af829ca01c826e8e861a03b96a871fa2a240fa25681df78",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec/4.1.117.Final/netty-codec-4.1.117.Final.jar",
+)
+
 
 ### auto-generated section `libraries` end
 

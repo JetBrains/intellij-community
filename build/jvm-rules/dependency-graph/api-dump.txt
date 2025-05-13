@@ -1,0 +1,181 @@
+f:org.jetbrains.jps.dependency.AffectionScopeMetaUsage
+- org.jetbrains.jps.dependency.Usage
+- <init>(org.jetbrains.jps.dependency.ReferenceID):V
+- equals(java.lang.Object):Z
+- getElementOwner():org.jetbrains.jps.dependency.ReferenceID
+- hashCode():I
+- write(org.jetbrains.jps.dependency.GraphDataOutput):V
+org.jetbrains.jps.dependency.BackDependencyIndex
+- s:createEmpty(java.lang.String):org.jetbrains.jps.dependency.BackDependencyIndex
+- a:getDependencies(org.jetbrains.jps.dependency.ReferenceID):java.lang.Iterable
+- a:getKeys():java.lang.Iterable
+- a:getName():java.lang.String
+- a:indexNode(org.jetbrains.jps.dependency.Node):V
+- a:integrate(java.lang.Iterable,java.lang.Iterable,org.jetbrains.jps.dependency.BackDependencyIndex):V
+org.jetbrains.jps.dependency.BaseMaplet
+- java.io.Closeable
+- java.io.Flushable
+- a:close():V
+- a:containsKey(java.lang.Object):Z
+- a:flush():V
+- a:getKeys():java.lang.Iterable
+- a:remove(java.lang.Object):V
+org.jetbrains.jps.dependency.CompositeBackDependencyIndex
+- org.jetbrains.jps.dependency.BackDependencyIndex
+- s:create(java.lang.String,java.lang.Iterable):org.jetbrains.jps.dependency.CompositeBackDependencyIndex
+org.jetbrains.jps.dependency.CompositeGraph
+- org.jetbrains.jps.dependency.Graph
+- s:create(java.lang.Iterable):org.jetbrains.jps.dependency.CompositeGraph
+org.jetbrains.jps.dependency.DataReader
+- a:load(org.jetbrains.jps.dependency.GraphDataInput):java.lang.Object
+org.jetbrains.jps.dependency.DataWriter
+- a:save(org.jetbrains.jps.dependency.GraphDataOutput,java.lang.Object):V
+org.jetbrains.jps.dependency.Delta
+- org.jetbrains.jps.dependency.Graph
+- a:associate(org.jetbrains.jps.dependency.Node,java.lang.Iterable):V
+- a:getBaseSources():java.util.Set
+- a:getDeletedSources():java.util.Set
+- a:isSourceOnly():Z
+org.jetbrains.jps.dependency.DependencyGraph
+- java.io.Closeable
+- java.io.Flushable
+- org.jetbrains.jps.dependency.Graph
+- a:createDelta(java.lang.Iterable,java.lang.Iterable,Z):org.jetbrains.jps.dependency.Delta
+- differentiate(org.jetbrains.jps.dependency.Delta,org.jetbrains.jps.dependency.DifferentiateParameters):org.jetbrains.jps.dependency.DifferentiateResult
+- a:differentiate(org.jetbrains.jps.dependency.Delta,org.jetbrains.jps.dependency.DifferentiateParameters,java.lang.Iterable):org.jetbrains.jps.dependency.DifferentiateResult
+- a:integrate(org.jetbrains.jps.dependency.DifferentiateResult):V
+org.jetbrains.jps.dependency.DifferentiateContext
+- a:affectNodeSource(org.jetbrains.jps.dependency.NodeSource):V
+- a:affectUsage(java.lang.Iterable,java.util.function.Predicate):V
+- a:affectUsage(org.jetbrains.jps.dependency.Usage):V
+- a:affectUsage(org.jetbrains.jps.dependency.Usage,java.util.function.Predicate):V
+- a:getDelta():org.jetbrains.jps.dependency.Delta
+- a:getGraph():org.jetbrains.jps.dependency.Graph
+- a:getParams():org.jetbrains.jps.dependency.DifferentiateParameters
+- a:isCompiled(org.jetbrains.jps.dependency.NodeSource):Z
+- a:isDeleted(org.jetbrains.jps.dependency.ReferenceID):Z
+org.jetbrains.jps.dependency.DifferentiateParameters
+- s:affectableInCurrentChunk(org.jetbrains.jps.dependency.DifferentiateParameters):java.util.function.Predicate
+- a:affectionFilter():java.util.function.Predicate
+- a:belongsToCurrentCompilationChunk():java.util.function.Predicate
+- getSessionName():java.lang.String
+- a:isCalculateAffected():Z
+- a:isCompiledWithErrors():Z
+- a:isProcessConstantsIncrementally():Z
+org.jetbrains.jps.dependency.DifferentiateResult
+- s:createNonIncremental(java.lang.String,org.jetbrains.jps.dependency.DifferentiateParameters,org.jetbrains.jps.dependency.Delta,Z,java.lang.Iterable):org.jetbrains.jps.dependency.DifferentiateResult
+- a:getAffectedSources():java.lang.Iterable
+- a:getDeletedNodes():java.lang.Iterable
+- a:getDelta():org.jetbrains.jps.dependency.Delta
+- a:getParameters():org.jetbrains.jps.dependency.DifferentiateParameters
+- getSessionName():java.lang.String
+- isIncremental():Z
+- a:isIntegrable():Z
+org.jetbrains.jps.dependency.DifferentiateStrategy
+- a:differentiate(org.jetbrains.jps.dependency.DifferentiateContext,java.lang.Iterable,java.lang.Iterable,java.lang.Iterable):Z
+- isIncremental(org.jetbrains.jps.dependency.DifferentiateContext,org.jetbrains.jps.dependency.Node):Z
+org.jetbrains.jps.dependency.Enumerator
+org.jetbrains.jps.dependency.ExternalizableGraphElement
+- a:write(org.jetbrains.jps.dependency.GraphDataOutput):V
+org.jetbrains.jps.dependency.Externalizer
+- org.jetbrains.jps.dependency.DataReader
+- org.jetbrains.jps.dependency.DataWriter
+- a:createStorage(I):java.lang.Object[]
+- s:forAnyGraphElement(java.util.function.Function):org.jetbrains.jps.dependency.Externalizer
+- s:forGraphElement(org.jetbrains.jps.dependency.DataReader,java.util.function.Function):org.jetbrains.jps.dependency.Externalizer
+org.jetbrains.jps.dependency.FactoredExternalizableGraphElement
+- org.jetbrains.jps.dependency.ExternalizableGraphElement
+- a:getFactorData():org.jetbrains.jps.dependency.ExternalizableGraphElement
+org.jetbrains.jps.dependency.Graph
+- a:getDependingNodes(org.jetbrains.jps.dependency.ReferenceID):java.lang.Iterable
+- a:getIndex(java.lang.String):org.jetbrains.jps.dependency.BackDependencyIndex
+- a:getIndices():java.lang.Iterable
+- a:getNodes(org.jetbrains.jps.dependency.NodeSource):java.lang.Iterable
+- getNodes(org.jetbrains.jps.dependency.NodeSource,java.lang.Class):java.lang.Iterable
+- s:getNodesOfType(java.lang.Iterable,java.lang.Class):java.lang.Iterable
+- a:getRegisteredNodes():java.lang.Iterable
+- a:getSources():java.lang.Iterable
+- a:getSources(org.jetbrains.jps.dependency.ReferenceID):java.lang.Iterable
+org.jetbrains.jps.dependency.GraphConfiguration
+- s:create(org.jetbrains.jps.dependency.DependencyGraph,org.jetbrains.jps.dependency.NodeSourcePathMapper):org.jetbrains.jps.dependency.GraphConfiguration
+- a:getGraph():org.jetbrains.jps.dependency.DependencyGraph
+- a:getPathMapper():org.jetbrains.jps.dependency.NodeSourcePathMapper
+org.jetbrains.jps.dependency.GraphDataInput
+- java.io.DataInput
+- a:readGraphElement():org.jetbrains.jps.dependency.ExternalizableGraphElement
+- a:readGraphElementCollection(java.util.Collection):java.util.Collection
+org.jetbrains.jps.dependency.GraphDataOutput
+- java.io.DataOutput
+- a:writeGraphElement(org.jetbrains.jps.dependency.ExternalizableGraphElement):V
+- a:writeGraphElementCollection(java.lang.Class,java.lang.Iterable):V
+org.jetbrains.jps.dependency.Maplet
+- org.jetbrains.jps.dependency.BaseMaplet
+- a:get(java.lang.Object):java.lang.Object
+- a:put(java.lang.Object,java.lang.Object):V
+org.jetbrains.jps.dependency.MapletFactory
+- a:createMaplet(java.lang.String,org.jetbrains.jps.dependency.Externalizer,org.jetbrains.jps.dependency.Externalizer):org.jetbrains.jps.dependency.Maplet
+- a:createSetMultiMaplet(java.lang.String,org.jetbrains.jps.dependency.Externalizer,org.jetbrains.jps.dependency.Externalizer):org.jetbrains.jps.dependency.MultiMaplet
+org.jetbrains.jps.dependency.MultiMaplet
+- org.jetbrains.jps.dependency.BaseMaplet
+- a:appendValue(java.lang.Object,java.lang.Object):V
+- appendValues(java.lang.Object,java.lang.Iterable):V
+- a:get(java.lang.Object):java.lang.Iterable
+- a:put(java.lang.Object,java.lang.Iterable):V
+- a:removeValue(java.lang.Object,java.lang.Object):V
+- removeValues(java.lang.Object,java.lang.Iterable):V
+- update(java.lang.Object,java.lang.Iterable,java.util.function.BiFunction):V
+org.jetbrains.jps.dependency.Node
+- org.jetbrains.jps.dependency.ExternalizableGraphElement
+- org.jetbrains.jps.dependency.diff.DiffCapable
+- a:getReferenceID():org.jetbrains.jps.dependency.ReferenceID
+- a:getUsages():java.lang.Iterable
+org.jetbrains.jps.dependency.NodeBuilder
+- a:addUsage(org.jetbrains.jps.dependency.Usage):V
+- a:getReferenceID():org.jetbrains.jps.dependency.ReferenceID
+- a:getResult():org.jetbrains.jps.dependency.Node
+org.jetbrains.jps.dependency.NodeSource
+- org.jetbrains.jps.dependency.ExternalizableGraphElement
+- a:equals(java.lang.Object):Z
+- a:hashCode():I
+- a:toString():java.lang.String
+org.jetbrains.jps.dependency.NodeSourcePathMapper
+- a:toNodeSource(java.io.File):org.jetbrains.jps.dependency.NodeSource
+- a:toNodeSource(java.lang.String):org.jetbrains.jps.dependency.NodeSource
+- a:toNodeSource(java.nio.file.Path):org.jetbrains.jps.dependency.NodeSource
+- a:toPath(org.jetbrains.jps.dependency.NodeSource):java.nio.file.Path
+org.jetbrains.jps.dependency.ReferenceID
+- org.jetbrains.jps.dependency.ExternalizableGraphElement
+- a:equals(java.lang.Object):Z
+- a:hashCode():I
+org.jetbrains.jps.dependency.Usage
+- org.jetbrains.jps.dependency.ExternalizableGraphElement
+- a:equals(java.lang.Object):Z
+- a:getElementOwner():org.jetbrains.jps.dependency.ReferenceID
+- a:hashCode():I
+org.jetbrains.jps.dependency.ValuesFilteredBackDependencyIndex
+- org.jetbrains.jps.dependency.BackDependencyIndex
+- s:create(org.jetbrains.jps.dependency.BackDependencyIndex,java.util.function.Predicate):org.jetbrains.jps.dependency.ValuesFilteredBackDependencyIndex
+org.jetbrains.jps.dependency.diff.DiffCapable
+- a:diffHashCode():I
+- a:difference(org.jetbrains.jps.dependency.diff.DiffCapable):org.jetbrains.jps.dependency.diff.Difference
+- a:isSame(org.jetbrains.jps.dependency.diff.DiffCapable):Z
+- s:wrap(java.lang.Object):org.jetbrains.jps.dependency.diff.DiffCapable$Adapter
+- s:wrap(java.lang.Object,java.util.function.BiPredicate,java.util.function.Function,java.util.function.BiFunction):org.jetbrains.jps.dependency.diff.DiffCapable$Adapter
+org.jetbrains.jps.dependency.diff.DiffCapable$Adapter
+- org.jetbrains.jps.dependency.diff.DiffCapable
+- a:getValue():java.lang.Object
+org.jetbrains.jps.dependency.diff.Difference
+- s:deepDiff(java.lang.Iterable,java.lang.Iterable):org.jetbrains.jps.dependency.diff.Difference$Specifier
+- s:deepDiff(java.lang.Iterable,java.lang.Iterable,java.util.function.BiPredicate,java.util.function.Function,java.util.function.BiFunction):org.jetbrains.jps.dependency.diff.Difference$Specifier
+- s:diff(java.lang.Iterable,java.lang.Iterable):org.jetbrains.jps.dependency.diff.Difference$Specifier
+- a:unchanged():Z
+org.jetbrains.jps.dependency.diff.Difference$Change
+- s:create(java.lang.Object,java.lang.Object,org.jetbrains.jps.dependency.diff.Difference):org.jetbrains.jps.dependency.diff.Difference$Change
+- a:getDiff():org.jetbrains.jps.dependency.diff.Difference
+- a:getNow():java.lang.Object
+- a:getPast():java.lang.Object
+org.jetbrains.jps.dependency.diff.Difference$Specifier
+- added():java.lang.Iterable
+- changed():java.lang.Iterable
+- removed():java.lang.Iterable
+- unchanged():Z

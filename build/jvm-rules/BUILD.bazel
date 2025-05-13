@@ -70,14 +70,42 @@ jvm_import(
         "//src/jvm-builder:__subpackages__",
         "//src/jvm-builder-core:__subpackages__",
         "//src/kotlin/kotlin-builder:__subpackages__",
+        "//src/jvm-builder:__subpackages__",
+        "//jvm-inc-builder:__subpackages__",
+        "//jps-builders-6:__subpackages__",
+        "//dependency-graph:__subpackages__",
     ],
 )
+
+jvm_import(
+    name = "netty-transport-jps",
+    jar = "@netty-transport-jps_http//file",
+    visibility = [
+        "//jps-builders-6:__subpackages__",
+    ],
+)
+jvm_import(
+    name = "netty-codec-jps",
+    jar = "@netty-codec-jps_http//file",
+    visibility = [
+        "//jps-builders-6:__subpackages__",
+    ],
+)
+
+
 
 jvm_import(
     name = "jps-javac-extension",
     jar = "@jps-javac-extension//file",
     visibility = ["//visibility:public"],
 )
+
+jvm_import(
+  name = "javax-annotation-api",
+  jar = "@javax_annotation-api-1_3_2_http//file",
+  visibility = ["//visibility:public"]
+)
+
 
 # jvm_import(
 #     name = "kotlin-compiler",

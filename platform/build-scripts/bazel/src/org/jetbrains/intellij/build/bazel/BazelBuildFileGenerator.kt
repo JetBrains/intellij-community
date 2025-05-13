@@ -6,11 +6,7 @@ package org.jetbrains.intellij.build.bazel
 import com.intellij.openapi.util.NlsSafe
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jetbrains.jps.model.JpsProject
-import org.jetbrains.jps.model.java.JavaResourceRootType
-import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.jetbrains.jps.model.java.JpsJavaDependencyScope
-import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.jetbrains.jps.model.java.LanguageLevel
+import org.jetbrains.jps.model.java.*
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
@@ -20,8 +16,7 @@ import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.kotlin.jps.model.JpsKotlinFacetModuleExtension
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.IdentityHashMap
-import java.util.TreeMap
+import java.util.*
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.invariantSeparatorsPathString
@@ -35,6 +30,29 @@ internal class ModuleList(
   @JvmField val deps = IdentityHashMap<ModuleDescriptor, ModuleDeps>()
   @JvmField val testDeps = IdentityHashMap<ModuleDescriptor, ModuleDeps>()
 }
+
+internal data class CustomModuleDescription(
+  val moduleName: String,
+  val bazelPackage: String,
+  val bazelTargetName: String,
+  val outputDirectory: String,
+) {
+  val dependencyLabel = if (bazelPackage.substringAfterLast("/") == bazelTargetName) {
+    bazelPackage
+  }
+  else {
+    "${bazelPackage}:${bazelTargetName}"
+  }
+}
+
+internal val customModules: Map<String, CustomModuleDescription> = listOf(
+  CustomModuleDescription(moduleName = "intellij.idea.community.build.zip", bazelPackage = "@rules_jvm//zip", bazelTargetName = "zip",
+                          outputDirectory = "out/bazel-out/rules_jvm+/\${CONF}/bin/zip"),
+  CustomModuleDescription(moduleName = "intellij.platform.jps.build.dependencyGraph", bazelPackage = "@rules_jvm//dependency-graph", bazelTargetName = "dependency-graph",
+                          outputDirectory = "out/bazel-out/rules_jvm+/\${CONF}/bin/dependency-graph"),
+  CustomModuleDescription(moduleName = "intellij.platform.jps.build.javac.rt", bazelPackage = "@rules_jvm//jps-builders-6", bazelTargetName = "build-javac-rt",
+                          outputDirectory = "out/bazel-out/rules_jvm+/\${CONF}/bin/build-javac-rt"),
+).associateBy { it.moduleName }
 
 @Suppress("ReplaceGetOrSet")
 internal class BazelBuildFileGenerator(
@@ -245,6 +263,14 @@ internal class BazelBuildFileGenerator(
   )
 
   fun generateModuleBuildFiles(list: ModuleList, isCommunity: Boolean): ModuleGenerationResult {
+    // assert that customModules are still actual
+    for (customModule in customModules.values) {
+      check(list.ultimate.any { it.module.name == customModule.moduleName } ||
+            list.community.any { it.module.name == customModule.moduleName }) {
+        "Unknown module name: ${customModule.moduleName} in `customModules`"
+      }
+    }
+
     val targetsPerModule = mutableListOf<ModuleTargets>()
     val fileToUpdater = LinkedHashMap<Path, Pair<BazelFileUpdater, BuildFile>>()
     for (module in (if (isCommunity) list.community else list.ultimate)) {
@@ -277,8 +303,9 @@ internal class BazelBuildFileGenerator(
   }
 
   fun getBazelDependencyLabel(module: ModuleDescriptor, dependent: ModuleDescriptor): String {
-    if (module.module.name == "intellij.idea.community.build.zip") {
-      return "@rules_jvm//zip"
+    val customModule = customModules[module.module.name]
+    if (customModule != null) {
+      return customModule.dependencyLabel
     }
 
     val dependentIsCommunity = dependent.isCommunity
@@ -469,14 +496,16 @@ internal class BazelBuildFileGenerator(
       relativePathFromRoot
     }
 
+    val customModule = customModules[moduleDescriptor.module.name]
+
     val packagePrefix = when {
-      moduleDescriptor.module.name == "intellij.idea.community.build.zip" -> "@rules_jvm//zip"
+      customModule != null -> customModule.bazelPackage
       moduleDescriptor.isCommunity -> "@community//${bazelModuleRelativePath}"
       else -> "//${bazelModuleRelativePath}"
     }
 
     val jarOutputDirectory = when {
-      moduleDescriptor.module.name == "intellij.idea.community.build.zip" -> "out/bazel-out/rules_jvm+/\${CONF}/bin/zip"
+      customModule != null -> customModule.outputDirectory
       moduleDescriptor.isCommunity -> "out/bazel-out/community+/\${CONF}/bin/$bazelModuleRelativePath"
       else -> "out/bazel-bin/$bazelModuleRelativePath"
     }
@@ -716,19 +745,17 @@ private fun isUsed(
 }
 
 private fun jpsModuleNameToBazelBuildName(module: JpsModule, baseBuildDir: Path, projectDir: Path): @NlsSafe String {
-  // non-standard location unfortunately
-  val moduleName = module.name
-  if (moduleName == "intellij.idea.community.build.zip") {
-    return "zip"
+  val customModule = customModules[module.name]
+  if (customModule != null) {
+    return customModule.bazelTargetName
   }
 
   val baseDirFilename = baseBuildDir.fileName.toString()
-  if (baseDirFilename != "resources" &&
-      (moduleName.endsWith(".$baseDirFilename") || (camelToSnakeCase(moduleName, '-')).endsWith(".$baseDirFilename"))) {
+  if (baseDirFilename != "resources" && module.name.endsWith(".$baseDirFilename")) {
     return baseDirFilename
   }
 
-  val result = moduleName
+  val result = module.name
     .removePrefix("intellij.platform.")
     .removePrefix("intellij.idea.community.")
     .removePrefix("intellij.")

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -11,6 +11,7 @@ import org.jetbrains.jps.dependency.impl.PathSource;
 import org.jetbrains.jps.dependency.java.JVMFlags;
 import org.jetbrains.jps.dependency.java.JvmClass;
 import org.jetbrains.jps.dependency.serializer.JvmClassTestUtil;
+import org.jetbrains.jps.incremental.storage.graph.PersistentMapletFactory;
 import org.jetbrains.jps.javac.Iterators;
 
 import java.io.File;
@@ -21,7 +22,7 @@ public class NodeGraphPersistentTest extends BasePlatformTestCase {
   public void testPersistentNodeGraph() throws IOException {
     // Create and fill out the graph
     File tempDirectory = FileUtil.createTempDirectory("persistent", "map");
-    try (DependencyGraphImpl graph = new DependencyGraphImpl(Containers.createPersistentContainerFactory(tempDirectory.getAbsolutePath()))) {
+    try (DependencyGraphImpl graph = new DependencyGraphImpl(new PersistentMapletFactory(tempDirectory.getAbsolutePath()))) {
       NodeSource aSrc = createNodeSource("A");
       NodeSource bSrc = createNodeSource("B");
 
@@ -54,7 +55,7 @@ public class NodeGraphPersistentTest extends BasePlatformTestCase {
   public void testIntegrateNodesWithSameID() throws IOException {
     // Create and fill out the graph
     File tempDirectory = FileUtil.createTempDirectory("persistent", "map");
-    try (DependencyGraphImpl graph = new DependencyGraphImpl(Containers.createPersistentContainerFactory(tempDirectory.getAbsolutePath()))) {
+    try (DependencyGraphImpl graph = new DependencyGraphImpl(new PersistentMapletFactory(tempDirectory.getAbsolutePath()))) {
       NodeSource aSrc = createNodeSource("A");
       NodeSource bSrc = createNodeSource("B");
 

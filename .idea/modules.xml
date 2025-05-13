@@ -828,7 +828,8 @@
       <module fileurl="file://$PROJECT_DIR$/platform/jewel/ui/intellij.platform.jewel.ui.iml" filepath="$PROJECT_DIR$/platform/jewel/ui/intellij.platform.jewel.ui.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/jewel/ui-tests/intellij.platform.jewel.uiTests.iml" filepath="$PROJECT_DIR$/platform/jewel/ui-tests/intellij.platform.jewel.uiTests.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps/jps-builders/intellij.platform.jps.build.iml" filepath="$PROJECT_DIR$/jps/jps-builders/intellij.platform.jps.build.iml" />
-      <module fileurl="file://$PROJECT_DIR$/jps/jps-builders-6/intellij.platform.jps.build.javac.rt.iml" filepath="$PROJECT_DIR$/jps/jps-builders-6/intellij.platform.jps.build.javac.rt.iml" />
+      <module fileurl="file://$PROJECT_DIR$/build/jvm-rules/dependency-graph/intellij.platform.jps.build.dependencyGraph.iml" filepath="$PROJECT_DIR$/build/jvm-rules/dependency-graph/intellij.platform.jps.build.dependencyGraph.iml" />
+      <module fileurl="file://$PROJECT_DIR$/build/jvm-rules/jps-builders-6/intellij.platform.jps.build.javac.rt.iml" filepath="$PROJECT_DIR$/build/jvm-rules/jps-builders-6/intellij.platform.jps.build.javac.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps/jps-launcher/intellij.platform.jps.build.launcher.iml" filepath="$PROJECT_DIR$/jps/jps-launcher/intellij.platform.jps.build.launcher.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps/jps-builders/intellij.platform.jps.build.tests.iml" filepath="$PROJECT_DIR$/jps/jps-builders/intellij.platform.jps.build.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps/model-api/intellij.platform.jps.model.iml" filepath="$PROJECT_DIR$/jps/model-api/intellij.platform.jps.model.iml" />

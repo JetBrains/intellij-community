@@ -50,6 +50,7 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
     "intellij.java.compiler.instrumentationUtil",
     "intellij.java.compiler.instrumentationUtil.java8",
     "intellij.platform.jps.build",
+    "intellij.platform.jps.build.dependencyGraph",
     "intellij.tools.jps.build.standalone",
   ).map { ModuleItem(moduleName = it, relativeOutputFile = "jps-builders.jar", reason = null) })
 

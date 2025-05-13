@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.java.compiler.instrumentationUtil" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build.javac.rt" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build.dependencyGraph" />
+    <orderEntry type="module" module-name="intellij.platform.util.rt" />
+    <orderEntry type="library" name="jps-javac-extension" level="project" />
+    <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="library" name="mvstore" level="project" />
+    <orderEntry type="library" name="hash4j" level="project" />
+    <orderEntry type="library" name="ASM" level="project" />
+    <orderEntry type="library" name="kotlin-metadata" level="project" />
+    <orderEntry type="library" name="caffeine" level="project" />
+    <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="module-library">
+      <library name="qdox-java-parser" type="repository">
+        <properties include-transitive-deps="false" maven-id="com.thoughtworks.qdox:qdox:2.2.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/thoughtworks/qdox/qdox/2.2.0/qdox-2.2.0.jar">
+              <sha256sum>c260c3230b2340af97d54bf01f7f67ebc57c901922736c881bb11cb981302be2</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/thoughtworks/qdox/qdox/2.2.0/qdox-2.2.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="library" scope="TEST" name="JUnit3" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="library" scope="PROVIDED" name="patched-kotlin-compiler-for-bazel" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlin-stdlib" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlinx-serialization-compiler-plugin" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlinc.compose-compiler-plugin" level="project" />
+  </component>
+</module>

@@ -105,6 +105,7 @@
     libraries:
       qdox-java-parser:
       - name: $MAVEN_REPOSITORY$/com/thoughtworks/qdox/qdox/2/qdox-2.jar
+  - name: intellij.platform.jps.build.dependencyGraph
 - name: lib/jps-javac-extension.jar
   library: jps-javac-extension
   files:

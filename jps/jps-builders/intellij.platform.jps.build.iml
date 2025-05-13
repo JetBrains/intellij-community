@@ -66,6 +66,7 @@
     <orderEntry type="module" module-name="intellij.platform.tracing.rt" />
     <orderEntry type="module" module-name="intellij.platform.runtime.repository" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build.dependencyGraph" />
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="hash4j" level="project" />
@@ -75,7 +76,5 @@
     <orderEntry type="library" exported="" name="maven-resolver-provider" level="project" />
     <orderEntry type="library" exported="" name="http-client" level="project" />
     <orderEntry type="library" name="kotlin-metadata" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler-common" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler-cli" level="project" />
   </component>
 </module>

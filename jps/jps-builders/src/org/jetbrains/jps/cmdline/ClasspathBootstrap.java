@@ -32,6 +32,7 @@ import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.jps.builders.impl.java.EclipseCompilerTool;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
+import org.jetbrains.jps.dependency.DependencyGraph;
 import org.jetbrains.jps.javac.ExternalJavacProcess;
 import org.jetbrains.jps.javac.ast.JavacReferenceCollector;
 import org.jetbrains.jps.model.JpsModel;
@@ -158,6 +159,7 @@ public final class ClasspathBootstrap {
     addToClassPath(cp, BuildMain.class);
     addToClassPath(cp, ExternalJavacProcess.class);  // intellij.platform.jps.build.javac.rt part
     addToClassPath(cp, JavacReferenceCollector.class);  // jps-javac-extension library
+    addToClassPath(cp, DependencyGraph.class);  // dep-graph
 
     // intellij.platform.util
     addToClassPath(cp, ClassPathUtil.getUtilClasses());
