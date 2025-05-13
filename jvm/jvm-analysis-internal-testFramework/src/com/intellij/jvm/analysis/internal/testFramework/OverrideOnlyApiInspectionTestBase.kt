@@ -1,6 +1,5 @@
 package com.intellij.jvm.analysis.internal.testFramework
 
-import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.codeInspection.OverrideOnlyApiInspection
 import com.intellij.jvm.analysis.testFramework.JvmInspectionTestBase
 import com.intellij.openapi.module.Module
@@ -13,7 +12,7 @@ import com.intellij.util.PathUtil
 import org.jetbrains.annotations.ApiStatus
 
 abstract class OverrideOnlyApiInspectionTestBase : JvmInspectionTestBase() {
-  override val inspection: InspectionProfileEntry = OverrideOnlyApiInspection()
+  override val inspection: OverrideOnlyApiInspection = OverrideOnlyApiInspection()
 
   override fun getProjectDescriptor(): LightProjectDescriptor = object : ProjectDescriptor(LanguageLevel.HIGHEST) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {

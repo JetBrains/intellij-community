@@ -8,11 +8,11 @@ import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.psi.search.scope.packageSet.PackageSetFactory
 
 abstract class DependencyInspectionTestBase : JvmInspectionTestBase() {
-  override val inspection = DependencyInspection()
+  override val inspection: DependencyInspection = DependencyInspection()
 
-  protected val javaFooFile = "JavaFoo.java"
+  protected val javaFooFile: String = "JavaFoo.java"
 
-  protected val kotlinFooFile = "KotlinFoo.kt"
+  protected val kotlinFooFile: String = "KotlinFoo.kt"
 
   override fun setUp() {
     super.setUp()

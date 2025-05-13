@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NonNls
 import java.io.File
 
 abstract class StringToUpperWithoutLocaleInspectionTestBase : JvmInspectionTestBase() {
-  override val inspection = StringToUpperWithoutLocale2Inspection()
+  override val inspection: StringToUpperWithoutLocale2Inspection = StringToUpperWithoutLocale2Inspection()
 
   override fun getProjectDescriptor(): LightProjectDescriptor = object : ProjectDescriptor(LanguageLevel.HIGHEST) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {

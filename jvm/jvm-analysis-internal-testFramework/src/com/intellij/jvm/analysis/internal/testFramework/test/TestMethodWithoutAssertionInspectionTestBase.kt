@@ -1,6 +1,5 @@
 package com.intellij.jvm.analysis.internal.testFramework.test
 
-import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.codeInspection.test.TestMethodWithoutAssertionInspection
 import com.intellij.jvm.analysis.testFramework.JvmInspectionTestBase
 import com.intellij.openapi.module.Module
@@ -10,7 +9,7 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 
 abstract class TestMethodWithoutAssertionInspectionTestBase : JvmInspectionTestBase() {
-  override val inspection: InspectionProfileEntry = TestMethodWithoutAssertionInspection().apply {
+  override val inspection: TestMethodWithoutAssertionInspection = TestMethodWithoutAssertionInspection().apply {
     assertKeywordIsAssertion = true
     ignoreIfExceptionThrown = true
   }
