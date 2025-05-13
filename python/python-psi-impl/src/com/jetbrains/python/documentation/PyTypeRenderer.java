@@ -8,7 +8,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -59,12 +58,6 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     @Override
     protected @NotNull HtmlChunk className(@Nls String name) {
       return PyDocumentationLink.toPossibleClass(name, myAnchor, myTypeEvalContext);
-    }
-
-    @Override
-    protected @NotNull HtmlChunk toClass(@NotNull String qualifiedName, @Nls @NotNull String linkText, @Nullable TextAttributesKey style) {
-      final var result = PyDocumentationLink.toClass(qualifiedName, linkText);
-      return style != null ? styledSpan(result, style) : result;
     }
 
     @Override
@@ -167,10 +160,6 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
 
   protected @NotNull HtmlChunk className(@Nls String name) {
     return escaped(name);
-  }
-
-  protected @NotNull HtmlChunk toClass(@NotNull String qualifiedName, @Nls @NotNull String linkText, @Nullable TextAttributesKey style) {
-    return HtmlChunk.raw(linkText);
   }
 
   protected @NotNull HtmlChunk styledExpression(@NotNull PyExpression expression) {
@@ -299,8 +288,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     if (isBitwiseOrUnionAvailable()) {
       result.append(render(ContainerUtil.find(type.getMembers(), t -> !isNoneType(t))));
       result.append(styled(" | ", PyHighlighter.PY_OPERATION_SIGN));
-      // TODO make this rendering consistent with rendering on None as a PyClassType instance
-      result.append(toClass(PyNames.TYPE_NONE, "None", PyHighlighter.PY_KEYWORD)); //NON-NLS
+      result.append(render(ContainerUtil.find(type.getMembers(), t -> isNoneType(t)))); //NON-NLS
     }
     else {
       result.append(escaped("Optional")); //NON-NLS
