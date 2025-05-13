@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit
 private val LOG = logger<DocumentCommitThread>()
 
 @ApiStatus.Internal
-class DocumentCommitThread internal constructor(coroutineScope: CoroutineScope) : DocumentCommitProcessor {
+class DocumentCommitThread(coroutineScope: CoroutineScope) : DocumentCommitProcessor {
   @OptIn(ExperimentalCoroutinesApi::class)
   private val childScope = coroutineScope.childScope("Document Commit Pool", Dispatchers.Default.limitedParallelism(1))
 
