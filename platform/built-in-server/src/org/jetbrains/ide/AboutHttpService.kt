@@ -49,21 +49,20 @@ internal class AboutHttpService : RestService() {
 
   override fun isOriginAllowed(request: HttpRequest): OriginCheckResult {
     val originAllowed = super.isOriginAllowed(request)
-    if (originAllowed == OriginCheckResult.FORBID && request.isEduToolsPluginRelated()) {
+    if (originAllowed == OriginCheckResult.FORBID && request.isJetBrainsAcademyPluginRelated()) {
       return OriginCheckResult.ALLOW
     }
     return originAllowed
   }
 
   /**
-   * [EduTools](https://plugins.jetbrains.com/plugin/10081-edutools) plugin requires IDE to respond with its version
+   * [JetBrains Academy](https://plugins.jetbrains.com/plugin/10081-jetbrains-academy) plugin requires IDE to respond with its version
    * from hyperskill.org and academy.jetbrains.com sites
    */
-  private fun HttpRequest.isEduToolsPluginRelated(): Boolean {
+  private fun HttpRequest.isJetBrainsAcademyPluginRelated(): Boolean {
     val origin = origin ?: return false
-    @Suppress("SpellCheckingInspection")
-    val hyperskillRegex = Regex("https://([a-z0-9-]+\\.)*hyperskill.org$")
-    val academyJetbrainsRegex = Regex("https://([a-z0-9-.]+)\\.jetbrains.com$")
+    val hyperskillRegex = Regex("https://([a-z0-9-]+\\.)*hyperskill\\.org$")
+    val academyJetbrainsRegex = Regex("https://([a-z0-9-.]+)\\.jetbrains\\.com$")
     return origin.matches(hyperskillRegex) || origin.matches(academyJetbrainsRegex)
   }
 
