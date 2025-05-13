@@ -5,14 +5,11 @@ import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.openapi.components.impl.ProjectWidePathMacroContributor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.platform.eel.EelDescriptor;
-import com.intellij.platform.eel.provider.EelProviderUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -30,28 +27,7 @@ final class MavenProjectPathMacroContributor implements ProjectWidePathMacroCont
 
   static @NotNull String getPathToDefaultMavenLocalRepositoryOnSpecificEnv(@NotNull @SystemIndependent String projectFilePath) {
     Path projectFile = Path.of(projectFilePath);
-
-    String serializedPath = getBySerializedProjectPath(projectFilePath);
-    if (serializedPath != null) {
-      return serializedPath;
-    }
-
     return MavenUtil.resolveDefaultLocalRepository(projectFile).toAbsolutePath().toString();
   }
 
-  private static @Nullable String getBySerializedProjectPath(@NotNull String projectFilePath){
-
-    ProjectManager projectManager = ProjectManager.getInstanceIfCreated();
-    if (projectManager == null) {
-      return null;
-    }
-    Project[] projects = projectManager.getOpenProjects();
-    for (Project project : projects) {
-      if (projectFilePath.equals(project.getProjectFilePath())) {
-        MavenSerializedRepositoryManager manager = project.getService(MavenSerializedRepositoryManager.class);
-        if (manager.isOverriden()) return manager.getMavenHomePath().toString();
-      }
-    }
-    return null;
-  }
 }
