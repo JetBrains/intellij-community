@@ -16,7 +16,7 @@ import org.jetbrains.mcpserverplugin.AbstractMcpTool
 import java.util.concurrent.CountDownLatch
 
 
-class ReformatCurrentFileTool : AbstractMcpTool<NoArgs>() {
+class ReformatCurrentFileTool : AbstractMcpTool<NoArgs>(NoArgs.serializer()) {
     override val name: String = "reformat_current_file"
     override val description: String = """
         Reformats the opened file in the JetBrains IDE editor.
@@ -48,7 +48,7 @@ class ReformatCurrentFileTool : AbstractMcpTool<NoArgs>() {
     }
 }
 
-class ReformatFileTool : AbstractMcpTool<PathInProject>() {
+class ReformatFileTool : AbstractMcpTool<PathInProject>(PathInProject.serializer()) {
     override val name: String = "reformat_file"
     override val description: String = """
         Reformats a specified file in the JetBrains IDE.

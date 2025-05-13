@@ -21,7 +21,7 @@ import javax.swing.JComponent
 val maxLineCount = 2000
 val timeout = TimeUnit.MINUTES.toMillis(2)
 
-class GetTerminalTextTool : AbstractMcpTool<NoArgs>() {
+class GetTerminalTextTool : AbstractMcpTool<NoArgs>(NoArgs.serializer()) {
     override val name: String = "get_terminal_text"
     override val description: String = """
         Retrieves the current text content from the first active terminal in the IDE.
@@ -43,7 +43,7 @@ class GetTerminalTextTool : AbstractMcpTool<NoArgs>() {
 @Serializable
 data class ExecuteTerminalCommandArgs(val command: String)
 
-class ExecuteTerminalCommandTool : AbstractMcpTool<ExecuteTerminalCommandArgs>() {
+class ExecuteTerminalCommandTool : AbstractMcpTool<ExecuteTerminalCommandArgs>(ExecuteTerminalCommandArgs.serializer()) {
     override val name: String = "execute_terminal_command"
     override val description: String = """
         Executes a specified shell command in the IDE's integrated terminal.

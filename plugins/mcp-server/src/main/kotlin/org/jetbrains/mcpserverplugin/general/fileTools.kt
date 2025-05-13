@@ -24,7 +24,7 @@ import kotlin.io.path.*
 @Serializable
 data class ListDirectoryTreeInFolderArgs(val pathInProject: String, val maxDepth: Int = 5)
 
-class ListDirectoryTreeInFolderTool : AbstractMcpTool<ListDirectoryTreeInFolderArgs>() {
+class ListDirectoryTreeInFolderTool : AbstractMcpTool<ListDirectoryTreeInFolderArgs>(ListDirectoryTreeInFolderArgs.serializer()) {
     override val name: String = "list_directory_tree_in_folder"
     override val description: String = """
         Provides a hierarchical tree view of the project directory structure starting from the specified folder.
@@ -103,7 +103,7 @@ class ListDirectoryTreeInFolderTool : AbstractMcpTool<ListDirectoryTreeInFolderA
 @Serializable
 data class ListFilesInFolderArgs(val pathInProject: String)
 
-class ListFilesInFolderTool : AbstractMcpTool<ListFilesInFolderArgs>() {
+class ListFilesInFolderTool : AbstractMcpTool<ListFilesInFolderArgs>(ListFilesInFolderArgs.serializer()) {
     override val name: String = "list_files_in_folder"
     override val description: String = """
         Lists all files and directories in the specified project folder.
@@ -146,7 +146,7 @@ class ListFilesInFolderTool : AbstractMcpTool<ListFilesInFolderArgs>() {
 @Serializable
 data class Query(val nameSubstring: String)
 
-class FindFilesByNameSubstring : AbstractMcpTool<Query>() {
+class FindFilesByNameSubstring : AbstractMcpTool<Query>(Query.serializer()) {
     override val name: String = "find_files_by_name_substring"
     override val description: String = """
         Searches for all files in the project whose names contain the specified substring (case-insensitive).
@@ -193,7 +193,7 @@ class FindFilesByNameSubstring : AbstractMcpTool<Query>() {
 @Serializable
 data class CreateNewFileWithTextArgs(val pathInProject: String, val text: String)
 
-class CreateNewFileWithTextTool : AbstractMcpTool<CreateNewFileWithTextArgs>() {
+class CreateNewFileWithTextTool : AbstractMcpTool<CreateNewFileWithTextArgs>(CreateNewFileWithTextArgs.serializer()) {
     override val name: String = "create_new_file_with_text"
     override val description: String = """
         Creates a new file at the specified path within the project directory and populates it with the provided text.
@@ -229,7 +229,7 @@ class CreateNewFileWithTextTool : AbstractMcpTool<CreateNewFileWithTextArgs>() {
 @Serializable
 data class OpenFileInEditorArgs(val filePath: String)
 
-class OpenFileInEditorTool : AbstractMcpTool<OpenFileInEditorArgs>() {
+class OpenFileInEditorTool : AbstractMcpTool<OpenFileInEditorArgs>(OpenFileInEditorArgs.serializer()) {
     override val name: String = "open_file_in_editor"
     override val description: String = """
         Opens the specified file in the JetBrains IDE editor.
@@ -261,7 +261,7 @@ class OpenFileInEditorTool : AbstractMcpTool<OpenFileInEditorArgs>() {
 }
 
 
-class GetAllOpenFilePathsTool : AbstractMcpTool<NoArgs>() {
+class GetAllOpenFilePathsTool : AbstractMcpTool<NoArgs>(NoArgs.serializer()) {
     override val name: String = "get_all_open_file_paths"
     override val description: String = """
         Lists full path relative paths to project root of all currently open files in the JetBrains IDE editor.
@@ -283,7 +283,7 @@ class GetAllOpenFilePathsTool : AbstractMcpTool<NoArgs>() {
 }
 
 
-class GetCurrentFilePathTool : AbstractMcpTool<NoArgs>() {
+class GetCurrentFilePathTool : AbstractMcpTool<NoArgs>(NoArgs.serializer()) {
     override val name: String = "get_open_in_editor_file_path"
     override val description: String = """
         Retrieves the absolute path of the currently active file in the JetBrains IDE editor.

@@ -17,7 +17,7 @@ import org.jetbrains.mcpserverplugin.general.resolveRel
 
 @Serializable
 data class ToggleBreakpointArgs(val filePathInProject: String, val line: Int)
-class ToggleBreakpointTool : AbstractMcpTool<ToggleBreakpointArgs>() {
+class ToggleBreakpointTool : AbstractMcpTool<ToggleBreakpointArgs>(ToggleBreakpointArgs.serializer()) {
     override val name: String = "toggle_debugger_breakpoint"
     override val description: String = """
         Toggles a debugger breakpoint at the specified line in a project file.
@@ -52,7 +52,7 @@ class ToggleBreakpointTool : AbstractMcpTool<ToggleBreakpointArgs>() {
     }
 }
 
-class GetBreakpointsTool : AbstractMcpTool<NoArgs>() {
+class GetBreakpointsTool : AbstractMcpTool<NoArgs>(NoArgs.serializer()) {
     override val name: String = "get_debugger_breakpoints"
     override val description: String = """
         Retrieves a list of all line breakpoints currently set in the project.

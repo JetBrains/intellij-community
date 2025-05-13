@@ -19,6 +19,7 @@ import io.netty.handler.codec.http.HttpMethod
 import io.netty.handler.codec.http.QueryStringDecoder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
@@ -105,7 +106,7 @@ class MCPService : RestService() {
 
         service<MCPUsageCollector>().sendUsage(tool.name)
         val args = try {
-            parseArgs(request, tool.argKlass)
+            parseArgs(request, tool.serializer)
         } catch (e: Throwable) {
             logger<MCPService>().warn("Failed to parse arguments for tool $path", e)
             sendJson(Response(error = e.message), request, context)
@@ -133,17 +134,13 @@ class MCPService : RestService() {
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun <T : Any> parseArgs(request: FullHttpRequest, klass: KClass<T>): T {
+    private fun <T> parseArgs(request: FullHttpRequest, serializer: KSerializer<T>): T {
         val body = request.content().toString(StandardCharsets.UTF_8)
         if (body.isEmpty()) {
+            @Suppress("UNCHECKED_CAST")
             return NoArgs as T
         }
-        return when (klass) {
-            NoArgs::class -> NoArgs as T
-            else -> {
-                json.decodeFromString(serializer(klass.starProjectedType), body) as T
-            }
-        }
+        return json.decodeFromString(serializer, body)
     }
 
     private fun <Args : Any> toolHandle(tool: McpTool<Args>, project: Project, args: Any): Response {

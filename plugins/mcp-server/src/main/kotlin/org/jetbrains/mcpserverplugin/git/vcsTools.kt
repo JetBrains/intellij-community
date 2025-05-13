@@ -17,7 +17,7 @@ import kotlin.io.path.Path
 @Serializable
 data class CommitQuery(val text: String)
 
-class FindCommitByTextTool : AbstractMcpTool<CommitQuery>() {
+class FindCommitByTextTool : AbstractMcpTool<CommitQuery>(CommitQuery.serializer()) {
     override val name: String = "find_commit_by_message"
     override val description: String = """
         Searches for a commit based on the provided text or keywords in the project history.
@@ -66,7 +66,7 @@ class FindCommitByTextTool : AbstractMcpTool<CommitQuery>() {
     }
 }
 
-class GetVcsStatusTool : AbstractMcpTool<NoArgs>() {
+class GetVcsStatusTool : AbstractMcpTool<NoArgs>(NoArgs.serializer()) {
     override val name: String = "get_project_vcs_status"
     override val description: String = """
         Retrieves the current version control status of files in the project.

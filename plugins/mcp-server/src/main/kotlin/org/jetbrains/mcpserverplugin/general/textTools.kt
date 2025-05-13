@@ -24,7 +24,7 @@ import org.jetbrains.mcpserverplugin.general.relativizeByProjectDir
 import org.jetbrains.mcpserverplugin.general.resolveRel
 import kotlin.text.replace
 
-class GetCurrentFileTextTool : AbstractMcpTool<NoArgs>() {
+class GetCurrentFileTextTool : AbstractMcpTool<NoArgs>(NoArgs.serializer()) {
     override val name: String = "get_open_in_editor_file_text"
     override val description: String = """
         Retrieves the complete text content of the currently active file in the JetBrains IDE editor.
@@ -40,7 +40,7 @@ class GetCurrentFileTextTool : AbstractMcpTool<NoArgs>() {
     }
 }
 
-class GetAllOpenFileTextsTool : AbstractMcpTool<NoArgs>() {
+class GetAllOpenFileTextsTool : AbstractMcpTool<NoArgs>(NoArgs.serializer()) {
     override val name: String = "get_all_open_file_texts"
     override val description: String = """
         Returns text of all currently open files in the JetBrains IDE editor.
@@ -66,7 +66,7 @@ class GetAllOpenFileTextsTool : AbstractMcpTool<NoArgs>() {
     }
 }
 
-class GetSelectedTextTool : AbstractMcpTool<NoArgs>() {
+class GetSelectedTextTool : AbstractMcpTool<NoArgs>(NoArgs.serializer()) {
     override val name: String = "get_selected_in_editor_text"
     override val description: String = """
         Retrieves the currently selected text from the active editor in JetBrains IDE.
@@ -85,7 +85,7 @@ class GetSelectedTextTool : AbstractMcpTool<NoArgs>() {
 @Serializable
 data class ReplaceSelectedTextArgs(val text: String)
 
-class ReplaceSelectedTextTool : AbstractMcpTool<ReplaceSelectedTextArgs>() {
+class ReplaceSelectedTextTool : AbstractMcpTool<ReplaceSelectedTextArgs>(ReplaceSelectedTextArgs.serializer()) {
     override val name: String = "replace_selected_text"
     override val description: String = """
         Replaces the currently selected text in the active editor with specified new text.
@@ -122,7 +122,7 @@ class ReplaceSelectedTextTool : AbstractMcpTool<ReplaceSelectedTextArgs>() {
 @Serializable
 data class ReplaceCurrentFileTextArgs(val text: String)
 
-class ReplaceCurrentFileTextTool : AbstractMcpTool<ReplaceCurrentFileTextArgs>() {
+class ReplaceCurrentFileTextTool : AbstractMcpTool<ReplaceCurrentFileTextArgs>(ReplaceCurrentFileTextArgs.serializer()) {
     override val name: String = "replace_current_file_text"
     override val description: String = """
         Replaces the entire content of the currently active file in the JetBrains IDE with specified new text.
@@ -155,7 +155,7 @@ class ReplaceCurrentFileTextTool : AbstractMcpTool<ReplaceCurrentFileTextArgs>()
 @Serializable
 data class PathInProject(val pathInProject: String)
 
-class GetFileTextByPathTool : AbstractMcpTool<PathInProject>() {
+class GetFileTextByPathTool : AbstractMcpTool<PathInProject>(PathInProject.serializer()) {
     override val name: String = "get_file_text_by_path"
     override val description: String = """
         Retrieves the text content of a file using its path relative to project root.
@@ -190,7 +190,7 @@ class GetFileTextByPathTool : AbstractMcpTool<PathInProject>() {
 @Serializable
 data class ReplaceSpecificTextArgs(val pathInProject: String, val oldText: String, val newText: String)
 
-class ReplaceSpecificTextTool : AbstractMcpTool<ReplaceSpecificTextArgs>() {
+class ReplaceSpecificTextTool : AbstractMcpTool<ReplaceSpecificTextArgs>(ReplaceSpecificTextArgs.serializer()) {
     override val name: String = "replace_specific_text"
     override val description: String = """
         Replaces specific text occurrences in a file with new text.
@@ -255,7 +255,7 @@ class ReplaceSpecificTextTool : AbstractMcpTool<ReplaceSpecificTextArgs>() {
 @Serializable
 data class ReplaceTextByPathToolArgs(val pathInProject: String, val text: String)
 
-class ReplaceTextByPathTool : AbstractMcpTool<ReplaceTextByPathToolArgs>() {
+class ReplaceTextByPathTool : AbstractMcpTool<ReplaceTextByPathToolArgs>(ReplaceTextByPathToolArgs.serializer()) {
     override val name: String = "replace_file_text_by_path"
     override val description: String = """
         Replaces the entire content of a specified file with new text, if the file is within the project.

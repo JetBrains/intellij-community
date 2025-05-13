@@ -56,7 +56,7 @@ fun Path.relativizeByProjectDir(projDir: Path?): String =
 @Serializable
 data class SearchInFilesArgs(val searchText: String)
 
-class SearchInFilesContentTool : org.jetbrains.mcpserverplugin.AbstractMcpTool<SearchInFilesArgs>() {
+class SearchInFilesContentTool : AbstractMcpTool<SearchInFilesArgs>(SearchInFilesArgs.serializer()) {
     override val name: String = "search_in_files_content"
     override val description: String = """
         Searches for a text substring within all files in the project using IntelliJ's search engine.
@@ -107,7 +107,7 @@ class SearchInFilesContentTool : org.jetbrains.mcpserverplugin.AbstractMcpTool<S
     }
 }
 
-class GetRunConfigurationsTool : org.jetbrains.mcpserverplugin.AbstractMcpTool<NoArgs>() {
+class GetRunConfigurationsTool : AbstractMcpTool<NoArgs>(NoArgs.serializer()) {
     override val name: String
         get() = "get_run_configurations"
     override val description: String
@@ -132,7 +132,7 @@ class GetRunConfigurationsTool : org.jetbrains.mcpserverplugin.AbstractMcpTool<N
 @Serializable
 data class RunConfigArgs(val configName: String)
 
-class RunConfigurationTool : AbstractMcpTool<RunConfigArgs>() {
+class RunConfigurationTool : AbstractMcpTool<RunConfigArgs>(RunConfigArgs.serializer()) {
     override val name: String = "run_configuration"
     override val description: String =
         "Run a specific run configuration in the current project and wait up to 120 seconds for it to finish. " +
@@ -243,7 +243,7 @@ class RunConfigurationTool : AbstractMcpTool<RunConfigArgs>() {
     }
 }
 
-class GetProjectModulesTool : org.jetbrains.mcpserverplugin.AbstractMcpTool<NoArgs>() {
+class GetProjectModulesTool : AbstractMcpTool<NoArgs>(NoArgs.serializer()) {
     override val name: String = "get_project_modules"
     override val description: String =
         "Get list of all modules in the project with their dependencies. Returns JSON list of module names."
@@ -255,7 +255,7 @@ class GetProjectModulesTool : org.jetbrains.mcpserverplugin.AbstractMcpTool<NoAr
     }
 }
 
-class GetProjectDependenciesTool : org.jetbrains.mcpserverplugin.AbstractMcpTool<NoArgs>() {
+class GetProjectDependenciesTool : AbstractMcpTool<NoArgs>(NoArgs.serializer()) {
     override val name: String = "get_project_dependencies"
     override val description: String =
         "Get list of all dependencies defined in the project. Returns JSON list of dependency names."
@@ -272,7 +272,7 @@ class GetProjectDependenciesTool : org.jetbrains.mcpserverplugin.AbstractMcpTool
     }
 }
 
-class ListAvailableActionsTool : org.jetbrains.mcpserverplugin.AbstractMcpTool<NoArgs>() {
+class ListAvailableActionsTool : AbstractMcpTool<NoArgs>(NoArgs.serializer()) {
     override val name: String = "list_available_actions"
     override val description: String = """
         Lists all available actions in JetBrains IDE editor.
@@ -310,7 +310,7 @@ class ListAvailableActionsTool : org.jetbrains.mcpserverplugin.AbstractMcpTool<N
 @Serializable
 data class ExecuteActionArgs(val actionId: String)
 
-class ExecuteActionByIdTool : org.jetbrains.mcpserverplugin.AbstractMcpTool<ExecuteActionArgs>() {
+class ExecuteActionByIdTool : AbstractMcpTool<ExecuteActionArgs>(ExecuteActionArgs.serializer()) {
     override val name: String = "execute_action_by_id"
     override val description: String = """
         Executes an action by its ID in JetBrains IDE editor.
@@ -343,7 +343,7 @@ class ExecuteActionByIdTool : org.jetbrains.mcpserverplugin.AbstractMcpTool<Exec
     }
 }
 
-class GetProgressIndicatorsTool : org.jetbrains.mcpserverplugin.AbstractMcpTool<NoArgs>() {
+class GetProgressIndicatorsTool : AbstractMcpTool<NoArgs>(NoArgs.serializer()) {
     override val name: String = "get_progress_indicators"
     override val description: String = """
         Retrieves the status of all running progress indicators in JetBrains IDE editor.
@@ -372,7 +372,7 @@ class GetProgressIndicatorsTool : org.jetbrains.mcpserverplugin.AbstractMcpTool<
 @Serializable
 data class WaitArgs(val milliseconds: Long = 5000)
 
-class WaitTool : org.jetbrains.mcpserverplugin.AbstractMcpTool<WaitArgs>() {
+class WaitTool : AbstractMcpTool<WaitArgs>(WaitArgs.serializer()) {
     override val name: String = "wait"
     override val description: String = """
         Waits for a specified number of milliseconds (default: 5000ms = 5 seconds).

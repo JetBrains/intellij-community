@@ -22,7 +22,7 @@ import org.jetbrains.mcpserverplugin.JsonUtils
 import java.nio.file.Path
 
 
-class GetCurrentFileErrorsTool : AbstractMcpTool<NoArgs>() {
+class GetCurrentFileErrorsTool : AbstractMcpTool<NoArgs>(NoArgs.serializer()) {
     override val name: String = "get_current_file_errors"
     override val description: String = """
         Analyzes the currently open file in the editor for errors and warnings using IntelliJ's inspections.
@@ -86,7 +86,7 @@ class GetCurrentFileErrorsTool : AbstractMcpTool<NoArgs>() {
     }
 }
 
-class GetProblemsTools : AbstractMcpTool<NoArgs>() {
+class GetProblemsTools : AbstractMcpTool<NoArgs>(NoArgs.serializer()) {
     override val name: String = "get_project_problems"
     override val description: String = """
         Retrieves all project problems (errors, warnings, etc.) detected in the project by IntelliJ's inspections.
