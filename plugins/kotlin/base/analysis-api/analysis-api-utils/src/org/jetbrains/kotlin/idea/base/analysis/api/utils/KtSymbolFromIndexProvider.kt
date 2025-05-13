@@ -306,6 +306,36 @@ class KtSymbolFromIndexProvider(
             resolveExtensionScopeWithTopLevelDeclarations.callables(nameFilter)
                 .filterNot { it.isExtension }
 
+    /**
+     * Returns top-level callables, including extensions.
+     */
+    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
+    fun getTopLevelCallableSymbolsByNameFilterIncludingExtensions(
+        nameFilter: (Name) -> Boolean,
+        scope: GlobalSearchScope = analysisScope,
+        psiFilter: (KtCallableDeclaration) -> Boolean = { true }
+    ): Sequence<KaCallableSymbol> = sequenceOf(
+        KotlinTopLevelFunctionFqnNameIndex,
+        KotlinTopLevelPropertyFqnNameIndex,
+    ).flatMap { helper ->
+        val results = mutableListOf<KtCallableDeclaration>()
+        val processor = cancelableCollectFilterProcessor(results) { declaration: KtCallableDeclaration ->
+            declaration.isAcceptable(psiFilter)
+        }
+
+        helper.processAllElements(
+            project = project,
+            scope = scope,
+            filter = { nameFilter(getShortName(it)) },
+            processor = processor,
+        )
+
+        results
+    }.map { it.symbol }
+        .filterIsInstance<KaCallableSymbol>() +
+            resolveExtensionScopeWithTopLevelDeclarations.callables(nameFilter)
+
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     fun getExtensionCallableSymbolsByName(
