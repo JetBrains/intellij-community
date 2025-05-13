@@ -62,12 +62,12 @@ abstract class NonModalCommitPanel(
     }
   }
 
-  protected val centerPanel = JBUI.Panels.simplePanel()
+  protected val centerPanel: BorderLayoutPanel = JBUI.Panels.simplePanel()
 
   private val bottomPanel: JBPanel<JBPanel<*>> = JBPanel<JBPanel<*>>(VerticalLayout(0))
 
   private val actions = ActionManager.getInstance().getAction("ChangesView.CommitToolbar") as ActionGroup
-  val toolbar = ActionManager.getInstance().createActionToolbar(COMMIT_TOOLBAR_PLACE, actions, true).apply {
+  val toolbar: ActionToolbar = ActionManager.getInstance().createActionToolbar(COMMIT_TOOLBAR_PLACE, actions, true).apply {
     targetComponent = mainPanel
     component.isOpaque = false
     setOrientation(SwingConstants.HORIZONTAL)
@@ -78,7 +78,7 @@ abstract class NonModalCommitPanel(
     .andTransparent()
     .withBackground(UISpec.COMMIT_EDITOR_COLOR)
 
-  val commitMessage = CommitMessage(project, false, false, true, message("commit.message.placeholder")).apply {
+  val commitMessage: CommitMessage = CommitMessage(project, false, false, true, message("commit.message.placeholder")).apply {
     editorField.addSettingsProvider { it.setBorder(emptyLeft(6)) }
   }
 
