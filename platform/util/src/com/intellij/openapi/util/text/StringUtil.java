@@ -13,6 +13,7 @@ import com.intellij.util.containers.FreezableArrayList;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
 import com.intellij.util.text.MergingCharSequence;
+import com.intellij.util.text.VersionComparatorUtil;
 import kotlin.jvm.internal.Ref;
 import org.jetbrains.annotations.*;
 import org.jetbrains.annotations.ApiStatus.NonExtendable;
@@ -2410,6 +2411,9 @@ public class StringUtil {
     return packageName + '.' + className;
   }
 
+  /**
+   * @see VersionComparatorUtil
+   */
   @Contract(pure = true)
   public static int compareVersionNumbers(@Nullable String v1, @Nullable String v2) {
     // todo duplicates com.intellij.util.text.VersionComparatorUtil.compare
