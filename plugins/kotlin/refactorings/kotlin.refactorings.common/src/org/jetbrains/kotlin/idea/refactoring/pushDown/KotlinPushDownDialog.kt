@@ -28,7 +28,7 @@ import javax.swing.JPanel
 class KotlinPushDownDialog(
     project: Project,
     private val memberInfos: List<KotlinMemberInfo>,
-    private val sourceClass: KtClass
+    private val sourceClass: KtClass,
 ) : RefactoringDialog(project, true) {
     init {
         title = PUSH_MEMBERS_DOWN
@@ -103,6 +103,13 @@ class KotlinPushDownDialog(
 
         KotlinCommonRefactoringSettings.getInstance().PUSH_DOWN_PREVIEW_USAGES = isPreviewUsages
 
-        invokeRefactoring(KotlinPushDownProcessor(project, sourceClass, selectedMemberInfos))
+        val processor = KotlinPushDownProcessorProvider.getInstance()
+            .createPushDownProcessor(
+                project,
+                sourceClass,
+                selectedMemberInfos
+            )
+
+        invokeRefactoring(processor)
     }
 }

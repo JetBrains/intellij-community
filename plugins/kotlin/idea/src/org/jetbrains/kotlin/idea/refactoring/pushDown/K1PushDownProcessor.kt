@@ -2,29 +2,17 @@
 
 package org.jetbrains.kotlin.idea.refactoring.pushDown
 
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
-import com.intellij.refactoring.BaseRefactoringProcessor
-import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.listeners.RefactoringEventData
 import com.intellij.usageView.UsageInfo
-import com.intellij.usageView.UsageViewBundle
-import com.intellij.usageView.UsageViewDescriptor
-import org.jetbrains.kotlin.asJava.unwrapped
+import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToShorteningWaitSet
-import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
 import org.jetbrains.kotlin.idea.refactoring.pullUp.*
-import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
-import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.idea.util.getTypeSubstitution
 import org.jetbrains.kotlin.idea.util.orEmpty
 import org.jetbrains.kotlin.idea.util.toSubstitutor
@@ -32,63 +20,23 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.types.TypeSubstitutor
 
-class KotlinPushDownProcessor(
+class K1PushDownProcessor(
     project: Project,
     sourceClass: KtClass,
     membersToMove: List<KotlinMemberInfo>
-) : BaseRefactoringProcessor(project) {
-    private val context = KotlinPushDownContext(sourceClass, membersToMove)
+) : KotlinPushDownProcessor(project) {
+    override val context: K1PushDownContext =
+        K1PushDownContext(sourceClass, membersToMove)
 
-    inner class UsageViewDescriptorImpl : UsageViewDescriptor {
-        override fun getProcessedElementsHeader() = RefactoringBundle.message("push.down.members.elements.header")
+    override fun renderSourceClassForConflicts(): String =
+        context.sourceClassDescriptor.renderForConflicts()
 
-        override fun getElements() = arrayOf(context.sourceClass)
+    override fun analyzePushDownConflicts(
+        usages: Array<out UsageInfo>,
+    ): MultiMap<PsiElement, String> =
+        analyzePushDownConflicts(context, usages)
 
-        override fun getCodeReferencesText(usagesCount: Int, filesCount: Int) =
-            RefactoringBundle.message("classes.to.push.down.members.to", UsageViewBundle.getReferencesString(usagesCount, filesCount))
-
-        override fun getCommentReferencesText(usagesCount: Int, filesCount: Int) = null
-    }
-
-    class SubclassUsage(element: PsiElement) : UsageInfo(element)
-
-    override fun getCommandName() = PUSH_MEMBERS_DOWN
-
-    override fun createUsageViewDescriptor(usages: Array<out UsageInfo>) = UsageViewDescriptorImpl()
-
-    override fun getBeforeData() = RefactoringEventData().apply {
-        addElement(context.sourceClass)
-        addElements(context.membersToMove.map { it.member }.toTypedArray())
-    }
-
-    override fun getAfterData(usages: Array<out UsageInfo>) = RefactoringEventData().apply {
-        addElements(usages.mapNotNull { it.element as? KtClassOrObject })
-    }
-
-    protected override fun findUsages(): Array<out UsageInfo> {
-        return HierarchySearchRequest(context.sourceClass, context.sourceClass.useScope, false).searchInheritors()
-            .asIterable()
-            .mapNotNull { it.unwrapped }
-            .map(::SubclassUsage)
-            .toTypedArray()
-    }
-
-    protected override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
-        val usages = refUsages.get() ?: UsageInfo.EMPTY_ARRAY
-        if (usages.isEmpty()) {
-            val message = KotlinBundle.message("text.0.have.no.inheritors.warning", context.sourceClassDescriptor.renderForConflicts())
-            val answer = Messages.showYesNoDialog(message.capitalize(), PUSH_MEMBERS_DOWN, Messages.getWarningIcon())
-            if (answer == Messages.NO) return false
-        }
-
-        val conflicts = myProject.runSynchronouslyWithProgress(RefactoringBundle.message("detecting.possible.conflicts"), true) {
-            runReadAction { analyzePushDownConflicts(context, usages) }
-        } ?: return false
-
-        return showConflicts(conflicts, usages)
-    }
-
-    private fun pushDownToClass(targetClass: KtClassOrObject) {
+    override fun pushDownToClass(targetClass: KtClassOrObject) {
         val sourceClassType = context.sourceClassDescriptor.defaultType
         val targetClassDescriptor = context.resolutionFacade.resolveToDescriptor(targetClass) as ClassDescriptor
         val substitutor = getTypeSubstitution(sourceClassType, targetClassDescriptor.defaultType)?.toSubstitutor().orEmpty()
@@ -130,7 +78,7 @@ class KotlinPushDownProcessor(
         }
     }
 
-    private fun removeOriginalMembers() {
+    override fun removeOriginalMembers() {
         for (memberInfo in context.membersToMove) {
             val member = memberInfo.member
             val memberDescriptor = context.memberDescriptors[member] ?: continue

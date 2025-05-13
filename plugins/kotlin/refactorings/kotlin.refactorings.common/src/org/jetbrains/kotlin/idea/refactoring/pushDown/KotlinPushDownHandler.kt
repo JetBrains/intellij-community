@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.pushDown
 
@@ -12,7 +12,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.util.RefactoringUIUtil
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.core.isInheritable
+import org.jetbrains.kotlin.idea.codeinsight.utils.isInheritable
 import org.jetbrains.kotlin.idea.refactoring.AbstractPullPushMembersHandler
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoStorage
@@ -59,6 +59,8 @@ class KotlinPushDownHandler : AbstractPullPushMembersHandler(
         }
 
         if (!(classOrObject is KtClass && classOrObject.isInheritable())) {
+            // TODO: Check if it's appropriate to use org.jetbrains.kotlin.idea.codeinsight.utils.KotlinPsiUtilsKt.isInheritable here.
+            // Previously, org.jetbrains.kotlin.idea.core.isInheritable was used.
             reportFinalClassOrObject(project, editor, classOrObject)
             return
         }
@@ -67,7 +69,10 @@ class KotlinPushDownHandler : AbstractPullPushMembersHandler(
         if (isUnitTestMode()) {
             val helper = dataContext?.getData(PUSH_DOWN_TEST_HELPER_KEY) as TestHelper
             val selectedMembers = helper.adjustMembers(members)
-            KotlinPushDownProcessor(project, classOrObject, selectedMembers).run()
+
+            KotlinPushDownProcessorProvider.getInstance()
+                .createPushDownProcessor(project, classOrObject, selectedMembers)
+                .run()
         } else {
             val manager = PsiManager.getInstance(project)
             members.filter { manager.areElementsEquivalent(it.member, member) }.forEach { it.isChecked = true }
