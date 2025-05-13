@@ -39,11 +39,17 @@ internal class FrontendEditorLinesBreakpointsInfoManager(private val project: Pr
     EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
       override fun editorCreated(event: EditorFactoryEvent) {
         val editor = event.editor
+        if (editor.project != project) {
+          return
+        }
         putNewLinesInfoMap(editor)
       }
 
       override fun editorReleased(event: EditorFactoryEvent) {
         val editor = event.editor
+        if (editor.project != project) {
+          return
+        }
         editorsMap.remove(editor)?.dispose()
       }
     }, cs.asDisposable())
