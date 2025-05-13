@@ -22,6 +22,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.InlayModel
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.impl.EditorHighlightingPredicate
@@ -41,6 +42,8 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.min
+
+private const val MAX_COUNT_TO_SHOW_HINT = 5
 
 /**
  * Service class responsible for managing and providing functionality for command completion within a project.
@@ -139,12 +142,27 @@ internal class CommandCompletionService(
     if (editor.inlayModel.getInlineElementsInRange(startOffset, endOffset).isNotEmpty()) return
     val applicationCommandCompletionService = ApplicationCommandCompletionService.getInstance()
     val state = applicationCommandCompletionService.state
-    if (state.showCounts > 5) return
+    if (state.showCounts > MAX_COUNT_TO_SHOW_HINT) return
     state.showCounts += 1
     val inlineElement: Inlay<HintRenderer?> = editor.inlayModel.addInlineElement(endOffset, true, EditorLineStripeTextRenderer("      " + CodeInsightBundle.message("command.completion.filter.hint", completionFactory.filterSuffix())))
                                               ?: return
     Disposer.register(lookup, inlineElement)
     Disposer.register(lookup) { lookup.removeUserData(INSTALLED_HINT) }
+
+    editor.inlayModel.addListener(object : InlayModel.Listener{
+      override fun onAdded(inlay: Inlay<*>) {
+        if (inlay.offset >= endOffset) {
+          lookup.putUserData(INSTALLED_HINT_KEY, false)
+          val installedHint = lookup.removeUserData(INSTALLED_HINT)
+          if (state.showCounts > MAX_COUNT_TO_SHOW_HINT) {
+            state.showCounts = MAX_COUNT_TO_SHOW_HINT
+          }
+          if (installedHint != null) {
+            Disposer.dispose(installedHint)
+          }
+        }
+      }
+    }, lookup)
 
     lookup.putUserData(INSTALLED_HINT, inlineElement)
     lookup.putUserData(INSTALLED_HINT_KEY, true)
