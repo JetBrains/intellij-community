@@ -56,11 +56,11 @@ class HatchRuntime(
    * Doesn't make any validation of stdout/stderr content.
    */
   internal suspend fun <T> execute(vararg arguments: String, processOutputTransformer: ProcessOutputTransformer<T>): Result<T, ExecError> {
-    return execService.execute(hatchBinary, arguments.toList(), execOptions, processOutputTransformer)
+    return execService.execute(hatchBinary, arguments.toList(), execOptions, processOutputTransformer = processOutputTransformer)
   }
 
   internal suspend fun <T> executeInteractive(vararg arguments: String, processSemiInteractiveFun: ProcessSemiInteractiveFun<T>): Result<T, ExecError> {
-    return execService.executeInteractive(hatchBinary, arguments.toList(), execOptions, processSemiInteractiveHandler(processSemiInteractiveFun))
+    return execService.executeInteractive(hatchBinary, arguments.toList(), execOptions, processSemiInteractiveHandler(code = processSemiInteractiveFun))
   }
 
   internal suspend fun resolvePythonVirtualEnvironment(pythonHomePath: PythonHomePath): PyResult<PythonVirtualEnvironment> {

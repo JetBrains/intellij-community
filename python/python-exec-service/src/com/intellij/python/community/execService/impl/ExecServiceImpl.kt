@@ -36,7 +36,7 @@ internal object ExecServiceImpl : ExecService {
 
     val result = try {
       withTimeout(options.timeout) {
-        val interactiveResult = processInteractiveHandler.getResultFromProcess(eelProcess)
+        val interactiveResult = processInteractiveHandler.getResultFromProcess(whatToExec, args, eelProcess)
 
         val successResult = interactiveResult.getOr { failure ->
           val (output, customErrorMessage) = failure.error
@@ -56,19 +56,22 @@ internal object ExecServiceImpl : ExecService {
     whatToExec: WhatToExec,
     args: List<String>,
     options: ExecOptions,
+    procListener: PyProcessListener?,
     processOutputTransformer: ProcessOutputTransformer<T>,
   ): Result<T, ExecError> {
     val executableProcess = whatToExec.buildExecutableProcess(args, options)
     val eelProcess = executableProcess.run().getOr { return it }
 
+    procListener?.emit(ProcessEvent.ProcessStarted(whatToExec, args))
     val eelProcessExecutionResult = try {
-      withTimeout(options.timeout) { eelProcess.awaitWithReporting() }
+      withTimeout(options.timeout) { eelProcess.awaitWithReporting(procListener) }
     }
     catch (_: TimeoutCancellationException) {
       return executableProcess.killProcessAndFailAsTimeout(eelProcess, options.timeout)
     }
 
     val processOutput = eelProcessExecutionResult
+    procListener?.emit(ProcessEvent.ProcessEnded(eelProcessExecutionResult.exitCode))
     val transformerSuccess = processOutputTransformer.invoke(processOutput).getOr { failure ->
       return executableProcess.failAsExecutionFailed(ExecErrorReason.UnexpectedProcessTermination(processOutput), failure.error)
     }

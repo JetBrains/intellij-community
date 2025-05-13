@@ -11,18 +11,12 @@ import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelHolder
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelSource
 import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplicationWithEel
-import com.intellij.platform.util.progress.createProgressPipe
-import com.intellij.python.community.execService.ExecService
-import com.intellij.python.community.execService.ProcessInteractiveHandler
-import com.intellij.python.community.execService.WhatToExec
-import com.intellij.python.community.execService.processSemiInteractiveHandler
+import com.intellij.python.community.execService.*
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.python.Result
 import com.jetbrains.python.getOrThrow
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
 import org.hamcrest.CoreMatchers
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers
@@ -32,7 +26,6 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junitpioneer.jupiter.cartesian.CartesianTest
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * How to use [ExecService].
@@ -106,7 +99,7 @@ class ExecServiceShowCaseTest {
   fun testInteractive(eelHolder: EelHolder): Unit = timeoutRunBlocking {
     val string = "abc123"
     val shell = eelHolder.eel.exec.getShell().first
-    val output = ExecService().executeInteractive(WhatToExec.Binary(shell.asNioPath()), emptyList(), processInteractiveHandler = ProcessInteractiveHandler<String> { process ->
+    val output = ExecService().executeInteractive(WhatToExec.Binary(shell.asNioPath()), emptyList(), processInteractiveHandler = ProcessInteractiveHandler<String> { _, _, process ->
       val stdout = async {
         process.stdout.readWholeText().getOrThrow()
       }
@@ -169,35 +162,69 @@ class ExecServiceShowCaseTest {
   fun testProgress(eelHolder: EelHolder): Unit = timeoutRunBlocking(10.minutes) {
     val eel = eelHolder.eel
     val shell = eel.exec.getShell().first
-    val reportPipe = createProgressPipe()
-
-    val progress = CopyOnWriteArrayList<String>()
-    val progressJob = launch {
-      reportPipe.progressUpdates().collect {
-        it.details?.let { text ->
-          progress.add(text)
-        }
-      }
-    }
 
     val text = "Once there was a captain brave".split(" ").toTypedArray()
 
-    reportPipe.collectProgressUpdates {
-      ExecService().executeInteractive(WhatToExec.Binary(shell.asNioPath()), args = emptyList(), processInteractiveHandler = processSemiInteractiveHandler<Unit> { stdin, exitCode ->
-        for (string in text) {
-          stdin.sendWholeText("echo $string\n").getOrThrow()
-          delay(500)
+    val whatToExec = WhatToExec.Binary(shell.asNioPath())
+
+    var processStartEvent = false
+    var processEndEvent = false
+
+    val progress = CopyOnWriteArrayList<String>()
+    val progressCapturer = PyProcessListener { event ->
+      when (event) {
+        is ProcessEvent.ProcessStarted -> {
+          assertEquals(whatToExec, event.whatToExec, "Wrong args for start event")
+          processStartEvent = true
         }
-        stdin.sendWholeText("exit\n").getOrThrow()
-        Result.success(Unit)
-      }).getOrThrow()
-    }
-    withTimeout(30.seconds) {
-      while (progress.size < text.size) {
-        delay(1.seconds)
+        is ProcessEvent.ProcessOutput -> {
+          progress.add(event.line)
+        }
+        is ProcessEvent.ProcessEnded -> {
+          processEndEvent = true
+        }
       }
     }
-    progressJob.cancel()
+
+    ExecService().executeInteractive(whatToExec, args = emptyList(), processInteractiveHandler = processSemiInteractiveHandler<Unit>(progressCapturer) { stdin, exitCode ->
+      for (string in text) {
+        stdin.sendWholeText("echo $string\n").getOrThrow()
+        delay(500)
+      }
+      stdin.sendWholeText("exit\n").getOrThrow()
+      Result.success(Unit)
+    }).getOrThrow()
     assertThat("Progress lost", progress, Matchers.containsInRelativeOrder(*text))
+    assertTrue(processStartEvent, "no process start event")
+    assertTrue(processEndEvent, "no process end event")
+  }
+
+  @ParameterizedTest
+  @EelSource
+  fun testOutputCapture(eelHolder: EelHolder): Unit = timeoutRunBlocking {
+    val eel = eelHolder.eel
+    val (shell, arg) = eel.exec.getShell()
+    var stdoutReported = false
+    val text = "abc"
+    val listener = PyProcessListener {
+      when (it) {
+        is ProcessEvent.ProcessOutput -> {
+          when (it.stream) {
+            ProcessEvent.OutputType.STDOUT -> {
+              assertEquals(text, it.line.trim(), "Wrong stdout")
+              stdoutReported = true
+            }
+            ProcessEvent.OutputType.STDERR -> {
+              fail("Unexpected stderr ${it.line}")
+            }
+          }
+        }
+        is ProcessEvent.ProcessEnded, is ProcessEvent.ProcessStarted -> Unit
+      }
+    }
+    val output = ExecService().execGetStdout(WhatToExec.Binary(shell.asNioPath()), listOf(arg, "echo $text"), procListener = listener).getOrThrow()
+    assertTrue(stdoutReported, "No stdout reported")
+    assertEquals(text, output.trim(), "Wrong result")
+
   }
 }

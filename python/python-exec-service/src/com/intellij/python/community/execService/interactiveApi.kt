@@ -26,7 +26,7 @@ fun interface ProcessInteractiveHandler<T> {
    * In latter case returns [EelProcessExecutionResult] (created out of collected output) and optional error message.
    * If no message returned -- the default one is used.
    */
-  suspend fun getResultFromProcess(process: EelProcess): Result<T, Pair<EelProcessExecutionResult, CustomErrorMessage?>>
+  suspend fun getResultFromProcess(whatToExec: WhatToExec, args: List<String>, process: EelProcess): Result<T, Pair<EelProcessExecutionResult, CustomErrorMessage?>>
 }
 
 
@@ -37,6 +37,7 @@ typealias ProcessSemiInteractiveFun<T> = suspend (EelSendChannel<IOException>, D
 
 /**
  * [ProcessInteractiveHandler], but you do not have to collect output by yourself. You only have access to stdout and exit code.
+ * Function collects output lines and reports them to [pyProcessListener] if set
  * So, you can only *write* something to process.
  */
-fun <T> processSemiInteractiveHandler(code: ProcessSemiInteractiveFun<T>): ProcessInteractiveHandler<T> = ProcessSemiInteractiveHandlerImpl(code)
+fun <T> processSemiInteractiveHandler(pyProcessListener: PyProcessListener? = null, code: ProcessSemiInteractiveFun<T>): ProcessInteractiveHandler<T> = ProcessSemiInteractiveHandlerImpl(pyProcessListener, code)

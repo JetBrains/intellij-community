@@ -41,7 +41,7 @@ interface ExecService {
    * This is a quite advanced mode where *you* are responsible for converting a process to output.
    * You must listen for process stdout/stderr e.t.c.
    * Use it if you need to get some info from a process before it ends or to interact (i.e write into stdin).
-   * See [ProcessInteractiveHandler] and [ProcessSemiInteractiveHandler]
+   * See [ProcessInteractiveHandler] and [processSemiInteractiveHandler]
    */
   @CheckReturnValue
   suspend fun <T> executeInteractive(
@@ -52,8 +52,8 @@ interface ExecService {
   ): Result<T, ExecError>
 
   /**
-   * Execute [whatToExec] with [args] and get both stdout/stderr outputs if `errorCode != 0`, gets error otherwise.
-   * If you want to show a modal window with progress, use `withModalProgress`.
+   * Execute [whatToExec] with [args] and get both stdout/stderr outputs if `errorCode != 0`, returns error otherwise.
+   * Function collects output lines and reports them to [procListener] if set
    *
    * @param[args] command line arguments
    * @param[options]  customizable process run options like timeout or environment variables to use
@@ -64,19 +64,25 @@ interface ExecService {
     whatToExec: WhatToExec,
     args: List<String> = emptyList(),
     options: ExecOptions = ExecOptions(),
+    procListener: PyProcessListener? = null,
     processOutputTransformer: ProcessOutputTransformer<T>,
   ): Result<T, ExecError>
 
+  /**
+   * See [execute]
+   */
   @CheckReturnValue
   suspend fun execGetStdout(
     whatToExec: WhatToExec,
     args: List<String> = emptyList(),
     options: ExecOptions = ExecOptions(),
+    procListener: PyProcessListener? = null,
   ): Result<String, ExecError> = execute(
     whatToExec = whatToExec,
     args = args,
     options = options,
-    processOutputTransformer = ZeroCodeStdoutTransformer
+    processOutputTransformer = ZeroCodeStdoutTransformer,
+    procListener = procListener
   )
 }
 
