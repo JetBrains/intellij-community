@@ -821,12 +821,8 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
             <caret>
             """);
         final TemplateImpl template =
-          TemplateSettings.getInstance().getTemplate("psvm", "Java//Instance 'main' methods for implicitly declared classes");
+          TemplateSettings.getInstance().getTemplate("psvma", "Java//Instance 'main' methods for implicitly declared classes");
         startTemplate(template);
-        LookupElement[] elements = myFixture.getLookupElements();
-        LookupElement last = elements[elements.length - 1];
-        myFixture.getLookup().setCurrentItem(last);
-        myFixture.finishLookup(Lookup.NORMAL_SELECT_CHAR);
         myFixture.checkResult(
             """
             void main(String[] args) {
@@ -851,7 +847,6 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
             """);
         final TemplateImpl template = TemplateSettings.getInstance().getTemplate("main", "Java//Instance 'main' methods for normal classes");
         startTemplate(template);
-        myFixture.type("\n");
         myFixture.checkResult(
             """
             class A{
