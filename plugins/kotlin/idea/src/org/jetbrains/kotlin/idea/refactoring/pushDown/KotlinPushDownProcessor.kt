@@ -18,8 +18,6 @@ import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaClassDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToShorteningWaitSet
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
@@ -32,27 +30,7 @@ import org.jetbrains.kotlin.idea.util.orEmpty
 import org.jetbrains.kotlin.idea.util.toSubstitutor
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.types.TypeSubstitutor
-import org.jetbrains.kotlin.utils.keysToMap
-
-class KotlinPushDownContext(
-    val sourceClass: KtClass,
-    val membersToMove: List<KotlinMemberInfo>
-) {
-    val resolutionFacade = sourceClass.getResolutionFacade()
-
-    val sourceClassContext = resolutionFacade.analyzeWithAllCompilerChecks(sourceClass).bindingContext
-
-    val sourceClassDescriptor = sourceClassContext[BindingContext.DECLARATION_TO_DESCRIPTOR, sourceClass] as ClassDescriptor
-
-    val memberDescriptors = membersToMove.map { it.member }.keysToMap {
-        when (it) {
-            is KtPsiClassWrapper -> it.psiClass.getJavaClassDescriptor(resolutionFacade)!!
-            else -> sourceClassContext[BindingContext.DECLARATION_TO_DESCRIPTOR, it]!!
-        }
-    }
-}
 
 class KotlinPushDownProcessor(
     project: Project,
