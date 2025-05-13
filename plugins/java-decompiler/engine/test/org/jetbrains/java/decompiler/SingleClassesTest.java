@@ -259,4 +259,9 @@ public class SingleClassesTest extends SingleClassesTestBase {
   @Test public void testNestedCalls() { doTest("pkg/TestNestedCalls"); }
   @Test public void testBreakpointsContextProvider() { doTest("com/intellij/tasks/context/java/BreakpointsContextProvider"); }
   @Test public void testAnnotationsForParametersWithNestedClass() { doTest("pkg/TestAnnotationsForParametersWithNestedClass"); }
+  @Test public void testNestedTypeAnnotationsParameters() {
+    doTest("typeAnnotations/NestedTypeAnnotationsParameters",
+           "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D", "typeAnnotations/E",
+           "typeAnnotations/F", "typeAnnotations/Z", "typeAnnotations/P", "typeAnnotations/S", "typeAnnotations/T");
+  }
 }

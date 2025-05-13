@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.struct;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.AnnotationExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.typeann.TargetInfo;
@@ -68,7 +67,7 @@ public abstract class StructMember {
   public boolean memberAnnCollidesWithTypeAnnotation(AnnotationExprent typeAnnotationExpr) {
     Type type = getType();
     if (type == null) return false; // when there is no type reference no collision is possible
-    Set<AnnotationExprent> typeAnnotations = TargetInfo.EmptyTarget.extract(getPossibleTypeAnnotationCollisions(type))
+    Set<AnnotationExprent> typeAnnotations = TargetInfo.EmptyTarget.extract(getPossibleTypeAnnotationCollisions())
       .stream()
       .map(typeAnnotation-> typeAnnotation.getAnnotationExpr())
       .collect(Collectors.toUnmodifiableSet());
@@ -78,15 +77,15 @@ public abstract class StructMember {
   /**
    * Checks whether annotations should go on parameter type instead of parameter
    */
-  public boolean paramAnnCollidesWithTypeAnnotation(AnnotationExprent typeAnnotationExpr, @NotNull Type type, int param) {
+  public boolean paramAnnCollidesWithTypeAnnotation(AnnotationExprent typeAnnotationExpr, int param) {
     Set<AnnotationExprent> typeAnnotations = TargetInfo.FormalParameterTarget
-      .extract(getPossibleTypeAnnotationCollisions(type), param).stream()
+      .extract(getPossibleTypeAnnotationCollisions(), param).stream()
       .map(typeAnnotation-> typeAnnotation.getAnnotationExpr())
       .collect(Collectors.toUnmodifiableSet());
     return typeAnnotations.contains(typeAnnotationExpr);
   }
 
-  private List<TypeAnnotation> getPossibleTypeAnnotationCollisions(@NotNull Type type) {
+  private List<TypeAnnotation> getPossibleTypeAnnotationCollisions() {
     return Arrays.stream(StructGeneralAttribute.TYPE_ANNOTATION_ATTRIBUTES)
       .flatMap(attrKey -> {
         StructTypeAnnotationAttribute attribute = (StructTypeAnnotationAttribute)getAttribute(attrKey);
