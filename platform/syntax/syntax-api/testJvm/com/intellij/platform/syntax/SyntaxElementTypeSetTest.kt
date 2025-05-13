@@ -204,4 +204,108 @@ internal class SyntaxElementTypeSetTest {
     val set = setOf(*array, 4)
     assertEquals(4, set.size)
   }
+
+  @Test
+  fun `test minus single element`() {
+    val item1 = SyntaxElementType("item1")
+    val item2 = SyntaxElementType("item2")
+    val set = syntaxElementTypeSetOf(item1, item2)
+
+    val result = set - item1
+    assertEquals(1, result.size)
+    assertTrue(item2 in result)
+    assertTrue(item1 !in result)
+  }
+
+  @Test
+  fun `test minus multiple elements`() {
+    val item1 = SyntaxElementType("item1")
+    val item2 = SyntaxElementType("item2")
+    val item3 = SyntaxElementType("item3")
+    val set = syntaxElementTypeSetOf(item1, item2, item3)
+
+    val result = set - listOf(item1, item2)
+    assertEquals(1, result.size)
+    assertTrue(item3 in result)
+    assertTrue(item1 !in result)
+    assertTrue(item2 !in result)
+  }
+
+  @Test
+  fun `test minus non-existent element`() {
+    val item = SyntaxElementType("existing")
+    val nonExistent = SyntaxElementType("non-existent")
+    val set = syntaxElementTypeSetOf(item)
+
+    val result = set - nonExistent
+    assertEquals(1, result.size)
+    assertTrue(item in result)
+  }
+
+  @Test
+  fun `test minus from empty set`() {
+    val item = SyntaxElementType("test")
+    val emptySet = emptySyntaxElementTypeSet()
+
+    val result = emptySet - item
+    assertTrue(result.isEmpty())
+  }
+
+  @Test
+  fun `test minus with null element handling`() {
+    val item = SyntaxElementType("test")
+    val set = syntaxElementTypeSetOf(item)
+    val nullList: List<SyntaxElementType?> = listOf(null)
+
+    val result = set - nullList
+    assertEquals(1, result.size)
+    assertTrue(item in result)
+  }
+
+  @Test
+  fun `test intersect with empty set`() {
+    val item = SyntaxElementType("test")
+    val set = syntaxElementTypeSetOf(item)
+    val emptySet = emptySyntaxElementTypeSet()
+
+    val result = set.intersect(emptySet)
+    assertTrue(result.isEmpty())
+  }
+
+  @Test
+  fun `test intersect with same elements`() {
+    val item1 = SyntaxElementType("item1")
+    val item2 = SyntaxElementType("item2")
+    val set1 = syntaxElementTypeSetOf(item1, item2)
+    val set2 = syntaxElementTypeSetOf(item1, item2)
+
+    val result = set1.intersect(set2)
+    assertEquals(2, result.size)
+    assertTrue(result.containsAll(listOf(item1, item2)))
+  }
+
+  @Test
+  fun `test intersect with overlapping elements`() {
+    val item1 = SyntaxElementType("item1")
+    val item2 = SyntaxElementType("item2")
+    val item3 = SyntaxElementType("item3")
+    val set1 = syntaxElementTypeSetOf(item1, item2)
+    val set2 = syntaxElementTypeSetOf(item2, item3)
+
+    val result = set1.intersect(set2)
+    assertEquals(1, result.size)
+    assertTrue(item2 in result)
+  }
+
+  @Test
+  fun `test intersect with disjoint sets`() {
+    val item1 = SyntaxElementType("item1")
+    val item2 = SyntaxElementType("item2")
+    val set1 = syntaxElementTypeSetOf(item1)
+    val set2 = syntaxElementTypeSetOf(item2)
+
+    val result = set1.intersect(set2)
+    assertTrue(result.isEmpty())
+  }
+
 }
