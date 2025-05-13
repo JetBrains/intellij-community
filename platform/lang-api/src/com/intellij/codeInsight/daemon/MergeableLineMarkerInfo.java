@@ -248,7 +248,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
     }
   }
 
-  private @NotNull AnAction getNavigateAction() {
+  protected @NotNull AnAction getNavigateAction() {
     return new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
