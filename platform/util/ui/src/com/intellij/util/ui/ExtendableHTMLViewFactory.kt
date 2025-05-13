@@ -573,7 +573,7 @@ private class DetailsSummarySupportExtension : Extension {
           (element as AbstractDocument.AbstractElement).addAttribute(HTML_Tag_SUMMARY, SimpleAttributeSet())
         }
       }
-      BlockViewEx(element, View.Y_AXIS)
+      SummaryView(element, View.Y_AXIS)
     }
     else
       null

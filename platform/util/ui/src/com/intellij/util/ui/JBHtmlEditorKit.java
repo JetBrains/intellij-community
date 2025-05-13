@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.html.DetailsView;
+import com.intellij.util.ui.html.SummaryView;
 import com.intellij.util.ui.html.UtilsKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +39,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
 
   private final @NotNull HTMLEditorKit.LinkController myLinkController = new MouseExitSupportLinkController();
   private final @NotNull HyperlinkListener myHyperlinkListener = new LinkUnderlineListener();
-  private final @NotNull JBHtmlEditorKit.DetailsController myDetailsController = new DetailsController();
+  private final @NotNull JBHtmlEditorKit.DetailsSummaryController myDetailsSummaryController = new DetailsSummaryController();
   private final boolean myDisableLinkedCss;
   private boolean myUnderlineHoveredHyperlink = true;
 
@@ -153,7 +153,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     if (myUnderlineHoveredHyperlink) {
       pane.addHyperlinkListener(myHyperlinkListener);
     }
-    pane.addMouseListener(myDetailsController);
+    pane.addMouseListener(myDetailsSummaryController);
 
     java.util.List<LinkController> listeners1 = filterLinkControllerListeners(pane.getMouseListeners());
     java.util.List<LinkController> listeners2 = filterLinkControllerListeners(pane.getMouseMotionListeners());
@@ -203,7 +203,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     }
   }
 
-  private static final class DetailsController extends MouseAdapter {
+  private static final class DetailsSummaryController extends MouseAdapter {
     @Override
     public void mouseClicked(MouseEvent e) {
       JEditorPane editor = (JEditorPane) e.getSource();
@@ -226,12 +226,10 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
           String name = e.getName();
           if (name.equals("a")) break;
           if (name.equals("summary")) {
-            e = e.getParentElement();
-            if (!e.getName().equals("details")) return;
             AttributeSet attributes = e.getAttributes();
             Object attribute = attributes.getAttribute(UtilsKt.getHTML_Tag_DETAILS());
             if (attribute instanceof MutableAttributeSet a) {
-              a.addAttribute(DetailsView.EXPANDED, a.getAttribute(DetailsView.EXPANDED) != Boolean.TRUE);
+              a.addAttribute(SummaryView.EXPANDED, a.getAttribute(SummaryView.EXPANDED) != Boolean.TRUE);
             }
             var rootView = html.getUI().getRootView(html);
             reapplyCss(rootView);
