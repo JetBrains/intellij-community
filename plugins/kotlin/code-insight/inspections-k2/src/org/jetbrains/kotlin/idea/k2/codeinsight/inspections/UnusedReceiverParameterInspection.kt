@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
+import org.jetbrains.kotlin.idea.codeinsight.utils.typeIfSafeToResolve
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureProcessor
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDescriptor
@@ -79,11 +80,11 @@ internal class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
 
         analyze(callableDeclaration) {
             val usedTypeParametersInReceiver = callableDeclaration.collectDescendantsOfType<KtTypeReference>()
-                .mapNotNull { (it.type as? KaTypeParameterType)?.symbol }
+                .mapNotNull { (it.typeIfSafeToResolve as? KaTypeParameterType)?.symbol }
                 .filterTo(mutableSetOf()) { it.isReified }
 
-            val receiverType = receiverTypeReference.type
-            val receiverTypeSymbol = receiverType.symbol
+            val receiverType = receiverTypeReference.typeIfSafeToResolve
+            val receiverTypeSymbol = receiverType?.symbol
             if (receiverTypeSymbol is KaClassSymbol && receiverTypeSymbol.classKind == KaClassKind.COMPANION_OBJECT) return
 
             val callableSymbol = callableDeclaration.symbol
