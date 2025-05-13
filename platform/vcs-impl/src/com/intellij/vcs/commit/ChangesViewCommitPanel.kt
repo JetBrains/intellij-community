@@ -44,9 +44,7 @@ class ChangesViewCommitPanel @ApiStatus.Internal constructor(project: Project, p
   init {
     Disposer.register(this, commitMessage)
 
-    bottomPanel.add(progressPanel.component)
-    bottomPanel.add(commitAuthorComponent.apply { border = empty(0, 5, 4, 0) })
-    bottomPanel.add(commitActionsPanel)
+    setProgressComponent(progressPanel)
 
     for (support in EditChangelistSupport.EP_NAME.getExtensionList(project)) {
       support.installSearch(commitMessage.editorField, commitMessage.editorField)

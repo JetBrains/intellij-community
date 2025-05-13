@@ -62,9 +62,7 @@ class GitStageCommitPanel(project: Project, private val settings: GitStageUiSett
     commitMessage.setChangesSupplier { state.changesToCommit }
     progressPanel.setup(this, commitMessage.editorField, empty(6))
 
-    bottomPanel.add(progressPanel.component)
-    bottomPanel.add(commitAuthorComponent.apply { border = empty(0, 5, 4, 0) })
-    bottomPanel.add(commitActionsPanel)
+    setProgressComponent(progressPanel)
 
     settings.addListener(object : GitStageUiSettingsListener {
       override fun settingsChanged() {

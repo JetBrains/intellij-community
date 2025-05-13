@@ -61,7 +61,7 @@ abstract class NonModalCommitPanel(
 
   protected val centerPanel = JBUI.Panels.simplePanel()
 
-  protected val bottomPanel: JBPanel<JBPanel<*>> = JBPanel<JBPanel<*>>(VerticalLayout(0))
+  private val bottomPanel: JBPanel<JBPanel<*>> = JBPanel<JBPanel<*>>(VerticalLayout(0))
 
   private val actions = ActionManager.getInstance().getAction("ChangesView.CommitToolbar") as ActionGroup
   val toolbar = ActionManager.getInstance().createActionToolbar(COMMIT_TOOLBAR_PLACE, actions, true).apply {
@@ -97,6 +97,9 @@ abstract class NonModalCommitPanel(
 
     commitMessagePanel.addToCenter(commitMessage)
 
+    bottomPanel.add(commitAuthorComponent)
+    bottomPanel.add(commitActionsPanel)
+
     centerPanel
       .addToTop(statusComponent)
       .addToCenter(commitMessagePanel)
@@ -108,6 +111,14 @@ abstract class NonModalCommitPanel(
     installBorders()
 
     InternalDecoratorImpl.preventRecursiveBackgroundUpdateOnToolwindow(mainPanel)
+  }
+
+  protected fun setProgressComponent(progressPanel: CommitProgressPanel) {
+    bottomPanel.removeAll()
+
+    bottomPanel.add(progressPanel.component)
+    bottomPanel.add(commitAuthorComponent)
+    bottomPanel.add(commitActionsPanel)
   }
 
   private fun installBorders() {
