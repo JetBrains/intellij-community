@@ -9,8 +9,14 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.h2.mvstore.MVMap
+import org.h2.mvstore.MVStore
+import org.jetbrains.bazel.jvm.mvStore.LongDataType
+import org.jetbrains.bazel.jvm.mvStore.VarIntDataType
 import org.jetbrains.bazel.jvm.worker.core.BazelBuildDataProvider
 import org.jetbrains.bazel.jvm.worker.impl.BazelBuildTargetStateManager
+import org.jetbrains.bazel.jvm.worker.state.TargetConfigurationDigestContainer
+import org.jetbrains.bazel.jvm.worker.state.TargetConfigurationDigestProperty
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.builders.BuildTargetType
 import org.jetbrains.jps.builders.storage.BuildDataPaths
@@ -27,7 +33,23 @@ import java.nio.file.SimpleFileVisitor
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.BasicFileAttributes
 
+internal class ToolOrStorageFormatChanged(reason: String) : RuntimeException(reason)
+
+private const val configurationDigestMapName = "configuration-digest"
+private val configurationDigestMapBuilder = createConfigurationDigestMapBuilder()
+private val configurationDigestSingleMapBuilder = createConfigurationDigestMapBuilder().singleWriter()
+
+private fun createConfigurationDigestMapBuilder(): MVMap.Builder<Int, Long> {
+  return MVMap.Builder<Int, Long>().keyType(VarIntDataType).valueType(LongDataType)
+}
+
+private const val TOOL_VERSION: Int = 1
+
 internal class StorageInitializer(private val dataDir: Path, private val dbFile: Path) {
+  companion object {
+    internal fun getTrashDirectory(dataDir: Path): Path = dataDir.resolve("_trash")
+  }
+
   private var wasCleared = false
 
   suspend fun createBuildDataManager(
@@ -35,28 +57,40 @@ internal class StorageInitializer(private val dataDir: Path, private val dbFile:
     relativizer: PathRelativizerService,
     buildDataProvider: BazelBuildDataProvider,
     span: Span,
+    targetDigests: TargetConfigurationDigestContainer,
   ): BuildDataManager {
+    var clearTrash = false
     if (isRebuild) {
       wasCleared = true
       withContext(Dispatchers.IO) {
         deleteOrMoveRecursively(dataDir, getTrashDirectory(dataDir))
       }
     }
-    else {  // clear trash only
-      withContext(Dispatchers.IO) {
-        getTrashDirectory(dataDir).takeIf(Files::exists)?.let { trashDir ->
-          Files.newDirectoryStream(trashDir).use {
-            it.forEach(::tryDeleteFile)
-          }
-        }
-      }
+    else {
+      clearTrash = true
     }
 
     while (true) {
       try {
         val containerManager = withContext(Dispatchers.IO) {
           Files.createDirectories(dataDir)
-          BazelPersistentMapletFactory.open(dbFile = dbFile, pathRelativizer = relativizer.typeAwareRelativizer!!, span = span)
+          val store = BazelPersistentMapletFactory.openStore(dbFile = dbFile, span = span)
+          executeOrCloseStorage(AutoCloseable(store::closeImmediately)) {
+            checkVersionAndConfigurationDigest(store = store, isRebuild = isRebuild, targetDigests = targetDigests)
+          }
+
+          BazelPersistentMapletFactory.createFactory(store = store, pathRelativizer = relativizer.typeAwareRelativizer!!)
+        }
+
+        if (clearTrash) {
+          // clear trash only
+          withContext(Dispatchers.IO) {
+            getTrashDirectory(dataDir).takeIf(Files::exists)?.let { trashDir ->
+              for (file in Files.newDirectoryStream(trashDir).use { it.toList() }) {
+                Files.deleteIfExists(file)
+              }
+            }
+          }
         }
 
         return executeOrCloseStorage(containerManager) {
@@ -68,6 +102,9 @@ internal class StorageInitializer(private val dataDir: Path, private val dbFile:
             containerFactory = containerManager,
           )
         }
+      }
+      catch (e: ToolOrStorageFormatChanged) {
+        throw e
       }
       catch (e: Throwable) {
         if (wasCleared) {
@@ -86,50 +123,96 @@ internal class StorageInitializer(private val dataDir: Path, private val dbFile:
     // todo rename and store
     FileUtilRt.deleteRecursively(dataDir)
   }
+}
 
-  companion object {
-    fun getTrashDirectory(dataDir: Path): Path = dataDir.resolve("_trash")
+private fun checkVersionAndConfigurationDigest(store: MVStore, isRebuild: Boolean, targetDigests: TargetConfigurationDigestContainer) {
+  if (isRebuild) {
+    store.storeVersion = TOOL_VERSION
+    initMap(store, targetDigests)
+    return
+  }
 
-    private fun deleteOrMoveRecursively(dataDir: Path, trashDir: Path) {
-      if (!Files.exists(dataDir)) {
-        return
-      }
+  if (store.storeVersion != TOOL_VERSION) {
+    throw ToolOrStorageFormatChanged("bazel builder version or storage version")
+  }
 
-      Files.walkFileTree(dataDir, object : SimpleFileVisitor<Path>() {
-        override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
-          if (!tryDeleteFile(file) && !file.startsWith(trashDir)) {
-            Files.createDirectories(trashDir)
-            val tempFile = Files.createTempFile(trashDir, null, null)
-            Files.move(file, tempFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
-          }
-          return FileVisitResult.CONTINUE
-        }
-
-        override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
-          if (exc != null) {
-            throw exc
-          }
-
-          try {
-            Files.deleteIfExists(dir)
-          }
-          catch (e: DirectoryNotEmptyException) {
-            if (dir == trashDir || Files.exists(trashDir) && dir == dataDir) {
-              // ignore
-            }
-            else {
-              throw e
-            }
-          }
-          return FileVisitResult.CONTINUE
-        }
-      })
+  val isInitial = !store.hasMap(configurationDigestMapName)
+  if (isInitial) {
+    initMap(store, targetDigests)
+  }
+  else {
+    val map = store.openMap(configurationDigestMapName, configurationDigestMapBuilder)
+    val rebuildRequested = checkConfiguration(metadata = map, targetDigests = targetDigests)
+    if (rebuildRequested != null) {
+      throw ToolOrStorageFormatChanged(rebuildRequested)
     }
   }
 }
 
-private fun tryDeleteFile(file: Path): Boolean {
-  return file.toFile().delete() || !Files.exists(file, LinkOption.NOFOLLOW_LINKS)
+private fun initMap(store: MVStore, targetDigests: TargetConfigurationDigestContainer) {
+  val map = store.openMap(configurationDigestMapName, configurationDigestSingleMapBuilder)
+  for (kind in TargetConfigurationDigestProperty.entries) {
+    map.append(kind.ordinal, targetDigests.get(kind))
+  }
+}
+
+private fun deleteOrMoveRecursively(dataDir: Path, trashDir: Path) {
+  if (Files.notExists(dataDir)) {
+    return
+  }
+
+  Files.walkFileTree(dataDir, object : SimpleFileVisitor<Path>() {
+    override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+      if (!Files.deleteIfExists(file) && Files.exists(file, LinkOption.NOFOLLOW_LINKS) && !file.startsWith(trashDir)) {
+        Files.createDirectories(trashDir)
+        val tempFile = Files.createTempFile(trashDir, null, null)
+        Files.move(file, tempFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
+      }
+      return FileVisitResult.CONTINUE
+    }
+
+    override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
+      if (exc != null) {
+        throw exc
+      }
+
+      try {
+        Files.deleteIfExists(dir)
+      }
+      catch (e: DirectoryNotEmptyException) {
+        if (dir == trashDir || Files.exists(trashDir) && dir == dataDir) {
+          // ignore
+        }
+        else {
+          throw e
+        }
+      }
+      return FileVisitResult.CONTINUE
+    }
+  })
+}
+
+// returns a reason to force rebuild
+private fun checkConfiguration(
+  metadata: MVMap<Int, Long>,
+  targetDigests: TargetConfigurationDigestContainer,
+): String? {
+  val digestProperties = TargetConfigurationDigestProperty.entries
+  if (metadata.size != digestProperties.size) {
+    return "configuration digest mismatch: expected metadata size ${digestProperties.size}, got ${metadata.size}"
+  }
+
+  val cursor = metadata.cursor(null)
+  while (cursor.hasNext()) {
+    val key = cursor.next()
+    val kind = digestProperties.getOrNull(key)
+    val actualHash = kind?.let { targetDigests.get(it) } ?: return "configuration digest mismatch: unknown kind $key"
+    val storedHash = cursor.value
+    if (actualHash != storedHash) {
+      return "configuration digest mismatch (${kind.description}): expected $actualHash, got $storedHash"
+    }
+  }
+  return null
 }
 
 private class BazelBuildDataPaths(private val dir: Path) : BuildDataPaths {

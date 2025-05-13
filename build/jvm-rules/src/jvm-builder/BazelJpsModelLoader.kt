@@ -62,8 +62,6 @@ private val javaHome = Path.of(System.getProperty("java.home")).normalize() ?: e
 
 private val KOTLINC_VERSION_HASH = Hashing.xxh3_64().hashBytesToLong((KotlinCompilerVersion.getVersion() ?: "@snapshot@").toByteArray())
 
-private const val TOOL_VERSION: Long = 58
-
 internal fun loadJpsModel(
   sources: List<Path>,
   args: ArgMap<JvmBuilderFlags>,
@@ -74,7 +72,6 @@ internal fun loadJpsModel(
 
   val digests = TargetConfigurationDigestContainer()
   digests.set(TargetConfigurationDigestProperty.KOTLIN_VERSION, KOTLINC_VERSION_HASH)
-  digests.set(TargetConfigurationDigestProperty.TOOL_VERSION, TOOL_VERSION)
 
   // properties not needed for us (not implemented for java)
   // extension.loadModuleOptions not needed for us (not implemented for java)

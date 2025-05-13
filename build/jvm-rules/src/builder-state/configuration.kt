@@ -11,7 +11,6 @@ interface PathRelativizer {
 
 enum class TargetConfigurationDigestProperty(@JvmField val description: String) {
   KOTLIN_VERSION("kotlinc version"),
-  TOOL_VERSION("bazel builder version or storage version"),
   COMPILER("kotlinc/javac configuration"),
   DEPENDENCY_PATH_LIST("dependency path list"),
   UNTRACKED_DEPENDENCY_DIGEST_LIST("untracked dependency digest list");
@@ -30,6 +29,4 @@ value class TargetConfigurationDigestContainer(
   fun set(kind: TargetConfigurationDigestProperty, hash: Long) {
     list[kind.ordinal] = hash
   }
-
-  fun asString(): Array<String> = Array(list.size) { java.lang.Long.toUnsignedString(list[it], Character.MAX_RADIX) }
 }

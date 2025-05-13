@@ -1,12 +1,19 @@
 load("@rules_java//java:defs.bzl", "java_binary")
-load("//:jvm.bzl", "jvm_import")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("//:jvm.bzl", "jvm_import")
 load("//:src/jvm-args.bzl", "get_jvm_flags")
 
 kt_jvm_library(
     name = "kotlin-builder",
     srcs = glob(["**/*.kt"]),
     kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        "//:kotlin-build-tools-api",
+        "//:kotlin-metadata",
+        "//:kotlin-util-klib",
+        "//:kotlin-util-klib-metadata",
+    ],
     deps = [
         "//:collection",
         "//zip",
@@ -27,11 +34,4 @@ kt_jvm_library(
         "//:jps-javac-extension",
         "//:caffeine",
     ],
-    runtime_deps = [
-        "//:kotlin-build-tools-api",
-        "//:kotlin-metadata",
-        "//:kotlin-util-klib",
-        "//:kotlin-util-klib-metadata",
-    ],
-    visibility = ["//visibility:public"],
 )

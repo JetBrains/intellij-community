@@ -22,10 +22,10 @@ internal val notNullUtfStringFieldType = FieldType.notNullable(ArrowType.Utf8.IN
 private val WRITE_FILE_OPTION = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE)
 private val READ_FILE_OPTION = EnumSet.of(StandardOpenOption.READ)
 
-internal fun writeVectorToFile(file: Path, root: VectorSchemaRoot, metadata: Map<String, String>) {
+internal fun writeVectorToFile(file: Path, root: VectorSchemaRoot) {
   writeFileUsingTempFile(file) { tempFile ->
     FileChannel.open(tempFile, WRITE_FILE_OPTION).use { fileChannel ->
-      ArrowFileWriter(root, null, fileChannel, metadata).use { fileWriter ->
+      ArrowFileWriter(root, null, fileChannel).use { fileWriter ->
         fileWriter.start()
         fileWriter.writeBatch()
         fileWriter.end()
@@ -43,7 +43,6 @@ internal inline fun <T : Any> readArrowFile(
   try {
     return FileChannel.open(file, READ_FILE_OPTION).use { fileChannel ->
       ArrowFileReader(fileChannel, allocator).use { fileReader ->
-        // metadata is available only after loading batch
         fileReader.loadNextBatch()
         task(fileReader)
       }

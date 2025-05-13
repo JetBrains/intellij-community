@@ -7,7 +7,6 @@ import androidx.collection.ScatterMap
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.Tracer
-import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -42,6 +41,7 @@ import org.jetbrains.bazel.jvm.worker.state.TargetConfigurationDigestProperty
 import org.jetbrains.bazel.jvm.worker.state.createInitialSourceMap
 import org.jetbrains.bazel.jvm.worker.state.saveBuildState
 import org.jetbrains.bazel.jvm.worker.storage.StorageInitializer
+import org.jetbrains.bazel.jvm.worker.storage.ToolOrStorageFormatChanged
 import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexBuilder
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 import org.jetbrains.jps.incremental.storage.BuildDataManager
@@ -162,6 +162,7 @@ suspend fun buildUsingJps(
     module = jpsModel.project.modules.single(),
     sources = sources,
     javaFileCount = args.optionalSingle(JvmBuilderFlags.JAVA_COUNT)?.toInt() ?: -1,
+    targetLabel = args.mandatorySingle(JvmBuilderFlags.TARGET_LABEL),
   )
 
   val isIncrementalCompilation = !args.boolFlag(JvmBuilderFlags.NON_INCREMENTAL) || forceIncremental
@@ -197,7 +198,6 @@ suspend fun buildUsingJps(
         sourceRelativizer = typeAwareRelativizer.sourceRelativizer,
         allocator = allocator,
         sourceFileToDigest = sourceFileToDigest,
-        targetDigests = targetDigests,
         forceIncremental = forceIncremental,
         tracer = tracer,
         parentSpan = it,
@@ -231,7 +231,6 @@ suspend fun buildUsingJps(
         sourceToDescriptor = sourceFileState?.map ?: createInitialSourceMap(sourceFileToDigest),
         storeFile = buildStateFile,
         allocator = allocator,
-        isCleanBuild = isRebuild,
         dependencyFileToDigest = dependencyFileToDigest,
       ),
       sourceFileState = sourceFileState,
@@ -241,6 +240,14 @@ suspend fun buildUsingJps(
   }
   catch (e: CancellationException) {
     throw e
+  }
+  catch (e: ToolOrStorageFormatChanged) {
+    rebuildReason = e.message
+    if (isDebugEnabled) {
+      log.out.appendLine("rebuild requested: $rebuildReason")
+    }
+    parentSpan.recordException(e)
+    -1
   }
   catch (e: Throwable) {
     if (isDebugEnabled) {
@@ -268,7 +275,6 @@ suspend fun buildUsingJps(
         sourceToDescriptor = createInitialSourceMap(sourceFileToDigest),
         storeFile = buildStateFile,
         allocator = allocator,
-        isCleanBuild = true,
         dependencyFileToDigest = dependencyFileToDigest,
       ),
       sourceFileState = null,
@@ -333,6 +339,7 @@ private suspend fun initAndBuild(
         isRebuild = isRebuild,
         relativizer = relativizer,
         buildDataProvider = dataManager,
+        targetDigests = targetDigests,
         span = span,
       )
     }
@@ -410,7 +417,6 @@ private suspend fun initAndBuild(
             moduleTarget = moduleTarget,
             outputs = outputs,
             context = context,
-            targetDigests = targetDigests,
             buildDataProvider = dataManager,
             requestLog = requestLog,
             outputSink = outputSink,
@@ -444,14 +450,10 @@ private suspend fun initAndBuild(
   }
 }
 
-private val stateFileMetaNames: Array<String> = TargetConfigurationDigestProperty.entries
-  .let { entries -> Array(entries.size) { entries.get(it).name } }
-
 private fun CoroutineScope.postBuild(
   moduleTarget: BazelModuleBuildTarget,
   outputs: OutputFiles,
   context: BazelCompileContext,
-  targetDigests: TargetConfigurationDigestContainer,
   buildDataProvider: BazelBuildDataProvider,
   requestLog: RequestLog,
   success: Boolean,
@@ -479,7 +481,6 @@ private fun CoroutineScope.postBuild(
       buildStateFile = buildDataProvider.storeFile,
       list = sourceDescriptors,
       relativizer = buildDataProvider.relativizer.sourceRelativizer,
-      metadata = Object2ObjectArrayMap(stateFileMetaNames, targetDigests.asString()),
       allocator = buildDataProvider.allocator,
     )
   }

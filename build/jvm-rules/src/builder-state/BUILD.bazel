@@ -1,20 +1,20 @@
-load("//:jvm.bzl", "jvm_import")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("//:jvm.bzl", "jvm_import")
 
 kt_jvm_library(
     name = "builder-state",
     srcs = glob(["**/*.kt"]),
     kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+    visibility = ["//visibility:public"],
     deps = [
+        "//:annotations",
+        "//:arrow-memory-core",
+        "//:arrow-vector",
+        "//:collection",
         "//:kotlinx-coroutines-core",
         "//:opentelemetry-api",
         "//:opentelemetry-context",
-        "//:collection",
         "//src/worker-util",
         "//zip",
-        "//:arrow-vector",
-        "//:arrow-memory-core",
-        "//:annotations",
     ],
-    visibility = ["//visibility:public"],
 )

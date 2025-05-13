@@ -8,7 +8,6 @@ import io.opentelemetry.api.trace.Tracer
 import org.apache.arrow.memory.RootAllocator
 import org.jetbrains.bazel.jvm.worker.state.PathRelativizer
 import org.jetbrains.bazel.jvm.worker.state.SourceFileStateResult
-import org.jetbrains.bazel.jvm.worker.state.TargetConfigurationDigestContainer
 import org.jetbrains.bazel.jvm.worker.state.loadBuildState
 import org.jetbrains.bazel.jvm.span
 import java.nio.file.Files
@@ -39,7 +38,6 @@ internal suspend fun computeBuildState(
   sourceRelativizer: PathRelativizer,
   allocator: RootAllocator,
   sourceFileToDigest: ScatterMap<Path, ByteArray>,
-  targetDigests: TargetConfigurationDigestContainer,
   forceIncremental: Boolean,
   tracer: Tracer,
 ): BuildStateResult {
@@ -48,13 +46,8 @@ internal suspend fun computeBuildState(
     relativizer = sourceRelativizer,
     allocator = allocator,
     sourceFileToDigest = sourceFileToDigest,
-    targetDigests = targetDigests,
     parentSpan = parentSpan,
   ) ?: return createCleanBuildStateResult("no source file state")
-
-  sourceFileStateResult.rebuildRequested?.let {
-    return createCleanBuildStateResult(it)
-  }
 
   if (!forceIncremental) {
     val reason = checkIsFullRebuildRequired(
@@ -67,7 +60,7 @@ internal suspend fun computeBuildState(
     }
   }
 
-  return tracer.span("load and check dependency state") { span ->
+  return tracer.span("load and check dependency state") {
     BuildStateResult(sourceFileState = sourceFileStateResult, rebuildRequested = null)
   }
 }

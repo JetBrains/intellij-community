@@ -20,6 +20,7 @@ import org.jetbrains.bazel.jvm.mvStore.ModernStringDataType
 import org.jetbrains.bazel.jvm.mvStore.MvStoreMapFactory
 import org.jetbrains.bazel.jvm.mvStore.StringEnumerator
 import org.jetbrains.bazel.jvm.mvStore.VarIntDataType
+import org.jetbrains.bazel.jvm.worker.state.TargetConfigurationDigestContainer
 import org.jetbrains.jps.dependency.ExternalizableGraphElement
 import org.jetbrains.jps.dependency.Externalizer
 import org.jetbrains.jps.dependency.Maplet
@@ -90,8 +91,11 @@ internal class BazelPersistentMapletFactory private constructor(
   private val pathRelativizer: PathTypeAwareRelativizer,
 ) : MapletFactory, Closeable, MvStoreContainerFactory {
   companion object {
-    internal fun open(dbFile: Path, pathRelativizer: PathTypeAwareRelativizer, span: Span): BazelPersistentMapletFactory {
-      val store = tryOpenMvStore(dbFile = dbFile, span = span)
+    internal fun openStore(dbFile: Path, span: Span): MVStore {
+      return tryOpenMvStore(dbFile = dbFile, span = span)
+    }
+
+    internal fun createFactory(store: MVStore, pathRelativizer: PathTypeAwareRelativizer): BazelPersistentMapletFactory {
       val storageCloser = AutoCloseable(store::closeImmediately)
 
       val stringHashToIndexMap = executeOrCloseStorage(storageCloser) {

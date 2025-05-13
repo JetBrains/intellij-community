@@ -24,7 +24,6 @@ class BazelBuildDataProvider(
   private val sourceToDescriptor: ScatterMap<Path, SourceDescriptor>,
   @JvmField val storeFile: Path,
   @JvmField val allocator: RootAllocator,
-  @JvmField val isCleanBuild: Boolean,
   @JvmField val dependencyFileToDigest: ScatterMap<Path, ByteArray>,
 ) : BuildDataProvider {
   @JvmField
@@ -112,7 +111,7 @@ class BazelStampStorage(private val map: ScatterMap<Path, SourceDescriptor>) : S
     }
   }
 
-  override fun getCurrentStampIfUpToDate(file: Path, buildTarget: BuildTarget<*>?, attrs: BasicFileAttributes?): ByteArray? {
+  override fun getCurrentStampIfUpToDate(file: Path, buildTarget: BuildTarget<*>?, attrs: BasicFileAttributes?): ByteArray {
     throw UnsupportedOperationException("Must not be used")
   }
 }
