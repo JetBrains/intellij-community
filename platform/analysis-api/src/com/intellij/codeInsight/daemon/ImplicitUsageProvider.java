@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Allows to disable highlighting of certain elements as unused when such elements are not referenced
+ * Allows disabling highlighting of certain elements as unused when such elements are not referenced
  * from the code but are referenced in some other way. For example,
  * <ul>
  * <li>from generated code</li>
@@ -19,17 +19,17 @@ public interface ImplicitUsageProvider {
   ExtensionPointName<ImplicitUsageProvider> EP_NAME = new ExtensionPointName<>("com.intellij.implicitUsageProvider");
 
   /**
-   * @return true if element should not be reported as unused
+   * @return true if the element should not be reported as unused
    */
   boolean isImplicitUsage(@NotNull PsiElement element);
 
   /**
-   * @return true if element should not be reported as "assigned but not used"
+   * @return true if the element should not be reported as "assigned but not used"
    */
   boolean isImplicitRead(@NotNull PsiElement element);
 
   /**
-   * @return true if element should not be reported as "referenced but never assigned"
+   * @return true if the element should not be reported as "referenced but never assigned"
    */
   boolean isImplicitWrite(@NotNull PsiElement element);
 
@@ -41,9 +41,10 @@ public interface ImplicitUsageProvider {
   }
 
   /**
-   * @return true if given element is represents a class (or another data structure declaration depending on language)
-   * which instances may have implicit initialization steps not directly available in the source code
-   * (e.g. Java class initializer is processed via annotation processor and custom steps added)
+   * @return true if the given element represents a class (or another data structure declaration, depending on language),
+   * which instances may have implicit initialization steps not directly available in the source code.
+   * <p>
+   * For example, a Java class initializer which is processed via an annotation processor and custom steps are added.
    */
   default boolean isClassWithCustomizedInitialization(@NotNull PsiElement element) {
     return false;
