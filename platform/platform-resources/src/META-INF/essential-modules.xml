@@ -18,12 +18,11 @@
     <module name="intellij.platform.navbar.monolith"/>
     <module name="intellij.platform.clouds"/>
 
+    <module name="intellij.platform.execution.serviceView"/>
+    <module name="intellij.platform.execution.serviceView.frontend"/>
     <module name="intellij.platform.execution.dashboard"/>
     <module name="intellij.platform.execution.dashboard.frontend"/>
     <module name="intellij.platform.execution.dashboard.backend"/>
-    <module name="intellij.platform.execution.serviceView"/>
-    <module name="intellij.platform.execution.serviceView.frontend"/>
-    <module name="intellij.platform.execution.serviceView.backend"/>
 
     <module name="intellij.platform.searchEverywhere"/>
     <module name="intellij.platform.searchEverywhere.backend"/>
