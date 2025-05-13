@@ -10,13 +10,14 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AddJavadocIntention extends PsiUpdateModCommandAction<PsiElement> {
+public class AddJavadocIntention extends PsiUpdateModCommandAction<PsiElement> implements DumbAware {
   public AddJavadocIntention() {
     super(PsiElement.class);
   }
