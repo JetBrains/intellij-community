@@ -230,11 +230,11 @@ class ProjectStructureProviderIdeImpl(private val project: Project) : IDEProject
 
     override fun getKaSourceModule(
         moduleId: ModuleId,
-        type: KaSourceModuleKind
+        kind: KaSourceModuleKind
     ): KaSourceModule? {
         val snapshot = project.workspaceModel.currentSnapshot
         val openapiModule = moduleId.resolve(snapshot)?.findModule(snapshot) ?: return null
-        return getKaSourceModule(openapiModule, type)
+        return getKaSourceModule(openapiModule, kind)
     }
 
     override fun getKaSourceModule(

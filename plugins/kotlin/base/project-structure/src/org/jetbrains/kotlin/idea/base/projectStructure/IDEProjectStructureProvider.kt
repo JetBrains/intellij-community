@@ -27,7 +27,7 @@ abstract class IDEProjectStructureProvider : KotlinProjectStructureProviderBase(
      */
     abstract val self: IDEProjectStructureProvider
 
-    abstract fun getKaSourceModule(moduleId: ModuleId, type: KaSourceModuleKind): KaSourceModule?
+    abstract fun getKaSourceModule(moduleId: ModuleId, kind: KaSourceModuleKind): KaSourceModule?
 
     abstract fun getKaSourceModules(moduleId: ModuleId): List<KaSourceModule>
 
