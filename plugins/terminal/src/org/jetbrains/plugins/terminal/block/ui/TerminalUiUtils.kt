@@ -57,7 +57,6 @@ import com.jediterm.terminal.ui.AwtTransformers
 import com.jediterm.terminal.util.CharUtils
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.TerminalFontSettingsService
 import org.jetbrains.plugins.terminal.block.output.TextAttributesProvider
 import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
 import org.jetbrains.plugins.terminal.block.session.TerminalModel
@@ -297,6 +296,8 @@ object TerminalUiUtils {
 fun EditorImpl.applyFontSettings(newSettings: JBTerminalSystemSettingsProviderBase) {
   colorsScheme.apply {
     fontPreferences = newSettings.fontPreferences
+    // for some reason, even though fontPreferences contains lineSpacing, the editor doesn't take it from there
+    lineSpacing = newSettings.lineSpacing
   }
   settings.apply {
     characterGridWidthMultiplier = newSettings.columnSpacing
