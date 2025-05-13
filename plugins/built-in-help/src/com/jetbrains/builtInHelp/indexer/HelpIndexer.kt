@@ -51,7 +51,7 @@ internal constructor(indexDir: String) {
             val parsedDocument = Jsoup.parse(file, "UTF-8")
 
             if (parsedDocument.select("meta[http-equiv=refresh]").isNotEmpty()) {
-              println("Skipping redirect page: $file ")
+              println("Skipping redirect page: $file")
               return@forEach
             }
 
@@ -60,7 +60,6 @@ internal constructor(indexDir: String) {
               return@forEach
             }
 
-            val content = StringBuilder()
             val article = parsedDocument.body().getElementsByClass("article").first()
 
             if (article == null) {
@@ -68,11 +67,15 @@ internal constructor(indexDir: String) {
               return@forEach
             }
 
-            article.children().forEach { content.append(it.text()).append(lineSeparator) }
-
-            docIndex.add(TextField("contents", content.toString(), Field.Store.YES))
-            docIndex.add(StringField("filename", file.name, Field.Store.YES))
-            docIndex.add(StringField("title", parsedDocument.title(), Field.Store.YES))
+            docIndex.add(TextField("contents",
+                                   article.children().joinToString(lineSeparator) { it.text() },
+                                   Field.Store.YES))
+            docIndex.add(StringField("filename",
+                                     file.name,
+                                     Field.Store.YES))
+            docIndex.add(StringField("title",
+                                     parsedDocument.title(),
+                                     Field.Store.YES))
 
             writer.addDocument(docIndex)
             println("Added: $file")
