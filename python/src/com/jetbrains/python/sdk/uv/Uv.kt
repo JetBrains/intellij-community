@@ -5,12 +5,15 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
+@ApiStatus.Internal
 interface UvCli {
   suspend fun runUv(workingDir: Path, vararg args: String): PyResult<String>
 }
 
+@ApiStatus.Internal
 interface UvLowLevel {
   suspend fun initializeEnvironment(init: Boolean, python: Path?): PyResult<Path>
 
@@ -38,6 +41,7 @@ interface UvLowLevel {
   suspend fun lock(): Result<String>
 }
 
+@ApiStatus.Internal
 sealed class ScriptSyncCheckResult {
   data object Synced : ScriptSyncCheckResult()
   data object NotSynced : ScriptSyncCheckResult()

@@ -11,7 +11,8 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.jetbrains.python.errorProcessing.asKotlinResult
+import com.jetbrains.python.errorProcessing.MessageError
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
@@ -34,9 +35,9 @@ class PyUvSdkConfiguration : PyProjectSdkConfigurationExtension {
   @RequiresBackgroundThread
   override fun createAndAddSdkForConfigurator(module: Module): Sdk? {
     return runBlockingCancellable {
-      createUv(module).getOrElse {
-        LOGGER.warn(it)
-        null
+      createUv(module).getOr {
+        LOGGER.warn(it.error.message)
+        return@runBlockingCancellable null
       }
     }
   }
@@ -44,19 +45,19 @@ class PyUvSdkConfiguration : PyProjectSdkConfigurationExtension {
   @RequiresBackgroundThread
   override fun createAndAddSdkForInspection(module: Module): Sdk? {
     return runBlockingCancellable {
-      createUv(module).getOrElse {
-        LOGGER.warn(it)
-        null
+      createUv(module).getOr {
+        LOGGER.warn(it.error.message)
+        return@runBlockingCancellable null
       }
     }
   }
 
   override fun supportsHeadlessModel(): Boolean = true
 
-  private suspend fun createUv(module: Module): Result<Sdk> {
+  private suspend fun createUv(module: Module): PyResult<Sdk> {
     val workingDir = tryResolvePath(module.basePath)
     if (workingDir == null) {
-      return Result.failure(IllegalStateException("Can't determine working dir for the module"))
+      return PyResult.failure(MessageError("Can't determine working dir for the module"))
     }
 
     val sdk = setupNewUvSdkAndEnvUnderProgress(module.project, workingDir, ProjectJdkTable.getInstance().allJdks.toList(), null)
@@ -64,6 +65,6 @@ class PyUvSdkConfiguration : PyProjectSdkConfigurationExtension {
       SdkConfigurationUtil.addSdk(it)
     }
 
-    return sdk.asKotlinResult()
+    return sdk
   }
 }
