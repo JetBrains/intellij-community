@@ -41,7 +41,11 @@ f:com.intellij.platform.util.progress.StepsKt
 - sf:ignoreProgressReportingIn(kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - sf:mapWithProgress(java.util.Collection,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - sf:reportProgress(I,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- sf:reportProgress(kotlinx.coroutines.CoroutineScope,I,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - bs:reportProgress$default(I,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- bs:reportProgress$default(kotlinx.coroutines.CoroutineScope,I,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- sf:reportProgressScope(I,kotlin.jvm.functions.Function3,kotlin.coroutines.Continuation):java.lang.Object
+- bs:reportProgressScope$default(I,kotlin.jvm.functions.Function3,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - sf:reportRawProgress(kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 - sf:reportSequentialProgress(I,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 - bs:reportSequentialProgress$default(I,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object

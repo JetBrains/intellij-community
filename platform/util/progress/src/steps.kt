@@ -88,7 +88,6 @@ suspend fun <T> reportProgress(size: Int = 100, action: suspend (reporter: Progr
  * }
  * ```
  */
-@Experimental
 suspend fun <T> reportProgressScope(size: Int = 100, action: suspend CoroutineScope.(reporter: ProgressReporter) -> T): T {
   return reportProgress(size) {
     ignoreProgressReportingIn {
@@ -203,6 +202,17 @@ suspend fun <T> durationStep(duration: Double, text: ProgressText? = null, actio
 suspend fun <X> withRawProgressReporter(action: suspend CoroutineScope.() -> X): X {
   return reportRawProgress { reporter ->
     withContext(reporter.asContextElement(), action)
+  }
+}
+
+/**
+ * Coroutines launched inside [action] will use the outer [CoroutineScope][this] and its context,
+ * hence the progress reporter will have no effect there. Use [reportProgressScope] instead.
+ */
+@Deprecated("Use `reportProgressScope` instead", ReplaceWith("reportProgressScope(size, action)"))
+suspend fun <T> CoroutineScope.reportProgress(size: Int = 100, action: suspend (reporter: ProgressReporter) -> T): T {
+  return internalCurrentStepAsConcurrent(size).use { handle ->
+    action(handle.reporter)
   }
 }
 
