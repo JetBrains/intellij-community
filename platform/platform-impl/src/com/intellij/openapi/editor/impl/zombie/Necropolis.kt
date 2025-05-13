@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl.zombie
 
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.idea.AppModeAssertions
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.WriteIntentReadAction
@@ -69,6 +70,8 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
     editorSupplier: suspend () -> EditorEx,
     highlighterReady: suspend () -> Unit,
   ) {
+    if (AppModeAssertions.isBackend())
+      return
     require(project == this.project)
     if (!project.isDisposed && !project.isDefault) {
       val fileId = application.serviceAsync<ZombieOriginRecipeBook>().getIdForFile(file) ?: return
@@ -102,6 +105,8 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
 
   private fun subscribeEditorClosed(necromancers: List<Necromancer<Zombie>>) {
     val originRecipeBook = application.service<ZombieOriginRecipeBook>()
+    if (AppModeAssertions.isBackend())
+      return
     EditorFactory.getInstance().addEditorFactoryListener(
       object : EditorFactoryListener {
         override fun editorReleased(event: EditorFactoryEvent) {

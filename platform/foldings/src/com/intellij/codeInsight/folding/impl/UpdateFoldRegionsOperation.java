@@ -38,7 +38,7 @@ final class UpdateFoldRegionsOperation implements Runnable {
   private static final Logger LOG = Logger.getInstance(UpdateFoldRegionsOperation.class);
   private static final Key<Boolean> CAN_BE_REMOVED_WHEN_COLLAPSED = Key.create("canBeRemovedWhenCollapsed");
   static final Key<Boolean> COLLAPSED_BY_DEFAULT = Key.create("collapsedByDefault");
-  static final Key<String> SIGNATURE = Key.create("signature");
+  static final Key<String> SIGNATURE = FoldingKeys.SIGNATURE;
   static final Key<Boolean> UPDATE_REGION = Key.create("update");
   static final String NO_SIGNATURE = "no signature";
 
