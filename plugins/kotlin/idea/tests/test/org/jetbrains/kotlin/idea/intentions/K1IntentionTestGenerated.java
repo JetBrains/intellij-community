@@ -7135,6 +7135,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertParameterToReceiver/vararg.kt");
         }
 
+        @TestMetadata("withContextParameter.kt")
+        public void testWithContextParameter() throws Exception {
+            runTest("testData/intentions/convertParameterToReceiver/withContextParameter.kt");
+        }
+
         @TestMetadata("withExtensionReceiver.kt")
         public void testWithExtensionReceiver() throws Exception {
             runTest("testData/intentions/convertParameterToReceiver/withExtensionReceiver.kt");

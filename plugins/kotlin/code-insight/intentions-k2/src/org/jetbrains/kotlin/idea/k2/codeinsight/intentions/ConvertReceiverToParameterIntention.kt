@@ -31,7 +31,7 @@ internal class ConvertReceiverToParameterIntention : SelfTargetingOffsetIndepend
         val function = (element.parent as? KtNamedFunction) ?: return
 
         val superMethods = checkSuperMethods(function, emptyList(), RefactoringBundle.message("to.refactor"))
-        val superFunction = superMethods.firstOrNull() as? KtNamedFunction ?: return
+        val superFunction = superMethods.lastOrNull() as? KtNamedFunction ?: return
 
         val project = element.project
 
