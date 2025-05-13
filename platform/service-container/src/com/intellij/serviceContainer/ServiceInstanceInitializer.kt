@@ -16,6 +16,7 @@ import com.intellij.platform.instanceContainer.instantiation.instantiate
 import com.intellij.platform.instanceContainer.instantiation.withStoredTemporaryContext
 import com.intellij.platform.instanceContainer.internal.InstanceInitializer
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CancellationException
 
 internal abstract class ServiceInstanceInitializer(
@@ -108,9 +109,15 @@ private fun checkWriteAction(instanceClass: Class<*>) {
   if (!LOG.isDebugEnabled) {
     return
   }
+  if (!checkServiceFromWriteAccess) {
+    return
+  }
   val app = ApplicationManager.getApplication()
             ?: return
   if (app.isWriteAccessAllowed && !app.isUnitTestMode && PersistentStateComponent::class.java.isAssignableFrom(instanceClass)) {
     LOG.warn(Throwable("Getting service from write-action leads to possible deadlock. Service implementation ${instanceClass.name}"))
   }
 }
+
+@ApiStatus.Internal
+var checkServiceFromWriteAccess: Boolean = true
