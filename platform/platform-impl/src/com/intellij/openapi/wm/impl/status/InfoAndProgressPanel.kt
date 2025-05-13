@@ -992,53 +992,74 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
               }
             }
             if (preferredWidth > width) {
-              indicator.setBounds(0, 0, 0, 0)
-              progressIcon.isVisible = true
-              val iconSize = progressIcon.getPreferredSize()
-              preferredWidth = iconSize.width
-              if (multiProcessLink.isVisible) {
-                preferredWidth += gap + multiProcessLink.getPreferredSize().width
-              }
-              if (preferredWidth > width) {
-                if (multiProcessLink.isVisible) {
-                  multiProcessLink.setBounds(0, 0, 0, 0)
-                }
-                setBounds(progressIcon, 0, centerY, iconSize, false)
-              }
-              else {
-                var miniWidth = true
-                if (multiProcessLink.isVisible) {
-                  rightX = setBounds(multiProcessLink, rightX, centerY, null, true) - gap
-                }
-                else if (width < 60) {
-                  rightX = 0
-                  miniWidth = false
-                }
-                setBounds(progressIcon, rightX, centerY, iconSize, miniWidth)
-              }
-              progressIcon.isVisible = true
+              layoutWithUnfittingIndicator(indicator,
+                                           initialPreferredWidth = preferredWidth,
+                                           initialRightX = rightX,
+                                           centerY = centerY)
             }
             else {
-              progressIcon.isVisible = false
-              if (multiProcessLink.isVisible) {
-                rightX = setBounds(multiProcessLink, rightX, centerY, null, true) - gap
-              }
-              setBounds(indicator, rightX, centerY, indicatorSize, true)
+              layoutWithFittingIndicator(indicator,
+                                         indicatorSize = indicatorSize,
+                                         initialRightX = rightX,
+                                         centerY = centerY)
             }
           }
           else {
-            val linkSize = multiProcessLink.getPreferredSize()
-            val preferredWidth = linkSize.width
-            if (preferredWidth > width) {
+            layoutWithoutIndicator(initialX = x, rightX = rightX, centerY = centerY)
+          }
+        }
+
+        private fun layoutWithUnfittingIndicator(indicatorComponent: JPanel, initialPreferredWidth: Int, initialRightX: Int, centerY: Int) {
+          var preferredWidth = initialPreferredWidth
+          var rightX = initialRightX
+          indicatorComponent.setBounds(0, 0, 0, 0)
+          progressIcon.isVisible = true
+          val iconSize = progressIcon.getPreferredSize()
+          preferredWidth = iconSize.width
+          if (multiProcessLink.isVisible) {
+            preferredWidth += gap + multiProcessLink.getPreferredSize().width
+          }
+          if (preferredWidth > width) {
+            if (multiProcessLink.isVisible) {
               multiProcessLink.setBounds(0, 0, 0, 0)
-              progressIcon.isVisible = true
-              setBounds(progressIcon, x, centerY, null, false)
-              progressIcon.isVisible = true
             }
-            else {
-              progressIcon.isVisible = false
-              setBounds(multiProcessLink, rightX, centerY, linkSize, true)
+            setBounds(progressIcon, 0, centerY, iconSize, false)
+          }
+          else {
+            var miniWidth = true
+            if (multiProcessLink.isVisible) {
+              rightX = setBounds(multiProcessLink, rightX, centerY, null, true) - gap
             }
+            else if (width < 60) {
+              rightX = 0
+              miniWidth = false
+            }
+            setBounds(progressIcon, rightX, centerY, iconSize, miniWidth)
+          }
+          progressIcon.isVisible = true
+        }
+
+        private fun layoutWithFittingIndicator(indicatorComponent: JPanel, indicatorSize: Dimension?, initialRightX: Int, centerY: Int) {
+          var rightX = initialRightX
+          progressIcon.isVisible = false
+          if (multiProcessLink.isVisible) {
+            rightX = setBounds(multiProcessLink, rightX, centerY, null, true) - gap
+          }
+          setBounds(indicatorComponent, rightX, centerY, indicatorSize, true)
+        }
+
+        private fun layoutWithoutIndicator(rightX: Int, centerY: Int, initialX: Int) {
+          val linkSize = multiProcessLink.getPreferredSize()
+          val preferredWidth = linkSize.width
+          if (preferredWidth > width) {
+            multiProcessLink.setBounds(0, 0, 0, 0)
+            progressIcon.isVisible = true
+            setBounds(progressIcon, initialX, centerY, null, false)
+            progressIcon.isVisible = true
+          }
+          else {
+            progressIcon.isVisible = false
+            setBounds(multiProcessLink, rightX, centerY, linkSize, true)
           }
         }
       })
