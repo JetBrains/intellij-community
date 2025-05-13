@@ -3,6 +3,7 @@ package com.intellij.platform.searchEverywhere.frontend.vm
 
 import com.intellij.platform.searchEverywhere.frontend.ui.SePopupContentPane
 import com.intellij.platform.searchEverywhere.providers.SeLog
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -11,9 +12,9 @@ import org.jetbrains.annotations.ApiStatus
 @Suppress("LocalVariableName")
 @ApiStatus.Internal
 inline fun <reified T> Flow<T>.throttledWithAccumulation(): Flow<SeThrottledItems<T>> {
-  val THROTTLING_IN_PROGRESS: Int = 0
-  val NO_THROTTLING: Int = 1
-  val SHOULD_SEND_THROTTLED_AND_CLOSE: Int = 2
+  val THROTTLING_IN_PROGRESS = 0
+  val NO_THROTTLING = 1
+  val SHOULD_SEND_THROTTLED_AND_CLOSE = 2
 
   val originalFlow = this
   return channelFlow {
@@ -28,13 +29,13 @@ inline fun <reified T> Flow<T>.throttledWithAccumulation(): Flow<SeThrottledItem
     val originalWithUnthrottlingOnCompletion = originalFlow.onCompletion {
       SeLog.log(SeLog.THROTTLING) { "Original flow completed" }
       throttlingStatusFlow.value = SHOULD_SEND_THROTTLED_AND_CLOSE
-    }
+    }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND)
 
     var lastCollectedStopThrottlingCount = THROTTLING_IN_PROGRESS
 
-    merge(flowOf(1), originalWithUnthrottlingOnCompletion).combine(throttlingStatusFlow) { event, throttlingStatus ->
+    merge(flowOf(1), originalWithUnthrottlingOnCompletion).buffer(0, onBufferOverflow = BufferOverflow.SUSPEND).combine(throttlingStatusFlow) { event, throttlingStatus ->
       event to throttlingStatus
-    }.collect { (event, throttlingStatus) ->
+    }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND).collect { (event, throttlingStatus) ->
       if (lastCollectedStopThrottlingCount != throttlingStatus) {
         if (throttlingStatus != THROTTLING_IN_PROGRESS) {
           if (throttlingStatus == NO_THROTTLING) {
@@ -72,9 +73,7 @@ inline fun <reified T> Flow<T>.throttledWithAccumulation(): Flow<SeThrottledItem
         }
       }
     }
-  }.onCompletion {
-    SeLog.log(SeLog.THROTTLING) { "Channel flow has completed" }
-  }
+  }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND)
 }
 
 @ApiStatus.Internal

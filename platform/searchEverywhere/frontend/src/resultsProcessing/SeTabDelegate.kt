@@ -48,7 +48,7 @@ class SeTabDelegate(val project: Project?,
           SeLog.log(ITEM_EMIT) { "Tab delegate for ${logLabel} emits: ${it.presentation.text}" }
           accumulator.add(it)
         }
-      }.collect {
+      }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND).collect {
         emit(it)
       }
     }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND)
