@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.pom.java.LanguageLevel;
@@ -6,8 +6,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.util.PsiUtil;
 
-public class ServiceReferenceTagInfo extends ClassReferenceTagInfo {
-  public ServiceReferenceTagInfo(String name) {
+final class ServiceReferenceTagInfo extends ClassReferenceTagInfo {
+  ServiceReferenceTagInfo(String name) {
     super(name);
   }
 

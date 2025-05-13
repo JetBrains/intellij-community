@@ -49,18 +49,6 @@ c:com.intellij.execution.rmi.RemoteServer$Jndi
 - <init>():V
 - getInitialContext(java.util.Hashtable):javax.naming.Context
 - invoke(java.lang.Object,java.lang.reflect.Method,java.lang.Object[]):java.lang.Object
-f:com.intellij.execution.rmi.ssl.DefaultSslSocketFactory
-- javax.net.ssl.SSLSocketFactory
-- <init>():V
-- <init>(java.lang.String):V
-- <init>(Z):V
-- createSocket(java.lang.String,I):java.net.Socket
-- createSocket(java.lang.String,I,java.net.InetAddress,I):java.net.Socket
-- createSocket(java.net.InetAddress,I):java.net.Socket
-- createSocket(java.net.InetAddress,I,java.net.InetAddress,I):java.net.Socket
-- createSocket(java.net.Socket,java.lang.String,I,Z):java.net.Socket
-- getDefaultCipherSuites():java.lang.String[]
-- getSupportedCipherSuites():java.lang.String[]
 f:com.intellij.execution.rmi.ssl.SslKeyStore
 - java.security.KeyStoreSpi
 - sf:SSL_DEFERRED_CA_LOADING:java.lang.String
@@ -72,17 +60,6 @@ f:com.intellij.execution.rmi.ssl.SslKeyStore
 - s:getUserKey():java.security.Key
 - s:loadKey(java.lang.String,java.lang.String,java.lang.String,C[]):V
 - s:setDefault():V
-f:com.intellij.execution.rmi.ssl.SslSocketFactory
-- javax.net.ssl.SSLSocketFactory
-- <init>():V
-- createSocket(java.lang.String,I):java.net.Socket
-- createSocket(java.lang.String,I,java.net.InetAddress,I):java.net.Socket
-- createSocket(java.net.InetAddress,I):java.net.Socket
-- createSocket(java.net.InetAddress,I,java.net.InetAddress,I):java.net.Socket
-- createSocket(java.net.Socket,java.lang.String,I,Z):java.net.Socket
-- s:createTrustManagers(java.lang.String):javax.net.ssl.TrustManager[]
-- getDefaultCipherSuites():java.lang.String[]
-- getSupportedCipherSuites():java.lang.String[]
 f:com.intellij.execution.rmi.ssl.SslTrustStore
 - java.security.KeyStoreSpi
 - <init>():V

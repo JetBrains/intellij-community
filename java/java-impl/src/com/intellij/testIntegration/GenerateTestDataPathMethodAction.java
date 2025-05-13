@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration;
 
 import com.intellij.java.JavaBundle;
@@ -24,9 +24,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
-public class GenerateTestDataPathMethodAction extends GenerateTestDataPathCommon {
-
-  public GenerateTestDataPathMethodAction() {
+final class GenerateTestDataPathMethodAction extends GenerateTestDataPathCommon {
+  GenerateTestDataPathMethodAction() {
     super(((project, editor, file) -> {
             var currentClass = PsiTreeUtil.findChildOfType(file, PsiClass.class);
             if (currentClass == null) return;

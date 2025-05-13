@@ -17163,9 +17163,6 @@ f:com.intellij.xml.breadcrumbs.BreadcrumbsComponent
 - setHoveredCrumb(com.intellij.xml.breadcrumbs.BreadcrumbsComponent$Crumb):V
 - setItems(java.util.List):V
 - setOffset(I):V
-f:com.intellij.xml.breadcrumbs.BreadcrumbsComponent$ButtonSettings
-- <init>():V
-- s:getBackgroundColor(Z,Z,Z,Z):java.awt.Color
 a:com.intellij.xml.breadcrumbs.BreadcrumbsPanel
 - javax.swing.JComponent
 - com.intellij.openapi.Disposable

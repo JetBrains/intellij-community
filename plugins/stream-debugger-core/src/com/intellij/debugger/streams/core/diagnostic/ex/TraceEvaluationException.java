@@ -6,8 +6,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Vitaliy.Bibaev
  */
-public class TraceEvaluationException extends TraceException {
-
+public final class TraceEvaluationException extends TraceException {
   public TraceEvaluationException(@NotNull String message, @NotNull String traceExpression) {
     super(message, traceExpression);
   }

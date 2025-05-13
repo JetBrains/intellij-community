@@ -1070,8 +1070,6 @@ a:com.intellij.diff.tools.simple.ThreesideDiffChangeBase
 - updateGutterActions(Z):V
 a:com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx
 - com.intellij.diff.tools.util.side.ThreesideTextDiffViewer
-- pf:myFoldingModel:com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx$MyFoldingModel
-- pf:myInitialScrollHelper:com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx$MyInitialScrollHelper
 - pf:myStatusPanel:com.intellij.diff.tools.util.StatusPanel
 - <init>(com.intellij.diff.DiffContext,com.intellij.diff.requests.ContentDiffRequest):V
 - p:applyNotification(javax.swing.JComponent):java.lang.Runnable
@@ -1108,11 +1106,6 @@ pc:com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx$MyFoldingModel
 - createState(java.util.List,java.util.List,com.intellij.diff.tools.util.FoldingModelSupport$Settings):com.intellij.diff.tools.util.FoldingModelSupport$Data
 - paintOnDivider(java.awt.Graphics2D,java.awt.Component,com.intellij.diff.util.Side):V
 - p:repaintSeparators():V
-pc:com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx$MyInitialScrollHelper
-- com.intellij.diff.tools.util.side.ThreesideTextDiffViewer$MyInitialScrollPositionHelper
-- p:<init>(com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx):V
-- p:doScrollToChange():Z
-- p:doScrollToFirstChange():Z
 pc:com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx$MyPrevNextDifferenceIterable
 - com.intellij.diff.tools.util.PrevNextDifferenceIterableBase
 - p:<init>(com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx):V
@@ -1595,8 +1588,6 @@ pa:com.intellij.diff.tools.util.side.OnesideTextDiffViewer$MyInitialScrollPositi
 - p:<init>(com.intellij.diff.tools.util.side.OnesideTextDiffViewer):V
 - p:disableSyncScroll(Z):V
 - p:doScrollToLine(Z):Z
-- p:doScrollToPosition():Z
-- p:getCaretPositions():com.intellij.openapi.editor.LogicalPosition[]
 - p:getEditors():java.util.List
 c:com.intellij.diff.tools.util.side.ThreesideContentPanel
 - javax.swing.JPanel
@@ -1640,13 +1631,6 @@ a:com.intellij.diff.tools.util.side.ThreesideTextDiffViewer
 - p:scrollToLine(com.intellij.diff.util.ThreeSide,I):V
 - p:transferPosition(com.intellij.diff.util.ThreeSide,com.intellij.diff.util.ThreeSide,com.intellij.openapi.editor.LogicalPosition):com.intellij.openapi.editor.LogicalPosition
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
-pa:com.intellij.diff.tools.util.side.ThreesideTextDiffViewer$MyInitialScrollPositionHelper
-- p:<init>(com.intellij.diff.tools.util.side.ThreesideTextDiffViewer):V
-- p:disableSyncScroll(Z):V
-- p:doScrollToLine():Z
-- p:doScrollToPosition():Z
-- p:getCaretPositions():com.intellij.openapi.editor.LogicalPosition[]
-- p:getEditors():java.util.List
 pc:com.intellij.diff.tools.util.side.ThreesideTextDiffViewer$MyToggleAutoScrollAction
 - com.intellij.openapi.project.DumbAwareToggleAction
 - <init>(com.intellij.diff.tools.util.side.ThreesideTextDiffViewer):V
@@ -1717,8 +1701,6 @@ pa:com.intellij.diff.tools.util.side.TwosideTextDiffViewer$MyInitialScrollPositi
 - p:<init>(com.intellij.diff.tools.util.side.TwosideTextDiffViewer):V
 - p:disableSyncScroll(Z):V
 - p:doScrollToLine(Z):Z
-- p:doScrollToPosition():Z
-- p:getCaretPositions():com.intellij.openapi.editor.LogicalPosition[]
 - p:getEditors():java.util.List
 - onRediff():V
 com.intellij.diff.tools.util.text.FineMergeLineFragment

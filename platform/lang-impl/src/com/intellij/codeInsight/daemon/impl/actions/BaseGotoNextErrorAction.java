@@ -18,9 +18,8 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
-
-abstract class BaseGotoNextErrorAction extends BaseCodeInsightAction implements ActionRemoteBehaviorSpecification, DumbAware {
-
+@Internal
+public abstract class BaseGotoNextErrorAction extends BaseCodeInsightAction implements ActionRemoteBehaviorSpecification, DumbAware {
   private final boolean goForward;
 
   BaseGotoNextErrorAction(boolean goForward) {

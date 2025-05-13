@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInsight.Nullability;
@@ -39,7 +39,7 @@ import static com.siyeh.ig.psiutils.ControlFlowUtils.getInitializerUsageStatus;
 import static com.siyeh.ig.psiutils.Java8MigrationUtils.MapCheckCondition.fromConditional;
 import static com.siyeh.ig.psiutils.Java8MigrationUtils.extractLambdaCandidate;
 
-class CollectMigration extends BaseStreamApiMigration {
+final class CollectMigration extends BaseStreamApiMigration {
   private static final Logger LOG = Logger.getInstance(CollectMigration.class);
 
   static final Map<String, String> INTERMEDIATE_STEPS = EntryStream.of(
@@ -50,7 +50,7 @@ class CollectMigration extends BaseStreamApiMigration {
     "java.util.TreeSet", ".distinct().sorted()"
   ).toMap();
 
-  protected CollectMigration(boolean shouldWarn, String methodName) {
+  CollectMigration(boolean shouldWarn, String methodName) {
     super(shouldWarn, methodName);
   }
 

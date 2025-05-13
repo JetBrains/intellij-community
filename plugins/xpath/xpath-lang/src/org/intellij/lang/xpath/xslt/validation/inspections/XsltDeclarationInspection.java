@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.xslt.validation.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -22,7 +22,7 @@ import org.intellij.lang.xpath.xslt.validation.DeclarationChecker;
 import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class XsltDeclarationInspection extends XsltInspection {
+public final class XsltDeclarationInspection extends XsltInspection {
     private XsltElementFactory myXsltElementFactory;
 
   @Override

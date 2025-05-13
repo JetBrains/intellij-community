@@ -17,8 +17,7 @@ import java.util.List;
  *
  * @author Ilya.Kazakevich
  */
-public final class CommandLineCommandReference extends CommandLineElementReference<CommandLineCommand> {
-
+final class CommandLineCommandReference extends CommandLineElementReference<CommandLineCommand> {
   CommandLineCommandReference(final @NotNull CommandLineCommand element) {
     super(element);
   }
@@ -27,7 +26,6 @@ public final class CommandLineCommandReference extends CommandLineElementReferen
   public @Nullable PsiElement resolve() {
     return null;
   }
-
 
   @Override
   public Object @NotNull [] getVariants() {

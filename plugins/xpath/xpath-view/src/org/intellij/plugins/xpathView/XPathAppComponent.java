@@ -144,14 +144,14 @@ public final class XPathAppComponent implements PersistentStateComponent<Config>
     }
   }
 
-  public static class FindNextHandler extends MyFindHandler {
-    public FindNextHandler(EditorActionHandler origHandler) {
+  static final class FindNextHandler extends MyFindHandler {
+    FindNextHandler(EditorActionHandler origHandler) {
       super(origHandler, false);
     }
   }
 
-  public static class FindPreviousHandler extends MyFindHandler {
-    public FindPreviousHandler(EditorActionHandler origHandler) {
+  static final class FindPreviousHandler extends MyFindHandler {
+    FindPreviousHandler(EditorActionHandler origHandler) {
       super(origHandler, true);
     }
   }

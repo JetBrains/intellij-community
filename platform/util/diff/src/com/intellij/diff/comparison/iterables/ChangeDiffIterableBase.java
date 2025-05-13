@@ -1,12 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.comparison.iterables;
 
 import com.intellij.diff.util.Range;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 
-abstract class ChangeDiffIterableBase implements DiffIterable {
+@ApiStatus.Internal
+public abstract class ChangeDiffIterableBase implements DiffIterable {
   private final int myLength1;
   private final int myLength2;
 

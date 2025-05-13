@@ -22,30 +22,30 @@ import org.intellij.lang.xpath.xslt.psi.XsltCallTemplate;
 import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
 import org.jetbrains.annotations.Nullable;
 
-public class XsltCallTemplateImpl extends XsltTemplateInvocationBase implements XsltCallTemplate {
-    public XsltCallTemplateImpl(XmlTag target) {
-        super(target);
-    }
+final class XsltCallTemplateImpl extends XsltTemplateInvocationBase implements XsltCallTemplate {
+  XsltCallTemplateImpl(XmlTag target) {
+    super(target);
+  }
 
-    @Override
-    public String getTemplateName() {
-        return getName();
-    }
+  @Override
+  public String getTemplateName() {
+    return getName();
+  }
 
-    @Override
-    public @Nullable XsltTemplate getTemplate() {
-        final PsiReference[] references = getReferences();
-        for (PsiReference reference : references) {
-            final PsiElement t = reference.resolve();
-            if (t instanceof XsltTemplate) {
-                return (XsltTemplate)t;
-            }
-        }
-        return null;
+  @Override
+  public @Nullable XsltTemplate getTemplate() {
+    final PsiReference[] references = getReferences();
+    for (PsiReference reference : references) {
+      final PsiElement t = reference.resolve();
+      if (t instanceof XsltTemplate) {
+        return (XsltTemplate)t;
+      }
     }
+    return null;
+  }
 
-    @Override
-    public String toString() {
-        return "XsltCallTemplate: " + getName();
-    }
+  @Override
+  public String toString() {
+    return "XsltCallTemplate: " + getName();
+  }
 }

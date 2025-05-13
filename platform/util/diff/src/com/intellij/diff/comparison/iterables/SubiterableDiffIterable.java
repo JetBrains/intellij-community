@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.comparison.iterables;
 
 import com.intellij.diff.util.Range;
@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 @Internal
-public class SubiterableDiffIterable extends ChangeDiffIterableBase {
+public final class SubiterableDiffIterable extends ChangeDiffIterableBase {
   private final @NotNull List<Range> myChanged;
   private final int myStart1;
   private final int myStart2;

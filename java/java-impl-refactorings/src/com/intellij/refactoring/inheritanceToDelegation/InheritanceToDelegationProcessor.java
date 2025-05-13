@@ -45,7 +45,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
+public final class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(InheritanceToDelegationProcessor.class);
   private final PsiClass myClass;
   private final String myInnerClassName;
@@ -729,7 +729,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
     // find overriding/implementing method
     {
-      class InnerClassOverridingMethod extends InnerClassMethod {
+      final class InnerClassOverridingMethod extends InnerClassMethod {
         InnerClassOverridingMethod(PsiMethod method) {
           super(method);
         }
@@ -756,7 +756,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
     // fix abstract methods
     {
-      class InnerClassAbstractMethod extends InnerClassMethod {
+      final class InnerClassAbstractMethod extends InnerClassMethod {
         private final boolean myImplicitImplementation;
 
         InnerClassAbstractMethod(PsiMethod method, final boolean implicitImplementation) {

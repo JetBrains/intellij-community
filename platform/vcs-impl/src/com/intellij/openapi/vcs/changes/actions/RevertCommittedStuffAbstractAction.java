@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.vcs.VcsActivity;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-abstract class RevertCommittedStuffAbstractAction extends AnAction implements DumbAware {
+@ApiStatus.Internal
+public abstract class RevertCommittedStuffAbstractAction extends AnAction implements DumbAware {
   private final boolean myReverse;
 
   protected RevertCommittedStuffAbstractAction(boolean reverse) {

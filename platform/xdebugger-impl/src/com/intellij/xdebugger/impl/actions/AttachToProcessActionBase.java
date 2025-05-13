@@ -43,6 +43,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public abstract class AttachToProcessActionBase extends AnAction implements DumbAware {
   private static final Key<Map<XAttachHost, LinkedHashSet<RecentItem>>> RECENT_ITEMS_KEY =
     Key.create("AttachToProcessAction.RECENT_ITEMS_KEY");
@@ -307,7 +308,7 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
            : List.copyOf(recentItems.get(host));
   }
 
-  public static class RecentItem {
+  public static final class RecentItem {
     private final @NotNull XAttachHost myHost;
     private final @NotNull ProcessInfo myProcessInfo;
     private final @NotNull XAttachPresentationGroup myGroup;
@@ -580,7 +581,8 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
     }
   }
 
-  private static class MyBasePopupStep<T extends AttachItem> extends BaseListPopupStep<T> {
+  @ApiStatus.Internal
+  public static class MyBasePopupStep<T extends AttachItem> extends BaseListPopupStep<T> {
     final @NotNull Project myProject;
 
     MyBasePopupStep(@NotNull Project project,
@@ -611,7 +613,7 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
     }
   }
 
-  public class AttachListStep extends MyBasePopupStep<AttachItem> implements ListPopupStepEx<AttachItem> {
+  public final class AttachListStep extends MyBasePopupStep<AttachItem> implements ListPopupStepEx<AttachItem> {
     public AttachListStep(@NotNull List<AttachItem> items, @Nullable @NlsContexts.PopupTitle String title, @NotNull Project project) {
       super(project, title, items);
     }

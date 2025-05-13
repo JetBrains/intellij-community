@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.fragmented;
 
 import com.intellij.diff.util.Side;
@@ -14,7 +14,7 @@ import java.util.Collections;
 import java.util.List;
 
 @ApiStatus.Internal
-public class UnifiedDiffModel {
+public final class UnifiedDiffModel {
   private final @NotNull UnifiedDiffViewer myViewer;
 
   private @Nullable ChangedBlockData myData = null;
@@ -91,7 +91,7 @@ public class UnifiedDiffModel {
     }
   }
 
-  public static class ChangedBlockData {
+  public static final class ChangedBlockData {
     private final @NotNull List<UnifiedDiffChange> myDiffChanges;
     private final @NotNull LineNumberConvertor myLineNumberConvertor1;
     private final @NotNull LineNumberConvertor myLineNumberConvertor2;

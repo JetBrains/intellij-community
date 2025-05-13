@@ -28,8 +28,7 @@ import org.intellij.lang.xpath.xslt.validation.XsltValidator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class UnusedElementInspection extends XsltInspection {
-
+public final class UnusedElementInspection extends XsltInspection {
   @Override
   public @NonNls @NotNull String getShortName() {
         return "XsltUnusedDeclaration";

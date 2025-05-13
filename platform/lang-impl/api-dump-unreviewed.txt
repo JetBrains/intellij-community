@@ -2447,20 +2447,6 @@ c:com.intellij.codeInsight.daemon.impl.actions.GotoNextErrorAction
 - com.intellij.codeInsight.actions.BaseCodeInsightAction
 - com.intellij.openapi.project.DumbAware
 - <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- p:getHandler():com.intellij.codeInsight.CodeInsightActionHandler
-- p:getHandler(com.intellij.openapi.actionSystem.DataContext):com.intellij.codeInsight.CodeInsightActionHandler
-- p:isValidForFile(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
-- p:isValidForLookup():Z
-c:com.intellij.codeInsight.daemon.impl.actions.GotoPreviousErrorAction
-- com.intellij.codeInsight.actions.BaseCodeInsightAction
-- com.intellij.openapi.project.DumbAware
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- p:getHandler():com.intellij.codeInsight.CodeInsightActionHandler
-- p:getHandler(com.intellij.openapi.actionSystem.DataContext):com.intellij.codeInsight.CodeInsightActionHandler
-- p:isValidForFile(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
-- p:isValidForLookup():Z
 f:com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil
 - s:forceRootHighlighting(com.intellij.psi.PsiElement,com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting):V
 f:com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
@@ -12939,15 +12925,7 @@ f:com.intellij.openapi.editor.richcopy.view.RtfTransferableData
 - sf:FLAVOR:java.awt.datatransfer.DataFlavor
 - sf:PRIORITY:I
 - <init>(com.intellij.openapi.editor.richcopy.model.SyntaxInfo):V
-- close():V
-- getFlavor():java.awt.datatransfer.DataFlavor
 - getPriority():I
-- mark(I):V
-- markSupported():Z
-- read():I
-- read(B[],I,I):I
-- reset():V
-- setRawText(java.lang.String):V
 f:com.intellij.openapi.file.exclude.OverrideFileTypeManager
 - com.intellij.openapi.components.PersistentStateComponent
 - <init>():V

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.impl.configuration;
 
 import com.intellij.openapi.util.Factory;
@@ -12,6 +12,7 @@ import com.intellij.util.config.ListProperty;
 import com.intellij.util.config.StorageProperty;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -145,7 +146,8 @@ public abstract class UIPropertyBinding {
     }
   }
 
-  private abstract static class ComponentBinding<Comp extends JComponent, Prop extends AbstractProperty> extends UIPropertyBinding {
+  @ApiStatus.Internal
+  public abstract static class ComponentBinding<Comp extends JComponent, Prop extends AbstractProperty> extends UIPropertyBinding {
     private final Comp myComponent;
     private final Prop myProperty;
 
@@ -178,10 +180,10 @@ public abstract class UIPropertyBinding {
     }
   }
 
-  public static class ToggleButtonBinding extends ComponentBinding<JToggleButton, AbstractProperty<Boolean>> {
+  static final class ToggleButtonBinding extends ComponentBinding<JToggleButton, AbstractProperty<Boolean>> {
     private final ChangeValueSupport myChangeSupport;
 
-    public ToggleButtonBinding(JToggleButton toggleButton, AbstractProperty<Boolean> property) {
+    ToggleButtonBinding(JToggleButton toggleButton, AbstractProperty<Boolean> property) {
       super(toggleButton, property);
       myChangeSupport = ChangeValueSupport.create(toggleButton, ListenerInstaller.TOGGLE_BUTTON, property.getName());
     }
@@ -507,8 +509,8 @@ public abstract class UIPropertyBinding {
     }
   }
 
-  public static class OrderListBinding<T> extends BaseListBinding<T> {
-    public OrderListBinding(JList list, ListProperty<T> property) {
+  static final class OrderListBinding<T> extends BaseListBinding<T> {
+    OrderListBinding(JList list, ListProperty<T> property) {
       super(property, list);
       list.setModel(new DefaultListModel());
     }
@@ -548,7 +550,7 @@ public abstract class UIPropertyBinding {
     }
   }
 
-  public static class ComboBoxBinding extends ComponentBinding<JComboBox, AbstractProperty<@Nls String>> {
+  static final class ComboBoxBinding extends ComponentBinding<JComboBox, AbstractProperty<@Nls String>> {
     public ComboBoxBinding(JComboBox comboBox, AbstractProperty<@Nls String> property) {
       super(comboBox, property);
     }

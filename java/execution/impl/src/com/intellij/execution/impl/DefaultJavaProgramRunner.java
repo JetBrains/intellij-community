@@ -279,7 +279,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
     protected abstract void perform(AnActionEvent e, ProcessProxy proxy, ProcessHandler handler);
   }
 
-  public static final class ControlBreakAction extends ProxyBasedAction implements ActionRemoteBehaviorSpecification.Disabled {
+  static final class ControlBreakAction extends ProxyBasedAction implements ActionRemoteBehaviorSpecification.Disabled {
     private final ExecutorService myExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Thread Dumper", 1);
 
     public ControlBreakAction() {
@@ -472,8 +472,8 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
       () -> AnalyzeStacktraceUtil.addConsole(project, factory, title, out), ModalityState.nonModal());
   }
 
-  public static final class SoftExitAction extends ProxyBasedAction {
-    public SoftExitAction() {
+  static final class SoftExitAction extends ProxyBasedAction {
+    SoftExitAction() {
       super(ExecutionBundle.message("run.configuration.exit.action.name"), null, AllIcons.Actions.Exit);
     }
 

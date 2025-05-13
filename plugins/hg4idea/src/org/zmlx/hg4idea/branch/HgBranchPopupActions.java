@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.branch;
 
 import com.intellij.CommonBundle;
@@ -56,8 +56,7 @@ import static org.zmlx.hg4idea.HgNotificationIdsHolder.BRANCH_CREATION_ERROR;
 import static org.zmlx.hg4idea.util.HgUtil.getNewBranchNameFromUser;
 import static org.zmlx.hg4idea.util.HgUtil.getSortedNamesWithoutHashes;
 
-public class HgBranchPopupActions {
-
+public final class HgBranchPopupActions {
   private final @NotNull Project myProject;
   private final @NotNull HgRepository myRepository;
 
@@ -160,7 +159,7 @@ public class HgBranchPopupActions {
     }
   }
 
-  public static class HgCloseBranchAction extends DumbAwareAction {
+  static final class HgCloseBranchAction extends DumbAwareAction {
     private final @NotNull List<HgRepository> myRepositories;
     final @NotNull HgRepository myPreselectedRepo;
 
@@ -209,8 +208,8 @@ public class HgBranchPopupActions {
     }
   }
 
-  public static class HgNewBookmarkAction extends DumbAwareAction {
-    protected final @NotNull List<HgRepository> myRepositories;
+  static final class HgNewBookmarkAction extends DumbAwareAction {
+    final @NotNull List<HgRepository> myRepositories;
     final @NotNull HgRepository myPreselectedRepo;
 
     HgNewBookmarkAction(@NotNull List<HgRepository> repositories, @NotNull HgRepository preselectedRepo) {
@@ -304,8 +303,8 @@ public class HgBranchPopupActions {
     }
   }
 
-  public static class CurrentBranch extends BranchActions implements PopupElementWithAdditionalInfo {
-    public CurrentBranch(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
+  static final class CurrentBranch extends BranchActions implements PopupElementWithAdditionalInfo {
+    CurrentBranch(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
       super(project, repositories, branchName);
       setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, AllIcons.Nodes.Favorite,
                AllIcons.Nodes.NotFavoriteOnHover);
@@ -321,7 +320,6 @@ public class HgBranchPopupActions {
    * Actions available for  bookmarks.
    */
   static class BookmarkActions extends HgCommonBranchActions {
-
     BookmarkActions(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
       super(project, repositories, branchName, HgBranchType.BOOKMARK);
     }
@@ -331,8 +329,7 @@ public class HgBranchPopupActions {
       return ArrayUtil.append(super.getChildren(e), new DeleteBookmarkAction(myProject, myRepositories, myBranchName));
     }
 
-    private static class DeleteBookmarkAction extends HgBranchAbstractAction {
-
+    private static final class DeleteBookmarkAction extends HgBranchAbstractAction {
       DeleteBookmarkAction(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
         super(project, CommonBundle.messagePointer("button.delete"), repositories, branchName);
       }
@@ -348,9 +345,8 @@ public class HgBranchPopupActions {
     }
   }
 
-  public static class CurrentActiveBookmark extends BookmarkActions implements PopupElementWithAdditionalInfo {
-
-    public CurrentActiveBookmark(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
+  static final class CurrentActiveBookmark extends BookmarkActions implements PopupElementWithAdditionalInfo {
+    CurrentActiveBookmark(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
       super(project, repositories, branchName);
       setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, AllIcons.Nodes.Favorite,
                AllIcons.Nodes.NotFavoriteOnHover);

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.MapOp;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.streamMigration.OperationReductionMigration.SUM_OPERATION;
 
-class SumMigration extends BaseStreamApiMigration {
+final class SumMigration extends BaseStreamApiMigration {
 
   SumMigration(boolean shouldWarn) {
     super(shouldWarn, "sum");

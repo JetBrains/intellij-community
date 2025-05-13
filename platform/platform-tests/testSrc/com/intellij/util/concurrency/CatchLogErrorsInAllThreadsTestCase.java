@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,7 +12,7 @@ import java.util.EnumSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
-abstract class CatchLogErrorsInAllThreadsTestCase extends TestCase {
+public abstract class CatchLogErrorsInAllThreadsTestCase extends TestCase {
   static {
     Logger.setFactory(TestLoggerFactory.class);
   }

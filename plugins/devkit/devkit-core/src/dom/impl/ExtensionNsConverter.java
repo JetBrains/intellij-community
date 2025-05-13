@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -18,8 +18,7 @@ import java.util.List;
 /**
  * @author Sascha Weinreuter
  */
-public class ExtensionNsConverter extends IdeaPluginConverterBase {
-
+public final class ExtensionNsConverter extends IdeaPluginConverterBase {
   @Override
   public @NotNull Collection<? extends IdeaPlugin> getVariants(@NotNull ConvertContext context) {
     final IdeaPlugin ideaPlugin = context.getInvocationElement().getParentOfType(IdeaPlugin.class, true);

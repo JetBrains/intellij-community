@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration;
 
 import com.intellij.java.JavaBundle;
@@ -11,7 +11,9 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.components.*;
+import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBTextField;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -22,9 +24,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class GenerateTestDataPathFileAction extends GenerateTestDataPathCommon {
-
-  public GenerateTestDataPathFileAction() {
+final class GenerateTestDataPathFileAction extends GenerateTestDataPathCommon {
+  GenerateTestDataPathFileAction() {
     super(((project, editor, file) -> {
             var currentClass = PsiTreeUtil.findChildOfType(file, PsiClass.class);
             if (currentClass == null) return;

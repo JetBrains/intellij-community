@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.simple;
 
 import com.intellij.codeWithMe.ClientId;
@@ -838,7 +838,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     }
   }
 
-  private class MyInitialScrollHelper extends MyInitialScrollPositionHelper {
+  private final class MyInitialScrollHelper extends MyInitialScrollPositionHelper {
     @Override
     protected boolean doScrollToChange() {
       if (myScrollToChange == null) return false;

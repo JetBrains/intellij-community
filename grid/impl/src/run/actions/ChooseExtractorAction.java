@@ -39,18 +39,15 @@ import java.util.function.Consumer;
 import static com.intellij.database.extractors.DataExtractorFactories.*;
 import static com.intellij.database.util.DataGridUIUtil.updateAllToolbarsUnder;
 
-/**
- * @author Gregory.Shrago
- */
-public class ChooseExtractorAction extends ActionGroup implements GridAction, DumbAware {
+final class ChooseExtractorAction extends ActionGroup implements GridAction, DumbAware {
   private final String myPopupGroupId;
 
   @SuppressWarnings("unused")
-  public ChooseExtractorAction() {
+  ChooseExtractorAction() {
     this("Console.TableResult.ChooseExtractor.Group");
   }
 
-  public ChooseExtractorAction(@NotNull String popupGroupId) {
+  ChooseExtractorAction(@NotNull String popupGroupId) {
     setPopup(true);
     getTemplatePresentation().setPerformGroup(true);
     myPopupGroupId = popupGroupId;
@@ -113,7 +110,7 @@ public class ChooseExtractorAction extends ActionGroup implements GridAction, Du
     }
   }
 
-  protected @Nls @NotNull String toHtml(@Nls @NotNull String text) {
+  @Nls @NotNull String toHtml(@Nls @NotNull String text) {
     return "<html>" + text.replaceAll("\n", "<br>") + "</html>";
   }
 
@@ -148,7 +145,7 @@ public class ChooseExtractorAction extends ActionGroup implements GridAction, Du
                                                                      BiFunction<? super DataExtractorFactory, List<? extends DataExtractorFactory>, ? extends AnAction> function);
   }
 
-  public static class BuiltInGroup extends GroupBase {
+  static final class BuiltInGroup extends GroupBase {
     @SuppressWarnings("BoundedWildcard")
     @Override
     protected @NotNull JBIterable<AnAction> getChildrenImpl(@NotNull DataGrid grid,
@@ -163,7 +160,7 @@ public class ChooseExtractorAction extends ActionGroup implements GridAction, Du
     }
   }
 
-  public static class CsvGroup extends GroupBase {
+  static final class CsvGroup extends GroupBase {
     @SuppressWarnings("BoundedWildcard")
     @Override
     protected @NotNull JBIterable<AnAction> getChildrenImpl(@NotNull DataGrid grid,
@@ -174,7 +171,7 @@ public class ChooseExtractorAction extends ActionGroup implements GridAction, Du
     }
   }
 
-  public static class ScriptedGroup extends GroupBase {
+  static final class ScriptedGroup extends GroupBase {
     @SuppressWarnings("BoundedWildcard")
     @Override
     protected @NotNull JBIterable<AnAction> getChildrenImpl(@NotNull DataGrid grid,
@@ -187,13 +184,13 @@ public class ChooseExtractorAction extends ActionGroup implements GridAction, Du
     }
   }
 
-  public static final class SelectExtractorAction extends ToggleAction implements DumbAware {
+  static final class SelectExtractorAction extends ToggleAction implements DumbAware {
     private final DataExtractorFactory factory;
     private final Consumer<AnActionEvent> myOnExtractorSelected;
 
-    public SelectExtractorAction(@NotNull DataExtractorFactory factory,
-                                 List<? extends DataExtractorFactory> factories,
-                                 @Nullable Consumer<AnActionEvent> onExtractorSelected) {
+    SelectExtractorAction(@NotNull DataExtractorFactory factory,
+                          List<? extends DataExtractorFactory> factories,
+                          @Nullable Consumer<AnActionEvent> onExtractorSelected) {
       super(StringUtil.escapeMnemonics(getDisplayName(factory, factories)));
       this.factory = factory;
       myOnExtractorSelected = onExtractorSelected;

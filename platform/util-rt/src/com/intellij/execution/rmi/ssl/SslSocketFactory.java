@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.rmi.ssl;
 
 import com.intellij.security.CompositeX509TrustManager;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +19,7 @@ import java.util.UUID;
 
 import static com.intellij.execution.rmi.ssl.SslUtil.*;
 
+@ApiStatus.Internal
 public final class SslSocketFactory extends DelegateSslSocketFactory {
   public SslSocketFactory() throws GeneralSecurityException {
     super(createDelegate());

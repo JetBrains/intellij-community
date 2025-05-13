@@ -9,10 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * @author Eugene Zhuravlev
- */
-abstract class PersistentMapTestBase extends UsefulTestCase {
+public abstract class PersistentMapTestBase extends UsefulTestCase {
   protected static final Logger LOG = Logger.getInstance(PersistentMapTestBase.class);
   protected PersistentHashMap<String, String> myMap;
   protected File myFile;

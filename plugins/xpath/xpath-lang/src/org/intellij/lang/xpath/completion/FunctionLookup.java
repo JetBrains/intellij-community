@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class FunctionLookup extends AbstractLookup {
+public final class FunctionLookup extends AbstractLookup {
   private final String type;
   private final boolean hasParameters;
 

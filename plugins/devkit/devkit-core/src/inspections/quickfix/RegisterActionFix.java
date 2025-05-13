@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -14,7 +14,7 @@ import org.jetbrains.idea.devkit.actions.obsolete.NewActionDialog;
 import org.jetbrains.idea.devkit.util.ActionData;
 import org.jetbrains.idea.devkit.util.ActionType;
 
-public class RegisterActionFix extends AbstractRegisterFix {
+public final class RegisterActionFix extends AbstractRegisterFix {
   private NewActionDialog myDialog;
 
   public RegisterActionFix(@NotNull PsiClass psiClass) {
