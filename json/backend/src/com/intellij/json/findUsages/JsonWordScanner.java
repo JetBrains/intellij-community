@@ -3,7 +3,7 @@ package com.intellij.json.findUsages;
 
 import com.intellij.json.JsonElementTypes;
 import com.intellij.json.JsonLanguage;
-import com.intellij.json.syntax.JsonLexer;
+import com.intellij.json.JsonSyntaxLexer;
 import com.intellij.lang.cacheBuilder.DefaultWordsScanner;
 import com.intellij.platform.syntax.psi.lexer.LexerAdapter;
 import com.intellij.psi.tree.TokenSet;
@@ -17,7 +17,7 @@ import static com.intellij.platform.syntax.psi.ElementTypeConverters.getConverte
  */
 public final class JsonWordScanner extends DefaultWordsScanner {
   public JsonWordScanner() {
-    super(new LexerAdapter(new JsonLexer(), getConverter(JsonLanguage.INSTANCE)), TokenSet.create(JsonElementTypes.IDENTIFIER), JSON_COMMENTARIES, JSON_LITERALS);
+    super(new LexerAdapter(new JsonSyntaxLexer(), getConverter(JsonLanguage.INSTANCE)), TokenSet.create(JsonElementTypes.IDENTIFIER), JSON_COMMENTARIES, JSON_LITERALS);
     setMayHaveFileRefsInLiterals(true);
   }
 }

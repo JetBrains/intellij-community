@@ -4,8 +4,8 @@ package com.jetbrains.jsonSchema.impl;
 import com.intellij.json.JsonFileType;
 import com.intellij.json.JsonSyntaxElementTypes;
 import com.intellij.json.json5.Json5FileType;
-import com.intellij.json.json5.Json5Lexer;
-import com.intellij.json.syntax.JsonLexer;
+import com.intellij.json.json5.Json5SyntaxLexer;
+import com.intellij.json.JsonSyntaxLexer;
 import com.intellij.platform.syntax.SyntaxElementType;
 import com.intellij.platform.syntax.element.SyntaxTokenTypes;
 import com.intellij.platform.syntax.lexer.Lexer;
@@ -84,8 +84,8 @@ public final class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<Str
     if (!(fileType instanceof JsonFileType)) return new HashMap<>();
 
     Lexer lexer = fileType == Json5FileType.INSTANCE ?
-                  new Json5Lexer():
-                  new JsonLexer();
+                  new Json5SyntaxLexer() :
+                  new JsonSyntaxLexer();
     final HashMap<String, String> map = new HashMap<>();
     lexer.start(content);
 

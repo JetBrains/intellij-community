@@ -5,15 +5,12 @@
  */
 package com.intellij.json;
 
-import com.intellij.json.syntax.JsonLexer;
 import com.intellij.lang.refactoring.NamesValidator;
-import com.intellij.lexer.FlexAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.syntax.SyntaxElementType;
 import com.intellij.platform.syntax.lexer.Lexer;
 import com.intellij.platform.syntax.psi.lexer.LexerAdapter;
-import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.json.JsonTokenSets.JSON_KEYWORDS;
@@ -21,12 +18,13 @@ import static com.intellij.json.JsonTokenSets.JSON_KEYWORDS;
 public final class JsonNamesValidator implements NamesValidator {
 
   LexerAdapter myFlexLexer; 
-  private final Lexer myLexer = new JsonLexer();
+  private final Lexer myLexer = new JsonSyntaxLexer();
 
   @Override
   public synchronized boolean isKeyword(@NotNull String name, Project project) {
     myLexer.start(name);
-    return JSON_KEYWORDS.contains(myLexer.getTokenType()) && myLexer.getTokenEnd() == name.length();
+    SyntaxElementType tokenType = myLexer.getTokenType();
+    return tokenType != null && JSON_KEYWORDS.contains(myLexer.getTokenType()) && myLexer.getTokenEnd() == name.length();
   }
   @Override
   public synchronized boolean isIdentifier(@NotNull String name, final Project project) {

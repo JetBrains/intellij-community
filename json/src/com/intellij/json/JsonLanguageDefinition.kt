@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json
 
-import com.intellij.json.syntax.JsonLexer
 import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.psi.LanguageSyntaxDefinition
 import com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime
@@ -10,7 +9,7 @@ import com.intellij.platform.syntax.syntaxElementTypeSetOf
 
 class JsonLanguageDefinition : LanguageSyntaxDefinition {
   override fun getLexer(): Lexer {
-    return JsonLexer() as Lexer
+    return JsonSyntaxLexer() as Lexer
   }
 
   override fun getCommentTokens(): SyntaxElementTypeSet = syntaxElementTypeSetOf(JsonSyntaxElementTypes.LINE_COMMENT,

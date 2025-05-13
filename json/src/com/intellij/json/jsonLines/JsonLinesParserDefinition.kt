@@ -5,7 +5,7 @@ import com.intellij.json.JsonSyntaxParser
 import com.intellij.json.JsonParserDefinition
 import com.intellij.json.json5.Json5Language
 import com.intellij.json.psi.impl.JsonFileImpl
-import com.intellij.json.syntax.JsonLexer
+import com.intellij.json.JsonSyntaxLexer
 import com.intellij.lang.ASTNode
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.lexer.Lexer
@@ -28,7 +28,7 @@ internal class JsonLinesParserDefinition : JsonParserDefinition() {
       override fun doParseContents(chameleon: ASTNode, psi: PsiElement): ASTNode? {
         val builderFactory = getInstance()
         val elementType = chameleon.getElementType()
-        val lexer = JsonLexer()
+        val lexer = JsonSyntaxLexer()
         val syntaxBuilder = builderFactory.createBuilder(chameleon,
                                                          lexer as Lexer?,
                                                          language,

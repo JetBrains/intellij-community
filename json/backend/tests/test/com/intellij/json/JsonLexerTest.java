@@ -2,10 +2,8 @@ package com.intellij.json;
 
 import com.intellij.json.psi.JsonElementTypeConverterFactory;
 
-import com.intellij.json.syntax.JsonLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.platform.syntax.psi.CommonElementTypeConverterFactory;
-import com.intellij.platform.syntax.psi.ElementTypeConverter;
 import com.intellij.platform.syntax.psi.lexer.LexerAdapter;
 import com.intellij.testFramework.LexerTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +18,7 @@ import static com.intellij.platform.syntax.psi.ElementTypeConverterKt.compositeE
 public class JsonLexerTest extends LexerTestCase {
   @Override
   protected @NotNull Lexer createLexer() {
-    return new LexerAdapter(new JsonLexer(), compositeElementTypeConverter(List.of(
+    return new LexerAdapter(new JsonSyntaxLexer(), compositeElementTypeConverter(List.of(
       new CommonElementTypeConverterFactory().getElementTypeConverter(),
       new JsonElementTypeConverterFactory().getElementTypeConverter())));
   }

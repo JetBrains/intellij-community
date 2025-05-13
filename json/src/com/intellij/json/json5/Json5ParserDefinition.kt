@@ -25,7 +25,7 @@ val FILE: IFileElementType = object : IFileElementType(Json5Language.INSTANCE) {
   override fun doParseContents(chameleon: ASTNode, psi: PsiElement): ASTNode? {
     val builderFactory = PsiSyntaxBuilderFactory.Companion.getInstance()
     val elementType = chameleon.getElementType()
-    val lexer = Json5Lexer()
+    val lexer = Json5SyntaxLexer()
     val syntaxBuilder = builderFactory.createBuilder(chameleon,
                                                      lexer,
                                                      language,
@@ -42,15 +42,15 @@ val FILE: IFileElementType = object : IFileElementType(Json5Language.INSTANCE) {
 
 open class Json5ParserDefinition : JsonParserDefinition() {
   
-  public override fun createLexer(project: Project?): Lexer {
-    return LexerAdapter(Json5Lexer(), getConverter(Json5Language.INSTANCE))
+  override fun createLexer(project: Project?): Lexer {
+    return LexerAdapter(Json5SyntaxLexer(), getConverter(Json5Language.INSTANCE))
   }
 
-  public override fun createFile(fileViewProvider: FileViewProvider): PsiFile {
+  override fun createFile(fileViewProvider: FileViewProvider): PsiFile {
     return JsonFileImpl(fileViewProvider, Json5Language.INSTANCE)
   }
 
-  public override fun getFileNodeType(): IFileElementType {
+  override fun getFileNodeType(): IFileElementType {
     return FILE
   }
 }

@@ -2,7 +2,6 @@
 package com.intellij.json
 
 import com.intellij.json.psi.impl.JsonFileImpl
-import com.intellij.json.syntax.JsonLexer
 import com.intellij.lang.ASTNode
 import com.intellij.lang.ParserDefinition
 import com.intellij.lang.PsiParser
@@ -26,7 +25,7 @@ val FILE: IFileElementType = object : IFileElementType(JsonLanguage.INSTANCE) {
   override fun doParseContents(chameleon: ASTNode, psi: PsiElement): ASTNode? {
     val builderFactory = getInstance()
     val elementType = chameleon.getElementType()
-    val lexer = JsonLexer()
+    val lexer = JsonSyntaxLexer()
     val syntaxBuilder = builderFactory.createBuilder(chameleon,
                                                      lexer,
                                                      language,
@@ -43,7 +42,7 @@ val FILE: IFileElementType = object : IFileElementType(JsonLanguage.INSTANCE) {
 open class JsonParserDefinition : ParserDefinition {
 
   override fun createLexer(project: Project?): Lexer {
-    return LexerAdapter(JsonLexer(), getConverter(JsonLanguage.INSTANCE))
+    return LexerAdapter(JsonSyntaxLexer(), getConverter(JsonLanguage.INSTANCE))
   }
 
   override fun createParser(project: Project?): PsiParser {throw UnsupportedOperationException("Should not be called directly")}

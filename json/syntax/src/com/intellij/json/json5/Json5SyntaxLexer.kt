@@ -3,5 +3,4 @@ package com.intellij.json.json5
 
 import com.intellij.platform.syntax.util.lexer.FlexAdapter
 
-class Json5Lexer : FlexAdapter(_Json5Lexer())
-
+class Json5SyntaxLexer : FlexAdapter(_Json5Lexer())
