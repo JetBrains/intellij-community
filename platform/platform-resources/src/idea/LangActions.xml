@@ -226,20 +226,16 @@
 
 
     <!-- Go To -->
-    <group id="GoToTargetEx">
-      <action id="GotoClass" class="com.intellij.ide.actions.GotoClassAction"/>
-      <action id="GotoFile" class="com.intellij.ide.actions.GotoFileAction">
-        <override-text place="MainMenu"/>
-        <add-to-group group-id="EditorTabsEntryPoint" anchor="after" relative-to-action="RecentLocations"/>
-      </action>
-      <action id="GotoSymbol" class="com.intellij.ide.actions.GotoSymbolAction">
-        <override-text place="MainMenu"/>
-      </action>
-      <action id="TextSearchAction" class="com.intellij.find.impl.TextSearchContributor$Companion$TextSearchAction"/>
-
-      <add-to-group group-id="GoToMenu" anchor="before" relative-to-action="GotoLine"/>
-
-    </group>
+    <action id="GotoClass" class="com.intellij.ide.actions.GotoClassAction">
+      <add-to-group group-id="GoToTargetEx" anchor="before" relative-to-action="GotoFile"/>
+    </action>
+    <action id="GotoSymbol" class="com.intellij.ide.actions.GotoSymbolAction">
+      <override-text place="MainMenu"/>
+      <add-to-group group-id="GoToTargetEx" anchor="after" relative-to-action="GotoFile"/>
+    </action>
+    <action id="TextSearchAction" class="com.intellij.find.impl.TextSearchContributor$Companion$TextSearchAction">
+      <add-to-group group-id="GoToTargetEx" anchor="after" relative-to-action="GotoSymbol"/>
+    </action>
 
     <group id="GoToCodeGroup">
       <separator/>

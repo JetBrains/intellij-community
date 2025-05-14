@@ -713,6 +713,11 @@
         <separator/>
         <reference ref="SearchEverywhere"/>
         <separator/>
+        <group id="GoToTargetEx">
+          <action id="GotoFile" class="com.intellij.ide.actions.GotoFileAction">
+            <override-text place="MainMenu"/>
+          </action>
+        </group>
         <action id="GotoLine" class="com.intellij.ide.actions.GotoLineAction">
           <override-text place="MainMenu"/>
           <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
@@ -943,6 +948,7 @@
     <group id="EditorTabsEntryPoint" popup="true" icon="AllIcons.Actions.More">
       <reference ref="RecentFilesFallback"/>
       <reference ref="RecentLocations"/>
+      <reference ref="GotoFile"/>
       <separator/>
       <reference ref="CloseAllEditors"/>
       <reference ref="ReopenClosedTab"/>
