@@ -68,7 +68,7 @@ public final class LookupTypedHandler extends TypedActionHandlerBase {
       file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     }
 
-    if (originalEditor.isInsertMode() && beforeCharTyped(charTyped, project, originalEditor, editor, file)) {
+    if (originalEditor.isInsertMode() && beforeCharTyped(charTyped, project, originalEditor, editor, file, null)) {
       return;
     }
 
@@ -82,7 +82,8 @@ public final class LookupTypedHandler extends TypedActionHandlerBase {
                                 Project project,
                                 final Editor originalEditor,
                                 final Editor editor,
-                                PsiFile file) {
+                                PsiFile file,
+                                @Nullable Runnable doUpdateDocument) {
     final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(originalEditor);
     if (lookup == null){
       return false;
@@ -102,11 +103,17 @@ public final class LookupTypedHandler extends TypedActionHandlerBase {
       long modificationStamp = document.getModificationStamp();
 
       if (!lookup.performGuardedChange(() -> {
-          lookup.fireBeforeAppendPrefix(charTyped);
+        lookup.fireBeforeAppendPrefix(charTyped);
+        if (doUpdateDocument == null) {
           EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(originalEditor, String.valueOf(charTyped), true);
-        })) {
+        }
+        else {
+          doUpdateDocument.run();
+        }
+      })) {
         return true;
       }
+
       lookup.appendPrefix(charTyped);
       if (lookup.isStartCompletionWhenNothingMatches() && lookup.getItems().isEmpty()) {
         final CompletionProgressIndicator completion = CompletionServiceImpl.getCurrentCompletionProgressIndicator();

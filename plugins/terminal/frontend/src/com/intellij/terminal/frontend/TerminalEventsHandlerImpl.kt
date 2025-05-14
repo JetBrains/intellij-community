@@ -41,7 +41,7 @@ internal open class TerminalEventsHandlerImpl(
   private val terminalInput: TerminalInput,
   private val settings: JBTerminalSystemSettingsProviderBase,
   private val scrollingModel: TerminalOutputScrollingModel?,
-  private val outputModel: TerminalOutputModel
+  private val outputModel: TerminalOutputModel,
 ) : TerminalEventsHandler {
   private var ignoreNextKeyTypedEvent: Boolean = false
   private var lastMotionReport: Point? = null
@@ -365,7 +365,8 @@ internal open class TerminalEventsHandlerImpl(
           project,
           editor,
           editor,
-          psiFile
+          psiFile,
+          Runnable { }
         )
       }
     }
