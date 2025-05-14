@@ -2859,6 +2859,7 @@ c:com.intellij.codeInspection.reference.RefManagerImpl
 - export(com.intellij.codeInspection.reference.RefEntity):org.jdom.Element
 - export(com.intellij.codeInspection.reference.RefEntity,I):org.jdom.Element
 - findAllDeclarations():V
+- fireAnonymousReferenced(com.intellij.codeInspection.reference.RefElement,Z,Z,Z,com.intellij.psi.PsiElement):V
 - fireNodeMarkedReferenced(com.intellij.codeInspection.reference.RefElement,com.intellij.codeInspection.reference.RefElement,Z,Z,Z):V
 - fireNodeMarkedReferenced(com.intellij.codeInspection.reference.RefElement,com.intellij.codeInspection.reference.RefElement,Z,Z,Z,com.intellij.psi.PsiElement):V
 - fireNodeMarkedReferenced(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):V

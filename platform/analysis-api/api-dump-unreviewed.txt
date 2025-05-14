@@ -2101,6 +2101,7 @@ com.intellij.codeInspection.reference.RefFile
 - getPsiElement():com.intellij.psi.PsiFile
 a:com.intellij.codeInspection.reference.RefGraphAnnotator
 - <init>():V
+- onAnonymousReferenced(com.intellij.codeInspection.reference.RefElement,Z,Z,Z,com.intellij.psi.PsiElement):V
 - onInitialize(com.intellij.codeInspection.reference.RefElement):V
 - onMarkReferenced(com.intellij.codeInspection.reference.RefElement,com.intellij.codeInspection.reference.RefElement,Z):V
 - onMarkReferenced(com.intellij.codeInspection.reference.RefElement,com.intellij.codeInspection.reference.RefElement,Z,Z,Z):V
