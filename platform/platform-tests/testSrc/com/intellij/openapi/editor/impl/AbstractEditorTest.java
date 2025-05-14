@@ -42,7 +42,7 @@ import static org.junit.Assert.assertArrayEquals;
 /**
  * Base super class for tests that check various IJ editor functionality on managed document modification.
  * <p/>
- * It's main purpose is to provide utility methods like fold regions addition and setup; typing etc. 
+ * Its main purpose is to provide utility methods like fold regions addition and setup; typing etc.
  */
 public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCase {
   public static final int TEST_CHAR_WIDTH = 10; // char width matches the one in EditorTestUtil.configureSoftWraps
