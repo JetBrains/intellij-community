@@ -24,10 +24,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.notebook.editor.BackedVirtualFileProvider;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -992,6 +989,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     Future<?> oldFuture = myUpdateRunnableFuture;
     if (LOG.isTraceEnabled()) {
       LOG.trace("scheduleUpdateRunnable("+TimeUnit.NANOSECONDS.toMillis(delayNanos)+"ms); oldFuture="+oldFuture+"; isDone="+oldFuture.isDone());
+    }
+    Application application = ApplicationManager.getApplication();
+    if (application == null || application.isDisposed()) {
+      return;
     }
     if (oldFuture.isDone()) {
       // schedule `manifest` into a separate call to avoid breaking the current stack with an exception from the previous execution
