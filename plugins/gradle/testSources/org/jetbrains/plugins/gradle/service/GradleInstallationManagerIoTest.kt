@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service
 
-import com.intellij.openapi.util.io.FileUtil
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.util.GradleVersion.version
@@ -14,11 +13,6 @@ import java.nio.file.Paths
 import kotlin.io.path.listDirectoryEntries
 
 class GradleInstallationManagerIoTest : GradleInstallationManagerTestCase() {
-
-  override fun setUp() {
-    super.setUp()
-    overrideGradleUserHome("guh")
-  }
 
   @Test
   fun testGetGradleHome(): Unit = runBlocking {
