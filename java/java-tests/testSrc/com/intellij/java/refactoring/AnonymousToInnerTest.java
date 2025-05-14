@@ -133,7 +133,18 @@ public class AnonymousToInnerTest extends LightJavaCodeInsightTestCase {
   public void testTypeParameterNotMentioned() {
     doTest("MyClass", true);
   }
-  
+
+  public void testAddThisQualifier() {
+    doTest("MyClass", true);
+  }
+
+  public void testAddThisQualifierWithImplicitThis() {
+    doTest("MyClass", true);
+  }
+
+  public void testOuterThisQualifier() {
+    doTest("MyClass", true);
+  }
 
   private void doTest(final String newClassName, final boolean makeStatic) {
     configureByFile(TEST_ROOT + getTestName(true) + ".java");

@@ -688,43 +688,17 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
     PsiMethodCallExpression methodCall = (PsiMethodCallExpression) ((PsiExpressionStatement) statement).getExpression();
     PsiExpressionList exprList = methodCall.getArgumentList();
 
+    final PsiThisExpression qualifiedThis = (PsiThisExpression) factory.createExpressionFromText("A.this", null);
+    final PsiJavaCodeReferenceElement targetClassRef = factory.createClassReferenceElement(myTargetClass);
+    PsiJavaCodeReferenceElement thisQualifier = qualifiedThis.getQualifier();
+    assert thisQualifier != null;
+    thisQualifier.replace(targetClassRef);
 
-    {
-      final PsiThisExpression qualifiedThis =
-        (PsiThisExpression) factory.createExpressionFromText("A.this", null);
-      final PsiJavaCodeReferenceElement targetClassRef = factory.createClassReferenceElement(myTargetClass);
-      PsiJavaCodeReferenceElement thisQualifier = qualifiedThis.getQualifier();
-      assert thisQualifier != null;
-      thisQualifier.replace(targetClassRef);
-
-      for (PsiExpression expr : paramExpressions) {
-        ChangeContextUtil.encodeContextInfo(expr, true);
-        final PsiElement newExpr = exprList.add(expr);
-        ChangeContextUtil.decodeContextInfo(newExpr, myTargetClass, qualifiedThis);
-      }
+    for (PsiExpression expr : paramExpressions) {
+      ChangeContextUtil.encodeContextInfo(expr, true);
+      final PsiElement newExpr = exprList.add(expr);
+      ChangeContextUtil.decodeContextInfo(newExpr, myTargetClass, qualifiedThis);
     }
-
-    class SupersConvertor extends JavaRecursiveElementVisitor {
-      @Override public void visitThisExpression(@NotNull PsiThisExpression expression) {
-        try {
-          final PsiThisExpression qualifiedThis =
-                  (PsiThisExpression) factory.createExpressionFromText("A.this", null);
-          final PsiJavaCodeReferenceElement targetClassRef = factory.createClassReferenceElement(myTargetClass);
-          PsiJavaCodeReferenceElement thisQualifier = qualifiedThis.getQualifier();
-          assert thisQualifier != null;
-          thisQualifier.replace(targetClassRef);
-          expression.replace(qualifiedThis);
-        } catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-      }
-
-      @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
-      }
-    }
-
-    final SupersConvertor supersConvertor = new SupersConvertor();
-    methodCall.getArgumentList().accept(supersConvertor);
   }
 
   private void calculateTypeParametersToCreate () {
