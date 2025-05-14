@@ -13,7 +13,7 @@ import com.intellij.util.PlatformUtils
  *
  * @see NewProjectWizardStep
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/new-project-wizard.html#steps-forking-the-wizard-flow">
- *   New Project Wizard APISteps Forking the Wizard Flow (IntelliJ Platform Docs)</a>
+ *   New Project Wizard API: Steps Forking the Wizard Flow (IntelliJ Platform Docs)</a>
  */
 @JvmDefaultWithCompatibility
 interface NewProjectWizardMultiStepFactory<P : NewProjectWizardStep> {
