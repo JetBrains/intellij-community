@@ -1,6 +1,6 @@
 // IMPORT__MARKER_START
-import fleet.buildtool.jps.module.plugin.configureAtMostOneJvmTargetOrThrow
 import fleet.buildtool.jpms.withJavaSourceSet
+import fleet.buildtool.jps.module.plugin.configureAtMostOneJvmTargetOrThrow
 // IMPORT__MARKER_END
 plugins {
   alias(libs.plugins.kotlin.multiplatform)
