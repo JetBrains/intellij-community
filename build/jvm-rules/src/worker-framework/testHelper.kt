@@ -23,6 +23,7 @@ enum class TestModules(@JvmField val sourcePaths: List<String>, private val para
   LANG_IMPL(listOf("platform/lang-impl/src", "platform/lang-impl/gen"), "platform/lang-impl/lang-impl.jar-0.params"),
   PLATFORM_BOOTSTRAP(listOf("platform/platform-impl/bootstrap/src"), "platform/platform-impl/bootstrap/ide-bootstrap.jar-0.params"),
   DEVKIT_CORE(listOf("plugins/devkit/devkit-core/src", "plugins/devkit/devkit-core/gen"), "plugins/devkit/devkit-core/core.jar-0.params"),
+  JAVA_PSI_API(listOf("java/java-psi-api"), "java/java-psi-api/psi.jar-0.params"),
   JEWEL(listOf("platform/jewel/foundation/src/main/kotlin"), "platform/jewel/foundation/foundation.jar-0.params"),
 
   TEST_AM_B(listOf("testData/IJI-2602/b"), "testData/IJI-2602/b.jar-0.params"),

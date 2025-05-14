@@ -27,7 +27,18 @@ internal class JavaAbiClassVisitor(
     if (isApiClass) {
       stripNonPublicMethods = !name.contains("android")
       if (superName != null && superName != "java/lang/Object" && classesToBeDeleted.contains(superName)) {
-        abiErrorConsumer("Class ${formatClassName(name)} extends ${formatClassName(superName)} which is not public")
+        val subClass = formatClassName(name)
+        val parentClass = formatClassName(superName)
+        abiErrorConsumer("""
+          Class $subClass is public, 
+          but it extends $parentClass, which is not public.
+          
+          A public class must only extend classes that are accessible at the same visibility level.
+          
+          To fix this, consider either:
+            * Reducing the visibility of $subClass, or
+            * Making $parentClass public (and annotate it with @ApiStatus.Internal if applicable).
+        """.trimIndent())
       }
       super.visit(version, access, name, signature, superName, interfaces)
     }
