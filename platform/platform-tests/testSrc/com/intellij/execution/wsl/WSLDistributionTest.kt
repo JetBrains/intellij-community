@@ -567,7 +567,7 @@ private val TEST_ROOT_USER_SET by lazy { Key.create<Boolean>("TEST_ROOT_USER_SET
 
 
 private val executeResultMock by lazy {
-  EelExecApi.ExecuteProcessException(errno = 12345, message = "mock result ${Ksuid.generate()}")
+  ExecuteProcessException(errno = 12345, message = "mock result ${Ksuid.generate()}")
 }
 
 private class WslTestStrategyExtension

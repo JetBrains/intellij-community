@@ -86,6 +86,6 @@ suspend fun Path.exec(vararg args: String, timeout: Duration = Int.MAX_VALUE.day
     process.awaitProcessResult()
   } ?: run {
     process.kill()
-    throw EelExecApi.ExecuteProcessException(-1, "Timeout exceeded: $timeout")
+    throw ExecuteProcessException(-1, "Timeout exceeded: $timeout")
   }
 }

@@ -112,8 +112,6 @@ sealed interface EelExecApi {
     val message: String
   }
 
-  class ExecuteProcessException(val errno: Int, override val message: String) : EelError, IOException()
-
   sealed interface PtyOrStdErrSettings
 
   /**

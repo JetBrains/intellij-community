@@ -58,7 +58,7 @@ class EelLocalExecApiTest {
       val r = localEel.exec.spawnProcess("something that doesn't exist for sure").eelIt()
       Assertions.fail("Process shouldn't be created ${r}")
     }
-    catch (e: EelExecApi.ExecuteProcessException) {
+    catch (e: ExecuteProcessException) {
       // **nix: ENOENT 2 No such file or directory
       // win: ERROR_FILE_NOT_FOUND 2 winerror.h
       Assertions.assertEquals(2, e.errno, "Wrong error code")

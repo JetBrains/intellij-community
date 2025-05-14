@@ -4,6 +4,7 @@ package com.intellij.python.community.execService.impl
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelProcess
+import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.getOr
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
@@ -120,12 +121,12 @@ private suspend fun EelExecutableProcess.run(): Result<EelProcess, ExecError> {
       .workingDirectory(workingDirectory?.asEelPath()).eelIt()
 
     return Result.success(executionResult)
-  } catch (e: EelExecApi.ExecuteProcessException) {
+  } catch (e: ExecuteProcessException) {
     return failAsCantStart(e)
   }
 }
 
-private fun EelExecutableProcess.failAsCantStart(executeProcessError: EelExecApi.ExecuteProcessException): Result.Failure<ExecError> {
+private fun EelExecutableProcess.failAsCantStart(executeProcessError: ExecuteProcessException): Result.Failure<ExecError> {
   return ExecError(
     exe = exe,
     args = args.toTypedArray(),

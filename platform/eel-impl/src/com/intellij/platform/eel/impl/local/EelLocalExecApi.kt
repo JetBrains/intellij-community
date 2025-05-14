@@ -124,7 +124,7 @@ private fun executeImpl(builder: EelExecApi.ExecuteProcessOptions): Process {
         null
       }
     } ?: -3003 // Just a random code which isn't used by any OS and not zero
-    throw EelExecApi.ExecuteProcessException(errorCode, e.toString())
+    throw ExecuteProcessException(errorCode, e.toString())
   }
 }
 

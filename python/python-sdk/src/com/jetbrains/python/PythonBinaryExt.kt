@@ -3,6 +3,7 @@ package com.jetbrains.python
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelPlatform
+import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.getOr
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
@@ -59,7 +60,7 @@ private suspend fun PythonBinary.executeWithResult(vararg args: String): Result<
     else {
       Result.success(output)
     }
-  } catch (e : EelExecApi.ExecuteProcessException) {
+  } catch (e : ExecuteProcessException) {
     return failure(e.message)
   }
 }

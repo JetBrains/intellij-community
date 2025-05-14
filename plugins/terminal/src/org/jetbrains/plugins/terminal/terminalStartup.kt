@@ -11,6 +11,7 @@ import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelExecApi.ExecuteProcessError
+import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.spawnProcess
@@ -121,7 +122,7 @@ private suspend fun doStartProcess(
     .ptyOrStdErrSettings(EelExecApi.Pty(initialTermSize.columns, initialTermSize.rows, true))
   return try {
     execOptions.eelIt().convertToJavaProcess() as PtyProcess
-  } catch (e : EelExecApi.ExecuteProcessException) {
+  } catch (e : ExecuteProcessException) {
     throw ErrnoException(e)
   }
 }
@@ -130,6 +131,6 @@ internal fun shouldUseEelApi(): Boolean {
   return `is`("terminal.use.EelApi", false)
 }
 
-internal class ErrnoException(val error: EelExecApi.ExecuteProcessException): Exception(error.message)
+internal class ErrnoException(val error: ExecuteProcessException): Exception(error.message)
 
 private val log: Logger = logger<AbstractTerminalRunner<*>>()

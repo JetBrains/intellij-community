@@ -33,6 +33,7 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelResult
+import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
@@ -159,7 +160,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
             }
           })
         }
-    } catch (e: EelExecApi.ExecuteProcessException) {
+    } catch (e: ExecuteProcessException) {
       MavenLog.LOG.warn("Cannot execute maven goal: errcode: ${e.errno}, message:  ${e.message}")
       throw ExecutionException(e.message)
     }
