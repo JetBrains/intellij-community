@@ -168,6 +168,9 @@ private class EditorBreakpointLinesInfoMap(
 
   private suspend fun Editor.viewportIndicesInclusive(): Pair<Int, Int> {
     return withContext(Dispatchers.EDT) {
+      if (isDisposed) {
+        cancel()
+      }
       val visibleRange = calculateVisibleRange()
       readAction {
         val firstVisibleLine = document.getLineNumber(visibleRange.startOffset)
