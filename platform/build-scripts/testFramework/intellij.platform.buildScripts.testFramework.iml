@@ -56,6 +56,12 @@
     <orderEntry type="module" module-name="intellij.platform.jps.build" />
     <orderEntry type="module" module-name="intellij.platform.runtime.product" />
     <orderEntry type="library" name="devkit.runtime.module.repository.jps" level="project" />
+    <orderEntry type="library" name="aalto-xml" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.ide.bootstrap" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
+    <orderEntry type="module" module-name="intellij.platform.plugins.testFramework" />
+    <orderEntry type="module" module-name="intellij.platform.plugins.parser.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
     <orderEntry type="library" name="tcServiceMessages" level="project" />
     <orderEntry type="module" module-name="intellij.platform.buildData" />

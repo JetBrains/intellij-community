@@ -27,6 +27,7 @@ class PluginSetTestBuilder private constructor(
   private var expiredPluginIds = mutableSetOf<PluginId>()
   private var brokenPlugins = mutableMapOf<PluginId, MutableSet<String?>>()
   private var productBuildNumber = PluginManagerCore.buildNumber
+  private var customCoreLoader: UrlClassLoader? = null
 
   companion object {
     @JvmStatic
@@ -34,6 +35,11 @@ class PluginSetTestBuilder private constructor(
       // constant order in tests
       val paths: List<Path> = path.directoryStreamIfExists { it.sorted() }!!
       paths.mapNotNull { path -> loadDescriptor(path, loadingContext, ZipFilePoolImpl()) }
+    }
+    
+    @JvmStatic
+    fun fromDescriptors(pluginDescriptorLoader: (loadingContext: PluginDescriptorLoadingContext) -> List<IdeaPluginDescriptorImpl>): PluginSetTestBuilder {
+      return PluginSetTestBuilder(pluginDescriptorLoader)
     }
   }
   
@@ -51,6 +57,10 @@ class PluginSetTestBuilder private constructor(
 
   fun withProductBuildNumber(productBuildNumber: BuildNumber): PluginSetTestBuilder = apply {
     this.productBuildNumber = productBuildNumber
+  }
+
+  fun withCustomCoreLoader(loader: UrlClassLoader): PluginSetTestBuilder = apply {
+    customCoreLoader = loader
   }
 
   var buildNumber: String
@@ -99,7 +109,7 @@ class PluginSetTestBuilder private constructor(
       descriptorLoadingErrors = loadingContext.copyDescriptorLoadingErrors(),
       initContext = initContext,
       loadingResult = loadingResult,
-      coreLoader = UrlClassLoader.build().get(),
+      coreLoader = customCoreLoader ?: UrlClassLoader.build().get(),
       parentActivity = null,
     ).pluginSet
   }
