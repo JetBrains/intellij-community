@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.java.execution.impl.frontend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "frontend_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "frontend",
+  module_name = "intellij.java.execution.impl.frontend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//java/execution/shared",
+    "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl/rpc",
+    "//platform/platform-impl:ide-impl",
+    "//platform/kernel/shared:kernel",
+    "//platform/project/shared:project",
+    "//platform/testRunner",
+    "//java/java-frontback-impl:frontback-impl",
+  ],
+  runtime_deps = [":frontend_resources"]
+)
+### auto-generated section `build intellij.java.execution.impl.frontend` end
