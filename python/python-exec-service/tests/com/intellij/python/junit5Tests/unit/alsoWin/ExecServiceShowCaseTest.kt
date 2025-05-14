@@ -16,13 +16,14 @@ import org.hamcrest.CoreMatchers
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.params.ParameterizedTest
 
 /**
  * How to use [ExecService].
  * To exec this test against remote eels, you need `intellij.platform.ijent.testFramework` in classpath (exists on TC)
  */
-@TestApplicationWithEel(atLeastOneRemoteEelRequired = false)
+@TestApplicationWithEel(osesMayNotHaveRemoteEels = [OS.WINDOWS, OS.LINUX, OS.MAC])
 class ExecServiceShowCaseTest {
 
   @ParameterizedTest

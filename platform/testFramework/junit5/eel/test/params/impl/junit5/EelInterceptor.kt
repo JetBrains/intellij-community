@@ -16,6 +16,7 @@ import com.intellij.testFramework.junit5.fixture.EelForFixturesProvider
 import com.intellij.testFramework.junit5.fixture.EelForFixturesProvider.Companion.makeFixturesEelAware
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
+import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.api.extension.*
 import org.junit.platform.commons.util.AnnotationUtils
 import org.opentest4j.TestAbortedException
@@ -31,7 +32,7 @@ internal class EelInterceptor : InvocationInterceptor, BeforeAllCallback, Before
 
     val ExtensionContext.atLeastOneRemoteEelRequired: Boolean
       get() =
-        AnnotationUtils.findAnnotation(testClass.get(), TestApplicationWithEel::class.java).get().atLeastOneRemoteEelRequired
+        OS.current() !in AnnotationUtils.findAnnotation(testClass.get(), TestApplicationWithEel::class.java).get().osesMayNotHaveRemoteEels
 
     val ExtensionContext.store: ExtensionContext.Store get() = getStore(ExtensionContext.Namespace.GLOBAL)
     private val ReflectiveInvocationContext<Method>.eelHolderArgs: List<EelHolder>
@@ -53,17 +54,17 @@ internal class EelInterceptor : InvocationInterceptor, BeforeAllCallback, Before
   }
 
   override fun beforeAll(context: ExtensionContext) {
+    //    -Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
+    val name = MultiRoutingFileSystemProvider::class.qualifiedName!!
+    assert(System.getProperty(PROVIDER_PROP_NAME) == name) {
+      "Please add `-D$PROVIDER_PROP_NAME=$name` as VMOption as eel needs custom nio provider"
+    }
     if (context.atLeastOneRemoteEelRequired) {
-      //    -Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
-      val name = MultiRoutingFileSystemProvider::class.qualifiedName!!
-      assert(System.getProperty(PROVIDER_PROP_NAME) == name) {
-        "Please add `-D$PROVIDER_PROP_NAME=$name` as VMOption as eel needs custom nio provider"
-      }
       assert(getIjentTestProviders().isNotEmpty()) {
         """
           No remote (ijent-based) eel implementation was found on class-path. 
           You have 2 options:
-          1. Disable ${TestApplicationWithEel::atLeastOneRemoteEelRequired} and stick with the local eel only (not recommended).
+          1. Add your OS to ${TestApplicationWithEel::osesMayNotHaveRemoteEels} and stick with the local eel only (not recommended).
           2. Make sure at least one ${EelIjentTestProvider::class} exists on the class-path.
         """.trimIndent()
       }
@@ -96,7 +97,7 @@ internal class EelInterceptor : InvocationInterceptor, BeforeAllCallback, Before
           error("""
             Although some remote (ijent) eel implementations were found on a class-path, all of them were skipped.
             That means, you've tested the local eel implementation only! 
-            If that was your plan, set ${TestApplicationWithEel::atLeastOneRemoteEelRequired} and stick with the local eel only (not recommended).
+            If that was your plan, configure ${TestApplicationWithEel::osesMayNotHaveRemoteEels} and stick with the local eel only (not recommended).
             But much better to do the following: $advice
             Testing something against local eel only is not recommended. 
           """.trimIndent())
