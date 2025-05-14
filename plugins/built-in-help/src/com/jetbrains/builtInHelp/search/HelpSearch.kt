@@ -97,9 +97,8 @@ class HelpSearch {
                 )
               )
             }
-
-            val searchResults = HelpSearchResults(results)
-            if (searchResults.hits.isNotEmpty()) return jacksonObjectMapper().writeValueAsString(searchResults)
+            if (results.isNotEmpty())
+              return jacksonObjectMapper().writeValueAsString(HelpSearchResults(results))
           }
           catch (e: Throwable) {
             Logger.getInstance(HelpSearch::class.java).info("Error searching help for $query", e)
@@ -107,9 +106,7 @@ class HelpSearch {
           finally {
             indexDirectory?.close()
             reader?.close()
-            val tempFiles = indexDir.toFile().listFiles()
-            tempFiles?.forEach { it.delete() }
-            Files.delete(indexDir)
+            indexDir.toFile().deleteRecursively()
           }
       }
       return NOT_FOUND
