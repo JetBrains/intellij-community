@@ -66,20 +66,20 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     }
   }
 
-  public static final class RichDocumentation extends HtmlRenderer {
-    public RichDocumentation(@NotNull TypeEvalContext typeEvalContext, @NotNull PsiElement anchor) {
+  static final class RichDocumentation extends HtmlRenderer {
+    RichDocumentation(@NotNull TypeEvalContext typeEvalContext, @NotNull PsiElement anchor) {
       super(typeEvalContext, anchor);
     }
   }
 
-  public static final class Documentation extends PyTypeRenderer {
-    public Documentation(@NotNull TypeEvalContext typeEvalContext) {
+  static final class Documentation extends PyTypeRenderer {
+    Documentation(@NotNull TypeEvalContext typeEvalContext) {
       super(typeEvalContext);
     }
   }
 
-  public static final class VerboseDocumentation extends PyTypeRenderer {
-    public VerboseDocumentation(@NotNull TypeEvalContext typeEvalContext) {
+  static final class VerboseDocumentation extends PyTypeRenderer {
+    VerboseDocumentation(@NotNull TypeEvalContext typeEvalContext) {
       super(typeEvalContext);
     }
 
