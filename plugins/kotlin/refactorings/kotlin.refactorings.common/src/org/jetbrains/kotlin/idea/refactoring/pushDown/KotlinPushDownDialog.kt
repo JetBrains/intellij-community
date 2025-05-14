@@ -7,6 +7,7 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.classMembers.*
 import com.intellij.refactoring.ui.RefactoringDialog
+import com.intellij.util.ui.JBUI
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionPanel
@@ -20,7 +21,6 @@ import org.jetbrains.kotlin.psi.KtProperty
 import java.awt.BorderLayout
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
-import java.awt.Insets
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -47,7 +47,7 @@ class KotlinPushDownDialog(
 
         val panel = JPanel(GridBagLayout())
 
-        gbConstraints.insets = Insets(4, 0, 10, 8)
+        gbConstraints.insets = JBUI.insets(4, 0, 10, 8)
         gbConstraints.weighty = 1.0
         gbConstraints.weightx = 1.0
         gbConstraints.gridy = 0
