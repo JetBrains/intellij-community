@@ -207,7 +207,7 @@ open class SavedPatchesUi(
 
   companion object {
     const val SAVED_PATCHES_UI_PLACE = "SavedPatchesUiPlace"
-    val SAVED_PATCHES_UI = DataKey.create<SavedPatchesUi>("SavedPatchesUi")
+    val SAVED_PATCHES_UI = DataKey.create<JComponent>("SavedPatchesUi")
     val SAVED_PATCHES_BROWSER = DataKey.create<SavedPatchesChangesBrowser>("SavedPatchesChangesBrowser")
     val SAVED_PATCH_CHANGES = DataKey.create<Iterable<SavedPatchesProvider.ChangeObject>>("SavedPatchChanges")
     val SAVED_PATCH_SELECTED_CHANGES = DataKey.create<Iterable<SavedPatchesProvider.ChangeObject>>("SavedPatchSelectedChanges")
