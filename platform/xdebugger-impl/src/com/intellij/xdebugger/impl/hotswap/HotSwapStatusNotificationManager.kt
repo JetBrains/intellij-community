@@ -8,6 +8,8 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.XDebuggerBundle
 import kotlinx.coroutines.CoroutineScope
@@ -28,6 +30,15 @@ class HotSwapStatusNotificationManager private constructor(private val project: 
   companion object {
     @JvmStatic
     fun getInstance(project: Project): HotSwapStatusNotificationManager = project.service()
+
+    @Suppress("IncorrectCancellationExceptionHandling")
+    internal fun getInstanceOrNull(project: Project): HotSwapStatusNotificationManager? = try {
+      // can throw ProcessCanceledException when a project is closing
+      project.serviceIfCreated()
+    }
+    catch (_: ProcessCanceledException) {
+      null
+    }
   }
 
   private val notifications = CopyOnWriteArrayList<Notification>()

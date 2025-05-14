@@ -143,7 +143,7 @@ class HotSwapSession<T> internal constructor(
   }
 
   override fun dispose() {
-    HotSwapStatusNotificationManager.getInstance(project).clearNotifications()
+    HotSwapStatusNotificationManager.getInstanceOrNull(project)?.clearNotifications()
     setStatus(HotSwapVisibleStatus.SESSION_COMPLETED)
     coroutineScope.cancel()
     HotSwapSessionManager.getInstance(project).onSessionDispose(this)
