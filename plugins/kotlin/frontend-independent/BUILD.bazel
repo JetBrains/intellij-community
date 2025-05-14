@@ -41,7 +41,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/impl-base",
     "//plugins/kotlin/code-insight/utils",
     "//platform/util",
-    "//plugins/maven",
+    "//platform/external-system-api:externalSystem",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/project-configuration",

@@ -17,7 +17,7 @@ jvm_library(
     "//plugins/kotlin/base/facet",
     "//platform/core-impl",
     "//java/java-impl:impl",
-    "//plugins/gradle:gradle-common",
+    "//platform/external-system-api:externalSystem",
     "//plugins/kotlin/base/compiler-configuration",
     "@lib//:kotlinx-serialization-core",
   ]

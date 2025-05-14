@@ -34,7 +34,6 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//plugins/IntelliLang:langInjection",
     "//java/java-psi-api:psi",
-    "//plugins/IntelliLang/java-support:java-langInjection",
     "//plugins/kotlin/base/code-insight",
   ],
   runtime_deps = [":k2_resources"]
