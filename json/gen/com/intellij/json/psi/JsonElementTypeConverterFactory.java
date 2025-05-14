@@ -4,7 +4,7 @@
 package com.intellij.json.psi;
 
 import com.intellij.json.JsonElementTypes;
-import com.intellij.json.JsonSyntaxElementTypes;
+import com.intellij.json.syntax.JsonSyntaxElementTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.platform.syntax.SyntaxElementType;
 import com.intellij.platform.syntax.psi.ElementTypeConverterFactory;

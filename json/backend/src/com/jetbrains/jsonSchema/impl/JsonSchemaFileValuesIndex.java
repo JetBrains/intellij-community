@@ -2,7 +2,7 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.JsonFileType;
-import com.intellij.json.JsonSyntaxElementTypes;
+import com.intellij.json.syntax.JsonSyntaxElementTypes;
 import com.intellij.json.json5.Json5FileType;
 import com.intellij.json.syntax.json5.Json5SyntaxLexer;
 import com.intellij.json.syntax.JsonSyntaxLexer;

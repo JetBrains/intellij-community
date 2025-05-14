@@ -3,6 +3,7 @@ package com.intellij.json
 
 import com.intellij.json.psi.impl.JsonFileImpl
 import com.intellij.json.syntax.JsonSyntaxLexer
+import com.intellij.json.syntax.JsonSyntaxParser
 import com.intellij.lang.ASTNode
 import com.intellij.lang.ParserDefinition
 import com.intellij.lang.PsiParser

@@ -1,14 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.jsonLines
 
-import com.intellij.json.JsonSyntaxParser
+import com.intellij.json.syntax.JsonSyntaxParser
 import com.intellij.json.JsonParserDefinition
 import com.intellij.json.json5.Json5Language
 import com.intellij.json.psi.impl.JsonFileImpl
 import com.intellij.json.syntax.JsonSyntaxLexer
 import com.intellij.lang.ASTNode
 import com.intellij.platform.syntax.SyntaxElementType
-import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.psi.ElementTypeConverters
 import com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory.Companion.getInstance
