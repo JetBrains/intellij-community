@@ -18,6 +18,9 @@
                         serviceInterface="org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoSupport"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.K2ReferenceMutateService"
                         serviceInterface="org.jetbrains.kotlin.idea.references.KtReferenceMutateService"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.refactoring.pushDown.KotlinPushDownProcessorProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.pushDown.K2PushDownProcessorProvider"/>
     <lang.refactoringSupport language="kotlin" 
                              implementationClass="org.jetbrains.kotlin.idea.k2.refactoring.KotlinFirRefactoringSupportProvider"/>
     <refactoring.safeDeleteProcessor

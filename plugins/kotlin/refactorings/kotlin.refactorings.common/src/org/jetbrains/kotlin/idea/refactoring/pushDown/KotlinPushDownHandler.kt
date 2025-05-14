@@ -11,6 +11,8 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.util.RefactoringUIUtil
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.isInheritable
 import org.jetbrains.kotlin.idea.refactoring.AbstractPullPushMembersHandler
@@ -46,6 +48,7 @@ class KotlinPushDownHandler : AbstractPullPushMembersHandler(
         CommonRefactoringUtil.showErrorHint(project, editor, message, PULL_MEMBERS_UP, HelpID.MEMBERS_PULL_UP)
     }
 
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun invoke(
         project: Project,
         editor: Editor?,
@@ -65,7 +68,7 @@ class KotlinPushDownHandler : AbstractPullPushMembersHandler(
             return
         }
 
-        val members = KotlinMemberInfoStorage(classOrObject).getClassMemberInfos(classOrObject).filter { it.member !is KtParameter }
+        val members = allowAnalysisOnEdt { KotlinMemberInfoStorage(classOrObject).getClassMemberInfos(classOrObject).filter { it.member !is KtParameter } }
         if (isUnitTestMode()) {
             val helper = dataContext?.getData(PUSH_DOWN_TEST_HELPER_KEY) as TestHelper
             val selectedMembers = helper.adjustMembers(members)

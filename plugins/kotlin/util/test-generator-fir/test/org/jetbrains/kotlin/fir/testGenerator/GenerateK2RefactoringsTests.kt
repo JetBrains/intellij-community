@@ -9,10 +9,12 @@ import org.jetbrains.kotlin.idea.k2.refactoring.inline.AbstractKotlinFirInlineTe
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.*
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.AbstractK2IntroduceVariableTest
 import org.jetbrains.kotlin.idea.k2.refactoring.move.*
+import org.jetbrains.kotlin.idea.k2.refactoring.pushDown.AbstractK2PushDownTest
 import org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.AbstractFirMultiModuleSafeDeleteTest
 import org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.AbstractK2SafeDeleteTest
 import org.jetbrains.kotlin.testGenerator.model.*
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
+import org.jetbrains.kotlin.testGenerator.model.Patterns.KT
 import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
 
 internal fun MutableTWorkspace.generateK2RefactoringsTests() {
@@ -136,6 +138,10 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
         }
         testClass<AbstractK2PsiUnifierTest> {
             model("unifier")
+        }
+        testClass<AbstractK2PushDownTest> {
+            model("refactoring/pushDown/k2k", pattern = KT, flatten = true, testClassName = "K2K", testMethodName = "doKotlinTest")
+            model("refactoring/pushDown/k2j", pattern = KT, flatten = true, testClassName = "K2J", testMethodName = "doKotlinTest")
         }
     }
 }

@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.introduceConstant.KotlinIntroduc
 import org.jetbrains.kotlin.idea.k2.refactoring.introduceParameter.KotlinFirIntroduceLambdaParameterHandler
 import org.jetbrains.kotlin.idea.k2.refactoring.introduceParameter.KotlinFirIntroduceParameterHandler
 import org.jetbrains.kotlin.idea.k2.refactoring.introduceProperty.KotlinIntroducePropertyHandler
+import org.jetbrains.kotlin.idea.refactoring.pushDown.KotlinPushDownHandler
 
 class KotlinFirRefactoringSupportProvider : RefactoringSupportProvider() {
     override fun isSafeDeleteAvailable(element: PsiElement): Boolean = element.canDeleteElement()
@@ -39,4 +40,6 @@ class KotlinFirRefactoringSupportProvider : RefactoringSupportProvider() {
     override fun getIntroduceConstantHandler(): RefactoringActionHandler = KotlinIntroduceConstantHandler()
 
     fun getIntroducePropertyHandler(): RefactoringActionHandler = KotlinIntroducePropertyHandler()
+
+    override fun getPushDownHandler(): RefactoringActionHandler = KotlinPushDownHandler()
 }
