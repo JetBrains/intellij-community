@@ -60,7 +60,7 @@ class SePopupContentPane(private val vm: SePopupVm) : JPanel(), Disposable {
   private val headerPane: SePopupHeaderPane = SePopupHeaderPane(vm.tabVms.map { it.name }, vm.currentTabIndex, vm.coroutineScope)
   private val textField: SeTextField = SeTextField()
 
-  private val resultListModel = SeResultListModel()
+  private val resultListModel = SeResultListModel { resultList.selectionModel }
   private val resultList: JBList<SeResultListRow> = JBList(resultListModel)
   private val resultsScrollPane = createListPane(resultList)
 

@@ -7,6 +7,7 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.topHit.SeTopHitItemsProvider
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.ListSelectionModel
 
 @ApiStatus.Internal
 interface SeResultList {
@@ -101,23 +102,36 @@ private val SeResultList.lastIndexToInsertItem: Int
     else size
 
 @ApiStatus.Internal
-class SeResultListModelAdapter(private val list: SeResultListModel) : SeResultList {
-  override val size: Int get() = list.size
-  override val frozenCount: Int get() = list.freezer.frozenCount
+class SeResultListModelAdapter(private val listModel: SeResultListModel, private val selectionModel: ListSelectionModel) : SeResultList {
+  override val size: Int get() = listModel.size
+  override val frozenCount: Int get() = listModel.freezer.frozenCount
 
   override fun getRow(index: Int): SeResultListRow =
-    list.getElementAt(index)
+    listModel.getElementAt(index)
 
   override fun addRow(index: Int, row: SeResultListRow) {
-    list.add(index, row)
+    val selectedIndexes = selectionModel.selectedIndices
+
+    listModel.add(index, row)
+
+    val newSelectedIndex = if (selectedIndexes.size == 1) {
+      if (selectedIndexes[0] == 0) 0
+      else selectedIndexes[0] + (if (index <= selectedIndexes[0]) 1 else 0)
+    }
+    else if (selectedIndexes.size > 1 && selectedIndexes.any { index <= it }) 0
+    else null
+
+    newSelectedIndex?.let {
+      selectionModel.setSelectionInterval(it, it)
+    }
   }
 
   override fun addRow(row: SeResultListRow) {
-    list.addElement(row)
+    listModel.addElement(row)
   }
 
   override fun removeRow(index: Int) {
-    list.remove(index)
+    listModel.remove(index)
   }
 }
 

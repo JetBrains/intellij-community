@@ -11,9 +11,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.DefaultListModel
+import javax.swing.ListSelectionModel
 
 @ApiStatus.Internal
-class SeResultListModel: DefaultListModel<SeResultListRow>() {
+class SeResultListModel(private val selectionModelProvider: () -> ListSelectionModel): DefaultListModel<SeResultListRow>() {
   val freezer: Freezer = Freezer { size }
 
   val isValid: Boolean get() = isValidState.value
@@ -49,7 +50,7 @@ class SeResultListModel: DefaultListModel<SeResultListRow>() {
         addAll(accumulatedList.list)
       }
       is SeThrottledOneItem<SeResultEvent> -> {
-        SeResultListModelAdapter(this).handleEvent(throttledEvent.item)
+        SeResultListModelAdapter(this, selectionModelProvider()).handleEvent(throttledEvent.item)
       }
     }
   }
