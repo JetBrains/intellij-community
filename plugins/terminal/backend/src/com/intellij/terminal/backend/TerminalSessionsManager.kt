@@ -5,7 +5,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.terminal.session.TerminalSession
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import com.jediterm.core.util.TermSize
@@ -20,10 +19,10 @@ import java.util.concurrent.atomic.AtomicInteger
 @OptIn(AwaitCancellationAndInvoke::class)
 @Service(Service.Level.APP)
 internal class TerminalSessionsManager {
-  private val sessionsMap = ConcurrentHashMap<TerminalSessionId, TerminalSession>()
+  private val sessionsMap = ConcurrentHashMap<TerminalSessionId, BackendTerminalSession>()
 
   /**
-   * Starts the terminal process using provided [options] and wraps it into [com.intellij.terminal.session.TerminalSession].
+   * Starts the terminal process using provided [options] and wraps it into [com.intellij.terminal.backend.BackendTerminalSession].
    * Also, it installs the port forwarding feature.
    *
    * The created session lifecycle is bound to the [scope]. If it cancels, then the process will be terminated.
@@ -43,7 +42,7 @@ internal class TerminalSessionsManager {
     val (ttyConnector, configuredOptions) = startTerminalProcess(project, optionsWithSize)
     val observableTtyConnector = ObservableTtyConnector(ttyConnector)
     val session = createTerminalSession(project, observableTtyConnector, configuredOptions, JBTerminalSystemSettingsProvider(), scope)
-    val stateAwareSession = StateAwareTerminalSession(session, scope.childScope("StateAwareSession"))
+    val stateAwareSession = StateAwareTerminalSession(session)
 
     val sessionId = storeSession(stateAwareSession, scope)
 
@@ -57,11 +56,11 @@ internal class TerminalSessionsManager {
     )
   }
 
-  fun getSession(id: TerminalSessionId): TerminalSession? {
+  fun getSession(id: TerminalSessionId): BackendTerminalSession? {
     return sessionsMap[id]
   }
 
-  private fun storeSession(session: TerminalSession, scope: CoroutineScope): TerminalSessionId {
+  private fun storeSession(session: BackendTerminalSession, scope: CoroutineScope): TerminalSessionId {
     val sessionId = TerminalSessionId(sessionIdCounter.getAndIncrement())
     sessionsMap.put(sessionId, session)
     scope.awaitCancellationAndInvoke {

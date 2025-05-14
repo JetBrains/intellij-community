@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalExecutorServiceManagerImpl
-import com.intellij.terminal.session.TerminalSession
 import com.intellij.terminal.session.TerminalSessionTerminatedEvent
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
@@ -39,9 +38,6 @@ internal fun startTerminalProcess(
   return connector to configuredOptions
 }
 
-/**
- * Returns a pair of started terminal session and final options used for session start.
- */
 @OptIn(AwaitCancellationAndInvoke::class)
 internal fun createTerminalSession(
   project: Project,
@@ -49,7 +45,7 @@ internal fun createTerminalSession(
   options: ShellStartupOptions,
   settings: JBTerminalSystemSettingsProviderBase,
   coroutineScope: CoroutineScope,
-): TerminalSession {
+): BackendTerminalSession {
   val observableTtyConnector = ttyConnector as? ObservableTtyConnector ?: ObservableTtyConnector(ttyConnector)
 
   val maxHistoryLinesCount = AdvancedSettings.getInt("terminal.buffer.max.lines.count")
@@ -88,7 +84,7 @@ internal fun createTerminalSession(
     }
   }
 
-  return BackendTerminalSession(inputChannel, outputFlow.asSharedFlow())
+  return BackendTerminalSessionImpl(inputChannel, outputFlow.asSharedFlow(), coroutineScope)
 }
 
 private fun createJediTermServices(

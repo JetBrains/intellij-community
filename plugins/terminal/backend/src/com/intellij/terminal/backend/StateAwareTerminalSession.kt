@@ -6,6 +6,7 @@ import com.intellij.terminal.session.*
 import com.intellij.terminal.session.dto.toDto
 import com.intellij.terminal.session.dto.toStyleRange
 import com.intellij.terminal.session.dto.toTerminalState
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.SendChannel
@@ -34,9 +35,8 @@ import kotlin.time.TimeSource
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class StateAwareTerminalSession(
-  private val delegate: TerminalSession,
-  coroutineScope: CoroutineScope,
-) : TerminalSession {
+  private val delegate: BackendTerminalSession,
+) : BackendTerminalSession {
   private val outputFlow = MutableSharedFlow<VersionedEvents>(replay = 1)
   private val modelsLock = Mutex()
 
@@ -76,7 +76,7 @@ internal class StateAwareTerminalSession(
 
     blocksModel = TerminalBlocksModelImpl(outputDocument)
 
-    coroutineScope.launch {
+    coroutineScope.launch(CoroutineName("StateAwareTerminalSession: models updating")) {
       val originalOutputFlow = delegate.getOutputFlow()
       originalOutputFlow.collect { events ->
         val versionedEvents = VersionedEvents(events)
@@ -114,6 +114,9 @@ internal class StateAwareTerminalSession(
 
   override val isClosed: Boolean
     get() = delegate.isClosed
+
+  override val coroutineScope: CoroutineScope
+    get() = delegate.coroutineScope
 
   private fun doHandleEvents(events: List<TerminalOutputEvent>) {
     for (event in events) {
