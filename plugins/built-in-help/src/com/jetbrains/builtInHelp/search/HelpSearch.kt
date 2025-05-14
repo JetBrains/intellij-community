@@ -43,12 +43,13 @@ class HelpSearch {
           try {
 
             resources.forEach { resource ->
+              val indexDirPath = indexDir.toAbsolutePath().toString()
               ResourceUtil.getResourceAsStream(HelpSearch::class.java.classLoader,
                                                "search",
                                                resource).use { resourceStream ->
                 if (resourceStream == null) return@forEach
 
-                Paths.get(indexDir.toAbsolutePath().toString(), resource)
+                Paths.get(indexDirPath, resource)
                   .safeOutputStream().use { resourceOutput ->
                     resourceOutput.write(resourceStream.readAllBytes())
                   }
@@ -67,38 +68,36 @@ class HelpSearch {
             val scorer: Scorer = QueryScorer(q)
             val highlighter = Highlighter(scorer)
 
-            val results = mutableListOf<HelpSearchResult>()
-
-            for (i in hits.scoreDocs.indices) {
-              val doc = searcher.storedFields().document(hits.scoreDocs[i].doc)
+            val results = hits.scoreDocs.indices.map { index ->
+              val doc = searcher.storedFields().document(hits.scoreDocs[index].doc)
               val contentValue = buildString {
                 append(highlighter.getBestFragment(
                   analyzer, "contents", doc.get("contents")
                 ))
                 append("...")
               }
-              results.add(
-                HelpSearchResult(
-                  doc.get("filename"),
-                  doc.get("title"),
-                  "",
-                  doc.get("title"),
-                  i.toString(),
-                  HelpSearchResult.SnippetResult(
-                    HelpSearchResult.SnippetResult.Content(
-                      contentValue, "full"
-                    )
-                  ),
-                  HelpSearchResult.HighlightedResult(
-                    HelpSearchResult.HelpSearchResultDetails(doc.get("filename")),
-                    HelpSearchResult.HelpSearchResultDetails(doc.get("title")),
-                    HelpSearchResult.HelpSearchResultDetails(contentValue),
-                    HelpSearchResult.HelpSearchResultDetails(doc.get("title")),
-                    HelpSearchResult.HelpSearchResultDetails(doc.get("title"))
+
+              HelpSearchResult(
+                doc.get("filename"),
+                doc.get("title"),
+                "",
+                doc.get("title"),
+                index.toString(),
+                HelpSearchResult.SnippetResult(
+                  HelpSearchResult.SnippetResult.Content(
+                    contentValue, "full"
                   )
+                ),
+                HelpSearchResult.HighlightedResult(
+                  HelpSearchResult.HelpSearchResultDetails(doc.get("filename")),
+                  HelpSearchResult.HelpSearchResultDetails(doc.get("title")),
+                  HelpSearchResult.HelpSearchResultDetails(contentValue),
+                  HelpSearchResult.HelpSearchResultDetails(doc.get("title")),
+                  HelpSearchResult.HelpSearchResultDetails(doc.get("title"))
                 )
               )
             }
+
             val searchResults = HelpSearchResults(results)
             if (searchResults.hits.isNotEmpty()) return jacksonObjectMapper().writeValueAsString(searchResults)
           }
