@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service
 
+import com.intellij.openapi.util.io.FileUtil
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.util.GradleVersion.version
@@ -9,6 +10,7 @@ import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 import java.io.BufferedReader
 import java.nio.file.Path
+import java.nio.file.Paths
 import kotlin.io.path.listDirectoryEntries
 
 class GradleInstallationManagerIoTest : GradleInstallationManagerTestCase() {
@@ -37,7 +39,7 @@ class GradleInstallationManagerIoTest : GradleInstallationManagerTestCase() {
         .generate()
     )
     val gradleJvmPath = GradleInstallationManager.getInstance().getGradleJvmPath(project, projectPath)
-    assertEquals(gradleJdkHome, gradleJvmPath)
+    assertEquals(Paths.get(gradleJdkHome!!), Paths.get(gradleJvmPath!!))
   }
 
   @Test
