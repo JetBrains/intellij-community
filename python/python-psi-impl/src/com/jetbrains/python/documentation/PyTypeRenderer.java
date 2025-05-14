@@ -37,7 +37,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     myTypeEvalContext = typeEvalContext;
   }
 
-  private static abstract class HtmlRenderer extends PyTypeRenderer {
+  static abstract class HtmlRenderer extends PyTypeRenderer {
     private final @NotNull PsiElement myAnchor;
 
     private HtmlRenderer(@NotNull TypeEvalContext typeEvalContext, @NotNull PsiElement anchor) {
