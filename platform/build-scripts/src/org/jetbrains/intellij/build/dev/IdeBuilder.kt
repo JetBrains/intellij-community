@@ -286,6 +286,9 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
       // ensure plugin dist files added to the list
       pluginDistributionEntriesDeferred.await()
 
+      spanBuilder("scramble platform").use{
+        request.scrambleTool?.scramble(platformLayout.await(), context)
+      }
       copyDistFiles(context = context, newDir = runDir, os = OsFamily.currentOs, arch = JvmArchitecture.currentJvmArch)
     }
   }.invokeOnCompletion {
@@ -499,6 +502,7 @@ private suspend fun createBuildContext(
           artifactDir = buildDir.resolve("artifacts"),
           searchableOptionDir = request.projectDir.resolve("out/dev-data/searchable-options"),
         )
+        result.distAllDir = runDir
         Files.createDirectories(tempDir)
 
         CompilationContextImpl.createCompilationContext(
