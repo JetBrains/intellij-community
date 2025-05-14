@@ -19,7 +19,7 @@ import java.util.List;
 
 public class ControlFlowBuilder {
 
-  public static final Logger LOG = Logger.getInstance(ControlFlowBuilder.class);
+  private static final Logger LOG = Logger.getInstance(ControlFlowBuilder.class);
 
   // Here we store all the instructions
   public List<Instruction> instructions;

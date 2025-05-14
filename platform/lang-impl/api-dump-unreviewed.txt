@@ -5092,7 +5092,6 @@ a:com.intellij.codeInsight.navigation.TargetUpdaterTask
 - p:createUsage(com.intellij.codeInsight.navigation.ItemWithPresentation):com.intellij.usages.Usage
 - f:updateComponent(com.intellij.psi.PsiElement):Z
 f:com.intellij.codeInsight.navigation.UtilKt
-- sf:getLOG():com.intellij.openapi.diagnostic.Logger
 c:com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 - com.intellij.codeInsight.actions.BaseCodeInsightAction
 - com.intellij.openapi.project.DumbAware

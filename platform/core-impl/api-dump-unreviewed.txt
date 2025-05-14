@@ -16,7 +16,6 @@ f:com.intellij.codeInsight.completion.CompletionUtilCoreImpl
 - s:getOriginalElement(com.intellij.psi.PsiElement,com.intellij.psi.PsiFile):com.intellij.psi.PsiElement
 - s:getOriginalOrSelf(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 c:com.intellij.codeInsight.controlflow.ControlFlowBuilder
-- sf:LOG:com.intellij.openapi.diagnostic.Logger
 - instructionCount:I
 - instructions:java.util.List
 - pending:java.util.List
