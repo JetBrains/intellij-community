@@ -896,10 +896,10 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
         waitForPause();
         stepOver();
         waitForPause();
+        removeBreakpoint(getScriptName(), 14);
         smartStepInto("make_class", 0);
         waitForPause();
         eval("x").hasValue("100");
-        removeBreakpoint(getScriptName(), 14);
 
         resume();
         waitForTerminate();
