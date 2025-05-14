@@ -145,16 +145,16 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     }
   }
 
-  override suspend fun computeSmartStepTargets(sessionId: XDebugSessionId, sourcePositionDto: XSourcePositionDto): List<XSmartStepIntoTargetDto> {
-    return computeTargets(sessionId, sourcePositionDto) { handler, position ->
+  override suspend fun computeSmartStepTargets(sessionId: XDebugSessionId): List<XSmartStepIntoTargetDto> {
+    return computeTargets(sessionId) { handler, position ->
       withContext(Dispatchers.EDT) {
         handler.computeSmartStepVariantsAsync(position).await()
       }
     }
   }
 
-  override suspend fun computeStepTargets(sessionId: XDebugSessionId, sourcePositionDto: XSourcePositionDto): List<XSmartStepIntoTargetDto> {
-    return computeTargets(sessionId, sourcePositionDto) { handler, position ->
+  override suspend fun computeStepTargets(sessionId: XDebugSessionId): List<XSmartStepIntoTargetDto> {
+    return computeTargets(sessionId) { handler, position ->
       withContext(Dispatchers.EDT) {
         handler.computeStepIntoVariants(position).await()
       }
@@ -163,13 +163,12 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
 
   private suspend fun computeTargets(
     sessionId: XDebugSessionId,
-    sourcePositionDto: XSourcePositionDto,
     computeVariants: suspend (XSmartStepIntoHandler<*>, XSourcePosition) -> List<XSmartStepIntoVariant>,
   ): List<XSmartStepIntoTargetDto> {
     val session = sessionId.findValue() ?: return emptyList()
     val scope = session.currentSuspendCoroutineScope ?: return emptyList()
     val handler = session.debugProcess.smartStepIntoHandler ?: return emptyList()
-    val sourcePosition = sourcePositionDto.sourcePosition()
+    val sourcePosition = session.topFramePosition ?: return emptyList()
     return computeVariants(handler, sourcePosition).map { variant ->
       val id = variant.storeGlobally(scope, session)
       readAction {

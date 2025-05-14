@@ -53,7 +53,6 @@ import com.intellij.xdebugger.impl.performDebuggerActionAsync
 import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
 import com.intellij.xdebugger.impl.rpc.XSmartStepIntoTargetDto
 import com.intellij.xdebugger.impl.rpc.XSmartStepIntoTargetId
-import com.intellij.xdebugger.impl.rpc.toRpc
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant
 import com.intellij.xdebugger.ui.DebuggerColors
@@ -120,7 +119,7 @@ internal open class XDebuggerSmartStepIntoHandler : XDebuggerProxySuspendedActio
     }
     else {
       try {
-        val targets = computeTargets(session, position).map { it.target() }
+        val targets = computeTargets(session).map { it.target() }
         withContext(Dispatchers.EDT) {
           if (!handleSimpleCases(targets, session)) {
             choose(targets, position, session, editor)
@@ -135,9 +134,8 @@ internal open class XDebuggerSmartStepIntoHandler : XDebuggerProxySuspendedActio
 
   protected open suspend fun computeTargets(
     session: XDebugSessionProxy,
-    position: XSourcePosition,
   ): List<XSmartStepIntoTargetDto> {
-    return XDebugSessionApi.getInstance().computeSmartStepTargets(session.id, position.toRpc())
+    return XDebugSessionApi.getInstance().computeSmartStepTargets(session.id)
   }
 
   protected open suspend fun handleSimpleCases(
