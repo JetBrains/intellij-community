@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.events
 
 import org.gradle.util.GradleVersion
+import org.intellij.lang.annotations.Language
 import org.jetbrains.plugins.gradle.testFramework.GradleTestExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
@@ -76,6 +77,30 @@ class GradleTestNavigationTest : GradleTestExecutionTestCase() {
           assertNode("ugly_dynamic_test dynamic second") {
             assertPsiLocation("DisplayNameTestCase", "ugly_dynamic_test", "[2]")
           }
+        }
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test display name generated and navigation with Java and Junit 5`(gradleVersion: GradleVersion) {
+    testJunit5Project(gradleVersion) {
+      writeText("src/test/java/org/example/DisplayNameGeneratedTestCase.java", JAVA_DISPLAY_NAME_GENERATOR_JUNIT5_TEST)
+
+      executeTasks(":test", isRunAsTest = true)
+      assertTestViewTree {
+        assertNode("DisplayNameGeneratedTestCase[Gradle '8.1']") {
+          assertPsiLocation("DisplayNameGeneratedTestCase")
+          assertNode("test") {
+            assertPsiLocation("DisplayNameGeneratedTestCase", "test")
+          }
+          //assertNode("InnerTest") {
+          //  assertPsiLocation("InnerTest")
+          //  assertNode("test") {
+          //    assertPsiLocation("InnerTest", "test")
+          //  }
+          //}
         }
       }
     }
@@ -256,6 +281,7 @@ class GradleTestNavigationTest : GradleTestExecutionTestCase() {
 
   companion object {
 
+    @Language("JAVA")
     private val JAVA_JUNIT5_TEST = """
       |package org.example;
       |
@@ -288,6 +314,7 @@ class GradleTestNavigationTest : GradleTestExecutionTestCase() {
       |}
     """.trimMargin()
 
+    @Language("JAVA")
     private val JAVA_DISPLAY_NAME_JUNIT5_TEST = """
       |package org.example;
       |
@@ -339,6 +366,34 @@ class GradleTestNavigationTest : GradleTestExecutionTestCase() {
       |}
     """.trimMargin()
 
+    @Language("JAVA")
+    private val JAVA_DISPLAY_NAME_GENERATOR_JUNIT5_TEST = """
+      |package org.example;
+      |
+      |import org.junit.jupiter.api.*;
+      |
+      |@DisplayNameGeneration(DisplayNameGeneratedTestCase.CustomNameGenerator.class)
+      |public class DisplayNameGeneratedTestCase {
+      |
+      |    @Test
+      |    public void test() {}
+      |
+      |    public static class CustomNameGenerator extends DisplayNameGenerator.Standard {
+      |        @Override
+      |        public String generateDisplayNameForClass(Class<?> testClass) {
+      |            return super.generateDisplayNameForClass(testClass) + "[Gradle '8.1']";
+      |        }
+      |    }
+      //|    
+      //|    @Nested
+      //|    public class InnerTest {
+      //|      @Test
+      //|      public void test() {}
+      //|    }
+      |}
+    """.trimMargin()
+
+    @Language("JAVA")
     private val JAVA_JUNIT4_TEST = """
       |package org.example;
       |
@@ -354,6 +409,7 @@ class GradleTestNavigationTest : GradleTestExecutionTestCase() {
       |}
     """.trimMargin()
 
+    @Language("JAVA")
     private val JAVA_PARAMETRIZED_JUNIT4_TEST = """
       |package org.example;
       |
@@ -389,6 +445,7 @@ class GradleTestNavigationTest : GradleTestExecutionTestCase() {
       |}
     """.trimMargin()
 
+    @Language("JAVA")
     private val JAVA_TESTNG_TEST = """
       |package org.example;
       |
@@ -405,6 +462,7 @@ class GradleTestNavigationTest : GradleTestExecutionTestCase() {
       |}
     """.trimMargin()
 
+    @Language("JAVA")
     private val JAVA_PARAMETRIZED_TESTNG_TEST = """
       |package org.example;
       |
