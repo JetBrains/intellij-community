@@ -23,23 +23,31 @@ import java.nio.file.Path
 
 internal object TerminalSessionTestUtil {
   fun startTestTerminalSession(
-    shellPath: String,
     project: Project,
+    shellPath: String,
     coroutineScope: CoroutineScope,
-    size: TermSize = TermSize(80, 24),
-    extraEnvVariables: Map<String, String> = emptyMap(),
-    workingDirectory: String = System.getProperty("user.home"),
+  ): TerminalSession {
+    val options = ShellStartupOptions.Builder()
+      .shellCommand(listOf(shellPath))
+      .build()
+
+    return startTestTerminalSession(project, options, coroutineScope)
+  }
+
+  fun startTestTerminalSession(
+    project: Project,
+    options: ShellStartupOptions,
+    coroutineScope: CoroutineScope,
   ): TerminalSession {
     TerminalTestUtil.setTerminalEngineForTest(TerminalEngine.REWORKED, coroutineScope.asDisposable())
 
-    val options = ShellStartupOptions.Builder()
-      .shellCommand(listOf(shellPath))
-      .workingDirectory(workingDirectory)
-      .initialTermSize(size)
-      .envVariables(mapOf(EnvironmentUtil.DISABLE_OMZ_AUTO_UPDATE to "true", "HISTFILE" to "/dev/null") + extraEnvVariables)
+    val allOptions = options.builder()
+      .envVariables(options.envVariables + mapOf(EnvironmentUtil.DISABLE_OMZ_AUTO_UPDATE to "true", "HISTFILE" to "/dev/null"))
+      .workingDirectory(options.workingDirectory ?: System.getProperty("user.home"))
+      .initialTermSize(options.initialTermSize ?: TermSize(80, 24))
       .build()
-    val (ttyConnector, _) = startTerminalProcess(project, options)
-    val session = createTerminalSession(project, ttyConnector, options, JBTerminalSystemSettingsProviderBase(), coroutineScope)
+    val (ttyConnector, _) = startTerminalProcess(project, allOptions)
+    val session = createTerminalSession(project, ttyConnector, allOptions, JBTerminalSystemSettingsProviderBase(), coroutineScope)
     return session
   }
 

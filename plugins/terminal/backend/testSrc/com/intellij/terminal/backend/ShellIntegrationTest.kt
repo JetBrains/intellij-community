@@ -20,6 +20,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
+import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.reworked.util.ZshPS1Customizer
 import org.junit.Assert
 import org.junit.Assume
@@ -53,7 +54,8 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
   @Test
   fun `shell integration send correct events on command invocation`() = timeoutRunBlocking(30.seconds) {
     val cwd = System.getProperty("user.home")
-    val events = startSessionAndCollectOutputEvents(workingDirectory = cwd) { input ->
+    val options = ShellStartupOptions.Builder().workingDirectory(cwd).build()
+    val events = startSessionAndCollectOutputEvents(options) { input ->
       input.send(TerminalWriteBytesEvent("pwd".toByteArray() + ENTER_BYTES))
     }
 
@@ -99,7 +101,8 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
   fun `prompt events received after prompt is redrawn because of long completion output`() = timeoutRunBlocking(30.seconds) {
     Assume.assumeTrue(shellPath.toString().contains("zsh"))
 
-    val events = startSessionAndCollectOutputEvents(TermSize(80, 4)) { input ->
+    val options = ShellStartupOptions.Builder().initialTermSize(TermSize(80, 4)).build()
+    val events = startSessionAndCollectOutputEvents(options) { input ->
       input.send(TerminalWriteBytesEvent("g".toByteArray() + TAB_BYTES))
       // Shell can ask "do you wish to see all N possibilities? (y/n)"
       // Wait for this question and ask `y`
@@ -130,7 +133,11 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
     val bindCommand = "bind 'set show-all-if-ambiguous on'"
     val cwd = System.getProperty("user.home")
 
-    val events = startSessionAndCollectOutputEvents(TermSize(80, 100), workingDirectory = cwd) { input ->
+    val options = ShellStartupOptions.Builder()
+      .initialTermSize(TermSize(80, 100))
+      .workingDirectory(cwd)
+      .build()
+    val events = startSessionAndCollectOutputEvents(options) { input ->
       // Configure the shell to show completion items on the first Tab key press.
       input.send(TerminalWriteBytesEvent(bindCommand.toByteArray() + ENTER_BYTES))
       delay(1000)
@@ -199,7 +206,10 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
       typeset -U my_path MY_PATH
       echo "MY_PATH=${'$'}MY_PATH"
     """.trimIndent())
-    val events = startSessionAndCollectOutputEvents(extraEnvVariables = mapOf("ZDOTDIR" to dir.toString())) {}
+
+    val envs = mapOf("ZDOTDIR" to dir.toString())
+    val options = ShellStartupOptions.Builder().envVariables(envs).build()
+    val events = startSessionAndCollectOutputEvents(options) {}
     val contentUpdatedEvents = events.filterIsInstance<TerminalContentUpdatedEvent>()
     val suffixFound = contentUpdatedEvents.any { it.text.contains("MY_PATH=path1:path2:path3") }
     Assert.assertTrue(contentUpdatedEvents.joinToString("\n") { it.text }, suffixFound)
@@ -215,26 +225,28 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
     val zshenvDir = Files.createTempDirectory(".zshenv-dir").also {
       it.resolve(".zshenv").writeText("ZDOTDIR='$zshrcDir'")
     }
-    val events = startSessionAndCollectOutputEvents(extraEnvVariables = mapOf("ZDOTDIR" to zshenvDir.toString())) {}
+
+    val envs = mapOf("ZDOTDIR" to zshenvDir.toString())
+    val options = ShellStartupOptions.Builder().envVariables(envs).build()
+    val events = startSessionAndCollectOutputEvents(options) {}
     val contentUpdatedEvents = events.filterIsInstance<TerminalContentUpdatedEvent>()
     val found = contentUpdatedEvents.any { it.text.contains(msg) }
     Assert.assertTrue(contentUpdatedEvents.joinToString("\n") { it.text }, found)
   }
 
   private suspend fun startSessionAndCollectOutputEvents(
-    size: TermSize = TermSize(80, 24),
-    extraEnvVariables: Map<String, String> = emptyMap(),
-    workingDirectory: String = System.getProperty("user.home"),
+    options: ShellStartupOptions = ShellStartupOptions.Builder().build(),
     block: suspend (SendChannel<TerminalInputEvent>) -> Unit,
   ): List<TerminalOutputEvent> {
     return coroutineScope {
+      val allOptions = options.builder()
+        .shellCommand(listOf(shellPath.toString()))
+        .build()
+
       val session = TerminalSessionTestUtil.startTestTerminalSession(
-        shellPath.toString(),
         projectRule.project,
+        allOptions,
         childScope("TerminalSession"),
-        size,
-        extraEnvVariables,
-        workingDirectory,
       )
       val inputChannel = session.getInputChannel()
 
