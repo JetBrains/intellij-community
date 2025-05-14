@@ -520,6 +520,10 @@ span.user-del {
   text-decoration: line-through;
 }
 
+.run-icon.code-block {
+ left: -0.25em;
+}
+
 ::-webkit-scrollbar {
   width: 0.75em;
   height: 0.75rem;

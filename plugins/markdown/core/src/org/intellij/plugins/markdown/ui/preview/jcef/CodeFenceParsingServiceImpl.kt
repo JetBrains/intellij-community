@@ -37,6 +37,7 @@ class CodeFenceParsingServiceImpl(cs: CoroutineScope? = null) : CodeFenceParsing
   @Volatile private var jsResultLatch: CountDownLatch? = null
   @Volatile private var jsResult: String? = null
   @Volatile private var jsError = false
+  @Volatile private var unknownLanguage = false
 
   private var browser: JBCefBrowser? = null
 
@@ -66,8 +67,13 @@ class CodeFenceParsingServiceImpl(cs: CoroutineScope? = null) : CodeFenceParsing
               jsResultLatch?.countDown()
             }
             else if (level == CefSettings.LogSeverity.LOGSEVERITY_ERROR) {
-              LOG.error("Error while executing highlighter: $message")
-              jsError = true
+              if (message.contains("Could not find the language")) {
+                unknownLanguage = true
+              }
+              else {
+                LOG.error("Error while executing highlighter: $message")
+                jsError = true
+              }
             }
 
             return true // Prevent creation of jcef_*.log files
@@ -157,6 +163,7 @@ class CodeFenceParsingServiceImpl(cs: CoroutineScope? = null) : CodeFenceParsing
 
     val execThread = Thread {
       jsError = false
+      unknownLanguage = false
       @Suppress("JSUnresolvedReference")
       browser!!.executeJavaScript("markdownHighlighter('${escapeForJs(language)}', '${escapeForJs(content)}')")
       jsExecLatch!!.countDown()
@@ -168,7 +175,7 @@ class CodeFenceParsingServiceImpl(cs: CoroutineScope? = null) : CodeFenceParsing
     execThread.start()
     execThread.join(MAX_HIGHLIGHT_JS_WAIT_TIME)
 
-    if (jsError || jsResult.isNullOrEmpty()) {
+    if (unknownLanguage || jsError || jsResult.isNullOrEmpty()) {
       return null
     }
     else {
