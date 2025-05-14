@@ -27,16 +27,17 @@ internal class RecentFilesVfsListener : AsyncFileListener {
             BackendRecentFileEventsController.applyRelevantEventsToModel(projectFilesToRemove, FileChangeKind.REMOVED, project)
           }
 
-          val projectFilesToMove = filterProjectFiles(movedFiles, project)
           val projectFilesToRename = filterProjectFiles(renamedFiles, project)
-
-          val projectFilesToUpdate = (projectFilesToMove + projectFilesToRename).distinct()
-          if (projectFilesToUpdate.isNotEmpty()) {
-            BackendRecentFileEventsController.applyRelevantEventsToModel(projectFilesToUpdate, FileChangeKind.ADDED, project)
+          if (projectFilesToRename.isNotEmpty()) {
+            BackendRecentFileEventsController.applyRelevantEventsToModel(projectFilesToRename, FileChangeKind.ADDED, project)
           }
 
+          val projectFilesToMove = filterProjectFiles(movedFiles, project)
           val projectFilesWithChangedContents = filterProjectFiles(filesWithChangedContents, project)
-          BackendRecentFileEventsController.applyRelevantEventsToModel(projectFilesWithChangedContents, FileChangeKind.UPDATED, project)
+          val projectFilesToUpdate = (projectFilesToMove + projectFilesWithChangedContents).distinct()
+          if (projectFilesToUpdate.isNotEmpty()) {
+            BackendRecentFileEventsController.applyRelevantEventsToModel(projectFilesToUpdate, FileChangeKind.UPDATED, project)
+          }
         }
       }
     }
