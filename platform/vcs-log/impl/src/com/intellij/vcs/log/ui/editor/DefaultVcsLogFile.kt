@@ -12,12 +12,14 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.ui.components.JBPanelWithEmptyText
-import com.intellij.util.asSafely
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogFilterCollection
-import com.intellij.vcs.log.impl.*
+import com.intellij.vcs.log.impl.CannotAddVcsLogWindowException
+import com.intellij.vcs.log.impl.VcsLogEditorUtil
+import com.intellij.vcs.log.impl.VcsLogTabLocation
 import com.intellij.vcs.log.impl.VcsLogTabsManager.Companion.onDisplayNameChange
+import com.intellij.vcs.log.impl.VcsLogTabsUtil
 import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.util.VcsLogUtil
 import java.awt.BorderLayout
@@ -41,11 +43,8 @@ internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.Vcs
   override fun createMainComponent(project: Project): JComponent {
     val panel = JBPanelWithEmptyText(BorderLayout()).withEmptyText(VcsLogBundle.message("vcs.log.is.loading"))
     VcsLogUtil.runWhenVcsAndLogIsReady(project) { logManager ->
-      val projectLog = VcsProjectLog.getInstance(project)
-      val tabsManager = projectLog.logManager.asSafely<VcsProjectLogManager>()?.tabsManager ?: return@runWhenVcsAndLogIsReady
-
       try {
-        val factory = tabsManager.getPersistentVcsLogUiFactory(tabId, VcsLogTabLocation.EDITOR, filters)
+        val factory = logManager.getMainLogUiFactory(tabId, filters)
         val ui = logManager.createLogUi(factory, VcsLogTabLocation.EDITOR)
         tabName = VcsLogTabsUtil.generateDisplayName(ui)
         ui.onDisplayNameChange {

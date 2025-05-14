@@ -26,7 +26,7 @@ internal class VcsProjectLogManager(
   }
 
   override fun disposeUi() {
-    tabsManager.disposeTabs()
+    Disposer.dispose(tabsManager)
     getVcsLogContentProvider(project)?.disposeMainUi()
     super.disposeUi()
   }
