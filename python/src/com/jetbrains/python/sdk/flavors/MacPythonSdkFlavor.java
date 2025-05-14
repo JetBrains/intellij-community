@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.flavors;
 
 import com.intellij.execution.ExecutionException;
@@ -16,6 +16,7 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.sdk.PyDetectedSdk;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,7 @@ import java.util.Set;
 import static com.intellij.openapi.util.text.HtmlChunk.raw;
 import static com.intellij.openapi.util.text.HtmlChunk.text;
 
+@ApiStatus.Internal
 
 public final class MacPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
 

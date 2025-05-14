@@ -34,6 +34,8 @@ import static com.jetbrains.python.venvReader.ResolveUtilKt.tryResolvePath;
  * This class knows how to find python in Windows Registry according to
  * <a href="https://www.python.org/dev/peps/pep-0514/">PEP 514</a>
  */
+@ApiStatus.Internal
+
 public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
   private static final @NotNull String[] REG_ROOTS = {"HKEY_LOCAL_MACHINE", "HKEY_CURRENT_USER"};
   /**

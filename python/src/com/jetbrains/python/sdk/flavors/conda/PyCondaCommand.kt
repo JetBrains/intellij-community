@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.flavors.conda
 
 import com.intellij.execution.target.*
@@ -8,10 +8,13 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.pathValidation.PlatformAndRoot.Companion.getPlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateExecutableFile
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Encapsulates conda binary command to simplify target request creation
  */
+@ApiStatus.Internal
+
 class PyCondaCommand(
   val fullCondaPathOnTarget: FullPathOnTarget,
   internal val targetConfig: TargetEnvironmentConfiguration?,

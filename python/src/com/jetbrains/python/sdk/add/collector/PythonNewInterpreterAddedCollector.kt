@@ -1,10 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.collector
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.statistics.*
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Internal
 
 object PythonNewInterpreterAddedCollector : CounterUsagesCollector() {
 

@@ -28,11 +28,15 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 
+@ApiStatus.Internal
+
 sealed class PythonPackageInstallRequest(val title: String) {
   data object AllRequirements : PythonPackageInstallRequest("All Requirements")
   data class ByLocation(val location: URI) : PythonPackageInstallRequest(location.toString())
   data class ByRepositoryPythonPackageSpecification(val specification: PythonRepositoryPackageSpecification) : PythonPackageInstallRequest(specification.nameWithVersionSpec)
 }
+
+@ApiStatus.Internal
 
 fun PythonRepositoryPackageSpecification.toInstallRequest(): PythonPackageInstallRequest.ByRepositoryPythonPackageSpecification {
   return PythonPackageInstallRequest.ByRepositoryPythonPackageSpecification(this)

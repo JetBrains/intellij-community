@@ -28,12 +28,13 @@ import java.net.URL
 import java.nio.charset.StandardCharsets
 
 
-val LOG: Logger = logger<Sdks>()
+private val LOG: Logger = logger<Sdks>()
 
 
 /**
  * Currently only CPython is supported
  */
+@ApiStatus.Internal
 enum class Product(val title: String) {
   CPython("Python"),
   Miniconda("Miniconda"),
@@ -43,6 +44,7 @@ enum class Product(val title: String) {
 /**
  * Resource Type enum with autodetection via file extensions.
  */
+@ApiStatus.Internal
 enum class ResourceType(vararg val extensions: String) {
   MICROSOFT_WINDOWS_EXECUTABLE("exe"),
   MICROSOFT_SOFTWARE_INSTALLER("msi"),
@@ -62,6 +64,8 @@ enum class ResourceType(vararg val extensions: String) {
  * Url-specified file resource. FileName and ResourceType values are calculated by the Url provided (might be declared explicitly).
  * Downloaded size / sha256 should be verified to prevent consistency leaks.
  */
+
+@ApiStatus.Internal
 data class Resource(
   val url: Url,
   val size: Long,
@@ -75,6 +79,7 @@ data class Resource(
  * Custom prepared installation packages per OS and ArchType.
  * Could contain multiple resources (in case of MSI for example)
  */
+@ApiStatus.Internal
 data class Binary(
   val os: OS,
   val cpuArch: CpuArch?,
@@ -89,12 +94,13 @@ data class Binary(
  * Bundle with release version of vendor. Might contain sources or any binary packages.
  * Vendor + Version is a primary key.
  */
+@ApiStatus.Internal
 data class Release(
   val version: String,
   val product: Product,
   val sources: List<Resource>?,
   val binaries: List<Binary>?,
-  val title: String = "${product.title} ${version}"
+  val title: String = "${product.title} ${version}",
 ) : Comparable<Release> {
   override fun compareTo(other: Release) = compareValuesBy(this, other, { it.product }, { it.version })
   override fun toString(): String {
@@ -107,12 +113,14 @@ data class Release(
  * Class represents /sdks.json structure with all available SDK release mappings.
  * It has only python section currently.
  */
+@ApiStatus.Internal
 data class Sdks(
   val python: List<Release> = listOf(),
   val conda: List<Release> = listOf(),
 )
 
 
+@ApiStatus.Internal
 fun Version?.toLanguageLevel(): LanguageLevel? = this?.let { LanguageLevel.fromPythonVersion("$major.$minor") }
 
 
@@ -121,12 +129,14 @@ fun Version?.toLanguageLevel(): LanguageLevel? = this?.let { LanguageLevel.fromP
  *
  * @see com.intellij.util.Url
  */
+@ApiStatus.Internal
 class UrlDeserializer : JsonDeserializer<Url>() {
   override fun deserialize(p: JsonParser?, ctxt: DeserializationContext?): Url {
     return Urls.parseEncoded(p!!.valueAsString)!!
   }
 }
 
+@ApiStatus.Internal
 class UrlSerializer : JsonSerializer<Url>() {
   override fun serialize(value: Url?, gen: JsonGenerator?, serializers: SerializerProvider?) {
     value?.let {
@@ -135,6 +145,8 @@ class UrlSerializer : JsonSerializer<Url>() {
   }
 }
 
+
+@ApiStatus.Internal
 object SdksKeeper {
   private val configUrl: URL? = Sdks::class.java.getResource("/sdks.json")
 

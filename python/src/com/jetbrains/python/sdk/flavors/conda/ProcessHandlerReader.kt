@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.flavors.conda
 
 import com.intellij.execution.process.*
@@ -15,7 +15,7 @@ import kotlin.coroutines.CoroutineContext
  *
  * You could either start [ProcessHandler.startNotify] manually, use constructor that wraps process or use [runProcessAndGetError].
  */
-class ProcessHandlerReader(processHandler: ProcessHandler) {
+internal class ProcessHandlerReader(processHandler: ProcessHandler) {
   private val stdOutImpl: Channel<String> = Channel()
   private val stdErrImpl: Channel<String> = Channel()
   private val processResult: Channel<Int> = Channel()

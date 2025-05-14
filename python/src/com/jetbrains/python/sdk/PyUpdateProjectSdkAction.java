@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -10,7 +10,10 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+
+@ApiStatus.Internal
 
 public class PyUpdateProjectSdkAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(PyUpdateProjectSdkAction.class);

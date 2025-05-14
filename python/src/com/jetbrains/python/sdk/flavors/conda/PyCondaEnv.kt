@@ -27,6 +27,8 @@ import kotlin.io.path.exists
  * TODO: Once we get rid of [TargetCommandExecutor] and have access to [com.intellij.execution.target.TargetEnvironmentConfiguration] use it validate conda binary in [getEnvs]
  * @see `PyCondaTest`
  */
+@ApiStatus.Internal
+
 data class PyCondaEnv(
   val envIdentity: PyCondaEnvIdentity,
   val fullCondaPathOnTarget: FullPathOnTarget,

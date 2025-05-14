@@ -133,6 +133,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     }
   }
 
+  @ApiStatus.Internal
   public final String getAssociatedModulePath() {
     return myAssociatedModulePath;
   }
@@ -171,9 +172,13 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     return myFlavorAndData.getFlavor();
   }
 
+  @ApiStatus.Internal
+
   public final @NotNull PyFlavorAndData<?, ?> getFlavorAndData() {
     return myFlavorAndData;
   }
+
+  @ApiStatus.Internal
 
   public static @NotNull PythonSdkAdditionalData loadFromElement(@Nullable Element element) {
     final PythonSdkAdditionalData data = new PythonSdkAdditionalData();
@@ -219,10 +224,13 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     }
   }
 
+  @ApiStatus.Internal
 
   public final Set<VirtualFile> getAddedPathFiles() {
     return getPathsAsVirtualFiles(myAddedPaths);
   }
+
+  @ApiStatus.Internal
 
   public final Set<VirtualFile> getExcludedPathFiles() {
     return getPathsAsVirtualFiles(myExcludedPaths);
@@ -231,6 +239,8 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   /**
    * @see com.jetbrains.python.sdk.PyTransferredSdkRootsKt#getPathsToTransfer(Sdk)
    */
+
+  @ApiStatus.Internal
   public final @NotNull Set<VirtualFile> getPathsToTransfer() {
     return getPathsAsVirtualFiles(myPathsToTransfer);
   }

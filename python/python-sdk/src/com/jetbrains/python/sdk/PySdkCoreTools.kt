@@ -13,6 +13,8 @@ import org.jetbrains.annotations.ApiStatus.Internal
  *
  * This method creates new in this case, but only if an SDK flavor doesn't require special additional data.
  */
+@Internal
+
 fun Sdk.getOrCreateAdditionalData(): PythonSdkAdditionalData {
   val existingData = sdkAdditionalData as? PythonSdkAdditionalData
   if (existingData != null) {

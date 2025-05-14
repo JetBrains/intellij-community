@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("AddInterpreterActions")
 
 package com.jetbrains.python.sdk
@@ -25,8 +25,10 @@ import com.jetbrains.python.sdk.add.v2.PythonAddLocalInterpreterDialog
 import com.jetbrains.python.sdk.add.v2.PythonAddLocalInterpreterPresenter
 import com.jetbrains.python.target.PythonLanguageRuntimeType
 import com.jetbrains.python.util.ShowingMessageErrorSync
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
 
+@ApiStatus.Internal
 fun collectAddInterpreterActions(moduleOrProject: ModuleOrProject, onSdkCreated: Consumer<Sdk>): List<AnAction> {
   // If module resides on this target, we can't use any target except same target and target types that explicitly allow that
   // example: on ``\\wsl$`` you can only use wsl target and dockers
@@ -90,6 +92,8 @@ private class AddInterpreterOnTargetAction(
     }
   }
 }
+
+@ApiStatus.Internal
 
 fun switchToSdk(module: Module, sdk: Sdk, currentSdk: Sdk?) {
   val project = module.project
