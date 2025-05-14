@@ -76,7 +76,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.io.File;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -754,7 +753,8 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
                                                  @NotNull FilePosition filePosition,
                                                  @Nullable Navigatable navigatable,
                                                  ExecutionNode parentNode) {
-    String filePath = FileUtilRt.toSystemIndependentName(filePosition.getFile().getPath());
+    File filePositionFile = filePosition.getFile();
+    String filePath = filePositionFile == null ? "" : FileUtilRt.toSystemIndependentName(filePositionFile.getPath());
     String parentsPath = "";
 
     String relativePath = FileUtilRt.getRelativePath(myWorkingDir, filePath, '/');
@@ -779,18 +779,17 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
     else {
       relativePath = getRelativePath(parentsPath, filePath);
     }
-    Path path = Paths.get(relativePath);
+    Path path = Path.of(relativePath);
     String nodeName = path.getFileName().toString();
     Path pathParent = path.getParent();
     String pathHint = pathParent == null ? null : pathParent.toString();
-    parentNode = getOrCreateMessagesNode(eventTime, filePath, parentNode, nodeName, pathHint,
-                                         () -> {
-                                           VirtualFile file = VfsUtil.findFileByIoFile(filePosition.getFile(), false);
-                                           if (file != null) {
-                                             return file.getFileType().getIcon();
-                                           }
-                                           return null;
-                                         }, navigatable, nodesMap, myProject);
+    parentNode = getOrCreateMessagesNode(eventTime, filePath, parentNode, nodeName, pathHint, () -> {
+      VirtualFile file = filePositionFile == null ? null : VfsUtil.findFileByIoFile(filePositionFile, false);
+      if (file != null) {
+        return file.getFileType().getIcon();
+      }
+      return null;
+    }, navigatable, nodesMap, myProject);
     return parentNode;
   }
 

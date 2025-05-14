@@ -222,7 +222,7 @@ com.intellij.build.BuildDescriptor
 - a:getWorkingDir():java.lang.String
 com.intellij.build.BuildProgressListener
 - a:onEvent(java.lang.Object,com.intellij.build.events.BuildEvent):V
-c:com.intellij.build.FilePosition
+f:com.intellij.build.FilePosition
 - <init>(java.io.File,I,I):V
 - <init>(java.io.File,I,I,I,I):V
 - equals(java.lang.Object):Z
