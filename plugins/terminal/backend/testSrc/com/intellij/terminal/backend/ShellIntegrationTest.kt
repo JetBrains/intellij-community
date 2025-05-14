@@ -180,6 +180,19 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
   }
 
   @Test
+  fun `non-zero exit code is received if command has failed`() = timeoutRunBlocking(30.seconds) {
+    val events = startSessionAndCollectOutputEvents { input ->
+      input.send(TerminalWriteBytesEvent("abracadabra".toByteArray() + ENTER_BYTES))
+      delay(2000)
+    }
+
+    val commandFinishedEvent = events.find { it is TerminalCommandFinishedEvent }
+    assertThat(commandFinishedEvent).isNotNull
+    assertThat((commandFinishedEvent as TerminalCommandFinishedEvent).exitCode).isNotEqualTo(0)
+    Unit
+  }
+
+  @Test
   fun `zsh integration can change PS1`() = timeoutRunBlocking(30.seconds) {
     Assume.assumeTrue(shellPath.name == "zsh")
     // It's a good idea to configure Zsh with PowerLevel10k.
