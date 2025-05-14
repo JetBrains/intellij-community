@@ -4,7 +4,6 @@ package com.intellij.platform.eel.fs
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.EelFileSystemApi.StatError
 import com.intellij.platform.eel.path.EelPath
-import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.CheckReturnValue
 import java.nio.ByteBuffer
@@ -482,16 +481,46 @@ interface EelFileSystemApi {
   }
 
   /**
-   * File watching
+   * Sets the currently watched paths from the specified set of file paths and provides a flow of change events.
+   * NOTE: Any previously watched paths are dropped, no more watch events will be received for them.
+   *
+   * @param paths A set of paths to watch for changes.See [WatchedPath]
+   * @param options A set of file change types to monitor, such as creation, deletion, or modification.
+   * @return A flow emitting [PathChange] instances that indicate the path and type of change.
+   *         Each path is an absolute path on the target system (container), for example, `/home/myproject/myfile.txt`
+   * @throws UnsupportedOperationException if the method isn't implemented for the file system.
    */
-  suspend fun watchChanges(paths: Set<WatchedPath>, options: Set<WatcherOption>): Flow<PathChange>? = null
+  suspend fun watchChanges(paths: Set<WatchedPath>, options: Set<FileChangeType>): Flow<PathChange> {
+    throw UnsupportedOperationException()
+  }
+
+  /**
+   * Represents a change in the state of a file path in the target file system.
+   *
+   * @property path The file system path where the change occurred, an absolute path on the target system.
+   * @property type The type of change that occurred. See [FileChangeType]
+   */
+  data class PathChange(val path: String, val type: FileChangeType)
+
+  /**
+   * Represents a file system path to be monitored for changes.
+   *
+   * @property path The file system path to watch. NOTE: It must be an absolute path on the target system. For example, `/home/myproject` in
+   *                the container.
+   * @property recursive A flag indicating whether changes in subdirectories should also be watched.
+   */
+  data class WatchedPath(val path: String, val recursive: Boolean)
+
+  /**
+   * Represents the type of change that can occur to a file in the file system.
+   *
+   * - `CREATED`: A file has been created.
+   * - `DELETED`: A file has been deleted.
+   * - `CHANGED`: A file has been modified (either its content or attributes have changed).
+   */
+  enum class FileChangeType { CREATED, DELETED, CHANGED }
 }
 
-data class PathChange(val path: String, val type: WatcherOption)
-
-data class WatchedPath(val path: String, val recursive: Boolean)
-
-enum class WatcherOption { GIVEUP, RESET, UNWATCHEABLE, MESSAGE, CREATE, DELETE, STATS, CHANGE }
 
 sealed interface EelOpenedFile {
   val path: EelPath
