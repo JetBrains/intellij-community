@@ -20,7 +20,6 @@ import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
-import com.jetbrains.python.packaging.conda.CondaPackageCache
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.packagesByRepository
 import com.jetbrains.python.packaging.management.toInstallRequest
@@ -65,18 +64,7 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
 
   private fun createRepoPackage(pkg: String, repository: PyPackageRepository): RepoPackage {
     val repositoryUrl = repository.repositoryUrl.takeIf { it != PyPIPackageRepository.repositoryUrl }
-    val latestVersion = getLatestVersion(pkg)
-    return RepoPackage(pkg, repositoryUrl, latestVersion)
-  }
-
-  // TODO unify logic of retrieving package versions for pypi and conda
-  private fun getLatestVersion(pkg: String): String? {
-    if (!isConda || !useConda) return null
-
-    val settings = PyPackagingSettings.getInstance(project)
-    val cache = service<CondaPackageCache>()
-    val versions = cache[pkg] ?: emptyList()
-    return settings.selectLatestVersion(versions)
+    return RepoPackage(pkg, repositoryUrl, null)
   }
 
   override fun getAllPackagesCached(): List<RepoPackage> {
