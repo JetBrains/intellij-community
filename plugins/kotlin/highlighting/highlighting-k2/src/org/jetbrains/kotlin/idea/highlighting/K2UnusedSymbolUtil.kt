@@ -415,24 +415,6 @@ object K2UnusedSymbolUtil {
 
         val handler = (FindManager.getInstance(project) as FindManagerImpl).findUsagesManager.getFindUsagesHandler(declaration, true)
         if (handler != null) {
-
-            fun classOrObjectHasTextUsages(classOrObject: KtClassOrObject): Boolean {
-                var hasTextUsages = false
-
-                // Finding text usages
-                if (classOrObject.useScope is GlobalSearchScope) {
-                    handler.processUsagesInText(
-                        classOrObject,
-                        { hasTextUsages = true; false },
-                        GlobalSearchScope.projectScope(classOrObject.project)
-                    )
-                }
-
-                return hasTextUsages
-            }
-
-            if (declaration is KtClassOrObject && classOrObjectHasTextUsages(declaration)) return true
-
             val options = handler.findUsagesOptions
             // effectively disable search for text occurrences for classes which are processed earlier but faster
             options.isSearchForTextOccurrences = false
