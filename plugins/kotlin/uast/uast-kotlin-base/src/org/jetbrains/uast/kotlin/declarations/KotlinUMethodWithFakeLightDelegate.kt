@@ -107,8 +107,6 @@ internal class KotlinUMethodWithFakeLightDelegateDefaultAccessor(
 ) : KotlinUMethodWithFakeLightDelegateBase<KtProperty>(original, fakePsi, givenParent),
     KotlinUMethodWithFakeLightDelegateAccessorBase {
     override fun computeAnnotations(annotations: SmartSet<UAnnotation>) {
-        // Annotations on property accessor
-        super.computeAnnotations(annotations)
         // Annotations on property, along with use-site target
         val useSiteTarget = if (fakePsi.isSetter) AnnotationUseSiteTarget.PROPERTY_SETTER else AnnotationUseSiteTarget.PROPERTY_GETTER
         computeAnnotationsFromProperty(annotations, this, original, useSiteTarget)
@@ -125,7 +123,7 @@ internal class KotlinUMethodWithFakeLightDelegateAccessor(
             : this(original, UastFakeSourceLightAccessor(original, containingLightClass), givenParent)
 
     override fun computeAnnotations(annotations: SmartSet<UAnnotation>) {
-        // Annotations on property accessor
+        // Annotations on property accessor ([original] of [KtPropertyAccessor])
         super.computeAnnotations(annotations)
         // Annotations on property, along with use-site target
         val useSiteTarget = if (original.isSetter) AnnotationUseSiteTarget.PROPERTY_SETTER else AnnotationUseSiteTarget.PROPERTY_GETTER
