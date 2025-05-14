@@ -27,6 +27,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.asSafely
 import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.WebSymbolsBundle
+import com.intellij.xml.frontback.impl.icons.XmlFrontbackImplIcons
 import com.intellij.xml.util.HtmlUtil
 import org.jetbrains.annotations.Nls
 import java.util.*
@@ -273,37 +274,23 @@ class MdnSymbolDocumentationAdapter(
   private fun renderBaseline(): String {
     val baseline = doc.baseline ?: return ""
     val supportedEngines = doc.compatibility?.get(defaultBcdContext)
+    val notSupportedEngines = supportedEngines?.let { BASELINE_BROWSERS.filter { supportedEngines[it] == null }.toMutableSet() }
     val supportedEnginesString = supportedEngines?.entries
       ?.joinToString(", ") { it.key.displayName + (if (it.value.isNotEmpty()) " " + it.value else "") }
       ?.ifBlank { MdnBundle.message("mdn.documentation.section.compat.supported_by.none") }
     val result = StringBuilder()
     if (supportedEnginesString != null) {
-      result.append("<details><summary>")
+      result.append("<details style='margin-bottom: ${JBUIScale.scale(4)}px'><summary>")
     }
-    result.append("<table style='margin:0px;padding:0px'><tr><td width=2 valign=top style='margin:0px;padding:0px ${JBUIScale.scale(4)}px 0px 0px'>" +
-                  "<icon src='" + XmlFrontbackImplIcons::class.java.name +".Baseline${baseline.level.name.lowercase().capitalize()}'></icon>\n" +
-                  "<td style='margin:0px;padding:0px'>")
+    result.append("<table style='border-spacing: 0; border-width: 0'><tr><td width=2 valign=top style='padding: 0 ${JBUIScale.scale(4)}px 0 0'>" +
+                  "<icon src='" + XmlFrontbackImplIcons::class.java.name + ".Baseline${baseline.level.name.lowercase().capitalize()}'></icon>\n" +
+                  "<td style='padding: 0; width:100%'>")
     when (baseline.level) {
       BaselineLevel.NONE -> {
-        if (supportedEngines != null) {
-          val notSupportedEngines = BASELINE_BROWSERS.filter { supportedEngines[it] == null }
-          if (notSupportedEngines.size == BASELINE_BROWSERS.size) {
-            result.append(MdnBundle.message("mdn.documentation.baseline.not-supported"))
-          }
-          else if (notSupportedEngines.isNotEmpty()) {
-            result.append(MdnBundle.message("mdn.documentation.baseline.limited-availability"))
-            result.append(" <i>(")
-            result.append(MdnBundle.message("mdn.documentation.baseline.not-supported-by",
-                                            notSupportedEngines.map { it.displayName }.sorted().joinToString(", ")))
-            result.append(")</i>")
-          }
-          else {
-            result.append(MdnBundle.message("mdn.documentation.baseline.limited-availability"))
-          }
-        }
-        else {
+        if (notSupportedEngines != null && notSupportedEngines.size == BASELINE_BROWSERS.size)
+          result.append(MdnBundle.message("mdn.documentation.baseline.not-supported"))
+        else
           result.append(MdnBundle.message("mdn.documentation.baseline.limited-availability"))
-        }
       }
       BaselineLevel.LOW -> {
         result.append(MdnBundle.message("mdn.documentation.baseline.newly-available"))
@@ -312,18 +299,25 @@ class MdnSymbolDocumentationAdapter(
         result.append(MdnBundle.message("mdn.documentation.baseline.widely-available"))
       }
     }
-    (baseline.highDate ?: baseline.lowDate)?.dropWhile { !it.isDigit() }?.let { date ->
-      result.append(" <i>(")
-      result.append(MdnBundle.message("mdn.documentation.baseline.since", date.takeWhile { it.isDigit() })
-                      .replace(" ", "&nbsp;"))
-      result.append(")</i>")
-    }
     result.append("\n</td></tr></table>")
     if (supportedEnginesString != null) {
       result.append("</summary>")
-      result.append("<p class='grayed'>")
-      DocumentationMarkup.CLASS_SECTION
+      result.append("<p class='grayed' style='margin: 0; padding: 0 0 ${JBUIScale.scale(4)}px 0; line-height: 100%'>")
       result.append(supportedEnginesString)
+      if (notSupportedEngines != null && notSupportedEngines.isNotEmpty()) {
+        notSupportedEngines.removeAll(notSupportedEngines.mapNotNull { it.mobileRuntime })
+        result.append(" <i>(")
+        result.append(MdnBundle.message("mdn.documentation.baseline.not-supported-by",
+                                        notSupportedEngines.map { it.displayName }.sorted().joinToString(", ")))
+        result.append(")</i>")
+      } else {
+        (baseline.highDate ?: baseline.lowDate)?.dropWhile { !it.isDigit() }?.let { date ->
+          result.append(". <i>")
+          result.append(MdnBundle.message("mdn.documentation.baseline.since", date.takeWhile { it.isDigit() })
+                          .replace(" ", "&nbsp;"))
+          result.append("</i>")
+        }
+      }
       result.append("</details>")
     }
     result.append("\n")
@@ -551,6 +545,13 @@ enum class MdnJavaScriptRuntime(displayName: String? = null, mdnId: String? = nu
   Deno(firstVersion = "1.0")
   ;
 
+  val mobileRuntime: MdnJavaScriptRuntime?
+    get() = when (this) {
+      Chrome -> ChromeAndroid
+      Firefox -> FirefoxAndroid
+      Safari -> SafariIOS
+      else -> null
+    }
   val mdnId: String = mdnId ?: toLowerCase(name)
   val displayName: String = displayName ?: name
 
