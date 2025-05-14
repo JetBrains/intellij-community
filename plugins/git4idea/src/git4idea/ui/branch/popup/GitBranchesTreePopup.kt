@@ -16,7 +16,7 @@ import com.intellij.vcs.git.shared.ref.GitReferenceName
 import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
 import com.intellij.vcs.git.shared.rpc.GitRepositoryApi
 import git4idea.GitReference
-import git4idea.actions.branch.GitBranchActionsUtil
+import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -153,7 +153,7 @@ internal class GitBranchesTreePopup(
     @VisibleForTesting
     internal fun createBranchesTreePopupStep(project: Project, selectedRepository: GitRepository?): GitBranchesTreePopupStep {
       val repositories = DvcsUtil.sortRepositories(GitRepositoryManager.getInstance(project).repositories)
-      val selectedRepoIfNeeded = if (GitBranchActionsUtil.userWantsSyncControl(project)) null else selectedRepository
+      val selectedRepoIfNeeded = if (GitVcsSettings.getInstance(project).shouldExecuteOperationsOnAllRoots()) null else selectedRepository
       return GitBranchesTreePopupStep(project, selectedRepoIfNeeded, repositories, true)
     }
   }

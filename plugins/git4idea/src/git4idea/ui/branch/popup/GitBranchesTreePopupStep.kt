@@ -24,7 +24,7 @@ import git4idea.GitReference
 import git4idea.GitTag
 import git4idea.GitVcs
 import git4idea.actions.branch.GitBranchActionsDataKeys
-import git4idea.actions.branch.GitBranchActionsUtil.userWantsSyncControl
+import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GIT_SINGLE_REF_ACTION_GROUP
@@ -72,7 +72,7 @@ internal class GitBranchesTreePopupStep(
     val repositoriesFrontendModel = repositories.map { holder.get(it.rpcId) }
 
     val model = when {
-      !filterActive && repositories.size > 1 && !userWantsSyncControl(project) && selectedRepository != null -> {
+      !filterActive && repositories.size > 1 && !GitVcsSettings.getInstance(project).shouldExecuteOperationsOnAllRoots() && selectedRepository != null -> {
         GitBranchesTreeSelectedRepoModel(project, holder.get(selectedRepository.rpcId), repositoriesFrontendModel, topLevelItems)
       }
       filterActive && repositories.size > 1 -> {
@@ -138,7 +138,7 @@ internal class GitBranchesTreePopupStep(
   fun isBranchesDiverged(): Boolean {
     return repositories.size > 1
            && getCommonName(repositories) { GitRefUtil.getCurrentReference(it)?.fullName ?: return@getCommonName null } == null
-           && userWantsSyncControl(project)
+           && GitVcsSettings.getInstance(project).shouldExecuteOperationsOnAllRoots()
   }
 
   companion object {

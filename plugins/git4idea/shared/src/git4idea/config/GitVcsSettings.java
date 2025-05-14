@@ -119,6 +119,13 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
     return getState().getRootSync();
   }
 
+  /**
+   * @return true if operations should be executed on all roots
+   */
+  public boolean shouldExecuteOperationsOnAllRoots() {
+    return getSyncSetting() != DvcsSyncSettings.Value.DONT_SYNC;
+  }
+
   @Override
   public void setSyncSetting(@NotNull Value value) {
     getState().setRootSync(value);
