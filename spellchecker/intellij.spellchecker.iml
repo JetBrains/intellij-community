@@ -96,19 +96,19 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="ai.grazie.spell.hunspell.en" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:hunspell-en-jvm:0.2.246">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:hunspell-en-jvm:0.2.274">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-en-jvm/0.2.246/hunspell-en-jvm-0.2.246.jar">
-              <sha256sum>b76f2c0952ed3b7cde6362e2104986572f05d5fa35840473973d81e41b842f4a</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-en-jvm/0.2.274/hunspell-en-jvm-0.2.274.jar">
+              <sha256sum>89970bd551f4fb0bfbd70a4520fc934ebaa1d03aa4fda86ee20a7e2de48bc3e4</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-en-jvm/0.2.246/hunspell-en-jvm-0.2.246.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-en-jvm/0.2.274/hunspell-en-jvm-0.2.274.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-en-jvm/0.2.246/hunspell-en-jvm-0.2.246-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-en-jvm/0.2.274/hunspell-en-jvm-0.2.274-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
