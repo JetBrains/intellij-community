@@ -997,10 +997,6 @@
 
     <applicationService serviceImplementation="com.intellij.ui.debugger.extensions.PlaybackDebugger$PlaybackDebuggerState"/>
 
-    <globalInspection language="" shortName="Annotator" groupKey="inspection.general.tools.group.name" groupBundle="messages.InspectionsBundle"
-                      enabledByDefault="true" level="ERROR"
-                      bundle="messages.InspectionsBundle" key="inspection.annotator.display.name"
-                      implementationClass="com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection"/>
     <localInspection language="" shortName="LossyEncoding" bundle="messages.LangBundle" key="lossy.encoding"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.internationalization.issues" enabledByDefault="true"
                      level="WARNING"
@@ -1452,7 +1448,6 @@
     <editorFactoryMouseMotionListener
       implementation="com.intellij.codeInsight.inline.completion.tooltip.InlineCompletionMouseMotionListener"/>
 
-    <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.GeneralHighlightingPassFactory"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.ChameleonSyntaxHighlightingPass$Factory"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.InjectedGeneralHighlightingPassFactory"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.LineMarkersPassFactory"/>

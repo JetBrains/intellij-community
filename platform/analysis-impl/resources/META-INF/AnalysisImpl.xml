@@ -79,5 +79,10 @@
     <inspectionsReportConverter implementation="com.intellij.codeInspection.ex.JsonInspectionsReportConverter"/>
     <inspectionsReportConverter implementation="com.intellij.codeInspection.ex.JsonSingleFileInspectionsReportConverter"/>
     <optionController implementation="com.intellij.codeInspection.ex.CurrentProfileOptionControllerProvider"/>
+    <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.GeneralHighlightingPassFactory"/>
+    <globalInspection language="" shortName="Annotator" groupKey="inspection.general.tools.group.name" groupBundle="messages.InspectionsBundle"
+                      enabledByDefault="true" level="ERROR"
+                      bundle="messages.InspectionsBundle" key="inspection.annotator.display.name"
+                      implementationClass="com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection"/>
   </extensions>
 </idea-plugin>

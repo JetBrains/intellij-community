@@ -31,6 +31,7 @@ import java.util.List;
 import static com.intellij.codeInsight.util.HighlightVisitorScopeKt.HighlightVisitorScope;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 
+@ApiStatus.Internal
 public final class HighlightVisitorBasedInspection extends GlobalSimpleInspectionTool {
   public static final String SHORT_NAME = HighlightInfo.ANNOTATOR_INSPECTION_SHORT_NAME;
   @SuppressWarnings("WeakerAccess") // made public for serialization

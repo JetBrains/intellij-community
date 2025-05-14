@@ -66,17 +66,17 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
   private final HighlightInfoUpdater myHighlightInfoUpdater;
   private final HighlightVisitorRunner myHighlightVisitorRunner;
 
-  public GeneralHighlightingPass(@NotNull PsiFile psiFile,
-                                 @NotNull Document document,
-                                 int startOffset,
-                                 int endOffset,
-                                 boolean updateAll,
-                                 @NotNull ProperTextRange priorityRange,
-                                 @Nullable Editor editor,
-                                 boolean runAnnotators,
-                                 boolean runVisitors,
-                                 boolean highlightErrorElements,
-                                 @NotNull HighlightInfoUpdater highlightInfoUpdater) {
+  GeneralHighlightingPass(@NotNull PsiFile psiFile,
+                          @NotNull Document document,
+                          int startOffset,
+                          int endOffset,
+                          boolean updateAll,
+                          @NotNull ProperTextRange priorityRange,
+                          @Nullable Editor editor,
+                          boolean runAnnotators,
+                          boolean runVisitors,
+                          boolean highlightErrorElements,
+                          @NotNull HighlightInfoUpdater highlightInfoUpdater) {
     super(psiFile.getProject(), document, AnalysisBundle.message("pass.syntax"), psiFile, editor, TextRange.create(startOffset, endOffset), true, HighlightInfoProcessor.getEmpty());
     myUpdateAll = updateAll;
     myPriorityRange = priorityRange;
