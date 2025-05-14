@@ -33,6 +33,12 @@ internal interface ComposeResourcesBase {
   /** drawable, font dirs vs value dir */
   val validInnerComposeResourcesDirNames: Set<String>
 
+  val fusActionType: ComposeResourcesUsageCollector.ActionType?
+    get() = null
+
+  val fusResourceBaseType: ComposeResourcesUsageCollector.ResourceBaseType?
+    get() = null
+
   /**
    * Determines if the given element belongs to a Compose resources context.
    *
@@ -80,6 +86,8 @@ internal interface ComposeResourcesFileBase : ComposeResourcesBase {
   override fun getName(element: PsiElement): String? = element.namedUnwrappedElement?.name?.withoutExtension?.asUnderscoredIdentifier()
   override val validInnerComposeResourcesDirNames: Set<String>
     get() = setOf("drawable", "font")
+  override val fusResourceBaseType: ComposeResourcesUsageCollector.ResourceBaseType
+    get() = ComposeResourcesUsageCollector.ResourceBaseType.FILE
 }
 
 internal interface ComposeResourcesXmlBase : ComposeResourcesBase {
@@ -87,4 +95,6 @@ internal interface ComposeResourcesXmlBase : ComposeResourcesBase {
   override fun getName(element: PsiElement): String? = element.text.asUnderscoredIdentifier()
   override val validInnerComposeResourcesDirNames: Set<String>
     get() = setOf("values")
+  override val fusResourceBaseType: ComposeResourcesUsageCollector.ResourceBaseType
+    get() = ComposeResourcesUsageCollector.ResourceBaseType.STRING
 }

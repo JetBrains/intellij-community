@@ -27,6 +27,7 @@
     <findUsagesHandlerFactory
       implementation="com.intellij.compose.ide.plugin.resources.findUsages.ComposeResourcesXmlFindUsagesHandlerFactory"/>
     <usageTargetProvider implementation="com.intellij.compose.ide.plugin.resources.findUsages.ComposeResourcesUsagesTargetProvider"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.compose.ide.plugin.resources.ComposeResourcesUsageCollector"/>
   </extensions>
 
   <projectListeners>
