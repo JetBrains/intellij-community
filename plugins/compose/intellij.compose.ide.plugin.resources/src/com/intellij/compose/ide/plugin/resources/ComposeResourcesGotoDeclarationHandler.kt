@@ -2,6 +2,8 @@
 package com.intellij.compose.ide.plugin.resources
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler
+import com.intellij.compose.ide.plugin.resources.ComposeResourcesUsageCollector.ActionType.*
+import com.intellij.compose.ide.plugin.resources.ComposeResourcesUsageCollector.ResourceBaseType.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
@@ -13,6 +15,9 @@ internal class ComposeResourcesGotoDeclarationHandler : GotoDeclarationHandler {
     val targetResourceItem = getResourceItem(kotlinSourceElement) ?: return null
 
     // return target psi elements
-    return targetResourceItem.getPsiElements().toTypedArray()
+    return targetResourceItem.getPsiElements().toTypedArray().also {
+      val resourceBaseType = if (targetResourceItem.type.isStringType) STRING else FILE
+      ComposeResourcesUsageCollector.logAction(NAVIGATE, resourceBaseType, targetResourceItem.type, it.size)
+    }
   }
 }
