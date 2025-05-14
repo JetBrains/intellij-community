@@ -68,6 +68,7 @@ private fun usageCount(
             val findClassUsagesHandler = KotlinFindClassUsagesHandler(namedDeclaration, KotlinFindUsagesHandlerFactory(project))
             val options = KotlinClassFindUsagesOptions(project)
             options.searchScope = scope
+            options.isSearchForTextOccurrences = false // ignore text occurrences which are enabled by default
             findClassUsagesHandler.processElementUsages(namedDeclaration, processor, options)
         }
 
