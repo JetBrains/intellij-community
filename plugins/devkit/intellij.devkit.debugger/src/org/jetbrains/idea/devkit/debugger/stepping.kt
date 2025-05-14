@@ -72,8 +72,9 @@ private class SessionThreadsData() {
   fun setNonCancellableSection(suspendContext: SuspendContextImpl) {
     try {
       if (!isPCEAdjustmentEnabled(suspendContext)) return
+      val thread = suspendContext.thread ?: return
       val state = getOrCreateThreadState(suspendContext) ?: return
-      state.setNonCancellable(suspendContext, true)
+      setNonCancelableSafe(state, thread, suspendContext, true)
     }
     catch (e: Exception) {
       if (logIncorrectSuspendState(e)) return
@@ -89,14 +90,26 @@ private class SessionThreadsData() {
       if (!isPCEAdjustmentEnabled(suspendContext)) return
       val pausedThreads = suspendContext.debugProcess.suspendManager.pausedContexts
         .mapNotNull { it.thread }
-        .mapNotNull { threadStates[it] }
-      for (state in pausedThreads) {
-        state.setNonCancellable(suspendContext, false)
+      for (thread in pausedThreads) {
+        val state = threadStates[thread] ?: continue
+        setNonCancelableSafe(state, thread, suspendContext, false)
       }
     }
     catch (e: Exception) {
       if (logIncorrectSuspendState(e)) return
       DebuggerUtilsImpl.logError(e)
+    }
+  }
+
+  private fun setNonCancelableSafe(
+    state: ThreadState, thread: ThreadReferenceProxyImpl,
+    suspendContext: SuspendContextImpl, value: Boolean,
+  ) {
+    try {
+      state.setNonCancellable(suspendContext, value)
+    }
+    catch (_: ObjectCollectedException) {
+      threadStates.remove(thread)
     }
   }
 
