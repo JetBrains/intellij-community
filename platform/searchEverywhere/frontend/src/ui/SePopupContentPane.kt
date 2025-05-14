@@ -3,7 +3,6 @@ package com.intellij.platform.searchEverywhere.frontend.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.searcheverywhere.ExtendedInfo
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoComponent
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI
 import com.intellij.openapi.Disposable
@@ -18,7 +17,6 @@ import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.searchEverywhere.SeActionItemPresentation
-import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeTargetItemPresentation
 import com.intellij.platform.searchEverywhere.SeTextSearchItemPresentation
 import com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionItemPresentationRenderer
@@ -502,7 +500,9 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     if (isExtendedInfoEnabled() && (SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID == vm.currentTab.tabId
                                     || vm.isExtendedInfoAvailable())) {
       val leftText = fun(element: Any): String? {
-        return (element as? SeResultListItemRow)?.item?.presentation?.extendedDescription
+        val leftText = (element as? SeResultListItemRow)?.item?.presentation?.extendedDescription
+        extendedInfoContainer.isVisible = !leftText.isNullOrEmpty()
+        return leftText
       }
       return ExtendedInfoComponent(project, ExtendedInfo(leftText) { null })
     }
