@@ -119,15 +119,16 @@ public final class DfaPsiUtil {
     if (DumbService.isDumb(owner.getProject())) return Nullability.UNKNOWN;
     NullabilityAnnotationInfo fromAnnotation = getNullabilityFromAnnotation(owner, ignoreParameterNullabilityInference);
     if (fromAnnotation != null) {
-      if (fromAnnotation.getNullability() != Nullability.NOT_NULL &&
-          owner instanceof PsiMethod method) {
-        PsiType type = method.getReturnType();
-        PsiAnnotationOwner annotationOwner = fromAnnotation.getAnnotation().getOwner();
-        if (PsiUtil.resolveClassInClassTypeOnly(type) instanceof PsiTypeParameter &&
-            annotationOwner instanceof PsiType && annotationOwner != type) {
-          // Nullable/Unknown from type hierarchy: should check the instantiation, as it could be more concrete
-          Nullability fromType = getNullabilityFromType(resultType, owner);
-          if (fromType != null) return fromType;
+      if (fromAnnotation.getNullability() != Nullability.NOT_NULL) {
+        PsiType type = PsiUtil.getTypeByPsiElement(owner);
+        if (type != null) {
+          PsiAnnotationOwner annotationOwner = fromAnnotation.getAnnotation().getOwner();
+          if (PsiUtil.resolveClassInClassTypeOnly(type) instanceof PsiTypeParameter &&
+              annotationOwner instanceof PsiType && annotationOwner != type) {
+            // Nullable/Unknown from type hierarchy: should check the instantiation, as it could be more concrete
+            Nullability fromType = getNullabilityFromType(resultType, owner);
+            if (fromType != null) return fromType;
+          }
         }
       }
       return fromAnnotation.getNullability();
@@ -260,7 +261,40 @@ public final class DfaPsiUtil {
   }
 
   private static @Nullable NullabilityAnnotationInfo getTypeOwnNullability(@NotNull PsiType eachType, boolean local) {
-    for (PsiAnnotation annotation : eachType.getAnnotations()) {
+    NullabilityAnnotationInfo info = getNullabilityFromAnnotations(eachType.getAnnotations());
+    if (info != null) return info;
+    if (eachType instanceof PsiClassType classType && !local) {
+      PsiElement context = classType.getPsiContext();
+      if (context != null) {
+        NullableNotNullManager manager = NullableNotNullManager.getInstance(context.getProject());
+        if (context instanceof PsiJavaCodeReferenceElement ref && ref.getParent() instanceof PsiTypeElement typeElement) {
+          // Due to the absence of nullability type inference, the annotation that presents directly at context
+          // could be removed from eachType. In this case, using context annotation would be wrong, so we just return null 
+          info = getNullabilityFromAnnotations(typeElement.getApplicableAnnotations());
+        }
+        NullabilityAnnotationInfo typeUseNullability = manager.findDefaultTypeUseNullability(context);
+        if (typeUseNullability != null) {
+          if (info != null && info.getNullability() != typeUseNullability.getNullability()) {
+            return null;
+          }
+          return typeUseNullability;
+        }
+        PsiClass declaration = PsiUtil.resolveClassInClassTypeOnly(classType);
+        if (declaration instanceof PsiTypeParameter typeParameter && typeParameter.getExtendsList().getReferenceElements().length == 0) {
+          // If there's no bound, we assume an implicit `extends Object` bound, which is subject to default annotation if any.
+          typeUseNullability = manager.findDefaultTypeUseNullability(declaration);
+          if (info != null && typeUseNullability != null && info.getNullability() != typeUseNullability.getNullability()) {
+            return null;
+          }
+          return typeUseNullability;
+        }
+      }
+    }
+    return null;
+  }
+
+  private static @Nullable NullabilityAnnotationInfo getNullabilityFromAnnotations(PsiAnnotation[] annotations) {
+    for (PsiAnnotation annotation : annotations) {
       String qualifiedName = annotation.getQualifiedName();
       NullableNotNullManager nnn = NullableNotNullManager.getInstance(annotation.getProject());
       Optional<Nullability> optionalNullability = nnn.getAnnotationNullability(qualifiedName);
@@ -268,21 +302,6 @@ public final class DfaPsiUtil {
         Nullability nullability = optionalNullability.get();
         if (nullability == Nullability.NULLABLE && shouldIgnoreAnnotation(annotation)) continue;
         return new NullabilityAnnotationInfo(annotation, nullability, false);
-      }
-    }
-    if (eachType instanceof PsiClassType classType && !local) {
-      PsiElement context = classType.getPsiContext();
-      if (context != null) {
-        NullableNotNullManager manager = NullableNotNullManager.getInstance(context.getProject());
-        NullabilityAnnotationInfo typeUseNullability = manager.findDefaultTypeUseNullability(context);
-        if (typeUseNullability != null) {
-          return typeUseNullability;
-        }
-        PsiClass declaration = PsiUtil.resolveClassInClassTypeOnly(classType);
-        if (declaration instanceof PsiTypeParameter typeParameter && typeParameter.getExtendsList().getReferenceElements().length == 0) {
-          // If there's no bound, we assume an implicit `extends Object` bound, which is subject to default annotation if any.
-          return manager.findDefaultTypeUseNullability(declaration);
-        }
       }
     }
     return null;
