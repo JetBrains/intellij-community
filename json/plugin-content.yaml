@@ -1,9 +1,7 @@
 - name: lib/json.jar
-  modules:
-  - name: intellij.json.syntax
-    reason: <- intellij.json
   contentModules:
   - name: intellij.json
+  - name: intellij.json.syntax
 - name: lib/modules/intellij.json.backend.jar
   contentModules:
   - name: intellij.json.backend
