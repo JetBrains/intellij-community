@@ -10,7 +10,7 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.WaitFor
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
-import org.jetbrains.idea.maven.plugins.compatibility.PluginCompatibilityConfigurator
+import org.jetbrains.idea.maven.plugins.compatibility.PluginCompatibilityConfiguratorService
 import org.jetbrains.idea.maven.tasks.MavenTasksManager
 import org.junit.Test
 import kotlin.io.path.isRegularFile
@@ -136,7 +136,7 @@ class MavenLifecyclePluginImportIntegrationTest : MavenCompilingTestCase() {
 
   private suspend fun runAndWaitForConfiguration() {
     //we cannot get rid of this - as this configurator runs after sync. It is a interesting question where to show this test
-    project.service<PluginCompatibilityConfigurator>().configureAsync()
+    project.service<PluginCompatibilityConfiguratorService>().configureAsync()
   }
 
 }

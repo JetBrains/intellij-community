@@ -4,10 +4,10 @@ package org.jetbrains.idea.maven.plugins.compatibility
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.joinAll
-import kotlinx.coroutines.launch
+import com.intellij.platform.backend.observation.launchTracked
+import com.intellij.platform.backend.observation.trackActivityBlocking
+import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters
 import org.jetbrains.idea.maven.model.MavenId
@@ -18,8 +18,8 @@ import org.jetbrains.idea.maven.project.MavenSyncListener
 import org.jetbrains.idea.maven.tasks.MavenCompilerTask
 import org.jetbrains.idea.maven.tasks.MavenTasksManager
 import org.jetbrains.idea.maven.tasks.MavenTasksManager.Phase
+import org.jetbrains.idea.maven.utils.MavenActivityKey
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil
-import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import org.jetbrains.idea.maven.utils.MavenLog
 import java.util.concurrent.ConcurrentHashMap
 
@@ -28,17 +28,20 @@ class PluginCompatibilityConfiguratorListener : MavenSyncListener {
   override fun syncFinished(project: Project) {
     if (MavenProjectsManager.getInstance(project).importingSettings.isRunPluginsCompatibilityOnSyncAndBuild) {
       MavenLog.LOG.info("Starting m2e compatibility parsing")
-      project.service<PluginCompatibilityConfigurator>().configure()
+      project.service<PluginCompatibilityConfiguratorService>().configure()
     }
   }
 }
 
 @Service(Service.Level.PROJECT)
-class PluginCompatibilityConfigurator(val project: Project) : MavenSyncListener {
+@ApiStatus.Internal
+class PluginCompatibilityConfiguratorService(val project: Project, val scope: CoroutineScope) {
 
   fun configure() {
-    MavenCoroutineScopeProvider.getCoroutineScope(project).launch {
-      configureAsync()
+    project.trackActivityBlocking(MavenActivityKey) {
+      scope.launchTracked {
+        configureAsync()
+      }
     }
   }
 
@@ -90,7 +93,7 @@ class PluginCompatibilityConfigurator(val project: Project) : MavenSyncListener 
   private suspend fun collectPluginsMap(): ConcurrentHashMap<MavenProject, List<Pair<MavenId, MavenPluginM2ELifecycles>>> {
     val map = ConcurrentHashMap<MavenProject, List<Pair<MavenId, MavenPluginM2ELifecycles>>>()
     MavenProjectsManager.getInstance(project).projects.map { mavenProject ->
-      MavenCoroutineScopeProvider.getCoroutineScope(project).async(Dispatchers.IO) {
+      scope.async(Dispatchers.IO) {
         val list = mavenProject.pluginInfos.mapNotNull { pl -> getLifecycle(pl)?.let { pl.plugin.mavenId to it } }
         if (list.isNotEmpty()) {
           map[mavenProject] = list

@@ -153,7 +153,7 @@ class MavenLifecyclePluginImportingTest : MavenCompilingTestCase() {
 
   private suspend fun runAndWaitForConfiguration() {
     //we cannot get rid of this - as this configurator runs after sync. It is a interesting question where to show this test
-    project.service<PluginCompatibilityConfigurator>().configureAsync()
+    project.service<PluginCompatibilityConfiguratorService>().configureAsync()
   }
 
   private fun createFakeProjectWrapper() {
