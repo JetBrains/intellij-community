@@ -6955,6 +6955,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public void testAfterThrow() throws Exception {
             runTest("testData/inspectionsLocal/kotlinUnreachableCode/afterThrow.kt");
         }
+
+        @TestMetadata("returnReturn.kt")
+        public void testReturnReturn() throws Exception {
+            runTest("testData/inspectionsLocal/kotlinUnreachableCode/returnReturn.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
