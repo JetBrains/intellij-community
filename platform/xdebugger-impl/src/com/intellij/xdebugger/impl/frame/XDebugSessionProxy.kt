@@ -22,6 +22,7 @@ import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
+import com.intellij.xdebugger.impl.XDebuggerSplitModeEnabler
 import com.intellij.xdebugger.impl.XSourceKind
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
@@ -277,4 +278,6 @@ interface XSmartStepIntoHandlerEntry {
   val popupTitle: String
 }
 
-private val useFeProxyCachedValue = Registry.`is`("xdebugger.toolwindow.split")
+private val useFeProxyCachedValue by lazy {
+  Registry.`is`("xdebugger.toolwindow.split") || XDebuggerSplitModeEnabler.EP_NAME.extensionList.any { it.useSplitDebuggerMode() }
+}
