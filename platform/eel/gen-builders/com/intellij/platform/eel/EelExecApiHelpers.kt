@@ -200,6 +200,7 @@ object EelExecApiHelpers {
      * Complete the builder and call [com.intellij.platform.eel.EelExecApi.spawnProcess]
      * with an instance of [com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions].
      */
+    @Throws(ExecuteProcessException::class)
     override suspend fun eelIt(): EelProcess =
       owner.spawnProcess(
         ExecuteProcessOptionsImpl(
