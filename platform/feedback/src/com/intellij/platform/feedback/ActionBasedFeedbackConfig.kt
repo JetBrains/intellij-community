@@ -19,7 +19,7 @@ import kotlinx.datetime.LocalDate
  * this config is intended to be used in cases when feedback is submitted by an explicit user
  * action (e.g., an action button, an action link, etc.).
  */
-interface ExplicitUserFeedbackConfig {
+interface ActionBasedFeedbackConfig {
 
   /**
    * Unique identifier reflecting the survey.
@@ -84,7 +84,7 @@ interface ExplicitUserFeedbackConfig {
  * @see showFeedbackDialog
  */
 @RequiresBackgroundThread
-fun ExplicitUserFeedbackConfig.isSuitableToShow(project: Project): Boolean {
+fun ActionBasedFeedbackConfig.isSuitableToShow(project: Project): Boolean {
   val commonConditionsForAllSurveys = if (Registry.`is`("platform.feedback.ignore.common.conditions.for.all.surveys", false)) {
     true
   }
@@ -109,7 +109,7 @@ fun ExplicitUserFeedbackConfig.isSuitableToShow(project: Project): Boolean {
  * @see isSuitableToShow
  */
 @RequiresEdt
-fun ExplicitUserFeedbackConfig.showFeedbackDialog(project: Project, forTest: Boolean) {
+fun ActionBasedFeedbackConfig.showFeedbackDialog(project: Project, forTest: Boolean) {
   val dialog = createFeedbackDialog(project, forTest)
   val isOk = dialog.showAndGet()
   if (isOk && !forTest) {

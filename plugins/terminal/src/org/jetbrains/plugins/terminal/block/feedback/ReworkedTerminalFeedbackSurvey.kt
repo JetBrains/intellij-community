@@ -95,7 +95,7 @@ object ReworkedTerminalFeedbackNotificationConfig : InIdeFeedbackSurveyConfig {
 }
 
 @ApiStatus.Internal
-object ReworkedTerminalFeedbackActionConfig : ExplicitUserFeedbackConfig {
+object ReworkedTerminalFeedbackActionConfig : ActionBasedFeedbackConfig {
   override val surveyId: String
     get() = ReworkedTerminalSurveyConfig.SURVEY_ID
 
