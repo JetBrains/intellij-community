@@ -21,15 +21,13 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 
-
 class HelpSearch {
 
   companion object {
-    private val resources = arrayOf("_0.cfe", "_0.cfs", "_0.si", "segments_1")
+    private val resources = setOf("_0.cfe", "_0.cfs", "_0.si", "segments_1")
 
     @NonNls
     private const val NOT_FOUND = "[]"
-
     private val analyzer: StandardAnalyzer = StandardAnalyzer()
 
     @NotNull
@@ -39,6 +37,7 @@ class HelpSearch {
         val indexDir: Path? = Files.createTempDirectory("search-index")
         var indexDirectory: NIOFSDirectory? = null
         var reader: DirectoryReader? = null
+
         if (indexDir != null)
           try {
 
