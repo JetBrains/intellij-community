@@ -237,8 +237,14 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
   override fun ScriptTreeBuilder.mavenCentral(): ScriptTreeBuilder = applyKt {
     val mavenRepositoryUrl = GradleEnvironment.Urls.getMavenRepositoryUrl()
     if (mavenRepositoryUrl != null) {
-      call("mavenCentral") {
-        assign("url", call("uri", mavenRepositoryUrl))
+      // it is possible to configure the mavenCentral repository via closure only since Gradle 5.3
+      if (GradleVersionUtil.isGradleOlderThan(gradleVersion, "5.3")) {
+        mavenRepository(mavenRepositoryUrl)
+      }
+      else {
+        call("mavenCentral") {
+          assign("url", call("uri", mavenRepositoryUrl))
+        }
       }
     }
     else {
