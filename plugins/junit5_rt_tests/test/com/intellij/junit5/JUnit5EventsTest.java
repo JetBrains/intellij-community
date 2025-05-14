@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit5;
 
+import com.intellij.junit5.testData.AnnotationsTestClass;
 import com.intellij.junit5.testData.MyTestClass;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -174,5 +175,24 @@ public class JUnit5EventsTest {
     var selector = selectors.get(0);
     Assertions.assertInstanceOf(ClassSelector.class, selector);
     Assertions.assertEquals("com.intellij.junit5.testData.InitStaticField$MyTest", ((ClassSelector)selector).getClassName());
+  }
+
+  @Test
+  void testEscaping() throws NoSuchMethodException {
+    JUnit5TestRunnerBuilder builder = new JUnit5TestRunnerBuilder();
+    JUnit5TestRunnerBuilder.TestDescriptorContext testContext = builder
+      .withRootName("testClass")
+      .withPresentableName("testClass")
+      .withTestMethod(AnnotationsTestClass.class, "test1");
+
+    builder.buildTestPlan().execute();
+    testContext.startExecution().finish();
+
+    Assertions.assertEquals("""
+                              ##teamcity[enteredTheMatrix]
+                              ##teamcity[rootName name = 'testClass' location = 'java:suite://testClass']
+                              ##teamcity[testStarted id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='|[test|'s method|]' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0' locationHint='java:test://com.intellij.junit5.testData.AnnotationsTestClass/test1' metainfo='']
+                              ##teamcity[testFinished id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='|[test|'s method|]' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0']
+                              """, builder.getFormattedOutput());
   }
 }

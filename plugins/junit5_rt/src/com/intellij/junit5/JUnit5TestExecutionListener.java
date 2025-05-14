@@ -96,9 +96,9 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
         comment = myRootName.substring(0, lastPointIdx);
       }
 
-      String messageName = (myPresentableName == null || myPresentableName.isEmpty()) ? escapeName(name) : myPresentableName;
+      String messageName = (myPresentableName == null || myPresentableName.isEmpty()) ? name : myPresentableName;
 
-      myPrintStream.println("##teamcity[rootName name = '" + messageName +
+      myPrintStream.println("##teamcity[rootName name = '" + escapeName(messageName) +
                             (comment != null ? ("' comment = '" + escapeName(comment)) : "") + "'" +
                             " location = 'java:suite://" + escapeName(myRootName) +
                             "']");
