@@ -71,6 +71,7 @@ jvm_library(
     "//java/testFramework",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
     "//java/openapi:java",
+    "//jps/model-api:model",
     "//platform/testRunner",
     "//platform/testRunner:testRunner_test_lib",
     "//platform/testFramework",

@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//platform/projectModel-api:projectModel",
     "//platform/core-impl",
     "//platform/projectModel-impl",
@@ -68,6 +69,7 @@ jvm_library(
   deps = [
     "//platform/editor-ui-api:editor-ui",
     "//platform/ide-core-impl",
+    "//jps/model-api:model",
     "//platform/projectModel-api:projectModel",
     "//platform/projectModel-impl",
     "//platform/platform-impl:ide-impl",

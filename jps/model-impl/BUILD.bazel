@@ -43,6 +43,7 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = ["//jps/model-impl"],
   deps = [
+    "//jps/model-api:model",
     "@lib//:kotlin-stdlib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

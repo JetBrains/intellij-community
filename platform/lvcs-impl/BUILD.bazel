@@ -42,6 +42,7 @@ jvm_library(
   associates = [":lvcs-impl"],
   deps = [
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//platform/vcs-api:vcs",
     "//platform/vcs-impl",
     "//platform/vcs-impl:vcs-impl_test_lib",

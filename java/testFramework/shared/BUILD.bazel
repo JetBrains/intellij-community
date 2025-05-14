@@ -8,6 +8,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//java/openapi:java",
+    "//jps/model-api:model",
     "//platform/util",
     "@lib//:junit4",
     "//platform/util/jdom",

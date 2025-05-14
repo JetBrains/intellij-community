@@ -21,6 +21,7 @@ jvm_library(
   deps = [
     "@lib//:jetbrains-annotations",
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//platform/refactoring",
     "//platform/structure-view-impl:structureView-impl",
     "//xml/xml-psi-impl:psi-impl",

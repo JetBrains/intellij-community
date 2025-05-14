@@ -12,6 +12,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/util/concurrency",
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//platform/util:util-ui",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",

@@ -46,6 +46,7 @@ jvm_library(
     "//platform/core-impl",
     "//platform/editor-ui-api:editor-ui",
     "//platform/execution-impl",
+    "//jps/model-api:model",
     "//platform/testRunner",
     "//platform/testRunner:testRunner_test_lib",
     "//platform/xdebugger-api:debugger",

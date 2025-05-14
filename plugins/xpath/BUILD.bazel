@@ -20,6 +20,7 @@ jvm_library(
   srcs = glob(["xpath-lang/src/**/*.kt", "xpath-lang/src/**/*.java", "xpath-view/src/**/*.kt", "xpath-view/src/**/*.java", "xpath-lang/gen/**/*.kt", "xpath-lang/gen/**/*.java"], allow_empty = True),
   deps = [
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//platform/structure-view-impl:structureView-impl",
     "//xml/openapi:xml",
     "//platform/lang-api:lang",
@@ -54,6 +55,7 @@ jvm_library(
   associates = [":xpath"],
   deps = [
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//platform/structure-view-impl:structureView-impl",
     "//xml/openapi:xml",
     "//platform/lang-api:lang",

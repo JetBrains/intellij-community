@@ -15,6 +15,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.io" />
     <orderEntry type="module" module-name="intellij.libraries.ktor.client" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.statsCollector" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />

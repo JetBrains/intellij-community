@@ -19,6 +19,7 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testGen/**/*.kt", "testGen/**/*.java"], allow_empty = True),
   associates = ["//platform/workspace/jps"],
   deps = [
+    "//jps/model-api:model",
     "//platform/workspace/storage",
     "//platform/smRunner",
     "//platform/smRunner:smRunner_test_lib",

@@ -18,6 +18,7 @@ jvm_library(
     "//java/execution/impl",
     "//java/java-runtime:rt",
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//platform/refactoring",
     "//platform/testRunner",
     "//platform/vcs-api:vcs",

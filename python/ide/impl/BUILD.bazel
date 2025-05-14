@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
+    "//jps/model-api:model",
     "//platform/usageView-impl",
     "//python:python-community-impl",
     "//platform/lang-api:lang",
@@ -59,6 +60,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//jps/model-api:model",
     "//platform/usageView-impl",
     "//python:python-community-impl",
     "//platform/lang-api:lang",

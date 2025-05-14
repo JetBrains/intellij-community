@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//platform/vcs-log/api:vcs-log",
     "//platform/vcs-api:vcs",
     "//platform/vcs-log/graph:vcs-log-graph-impl",
@@ -58,6 +59,7 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//platform/vcs-log/api:vcs-log",
     "//platform/vcs-api:vcs",
     "//platform/vcs-log/graph:vcs-log-graph-impl",

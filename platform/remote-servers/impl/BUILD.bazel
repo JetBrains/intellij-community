@@ -21,6 +21,7 @@ jvm_library(
   deps = [
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
+    "//jps/model-api:model",
     "//platform/remote-servers/api:remoteServers",
     "//platform/core-impl",
     "//platform/lang-api:lang",

@@ -21,6 +21,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//platform/refactoring",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

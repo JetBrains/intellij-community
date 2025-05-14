@@ -9,6 +9,7 @@ jvm_library(
   deps = [
     "//java/compiler/openapi:java-compiler",
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//platform/refactoring",
     "//platform/util/jdom",
     "//platform/util",

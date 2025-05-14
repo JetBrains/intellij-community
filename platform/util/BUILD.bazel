@@ -81,6 +81,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [
+    "//jps/model-api:model",
     "//platform/util",
     "//platform/core-impl",
     "@lib//:kotlin-stdlib",

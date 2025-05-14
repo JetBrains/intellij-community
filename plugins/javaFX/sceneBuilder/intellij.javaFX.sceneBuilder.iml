@@ -12,6 +12,7 @@
     <orderEntry type="module" module-name="intellij.java.indexing" />
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="intellij.javaFX" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.util.nanoxml" />
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="SceneBuilderKit11" type="repository">

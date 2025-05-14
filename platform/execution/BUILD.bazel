@@ -18,6 +18,7 @@ jvm_library(
     "//platform/ide-core",
     "//platform/ide-core/plugins",
     "//platform/platform-util-io:ide-util-io",
+    "//jps/model-api:model",
     "//platform/util:util-ui",
     "//platform/util/jdom",
     "//platform/util",

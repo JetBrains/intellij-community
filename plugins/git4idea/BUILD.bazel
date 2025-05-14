@@ -112,6 +112,7 @@ jvm_library(
   deps = [
     "//platform/editor-ui-api:editor-ui",
     "//platform/observable",
+    "//jps/model-api:model",
     "//platform/vcs-api:vcs",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",

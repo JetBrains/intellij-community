@@ -24,6 +24,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
     "//java/testFramework",
+    "//jps/model-api:model",
     "//platform/refactoring",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

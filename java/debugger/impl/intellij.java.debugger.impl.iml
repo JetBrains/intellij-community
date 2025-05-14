@@ -35,6 +35,7 @@
     <orderEntry type="module" module-name="intellij.java.resources" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.java.compiler" />
     <orderEntry type="module" module-name="intellij.java.compiler.impl" />

@@ -19,6 +19,7 @@ jvm_library(
     "@lib//:kotlinc-analysis-api-impl-base-tests",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:guava",
+    "//jps/model-api:model",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/frontend-agnostic",

@@ -21,6 +21,7 @@ jvm_library(
     "//plugins/maven",
     "//plugins/maven/testFramework",
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//platform/refactoring",
     "//platform/structure-view-impl:structureView-impl",
     "//platform/testFramework",

@@ -68,6 +68,7 @@ jvm_library(
   kotlinc_opts = ":custom",
   associates = [":kotlin-highlighting-k2"],
   deps = [
+    "//jps/model-api:model",
     "//platform/refactoring",
     "//plugins/kotlin/plugin/k2",
     "@lib//:kotlin-stdlib",

@@ -22,6 +22,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:java_compatibility",
     "//platform/platform-impl:ide-impl",
+    "//jps/model-api:model",
     "//plugins/kotlin/base/frontend-agnostic",
     "//platform/ide-core-impl",
     "//plugins/kotlin/base/util",

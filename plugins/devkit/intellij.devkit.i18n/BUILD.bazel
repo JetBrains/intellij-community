@@ -45,6 +45,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
     "//platform/ide-core-impl",
+    "//jps/model-api:model",
     "//plugins/properties/properties-psi-api:psi",
     "//plugins/properties/properties-psi-impl:backend-psi",
     "//plugins/java-i18n",

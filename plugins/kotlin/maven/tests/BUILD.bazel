@@ -17,6 +17,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:junit4",
+    "//jps/model-api:model",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:gson",

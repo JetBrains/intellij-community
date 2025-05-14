@@ -43,6 +43,7 @@ jvm_library(
     "//platform/ijent/impl",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//jps/model-api:model",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/stream-debugger-core:debugger-streams-core",

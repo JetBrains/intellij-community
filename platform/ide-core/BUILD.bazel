@@ -17,6 +17,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/util/concurrency",
+    "//jps/model-api:model",
     "//platform/util:util-ui",
     "//platform/editor-ui-api:editor-ui",
     "//platform/projectModel-api:projectModel",

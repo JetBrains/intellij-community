@@ -10,6 +10,7 @@ jvm_library(
     "//jvm/jvm-analysis-impl:analysis-impl",
     "//jvm/jvm-analysis-testFramework:analysis-testFramework",
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//platform/refactoring",
     "//platform/testFramework",
     "//java/java-impl-refactorings:impl-refactorings",

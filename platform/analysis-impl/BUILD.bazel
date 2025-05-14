@@ -16,6 +16,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/core-impl",
+    "//jps/model-api:model",
     "//platform/util",
     "//platform/editor-ui-api:editor-ui",
     "//platform/extensions",

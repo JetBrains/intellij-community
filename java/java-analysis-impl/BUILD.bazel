@@ -17,6 +17,7 @@ jvm_library(
     "//java/java-indexing-impl:indexing-impl",
     "//java/java-psi-impl:psi-impl",
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//platform/projectModel-impl",
     "//java/java-analysis-api:analysis",
     "//resources-en:java-resources-en",

@@ -82,6 +82,7 @@ jvm_library(
     "//jps/jps-builders:build",
     "@rules_jvm//dependency-graph",
     "//java/testFramework",
+    "//jps/model-api:model",
     "//jps/model-impl:model-tests_test_lib",
     "//jps/model-serialization:model-serialization-tests_test_lib",
     "//platform/testFramework",

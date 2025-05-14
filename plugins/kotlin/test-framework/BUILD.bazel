@@ -21,6 +21,7 @@ jvm_library(
     "//java/idea-ui:ui",
     "@lib//:test_n_g",
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:kotlinc-kotlin-jps-common",

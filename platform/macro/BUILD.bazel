@@ -10,6 +10,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//platform/projectModel-api:projectModel",
     "//platform/execution",
     "//platform/lang-core",

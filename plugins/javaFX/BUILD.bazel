@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//platform/lang-api:lang",
     "//java/execution/openapi:java-execution",
     "//java/execution/impl",
@@ -51,6 +52,7 @@ jvm_library(
   associates = [":javaFX"],
   deps = [
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//platform/lang-api:lang",
     "//java/execution/openapi:java-execution",
     "//java/execution/impl",

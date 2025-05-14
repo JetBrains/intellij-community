@@ -11,6 +11,7 @@
     <orderEntry type="module" module-name="intellij.junit" exported="" />
     <orderEntry type="module" module-name="intellij.java.frontback.psi" exported="" />
     <orderEntry type="module" module-name="intellij.java.testFramework" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
   </component>

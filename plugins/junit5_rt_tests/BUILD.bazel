@@ -16,6 +16,7 @@ jvm_library(
     "//aether-dependency-resolver:aether-dependency-resolver_test_lib",
     "//java/compiler/openapi:java-compiler",
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//platform/smRunner",
     "//platform/smRunner:smRunner_test_lib",
     "//platform/testFramework",

@@ -32,6 +32,7 @@ jvm_library(
     "@lib//:workspace-model-codegen",
     "//platform/ide-core",
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//platform/util",
     "//platform/projectModel-api:projectModel",
     "//platform/analysis-api:analysis",

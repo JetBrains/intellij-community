@@ -18,6 +18,7 @@
     <orderEntry type="module" module-name="intellij.java.compiler" />
     <orderEntry type="library" name="ASM" level="project" />
     <orderEntry type="module" module-name="intellij.java.impl.refactorings" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.usageView" />

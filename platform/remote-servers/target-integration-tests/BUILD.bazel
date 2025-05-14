@@ -17,6 +17,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlin-stdlib",
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:testcontainers",

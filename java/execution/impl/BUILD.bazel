@@ -29,6 +29,7 @@ jvm_library(
     "//java/execution/openapi:java-execution",
     "//java/java-runtime:rt",
     "//java/debugger/impl",
+    "//jps/model-api:model",
     "//platform/testRunner",
     "//platform/vcs-api:vcs",
     "//platform/usageView",

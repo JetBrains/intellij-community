@@ -13,6 +13,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//jps/model-api:model",
     "//xml/xml-psi-impl:psi-impl",
     "//platform/analysis-impl",
     "//platform/core-impl",

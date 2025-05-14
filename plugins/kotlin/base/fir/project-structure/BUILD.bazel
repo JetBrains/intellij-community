@@ -56,6 +56,7 @@ jvm_library(
   associates = [":project-structure"],
   deps = [
     "@lib//:kotlin-stdlib",
+    "//jps/model-api:model",
     "//plugins/kotlin/plugin/k2",
     "//platform/workspace/storage",
     "//java/testFramework",

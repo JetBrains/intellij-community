@@ -68,6 +68,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:gson",
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//platform/refactoring",
     "//plugins/kotlin/plugin/k2",
     "//platform/lang-impl",

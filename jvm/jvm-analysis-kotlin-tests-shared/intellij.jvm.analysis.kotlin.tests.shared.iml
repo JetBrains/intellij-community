@@ -8,6 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.plugin.common" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.jvm.analysis.internal.testFramework" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.tests" exported="" scope="TEST" />

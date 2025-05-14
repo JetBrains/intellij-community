@@ -9,6 +9,7 @@ jvm_library(
   deps = [
     "//java/jsp-openapi:jsp",
     "//java/openapi:java",
+    "//jps/model-api:model",
     "//java/jsp-base-openapi:jsp-base",
   ],
   exports = [

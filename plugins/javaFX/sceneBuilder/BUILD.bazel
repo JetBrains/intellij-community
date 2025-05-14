@@ -12,6 +12,7 @@ jvm_library(
     "//java/java-indexing-api:indexing",
     "//java/openapi:java",
     "//plugins/javaFX",
+    "//jps/model-api:model",
     "//platform/util/nanoxml",
     "@lib//:java_f_x-scene_builder-_scene_builder_kit11-provided",
     "//platform/indexing-impl",

@@ -20,6 +20,7 @@ jvm_library(
   deps = [
     "//platform/editor-ui-api:editor-ui",
     "//platform/foldings",
+    "//jps/model-api:model",
     "//platform/lang-impl",
     "@lib//:junit4",
     "@lib//:jmock",

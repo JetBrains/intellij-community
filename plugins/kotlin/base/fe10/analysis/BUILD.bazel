@@ -28,6 +28,7 @@ jvm_library(
     "@lib//:guava",
     "@lib//:vavr",
     "@lib//:javax-inject",
+    "//jps/model-api:model",
     "//plugins/kotlin/base/util",
     "//platform/platform-impl:ide-impl",
     "//plugins/kotlin/base/psi",

@@ -27,6 +27,7 @@ jvm_library(
   deps = [
     "//plugins/lombok/generated",
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//platform/lang-api:lang",
     "//platform/analysis-impl",
     "//java/openapi:java",
@@ -54,6 +55,7 @@ jvm_library(
   deps = [
     "//plugins/lombok/generated",
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//platform/lang-api:lang",
     "//platform/analysis-impl",
     "//java/openapi:java",

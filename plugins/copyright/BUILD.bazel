@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//xml/openapi:xml",
     "//platform/platform-impl:ide-impl",
     "//platform/lang-api:lang",
@@ -37,6 +38,7 @@ jvm_library(
   associates = [":copyright"],
   deps = [
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//xml/openapi:xml",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",

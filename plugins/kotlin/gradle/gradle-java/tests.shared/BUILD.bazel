@@ -15,6 +15,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//plugins/gradle:gradle-tests_test_lib",
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/execution/impl",

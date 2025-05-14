@@ -31,6 +31,7 @@ jvm_library(
     "//plugins/copyright:copyright_test_lib",
     "//java/openapi:java",
     "//java/java-impl:impl",
+    "//jps/model-api:model",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/testFramework/junit5",

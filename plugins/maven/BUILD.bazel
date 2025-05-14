@@ -29,6 +29,7 @@ jvm_library(
     "//java/openapi:java",
     "//plugins/maven-server-api:maven-server",
     "//platform/platform-impl:ide-impl",
+    "//jps/model-api:model",
     "//platform/lang-api:lang",
     "//java/java-impl:impl",
     "//platform/refactoring",

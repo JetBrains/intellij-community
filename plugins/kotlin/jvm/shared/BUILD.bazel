@@ -25,6 +25,7 @@ jvm_library(
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",
+    "//jps/model-api:model",
     "//platform/util/jdom",
     "@lib//:gson",
     "@lib//:kotlinc-kotlin-compiler-common",

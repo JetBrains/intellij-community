@@ -44,6 +44,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//platform/vcs-tests:vcs-testFramework",
     "//platform/lang-impl",
     "//platform/vcs-impl/lang",

@@ -10,6 +10,7 @@
     <orderEntry type="module" module-name="intellij.jvm.analysis.impl" />
     <orderEntry type="module" module-name="intellij.jvm.analysis.testFramework" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" />
     <orderEntry type="module" module-name="intellij.java.impl.refactorings" />

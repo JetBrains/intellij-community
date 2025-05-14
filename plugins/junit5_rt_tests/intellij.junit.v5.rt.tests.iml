@@ -15,6 +15,7 @@
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.compiler" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.smRunner" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />

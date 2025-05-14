@@ -18,6 +18,7 @@ jvm_library(
     "//java/compiler/openapi:java-compiler",
     "@lib//:asm",
     "//java/java-impl-refactorings:impl-refactorings",
+    "//jps/model-api:model",
     "//platform/refactoring",
     "//platform/util/jdom",
     "//platform/usageView",

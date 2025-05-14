@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:stream_ex",
+    "//jps/model-api:model",
     "//platform/util",
     "//platform/projectModel-api:projectModel",
     "//platform/indexing-api:indexing",

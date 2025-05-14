@@ -14,6 +14,7 @@
     <orderEntry type="library" name="kotlin-reflect" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.plugin.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.test" />
     <orderEntry type="module" module-name="kotlin.base.scripting" />

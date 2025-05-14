@@ -17,6 +17,7 @@ jvm_library(
     "//java/java-psi-impl:psi-impl",
     "//platform/indexing-api:indexing",
     "//platform/indexing-impl",
+    "//jps/model-api:model",
     "//platform/projectModel-api:projectModel",
     "//platform/projectModel-impl",
     "//platform/util",

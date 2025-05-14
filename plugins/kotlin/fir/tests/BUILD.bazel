@@ -30,6 +30,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:kotlinc-analysis-api-platform-interface",
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//platform/refactoring",
     "//platform/usageView",
     "//platform/core-api:core",

@@ -43,6 +43,7 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [
     "//plugins/devkit/jps-plugin:jps",
+    "//jps/model-api:model",
     "//jps/model-impl",
     "//jps/jps-builders:build-tests_test_lib",
     "//java/testFramework",

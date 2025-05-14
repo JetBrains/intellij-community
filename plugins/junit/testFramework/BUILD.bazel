@@ -11,6 +11,7 @@ jvm_library(
     "//plugins/junit",
     "//java/java-frontback-psi-api:frontback-psi",
     "//java/testFramework",
+    "//jps/model-api:model",
     "//platform/testFramework",
     "//platform/projectModel-api:projectModel",
   ],

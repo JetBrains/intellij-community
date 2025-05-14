@@ -27,6 +27,7 @@ jvm_library(
   deps = [
     "//platform/boot",
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//platform/lang-api:lang",
     "@lib//:oro_matcher",
     "@lib//:velocity",
@@ -140,6 +141,7 @@ jvm_library(
   deps = [
     "//platform/boot",
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//platform/lang-api:lang",
     "//platform/usageView-impl",
     "//platform/vcs-api:vcs",

@@ -21,6 +21,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:kotlinc-analysis-api-platform-interface",
     "@lib//:guava",
+    "//jps/model-api:model",
     "//platform/refactoring",
     "//plugins/kotlin/base/frontend-agnostic",
     "//plugins/kotlin/base/facet",

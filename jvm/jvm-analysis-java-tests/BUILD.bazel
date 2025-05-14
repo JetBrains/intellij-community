@@ -15,6 +15,7 @@ jvm_library(
     "//java/openapi:java",
     "//java/testFramework",
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//jvm/jvm-analysis-impl:analysis-impl",

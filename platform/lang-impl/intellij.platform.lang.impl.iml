@@ -33,6 +33,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.lang" exported="" />
     <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="library" name="Velocity" level="project" />

@@ -17,6 +17,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-jps-common",
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//plugins/kotlin/base/frontend-agnostic",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/plugin",

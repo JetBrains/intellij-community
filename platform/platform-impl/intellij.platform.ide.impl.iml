@@ -35,6 +35,7 @@
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide" exported="" />
     <orderEntry type="library" name="OroMatcher" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="library" name="jna" level="project" />
     <orderEntry type="library" name="winp" level="project" />

@@ -53,6 +53,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/core-api:core",
+    "//jps/model-api:model",
     "//platform/vcs-api:vcs",
     "//platform/ide-core-impl",
     "//platform/vcs-log/api:vcs-log",

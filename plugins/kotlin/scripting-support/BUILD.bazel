@@ -17,6 +17,7 @@ jvm_library(
     "@lib//:junit4",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-tests",
+    "//jps/model-api:model",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",

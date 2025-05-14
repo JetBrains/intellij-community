@@ -20,6 +20,7 @@ jvm_library(
     "//libraries/io",
     "//libraries/ktor-client",
     "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//plugins/stats-collector",
     "//platform/ide-core-impl",
     "//platform/platform-impl:ide-impl",

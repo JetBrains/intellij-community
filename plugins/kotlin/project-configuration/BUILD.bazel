@@ -21,6 +21,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
     "@lib//:guava",
+    "//jps/model-api:model",
     "//platform/vcs-api:vcs",
     "//platform/observable",
     "@lib//:gson",

@@ -18,6 +18,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:gson",
     "@lib//:junit4",
+    "//jps/model-api:model",
     "//plugins/kotlin/plugin/k1",
     "//plugins/kotlin/base/psi",
     "//plugins/kotlin/base/plugin",
