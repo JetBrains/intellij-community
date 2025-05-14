@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.platform.project.projectId
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -43,8 +44,7 @@ open class FrontendSessionProcessHandler(
   private val project: Project,
   protected val processHandlerDto: ProcessHandlerDto,
 ) : ProcessHandler() {
-  // TODO: use better CoroutineScope
-  protected val cs: CoroutineScope = project.service<FrontendSessionProcessHandlerCoroutineScope>().cs
+  protected val cs: CoroutineScope = project.service<FrontendSessionProcessHandlerCoroutineScope>().cs.childScope("FrontendProcessHandler")
 
   protected val handlerId: ProcessHandlerId = processHandlerDto.processHandlerId
 
