@@ -16,6 +16,7 @@ import com.jetbrains.python.errorProcessing.PyExecResult
 import com.jetbrains.python.errorProcessing.PyResult
 import io.github.z4kn4fein.semver.Version
 import io.github.z4kn4fein.semver.VersionFormatException
+import java.io.IOException
 import java.nio.file.Path
 
 /**
@@ -125,7 +126,11 @@ class HatchCli(private val runtime: HatchRuntime) {
     ).makeOptions()
     return runtime.executeInteractive("new", *options) { eelProcess, _ ->
       if (initExistingProject) {
-        eelProcess.sendWholeText("$projectName\n").getOr { return@executeInteractive Result.failure("Failed to write to process: ${it.error.localizedMessage}") }
+        try {
+          eelProcess.sendWholeText("$projectName\n")
+        } catch (error: IOException) {
+          return@executeInteractive Result.failure("Failed to write to process: ${error.localizedMessage}")
+        }
       }
       Result.success("Created")
     }

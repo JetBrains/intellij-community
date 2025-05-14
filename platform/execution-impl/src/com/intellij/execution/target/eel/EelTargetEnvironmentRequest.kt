@@ -164,10 +164,10 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
           val connection = acceptor.incomingConnections.receive()
 
           launch {
-            copy(socket.consumeAsEelChannel(), connection.sendChannel).getOrThrow()  // TODO: Process error
+            copy(socket.consumeAsEelChannel(), connection.sendChannel)  // TODO: Process error
           }
           launch {
-            copy(connection.receiveChannel, socket.asEelChannel()).getOrThrow() // TODO: PRocess error
+            copy(connection.receiveChannel, socket.asEelChannel()) // TODO: PRocess error
           }
         }
 

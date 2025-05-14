@@ -14,8 +14,8 @@ internal class SocketAdapter(channel: SocketChannel) : EelTunnelsApi.Connection 
   private val socket = channel.socket()
 
 
-  override val sendChannel: EelSendChannel<IOException> = channel.asEelChannel()
-  override val receiveChannel: EelReceiveChannel<IOException> = channel.consumeAsEelChannel()
+  override val sendChannel: EelSendChannel = channel.asEelChannel()
+  override val receiveChannel: EelReceiveChannel = channel.consumeAsEelChannel()
 
   override suspend fun configureSocket(block: suspend ConfigurableClientSocket.() -> Unit) {
     block(ConfigurableClientSocketImpl(socket))

@@ -101,10 +101,10 @@ class ExecServiceShowCaseTest {
     val shell = eelHolder.eel.exec.getShell().first
     val output = ExecService().executeInteractive(WhatToExec.Binary(shell.asNioPath()), emptyList(), processInteractiveHandler = ProcessInteractiveHandler<String> { _, _, process ->
       val stdout = async {
-        process.stdout.readWholeText().getOrThrow()
+        process.stdout.readWholeText()
       }
-      process.stdin.sendWholeText("echo $string\n").getOrThrow()
-      process.stdin.sendWholeText("exit\n").getOrThrow()
+      process.stdin.sendWholeText("echo $string\n")
+      process.stdin.sendWholeText("exit\n")
       Result.success(stdout.await())
     }).orThrow()
     assertThat("No expected output", output, CoreMatchers.containsString(string))
@@ -118,7 +118,7 @@ class ExecServiceShowCaseTest {
     val messageToUser = "abc123"
     val shell = eelHolder.eel.exec.getShell().first
     val result = ExecService().executeInteractive(WhatToExec.Binary(shell.asNioPath()), emptyList(), processInteractiveHandler = processSemiInteractiveHandler<Unit> { channel, exitCode ->
-      channel.sendWholeText("exit\n").getOrThrow()
+      channel.sendWholeText("exit\n")
       assertEquals(0, exitCode.await(), "Wrong exit code")
       if (sunny) {
         Result.success(Unit)
@@ -188,10 +188,10 @@ class ExecServiceShowCaseTest {
 
     ExecService().executeInteractive(whatToExec, args = emptyList(), processInteractiveHandler = processSemiInteractiveHandler<Unit>(progressCapturer) { stdin, exitCode ->
       for (string in text) {
-        stdin.sendWholeText("echo $string\n").getOrThrow()
+        stdin.sendWholeText("echo $string\n")
         delay(500)
       }
-      stdin.sendWholeText("exit\n").getOrThrow()
+      stdin.sendWholeText("exit\n")
       Result.success(Unit)
     }).getOrThrow()
     assertThat("Progress lost", progress, Matchers.containsInRelativeOrder(*text))

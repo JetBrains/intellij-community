@@ -60,10 +60,10 @@ class EelLocalTunnelApiTest {
   fun testClientSuccessConnection(): Unit = timeoutRunBlocking(1.minutes) {
     withServer { connection, _ ->
       val buffer = ByteBuffer.allocate(4096)
-      connection.receiveChannel.receive(buffer).getOrThrow()
+      connection.receiveChannel.receive(buffer)
       Assertions.assertEquals(NetworkConstants.HELLO_FROM_SERVER, NetworkConstants.fromByteBuffer(buffer.flip()))
-      connection.sendChannel.sendWholeBuffer(NetworkConstants.HELLO_FROM_CLIENT.toBuffer()).getOrThrow() //      Helper closes the stream, so does the channel
-      Assertions.assertEquals(ReadResult.EOF, connection.receiveChannel.receive(ByteBuffer.allocate(1)).getOrThrow())
+      connection.sendChannel.sendWholeBuffer(NetworkConstants.HELLO_FROM_CLIENT.toBuffer()) //      Helper closes the stream, so does the channel
+      Assertions.assertEquals(ReadResult.EOF, connection.receiveChannel.receive(ByteBuffer.allocate(1)))
     }
   }
 
@@ -71,11 +71,11 @@ class EelLocalTunnelApiTest {
   fun testServerListensForConnection(): Unit = timeoutRunBlocking(1.minutes) {
     val helper = clientExecutor.createBuilderToExecuteMain(localEel.exec).eelIt()
     val acceptor = localEel.tunnels.getAcceptorForRemotePort().eelIt()
-    helper.stdin.sendWholeText(acceptor.boundAddress.port.toString() + "\n").getOrThrow()
+    helper.stdin.sendWholeText(acceptor.boundAddress.port.toString() + "\n")
     val conn = acceptor.incomingConnections.receive()
     try {
       val buff = ByteBuffer.allocate(1024)
-      conn.receiveChannel.receive(buff).getOrThrow()
+      conn.receiveChannel.receive(buff)
       val fromServer = NetworkConstants.fromByteBuffer(buff.flip())
       assertEquals(NetworkConstants.HELLO_FROM_CLIENT, fromServer)
     }
@@ -111,7 +111,7 @@ class EelLocalTunnelApiTest {
           }
         }
       }
-      tx.sendWholeBuffer(ByteBuffer.wrap(helloFromServer)).getOrThrow()
+      tx.sendWholeBuffer(ByteBuffer.wrap(helloFromServer))
       val bufferRecv = ByteBuffer.allocate(helloFromClient.size)
       while (bufferRecv.hasRemaining()) {
         rx.receive(bufferRecv)

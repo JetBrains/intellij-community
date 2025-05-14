@@ -145,11 +145,11 @@ class PyVirtualEnvTerminalCustomizerTest {
     val process = execOptions.eelIt()
     try {
       val stderr = async {
-        process.stderr.readWholeText().getOrThrow()
+        process.stderr.readWholeText()
       }
       val stdout = async {
         val separator = if (SystemInfo.isWindows) "\n" else "\r\n"
-        process.stdout.readWholeText().getOrThrow().split(separator).map { it.trim() }
+        process.stdout.readWholeText().split(separator).map { it.trim() }
       }
 
       // tool -- where.exe Windows, "type(1)" **nix
@@ -162,7 +162,7 @@ class PyVirtualEnvTerminalCustomizerTest {
         val quot = if (shellType == ShellType.ZSH) "'" else ""
         Triple("type", "python is $quot", quot)
       }
-      process.stdin.sendWholeText("$locateTool python\nexit\n").getOrThrow()
+      process.stdin.sendWholeText("$locateTool python\nexit\n")
       val error = stderr.await()
 
       Assertions.assertTrue(error.isEmpty(), "Unexpected text in stderr: $error")

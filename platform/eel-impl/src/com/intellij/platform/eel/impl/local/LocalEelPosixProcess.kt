@@ -27,9 +27,9 @@ internal class LocalEelPosixProcess(
     ApplicationManager.getApplication().service<EelLocalApiService>().scope("LocalEelProcess pid=${process.pid()}")
 
   override val pid: EelApi.Pid = LocalPid(process.pid())
-  override val stdin: EelSendChannel<IOException> = process.outputStream.asEelChannel()
-  override val stdout: EelReceiveChannel<IOException> = StreamClosedAwareEelReceiveChannel(process.inputStream.consumeAsEelChannel())
-  override val stderr: EelReceiveChannel<IOException> = StreamClosedAwareEelReceiveChannel(process.errorStream.consumeAsEelChannel())
+  override val stdin: EelSendChannel = process.outputStream.asEelChannel()
+  override val stdout: EelReceiveChannel = StreamClosedAwareEelReceiveChannel(process.inputStream.consumeAsEelChannel())
+  override val stderr: EelReceiveChannel = StreamClosedAwareEelReceiveChannel(process.errorStream.consumeAsEelChannel())
   override val exitCode: Deferred<Int> = scope.async {
     process.awaitExit()
   }

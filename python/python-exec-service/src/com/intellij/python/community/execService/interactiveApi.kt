@@ -33,7 +33,7 @@ fun interface ProcessInteractiveHandler<T> {
 /**
  * Process stdout -> result
  */
-typealias ProcessSemiInteractiveFun<T> = suspend (EelSendChannel<IOException>, Deferred<Int>) -> Result<T, CustomErrorMessage?>
+typealias ProcessSemiInteractiveFun<T> = suspend (EelSendChannel, Deferred<Int>) -> Result<T, CustomErrorMessage?>
 
 /**
  * [ProcessInteractiveHandler], but you do not have to collect output by yourself. You only have access to stdout and exit code.

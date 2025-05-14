@@ -14,10 +14,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
-import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.spawnProcess
 import com.intellij.platform.eel.provider.utils.copy
-import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.utils.asEelChannel
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
@@ -80,7 +78,7 @@ abstract class AbstractIjentVerificationAction : DumbAwareAction() {
                   launch {
                     val process = ijent.exec.spawnProcess("uname", "-a").eelIt()
                     val stdout = ByteArrayOutputStream()
-                    copy(process.stdout, stdout.asEelChannel()).getOrThrow() // TODO: process errors
+                    copy(process.stdout, stdout.asEelChannel()) // TODO: process errors
                     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
                       Messages.showInfoMessage(stdout.toString(), title)
                     }

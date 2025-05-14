@@ -19,9 +19,9 @@ sealed interface EelProcess {
    *
    * Note that each chunk of data is individually and immediately flushed into the process without any intermediate buffer storage.
    */
-  val stdin: EelSendChannel<IOException>
-  val stdout: EelReceiveChannel<IOException>
-  val stderr: EelReceiveChannel<IOException>
+  val stdin: EelSendChannel
+  val stdout: EelReceiveChannel
+  val stderr: EelReceiveChannel
   val exitCode: Deferred<Int>
 
   /**

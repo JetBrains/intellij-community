@@ -194,20 +194,19 @@ private class ConnectionAcceptorImpl(private val boundServerSocket: ServerSocket
 @Service
 private class MyService(val scope: CoroutineScope)
 
-private suspend fun copyWithLoggingAndErrorHandling(src: EelReceiveChannel<IOException>, dest: EelSendChannel<IOException>, title: String, onError: (IOException) -> Unit) {
-  when (val r = copy(src, dest)) {
-    is EelResult.Error -> {
-      when (val e = r.error) {
-        is CopyResultError.InError -> {
-          logger.warn("$title input error", e.inError)
-          onError(e.inError)
-        }
-        is CopyResultError.OutError -> {
-          logger.warn("$title output error", e.outError)
-          onError(e.outError)
-        }
+private suspend fun copyWithLoggingAndErrorHandling(src: EelReceiveChannel, dest: EelSendChannel, title: String, onError: (IOException) -> Unit) {
+  try {
+    copy(src, dest)
+  } catch (e: CopyError) {
+    when (e) {
+      is CopyError.InError -> {
+        logger.warn("$title input error", e.cause)
+        onError(e.cause as IOException)
+      }
+      is CopyError.OutError -> {
+        logger.warn("$title output error", e.cause)
+        onError(e.cause as IOException)
       }
     }
-    is EelResult.Ok -> Unit
   }
 }

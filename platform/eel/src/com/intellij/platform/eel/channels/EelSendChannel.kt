@@ -1,15 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.channels
 
-import com.intellij.platform.eel.EelResult
-import com.intellij.platform.eel.getOr
 import org.jetbrains.annotations.CheckReturnValue
 import java.nio.ByteBuffer
 
 /**
- * Consumes bytes as buffers. Each [send] writes `0` or more bytes or returns [ERR] in case if IO error
+ * Consumes bytes as buffers. Each [send] writes `0` or more bytes or throws an exception in case of IO error
  */
-interface EelSendChannel<out ERR : Any> {
+interface EelSendChannel {
   /**
    * Writes [src], suspends until written.
    *
@@ -20,11 +18,10 @@ interface EelSendChannel<out ERR : Any> {
    *
    * This method is *not* thread-safe (i.e. you can't send two buffers and the same time).
    *
-   * @return Either IO [ERR] string or success if [src] was written.
+   * Throws an exception in case of IO error.
    */
   @EelSendApi
-  @CheckReturnValue
-  suspend fun send(src: ByteBuffer): EelResult<Unit, ERR>
+  suspend fun send(src: ByteBuffer)
 
   /**
    * Closes channel for sending. You can't send anything to a closed channel.
@@ -44,17 +41,13 @@ interface EelSendChannel<out ERR : Any> {
  * In most cases, you need this function.
  * This method is *not* thread-safe (i.e. you can't send two buffers and the same time).
  */
-@CheckReturnValue
-suspend fun <ERR : Any> EelSendChannel<ERR>.sendWholeBuffer(src: ByteBuffer): EelResult<Unit, ERR> {
+@OptIn(EelSendApi::class)
+suspend fun EelSendChannel.sendWholeBuffer(src: ByteBuffer) {
   if (this is EelSendChannelCustomSendWholeBuffer) {
     return sendWholeBufferCustom(src)
   }
-  var result: EelResult<Unit, ERR>
   do {
-    @Suppress("OPT_IN_USAGE")
-    result = send(src).also { it.getOr { return it } }
+    send(src)
   }
   while (src.hasRemaining())
-  return result
 }
-

@@ -1,10 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.impl.local
 
-import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.ReadResult
 import com.intellij.platform.eel.channels.EelReceiveChannel
-import com.intellij.platform.eel.provider.ResultOkImpl
 import java.io.IOException
 import java.nio.ByteBuffer
 
@@ -20,23 +18,22 @@ import java.nio.ByteBuffer
  * Even though the data is still lost, there's at least no unexpected error.
  */
 internal class StreamClosedAwareEelReceiveChannel(
-  private val delegate: EelReceiveChannel<IOException>,
-) : EelReceiveChannel<IOException> {
-  override suspend fun receive(dst: ByteBuffer): EelResult<ReadResult, IOException> =
-    when (val result = delegate.receive(dst)) {
-      is EelResult.Ok -> result
-      is EelResult.Error -> {
-        val e = result.error
-        if (
-          e.javaClass == IOException::class.java &&
-          e.message == "Stream closed" &&
-          e.stackTrace.firstOrNull()?.className == "java.io.BufferedInputStream"
-        ) {
-          ResultOkImpl(ReadResult.fromNumberOfReadBytes(-1))
-        }
-        else result
-      }
+  private val delegate: EelReceiveChannel,
+) : EelReceiveChannel {
+  override suspend fun receive(dst: ByteBuffer): ReadResult {
+    try {
+      return delegate.receive(dst)
     }
+    catch (error: IOException) {
+      val e = error
+      if (
+        e.message == "Stream closed" && e.stackTrace.firstOrNull()?.className == "java.io.BufferedInputStream"
+      ) {
+        return ReadResult.fromNumberOfReadBytes(-1)
+      }
+      throw e
+    }
+  }
 
   override suspend fun close(): Unit = delegate.close()
 }

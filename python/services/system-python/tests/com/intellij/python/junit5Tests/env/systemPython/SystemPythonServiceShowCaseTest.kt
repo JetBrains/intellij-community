@@ -50,7 +50,7 @@ class SystemPythonServiceShowCaseTest {
       val eelApi = systemPython.pythonBinary.getEelDescriptor().upgrade()
       val process = eelApi.exec.spawnProcess(systemPython.pythonBinary.pathString, "--version").eelIt()
       val output = async {
-        (if (systemPython.languageLevel.isPy3K) process.stdout else process.stderr).readWholeText().getOrThrow()
+        (if (systemPython.languageLevel.isPy3K) process.stdout else process.stderr).readWholeText()
       }
       Assertions.assertEquals(0, process.exitCode.await(), "Wrong exit code")
       val versionString = PythonSdkFlavor.getLanguageLevelFromVersionStringStaticSafe(output.await())!!

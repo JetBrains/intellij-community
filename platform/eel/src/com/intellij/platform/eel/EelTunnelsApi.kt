@@ -48,8 +48,8 @@ sealed interface EelTunnelsApi {
 
   data class ListenOnUnixSocketResult(
     val unixSocketPath: String,
-    val tx: EelSendChannel<IOException>,
-    val rx: EelReceiveChannel<IOException>,
+    val tx: EelSendChannel,
+    val rx: EelReceiveChannel,
   )
 
   sealed interface CreateFilePath {
@@ -191,12 +191,12 @@ sealed interface EelTunnelsApi {
     /**
      * A channel to the server
      */
-    val sendChannel: EelSendChannel<IOException>
+    val sendChannel: EelSendChannel
 
     /**
      * A channel from the server
      */
-    val receiveChannel: EelReceiveChannel<IOException>
+    val receiveChannel: EelReceiveChannel
 
     /**
      * Configure various socket options
@@ -295,13 +295,13 @@ interface ConfigurableClientSocket : ConfigurableSocket {
  * Convenience operator to decompose connection to a pair of channels when needed.
  * @return channel to server
  */
-operator fun Connection.component1(): EelSendChannel<IOException> = sendChannel
+operator fun Connection.component1(): EelSendChannel = sendChannel
 
 /**
  * Convenience operator to decompose connection to a pair of channels when needed.
  * @return channel from server
  */
-operator fun Connection.component2(): EelReceiveChannel<IOException> = receiveChannel
+operator fun Connection.component2(): EelReceiveChannel = receiveChannel
 
 interface EelTunnelsPosixApi : EelTunnelsApi {
 

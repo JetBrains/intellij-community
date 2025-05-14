@@ -127,7 +127,7 @@ class EelLocalExecApiTest {
         else {
           process.stdout // stderr is redirected to stdout when launched with PTY
         }
-        while (helloStream.receive(text).getOrThrow() != ReadResult.EOF) {
+        while (helloStream.receive(text) != ReadResult.EOF) {
           if (HELLO in text.slice(0, text.position()).decodeString()) break
         }
       }
@@ -140,7 +140,7 @@ class EelLocalExecApiTest {
     var ttyState: TTYState? = null
     text.clear()
     while (ttyState == null) {
-      process.stdout.receive(text).getOrThrow()
+      process.stdout.receive(text)
       // tty might insert "\r\n", we need to remove them, hence, NEW_LINES.
       // Schlemiel the Painter's Algorithm is OK in tests: do not use in production
       ttyState = TTYState.deserializeIfValid(text.slice(0, text.position()).decodeString().replace(NEW_LINES, ""))
@@ -224,7 +224,7 @@ class EelLocalExecApiTest {
    *
    * @see `com.pty4j.PtyProcessBuilder.setUnixOpenTtyToPreserveOutputAfterTermination`
    */
-  private fun EelReceiveChannel<IOException>.readAllBytesAsync(coroutineScope: CoroutineScope) {
+  private fun EelReceiveChannel.readAllBytesAsync(coroutineScope: CoroutineScope) {
     coroutineScope.launch {
       readAllBytes()
     }
@@ -234,6 +234,6 @@ class EelLocalExecApiTest {
    * Sends [command] to the helper and flush
    */
   private suspend fun EelProcess.sendCommand(command: Command) {
-    stdin.sendWholeText(command.name + "\n").getOrThrow()
+    stdin.sendWholeText(command.name + "\n")
   }
 }

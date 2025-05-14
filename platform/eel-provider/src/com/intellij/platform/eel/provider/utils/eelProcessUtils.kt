@@ -5,8 +5,6 @@ package com.intellij.platform.eel.provider.utils
 
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.eel.*
-import com.intellij.platform.eel.provider.ResultErrImpl
-import com.intellij.platform.eel.provider.ResultOkImpl
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -56,11 +54,11 @@ suspend fun EelProcess.awaitProcessResult(): EelProcessExecutionResult {
       ByteArrayOutputStream().use { err ->
         coroutineScope {
           launch {
-            copy(stdout, out.asEelChannel()).getOrThrow() // TODO: process errors
+            copy(stdout, out.asEelChannel()) // TODO: process errors
           }
 
           launch {
-            copy(stderr, err.asEelChannel()).getOrThrow() // TODO: process errors
+            copy(stderr, err.asEelChannel()) // TODO: process errors
           }
         }
 
