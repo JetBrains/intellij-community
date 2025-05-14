@@ -1,0 +1,26 @@
+<component name="libraryTable">
+  <library name="kotlinx-io-core" type="repository">
+    <properties maven-id="org.jetbrains.kotlinx:kotlinx-io-core-jvm:0.6.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-io-core-jvm/0.6.0/kotlinx-io-core-jvm-0.6.0.jar">
+          <sha256sum>42523c80823d31ef59fae42c9252ef1d3b1189ca9d3cc3adfd402a29d063e6ff</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-io-bytestring-jvm/0.6.0/kotlinx-io-bytestring-jvm-0.6.0.jar">
+          <sha256sum>baa77a783d70a66af88d6898a1d4971e4aa84e62b26418057379bdf09fb5bada</sha256sum>
+        </artifact>
+      </verification>
+      <exclude>
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-io-core-jvm/0.6.0/kotlinx-io-core-jvm-0.6.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-io-bytestring-jvm/0.6.0/kotlinx-io-bytestring-jvm-0.6.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-io-core-jvm/0.6.0/kotlinx-io-core-jvm-0.6.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-io-bytestring-jvm/0.6.0/kotlinx-io-bytestring-jvm-0.6.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

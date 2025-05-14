@@ -51,6 +51,7 @@
     <orderEntry type="library" name="kotlinx-coroutines-slf4j" level="project" />
     <orderEntry type="library" scope="TEST" name="ktor-client-mock" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-test" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.io" />
     <orderEntry type="module" module-name="intellij.libraries.ktor.client" />
     <orderEntry type="library" exported="" name="package-search-api-client" level="project" />
     <orderEntry type="library" name="kotlinx-document-store-mvstore" level="project" />

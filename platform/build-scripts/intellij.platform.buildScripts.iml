@@ -241,6 +241,7 @@
     <orderEntry type="module" module-name="intellij.platform.boot" />
     <orderEntry type="module" module-name="intellij.platform.ijent.community.buildConstants" />
     <orderEntry type="library" name="ktor-client-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.io" />
     <orderEntry type="library" scope="RUNTIME" name="snakeyaml" level="project" />
     <orderEntry type="library" name="netty" level="project" />
     <orderEntry type="library" name="netty-tcnative-boringssl" level="project" />

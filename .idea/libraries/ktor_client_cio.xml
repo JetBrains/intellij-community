@@ -32,12 +32,6 @@
         <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/3.0.3/ktor-io-jvm-3.0.3.jar">
           <sha256sum>587f6aa4a22daf484ebb84ee5513f1b898e0feeeac714bd2fe0dd2232f57ade5</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-io-core-jvm/0.5.4/kotlinx-io-core-jvm-0.5.4.jar">
-          <sha256sum>dc3587c12795af01231591c0ef09a4139dfca8113c2989273b96b958006853c3</sha256sum>
-        </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-io-bytestring-jvm/0.5.4/kotlinx-io-bytestring-jvm-0.5.4.jar">
-          <sha256sum>1fc96e19b445387dbc49183d0cc623c5a61bfa47c86cf81aaf5aff4845154fab</sha256sum>
-        </artifact>
         <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/3.0.3/ktor-websockets-jvm-3.0.3.jar">
           <sha256sum>4ecb08d33dc0d7c9d6b943b2b3e706f3d55fabef584b0c72fb2f0c5ba8a0eb7a</sha256sum>
         </artifact>
@@ -54,6 +48,7 @@
         <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm" />
         <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
         <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-slf4j" />
+        <dependency maven-id="org.jetbrains.kotlinx:kotlinx-io-core-jvm" />
       </exclude>
     </properties>
     <CLASSES>
@@ -67,8 +62,6 @@
       <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-cio-jvm/3.0.3/ktor-http-cio-jvm-3.0.3.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-jvm/3.0.3/ktor-network-jvm-3.0.3.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/3.0.3/ktor-io-jvm-3.0.3.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-io-core-jvm/0.5.4/kotlinx-io-core-jvm-0.5.4.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-io-bytestring-jvm/0.5.4/kotlinx-io-bytestring-jvm-0.5.4.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/3.0.3/ktor-websockets-jvm-3.0.3.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-tls-jvm/3.0.3/ktor-network-tls-jvm-3.0.3.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/3.0.3/ktor-utils-jvm-3.0.3.jar!/" />
@@ -85,8 +78,6 @@
       <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-cio-jvm/3.0.3/ktor-http-cio-jvm-3.0.3-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-jvm/3.0.3/ktor-network-jvm-3.0.3-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/3.0.3/ktor-io-jvm-3.0.3-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-io-core-jvm/0.5.4/kotlinx-io-core-jvm-0.5.4-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-io-bytestring-jvm/0.5.4/kotlinx-io-bytestring-jvm-0.5.4-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/3.0.3/ktor-websockets-jvm-3.0.3-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-tls-jvm/3.0.3/ktor-network-tls-jvm-3.0.3-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/3.0.3/ktor-utils-jvm-3.0.3-sources.jar!/" />

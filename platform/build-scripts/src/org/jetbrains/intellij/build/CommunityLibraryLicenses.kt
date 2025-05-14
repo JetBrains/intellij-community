@@ -787,6 +787,10 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/Kotlin/kotlinx.coroutines/blob/master/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
+    LibraryLicense("Kotlin library providing basic IO primitives", libraryName = "kotlinx-io-core", url = "https://github.com/Kotlin/kotlinx-io")
+      .apache("https://github.com/Kotlin/kotlinx-io/blob/master/LICENSE")
+      .suppliedByOrganizations(Suppliers.JETBRAINS),
+
     LibraryLicense("Kotlin multiplatform / multi-format serialization", libraryName = "kotlinx-serialization-core", url = "https://github.com/Kotlin/kotlinx.serialization")
       .apache("https://github.com/Kotlin/kotlinx.serialization/blob/master/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),

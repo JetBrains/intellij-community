@@ -23,5 +23,6 @@
     <orderEntry type="library" name="okhttp" level="project" />
     <orderEntry type="library" name="ktor-client-core" level="project" />
     <orderEntry type="library" name="hash4j" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="kotlinx-io-core" level="project" />
   </component>
 </module>

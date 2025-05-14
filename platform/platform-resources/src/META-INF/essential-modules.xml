@@ -4,6 +4,8 @@
     <module name="intellij.libraries.ktor.client"/>
     <module name="intellij.libraries.ktor.client.cio"/>
 
+    <module name="intellij.libraries.kotlinx.io"/>
+
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.rpc.backend"/>
     <module name="intellij.platform.kernel.impl"/>
