@@ -56,7 +56,7 @@ internal val customModules: Map<String, CustomModuleDescription> = listOf(
   CustomModuleDescription(moduleName = "intellij.platform.jps.build.dependencyGraph", bazelPackage = "@rules_jvm//dependency-graph", bazelTargetName = "dependency-graph",
                           outputDirectory = "out/bazel-out/rules_jvm+/\${CONF}/bin/dependency-graph"),
   CustomModuleDescription(moduleName = "intellij.platform.jps.build.javac.rt", bazelPackage = "@rules_jvm//jps-builders-6", bazelTargetName = "build-javac-rt",
-                          outputDirectory = "out/bazel-out/rules_jvm+/\${CONF}/bin/build-javac-rt"),
+                          outputDirectory = "out/bazel-out/rules_jvm+/\${CONF}/bin/jps-builders-6"),
 ).associateBy { it.moduleName }
 
 @Suppress("ReplaceGetOrSet")
