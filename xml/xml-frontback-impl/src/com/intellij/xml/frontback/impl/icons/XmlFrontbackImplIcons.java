@@ -15,7 +15,7 @@ public final class XmlFrontbackImplIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, XmlFrontbackImplIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 30x16 */ public static final @NotNull Icon BaselineHigh = load("icons/baseline-high.svg", 177995492, 2);
-  /** 30x16 */ public static final @NotNull Icon BaselineLow = load("icons/baseline-low.svg", 1079046063, 2);
-  /** 30x16 */ public static final @NotNull Icon BaselineNone = load("icons/baseline-none.svg", 717041609, 2);
+  /** 20x16 */ public static final @NotNull Icon BaselineHigh = load("icons/baseline-high.svg", -1850171986, 2);
+  /** 20x16 */ public static final @NotNull Icon BaselineLow = load("icons/baseline-low.svg", -723775788, 2);
+  /** 20x16 */ public static final @NotNull Icon BaselineNone = load("icons/baseline-none.svg", 921481460, 2);
 }
