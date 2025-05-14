@@ -195,7 +195,7 @@ internal abstract class GitBranchesTreeModel(
    */
   fun isSelectable(node: Any?): Boolean {
     val userValue = node ?: return false
-    return (userValue is RepositoryNode && (userValue.isLeaf || this !is GitBranchesTreeMultiRepoFilteringModel)) ||
+    return (userValue is RepositoryNode && userValue.isLeaf) ||
            userValue is GitReference ||
            userValue is RefUnderRepository ||
            (userValue is PopupFactoryImpl.ActionItem && userValue.isEnabled)

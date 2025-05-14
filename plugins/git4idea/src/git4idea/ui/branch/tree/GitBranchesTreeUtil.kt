@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.tree
 
 import com.intellij.openapi.project.Project
@@ -39,7 +39,7 @@ object GitBranchesTreeUtil {
     return when (node) {
       is PopupFactoryImpl.ActionItem -> GitBranchesTreePopupFilterByAction.isSelected(project)
       is GitBranchesTreeModel.RepositoryNode -> {
-        if (model is GitBranchesTreeMultiRepoFilteringModel && !node.isLeaf) false else GitBranchesTreePopupFilterByRepository.isSelected(project)
+        if (!node.isLeaf) false else GitBranchesTreePopupFilterByRepository.isSelected(project)
       }
       else -> model.isLeaf(node)
     }
