@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
 import com.intellij.application.options.CodeStyle;
@@ -62,12 +62,14 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     super.setUp();
     JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
     boolean preserveModuleImports = javaSettings.isPreserveModuleImports();
+    boolean deleteUnusedModuleImports = javaSettings.isDeleteUnusedModuleImports();
     PackageEntryTable table = javaSettings.IMPORT_LAYOUT_TABLE;
     int classOnDemand = javaSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND;
     int namesOnDemand = javaSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND;
     Disposer.register(getTestRootDisposable(), new Disposable() {
       @Override
       public void dispose() {
+        javaSettings.setDeleteUnusedModuleImports(deleteUnusedModuleImports);
         javaSettings.setPreserveModuleImports(preserveModuleImports);
         javaSettings.IMPORT_LAYOUT_TABLE = table;
         javaSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = classOnDemand;
@@ -171,6 +173,18 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   }
 
   public void testConflictModuleImport(){
+    JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(true);
+    myFixture.addClass("package p1; public class List {}");
+    myFixture.addClass("package p1; public class A1 {}");
+    myFixture.addClass("package p1; public class A2 {}");
+    myFixture.addClass("package p1; public class A3 {}");
+    myFixture.addClass("package p1; public class A4 {}");
+    myFixture.addClass("package p1; public class A5 {}");
+    doTest();
+  }
+
+  public void testConflictModuleImportDoNotDeleteModule(){
+    JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
     myFixture.addClass("package p1; public class List {}");
     myFixture.addClass("package p1; public class A1 {}");
     myFixture.addClass("package p1; public class A2 {}");
@@ -754,7 +768,8 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   }
 
 
-  public void testDoNotInsertImportForClassVisibleByInheritanceWithModuleConflict() {
+  public void testDoNotInsertImportForClassVisibleByInheritanceWithModuleConflictDoNotDeleteModule() {
+    JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
     myFixture.addClass("""
                          package one;
                          public interface Super {
@@ -783,7 +798,43 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
                          """);
     doTest();
   }
-  
+
+  public void testDoNotInsertImportForClassVisibleByInheritanceWithModuleConflict() {
+    JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(true);
+    myFixture.addClass("""
+                         package one;
+                         public interface Super {
+                           class List {}
+                         
+                           List x();
+                         }
+                         """);
+    myFixture.addClass("""
+                         package two;
+                         public class List {}
+                         public class One {}
+                         public class Two {}
+                         public class Three {}
+                         public class Four {}
+                         public class Five {}
+                         """);
+    myFixture.addClass("""
+                         package three;
+                         public class List {}
+                         public class Six {}
+                         public class Seven {}
+                         public class Eight {}
+                         public class Nine {}
+                         public class Ten {}
+                         """);
+    doTest();
+  }
+
+  public void testNotDeleteModuleImport() {
+    JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
+    doTest();
+  }
+
   public void testUnresolvedReferenceAfterParenthesis() {
     doTest();
   }

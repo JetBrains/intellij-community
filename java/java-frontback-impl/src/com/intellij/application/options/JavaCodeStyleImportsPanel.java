@@ -21,6 +21,7 @@ import java.util.List;
 class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
   private FullyQualifiedNamesInJavadocOptionProvider myFqnInJavadocOption;
   private @Nullable JCheckBox myCbPreserveModuleImports;
+  private @Nullable JCheckBox myCbDeleteUnusedModuleImports;
   private ListTableModel<InnerClassItem> doNotInsertInnerListModel;
 
   private static final ColumnInfo<?, ?>[] INNER_CLASS_COLUMNS = {
@@ -45,10 +46,11 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
   @Override
   protected CodeStyleImportsBaseUI createKotlinUI(JComponent packages, JComponent importLayout) {
     createDoNotImportInnerList();
-    myCbPreserveModuleImports = new JBCheckBox(JavaFrontbackBundle.message("checkbox.preserve.module.import"));
+    myCbPreserveModuleImports = new JBCheckBox(JavaFrontbackBundle.message("checkbox.no.separate.module.import"));
+    myCbDeleteUnusedModuleImports = new JBCheckBox(JavaFrontbackBundle.message("checkbox.delete.unused.module.import"));
     myFqnInJavadocOption = new FullyQualifiedNamesInJavadocOptionProvider();
     JavaCodeStyleImportsUI result =
-      new JavaCodeStyleImportsUI(packages, importLayout, mydoNotInsertInnerTable, myCbPreserveModuleImports, myFqnInJavadocOption.getPanel());
+      new JavaCodeStyleImportsUI(packages, importLayout, mydoNotInsertInnerTable, myCbPreserveModuleImports, myCbDeleteUnusedModuleImports, myFqnInJavadocOption.getPanel());
     result.init();
     return result;
   }
@@ -60,6 +62,8 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
     myFqnInJavadocOption.apply(settings);
     JCheckBox cbPreserveModuleImports = myCbPreserveModuleImports;
     if(cbPreserveModuleImports!=null) javaSettings.setPreserveModuleImports(cbPreserveModuleImports.isSelected());
+    JCheckBox cbDeleteUnusedModuleImports = myCbDeleteUnusedModuleImports;
+    if(cbDeleteUnusedModuleImports!=null) javaSettings.setDeleteUnusedModuleImports(cbDeleteUnusedModuleImports.isSelected());
     javaSettings.setDoNotImportInner(getInnerClassesNames());
     javaSettings.setLayoutOnDemandImportFromSamePackageFirst(myImportLayoutPanel.isLayoutOnDemandImportsFromSamePackageFirst());
   }
@@ -76,6 +80,9 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
     JCheckBox cbPreserveModuleImports = myCbPreserveModuleImports;
     if (cbPreserveModuleImports != null) cbPreserveModuleImports.setSelected(javaSettings.isPreserveModuleImports());
 
+    JCheckBox cbDeleteUnusedModuleImports = myCbDeleteUnusedModuleImports;
+    if (cbDeleteUnusedModuleImports != null) cbDeleteUnusedModuleImports.setSelected(javaSettings.isDeleteUnusedModuleImports());
+
     JBCheckBox cbLayoutOnDemandImportsFromSamePackageFirst = myImportLayoutPanel.getCbLayoutOnDemandImportsFromSamePackageFirst();
     if (cbLayoutOnDemandImportsFromSamePackageFirst != null) cbLayoutOnDemandImportsFromSamePackageFirst.setSelected(javaSettings.isLayoutOnDemandImportFromSamePackageFirst());
   }
@@ -88,10 +95,13 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
     isModified |= !javaSettings.getDoNotImportInner().equals(getInnerClassesNames());
 
     JCheckBox cbPreserveModuleImports = myCbPreserveModuleImports;
-    if (cbPreserveModuleImports != null) isModified |= CodeStyleImportsPanelBase.isModified(cbPreserveModuleImports, javaSettings.isPreserveModuleImports());
+    if (cbPreserveModuleImports != null) isModified |= isModified(cbPreserveModuleImports, javaSettings.isPreserveModuleImports());
+
+    JCheckBox cbDeleteUnusedModuleImports = myCbDeleteUnusedModuleImports;
+    if (cbDeleteUnusedModuleImports != null) isModified |= isModified(cbDeleteUnusedModuleImports, javaSettings.isDeleteUnusedModuleImports());
 
     JBCheckBox cbLayoutOnDemandImportsFromSamePackageFirst = myImportLayoutPanel.getCbLayoutOnDemandImportsFromSamePackageFirst();
-    if (cbLayoutOnDemandImportsFromSamePackageFirst != null) isModified |= CodeStyleImportsPanelBase.isModified(cbLayoutOnDemandImportsFromSamePackageFirst, javaSettings.isLayoutOnDemandImportFromSamePackageFirst());
+    if (cbLayoutOnDemandImportsFromSamePackageFirst != null) isModified |= isModified(cbLayoutOnDemandImportsFromSamePackageFirst, javaSettings.isLayoutOnDemandImportFromSamePackageFirst());
     return isModified;
   }
 

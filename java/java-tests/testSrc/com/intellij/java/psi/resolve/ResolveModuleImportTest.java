@@ -1,18 +1,21 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.resolve;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase;
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -43,6 +46,16 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
                                                 getJarRootUrls("lib/moduleA-1.0-sources.jar"));
     ModuleRootModificationUtil.addModuleLibrary(getModule(), "moduleB", getJarRootUrls("lib/moduleB-1.0.jar"),
                                                 getJarRootUrls("lib/moduleB-1.0-sources.jar"));
+
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+    boolean deleteUnusedModuleImports = javaSettings.isDeleteUnusedModuleImports();
+    Disposer.register(getTestRootDisposable(), new Disposable() {
+      @Override
+      public void dispose() {
+        javaSettings.setDeleteUnusedModuleImports(deleteUnusedModuleImports);
+      }
+    });
+    javaSettings.setDeleteUnusedModuleImports(false);
   }
 
   private List<String> getJarRootUrls(String path) {
@@ -382,6 +395,7 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
   }
 
   public void testOptimizeImportWithSimilarNames() {
+    JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
     addCode("module-info.java", """
     module my.source.moduleB {
       exports my.source.moduleB;

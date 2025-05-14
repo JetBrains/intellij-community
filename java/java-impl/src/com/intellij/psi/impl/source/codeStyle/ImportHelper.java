@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -124,7 +124,11 @@ public final class ImportHelper extends ImportHelperBase {
     ImportUtils.ImplicitImportChecker checker = ImportUtils.createImplicitImportChecker(file);
     Set<String> classesToUseSingle = findSingleImports(file, resultList, classesOrPackagesToImportOnDemand.keySet(),
                                                        moduleStatementMap.keySet(), checker);
-    Set<String> toReimport = calculateOnDemandImportConflicts(file, classesOrPackagesToImportOnDemand, moduleStatementMap.values(),
+
+    Collection<PsiImportModuleStatement> moduleImports =
+      mySettings.isDeleteUnusedModuleImports() ? moduleStatementMap.values() : previousModuleStatements;
+
+    Set<String> toReimport = calculateOnDemandImportConflicts(file, classesOrPackagesToImportOnDemand, moduleImports,
                                                               moduleStatementMap.keySet());
     classesToUseSingle.addAll(toReimport);
 
@@ -138,6 +142,7 @@ public final class ImportHelper extends ImportHelperBase {
                             classesToUseSingle,
                             checker,
                             moduleStatementMap,
+                            previousModuleStatements,
                             onDemandFirst,
                             items.moduleIndex());
       for (PsiElement nonImport : nonImports) {
@@ -199,9 +204,8 @@ public final class ImportHelper extends ImportHelperBase {
   private static @NotNull Map<String, PsiImportModuleStatement> collectNamesImportedByModules(@NotNull PsiJavaFile file,
                                                                                               @NotNull List<PsiImportModuleStatement> statements,
                                                                                               @NotNull List<Import> list) {
-    List<PsiImportStatementBase> implicitImports = ImportsUtil.getAllImplicitImports(file);
     List<PsiImportModuleStatement> moduleImports =
-      new ArrayList<>(ContainerUtil.filterIsInstance(implicitImports, PsiImportModuleStatement.class));
+      new ArrayList<>(ContainerUtil.filterIsInstance(ImportsUtil.getAllImplicitImports(file), PsiImportModuleStatement.class));
     moduleImports.addAll(statements);
 
     Map<String, PsiImportModuleStatement> usedClasses = new HashMap<>();
@@ -227,6 +231,7 @@ public final class ImportHelper extends ImportHelperBase {
 
   /**
    * Collects the module import statements from the specified Java file, considering the code style settings, to insert in the new import list
+   * If there are two modules, one of which (parent) includes another, only this parent will be taken
    *
    * @param file     the Java file from which module import statements are collected.
    * @param settings the code style settings that determine whether module imports should be preserved.
@@ -236,7 +241,7 @@ public final class ImportHelper extends ImportHelperBase {
     if (!settings.isPreserveModuleImports()) return Collections.emptyList();
     PsiImportList importList = file.getImportList();
     if (importList == null) return Collections.emptyList();
-    return Arrays.asList(importList.getImportModuleStatements());
+    return ImportUtils.optimizeModuleImports(file);
   }
 
   public static void collectOnDemandImports(@NotNull List<Import> resultList,
@@ -504,11 +509,12 @@ public final class ImportHelper extends ImportHelperBase {
     return result;
   }
 
-  private static @NotNull StringBuilder buildImportListText(@NotNull List<Import> imports,
+  private @NotNull StringBuilder buildImportListText(@NotNull List<Import> imports,
                                                             @NotNull Set<String> packagesOrClassesToImportOnDemand,
                                                             @NotNull Set<String> namesToUseSingle,
                                                             @NotNull ImportUtils.ImplicitImportChecker implicitImportContext,
                                                             @NotNull Map<String, PsiImportModuleStatement> moduleStatementMap,
+                                                            @NotNull List<PsiImportModuleStatement> previousModuleStatements,
                                                             boolean onDemandImportsFirst,
                                                             int moduleIndex) {
     Set<String> importedPackagesOrClasses = new HashSet<>();
@@ -547,6 +553,9 @@ public final class ImportHelper extends ImportHelperBase {
       }
     }
 
+    if (!mySettings.isDeleteUnusedModuleImports()) {
+      usedModuleImports = new HashSet<>(previousModuleStatements);
+    }
     StringBuilder moduleStatements = new StringBuilder();
     usedModuleImports.stream()
       .sorted(Comparator.comparing(m -> {

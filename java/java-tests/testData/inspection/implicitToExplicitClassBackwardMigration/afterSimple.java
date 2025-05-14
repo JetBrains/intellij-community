@@ -1,3 +1,5 @@
+import module java.base;
+
 public class beforeSimple {
     private final String field = "field";
 

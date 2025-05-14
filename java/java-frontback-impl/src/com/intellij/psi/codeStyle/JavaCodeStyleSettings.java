@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -177,6 +177,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   public boolean LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
   public boolean LAYOUT_ON_DEMAND_IMPORT_FROM_SAME_PACKAGE_FIRST = true;
   public boolean PRESERVE_MODULE_IMPORTS = true;
+  public boolean DELETE_UNUSED_MODULE_IMPORTS = false;
   public boolean USE_FQ_CLASS_NAMES;
   public boolean USE_SINGLE_CLASS_IMPORTS = true;
   public boolean INSERT_INNER_CLASS_IMPORTS;
@@ -361,6 +362,14 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
 
   public void setPreserveModuleImports(boolean value) {
     PRESERVE_MODULE_IMPORTS = value;
+  }
+
+  public boolean isDeleteUnusedModuleImports() {
+    return DELETE_UNUSED_MODULE_IMPORTS;
+  }
+
+  public void setDeleteUnusedModuleImports(boolean value) {
+    this.DELETE_UNUSED_MODULE_IMPORTS = value;
   }
 
   @Override

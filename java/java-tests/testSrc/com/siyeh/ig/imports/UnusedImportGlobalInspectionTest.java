@@ -1,12 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.imports;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.InspectionTestUtil;
 import com.intellij.testFramework.InspectionsKt;
@@ -19,6 +22,21 @@ import java.io.File;
 import java.util.Collections;
 
 public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+    boolean deleteUnusedModuleImports = javaSettings.isDeleteUnusedModuleImports();
+    Disposer.register(getTestRootDisposable(), new Disposable() {
+      @Override
+      public void dispose() {
+        javaSettings.setDeleteUnusedModuleImports(deleteUnusedModuleImports);
+      }
+    });
+    javaSettings.setDeleteUnusedModuleImports(false);
+  }
+
   @Override
   protected String getTestDataPath() {
     return PathManagerEx.getCommunityHomePath() + "/java/java-tests/testData/ig/com/siyeh/igtest/imports/globalInspection";
@@ -372,6 +390,7 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
   public void testRedundantImportModuleWithNotRedundantPackage() {
     IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(),
                            () -> {
+                             JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(true);
                              myFixture.addClass("""
                                                   package a.b;
                                                   
@@ -380,6 +399,53 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
                                                   """);
                              doTest("""
                                       /*Unused import 'import module java.base;'*/import module java.base;/**/
+                                      import a.b.*;
+                                      
+                                      class Main {
+                                          public static void main(String[] args) {
+                                              List a;
+                                          }
+                                      }
+                                      """);
+                           });
+  }
+
+  public void testNotShowRedundantImportModuleWithNotRedundantPackage() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(),
+                           () -> {
+                             JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
+                             myFixture.addClass("""
+                                                  package a.b;
+                                                  
+                                                  public final class List {
+                                                  }
+                                                  """);
+                             doTest("""
+                                      import module java.base;
+                                      import a.b.*;
+                                      
+                                      class Main {
+                                          public static void main(String[] args) {
+                                              List a;
+                                          }
+                                      }
+                                      """);
+                           });
+  }
+
+  public void testDuplicatedRedundantImportModuleWithNotRedundantPackage() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(),
+                           () -> {
+                             JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
+                             myFixture.addClass("""
+                                                  package a.b;
+                                                  
+                                                  public final class List {
+                                                  }
+                                                  """);
+                             doTest("""
+                                      /*Unused import 'import module java.base;'*/ import module java.base;/**/
+                                      import module java.base;
                                       import a.b.*;
                                       
                                       class Main {

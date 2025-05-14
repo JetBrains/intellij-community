@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaFileCodeStyleFacade;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.*;
@@ -856,6 +857,48 @@ public final class ImportUtils {
     cachedValue.put(fullyQualifiedName, conflictingRef);
 
     return conflictingRef.booleanValue();
+  }
+
+  /**
+   * Optimizes the module imports within the specified Java file by removing module import statements,
+   * which are included in other module import statements.
+   *
+   * @param file the Java file for which module imports need to be optimized
+   * @return a list of optimized module import statements.
+   */
+  @NotNull
+  public static List<PsiImportModuleStatement> optimizeModuleImports(@NotNull PsiJavaFile file) {
+    return CachedValuesManager.getCachedValue(file, () -> {
+      PsiImportList importList = file.getImportList();
+      if (importList == null) {
+        return new CachedValueProvider.Result<>(List.of(), PsiModificationTracker.MODIFICATION_COUNT);
+      }
+      List<PsiImportModuleStatement> statements = Arrays.asList((importList.getImportModuleStatements()));
+      List<PsiImportModuleStatement> implicit =
+        ContainerUtil.filterIsInstance(getAllImplicitImports(file), PsiImportModuleStatement.class);
+      List<PsiImportModuleStatement> results = new ArrayList<>(statements);
+      Map<PsiImportModuleStatement, PsiJavaModule> modules = new HashMap<>();
+      Map<PsiJavaModule, Set<PsiJavaModule>> dependencies = new HashMap<>();
+      Set<PsiImportModuleStatement> toDelete = new HashSet<>();
+      for (PsiImportModuleStatement current : statements) {
+        PsiJavaModule currentModule = modules.computeIfAbsent(current, m -> m.resolveTargetModule());
+        if (currentModule == null) continue;
+        for (PsiImportModuleStatement higher : ContainerUtil.concat(implicit, statements)) {
+          if(toDelete.contains(higher)) continue;
+          if (higher == current) continue;
+          PsiJavaModule higherModule = modules.computeIfAbsent(higher, m -> m.resolveTargetModule());
+          if (higherModule == null) continue;
+          Set<PsiJavaModule> higherDependencies =
+            dependencies.computeIfAbsent(higherModule, m -> JavaResolveUtil.getAllTransitiveModulesIncludeCurrent(m));
+          if (higherDependencies.contains(currentModule)) {
+            toDelete.add(current);
+            break;
+          }
+        }
+      }
+      results.removeAll(toDelete);
+      return new CachedValueProvider.Result<>(results, PsiModificationTracker.MODIFICATION_COUNT);
+    });
   }
 
   private static class ConflictingClassReferenceVisitor extends JavaRecursiveElementWalkingVisitor {

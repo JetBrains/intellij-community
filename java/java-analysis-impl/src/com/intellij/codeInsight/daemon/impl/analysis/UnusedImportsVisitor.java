@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -29,11 +29,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -164,6 +167,13 @@ class UnusedImportsVisitor extends JavaElementVisitor {
           String name = psiClass.getName();
           isRedundant = qName.equals(packageName + '.' + name);
         }
+      }
+    }
+    if (isRedundant && importStatement instanceof PsiImportModuleStatement moduleStatement &&
+        !JavaCodeStyleSettings.getInstance(javaFile).isDeleteUnusedModuleImports()) {
+      List<PsiImportModuleStatement> moduleStatements = ImportUtils.optimizeModuleImports(javaFile);
+      if (moduleStatements.contains(moduleStatement)) {
+        return false;
       }
     }
     return isRedundant;

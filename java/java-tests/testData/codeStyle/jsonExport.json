@@ -69,6 +69,7 @@
       "class_names_in_javadoc": 1,
       "continuation_indent_size": 8,
       "deconstruction_list_wrap": "normal",
+      "delete_unused_module_imports": false,
       "do_not_indent_top_level_class_members": false,
       "do_not_wrap_after_single_annotation": false,
       "do_not_wrap_after_single_annotation_in_parameter": false,

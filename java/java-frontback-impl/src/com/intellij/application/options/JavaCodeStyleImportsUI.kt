@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options
 
 import com.intellij.application.options.JavaCodeStyleImportsPanel.InnerClassItem
@@ -19,6 +19,7 @@ internal class JavaCodeStyleImportsUI(packages: JComponent,
                                       importLayout: JComponent,
                                       private val doNotInsertInnerTable: TableView<InnerClassItem>,
                                       private val preserveModuleImports: JCheckBox,
+                                      private val deleteUnusedModuleImports: JCheckBox,
                                       private val fqnInJavadocOption: JComponent) : CodeStyleImportsBaseUI(packages, importLayout) {
 
   override fun init() {
@@ -31,6 +32,11 @@ internal class JavaCodeStyleImportsUI(packages: JComponent,
   override fun Panel.fillCustomOptions() {
     row {
       cell(preserveModuleImports).applyToComponent {
+        isOpaque = false
+      }
+    }
+    row {
+      cell(deleteUnusedModuleImports).applyToComponent {
         isOpaque = false
       }
     }
