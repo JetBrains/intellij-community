@@ -227,6 +227,32 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
     Assert.assertTrue(contentUpdatedEvents.joinToString("\n") { it.text }, suffixFound)
   }
 
+  /**
+   * $# variable value is the number of the parameters passed to the enclosing function.
+   * User's shell scripts should be sourced in the global scope instead of the function.
+   * So, this variable should be zero during user scripts sourcing.
+   */
+  @Test
+  fun `zsh $# variable is zero during user scripts sourcing`() = timeoutRunBlocking(30.seconds) {
+    Assume.assumeTrue(shellPath.name == "zsh")
+
+    val warningText = "variable is not zero"
+    val dir = Files.createTempDirectory("zsh-custom-zdotdir")
+    Files.writeString(dir.resolve(".zshrc"), """
+      if [[ $# -gt 0 ]]; then
+        echo "$warningText"
+      fi
+    """.trimIndent())
+
+    val envs = mapOf("ZDOTDIR" to dir.toString())
+    val options = ShellStartupOptions.Builder().envVariables(envs).build()
+    val events = startSessionAndCollectOutputEvents(options) {}
+    val output = calculateResultingOutput(events)
+
+    assertThat(output).doesNotContain(warningText)
+    Unit
+  }
+
   @Test
   fun `ZDOTDIR can be changed in zshenv`() = timeoutRunBlocking(30.seconds) {
     Assume.assumeTrue(shellPath.name == "zsh")
