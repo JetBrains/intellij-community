@@ -23,9 +23,9 @@ interface SeResultList {
       "CalculatorSEContributor",
       "AutocompletionContributor",
       "CommandsContributor",
+      if (AdvancedSettings.getBoolean("search.everywhere.recent.at.top")) RecentFilesSEContributor::class.java.getSimpleName() else null,
       SeTopHitItemsProvider.id(false),
       SeTopHitItemsProvider.id(true),
-      if (AdvancedSettings.getBoolean("search.everywhere.recent.at.top")) RecentFilesSEContributor::class.java.getSimpleName() else null
     ).map { SeProviderId(it) }
 
     val prioritizedProvidersPriorities: Map<SeProviderId, Int> = prioritizedProviders.withIndex().associate {
