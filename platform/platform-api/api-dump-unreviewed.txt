@@ -11004,6 +11004,7 @@ f:com.intellij.util.ui.LafIconLookup
 c:com.intellij.util.ui.ListTableModel
 - com.intellij.util.ui.TableViewModel
 - com.intellij.util.ui.EditableModel
+- p:myItems:java.util.List
 - <init>(com.intellij.util.ui.ColumnInfo[]):V
 - <init>(com.intellij.util.ui.ColumnInfo[],java.util.List):V
 - <init>(com.intellij.util.ui.ColumnInfo[],java.util.List,I):V
