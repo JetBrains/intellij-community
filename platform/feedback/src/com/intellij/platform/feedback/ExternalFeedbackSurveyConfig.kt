@@ -6,9 +6,9 @@ import com.intellij.openapi.project.Project
 /**
  * Represents the config for external feedback survey.
  *
- * @see com.intellij.platform.feedback.FeedbackSurveyConfig
+ * @see com.intellij.platform.feedback.NotificationBasedFeedbackSurveyConfig
  */
-interface ExternalFeedbackSurveyConfig : FeedbackSurveyConfig {
+interface ExternalFeedbackSurveyConfig : NotificationBasedFeedbackSurveyConfig {
 
   /**
    * Returns a link to a feedback survey on the web.

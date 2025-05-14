@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nls
  * @see com.intellij.platform.feedback.InIdeFeedbackSurveyConfig
  * @see com.intellij.platform.feedback.ExternalFeedbackSurveyConfig
  */
-interface FeedbackSurveyConfig {
+interface NotificationBasedFeedbackSurveyConfig {
 
   /**
    * Unique identifier reflecting the survey.

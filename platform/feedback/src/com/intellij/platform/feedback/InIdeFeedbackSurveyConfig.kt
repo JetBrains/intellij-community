@@ -8,9 +8,9 @@ import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
 /**
  * Represents the config for In-IDE feedback survey.
  *
- * @see com.intellij.platform.feedback.FeedbackSurveyConfig
+ * @see com.intellij.platform.feedback.NotificationBasedFeedbackSurveyConfig
  */
-interface InIdeFeedbackSurveyConfig : FeedbackSurveyConfig {
+interface InIdeFeedbackSurveyConfig : NotificationBasedFeedbackSurveyConfig {
 
   /**
    * Returns a dialog with the feedback survey.
