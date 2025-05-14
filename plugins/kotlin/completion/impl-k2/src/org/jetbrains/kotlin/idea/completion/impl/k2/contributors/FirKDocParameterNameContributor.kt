@@ -36,42 +36,38 @@ internal open class FirKDocParameterNameContributor(
         val alreadyDocumentedParameters = section.findTagsByName(PARAMETER_TAG_NAME).map { it.getSubjectName() }.toSet()
 
         val ownerDeclaration = positionContext.nameExpression.getContainingDoc().owner ?: return
-        val ownerDeclarationSymbol = ownerDeclaration.symbol
+        val symbolOrigin = CompletionSymbolOrigin.Scope(KaScopeKinds.LocalScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX))
 
-        getParametersForKDoc(ownerDeclarationSymbol)
-            .filter { (it.symbol as KaNamedSymbol).name.asString() !in alreadyDocumentedParameters }
-            .flatMap { createLookupElements(weighingContext, it) }
+        getParametersForKDoc(ownerDeclaration.symbol)
+            .filter { (it as KaNamedSymbol).name.asString() !in alreadyDocumentedParameters }
+            .flatMap { createLookupElements(it, symbolOrigin, weighingContext) }
             .forEach(sink::addElement)
     }
 
     context(KaSession)
-    @OptIn(KaExperimentalApi::class)
     private fun createLookupElements(
+        declarationSymbol: KaDeclarationSymbol,
+        symbolOrigin: CompletionSymbolOrigin,
         weighingContext: WeighingContext,
-        symbolWithOrigin: KtSymbolWithOrigin,
-    ): Sequence<LookupElement> {
-        val origin = symbolWithOrigin.origin
-        return when (val symbol = symbolWithOrigin.symbol) {
-            is KaTypeParameterSymbol ->
-                TypeParameterLookupElementFactory.createLookup(symbol)
-                    .applyWeighs(weighingContext, KtSymbolWithOrigin(symbol, origin))
-                    .let { sequenceOf(it) }
+    ): Sequence<LookupElement> = when (declarationSymbol) {
+        is KaTypeParameterSymbol -> TypeParameterLookupElementFactory.createLookup(declarationSymbol)
+            .applyWeighs(weighingContext, KtSymbolWithOrigin(declarationSymbol, symbolOrigin))
+            .let { sequenceOf(it) }
 
-            is KaValueParameterSymbol -> createCallableLookupElements(
-                context = weighingContext,
-                signature = symbol.asSignature(),
-                options = CallableInsertionOptions(ImportStrategy.DoNothing, CallableInsertionStrategy.AsIdentifier),
-                symbolOrigin = origin,
-            )
+        is KaValueParameterSymbol -> createCallableLookupElements(
+            context = weighingContext,
+            signature = @OptIn(KaExperimentalApi::class) (declarationSymbol.asSignature()),
+            options = CallableInsertionOptions(ImportStrategy.DoNothing, CallableInsertionStrategy.AsIdentifier),
+            symbolOrigin = symbolOrigin,
+        )
 
-            else -> emptySequence()
-        }
+        else -> emptySequence()
     }
 
     context(KaSession)
     private fun getParametersForKDoc(
         ownerDeclarationSymbol: KaDeclarationSymbol
-    ): Sequence<KtSymbolWithOrigin> = sequence {
+    ): Sequence<KaDeclarationSymbol> = sequence {
         @OptIn(KaExperimentalApi::class)
         yieldAll(ownerDeclarationSymbol.typeParameters)
 
@@ -86,9 +82,6 @@ internal open class FirKDocParameterNameContributor(
             else -> emptyList()
         }
         yieldAll(valueParameters)
-    }.map { symbol ->
-        val symbolOrigin = CompletionSymbolOrigin.Scope(KaScopeKinds.LocalScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX))
-        KtSymbolWithOrigin(symbol, symbolOrigin)
     }
 
     companion object {

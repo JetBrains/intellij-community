@@ -68,17 +68,14 @@ internal open class FirClassifierCompletionContributor(
                     symbols.asSequence()
                         .mapNotNull { it.staticScope }
                         .flatMap { scopeWithKind ->
-                            val kind = scopeWithKind.kind
+                            val origin = CompletionSymbolOrigin.Scope(scopeWithKind.kind)
                             scopeWithKind.completeClassifiers(positionContext)
-                                .map { it to kind }
-                        }.flatMap { (classifierSymbol, kind) ->
-                            val symbolWithOrigin = KtSymbolWithOrigin(
-                                _symbol = classifierSymbol,
-                                origin = CompletionSymbolOrigin.Scope(kind),
-                            )
-
-                            createClassifierLookupElement(classifierSymbol, weighingContext.expectedType)
-                                .map { it.applyWeighs(weighingContext, symbolWithOrigin) }
+                                .map { KtSymbolWithOrigin(it, origin) }
+                        }.flatMap { symbolWithOrigin ->
+                            createClassifierLookupElement(
+                                classifierSymbol = symbolWithOrigin.symbol,
+                                expectedType = weighingContext.expectedType,
+                            ).map { it.applyWeighs(weighingContext, symbolWithOrigin) }
                         }.forEach(sink::addElement)
                 } else {
                     runChainCompletion(positionContext, explicitReceiver) { receiverExpression,

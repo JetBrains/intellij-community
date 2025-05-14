@@ -301,20 +301,22 @@ internal object Weighers {
     context(KaSession)
     fun <E : LookupElement> E.applyWeighs(
         context: WeighingContext,
-        symbolWithOrigin: KtSymbolWithOrigin? = null,
+        symbolWithOrigin: KtSymbolWithOrigin<*>? = null,
     ): E = also { lookupElement -> // todo replace everything with apply
-        ExpectedTypeWeigher.addWeight(context, lookupElement, symbolWithOrigin?.symbol)
-        KindWeigher.addWeight(lookupElement, symbolWithOrigin?.symbol, context)
+        val symbol = symbolWithOrigin?.symbol
 
-        if (symbolWithOrigin == null) return@also
-        val symbol = symbolWithOrigin.symbol
+        ExpectedTypeWeigher.addWeight(context, lookupElement, symbol)
+        KindWeigher.addWeight(lookupElement, symbol, context)
 
-        val availableWithoutImport = symbolWithOrigin.origin is CompletionSymbolOrigin.Scope
+        if (symbol == null) return@also
 
         DeprecatedWeigher.addWeight(lookupElement, symbol)
         PreferGetSetMethodsToPropertyWeigher.addWeight(lookupElement, symbol)
-        NotImportedWeigher.addWeight(context, lookupElement, symbol, availableWithoutImport)
-        ClassifierWeigher.addWeight(lookupElement, symbol, symbolWithOrigin.origin)
+        NotImportedWeigher.addWeight(
+            context, lookupElement, symbol,
+            availableWithoutImport = symbolWithOrigin.symbolOrigin is CompletionSymbolOrigin.Scope,
+        )
+        ClassifierWeigher.addWeight(lookupElement, symbol, symbolWithOrigin.symbolOrigin)
         VariableOrFunctionWeigher.addWeight(lookupElement, symbol)
         PreferredSubtypeWeigher.addWeight(context, lookupElement, symbol)
 

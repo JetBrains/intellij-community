@@ -81,13 +81,15 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
         presentableText: @NlsSafe String? = null, // TODO decompose
         withTrailingLambda: Boolean = false, // TODO find a better solution
     ): Sequence<LookupElementBuilder> {
-        val namedSymbol = when (val symbol = signature.symbol) {
-            is KaNamedSymbol -> symbol
-            is KaConstructorSymbol -> symbol.containingDeclaration as? KaNamedClassSymbol
+        val callableSymbol = signature.symbol
+        val namedSymbol = when (callableSymbol) {
+            is KaNamedSymbol -> callableSymbol
+            is KaConstructorSymbol -> callableSymbol.containingDeclaration as? KaNamedClassSymbol
             else -> null
         } ?: return emptySequence()
 
         val shortName = namedSymbol.name
+        val symbolWithOrigin = KtSymbolWithOrigin(callableSymbol, symbolOrigin)
 
         return sequence {
             KotlinFirLookupElementFactory.createCallableLookupElement(
@@ -126,12 +128,12 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
                     signature = signature,
                     symbolOrigin = symbolOrigin,
                     actualReceiverTypes = context.actualReceiverTypes,
-                    isFunctionalVariableCall = signature.symbol is KaVariableSymbol
+                    isFunctionalVariableCall = callableSymbol is KaVariableSymbol
                             && lookup.`object` is FunctionCallLookupObject,
                 )
             }
 
-            lookup.applyWeighs(context, KtSymbolWithOrigin(signature.symbol, symbolOrigin))
+            lookup.applyWeighs(context, symbolWithOrigin)
             lookup.applyKindToPresentation()
         }
     }
