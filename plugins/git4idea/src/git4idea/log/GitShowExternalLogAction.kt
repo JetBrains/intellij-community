@@ -31,7 +31,6 @@ import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.impl.VcsLogContentUtil
@@ -75,7 +74,9 @@ internal class GitShowExternalLogAction : DumbAwareAction() {
     val window = getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
     if (project.isDefault || !ProjectLevelVcsManager.getInstance(project).hasActiveVcss() || window == null) {
       ProgressManager.getInstance().run(ShowLogTask(project, roots, vcs, true) { disposable ->
-        val content = createContent(this, getMainLogUiFactory(calcLogId(roots), null), roots, false, disposable)
+        val ui = createLogUi(calcLogId(roots), VcsLogTabLocation.STANDALONE, null)
+        Disposer.register(disposable, ui)
+        val content = MyContentComponent(VcsLogPanel(this, ui), roots)
         showLogContentWindow(project, content, GitBundle.message("git.log.external.window.title"), disposable)
       })
     }
@@ -87,28 +88,36 @@ internal class GitShowExternalLogAction : DumbAwareAction() {
 }
 
 @Internal
-fun showExternalGitLogInToolwindow(project: Project,
-                                   toolWindow: ToolWindow,
-                                   vcs: GitVcs,
-                                   roots: List<VirtualFile>,
-                                   tabTitle: @NlsContexts.TabTitle String,
-                                   tabDescription: @NlsContexts.Tooltip String) {
-  showExternalGitLogInToolwindow(project, toolWindow, { it.getMainLogUiFactory(calcLogId(roots), null) }, vcs, roots, tabTitle, tabDescription)
+fun showExternalGitLogInToolwindow(
+  project: Project,
+  toolWindow: ToolWindow,
+  vcs: GitVcs,
+  roots: List<VirtualFile>,
+  tabTitle: @NlsContexts.TabTitle String,
+  tabDescription: @NlsContexts.Tooltip String,
+) {
+  showExternalGitLogInToolwindow(project, toolWindow, {
+    val location = if (toolWindow.id == ChangesViewContentManager.TOOLWINDOW_ID) VcsLogTabLocation.TOOL_WINDOW else VcsLogTabLocation.STANDALONE
+    createLogUi(calcLogId(roots), location, null)
+  }, vcs, roots, tabTitle, tabDescription)
 }
 
 @Internal
-fun <T : VcsLogUiEx> showExternalGitLogInToolwindow(project: Project,
-                                                    toolWindow: ToolWindow,
-                                                    uiFactory: (VcsLogManager) -> VcsLogManager.VcsLogUiFactory<T>,
-                                                    vcs: GitVcs,
-                                                    roots: List<VirtualFile>,
-                                                    tabTitle: @NlsContexts.TabTitle String,
-                                                    tabDescription: @NlsContexts.Tooltip String) {
+fun <T : VcsLogUiEx> showExternalGitLogInToolwindow(
+  project: Project,
+  toolWindow: ToolWindow,
+  uiFactory: VcsLogManager.() -> T,
+  vcs: GitVcs,
+  roots: List<VirtualFile>,
+  tabTitle: @NlsContexts.TabTitle String,
+  tabDescription: @NlsContexts.Tooltip String,
+) {
   val showContent = {
     if (!selectProjectLog(project, vcs, roots) && !selectAlreadyOpened(toolWindow.contentManager, roots)) {
       ProgressManager.getInstance().run(ShowLogTask(project, roots, vcs, false) { disposable ->
-        val isToolWindowTab = toolWindow.id == ChangesViewContentManager.TOOLWINDOW_ID
-        val component = createContent(this, uiFactory(this), roots, isToolWindowTab, disposable)
+        val ui = uiFactory(this)
+        Disposer.register(disposable, ui)
+        val component = MyContentComponent(VcsLogPanel(this, ui), roots)
         toolWindow.addLogContent(project, component, tabTitle, tabDescription, disposable)
       })
     }
@@ -174,17 +183,6 @@ private fun showLogContentWindow(project: Project, content: JComponent, @NlsCont
   Disposer.register(window, disposable)
   doOnProviderRemoval(project, disposable) { window.close() }
   window.show()
-}
-
-@RequiresEdt
-private fun <T : VcsLogUiEx> createContent(manager: VcsLogManager,
-                                           uiFactory: VcsLogManager.VcsLogUiFactory<T>,
-                                           roots: List<VirtualFile>,
-                                           isToolWindowTab: Boolean,
-                                           disposable: Disposable): MyContentComponent {
-  val ui = manager.createLogUi(uiFactory, if (isToolWindowTab) VcsLogTabLocation.TOOL_WINDOW else VcsLogTabLocation.STANDALONE)
-  Disposer.register(disposable, ui)
-  return MyContentComponent(VcsLogPanel(manager, ui), roots)
 }
 
 @RequiresBackgroundThread

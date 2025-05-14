@@ -132,8 +132,8 @@ class VcsLogTabsManager(
 
   private fun openToolWindowLogTab(toolWindow: ToolWindow, tabId: String, focus: Boolean,
                                    filters: VcsLogFilterCollection?): MainVcsLogUi {
-    val factory = logManager.getMainLogUiFactory(tabId, filters)
-    val ui = openLogTab(logManager, factory, toolWindow, TAB_GROUP_ID, { VcsLogTabsUtil.generateShortDisplayName(it) }, focus)
+    val ui = logManager.createLogUi(tabId, VcsLogTabLocation.TOOL_WINDOW, filters)
+    openLogTab(logManager, toolWindow, TAB_GROUP_ID, ui, { it: MainVcsLogUi -> VcsLogTabsUtil.generateShortDisplayName(it) }, focus)
     ui.onDisplayNameChange { updateLogUiName(project, ui) }
 
     installContentListener(toolWindow)

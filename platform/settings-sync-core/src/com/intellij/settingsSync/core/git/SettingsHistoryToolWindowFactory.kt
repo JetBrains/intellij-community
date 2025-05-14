@@ -14,6 +14,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.settingsSync.core.*
+import com.intellij.vcs.log.impl.VcsLogTabLocation
 import git4idea.GitVcs
 import git4idea.log.showExternalGitLogInToolwindow
 import kotlinx.coroutines.CoroutineScope
@@ -82,8 +83,9 @@ internal class SettingsHistoryToolWindowFactory(private val corotineScope: Corou
         return@executeOnPooledThread
       }
 
-      showExternalGitLogInToolwindow(project, toolWindow, { SettingsHistoryLogUiFactory() }, GitVcs.getInstance(project),
-                                     listOf(virtualFile), "", "")
+      showExternalGitLogInToolwindow(project, toolWindow, {
+        createLogUi(SettingsHistoryLogUiFactory(), VcsLogTabLocation.STANDALONE)
+      }, GitVcs.getInstance(project), listOf(virtualFile), "", "")
     }
   }
 }

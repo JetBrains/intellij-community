@@ -51,29 +51,33 @@ object VcsLogContentUtil {
 
   @Internal
   @JvmStatic
-  fun <U : VcsLogUiEx> openLogTab(project: Project,
-                                  logManager: VcsLogManager,
-                                  tabGroupId: TabGroupId,
-                                  tabDisplayName: Function<U, @NlsContexts.TabTitle String>,
-                                  factory: VcsLogUiFactory<out U>,
-                                  focus: Boolean): U {
+  fun <U : VcsLogUiEx> openLogTab(
+    project: Project,
+    logManager: VcsLogManager,
+    tabGroupId: TabGroupId,
+    tabDisplayName: Function<U, @NlsContexts.TabTitle String>,
+    factory: VcsLogUiFactory<out U>,
+    focus: Boolean,
+  ): U {
     val toolWindow = getToolWindowOrThrow(project)
-    return openLogTab(logManager, factory, toolWindow, tabGroupId, tabDisplayName, focus)
+    val ui = logManager.createLogUi(factory, VcsLogTabLocation.TOOL_WINDOW)
+    openLogTab(logManager, toolWindow, tabGroupId, ui, tabDisplayName, focus)
+    return ui
   }
 
-  internal fun <U : VcsLogUiEx> openLogTab(logManager: VcsLogManager,
-                                           factory: VcsLogUiFactory<out U>,
-                                           toolWindow: ToolWindow,
-                                           tabGroupId: TabGroupId,
-                                           tabDisplayName: Function<U, @NlsContexts.TabTitle String>,
-                                           focus: Boolean): U {
-    val logUi = logManager.createLogUi(factory, VcsLogTabLocation.TOOL_WINDOW)
+  internal fun <U : VcsLogUiEx> openLogTab(
+    logManager: VcsLogManager,
+    toolWindow: ToolWindow,
+    tabGroupId: TabGroupId,
+    logUi: U,
+    tabDisplayName: Function<U, @NlsContexts.TabTitle String>,
+    focus: Boolean,
+  ) {
     ContentUtilEx.addTabbedContent(toolWindow.contentManager, tabGroupId,
                                    TabDescriptor(VcsLogPanel(logManager, logUi), Supplier { tabDisplayName.apply(logUi) }, logUi), focus)
     if (focus) {
       toolWindow.activate(null)
     }
-    return logUi
   }
 
   internal fun closeLogTab(manager: ContentManager, tabId: String): Boolean {
