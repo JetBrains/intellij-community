@@ -39,15 +39,29 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
       val presentableTextWidth = fontMetrics.stringWidth(presentation.presentableText)
       val locationTextWidth = presentation.locationText?.let { fontMetrics.stringWidth(it) } ?: 0
       val width = resultList.width
+      val shortenContainerText = SETextShortener.getShortenContainerText(containerText, width - presentableTextWidth - JBUI.scale(16) - locationTextWidth - JBUI.scale(20), { fontMetrics.stringWidth(it) })
 
-      text(SETextShortener.getShortenContainerText(containerText, width - presentableTextWidth - JBUI.scale(16) - locationTextWidth - JBUI.scale(20), { fontMetrics.stringWidth(it) })) {
+      text(shortenContainerText) {
         attributes = SimpleTextAttributes.GRAYED_ATTRIBUTES
 
-        //if (selected) {
-        //  speedSearch {
-        //    ranges = presentation.containerTextMatchedRanges?.map { it.textRange }
-        //  }
-        //}
+        if (selected) {
+          val prefixBoundary = shortenContainerText.commonPrefixWith(containerText).length - 1
+          val suffixBoundary = containerText.length - shortenContainerText.commonSuffixWith(containerText).length + 1
+          val postSuffixShiftAmount = containerText.length - shortenContainerText.length
+
+          speedSearch {
+            ranges = presentation.containerTextMatchedRanges?.map { it.textRange }?.filter { range ->
+              range.endOffset <= prefixBoundary || range.startOffset >= suffixBoundary
+            }?.map { range ->
+              if (range.startOffset >= suffixBoundary) {
+                range.shiftLeft(postSuffixShiftAmount)
+              }
+              else {
+                range
+              }
+            }
+          }
+        }
       }
     }
 
