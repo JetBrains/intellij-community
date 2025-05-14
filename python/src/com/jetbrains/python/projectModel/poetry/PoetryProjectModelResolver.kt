@@ -1,9 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.projectModel.poetry
 
-import com.jetbrains.python.projectModel.ModuleDependency
-import com.jetbrains.python.projectModel.ModuleDescriptor
-import com.jetbrains.python.projectModel.ProjectModelGraph
+import com.jetbrains.python.projectModel.ExternalProject
+import com.jetbrains.python.projectModel.ExternalProjectDependency
+import com.jetbrains.python.projectModel.ExternalProjectGraph
 import com.jetbrains.python.projectModel.PythonProjectModelResolver
 import org.apache.tuweni.toml.Toml
 import org.apache.tuweni.toml.TomlTable
@@ -12,7 +12,7 @@ import kotlin.io.path.*
 
 @OptIn(ExperimentalPathApi::class)
 object PoetryProjectModelResolver : PythonProjectModelResolver {
-  override fun discoverProjectRootSubgraph(root: Path): ProjectModelGraph? {
+  override fun discoverProjectRootSubgraph(root: Path): ExternalProjectGraph? {
     if (!root.resolve(PoetryConstants.PYPROJECT_TOML).exists()) {
       return null
     }
@@ -23,16 +23,16 @@ object PoetryProjectModelResolver : PythonProjectModelResolver {
     if (poetryProjects.isNotEmpty()) {
       val modules = poetryProjects
         .map {
-          ModuleDescriptor(
+          ExternalProject(
             name = it.projectName,
             root = it.root,
-            moduleDependencies = it.editablePathDependencies.map { entry ->
-              ModuleDependency(entry.key, entry.value)
+            dependencies = it.editablePathDependencies.map { entry ->
+              ExternalProjectDependency(entry.key, entry.value)
             })
         }
-      return ProjectModelGraph(
+      return ExternalProjectGraph(
         root = root,
-        modules = modules
+        projects = modules
       )
     }
     return null

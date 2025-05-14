@@ -6,7 +6,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.workspace.jps.entities.*
-import com.intellij.platform.workspace.jps.entities.ModuleDependency
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -78,7 +77,7 @@ abstract class BaseProjectModelService<E : EntitySource> {
       if (graph.isEmpty()) {
         return
       }
-      val allModules = graph.flatMap { it.modules }
+      val allModules = graph.flatMap { it.projects }
       val storage = createProjectModel(project, allModules, source)
       project.workspaceModel.update("$systemName sync at ${projectRoot}") { mutableStorage ->
         // Fake module entity is added by default if nothing was discovered
@@ -95,7 +94,7 @@ abstract class BaseProjectModelService<E : EntitySource> {
 
   private fun createProjectModel(
     project: Project,
-    graph: List<ModuleDescriptor>,
+    graph: List<ExternalProject>,
     source: EntitySource,
   ): EntityStorage {
     val fileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
@@ -112,7 +111,7 @@ abstract class BaseProjectModelService<E : EntitySource> {
       storage addEntity ModuleEntity(module.name, emptyList(), source) {
         dependencies += sdkDependency
         dependencies += ModuleSourceDependency
-        for (moduleName in module.moduleDependencies) {
+        for (moduleName in module.dependencies) {
           dependencies += ModuleDependency(ModuleId(moduleName.name), true, DependencyScope.COMPILE, false)
         }
         contentRoots = listOf(ContentRootEntity(module.root.toVirtualFileUrl(fileUrlManager), emptyList(), source))

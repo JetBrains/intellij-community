@@ -2,9 +2,9 @@
 package com.jetbrains.python.projectModel.uv
 
 import com.intellij.openapi.util.getPathMatcher
-import com.jetbrains.python.projectModel.ModuleDependency
-import com.jetbrains.python.projectModel.ModuleDescriptor
-import com.jetbrains.python.projectModel.ProjectModelGraph
+import com.jetbrains.python.projectModel.ExternalProject
+import com.jetbrains.python.projectModel.ExternalProjectDependency
+import com.jetbrains.python.projectModel.ExternalProjectGraph
 import com.jetbrains.python.projectModel.PythonProjectModelResolver
 import org.apache.tuweni.toml.Toml
 import org.apache.tuweni.toml.TomlTable
@@ -15,7 +15,7 @@ private const val DEFAULT_VENV_DIR = ".venv"
 
 @OptIn(ExperimentalPathApi::class)
 object UvProjectModelResolver : PythonProjectModelResolver {
-  override fun discoverProjectRootSubgraph(root: Path): ProjectModelGraph? {
+  override fun discoverProjectRootSubgraph(root: Path): ExternalProjectGraph? {
     if (!root.resolve(UvConstants.PYPROJECT_TOML).exists()) {
       return null
     }
@@ -48,20 +48,20 @@ object UvProjectModelResolver : PythonProjectModelResolver {
         }.associateBy { it.projectName }
     }
     
-    return ProjectModelGraph(
+    return ExternalProjectGraph(
       root = root,
-      modules = allUvProjects
+      projects = allUvProjects
         .map { uvProject -> 
-          val pathDependencies = uvProject.editablePathDependencies.map { ModuleDependency(it.key, it.value) }
+          val pathDependencies = uvProject.editablePathDependencies.map { ExternalProjectDependency(it.key, it.value) }
           val resolvedWorkspaceDependencies = uvProject.workspaceDependencies.mapNotNull {
             val workspaceMember = workspaceMembers[it]
-            if (workspaceMember != null) ModuleDependency(it, workspaceMember.root) 
+            if (workspaceMember != null) ExternalProjectDependency(it, workspaceMember.root) 
             else null 
           }
-          ModuleDescriptor(
+          ExternalProject(
             name = uvProject.projectName,
             root =uvProject.root,
-            moduleDependencies = pathDependencies + resolvedWorkspaceDependencies
+            dependencies = pathDependencies + resolvedWorkspaceDependencies
           )
         }
     )
