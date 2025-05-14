@@ -43,11 +43,11 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
       text(SETextShortener.getShortenContainerText(containerText, width - presentableTextWidth - JBUI.scale(16) - locationTextWidth - JBUI.scale(20), { fontMetrics.stringWidth(it) })) {
         attributes = SimpleTextAttributes.GRAYED_ATTRIBUTES
 
-        if (selected) {
-          speedSearch {
-            ranges = presentation.containerTextMatchedRanges?.map { it.textRange }
-          }
-        }
+        //if (selected) {
+        //  speedSearch {
+        //    ranges = presentation.containerTextMatchedRanges?.map { it.textRange }
+        //  }
+        //}
       }
     }
 
