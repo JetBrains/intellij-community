@@ -4,7 +4,7 @@ package com.jetbrains.builtInHelp.search
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.ResourceUtil
-import org.apache.commons.compress.utils.IOUtils
+import com.intellij.util.io.safeOutputStream
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.queryparser.simple.SimpleQueryParser
@@ -13,10 +13,9 @@ import org.apache.lucene.search.TopScoreDocCollector
 import org.apache.lucene.search.highlight.Highlighter
 import org.apache.lucene.search.highlight.QueryScorer
 import org.apache.lucene.search.highlight.Scorer
-import org.apache.lucene.store.FSDirectory
+import org.apache.lucene.store.NIOFSDirectory
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
-import java.io.FileOutputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -38,7 +37,7 @@ class HelpSearch {
 
       if (query != null) {
         val indexDir: Path? = Files.createTempDirectory("search-index")
-        var indexDirectory: FSDirectory? = null
+        var indexDirectory: NIOFSDirectory? = null
         var reader: DirectoryReader? = null
         if (indexDir != null)
           try {
@@ -47,15 +46,16 @@ class HelpSearch {
               val input = ResourceUtil.getResourceAsStream(HelpSearch::class.java.classLoader,
                                                            "search",
                                                            resourceName)
-              val fos =
-                FileOutputStream(Paths.get(indexDir.toAbsolutePath().toString(), resourceName).toFile())
-              IOUtils.copy(input, fos)
+              if (input == null) continue
+              val fos = Paths.get(indexDir.toAbsolutePath().toString(), resourceName)
+                .safeOutputStream()
+              fos.write(input.readAllBytes())
               fos.flush()
               fos.close()
-              input?.close()
+              input.close()
             }
 
-            indexDirectory = FSDirectory.open(indexDir)
+            indexDirectory = NIOFSDirectory.open(indexDir) as NIOFSDirectory
             reader = DirectoryReader.open(indexDirectory)
 
             val searcher = IndexSearcher(reader)
@@ -124,12 +124,12 @@ data class HelpSearchResult(
   val mainTitle: String,
   val objectID: String,
   val _snippetResult: SnippetResult,
-  val _highlightResult: HighlightedResult
+  val _highlightResult: HighlightedResult,
 ) {
   data class SnippetResult(val content: Content) {
     data class Content(
       val value: String,
-      val matchLevel: String
+      val matchLevel: String,
     )
 
   }
@@ -138,7 +138,7 @@ data class HelpSearchResult(
     val value: String,
     val matchLevel: String = "full",
     val fullyHighlighted: Boolean = true,
-    val matchedWords: List<String> = Collections.emptyList()
+    val matchedWords: List<String> = Collections.emptyList(),
   )
 
   data class HighlightedResult(
@@ -146,7 +146,7 @@ data class HelpSearchResult(
     val pageTitle: HelpSearchResultDetails,
     val metaDescription: HelpSearchResultDetails,
     val mainTitle: HelpSearchResultDetails,
-    val headings: HelpSearchResultDetails
+    val headings: HelpSearchResultDetails,
   )
 }
 
