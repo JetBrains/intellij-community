@@ -40,6 +40,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentati
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -49,10 +50,12 @@ import com.intellij.pom.NonNavigatable;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.render.RenderingHelper;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.ui.tree.ui.DefaultTreeUI;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Invoker;
@@ -60,6 +63,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.Promise;
@@ -81,17 +85,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-
-import static com.intellij.build.BuildConsoleUtils.getMessageTitle;
-import static com.intellij.build.BuildView.CONSOLE_VIEW_NAME;
-import static com.intellij.openapi.util.text.StringUtil.isEmpty;
-import static com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED;
-import static com.intellij.ui.SimpleTextAttributes.GRAYED_ATTRIBUTES;
-import static com.intellij.ui.render.RenderingHelper.SHRINK_LONG_RENDERER;
-import static com.intellij.ui.tree.ui.DefaultTreeUI.AUTO_EXPAND_ALLOWED;
-import static com.intellij.util.ObjectUtils.chooseNotNull;
-import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
-import static com.intellij.util.ui.UIUtil.*;
 
 /**
  * @author Vladislav.Soroka
@@ -160,7 +153,7 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
     myContentPanel.add(ScrollPaneFactory.createScrollPane(myTree, SideBorder.NONE), TREE);
 
     if (ExperimentalUI.isNewUI()) {
-      setBackgroundRecursively(myContentPanel, JBUI.CurrentTheme.ToolWindow.background());
+      UIUtil.setBackgroundRecursively(myContentPanel, JBUI.CurrentTheme.ToolWindow.background());
     }
 
     myPanel.setLayout(new BorderLayout());
@@ -194,7 +187,7 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
   }
 
   private void installContextMenu() {
-    invokeLaterIfNeeded(() -> {
+    UIUtil.invokeLaterIfNeeded(() -> {
       final DefaultActionGroup rerunActionGroup = new DefaultActionGroup();
       List<AnAction> restartActions = myBuildDescriptor.getRestartActions();
       rerunActionGroup.addAll(restartActions);
@@ -307,7 +300,7 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
     ExecutionNode parentNode = event.getParentId() == null ? null : nodesMap.get(event.getParentId());
     if (event instanceof MessageEvent) {
       parentNode = createMessageParentNodes((MessageEvent)event, parentNode);
-      addIfNotNull(structureChanged, parentNode);
+      ContainerUtil.addIfNotNull(structureChanged, parentNode);
     }
     return parentNode;
   }
@@ -350,7 +343,7 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
             Navigatable messageEventNavigatable = messageEvent.getNavigatable(myProject);
             currentNode.setNavigatable(messageEventNavigatable);
             MessageEventResult messageEventResult = messageEvent.getResult();
-            addIfNotNull(structureChanged, currentNode.setResult(messageEventResult));
+            ContainerUtil.addIfNotNull(structureChanged, currentNode.setResult(messageEventResult));
 
             if (messageEventResult instanceof FailureResult) {
               for (Failure failure : ((FailureResult)messageEventResult).getFailures()) {
@@ -433,7 +426,7 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
         result = calculateDerivedResult((DerivedResult)result, currentNode);
       }
       currentNode.setResult(result, false);
-      addIfNotNull(structureChanged, currentNode.setEndTime(event.getEventTime()));
+      ContainerUtil.addIfNotNull(structureChanged, currentNode.setEndTime(event.getEventTime()));
       SkippedResult skippedResult = new SkippedResultImpl();
       finishChildren(structureChanged, currentNode, skippedResult);
       if (result instanceof FailureResult) {
@@ -594,14 +587,14 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
                                                  @NotNull String defaultFailureMessage,
                                                  long eventTime,
                                                  @NotNull Set<? super ExecutionNode> structureChanged) {
-    String message = chooseNotNull(failure.getMessage(), failure.getDescription());
+    String message = ObjectUtils.chooseNotNull(failure.getMessage(), failure.getDescription());
     if (message == null && failure.getError() != null) {
       message = failure.getError().getMessage();
     }
     if (message == null) {
       message = defaultFailureMessage;
     }
-    String failureNodeName = getMessageTitle(message);
+    String failureNodeName = BuildConsoleUtils.getMessageTitle(message);
     Navigatable failureNavigatable = failure.getNavigatable();
     FilePosition filePosition = null;
     if (failureNavigatable instanceof OpenFileDescriptor fileDescriptor) {
@@ -657,7 +650,7 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
         continue;
       }
       finishChildren(structureChanged, child, result);
-      addIfNotNull(structureChanged, child.setResult(result));
+      ContainerUtil.addIfNotNull(structureChanged, child.setResult(result));
     }
   }
 
@@ -761,10 +754,10 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
                                                  @NotNull FilePosition filePosition,
                                                  @Nullable Navigatable navigatable,
                                                  ExecutionNode parentNode) {
-    String filePath = FileUtil.toSystemIndependentName(filePosition.getFile().getPath());
+    String filePath = FileUtilRt.toSystemIndependentName(filePosition.getFile().getPath());
     String parentsPath = "";
 
-    String relativePath = FileUtil.getRelativePath(myWorkingDir, filePath, '/');
+    String relativePath = FileUtilRt.getRelativePath(myWorkingDir, filePath, '/');
     if (relativePath != null) {
       if (relativePath.equals(".")) {
         return parentNode;
@@ -774,7 +767,7 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
       }
     }
 
-    if (isEmpty(parentsPath)) {
+    if (parentsPath.isEmpty()) {
       File userHomeDir = new File(SystemProperties.getUserHome());
       if (FileUtil.isAncestor(userHomeDir, new File(filePath), true)) {
         relativePath = FileUtil.getLocationRelativeToUserHome(filePath, false);
@@ -802,7 +795,7 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
   }
 
   private static String getRelativePath(@NotNull String basePath, @NotNull String filePath) {
-    String path = ObjectUtils.notNull(FileUtil.getRelativePath(basePath, filePath, '/'), filePath);
+    String path = Objects.requireNonNullElse(FileUtil.getRelativePath(basePath, filePath, '/'), filePath);
     File userHomeDir = new File(SystemProperties.getUserHome());
     if (path.startsWith("..") && FileUtil.isAncestor(userHomeDir, new File(filePath), true)) {
       return FileUtil.getLocationRelativeToUserHome(filePath, false);
@@ -811,7 +804,7 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
   }
 
   public void hideRootNode() {
-    invokeLaterIfNeeded(() -> {
+    UIUtil.invokeLaterIfNeeded(() -> {
       if (myTree != null) {
         myTree.setRootVisible(false);
         myTree.setShowsRootHandles(true);
@@ -866,8 +859,8 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
   private static Tree initTree(@NotNull AsyncTreeModel model) {
     Tree tree = new Tree(model);
     tree.setLargeModel(true);
-    ComponentUtil.putClientProperty(tree, ANIMATION_IN_RENDERER_ALLOWED, true);
-    ComponentUtil.putClientProperty(tree, AUTO_EXPAND_ALLOWED, false);
+    ComponentUtil.putClientProperty(tree, AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true);
+    ComponentUtil.putClientProperty(tree, DefaultTreeUI.AUTO_EXPAND_ALLOWED, false);
     tree.setRootVisible(false);
     EditSourceOnDoubleClickHandler.install(tree);
     EditSourceOnEnterKeyHandler.install(tree);
@@ -876,7 +869,7 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
     if (Registry.is("build.toolwindow.show.inline.statistics")) {
       tree.setCellRenderer(new MyNodeRenderer());
     }
-    tree.putClientProperty(SHRINK_LONG_RENDERER, true);
+    tree.putClientProperty(RenderingHelper.SHRINK_LONG_RENDERER, true);
     return tree;
   }
 
@@ -943,7 +936,7 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
         @Override
         public void addView(@NotNull ExecutionConsole view, @NotNull String viewName) {
           super.addView(view, viewName);
-          removeScrollBorder(view.getComponent());
+          UIUtil.removeScrollBorder(view.getComponent());
         }
       };
       Disposer.register(this, myView);
@@ -964,7 +957,7 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
       myPanel.add(myToolbar.getComponent(), BorderLayout.EAST);
 
       if (ExperimentalUI.isNewUI()) {
-        setBackgroundRecursively(myPanel, JBUI.CurrentTheme.ToolWindow.background());
+        UIUtil.setBackgroundRecursively(myPanel, JBUI.CurrentTheme.ToolWindow.background());
       }
 
       tree.addTreeSelectionListener(e -> {
@@ -997,7 +990,7 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
     }
 
     private void updateToolbarActionsImmediately() {
-      invokeLaterIfNeeded(() -> myToolbar.updateActionsImmediately());
+      UIUtil.invokeLaterIfNeeded(() -> myToolbar.updateActionsImmediately());
     }
 
     private @NotNull DefaultActionGroup createDefaultTextConsoleToolbar() {
@@ -1078,7 +1071,7 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
     }
 
     public void maybeAddExecutionConsole(@NotNull ExecutionNode node, @NotNull BuildEventPresentationData presentationData) {
-      invokeLaterIfNeeded(() -> {
+      UIUtil.invokeLaterIfNeeded(() -> {
         ExecutionConsole executionConsole = presentationData.getExecutionConsole();
         if (executionConsole == null) return;
         String nodeConsoleViewName = getNodeConsoleViewName(node);
@@ -1135,8 +1128,8 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
       }
 
       myExecutionNode = null;
-      if (myView.getView(CONSOLE_VIEW_NAME) != null/* && myViewSettingsProvider.isSideBySideView()*/) {
-        myView.showView(CONSOLE_VIEW_NAME, false);
+      if (myView.getView(BuildView.CONSOLE_VIEW_NAME) != null/* && myViewSettingsProvider.isSideBySideView()*/) {
+        myView.showView(BuildView.CONSOLE_VIEW_NAME, false);
         myPanel.setVisible(true);
       }
       else {
@@ -1241,7 +1234,7 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
           myDurationWidth = metrics.stringWidth(myDurationText);
           myDurationLeftInset = metrics.getHeight() / 4;
           myDurationRightInset = ExperimentalUI.isNewUI() ? tree.getInsets().right + JBUI.scale(4) : myDurationLeftInset;
-          myDurationColor = selected ? getTreeSelectionForeground(hasFocus) : GRAYED_ATTRIBUTES.getFgColor();
+          myDurationColor = selected ? UIUtil.getTreeSelectionForeground(hasFocus) : SimpleTextAttributes.GRAYED_ATTRIBUTES.getFgColor();
         }
       }
     }
