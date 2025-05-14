@@ -47,6 +47,28 @@ def foo(param: int) -> int:
             return 41
                    """);
   }
+  
+  // PY-80471
+  public void testIfTrueForLoop() {
+    doTestByText("""
+if True:
+    for i in []:
+        pass
+else:
+    <warning descr="This code is unreachable">print("unreachable")</warning>
+                   """);
+  }
+
+  // PY-80471
+  public void testIfTrueWhileLoop() {
+    doTestByText("""
+if True:
+    while expr:
+        break
+else:
+    <warning descr="This code is unreachable">print("unreachable")</warning>
+                   """);
+  }
 
   // PY-51564
   public void testWithNotContext() {

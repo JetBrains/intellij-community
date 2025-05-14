@@ -9,7 +9,6 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions;
-import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -3551,7 +3550,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testNonShadowingReturnInsideFinally() {
-    doTest("int | str", """
+    doTest("str | int", """
       def f(p):
           try:
               return 42
