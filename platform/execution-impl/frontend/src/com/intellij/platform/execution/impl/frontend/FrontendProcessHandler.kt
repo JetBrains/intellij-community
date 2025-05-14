@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.platform.project.projectId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.io.OutputStream
@@ -110,6 +111,7 @@ open class FrontendSessionProcessHandler(
     cs.launch {
       val exitCode = ProcessHandlerApi.getInstance().destroyProcess(handlerId).await()
       notifyProcessTerminated(exitCode ?: 0)
+      cs.cancel()
     }
   }
 
@@ -117,6 +119,7 @@ open class FrontendSessionProcessHandler(
     cs.launch {
       ProcessHandlerApi.getInstance().detachProcess(handlerId).await()
       notifyProcessDetached()
+      cs.cancel()
     }
   }
 
@@ -144,6 +147,8 @@ private class FrontendSessionKillableProcessHandler(
     if (canKillProcess()) {
       cs.launch {
         ProcessHandlerApi.getInstance().killProcess(handlerId)
+        notifyProcessTerminated(0)
+        cs.cancel()
       }
     }
   }
