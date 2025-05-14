@@ -16,7 +16,6 @@ import com.intellij.webcore.packaging.RepoPackage
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyPackagingSettings
 import com.jetbrains.python.packaging.common.*
-import com.jetbrains.python.packaging.conda.CondaPackageCache
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.packagesByRepository
 import com.jetbrains.python.packaging.repository.PyPIPackageRepository
@@ -63,18 +62,7 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
       repository.isCustom -> repository.repositoryUrl
       else -> null
     }
-    val latestVersion = getLatestVersion(pkg)
-    return RepoPackage(pkg, repositoryUrl, latestVersion)
-  }
-
-  // TODO unify logic of retrieving package versions for pypi and conda
-  private fun getLatestVersion(pkg: String): String? {
-    if (!isConda || !useConda) return null
-
-    val settings = PyPackagingSettings.getInstance(project)
-    val cache = service<CondaPackageCache>()
-    val versions = cache[pkg] ?: emptyList()
-    return settings.selectLatestVersion(versions)
+    return RepoPackage(pkg, repositoryUrl, null)
   }
 
   override fun getAllPackagesCached(): List<RepoPackage> {
