@@ -27,7 +27,7 @@ abstract class UndoRedo {
 
   protected UndoRedo(UndoClientState state, FileEditor editor) {
     myState = state;
-    myManager = state.myManager;
+    myManager = state.getUndoManager();
     myEditor = editor;
     myUndoableGroup = getLastAction();
   }
@@ -98,7 +98,7 @@ abstract class UndoRedo {
       }
     }
 
-    if (!disableConfirmation && myUndoableGroup.shouldAskConfirmation(isRedo()) && !UndoManagerImpl.ourNeverAskUser) {
+    if (!disableConfirmation && myUndoableGroup.shouldAskConfirmation(isRedo()) && !isNeverAskUser()) {
       if (!askUser()) return false;
     }
     else {
@@ -293,5 +293,10 @@ abstract class UndoRedo {
   public boolean isBlockedByOtherChanges() {
     return myUndoableGroup.isGlobal() && myUndoableGroup.isUndoable() &&
            !getStacksHolder().collectClashingActions(myUndoableGroup).isEmpty();
+  }
+
+  private static boolean isNeverAskUser() {
+    //noinspection TestOnlyProblems
+    return UndoManagerImpl.ourNeverAskUser;
   }
 }

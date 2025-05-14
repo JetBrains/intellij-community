@@ -41,12 +41,12 @@ public final class CommandMerger {
   private UndoConfirmationPolicy myUndoConfirmationPolicy = UndoConfirmationPolicy.DEFAULT;
 
   CommandMerger(@NotNull UndoClientState state) {
-    myManager = state.myManager;
+    myManager = state.getUndoManager();
     myState = state;
   }
 
   CommandMerger(@NotNull UndoClientState state, boolean isTransparent) {
-    myManager = state.myManager;
+    myManager = state.getUndoManager();
     myState = state;
     myTransparent = isTransparent;
   }
@@ -72,7 +72,7 @@ public final class CommandMerger {
         return;
       }
 
-      SharedAdjustableUndoableActionsHolder actionsHolder = myManager.getAdjustableUndoableActionHolder();
+      SharedAdjustableUndoableActionsHolder actionsHolder = myManager.getAdjustableUndoableActionsHolder();
       actionsHolder.addAction(adjustable);
 
       for (DocumentReference reference : affected) {
@@ -92,7 +92,7 @@ public final class CommandMerger {
 
     if (!shouldMerge(groupId, nextCommandToMerge)) {
       flushCurrentCommand();
-      myManager.compact(myState);
+      myState.compactIfNeeded();
     }
     merge(nextCommandToMerge);
 
@@ -189,10 +189,6 @@ public final class CommandMerger {
     myAdditionalAffectedDocuments.remove(refByDoc);
   }
 
-  private static boolean refMatch(@NotNull Document document, VirtualFile file, @NotNull DocumentReference ref) {
-    return file != null && file.equals(ref.getFile()) || ref.getDocument() == document;
-  }
-
   public static boolean canMergeGroup(Object groupId, Object lastGroupId) {
     return groupId != null && Comparing.equal(lastGroupId, groupId);
   }
@@ -229,24 +225,8 @@ public final class CommandMerger {
     }
   }
 
-  private static final class MyEmptyUndoableAction extends BasicUndoableAction {
-    MyEmptyUndoableAction(DocumentReference @NotNull [] refs) {
-      super(refs);
-    }
-
-    @Override
-    public void undo() throws UnexpectedUndoException {
-
-    }
-
-    @Override
-    public void redo() throws UnexpectedUndoException {
-
-    }
-  }
-
   void flushCurrentCommand() {
-    flushCurrentCommand(myState.nextCommandTimestamp(), myState.myUndoStacksHolder);
+    flushCurrentCommand(myState.nextCommandTimestamp(), myState.getUndoStacksHolder());
   }
 
   void flushCurrentCommand(int commandTimestamp, @NotNull UndoRedoStacksHolder stacksHolder) {
@@ -317,7 +297,7 @@ public final class CommandMerger {
   }
 
   private void clearRedoStacks(@NotNull CommandMerger nextMerger) {
-    myState.myRedoStacksHolder.clearStacks(nextMerger.isGlobal(), nextMerger.myAllAffectedDocuments);
+    myState.getRedoStacksHolder().clearStacks(nextMerger.isGlobal(), nextMerger.myAllAffectedDocuments);
   }
 
   boolean isGlobal() {
@@ -502,5 +482,19 @@ public final class CommandMerger {
       }
     }
     return false;
+  }
+
+  private static final class MyEmptyUndoableAction extends BasicUndoableAction {
+    MyEmptyUndoableAction(DocumentReference @NotNull [] refs) {
+      super(refs);
+    }
+
+    @Override
+    public void undo() {
+    }
+
+    @Override
+    public void redo() {
+    }
   }
 }

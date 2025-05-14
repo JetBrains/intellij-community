@@ -17,12 +17,12 @@ final class Undo extends UndoRedo {
 
   @Override
   protected UndoRedoStacksHolder getStacksHolder() {
-    return myState.myUndoStacksHolder;
+    return myState.getUndoStacksHolder();
   }
 
   @Override
   protected UndoRedoStacksHolder getReverseStacksHolder() {
-    return myState.myRedoStacksHolder;
+    return myState.getRedoStacksHolder();
   }
 
   @Override
