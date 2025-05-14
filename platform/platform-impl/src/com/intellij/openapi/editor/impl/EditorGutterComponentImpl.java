@@ -383,7 +383,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
 
   @Override
   public void paintComponent(Graphics g_) {
-    ReadAction.run(() -> {
+    EditorThreading.run(() -> {
       Rectangle clip = g_.getClipBounds();
       if (clip == null || clip.isEmpty()) {
         return;

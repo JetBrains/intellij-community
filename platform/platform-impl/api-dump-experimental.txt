@@ -172,6 +172,11 @@ f:com.intellij.openapi.editor.impl.EditorImpl
 - java.awt.event.FocusListener
 - *:addHighlightingPredicate(com.intellij.openapi.util.Key,com.intellij.openapi.editor.impl.EditorHighlightingPredicate):com.intellij.openapi.editor.impl.EditorHighlightingPredicate
 - *:removeHighlightingPredicate(com.intellij.openapi.util.Key):com.intellij.openapi.editor.impl.EditorHighlightingPredicate
+*f:com.intellij.openapi.editor.impl.EditorThreading
+- sf:INSTANCE:com.intellij.openapi.editor.impl.EditorThreading
+- sf:assertInteractionAllowed():V
+- sf:compute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
+- sf:run(java.lang.Runnable):V
 *f:com.intellij.openapi.editor.impl.event.EditorGutterHoverEvent
 - java.util.EventObject
 - <init>(com.intellij.openapi.editor.ex.EditorGutterComponentEx,com.intellij.openapi.editor.markup.GutterIconRenderer):V

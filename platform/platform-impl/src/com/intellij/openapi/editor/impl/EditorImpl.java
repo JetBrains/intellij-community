@@ -1605,22 +1605,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull VisualPosition offsetToVisualPosition(int offset, boolean leanForward, boolean beforeSoftWrap) {
-    return ReadAction.compute(() -> myView.offsetToVisualPosition(offset, leanForward, beforeSoftWrap));
+    return EditorThreading.compute(() -> myView.offsetToVisualPosition(offset, leanForward, beforeSoftWrap));
   }
 
   public int offsetToVisualColumnInFoldRegion(@NotNull FoldRegion region, int offset, boolean leanTowardsLargerOffsets) {
     assertIsDispatchThread();
-    return ReadAction.compute(() -> myView.offsetToVisualColumnInFoldRegion(region, offset, leanTowardsLargerOffsets));
+    return EditorThreading.compute(() -> myView.offsetToVisualColumnInFoldRegion(region, offset, leanTowardsLargerOffsets));
   }
 
   public int visualColumnToOffsetInFoldRegion(@NotNull FoldRegion region, int visualColumn, boolean leansRight) {
     assertIsDispatchThread();
-    return ReadAction.compute(() -> myView.visualColumnToOffsetInFoldRegion(region, visualColumn, leansRight));
+    return EditorThreading.compute(() -> myView.visualColumnToOffsetInFoldRegion(region, visualColumn, leansRight));
   }
 
   @Override
   public @NotNull LogicalPosition offsetToLogicalPosition(int offset) {
-    return ReadAction.compute(() -> myView.offsetToLogicalPosition(offset));
+    return EditorThreading.compute(() -> myView.offsetToLogicalPosition(offset));
   }
 
   @TestOnly
@@ -1667,7 +1667,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull Point logicalPositionToXY(@NotNull LogicalPosition pos) {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       VisualPosition visible = logicalToVisualPosition(pos);
       return visualPositionToXY(visible);
     });
@@ -1675,7 +1675,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull Point visualPositionToXY(@NotNull VisualPosition visible) {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       Point2D point2D = myView.visualPositionToXY(visible);
       return new Point((int)point2D.getX(), (int)point2D.getY());
     });
@@ -1683,7 +1683,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull Point2D visualPositionToPoint2D(@NotNull VisualPosition visible) {
-    return ReadAction.compute(() -> myView.visualPositionToXY(visible));
+    return EditorThreading.compute(() -> myView.visualPositionToXY(visible));
   }
 
   /**
@@ -1701,12 +1701,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public int findNearestDirectionBoundary(int offset, boolean lookForward) {
-    return ReadAction.compute(() -> myView.findNearestDirectionBoundary(offset, lookForward));
+    return EditorThreading.compute(() -> myView.findNearestDirectionBoundary(offset, lookForward));
   }
 
   @Override
   public int visualLineToY(int line) {
-    return ReadAction.compute(() -> myView.visualLineToY(line));
+    return EditorThreading.compute(() -> myView.visualLineToY(line));
   }
 
   @Override
@@ -1733,7 +1733,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
     assertIsDispatchThread();
-    ReadAction.run(() -> {
+    EditorThreading.run(() -> {
       int minEndOffset = Math.min(endOffset, getEditorModel().getDocument().getTextLength());
 
       if (invalidateTextLayout) {
@@ -2200,7 +2200,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-    ApplicationManager.getApplication().runReadAction(() -> {
+    EditorThreading.run(() -> {
       if (myUpdateCursor && !myPurePaintingMode) {
         setCursorPosition();
         myUpdateCursor = false;
@@ -2266,7 +2266,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public boolean hasHeaderComponent() {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       JComponent header = getHeaderComponent();
       return header != null && header != getPermanentHeaderComponent();
     });
@@ -2274,7 +2274,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @Nullable JComponent getPermanentHeaderComponent() {
-    return ReadAction.compute(() -> getUserData(PERMANENT_HEADER));
+    return EditorThreading.compute(() -> getUserData(PERMANENT_HEADER));
   }
 
   @Override
@@ -2307,7 +2307,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull Color getBackgroundColor() {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       Color forcedBackground = myState.getMyForcedBackground();
       return forcedBackground == null ? getBackgroundIgnoreForced() : forcedBackground;
     });
@@ -2376,7 +2376,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public int getMaxWidthInRange(int startOffset, int endOffset) {
-    return ReadAction.compute(() -> myView.getMaxWidthInRange(startOffset, endOffset));
+    return EditorThreading.compute(() -> myView.getMaxWidthInRange(startOffset, endOffset));
   }
 
   public boolean isPaintSelection() {
@@ -2414,7 +2414,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public int getLineHeight() {
-    return ReadAction.compute(() -> myView.getLineHeight());
+    return EditorThreading.compute(() -> myView.getLineHeight());
   }
 
   public int getDescent() {
@@ -2452,7 +2452,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public @NotNull Dimension getPreferredSize() {
-    return ReadAction.compute(() -> isReleased ? new Dimension()
+    return EditorThreading.compute(() -> isReleased ? new Dimension()
                                                : Registry.is("idea.true.smooth.scrolling.dynamic.scrollbars")
                                                  ? new Dimension(getPreferredWidthOfVisibleLines(), myView.getPreferredHeight())
                                                  : myView.getPreferredSize());
@@ -2508,7 +2508,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull Dimension getContentSize() {
-    return ReadAction.compute(() -> isReleased ? new Dimension() : myView.getPreferredSize());
+    return EditorThreading.compute(() -> isReleased ? new Dimension() : myView.getPreferredSize());
   }
 
   @Override
@@ -2528,12 +2528,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public Insets getInsets() {
-    return ReadAction.compute(() -> myScrollPane.getInsets());
+    return EditorThreading.compute(() -> myScrollPane.getInsets());
   }
 
   @Override
   public int logicalPositionToOffset(@NotNull LogicalPosition pos) {
-    return ReadAction.compute(() -> myView.logicalPositionToOffset(pos));
+    return EditorThreading.compute(() -> myView.logicalPositionToOffset(pos));
   }
 
   /**
@@ -2544,17 +2544,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    * minus the number of folded lines.
    */
   public int getVisibleLineCount() {
-    return ReadAction.compute(() -> myView.getVisibleLineCount());
+    return EditorThreading.compute(() -> myView.getVisibleLineCount());
   }
 
   @Override
   public @NotNull VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos) {
-    return ReadAction.compute(() -> myView.logicalToVisualPosition(logicalPos, false));
+    return EditorThreading.compute(() -> myView.logicalToVisualPosition(logicalPos, false));
   }
 
   @Override
   public @NotNull LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos) {
-    return ReadAction.compute(() -> myView.visualToLogicalPosition(visiblePos));
+    return EditorThreading.compute(() -> myView.visualToLogicalPosition(visiblePos));
   }
 
   private int offsetToLogicalLine(int offset) {
@@ -2678,7 +2678,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public EditorMouseEventArea getMouseEventArea(@NotNull MouseEvent e) {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       if (myGutterComponent != e.getSource()) return EditorMouseEventArea.EDITING_AREA;
 
       int x = myGutterComponent.convertX(e.getX());
@@ -3136,7 +3136,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public boolean setCaretVisible(boolean b) {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       boolean old = myCaretCursor.isActive();
       if (b) {
         myCaretCursor.activate();
@@ -3150,7 +3150,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public boolean setCaretEnabled(boolean enabled) {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       boolean old = myCaretCursor.isEnabled();
       myCaretCursor.setEnabled(enabled);
       return old;
@@ -3185,7 +3185,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void setEmbeddedIntoDialogWrapper(boolean b) {
     assertIsDispatchThread();
-    ReadAction.run(() -> myState.setEmbeddedIntoDialogWrapper(b));
+    EditorThreading.run(() -> myState.setEmbeddedIntoDialogWrapper(b));
   }
 
   private void isEmbeddedIntoDialogWrapperChanged(ObservableStateListener.PropertyChangeEvent event) {
@@ -3561,7 +3561,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private @NotNull MyEditable getViewer() {
     MyEditable editable = myEditable;
     if (editable == null) {
-      myEditable = editable = ReadAction.compute(() -> new MyEditable());
+      myEditable = editable = EditorThreading.compute(() -> new MyEditable());
     }
     return editable;
   }
@@ -3694,7 +3694,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public void setColorsScheme(final @NotNull EditorColorsScheme scheme) {
     assertIsDispatchThread();
     final EditorImpl finalEditor = this;
-    ReadAction.run(() -> {
+    EditorThreading.run(() -> {
       final EditorColorsManager colorsManager = ApplicationManager.getApplication().getServiceIfCreated(EditorColorsManager.class);
       if (colorsManager == null) {
         LOG.info("Skipping attempt to set color scheme without EditorColorsManager");
@@ -3721,7 +3721,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void setVerticalScrollbarOrientation(int type) {
     assertIsDispatchThread();
-    ReadAction.run(() -> myState.setVerticalScrollBarOrientation(type));
+    EditorThreading.run(() -> myState.setVerticalScrollBarOrientation(type));
   }
 
   private void verticalScrollBarOrientationChanged(ObservableStateListener.PropertyChangeEvent event) {
@@ -4035,7 +4035,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private static <T> T execute(@NotNull ThrowableComputable<T, RuntimeException> computable) {
-      return UIUtil.invokeAndWaitIfNeeded(() -> ReadAction.compute(computable));
+      return UIUtil.invokeAndWaitIfNeeded(() -> EditorThreading.compute(computable));
     }
   }
 

@@ -4,7 +4,6 @@ package com.intellij.openapi.editor.impl.view;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -19,7 +18,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.*;
@@ -126,12 +124,12 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   public @NotNull LogicalPosition offsetToLogicalPosition(int offset) {
-    assertReadAccess();
+    assertEditorAccessible();
     return myMapper.offsetToLogicalPosition(offset);
   }
 
   public int logicalPositionToOffset(@NotNull LogicalPosition pos) {
-    assertReadAccess();
+    assertEditorAccessible();
     return myMapper.logicalPositionToOffset(pos);
   }
 
@@ -232,7 +230,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   @RequiresEdt
   public @NotNull Dimension getPreferredSize() {
     assert !myEditor.isPurePaintingMode();
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       getSoftWrapModel().prepareToMapping();
       return mySizeManager.getPreferredSize();
     });
@@ -250,7 +248,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   @RequiresEdt
   public int getPreferredWidth(int beginLine, int endLine) {
     assert !myEditor.isPurePaintingMode();
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       getSoftWrapModel().prepareToMapping();
       return mySizeManager.getPreferredWidth(beginLine, endLine);
     });
@@ -259,7 +257,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   @RequiresEdt
   public int getPreferredHeight() {
     assert !myEditor.isPurePaintingMode();
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       getSoftWrapModel().prepareToMapping();
       return mySizeManager.getPreferredHeight();
     });
@@ -694,7 +692,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   private void invalidateFoldRegionLayouts() {
-    ReadAction.run(() -> {
+    EditorThreading.run(() -> {
       for (FoldRegion region : getFoldingModel().getAllFoldRegions()) {
         invalidateFoldRegionLayout(region);
       }
@@ -802,9 +800,9 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     }
   }
 
-  private void assertReadAccess() {
+  private void assertEditorAccessible() {
     if (!myEditorModel.isAd()) {
-      ThreadingAssertions.assertReadAccess();
+      EditorThreading.assertInteractionAllowed();
     }
   }
 
