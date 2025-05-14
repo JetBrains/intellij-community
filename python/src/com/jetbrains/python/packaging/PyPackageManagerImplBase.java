@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.net.HttpConfigurable;
 import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.PySdkBundle;
@@ -167,6 +168,7 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
     return dependents;
   }
 
+  @RequiresReadLock(generateAssertion = false)
   protected static @NotNull LanguageLevel getOrRequestLanguageLevelForSdk(@NotNull Sdk sdk) throws ExecutionException {
     if (sdk instanceof PyDetectedSdk) {
       final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);

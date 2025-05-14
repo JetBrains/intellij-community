@@ -33,6 +33,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.ResolveResult;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -419,6 +420,7 @@ public final class PyPackageUtil {
            PyPsiPackageUtil.findPackage(packages, PIP) != null;
   }
 
+  @RequiresReadLock(generateAssertion = false)
   public static @Nullable List<PyRequirement> getRequirementsFromTxt(@NotNull Module module) {
     final VirtualFile requirementsTxt = findRequirementsTxt(module);
     if (requirementsTxt != null) {
