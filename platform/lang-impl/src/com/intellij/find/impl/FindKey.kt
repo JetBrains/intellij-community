@@ -2,7 +2,9 @@
 package com.intellij.find.impl
 
 import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object FindKey {
   val isEnabled: Boolean
     @JvmStatic

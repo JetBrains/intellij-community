@@ -67,6 +67,7 @@ interface FindRemoteApi : RemoteApi<Unit> {
  * @property tooltipText The tooltip text to be displayed when hovering over the result, if available.
  * @property iconId The identifier for an icon, if any.
  */
+@Internal
 @Serializable
 data class FindInFilesResult(
   val presentation: List<SerializableTextChunk>,

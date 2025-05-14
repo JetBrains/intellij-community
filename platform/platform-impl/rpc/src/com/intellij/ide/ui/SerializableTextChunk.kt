@@ -9,9 +9,11 @@ import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.SimpleTextAttributes
-import kotlinx.serialization.Serializable
 import com.intellij.usages.TextChunk
+import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Serializable
 class SerializableTextChunk(val text: @NlsSafe String, val foregroundColorId: ColorId?, val fontType: Int, val effectType: EffectType?, val effectColor: ColorId?) {
 

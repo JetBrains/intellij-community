@@ -7551,6 +7551,7 @@ f:com.intellij.find.impl.FindInProjectUtil
 - s:findUsages(com.intellij.find.FindModel,com.intellij.openapi.project.Project,com.intellij.usages.FindUsagesProcessPresentation,java.util.Set,com.intellij.util.Processor):V
 - s:findUsages(com.intellij.find.FindModel,com.intellij.openapi.project.Project,com.intellij.util.Processor,com.intellij.usages.FindUsagesProcessPresentation):V
 - s:getDirectory(com.intellij.find.FindModel):com.intellij.openapi.vfs.VirtualFile
+- s:getGlobalSearchScope(com.intellij.openapi.project.Project,com.intellij.find.FindModel):com.intellij.psi.search.GlobalSearchScope
 - s:getPresentableName(com.intellij.find.FindModel$SearchContext):java.lang.String
 - s:getTitleForScope(com.intellij.find.FindModel):java.lang.String
 - s:initFileFilter(javax.swing.JComboBox,javax.swing.JCheckBox):V

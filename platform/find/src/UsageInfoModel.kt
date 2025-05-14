@@ -32,7 +32,7 @@ import javax.swing.Icon
 
 private val LOG = logger<UsageInfoModel>()
 
-class UsageInfoModel(val project: Project, val model: FindInFilesResult, val coroutineScope: CoroutineScope) : UsageInfoAdapter, UsageInFile, UsageDocumentProcessor {
+internal class UsageInfoModel(val project: Project, val model: FindInFilesResult, val coroutineScope: CoroutineScope) : UsageInfoAdapter, UsageInFile, UsageDocumentProcessor {
   private val virtualFile: VirtualFile? = run {
     val virtualFile = model.fileId.virtualFile()
     if (virtualFile == null) LOG.error("Cannot find virtualFile for ${model.presentablePath}")

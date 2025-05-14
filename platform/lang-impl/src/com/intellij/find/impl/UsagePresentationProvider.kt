@@ -5,7 +5,9 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.usages.UsageInfoAdapter
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface UsagePresentationProvider {
   companion object {
     private val EP_NAME = ExtensionPointName<UsagePresentationProvider>("com.intellij.usagePresentationProvider")

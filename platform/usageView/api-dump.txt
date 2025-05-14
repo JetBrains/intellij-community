@@ -190,6 +190,7 @@ c:com.intellij.usages.UsageInfo2UsageAdapter
 - com.intellij.usages.UsagePresentation
 - com.intellij.usages.rules.MergeableUsage
 - com.intellij.usages.rules.PsiElementUsage
+- com.intellij.usages.rules.UsageDocumentProcessor
 - com.intellij.usages.rules.UsageInFile
 - com.intellij.usages.rules.UsageInLibrary
 - com.intellij.usages.rules.UsageInModule
@@ -542,6 +543,10 @@ a:com.intellij.usages.rules.SingleParentUsageGroupingRule
 - pa:getParentGroupFor(com.intellij.usages.Usage,com.intellij.usages.UsageTarget[]):com.intellij.usages.UsageGroup
 - f:getParentGroupsFor(com.intellij.usages.Usage,com.intellij.usages.UsageTarget[]):java.util.List
 - groupUsage(com.intellij.usages.Usage):com.intellij.usages.UsageGroup
+com.intellij.usages.rules.UsageDocumentProcessor
+- com.intellij.usages.UsageInfoAdapter
+- a:getDocument():com.intellij.openapi.editor.Document
+- processRangeMarkers(com.intellij.util.Processor):Z
 com.intellij.usages.rules.UsageFilteringRule
 - sf:EMPTY_ARRAY:com.intellij.usages.rules.UsageFilteringRule[]
 - getActionId():java.lang.String

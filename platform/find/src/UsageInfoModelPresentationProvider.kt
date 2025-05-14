@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.usages.UsageInfoAdapter
 
-class UsageInfoModelPresentationProvider: UsagePresentationProvider {
+private class UsageInfoModelPresentationProvider: UsagePresentationProvider {
   override fun getUsagePresentation(usageInfo: UsageInfoAdapter, project: Project, scope: GlobalSearchScope): UsagePresentation? {
     if (usageInfo !is UsageInfoModel) return null
     val model = usageInfo.model

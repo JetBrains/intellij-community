@@ -20,7 +20,7 @@
 c:com.intellij.openapi.util.UserDataHolderBase
 - java.util.concurrent.atomic.AtomicReference
 - com.intellij.openapi.util.UserDataHolderEx
-- *p:isCopyableDataEqual(com.intellij.openapi.util.UserDataHolderBase):Z
+- *:isCopyableDataEqual(com.intellij.openapi.util.UserDataHolderBase):Z
 f:com.intellij.openapi.util.io.NioFiles
 - *s:copyRecursively(java.nio.file.Path,java.nio.file.Path):V
 - *s:copyRecursively(java.nio.file.Path,java.nio.file.Path,java.util.function.Consumer):V
