@@ -29,7 +29,7 @@ internal class HighlighterFilter private constructor(
       }
 
       val oldPredicates = predicates
-      predicates = predicates + predicate
+      predicates += predicate
 
       return HighlighterFilter(oldPredicates)
     }
