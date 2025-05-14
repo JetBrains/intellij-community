@@ -5,6 +5,7 @@ import com.intellij.ide.actions.ApplyIntentionAction
 import com.intellij.ide.actions.searcheverywhere.PromoAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.icons.rpcId
+import com.intellij.ide.ui.icons.rpcIdOrNull
 import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.ide.util.gotoByName.GotoActionModel
@@ -54,8 +55,8 @@ object SeActionPresentationProvider {
 
       if (UISettings.getInstance().showIconsInMenus) {
         presentation = presentation.run {
-          copy(iconId = actionPresentation.icon?.rpcId(),
-               selectedIconId = actionPresentation.selectedIcon?.rpcId())
+          copy(iconId = actionPresentation.icon?.rpcIdOrNull(),
+               selectedIconId = actionPresentation.selectedIcon?.rpcIdOrNull())
         }
       }
 
