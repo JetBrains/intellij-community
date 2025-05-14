@@ -446,6 +446,18 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
     });
   }
 
+  // PY-80733
+  public void testTryExceptDoesNotRedirectBreak() {
+    doTestByText("""
+      while True:
+          try:
+              foo = could_raise()
+          except IndexError:
+              break
+      
+          print(foo)""");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

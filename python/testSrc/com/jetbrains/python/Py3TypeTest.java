@@ -3466,7 +3466,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testNonShadowingReturnInsideFinally() {
-    doTest("int | str", """
+    doTest("str | int", """
       def f(p):
           try:
               return 42

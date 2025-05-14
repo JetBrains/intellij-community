@@ -587,6 +587,8 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     if (elsePart != null) {
       visitPyStatementPart(elsePart);
     }
+
+    collectInternalPendingEdges(node);
   }
 
   @Override
@@ -631,7 +633,10 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       elsePart.accept(this);
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
+    
+
     myBuilder.flowAbrupted();
+    collectInternalPendingEdges(node);
   }
 
   private static boolean loopHasAtLeastOneIteration(@NotNull PyLoopStatement loopStatement) {
@@ -751,18 +756,21 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     final Instruction finallyFailInstruction;
 
     // Store pending normal exit instructions from try-except-else parts
-    myBuilder.processPending((pendingScope, instruction) -> {
-      final PsiElement pendingElement = instruction.getElement();
-      final boolean isPending = pendingElement == null || 
-                                PsiTreeUtil.isAncestor(node, pendingElement, false) &&
-                                !PsiTreeUtil.isAncestor(finallyPart, pendingElement, false);
-      if (isPending && pendingScope != null) {
-        pendingNormalExits.add(Pair.createNonNull(pendingScope, instruction));
-      }
-      else {
-        myBuilder.addPendingEdge(pendingScope, instruction);
-      }
-    });
+    if (finallyPart != null) {
+      myBuilder.processPending((pendingScope, instruction) -> {
+        final PsiElement pendingElement = instruction.getElement();
+        if (pendingElement != null) {
+          final boolean isPending = PsiTreeUtil.isAncestor(node, pendingElement, false) &&
+                                    !PsiTreeUtil.isAncestor(finallyPart, pendingElement, false);
+          if (isPending && pendingScope != null) {
+            pendingNormalExits.add(Pair.createNonNull(pendingScope, instruction));
+          }
+          else {
+            myBuilder.addPendingEdge(pendingScope, instruction);
+          }
+        }
+      });
+    }
 
     // Finally-fail part handling
     if (finallyPart != null) {
@@ -806,7 +814,6 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       }
     }
 
-    final Instruction exitInstruction;
     if (finallyPart != null) {
       myBuilder.processPending((pendingScope, instruction) -> {
         final PsiElement e = instruction.getElement();
@@ -827,6 +834,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
       // Duplicate CFG for finally (-fail and -success) only if there are some successful exits from the
       // try part. Otherwise, a single CFG for finally provides the correct control flow
+      final Instruction finallyInstruction;
       if (!pendingNormalExits.isEmpty()) {
         // Finally-success part handling
         pendingBackup = new ArrayList<>(myBuilder.pending);
@@ -837,30 +845,28 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
         for (Pair<PsiElement, Instruction> pair : pendingBackup) {
           myBuilder.addPendingEdge(pair.first, pair.second);
         }
-        exitInstruction = finallySuccessInstruction;
+        finallyInstruction = finallySuccessInstruction;
       }
       else {
-        exitInstruction = finallyFailInstruction;
+        finallyInstruction = finallyFailInstruction;
+      }
+
+      // Connect normal exits from try and else parts to the finally part
+      for (Pair<PsiElement, Instruction> pendingScopeAndInstruction : pendingNormalExits) {
+        final PsiElement pendingScope = pendingScopeAndInstruction.first;
+        final Instruction instruction = pendingScopeAndInstruction.second;
+
+        myBuilder.addEdge(instruction, finallyInstruction);
+
+        // When instruction continues outside try-except statement scope
+        // the last instruction in finally-block is marked as pointing to that continuation
+        if (PsiTreeUtil.isAncestor(pendingScope, node, true)) {
+          myBuilder.addPendingEdge(pendingScope, myBuilder.prevInstruction);
+        }
       }
     }
-    else {
-      exitInstruction = addTransparentInstruction();    
-      myBuilder.prevInstruction = exitInstruction;
-    }
 
-    // Connect normal exits from try and else parts to the finally part or exit instruction
-    for (Pair<PsiElement, Instruction> pendingScopeAndInstruction : pendingNormalExits) {
-      final PsiElement pendingScope = pendingScopeAndInstruction.first;
-      final Instruction instruction = pendingScopeAndInstruction.second;
-
-      myBuilder.addEdge(instruction, exitInstruction);
-
-      // When instruction continues outside try-except statement scope
-      // the last instruction in finally-block is marked as pointing to that continuation
-      if (PsiTreeUtil.isAncestor(pendingScope, node, true)) {
-        myBuilder.addPendingEdge(pendingScope, myBuilder.prevInstruction);
-      }
-    }
+    collectInternalPendingEdges(node);
   }
 
   @Override
@@ -934,6 +940,8 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
         myBuilder.addEdge(myBuilder.prevInstruction, i);
       }
     }
+    
+    collectInternalPendingEdges(node);
   }
 
   @Override
@@ -1103,5 +1111,28 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     TransparentInstructionImpl instruction = new TransparentInstructionImpl(myBuilder, null, "");
     myBuilder.instructions.add(instruction);
     return instruction;
+  }
+
+  /**
+   * Can be used to collect all pending edges  
+   * that we used to build CFG for `node`,
+   * but are not relevant to other elements.
+   * Is almost equivalent to this:
+   * 
+   * <pre>{@code
+   * visitPy...(node);
+   * myBuilder.startNode(node.nextSibling); // collectInternalPendingEdges does this, without needing nextSibling
+   * }</pre>
+   */
+  private void collectInternalPendingEdges(@NotNull PyElement node) {
+    myBuilder.addNode(new TransparentInstructionImpl(myBuilder, null, "")); // exit
+    myBuilder.processPending((pendingScope, instruction) -> {
+      if (pendingScope != null && PsiTreeUtil.isAncestor(node, pendingScope, false)) {
+        myBuilder.addEdge(instruction, myBuilder.prevInstruction); // to exit
+      }
+      else {
+        myBuilder.addPendingEdge(pendingScope, instruction);
+      }
+    });
   }
 }
