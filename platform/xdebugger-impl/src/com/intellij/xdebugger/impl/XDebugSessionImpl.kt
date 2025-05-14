@@ -826,10 +826,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
     if (activeNonLineBreakpoint != null) {
       return (activeNonLineBreakpoint as XBreakpointBase<*, *, *>).createGutterIconRenderer()
     }
-    if (this.currentExecutionStack != null) {
-      return currentExecutionStack!!.executionLineIconRenderer
-    }
-    return null
+    return currentExecutionStack?.executionLineIconRenderer
   }
 
   override fun updateBreakpointPresentation(

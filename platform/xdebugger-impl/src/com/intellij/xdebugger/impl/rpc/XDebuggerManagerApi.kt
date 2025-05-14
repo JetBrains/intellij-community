@@ -94,7 +94,7 @@ sealed interface XDebuggerSessionEvent {
   class SettingsChanged() : XDebuggerSessionEvent
 
   @Serializable
-  class BreakpointsMuted(val muted: Boolean) : XDebuggerSessionEvent
+  data class BreakpointsMuted(val muted: Boolean) : XDebuggerSessionEvent
 }
 
 @ApiStatus.Internal
