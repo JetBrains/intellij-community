@@ -17892,6 +17892,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             public void testSecondaryConstructorUnused() throws Exception {
                 runTest("testData/inspectionsLocal/unusedSymbol/multifile/secondaryConstructorUnused.kt");
             }
+
+            @TestMetadata("textUsagesClass.kt")
+            public void testTextUsagesClass() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/multifile/textUsagesClass.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -18360,6 +18365,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("suppressedClass.kt")
             public void testSuppressedClass() throws Exception {
                 runTest("testData/inspectionsLocal/unusedSymbol/suppressedClass.kt");
+            }
+
+            @TestMetadata("textUsages.kt")
+            public void testTextUsages() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/textUsages.kt");
             }
 
             @TestMetadata("typeAlias.kt")
