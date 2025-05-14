@@ -5,8 +5,8 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
-import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.ModuleStore
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.debug
@@ -496,7 +496,7 @@ abstract class ModuleManagerBridgeImpl(
         registerNonPersistentModuleStore(module)
       }
       else {
-        val moduleStore = module.getService(IComponentStore::class.java) as ModuleStore
+        val moduleStore = module.stateStore as ModuleStore
         moduleStore.setPath(path = moduleFileUrl.toPath(), virtualFile = null, isNew = isNew)
       }
     }

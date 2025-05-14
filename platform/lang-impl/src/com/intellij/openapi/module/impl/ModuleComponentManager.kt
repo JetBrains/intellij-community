@@ -9,10 +9,9 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentConfig
+import com.intellij.openapi.components.impl.stores.ComponentStoreOwner
 import com.intellij.openapi.components.impl.stores.IComponentStore
-import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.serviceContainer.ComponentManagerImpl
@@ -82,13 +81,6 @@ class ModuleComponentManager(parent: ComponentManagerImpl) : ComponentManagerImp
     return pluginDescriptor.moduleContainerDescriptor
   }
 
-  override fun dispose() {
-    runCatching {
-      serviceIfCreated<IComponentStore>()?.release()
-    }.getOrLogException(LOG)
-    super.dispose()
-  }
-
   override fun debugString(short: Boolean): String = if (short) javaClass.simpleName else super.debugString(short = false)
 
   // expose to call it via ModuleImpl
@@ -108,4 +100,7 @@ class ModuleComponentManager(parent: ComponentManagerImpl) : ComponentManagerImp
       unregisterComponent(DeprecatedModuleOptionManager::class.java)
     }
   }
+
+  override val componentStore: IComponentStore
+    get() = (module as ComponentStoreOwner).componentStore
 }

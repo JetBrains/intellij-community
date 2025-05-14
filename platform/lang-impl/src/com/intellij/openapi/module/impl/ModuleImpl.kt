@@ -6,6 +6,7 @@ package com.intellij.openapi.module.impl
 import com.intellij.configurationStore.RenameableStateStorageManager
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.openapi.components.*
+import com.intellij.openapi.components.impl.stores.ComponentStoreOwner
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -109,7 +110,7 @@ open class ModuleImpl(
   }
 
   protected val store: IComponentStore
-    get() = componentManager.getService(IComponentStore::class.java)!!
+    get() = (this as ComponentStoreOwner).componentStore
 
   final override fun canStoreSettings(): Boolean = store !is NonPersistentModuleStore
 

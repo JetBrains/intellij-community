@@ -11,8 +11,8 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
-import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getExternalConfigurationDir
@@ -93,7 +93,7 @@ open class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(proje
         continue
       }
 
-      val moduleStore = module.serviceAsync<IComponentStore>() as? ComponentStoreImpl ?: continue
+      val moduleStore = module.stateStore as? ComponentStoreImpl ?: continue
       val moduleSessionManager = moduleStore.createSaveSessionProducerManager()
       moduleStore.commitComponents(isForce = forceSavingAllSettings, sessionManager = moduleSessionManager, saveResult = saveResult)
       projectSessionManager.commitComponents(moduleStore = moduleStore, moduleSaveSessionManager = moduleSessionManager)

@@ -12,7 +12,9 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.impl.ModulePathMacroManager
+import com.intellij.openapi.components.impl.stores.ComponentStoreOwner
 import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ModuleImpl
@@ -26,6 +28,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
@@ -48,7 +51,7 @@ class ModuleBridgeImpl(
   project = project,
   virtualFilePointer = virtualFileUrl as? VirtualFileUrlBridge,
   componentManager = componentManager
-), ModuleBridge {
+), ModuleBridge, ComponentStoreOwner {
   override fun rename(newName: String, newModuleFileUrl: VirtualFileUrl?, notifyStorage: Boolean) {
     imlFilePointer = newModuleFileUrl as VirtualFileUrlBridge
     rename(newName, notifyStorage)
@@ -201,5 +204,13 @@ class ModuleBridgeImpl(
     init {
       setupOpenTelemetryReporting(jpsMetrics.meter)
     }
+  }
+
+  private val _componentStore = SynchronizedClearableLazy { this.service<IComponentStore>() }
+  override val componentStore: IComponentStore get() = _componentStore.value
+
+  override fun dispose() {
+    super.dispose()
+    _componentStore.valueIfInitialized?.release()
   }
 }
