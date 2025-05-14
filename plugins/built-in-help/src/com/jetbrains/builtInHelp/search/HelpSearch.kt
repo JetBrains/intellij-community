@@ -40,9 +40,9 @@ class HelpSearch {
 
         if (indexDir != null)
           try {
+            val indexDirPath = indexDir.toAbsolutePath().toString()
 
             resources.forEach { resource ->
-              val indexDirPath = indexDir.toAbsolutePath().toString()
               ResourceUtil.getResourceAsStream(HelpSearch::class.java.classLoader,
                                                "search",
                                                resource).use { resourceStream ->
