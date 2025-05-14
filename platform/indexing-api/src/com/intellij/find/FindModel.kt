@@ -118,7 +118,10 @@ open class FindModel : UserDataHolder, Cloneable {
 
   var searchContext: SearchContext = SearchContext.ANY
     set(value) {
-      doSetContext(value)
+      if (value != field) {
+        field = value
+        notifyObservers()
+      }
     }
 
   /**
