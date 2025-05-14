@@ -2,13 +2,13 @@
 <module type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="kotlin-language" name="Kotlin">
-      <configuration version="5" platform="JVM 1.8" allPlatforms="JVM [1.8]" useProjectSettings="false">
+      <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]">
         <compilerSettings>
           <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi -Xno-param-assertions -Xno-call-assertions" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
-            <stringArg name="jvmTarget" arg="1.8" />
+            <stringArg name="jvmTarget" arg="17" />
             <stringArg name="apiVersion" arg="2.1" />
             <stringArg name="languageVersion" arg="2.1" />
           </stringArguments>
