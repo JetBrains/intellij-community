@@ -149,14 +149,16 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
     }
 
     request.localPortBindings.forEach { localPortBinding ->
-      forwardingScope.launch {
+      val acceptor = runBlockingMaybeCancellable {
         val remoteAddress = EelTunnelsApi.HostAddress.Builder((localPortBinding.target ?: 0).toUShort()).build()
-        val acceptor = eel.tunnels.getAcceptorForRemotePort(remoteAddress).getOrThrow()
+        eel.tunnels.getAcceptorForRemotePort(remoteAddress).getOrThrow()
+      }
 
-        val socket = Socket()
+      val socket = Socket()
 
-        socket.connect(InetSocketAddress(localPortBinding.local))
+      socket.connect(InetSocketAddress(localPortBinding.local))
 
+      forwardingScope.launch {
         launch {
           val connection = acceptor.incomingConnections.receive()
 
@@ -168,16 +170,17 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
           }
         }
 
+        @Suppress("OPT_IN_USAGE")
         awaitCancellationAndInvoke {
           acceptor.close()
           socket.close()
         }
-
-        myLocalPortBindings[localPortBinding] = ResolvedPortBinding(
-          localEndpoint = LocalHostPort(localPortBinding.local),
-          targetEndpoint = LocalHostPort(acceptor.boundAddress.port.toInt())
-        )
       }
+
+      myLocalPortBindings[localPortBinding] = ResolvedPortBinding(
+        localEndpoint = LocalHostPort(localPortBinding.local),
+        targetEndpoint = LocalHostPort(acceptor.boundAddress.port.toInt())
+      )
     }
   }
 
