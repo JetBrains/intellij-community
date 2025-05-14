@@ -6,8 +6,6 @@ import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
-import com.intellij.execution.configurations.RunConfigurationModule;
-import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.scratch.JavaScratchConfiguration;
@@ -17,6 +15,7 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExe
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.task.TaskCallback;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -46,7 +45,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration.PROGRESS_LISTENER_KEY;
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.isExternalSystemAwareModule;
 import static com.intellij.openapi.util.text.StringUtil.*;
 
 /**
@@ -279,38 +277,31 @@ public final class GradleProjectTaskRunner extends ProjectTaskRunner {
 
   @Override
   public boolean canRun(@NotNull ProjectTask projectTask) {
-    if (projectTask instanceof ModuleBuildTask) {
-      Module module = ((ModuleBuildTask)projectTask).getModule();
-      if (!GradleProjectSettings.isDelegatedBuildEnabled(module)) return false;
-      return isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module);
+    if (projectTask instanceof ModuleBuildTask moduleBuildTask) {
+      return isDelegatedBuildEnabled(moduleBuildTask.getModule());
     }
     if (projectTask instanceof BuildTask buildTask) {
-      for (GradleBuildTasksProvider buildTasksProvider : GradleBuildTasksProvider.EP_NAME.getExtensions()) {
-        if (buildTasksProvider.isApplicable(buildTask)) return true;
-      }
+      return GradleBuildTasksProvider.EP_NAME.findFirstSafe(it -> it.isApplicable(buildTask)) != null;
     }
-
-    if (projectTask instanceof ExecuteRunConfigurationTask) {
-      RunProfile runProfile = ((ExecuteRunConfigurationTask)projectTask).getRunProfile();
-      if (runProfile instanceof JavaScratchConfiguration) {
-        return false;
-      }
-      if (runProfile instanceof ModuleBasedConfiguration) {
-        RunConfigurationModule module = ((ModuleBasedConfiguration<?, ?>)runProfile).getConfigurationModule();
-        if (!isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module.getModule()) ||
-            !GradleProjectSettings.isDelegatedBuildEnabled(module.getModule())) {
+    if (projectTask instanceof ExecuteRunConfigurationTask executeRunConfigurationTask) {
+      var runProfile = executeRunConfigurationTask.getRunProfile();
+      if (runProfile instanceof ModuleBasedConfiguration<?, ?> moduleRunProfile) {
+        var module = moduleRunProfile.getConfigurationModule().getModule();
+        if (!isDelegatedBuildEnabled(module)) {
           return false;
         }
       }
-      for (GradleExecutionEnvironmentProvider environmentProvider : GradleExecutionEnvironmentProvider.EP_NAME.getExtensions()) {
-        if (environmentProvider.isApplicable(((ExecuteRunConfigurationTask)projectTask))) {
-          return true;
-        }
-      }
+      return GradleExecutionEnvironmentProvider.EP_NAME.findFirstSafe(it -> it.isApplicable(executeRunConfigurationTask)) != null;
     }
     return false;
   }
 
+  private static boolean isDelegatedBuildEnabled(@Nullable Module module) {
+    var externalProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module);
+    return externalProjectPath != null &&
+           ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module) &&
+           GradleProjectSettings.isDelegatedBuildEnabled(module.getProject(), externalProjectPath);
+  }
 
   @Override
   public ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
