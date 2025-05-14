@@ -12,7 +12,6 @@ public final class Test {
         }
     }
     public fun Test() = UastEmptyExpression
-    @kotlin.Deprecated(message = "no more property", level = DeprecationLevel.HIDDEN)
     public final fun getPOld_setter_deprecatedOnProperty() : java.lang.String = UastEmptyExpression
     public final fun setPOld_setter_deprecatedOnProperty(@org.jetbrains.annotations.Nullable value: java.lang.String) : void {
         if (field == null) {

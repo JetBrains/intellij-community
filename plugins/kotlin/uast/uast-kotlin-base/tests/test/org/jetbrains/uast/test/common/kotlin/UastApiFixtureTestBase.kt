@@ -2127,6 +2127,64 @@ interface UastApiFixtureTestBase {
         )
     }
 
+    fun checkAnnotationOnPropertyWithValueClassInSignature(myFixture: JavaCodeInsightTestFixture) {
+        // https://youtrack.jetbrains.com/issue/KTIJ-34167
+        myFixture.configureByText(
+            "test.kt",
+            """
+                package test.pkg
+
+                annotation class Anno
+
+                @JvmInline
+                value class IntValue(val value: Int) {
+                    companion object {
+                        @Anno val withValueClassTypeSpecified: IntValue = IntValue(0)
+                        @Anno val withValueClassTypeUnspecified = IntValue(1)
+                        @Anno val withNonValueClassTypeSpecified: Int = 2
+                        @Anno val withNonValueClassTypeUnSpecified = 3
+                    }
+                }
+            """.trimIndent()
+        )
+
+        var count = 0
+        val uFile = myFixture.file.toUElementOfType<UFile>()!!
+        uFile.accept(
+            object : AbstractUastVisitor() {
+                override fun visitField(node: UField): Boolean {
+                    if (!node.name.startsWith("with"))
+                        return super.visitField(node)
+
+                    val uAnnos = node.uAnnotations.filter { it.qualifiedName == "test.pkg.Anno" }
+                    TestCase.assertEquals(node.name, 1, uAnnos.size)
+
+                    val jAnnos = (node.javaPsi as? PsiField)?.annotations?.filter { it.qualifiedName == "test.pkg.Anno" }
+                    TestCase.assertEquals(node.name, 0, jAnnos?.size)
+
+                    count++
+                    return super.visitField(node)
+                }
+
+                override fun visitMethod(node: UMethod): Boolean {
+                    if (!node.name.startsWith("getWith"))
+                        return super.visitMethod(node)
+
+                    val uAnnos = node.uAnnotations.filter { it.qualifiedName == "test.pkg.Anno" }
+                    TestCase.assertEquals(node.name, 0, uAnnos.size)
+
+                    val jAnnos = node.javaPsi.annotations.filter { it.qualifiedName == "test.pkg.Anno" }
+                    TestCase.assertEquals(node.name, 0, jAnnos.size)
+
+                    count++
+                    return super.visitMethod(node)
+                }
+            }
+        )
+        // 4 fields and 4 getters
+        TestCase.assertEquals(8, count)
+    }
+
     fun checkTypealiasAnnotation(myFixture: JavaCodeInsightTestFixture) {
         myFixture.addClass(
             """

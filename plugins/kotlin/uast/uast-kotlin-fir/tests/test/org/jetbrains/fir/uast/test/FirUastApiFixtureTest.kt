@@ -234,6 +234,10 @@ class FirUastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         checkAnnotationOnMemberWithValueClassInSignature(myFixture)
     }
 
+    fun testAnnotationOnPropertyWithValueClassInSignature() {
+        checkAnnotationOnPropertyWithValueClassInSignature(myFixture)
+    }
+
     fun testTypealiasAnnotation() {
         checkTypealiasAnnotation(myFixture)
     }

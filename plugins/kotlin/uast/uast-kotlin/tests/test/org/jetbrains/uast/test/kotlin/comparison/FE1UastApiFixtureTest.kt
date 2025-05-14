@@ -226,11 +226,15 @@ class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         checkJavaConstantEvaluation(myFixture)
     }
 
-    fun testTypealiasAnnotation() {
-        checkTypealiasAnnotation(myFixture)
-    }
-
     fun testAnnotationOnMemberWithValueClassInSignature() {
         checkAnnotationOnMemberWithValueClassInSignature(myFixture)
+    }
+
+    fun testAnnotationOnPropertyWithValueClassInSignature() {
+        checkAnnotationOnPropertyWithValueClassInSignature(myFixture)
+    }
+
+    fun testTypealiasAnnotation() {
+        checkTypealiasAnnotation(myFixture)
     }
 }

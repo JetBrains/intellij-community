@@ -3,9 +3,7 @@ package test.pkg
 public abstract interface TestInterface {
     public abstract fun getPNew() : int = UastEmptyExpression
     public abstract fun setPNew(<set-?>: int) : void = UastEmptyExpression
-    @kotlin.Deprecated(message = "no more property", level = DeprecationLevel.HIDDEN)
     public abstract fun getPOld_deprecatedOnProperty() : int = UastEmptyExpression
-    @kotlin.Deprecated(message = "no more property", level = DeprecationLevel.HIDDEN)
     public abstract fun setPOld_deprecatedOnProperty(@org.jetbrains.annotations.NotNull <set-?>: int) : void = UastEmptyExpression
     @kotlin.Deprecated(message = "no more getter", level = DeprecationLevel.HIDDEN)
     public abstract fun getPOld_deprecatedOnGetter() : int = UastEmptyExpression
