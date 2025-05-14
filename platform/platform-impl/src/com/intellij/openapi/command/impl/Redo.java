@@ -11,7 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
  * @author lesya
  */
 final class Redo extends UndoRedo {
-  Redo(UndoManagerImpl.ClientState state, FileEditor editor) {
+  Redo(UndoClientState state, FileEditor editor) {
     super(state, editor);
   }
 

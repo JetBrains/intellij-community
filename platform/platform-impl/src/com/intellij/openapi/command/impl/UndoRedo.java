@@ -21,11 +21,11 @@ import java.util.function.Predicate;
 
 abstract class UndoRedo {
   protected final UndoManagerImpl myManager;
-  protected final UndoManagerImpl.ClientState myState;
+  protected final UndoClientState myState;
   protected final FileEditor myEditor;
   protected final UndoableGroup myUndoableGroup;
 
-  protected UndoRedo(UndoManagerImpl.ClientState state, FileEditor editor) {
+  protected UndoRedo(UndoClientState state, FileEditor editor) {
     myState = state;
     myManager = state.myManager;
     myEditor = editor;

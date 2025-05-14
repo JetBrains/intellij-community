@@ -27,7 +27,7 @@ import java.util.*;
 @ApiStatus.Internal
 public final class CommandMerger {
   private final UndoManagerImpl myManager;
-  private final UndoManagerImpl.ClientState myState;
+  private final UndoClientState myState;
   private Reference<Object> myLastGroupId; // weak reference to avoid memleaks when clients pass some exotic objects as commandId
   private boolean myForcedGlobal;
   private boolean myTransparent;
@@ -40,12 +40,12 @@ public final class CommandMerger {
   private EditorAndState myStateAfter;
   private UndoConfirmationPolicy myUndoConfirmationPolicy = UndoConfirmationPolicy.DEFAULT;
 
-  CommandMerger(@NotNull UndoManagerImpl.ClientState state) {
+  CommandMerger(@NotNull UndoClientState state) {
     myManager = state.myManager;
     myState = state;
   }
 
-  CommandMerger(@NotNull UndoManagerImpl.ClientState state, boolean isTransparent) {
+  CommandMerger(@NotNull UndoClientState state, boolean isTransparent) {
     myManager = state.myManager;
     myState = state;
     myTransparent = isTransparent;
