@@ -9,7 +9,7 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.queryparser.simple.SimpleQueryParser
 import org.apache.lucene.search.IndexSearcher
-import org.apache.lucene.search.TopScoreDocCollector
+import org.apache.lucene.search.TopScoreDocCollectorManager
 import org.apache.lucene.search.highlight.Highlighter
 import org.apache.lucene.search.highlight.QueryScorer
 import org.apache.lucene.search.highlight.Scorer
@@ -59,17 +59,18 @@ class HelpSearch {
             reader = DirectoryReader.open(indexDirectory)
 
             val searcher = IndexSearcher(reader)
-            val collector: TopScoreDocCollector = TopScoreDocCollector.create(maxHits, maxHits)
-            val q = SimpleQueryParser(analyzer, mapOf(Pair("contents", 1.0F), Pair("title", 1.5F))).parse(query)
-            searcher.search(q, collector)
-            val hits = collector.topDocs().scoreDocs
+            val q = SimpleQueryParser(analyzer, mapOf(Pair("contents", 1.0F),
+                                                      Pair("title", 1.5F))).parse(query)
+            val hits = searcher.search(q,
+                                       TopScoreDocCollectorManager(maxHits, maxHits))
 
             val scorer: Scorer = QueryScorer(q)
             val highlighter = Highlighter(scorer)
 
-            val results = ArrayList<HelpSearchResult>()
-            for (i in hits.indices) {
-              val doc = searcher.doc(hits[i].doc)
+            val results = mutableListOf<HelpSearchResult>()
+
+            for (i in hits.scoreDocs.indices) {
+              val doc = searcher.storedFields().document(hits.scoreDocs[i].doc)
               val contentValue = buildString {
                 append(highlighter.getBestFragment(
                   analyzer, "contents", doc.get("contents")
