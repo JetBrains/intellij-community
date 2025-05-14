@@ -79,19 +79,19 @@ sealed interface XDebuggerSessionEvent {
   ) : XDebuggerSessionEvent
 
   @Serializable
-  class SessionResumed() : XDebuggerSessionEvent
+  object SessionResumed : XDebuggerSessionEvent
 
   @Serializable
-  class SessionStopped() : XDebuggerSessionEvent
+  object SessionStopped : XDebuggerSessionEvent
 
   @Serializable
   class StackFrameChanged(val stackFrame: XStackFrameDto?) : XDebuggerSessionEvent
 
   @Serializable
-  class BeforeSessionResume() : XDebuggerSessionEvent
+  object BeforeSessionResume : XDebuggerSessionEvent
 
   @Serializable
-  class SettingsChanged() : XDebuggerSessionEvent
+  object SettingsChanged : XDebuggerSessionEvent
 
   @Serializable
   data class BreakpointsMuted(val muted: Boolean) : XDebuggerSessionEvent

@@ -130,15 +130,15 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
       }
 
       override fun sessionResumed() {
-        trySend(XDebuggerSessionEvent.SessionResumed())
+        trySend(XDebuggerSessionEvent.SessionResumed)
       }
 
       override fun sessionStopped() {
-        trySend(XDebuggerSessionEvent.SessionStopped())
+        trySend(XDebuggerSessionEvent.SessionStopped)
       }
 
       override fun beforeSessionResume() {
-        trySend(XDebuggerSessionEvent.BeforeSessionResume())
+        trySend(XDebuggerSessionEvent.BeforeSessionResume)
       }
 
       override fun stackFrameChanged() {
@@ -150,7 +150,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
       }
 
       override fun settingsChanged() {
-        trySend(XDebuggerSessionEvent.SettingsChanged())
+        trySend(XDebuggerSessionEvent.SettingsChanged)
       }
 
       override fun breakpointsMuted(muted: Boolean) {
