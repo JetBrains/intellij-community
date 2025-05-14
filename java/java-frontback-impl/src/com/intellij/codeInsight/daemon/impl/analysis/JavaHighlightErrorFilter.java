@@ -6,13 +6,15 @@ import com.intellij.idea.AppMode;
 import com.intellij.java.codeserver.highlighting.JavaSyntaxErrorChecker;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.PsiErrorElement;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 
 public final class JavaHighlightErrorFilter extends HighlightErrorFilter {
   @Override
   public boolean shouldHighlightErrorElement(@NotNull PsiErrorElement element) {
     // todo we should handle it on the platform side IJPL-185339
-    if (element.getLanguage().equals(JavaLanguage.INSTANCE) && AppMode.isRemoteDevHost()) {
+    // should be skipped on the client only, because the client doesn't know about fixes
+    if (element.getLanguage().equals(JavaLanguage.INSTANCE) && PlatformUtils.isJetBrainsClient()) {
       return false;
     }
     return JavaSyntaxErrorChecker.shouldHighlightErrorElement(element);
