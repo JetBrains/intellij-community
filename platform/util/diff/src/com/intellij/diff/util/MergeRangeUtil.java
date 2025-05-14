@@ -43,7 +43,7 @@ public final class MergeRangeUtil {
           return new MergeConflictType(MergeConflictType.Type.INSERTED, true, true);
         }
         else {
-          return new MergeConflictType(MergeConflictType.Type.CONFLICT, true, true, false);
+          return new MergeConflictType(MergeConflictType.Type.CONFLICT, true, true, null);
         }
       }
     }
@@ -72,7 +72,7 @@ public final class MergeRangeUtil {
         }
         else {
           boolean canBeResolved = !isLeftEmpty && !isRightEmpty && conflictResolver.getAsBoolean();
-          return new MergeConflictType(MergeConflictType.Type.CONFLICT, true, true, canBeResolved);
+          return new MergeConflictType(MergeConflictType.Type.CONFLICT, true, true, canBeResolved ? MergeConflictResolutionStrategy.TEXT : null);
         }
       }
     }

@@ -7,6 +7,9 @@
 
     <registryKey key="diff.by.word.deprioritize.line.differences" defaultValue="false"
                  description="When possible, let 'changed words' have influence on 'changed lines'"/>
+    <registryKey key="semantic.merge.conflict.resolution" defaultValue="false" description="Try to resolve conflicts based on the semantics of the file"/>
+    <registryKey key="semantic.merge.recompute.after.change" defaultValue="false" description="Recompute semantic merge conflicting chunks result when document has changed"/>
+
 
     <registryKey key="diff.semantic.highlighting" defaultValue="false" description="Enables difference highlighting based on the semantics language"/>
 

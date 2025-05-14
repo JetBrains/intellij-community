@@ -347,6 +347,7 @@
     <extensionPoint name="diff.DiffTool" interface="com.intellij.diff.DiffTool" dynamic="true"/>
     <!--suppress PluginXmlValidity -->
     <extensionPoint name="diff.merge.MergeTool" interface="com.intellij.diff.merge.MergeTool" dynamic="true"/>
+    <extensionPoint name="diff.merge.conflict.semantic.resolver" interface="com.intellij.diff.merge.LangSpecificMergeConflictResolver" dynamic="true"/>
     <!--suppress PluginXmlValidity -->
     <extensionPoint name="diff.DiffExtension" interface="com.intellij.diff.DiffExtension" dynamic="true"/>
     <!--suppress PluginXmlValidity -->

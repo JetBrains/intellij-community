@@ -341,7 +341,7 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
    * @param property the property to get the upper edge for
    * @return the property itself or the first {@link PsiComment} node that is related to the property
    */
-  static PsiElement getEdgeOfProperty(final @NotNull Property property) {
+  public static PsiElement getEdgeOfProperty(final @NotNull Property property) {
     PsiElement prev = property;
     for (PsiElement node = property.getPrevSibling(); node != null; node = node.getPrevSibling()) {
       if (node instanceof Property) break;

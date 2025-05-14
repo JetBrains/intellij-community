@@ -2,30 +2,43 @@
 package com.intellij.diff.util;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class MergeConflictType {
   private final @NotNull Type myType;
   private final boolean myLeftChange;
   private final boolean myRightChange;
-  private final boolean myCanBeResolved;
+  private @Nullable MergeConflictResolutionStrategy myResolutionStrategy;
 
   public MergeConflictType(@NotNull Type type, boolean leftChange, boolean rightChange) {
     this(type, leftChange, rightChange, true);
   }
 
   public MergeConflictType(@NotNull Type type, boolean leftChange, boolean rightChange, boolean canBeResolved) {
+    this(type, leftChange, rightChange, canBeResolved ? MergeConflictResolutionStrategy.DEFAULT : null);
+  }
+
+  public MergeConflictType(@NotNull Type type, boolean leftChange, boolean rightChange, @Nullable MergeConflictResolutionStrategy resolutionStrategy) {
     myType = type;
     myLeftChange = leftChange;
     myRightChange = rightChange;
-    myCanBeResolved = canBeResolved;
+    myResolutionStrategy = resolutionStrategy;
   }
 
   public @NotNull Type getType() {
     return myType;
   }
 
+  public @Nullable MergeConflictResolutionStrategy getResolutionStrategy() {
+    return myResolutionStrategy;
+  }
+
+  public void setResolutionStrategy(@Nullable MergeConflictResolutionStrategy resolutionStrategy) {
+    myResolutionStrategy = resolutionStrategy;
+  }
+
   public boolean canBeResolved() {
-    return myCanBeResolved;
+    return myResolutionStrategy != null;
   }
 
   public boolean isChange(@NotNull Side side) {

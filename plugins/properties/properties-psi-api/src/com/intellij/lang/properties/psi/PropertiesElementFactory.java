@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataCache;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +42,11 @@ public final class PropertiesElementFactory {
                                                   @NotNull PropertyKeyValueFormat format) {
     String text = getPropertyText(name, value, delimiter, project, format);
     final PropertiesFile dummyFile = createPropertiesFile(project, text);
-    return dummyFile.getProperties().get(0);
+    IProperty iProperty = dummyFile.getProperties().get(0);
+    if (iProperty instanceof Property property) {
+      CodeStyleManager.getInstance(project).reformat(property);
+    }
+    return iProperty;
   }
 
   public static @NotNull String getPropertyText(@NonNls @NotNull String name,

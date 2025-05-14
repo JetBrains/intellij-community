@@ -23,6 +23,7 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -135,18 +136,23 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
         reinstallHighlighters(index);
       });
       myChangesToUpdate.clear();
+      postInstallHighlighters();
     }
   }
 
   @RequiresEdt
   protected abstract void reinstallHighlighters(int index);
 
+  @RequiresEdt
+  protected void postInstallHighlighters() {
+  }
+
   //
   // Undo
   //
 
   @RequiresEdt
-  protected abstract @NotNull S storeChangeState(int index);
+  protected abstract @Nullable S storeChangeState(int index);
 
   @RequiresEdt
   protected void restoreChangeState(@NotNull S state) {
@@ -214,6 +220,20 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
       if (isDisposed()) return;
       exitBulkChangeUpdateBlock();
     }
+  }
+
+  @TestOnly
+  public boolean executeMergeCommand(
+    @Nullable @NlsContexts.Command String commandName,
+    @Nullable String commandGroupId,
+    @NotNull UndoConfirmationPolicy confirmationPolicy,
+    boolean underBulkUpdate,
+    int affectedChange,
+    @NotNull Runnable task
+  ) {
+    IntList list = new IntArrayList();
+    list.add(affectedChange);
+    return executeMergeCommand(commandName, commandGroupId, confirmationPolicy, underBulkUpdate, list, task);
   }
 
   public boolean executeMergeCommand(@Nullable @NlsContexts.Command String commandName,

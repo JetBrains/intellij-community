@@ -223,13 +223,24 @@ f:com.intellij.diff.util.DiffRangeUtil
 - s:getLinesContent(java.lang.CharSequence,com.intellij.diff.tools.util.text.LineOffsets,I,I):java.lang.CharSequence
 - s:getLinesContent(java.lang.CharSequence,com.intellij.diff.tools.util.text.LineOffsets,I,I,Z):java.lang.CharSequence
 - s:getLinesRange(com.intellij.diff.tools.util.text.LineOffsets,I,I,Z):com.intellij.openapi.util.TextRange
+e:com.intellij.diff.util.MergeConflictResolutionStrategy
+- java.lang.Enum
+- sf:DEFAULT:com.intellij.diff.util.MergeConflictResolutionStrategy
+- sf:SEMANTIC:com.intellij.diff.util.MergeConflictResolutionStrategy
+- sf:TEXT:com.intellij.diff.util.MergeConflictResolutionStrategy
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.diff.util.MergeConflictResolutionStrategy
+- s:values():com.intellij.diff.util.MergeConflictResolutionStrategy[]
 c:com.intellij.diff.util.MergeConflictType
 - <init>(com.intellij.diff.util.MergeConflictType$Type,Z,Z):V
+- <init>(com.intellij.diff.util.MergeConflictType$Type,Z,Z,com.intellij.diff.util.MergeConflictResolutionStrategy):V
 - <init>(com.intellij.diff.util.MergeConflictType$Type,Z,Z,Z):V
 - canBeResolved():Z
+- getResolutionStrategy():com.intellij.diff.util.MergeConflictResolutionStrategy
 - getType():com.intellij.diff.util.MergeConflictType$Type
 - isChange(com.intellij.diff.util.Side):Z
 - isChange(com.intellij.diff.util.ThreeSide):Z
+- setResolutionStrategy(com.intellij.diff.util.MergeConflictResolutionStrategy):V
 e:com.intellij.diff.util.MergeConflictType$Type
 - java.lang.Enum
 - sf:CONFLICT:com.intellij.diff.util.MergeConflictType$Type

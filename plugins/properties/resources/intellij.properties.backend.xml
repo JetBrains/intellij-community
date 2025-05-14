@@ -127,6 +127,8 @@
     <liveTemplateContext contextId="Properties" implementation="com.intellij.lang.properties.template.PropertiesContextType"/>
     <structuralsearch.profile implementation="com.intellij.lang.properties.structuralsearch.PropertiesStructuralSearchProfile"/>
 
+    <diff.merge.conflict.semantic.resolver implementation="com.intellij.lang.properties.merge.PropertiesMergeConflictResolver"/>
+
     <intentionAction>
       <language>Properties</language>
       <className>com.intellij.lang.properties.actions.CopyPropertyValueToClipboardIntention</className>

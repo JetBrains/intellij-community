@@ -34,6 +34,7 @@ import com.intellij.diff.tools.util.text.TextDiffProviderBase;
 import com.intellij.diff.util.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -61,6 +62,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ex.*;
@@ -128,6 +130,8 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   protected final @NotNull TextMergeRequest myMergeRequest;
   protected final @NotNull TextMergeViewer myTextMergeViewer;
 
+  private final @NotNull LangSpecificMergeConflictResolverWrapper myConflictResolver;
+
   public MergeThreesideViewer(@NotNull DiffContext context,
                               @NotNull ContentDiffRequest request,
                               @NotNull MergeContext mergeContext,
@@ -172,6 +176,8 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     DiffUtil.registerAction(new NavigateToChangeMarkerAction(true), myPanel);
 
     ProxyUndoRedoAction.register(getProject(), getEditor(), myContentPanel);
+
+    myConflictResolver = new LangSpecificMergeConflictResolverWrapper(context.getProject(), myMergeRequest.getContents());
   }
 
   @Override
@@ -402,8 +408,8 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       List<DocumentContent> contents = myMergeRequest.getContents();
       MergeRange importRange = ReadAction.compute(() -> {
         sequences.addAll(ContainerUtil.map(contents, content -> content.getDocument().getImmutableCharSequence()));
+        initPsiFiles();
         if (getTextSettings().isAutoResolveImportConflicts()) {
-          initPsiFiles();
           boolean canImportsBeProcessedAutomatically = canImportsBeProcessedAutomatically();
           myResolveImportsPossible = canImportsBeProcessedAutomatically;
           if (canImportsBeProcessedAutomatically) {
@@ -415,9 +421,14 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
       MergeLineFragmentsWithImportMetadata lineFragments = getLineFragments(indicator, sequences, importRange, ignorePolicy);
       List<LineOffsets> lineOffsets = ContainerUtil.map(sequences, LineOffsetsUtil::create);
+
       List<MergeConflictType> conflictTypes = ContainerUtil.map(lineFragments.getFragments(), fragment -> {
         return MergeRangeUtil.getLineMergeType(fragment, sequences, lineOffsets, ignorePolicy.getComparisonPolicy());
       });
+
+      myConflictResolver.init(lineOffsets, lineFragments.getFragments(), myPsiFiles);
+      patchConflictTypes(conflictTypes);
+
 
       FoldingModelSupport.Data foldingState =
         myFoldingModel.createState(lineFragments.getFragments(), lineOffsets, getFoldingModelSettings());
@@ -436,6 +447,15 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
         clearDiffPresentation();
         myPanel.setErrorContent();
       };
+    }
+  }
+
+  private void patchConflictTypes(List<MergeConflictType> conflictTypes) {
+    for (int i = 0; i < conflictTypes.size(); i++) {
+      MergeConflictType conflictType = conflictTypes.get(i);
+      if (!conflictType.canBeResolved() && myConflictResolver.canResolveConflictSemantically(i)) {
+        conflictType.setResolutionStrategy(MergeConflictResolutionStrategy.SEMANTIC);
+      }
     }
   }
 
@@ -524,12 +544,19 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     myResolveImportConflicts = getTextSettings().isAutoResolveImportConflicts();
 
     // build initial statistics
-    int autoResolvableChanges = ContainerUtil.count(getAllChanges(), c -> canResolveChangeAutomatically(c, ThreeSide.BASE));
+    List<TextMergeChange> autoResolvableChanges = ContainerUtil.filter(getAllChanges(), c -> canResolveChangeAutomatically(c, ThreeSide.BASE));
+    int autoResolvableWithSemanticsChangesCount = ContainerUtil.count(autoResolvableChanges, c -> c.getConflictType().getResolutionStrategy() == MergeConflictResolutionStrategy.SEMANTIC);
+    Language language = null;
+    if (myPsiFiles.size() == 3) {
+      language = ThreeSide.BASE.select(myPsiFiles).getLanguage();
+    }
 
     myAggregator = new MergeStatisticsAggregator(
       getAllChanges().size(),
-      autoResolvableChanges,
-      getConflictsCount()
+      autoResolvableChanges.size(),
+      autoResolvableWithSemanticsChangesCount,
+      getConflictsCount(),
+      language
     );
 
     if (myResolveImportConflicts) {
@@ -963,8 +990,16 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   }
 
   protected class MyMergeModel extends MergeModelBase<TextMergeChange.State> {
+    private @Nullable final PsiFile myEditablePsiFile;
+
     MyMergeModel(@Nullable Project project, @NotNull Document document) {
       super(project, document);
+      if (project != null) {
+        myEditablePsiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      }
+      else {
+        myEditablePsiFile = null;
+      }
     }
 
     @Override
@@ -972,6 +1007,16 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       TextMergeChange change = myAllMergeChanges.get(index);
       change.reinstallHighlighters();
       myInnerDiffWorker.scheduleRediff(change);
+    }
+
+    @Override
+    protected void postInstallHighlighters() {
+      if (!Registry.is("semantic.merge.recompute.after.change", false) || myEditablePsiFile == null || myProject == null) return;
+
+      PsiDocumentManager.getInstance(myProject).commitDocument(myEditablePsiFile.getFileDocument());
+      List<PsiFile> fileList = List.of(ThreeSide.LEFT.select(myPsiFiles), myEditablePsiFile, ThreeSide.RIGHT.select(myPsiFiles));
+
+      myConflictResolver.updateHighlighting(fileList, myAllMergeChanges, () -> myInnerDiffWorker.scheduleRediff(myAllMergeChanges));
     }
 
     @Override
@@ -1055,7 +1100,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       return side == ThreeSide.BASE &&
              change.getConflictType().canBeResolved() &&
              !change.isResolved(Side.LEFT) && !change.isResolved(Side.RIGHT) &&
-             !isChangeRangeModified(change);
+             (change.getConflictType().getResolutionStrategy() != MergeConflictResolutionStrategy.TEXT || !isChangeRangeModified(change));
     }
     else {
       return !change.isResolved() &&
@@ -1135,19 +1180,32 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     if (!canResolveChangeAutomatically(change, side)) return null;
 
     if (change.isConflict()) {
-      List<CharSequence> texts =
-        ThreeSide.map(it -> DiffUtil.getLinesContent(getEditor(it).getDocument(), change.getStartLine(it), change.getEndLine(it)));
+      return switch (Objects.requireNonNull(change.getConflictType().getResolutionStrategy())) {
+        case TEXT -> {
+          List<CharSequence> texts =
+            ThreeSide.map(it -> DiffUtil.getLinesContent(getEditor(it).getDocument(), change.getStartLine(it), change.getEndLine(it)));
 
-      CharSequence newContent = ComparisonMergeUtil.tryResolveConflict(texts.get(0), texts.get(1), texts.get(2));
-      if (newContent == null) {
-        LOG.warn(String.format("Can't resolve conflicting change:\n'%s'\n'%s'\n'%s'\n", texts.get(0), texts.get(1), texts.get(2)));
-        return null;
-      }
+          CharSequence leftText = ThreeSide.LEFT.select(texts);
+          CharSequence baseText = ThreeSide.BASE.select(texts);
+          CharSequence rightText = ThreeSide.RIGHT.select(texts);
+          CharSequence newContent = ComparisonMergeUtil.tryResolveConflict(leftText, baseText, rightText);
+          if (newContent == null) {
+            LOG.warn(String.format("Can't resolve conflicting change:\n'%s'\n'%s'\n'%s'\n", leftText, baseText, rightText));
+            yield null;
+          }
 
-      String[] newContentLines = LineTokenizer.tokenize(newContent, false);
-      myModel.replaceChange(change.getIndex(), Arrays.asList(newContentLines));
-      markChangeResolved(change);
-      return new LineRange(myModel.getLineStart(change.getIndex()), myModel.getLineEnd(change.getIndex()));
+          yield replaceWithNewContent(change, newContent);
+        }
+        case SEMANTIC -> {
+          CharSequence newContent = myConflictResolver.getResolvedConflictContent(change.getIndex());
+          if (newContent == null) {
+            LOG.warn("Unable to resolve conflict using semantic merge");
+            yield null;
+          }
+          yield replaceWithNewContent(change, newContent);
+        }
+        case DEFAULT -> null;
+      };
     }
     else {
       Side masterSide = side.select(Side.LEFT,
@@ -1155,6 +1213,13 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
                                     Side.RIGHT);
       return replaceChange(change, masterSide, false);
     }
+  }
+
+  private @NotNull LineRange replaceWithNewContent(@NotNull TextMergeChange change, @NotNull CharSequence newContent) {
+    String[] newContentLines = LineTokenizer.tokenize(newContent, false);
+    myModel.replaceChange(change.getIndex(), Arrays.asList(newContentLines));
+    markChangeResolved(change);
+    return new LineRange(myModel.getLineStart(change.getIndex()), myModel.getLineEnd(change.getIndex()));
   }
 
   private static final Key<Boolean> EXTERNAL_OPERATION_IN_PROGRESS = Key.create("external.resolve.operation");
@@ -1637,7 +1702,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     }
 
     @Override
-    public void scrollAndShow(@NotNull Editor editor, @NotNull com.intellij.openapi.vcs.ex.Range range) {
+    public void scrollAndShow(@NotNull Editor editor, @NotNull Range range) {
       if (!myTracker.isValid()) return;
       final Document document = myTracker.getDocument();
       int line = Math.min(!range.hasLines() ? range.getLine2() : range.getLine2() - 1, getLineCount(document) - 1);
@@ -1658,7 +1723,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
     @Override
     protected @NotNull List<AnAction> createToolbarActions(@NotNull Editor editor,
-                                                           @NotNull com.intellij.openapi.vcs.ex.Range range,
+                                                           @NotNull Range range,
                                                            @Nullable Point mousePosition) {
       List<AnAction> actions = new ArrayList<>();
       actions.add(new LineStatusMarkerPopupActions.ShowPrevChangeMarkerAction(editor, myTracker, range, this));
@@ -1671,17 +1736,17 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     }
 
     private final class MyRollbackLineStatusRangeAction extends LineStatusMarkerPopupActions.RangeMarkerAction {
-      private MyRollbackLineStatusRangeAction(@NotNull Editor editor, @NotNull com.intellij.openapi.vcs.ex.Range range) {
+      private MyRollbackLineStatusRangeAction(@NotNull Editor editor, @NotNull Range range) {
         super(editor, myTracker, range, IdeActions.SELECTED_CHANGES_ROLLBACK);
       }
 
       @Override
-      protected boolean isEnabled(@NotNull Editor editor, @NotNull com.intellij.openapi.vcs.ex.Range range) {
+      protected boolean isEnabled(@NotNull Editor editor, @NotNull Range range) {
         return true;
       }
 
       @Override
-      protected void actionPerformed(@NotNull Editor editor, @NotNull com.intellij.openapi.vcs.ex.Range range) {
+      protected void actionPerformed(@NotNull Editor editor, @NotNull Range range) {
         DiffUtil.moveCaretToLineRangeIfNeeded(editor, range.getLine1(), range.getLine2());
         myTracker.rollbackChanges(range);
       }
