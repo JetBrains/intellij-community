@@ -8,6 +8,7 @@ import com.intellij.python.hatch.runtime.HatchRuntime
 import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ExecError
+import com.jetbrains.python.errorProcessing.PyExecResult
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -129,7 +130,7 @@ class HatchEnv(runtime: HatchRuntime) : HatchCommand("env", runtime) {
    *
    * @return true if created, false if already exists
    */
-  suspend fun create(envName: String? = null): Result<CreateResult, ExecError> {
+  suspend fun create(envName: String? = null): PyExecResult<CreateResult> {
     val arguments = if (envName == null) emptyArray() else arrayOf(envName)
     return executeAndHandleErrors("create", *arguments) {
       val actualEnvName = envName ?: DEFAULT_ENV_NAME
@@ -147,7 +148,7 @@ class HatchEnv(runtime: HatchRuntime) : HatchCommand("env", runtime) {
    *
    * @return path to environment
    */
-  suspend fun find(envName: String? = null): Result<PythonHomePath?, ExecError> {
+  suspend fun find(envName: String? = null): PyExecResult<PythonHomePath?> {
     val arguments = if (envName == null) emptyArray() else arrayOf(envName)
     return executeAndHandleErrors("find", *arguments) {
       when (it.exitCode) {
@@ -182,7 +183,7 @@ class HatchEnv(runtime: HatchRuntime) : HatchCommand("env", runtime) {
    * - [RemoveResult.CantRemoveActiveEnvironment] if the environment cannot be removed because it is currently active.
    * - An error wrapped in [ExecError] in case of execution failure.
    */
-  suspend fun remove(envName: String? = null): Result<RemoveResult, ExecError> {
+  suspend fun remove(envName: String? = null): PyExecResult<RemoveResult> {
     val arguments = if (envName == null) emptyArray() else arrayOf(envName)
     return executeAndHandleErrors("remove", *arguments) {
       val actualEnvName = envName ?: DEFAULT_ENV_NAME
@@ -204,7 +205,7 @@ class HatchEnv(runtime: HatchRuntime) : HatchCommand("env", runtime) {
    * - [HatchDetailedEnvironments] if operation is successful.
    * - An error wrapped in [ExecError] if an execution failure occurs.
    */
-  suspend fun showWithDetails(vararg envs: String): Result<HatchDetailedEnvironments, ExecError> {
+  suspend fun showWithDetails(vararg envs: String): PyExecResult<HatchDetailedEnvironments> {
     return executeAndHandleErrors("show", "--json", *envs) { processOutput ->
       val output = processOutput.takeIf { it.exitCode == 0 }?.stdoutString
                    ?: return@executeAndHandleErrors Result.failure(null)
@@ -231,7 +232,7 @@ class HatchEnv(runtime: HatchRuntime) : HatchCommand("env", runtime) {
    * - [HatchDetailedEnvironments] if operation is successful.
    * - An error wrapped in [ExecError] if an execution failure occurs.
    */
-  suspend fun show(vararg envs: String, internal: Boolean = false): Result<HatchEnvironments, ExecError> {
+  suspend fun show(vararg envs: String, internal: Boolean = false): PyExecResult<HatchEnvironments> {
     val options = listOf(internal to "--internal").makeOptions()
 
     return executeAndMatch("show", "--ascii", *options, *envs, expectedOutput = SHOW_RESPONSE_REGEX) { matchResult ->

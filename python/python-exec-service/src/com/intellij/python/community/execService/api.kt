@@ -10,6 +10,7 @@ import com.intellij.python.community.execService.impl.ExecServiceImpl
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ExecError
+import com.jetbrains.python.errorProcessing.PyExecResult
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.annotations.Nls
@@ -49,7 +50,7 @@ interface ExecService {
     args: List<String> = emptyList(),
     options: ExecOptions = ExecOptions(),
     processInteractiveHandler: ProcessInteractiveHandler<T>,
-  ): Result<T, ExecError>
+  ): PyExecResult<T>
 
   /**
    * Execute [whatToExec] with [args] and get both stdout/stderr outputs if `errorCode != 0`, returns error otherwise.
@@ -66,7 +67,7 @@ interface ExecService {
     options: ExecOptions = ExecOptions(),
     procListener: PyProcessListener? = null,
     processOutputTransformer: ProcessOutputTransformer<T>,
-  ): Result<T, ExecError>
+  ): PyExecResult<T>
 
   /**
    * See [execute]
@@ -77,7 +78,7 @@ interface ExecService {
     args: List<String> = emptyList(),
     options: ExecOptions = ExecOptions(),
     procListener: PyProcessListener? = null,
-  ): Result<String, ExecError> = execute(
+  ): PyExecResult<String> = execute(
     whatToExec = whatToExec,
     args = args,
     options = options,

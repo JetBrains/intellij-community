@@ -2,8 +2,7 @@
 package com.jetbrains.python.poetry.packaging
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.asPythonResult
 import com.jetbrains.python.packaging.management.PythonPackageManagerAction
 import com.jetbrains.python.packaging.management.getPythonPackageManager
@@ -15,18 +14,18 @@ internal sealed class PoetryPackageManagerAction : PythonPackageManagerAction<Po
 }
 
 internal class PoetryLockAction() : PoetryPackageManagerAction() {
-  override suspend fun execute(e: AnActionEvent, manager: PoetryPackageManager): Result<String, PyError> {
+  override suspend fun execute(e: AnActionEvent, manager: PoetryPackageManager): PyResult<String> {
     return runPoetryWithManager(manager, listOf("lock"))
   }
 }
 
 internal class PoetryUpdateAction() : PoetryPackageManagerAction() {
-  override suspend fun execute(e: AnActionEvent, manager: PoetryPackageManager): Result<String, PyError> {
+  override suspend fun execute(e: AnActionEvent, manager: PoetryPackageManager): PyResult<String> {
     return runPoetryWithManager(manager, listOf("update"))
   }
 }
 
-private suspend fun runPoetryWithManager(manager: PoetryPackageManager, args: List<String>): Result<String, PyError> {
+private suspend fun runPoetryWithManager(manager: PoetryPackageManager, args: List<String>): PyResult<String> {
   val result = runPoetryWithSdk(manager.sdk, *args.toTypedArray())
   return result.asPythonResult()
 }

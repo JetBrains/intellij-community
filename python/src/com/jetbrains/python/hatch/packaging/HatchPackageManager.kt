@@ -5,13 +5,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.hatch.HatchService
 import com.intellij.python.hatch.getHatchService
-import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.hatch.sdk.HatchSdkAdditionalData
 import com.jetbrains.python.hatch.sdk.isHatch
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
 import com.jetbrains.python.packaging.pip.PipPythonPackageManager
-import com.jetbrains.python.Result
 
 internal class HatchPackageManager(project: Project, sdk: Sdk) : PipPythonPackageManager(project, sdk) {
   fun getSdkAdditionalData(): HatchSdkAdditionalData {
@@ -21,7 +20,7 @@ internal class HatchPackageManager(project: Project, sdk: Sdk) : PipPythonPackag
                     "but was ${sdk.sdkAdditionalData?.javaClass?.name}")
   }
 
-  suspend fun getHatchService(): Result<HatchService, PyError> {
+  suspend fun getHatchService(): PyResult<HatchService> {
     val data = getSdkAdditionalData()
     val workingDirectory = data.hatchWorkingDirectory
     return workingDirectory.getHatchService(hatchEnvironmentName = data.hatchEnvironmentName)

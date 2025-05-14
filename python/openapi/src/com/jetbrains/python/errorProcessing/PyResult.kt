@@ -6,6 +6,7 @@ import com.jetbrains.python.packaging.PyExecutionException
 /**
  * This class is expected to be used as a return value of most PyCharm APIs.
  * Use it instead of exceptions and Kotlin Result.
+ * If your function returns [ExecError] only, use [PyExecResult]
  */
 typealias PyResult<T> = com.jetbrains.python.Result<T, PyError>
 /**

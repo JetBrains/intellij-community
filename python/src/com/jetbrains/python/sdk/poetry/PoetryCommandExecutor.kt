@@ -26,7 +26,10 @@ import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateExecutableFile
-import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.PyDetectedSdk
+import com.jetbrains.python.sdk.associatedModulePath
+import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.runExecutableWithProgress
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import io.github.z4kn4fein.semver.Version
 import io.github.z4kn4fein.semver.toVersion

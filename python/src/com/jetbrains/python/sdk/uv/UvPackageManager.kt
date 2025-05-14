@@ -3,16 +3,13 @@ package com.jetbrains.python.sdk.uv
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.errorProcessing.PyExecResult
 import com.jetbrains.python.errorProcessing.asKotlinResult
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
-import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
-import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
-import com.jetbrains.python.packaging.management.PythonRepositoryManager
-import com.jetbrains.python.packaging.management.toInstallRequest
+import com.jetbrains.python.packaging.management.*
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
 import com.jetbrains.python.sdk.uv.impl.createUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
@@ -72,11 +69,11 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
     return uv.listPackages().asKotlinResult()
   }
 
-  suspend fun sync(): Result<String> {
+  suspend fun sync(): PyExecResult<String> {
     return uv.sync()
   }
 
-  suspend fun lock(): Result<String> {
+  suspend fun lock(): PyExecResult<String> {
     return uv.lock()
   }
 }

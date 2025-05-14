@@ -1,21 +1,20 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv.impl
 
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.intellij.util.io.delete
-import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.ExecErrorReason
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.errorProcessing.PyExecResult
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.errorProcessing.asKotlinResult
 import com.jetbrains.python.errorProcessing.failure
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
+import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.sdk.uv.ScriptSyncCheckResult
 import com.jetbrains.python.sdk.uv.UvCli
 import com.jetbrains.python.sdk.uv.UvLowLevel
@@ -93,7 +92,7 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
     return PyResult.success(pythons)
   }
 
-  override suspend fun listPackages(): PyResult<List<PythonPackage>> {
+  override suspend fun listPackages(): PyExecResult<List<PythonPackage>> {
     val out = uvCli.runUv(cwd, "pip", "list", "--format", "json")
       .getOr { return it }
 
@@ -128,14 +127,14 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
     }
   }
 
-  override suspend fun installPackage(name: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
+  override suspend fun installPackage(name: PythonPackageInstallRequest, options: List<String>): PyExecResult<Unit> {
     uvCli.runUv(cwd, "pip", "install", name.formatPackageName(), *options.toTypedArray())
       .onFailure { return PyResult.failure(it) }
 
     return PyExecResult.success(Unit)
   }
 
-  override suspend fun uninstallPackage(name: PythonPackage): PyResult<Unit> {
+  override suspend fun uninstallPackage(name: PythonPackage): PyExecResult<Unit> {
     // TODO: check if package is in dependencies and reject it
     uvCli.runUv(cwd, "pip", "uninstall", name.name)
       .onFailure { return PyResult.failure(it) }
@@ -143,21 +142,21 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
     return PyExecResult.success(Unit)
   }
 
-  override suspend fun addDependency(name: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
+  override suspend fun addDependency(name: PythonPackageInstallRequest, options: List<String>): PyExecResult<Unit> {
     uvCli.runUv(cwd, "add", name.formatPackageName(), *options.toTypedArray())
       .onFailure { return PyResult.failure(it) }
 
     return PyExecResult.success(Unit)
   }
 
-  override suspend fun removeDependency(name: PythonPackage): PyResult<Unit> {
+  override suspend fun removeDependency(name: PythonPackage): PyExecResult<Unit> {
     uvCli.runUv(cwd, "remove", name.name)
       .onFailure { return PyResult.failure(it) }
 
     return PyExecResult.success(Unit)
   }
 
-  override suspend fun isProjectSynced(inexact: Boolean): PyResult<Boolean> {
+  override suspend fun isProjectSynced(inexact: Boolean): PyExecResult<Boolean> {
     val args = constructSyncArgs(inexact)
 
     uvCli.runUv(cwd, *args.toTypedArray())
@@ -174,7 +173,7 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
     return PyExecResult.success(true)
   }
 
-  override suspend fun isScriptSynced(inexact: Boolean, scriptPath: Path): PyResult<ScriptSyncCheckResult> {
+  override suspend fun isScriptSynced(inexact: Boolean, scriptPath: Path): PyExecResult<ScriptSyncCheckResult> {
     val args = constructSyncArgs(inexact) + listOf("--script", scriptPath.pathString)
 
     uvCli.runUv(cwd, *args.toTypedArray())
@@ -234,12 +233,12 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
     return pythons
   }
 
-  override suspend fun sync(): Result<String> {
-      return uvCli.runUv(cwd, "sync").asKotlinResult()
+  override suspend fun sync(): PyExecResult<String> {
+    return uvCli.runUv(cwd, "sync")
   }
 
-  override suspend fun lock(): Result<String> {
-      return uvCli.runUv(cwd, "lock").asKotlinResult()
+  override suspend fun lock(): PyExecResult<String> {
+    return uvCli.runUv(cwd, "lock")
   }
 }
 

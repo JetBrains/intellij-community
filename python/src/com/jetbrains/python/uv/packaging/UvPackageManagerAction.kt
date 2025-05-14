@@ -2,9 +2,7 @@
 package com.jetbrains.python.uv.packaging
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyError
-import com.jetbrains.python.errorProcessing.asPythonResult
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.management.PythonPackageManagerAction
 import com.jetbrains.python.packaging.management.getPythonPackageManager
 import com.jetbrains.python.sdk.uv.UvPackageManager
@@ -14,13 +12,13 @@ internal sealed class UvPackageManagerAction : PythonPackageManagerAction<UvPack
 }
 
 internal class UvSyncAction() : UvPackageManagerAction() {
-  override suspend fun execute(e: AnActionEvent, manager: UvPackageManager): Result<String, PyError> {
-    return manager.sync().asPythonResult()
+  override suspend fun execute(e: AnActionEvent, manager: UvPackageManager): PyResult<String> {
+    return manager.sync()
   }
 }
 
 internal class UvLockAction() : UvPackageManagerAction() {
-  override suspend fun execute(e: AnActionEvent, manager: UvPackageManager): Result<String, PyError> {
-    return manager.lock().asPythonResult()
+  override suspend fun execute(e: AnActionEvent, manager: UvPackageManager): PyResult<String> {
+    return manager.lock()
   }
 }

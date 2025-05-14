@@ -4,8 +4,7 @@ package com.jetbrains.python.hatch.packaging
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.python.hatch.HATCH_TOML
 import com.intellij.python.pyproject.PY_PROJECT_TOML
-import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.management.PythonPackageManagerAction
 import com.jetbrains.python.packaging.management.getPythonPackageManager
 import kotlin.text.Regex.Companion.escape
@@ -17,7 +16,7 @@ internal sealed class HatchPackageManagerAction : PythonPackageManagerAction<Hat
 }
 
 internal class HatchRunAction() : HatchPackageManagerAction() {
-  override suspend fun execute(e: AnActionEvent, manager: HatchPackageManager): Result<String, PyError> {
+  override suspend fun execute(e: AnActionEvent, manager: HatchPackageManager): PyResult<String> {
     val service = manager.getHatchService().getOr { return it }
     return service.syncDependencies()
   }

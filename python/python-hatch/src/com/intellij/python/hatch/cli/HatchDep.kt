@@ -3,8 +3,7 @@ package com.intellij.python.hatch.cli
 
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
 import com.intellij.python.hatch.runtime.HatchRuntime
-import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.ExecError
+import com.jetbrains.python.errorProcessing.PyExecResult
 
 enum class Scope(val options: Array<String>) {
   All(emptyArray()),
@@ -19,7 +18,7 @@ class HatchDep(runtime: HatchRuntime) : HatchCommand("dep", runtime) {
   /**
    *  Output a hash of the currently defined dependencies
    **/
-  suspend fun hash(scope: Scope = Scope.All): Result<String, ExecError> {
+  suspend fun hash(scope: Scope = Scope.All): PyExecResult<String> {
     return executeAndHandleErrors("hash", *scope.options, transformer = ZeroCodeStdoutTransformer)
   }
 
@@ -38,7 +37,7 @@ class HatchDepShow(runtime: HatchRuntime) : HatchCommand(arrayOf("dep", "show"),
    *
    * @param features only show the dependencies of the specified features
    */
-  suspend fun requirements(scope: Scope = Scope.All, features: List<String>? = null): Result<String, ExecError> {
+  suspend fun requirements(scope: Scope = Scope.All, features: List<String>? = null): PyExecResult<String> {
     val options = features?.flatMap { listOf("--feature", it) }?.toTypedArray() ?: arrayOf("--all")
     return executeAndHandleErrors("requirements", *scope.options, *options, transformer = ZeroCodeStdoutTransformer)
   }
@@ -46,7 +45,7 @@ class HatchDepShow(runtime: HatchRuntime) : HatchCommand(arrayOf("dep", "show"),
   /**
    * Enumerate dependencies in a tabular format.
    */
-  suspend fun table(scope: Scope = Scope.All): Result<String, ExecError> {
+  suspend fun table(scope: Scope = Scope.All): PyExecResult<String> {
     val options = listOf(null to "--lines", true to "--ascii").makeOptions()
     return executeAndHandleErrors("table", *scope.options, *options, transformer = ZeroCodeStdoutTransformer)
   }

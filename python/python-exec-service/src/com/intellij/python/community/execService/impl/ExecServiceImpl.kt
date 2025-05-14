@@ -2,10 +2,8 @@
 package com.intellij.python.community.execService.impl
 
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.ExecuteProcessException
-import com.intellij.platform.eel.getOr
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
@@ -16,6 +14,7 @@ import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.ExecErrorReason
+import com.jetbrains.python.errorProcessing.PyExecResult
 import com.jetbrains.python.errorProcessing.failure
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
@@ -31,7 +30,7 @@ internal object ExecServiceImpl : ExecService {
     args: List<String>,
     options: ExecOptions,
     processInteractiveHandler: ProcessInteractiveHandler<T>,
-  ): Result<T, ExecError> {
+  ): PyExecResult<T> {
     val executableProcess = whatToExec.buildExecutableProcess(args, options)
     val eelProcess = executableProcess.run().getOr { return it }
 
@@ -59,7 +58,7 @@ internal object ExecServiceImpl : ExecService {
     options: ExecOptions,
     procListener: PyProcessListener?,
     processOutputTransformer: ProcessOutputTransformer<T>,
-  ): Result<T, ExecError> {
+  ): PyExecResult<T> {
     val executableProcess = whatToExec.buildExecutableProcess(args, options)
     val eelProcess = executableProcess.run().getOr { return it }
 
@@ -112,7 +111,7 @@ private suspend fun WhatToExec.buildExecutableProcess(args: List<String>, option
 }
 
 @CheckReturnValue
-private suspend fun EelExecutableProcess.run(): Result<EelProcess, ExecError> {
+private suspend fun EelExecutableProcess.run(): PyExecResult<EelProcess> {
   val workingDirectory = if (workingDirectory != null && !workingDirectory.isAbsolute) workingDirectory.toRealPath() else workingDirectory
   try {
     val executionResult = exe.descriptor.upgrade().exec.spawnProcess(exe.toString())

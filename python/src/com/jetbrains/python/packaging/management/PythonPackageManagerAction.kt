@@ -68,7 +68,7 @@ abstract class PythonPackageManagerAction<T : PythonPackageManager, V> : DumbAwa
    *
    * @return [Result] which contains the successful result of type [V] or an error of type [PyError] if it fails.
    */
-  protected abstract suspend fun execute(e: AnActionEvent, manager: T): Result<V, PyError>
+  protected abstract suspend fun execute(e: AnActionEvent, manager: T): PyResult<V>
 
   override fun update(e: AnActionEvent) {
     val isWatchedFile = e.editor()?.virtualFile?.name?.let { fileNamesPattern.matches(it) } ?: false
@@ -89,7 +89,7 @@ abstract class PythonPackageManagerAction<T : PythonPackageManager, V> : DumbAwa
     document?.reloadIntentions(manager.project)
   }
 
-  private suspend fun executeScenarioWithinProgress(manager: T, e: AnActionEvent, document: Document?): Result<V, PyError> {
+  private suspend fun executeScenarioWithinProgress(manager: T, e: AnActionEvent, document: Document?): PyResult<V> {
     return reportSequentialProgress(2) { reporter ->
       reporter.itemStep {
         execute(e, manager)

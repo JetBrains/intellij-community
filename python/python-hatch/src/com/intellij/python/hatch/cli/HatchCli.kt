@@ -12,7 +12,7 @@ import com.intellij.python.hatch.PyHatchBundle
 import com.intellij.python.hatch.runtime.HatchConstants
 import com.intellij.python.hatch.runtime.HatchRuntime
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.ExecError
+import com.jetbrains.python.errorProcessing.PyExecResult
 import com.jetbrains.python.errorProcessing.PyResult
 import io.github.z4kn4fein.semver.Version
 import io.github.z4kn4fein.semver.VersionFormatException
@@ -21,7 +21,7 @@ import java.nio.file.Path
 /**
  * Handles hatch-specific errors, runs [transformer] only on outputs with codes 0 or 1 without tracebacks.
  */
-private suspend fun <T> HatchRuntime.executeAndHandleErrors(vararg arguments: String, transformer: ProcessOutputTransformer<T>): Result<T, ExecError> {
+private suspend fun <T> HatchRuntime.executeAndHandleErrors(vararg arguments: String, transformer: ProcessOutputTransformer<T>): PyExecResult<T> {
   val errorHandlerTransformer: ProcessOutputTransformer<T> = { output ->
     when {
       output.exitCode !in 0..1 -> Result.failure(null)
@@ -41,7 +41,7 @@ private suspend fun <T> HatchRuntime.executeAndMatch(
   expectedOutput: Regex,
   outputContentSupplier: (EelProcessExecutionResultInfo) -> String = { it.stdoutString },
   transformer: (MatchResult) -> Result<T, @NlsSafe String?>,
-): Result<T, ExecError> {
+): PyExecResult<T> {
   return this.executeAndHandleErrors(*arguments) { processOutput ->
     if (processOutput.exitCode != 0) return@executeAndHandleErrors Result.failure(null)
 
@@ -60,11 +60,11 @@ sealed class HatchCommand(private val command: Array<String>, protected val runt
   @Suppress("unused")
   constructor(command: String, runtime: HatchRuntime) : this(arrayOf(command), runtime)
 
-  protected suspend fun <T> executeAndHandleErrors(vararg arguments: String, transformer: ProcessOutputTransformer<T>): Result<T, ExecError> {
+  protected suspend fun <T> executeAndHandleErrors(vararg arguments: String, transformer: ProcessOutputTransformer<T>): PyExecResult<T> {
     return runtime.executeAndHandleErrors(*command, *arguments, transformer = transformer)
   }
 
-  protected suspend fun <T> executeAndMatch(vararg arguments: String, expectedOutput: Regex, transformer: (MatchResult) -> Result<T, @NlsSafe String?>): Result<T, ExecError> {
+  protected suspend fun <T> executeAndMatch(vararg arguments: String, expectedOutput: Regex, transformer: (MatchResult) -> Result<T, @NlsSafe String?>): PyExecResult<T> {
     return runtime.executeAndMatch(*command, *arguments, expectedOutput = expectedOutput, transformer = transformer)
   }
 }
@@ -73,12 +73,12 @@ class HatchCli(private val runtime: HatchRuntime) {
   /**
    * Build a project
    */
-  fun build(): Result<Unit, ExecError> = TODO()
+  fun build(): PyExecResult<Unit> = TODO()
 
   /**
    * Remove build artifacts
    */
-  fun clean(): Result<Unit, ExecError> = TODO()
+  fun clean(): PyExecResult<Unit> = TODO()
 
   /**
    * Manage the config file
@@ -98,7 +98,7 @@ class HatchCli(private val runtime: HatchRuntime) {
   /**
    * Format and lint source code
    */
-  fun fmt(): Result<Unit, ExecError> = TODO()
+  fun fmt(): PyExecResult<Unit> = TODO()
 
   /**
    * Create or initialize a project.
@@ -139,7 +139,7 @@ class HatchCli(private val runtime: HatchRuntime) {
   /**
    * Publish build artifacts
    */
-  fun publish(): Result<Unit, ExecError> = TODO()
+  fun publish(): PyExecResult<Unit> = TODO()
 
   /**
    * Manage Python installations
@@ -149,7 +149,7 @@ class HatchCli(private val runtime: HatchRuntime) {
   /**
    * Run commands within project environments
    */
-  suspend fun run(envName: String? = null, vararg command: String): Result<String, ExecError> {
+  suspend fun run(envName: String? = null, vararg command: String): PyExecResult<String> {
     val envRuntime = envName?.let { runtime.withEnv(HatchConstants.AppEnvVars.ENV to it) } ?: runtime
     return envRuntime.executeAndHandleErrors("run", *command) { output ->
       if (output.exitCode != 0) return@executeAndHandleErrors Result.failure(null)
@@ -170,14 +170,14 @@ class HatchCli(private val runtime: HatchRuntime) {
   /**
    * Enter a shell within a project's environment
    */
-  fun shell(): Result<Unit, ExecError> = TODO()
+  fun shell(): PyExecResult<Unit> = TODO()
 
   data class HatchStatus(val project: String, val location: Path, val config: Path)
 
   /**
    * Show information about the current environment
    */
-  suspend fun status(): Result<HatchStatus, ExecError> {
+  suspend fun status(): PyExecResult<HatchStatus> {
     val expectedOutput = """^\[Project] - (.*)\n\[Location] - (.*)\n\[Config] - (.*)\n$""".toRegex()
 
     return runtime.executeAndMatch("status", expectedOutput = expectedOutput, outputContentSupplier = { it.stderrString }) { matchResult ->
@@ -194,14 +194,14 @@ class HatchCli(private val runtime: HatchRuntime) {
   /**
    * Run tests
    */
-  fun test(): Result<Unit, ExecError> = TODO()
+  fun test(): PyExecResult<Unit> = TODO()
 
   /**
    * View a project's version.
    *
    * @return Project Version
    */
-  suspend fun getVersion(): Result<Version, ExecError> {
+  suspend fun getVersion(): PyExecResult<Version> {
     return runtime.executeAndHandleErrors("version") { processOutput ->
       val output = processOutput.takeIf { it.exitCode == 0 }?.stdoutString?.trim()
                    ?: return@executeAndHandleErrors Result.failure(null)
