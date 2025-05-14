@@ -61,7 +61,7 @@ sealed interface XBreakpointEvent {
 @Serializable
 sealed interface XDebuggerManagerSessionEvent {
   @Serializable
-  data class ProcessStarted(val sessionId: XDebugSessionId, val sessionDto: XDebugSessionDto) : XDebuggerManagerSessionEvent
+  data class ProcessStarted(val sessionDto: XDebugSessionDto) : XDebuggerManagerSessionEvent
 
   @Serializable
   data class ProcessStopped(val sessionId: XDebugSessionId) : XDebuggerManagerSessionEvent

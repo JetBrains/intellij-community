@@ -169,7 +169,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
           val session = debugProcess.session as? XDebugSessionImpl ?: return
           launch {
             val sessionDto = createSessionDto(session, debugProcess)
-            send(XDebuggerManagerSessionEvent.ProcessStarted(sessionDto.id, sessionDto))
+            send(XDebuggerManagerSessionEvent.ProcessStarted(sessionDto))
           }
         }
 
