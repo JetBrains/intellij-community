@@ -26,7 +26,7 @@ import java.nio.file.Path
 /**
  * Responsible for handling Git repository initialization if the user enables it.
  *
- * @see <a href="https://helpserver.labs.jb.gg/help/intellij/new-project-wizard/new-project-wizard.html#common-steps">
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/new-project-wizard.html#common-steps">
  *   New Project Wizard API: Common Steps (IntelliJ Platform Docs)</a>
  */
 class GitNewProjectWizardStep(

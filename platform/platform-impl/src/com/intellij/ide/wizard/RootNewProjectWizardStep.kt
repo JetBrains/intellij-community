@@ -8,7 +8,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 /**
  * The root project wizard step initializing a data holder and other properties shared with all descendant steps in the wizard.
  *
- * @see <a href="https://helpserver.labs.jb.gg/help/intellij/new-project-wizard/new-project-wizard.html#root-step">
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/new-project-wizard.html#root-step">
  *   New Project Wizard API: Root Steps (IntelliJ Platform Docs)</a>
  */
 class RootNewProjectWizardStep(override val context: WizardContext) : NewProjectWizardStep {

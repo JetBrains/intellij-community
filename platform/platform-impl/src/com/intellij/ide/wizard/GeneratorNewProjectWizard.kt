@@ -16,7 +16,7 @@ import javax.swing.Icon
  * It's possible to use it to create adapters for [com.intellij.platform.DirectoryProjectGenerator] for minor IDEs as well. See also
  * project generators in PyCharm.
  *
- * @see <a href="https://helpserver.labs.jb.gg/help/intellij/new-project-wizard/new-project-wizard.html#framework-project-generators">
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/new-project-wizard.html#framework-project-generators">
  *   New Project Wizard API: Framework Project Generators (IntelliJ Platform Docs)</a>
  */
 interface GeneratorNewProjectWizard {
