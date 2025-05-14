@@ -4,13 +4,16 @@ package org.jetbrains.plugins.gradle.execution.build
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.ModuleBasedConfiguration
 import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.Module
-import com.intellij.task.ProjectTask
+import com.intellij.openapi.observable.util.setKotlinProperty
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.task.ProjectTaskContext
-import com.intellij.task.impl.EmptyCompileScopeBuildTaskImpl
+import com.intellij.task.ProjectTaskRunner
 import com.intellij.task.impl.ExecuteRunConfigurationTaskImpl
 import com.intellij.task.impl.ModuleBuildTaskImpl
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
+import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.GradleProjectTestCase
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.junit.jupiter.api.Assertions
@@ -18,66 +21,45 @@ import org.junit.jupiter.api.Assertions
 @GradleProjectTestApplication
 abstract class GradleProjectTaskRunnerTestCase : GradleProjectTestCase() {
 
-  @Suppress("SameParameterValue")
-  fun `test GradleProjectTaskRunner#canRun`(
-    configurationType: ConfigurationType,
-    shouldRunWithModule: Boolean,
-    shouldRunWithoutModule: Boolean,
-    shouldBuildWithModule: Boolean,
-    shouldBuildWithoutModule: Boolean,
-  ) {
-    Assertions.assertTrue(GradleProjectSettings.isDelegatedBuildEnabled(module)) {
-      "Build and run actions should be delegated to Gradle"
-    }
+  private val projectSettings: GradleProjectSettings
+    get() = GradleSettings.getInstance(project).getLinkedProjectSettings(projectPath)!!
 
-    run {
-      val configuration = createTestConfiguration(configurationType, module)
-      val executeTask = ExecuteRunConfigurationTaskImpl(configuration)
-      `assert GradleProjectTaskRunner#canRun`(executeTask, null, shouldRunWithModule) {
-        configurationType.displayName + " configuration"
-      }
-    }
+  private var delegatedBuild: Boolean
+    get() = projectSettings.delegatedBuild
+    set(value) = projectSettings.setDelegatedBuild(value)
 
-    run {
-      val configuration = createTestConfiguration(configurationType)
-      val executeTask = ExecuteRunConfigurationTaskImpl(configuration)
-      `assert GradleProjectTaskRunner#canRun`(executeTask, null, shouldRunWithoutModule) {
-        configurationType.displayName + " configuration without module"
-      }
-    }
+  private var delegatedRun: Boolean
+    get() = AdvancedSettings.getBoolean("gradle.run.using.gradle")
+    set(value) = AdvancedSettings.setBoolean("gradle.run.using.gradle", value)
 
-    run {
-      val configuration = createTestConfiguration(configurationType, module)
-      val buildTask = ModuleBuildTaskImpl(module)
-      val buildTaskContext = ProjectTaskContext(Any(), configuration)
-      `assert GradleProjectTaskRunner#canRun`(buildTask, buildTaskContext, shouldBuildWithModule) {
-        configurationType.displayName + " module build task"
-      }
-    }
-
-    run {
-      val configuration = createTestConfiguration(configurationType)
-      val buildTask = EmptyCompileScopeBuildTaskImpl(true)
-      val buildTaskContext = ProjectTaskContext(Any(), configuration)
-      `assert GradleProjectTaskRunner#canRun`(buildTask, buildTaskContext, shouldBuildWithoutModule) {
-        configurationType.displayName + " empty scope build task"
-      }
-    }
+  fun setupGradleDelegationMode(delegatedBuild: Boolean, delegatedRun: Boolean, disposable: Disposable) {
+    setKotlinProperty(::delegatedBuild, delegatedBuild, disposable)
+    setKotlinProperty(::delegatedRun, delegatedRun, disposable)
   }
 
-  private fun `assert GradleProjectTaskRunner#canRun`(
-    projectTask: ProjectTask,
-    context: ProjectTaskContext?,
-    expected: Boolean,
-    nameSupplier: () -> String,
+  fun assertGradleProjectTaskRunnerCanRun(
+    configurationType: ConfigurationType,
+    shouldBuild: Boolean,
+    shouldRun: Boolean,
   ) {
-    val taskRunner = GradleProjectTaskRunner()
-    val actual = taskRunner.canRun(project, projectTask, context)
-    Assertions.assertEquals(expected, actual) {
-      val name = nameSupplier()
-      when (expected) {
-        true -> "$name should run by Gradle."
-        else -> "$name shouldn't run by Gradle."
+    val projectTaskRunner = ProjectTaskRunner.EP_NAME.findExtensionOrFail(GradleProjectTaskRunner::class.java)
+
+    val configuration = createTestConfiguration(configurationType, module)
+
+    val buildTask = ModuleBuildTaskImpl(module)
+    val buildTaskContext = ProjectTaskContext(Any(), configuration)
+    Assertions.assertEquals(shouldBuild, projectTaskRunner.canRun(project, buildTask, buildTaskContext)) {
+      when (shouldBuild) {
+        true -> configurationType.displayName + " run configuration's module build task should run by Gradle."
+        else -> configurationType.displayName + " run configuration's module build task shouldn't run by Gradle."
+      }
+    }
+
+    val executeTask = ExecuteRunConfigurationTaskImpl(configuration)
+    Assertions.assertEquals(shouldRun, projectTaskRunner.canRun(project, executeTask, null)) {
+      when (shouldRun) {
+        true -> configurationType.displayName + " run configuration task should run by Gradle."
+        else -> configurationType.displayName + " run configuration task shouldn't run by Gradle."
       }
     }
   }

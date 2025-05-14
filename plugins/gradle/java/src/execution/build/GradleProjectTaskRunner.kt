@@ -170,7 +170,7 @@ class GradleProjectTaskRunner : ProjectTaskRunner() {
       val runProfile = projectTask.runProfile
       if (runProfile is ModuleBasedConfiguration<*, *>) {
         val module = runProfile.configurationModule.module
-        if (!isDelegatedBuildEnabled(module)) {
+        if (!isDelegatedRunEnabled(module)) {
           return false
         }
       }
@@ -184,6 +184,13 @@ class GradleProjectTaskRunner : ProjectTaskRunner() {
     return externalProjectPath != null &&
            ExternalSystemApiUtil.isExternalSystemAwareModule(SYSTEM_ID, module) &&
            GradleProjectSettings.isDelegatedBuildEnabled(module!!.getProject(), externalProjectPath)
+  }
+
+  private fun isDelegatedRunEnabled(module: Module?): Boolean {
+    val externalProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module)
+    return externalProjectPath != null &&
+           ExternalSystemApiUtil.isExternalSystemAwareModule(SYSTEM_ID, module) &&
+           GradleProjectSettings.isDelegatedRunEnabled(module!!.getProject(), externalProjectPath)
   }
 
   override fun createExecutionEnvironment(project: Project, task: ExecuteRunConfigurationTask, executor: Executor?): ExecutionEnvironment? {

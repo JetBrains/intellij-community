@@ -6,12 +6,14 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUt
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.annotations.*;
 import org.gradle.util.GradleVersion;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
@@ -160,6 +162,11 @@ public class GradleProjectSettings extends ExternalProjectSettings {
 
   public static boolean isDelegatedBuildEnabled(@NotNull Module module) {
     return isDelegatedBuildEnabled(module.getProject(), ExternalSystemApiUtil.getExternalRootProjectPath(module));
+  }
+
+  @ApiStatus.Internal
+  public static boolean isDelegatedRunEnabled(@NotNull Project project, @NotNull String gradleProjectPath) {
+    return isDelegatedBuildEnabled(project, gradleProjectPath) && AdvancedSettings.getBoolean("gradle.run.using.gradle");
   }
 
   /**
