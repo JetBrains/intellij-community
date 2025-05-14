@@ -27,6 +27,8 @@ import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.buildTargetedCommandLine
 import com.jetbrains.python.run.ensureProjectSdkAndModuleDirsAreOnTarget
 import com.jetbrains.python.run.prepareHelperScriptExecution
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import kotlin.math.min
@@ -45,7 +47,7 @@ fun PythonPackageManager.launchReload() {
 suspend fun PythonPackageManager.runPackagingTool(
   operation: String, arguments: List<String>, @Nls text: String,
   withBackgroundProgress: Boolean = true,
-): String {
+): String = withContext(Dispatchers.IO) {
   // todo[akniazev]: check for package management tools
   val helpersAwareTargetRequest = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(sdk, project)
   val targetEnvironmentRequest = helpersAwareTargetRequest.targetEnvironmentRequest
@@ -101,7 +103,7 @@ suspend fun PythonPackageManager.runPackagingTool(
 
   thisLogger().debug("Running python packaging tool. Operation: $operation")
 
-  val result = PythonPackageManagerRunner.runProcess(this, process, commandLineString, text, withBackgroundProgress)
+  val result = PythonPackageManagerRunner.runProcess(this@runPackagingTool, process, commandLineString, text, withBackgroundProgress)
   if (result.isCancelled) throw RunCanceledByUserException()
   result.checkSuccess(thisLogger())
   val exitCode = result.exitCode
@@ -118,7 +120,7 @@ suspend fun PythonPackageManager.runPackagingTool(
     throw PyExecutionException.createForTimeout(PySdkBundle.message("python.sdk.packaging.timed.out"), helperPath, args)
   }
 
-  return result.stdout
+  return@withContext result.stdout
 }
 
 private val proxyString: String?

@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.errorProcessing.PyExecResult
 import com.jetbrains.python.errorProcessing.asKotlinResult
-import com.jetbrains.python.onSuccess
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
@@ -19,8 +18,6 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
   override var installedPackages: List<PythonPackage> = emptyList()
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager(project)
 
-  @Volatile
-  var outdatedPackages: Map<String, PythonOutdatedPackage> = emptyMap()
 
   override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): Result<Unit> {
     val result = if (sdk.uvUsePackageManagement) {
@@ -61,12 +58,11 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
   }
 
   override suspend fun reloadPackagesCommand(): Result<List<PythonPackage>> {
-    // ignoring errors as handling outdated packages is a pretty new option
-    uv.listOutdatedPackages().onSuccess { packages ->
-      outdatedPackages = packages.associateBy { it.name }
-    }
-
     return uv.listPackages().asKotlinResult()
+  }
+
+  override suspend fun loadOutdatedPackagesCommand(): Result<List<PythonOutdatedPackage>> {
+    return uv.listOutdatedPackages().asKotlinResult()
   }
 
   suspend fun sync(): PyExecResult<String> {

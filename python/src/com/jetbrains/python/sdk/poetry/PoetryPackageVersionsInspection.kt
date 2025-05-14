@@ -15,6 +15,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.normalizePackageName
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.findAmongRoots
 import org.toml.lang.psi.TomlKeyValue
@@ -58,9 +59,8 @@ internal class PoetryPackageVersionsInspection : LocalInspectionTool() {
         }.flatMap {
           it.children.mapNotNull { line -> line as? TomlKeyValue }
         }.forEach { keyValue ->
-          val packageName = keyValue.key.text
-          val outdatedVersion = (PythonPackageManager.forSdk(
-            module.project, sdk) as? PoetryPackageManager)?.let { it.getOutdatedPackages()[packageName] }
+          val packageName = normalizePackageName(keyValue.key.text)
+          val outdatedVersion = PythonPackageManager.forSdk(module.project, sdk).outdatedPackages[packageName]
           if (outdatedVersion != null) {
             val message = PyBundle.message("python.sdk.inspection.message.version.outdated.latest",
                                            packageName, outdatedVersion.version, outdatedVersion.latestVersion)

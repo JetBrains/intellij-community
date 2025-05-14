@@ -16,12 +16,10 @@ import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.util.messages.Topic
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyPackageManager
-import com.jetbrains.python.packaging.common.PythonPackage
-import com.jetbrains.python.packaging.common.PythonPackageManagementListener
-import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
-import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
+import com.jetbrains.python.packaging.common.*
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
+import com.jetbrains.python.sdk.PythonSdkCoroutineService
 import com.jetbrains.python.sdk.PythonSdkUpdater
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -45,6 +43,11 @@ fun PythonRepositoryPackageSpecification.toInstallRequest(): PythonPackageInstal
 @ApiStatus.Experimental
 abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
   abstract var installedPackages: List<PythonPackage>
+
+  @ApiStatus.Internal
+  @Volatile
+  var outdatedPackages: Map<String, PythonOutdatedPackage> = emptyMap()
+    private set
 
   abstract val repositoryManager: PythonRepositoryManager
 
@@ -84,6 +87,8 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
   open suspend fun reloadPackages(): Result<List<PythonPackage>> {
     thisLogger().info("Reload packages: start")
     val packages = reloadPackagesCommand().getOrElse {
+      outdatedPackages = emptyMap()
+      installedPackages = emptyList()
       return Result.failure(it)
     }
     thisLogger().info("Reload packages: finish")
@@ -92,6 +97,11 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
     ApplicationManager.getApplication().messageBus.apply {
       syncPublisher(PACKAGE_MANAGEMENT_TOPIC).packagesChanged(sdk)
       syncPublisher(PyPackageManager.PACKAGE_MANAGER_TOPIC).packagesRefreshed(sdk)
+    }
+    if (!ApplicationManager.getApplication().isUnitTestMode) {
+      service<PythonSdkCoroutineService>().cs.launch {
+        reloadOutdatedPackages()
+      }
     }
 
     return Result.success(packages)
@@ -103,6 +113,9 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
   protected abstract suspend fun updatePackageCommand(specification: PythonRepositoryPackageSpecification): Result<Unit>
   protected abstract suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<Unit>
   protected abstract suspend fun reloadPackagesCommand(): Result<List<PythonPackage>>
+
+  @ApiStatus.Internal
+  abstract suspend fun loadOutdatedPackagesCommand(): Result<List<PythonOutdatedPackage>>
 
   internal suspend fun refreshPaths() {
     edtWriteAction {
@@ -169,6 +182,23 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
       return Result.success(Unit)
     }
     return result
+  }
+
+  @ApiStatus.Internal
+  suspend fun reloadOutdatedPackages() {
+    if (installedPackages.isEmpty()) {
+      outdatedPackages = emptyMap()
+      return
+    }
+    val loadedPackages = loadOutdatedPackagesCommand().getOrElse {
+      thisLogger().warn("Failed to load outdated packages", it)
+      emptyList()
+    }
+    val packageMap = loadedPackages.associateBy { it.name }
+    outdatedPackages = packageMap
+    ApplicationManager.getApplication().messageBus.apply {
+      syncPublisher(PACKAGE_MANAGEMENT_TOPIC).outdatedPackagesChanged(sdk)
+    }
   }
 
   fun createPackageSpecificationWithSpec(packageName: String, versionSpec: PyRequirementVersionSpec? = null): PythonRepositoryPackageSpecification? {

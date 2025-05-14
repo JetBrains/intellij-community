@@ -21,7 +21,7 @@ def exit(retcode):
 
 
 def usage():
-    sys.stderr.write('Usage: packaging_tool.py <list|install|uninstall|pyvenv>\n')
+    sys.stderr.write('Usage: packaging_tool.py <list|list_outdated|install|uninstall|pyvenv>\n')
     sys.stderr.flush()
     exit(ERROR_WRONG_USAGE)
 
@@ -69,6 +69,9 @@ def do_list():
 
 def do_install(pkgs):
     run_pip(['install'] + pkgs)
+
+def do_list_outdated():
+    run_pip(['list', "--outdated"])
 
 
 def do_uninstall(pkgs):
@@ -118,6 +121,10 @@ def main():
             if len(sys.argv) != 2:
                 usage()
             do_list()
+        elif cmd == 'list_outdated':
+            if len(sys.argv) != 2:
+                usage()
+            do_list_outdated()
         elif cmd == 'install':
             if len(sys.argv) < 2:
                 usage()

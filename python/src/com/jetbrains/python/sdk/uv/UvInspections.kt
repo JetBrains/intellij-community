@@ -11,15 +11,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
-import com.intellij.python.pyproject.PY_PROJECT_TOML
-import com.intellij.python.pyproject.PyProjectToml
-import com.intellij.python.pyproject.findTomlHeader
-import com.intellij.python.pyproject.findTomlLiteralsContaining
-import com.intellij.python.pyproject.findTomlValueByKey
+import com.intellij.python.pyproject.*
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.requirements.createNameReq
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.findAmongRoots
 import org.jetbrains.annotations.ApiStatus
@@ -57,7 +52,7 @@ class UvPackageVersionsInspection : LocalInspectionTool() {
 
       val pyProject = PyProjectToml.parse(file.virtualFile.inputStream).getOr { return }
       val uvTool = pyProject.getTool(UvPyProject)
-      val outdatedPackages = (PythonPackageManager.forSdk(module.project, sdk) as? UvPackageManager)?.outdatedPackages ?: return
+      val outdatedPackages = PythonPackageManager.forSdk(module.project, sdk).outdatedPackages
 
       uvTool.matchOutdatedPackages(module, pyProject, outdatedPackages).forEach { pyReq ->
         listOfNotNull(

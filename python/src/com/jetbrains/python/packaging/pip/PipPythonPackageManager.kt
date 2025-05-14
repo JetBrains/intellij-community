@@ -11,6 +11,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonHelpersLocator.Companion.findPathInHelpers
 import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.PyPackageUtil
+import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
@@ -54,6 +55,18 @@ open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageMa
     }
 
     return Result.success(Unit)
+  }
+
+  override suspend fun loadOutdatedPackagesCommand(): Result<List<PythonOutdatedPackage>> = runCatching {
+    val output = runPackagingTool("list_outdated", listOf(), PyBundle.message("python.packaging.list.outdated.progress"))
+    output.lineSequence()
+      .drop(2) // skip header and separator line
+      .filter { it.isNotBlank() }
+      .map {
+        val line = it.split("\t", " ").filter { it.isNotBlank() }
+        PythonOutdatedPackage(line[0], line[1], latestVersion = line[2])
+      }
+      .toList()
   }
 
   override suspend fun updatePackageCommand(specification: PythonRepositoryPackageSpecification): Result<Unit> {

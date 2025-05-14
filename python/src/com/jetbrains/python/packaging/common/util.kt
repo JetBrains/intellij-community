@@ -23,6 +23,9 @@ import java.util.concurrent.CancellationException
 @ApiStatus.Experimental
 interface PythonPackageManagementListener {
   fun packagesChanged(sdk: Sdk)
+
+  @ApiStatus.Internal
+  fun outdatedPackagesChanged(sdk: Sdk) {}
 }
 
 internal class PythonRankingAwarePackageNameComparator : Comparator<String> {

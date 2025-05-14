@@ -11,6 +11,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.packaging.PyExecutionException
+import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
@@ -41,6 +42,16 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pro
   @Volatile
   override var installedPackages: List<PythonPackage> = emptyList()
   override val repositoryManager: PythonRepositoryManager = CondaRepositoryManger(project, sdk)
+
+  override suspend fun loadOutdatedPackagesCommand(): Result<List<PythonOutdatedPackage>> {
+    return runCatching {
+      val jsonResult = runConda("update", listOf("--dry-run", "--all", "--json"),
+                                message("conda.packaging.list.outdated.progress"),
+                                withBackgroundProgress = false)
+
+      CondaParseUtils.parseOutdatedOutputs(jsonResult)
+    }
+  }
 
   override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): Result<Unit> {
     val installationArgs = installRequest.buildInstallationArguments().getOrElse { return Result.failure(it) }

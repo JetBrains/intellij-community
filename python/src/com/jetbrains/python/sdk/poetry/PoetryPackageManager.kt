@@ -3,7 +3,9 @@ package com.jetbrains.python.sdk.poetry
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.packaging.common.*
+import com.jetbrains.python.packaging.common.PythonOutdatedPackage
+import com.jetbrains.python.packaging.common.PythonPackage
+import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
@@ -17,8 +19,6 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
   override var installedPackages: List<PythonPackage> = emptyList()
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager(project)
 
-  @Volatile
-  private var outdatedPackages: Map<String, PythonOutdatedPackage> = emptyMap()
 
   override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): Result<Unit> {
     val packageWithVersion = when (installRequest) {
@@ -53,10 +53,6 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
       return Result.failure(it)
     }
 
-    outdatedPackages = poetryShowOutdated(sdk).getOrElse {
-      emptyMap()
-    }
-
     val packages = installed.map {
       PythonPackage(it.name, it.version, false)
     }
@@ -64,7 +60,9 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
     return Result.success(packages)
   }
 
-  internal fun getOutdatedPackages(): Map<String, PythonOutdatedPackage> = outdatedPackages
+  override suspend fun loadOutdatedPackagesCommand(): Result<List<PythonOutdatedPackage>> = poetryShowOutdated(sdk).map {
+    it.values.toList()
+  }
 
   private fun PythonRepositoryPackageSpecification.getPackageWithVersionInPoetryFormat(): String {
     return versionSpec?.let { "$name@${it.presentableText}" } ?: name

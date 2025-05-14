@@ -8,7 +8,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.module.ModuleUtilCore
@@ -24,7 +23,10 @@ import com.intellij.platform.util.progress.reportRawProgress
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.packaging.*
-import com.jetbrains.python.packaging.common.*
+import com.jetbrains.python.packaging.common.PythonPackageDetails
+import com.jetbrains.python.packaging.common.PythonPackageManagementListener
+import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
+import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
 import com.jetbrains.python.packaging.conda.CondaPackage
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -180,9 +182,16 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     val connection = project.messageBus.connect(this)
     connection.subscribe(PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC, object : PythonPackageManagementListener {
       override fun packagesChanged(sdk: Sdk) {
-        if (currentSdk == sdk) serviceScope.launch(Dispatchers.IO) {
+        if (currentSdk == sdk) serviceScope.launch(Dispatchers.Main) {
           refreshInstalledPackages()
         }
+      }
+
+      override fun outdatedPackagesChanged(sdk: Sdk) {
+        if (currentSdk == sdk) serviceScope.launch(Dispatchers.Main) {
+          refreshInstalledPackages()
+        }
+
       }
     })
     connection.subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
@@ -210,69 +219,17 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
 
   suspend fun refreshInstalledPackages() {
     val packages = manager.installedPackages.map {
-      val spec = manager.createPackageSpecification(it.name,  it.version)
+      val spec = manager.createPackageSpecification(it.name, it.version)
       val repository = spec?.repository
-      InstalledPackage(it, repository, null)
+      val nextVersionRaw = manager.outdatedPackages[it.name]?.latestVersion
+      val nextVersion = nextVersionRaw?.let { PyPackageVersionNormalizer.normalize(it) }
+      InstalledPackage(it, repository, nextVersion)
     }
 
     installedPackages = packages.associateBy { it.name }
 
     withContext(Dispatchers.Main) {
       handleSearch(query = currentQuery)
-    }
-
-    withContext(Dispatchers.Default) {
-      launch {
-        calculateLatestVersionForInstalledPackages()
-        withContext(Dispatchers.Main) {
-          handleSearch(query = currentQuery)
-        }
-      }
-    }
-  }
-
-  private suspend fun calculateLatestVersionForInstalledPackages() {
-    val proccessPackages = installedPackages
-
-    val updatedPackages = withContext(Dispatchers.Main) {
-      val jobs = proccessPackages.entries.chunked(5).map { chunk ->
-        async(Dispatchers.IO) {
-          chunk.map { (name, pyPackage) ->
-            name to calculatePyPackageLatestVersion(pyPackage)
-          }
-        }
-      }
-      val results = jobs.awaitAll()
-      results.flatten().toMap()
-    }
-
-    installedPackages = installedPackages.map {
-      val newVersion = updatedPackages[it.key]
-      it.key to it.value.withNextVersion(newVersion)
-    }.toMap()
-  }
-
-  private suspend fun calculatePyPackageLatestVersion(pyPackage: InstalledPackage): PyPackageVersion? {
-    if (pyPackage.nextVersion != null)
-      return pyPackage.nextVersion
-
-    try {
-      val specification = pyPackage.repository?.createPackageSpecification(pyPackage.name)
-      val latestVersion = specification?.let { manager.repositoryManager.getLatestVersion(it) }
-      val currentVersion = PyPackageVersionNormalizer.normalize(pyPackage.instance.version)
-
-      val upgradeTo = if (latestVersion != null && currentVersion != null &&
-                          PyPackageVersionComparator.compare(latestVersion, currentVersion) > 0) {
-        latestVersion
-      }
-      else {
-        null
-      }
-      return upgradeTo
-    }
-    catch (t: Throwable) {
-      thisLogger().warn("Cannot get version for ${pyPackage.instance.name}", t)
-      return null
     }
   }
 
@@ -377,7 +334,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   companion object {
     private const val PACKAGES_LIMIT = 50
 
-    fun getInstance(project: Project) = project.service<PyPackagingToolWindowService>()
+    fun getInstance(project: Project): PyPackagingToolWindowService = project.service<PyPackagingToolWindowService>()
 
     private fun createNameComparator(query: String, url: String): Comparator<String> {
       val nameComparator = Comparator<String> { name1, name2 ->

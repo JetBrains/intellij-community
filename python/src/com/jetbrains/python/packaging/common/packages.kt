@@ -34,11 +34,12 @@ open class PythonPackage(name: String, val version: String, val isEditableMode: 
   }
 }
 
-open class PythonOutdatedPackage(name: String, version: String, val latestVersion: String)
-  : PythonPackage(name, version, false)
+class PythonOutdatedPackage(name: String, version: String, val latestVersion: String)
+  : PythonPackage(name, version, false) {
+  override fun toString(): String = "PythonOutdatedPackage(name='$name', version='$version', latestVersion='$latestVersion')"
+}
 
 interface PythonPackageDetails {
-
   val name: String
   val availableVersions: List<String>
   val repository: PyPackageRepository

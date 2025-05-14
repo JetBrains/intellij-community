@@ -4,10 +4,7 @@ package com.jetbrains.python.packaging.management
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridge
-import com.jetbrains.python.packaging.common.PythonPackage
-import com.jetbrains.python.packaging.common.PythonPackageDetails
-import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
-import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
+import com.jetbrains.python.packaging.common.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import org.jetbrains.annotations.TestOnly
@@ -22,6 +19,10 @@ class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManage
 
   override val repositoryManager: PythonRepositoryManager
     get() = TestPythonRepositoryManager(project).withPackageNames(packageNames).withPackageDetails(packageDetails)
+
+  override suspend fun loadOutdatedPackagesCommand(): Result<List<PythonOutdatedPackage>> {
+    return Result.success(emptyList())
+  }
 
   override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): Result<Unit> {
     if (installRequest !is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecification) {

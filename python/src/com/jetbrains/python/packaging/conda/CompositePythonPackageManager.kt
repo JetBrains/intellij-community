@@ -4,6 +4,7 @@ package com.jetbrains.python.packaging.conda
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
@@ -23,6 +24,27 @@ internal class CompositePythonPackageManager(
     CompositePythonRepositoryManager(project, managers.map { it.repositoryManager })
 
   private val managerNames = managers.joinToString { it.javaClass.simpleName }
+
+  override suspend fun loadOutdatedPackagesCommand(): Result<List<PythonOutdatedPackage>> {
+    val results = mutableListOf<PythonOutdatedPackage>()
+    val exceptions = mutableListOf<Throwable>()
+
+    for (manager in managers) {
+      manager.loadOutdatedPackagesCommand()
+        .onSuccess { results.addAll(it) }
+        .onFailure { exceptions.add(it) }
+    }
+
+    return if (results.isNotEmpty()) {
+      Result.success(results)
+    }
+    else {
+      Result.failure(createCompositeException(
+        exceptions,
+        PyBundle.message("python.packaging.composite.list.outdated.packages.error", managerNames)
+      ))
+    }
+  }
 
   override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): Result<Unit> {
     return processPackageOperation(
@@ -89,7 +111,7 @@ internal class CompositePythonPackageManager(
 
   fun createCompositeException(
     exceptions: List<Throwable>,
-    defaultMessage: String
+    defaultMessage: String,
   ): RuntimeException {
     if (exceptions.isEmpty()) {
       return RuntimeException(defaultMessage)
