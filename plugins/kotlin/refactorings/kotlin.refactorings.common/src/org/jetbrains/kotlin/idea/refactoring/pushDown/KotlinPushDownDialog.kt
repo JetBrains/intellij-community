@@ -112,4 +112,6 @@ class KotlinPushDownDialog(
 
         invokeRefactoring(processor)
     }
+
+    override fun hasHelpAction(): Boolean = false
 }
