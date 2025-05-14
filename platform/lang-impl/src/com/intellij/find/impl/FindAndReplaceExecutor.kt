@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.table.TableCellRenderer
 
 @ApiStatus.Internal
-interface FindAndReplaceExecutor{
+interface FindAndReplaceExecutor {
 
   companion object {
     @JvmStatic
@@ -44,7 +44,6 @@ interface FindAndReplaceExecutor{
    * @param findModel the model containing search parameters and criteria
    * @param project the project where the search is performed
    */
-
   fun performFindAllOrReplaceAll(findModel: FindModel, project: Project)
 
 }

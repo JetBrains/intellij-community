@@ -30,9 +30,9 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicInteger
 
-val LOG: Logger = logger<FindRemoteApiImpl>()
+private val LOG: Logger = logger<FindRemoteApiImpl>()
 
-class FindRemoteApiImpl : FindRemoteApi {
+internal class FindRemoteApiImpl : FindRemoteApi {
   override suspend fun findByModel(findModel: FindModel, projectId: ProjectId, filesToScanInitially: List<VirtualFileId>): Flow<FindInFilesResult> {
     return channelFlow {
       coroutineScope {
@@ -105,7 +105,8 @@ class FindRemoteApiImpl : FindRemoteApi {
     }
     if (findModel.isReplaceState) {
       ReplaceInProjectManager.getInstance(project).replaceInPath(findModel)
-    } else {
+    }
+    else {
       FindInProjectManager.getInstance(project).findInPath(findModel)
     }
   }

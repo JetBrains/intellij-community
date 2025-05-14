@@ -7,7 +7,6 @@ import com.intellij.find.impl.FindInProjectUtil
 import com.intellij.find.impl.FindKey
 import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.platform.project.projectId
@@ -16,7 +15,7 @@ import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageInfoAdapter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus.*
+import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : FindAndReplaceExecutor {
@@ -35,9 +34,8 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
         val filesToScanInitially = previousUsages.mapNotNull { (it as? UsageInfoModel)?.model?.fileId?.virtualFile() }.toSet()
 
         FindRemoteApi.getInstance().findByModel(findModel, project.projectId(), filesToScanInitially.map { it.rpcId() }).collect { findResult ->
-          val usage = readAction {
-            UsageInfoModel(project, findResult, coroutineScope)
-          }
+          val usage = UsageInfoModel(project, findResult, coroutineScope)
+
           onResult(usage)
 
         }

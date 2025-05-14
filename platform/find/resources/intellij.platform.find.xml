@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.platform.find">
+<idea-plugin>
 
   <extensions defaultExtensionNs="com.intellij">
     <usagePresentationProvider implementation="com.intellij.platform.find.UsageInfoModelPresentationProvider"/>

@@ -19,7 +19,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 @Rpc
-//TODO provide custom scope and search context (it's not serializable in FindModel)
+//TODO provide custom scope (it's not serializable in FindModel)
 interface FindRemoteApi : RemoteApi<Unit> {
   /**
    * Searches for matches based on the specified find model within a given project and initial set of files.
@@ -31,6 +31,16 @@ interface FindRemoteApi : RemoteApi<Unit> {
    */
   suspend fun findByModel(findModel: FindModel, projectId: ProjectId, filesToScanInitially: List<VirtualFileId>): Flow<FindInFilesResult>
 
+  /**
+   * Initiates a "Find all"/"Replace all" operation on the backend and displays results in the Find tool window.
+   * NOTE: Currently, the operation is performed on the backend only, with results not being returned to the frontend
+   * should be reworked when Find tool window is split for remote development.
+   *
+   * This function handles searching for text based on the provided search model
+   *
+   * @param findModel the model containing search parameters and criteria
+   * @param project the project where the search is performed
+   */
   suspend fun performFindAllOrReplaceAll(findModel: FindModel, projectId: ProjectId)
 
   companion object {

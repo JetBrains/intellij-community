@@ -116,7 +116,6 @@ open class FindModel : UserDataHolder, Cloneable {
       }
     }
 
-  @Transient
   var searchContext: SearchContext = SearchContext.ANY
     set(value) {
       doSetContext(value)
