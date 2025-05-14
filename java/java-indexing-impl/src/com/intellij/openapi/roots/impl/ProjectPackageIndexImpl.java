@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.util.NlsSafe;
@@ -14,17 +13,11 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public final class ProjectPackageIndexImpl extends PackageIndex {
-  private static final Logger LOG = Logger.getInstance(ProjectPackageIndexImpl.class);
   private final DirectoryIndex myDirectoryIndex;
 
   @ApiStatus.Internal
   public ProjectPackageIndexImpl(@NotNull Project project) {
     myDirectoryIndex = DirectoryIndex.getInstance(project);
-  }
-
-  @Override
-  public VirtualFile @NotNull [] getDirectoriesByPackageName(@NotNull @NlsSafe String packageName, boolean includeLibrarySources) {
-    return getDirsByPackageName(packageName, includeLibrarySources).toArray(VirtualFile.EMPTY_ARRAY);
   }
 
   @Override

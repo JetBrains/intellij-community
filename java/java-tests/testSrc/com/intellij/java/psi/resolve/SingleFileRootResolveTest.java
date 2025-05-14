@@ -2,6 +2,7 @@
 package com.intellij.java.psi.resolve;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ResourceFileUtil;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.PackageIndex;
@@ -85,5 +86,13 @@ public final class SingleFileRootResolveTest extends LightJavaCodeInsightFixture
     PsiJavaCodeReferenceElement ref = assertInstanceOf(element, PsiJavaCodeReferenceElement.class);
     PsiTypeElement typeElement = assertInstanceOf(ref.getParent(), PsiTypeElement.class);
     assertInstanceOf(typeElement.getParent(), PsiField.class);
+  }
+  
+  public void testFindResource() throws IOException {
+    VirtualFile cFile = ResourceFileUtil.findResourceFileInProject(getProject(), "com/example/C.java");
+    assertNotNull(cFile);
+    assertEquals("package com.example;\nclass C {}\n", new String(cFile.contentsToByteArray(), StandardCharsets.UTF_8));
+    VirtualFile bFile = ResourceFileUtil.findResourceFileInProject(getProject(), "com/example/B.java");
+    assertNull(bFile);
   }
 }

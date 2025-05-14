@@ -24,12 +24,17 @@ public abstract class PackageIndex {
   /**
    * Returns all directories in content sources and libraries (and optionally library sources)
    * corresponding to the given package name.
+   * <p>
+   * If you need to somehow process all the members of the package, you need to call additionally {@link #getFilesByPackageName(String)}
+   * to take single-file source roots into account.
    *
    * @param packageName           the name of the package for which directories are requested.
    * @param includeLibrarySources if true, directories under library sources are included in the returned list.
    * @return the array of directories.
    */
-  public abstract VirtualFile @NotNull [] getDirectoriesByPackageName(@NotNull @NlsSafe String packageName, boolean includeLibrarySources);
+  public VirtualFile @NotNull [] getDirectoriesByPackageName(@NotNull @NlsSafe String packageName, boolean includeLibrarySources) {
+    return getDirsByPackageName(packageName, includeLibrarySources).toArray(VirtualFile.EMPTY_ARRAY);
+  }
 
   /**
    * @return all directories in the given scope corresponding to the given package name. Note that package may also contain
@@ -41,6 +46,7 @@ public abstract class PackageIndex {
 
   /**
    * @return Returns a query producing single file source root files which correspond to {@code packageName}.
+   * @see #getDirsByPackageName(String, boolean) 
    */
   @ApiStatus.Experimental
   public Query<VirtualFile> getFilesByPackageName(@NotNull @NlsSafe String packageName) { 
@@ -50,10 +56,14 @@ public abstract class PackageIndex {
   /**
    * Returns all directories in content sources and libraries (and optionally library sources)
    * corresponding to the given package name as a query object (allowing to perform partial iteration of the results).
+   * <p>
+   * If you need to somehow process all the members of the package, you need to call additionally {@link #getFilesByPackageName(String)}
+   * to take single-file source roots into account.
    *
    * @param packageName           the name of the package for which directories are requested.
    * @param includeLibrarySources if true, directories under library sources are included in the returned list.
    * @return the query returning the list of directories.
+   * @see #getFilesByPackageName(String) 
    */
   public abstract @NotNull Query<VirtualFile> getDirsByPackageName(@NotNull @NlsSafe String packageName, boolean includeLibrarySources);
 

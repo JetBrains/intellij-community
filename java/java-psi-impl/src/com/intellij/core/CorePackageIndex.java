@@ -39,11 +39,6 @@ public class CorePackageIndex extends PackageIndex {
   }
 
   @Override
-  public VirtualFile @NotNull [] getDirectoriesByPackageName(@NotNull @NlsSafe String packageName, boolean includeLibrarySources) {
-    return getDirsByPackageName(packageName, includeLibrarySources).toArray(VirtualFile.EMPTY_ARRAY);
-  }
-
-  @Override
   public @NotNull Query<VirtualFile> getDirsByPackageName(@NotNull @NlsSafe String packageName, boolean includeLibrarySources) {
     return new CollectionQuery<>(findDirectoriesByPackageName(packageName));
   }
