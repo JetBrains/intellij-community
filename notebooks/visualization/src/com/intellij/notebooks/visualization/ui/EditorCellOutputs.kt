@@ -23,7 +23,7 @@ class EditorCellOutputs(private val cell: EditorCell) {
   }
 
   private fun getOutputs(): List<EditorCellOutput> =
-    NotebookOutputDataKeyExtractor.Companion.EP_NAME.extensionList.asSequence()
+    NotebookOutputDataKeyExtractor.EP_NAME.extensionList.asSequence()
       .mapNotNull { it.extract(editor as EditorImpl, cell.interval) }
       .firstOrNull()
       ?.takeIf { it.isNotEmpty() }
