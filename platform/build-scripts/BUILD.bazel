@@ -84,6 +84,7 @@ jvm_library(
     "//platform/boot",
     "//platform/ijent/buildConstants",
     "@lib//:ktor-client-core",
+    "//libraries/io",
     "@lib//:netty",
     "@lib//:netty-tcnative-boringssl",
     "//platform/util/coroutines",

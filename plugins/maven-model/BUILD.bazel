@@ -7,6 +7,6 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
-  deps = ["@lib//:jetbrains-annotations-java5"]
+  deps = ["@lib//:jetbrains-annotations"]
 )
 ### auto-generated section `build intellij.maven.model` end

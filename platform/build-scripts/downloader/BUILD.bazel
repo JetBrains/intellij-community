@@ -23,6 +23,7 @@ jvm_library(
     "@lib//:okhttp",
     "@lib//:ktor-client-core",
     "@lib//:hash4j",
-  ]
+  ],
+  runtime_deps = ["@lib//:kotlinx-io-core"]
 )
 ### auto-generated section `build intellij.platform.buildScripts.downloader` end

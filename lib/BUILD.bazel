@@ -4076,6 +4076,34 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
+java_library(
+  name = "kotlinx-io-core",
+  exports = [
+    ":kotlinx-io-core-jvm-0_6_0_http_import",
+    ":kotlinx-io-bytestring-jvm-0_6_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "kotlinx-io-core-jvm-0_6_0_http_import",
+  jar = "@kotlinx-io-core-jvm-0_6_0_http//file",
+  source_jar = "@kotlinx-io-core-jvm-0_6_0-sources_http//file"
+)
+
+jvm_import(
+  name = "kotlinx-io-bytestring-jvm-0_6_0_http_import",
+  jar = "@kotlinx-io-bytestring-jvm-0_6_0_http//file",
+  source_jar = "@kotlinx-io-bytestring-jvm-0_6_0-sources_http//file"
+)
+
+java_library(
+  name = "kotlinx-io-core-provided",
+  exports = [":kotlinx-io-core"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
 jvm_import(
   name = "kotlinx-serialization-core",
   jar = "@kotlinx-serialization-core-jvm-1_7_3_http//file",
@@ -4134,8 +4162,6 @@ java_library(
     ":ktor-http-jvm-3_0_3_http_import",
     ":ktor-utils-jvm-3_0_3_http_import",
     ":ktor-io-jvm-3_0_3_http_import",
-    ":kotlinx-io-core-jvm-0_5_4_http_import",
-    ":kotlinx-io-bytestring-jvm-0_5_4_http_import",
     ":ktor-events-jvm-3_0_3_http_import",
     ":ktor-websocket-serialization-jvm-3_0_3_http_import",
     ":ktor-serialization-jvm-3_0_3_http_import",
@@ -4167,18 +4193,6 @@ jvm_import(
   name = "ktor-io-jvm-3_0_3_http_import",
   jar = "@ktor-io-jvm-3_0_3_http//file",
   source_jar = "@ktor-io-jvm-3_0_3-sources_http//file"
-)
-
-jvm_import(
-  name = "kotlinx-io-core-jvm-0_5_4_http_import",
-  jar = "@kotlinx-io-core-jvm-0_5_4_http//file",
-  source_jar = "@kotlinx-io-core-jvm-0_5_4-sources_http//file"
-)
-
-jvm_import(
-  name = "kotlinx-io-bytestring-jvm-0_5_4_http_import",
-  jar = "@kotlinx-io-bytestring-jvm-0_5_4_http//file",
-  source_jar = "@kotlinx-io-bytestring-jvm-0_5_4-sources_http//file"
 )
 
 jvm_import(
@@ -4231,8 +4245,6 @@ java_library(
     ":ktor-http-cio-jvm-3_0_3_http_import",
     ":ktor-network-jvm-3_0_3_http_import",
     ":ktor-io-jvm-3_0_3_http_import",
-    ":kotlinx-io-core-jvm-0_5_4_http_import",
-    ":kotlinx-io-bytestring-jvm-0_5_4_http_import",
     ":ktor-websockets-jvm-3_0_3_http_import",
     ":ktor-network-tls-jvm-3_0_3_http_import",
     ":ktor-utils-jvm-3_0_3_http_import",
@@ -4278,8 +4290,6 @@ java_library(
     ":ktor-http-jvm-3_0_3_http_import",
     ":ktor-utils-jvm-3_0_3_http_import",
     ":ktor-io-jvm-3_0_3_http_import",
-    ":kotlinx-io-core-jvm-0_5_4_http_import",
-    ":kotlinx-io-bytestring-jvm-0_5_4_http_import",
     ":ktor-events-jvm-3_0_3_http_import",
     ":ktor-websocket-serialization-jvm-3_0_3_http_import",
     ":ktor-serialization-jvm-3_0_3_http_import",
@@ -4317,8 +4327,6 @@ java_library(
     ":ktor-http-jvm-3_0_3_http_import",
     ":ktor-utils-jvm-3_0_3_http_import",
     ":ktor-io-jvm-3_0_3_http_import",
-    ":kotlinx-io-core-jvm-0_5_4_http_import",
-    ":kotlinx-io-bytestring-jvm-0_5_4_http_import",
     ":ktor-client-core-jvm-3_0_3_http_import",
     ":ktor-events-jvm-3_0_3_http_import",
     ":ktor-websocket-serialization-jvm-3_0_3_http_import",
@@ -4350,8 +4358,6 @@ java_library(
     ":ktor-network-jvm-3_0_3_http_import",
     ":ktor-utils-jvm-3_0_3_http_import",
     ":ktor-io-jvm-3_0_3_http_import",
-    ":kotlinx-io-core-jvm-0_5_4_http_import",
-    ":kotlinx-io-bytestring-jvm-0_5_4_http_import",
   ],
   visibility = ["//visibility:public"]
 )
@@ -4390,8 +4396,6 @@ java_library(
     ":ktor-events-jvm-3_0_3_http_import",
     ":ktor-http-cio-jvm-3_0_3_http_import",
     ":ktor-io-jvm-3_0_3_http_import",
-    ":kotlinx-io-core-jvm-0_5_4_http_import",
-    ":kotlinx-io-bytestring-jvm-0_5_4_http_import",
     ":ktor-websockets-jvm-3_0_3_http_import",
     ":ktor-network-jvm-3_0_3_http_import",
   ],
@@ -8736,8 +8740,8 @@ java_library(
 
 jvm_import(
   name = "spellchecker-ai-grazie-spell-hunspell-en",
-  jar = "@hunspell-en-jvm-0_2_246_http//file",
-  source_jar = "@hunspell-en-jvm-0_2_246-sources_http//file",
+  jar = "@hunspell-en-jvm-0_2_274_http//file",
+  source_jar = "@hunspell-en-jvm-0_2_274-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

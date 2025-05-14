@@ -251,6 +251,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//python/python-syntax:syntax",
     "//platform/ui.jcef",
+    "//libraries/io",
     "//libraries/ktor-client",
     "//libraries/ktor-client-cio",
     "//platform/util/progress",

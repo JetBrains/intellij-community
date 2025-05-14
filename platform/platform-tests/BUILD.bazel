@@ -130,6 +130,7 @@ jvm_library(
     "@lib//:kotlinx-collections-immutable",
     "//platform/buildData",
     "@lib//:ktor-server-cio",
+    "//libraries/io",
     "//platform/ui.jcef",
     "@lib//:rhino",
     "//platform/eel-impl",

@@ -95,6 +95,7 @@ jvm_library(
     "//platform/testFramework/junit5/eel",
     "//platform/testFramework/junit5/eel:eel_test_lib",
     "//platform/eel-provider",
+    "//libraries/io",
   ]
 )
 

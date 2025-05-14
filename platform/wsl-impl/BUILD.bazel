@@ -16,6 +16,7 @@ jvm_library(
     "@lib//:lz4-java",
     "//platform/util-ex",
     "@lib//:ktor-network-tls",
+    "//libraries/io",
   ]
 )
 ### auto-generated section `build intellij.platform.wsl.impl` end

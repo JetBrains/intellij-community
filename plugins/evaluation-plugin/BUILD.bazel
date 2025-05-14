@@ -17,6 +17,7 @@ jvm_library(
     "//plugins/evaluation-plugin/languages",
     "//plugins/evaluation-plugin/core",
     "//plugins/completion-ml-ranking",
+    "//libraries/io",
     "//libraries/ktor-client",
     "//platform/editor-ui-api:editor-ui",
     "//plugins/stats-collector",

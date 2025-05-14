@@ -16,6 +16,7 @@ jvm_library(
   deps = [
     "//platform/util-ex",
     "@lib//:ktor-network-tls",
+    "//libraries/io",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
     "@lib//:kotlinx-serialization-core",
