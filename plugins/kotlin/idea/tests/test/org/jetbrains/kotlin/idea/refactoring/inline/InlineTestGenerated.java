@@ -68,6 +68,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
             runTest("testData/refactoring/inline/anonymousFunction/withConstantParameter.kt");
         }
 
+        @TestMetadata("withImplicitInvoke.kt")
+        public void testWithImplicitInvoke() throws Exception {
+            runTest("testData/refactoring/inline/anonymousFunction/withImplicitInvoke.kt");
+        }
+
         @TestMetadata("withInvoke.kt")
         public void testWithInvoke() throws Exception {
             runTest("testData/refactoring/inline/anonymousFunction/withInvoke.kt");

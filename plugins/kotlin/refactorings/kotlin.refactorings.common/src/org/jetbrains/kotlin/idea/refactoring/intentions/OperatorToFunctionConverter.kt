@@ -203,7 +203,7 @@ object OperatorToFunctionConverter {
         // to skip broken code like Main.({ println("hello")})() which is possible during inline anonymous function.
         // see KotlinInlineAnonymousFunctionProcessor.Companion.findFunction
         // and corresponding test InlineVariableOrProperty.testFunctionalPropertyWithReceiver
-        val isLambdaWithReceiver = receiver != null && callee.safeDeparenthesize() is KtLambdaExpression
+        val isLambdaWithReceiver = receiver != null && receiver != element && callee.safeDeparenthesize() is KtLambdaExpression
         val argumentsList = element.valueArgumentList
         val argumentString = argumentsList?.text?.removeSurrounding("(", ")") ?: ""
         val argumentsWithReceiverIfNeeded = if (isAnonymousFunctionWithReceiver) {
