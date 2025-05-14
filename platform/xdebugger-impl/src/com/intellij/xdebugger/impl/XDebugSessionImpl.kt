@@ -126,7 +126,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   private var myRunContentDescriptor: RunContentDescriptor? = null
   val sessionData: XDebugSessionData
   private val myActiveNonLineBreakpointAndPositionFlow = MutableStateFlow<Pair<XBreakpoint<*>, XSourcePosition?>?>(null)
-  private val myPausedFlow = createMutableStateFlow<XDebugSessionPausedInfo?>(null)
+  private val myPausedEvents = MutableSharedFlow<XDebugSessionPausedInfo>(extraBufferCapacity = 1)
   private val myDispatcher = EventDispatcher.create<XDebugSessionListener>(XDebugSessionListener::class.java)
   private val myProject: Project = debuggerManager.project
 
@@ -291,8 +291,8 @@ class XDebugSessionImpl @JvmOverloads constructor(
     get() = myPaused
 
   @ApiStatus.Internal
-  fun getPausedFlow(): Flow<XDebugSessionPausedInfo?> {
-    return myPausedFlow
+  fun getPausedEventsFlow(): Flow<XDebugSessionPausedInfo?> {
+    return myPausedEvents
   }
 
   @ApiStatus.Internal
@@ -1007,7 +1007,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
         }
         val topFrameIsAbsent = topFramePosition == null
         if (useFeProxy()) {
-          myPausedFlow.value = XDebugSessionPausedInfo(attract, topFrameIsAbsent)
+          myPausedEvents.tryEmit(XDebugSessionPausedInfo(attract, topFrameIsAbsent))
         }
         else {
           // We have to keep this code because Code with Me expects BE to work with tab similar to monolith

@@ -89,7 +89,7 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     val session = sessionId.findValue() ?: return emptyFlow()
     return session.tabInitDataFlow.map {
       if (it == null) return@map null
-      XDebuggerSessionTabDto(it, session.getPausedFlow().toRpc())
+      XDebuggerSessionTabDto(it, session.getPausedEventsFlow().toRpc())
     }
   }
 
