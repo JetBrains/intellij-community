@@ -94,7 +94,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
       initialSessionState,
       currentSession.suspendData(),
       currentSession.sessionName,
-      createSessionEvents(currentSession).toRpc(),
+      createSessionEvents(currentSession, initialSessionState).toRpc(),
       sessionDataDto,
       consoleView,
       createProcessHandlerDto(currentSession.coroutineScope, currentSession.debugProcess.processHandler),
@@ -105,8 +105,8 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  private fun createSessionEvents(currentSession: XDebugSessionImpl): Flow<XDebuggerSessionEvent> = channelFlow {
-    currentSession.addSessionListener(object : XDebugSessionListener {
+  private fun createSessionEvents(currentSession: XDebugSessionImpl, initialSessionState: XDebugSessionState): Flow<XDebuggerSessionEvent> = channelFlow {
+    val listener = object : XDebugSessionListener {
       override fun sessionPaused() {
         val suspendContext = currentSession.suspendContext ?: return
         val suspendScope = currentSession.currentSuspendCoroutineScope ?: return
@@ -156,7 +156,18 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
       override fun breakpointsMuted(muted: Boolean) {
         trySend(XDebuggerSessionEvent.BreakpointsMuted(muted))
       }
-    }, this.asDisposable())
+    }
+    currentSession.addSessionListener(listener, this.asDisposable())
+    // Try to send the important events lost during listener installation
+    if (currentSession.isStopped && !initialSessionState.isStopped) {
+      listener.sessionStopped()
+    }
+    else if (currentSession.isPaused && !initialSessionState.isPaused) {
+      listener.sessionPaused()
+    }
+    else if (!currentSession.isPaused && initialSessionState.isPaused) {
+      listener.sessionResumed()
+    }
     awaitClose()
   }.buffer(Channel.UNLIMITED)
 
