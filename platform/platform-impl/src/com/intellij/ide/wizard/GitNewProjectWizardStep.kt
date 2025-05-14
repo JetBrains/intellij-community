@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.wizard
 
 import com.intellij.ide.IdeBundle
@@ -23,6 +23,12 @@ import com.intellij.ui.dsl.builder.whenStateChangedFromUi
 import kotlinx.coroutines.CoroutineScope
 import java.nio.file.Path
 
+/**
+ * Responsible for handling Git repository initialization if the user enables it.
+ *
+ * @see <a href="https://helpserver.labs.jb.gg/help/intellij/new-project-wizard/new-project-wizard.html#common-steps">
+ *   New Project Wizard API: Common Steps (IntelliJ Platform Docs)</a>
+ */
 class GitNewProjectWizardStep(
   parent: NewProjectWizardBaseStep
 ) : AbstractNewProjectWizardStep(parent),

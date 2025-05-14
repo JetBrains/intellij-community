@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.wizard
 
 import com.intellij.ide.util.projectWizard.WizardContext
@@ -24,6 +24,8 @@ import com.intellij.ui.dsl.builder.Panel
  * @see AbstractNewProjectWizardMultiStep
  * @see NewProjectWizardMultiStepFactory
  * @see GeneratorNewProjectWizard
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/new-project-wizard.html#wizard-steps">
+ *   New Project Wizard API: Wizard Steps (IntelliJ Platform Docs)</a>
  */
 interface NewProjectWizardStep {
 
@@ -77,7 +79,7 @@ interface NewProjectWizardStep {
   fun setupUI(builder: Panel) {}
 
   /**
-   * Applies data from UI into project model or settings.
+   * Applies data from UI into the project model or settings.
    * This function will be executed in both cases: new project and module wizards.
    *
    * Wizard type (NPW or NMW) can be determined by [context] property

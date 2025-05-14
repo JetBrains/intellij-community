@@ -1,10 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.wizard
 
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.util.UserDataHolderBase
 
+/**
+ * The root project wizard step initializing a data holder and other properties shared with all descendant steps in the wizard.
+ *
+ * @see <a href="https://helpserver.labs.jb.gg/help/intellij/new-project-wizard/new-project-wizard.html#root-step">
+ *   New Project Wizard API: Root Steps (IntelliJ Platform Docs)</a>
+ */
 class RootNewProjectWizardStep(override val context: WizardContext) : NewProjectWizardStep {
 
   override val data: UserDataHolderBase = UserDataHolderBase()
