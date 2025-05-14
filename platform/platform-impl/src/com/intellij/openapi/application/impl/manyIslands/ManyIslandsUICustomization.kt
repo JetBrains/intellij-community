@@ -5,6 +5,9 @@ import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.impl.ToolWindowUIDecorator
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
+import com.intellij.openapi.ui.Divider
+import com.intellij.openapi.ui.OnePixelDivider
+import com.intellij.openapi.ui.Splittable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.IdeGlassPane
@@ -53,6 +56,16 @@ internal class ManyIslandsUICustomization : InternalUICustomization() {
       }
       return super.toolWindowUIDecorator
     }
+
+  override fun createCustomDivider(isVertical: Boolean, splitter: Splittable): Divider? {
+    if (isManyIslandsEnabled) {
+      return object : OnePixelDivider(isVertical, splitter) {
+        override fun paint(g: Graphics) {
+        }
+      }
+    }
+    return null
+  }
 
   override fun installEditorBackground(component: JComponent) {
     if (isManyIslandsEnabled) {
