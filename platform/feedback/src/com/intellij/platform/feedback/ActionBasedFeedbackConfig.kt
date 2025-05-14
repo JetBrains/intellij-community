@@ -10,58 +10,33 @@ import com.intellij.platform.feedback.impl.checkIsIdeEAPIfRequired
 import com.intellij.platform.feedback.impl.state.CommonFeedbackSurveyService
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.datetime.LocalDate
 
 /**
  * Represents the config of a feedback action that can be explicitly invoked by the user.
  *
- * Similar to [InIdeFeedbackSurveyConfig], but instead of asking the user to submit feedback,
+ * Similar to [NotificationBasedFeedbackSurveyConfig], but instead of asking the user to submit feedback,
  * this config is intended to be used in cases when feedback is submitted by an explicit user
  * action (e.g., an action button, an action link, etc.).
  */
-interface ActionBasedFeedbackConfig {
-
-  /**
-   * Unique identifier reflecting the survey.
-   *
-   * If the same feedback can be provided both by an in-IDE notification using [InIdeFeedbackSurveyConfig]
-   * and by an explicit action, then this survey ID must be equal to that of the in-IDE survey config
-   * to prevent showing survey notifications if the user has already sent feedback explicitly.
-   */
-  val surveyId: String
-
-  /**
-   * Date of the last day of feedback collection.
-   *
-   * Used to not letting the user submit feedback when it's no longer relevant.
-   *
-   * Often set to something like the planned date of the next release.
-   */
-  val lastDayOfFeedbackCollection: LocalDate
-
-  /**
-   * Whether the IDE must be of a EAP version.
-   */
-  val requireIdeEAP: Boolean
-
-  /**
-   * Checks whether the IDE is suitable for the feedback survey.
-   *
-   * Usually needed when you want to show a survey only to users of a particular IDE.
-   */
-  fun checkIdeIsSuitable(): Boolean
+interface ActionBasedFeedbackConfig : FeedbackSurveyConfig {
 
   /**
    * Checks whether the extra conditions for submitting feedback are satisfied.
    *
-   * Normally it imposes fewer restrictions than [InIdeFeedbackSurveyConfig.checkExtraConditionSatisfied],
+   * For the feedback action to be enabled, both [FeedbackSurveyConfig.checkExtraConditionSatisfied]
+   * and this function must return `true`.
+   * This function, along with [NotificationBasedFeedbackSurveyConfig.checkExtraConditionSatisfiedForNotification]
+   * is intended to be used in cases when the conditions for notification-based and action-based
+   * surveys are different.
+   * 
+   * Normally it imposes fewer restrictions than [NotificationBasedFeedbackSurveyConfig.checkExtraConditionSatisfiedForNotification],
    * as, for example, there may be a check whether the user has been using a specific feature long enough
    * before showing a survey notification.
    * But when the user explicitly invoked an action to submit feedback, such checks are not needed.
    *
    * This check might include, for example, a check that the feature to submit feedback about is currently enabled.
    */
-  fun checkExtraConditionSatisfied(project: Project): Boolean = true
+  fun checkExtraConditionSatisfiedForAction(project: Project): Boolean = true
 
   /**
    * Returns a dialog with the feedback survey.
@@ -98,7 +73,7 @@ fun ActionBasedFeedbackConfig.isSuitableToShow(project: Project): Boolean {
     checkIsFeedbackCollectionDeadlineNotPast(lastDayOfFeedbackCollection) &&
     checkIsIdeEAPIfRequired(requireIdeEAP)
   }
-  return commonConditionsForAllSurveys && checkExtraConditionSatisfied(project)
+  return commonConditionsForAllSurveys && checkExtraConditionSatisfied(project) && checkExtraConditionSatisfiedForAction(project)
 }
 
 /**

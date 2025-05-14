@@ -80,7 +80,7 @@ internal fun isSuitableToShow(feedbackSurveyConfig: NotificationBasedFeedbackSur
     return false
   }
 
-  return feedbackSurveyConfig.checkExtraConditionSatisfied(project)
+  return feedbackSurveyConfig.checkExtraConditionSatisfied(project) && feedbackSurveyConfig.checkExtraConditionSatisfiedForNotification(project)
 }
 
 private fun invokeRespondNotificationAction(feedbackSurveyType: FeedbackSurveyType<*>, project: Project, forTest: Boolean) {

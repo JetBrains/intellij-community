@@ -4,56 +4,31 @@ package com.intellij.platform.feedback
 import com.intellij.openapi.project.Project
 import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
 import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
-import kotlinx.datetime.LocalDate
 import org.jetbrains.annotations.Nls
 
 /**
- * Represents the base config for feedback survey.
+ * Represents the base config for showing feedback survey notifications.
  *
  * @see com.intellij.platform.feedback.InIdeFeedbackSurveyConfig
  * @see com.intellij.platform.feedback.ExternalFeedbackSurveyConfig
  */
-interface NotificationBasedFeedbackSurveyConfig {
+interface NotificationBasedFeedbackSurveyConfig : FeedbackSurveyConfig {
 
   /**
-   * Unique identifier reflecting the survey.
+   * Checks whether the extra conditions for showing the survey notification are satisfied.
    *
-   * Used for automatic collection of FUS statistics.
+   * For a notification to be shown, both this and [checkExtraConditionSatisfied] must return `true`.
+   * This function, along with [ActionBasedFeedbackConfig.checkExtraConditionSatisfiedForAction]
+   * is intended to be used in cases when the conditions for notification-based and action-based
+   * surveys are different.
    */
-  val surveyId: String
-
-  /**
-   * Date of the last day of feedback collection.
-   *
-   * Used to not keep collecting user feedback when it's no longer needed.
-   */
-  val lastDayOfFeedbackCollection: LocalDate
-
-  /**
-   * Whether the IDE must be of EAP version.
-   */
-  val requireIdeEAP: Boolean
+  fun checkExtraConditionSatisfiedForNotification(project: Project): Boolean = true
 
   /**
    * Whether the survey is allowed to be shown indefinite times. Must only be used by product and not plugins.
    */
   val isIndefinite: Boolean
     get() = false
-
-  /**
-   * Checks whether the IDE is suitable for the feedback survey.
-   *
-   * Usually needed when you want to show a survey only to users of a particular IDE.
-   */
-  fun checkIdeIsSuitable(): Boolean
-
-  /**
-   * Checks whether the extra conditions for showing the survey notification are satisfied.
-   *
-   * Usually needed when you want to show a survey only to users who have already used some feature.
-   * Or when you want to show a survey only to users of a particular version of the IDE.
-   */
-  fun checkExtraConditionSatisfied(project: Project): Boolean
 
   /**
    * Returns a notification encouraging the user to leave feedback, which will be shown to the user.
