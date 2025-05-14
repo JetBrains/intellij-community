@@ -10,7 +10,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKind
@@ -36,6 +35,7 @@ import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositio
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.renderer.render
+import org.jetbrains.kotlin.utils.yieldIfNotNull
 
 internal open class FirClassifierCompletionContributor(
     parameters: KotlinFirCompletionParameters,
@@ -192,33 +192,32 @@ internal open class FirClassifierCompletionContributor(
                 indexClassifiers
     }
 
-    private fun LookupElementBuilder.withExpensiveRendererIfNeeded(
-        importingStrategy: ImportStrategy,
-    ): LookupElementBuilder = when (importingStrategy) {
-        is ImportStrategy.InsertFqNameAndShorten -> ClassifierLookupElementRenderer(
-            fqName = importingStrategy.fqName,
-            position = parameters.position,
-        ).let(::withExpensiveRenderer)
-
-        else -> this
-    }
-
 
     context(KaSession)
     private fun createClassifierLookupElement(
         classifierSymbol: KaClassifierSymbol,
         expectedType: KaType? = null,
         importingStrategy: ImportStrategy = ImportStrategy.DoNothing,
-    ): List<LookupElementBuilder> = buildList {
-        if (expectedType != null && classifierSymbol is KaNamedClassSymbol && expectedType.symbol == classifierSymbol) {
-            KotlinFirLookupElementFactory.createConstructorCallLookupElement(classifierSymbol, importingStrategy)
-                ?.withExpensiveRendererIfNeeded(importingStrategy)
-                ?.let(::add)
+    ): Sequence<LookupElementBuilder> = sequence {
+        if (classifierSymbol is KaNamedClassSymbol
+            && expectedType?.symbol == classifierSymbol
+        ) {
+            yieldIfNotNull(KotlinFirLookupElementFactory.createConstructorCallLookupElement(classifierSymbol, importingStrategy))
         }
-        val builder = KotlinFirLookupElementFactory.createClassifierLookupElement(classifierSymbol, importingStrategy)
-            ?.withExpensiveRendererIfNeeded(importingStrategy)
 
-        addIfNotNull(builder)
+        yieldIfNotNull(KotlinFirLookupElementFactory.createClassifierLookupElement(classifierSymbol, importingStrategy))
+    }.map { builder ->
+        when (importingStrategy) {
+            is ImportStrategy.InsertFqNameAndShorten -> {
+                val expensiveRenderer = ClassifierLookupElementRenderer(
+                    fqName = importingStrategy.fqName,
+                    position = parameters.position,
+                )
+                builder.withExpensiveRenderer(expensiveRenderer)
+            }
+
+            else -> builder
+        }
     }
 }
 
