@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,6 +94,11 @@ public class AnimatedIcon extends JComponent implements Disposable {
 
   public void setPaintPassiveIcon(boolean paintPassive) {
     isPaintPassive = paintPassive;
+  }
+
+  @ApiStatus.Internal
+  public void tickAnimation() {
+    animator.forceTick();
   }
 
   private boolean ensureAnimation(boolean running) {

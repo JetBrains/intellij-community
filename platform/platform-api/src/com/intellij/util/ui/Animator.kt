@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.SingleAlarm
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.NonNls
 import java.awt.GraphicsEnvironment
@@ -56,6 +57,14 @@ abstract class Animator @JvmOverloads constructor(
     if (skipAnimation()) {
       animationDone()
     }
+  }
+
+  /**
+   * This operation is used for manual processing of animation in cases when IDE event queue is unavailable
+   */
+  @ApiStatus.Internal
+  fun forceTick() {
+    onTick()
   }
 
   private fun onTick() {
