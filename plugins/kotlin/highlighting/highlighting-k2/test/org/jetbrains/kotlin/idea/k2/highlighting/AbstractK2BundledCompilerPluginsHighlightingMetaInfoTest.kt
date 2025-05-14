@@ -3,19 +3,25 @@ package org.jetbrains.kotlin.idea.k2.highlighting
 
 import com.intellij.openapi.application.PathMacros
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.rootManager
+import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.psi.PsiFile
+import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.MavenDependencyUtil
+import com.intellij.testFramework.registerExtension
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
-import org.jetbrains.kotlin.idea.base.test.ensureFilesResolved
-import org.jetbrains.kotlin.idea.test.Directives
+import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider
+import org.jetbrains.kotlin.idea.core.script.k2.modules.K2IdeScriptAdditionalIdeaDependenciesProvider
+import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.COMPILER_ARGUMENTS_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
-import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
+import kotlin.script.experimental.api.compilerOptions
+import kotlin.script.experimental.api.with
 
 /**
  * N.B. These test rely on the fake compiler plugins jars present in the testdata (`*_fake_plugin.jar` files).
@@ -43,6 +49,21 @@ abstract class AbstractK2BundledCompilerPluginsHighlightingMetaInfoTest : Abstra
 
     override fun setUp() {
         super.setUp()
+        // Required to share dependencies for script modules
+        project.registerExtension(
+            K2IdeScriptAdditionalIdeaDependenciesProvider.EP_NAME,
+            object : ScriptAdditionalIdeaDependenciesProvider {
+                override fun getRelatedLibraries(
+                    file: VirtualFile,
+                    project: Project
+                ): List<Library> {
+                    return module.rootManager.orderEntries.mapNotNull { (it as? LibraryOrderEntry)?.library }.ifEmpty {
+                        return emptyList()
+                    }
+                }
+            },
+            testRootDisposable
+        )
 
         // N.B. We don't use PathMacroContributor here because it's too late to register at this point
         PathMacros.getInstance().apply {
@@ -65,6 +86,15 @@ abstract class AbstractK2BundledCompilerPluginsHighlightingMetaInfoTest : Abstra
 
     override fun getDefaultProjectDescriptor(): ProjectDescriptorWithStdlibSources =
         ProjectDescriptorWithStdlibSourcesAndExtraLibraries
+
+    override val scriptConfigurationRefiner = TestScriptConfigurationRefiner { directives, configuration ->
+        val compilerArguments = directives[COMPILER_ARGUMENTS_DIRECTIVE.dropLast(1)] ?: return@TestScriptConfigurationRefiner configuration
+        module.rootManager.contentRoots
+
+        configuration.with {
+            compilerOptions.putIfAny(listOf(compilerArguments))
+        }
+    }
 }
 
 /**

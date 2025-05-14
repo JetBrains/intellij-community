@@ -27,7 +27,7 @@ internal fun MutableTWorkspace.generateK2HighlighterTests() {
         }
 
         testClass<AbstractK2BundledCompilerPluginsHighlightingMetaInfoTest> {
-            model("highlighterMetaInfoWithBundledCompilerPlugins")
+            model("highlighterMetaInfoWithBundledCompilerPlugins", pattern = Patterns.KT_OR_KTS)
         }
 
         testClass<AbstractK2ComposeCompilerPluginCheckerTest> {

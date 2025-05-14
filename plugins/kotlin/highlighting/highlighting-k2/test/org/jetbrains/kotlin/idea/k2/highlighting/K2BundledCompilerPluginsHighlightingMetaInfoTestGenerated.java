@@ -60,6 +60,11 @@ public class K2BundledCompilerPluginsHighlightingMetaInfoTestGenerated extends A
         runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/dataframe.kt");
     }
 
+    @TestMetadata("dataframeScripting.kts")
+    public void testDataframeScripting() throws Exception {
+        runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/dataframeScripting.kts");
+    }
+
     @TestMetadata("dataframe_from_KOTLIN_BUNDLED.kt")
     public void testDataframe_from_KOTLIN_BUNDLED() throws Exception {
         runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/dataframe_from_KOTLIN_BUNDLED.kt");

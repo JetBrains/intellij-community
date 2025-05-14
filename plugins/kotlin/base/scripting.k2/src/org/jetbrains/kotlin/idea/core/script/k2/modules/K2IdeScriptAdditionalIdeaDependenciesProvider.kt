@@ -6,13 +6,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.workspace.jps.entities.LibraryDependency
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import org.jetbrains.annotations.TestOnly
 
 interface K2IdeScriptAdditionalIdeaDependenciesProvider {
     fun getRelatedModules(file: VirtualFile, project: Project): List<ModuleEntity> = emptyList()
     fun getRelatedLibraries(file: VirtualFile, project: Project): List<LibraryDependency> = emptyList()
 
     companion object {
-        private val EP_NAME: ExtensionPointName<K2IdeScriptAdditionalIdeaDependenciesProvider> =
+        @TestOnly
+        val EP_NAME: ExtensionPointName<K2IdeScriptAdditionalIdeaDependenciesProvider> =
             ExtensionPointName.Companion.create("org.jetbrains.kotlin.k2IdeScriptAdditionalIdeaDependenciesProvider")
 
         fun getRelatedModules(file: VirtualFile, project: Project): List<ModuleEntity> = EP_NAME.extensionList
