@@ -42,17 +42,17 @@ class HelpSearch {
         if (indexDir != null)
           try {
 
-            for (resourceName in resources) {
-              val input = ResourceUtil.getResourceAsStream(HelpSearch::class.java.classLoader,
-                                                           "search",
-                                                           resourceName)
-              if (input == null) continue
-              val fos = Paths.get(indexDir.toAbsolutePath().toString(), resourceName)
-                .safeOutputStream()
-              fos.write(input.readAllBytes())
-              fos.flush()
-              fos.close()
-              input.close()
+            resources.forEach { resource ->
+              ResourceUtil.getResourceAsStream(HelpSearch::class.java.classLoader,
+                                               "search",
+                                               resource).use { resourceStream ->
+                if (resourceStream == null) return@forEach
+
+                Paths.get(indexDir.toAbsolutePath().toString(), resource)
+                  .safeOutputStream().use { resourceOutput ->
+                    resourceOutput.write(resourceStream.readAllBytes())
+                  }
+              }
             }
 
             indexDirectory = NIOFSDirectory.open(indexDir) as NIOFSDirectory
