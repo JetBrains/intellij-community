@@ -21,6 +21,7 @@ import kotlinx.coroutines.launch
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
 import org.jetbrains.plugins.terminal.ShellStartupOptions
+import org.jetbrains.plugins.terminal.reworked.util.TerminalTestUtil
 import org.jetbrains.plugins.terminal.reworked.util.ZshPS1Customizer
 import org.junit.Assert
 import org.junit.Assume
@@ -239,10 +240,8 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
     block: suspend (SendChannel<TerminalInputEvent>) -> Unit,
   ): List<TerminalOutputEvent> {
     return coroutineScope {
-      val allOptions = options.builder()
-        .shellCommand(listOf(shellPath.toString()))
-        .build()
-
+      val shellCommand = TerminalSessionTestUtil.createShellCommand(shellPath.toString())
+      val allOptions = options.builder().shellCommand(shellCommand).build()
       val session = TerminalSessionTestUtil.startTestTerminalSession(
         projectRule.project,
         allOptions,
