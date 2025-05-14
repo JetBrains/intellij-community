@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -38,6 +39,7 @@ import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionInsertionH
 import org.jetbrains.kotlin.idea.completion.reference
 import org.jetbrains.kotlin.idea.completion.weighers.CallableWeigher.callableWeight
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.core.NotPropertiesService
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
@@ -48,6 +50,8 @@ import org.jetbrains.kotlin.psi.psiUtil.nextSiblingOfSameType
 import org.jetbrains.kotlin.resolve.ArrayFqNames
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.exceptions.KotlinIllegalArgumentExceptionWithAttachments
+
+private val NOT_PROPERTIES = NotPropertiesService.DEFAULT.toSet()
 
 internal open class FirCallableCompletionContributor(
     parameters: KotlinFirCompletionParameters,
@@ -650,6 +654,25 @@ internal open class FirCallableCompletionContributor(
     }
 
     /**
+     * If the signature is that of certain synthetic java properties (e.g. `AtomicInteger.getAndIncrement`),
+     * we do not want to use the synthetic property (e.g. `andIncrement`) because it would be unnatural as they are not real properties.
+     * For these cases, this function will return the signature of the underlying Java getter instead.
+     *
+     * @see NotPropertiesService
+     */
+    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
+    private fun KaCallableSignature<*>.getJavaGetterSignatureIfNotProperty(): KaCallableSignature<*>? {
+        if (this !is KaVariableSignature<*>) return null
+        val symbol = symbol
+        if (symbol !is KaSyntheticJavaPropertySymbol || symbol.javaSetterSymbol != null) return null
+
+        val fqName = symbol.javaGetterSymbol.callableId?.asSingleFqName()?.asString() ?: return null
+        if (fqName !in NOT_PROPERTIES) return null
+        return symbol.javaGetterSymbol.asSignature()
+    }
+
+    /**
      * Note, that [isImportDefinitelyNotRequired] should be set to true only if the callable is available without import, and it doesn't
      * require import or fully-qualified name to be resolved unambiguously.
      */
@@ -659,11 +682,19 @@ internal open class FirCallableCompletionContributor(
         scopeKind: KaScopeKind,
         isImportDefinitelyNotRequired: Boolean = false,
         options: CallableInsertionOptions = getOptions(signature, isImportDefinitelyNotRequired),
-    ): CallableWithMetadataForCompletion = CallableWithMetadataForCompletion(
-        _signature = signature,
-        options = options,
-        symbolOrigin = CompletionSymbolOrigin.Scope(scopeKind),
-    )
+    ): CallableWithMetadataForCompletion {
+        val javaGetterIfNotProperty = signature.getJavaGetterSignatureIfNotProperty()
+        val optionsToUse = if (javaGetterIfNotProperty != null && options.insertionStrategy == CallableInsertionStrategy.AsIdentifier) {
+            options.copy(insertionStrategy = CallableInsertionStrategy.AsCall)
+        } else {
+            options
+        }
+        return CallableWithMetadataForCompletion(
+            _signature = javaGetterIfNotProperty ?: signature,
+            options = optionsToUse,
+            symbolOrigin = CompletionSymbolOrigin.Scope(scopeKind),
+        )
+    }
 
     private fun isUninitializedCallable(
         position: PsiElement,

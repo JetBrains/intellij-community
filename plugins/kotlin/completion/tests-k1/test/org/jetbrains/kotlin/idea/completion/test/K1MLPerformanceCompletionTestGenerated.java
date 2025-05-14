@@ -4482,6 +4482,11 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
                 runTest("../testData/basic/java/syntheticExtensions/SafeCall.kt");
             }
 
+            @TestMetadata("ShowAccessorsForAtomicOperations.kt")
+            public void testShowAccessorsForAtomicOperations() throws Exception {
+                runTest("../testData/basic/java/syntheticExtensions/ShowAccessorsForAtomicOperations.kt");
+            }
+
             @TestMetadata("ShowGetSetOnSecondCompletion.kt")
             public void testShowGetSetOnSecondCompletion() throws Exception {
                 runTest("../testData/basic/java/syntheticExtensions/ShowGetSetOnSecondCompletion.kt");
