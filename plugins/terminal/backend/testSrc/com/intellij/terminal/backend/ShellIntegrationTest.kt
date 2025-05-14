@@ -7,17 +7,15 @@ import com.intellij.terminal.backend.util.TerminalSessionTestUtil
 import com.intellij.terminal.backend.util.TerminalSessionTestUtil.ENTER_BYTES
 import com.intellij.terminal.backend.util.TerminalSessionTestUtil.awaitOutputEvent
 import com.intellij.terminal.session.*
+import com.intellij.terminal.session.dto.toStyleRange
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jediterm.core.util.TermSize
-import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
 import org.jetbrains.plugins.terminal.ShellStartupOptions
@@ -235,13 +233,53 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
     Assert.assertTrue(contentUpdatedEvents.joinToString("\n") { it.text }, found)
   }
 
+  /**
+   * This test may fail locally if you have some custom prompt configured in your Bash configs.
+   * Some prompts may be rendered differently in the posix mode.
+   */
+  @Test
+  fun `Output is not affected by enabling posix option in bash`() = timeoutRunBlocking(30.seconds) {
+    Assume.assumeTrue(shellPath.name == "bash")
+
+    val terminalInputActions: suspend (SendChannel<TerminalInputEvent>) -> Unit = {
+      it.send(TerminalWriteBytesEvent("echo 'abracadabra'".toByteArray()))
+      it.send(TerminalWriteBytesEvent(ENTER_BYTES))
+    }
+
+    val regularSessionEvents = async {
+      startSessionAndCollectOutputEvents(block = terminalInputActions)
+    }
+    val posixSessionEvents = async {
+      val rcFile = Files.createTempFile("terminal", ".rcfile")
+      rcFile.writeText("set -o posix")
+
+      val initialCommand = TerminalSessionTestUtil.createShellCommand(shellPath.toString())
+      val fullCommand = initialCommand + listOf("--rcfile", rcFile.toString())
+      val options = ShellStartupOptions.Builder().shellCommand(fullCommand).build()
+      startSessionAndCollectOutputEvents(options, terminalInputActions)
+    }
+
+    val regularSessionOutput = calculateResultingOutput(regularSessionEvents.await())
+    val posixSessionOutput = calculateResultingOutput(posixSessionEvents.await())
+
+    // Check that the output of posix and regular sessions is the same
+    assertThat(posixSessionOutput).isEqualTo(regularSessionOutput)
+    Unit
+  }
+
   private suspend fun startSessionAndCollectOutputEvents(
     options: ShellStartupOptions = ShellStartupOptions.Builder().build(),
     block: suspend (SendChannel<TerminalInputEvent>) -> Unit,
   ): List<TerminalOutputEvent> {
     return coroutineScope {
-      val shellCommand = TerminalSessionTestUtil.createShellCommand(shellPath.toString())
-      val allOptions = options.builder().shellCommand(shellCommand).build()
+      val allOptions = if (options.shellCommand != null) {
+        options
+      }
+      else {
+        val shellCommand = TerminalSessionTestUtil.createShellCommand(shellPath.toString())
+        options.builder().shellCommand(shellCommand).build()
+      }
+
       val session = TerminalSessionTestUtil.startTestTerminalSession(
         projectRule.project,
         allOptions,
@@ -274,6 +312,18 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
       outputEvents
     }
+  }
+
+  private fun calculateResultingOutput(events: List<TerminalOutputEvent>): String {
+    val outputModel = TerminalTestUtil.createOutputModel(maxLength = Int.MAX_VALUE)
+    events
+      .filterIsInstance<TerminalContentUpdatedEvent>()
+      .map { event ->
+        val styles = event.styles.map { it.toStyleRange() }
+        outputModel.updateContent(event.startLineLogicalIndex, event.text, styles)
+      }
+
+    return outputModel.document.text
   }
 
   private fun assertSameEvents(
