@@ -4,18 +4,14 @@ package com.intellij.codeInsight;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.webSymbols.testFramework.WebTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -116,33 +112,21 @@ public class XmlDocumentationTest extends BasePlatformTestCase {
 
   private void doQuickDocGenerationTestWithCheckExpectedResult(Object completionVariant, final String... baseFileNames) {
     final DocumentationTestContext context = new DocumentationTestContext(baseFileNames);
-    String pathname = getTestDataPath() + baseFileNames[0] + ".expected.html";
-    VirtualFile vfile = LocalFileSystem.getInstance().findFileByIoFile(new File(pathname));
-    assertNotNull(pathname + " not found", vfile);
-    try {
-      String expectedText = StringUtil.convertLineSeparators(VfsUtilCore.loadText(vfile));
-      String text = context.generateDoc();
-      assertThat(text).isNotNull();
-      assertEquals(stripFirstLine(expectedText).replaceAll("\\s+", ""),
-                   stripFirstLine(StringUtil.convertLineSeparators(text)).replaceAll("\\s+", ""));
 
-      if (completionVariant != null) {
-        vfile =
-          LocalFileSystem.getInstance().findFileByIoFile(new File(getTestDataPath() + baseFileNames[0] + ".expected.completion.html"));
-        expectedText = StringUtil.convertLineSeparators(VfsUtilCore.loadText(vfile), "\n");
-        assertEquals(stripFirstLine(expectedText).replaceAll("\\s+", ""),
-                     stripFirstLine(StringUtil.convertLineSeparators(context.generateDocForCompletion(completionVariant), "\n"))
-                       .replaceAll("\\s+", ""));
-      }
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+    String text = context.generateDoc();
+    assertThat(text).isNotNull();
+    WebTestUtil.checkTextByFile(myFixture, cleanupHtmlDoc(text), baseFileNames[0] + ".expected.html");
+
+    if (completionVariant != null) {
+      String completionText = context.generateDocForCompletion(completionVariant);
+      assertThat(completionText).isNotNull();
+      WebTestUtil.checkTextByFile(myFixture, cleanupHtmlDoc(completionText),
+                                  baseFileNames[0] + ".expected.completion.html");
     }
   }
 
-  // the first line may contain attributes in unpredictable order (after Transform work)
-  private static String stripFirstLine(String text) {
-    if (!text.startsWith("<html ")) return text;
-    return text.substring(text.indexOf('\n'));
+  private static String cleanupHtmlDoc(String doc) {
+    return StringUtil.convertLineSeparators(doc.replaceAll(" +\n", "\n"));
   }
 
   public void testDtdDoc() {

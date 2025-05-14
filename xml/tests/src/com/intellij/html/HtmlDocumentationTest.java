@@ -17,12 +17,12 @@ package com.intellij.html;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
-import junit.framework.ComparisonFailure;
-
-import java.util.Collections;
-import java.util.List;
+import com.intellij.webSymbols.testFramework.WebTestUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class HtmlDocumentationTest extends BasePlatformTestCase {
   public void testQuickDocumentationHtml5Tag() {
@@ -31,11 +31,8 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
              <html>
              <bo<caret>dy onload="">
              </body>
-             </html>""",
-           "<div class='definition'><pre>body</pre></div>\n<div class='content'>" +
-           "The <strong><code>&lt;body&gt;</code></strong> <a href=\"https://developer.mozilla.org/en-us/docs/Web/HTML\">HTML</a> " +
-           "element represents the content of",
-           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/reference/elements/body"));
+             </html>"""
+    );
   }
 
   public void testQuickDocumentationHtml5TagDialog() {
@@ -45,11 +42,8 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
              <body onload="">
              <dia<caret>log></dialog
              </body>
-             </html>""",
-           "<div class='definition'><pre>dialog</pre></div>\n<div class='content'>" +
-           "The <strong><code>&lt;dialog&gt;</code></strong> <a href=\"https://developer.mozilla.org/en-us/docs/Web/HTML\">HTML</a> " +
-           "element represents a modal",
-           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/reference/elements/dialog"));
+             </html>"""
+    );
   }
 
   public void testQuickDocumentationHtml5Attr() {
@@ -58,9 +52,8 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
              <html>
              <body on<caret>load="">
              </body>
-             </html>""",
-           "<div class='definition'><pre>onload</pre></div>\n<div class='content'>Function to call when the document has finished loading.",
-           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/element/body#onload"));
+             </html>"""
+    );
   }
 
   public void testQuickDocumentationHtml5Svg() {
@@ -71,10 +64,8 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
              <sv<caret>g>
              </svg>
              </body>
-             </html>""",
-           "<div class='definition'><pre>svg</pre></div>\n<div class='content'>" +
-           "The <strong><code>&lt;svg&gt;</code></strong> <a href=\"https://developer.mozilla.org/en-us/docs/Web/SVG\">SVG</a> element is a container that defines a new coordinate system and",
-           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/svg/reference/element/svg"));
+             </html>"""
+    );
   }
 
   public void testQuickDocumentationHtml5SvgImage() {
@@ -87,10 +78,8 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
              </image>
              </svg>
              </body>
-             </html>""",
-           "<div class='definition'><pre>image</pre></div>\n<div class='content'>" +
-           "The <strong><code>&lt;image&gt;</code></strong> <a href=\"https://developer.mozilla.org/en-us/docs/Web/SVG\">SVG</a> element includes images inside SVG documents.",
-           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/svg/reference/element/image"));
+             </html>"""
+    );
   }
 
   public void testQuickDocumentationHtml5Math() {
@@ -101,11 +90,8 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
              <ma<caret>th>
              </math>
              </body>
-             </html>""",
-           "<div class='definition'><pre>math</pre></div>\n<div class='content'>" +
-           "The <strong><code>&lt;math&gt;</code></strong> <a href=\"https://developer.mozilla.org/en-us/docs/Web/MathML\">MathML</a> " +
-           "element is the top-level MathML element",
-           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/mathml/reference/element/math"));
+             </html>"""
+    );
   }
 
   public void testQuickDocumentationHtml5MathMrow() {
@@ -118,11 +104,8 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
              </mrow>
              </math>
              </body>
-             </html>""",
-           "<div class='definition'><pre>mrow</pre></div>\n<div class='content'>" +
-           "The <strong><code>&lt;mrow&gt;</code></strong> <a href=\"https://developer.mozilla.org/en-us/docs/Web/MathML\">MathML</a> " +
-           "element is used to group sub-expressions",
-           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/mathml/reference/element/mrow"));
+             </html>"""
+    );
   }
 
   public void testQuickDocumentationHtml4Tag() {
@@ -132,11 +115,8 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
              <html>
              <bo<caret>dy onload="">
              </body>
-             </html>""",
-           "<div class='definition'><pre>body</pre></div>\n<div class='content'>" +
-           "The <strong><code>&lt;body&gt;</code></strong> <a href=\"https://developer.mozilla.org/en-us/docs/Web/HTML\">HTML</a> " +
-           "element represents the content of an HTML document.",
-           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/reference/elements/body"));
+             </html>"""
+    );
   }
 
   public void testQuickDocumentationHtml4Attr() {
@@ -146,25 +126,19 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
              <html>
              <body on<caret>load="">
              </body>
-             </html>""",
-           "<div class='definition'><pre>onload</pre></div>\n<div class='content'>Function to call when the document has finished loading.",
-           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/element/body#onload"));
+             </html>"""
+    );
   }
 
   public void testQuickDocumentationHtml5Script() {
-    doTest("<scr<caret>ipt></script>",
-           "<div class='definition'><pre>script</pre></div>\n<div class='content'>" +
-           "The <strong><code>&lt;script&gt;</code></strong> <a href=\"https://developer.mozilla.org/en-us/docs/Web/HTML\">HTML</a> " +
-           "element is used to embed executable",
-           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/reference/elements/script"));
+    doTest("<scr<caret>ipt></script>"
+    );
   }
 
 
   public void testQuickDocumentationHtml5MediaEvents() {
-    doTest("<video on<caret>stalled=''>",
-           "<div class='definition'><pre>onstalled</pre></div>\n<div class='content'>" +
-           "The <code>stalled</code> event is fired when the user agent is trying to fetch media data",
-           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/api/htmlmediaelement/stalled_event"));
+    doTest("<video on<caret>stalled=''>"
+    );
   }
 
   public void testLookupDocWordCompletions() {
@@ -175,22 +149,23 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
     assertNull(element);
   }
 
-  private void doTest(String text, String doc, List<String> url) {
+  private void doTest(String text) {
     myFixture.configureByText("test.html", text);
     PsiElement originalElement = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
     PsiElement element = DocumentationManager.getInstance(getProject()).findTargetElement(myFixture.getEditor(), myFixture.getFile());
     DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(originalElement);
 
     String generatedDoc = documentationProvider.generateDoc(element, originalElement);
-    if (generatedDoc != null) {
-      generatedDoc = generatedDoc.replaceAll("(?s)<details>.+</details>\n", "");
-    }
     if (generatedDoc == null) {
-      //noinspection ConstantConditions
-      assertEquals(doc, generatedDoc);
-    } else if (doc == null || !generatedDoc.startsWith(doc)) {
-      throw new ComparisonFailure("Generated doc doesn't start with correct prefix", doc, generatedDoc);
+      generatedDoc = "<no documentation>";
     }
-    assertEquals(url, documentationProvider.getUrlFor(element, originalElement));
+    generatedDoc = StringUtil.convertLineSeparators(generatedDoc.strip());
+    generatedDoc += "\n---\n" + documentationProvider.getUrlFor(element, originalElement);
+    WebTestUtil.checkTextByFile(myFixture, generatedDoc, getTestName(false) + ".expected.html");
+  }
+
+  @Override
+  protected @NotNull String getTestDataPath() {
+    return PlatformTestUtil.getCommunityPath() + "/xml/tests/testData/documentation/";
   }
 }

@@ -39,6 +39,7 @@
     <orderEntry type="library" scope="TEST" name="jackson" level="project" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.images.backend.svg" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.webSymbols.testFramework" scope="TEST" />
   </component>
   <component name="copyright">
     <Base>
