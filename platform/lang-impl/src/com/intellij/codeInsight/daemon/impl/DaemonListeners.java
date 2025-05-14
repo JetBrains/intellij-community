@@ -351,7 +351,6 @@ public final class DaemonListeners implements Disposable {
 
     connection.subscribe(SeverityRegistrar.SEVERITIES_CHANGED_TOPIC, () -> stopDaemonAndRestartAllFiles("Severities changed"));
 
-    //noinspection rawtypes
     connection.subscribe(FacetManager.FACETS_TOPIC, new FacetManagerListener() {
       @Override
       public void facetRenamed(@NotNull Facet facet, @NotNull String oldName) {
@@ -535,7 +534,7 @@ public final class DaemonListeners implements Disposable {
     if (daemonCodeAnalyzer.cutOperationJustHappened()) {
       return false;
     }
-    return CanISilentlyChange.thisFile(file).canIReally(isInContent, extensionsAllowToChangeFileSilently);
+    return HighlightingSessionImpl.canChangeFileSilently(file, isInContent, extensionsAllowToChangeFileSilently);
   }
 
   /**

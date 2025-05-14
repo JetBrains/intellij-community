@@ -24,6 +24,7 @@ import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ThreeState;
@@ -396,5 +397,12 @@ public final class HighlightingSessionImpl implements HighlightingSession {
 
   @NotNull TextRange getCompositeDocumentDirtyRange() {
     return myCompositeDocumentDirtyRange;
+  }
+
+  @ApiStatus.Internal
+  public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file,
+                                              boolean isInContent,
+                                              @NotNull ThreeState extensionsAllowToChangeFileSilently) {
+    return CanISilentlyChange.thisFile(file).canIReally(isInContent, extensionsAllowToChangeFileSilently);
   }
 }
