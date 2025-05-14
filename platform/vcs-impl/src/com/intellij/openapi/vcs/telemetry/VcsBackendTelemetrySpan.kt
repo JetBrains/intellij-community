@@ -1,14 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.telemetry
 
+import com.intellij.platform.vcs.impl.shared.telemetry.VcsTelemetrySpan
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-interface VcsTelemetrySpan {
-
-  fun getName(): String
-
-  enum class LogHistory(val tag: String) : VcsTelemetrySpan {
+interface VcsBackendTelemetrySpan: VcsTelemetrySpan {
+  enum class LogHistory(val tag: String) : VcsBackendTelemetrySpan {
     /**
      * Computing new [com.intellij.vcs.log.visible.VisiblePack] with file history using either indexes or [com.intellij.vcs.log.VcsLogFileHistoryHandler].
      * If the latter is used, a portion of commits that was already produced by the handler is used for the computation,
@@ -29,11 +27,11 @@ interface VcsTelemetrySpan {
     override fun getName(): String = tag
   }
 
-  object LogFilter : VcsTelemetrySpan {
+  object LogFilter : VcsBackendTelemetrySpan {
     override fun getName() = "vcs-log-filtering"
   }
 
-  enum class LogData(val tag: String) : VcsTelemetrySpan {
+  enum class LogData(val tag: String) : VcsBackendTelemetrySpan {
     // Top-level tasks
 
     /**
@@ -119,7 +117,7 @@ interface VcsTelemetrySpan {
     override fun getName(): String = tag
   }
 
-  enum class LogIndex(val tag: String) : VcsTelemetrySpan {
+  enum class LogIndex(val tag: String) : VcsBackendTelemetrySpan {
     Indexing("vcs-log-indexing"),
 
     StoreDetailIndex("vcs-store-detail-index");
@@ -127,7 +125,7 @@ interface VcsTelemetrySpan {
     override fun getName(): String = tag
   }
 
-  enum class Shelve(val tag: String) : VcsTelemetrySpan {
+  enum class Shelve(val tag: String) : VcsBackendTelemetrySpan {
     TotalShelving("shelf-total-shelving"),
 
     StoringBaseRevision("shelf-storing-base-revisions"),
@@ -145,7 +143,7 @@ interface VcsTelemetrySpan {
     override fun getName(): String = tag
   }
 
-  enum class ChangesView(val tag: String) : VcsTelemetrySpan {
+  enum class ChangesView(val tag: String) : VcsBackendTelemetrySpan {
     ChangesViewRefreshBackground("changes-view-refresh-background"),
 
     ChangesViewRefreshEdt("changes-view-refresh-edt");

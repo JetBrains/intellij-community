@@ -1,24 +1,25 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.telemetry
 
-import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan
+import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan
+import com.intellij.vcs.git.shared.telemetry.GitTelemetrySpan
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-interface GitTelemetrySpan : VcsTelemetrySpan {
-  enum class Repository : GitTelemetrySpan {
+interface GitBackendTelemetrySpan : VcsBackendTelemetrySpan, GitTelemetrySpan {
+  enum class Repository : GitBackendTelemetrySpan {
     ReadGitRepositoryInfo {
       override fun getName() = "git-reading-repo-info"
     }
   }
 
-  enum class Operation : GitTelemetrySpan {
+  enum class Operation : GitBackendTelemetrySpan {
     Checkout {
       override fun getName() = "git-checkout"
     }
   }
 
-  enum class Log : GitTelemetrySpan {
+  enum class Log : GitBackendTelemetrySpan {
     LoadingFullCommitDetails {
       override fun getName() = "git-loading-full-commit-details"
     },
@@ -28,7 +29,7 @@ interface GitTelemetrySpan : VcsTelemetrySpan {
     }
   }
 
-  enum class LogProvider : GitTelemetrySpan {
+  enum class LogProvider : GitBackendTelemetrySpan {
     SortingCommits {
       override fun getName() = "git-log-sorting-commits"
     },
@@ -50,14 +51,14 @@ interface GitTelemetrySpan : VcsTelemetrySpan {
     }
   }
 
-  enum class Annotations : GitTelemetrySpan {
+  enum class Annotations : GitBackendTelemetrySpan {
     OpenAnnotation {
       override fun getName() = "git-open-annotation"
     }
   }
 
 
-  enum class GitBranchesPopup : GitTelemetrySpan {
+  enum class GitBranchesPopup : GitBackendTelemetrySpan {
     BuildingTree {
       override fun getName() = "git-branches-popup-building-tree"
     }

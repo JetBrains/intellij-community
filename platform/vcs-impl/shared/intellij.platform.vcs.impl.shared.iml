@@ -43,5 +43,7 @@
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.rpc" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic" />
+    <orderEntry type="library" name="opentelemetry" level="project" />
   </component>
 </module>

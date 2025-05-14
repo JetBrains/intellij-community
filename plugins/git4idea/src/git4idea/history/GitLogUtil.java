@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
 import com.intellij.openapi.application.ReadAction;
@@ -22,7 +22,7 @@ import git4idea.commands.*;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.log.GitLogProvider;
 import git4idea.log.GitRefManager;
-import git4idea.telemetry.GitTelemetrySpan.Log;
+import git4idea.telemetry.GitBackendTelemetrySpan.Log;
 import io.opentelemetry.api.trace.Tracer;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.ApiStatus;
@@ -33,8 +33,8 @@ import java.nio.charset.Charset;
 import java.util.*;
 import java.util.function.Consumer;
 
-import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
 import static com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil.runWithSpanThrows;
+import static com.intellij.platform.vcs.impl.shared.telemetry.VcsScopeKt.VcsScope;
 import static git4idea.history.GitLogParser.GitLogOption.*;
 
 @ApiStatus.Internal

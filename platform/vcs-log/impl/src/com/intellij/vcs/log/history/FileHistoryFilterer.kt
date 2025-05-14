@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Internal
 
 package com.intellij.vcs.log.history
@@ -9,14 +9,17 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.UnorderedPair
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsKey
 import com.intellij.openapi.vcs.history.VcsFileRevision
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx
-import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.*
+import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan.LogHistory
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
 import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.*
@@ -32,7 +35,8 @@ import com.intellij.vcs.log.statistics.VcsLogRepoSizeCollector
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
 import com.intellij.vcs.log.util.*
 import com.intellij.vcs.log.visible.*
-import com.intellij.vcs.log.visible.filters.*
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import com.intellij.vcs.log.visible.filters.without
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap

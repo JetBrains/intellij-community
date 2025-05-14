@@ -1,15 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.visible
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.VcsScope
-import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.LogFilter
+import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan.LogFilter
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.*
@@ -30,8 +30,9 @@ import com.intellij.vcs.log.history.removeTrivialMerges
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.statistics.filtersToStringPresentation
 import com.intellij.vcs.log.statistics.vcsToStringPresentation
-import com.intellij.vcs.log.util.*
 import com.intellij.vcs.log.util.GraphOptionsUtil.kindName
+import com.intellij.vcs.log.util.IntCollectionUtil
+import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.VcsLogUtil.FULL_HASH_LENGTH
 import com.intellij.vcs.log.visible.filters.*
 import io.opentelemetry.api.trace.Span

@@ -16,7 +16,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.LogData;
+import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan.LogData;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,7 +37,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 
-import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
+import static com.intellij.platform.vcs.impl.shared.telemetry.VcsScopeKt.VcsScope;
 
 public final class VcsLogData implements Disposable, VcsLogDataProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogData.class);

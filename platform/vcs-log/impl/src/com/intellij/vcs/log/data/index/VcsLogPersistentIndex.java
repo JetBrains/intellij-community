@@ -13,7 +13,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan;
+import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.backend.observation.TrackingUtil;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
@@ -52,7 +52,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
-import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
+import static com.intellij.platform.vcs.impl.shared.telemetry.VcsScopeKt.VcsScope;
 
 @ApiStatus.Internal
 public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable {
@@ -419,7 +419,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       indicator.setIndeterminate(false);
       indicator.setFraction(0);
 
-      mySpan = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(VcsTelemetrySpan.LogIndex.Indexing.getName()).startSpan();
+      mySpan = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(VcsBackendTelemetrySpan.LogIndex.Indexing.getName()).startSpan();
       myScope = mySpan.makeCurrent();
       myStartTime = getCurrentTimeMillis();
 

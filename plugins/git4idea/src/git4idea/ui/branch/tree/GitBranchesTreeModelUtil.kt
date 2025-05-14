@@ -2,9 +2,9 @@
 package git4idea.ui.branch.tree
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.VcsScope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.ui.SeparatorWithText
 import com.intellij.ui.popup.PopupFactoryImpl
@@ -19,7 +19,7 @@ import git4idea.branch.GitRefType
 import git4idea.branch.GitTagType
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
-import git4idea.telemetry.GitTelemetrySpan
+import git4idea.telemetry.GitBackendTelemetrySpan
 import git4idea.ui.branch.popup.GitBranchesTreePopupFilterByAction
 import git4idea.ui.branch.popup.GitBranchesTreePopupFilterByRepository
 import javax.swing.tree.TreePath
@@ -252,7 +252,7 @@ internal class LazyRefsSubtreeHolder<out T : GitReference>(
 
   val tree: Map<String, Any> by lazy {
     val infoList = matchingResult.matchedNodes
-    getInstance().getTracer(VcsScope).spanBuilder(GitTelemetrySpan.GitBranchesPopup.BuildingTree.getName()).use { span ->
+    getInstance().getTracer(VcsScope).spanBuilder(GitBackendTelemetrySpan.GitBranchesPopup.BuildingTree.getName()).use { span ->
       buildSubTree(infoList.map { (if (isPrefixGrouping()) it.name.split('/') else listOf(it.name)) to it })
     }
   }

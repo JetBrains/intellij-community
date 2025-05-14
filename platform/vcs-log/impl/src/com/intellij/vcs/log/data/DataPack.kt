@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data
 
-import com.intellij.openapi.vcs.VcsScope
-import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan
+import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
 import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.graph.GraphColorManagerImpl
@@ -81,7 +81,7 @@ private fun buildPermanentGraph(
   val branches = refsModel.branches.mapTo(HashSet()) { storage.getCommitIndex(it.commitHash, it.root) }
 
   val tracer = getInstance().getTracer(VcsScope)
-  return tracer.spanBuilder(VcsTelemetrySpan.LogData.BuildingGraph.getName()).use { span ->
+  return tracer.spanBuilder(VcsBackendTelemetrySpan.LogData.BuildingGraph.getName()).use { span ->
     PermanentGraphImpl.newInstance(commits, GraphColorGetterByHeadFactory(GraphColorManagerImpl(refsModel)), headCommitsComparator, branches)
   }
 }
