@@ -27,4 +27,7 @@ public class OpenFileCommandOptions {
   @ApiStatus.Experimental
   @Argument(alias = "unwfca")
   public Boolean useNewWaitForCodeAnalysisCode = false;
+
+  @Argument
+  public Boolean forbidDownloadingSourcesOnNavigation = false;
 }

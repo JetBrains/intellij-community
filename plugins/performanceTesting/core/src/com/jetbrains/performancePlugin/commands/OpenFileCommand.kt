@@ -9,6 +9,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.fileEditor.impl.waitForFullyCompleted
+import com.intellij.openapi.options.advanced.AdvancedSettingType
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.playback.PlaybackContext
@@ -63,6 +65,9 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
     val filePath = (options?.file ?: text.split(' ', limit = 4)[1]).replace("SPACE_SYMBOL", " ")
     val timeout = options?.timeout ?: 0
     val suppressErrors = options?.suppressErrors == true
+    if (options?.forbidDownloadingSourcesOnNavigation == true) {
+      AdvancedSettings.getInstance().setSetting("gradle.download.sources.automatically", false, AdvancedSettingType.Bool)
+    }
 
     val project = context.project
     val file = findFile(filePath, project) ?: error(PerformanceTestingBundle.message("command.file.not.found", filePath))

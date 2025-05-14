@@ -78,6 +78,7 @@ fun <T : CommandChain> T.openFile(
   warmup: Boolean = false,
   disableCodeAnalysis: Boolean = false,
   useWaitForCodeAnalysisCode: Boolean = true,
+  forbidDownloadingSourcesOnNavigation: Boolean = false,
 ): T = apply {
   val command = mutableListOf("${CMD_PREFIX}openFile", "-file ${relativePath.replace(" ", "SPACE_SYMBOL")}")
   if (timeoutInSeconds != 0L) {
@@ -94,6 +95,9 @@ fun <T : CommandChain> T.openFile(
   }
   if (useWaitForCodeAnalysisCode) {
     command.add("-unwfca")
+  }
+  if (forbidDownloadingSourcesOnNavigation) {
+    command.add("-forbidDownloadingSourcesOnNavigation")
   }
 
   addCommand(*command.toTypedArray())
