@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Stream;
 
 public final class SingleFileRootResolveTest extends LightJavaCodeInsightFixtureTestCase {
   private final @NotNull LightProjectDescriptor MY_DESCRIPTOR = new LightProjectDescriptor() {
@@ -94,5 +96,13 @@ public final class SingleFileRootResolveTest extends LightJavaCodeInsightFixture
     assertEquals("package com.example;\nclass C {}\n", new String(cFile.contentsToByteArray(), StandardCharsets.UTF_8));
     VirtualFile bFile = ResourceFileUtil.findResourceFileInProject(getProject(), "com/example/B.java");
     assertNull(bFile);
+  }
+  
+  public void testGetFiles() {
+    PsiPackage psiPackage = JavaPsiFacade.getInstance(getProject()).findPackage("com.example");
+    assertNotNull(psiPackage);
+    List<String> fileNames = Stream.of(psiPackage.getFiles(GlobalSearchScope.projectScope(getProject())))
+      .map(f -> f.getName()).sorted().toList();
+    assertEquals(List.of("A.java", "C.java"), fileNames);
   }
 }

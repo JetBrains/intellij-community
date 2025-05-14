@@ -158,7 +158,9 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
   @Override
   public PsiFile @NotNull [] getFiles(@NotNull GlobalSearchScope scope) {
-    return getFacade().getPackageFiles(this, scope);
+    PsiFile[] files = getFacade().getPackageFiles(this, scope);
+    Collection<@NotNull PsiFile> individualFiles = getIndividualFiles(scope);
+    return individualFiles.isEmpty() ? files : ArrayUtil.mergeArrays(files, individualFiles.toArray(PsiFile.EMPTY_ARRAY));
   }
 
   @Override
