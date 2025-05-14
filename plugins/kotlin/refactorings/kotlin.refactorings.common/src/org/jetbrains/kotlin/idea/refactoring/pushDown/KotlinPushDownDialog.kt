@@ -40,7 +40,7 @@ class KotlinPushDownDialog(
     private val selectedMemberInfos: List<KotlinMemberInfo>
         get() = memberInfos.filter { it.isChecked && memberInfoModel?.isMemberEnabled(it) ?: false }
 
-    override fun getDimensionServiceKey() = "#" + this::class.java.name
+    override fun getDimensionServiceKey(): String = "#" + this::class.java.name
 
     override fun createNorthPanel(): JComponent {
         val gbConstraints = GridBagConstraints()
