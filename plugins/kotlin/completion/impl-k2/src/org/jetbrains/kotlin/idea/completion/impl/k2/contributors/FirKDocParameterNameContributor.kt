@@ -4,11 +4,10 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 import com.intellij.codeInsight.lookup.LookupElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaScopeKinds
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtOutsideTowerScopeKinds
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
@@ -36,29 +35,32 @@ internal open class FirKDocParameterNameContributor(
         val alreadyDocumentedParameters = section.findTagsByName(PARAMETER_TAG_NAME).map { it.getSubjectName() }.toSet()
 
         val ownerDeclaration = positionContext.nameExpression.getContainingDoc().owner ?: return
-        val symbolOrigin = CompletionSymbolOrigin.Scope(KaScopeKinds.LocalScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX))
 
         getParametersForKDoc(ownerDeclaration.symbol)
             .filter { (it as KaNamedSymbol).name.asString() !in alreadyDocumentedParameters }
-            .flatMap { createLookupElements(it, symbolOrigin, weighingContext) }
+            .flatMap { createLookupElements(it, weighingContext) }
             .forEach(sink::addElement)
     }
 
     context(KaSession)
     private fun createLookupElements(
         declarationSymbol: KaDeclarationSymbol,
-        symbolOrigin: CompletionSymbolOrigin,
         weighingContext: WeighingContext,
     ): Sequence<LookupElement> = when (declarationSymbol) {
         is KaTypeParameterSymbol -> TypeParameterLookupElementFactory.createLookup(declarationSymbol)
-            .applyWeighs(weighingContext, KtSymbolWithOrigin(declarationSymbol, symbolOrigin))
-            .let { sequenceOf(it) }
+            .applyWeighs(
+                context = weighingContext,
+                symbolWithOrigin = KtSymbolWithOrigin(
+                    _symbol = declarationSymbol,
+                    scopeKind = KtOutsideTowerScopeKinds.LocalScope,
+                ),
+            ).let { sequenceOf(it) }
 
         is KaValueParameterSymbol -> createCallableLookupElements(
             context = weighingContext,
             signature = @OptIn(KaExperimentalApi::class) (declarationSymbol.asSignature()),
             options = CallableInsertionOptions(ImportStrategy.DoNothing, CallableInsertionStrategy.AsIdentifier),
-            symbolOrigin = symbolOrigin,
+            scopeKind = KtOutsideTowerScopeKinds.LocalScope,
         )
 
         else -> emptySequence()

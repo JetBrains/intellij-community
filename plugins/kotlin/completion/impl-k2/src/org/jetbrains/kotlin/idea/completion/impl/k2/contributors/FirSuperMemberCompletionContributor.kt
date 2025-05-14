@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtOutsideTowerScopeKinds
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.collectNonExtensionsForType
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
@@ -42,12 +42,19 @@ internal class FirSuperMemberCompletionContributor(
     private data class CallableInfo(
         private val _type: KaType,
         private val _signature: KaCallableSignature<*>,
-        val scopeKind: KaScopeKind
     ) : KaLifetimeOwner {
+
+        val scopeKind: KaScopeKind
+            get() = KtOutsideTowerScopeKinds.TypeScope
+
         override val token: KaLifetimeToken
             get() = _signature.token
-        val type: KaType get() = withValidityAssertion { _type }
-        val signature: KaCallableSignature<*> get() = withValidityAssertion { _signature }
+
+        val type: KaType
+            get() = withValidityAssertion { _type }
+
+        val signature: KaCallableSignature<*>
+            get() = withValidityAssertion { _signature }
     }
 
     context(KaSession)
@@ -103,7 +110,7 @@ internal class FirSuperMemberCompletionContributor(
                     symbolsInAny.add(symbol)
                 }
 
-                allSymbols.add(CallableInfo(superType, callableInfo.signature, callableInfo.scopeKind))
+                allSymbols.add(callableInfo.copy(superType))
                 val name = callableInfo.signature.callableId?.callableName ?: continue
                 symbolCountsByName[name] = (symbolCountsByName[name] ?: 0) + 1
             }
@@ -128,7 +135,12 @@ internal class FirSuperMemberCompletionContributor(
         receiverType = receiverType,
         visibilityChecker = visibilityChecker,
         scopeNameFilter = scopeNameFilter,
-    ).map { CallableInfo(receiverType, it.signature, it.scopeKind) }
+    ).map {
+        CallableInfo(
+            _type = receiverType,
+            _signature = it,
+        )
+    }
 
     context(KaSession)
     private fun collectCallToSuperMember(
@@ -136,22 +148,25 @@ internal class FirSuperMemberCompletionContributor(
         callableInfo: CallableInfo,
         context: WeighingContext,
         namesNeedDisambiguation: Set<Name>
-    ): Sequence<LookupElement> = createCallableLookupElements(
-        context = context,
-        signature = callableInfo.signature,
-        options = CallableInsertionOptions(
-            importStrategyDetector.detectImportStrategyForCallableSymbol(callableInfo.signature.symbol),
-            wrapWithDisambiguationIfNeeded(
-                getInsertionStrategy(callableInfo.signature),
-                callableInfo.type,
-                callableInfo.signature,
-                namesNeedDisambiguation,
-                superReceiver
-            )
-        ),
-        symbolOrigin = CompletionSymbolOrigin.Scope(callableInfo.scopeKind),
-        withTrailingLambda = true,
-    )
+    ): Sequence<LookupElement> {
+        val signature = callableInfo.signature
+        return createCallableLookupElements(
+            context = context,
+            signature = signature,
+            options = CallableInsertionOptions(
+                importStrategyDetector.detectImportStrategyForCallableSymbol(signature.symbol),
+                wrapWithDisambiguationIfNeeded(
+                    insertionStrategy = getInsertionStrategy(signature),
+                    superType = callableInfo.type,
+                    callableSignature = signature,
+                    namesNeedDisambiguation = namesNeedDisambiguation,
+                    superReceiver = superReceiver,
+                )
+            ),
+            scopeKind = callableInfo.scopeKind,
+            withTrailingLambda = true,
+        )
+    }
 
     context(KaSession)
     private fun getInsertionStrategy(signature: KaCallableSignature<*>): CallableInsertionStrategy = when (signature) {
@@ -223,10 +238,10 @@ internal class FirSuperMemberCompletionContributor(
                             callableInfo.type,
                             callableInfo.signature,
                             namesNeedDisambiguation,
-                            superReceiver
+                            superReceiver,
                         )
                     ),
-                    symbolOrigin = CompletionSymbolOrigin.Scope(callableInfo.scopeKind),
+                    scopeKind = callableInfo.scopeKind,
                 )
 
                 for (element in elements) {

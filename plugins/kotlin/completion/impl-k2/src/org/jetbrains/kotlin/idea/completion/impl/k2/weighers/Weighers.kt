@@ -30,7 +30,6 @@ import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters.Companion.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters.Companion.useSiteModule
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.K2SoftDeprecationWeigher
@@ -314,9 +313,9 @@ internal object Weighers {
         PreferGetSetMethodsToPropertyWeigher.addWeight(lookupElement, symbol)
         NotImportedWeigher.addWeight(
             context, lookupElement, symbol,
-            availableWithoutImport = symbolWithOrigin.symbolOrigin is CompletionSymbolOrigin.Scope,
+            availableWithoutImport = symbolWithOrigin.scopeKind != null,
         )
-        ClassifierWeigher.addWeight(lookupElement, symbol, symbolWithOrigin.symbolOrigin)
+        ClassifierWeigher.addWeight(lookupElement, symbol, symbolWithOrigin.scopeKind)
         VariableOrFunctionWeigher.addWeight(lookupElement, symbol)
         PreferredSubtypeWeigher.addWeight(context, lookupElement, symbol)
 

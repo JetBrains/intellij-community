@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.completion.*
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
@@ -150,9 +149,15 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
                 scopeWithKind.scope
                     .classifiers(nameFilter)
                     .filter { visibilityChecker.isVisible(it, positionContext) }
-                    .forEach { classifier ->
-                        val symbolOrigin = CompletionSymbolOrigin.Scope(scopeWithKind.kind)
-                        addSuggestions(variableOrParameter, classifier, userPrefix, lookupNamesAdded, weighingContext, symbolOrigin)
+                    .forEach {
+                        addSuggestions(
+                            variableOrParameter = variableOrParameter,
+                            symbol = it,
+                            userPrefix = userPrefix,
+                            lookupNamesAdded = lookupNamesAdded,
+                            weighingContext = weighingContext,
+                            scopeKind = scopeWithKind.kind,
+                        )
                     }
             }
         }
@@ -172,9 +177,14 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
                 symbolProvider = symbolFromIndexProvider,
                 scopeNameFilter = nameFilter,
                 visibilityChecker = visibilityChecker,
-            ).forEach { classifier ->
-                val symbolOrigin = CompletionSymbolOrigin.Index
-                addSuggestions(variableOrParameter, classifier, userPrefix, lookupNamesAdded, weighingContext, symbolOrigin)
+            ).forEach {
+                addSuggestions(
+                    variableOrParameter = variableOrParameter,
+                    symbol = it,
+                    userPrefix = userPrefix,
+                    lookupNamesAdded = lookupNamesAdded,
+                    weighingContext = weighingContext,
+                )
             }
         }
     }
@@ -186,7 +196,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
         userPrefix: String,
         lookupNamesAdded: MutableSet<String>,
         weighingContext: WeighingContext,
-        symbolOrigin: CompletionSymbolOrigin,
+        scopeKind: KaScopeKind? = null,
     ) {
         ProgressManager.checkCanceled()
 
@@ -214,7 +224,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
 
             val lookupElement = createLookupElement(variableOrParameter, name, typeLookupElement)
             lookupElement.nameWithTypePriority = userPrefix.length // suggestions with longer user prefix get lower priority
-            lookupElement.applyWeighs(weighingContext, KtSymbolWithOrigin(symbol, symbolOrigin))
+            lookupElement.applyWeighs(weighingContext, KtSymbolWithOrigin(symbol, scopeKind))
 
             sink.addElement(lookupElement)
         }

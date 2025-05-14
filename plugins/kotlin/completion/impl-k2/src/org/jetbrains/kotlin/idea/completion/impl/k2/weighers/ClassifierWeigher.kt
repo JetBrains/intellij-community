@@ -5,11 +5,11 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolLocation
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.psi.UserDataProperty
 
 internal object ClassifierWeigher {
@@ -22,17 +22,18 @@ internal object ClassifierWeigher {
     }
 
     context(KaSession)
-fun addWeight(lookupElement: LookupElement, symbol: KaSymbol, symbolOrigin: CompletionSymbolOrigin) {
+    fun addWeight(
+        lookupElement: LookupElement,
+        symbol: KaSymbol,
+        scopeKind: KaScopeKind?,
+    ) {
         if (symbol !is KaClassifierSymbol) return
 
-        val isLocal = (symbol as? KaClassLikeSymbol)?.location == KaSymbolLocation.LOCAL
-        val weight = if (isLocal) Weight.LOCAL else Weight.NON_LOCAL
-
-        val priority = when (symbolOrigin) {
-            is CompletionSymbolOrigin.Scope -> symbolOrigin.kind.indexInTower
-            is CompletionSymbolOrigin.Index -> LOW_PRIORITY
-        }
-        lookupElement.classifierWeight = CompoundWeight2(weight, priority)
+        val location = (symbol as? KaClassLikeSymbol)?.location
+        lookupElement.classifierWeight = CompoundWeight2(
+            weight1 = if (location == KaSymbolLocation.LOCAL) Weight.LOCAL else Weight.NON_LOCAL,
+            weight2 = scopeKind?.indexInTower ?: LOW_PRIORITY,
+        )
     }
 
     object Weigher : LookupElementWeigher(WEIGHER_ID) {

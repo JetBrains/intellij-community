@@ -19,9 +19,9 @@ import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiers
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtOutsideTowerScopeKinds
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.staticScope
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
@@ -68,9 +68,8 @@ internal open class FirClassifierCompletionContributor(
                     symbols.asSequence()
                         .mapNotNull { it.staticScope }
                         .flatMap { scopeWithKind ->
-                            val origin = CompletionSymbolOrigin.Scope(scopeWithKind.kind)
                             scopeWithKind.completeClassifiers(positionContext)
-                                .map { KtSymbolWithOrigin(it, origin) }
+                                .map { KtSymbolWithOrigin(it, scopeWithKind.kind) }
                         }.flatMap { symbolWithOrigin ->
                             createClassifierLookupElement(
                                 classifierSymbol = symbolWithOrigin.symbol,
@@ -141,8 +140,8 @@ internal open class FirClassifierCompletionContributor(
             .asSequence()
             .flatMap { it.getAvailableClassifiers(positionContext, scopeNameFilter, visibilityChecker) }
             .filter { filterClassifiers(it.symbol) }
-            .flatMap { symbolWithScopeKind ->
-                val classifierSymbol = symbolWithScopeKind.symbol
+            .flatMap { symbolWithOrigin ->
+                val classifierSymbol = symbolWithOrigin.symbol
                 availableFromScope += classifierSymbol
 
                 createClassifierLookupElement(
@@ -150,13 +149,7 @@ internal open class FirClassifierCompletionContributor(
                     expectedType = weighingContext.expectedType,
                     importingStrategy = getImportingStrategy(classifierSymbol),
                 ).map {
-                    it.applyWeighs(
-                        context = context,
-                        symbolWithOrigin = KtSymbolWithOrigin(
-                            classifierSymbol,
-                            CompletionSymbolOrigin.Scope(symbolWithScopeKind.scopeKind)
-                        ),
-                    )
+                    it.applyWeighs(context, symbolWithOrigin)
                 }
             }
 
@@ -176,7 +169,7 @@ internal open class FirClassifierCompletionContributor(
                     ).map {
                         it.applyWeighs(
                             context = context,
-                            symbolWithOrigin = KtSymbolWithOrigin(classifierSymbol, CompletionSymbolOrigin.Index),
+                            symbolWithOrigin = KtSymbolWithOrigin(classifierSymbol),
                         )
                     }
                 }

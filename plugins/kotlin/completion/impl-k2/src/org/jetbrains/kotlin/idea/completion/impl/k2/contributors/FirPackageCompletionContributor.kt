@@ -3,11 +3,10 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaScopeKinds
 import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
 import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtOutsideTowerScopeKinds
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.resolveReceiverToSymbols
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
@@ -33,14 +32,18 @@ internal class FirPackageCompletionContributor(
             .singleOrNull()
             ?: return
 
-        val symbolOrigin = CompletionSymbolOrigin.Scope(KaScopeKinds.PackageMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX))
-
         rootSymbol.packageScope
             .getPackageSymbols(scopeNameFilter)
             .filterNot { it.fqName.isExcludedFromAutoImport(project, originalKtFile) }
             .map { packageSymbol ->
                 KotlinFirLookupElementFactory.createPackagePartLookupElement(packageSymbol.fqName)
-                    .applyWeighs(weighingContext, KtSymbolWithOrigin(packageSymbol, symbolOrigin))
+                    .applyWeighs(
+                        context = weighingContext,
+                        symbolWithOrigin = KtSymbolWithOrigin(
+                            _symbol = packageSymbol,
+                            scopeKind = KtOutsideTowerScopeKinds.PackageMemberScope,
+                        ),
+                    )
             }.forEach(sink::addElement)
     }
 }
