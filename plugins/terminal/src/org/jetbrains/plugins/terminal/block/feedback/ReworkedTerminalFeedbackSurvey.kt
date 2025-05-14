@@ -51,27 +51,28 @@ internal fun getFeedbackMoment(project: Project): TerminalFeedbackMoment {
 }
 
 internal class ReworkedTerminalFeedbackSurvey : FeedbackSurvey() {
-  override val feedbackSurveyType: FeedbackSurveyType<*> = InIdeFeedbackSurveyType(ReworkedTerminalFeedbackNotificationConfig)
+  override val feedbackSurveyType: FeedbackSurveyType<*> = InIdeFeedbackSurveyType(ReworkedTerminalSurveyConfig)
 }
 
 @ApiStatus.Internal
-object ReworkedTerminalFeedbackNotificationConfig : InIdeFeedbackSurveyConfig {
+object ReworkedTerminalSurveyConfig : InIdeFeedbackSurveyConfig, ActionBasedFeedbackConfig {
   override val surveyId: String
-    get() = ReworkedTerminalSurveyConfig.SURVEY_ID
+    get() = "reworked_terminal"
 
-  override val lastDayOfFeedbackCollection: LocalDate
-    get() = ReworkedTerminalSurveyConfig.lastDayOfFeedbackCollection
+  override val lastDayOfFeedbackCollection: LocalDate = LocalDate(2025, 7, 15)
 
-  override val requireIdeEAP: Boolean
-    get() = ReworkedTerminalSurveyConfig.REQUIRE_EAP
+  override val requireIdeEAP: Boolean = false
 
-  override fun checkIdeIsSuitable(): Boolean =
-    ReworkedTerminalSurveyConfig.checkIdeIsSuitable()
+  override fun checkIdeIsSuitable(): Boolean = PlatformUtils.isJetBrainsProduct()
 
-  override fun createFeedbackDialog(project: Project, forTest: Boolean): BlockBasedFeedbackDialog<out SystemDataJsonSerializable> =
-    ReworkedTerminalSurveyConfig.createFeedbackDialog(project, forTest)
+  override fun createFeedbackDialog(project: Project, forTest: Boolean): BlockBasedFeedbackDialog<out SystemDataJsonSerializable> {
+    return ReworkedTerminalFeedbackDialog(project, forTest)
+  }
 
-  override fun checkExtraConditionSatisfied(project: Project): Boolean {
+  // always true because separate conditions are used for actions and for 
+  override fun checkExtraConditionSatisfied(project: Project): Boolean = true
+
+  override fun checkExtraConditionSatisfiedForNotification(project: Project): Boolean {
     val usageStorage = TerminalUsageLocalStorage.getInstance()
     // Show notification if the user has executed enough commands or if the reworked terminal is being disabled.
     return !usageStorage.state.feedbackNotificationShown &&
@@ -79,6 +80,11 @@ object ReworkedTerminalFeedbackNotificationConfig : InIdeFeedbackSurveyConfig {
              usageStorage.state.enterKeyPressedTimes >= 15 ||
              usageStorage.state.enterKeyPressedTimes > 0 && getFeedbackMoment(project) == ON_DISABLING
            )
+  }
+
+  override fun checkExtraConditionSatisfiedForAction(project: Project): Boolean {
+    // Explicitly sending feedback is only enabled when the reworked terminal is enabled.
+    return TerminalOptionsProvider.instance.terminalEngine == TerminalEngine.REWORKED
   }
 
   override fun createNotification(project: Project, forTest: Boolean): RequestFeedbackNotification {
@@ -92,43 +98,4 @@ object ReworkedTerminalFeedbackNotificationConfig : InIdeFeedbackSurveyConfig {
   }
 
   override fun updateStateAfterDialogClosedOk(project: Project) { }
-}
-
-@ApiStatus.Internal
-object ReworkedTerminalFeedbackActionConfig : ActionBasedFeedbackConfig {
-  override val surveyId: String
-    get() = ReworkedTerminalSurveyConfig.SURVEY_ID
-
-  override val lastDayOfFeedbackCollection: LocalDate
-    get() = ReworkedTerminalSurveyConfig.lastDayOfFeedbackCollection
-
-  override val requireIdeEAP: Boolean
-    get() = ReworkedTerminalSurveyConfig.REQUIRE_EAP
-
-  override fun checkIdeIsSuitable(): Boolean =
-    ReworkedTerminalSurveyConfig.checkIdeIsSuitable()
-
-  override fun createFeedbackDialog(project: Project, forTest: Boolean): BlockBasedFeedbackDialog<out SystemDataJsonSerializable> =
-    ReworkedTerminalSurveyConfig.createFeedbackDialog(project, forTest)
-
-  override fun updateStateAfterDialogClosedOk(project: Project) { }
-
-  override fun checkExtraConditionSatisfied(project: Project): Boolean {
-    // Explicitly sending feedback is only enabled when the reworked terminal is enabled.
-    return TerminalOptionsProvider.instance.terminalEngine == TerminalEngine.REWORKED
-  }
-}
-
-private object ReworkedTerminalSurveyConfig {
-  const val SURVEY_ID: String = "reworked_terminal"
-
-  val lastDayOfFeedbackCollection: LocalDate = LocalDate(2025, 7, 15)
-
-  const val REQUIRE_EAP: Boolean = false
-
-  fun checkIdeIsSuitable(): Boolean = PlatformUtils.isJetBrainsProduct()
-
-  fun createFeedbackDialog(project: Project, forTest: Boolean): BlockBasedFeedbackDialog<out SystemDataJsonSerializable> {
-    return ReworkedTerminalFeedbackDialog(project, forTest)
-  }
 }
