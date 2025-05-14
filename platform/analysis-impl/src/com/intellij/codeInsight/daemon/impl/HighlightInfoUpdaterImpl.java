@@ -93,8 +93,9 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     return ASSERT_INVARIANTS;
   }
 
-  @VisibleForTesting
+  @TestOnly
   public void runAssertingInvariants(@NotNull Runnable runnable) {
+    assert ApplicationManagerEx.getApplicationEx().isUnitTestMode();
     boolean old = ASSERT_INVARIANTS;
     try {
       ASSERT_INVARIANTS = true;
