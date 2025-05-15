@@ -8944,6 +8944,7 @@ c:com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 - com.intellij.ide.actions.searcheverywhere.SearchEverywherePreviewProvider
 - sf:Companion:com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor$Companion
 - <init>(com.intellij.openapi.actionSystem.AnActionEvent):V
+- <init>(com.intellij.openapi.actionSystem.AnActionEvent,java.util.List):V
 - createExtendedInfo():com.intellij.ide.actions.searcheverywhere.ExtendedInfo
 - sf:createFileTypeFilter(com.intellij.openapi.project.Project):com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributorFilter
 - p:createModel(com.intellij.openapi.project.Project):com.intellij.ide.util.gotoByName.FilteringGotoByModel

@@ -19,7 +19,7 @@ interface SearchEverywhereContributorModule {
 
   fun processSelectedItem(item: Any, modifiers: Int, searchTest: String): Boolean?
 
-  fun getOverridingElementRenderer(parent: Disposable): ListCellRenderer<in Any?>
+  fun getOverridingElementRenderer(parent: Disposable): ListCellRenderer<in Any?>?
 
   fun perProductFetchWeightedElements(pattern: String, progressIndicator: ProgressIndicator, consumer: Processor<in FoundItemDescriptor<Any>>)
 

@@ -43,6 +43,10 @@ open class FileSearchEverywhereContributor(event: AnActionEvent) : AbstractGotoS
   private val modelForRenderer: GotoFileModel
   private val filter: PersistentSearchEverywhereContributorFilter<FileTypeRef>
 
+  constructor(event: AnActionEvent, contributorModules: List<SearchEverywhereContributorModule>?) : this(event) {
+    this.contributorModules = contributorModules
+  }
+
   init {
     val project = event.getRequiredData(CommonDataKeys.PROJECT)
     modelForRenderer = GotoFileModel(project)
