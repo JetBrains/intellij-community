@@ -9,9 +9,9 @@ import com.intellij.driver.sdk.ui.components.common.EditorComponentImpl
 import com.intellij.driver.sdk.ui.components.common.JEditorUiComponent
 import com.intellij.driver.sdk.ui.components.common.editor
 import com.intellij.driver.sdk.ui.components.elements.JLabelUiComponent
-import com.intellij.driver.sdk.ui.components.elements.JTableUiComponent
 import com.intellij.driver.sdk.ui.components.elements.JcefOffScreenViewComponent
 import com.intellij.driver.sdk.ui.components.elements.LetsPlotComponent
+import com.intellij.driver.sdk.ui.components.elements.NotebookTableOutputUi
 import com.intellij.driver.sdk.ui.pasteText
 import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.waitFor
@@ -117,8 +117,8 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
   val notebookCellExecutionInfos: List<JLabelUiComponent>
     get() = xx("//div[@accessiblename='ExecutionLabel']", JLabelUiComponent::class.java).list()
 
-  val notebookTables: List<JTableUiComponent>
-    get() = xx("//div[@class='TableResultView']", JTableUiComponent::class.java).list()
+  val notebookTables: List<NotebookTableOutputUi>
+    get() = xx("//div[@class='LoadingDecoratorLayeredPane']/div[@class='JPanel'][descendant::div[@class='TableResultView']][descendant::div[@class='TwoSideComponent']]", NotebookTableOutputUi::class.java).list()
 
   val notebookPlots: List<LetsPlotComponent>
     get() = xx("//div[@class='LetsPlotComponent']", LetsPlotComponent::class.java).list()

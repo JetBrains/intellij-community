@@ -33,6 +33,7 @@ open class JTableUiComponent(data: ComponentData) : UiComponent(data) {
   fun isRowSelected(row: Int): Boolean = tableComponent.isRowSelected(row)
   fun getSelectedRow(): Int = tableComponent.getSelectedRow()
   fun getComponentAt(row: Int, column: Int): Component = fixture.getComponentAt(row, column)
+  fun getValueAt(row: Int, column: Int): String? = content()[row]?.get(column)
 }
 
 @Remote("com.jetbrains.performancePlugin.remotedriver.fixtures.JTableTextFixture", plugin = REMOTE_ROBOT_MODULE_ID)

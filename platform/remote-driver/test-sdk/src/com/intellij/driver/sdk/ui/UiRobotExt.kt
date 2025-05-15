@@ -19,6 +19,11 @@ fun UiRobot.pasteText(text: String) {
   }
 }
 
+fun UiRobot.getClipboardText() = driver.utility(ToolkitRef::class)
+    .getDefaultToolkit()
+    .getSystemClipboard()
+    .getData(DataFlavor.stringFlavor)
+
 fun UiRobot.dragAndDrop(start: Point, end: Point) {
   try {
     moveMouse(start)
