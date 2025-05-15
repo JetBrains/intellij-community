@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl
 
+import com.intellij.codeInspection.options.OptPane.tab
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.filters.HyperlinkInfo
@@ -425,6 +426,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   val sessionTab: XDebugSessionTab?
     get() {
       if (useFeProxy() && showFeWarnings()) {
+        // See "TODO [Debugger.sessionTab]" to see usages which are not yet properly migrated.
         LOG.error("Debug tab should not be used in split mode from XDebugSession")
       }
       return mySessionTab
@@ -509,8 +511,9 @@ class XDebugSessionImpl @JvmOverloads constructor(
   }
 
   fun showSessionTab() {
-    val tab = checkNotNull(this.sessionTab)
-    tab.showTab()
+    if (sessionTab != null) {
+      sessionTab!!.showTab()
+    }
   }
 
   val valueMarkers: XValueMarkers<*, *>?

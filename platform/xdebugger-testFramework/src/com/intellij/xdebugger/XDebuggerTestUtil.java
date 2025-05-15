@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger;
 
 import com.intellij.execution.impl.ConsoleViewImpl;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
@@ -26,6 +27,7 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -350,8 +352,14 @@ public class XDebuggerTestUtil {
   public static void disposeDebugSession(final XDebugSession debugSession) {
     WriteAction.runAndWait(() -> {
       XDebugSessionImpl session = (XDebugSessionImpl)debugSession;
-      Disposer.dispose(session.getSessionTab());
-      Disposer.dispose(session.getConsoleView());
+      XDebugSessionTab tab = session.getSessionTab();
+      if (tab != null) {
+        Disposer.dispose(tab);
+      }
+      ConsoleView consoleView = session.getConsoleView();
+      if (consoleView != null) {
+        Disposer.dispose(consoleView);
+      }
     });
   }
 
