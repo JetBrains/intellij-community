@@ -12,7 +12,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -30,8 +29,6 @@ import java.util.List;
 
 final class StubTreeLoaderImpl extends StubTreeLoader {
   private static final Logger LOG = Logger.getInstance(StubTreeLoaderImpl.class);
-  // todo remove once we don't need this for stub-ast mismatch debug info
-  private static volatile boolean ourStubReloadingProhibited;
   private final IndexingStampInfoStorage indexingStampInfoStorage = createStorage();
 
   private static IndexingStampInfoStorage createStorage() {
@@ -136,7 +133,9 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
       ObjectStubTree<?> tree =
         stub instanceof PsiFileStub ? new StubTree((PsiFileStub<?>)stub) : new ObjectStubTree<>((ObjectStubBase<?>)stub, true);
       tree.setDebugInfo("created from index");
-      checkDeserializationCreatesNoPsi(tree);
+      StubBase.checkDeserializationCreatesNoPsi(tree.getRoot() instanceof PsiFileStubImpl<?> fileStub
+                                             ? fileStub.getStubRoots()
+                                             : PsiFileStub.EMPTY_ARRAY);
       return tree;
     }
 
@@ -211,24 +210,6 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
       message += e.getMessage();
     }
     return message;
-  }
-
-  private static void checkDeserializationCreatesNoPsi(ObjectStubTree<?> tree) {
-    if (ourStubReloadingProhibited || !(tree instanceof StubTree)) return;
-
-    for (PsiFileStub<?> root : ((PsiFileStubImpl<?>)tree.getRoot()).getStubRoots()) {
-      if (root instanceof StubBase) {
-        StubList stubList = ((StubBase<?>)root).getStubList();
-        for (int i = 0; i < stubList.size(); i++) {
-          StubBase<?> each = stubList.getCachedStub(i);
-          PsiElement cachedPsi = each == null ? null : each.getCachedPsi();
-          if (cachedPsi != null) {
-            ourStubReloadingProhibited = true;
-            throw new AssertionError("Stub deserialization shouldn't create PSI: " + cachedPsi + "; " + each);
-          }
-        }
-      }
-    }
   }
 
   private static int getCurrentTextContentLength(Project project, VirtualFile vFile, Document document, PsiFile psiFile) {
