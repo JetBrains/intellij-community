@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.editor.VisualPosition;
@@ -37,7 +37,7 @@ public class EditorMouseFixture {
 
   public EditorMouseFixture pressAtLineNumbers(int visualLine) {
     assert myEditor.getSettings().isLineNumbersShown();
-    return pressAt(myEditor.getGutterComponentEx(), 1, new Point(0, myEditor.visualLineToY(visualLine)));
+    return pressAt(myEditor.getGutterComponentEx(), 1, new Point(myEditor.getGutterComponentEx().getLineNumberAreaOffset(), myEditor.visualLineToY(visualLine)));
   }
 
   private EditorMouseFixture pressAt(int clickCount, Point p) {
