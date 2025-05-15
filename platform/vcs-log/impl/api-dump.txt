@@ -531,6 +531,8 @@ c:com.intellij.vcs.log.impl.VcsLogManager
 - f:isLogVisible():Z
 f:com.intellij.vcs.log.impl.VcsLogManager$Companion
 - f:findLogProviders(java.util.Collection,com.intellij.openapi.project.Project):java.util.Map
+f:com.intellij.vcs.log.impl.VcsLogManagerKt
+- sf:waitForRefresh(com.intellij.vcs.log.impl.VcsLogManager,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.vcs.log.impl.VcsLogNavigationUtil
 - sf:INSTANCE:com.intellij.vcs.log.impl.VcsLogNavigationUtil
 - sf:jumpToBranch(com.intellij.vcs.log.ui.VcsLogUiEx,java.lang.String,Z,Z):V
@@ -540,9 +542,7 @@ f:com.intellij.vcs.log.impl.VcsLogNavigationUtil
 - sf:jumpToHash(com.intellij.vcs.log.ui.VcsLogUiEx,java.lang.String,Z,Z):com.google.common.util.concurrent.ListenableFuture
 - sf:jumpToRefOrHash(com.intellij.vcs.log.ui.VcsLogUiEx,java.lang.String,Z,Z):com.google.common.util.concurrent.ListenableFuture
 - sf:jumpToRevisionAsync(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.Hash,com.intellij.openapi.vcs.FilePath):java.util.concurrent.CompletableFuture
-- sf:jumpToRevisionAsync(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.Hash,com.intellij.openapi.vcs.FilePath,Z):java.util.concurrent.CompletableFuture
 - bs:jumpToRevisionAsync$default(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.Hash,com.intellij.openapi.vcs.FilePath,I,java.lang.Object):java.util.concurrent.CompletableFuture
-- f:waitForRefresh(com.intellij.vcs.log.impl.VcsLogManager,kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.vcs.log.impl.VcsLogTabsProperties
 - a:createProperties(java.lang.String):com.intellij.vcs.log.impl.MainVcsLogUiProperties
 com.intellij.vcs.log.impl.VcsLogUiProperties

@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.objectTree.ThrowableInterner
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vfs.VirtualFile
@@ -17,10 +18,9 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.lazyUnsafe
-import com.intellij.vcs.log.VcsLogFilterCollection
-import com.intellij.vcs.log.VcsLogProvider
-import com.intellij.vcs.log.VcsLogRefresher
-import com.intellij.vcs.log.VcsLogUi
+import com.intellij.vcs.log.*
+import com.intellij.vcs.log.data.DataPack
+import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.VcsLogStatusBarProgress
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
@@ -33,6 +33,7 @@ import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.collection
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import it.unimi.dsi.fastutil.ints.IntSets
+import kotlinx.coroutines.suspendCancellableCoroutine
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.CalledInAny
@@ -119,6 +120,16 @@ open class VcsLogManager @Internal constructor(
 
   internal open fun runInMainUi(consumer: (MainVcsLogUi) -> Unit) {
     error("${this::class.simpleName} has no main UI")
+  }
+
+  @Internal
+  open suspend fun showCommit(hash: Hash, root: VirtualFile, requestFocus: Boolean): Boolean {
+    return false
+  }
+
+  @Internal
+  open suspend fun showCommit(hash: Hash, root: VirtualFile, filePath: FilePath, requestFocus: Boolean): Boolean {
+    return false
   }
 
   @Internal
@@ -336,6 +347,29 @@ open class VcsLogManager @Internal constructor(
       }
       return logProviders
     }
+  }
+}
+
+suspend fun VcsLogManager.waitForRefresh() {
+  suspendCancellableCoroutine { continuation ->
+    val dataPackListener = object : DataPackChangeListener {
+      override fun onDataPackChange(newDataPack: DataPack) {
+        if (isLogUpToDate) {
+          dataManager.removeDataPackChangeListener(this)
+          continuation.resumeWith(Result.success(Unit))
+        }
+      }
+    }
+    dataManager.addDataPackChangeListener(dataPackListener)
+    if (isLogUpToDate) {
+      dataManager.removeDataPackChangeListener(dataPackListener)
+      continuation.resumeWith(Result.success(Unit))
+      return@suspendCancellableCoroutine
+    }
+
+    scheduleUpdate()
+
+    continuation.invokeOnCancellation { dataManager.removeDataPackChangeListener(dataPackListener) }
   }
 }
 
