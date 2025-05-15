@@ -385,6 +385,11 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../../completion/testData/basic/multifile/NotImportedClass/");
     }
 
+    @TestMetadata("NotImportedExtensionForDefinitelyNotNullableType")
+    public void testNotImportedExtensionForDefinitelyNotNullableType() throws Exception {
+        runTest("../../completion/testData/basic/multifile/NotImportedExtensionForDefinitelyNotNullableType/");
+    }
+
     @TestMetadata("NotImportedExtensionForFlexibleType")
     public void testNotImportedExtensionForFlexibleType() throws Exception {
         runTest("../../completion/testData/basic/multifile/NotImportedExtensionForFlexibleType/");

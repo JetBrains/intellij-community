@@ -442,6 +442,8 @@ private fun findAllNamesForTypes(
     fun findAllNamesForType(type: KaType): Set<Name> = when (type) {
         is KaFlexibleType -> findAllNamesForType(type.lowerBound)
 
+        is KaDefinitelyNotNullType -> findAllNamesForType(type.original)
+        
         is KaIntersectionType -> findAllNamesForTypes(project, type.conjuncts, scope, builtinTypes)
 
         is KaCapturedType -> type.projection

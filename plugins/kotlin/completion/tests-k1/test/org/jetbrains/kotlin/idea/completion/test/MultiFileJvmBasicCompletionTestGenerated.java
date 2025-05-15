@@ -385,6 +385,11 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/NotImportedClass/");
     }
 
+    @TestMetadata("NotImportedExtensionForDefinitelyNotNullableType")
+    public void testNotImportedExtensionForDefinitelyNotNullableType() throws Exception {
+        runTest("../testData/basic/multifile/NotImportedExtensionForDefinitelyNotNullableType/");
+    }
+
     @TestMetadata("NotImportedExtensionForFlexibleType")
     public void testNotImportedExtensionForFlexibleType() throws Exception {
         runTest("../testData/basic/multifile/NotImportedExtensionForFlexibleType/");

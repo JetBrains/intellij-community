@@ -778,6 +778,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/extensionFunctionImport_atPrimaryConstructorPropertyDefaultValuePosition_outerClassReceiver.test");
             }
 
+            @TestMetadata("extensionFunctionImport_definitelyNotNullableTypeReceiver.test")
+            public void testExtensionFunctionImport_definitelyNotNullableTypeReceiver() throws Exception {
+                runTest("testData/quickfix/autoImports/extensionFunctionImport_definitelyNotNullableTypeReceiver.test");
+            }
+
             @TestMetadata("extensionFunctionWithGenericImport.before.Main.kt")
             public void testExtensionFunctionWithGenericImport() throws Exception {
                 runTest("testData/quickfix/autoImports/extensionFunctionWithGenericImport.before.Main.kt");
