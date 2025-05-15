@@ -200,7 +200,6 @@
       <module fileurl="file://$PROJECT_DIR$/android/ml-api/intellij.android.ml-api-tests.iml" filepath="$PROJECT_DIR$/android/ml-api/intellij.android.ml-api-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/mlkit/intellij.android.mlkit.iml" filepath="$PROJECT_DIR$/android/mlkit/intellij.android.mlkit.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/mlkit/intellij.android.mlkit.tests.iml" filepath="$PROJECT_DIR$/android/mlkit/intellij.android.mlkit.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/motion-editor/intellij.android.motion-editor.iml" filepath="$PROJECT_DIR$/android/motion-editor/intellij.android.motion-editor.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/native-symbolizer/intellij.android.native-symbolizer.iml" filepath="$PROJECT_DIR$/android/native-symbolizer/intellij.android.native-symbolizer.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/native-symbolizer/gradle/intellij.android.native-symbolizer.gradle.iml" filepath="$PROJECT_DIR$/android/native-symbolizer/gradle/intellij.android.native-symbolizer.gradle.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/native-symbolizer/intellij.android.native-symbolizer.tests.iml" filepath="$PROJECT_DIR$/android/native-symbolizer/intellij.android.native-symbolizer.tests.iml" />
