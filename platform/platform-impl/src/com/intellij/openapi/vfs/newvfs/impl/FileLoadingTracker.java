@@ -1,17 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.util.containers.CollectionFactory;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.ints.IntSets;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.Set;
 
 final class FileLoadingTracker {
@@ -22,14 +22,15 @@ final class FileLoadingTracker {
   static {
     String[] pathsToTrack = System.getProperty("file.system.trace.loading", "").split(";");
     if (pathsToTrack.length == 0) {
-      ourPaths = Collections.emptySet();
+      ourPaths = Set.of();
       ourLeafNameIds = IntSets.EMPTY_SET;
     }
     else {
       ourPaths = CollectionFactory.createFilePathSet(pathsToTrack, SystemInfoRt.isFileSystemCaseSensitive);
       ourLeafNameIds = new IntOpenHashSet(ourPaths.size());
+      FSRecordsImpl fsRecords = FSRecords.getInstance();
       for (String path : ourPaths) {
-        ourLeafNameIds.add(FSRecords.getInstance().getNameId(StringUtilRt.getShortName(path, '/')));
+        ourLeafNameIds.add(fsRecords.getNameId(StringUtilRt.getShortName(path, '/')));
       }
     }
   }
