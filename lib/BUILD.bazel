@@ -2671,15 +2671,15 @@ jvm_import(
 
 jvm_import(
   name = "jediterm-core",
-  jar = "@jediterm-core-3_51_http//file",
-  source_jar = "@jediterm-core-3_51-sources_http//file",
+  jar = "@jediterm-core-3_53_http//file",
+  source_jar = "@jediterm-core-3_53-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "jediterm-ui",
-  jar = "@jediterm-ui-3_51_http//file",
-  source_jar = "@jediterm-ui-3_51-sources_http//file",
+  jar = "@jediterm-ui-3_53_http//file",
+  source_jar = "@jediterm-ui-3_53-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
