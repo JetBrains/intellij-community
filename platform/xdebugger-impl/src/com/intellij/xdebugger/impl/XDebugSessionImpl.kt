@@ -432,10 +432,16 @@ class XDebugSessionImpl @JvmOverloads constructor(
       return mySessionTab
     }
 
-  override fun getUI(): RunnerLayoutUi {
-    assertSessionTabInitialized()
-    val sessionTab: XDebugSessionTab? = checkNotNull(this.sessionTab)
-    return sessionTab!!.ui
+  override fun getUI(): RunnerLayoutUi? {
+    return if (useFeProxy() && showFeWarnings()) {
+      // See "TODO [Debugger.RunnerLayoutUi]" to see usages which are not yet properly migrated.
+      LOG.error("RunnerLayoutUi should not be used in split mode from XDebugSession")
+      null
+    }
+    else {
+      assertSessionTabInitialized()
+      sessionTab!!.ui
+    }
   }
 
   override fun isMixedMode(): Boolean {

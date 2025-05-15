@@ -347,6 +347,10 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
                                              @Nullable XValueNodeImpl node) {
     XDebugProcess process = session.getDebugProcess();
     RunnerLayoutUi ui = session.getUI();
+    if (ui == null) {
+      // TODO [Debugger.RunnerLayoutUi]
+      return;
+    }
     String title = JavaDebuggerBundle.message("collection.history.tab.title", clsName + "." + fieldName);
     for (Content content : ui.getContents()) {
       if (title.equals(content.getDisplayName())) {

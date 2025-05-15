@@ -22,6 +22,7 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.AppUIExecutor;
@@ -242,9 +243,15 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       });
 
     if (ExperimentalUI.isNewUI()) {
-      session.getUI().getDefaults().initContentAttraction(DebuggerContentInfo.CONSOLE_CONTENT,
-                                                          XDebuggerUIConstants.LAYOUT_VIEW_FINISH_CONDITION,
-                                                          new LayoutAttractionPolicy.FocusOnce());
+      RunnerLayoutUi sessionUi = session.getUI();
+      if (sessionUi != null) {
+        sessionUi.getDefaults().initContentAttraction(DebuggerContentInfo.CONSOLE_CONTENT,
+                                                      XDebuggerUIConstants.LAYOUT_VIEW_FINISH_CONDITION,
+                                                      new LayoutAttractionPolicy.FocusOnce());
+      }
+      else {
+        // TODO [Debugger.RunnerLayoutUi]
+      }
     }
     return session;
   }
@@ -262,9 +269,15 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       });
 
     if (ExperimentalUI.isNewUI()) {
-      session.getUI().getDefaults().initContentAttraction(DebuggerContentInfo.CONSOLE_CONTENT,
-                                                          XDebuggerUIConstants.LAYOUT_VIEW_FINISH_CONDITION,
-                                                          new LayoutAttractionPolicy.FocusOnce());
+      RunnerLayoutUi sessionUi = session.getUI();
+      if (sessionUi != null) {
+        sessionUi.getDefaults().initContentAttraction(DebuggerContentInfo.CONSOLE_CONTENT,
+                                                      XDebuggerUIConstants.LAYOUT_VIEW_FINISH_CONDITION,
+                                                      new LayoutAttractionPolicy.FocusOnce());
+      }
+      else {
+        // TODO [Debugger.RunnerLayoutUi]
+      }
     }
     return session;
   }
@@ -475,7 +488,12 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       public void inputRequested() {
         ApplicationManager.getApplication().invokeLater(() -> {
           if (session.getConsoleView() instanceof PythonDebugLanguageConsoleView debugConsoleView) {
-            selectConsoleTab(session.getRunContentDescriptor(), session.getUI().getContentManager(), true);
+            RunnerLayoutUi sessionUi = session.getUI();
+            if (sessionUi != null) {
+              selectConsoleTab(session.getRunContentDescriptor(), sessionUi.getContentManager(), true);
+            } else {
+              // TODO [Debugger.RunnerLayoutUi]
+            }
 
             if (pythonConsoleView.isVisible()) {
               requestFocus(true, null, pythonConsoleView, true);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("PyExecuteInConsole")
 
 package com.jetbrains.python.actions
@@ -234,7 +234,13 @@ private fun showConsole(project: Project,
         }
       }
       // Select "Console" tab in case of Debug console
-      selectConsoleTab(descriptor, currentSession.ui.contentManager, isDebug=true)
+      val sessionUi = currentSession.ui
+      if (sessionUi != null) {
+        selectConsoleTab(descriptor, sessionUi.contentManager, isDebug = true)
+      }
+      else {
+        // TODO [Debugger.RunnerLayoutUi]
+      }
       return (console as PythonDebugLanguageConsoleView).pydevConsoleView
     }
   }
