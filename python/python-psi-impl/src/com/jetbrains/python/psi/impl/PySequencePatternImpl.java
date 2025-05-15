@@ -10,7 +10,9 @@ import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static com.jetbrains.python.psi.types.PyLiteralType.upcastLiteralToClass;
 
@@ -43,9 +45,8 @@ public class PySequencePatternImpl extends PyElementImpl implements PySequencePa
       }
     }
     PyType expectedType = isHomogeneous ? wrapInSequenceType(PyUnionType.union(types), this) : PyTupleType.create(this, types);
-    PyType captureType = PyCapturePatternImpl.getCaptureType(this, context);
-    if (captureType == null) return expectedType;
-    return PyTypeUtil.toStream(captureType)
+    if (sequenceCaptureType == null) return expectedType;
+    return PyTypeUtil.toStream(sequenceCaptureType)
       .map(it -> {
         if (PyTypeChecker.match(expectedType, it, context)) {
           return it;
@@ -85,8 +86,25 @@ public class PySequencePatternImpl extends PyElementImpl implements PySequencePa
 
       if (captureType instanceof PyTupleType tupleType && !tupleType.isHomogeneous()) {
         final List<PyPattern> elements = pattern.getElements();
-        if (hasStar && elements.size() <= tupleType.getElementCount() || elements.size() == tupleType.getElementCount()) {
-          types.add(captureType);
+        List<PyType> tupleElementTypes = tupleType.getElementTypes();
+        int unpackedTupleIndex = ContainerUtil.indexOf(tupleElementTypes, it -> it instanceof PyUnpackedTupleType);
+        if (unpackedTupleIndex != -1) {
+          PyUnpackedTupleType unpackedTupleType = (PyUnpackedTupleType)tupleElementTypes.get(unpackedTupleIndex);
+          assert unpackedTupleType.isUnbound();
+          int variadicElementsCount = elements.size() - tupleElementTypes.size() + 1;
+          if (variadicElementsCount >= 0) {
+            List<PyType> adjustedTupleElementTypes = new ArrayList<>(elements.size());
+            adjustedTupleElementTypes.addAll(tupleElementTypes.subList(0, unpackedTupleIndex));
+            for (int i = 0; i < variadicElementsCount; i++) {
+              adjustedTupleElementTypes.add(unpackedTupleType.getElementTypes().get(0));
+            }
+            adjustedTupleElementTypes.addAll(tupleElementTypes.subList(unpackedTupleIndex + 1, tupleElementTypes.size()));
+            types.add(new PyTupleType(tupleType.getPyClass(), adjustedTupleElementTypes, false));
+          }
+        } else {
+          if (hasStar && elements.size() <= tupleType.getElementCount() || elements.size() == tupleType.getElementCount()) {
+            types.add(captureType);
+          }
         }
       }
       else {

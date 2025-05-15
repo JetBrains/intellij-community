@@ -68,7 +68,6 @@ specialtypes_any.py
 specialtypes_never.py
 specialtypes_promotions.py
 specialtypes_type.py
-tuples_type_compat.py
 tuples_type_form.py
 tuples_unpacked.py
 typeddicts_readonly_inheritance.py

@@ -1,10 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types;
 
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.RecursionManager;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.ResolveResult;
@@ -39,7 +36,6 @@ import java.util.*;
 import static com.jetbrains.python.PyNames.FUNCTION;
 import static com.jetbrains.python.psi.PyUtil.*;
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.*;
-import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
 
 public final class PyTypeChecker {
   private PyTypeChecker() {
@@ -599,20 +595,36 @@ public final class PyTypeChecker {
     return elementType;
   }
 
+  // https://typing.python.org/en/latest/spec/tuples.html#type-compatibility-rules
   private static @NotNull Optional<Boolean> match(@NotNull PyTupleType expected, @NotNull PyTupleType actual, @NotNull MatchContext context) {
+    if (actual.isHomogeneous()) {
+      // The type tuple[Any, ...] is consistent with any tuple
+      final PyType elementType = actual.getIteratedItemType();
+      if (elementType == null) {
+        return Optional.of(true);
+      }
+    }
     // TODO Delegate to UnpackedTupleType here, once it's introduced
     if (!expected.isHomogeneous() && !actual.isHomogeneous()) {
+      Condition<PyType> isUnbound =
+        type -> (type instanceof PyUnpackedTupleType unpacked && unpacked.isUnbound()) || type instanceof PyTypeVarTupleType;
+      boolean expectedContainsUnboundTypes =
+        ContainerUtil.exists(expected.getElementTypes(), isUnbound);
+      boolean actualContainsUnboundTypes =
+        ContainerUtil.exists(actual.getElementTypes(), isUnbound);
+
+      if (actualContainsUnboundTypes && !expectedContainsUnboundTypes) {
+        return Optional.of(false);
+      }
+
       return Optional.of(matchTypeParameters(expected.getElementTypes(), actual.getElementTypes(), context));
     }
 
     if (expected.isHomogeneous() && !actual.isHomogeneous()) {
       final PyType expectedElementType = expected.getIteratedItemType();
-      for (int i = 0; i < actual.getElementCount(); i++) {
-        if (!match(expectedElementType, actual.getElementType(i), context).orElse(true)) {
-          return Optional.of(false);
-        }
-      }
-      return Optional.of(true);
+      return Optional.of(
+        PyTypeUtil.toStream(actual.getIteratedItemType()).allMatch(type -> match(expectedElementType, type, context).orElse(true))
+      );
     }
 
     if (!expected.isHomogeneous() && actual.isHomogeneous()) {

@@ -6486,6 +6486,32 @@ public class PyTypingTest extends PyTestCase {
            "expr = type(None)");
   }
 
+  // PY-76908
+  public void testSequenceUnpackedTuple() {
+    doTest("Sequence[int | str]",
+           """
+            from typing import Sequence, TypeVar
+            T = TypeVar("T")
+            def test_seq(x: Sequence[T]) -> Sequence[T]:
+                return x
+            def func(p: tuple[int, *tuple[str, ...]]):
+                expr = test_seq(p)
+            """);
+  }
+
+  // PY-76908
+  public void testSequenceDeepUnpackedTuple() {
+    doTest("Sequence[int | complex | str]",
+           """
+            from typing import Sequence, TypeVar
+            T = TypeVar("T")
+            def test_seq(x: Sequence[T]) -> Sequence[T]:
+                return x
+            def func(p: tuple[int, *tuple[complex, *tuple[str, ...]]]):
+                expr = test_seq(p)
+            """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

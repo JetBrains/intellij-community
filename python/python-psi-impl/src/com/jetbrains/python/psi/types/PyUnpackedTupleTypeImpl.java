@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 public final class PyUnpackedTupleTypeImpl implements PyUnpackedTupleType {
   public static final PyUnpackedTupleType UNSPECIFIED = new PyUnpackedTupleTypeImpl(Collections.singletonList(null), true);
@@ -25,9 +26,21 @@ public final class PyUnpackedTupleTypeImpl implements PyUnpackedTupleType {
       if (elementTypes.get(0) instanceof PyPositionalVariadicType) {
         throw new IllegalArgumentException("Unbounded unpacked tuple type of a TypeVarTuple or another unpacked tuple type is now allowed");
       }
+      myElementTypes = new ArrayList<>(elementTypes);
+    } else {
+      myElementTypes = unpackElementTypes(elementTypes).toList();
     }
-    myElementTypes = new ArrayList<>(elementTypes);
     myIsHomogeneous = isUnbound;
+  }
+
+  private static @NotNull Stream<PyType> unpackElementTypes(@NotNull List<? extends PyType> types) {
+    return types.stream().flatMap(type -> {
+      if (type instanceof PyUnpackedTupleType unpackedTupleType && !unpackedTupleType.isUnbound()) {
+        return unpackElementTypes(unpackedTupleType.getElementTypes());
+      } else {
+        return Stream.of(type);
+      }
+    });
   }
 
   public static @NotNull PyUnpackedTupleType create(@NotNull List<? extends PyType> elementTypes) {
