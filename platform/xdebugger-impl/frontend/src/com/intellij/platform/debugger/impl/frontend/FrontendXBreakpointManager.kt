@@ -8,9 +8,9 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.debugger.impl.rpc.XBreakpointApi
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.platform.debugger.impl.rpc.XBreakpointApi
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.XLineBreakpointInstallationInfo
 import com.intellij.xdebugger.impl.breakpoints.*
@@ -22,6 +22,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
 @ApiStatus.Internal
@@ -50,6 +51,9 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
       breakpoints[it]
     })
 
+  @VisibleForTesting
+  val breakpointIdsRemovedLocally: MutableSet<XBreakpointId> = ConcurrentHashMap.newKeySet()
+
   init {
     cs.launch {
       FrontendXBreakpointTypesManager.getInstance(project).typesInitialized().await()
@@ -65,6 +69,8 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
           }
           is XBreakpointEvent.BreakpointRemoved -> {
             removeBreakpointsLocally(setOf(event.breakpointId))
+            // breakpointRemoved event happened on the server, so we can remove id from the frontend
+            breakpointIdsRemovedLocally.remove(event.breakpointId)
           }
         }
       }
@@ -72,6 +78,10 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
   }
 
   override fun addBreakpoint(breakpointDto: XBreakpointDto): XBreakpointProxy? {
+    if (breakpointDto.id in breakpointIdsRemovedLocally) {
+      // don't add breakpoints if it was already removed locally
+      return null
+    }
     val currentBreakpoint = breakpoints[breakpointDto.id]
     if (currentBreakpoint != null) {
       return currentBreakpoint
@@ -162,6 +172,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
       if (removedBreakpoint is XLineBreakpointProxy) {
         lineBreakpointManager.unregisterBreakpoint(removedBreakpoint)
       }
+      breakpointIdsRemovedLocally.add(breakpointToRemove)
     }
     breakpointsChanged.tryEmit(Unit)
   }
