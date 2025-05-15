@@ -29,7 +29,7 @@ class KotlinReferencesCodeVisionProvider : RenameAwareReferencesCodeVisionProvid
         val namedDeclaration = element as? KtNamedDeclaration ?: return null
         val result = KotlinUsagesCountManager.getInstance(element.getProject()).countMemberUsages(file, namedDeclaration)
         if (result == 0) return null
-        return return CodeVisionProviderBase.CodeVisionInfo(KotlinBundle.message("hints.codevision.usages.format", result), result)
+        return CodeVisionProviderBase.CodeVisionInfo(KotlinBundle.message("hints.codevision.usages.format", result), result)
     }
 
     override fun getHint(element: PsiElement, file: PsiFile): String? {
