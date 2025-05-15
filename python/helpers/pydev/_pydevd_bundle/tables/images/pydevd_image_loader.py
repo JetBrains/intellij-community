@@ -32,8 +32,8 @@ def load_image_chunk(offset, image_id):
         return "Error: {}".format(e)
 
 
-def save_image_to_storage(image_data, format=DEFAULT_IMAGE_FORMAT, save_func=None):
-    # type: (any, str, callable) -> str
+def save_image_to_storage(image_data, data_type=None, format=DEFAULT_IMAGE_FORMAT, save_func=None):
+    # type: (any, str, str, callable) -> str
     try:
         bytes_buffer = io.BytesIO()
         try:
@@ -45,7 +45,9 @@ def save_image_to_storage(image_data, format=DEFAULT_IMAGE_FORMAT, save_func=Non
             bytes_data = bytes_buffer.getvalue()
             image_id = str(uuid.uuid4())
             IMAGE_DATA_STORAGE[image_id] = bytes_data
-            return "{};{}".format(image_id, len(bytes_data))
+            if data_type is None:
+                data_type = "None"
+            return "{};{};{}".format(image_id, len(bytes_data), data_type)
         finally:
             bytes_buffer.close()
     except Exception as e:
