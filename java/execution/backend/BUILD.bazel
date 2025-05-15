@@ -17,7 +17,6 @@ jvm_library(
     "@lib//:kotlinx-serialization-json",
     "//java/execution/shared",
     "//java/execution/impl",
-    "//platform/editor/shared:editor",
     "//platform/editor-ui-api:editor-ui",
     "//platform/kernel/backend",
     "//platform/platform-api:ide",

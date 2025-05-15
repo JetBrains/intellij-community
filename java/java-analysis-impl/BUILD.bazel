@@ -38,6 +38,7 @@ jvm_library(
     "//platform/editor-ui-ex:editor-ex",
     "//java/codeserver/highlighting",
     "//java/codeserver/core",
+    "//platform/refactoring",
   ],
   exports = [
     "//platform/analysis-impl",

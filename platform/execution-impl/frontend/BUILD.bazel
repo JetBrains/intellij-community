@@ -28,6 +28,7 @@ jvm_library(
     "//platform/execution",
     "//platform/core-ui",
     "//platform/lang-impl",
+    "//platform/util/coroutines",
   ],
   runtime_deps = [":frontend_resources"]
 )
