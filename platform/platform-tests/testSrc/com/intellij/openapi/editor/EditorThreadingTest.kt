@@ -31,7 +31,8 @@ class EditorThreadingTest {
   val actions = listOf(
     { editor.get().caretModel.offset } to "caret",
     { EditorThreading.assertInteractionAllowed() } to "raw threading",
-    { editor.get().selectionModel.selectedText } to "selection"
+    { editor.get().selectionModel.selectedText } to "selection",
+    { editor.get().foldingModel.allFoldRegions } to "folding model",
   )
 
   fun runTest(processor: (() -> Unit) -> Unit): List<DynamicTest> {
