@@ -13,6 +13,7 @@ import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
+import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.testFramework.workspaceModel.update
 import com.intellij.util.indexing.testEntities.IndexingTestEntity
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
@@ -29,6 +30,10 @@ class CustomKindFileSetTest {
   @RegisterExtension
   val projectModel: ProjectModelExtension = ProjectModelExtension()
 
+  @JvmField
+  @RegisterExtension
+  val baseNonProjectDir: TempDirectoryExtension = TempDirectoryExtension()
+
   private val fileIndex
     get() = WorkspaceFileIndex.getInstance(projectModel.project)
 
@@ -42,14 +47,14 @@ class CustomKindFileSetTest {
 
   @BeforeEach
   fun setUp() {
-    customContentFileSetRoot = projectModel.baseProjectDir.newVirtualDirectory("root")
+    customContentFileSetRoot = baseNonProjectDir.newVirtualDirectory("root")
     module = projectModel.createModule()
     WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(CustomKindFileSetContributor(), disposable)
   }
 
   @Test
   fun `add and remove entity with file set of a custom kind`() = runBlocking {
-    val file = projectModel.baseProjectDir.newVirtualFile("root/a.txt")
+    val file = baseNonProjectDir.newVirtualFile("root/a.txt")
     val root = file.parent
     readAction {
       assertFalse(fileIndex.isInWorkspace(root))

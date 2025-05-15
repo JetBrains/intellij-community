@@ -2,6 +2,7 @@
 package com.intellij.platform.testFramework.junit5.projectStructure.fixture
 
 import com.intellij.codeInsight.multiverse.MultiverseTestEnabler
+import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.project.Project
 import com.intellij.platform.testFramework.junit5.projectStructure.fixture.impl.MultiverseFixtureInitializer
 import com.intellij.testFramework.junit5.fixture.TestFixture
@@ -12,10 +13,10 @@ import org.jetbrains.annotations.TestOnly
  * This fixture allows setting up the project structure via a simple DSL
  */
 @TestOnly
-fun multiverseProjectFixture(withSharedSourceEnabled: Boolean = true, init: ProjectBuilder.() -> Unit): TestFixture<Project> {
+fun multiverseProjectFixture(withSharedSourceEnabled: Boolean = true, openProjectTask: OpenProjectTask = OpenProjectTask.build(), openAfterCreation: Boolean = false, init: ProjectBuilder.() -> Unit): TestFixture<Project> {
   val fixture = testFixture("multiverse-project-fixture") {
     val project = with(MultiverseFixtureInitializer(init)) {
-      initializeProjectModel()
+      initializeProjectModel(openProjectTask, openAfterCreation)
     }
 
     initialized(project) { /* Nothing to dispose of */ }

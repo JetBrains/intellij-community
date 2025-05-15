@@ -18,6 +18,7 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
+import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.util.ui.UIUtil
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -31,16 +32,20 @@ class SyntheticLibraryInProjectFileIndexTest {
   @RegisterExtension
   val projectModel: ProjectModelExtension = ProjectModelExtension()
 
+  @JvmField
+  @RegisterExtension
+  val baseLibraryDir: TempDirectoryExtension = TempDirectoryExtension()
+
   private val fileIndex
     get() = ProjectFileIndex.getInstance(projectModel.project)
 
   @Test
   fun `add remove library`() {
-    val srcRoot = projectModel.baseProjectDir.newVirtualDirectory("lib/src")
-    val srcFile = projectModel.baseProjectDir.newVirtualDirectory("lib/src/src.txt")
-    val binaryRoot = projectModel.baseProjectDir.newVirtualDirectory("lib/binary")
-    val binaryFile = projectModel.baseProjectDir.newVirtualDirectory("lib/binary/bin.txt")
-    val excludedRoot = projectModel.baseProjectDir.newVirtualDirectory("lib/excluded")
+    val srcRoot = baseLibraryDir.newVirtualDirectory("lib/src")
+    val srcFile = baseLibraryDir.newVirtualDirectory("lib/src/src.txt")
+    val binaryRoot = baseLibraryDir.newVirtualDirectory("lib/binary")
+    val binaryFile = baseLibraryDir.newVirtualDirectory("lib/binary/bin.txt")
+    val excludedRoot = baseLibraryDir.newVirtualDirectory("lib/excluded")
     val registration = registerSyntheticLibrary(
       SyntheticLibrary.newImmutableLibrary(listOf(srcRoot), listOf(binaryRoot), setOf(excludedRoot), null)
     )

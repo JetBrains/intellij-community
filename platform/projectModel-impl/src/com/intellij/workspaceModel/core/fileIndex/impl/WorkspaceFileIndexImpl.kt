@@ -94,6 +94,16 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
                        includeCustomKindSets = false) != null
   }
 
+  override fun isIndexable(file: VirtualFile): Boolean {
+    val type = findFileSet(file = file,
+                           honorExclusion = true,
+                           includeContentSets = true,
+                           includeExternalSets = true,
+                           includeExternalSourceSets = false,
+                           includeCustomKindSets = false)
+    return type?.kind?.isIndexable ?: false
+  }
+
   override fun getContentFileSetRoot(file: VirtualFile, honorExclusion: Boolean): VirtualFile? {
     return findFileSet(file, honorExclusion, true, false, false, false)?.root
   }
@@ -125,18 +135,18 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
     return ThreeState.NO
   }
 
-  override fun processContentFilesRecursively(fileOrDir: VirtualFile,
-                                              processor: ContentIteratorEx,
-                                              customFilter: VirtualFileFilter?,
-                                              fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean): Boolean {
-    return processContentFilesRecursively(fileOrDir, processor, customFilter, fileSetFilter, 0)
+  override fun processIndexableFilesRecursively(fileOrDir: VirtualFile,
+                                                processor: ContentIteratorEx,
+                                                customFilter: VirtualFileFilter?,
+                                                fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean): Boolean {
+    return processIndexableFilesRecursively(fileOrDir, processor, customFilter, fileSetFilter, 0)
   }
 
-  private fun processContentFilesRecursively(fileOrDir: VirtualFile,
-                                             processor: ContentIteratorEx,
-                                             customFilter: VirtualFileFilter?,
-                                             fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean,
-                                             numberOfExcludedParentDirectories: Int): Boolean {
+  private fun processIndexableFilesRecursively(fileOrDir: VirtualFile,
+                                               processor: ContentIteratorEx,
+                                               customFilter: VirtualFileFilter?,
+                                               fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean,
+                                               numberOfExcludedParentDirectories: Int): Boolean {
     val visitor = object : VirtualFileVisitor<Void?>() {
       override fun visitFileEx(file: VirtualFile): Result {
         val fileInfo = ApplicationManager.getApplication().runReadAction(Computable {
@@ -159,7 +169,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
           }
         }
         val accepted = ApplicationManager.getApplication().runReadAction(Computable {
-          fileInfo.findFileSet(fileSetFilter) != null && (customFilter == null || customFilter.accept(file))
+          fileInfo.findFileSet(fileSetFilter)?.kind?.isIndexable == true && (customFilter == null || customFilter.accept(file))
         })
         val status = if (accepted) processor.processFileEx(file) else TreeNodeProcessingResult.CONTINUE
         return when (status) {
@@ -196,8 +206,8 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
     val virtualFileUrl = virtualFileUrlManager.findByUrl(dir.url) ?: return VirtualFileVisitor.SKIP_CHILDREN
     val processed = virtualFileUrlManager.processChildrenRecursively(virtualFileUrl) { childUrl ->
       val childFile = childUrl.virtualFile ?: return@processChildrenRecursively TreeNodeProcessingResult.SKIP_CHILDREN
-      return@processChildrenRecursively if (runReadAction { isInContent (childFile) }) {
-        if (processContentFilesRecursively(childFile, processor, customFilter, fileSetFilter, numberOfExcludedParentDirectories + 1)) {
+      return@processChildrenRecursively if (runReadAction { isIndexable (childFile) }) {
+        if (processIndexableFilesRecursively(childFile, processor, customFilter, fileSetFilter, numberOfExcludedParentDirectories + 1)) {
           TreeNodeProcessingResult.SKIP_CHILDREN
         }
         else {

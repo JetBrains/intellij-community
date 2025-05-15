@@ -110,8 +110,8 @@ internal class WorkspaceFileIndexDataImpl(
     }
     ensureIsUpToDate()
 
-    val originalAcceptedKindMask = 
-      (if (includeContentSets) WorkspaceFileKindMask.CONTENT else 0) or
+    val originalAcceptedKindMask =
+      (if (includeContentSets) WorkspaceFileKindMask.CONTENT or WorkspaceFileKindMask.CONTENT_NON_INDEXABLE else 0) or
         (if (includeExternalSets) WorkspaceFileKindMask.EXTERNAL_BINARY else 0) or
         (if (includeExternalSourceSets) WorkspaceFileKindMask.EXTERNAL_SOURCE else 0) or
         (if (includeCustomKindSets) WorkspaceFileKindMask.CUSTOM else 0)
@@ -479,7 +479,12 @@ internal class WorkspaceFileIndexDataImpl(
     override fun registerExcludedRoot(excludedRoot: VirtualFileUrl, excludedFrom: WorkspaceFileKind, entity: WorkspaceEntity) {
       val file = excludedRoot.virtualFile
       if (file != null) {
-        val mask = if (excludedFrom == WorkspaceFileKind.EXTERNAL) WorkspaceFileKindMask.EXTERNAL else excludedFrom.toMask()
+        val mask = when (excludedFrom) {
+          WorkspaceFileKind.EXTERNAL -> WorkspaceFileKindMask.EXTERNAL
+          WorkspaceFileKind.CONTENT ->  WorkspaceFileKindMask.CONTENT or WorkspaceFileKindMask.CONTENT_NON_INDEXABLE
+          else -> excludedFrom.toMask()
+        }
+
         fileSets.putValue(file, ExcludedFileSet.ByFileKind(mask, entity.createPointer(), storageKind))
       }
       else {
@@ -600,6 +605,7 @@ internal fun WorkspaceFileKind.toMask(): Int {
     WorkspaceFileKind.EXTERNAL -> WorkspaceFileKindMask.EXTERNAL_BINARY
     WorkspaceFileKind.EXTERNAL_SOURCE -> WorkspaceFileKindMask.EXTERNAL_SOURCE
     WorkspaceFileKind.CUSTOM -> WorkspaceFileKindMask.CUSTOM
+    WorkspaceFileKind.CONTENT_NON_INDEXABLE -> WorkspaceFileKindMask.CONTENT_NON_INDEXABLE
   }
   return mask
 }

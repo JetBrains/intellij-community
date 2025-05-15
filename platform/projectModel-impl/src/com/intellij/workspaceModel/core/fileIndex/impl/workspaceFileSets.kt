@@ -297,7 +297,8 @@ internal object WorkspaceFileKindMask {
   const val EXTERNAL_SOURCE = 4
   const val EXTERNAL = EXTERNAL_SOURCE or EXTERNAL_BINARY
   const val CUSTOM = 8
-  const val ALL = CONTENT or EXTERNAL or CUSTOM
+  const val CONTENT_NON_INDEXABLE = 16
+  const val ALL = CONTENT or EXTERNAL or CUSTOM or CONTENT_NON_INDEXABLE
 }
 
 internal sealed interface ExcludedFileSet : StoredFileSet {

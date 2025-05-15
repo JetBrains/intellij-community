@@ -67,15 +67,15 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
   val indexData: WorkspaceFileIndexData
 
   /**
-   * Processes [content][com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind.isContent] files from the file sets located under 
+   * Processes [indexable][com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind.isIndexable] files from the file sets located under
    * [fileOrDir] directory using [processor].
    * @param customFilter determines whether an individual file or directory should be processed;
    * @param fileSetFilter determines whether files belonging to a specific file set should be processed;
    * @return `true` if all files were processed, or `false` if processing was stopped because [processor] returned 
    * [STOP][com.intellij.util.containers.TreeNodeProcessingResult.STOP]. 
    */
-  fun processContentFilesRecursively(fileOrDir: VirtualFile, processor: ContentIteratorEx, customFilter: VirtualFileFilter?,
-                                     fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean): Boolean
+  fun processIndexableFilesRecursively(fileOrDir: VirtualFile, processor: ContentIteratorEx, customFilter: VirtualFileFilter?,
+                                       fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean): Boolean
 
   /**
    * Returns package name for [directory] if it's located under source root or classes root of Java library, or `null` otherwise.

@@ -13,6 +13,7 @@
     <postStartupActivity implementation="com.intellij.workspaceModel.ide.impl.WorkspaceEntitiesLifecycleActivity"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.VirtualFileUrlsLazyInitializer"/>
+    <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.ide.ProjectRootEntityWorkspaceFileIndexContributor"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelSeparationListener"

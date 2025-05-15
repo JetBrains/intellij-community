@@ -75,7 +75,7 @@ internal class ModuleFilesIteratorImpl(
     customFilter: VirtualFileFilter,
     myWorkspaceFileIndex: WorkspaceFileIndexEx,
   ): Boolean {
-    return myWorkspaceFileIndex.processContentFilesRecursively(dir, processor, customFilter) { fileSet -> !isScopeDisposed() && isInContent(fileSet) }
+    return myWorkspaceFileIndex.processIndexableFilesRecursively(dir, processor, customFilter) { fileSet -> !isScopeDisposed() && isInContent(fileSet) }
   }
 
   private fun toContentIteratorEx(processor: ContentIterator): ContentIteratorEx {

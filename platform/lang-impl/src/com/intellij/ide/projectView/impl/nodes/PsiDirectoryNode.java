@@ -90,6 +90,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     assert psiDirectory != null : this;
     VirtualFile directoryFile = psiDirectory.getVirtualFile();
     Object parentValue = getParentValue();
+    data.setTooltip(null);
     synchronized (chain) {
       if (chain.isEmpty()) {
         VirtualFile ancestor = getVirtualFile(parentValue);

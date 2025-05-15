@@ -137,10 +137,19 @@ enum class WorkspaceFileKind {
    *
    * This kind corresponds to files from [com.intellij.util.indexing.IndexableSetContributor] in the old API.
    */
-  CUSTOM;
+  CUSTOM,
+
+  /**
+   * Describe files that are in the workspace but should not be indexed. These files are usually in a directory that the user has opened,
+   * but before the project is imported by any build system. They can be edited.
+   */
+  CONTENT_NON_INDEXABLE;
   
   val isContent: Boolean
-    get() = this == CONTENT || this == TEST_CONTENT
+    get() = this == CONTENT || this == TEST_CONTENT || this == CONTENT_NON_INDEXABLE
+
+  val isIndexable: Boolean
+    get() = (this != CONTENT_NON_INDEXABLE)
 }
 
 /**

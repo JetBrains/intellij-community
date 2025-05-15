@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.junit5.projectStructure.fixture.impl
 
+import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -25,8 +26,11 @@ internal class MultiverseFixtureInitializer(
 
   private val sdkFixtures = mutableMapOf<String, TestFixture<Sdk>>()
 
-  suspend fun TestFixtureInitializer.R<Project>.initializeProjectModel(): Project {
-    projectFixture = projectFixture()
+  suspend fun TestFixtureInitializer.R<Project>.initializeProjectModel(
+    openProjectTask: OpenProjectTask = OpenProjectTask.build(),
+    openAfterCreation: Boolean
+  ): Project {
+    projectFixture = projectFixture(openProjectTask = openProjectTask, openAfterCreation = openAfterCreation)
     val project = projectFixture.init()
 
     projectRootPath = project.basePath?.let { Path(it) } ?: error("Project base path is not available")

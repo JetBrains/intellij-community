@@ -39,7 +39,7 @@ public abstract class FileIndexBase implements FileIndex {
                                               @NotNull ContentIterator processor,
                                               @Nullable VirtualFileFilter customFilter) {
     ContentIteratorEx processorEx = toContentIteratorEx(processor);
-    return myWorkspaceFileIndex.processContentFilesRecursively(dir, processorEx, customFilter, fileSet -> !isScopeDisposed() && isInContent(fileSet));
+    return myWorkspaceFileIndex.processIndexableFilesRecursively(dir, processorEx, customFilter, fileSet -> !isScopeDisposed() && isInContent(fileSet));
   }
 
   private static @NotNull ContentIteratorEx toContentIteratorEx(@NotNull ContentIterator processor) {
