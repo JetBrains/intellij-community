@@ -29,7 +29,7 @@ test --test_verbose_timeout_warnings --test_timeout=60 --test_output=all
 # https://www.buildbuddy.io/blog/debugging-slow-bazel-builds/
 common --nolegacy_important_outputs --remote_build_event_upload=minimal --remote_cache_async --remote_cache_compression
 
-common --symlink_prefix=out/bazel-
+common --experimental_convenience_symlinks=ignore
 
 common --incompatible_strict_action_env=true
 

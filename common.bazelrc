@@ -42,7 +42,7 @@ common --tool_java_runtime_version=remotejdk_21
 common --experimental_ui_max_stdouterr_bytes=-1
 
 # IDEA do not handle symlinks efficiently (freeze due to modal non-cancellable dialog) and no way to exclude directories by pattern bazel-
-common --symlink_prefix=out/bazel-
+common --experimental_convenience_symlinks=ignore
 
 # FS Watch
 build --watchfs
