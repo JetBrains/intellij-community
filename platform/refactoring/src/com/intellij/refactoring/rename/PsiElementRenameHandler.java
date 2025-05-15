@@ -23,6 +23,7 @@ import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.ui.UiInterceptors;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -198,6 +199,7 @@ public class PsiElementRenameHandler implements RenameHandler {
 
     RenameRefactoringDialog dialog = processor.createDialog(project, substituted, nameSuggestionContext, editor);
     dialog.addSuggestedNames(suggestedNames);
+    if (UiInterceptors.tryIntercept(dialog)) return;
 
     if (defaultName == null && ApplicationManager.getApplication().isUnitTestMode()) {
       String[] strings = dialog.getSuggestedNames();

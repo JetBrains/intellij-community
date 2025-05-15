@@ -323,9 +323,10 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     PsiFile psiFile = PsiManagerEx.getInstanceEx(project).findFile(file);
     if (psiFile == null) return false;
     TextRange range = rename.symbolRange().range();
+    TextRange nameRange = requireNonNullElse(rename.symbolRange().nameIdentifierRange(), range);
     InjectedLanguageManager manager = InjectedLanguageManager.getInstance(project);
-    PsiElement injectedElement = manager.findInjectedElementAt(psiFile, range.getStartOffset());
-    PsiElement psiElement = injectedElement != null ? injectedElement : psiFile.findElementAt(range.getStartOffset());
+    PsiElement injectedElement = manager.findInjectedElementAt(psiFile, nameRange.getStartOffset());
+    PsiElement psiElement = injectedElement != null ? injectedElement : psiFile.findElementAt(nameRange.getStartOffset());
     PsiNamedElement namedElement = PsiTreeUtil.getNonStrictParentOfType(psiElement, PsiNamedElement.class);
     if (namedElement == null) return false;
     Editor finalEditor = getEditor(project, editor, file);
