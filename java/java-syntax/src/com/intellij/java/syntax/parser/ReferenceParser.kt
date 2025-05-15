@@ -91,7 +91,15 @@ class ReferenceParser(private val myParser: JavaParser) {
       return typeInfo
     }
     else if (tokenType === JavaSyntaxTokenType.IDENTIFIER) {
-      parseJavaCodeReference(builder, isSet(flags, EAT_LAST_DOT), true, false, false, false, isSet(flags, DIAMONDS), typeInfo)
+      parseJavaCodeReference(
+        builder = builder,
+        eatLastDot = isSet(flags, EAT_LAST_DOT),
+        parameterList = true,
+        isImport = false,
+        isStaticImport = false,
+        isNew = false,
+        diamonds = isSet(flags, DIAMONDS),
+        typeInfo = typeInfo)
     }
     else if (tokenType === JavaSyntaxTokenType.VAR_KEYWORD) {
       builder.advanceLexer()
@@ -173,21 +181,42 @@ class ReferenceParser(private val myParser: JavaParser) {
     eatLastDot: Boolean,
     parameterList: Boolean,
     isNew: Boolean,
-    diamonds: Boolean
+    diamonds: Boolean,
   ): SyntaxTreeBuilder.Marker? {
-    return parseJavaCodeReference(builder, eatLastDot, parameterList, false, false, isNew, diamonds, TypeInfo())
+    return parseJavaCodeReference(
+      builder = builder,
+      eatLastDot = eatLastDot,
+      parameterList = parameterList,
+      isImport = false,
+      isStaticImport = false,
+      isNew = isNew,
+      diamonds = diamonds,
+      typeInfo = TypeInfo())
   }
 
   fun parseImportCodeReference(builder: SyntaxTreeBuilder, isStatic: Boolean): Boolean {
     val typeInfo = TypeInfo()
-    parseJavaCodeReference(builder, true, false, true, isStatic, false, false, typeInfo)
+    parseJavaCodeReference(
+      builder = builder,
+      eatLastDot = true,
+      parameterList = false,
+      isImport = true,
+      isStaticImport = isStatic,
+      isNew = false,
+      diamonds = false,
+      typeInfo = typeInfo)
     return !typeInfo.hasErrors
   }
 
   private fun parseJavaCodeReference(
-    builder: SyntaxTreeBuilder, eatLastDot: Boolean, parameterList: Boolean, isImport: Boolean,
-    isStaticImport: Boolean, isNew: Boolean, diamonds: Boolean,
-    typeInfo: TypeInfo
+    builder: SyntaxTreeBuilder,
+    eatLastDot: Boolean,
+    parameterList: Boolean,
+    isImport: Boolean,
+    isStaticImport: Boolean,
+    isNew: Boolean,
+    diamonds: Boolean,
+    typeInfo: TypeInfo,
   ): SyntaxTreeBuilder.Marker? {
     var refElement = builder.mark()
 
@@ -359,7 +388,7 @@ class ReferenceParser(private val myParser: JavaParser) {
     builder: SyntaxTreeBuilder,
     start: SyntaxElementType?,
     type: SyntaxElementType?,
-    delimiter: SyntaxElementType?
+    delimiter: SyntaxElementType?,
   ): Boolean {
     val element = builder.mark()
 
