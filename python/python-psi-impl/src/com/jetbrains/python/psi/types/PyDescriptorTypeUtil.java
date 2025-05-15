@@ -59,6 +59,9 @@ public final class PyDescriptorTypeUtil {
         PyType instanceArgumentType;
         PyType instanceTypeArgument;
         final var noneType = PyBuiltinCache.getInstance(expression).getNoneType();
+        if (noneType == null) {
+          return null;
+        }
         if (classType.isDefinition()) {
           instanceArgumentType = noneType;
           instanceTypeArgument = classType;
