@@ -199,37 +199,37 @@ class FrontendXValue private constructor(
       for (part in advancedPresentation.parts) {
         when (part) {
           is XValueAdvancedPresentationPart.Comment -> {
-            renderer.renderComment(part.comment)
+            renderer.renderComment(part.text)
           }
           is XValueAdvancedPresentationPart.Error -> {
-            renderer.renderError(part.error)
+            renderer.renderError(part.text)
           }
           is XValueAdvancedPresentationPart.KeywordValue -> {
-            renderer.renderKeywordValue(part.value)
+            renderer.renderKeywordValue(part.text)
           }
           is XValueAdvancedPresentationPart.NumericValue -> {
-            renderer.renderNumericValue(part.value)
+            renderer.renderNumericValue(part.text)
           }
           is XValueAdvancedPresentationPart.SpecialSymbol -> {
-            renderer.renderSpecialSymbol(part.symbol)
+            renderer.renderSpecialSymbol(part.text)
           }
           is XValueAdvancedPresentationPart.StringValue -> {
-            renderer.renderStringValue(part.value)
+            renderer.renderStringValue(part.text)
           }
           is XValueAdvancedPresentationPart.StringValueWithHighlighting -> {
-            renderer.renderStringValue(part.value, part.additionalSpecialCharsToHighlight, part.maxLength)
+            renderer.renderStringValue(part.text, part.additionalSpecialCharsToHighlight, part.maxLength)
           }
           is XValueAdvancedPresentationPart.Value -> {
-            renderer.renderValue(part.value)
+            renderer.renderValue(part.text)
           }
           is XValueAdvancedPresentationPart.ValueWithAttributes -> {
             // TODO[IJPL-160146]: support [TextAttributesKey] serialization
             val attributesKey = part.key
             if (attributesKey != null) {
-              renderer.renderValue(part.value, attributesKey)
+              renderer.renderValue(part.text, attributesKey)
             }
             else {
-              renderer.renderValue(part.value)
+              renderer.renderValue(part.text)
             }
           }
         }

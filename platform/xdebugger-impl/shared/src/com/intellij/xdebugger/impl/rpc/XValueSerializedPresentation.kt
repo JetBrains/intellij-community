@@ -35,44 +35,46 @@ sealed interface XValueSerializedPresentation {
 @ApiStatus.Internal
 @Serializable
 sealed interface XValueAdvancedPresentationPart {
-  @ApiStatus.Internal
-  @Serializable
-  data class Value(@JvmField val value: String) : XValueAdvancedPresentationPart
+  val text: String
 
   @ApiStatus.Internal
   @Serializable
-  data class StringValue(@JvmField val value: String) : XValueAdvancedPresentationPart
+  data class Value(override val text: String) : XValueAdvancedPresentationPart
 
   @ApiStatus.Internal
   @Serializable
-  data class NumericValue(@JvmField val value: String) : XValueAdvancedPresentationPart
+  data class StringValue(override val text: String) : XValueAdvancedPresentationPart
 
   @ApiStatus.Internal
   @Serializable
-  data class KeywordValue(@JvmField val value: String) : XValueAdvancedPresentationPart
+  data class NumericValue(override val text: String) : XValueAdvancedPresentationPart
+
+  @ApiStatus.Internal
+  @Serializable
+  data class KeywordValue(override val text: String) : XValueAdvancedPresentationPart
 
   // TODO[IJPL-160146]: support [TextAttributesKey] serialization
   @ApiStatus.Internal
   @Serializable
-  data class ValueWithAttributes(@JvmField val value: String, @Transient @JvmField val key: TextAttributesKey? = null) : XValueAdvancedPresentationPart
+  data class ValueWithAttributes(override val text: String, @Transient @JvmField val key: TextAttributesKey? = null) : XValueAdvancedPresentationPart
 
   @ApiStatus.Internal
   @Serializable
   data class StringValueWithHighlighting(
-    @JvmField val value: String,
+    override val text: String,
     @JvmField val additionalSpecialCharsToHighlight: String?,
     @JvmField val maxLength: Int,
   ) : XValueAdvancedPresentationPart
 
   @ApiStatus.Internal
   @Serializable
-  data class Comment(@JvmField val comment: String) : XValueAdvancedPresentationPart
+  data class Comment(override val text: String) : XValueAdvancedPresentationPart
 
   @ApiStatus.Internal
   @Serializable
-  data class SpecialSymbol(@JvmField val symbol: String) : XValueAdvancedPresentationPart
+  data class SpecialSymbol(override val text: String) : XValueAdvancedPresentationPart
 
   @ApiStatus.Internal
   @Serializable
-  data class Error(@JvmField val error: String) : XValueAdvancedPresentationPart
+  data class Error(override val text: String) : XValueAdvancedPresentationPart
 }
