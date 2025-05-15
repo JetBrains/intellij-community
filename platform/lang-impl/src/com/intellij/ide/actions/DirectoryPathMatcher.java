@@ -106,9 +106,11 @@ final class DirectoryPathMatcher {
     AtomicInteger counter = new AtomicInteger();
     BooleanSupplier tooMany = () -> counter.get() > 1000;
     for (Pair<VirtualFile, String> pair : files) {
-      if (containsChar(pair.second, nextLetter) && matcher.matches(pair.second)) {
-        names.add(pair.first.getName());
-      } else {
+      // Commented this out because the pattern Utils/TT matched the original "Utils" directory name and nothing more here.
+      // ("Utils" contain "t", "Utils" is matched by a ["T" "T"] matcher)
+      //if (containsChar(pair.second, nextLetter) && matcher.matches(pair.second)) {
+      //  names.add(pair.first.getName());
+      //} else {
         processProjectFilesUnder(pair.first, sub -> {
           counter.incrementAndGet();
           if (tooMany.getAsBoolean()) return false;
@@ -119,7 +121,7 @@ final class DirectoryPathMatcher {
           }
           return true;
         });
-      }
+      //}
     }
     return tooMany.getAsBoolean() ? null : names;
   }
