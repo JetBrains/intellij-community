@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.colors.EditorFontType
+import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.EditorGutterFreePainterAreaState
@@ -295,7 +296,13 @@ object TerminalUiUtils {
 
 fun EditorImpl.applyFontSettings(newSettings: JBTerminalSystemSettingsProviderBase) {
   colorsScheme.apply {
-    fontPreferences = newSettings.fontPreferences
+    val newPreferences = FontPreferencesImpl()
+    newSettings.fontPreferences.copyTo(newPreferences)
+    // the font size in the settings is unscaled, we need to get the scaled one separately
+    for (fontFamily in newPreferences.effectiveFontFamilies) {
+      newPreferences.setFontSize(fontFamily, newSettings.terminalFontSize)
+    }
+    fontPreferences = newPreferences
     // for some reason, even though fontPreferences contains lineSpacing, the editor doesn't take it from there
     lineSpacing = newSettings.lineSpacing
   }
