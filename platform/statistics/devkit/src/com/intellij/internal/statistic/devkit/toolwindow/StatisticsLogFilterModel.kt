@@ -7,7 +7,7 @@ import com.intellij.diagnostic.logging.LogFilterModel
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.util.containers.ContainerUtil
 
-internal class StatisticsLogFilterModel : LogFilterModel() {
+internal open class StatisticsLogFilterModel : LogFilterModel() {
   private val listeners = ContainerUtil.createLockFreeCopyOnWriteList<LogFilterListener>()
   private var customFilter: String? = null
 

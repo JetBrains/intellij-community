@@ -36,9 +36,11 @@ a:com.intellij.diagnostic.logging.LogConsoleBase
 - attachStopLogConsoleTrackingListener(com.intellij.execution.process.ProcessHandler):V
 - clear():V
 - dispose():V
+- p:filterConsoleOutput():V
 - s:getApplyingFilterTitle():java.lang.String
 - getComponent():javax.swing.JComponent
 - getConsole():com.intellij.execution.ui.ConsoleView
+- getConsoleNotNull():com.intellij.execution.ui.ConsoleView
 - getFilterModel():com.intellij.diagnostic.logging.LogFilterModel
 - getOrCreateActions():com.intellij.openapi.actionSystem.ActionGroup
 - getOriginalDocument():java.lang.StringBuffer

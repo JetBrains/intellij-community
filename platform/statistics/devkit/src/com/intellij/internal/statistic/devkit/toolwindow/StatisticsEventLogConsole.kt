@@ -17,10 +17,13 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.psi.PsiManager
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.startOffset
 
-internal class StatisticsEventLogConsole(private val project: Project, model: LogFilterModel, recorderId: String)
-  : LogConsoleBase(project, null, eventLogToolWindowsId, false, model) {
+internal class StatisticsEventLogConsole(private val project: Project, model: LogFilterModel, recorderId: String, val logFormatter: StatisticsEventLogFormatter)
+  : LogConsoleBase(project, null, eventLogToolWindowsId, false, model,
+                   GlobalSearchScope.allScope(project), logFormatter) {
+  private var isMultilineLog: Boolean = false
 
   init {
     val schemeFile = LocalFileSystem.getInstance().findFileByNioFile(getEventsSchemeFile(recorderId))
@@ -61,5 +64,11 @@ internal class StatisticsEventLogConsole(private val project: Project, model: Lo
 
   fun addLogLine(line: String) {
     super.addMessage(line)
+  }
+
+  fun updateLogPresentation(isMultilineLog: Boolean) {
+    this.isMultilineLog = isMultilineLog
+    logFormatter.updateLogPresentation(isMultilineLog)
+    filterConsoleOutput()
   }
 }

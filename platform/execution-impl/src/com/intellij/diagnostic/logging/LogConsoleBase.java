@@ -487,7 +487,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     return CommonDataKeys.EDITOR.getData(dataContext);
   }
 
-  private void filterConsoleOutput() {
+  protected void filterConsoleOutput() {
     ApplicationManager.getApplication().invokeLater(() -> computeSelectedLineAndFilter());
   }
 
@@ -587,7 +587,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
    * If we get the assertion then it is a time to revisit logic of caller ;)
    */
 
-  private @NotNull ConsoleView getConsoleNotNull() {
+  public @NotNull ConsoleView getConsoleNotNull() {
     final ConsoleView console = getConsole();
     assert console != null: "it looks like console has been disposed";
     return console;
