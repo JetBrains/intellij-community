@@ -11,7 +11,7 @@ import com.intellij.vcs.log.ui.VcsLogUiEx
 import org.jetbrains.annotations.NonNls
 
 internal class VcsLogEditorTabsWatcher(private val project: Project,
-                                       parentDisposable: Disposable) : VcsLogTabsWatcherExtension<VcsLogEditorTabsWatcher.VcsLogEditorTab> {
+                                       parentDisposable: Disposable) : VcsLogTabsWatcher<VcsLogEditorTabsWatcher.VcsLogEditorTab> {
   private var tabSelectedCallback: (String) -> Unit = {}
 
   init {

@@ -12,6 +12,7 @@ import com.intellij.openapi.util.objectTree.ThrowableInterner
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.VcsRoot
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -25,6 +26,7 @@ import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.VcsLogStatusBarProgress
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
 import com.intellij.vcs.log.impl.PostponableLogRefresher.VcsLogWindow
+import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.*
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl
@@ -41,6 +43,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.BiConsumer
+import java.util.function.Consumer
 
 open class VcsLogManager @Internal constructor(
   protected val project: Project,
@@ -62,9 +65,25 @@ open class VcsLogManager @Internal constructor(
   val dataManager: VcsLogData = VcsLogData(project, logProviders, MyErrorHandler(), isIndexEnabled, this)
   private val postponableRefresher = PostponableLogRefresher(dataManager)
 
-  private val lazyTabsWatcher = lazyUnsafe {
+  private val watchers = lazyUnsafe {
     LOG.assertTrue(!isDisposed)
-    VcsLogTabsWatcher(project, postponableRefresher)
+    mapOf(
+      Pair(VcsLogTabLocation.TOOL_WINDOW, VcsLogToolWindowTabsWatcher(project, ChangesViewContentManager.TOOLWINDOW_ID, this)),
+      Pair(VcsLogTabLocation.EDITOR, VcsLogEditorTabsWatcher(project, this))
+    ).apply {
+      values.forEach(Consumer { extension ->
+        extension.setTabSelectedCallback { tabId -> selectionChanged(tabId) }
+      })
+    }
+  }
+
+  private fun selectionChanged(tabId: String) {
+    val logWindow = postponableRefresher.logWindows.find { window -> window.id == tabId }
+    if (logWindow != null) {
+      LOG.debug("Selected log window '$logWindow'")
+      VcsLogUsageTriggerCollector.triggerTabNavigated(project)
+      postponableRefresher.refresherActivated(logWindow.refresher, false)
+    }
   }
 
   val colorManager: VcsLogColorManager = VcsLogColorManagerFactory.create(logProviders.keys)
@@ -172,7 +191,9 @@ open class VcsLogManager @Internal constructor(
   }
 
   private fun registerLogUi(ui: VcsLogUiEx, location: VcsLogTabLocation, isClosedOnDispose: Boolean) {
-    val registrationDisposable = lazyTabsWatcher.value.addTabToWatch(ui, location, isClosedOnDispose)
+    val extension = watchers.value[location]
+    val window = extension?.createLogTab(ui, isClosedOnDispose) ?: VcsLogWindow(ui)
+    val registrationDisposable = postponableRefresher.addLogWindow(window)
     Disposer.register(ui, registrationDisposable)
   }
 
@@ -189,20 +210,26 @@ open class VcsLogManager @Internal constructor(
   }
 
   fun getLogUis(): List<VcsLogUi> {
-    if (!lazyTabsWatcher.isInitialized()) return emptyList()
-    return lazyTabsWatcher.value.getTabs()
+    return postponableRefresher.logWindows.map { it.ui }
   }
 
   @Internal
   fun getLogUis(location: VcsLogTabLocation): List<VcsLogUi> {
-    if (!lazyTabsWatcher.isInitialized()) return emptyList()
-    return lazyTabsWatcher.value.getTabs(location)
+    return getLogWindows(location).map { it.ui }
   }
 
   @Internal
   fun getVisibleLogUis(location: VcsLogTabLocation): List<VcsLogUi> {
-    if (!lazyTabsWatcher.isInitialized()) return emptyList()
-    return lazyTabsWatcher.value.getVisibleTabs(location)
+    return getLogWindows(location).filter { it.isVisible() }.map { it.ui }
+  }
+
+  private fun getLogWindows(location: VcsLogTabLocation): List<VcsLogWindow> {
+    if (!watchers.isInitialized()) return emptyList()
+    val watcherExtension = watchers.value[location]
+    if (watcherExtension == null) {
+      return postponableRefresher.logWindows.filter { tab -> watchers.value.values.none { it.isOwnerOf(tab) } }
+    }
+    return postponableRefresher.logWindows.filter(watcherExtension::isOwnerOf)
   }
 
   @Internal
@@ -214,7 +241,11 @@ open class VcsLogManager @Internal constructor(
   internal open fun disposeUi() {
     isDisposed = true
     ThreadingAssertions.assertEventDispatchThread()
-    if (lazyTabsWatcher.isInitialized()) Disposer.dispose(lazyTabsWatcher.value)
+    if (watchers.isInitialized()) {
+      for (extension in watchers.value.values) {
+        extension.closeTabs(postponableRefresher.logWindows.filter(extension::isOwnerOf))
+      }
+    }
     Disposer.dispose(statusBarProgress)
   }
 

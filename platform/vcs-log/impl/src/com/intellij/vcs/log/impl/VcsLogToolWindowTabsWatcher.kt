@@ -23,7 +23,7 @@ import java.beans.PropertyChangeListener
 
 internal class VcsLogToolWindowTabsWatcher(private val project: Project,
                                            private val toolWindowId: String,
-                                           parentDisposable: Disposable) : VcsLogTabsWatcherExtension<VcsLogToolWindowTab> {
+                                           parentDisposable: Disposable) : VcsLogTabsWatcher<VcsLogToolWindowTab> {
   private val mainDisposable = Disposer.newDisposable()
   private val toolwindowListenerDisposable = Disposer.newDisposable()
   private var tabSelectedCallback: (String) -> Unit = {}
