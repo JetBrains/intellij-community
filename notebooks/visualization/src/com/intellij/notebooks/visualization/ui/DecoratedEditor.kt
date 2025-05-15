@@ -76,7 +76,7 @@ class DecoratedEditor private constructor(
             editorImpl.setMode(NotebookEditorMode.COMMAND)
           }
           updateSelectionAfterClick(hoveredCell.interval, event.isCtrlPressed(),
-                                                             event.isShiftPressed(), event.button)
+                                    event.isShiftPressed(), event.button)
         }
       }
 
@@ -92,6 +92,8 @@ class DecoratedEditor private constructor(
     private val editorViewport: JViewport,
     component: Component,
   ) : JPanel(BorderLayout()) {
+
+    // The only need to use JLayer here is our frame borders around notebook cells.
     private val layeredPane: JLayer<JPanel>
     private val overlayLines = mutableListOf<Pair<Line2D, Color>>()
 
@@ -107,24 +109,22 @@ class DecoratedEditor private constructor(
         add(viewportWrapper, BorderLayout.CENTER)
       }
 
-      layeredPane = JLayer(editorPanel).apply {
-        setUI(object : LayerUI<JPanel>() {
-          override fun paint(graphics: Graphics, component: JComponent) {
-            super.paint(graphics, component)
+      layeredPane = JLayer(editorPanel, object : LayerUI<JPanel>() {
+        override fun paint(graphics: Graphics, component: JComponent) {
+          super.paint(graphics, component)
 
-            val g2d = graphics.create() as Graphics2D
-            try {
-              for ((line, color) in overlayLines) {
-                g2d.color = color
-                g2d.draw(line)
-              }
-            }
-            finally {
-              g2d.dispose()
+          val g2d = graphics.create() as Graphics2D
+          try {
+            for ((line, color) in overlayLines) {
+              g2d.color = color
+              g2d.draw(line)
             }
           }
-        })
-      }
+          finally {
+            g2d.dispose()
+          }
+        }
+      })
 
       add(layeredPane, BorderLayout.CENTER)
     }
@@ -147,7 +147,6 @@ class DecoratedEditor private constructor(
       layeredPane.repaint()
     }
   }
-
 
   override fun inlayClicked(clickedCell: NotebookCellLines.Interval, ctrlPressed: Boolean, shiftPressed: Boolean, mouseButton: Int) {
     editorImpl.setMode(NotebookEditorMode.COMMAND)
