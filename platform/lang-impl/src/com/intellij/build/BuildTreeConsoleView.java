@@ -535,6 +535,9 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
   }
 
   private @Nullable Runnable showErrorIfFirst(@NotNull ExecutionNode node, @Nullable Navigatable navigatable) {
+    if (!Registry.is("run.toolwindow.navigate.to.first.error")) {
+      return null;
+    }
     if (myShownFirstError.compareAndSet(false, true)) {
       return () -> {
         TreeUtil.promiseSelect(myTree, visitor(node));
