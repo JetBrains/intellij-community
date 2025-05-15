@@ -46,6 +46,7 @@ private val PERSISTENT_INDEXABLE_FILES_FILTER_INVALIDATED = Key<Boolean>("PERSIS
 
 internal fun scanAndIndexProjectAfterOpen(project: Project,
                                           orphanQueue: OrphanDirtyFilesQueue,
+                                          orphanQueueDiscardReason: OrphanDirtyFilesQueueDiscardReason?,
                                           additionalOrphanDirtyFiles: Collection<Int>,
                                           projectDirtyFilesQueue: ProjectDirtyFilesQueue,
                                           allowSkippingFullScanning: Boolean,
@@ -68,7 +69,7 @@ internal fun scanAndIndexProjectAfterOpen(project: Project,
   val filterCheckState = FilterCheckState(project, filterHolder, isFilterInvalidated, appCurrent)
   val filterUpToDateUnsatisfiedConditions = findFilterUpToDateUnsatisfiedConditions(filterCheckState, requireReadingIndexableFilesIndexFromDisk)
 
-  val notSeenIds = orphanQueue.getNotSeenIds(project, projectDirtyFilesQueue)
+  val notSeenIds = orphanQueue.getNotSeenIds(project, projectDirtyFilesQueue, orphanQueueDiscardReason)
   val scanningCheckState = SkippingScanningCheckState(allowSkippingFullScanning, filterUpToDateUnsatisfiedConditions, notSeenIds)
   val skippingScanningUnsatisfiedConditions = SkippingFullScanningCondition.entries.filter { !it.canSkipFullScanning(scanningCheckState) }
   return if (skippingScanningUnsatisfiedConditions.isEmpty()) {
@@ -138,7 +139,7 @@ private fun scheduleFullScanning(
   isFilterUpToDate: Boolean,
   coroutineScope: CoroutineScope,
   indexingReason: String,
-  fullScanningType: ScanningType
+  fullScanningType: ScanningType,
 ): Job {
   val someDirtyFilesScheduledForIndexing = if (notSeenIds is AllNotSeenDirtyFileIds) coroutineScope.async(Dispatchers.IO) {
     clearIndexesForDirtyFiles(project, notSeenIds.result.plus(additionalOrphanDirtyFiles), projectDirtyFilesQueue, false)
@@ -162,7 +163,7 @@ private fun scheduleDirtyFilesScanning(
   projectDirtyFilesQueue: ProjectDirtyFilesQueue,
   coroutineScope: CoroutineScope,
   indexingReason: String,
-  partialScanningType: ScanningType
+  partialScanningType: ScanningType,
 ): Job {
   val projectDirtyFiles = coroutineScope.async(Dispatchers.IO) {
     clearIndexesForDirtyFiles(project, allNotSeenIds, projectDirtyFilesQueue, true)
@@ -193,7 +194,7 @@ private suspend fun clearIndexesForDirtyFiles(project: Project,
 
     val vfToFindLimit = if (findAllVirtualFiles) -1
     else max(0, dumbModeThreshold - projectDirtyFilesFromOrphanQueue.size - 1)
-    
+
     val projectDirtyFilesFromProjectQueue = findProjectFiles(project, projectDirtyFilesQueue.fileIds, vfToFindLimit)
     val projectDirtyFiles = projectDirtyFilesFromProjectQueue + projectDirtyFilesFromOrphanQueue
     scheduleForIndexing(projectDirtyFiles, project, fileBasedIndex, dumbModeThreshold - 1)
@@ -201,11 +202,12 @@ private suspend fun clearIndexesForDirtyFiles(project: Project,
   }
 }
 
-private fun OrphanDirtyFilesQueue.getNotSeenIds(project: Project, projectQueue: ProjectDirtyFilesQueue): GetNotSeenDirtyFileIdsResult {
+private fun OrphanDirtyFilesQueue.getNotSeenIds(project: Project, projectQueue: ProjectDirtyFilesQueue, orphanQueueDiscardReason: OrphanDirtyFilesQueueDiscardReason?): GetNotSeenDirtyFileIdsResult {
   if (projectQueue.lastSeenIndexInOrphanQueue > untrimmedSize) {
     LOG.error("It should not happen that project has seen file id in orphan queue at index larger than number of files that orphan queue ever had. " +
               "projectQueue.lastSeenIdsInOrphanQueue=${projectQueue.lastSeenIndexInOrphanQueue}, orphanQueue.untrimmedSize=${untrimmedSize}, " +
-              "orphanQueue.fileIds.size=${fileIds.size}, project=$project")
+              "orphanQueue.fileIds.size=${fileIds.size}, project=$project, " +
+              "orphanQueueDiscardReason=$orphanQueueDiscardReason")
     return ProjectDirtyFilesQueuePointsToIncorrectPosition
   }
 
@@ -226,6 +228,7 @@ private data object ProjectDirtyFilesQueuePointsToIncorrectPosition : GetNotSeen
   override fun explain(): String {
     return "Project dirty files queue points to an index in orphan queue at index larger than number of files that orphan queue ever had"
   }
+
   override fun getFullScanningDecision(): NotSeenIdsBasedFullScanningDecision = NoSkipDirtyFileQueuePintsToIncorrectPosition
 }
 
@@ -235,6 +238,7 @@ private class DirtyFileIdsWereMissed(val orphanDirtyFilesQueue: OrphanDirtyFiles
            "orphanQueue.fileIds.size=${orphanDirtyFilesQueue.fileIds.size}, " +
            "projectQueue.lastSeenIndexInOrphanQueue=${projectQueue.lastSeenIndexInOrphanQueue}"
   }
+
   override fun getFullScanningDecision(): NotSeenIdsBasedFullScanningDecision = NoSkipDirtyFileIdsWereMissed
 }
 

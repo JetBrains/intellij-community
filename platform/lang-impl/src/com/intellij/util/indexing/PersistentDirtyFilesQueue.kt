@@ -46,10 +46,13 @@ object PersistentDirtyFilesQueue {
   }
 
   @JvmStatic
-  fun readOrphanDirtyFilesQueue(queueFile: Path, currentVfsVersion: Long?): OrphanDirtyFilesQueue {
-    val (fileIds, index) = readIndexingQueue(queueFile, currentVfsVersion)
-    return OrphanDirtyFilesQueue(fileIds, index ?: fileIds.size.toLong())
+  fun readOrphanDirtyFilesQueue(queueFile: Path, currentVfsVersion: Long?): Pair<OrphanDirtyFilesQueue, OrphanDirtyFilesQueueDiscardReason?> {
+    val (fileIds, index, discardReason) = readIndexingQueue(queueFile, currentVfsVersion)
+    return OrphanDirtyFilesQueue(fileIds, index ?: fileIds.size.toLong()) to discardReason
   }
+
+  @ApiStatus.Internal
+  data class IndexingQueueReadResult(val fileIds: List<Int>, val index: Long?, val orphanQueueDiscardReason: OrphanDirtyFilesQueueDiscardReason?)
 
   /**
    * Project dirty files queue and orphan dirty files queue have the same format
@@ -57,8 +60,8 @@ object PersistentDirtyFilesQueue {
    * Orphan queue: [version, vfs version, last index in queue, ids...]
    */
   @JvmStatic
-  fun readIndexingQueue(queueFile: Path, currentVfsVersion: Long?): Pair<List<Int>, Long?> {
-    try {
+  fun readIndexingQueue(queueFile: Path, currentVfsVersion: Long?): IndexingQueueReadResult {
+    val error: Throwable? = try {
       DataInputStream(queueFile.inputStream().buffered()).use {
         val fileIds = IntArrayList()
         val version = it.readLong()
@@ -79,25 +82,30 @@ object PersistentDirtyFilesQueue {
           }
         }
         if (currentVfsVersion != null && storedVfsVersion != currentVfsVersion) {
-          thisLogger().info("Discarding dirty files queue $queueFile because vfs version changed: old=$storedVfsVersion, new=$currentVfsVersion")
-          return Pair(IntArrayList(), null)
+          val message = "Discarding dirty files queue $queueFile because vfs version changed: old=$storedVfsVersion, new=$currentVfsVersion"
+          thisLogger().info(message)
+          return IndexingQueueReadResult(IntArrayList(), null, OrphanDirtyFilesQueueDiscardReason(message))
         }
         while (it.available() > 0) {
           fileIds.add(it.readInt())
         }
         thisLogger().info("Dirty file ids read. Size: ${fileIds.size}. Index: $index Path: $queueFile." +
                           if (isUnittestMode) " Ids: ${fileIds.toIntArray().contentToString()}" else "")
-        return Pair(fileIds, index)
+        return IndexingQueueReadResult(fileIds, index, null)
       }
     }
-    catch (_: NoSuchFileException) {
+    catch (e: NoSuchFileException) {
+      e
     }
-    catch (_: EOFException) {
+    catch (e: EOFException) {
+      e
     }
     catch (e: IOException) {
       thisLogger().info(e)
+      e
     }
-    return Pair(IntArrayList(), null)
+    val orphanQueueDiscardReason = error?.let { OrphanDirtyFilesQueueDiscardReason(error.toString()) }
+    return IndexingQueueReadResult(IntArrayList(), null, orphanQueueDiscardReason)
   }
 
   @JvmStatic
@@ -162,3 +170,6 @@ class OrphanDirtyFilesQueue(val fileIds: List<Int>, val untrimmedSize: Long) {
     else OrphanDirtyFilesQueue(fileIds.takeLast(maxSize), untrimmedSize)
   }
 }
+
+@ApiStatus.Internal
+class OrphanDirtyFilesQueueDiscardReason(val message: String)

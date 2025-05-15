@@ -93,6 +93,7 @@ private class ProjectFileBasedIndexStartupActivity : RequiredForSmartMode {
     val indexCleanupJob = scanAndIndexProjectAfterOpen(
       project = project,
       orphanQueue = orphanQueue,
+      orphanQueueDiscardReason = registeredIndexes.orphanDirtyFilesQueueDiscardReason,
       additionalOrphanDirtyFiles = fileBasedIndex.getAllDirtyFiles(null),
       projectDirtyFilesQueue = projectDirtyFilesQueue,
       allowSkippingFullScanning = !wasCorrupted,
