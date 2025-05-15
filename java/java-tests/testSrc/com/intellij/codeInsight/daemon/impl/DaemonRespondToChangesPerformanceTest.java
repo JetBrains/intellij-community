@@ -23,14 +23,18 @@ import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.LanguageInjector;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.Timings;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
@@ -144,12 +148,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
             final long start1 = typingStart.get();
             if (start1 == -1) break;
             if (start1 == 0) {
-              try {
-                Thread.sleep(5);
-              }
-              catch (InterruptedException e1) {
-                throw new RuntimeException(e1);
-              }
+              TimeoutUtil.sleep(5);
               continue;
             }
             long elapsed = System.currentTimeMillis() - start1;
@@ -177,7 +176,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
           interruptTimes[finalI] = interruptTime;
           DaemonProgressIndicator indicator = ContainerUtil.getFirstItem(new ArrayList<>(codeAnalyzer.getUpdateProgress().values()));
           assertTrue(String.valueOf(indicator), indicator == null || indicator.isCanceled());
-          System.out.println(interruptTime);
+          LOG.debug("interruptTime:"+interruptTime);
           throw new ProcessCanceledException();
         };
         long hiStart = System.currentTimeMillis();

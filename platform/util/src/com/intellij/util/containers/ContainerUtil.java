@@ -1654,7 +1654,7 @@ public final class ContainerUtil {
     return result.emptyOrFrozen();
   }
 
-  private static <K,V> Map<K,V> emptyOrFrozen(FreezableHashMap<? extends K, ? extends V> result) {
+  private static <K,V> @NotNull Map<K,V> emptyOrFrozen(@NotNull FreezableHashMap<? extends K, ? extends V> result) {
     //noinspection unchecked
     return result.isEmpty() ? Collections.emptyMap() :
            Options.RETURN_REALLY_UNMODIFIABLE_COLLECTION_FROM_METHODS_MARKED_UNMODIFIABLE ? (Map<K,V>)result.freeze()
