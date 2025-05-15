@@ -103,7 +103,8 @@ public class ProjectViewDirectoryHelper {
     return true;
   }
 
-  public @Nullable String getNodeName(ViewSettings settings, Object parentValue, PsiDirectory directory) {
+  @NotNull
+  public String getNodeName(ViewSettings settings, Object parentValue, PsiDirectory directory) {
     return directory.getName();
   }
 
