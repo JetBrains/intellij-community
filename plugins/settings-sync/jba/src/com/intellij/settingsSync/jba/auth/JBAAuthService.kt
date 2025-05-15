@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.actionSystem.ex.ActionUtil.performAction
 import com.intellij.openapi.actionSystem.ex.ActionUtil.performActionDumbAwareWithCallbacks
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -240,7 +239,7 @@ internal class JBAAuthService(private val cs: CoroutineScope) : SettingsSyncAuth
       val registerAction = actionManager.getAction("RegisterPlugins") ?: actionManager.getAction("Register")
       if (registerAction != null) {
         return {
-          performAction(registerAction,
+          performActionDumbAwareWithCallbacks(registerAction,
                         AnActionEvent.createEvent(DataContext.EMPTY_CONTEXT, Presentation(), "", ActionUiKind.NONE, null))
 
         }
