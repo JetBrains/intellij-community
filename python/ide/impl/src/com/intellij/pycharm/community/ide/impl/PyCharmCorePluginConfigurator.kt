@@ -101,7 +101,7 @@ private class PyCharmCorePluginConfigurator : ApplicationInitializedListener {
       when (ep.id) {
         "DSTables" -> {
           ep.groupId = PythonMainConfigurable.ID
-          ep.groupWeight = 50
+          ep.groupWeight = 70
         }
         "debugger.dataViews.python.type.renderers" -> {
           ep.groupId = PythonMainConfigurable.ID
@@ -120,7 +120,7 @@ private class PyCharmCorePluginConfigurator : ApplicationInitializedListener {
 
     ConfigurableGroupEP.find("Jupyter Settings")?.apply {
       parentId = PythonMainConfigurable.ID
-      weight = 70
+      weight = 90
     }
   }
 }
