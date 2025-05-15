@@ -101,6 +101,7 @@ object EelExecPosixApiHelpers {
      * Complete the builder and call [com.intellij.platform.eel.EelExecPosixApi.spawnProcess]
      * with an instance of [com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions].
      */
+    @ThrowsChecked(ExecuteProcessException::class)
     override suspend fun eelIt(): EelPosixProcess =
       owner.spawnProcess(
         ExecuteProcessOptionsImpl(

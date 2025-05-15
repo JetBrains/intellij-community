@@ -13,6 +13,7 @@ sealed interface EelExecApi {
   val descriptor: EelDescriptor
 
   @Throws(ExecuteProcessException::class)
+  @ThrowsChecked(ExecuteProcessException::class)
   suspend fun spawnProcess(@GeneratedBuilder generatedBuilder: ExecuteProcessOptions): EelProcess
 
   /**
@@ -134,10 +135,12 @@ sealed interface EelExecApi {
 }
 
 interface EelExecPosixApi : EelExecApi {
+  @ThrowsChecked(ExecuteProcessException::class)
   override suspend fun spawnProcess(@GeneratedBuilder generatedBuilder: ExecuteProcessOptions): EelPosixProcess
 }
 
 interface EelExecWindowsApi : EelExecApi {
+  @ThrowsChecked(ExecuteProcessException::class)
   override suspend fun spawnProcess(@GeneratedBuilder generatedBuilder: ExecuteProcessOptions): EelWindowsProcess
 }
 

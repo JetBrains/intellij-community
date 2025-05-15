@@ -101,6 +101,7 @@ object EelExecWindowsApiHelpers {
      * Complete the builder and call [com.intellij.platform.eel.EelExecWindowsApi.spawnProcess]
      * with an instance of [com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions].
      */
+    @ThrowsChecked(ExecuteProcessException::class)
     override suspend fun eelIt(): EelWindowsProcess =
       owner.spawnProcess(
         ExecuteProcessOptionsImpl(

@@ -8,9 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
-import org.jetbrains.annotations.CheckReturnValue
 import java.io.IOException
-import kotlin.jvm.Throws
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -85,6 +83,7 @@ sealed interface EelTunnelsApi {
    * To configure a socket before connection use [configureSocketBeforeConnection]. After that, use [Connection.configureSocket]
    */
   @Throws(EelConnectionError::class)
+  @ThrowsChecked(EelConnectionError::class)
   suspend fun getConnectionToRemotePort(@GeneratedBuilder args: GetConnectionToRemotePortArgs): Connection
 
   interface GetConnectionToRemotePortArgs : HostAddress {
@@ -239,6 +238,7 @@ sealed interface EelTunnelsApi {
    * One should not forget to invoke [Connection.close] when the connection is not needed.
    */
   @Throws(EelConnectionError::class)
+  @ThrowsChecked(EelConnectionError::class)
   suspend fun getAcceptorForRemotePort(@GeneratedBuilder args: GetAcceptorForRemotePort): ConnectionAcceptor
 
   interface GetAcceptorForRemotePort : HostAddress {

@@ -128,6 +128,7 @@ object EelTunnelsApiHelpers {
      * with an instance of [com.intellij.platform.eel.EelTunnelsApi.GetAcceptorForRemotePort].
      */
     @Throws(EelConnectionError::class)
+    @ThrowsChecked(EelConnectionError::class)
     override suspend fun eelIt(): EelTunnelsApi.ConnectionAcceptor =
       owner.getAcceptorForRemotePort(
         GetAcceptorForRemotePortImpl(
@@ -198,6 +199,7 @@ object EelTunnelsApiHelpers {
      * with an instance of [com.intellij.platform.eel.EelTunnelsApi.GetConnectionToRemotePortArgs].
      */
     @Throws(EelConnectionError::class)
+    @ThrowsChecked(EelConnectionError::class)
     override suspend fun eelIt(): Connection =
       owner.getConnectionToRemotePort(
         GetConnectionToRemotePortArgsImpl(

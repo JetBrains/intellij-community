@@ -73,6 +73,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Optional
 import java.util.TreeSet
+import kotlin.Boolean
 import kotlin.Char
 import kotlin.OptIn
 import kotlin.Pair
@@ -331,7 +332,7 @@ class BuildersGeneratorTest {
     var genSrcDirName: Path? = null
     val ultimateProject: JpsProject = IntelliJProjectConfiguration.loadIntelliJProject(Path.of(PathManager.getHomePath()).pathString)
 
-    val libraries = mutableListOf<JpsLibrary>()
+    val libraries = mutableSetOf<JpsLibrary>()
 
     val newEelModule: Module = writeAction {
       val projectModel = ModuleManager.getInstance(tempProject).getModifiableModel()
@@ -461,7 +462,7 @@ private fun findBuilders(psiFile: PsiFile, methods: MutableList<BuilderRequest>)
           methods += BuilderRequest(
             shouldCheckReturnValue = fn.annotationEntries.mapNotNull { it.shortName?.asString() }.contains("CheckReturnValue"),
             deprecatedAnnotation = fn.annotationEntries.find { it.shortName?.asString() == "Deprecated" }?.text?.trim(),
-            throwsAnnotation = fn.annotationEntries.find { it.shortName?.asString() == "Throws" }?.text?.trim(),
+            throwsAnnotation = fn.annotationEntries.filter { it.shortName?.asString() in listOf("Throws", "ThrowsChecked") }.joinToString(" ") { it.text.trim() },
             argsInterfaceFqn = typeFqn,
             clsFqn = methodCls.asString(),
             methodName = methodName,
