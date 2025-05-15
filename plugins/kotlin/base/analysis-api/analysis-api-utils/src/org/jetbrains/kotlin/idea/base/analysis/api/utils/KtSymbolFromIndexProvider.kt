@@ -39,12 +39,17 @@ class KtSymbolFromIndexProvider(
     private val project: Project
         get() = file.project
 
+    private fun keyFilter(nameFilter: (Name) -> Boolean): (String) -> Boolean = { name ->
+        val name = name.substringAfterLast('.')
+        nameFilter(Name.identifier(name))
+    }
+
     context(KaSession)
     private fun <T : PsiElement> T.isAcceptable(psiFilter: (T) -> Boolean): Boolean {
         if (!psiFilter(this)) return false
 
         if (kotlinFqName?.isExcludedFromAutoImport(project, file) == true) return false
-        
+
         if (this !is KtDeclaration) {
             // no more checks for non-kotlin elements
             return true
@@ -54,7 +59,7 @@ class KtSymbolFromIndexProvider(
             // filter out expect declarations outside of common modules
             return false
         }
-        
+
         if (isFromKotlinMetadataOrBuiltins()) {
             return false
         }
@@ -89,7 +94,7 @@ class KtSymbolFromIndexProvider(
         scope: GlobalSearchScope = analysisScope,
         psiFilter: (KtClassLikeDeclaration) -> Boolean = { true },
     ): Sequence<KaClassLikeSymbol> {
-        val keyFilter: (String) -> Boolean = { nameFilter(getShortName(it)) }
+        val keyFilter: (String) -> Boolean = keyFilter(nameFilter)
         val resolveExtensionScope = resolveExtensionScopeWithTopLevelDeclarations
 
         return getClassLikeSymbols(
@@ -126,7 +131,7 @@ class KtSymbolFromIndexProvider(
     ): Sequence<KaClassSymbol> = KotlinSubclassObjectNameIndex.getAllElements<KtObjectDeclaration>(
         project,
         scope,
-        keyFilter = { nameFilter(getShortName(it)) },
+        keyFilter = keyFilter(nameFilter),
     ) { it.isAcceptable(psiFilter) }
         .map { it.symbol }
 
@@ -138,7 +143,7 @@ class KtSymbolFromIndexProvider(
     ): Sequence<KaEnumEntrySymbol> = KotlinFullClassNameIndex.getAllElements<KtEnumEntry>(
         project = project,
         scope = scope,
-        keyFilter = { nameFilter(getShortName(it)) },
+        keyFilter = keyFilter(nameFilter),
     ) { it.isAcceptable(psiFilter) }
         .map { it.symbol }
 
@@ -199,7 +204,7 @@ class KtSymbolFromIndexProvider(
         index.getAllElements<KtCallableDeclaration>(
             project = project,
             scope = scope,
-            keyFilter = { nameFilter(getShortName(it)) },
+            keyFilter = keyFilter(nameFilter),
         ) { declaration ->
             declaration.isAcceptable(psiFilter)
                     && !declaration.isExtensionDeclaration()
@@ -296,7 +301,7 @@ class KtSymbolFromIndexProvider(
         helper.processAllElements(
             project = project,
             scope = scope,
-            filter = { nameFilter(getShortName(it)) },
+            filter = keyFilter(nameFilter),
             processor = processor,
         )
 
@@ -327,7 +332,7 @@ class KtSymbolFromIndexProvider(
         helper.processAllElements(
             project = project,
             scope = scope,
-            filter = { nameFilter(getShortName(it)) },
+            filter = keyFilter(nameFilter),
             processor = processor,
         )
 
@@ -428,9 +433,6 @@ class KtSymbolFromIndexProvider(
             .getPoint(project) // could have been ::lazySequence in this case
             .let { it as ExtensionPointImpl<PsiShortNamesCache> }
             .filterNot { it::class.java.name == "org.jetbrains.kotlin.idea.caches.KotlinShortNamesCache" }
-
-    private fun getShortName(fqName: String) = Name.identifier(fqName.substringAfterLast('.'))
-
 }
 
 private fun findAllNamesForTypes(
