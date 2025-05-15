@@ -14,7 +14,7 @@ common --@rules_jvm//:koltin_inc_threshold=0 --@rules_jvm//:java_inc_threshold=0
 
 # make sure you don't need to open file to read commpilation errors
 common --experimental_ui_max_stdouterr_bytes=-1
-common --experimental_convenience_symlinks=ignore
+common --symlink_prefix=/
 
 # disable deprecated WORKSPACE support
 common --noenable_workspace
