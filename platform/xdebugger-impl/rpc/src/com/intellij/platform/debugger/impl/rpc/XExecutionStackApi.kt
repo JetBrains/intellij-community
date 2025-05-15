@@ -2,6 +2,7 @@
 package com.intellij.platform.debugger.impl.rpc
 
 import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.XExecutionStackId
 import com.intellij.xdebugger.impl.rpc.XStackFrameId
 import fleet.rpc.RemoteApi
@@ -19,6 +20,12 @@ interface XExecutionStackApi : RemoteApi<Unit> {
   suspend fun computeStackFrames(executionStackId: XExecutionStackId, firstFrameIndex: Int): Flow<XStackFramesEvent>
 
   suspend fun computeVariables(xStackFrameId: XStackFrameId): Flow<XValueComputeChildrenEvent>
+
+  /**
+   * This method should be called only after [computeStackFrames], as the frame cannot be dropped until the previous frame is computed.
+   */
+  suspend fun canDrop(sessionId: XDebugSessionId, stackFrameId: XStackFrameId): Boolean
+  suspend fun dropFrame(sessionId: XDebugSessionId, stackFrameId: XStackFrameId)
 
   companion object {
     @JvmStatic

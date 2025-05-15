@@ -13,14 +13,7 @@ import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.platform.debugger.impl.rpc.XDebuggerEvaluatorDto
-import com.intellij.platform.debugger.impl.rpc.XStackFrameCaptionInfo
-import com.intellij.platform.debugger.impl.rpc.XStackFrameCustomBackgroundInfo
-import com.intellij.platform.debugger.impl.rpc.XStackFrameDto
-import com.intellij.platform.debugger.impl.rpc.XStackFramePresentation
-import com.intellij.platform.debugger.impl.rpc.XStackFramePresentationFragment
-import com.intellij.platform.debugger.impl.rpc.XStackFrameStringEqualityObject
-import com.intellij.platform.debugger.impl.rpc.toRpc
+import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.ui.ColoredTextContainer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.XSourcePosition
@@ -281,22 +274,6 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     val session = sessionId.findValue() ?: return
     withContext(Dispatchers.EDT) {
       session.setBreakpointMuted(muted)
-    }
-  }
-
-  override suspend fun canDrop(sessionId: XDebugSessionId, stackFrameId: XStackFrameId): Boolean {
-    val session = sessionId.findValue() ?: return false
-    val stack = stackFrameId.findValue() ?: return false
-    return withContext(Dispatchers.EDT) {
-      session.debugProcess.dropFrameHandler?.canDrop(stack.stackFrame) ?: false
-    }
-  }
-
-  override suspend fun dropFrame(sessionId: XDebugSessionId, stackFrameId: XStackFrameId) {
-    val session = sessionId.findValue() ?: return
-    val stack = stackFrameId.findValue() ?: return
-    withContext(Dispatchers.EDT) {
-      session.debugProcess.dropFrameHandler?.drop(stack.stackFrame)
     }
   }
 }
