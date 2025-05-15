@@ -39,7 +39,16 @@ class KotlinUsagesCountManager(project: Project): UsagesCountManagerBase<KtNamed
 
 object KotlinUsageCounterConfiguration: UsageCounterConfigurationBase<KtNamedDeclaration> {
   override fun countUsages(file: PsiFile, members: List<KtNamedDeclaration>, scope: SearchScope): Int {
-     return members.sumOf { usageCount(it, file, scope) }
+      var sum = 0
+      for (m in members) {
+          val count = usageCount(m, file, scope)
+          if (count == -1) {
+              // don't show sum if one was not actually calculated
+              return 0
+          }
+          sum += count
+      }
+     return sum
   }
 }
 
@@ -53,14 +62,12 @@ private fun usageCount(
     if (isCheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) {
         return 0
     } else if (isCheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) {
-        return 0
+        return -1
     }
     val count = AtomicInteger(0)
-    val processor = object : Processor<UsageInfo> {
-        override fun process(t: UsageInfo?): Boolean {
-            count.incrementAndGet()
-            return true
-        }
+    val processor = Processor<UsageInfo> {
+        count.incrementAndGet()
+        true
     }
     val project = file.project
     when (namedDeclaration) {
