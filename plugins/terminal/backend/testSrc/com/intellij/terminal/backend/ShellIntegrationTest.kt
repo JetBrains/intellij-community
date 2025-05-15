@@ -21,7 +21,6 @@ import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.reworked.util.TerminalTestUtil
 import org.jetbrains.plugins.terminal.reworked.util.ZshPS1Customizer
-import org.junit.Assert
 import org.junit.Assume
 import org.junit.Rule
 import org.junit.Test
@@ -187,8 +186,12 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
     }
 
     val commandFinishedEvent = events.find { it is TerminalCommandFinishedEvent }
-    assertThat(commandFinishedEvent).isNotNull
-    assertThat((commandFinishedEvent as TerminalCommandFinishedEvent).exitCode).isNotEqualTo(0)
+    assertThat(commandFinishedEvent)
+      .overridingErrorMessage { "Failed to find command finished event.\n${dumpTerminalState(events)}" }
+      .isNotNull
+    assertThat((commandFinishedEvent as TerminalCommandFinishedEvent).exitCode)
+      .overridingErrorMessage { "Expected exit code to be non-zero.\n${dumpTerminalState(events)}" }
+      .isNotEqualTo(0)
     Unit
   }
 
@@ -202,10 +205,14 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
       listOf(ZshPS1Customizer(ps1Suffix)),
       disposableRule.disposable
     )
+
     val events = startSessionAndCollectOutputEvents {}
-    val contentUpdatedEvents = events.filterIsInstance<TerminalContentUpdatedEvent>()
-    val suffixFound = contentUpdatedEvents.any { it.text.contains(ps1Suffix) }
-    Assert.assertTrue(contentUpdatedEvents.joinToString("\n") { it.text }, suffixFound)
+
+    val output = calculateResultingOutput(events)
+    assertThat(output)
+      .overridingErrorMessage { "Expected output to contain '$ps1Suffix'.\n${dumpTerminalState(events)}" }
+      .contains(ps1Suffix)
+    Unit
   }
 
   @Test
@@ -222,9 +229,13 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
     val envs = mapOf("ZDOTDIR" to dir.toString())
     val options = ShellStartupOptions.Builder().envVariables(envs).build()
     val events = startSessionAndCollectOutputEvents(options) {}
-    val contentUpdatedEvents = events.filterIsInstance<TerminalContentUpdatedEvent>()
-    val suffixFound = contentUpdatedEvents.any { it.text.contains("MY_PATH=path1:path2:path3") }
-    Assert.assertTrue(contentUpdatedEvents.joinToString("\n") { it.text }, suffixFound)
+
+    val textToFind = "MY_PATH=path1:path2:path3"
+    val output = calculateResultingOutput(events)
+    assertThat(output)
+      .overridingErrorMessage { "Expected output to contain '$textToFind'.\n${dumpTerminalState(events)}" }
+      .contains(textToFind)
+    Unit
   }
 
   /**
@@ -247,9 +258,11 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
     val envs = mapOf("ZDOTDIR" to dir.toString())
     val options = ShellStartupOptions.Builder().envVariables(envs).build()
     val events = startSessionAndCollectOutputEvents(options) {}
-    val output = calculateResultingOutput(events)
 
-    assertThat(output).doesNotContain(warningText)
+    val output = calculateResultingOutput(events)
+    assertThat(output)
+      .overridingErrorMessage { "Expected output to not contain '$warningText'.\n${dumpTerminalState(events)}" }
+      .doesNotContain(warningText)
     Unit
   }
 
@@ -267,9 +280,12 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
     val envs = mapOf("ZDOTDIR" to zshenvDir.toString())
     val options = ShellStartupOptions.Builder().envVariables(envs).build()
     val events = startSessionAndCollectOutputEvents(options) {}
-    val contentUpdatedEvents = events.filterIsInstance<TerminalContentUpdatedEvent>()
-    val found = contentUpdatedEvents.any { it.text.contains(msg) }
-    Assert.assertTrue(contentUpdatedEvents.joinToString("\n") { it.text }, found)
+
+    val output = calculateResultingOutput(events)
+    assertThat(output)
+      .overridingErrorMessage { "Expected output to contain '$msg'.\n${dumpTerminalState(events)}" }
+      .contains(msg)
+    Unit
   }
 
   /**
@@ -365,6 +381,16 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
     return outputModel.document.text
   }
 
+  private fun dumpTerminalState(events: List<TerminalOutputEvent>): String {
+    return """
+      |Output:
+      |${calculateResultingOutput(events)}
+      |-------------------------------------------------------------
+      |All events:
+      |${events.joinToString("\n")}
+      """.trimMargin()
+  }
+
   private fun assertSameEvents(
     actual: List<TerminalOutputEvent>,
     expected: List<TerminalOutputEvent>,
@@ -376,15 +402,13 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
     val errorMessage = {
       """
-        |
         |Expected:
         |${expected.asString()}
-        |
+        |-------------------------------------------------------------
         |But was:
         |${actual.asString()}
-        |
-        |All events:
-        |${eventsToLog.asString()}
+        |-------------------------------------------------------------
+        |${dumpTerminalState(eventsToLog)}
       """.trimMargin()
     }
 
