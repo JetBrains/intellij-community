@@ -10,10 +10,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.*;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.AnnotationUtil.*;
@@ -489,5 +486,23 @@ public abstract class NullableNotNullManager {
      * @return nullability
      */
     @Nullable Nullability getNullability(String annotation);
+
+    /**
+     * @param map from annotation qualified name to nullability
+     * @return a data holder implementation based on the provided map
+     */
+    static @NotNull NullabilityAnnotationDataHolder fromMap(@NotNull Map<String, Nullability> map) {
+      return new NullabilityAnnotationDataHolder() {
+        @Override
+        public Set<String> qualifiedNames() {
+          return map.keySet();
+        }
+  
+        @Override
+        public @Nullable Nullability getNullability(String annotation) {
+          return map.get(annotation);
+        }
+      };
+    }
   }
 }

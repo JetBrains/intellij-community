@@ -17,6 +17,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -142,16 +143,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
 
   @Override
   public @NotNull Optional<Nullability> getAnnotationNullability(String name) {
-    if (myNotNulls.contains(name)) {
-      return Optional.of(Nullability.NOT_NULL);
-    }
-    if (myNullables.contains(name)) {
-      return Optional.of(Nullability.NULLABLE);
-    }
-    if (myDefaultUnknowns.containsKey(name)) {
-      return Optional.of(Nullability.UNKNOWN);
-    }
-    return Optional.empty();
+    return Optional.ofNullable(getAllNullabilityAnnotationsWithNickNames().getNullability(name));
   }
 
   @Override
@@ -361,39 +353,38 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
 
   @Override
   protected @NotNull NullabilityAnnotationDataHolder getAllNullabilityAnnotationsWithNickNames() {
+    if (DumbService.isDumb(myProject)) {
+      // Searching for nullability nicknames is not available in the dumb mode
+      return NullabilityAnnotationDataHolder.fromMap(getNullabilityMap());
+    }
     return CachedValuesManager.getManager(myProject).getCachedValue(myProject, () -> {
-      Map<String, Nullability> result = new HashMap<>();
-      for (String qName : myDefaultAll) {
-        result.put(qName, null);
-      }
-      for (String qName : getNotNulls()) {
-        result.put(qName, Nullability.NOT_NULL);
-      }
-      for (String qName : getNullables()) {
-        result.put(qName, Nullability.NULLABLE);
-      }
-      for (String qName : myDefaultUnknowns.keySet()) {
-        result.put(qName, Nullability.UNKNOWN);
-      }
+      Map<String, Nullability> result = getNullabilityMap();
       for (PsiClass aClass : getAllNullabilityNickNames()) {
         String qName = aClass.getQualifiedName();
         if (qName != null) {
           result.putIfAbsent(qName, Jsr305Support.getNickNamedNullability(aClass));
         }
       }
-      NullabilityAnnotationDataHolder holder = new NullabilityAnnotationDataHolder() {
-        @Override
-        public Set<String> qualifiedNames() {
-          return result.keySet();
-        }
-
-        @Override
-        public @Nullable Nullability getNullability(String annotation) {
-          return result.get(annotation);
-        }
-      };
+      NullabilityAnnotationDataHolder holder = NullabilityAnnotationDataHolder.fromMap(result);
       return Result.create(holder, PsiModificationTracker.MODIFICATION_COUNT);
     });
+  }
+
+  private @NotNull Map<String, Nullability> getNullabilityMap() {
+    Map<String, Nullability> result = new HashMap<>();
+    for (String qName : myDefaultAll) {
+      result.put(qName, null);
+    }
+    for (String qName : getNotNulls()) {
+      result.put(qName, Nullability.NOT_NULL);
+    }
+    for (String qName : getNullables()) {
+      result.put(qName, Nullability.NULLABLE);
+    }
+    for (String qName : myDefaultUnknowns.keySet()) {
+      result.put(qName, Nullability.UNKNOWN);
+    }
+    return result;
   }
 
   @Override

@@ -179,4 +179,9 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     doTest();
   }
+  
+  public void testJsr305NicknameAsTypeAnnotation() {
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    doTest();
+  }
 }
