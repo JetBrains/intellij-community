@@ -25,8 +25,9 @@ import com.intellij.ui.JBColor
 import java.awt.Color
 import kotlin.sequences.generateSequence
 
-open class DefaultNotebookEditorAppearance(private val editor: Editor) : NotebookEditorAppearance,
-                                                                         NotebookEditorAppearanceSizes by DefaultNotebookEditorAppearanceSizes {
+open class DefaultNotebookEditorAppearance(
+  private val editor: Editor
+) : NotebookEditorAppearance, NotebookEditorAppearanceSizes by DefaultNotebookEditorAppearanceSizes {
 
   private val swapCellAndEditorBackgroundColor = AtomicBooleanProperty(
     Registry.`is`("jupyter.editor.swap.cell.and.editor.background", false)
@@ -130,12 +131,11 @@ open class DefaultNotebookEditorAppearance(private val editor: Editor) : Noteboo
 
   override fun getCellLeftLineWidth(editor: Editor): Int =
     when (editor.currentMode) {
-      NotebookEditorMode.EDIT -> EDIT_MODE_CELL_LEFT_LINE_WIDTH
-      NotebookEditorMode.COMMAND -> COMMAND_MODE_CELL_LEFT_LINE_WIDTH
+      NotebookEditorMode.EDIT -> editModeCellLeftLineWidth
+      NotebookEditorMode.COMMAND -> commandModeCellLeftLineWidth
     }
 
-  override fun getCellLeftLineHoverWidth(): Int =
-    COMMAND_MODE_CELL_LEFT_LINE_WIDTH
+  override fun getCellLeftLineHoverWidth(): Int = commandModeCellLeftLineWidth
 
   override fun shouldShowCellLineNumbers(): Boolean = true
 
