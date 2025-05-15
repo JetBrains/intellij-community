@@ -481,9 +481,16 @@ suspend fun <T> Query<T>.collect(f: suspend CoroutineScope.(T) -> Unit) {
 }
 
 /**
+ * DEPRECATED
+ * - for a state-query that never has more than one valid match at the same time ( query { } ) it is equivalent to Query.collect
+ * - for a query that can potentially have many valid matches (Entity.each()) it is almost definitely an error because only one of them will be processed
+ *
+ * If you want this behaviour for some inexplicable reason - use [asValuesFlow]
+ *
  * invokes [f] sequentially with each value of [Query] [Match]es
  * when new match arrives, the previous work is cancelled, see [Flow.collectLatest]
- * */
+ */
+@Deprecated(replaceWith = ReplaceWith("collect(f)", "fleet.kernel.rete.collect"), message = "its usage is either equivalent to .collect() or is a bug")
 suspend fun <T> Query<T>.collectLatest(f: suspend CoroutineScope.(T) -> Unit) {
   matchesFlow().collectLatestMatch(f)
 }
