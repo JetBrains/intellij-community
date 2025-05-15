@@ -100,7 +100,7 @@ object PyPackageInstallUtils {
     val packageSpecification = pythonPackageManager?.repositoryManager?.repositories?.firstOrNull()?.createPackageSpecification(packageName, version)
                                ?: return Result.failure(Exception("Could not find any repositories"))
 
-    return pythonPackageManager.updatePackage(packageSpecification)
+    return pythonPackageManager.updatePackages(packageSpecification)
   }
 
   suspend fun installPackage(

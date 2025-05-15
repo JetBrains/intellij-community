@@ -136,7 +136,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
 
   suspend fun updatePackage(specification: PythonRepositoryPackageSpecification) {
     val result = runPackagingOperationOrShowErrorDialog(manager.sdk, message("python.packaging.notification.update.failed", specification.name), specification.name) {
-      manager.updatePackage(specification)
+      manager.updatePackages(specification)
     }
 
     if (result.isSuccess) {

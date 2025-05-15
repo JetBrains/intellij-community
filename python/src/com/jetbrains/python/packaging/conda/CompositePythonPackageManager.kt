@@ -57,7 +57,7 @@ internal class CompositePythonPackageManager(
   override suspend fun updatePackageCommand(specification: PythonRepositoryPackageSpecification): Result<Unit> {
     return processPackageOperation(
       errorMessageKey = "python.packaging.composite.update.package.error",
-      operation = { it.updatePackage(specification) },
+      operation = { it.updatePackageCommand(specification) },
       name = specification.name
     )
   }
@@ -65,7 +65,7 @@ internal class CompositePythonPackageManager(
   override suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<Unit> {
     return processPackageOperation(
       errorMessageKey = "python.packaging.composite.uninstall.package.error",
-      operation = { it.uninstallPackage(pkg) },
+      operation = { it.uninstallPackageCommand(pkg) },
       name = pkg.name
     )
   }

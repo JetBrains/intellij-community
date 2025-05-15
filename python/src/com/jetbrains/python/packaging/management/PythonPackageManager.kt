@@ -68,12 +68,29 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
       installPackagesSilently(installRequests, options)
   }
 
-  suspend fun updatePackage(specification: PythonRepositoryPackageSpecification): Result<List<PythonPackage>> {
-    updatePackageCommand(specification).onFailure {
-      return Result.failure(it)
+  @ApiStatus.Internal
+  suspend fun updatePackages(vararg packages: PythonRepositoryPackageSpecification): Result<List<PythonPackage>> {
+    val progressTitle = if (packages.size > 1) {
+      PyBundle.message("python.packaging.updating.packages")
     }
-    refreshPaths()
-    return reloadPackages()
+    else {
+      PyBundle.message("python.packaging.updating.package", packages.first().name)
+    }
+
+    return withBackgroundProgress(project = project, progressTitle, cancellable = true) {
+      reportSequentialProgress(packages.size) { reporter ->
+        packages.forEach { specification ->
+          reporter.itemStep(PyBundle.message("python.packaging.updating.package", specification.name))
+          runCatching {
+            updatePackageCommand(specification)
+          }.onFailure {
+            return@withBackgroundProgress Result.failure(it)
+          }
+        }
+      }
+
+      reloadPackages()
+    }
   }
 
   suspend fun uninstallPackage(pkg: PythonPackage): Result<List<PythonPackage>> {
@@ -109,11 +126,16 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
 
   fun packageExists(pkg: PythonPackage): Boolean = installedPackages.any { it.name.equals(pkg.name, ignoreCase = true) }
 
+  @ApiStatus.Internal
   abstract suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): Result<Unit>
-  protected abstract suspend fun updatePackageCommand(specification: PythonRepositoryPackageSpecification): Result<Unit>
-  protected abstract suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<Unit>
-  protected abstract suspend fun reloadPackagesCommand(): Result<List<PythonPackage>>
+  @ApiStatus.Internal
+  abstract suspend fun updatePackageCommand(specification: PythonRepositoryPackageSpecification): Result<Unit>
 
+  @ApiStatus.Internal
+  abstract suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<Unit>
+
+  @ApiStatus.Internal
+  abstract suspend fun reloadPackagesCommand(): Result<List<PythonPackage>>
   @ApiStatus.Internal
   abstract suspend fun loadOutdatedPackagesCommand(): Result<List<PythonOutdatedPackage>>
 
