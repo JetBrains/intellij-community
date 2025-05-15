@@ -9,5 +9,38 @@
     <registryKey key="markdown.open.link.fallback"
                  defaultValue="false"
                  description="Should fallback to Markdown link opening implementation before the split."/>
+
+    <typedHandler implementation="com.intellij.markdown.frontend.editor.tables.handlers.MarkdownTableTypedHandler"/>
+
+    <backspaceHandlerDelegate implementation="com.intellij.markdown.frontend.editor.tables.handlers.MarkdownTableBackspaceHandler"/>
+
+    <enterHandlerDelegate implementation="com.intellij.markdown.frontend.editor.tables.handlers.MarkdownTableEnterHandler"/>
+
+    <!-- MarkdownColorSettingsPage is left in the shared module since it's used in the MDX plugin -->
+    <colorSettingsPage implementation="org.intellij.plugins.markdown.highlighting.MarkdownColorSettingsPage"/>
+
+    <!-- MarkdownSyntaxHighlighter is left in the shared module since it's used in the Zeppelin and MDX plugins -->
+    <syntaxHighlighter key="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownSyntaxHighlighter"/>
+
+    <typedHandler implementation="com.intellij.markdown.frontend.editor.MarkdownTypedHandler"/>
+
+    <annotator language="Markdown" implementationClass="com.intellij.markdown.frontend.highlighting.MarkdownHighlightingAnnotator"/>
+
+    <lang.foldingBuilder language="Markdown" implementationClass="com.intellij.markdown.frontend.folding.MarkdownFoldingBuilder"/>
+
+    <enterHandlerDelegate id="MarkdownEnterHandler" implementation="com.intellij.markdown.frontend.editor.MarkdownEnterHandler"/>
+
+    <extendWordSelectionHandler implementation="com.intellij.markdown.frontend.editor.MarkdownCodeSpanExtendWordSelectionHandler"/>
+
+    <typedHandler implementation="com.intellij.markdown.frontend.editor.lists.MarkdownListItemCreatingTypedHandlerDelegate"/>
+
+    <enterHandlerDelegate implementation="com.intellij.markdown.frontend.editor.lists.MarkdownListEnterHandlerDelegate"
+                          order="before MarkdownEnterHandler"/> <!-- to be able to handle Enter inside indent -->
+
+    <backspaceHandlerDelegate implementation="com.intellij.markdown.frontend.editor.lists.MarkdownListMarkerBackspaceHandlerDelegate"/>
+
+    <backspaceHandlerDelegate implementation="com.intellij.markdown.frontend.editor.lists.MarkdownListIndentBackspaceHandlerDelegate"
+                              order="before SmartIndentingBackspaceHandler"/>
+
   </extensions>
 </idea-plugin>

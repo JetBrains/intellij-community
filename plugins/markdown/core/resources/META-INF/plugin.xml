@@ -72,9 +72,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <typedHandler implementation="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableTypedHandler"/>
-    <backspaceHandlerDelegate implementation="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableBackspaceHandler"/>
-    <enterHandlerDelegate implementation="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableEnterHandler"/>
     <editorActionHandler action="EditorTab" implementationClass="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableTabHandler$Tab"/>
     <editorActionHandler action="EditorUnindentSelection" implementationClass="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableTabHandler$ShiftTab"/>
     <editorActionHandler action="EditorStartNewLine" implementationClass="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableShiftEnterHandler"/>
@@ -156,18 +153,13 @@
     <lang.elementManipulator forClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownFrontMatterHeader"
                              implementationClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownFrontMatterHeader$Manipulator"/>
 
-    <colorSettingsPage implementation="org.intellij.plugins.markdown.highlighting.MarkdownColorSettingsPage"/>
-    <syntaxHighlighter key="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownSyntaxHighlighter"/>
     <additionalTextAttributes scheme="Default" file="colorSchemes/MarkdownDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/MarkdownDarcula.xml"/>
 
     <braceMatcher filetype="Markdown" implementationClass="org.intellij.plugins.markdown.braces.MarkdownBraceMatcher"/>
     <quoteHandler fileType="Markdown" className="org.intellij.plugins.markdown.braces.MarkdownQuoteHandler"/>
-    <typedHandler implementation="org.intellij.plugins.markdown.editor.MarkdownTypedHandler"/>
 
     <bidiRegionsSeparator language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownBidiRegionsSeparator"/>
-
-    <annotator language="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownHighlightingAnnotator"/>
 
     <runLineMarkerContributor language="Markdown" implementationClass="org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunLineMarkersProvider"/>
 
@@ -228,8 +220,6 @@
                      level="WARNING"
                      implementationClass="org.intellij.plugins.markdown.lang.references.paths.MarkdownUnresolvedFileReferenceInspection"/>
 
-    <lang.foldingBuilder language="Markdown" implementationClass="org.intellij.plugins.markdown.folding.MarkdownFoldingBuilder"/>
-
     <stubIndex implementation="org.intellij.plugins.markdown.lang.index.HeaderTextIndex"/>
     <stubElementTypeHolder class="org.intellij.plugins.markdown.lang.MarkdownStubElementTypes"/>
     <stubIndex implementation="org.intellij.plugins.markdown.lang.index.HeaderAnchorIndex"/>
@@ -244,22 +234,10 @@
 
     <todoIndexer filetype="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownTodoIndexer"/>
     <indexPatternBuilder implementation="org.intellij.plugins.markdown.highlighting.MarkdownIndexPatternBuilder"/>
-    <enterHandlerDelegate id="MarkdownEnterHandler"
-                          implementation="org.intellij.plugins.markdown.editor.MarkdownEnterHandler"/>
 
     <daemon.highlightInfoFilter implementation="org.intellij.plugins.markdown.injection.CodeFenceHighlightInfoFilter"/>
 
-    <extendWordSelectionHandler implementation="org.intellij.plugins.markdown.editor.MarkdownCodeSpanExtendWordSelectionHandler"/>
-
-    <typedHandler implementation="org.intellij.plugins.markdown.editor.lists.MarkdownListItemCreatingTypedHandlerDelegate"/>
-
     <lineIndentProvider implementation="org.intellij.plugins.markdown.editor.lists.MarkdownListIndentProvider"/>
-    <enterHandlerDelegate implementation="org.intellij.plugins.markdown.editor.lists.MarkdownListEnterHandlerDelegate"
-                          order="before MarkdownEnterHandler"/> <!-- to be able to handle Enter inside indent -->
-
-    <backspaceHandlerDelegate implementation="org.intellij.plugins.markdown.editor.lists.MarkdownListMarkerBackspaceHandlerDelegate"/>
-    <backspaceHandlerDelegate implementation="org.intellij.plugins.markdown.editor.lists.MarkdownListIndentBackspaceHandlerDelegate"
-                              order="before SmartIndentingBackspaceHandler"/>
 
     <editorActionHandler action="EditorTab" implementationClass="org.intellij.plugins.markdown.editor.lists.MarkdownListItemTabHandler"/>
     <editorActionHandler action="EditorIndentSelection"
@@ -368,6 +346,8 @@
     <advancedSetting id="markdown.squash.multiple.dashes.in.header.anchors" default="false" groupKey="markdown.settings.name"/>
 
     <statistics.counterUsagesCollector implementationClass="org.intellij.plugins.markdown.MarkdownUsageCollector"/>
+
+    <editor.rd.localSupport filetype="Markdown"/>
   </extensions>
 
   <applicationListeners>

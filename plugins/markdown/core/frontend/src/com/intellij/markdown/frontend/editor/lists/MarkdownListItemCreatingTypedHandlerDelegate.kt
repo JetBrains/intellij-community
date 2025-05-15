@@ -1,4 +1,4 @@
-package org.intellij.plugins.markdown.editor.lists
+package com.intellij.markdown.frontend.editor.lists
 
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate
 import com.intellij.openapi.editor.Editor

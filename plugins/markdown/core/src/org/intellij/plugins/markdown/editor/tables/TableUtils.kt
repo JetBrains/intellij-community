@@ -165,7 +165,8 @@ object TableUtils {
     return false
   }
 
-  internal fun isFormattingOnTypeEnabledForTables(file: PsiFile): Boolean {
+  @ApiStatus.Internal
+  fun isFormattingOnTypeEnabledForTables(file: PsiFile): Boolean {
     return MarkdownCodeInsightSettings.getInstance().state.reformatTablesOnType && file !in CodeStyle.getSettings(file).excludedFiles
   }
 

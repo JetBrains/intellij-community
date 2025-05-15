@@ -19,8 +19,10 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionPlaces
+import org.jetbrains.annotations.ApiStatus
 
-internal class GenerateTableOfContentsAction: AnAction() {
+@ApiStatus.Internal
+class GenerateTableOfContentsAction: AnAction() {
   init {
     addTextOverride(MarkdownActionPlaces.INSERT_POPUP) {
       MarkdownBundle.message("action.Markdown.GenerateTableOfContents.insert.popup.text")

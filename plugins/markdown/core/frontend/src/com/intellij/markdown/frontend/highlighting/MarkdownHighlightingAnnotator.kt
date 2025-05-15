@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.plugins.markdown.highlighting
+package com.intellij.markdown.frontend.highlighting
 
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
@@ -13,6 +13,8 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.OuterLanguageElementType
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.elementType
+import org.intellij.plugins.markdown.highlighting.MarkdownHighlighterColors
+import org.intellij.plugins.markdown.highlighting.MarkdownSyntaxHighlighter
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
@@ -69,7 +71,7 @@ internal class MarkdownHighlightingAnnotator : Annotator, DumbAware {
 
   /**
    * Traverse element's subtree and create annotations corresponding only to Markdown content,
-   * ignoring nodes which might be of [OuterLanguageElementType].
+   * ignoring nodes which might be of [com.intellij.psi.tree.OuterLanguageElementType].
    * Applying for leaf elements would result in a guarantee of non-overlapping ranges.
    */
   private fun PsiElement.traverseAndCreateAnnotationsForContent(holder: AnnotationHolder, textAttributesKey: TextAttributesKey) {
@@ -86,7 +88,7 @@ internal class MarkdownHighlightingAnnotator : Annotator, DumbAware {
       }
     })
     /**
-     * If an original sequence was separated by [OuterLanguageElementType]s, then there are several ranges.
+     * If an original sequence was separated by [com.intellij.psi.tree.OuterLanguageElementType]s, then there are several ranges.
      * In other cases, the result contains one element.
      */
     val mergedRanges = mergeRanges(contentRanges)

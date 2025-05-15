@@ -13,12 +13,14 @@ import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAtLine
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * This is a base class for classes, handling indenting/unindenting of list items.
  * It collects selected items (or the ones the carets are inside) and calls [doIndentUnindent] and [updateNumbering] on them one by one.
  */
-internal abstract class ListItemIndentUnindentHandlerBase(private val baseHandler: EditorActionHandler?) : EditorWriteActionHandler.ForEachCaret() {
+@ApiStatus.Internal
+abstract class ListItemIndentUnindentHandlerBase(private val baseHandler: EditorActionHandler?) : EditorWriteActionHandler.ForEachCaret() {
 
   override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean =
     baseHandler?.isEnabled(editor, caret, dataContext) == true
