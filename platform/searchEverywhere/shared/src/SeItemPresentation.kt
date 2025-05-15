@@ -13,7 +13,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.codeStyle.MinusculeMatcher
-import com.intellij.ui.SimpleTextAttributes
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls

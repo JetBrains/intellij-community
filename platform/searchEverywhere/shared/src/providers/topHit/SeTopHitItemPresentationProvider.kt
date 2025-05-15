@@ -14,7 +14,10 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SeActionItemPresentation
+import com.intellij.platform.searchEverywhere.SeItemPresentation
+import com.intellij.platform.searchEverywhere.SeOptionActionItemPresentation
+import com.intellij.platform.searchEverywhere.SeSimpleItemPresentation
 import com.intellij.ui.Changeable
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.scale.JBUIScale

@@ -3,8 +3,7 @@ package com.intellij.platform.searchEverywhere.frontend.tabs.text
 
 import com.intellij.find.impl.TextSearchListAgnosticRenderer
 import com.intellij.find.impl.UsagePresentation
-import com.intellij.ide.ui.colors.color
-import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.ide.ui.textChunk
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.platform.searchEverywhere.SeTextSearchItemPresentation
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListItemRow
@@ -12,7 +11,6 @@ import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListRow
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.ui.popup.list.SelectablePanel.Companion.wrap
-import com.intellij.usages.TextChunk
 import com.intellij.util.containers.toArray
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -34,7 +32,7 @@ class SeTextSearchItemPresentationRenderer {
     }
 
     private fun SeTextSearchItemPresentation.asUsagePresentation(): UsagePresentation =
-      UsagePresentation(textChunks.map { it.toTextChunk() }.toArray(emptyArray()), backgroundColor, fileString)
+      UsagePresentation(textChunks.map { it.textChunk() }.toArray(emptyArray()), backgroundColor, fileString)
 
     override fun getListCellRendererComponent(
       list: JList<out SeResultListRow>?,

@@ -7,9 +7,9 @@ import com.intellij.find.findInProject.FindInProjectManager
 import com.intellij.find.impl.FindInProjectUtil
 import com.intellij.find.impl.getPresentableFilePath
 import com.intellij.find.replaceInProject.ReplaceInProjectManager
-import com.intellij.ide.ui.SerializableTextChunk
 import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.ui.icons.rpcId
+import com.intellij.ide.ui.toSerializableTextChunk
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
@@ -69,8 +69,7 @@ internal class FindRemoteApiImpl : FindRemoteApi {
           adapter.updateCachedPresentation()
           previousResult.set(adapter)
 
-          val textChunks = adapter.text.map {
-            SerializableTextChunk(it.text, it.attributes)
+          val textChunks = adapter.text.map {it.toSerializableTextChunk()
           }
           val bgColor = VfsPresentationUtil.getFileBackgroundColor(project, virtualFile)?.rpcId()
           val presentablePath = getPresentableFilePath(project, scope, virtualFile)

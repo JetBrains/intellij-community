@@ -48,5 +48,6 @@
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.rpc" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
+    <orderEntry type="module" module-name="intellij.platform.usageView" />
   </component>
 </module>
