@@ -8,10 +8,13 @@ import com.intellij.util.Processor
 import com.intellij.util.containers.SortedList
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
+import com.jetbrains.python.codeInsight.typing.isProtocol
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyKnownDecoratorUtil
 import com.jetbrains.python.psi.PyUtil
+import com.jetbrains.python.psi.impl.PyClassImpl
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
@@ -48,28 +51,38 @@ class PyOverloadsInspection : PyInspection() {
     }
 
     private fun processSameNameFunctions(owner: ScopeOwner, functions: List<PyFunction>) {
-      if (functions.find { PyiUtil.isOverload(it, myTypeEvalContext) } == null) return
+      val (overloads, implementations) = functions.partition { PyiUtil.isOverload(it, myTypeEvalContext) }
 
-      val implementation = functions.lastOrNull { !PyiUtil.isOverload(it, myTypeEvalContext) }
+      if (overloads.isEmpty()) return
 
-      if (implementation == null) {
-        registerProblem(functions.first().nameIdentifier, if (owner is PyClass) {
-          PyPsiBundle.message("INSP.overloads.series.overload.decorated.methods.should.always.be.followed.by.implementation")
+      var requiresImplementation = true
+      if (owner is PyClass) {
+        if (isProtocol(owner, myTypeEvalContext)) {
+          requiresImplementation = false
         }
         else {
-          PyPsiBundle.message("INSP.overloads.series.overload.decorated.functions.should.always.be.followed.by.implementation")
-        })
+          if (PyClassImpl.canHaveAbstractMethods(owner, myTypeEvalContext)) {
+            if (overloads.all { PyKnownDecoratorUtil.hasAbstractDecorator(it, myTypeEvalContext) }) {
+              requiresImplementation = false
+            }
+          }
+        }
       }
-      else {
-        if (implementation != functions.last()) {
-          registerProblem(functions.last().nameIdentifier, if (owner is PyClass) {
+
+      val implementation = implementations.lastOrNull()
+      if (requiresImplementation) {
+        if (implementation !== functions.last()) {
+          val problemElement = if (implementation == null) functions.first() else functions.last()
+          registerProblem(problemElement.nameIdentifier, if (owner is PyClass) {
             PyPsiBundle.message("INSP.overloads.series.overload.decorated.methods.should.always.be.followed.by.implementation")
           }
           else {
             PyPsiBundle.message("INSP.overloads.series.overload.decorated.functions.should.always.be.followed.by.implementation")
           })
         }
+      }
 
+      if (implementation != null) {
         functions
           .asSequence()
           .filter { isIncompatibleOverload(implementation, it) }
