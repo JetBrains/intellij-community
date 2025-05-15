@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.configurable
 
 import com.intellij.icons.AllIcons
@@ -43,7 +43,7 @@ import javax.swing.*
 import javax.swing.table.TableCellEditor
 import javax.swing.table.TableCellRenderer
 
-class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), Disposable {
+internal class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), Disposable {
   private val POSTPONE_MAPPINGS_LOADING_PANEL = ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
 
   private val isEditingDisabled = project.isDefault

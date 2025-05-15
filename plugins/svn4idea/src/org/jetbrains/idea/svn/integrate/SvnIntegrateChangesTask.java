@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.configurationStore.StoreReloadManager;
@@ -110,7 +110,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
       while (true) {
         doMerge();
 
-        RefreshVFsSynchronously.updateAllChanged(myRecentlyUpdatedFiles);
+        RefreshVFsSynchronously.INSTANCE.updateAllChanged(myRecentlyUpdatedFiles);
         indicator.setText(VcsBundle.message("progress.text.updating.done"));
 
         if (myResolveWorker.needsInteraction(myRecentlyUpdatedFiles) || (! myMerger.hasNext()) ||

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs;
 
 import com.intellij.dvcs.push.PushSupport;
@@ -30,7 +30,6 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -79,8 +78,7 @@ public final class DvcsUtil {
   }
 
   public static @NotNull @Unmodifiable List<VirtualFile> findVirtualFilesWithRefresh(@NotNull List<? extends File> files) {
-    RefreshVFsSynchronously.refreshFiles(files);
-    return ContainerUtil.mapNotNull(files, file -> VfsUtil.findFileByIoFile(file, false));
+    return RefreshVFsSynchronously.INSTANCE.findVirtualFilesWithRefresh(files);
   }
 
   public static @NlsSafe @NotNull String getShortRepositoryName(@NotNull Repository repository) {

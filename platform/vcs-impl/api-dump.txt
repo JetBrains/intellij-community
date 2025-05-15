@@ -3438,18 +3438,6 @@ f:com.intellij.openapi.vcs.configurable.VcsContentAnnotationConfigurable
 - getDisplayName():java.lang.String
 - isModified():Z
 - reset():V
-f:com.intellij.openapi.vcs.configurable.VcsDirectoryConfigurationPanel
-- javax.swing.JPanel
-- com.intellij.openapi.Disposable
-- sf:Companion:com.intellij.openapi.vcs.configurable.VcsDirectoryConfigurationPanel$Companion
-- <init>(com.intellij.openapi.project.Project):V
-- f:apply():V
-- sf:buildVcsesComboBox(com.intellij.openapi.project.Project):com.intellij.openapi.ui.ComboBox
-- dispose():V
-- f:isModified():Z
-- f:reset():V
-f:com.intellij.openapi.vcs.configurable.VcsDirectoryConfigurationPanel$Companion
-- f:buildVcsesComboBox(com.intellij.openapi.project.Project):com.intellij.openapi.ui.ComboBox
 a:com.intellij.openapi.vcs.configurable.VcsOptionsTopHitProviderBase
 - com.intellij.ide.ui.OptionsSearchTopHitProvider$ProjectLevelProvider
 - <init>():V
@@ -4129,15 +4117,18 @@ c:com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 - s:showOverVersionControlView(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.ui.MessageType):V
 a:com.intellij.openapi.vcs.update.AbstractCommonUpdateAction
 - com.intellij.openapi.project.DumbAwareAction
+- sf:Companion:com.intellij.openapi.vcs.update.AbstractCommonUpdateAction$Companion
 - p:<init>(com.intellij.openapi.vcs.update.ActionInfo,com.intellij.openapi.vcs.update.ScopeInfo,Z):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - pa:filterRootsBeforeAction():Z
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- getConfigurableToEnvMap(com.intellij.openapi.project.Project):java.util.LinkedHashMap
+- f:getConfigurableToEnvMap(com.intellij.openapi.project.Project):java.util.LinkedHashMap
 - p:isShowOptions(com.intellij.openapi.project.Project):Z
 - p:onSuccess():V
-- s:showsCustomNotification(java.util.Collection):Z
+- sf:showsCustomNotification(java.util.Collection):Z
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.openapi.vcs.update.AbstractCommonUpdateAction$Companion
+- f:showsCustomNotification(java.util.Collection):Z
 com.intellij.openapi.vcs.update.ActionInfo
 - sf:INTEGRATE:com.intellij.openapi.vcs.update.ActionInfo
 - sf:STATUS:com.intellij.openapi.vcs.update.ActionInfo
@@ -4162,17 +4153,6 @@ f:com.intellij.openapi.vcs.update.FilePathChange$Simple
 - <init>(com.intellij.openapi.vcs.FilePath,com.intellij.openapi.vcs.FilePath):V
 - getAfterPath():com.intellij.openapi.vcs.FilePath
 - getBeforePath():com.intellij.openapi.vcs.FilePath
-f:com.intellij.openapi.vcs.update.RefreshVFsSynchronously
-- sf:INSTANCE:com.intellij.openapi.vcs.update.RefreshVFsSynchronously
-- f:refresh(java.util.Collection,Z):V
-- bs:refresh$default(com.intellij.openapi.vcs.update.RefreshVFsSynchronously,java.util.Collection,Z,I,java.lang.Object):V
-- sf:refreshFiles(java.util.Collection):V
-- sf:refreshVirtualFiles(java.util.Collection):V
-- sf:refreshVirtualFilesRecursive(java.util.Collection):V
-- sf:trace(java.lang.String):V
-- sf:updateAllChanged(com.intellij.openapi.vcs.update.UpdatedFiles):V
-- sf:updateChanges(java.util.Collection):V
-- sf:updateChangesForRollback(java.util.List):V
 f:com.intellij.openapi.vcs.update.RestoreUpdateTree
 - com.intellij.openapi.components.PersistentStateComponent
 - sf:Companion:com.intellij.openapi.vcs.update.RestoreUpdateTree$Companion
