@@ -20,7 +20,11 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.eel.fs.createTemporaryFile
+import com.intellij.platform.eel.getOrThrow
+import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.task.*
 import com.intellij.task.TaskRunnerResults.SUCCESS
 import com.intellij.util.text.nullize
@@ -36,9 +40,11 @@ import org.jetbrains.plugins.gradle.service.task.GradleTaskManager.*
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
-import java.io.File
 import java.io.IOException
+import java.nio.file.Path
 import kotlin.io.path.Path
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.readLines
 
 class GradleProjectTaskRunner : ProjectTaskRunner() {
 
@@ -52,13 +58,11 @@ class GradleProjectTaskRunner : ProjectTaskRunner() {
   }
 
   private suspend fun run(project: Project, context: ProjectTaskContext, tasks: List<ProjectTask>) {
-    val taskOutputFile = if (context.isCollectionOfGeneratedFilesEnabled) createTaskOutputFile() else null
+    val taskOutputEelPath = if (context.isCollectionOfGeneratedFilesEnabled) createTaskOutputFile(project) else null
+    val taskOutputPath = taskOutputEelPath?.asNioPath()
     try {
-      val hotswapDetectionInitScript = taskOutputFile?.let {
-        loadHotswapDetectionInitScript(
-          GradleImprovedHotswapDetection.isEnabled(),
-          FileUtil.toCanonicalPath(taskOutputFile.absolutePath)
-        )
+      val hotswapDetectionInitScript = taskOutputEelPath?.let {
+        loadHotswapDetectionInitScript(GradleImprovedHotswapDetection.isEnabled(), it)
       }
 
       val settings = TasksExecutionSettingsBuilder(tasks)
@@ -104,10 +108,10 @@ class GradleProjectTaskRunner : ProjectTaskRunner() {
       }
 
       if (GradleImprovedHotswapDetection.isEnabled()) {
-        GradleImprovedHotswapDetection.processInitScriptOutput(context, taskOutputFile)
+        GradleImprovedHotswapDetection.processInitScriptOutput(context, taskOutputPath)
       }
       else {
-        val affectedRoots = getAffectedOutputRoots(settings, taskOutputFile)
+        val affectedRoots = getAffectedOutputRoots(settings, taskOutputPath)
         if (!affectedRoots.isEmpty()) {
           context.addDirtyOutputPathsProvider { affectedRoots }
         }
@@ -117,15 +121,18 @@ class GradleProjectTaskRunner : ProjectTaskRunner() {
       }
     }
     finally {
-      if (taskOutputFile != null) {
-        FileUtil.delete(taskOutputFile)
-      }
+      taskOutputPath?.deleteIfExists()
     }
   }
 
-  private fun createTaskOutputFile(): File? {
+  private suspend fun createTaskOutputFile(project: Project): EelPath? {
     try {
-      return FileUtil.createTempFile("output", ".paths", true)
+      val eel = project.getEelDescriptor().upgrade()
+      return eel.fs.createTemporaryFile()
+        .prefix("output")
+        .suffix(".paths")
+        .deleteOnExit(true)
+        .getOrThrow()
     }
     catch (e: IOException) {
       LOG.warn("Can not create temp file to collect Gradle tasks output paths", e)
@@ -133,11 +140,10 @@ class GradleProjectTaskRunner : ProjectTaskRunner() {
     return null
   }
 
-  private fun getAffectedOutputRoots(settings: TasksExecutionSettingsBuilder, outputPathsFile: File?): Set<String> {
+  private fun getAffectedOutputRoots(settings: TasksExecutionSettingsBuilder, outputPathsFile: Path?): Set<String> {
     if (outputPathsFile != null) {
       try {
-        return FileUtil.loadLines(outputPathsFile)
-          .mapNotNullTo(LinkedHashSet()) { it.trim().nullize() }
+        return outputPathsFile.readLines().mapNotNullTo(LinkedHashSet()) { it.trim().nullize() }
       }
       catch (e: IOException) {
         LOG.warn("Can not load temp file with collected Gradle tasks output paths", e)

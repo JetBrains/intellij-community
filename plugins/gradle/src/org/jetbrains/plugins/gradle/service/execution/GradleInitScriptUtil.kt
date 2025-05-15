@@ -223,7 +223,7 @@ fun loadJvmOptionsInitScript(
 @ApiStatus.Internal
 fun loadHotswapDetectionInitScript(
   isImprovedHotswapDetectionEnabled: Boolean,
-  outputPath: String,
+  outputFile: EelPath,
 ): List<VersionSpecificInitScript> {
   return listOf(
     LazyVersionSpecificInitScript(
@@ -233,7 +233,7 @@ fun loadHotswapDetectionInitScript(
         joinInitScripts(
           loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/projectTaskRunner/ImprovedHotswapDetectionUtils.gradle"),
           loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/projectTaskRunner/ImprovedHotswapDetectionInit.gradle", mapOf(
-            "OUTPUT_PATH" to outputPath.toGroovyStringLiteral(),
+            "OUTPUT_PATH" to outputFile.toString().toGroovyStringLiteral(),
           ))
         )
       }
@@ -245,7 +245,7 @@ fun loadHotswapDetectionInitScript(
         joinInitScripts(
           loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/projectTaskRunner/ImprovedHotswapDetectionUtils.gradle"),
           loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/projectTaskRunner/ImprovedHotswapDetectionUsingServiceInit.gradle", mapOf(
-            "OUTPUT_PATH" to outputPath.toGroovyStringLiteral(),
+            "OUTPUT_PATH" to outputFile.toString().toGroovyStringLiteral(),
           ))
         )
       }
@@ -255,7 +255,7 @@ fun loadHotswapDetectionInitScript(
       isApplicable = { !isImprovedHotswapDetectionEnabled && GradleVersionUtil.isGradleOlderThan(it, "6.8") },
       scriptSupplier = {
         loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/projectTaskRunner/HotswapDetectionInit.gradle", mapOf(
-          "OUTPUT_PATH" to outputPath.toGroovyStringLiteral(),
+          "OUTPUT_PATH" to outputFile.toString().toGroovyStringLiteral(),
         ))
       }
     ),
@@ -264,7 +264,7 @@ fun loadHotswapDetectionInitScript(
       isApplicable = { !isImprovedHotswapDetectionEnabled && GradleVersionUtil.isGradleAtLeast(it, "6.8") },
       scriptSupplier = {
         loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/projectTaskRunner/HotswapDetectionUsingServiceInit.gradle", mapOf(
-          "OUTPUT_PATH" to outputPath.toGroovyStringLiteral(),
+          "OUTPUT_PATH" to outputFile.toString().toGroovyStringLiteral(),
         ))
       }
     )

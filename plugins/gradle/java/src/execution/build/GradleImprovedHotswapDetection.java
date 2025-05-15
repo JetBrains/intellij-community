@@ -7,7 +7,7 @@ import com.intellij.task.ProjectTaskContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -19,8 +19,8 @@ public final class GradleImprovedHotswapDetection {
     // static class cannot be constructed constructor
   }
 
-  public static void processInitScriptOutput(ProjectTaskContext context, @Nullable File outputPathsFile) {
-    if (outputPathsFile == null || !context.isCollectionOfGeneratedFilesEnabled()) {
+  public static void processInitScriptOutput(ProjectTaskContext context, @Nullable Path outputPathsFile) {
+    if (outputPathsFile == null) {
       return;
     }
 
