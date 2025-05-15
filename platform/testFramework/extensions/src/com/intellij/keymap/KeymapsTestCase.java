@@ -13,6 +13,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
    * mentioned actions will never be enabled in the same context. Otherwise, users may get unexpected behavior when they try to use that
    * shortcut.
    */
+  // @formatter:off
   private static final Map<String, String[][]> DEFAULT_DUPLICATES = Map.ofEntries(
     Map.entry("$default", new String[][]{
       {"ADD",                      "ExpandTreeNode", "Graph.ZoomIn"},
@@ -38,7 +39,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"SUBTRACT",                 "CollapseTreeNode", "Graph.ZoomOut"},
       {"TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection",
                                    "EditorTab", "ExpandLiveTemplateByTab", "BraceOrQuoteOut", "SplitChooser.NextWindow", "InsertInlineCompletionAction",
-                                   "Terminal.CommandCompletion", "CodeFloatingToolbar.GotoNextMenu", "AIAssistant.Editor.AcceptOneLineCompletion", 
+                                   "Terminal.CommandCompletion", "CodeFloatingToolbar.GotoNextMenu", "AIAssistant.Editor.AcceptOneLineCompletion",
                                    "InlinePromptGenerateCodeAction", "InsertNextEditAction"},
       {"UP",                       "EditorUp", "Terminal.SelectBlockAbove", "Terminal.UpCommandCompletion"},
       {"alt DOWN",                 "MethodDown", "ShowContent", "ShowSearchHistory", "JupyterNotebookMoveCellDownCommandModeAction", "NotebookMoveCellDownAction"},
@@ -610,10 +611,12 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
   private static final Set<String> DEFAULT_UNKNOWN_ACTION_IDS = Set.of(
     "ActivateVersionControlToolWindow", "ActivateFavoritesToolWindow", "ActivateBookmarksToolWindow", "ActivateCommanderToolWindow",
     "ActivateServicesToolWindow", "ActivateMessagesToolWindow", "ActivateProjectToolWindow", "ActivateStructureToolWindow",
-    "ActivateProblemsViewToolWindow", "ActivateTODOToolWindow", "ActivateWebToolWindow", "ActivatePaletteToolWindow", "ActivateTerminalToolWindow",
+    "ActivateProblemsViewToolWindow", "ActivateTODOToolWindow", "ActivateWebToolWindow", "ActivatePaletteToolWindow",
+    "ActivateTerminalToolWindow",
     "IDEtalk.SearchUserHistory", "IDEtalk.Rename", "CIDR.Lang.Cpp.GenerateDefinitions", "ActivateErrorsInSolutionToolWindow",
     "ActivateUnitTestsToolWindow", "ActivateDatabaseToolWindow", "ActivateBuildToolWindow", "ActivateNuGetToolWindow",
-    "RiderBackendAction-EncapsulateField", "SwitchHeaderSource", "BuildProject", "RebuildProject", "BuildSolutionAction", "RebuildSolutionAction",
+    "RiderBackendAction-EncapsulateField", "SwitchHeaderSource", "BuildProject", "RebuildProject", "BuildSolutionAction",
+    "RebuildSolutionAction",
     "ActivateInspectionResultsToolWindow", "", "ValidateXml"
   );
 
