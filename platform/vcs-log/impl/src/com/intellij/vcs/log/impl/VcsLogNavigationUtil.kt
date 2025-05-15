@@ -6,10 +6,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.google.common.util.concurrent.SettableFuture
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.runBackgroundableTask
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntRef
 import com.intellij.openapi.util.text.StringUtil
@@ -33,45 +30,16 @@ import com.intellij.vcs.log.ui.VcsLogUiEx.JumpResult
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcs.log.visible.VisiblePack.ErrorVisiblePack
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.guava.await
-import kotlinx.coroutines.withContext
 import java.util.concurrent.CompletableFuture
-import kotlin.coroutines.cancellation.CancellationException
 
 object VcsLogNavigationUtil {
   private val LOG = logger<VcsLogNavigationUtil>()
 
   @JvmStatic
-  fun jumpToRevisionAsync(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath? = null): CompletableFuture<Boolean> {
-    return jumpToRevisionAsync(project, root, hash, filePath, true)
-  }
-
-  private fun jumpToRevisionAsync(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath?, requestFocus: Boolean): CompletableFuture<Boolean> {
-    val resultFuture = CompletableFuture<Boolean>()
-
-    val progressTitle = VcsLogBundle.message("vcs.log.show.commit.in.log.process", hash.toShortString())
-    runBackgroundableTask(progressTitle, project, true) { indicator ->
-      runBlockingCancellable {
-        resultFuture.computeResult {
-          withContext(Dispatchers.EDT) {
-            jumpToRevision(project, root, hash, filePath, requestFocus)
-          }
-        }
-      }
-    }
-
-    return resultFuture
-  }
-
-  private suspend fun jumpToRevision(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath?, requestFocus: Boolean): Boolean {
-    val manager = VcsProjectLog.awaitLogIsReady(project) ?: return false
-    return if(filePath != null) {
-      manager.showCommit(hash,root, filePath, requestFocus)
-    } else {
-      manager.showCommit(hash,root,requestFocus)
-    }
-  }
+  fun jumpToRevisionAsync(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath? = null): CompletableFuture<Boolean> =
+    VcsProjectLog.jumpToRevisionAsync(project, root, hash, filePath).asCompletableFuture()
 
   internal fun MainVcsLogUi.showCommitSync(hash: Hash, root: VirtualFile, requestFocus: Boolean): Boolean {
     return when (jumpToCommitSyncInternal(hash, root, true, requestFocus)) {
@@ -92,19 +60,6 @@ object VcsLogNavigationUtil {
         false
       }
       JumpResult.COMMIT_DOES_NOT_MATCH -> false
-    }
-  }
-
-  private suspend fun <T> CompletableFuture<T>.computeResult(task: suspend () -> T) {
-    try {
-      val result = task()
-      this.complete(result)
-    }
-    catch (e: CancellationException) {
-      this.cancel(false)
-    }
-    catch (e: Throwable) {
-      this.completeExceptionally(e)
     }
   }
 

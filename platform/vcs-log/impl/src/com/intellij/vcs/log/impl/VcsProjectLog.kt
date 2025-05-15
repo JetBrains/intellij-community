@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsKey
 import com.intellij.openapi.vcs.VcsMappingListener
@@ -37,6 +38,7 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
+import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogProvider
@@ -154,13 +156,17 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
   }
 
   internal fun createLogInBackground(forceInit: Boolean) {
-    launchCreateLog(forceInit)
+    getOrCreateLogManagerAsync(forceInit)
   }
 
-  private fun launchCreateLog(forceInit: Boolean): Job {
-    return launchWithAnyModality {
+  private suspend fun ensureLogIsReady(): VcsLogManager? {
+    return getOrCreateLogManagerAsync(true).await()
+  }
+
+  private fun getOrCreateLogManagerAsync(forceInit: Boolean): Deferred<VcsLogManager?> {
+    return asyncWithAnyModality {
       mutex.withLock {
-        createLogInternal(forceInit)
+        getOrCreateLogManager(forceInit)
       }
     }
   }
@@ -185,7 +191,7 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
           LOG.error("Unable to execute 'beforeCreateLog'", e)
         }
 
-        createLogInternal(forceInit = false)
+        getOrCreateLogManager(forceInit = false)
       }
     }
   }
@@ -197,7 +203,7 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
     if (logManager != null) Disposer.dispose(logManager)
   }
 
-  private suspend fun createLogInternal(forceInit: Boolean): VcsLogManager? {
+  private suspend fun getOrCreateLogManager(forceInit: Boolean): VcsLogManager? {
     if (isDisposing || PlatformUtils.isQodana()) return null
 
     val projectLevelVcsManager = project.serviceAsync<ProjectLevelVcsManager>()
@@ -249,6 +255,10 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
     return coroutineScope.launch(ModalityState.any().asContextElement(), block = block)
   }
 
+  private fun <T> asyncWithAnyModality(block: suspend CoroutineScope.() -> T): Deferred<T> {
+    return coroutineScope.async(ModalityState.any().asContextElement(), block = block)
+  }
+
   internal class InitLogStartupActivity : ProjectActivity {
     init {
       val app = ApplicationManager.getApplication()
@@ -258,7 +268,7 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
     }
 
     override suspend fun execute(project: Project) {
-      getInstance(project).launchCreateLog(forceInit = false)
+      getInstance(project).getOrCreateLogManagerAsync(forceInit = false)
     }
   }
 
@@ -366,12 +376,24 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
       }
     }
 
-    suspend fun awaitLogIsReady(project: Project): VcsLogManager? {
-      val projectLog = project.serviceAsync<VcsProjectLog>()
-      if (projectLog.logManager != null) return projectLog.logManager
-      projectLog.launchCreateLog(forceInit = true).join()
-      return projectLog.logManager
+    @ApiStatus.Internal
+    fun jumpToRevisionAsync(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath?): Deferred<Boolean> {
+      val projectLog = getInstance(project)
+      return projectLog.coroutineScope.async {
+        val progressTitle = VcsLogBundle.message("vcs.log.show.commit.in.log.process", hash.toShortString())
+        withBackgroundProgress(project, progressTitle) {
+          val manager = projectLog.ensureLogIsReady()
+          if (filePath != null) {
+            manager?.showCommit(hash, root, filePath, true)
+          }
+          else {
+            manager?.showCommit(hash, root, true)
+          } ?: false
+        }
+      }
     }
+
+    suspend fun awaitLogIsReady(project: Project): VcsLogManager? = project.serviceAsync<VcsProjectLog>().ensureLogIsReady()
 
     @Deprecated("awaitLogIsReady is preferred",
                 ReplaceWith("awaitLogIsReady(project) != null",

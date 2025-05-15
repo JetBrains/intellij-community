@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.EdtImmediate
 import com.intellij.openapi.application.UiImmediate
 import com.intellij.openapi.components.serviceAsync
@@ -95,22 +96,26 @@ internal class VcsProjectLogManager(
     return tabsManager.openAnotherLogTab(filters, location)
   }
 
-  override suspend fun showCommit(hash: Hash, root: VirtualFile, requestFocus: Boolean): Boolean {
-    return showCommitInLogTab(hash, root, requestFocus) { true } != null
-  }
+  override suspend fun showCommit(hash: Hash, root: VirtualFile, requestFocus: Boolean): Boolean =
+    withContext(Dispatchers.EDT) {
+      if (isDisposed) return@withContext false
+      showCommitInLogTab(hash, root, requestFocus) { true } != null
+    }
 
-  override suspend fun showCommit(hash: Hash, root: VirtualFile, filePath: FilePath, requestFocus: Boolean): Boolean {
-    val logUi = showCommitInLogTab(hash, root, false) { logUi ->
-      // Structure filter might prevent us from navigating to FilePath
-      val hasFilteredChanges = logUi.properties.exists(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES) &&
-                               logUi.properties[MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES] &&
-                               !logUi.properties.getFilterValues(VcsLogFilterCollection.STRUCTURE_FILTER.name).isNullOrEmpty()
-      return@showCommitInLogTab !hasFilteredChanges
-    } ?: return false
+  override suspend fun showCommit(hash: Hash, root: VirtualFile, filePath: FilePath, requestFocus: Boolean): Boolean =
+    withContext(Dispatchers.EDT) {
+      if (isDisposed) return@withContext false
+      val logUi = showCommitInLogTab(hash, root, false) { logUi ->
+        // Structure filter might prevent us from navigating to FilePath
+        val hasFilteredChanges = logUi.properties.exists(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES) &&
+                                 logUi.properties[MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES] &&
+                                 !logUi.properties.getFilterValues(VcsLogFilterCollection.STRUCTURE_FILTER.name).isNullOrEmpty()
+        return@showCommitInLogTab !hasFilteredChanges
+      } ?: return@withContext false
 
-    logUi.selectFilePath(filePath, requestFocus)
-    return true
-  }
+      logUi.selectFilePath(filePath, requestFocus)
+      true
+    }
 
   /**
    * Show given commit in the changes view tool window in the log tab matching a given predicate:
