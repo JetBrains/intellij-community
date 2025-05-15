@@ -1,5 +1,3 @@
-import module java.base;
-
 public class beforeAdjustComments {
     //many comments
     private final String field = "field";

@@ -1,4 +1,3 @@
-import module java.base;
 import test.List;
 
 public class beforeC<caret>onflictModuleImportDemandOverModule {

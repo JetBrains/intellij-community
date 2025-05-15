@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.wrongPackageStatement.AdjustPackageNameFix;
@@ -7,16 +7,19 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.SingleFileSourcesTracker;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
+import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -117,7 +120,21 @@ public final class ImplicitToExplicitClassBackwardMigrationInspection extends Ab
       addImplicitStaticImports(project, staticImports, implicitClass, importList);
       addImplicitJavaModuleImports(project, moduleImports, importList);
       addPackageStatement(newPsiJavaFile, originalFile);
-      JavaCodeStyleManager.getInstance(project).optimizeImports(newPsiJavaFile);
+      optimizeImport(newPsiJavaFile);
+    }
+
+    private static void optimizeImport(@NotNull PsiJavaFile newPsiJavaFile) {
+      JavaCodeStyleSettings original = JavaCodeStyleSettings.getInstance(newPsiJavaFile);
+      JavaCodeStyleSettings clone = (JavaCodeStyleSettings)original.clone();
+      clone.setDeleteUnusedModuleImports(true);
+      PsiImportList newList = new ImportHelper(clone).prepareOptimizeImportsResult(newPsiJavaFile, Predicates.alwaysTrue());
+      if (newList != null) {
+        final PsiImportList newImportList = newPsiJavaFile.getImportList();
+        if (newImportList != null) {
+          newImportList.getParent().addRangeAfter(newList.getParent().getFirstChild(), newList.getParent().getLastChild(), newImportList);
+          new CommentTracker().deleteAndRestoreComments(newImportList);
+        }
+      }
     }
 
     private static void addPackageStatement(@NotNull PsiJavaFile javaFile, PsiFile originalFile) {
@@ -131,8 +148,8 @@ public final class ImplicitToExplicitClassBackwardMigrationInspection extends Ab
       SingleFileSourcesTracker singleFileSourcesTracker = SingleFileSourcesTracker.getInstance(originalFile.getProject());
       String singleFileSourcePackageName = singleFileSourcesTracker.getPackageNameForSingleFileSource(originalFile.getVirtualFile());
       if (singleFileSourcePackageName != null) packageName = singleFileSourcePackageName;
-      if(packageName.isEmpty()) return;
-      if(!PsiDirectoryFactory.getInstance(javaFile.getProject()).isValidPackageName(packageName)) return;
+      if (packageName.isEmpty()) return;
+      if (!PsiDirectoryFactory.getInstance(javaFile.getProject()).isValidPackageName(packageName)) return;
       AdjustPackageNameFix.applyFix(javaFile, originalFile, originalFile.getContainingDirectory());
     }
 
