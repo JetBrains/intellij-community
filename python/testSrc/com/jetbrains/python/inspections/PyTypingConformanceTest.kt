@@ -9,7 +9,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiComment
 import com.intellij.util.io.URLUtil
 import com.jetbrains.python.PythonTestUtil
-import com.jetbrains.python.codeInsight.PyCodeInsightSettings
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
 import com.jetbrains.python.psi.PyRecursiveElementVisitor
@@ -47,17 +46,9 @@ private val inspections
 class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
   @Test
   fun test() {
-    val settings = PyCodeInsightSettings.getInstance()
-    val oldHighlightUnusedImports = settings.HIGHLIGHT_UNUSED_IMPORTS
-    settings.HIGHLIGHT_UNUSED_IMPORTS = false
-    try {
-      myFixture.configureByFiles(*getFilePaths())
-      myFixture.enableInspections(*inspections)
-      checkHighlighting()
-    }
-    finally {
-      settings.HIGHLIGHT_UNUSED_IMPORTS = oldHighlightUnusedImports
-    }
+    myFixture.configureByFiles(*getFilePaths())
+    myFixture.enableInspections(*inspections)
+    checkHighlighting()
   }
 
   private fun getFilePaths(): Array<String> {
