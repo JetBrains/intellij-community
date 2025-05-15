@@ -39,6 +39,7 @@ internal open class DirectoryBuilderBase(
     val nestedModulePath = subPath(moduleName)
     val nestedModule = ModuleBuilderImpl(moduleName, nestedModulePath, projectStructure).apply(init)
     _nestedModules.add(nestedModule)
+    projectStructure.addModule(moduleName, nestedModule)
   }
 
   override fun sdk(

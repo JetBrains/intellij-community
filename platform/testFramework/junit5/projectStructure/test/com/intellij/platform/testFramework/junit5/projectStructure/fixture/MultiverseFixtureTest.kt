@@ -49,7 +49,9 @@ internal class SdkMultiverseFixtureTest {
     val projectFixture = multiverseProjectFixture {
       sdk("sdk", UnknownSdkType.getInstance("my-sdk")) {}
       module("a") {
-        useSdk("sdk")
+        dependencies {
+          useSdk("sdk")
+        }
       }
     }
   }

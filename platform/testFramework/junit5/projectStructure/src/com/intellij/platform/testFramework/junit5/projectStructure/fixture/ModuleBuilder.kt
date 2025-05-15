@@ -9,5 +9,5 @@ interface ModuleBuilder : ProjectBuilder {
 
   fun sharedSourceRoot(sourceRootId: String)
 
-  fun useSdk(name: String)
+  fun dependencies(init: ModuleDependenciesBuilder.() -> Unit)
 }

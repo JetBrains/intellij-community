@@ -48,6 +48,7 @@ internal class MultiverseFixtureInitializer(
     val modulePath = module.path.resolvePath()
     val modulePathFixture = dirFixture(modulePath)
     val moduleFixture = projectFixture.moduleFixture(modulePathFixture)
+    structure.addModuleFixture(module.moduleName, moduleFixture)
     val moduleInstance = moduleFixture.init()
 
     module.usedSdk?.let { usedSdk ->
@@ -56,6 +57,17 @@ internal class MultiverseFixtureInitializer(
       writeAction {
         val model = ModuleRootManager.getInstance(moduleInstance).modifiableModel
         model.sdk = sdkInstance
+        model.commit()
+      }
+    }
+
+    module.dependencies.forEach { dependency ->
+      val dependencyModuleName = dependency.moduleName
+      val dependencyModuleFixture = structure.findModuleFixture(dependencyModuleName) ?: error("Module '$dependencyModuleName' isn't found")
+      val dependencyModuleInstance = dependencyModuleFixture.init()
+      writeAction {
+        val model = ModuleRootManager.getInstance(moduleInstance).modifiableModel
+        model.addModuleOrderEntry(dependencyModuleInstance)
         model.commit()
       }
     }
