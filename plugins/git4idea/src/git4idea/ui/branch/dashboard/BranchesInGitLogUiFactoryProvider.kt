@@ -279,7 +279,7 @@ fun VcsLogUiEx.navigateTo(navigatable: BranchNodeDescriptor.LogNavigatable, focu
 @ApiStatus.Internal
 val SHOW_GIT_BRANCHES_LOG_PROPERTY: VcsLogUiProperties.VcsLogUiProperty<Boolean> =
   object : VcsLogProjectTabsProperties.CustomBooleanTabProperty("Show.Git.Branches") {
-    override fun defaultValue(logId: String) = logId == VcsLogContentProvider.MAIN_LOG_ID
+    override fun defaultValue(logId: String) = logId == VcsLogManager.MAIN_LOG_ID
   }
 
 @ApiStatus.Internal

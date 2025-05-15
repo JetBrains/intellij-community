@@ -37,6 +37,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.BiConsumer
 
@@ -310,6 +311,8 @@ open class VcsLogManager @Internal constructor(
   }
 
   companion object {
+    @Internal
+    const val MAIN_LOG_ID: @NonNls String = "MAIN"
     private val LOG = Logger.getInstance(VcsLogManager::class.java)
 
     @JvmStatic
