@@ -165,14 +165,6 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
     return allProviders.filter { providerIds.contains(it.key) }.mapValues { it.value.displayName }
   }
 
-  suspend fun isExtendedInfoAvailable(
-    sessionRef: DurableRef<SeSessionEntity>,
-    dataContextId: DataContextId,
-  ): Boolean {
-    val allProviders = getProviders(sessionRef, dataContextId)
-    return allProviders.values.any { it.isExtendedInfoAvailable() }
-  }
-
   companion object {
     @JvmStatic
     fun getInstance(project: Project): SeBackendService = project.service<SeBackendService>()

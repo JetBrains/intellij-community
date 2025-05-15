@@ -101,8 +101,4 @@ class SeTabVm(
   suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean {
     return tab.itemSelected(item, modifiers, searchText)
   }
-
-  suspend fun isExtendedInfoAvailable(): Boolean {
-    return tab.isExtendedInfoAvailable()
-  }
 }

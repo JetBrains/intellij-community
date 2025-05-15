@@ -189,11 +189,11 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     }
 
     vm.coroutineScope.launch {
-      vm.currentTabFlow.collectLatest {  tabVm ->
+      vm.currentTabFlow.collectLatest { tabVm ->
         coroutineScope {
           combine(isScrolledAlmostToAnEnd, resultListModel.isValidState) {
             it[0] to it[1]
-          }.collect {  (isScrolledAlmostToAnEnd, isValidList) ->
+          }.collect { (isScrolledAlmostToAnEnd, isValidList) ->
             tabVm.shouldLoadMore = isScrolledAlmostToAnEnd || !isValidList
           }
         }
@@ -496,9 +496,8 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
       .show(relativePoint)
   }
 
-  private suspend fun createExtendedInfoComponent(): ExtendedInfoComponent? {
-    if (isExtendedInfoEnabled() && (SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID == vm.currentTab.tabId
-                                    || vm.isExtendedInfoAvailable())) {
+  private fun createExtendedInfoComponent(): ExtendedInfoComponent? {
+    if (isExtendedInfoEnabled()) {
       val leftText = fun(element: Any): String? {
         val leftText = (element as? SeResultListItemRow)?.item?.presentation?.extendedDescription
         extendedInfoContainer.isVisible = !leftText.isNullOrEmpty()
@@ -511,10 +510,8 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
 
   private fun updateExtendedInfoContainer() {
     extendedInfoContainer.removeAll()
-    vm.coroutineScope.launch(Dispatchers.EDT) {
-      extendedInfoComponent = createExtendedInfoComponent()
-      extendedInfoComponent?.let { extendedInfoContainer.add(it.component) }
-    }
+    extendedInfoComponent = createExtendedInfoComponent()
+    extendedInfoComponent?.let { extendedInfoContainer.add(it.component) }
   }
 
   private fun closePopup() {

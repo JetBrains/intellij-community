@@ -51,10 +51,6 @@ class SeBackendItemDataProvider(override val id: SeProviderId,
   override suspend fun getTypeVisibilityStates(): List<SeTypeVisibilityStatePresentation>? =
     (provider as? SeTypeVisibilityStateProvider)?.getTypeVisibilityStates()
 
-  override suspend fun isExtendedInfoAvailable(): Boolean {
-    return provider.isExtendedInfoAvailable()
-  }
-
   override fun dispose() {
     SeLog.log(LIFE_CYCLE, "Backend provider ${id.value} disposed")
     Disposer.dispose(provider)

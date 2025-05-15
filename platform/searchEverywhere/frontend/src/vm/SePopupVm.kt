@@ -113,10 +113,6 @@ class SePopupVm(
     usageLogger.contributorItemSelected()
   }
 
-  suspend fun isExtendedInfoAvailable(): Boolean {
-    return currentTab.isExtendedInfoAvailable()
-  }
-
   fun closePopup() {
     closePopupHandler()
   }

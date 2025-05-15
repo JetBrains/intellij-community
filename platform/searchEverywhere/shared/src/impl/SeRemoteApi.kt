@@ -68,12 +68,6 @@ interface SeRemoteApi : RemoteApi<Unit> {
     providerIds: List<SeProviderId>,
   ): Map<SeProviderId, @Nls String>
 
-  suspend fun isExtendedInfoAvailable(
-    projectId: ProjectId,
-    sessionRef: DurableRef<SeSessionEntity>,
-    dataContextId: DataContextId,
-  ): Boolean
-
   companion object {
     @JvmStatic
     suspend fun getInstance(): SeRemoteApi {

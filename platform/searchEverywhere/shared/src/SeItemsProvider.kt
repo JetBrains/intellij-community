@@ -17,5 +17,4 @@ interface SeItemsProvider: Disposable {
 
   suspend fun collectItems(params: SeParams, collector: Collector)
   suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean
-  fun isExtendedInfoAvailable(): Boolean
 }

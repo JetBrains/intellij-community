@@ -13,7 +13,6 @@ import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
 import com.intellij.platform.searchEverywhere.providers.SeAsyncWeightedContributorWrapper
 import com.intellij.platform.searchEverywhere.providers.getExtendedDescription
-import com.intellij.platform.searchEverywhere.providers.isExtendedInfoAvailable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -65,10 +64,6 @@ class SeTextItemsProvider(private val contributorWrapper: SeAsyncWeightedContrib
     return withContext(Dispatchers.EDT) {
       contributorWrapper.contributor.processSelectedItem(legacyItem, modifiers, searchText)
     }
-  }
-
-  override fun isExtendedInfoAvailable(): Boolean {
-    return contributorWrapper.contributor.isExtendedInfoAvailable()
   }
 
   fun getExtendedDescription(item: SearchEverywhereItem): String? {

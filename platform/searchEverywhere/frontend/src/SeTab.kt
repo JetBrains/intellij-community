@@ -28,6 +28,4 @@ interface SeTab: Disposable {
   suspend fun getFilterEditor(): SeFilterEditor?
 
   suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean
-
-  suspend fun isExtendedInfoAvailable(): Boolean
 }

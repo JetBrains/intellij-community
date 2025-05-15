@@ -16,7 +16,6 @@ import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
 import com.intellij.platform.searchEverywhere.providers.SeAsyncWeightedContributorWrapper
 import com.intellij.platform.searchEverywhere.providers.SeTypeVisibilityStateProviderDelegate
 import com.intellij.platform.searchEverywhere.providers.getExtendedDescription
-import com.intellij.platform.searchEverywhere.providers.isExtendedInfoAvailable
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetsFilter
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import com.intellij.psi.codeStyle.NameUtil
@@ -63,10 +62,6 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncWeightedC
   fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {
     val legacyItem = (item as? SeTargetItem)?.legacyItem ?: return false
     return contributorWrapper.contributor.processSelectedItem(legacyItem, modifiers, searchText)
-  }
-
-  fun isExtendedInfoAvailable(): Boolean {
-    return contributorWrapper.contributor.isExtendedInfoAvailable()
   }
 
   fun getExtendedDescription(legacyItem: ItemWithPresentation<*>): String? {
