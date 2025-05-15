@@ -128,10 +128,16 @@ public abstract class SourcePosition implements Navigatable {
     @Override
     public int getOffset() {
       updateData();
-      if (myOffset == null) {
-        myOffset = calcOffset();
+      Integer offset = myOffset;
+      int result;
+      if (offset == null) {
+        result = calcOffset();
+        myOffset = result;
       }
-      return myOffset.intValue();
+      else {
+        result = offset;
+      }
+      return result;
     }
 
     @Override
