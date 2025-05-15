@@ -30,11 +30,12 @@ import com.jetbrains.python.packaging.toolwindow.details.PyPackageInfoPanel
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.model.PyPackagesViewData
-import com.jetbrains.python.packaging.toolwindow.modules.PyPackagesModuleController
+import com.jetbrains.python.packaging.toolwindow.modules.PyPackagesSdkController
 import com.jetbrains.python.packaging.toolwindow.packages.PyPackageSearchTextField
 import com.jetbrains.python.packaging.toolwindow.packages.PyPackagesListController
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
+import com.jetbrains.python.sdk.pythonSdk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -53,7 +54,7 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
 
   private val packageSearchController = PyPackageSearchTextField(project)
   internal val packageListController = PyPackagesListController(project, controller = this)
-  private val moduleController = PyPackagesModuleController(project)
+  private val moduleController = PyPackagesSdkController(project)
   private val descriptionController = PyPackageInfoPanel(project)
   private val packagingScope = PyPackageCoroutine.getIoScope(project)
 
@@ -146,7 +147,7 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
       add(packageListController.component, BorderLayout.CENTER)
     }
 
-    if (project.modules.size == 1) {
+    if (project.modules.mapNotNull { it.pythonSdk }.distinct().size <= 1) {
       return leftPanel
     }
 
