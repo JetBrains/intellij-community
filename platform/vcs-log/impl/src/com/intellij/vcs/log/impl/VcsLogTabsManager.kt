@@ -17,9 +17,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
-import com.intellij.ui.content.TabGroupId
 import com.intellij.util.asSafely
-import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.impl.VcsLogContentUtil.getToolWindow
 import com.intellij.vcs.log.impl.VcsLogContentUtil.openLogTab
@@ -28,11 +26,9 @@ import com.intellij.vcs.log.impl.VcsLogEditorUtil.findVcsLogUi
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.editor.DefaultVcsLogFile
 import com.intellij.vcs.log.ui.editor.VcsLogVirtualFileSystem
-import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.CompletableFuture
 
-@Internal
-class VcsLogTabsManager(
+internal class VcsLogTabsManager(
   private val project: Project,
   private val uiProperties: VcsLogProjectTabsProperties,
   private val logManager: VcsLogManager,
@@ -130,7 +126,7 @@ class VcsLogTabsManager(
   private fun openToolWindowLogTab(toolWindow: ToolWindow, tabId: String, focus: Boolean,
                                    filters: VcsLogFilterCollection?): MainVcsLogUi {
     val ui = logManager.createLogUi(tabId, VcsLogTabLocation.TOOL_WINDOW, filters)
-    openLogTab(logManager, toolWindow, TAB_GROUP_ID, ui, { it: MainVcsLogUi -> VcsLogTabsUtil.generateShortDisplayName(it) }, focus)
+    openLogTab(logManager, toolWindow, VcsLogContentUtil.DEFAULT_TAB_GROUP_ID, ui, { it: MainVcsLogUi -> VcsLogTabsUtil.generateShortDisplayName(it) }, focus)
     ui.onDisplayNameChange { updateLogUiName(project, ui) }
 
     installContentListener(toolWindow)
@@ -162,7 +158,6 @@ class VcsLogTabsManager(
 
   companion object {
     private val LOG = Logger.getInstance(VcsLogTabsManager::class.java)
-    val TAB_GROUP_ID: TabGroupId = TabGroupId(VcsLogContentProvider.TAB_NAME, { VcsLogBundle.message("vcs.log.tab.name") }, true)
 
     fun MainVcsLogUi.onDisplayNameChange(block: () -> Unit) {
       filterUi.addFilterListener { block() }

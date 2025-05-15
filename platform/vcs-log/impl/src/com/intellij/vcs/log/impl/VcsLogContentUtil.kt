@@ -19,6 +19,7 @@ import com.intellij.vcs.log.VcsLogUi
 import com.intellij.vcs.log.impl.VcsLogManager.VcsLogUiFactory
 import com.intellij.vcs.log.ui.*
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.NonNls
 import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.JComponent
@@ -27,6 +28,11 @@ import javax.swing.JComponent
  * Utility methods to operate VCS Log tabs as [Content]s of the [ContentManager] of the VCS toolwindow.
  */
 object VcsLogContentUtil {
+  @Internal
+  const val MAIN_LOG_TAB_NAME: @NonNls String = "Log" // used as tab id, not user-visible
+
+  @Internal
+  val DEFAULT_TAB_GROUP_ID: TabGroupId = TabGroupId(MAIN_LOG_TAB_NAME, VcsLogBundle.messagePointer("vcs.log.tab.name"), true)
 
   private fun getLogUi(c: JComponent): VcsLogUiEx? {
     val uis = VcsLogUiHolder.getLogUis(c)
@@ -118,7 +124,7 @@ object VcsLogContentUtil {
   internal fun findMainLog(cm: ContentManager): Content? {
     // here tab name is used instead of log ui id to select the correct tab
     // it's done this way since main log ui may not be created when this method is called
-    return cm.contents.find { VcsLogContentProvider.TAB_NAME == it.tabName }
+    return cm.contents.find { MAIN_LOG_TAB_NAME == it.tabName }
   }
 
   private fun selectMainLog(cm: ContentManager): Boolean {

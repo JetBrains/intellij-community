@@ -21,7 +21,6 @@ import com.intellij.vcs.log.impl.VcsLogTabsManager.Companion.onDisplayNameChange
 import com.intellij.vcs.log.impl.VcsProjectLog.Companion.getLogProviders
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogPanel
-import org.jetbrains.annotations.NonNls
 import java.util.concurrent.ExecutionException
 import java.util.function.Predicate
 import java.util.function.Supplier
@@ -53,7 +52,7 @@ internal class VcsLogContentProvider(private val project: Project) : ChangesView
 
     // Display name is always used for presentation, tab name is used as an id.
     // See com.intellij.vcs.log.impl.VcsLogContentUtil.selectMainLog.
-    tabContent!!.tabName = TAB_NAME //NON-NLS
+    tabContent!!.tabName = VcsLogContentUtil.MAIN_LOG_TAB_NAME //NON-NLS
     updateDisplayName()
 
     projectLog.createLogInBackground(true)
@@ -155,9 +154,5 @@ internal class VcsLogContentProvider(private val project: Project) : ChangesView
 
   internal class DisplayNameSupplier : Supplier<String> {
     override fun get(): String = VcsLogBundle.message("vcs.log.tab.name")
-  }
-
-  companion object {
-    const val TAB_NAME: @NonNls String = "Log" // used as tab id, not user-visible
   }
 }
