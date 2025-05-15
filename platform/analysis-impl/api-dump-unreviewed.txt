@@ -2692,7 +2692,6 @@ c:com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 - getAlternativeID():java.lang.String
 - getID():java.lang.String
 - getJobDescriptors(com.intellij.codeInspection.GlobalInspectionContext):com.intellij.codeInspection.ex.JobDescriptor[]
-- isDumbAware():Z
 - isUnfair():Z
 - runForWholeFile():Z
 f:com.intellij.codeInspection.ex.MetaInformation

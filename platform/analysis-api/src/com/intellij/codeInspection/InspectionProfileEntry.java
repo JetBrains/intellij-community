@@ -30,7 +30,6 @@ import com.intellij.serialization.SerializationException;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.annotations.Property;
@@ -215,33 +214,22 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
         suppressors.addAll(LanguageInspectionSuppressors.INSTANCE.allForLanguage(language));
       }
       suppressors.addAll(elementLanguageSuppressors);
-      return checkDumbMode(file, suppressors);
+      return DumbService.getInstance(file.getProject()).filterByDumbAwareness(suppressors);
     }
     if (!elementLanguage.isKindOf(baseLanguage)) {
       // handling embedding elements {@link EmbeddingElementType}
       Set<InspectionSuppressor> suppressors = new LinkedHashSet<>();
       suppressors.addAll(LanguageInspectionSuppressors.INSTANCE.allForLanguage(baseLanguage));
       suppressors.addAll(elementLanguageSuppressors);
-      return checkDumbMode(file, suppressors);
+      return DumbService.getInstance(file.getProject()).filterByDumbAwareness(suppressors);
     }
-    Collection<InspectionSuppressor> dumbProofSuppressors = checkDumbMode(file, new LinkedHashSet<>(elementLanguageSuppressors));
+    Collection<InspectionSuppressor> dumbProofSuppressors = DumbService.getInstance(file.getProject()).filterByDumbAwareness(elementLanguageSuppressors);
     int size = dumbProofSuppressors.size();
     return switch (size) {
       case 0 -> Collections.emptySet();
       case 1 -> Collections.singleton(dumbProofSuppressors.iterator().next());
       default -> dumbProofSuppressors;
     };
-  }
-
-  private static @Unmodifiable @NotNull Collection<InspectionSuppressor> checkDumbMode(@NotNull PsiFile file,
-                                                                                       @NotNull Collection<InspectionSuppressor> suppressors) {
-    DumbService dumbService = DumbService.getInstance(file.getProject());
-    if (dumbService.isDumb()) {
-      return ContainerUtil.filter(suppressors, suppressor -> DumbService.isDumbAware(suppressor));
-    }
-    else {
-      return suppressors;
-    }
   }
 
   public void cleanup(@NotNull Project project) {

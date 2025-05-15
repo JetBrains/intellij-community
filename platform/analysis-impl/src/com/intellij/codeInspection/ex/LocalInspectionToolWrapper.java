@@ -1,7 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.GlobalInspectionContext;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.LocalInspectionEP;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
@@ -51,10 +54,6 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
 
   public boolean runForWholeFile() {
     return myEP == null ? getTool().runForWholeFile() : myEP.runForWholeFile;
-  }
-
-  public boolean isDumbAware() {
-    return getTool().isDumbAware();
   }
 
   public static @Nullable InspectionToolWrapper<?, ?> findTool2RunInBatch(@NotNull Project project,
