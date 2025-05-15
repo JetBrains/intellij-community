@@ -2,78 +2,65 @@
 package com.intellij.platform.searchEverywhere.frontend.vm
 
 import com.intellij.platform.searchEverywhere.frontend.ui.SePopupContentPane
-import com.intellij.platform.searchEverywhere.providers.SeLog
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 
-@Suppress("LocalVariableName")
+/**
+ * Accumulate results until DEFAULT_RESULT_THROTTLING_MS has past or DEFAULT_RESULT_COUNT_TO_STOP_THROTTLING items where received,
+ * then send the first batch of items inside SeThrottledAccumulatedItems, and then send on demand one by one SeThrottledOneItem.
+ */
+@OptIn(DelicateCoroutinesApi::class)
 @ApiStatus.Internal
-inline fun <reified T> Flow<T>.throttledWithAccumulation(): Flow<SeThrottledItems<T>> {
-  val THROTTLING_IN_PROGRESS = 0
-  val NO_THROTTLING = 1
-  val SHOULD_SEND_THROTTLED_AND_CLOSE = 2
-
+fun <T> Flow<T>.throttledWithAccumulation(): Flow<SeThrottledItems<T>> {
   val originalFlow = this
   return channelFlow {
-    val throttledEvents = mutableListOf<T>()
-    val throttlingStatusFlow = MutableStateFlow(THROTTLING_IN_PROGRESS)
+    var pendingFirstBatch: MutableList<T>? = mutableListOf<T>() // null -> no more throttling
+    val mutex = Mutex()
+    suspend fun sendFirstBatchIfNeeded() {
+      mutex.withLock {
+        if (isClosedForSend) return
 
+        val firstBatch = pendingFirstBatch
+        pendingFirstBatch = null
+        if (!firstBatch.isNullOrEmpty()) {
+          send(SeThrottledAccumulatedItems(firstBatch))
+        }
+      }
+    }
     launch {
       delay(SePopupContentPane.DEFAULT_RESULT_THROTTLING_MS)
-      throttlingStatusFlow.value = NO_THROTTLING
+      sendFirstBatchIfNeeded()
     }
-
-    val originalWithUnthrottlingOnCompletion = originalFlow.onCompletion {
-      SeLog.log(SeLog.THROTTLING) { "Original flow completed" }
-      throttlingStatusFlow.value = SHOULD_SEND_THROTTLED_AND_CLOSE
-    }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND)
-
-    var lastCollectedStopThrottlingCount = THROTTLING_IN_PROGRESS
-
-    merge(flowOf(1), originalWithUnthrottlingOnCompletion).buffer(0, onBufferOverflow = BufferOverflow.SUSPEND).combine(throttlingStatusFlow) { event, throttlingStatus ->
-      event to throttlingStatus
-    }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND).collect { (event, throttlingStatus) ->
-      if (lastCollectedStopThrottlingCount != throttlingStatus) {
-        if (throttlingStatus != THROTTLING_IN_PROGRESS) {
-          if (throttlingStatus == NO_THROTTLING) {
-            SeLog.log(SeLog.THROTTLING) { "Will send accumulated" }
-          }
-
-          if (throttledEvents.isNotEmpty()) {
-            //SeLog.log(SeLog.THROTTLING) { "Will send accumulated events ${throttledEvents.size}" }
-            send(SeThrottledAccumulatedItems(throttledEvents.toList()))
-            throttledEvents.clear()
-          }
-
-          if (throttlingStatus == SHOULD_SEND_THROTTLED_AND_CLOSE) {
-            SeLog.log(SeLog.THROTTLING) { "Will close channel" }
-            close()
-          }
-        }
-
-        lastCollectedStopThrottlingCount = throttlingStatus
-      }
-      else if (event is T) {
-        if (throttlingStatus == THROTTLING_IN_PROGRESS) {
-          SeLog.log(SeLog.THROTTLING) { "Will accumulate event (${throttledEvents.size})" }
-          throttledEvents.add(event)
-
-          if (throttledEvents.size >= SePopupContentPane.DEFAULT_RESULT_COUNT_TO_STOP_THROTTLING) {
-            throttlingStatusFlow.update {
-              if (it == THROTTLING_IN_PROGRESS) NO_THROTTLING
-              else it
+    launch {
+      originalFlow.collect { item ->
+        mutex.withLock {
+          val firstBatch = pendingFirstBatch
+          if (firstBatch != null) {
+            firstBatch += item
+            if (firstBatch.size >= SePopupContentPane.DEFAULT_RESULT_COUNT_TO_STOP_THROTTLING) {
+              pendingFirstBatch = null
+              send(SeThrottledAccumulatedItems(firstBatch))
             }
           }
-        }
-        else {
-          send(SeThrottledOneItem(event))
+          else {
+            send(SeThrottledOneItem(item))
+          }
         }
       }
+      sendFirstBatchIfNeeded()
+      mutex.withLock {
+        close()
+      }
     }
-  }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND)
+  }.buffer(capacity = 0, onBufferOverflow = BufferOverflow.SUSPEND)
 }
 
 @ApiStatus.Internal
