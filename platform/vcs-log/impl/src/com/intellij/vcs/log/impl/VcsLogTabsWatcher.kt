@@ -45,7 +45,7 @@ internal class VcsLogTabsWatcher(private val project: Project, private val postp
   }
 
   fun getVisibleTabs(location: VcsLogTabLocation): List<VcsLogUiEx> {
-    return getLogWindows(location).filter { it.isVisible }.map { it.ui }
+    return getLogWindows(location).filter { it.isVisible() }.map { it.ui }
   }
 
   private fun selectionChanged(tabId: String) {

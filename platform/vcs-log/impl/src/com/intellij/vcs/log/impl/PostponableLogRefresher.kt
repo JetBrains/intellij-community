@@ -1,153 +1,126 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.log.impl;
+package com.intellij.vcs.log.impl
 
-import com.intellij.ide.PowerSaveMode;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.data.DataPack;
-import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.ui.VcsLogUiEx;
-import com.intellij.vcs.log.visible.VisiblePackRefresher;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ide.PowerSaveMode
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry.Companion.`is`
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.vcs.log.data.DataPackChangeListener
+import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.ui.VcsLogUiEx
+import com.intellij.vcs.log.visible.VisiblePackRefresher
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
 
-import java.util.*;
+private val LOG = logger<PostponableLogRefresher>()
 
 @ApiStatus.Internal
-public final class PostponableLogRefresher {
-  private static final Logger LOG = Logger.getInstance(PostponableLogRefresher.class);
-  private final @NotNull VcsLogData myLogData;
-  private final @NotNull Set<VirtualFile> myRootsToRefresh = new HashSet<>();
-  private final @NotNull Set<VcsLogWindow> myLogWindows = new HashSet<>();
-  private final @NotNull Map<String, Throwable> myCreationTraces = new HashMap<>();
+class PostponableLogRefresher internal constructor(private val logData: VcsLogData) {
+  private val rootsToRefresh = mutableSetOf<VirtualFile?>()
+  private val _logWindows = mutableSetOf<VcsLogWindow>()
+  val logWindows: Set<VcsLogWindow> get() = _logWindows
+  private val creationTraces = mutableMapOf<String?, Throwable?>()
 
-  PostponableLogRefresher(@NotNull VcsLogData logData) {
-    myLogData = logData;
-    myLogData.addDataPackChangeListener(dataPack -> {
-      LOG.debug("Refreshing log windows " + myLogWindows);
-      for (VcsLogWindow window : myLogWindows) {
-        dataPackArrived(window.getRefresher(), window.isVisible(), dataPack);
+  init {
+    logData.addDataPackChangeListener(DataPackChangeListener { dataPack ->
+      LOG.debug("Refreshing log windows " + logWindows)
+      for (window in logWindows) {
+        window.refresher.setDataPack(window.isVisible(), dataPack)
       }
-    });
+    })
   }
 
-  public @NotNull Disposable addLogWindow(@NotNull VcsLogWindow window) {
-    String windowId = window.getId();
-    if (ContainerUtil.exists(myLogWindows, w -> w.getId().equals(windowId))) {
-      throw new CannotAddVcsLogWindowException("Log window with id '" + windowId + "' was already added. " +
-                                               "Existing windows:\n" + getLogWindowsInformation(),
-                                               myCreationTraces.get(windowId));
+  fun addLogWindow(window: VcsLogWindow): Disposable {
+    val windowId = window.id
+    if (logWindows.any { it.id == windowId }) {
+      throw CannotAddVcsLogWindowException("Log window with id '" + windowId + "' was already added. " +
+                                           "Existing windows:\n" + getLogWindowsInformation(),
+                                           creationTraces[windowId])
     }
 
-    myLogWindows.add(window);
-    myCreationTraces.put(windowId, new Throwable("Creation trace for " + window));
-    refresherActivated(window.getRefresher(), true);
-    return () -> {
-      LOG.debug("Removing disposed log window " + window);
-      myLogWindows.remove(window);
-      myCreationTraces.remove(windowId);
-    };
-  }
-
-  public static boolean keepUpToDate() {
-    return Registry.is("vcs.log.keep.up.to.date") && !PowerSaveMode.isEnabled();
-  }
-
-  private boolean canRefreshNow() {
-    if (keepUpToDate()) return true;
-    return isLogVisible();
-  }
-
-  public boolean isLogVisible() {
-    for (VcsLogWindow window : myLogWindows) {
-      if (window.isVisible()) return true;
+    _logWindows.add(window)
+    creationTraces[windowId] = Throwable("Creation trace for " + window)
+    refresherActivated(window.refresher, true)
+    return Disposable {
+      LOG.debug("Removing disposed log window " + window)
+      _logWindows.remove(window)
+      creationTraces.remove(windowId)
     }
-    return false;
   }
 
-  public void refresherActivated(@NotNull VisiblePackRefresher refresher, boolean firstTime) {
-    myLogData.initialize();
+  private fun canRefreshNow(): Boolean {
+    if (keepUpToDate()) return true
+    return this.isLogVisible
+  }
 
-    if (!myRootsToRefresh.isEmpty()) {
-      refreshPostponedRoots();
+  val isLogVisible: Boolean
+    get() = logWindows.any { it.isVisible() }
+
+  fun refresherActivated(refresher: VisiblePackRefresher, firstTime: Boolean) {
+    logData.initialize()
+
+    if (!rootsToRefresh.isEmpty()) {
+      refreshPostponedRoots()
     }
     else {
-      refresher.setValid(true, firstTime);
+      refresher.setValid(true, firstTime)
     }
-  }
-
-  private static void dataPackArrived(@NotNull VisiblePackRefresher refresher, boolean visible, @NotNull DataPack newDataPack) {
-    refresher.setDataPack(visible, newDataPack);
   }
 
   @RequiresEdt
-  public void refresh(@NotNull VirtualFile root) {
+  fun refresh(root: VirtualFile) {
     if (canRefreshNow()) {
-      myLogData.refresh(Collections.singleton(root), true);
+      logData.refresh(setOf(root), true)
     }
     else {
-      LOG.debug("Postponed refresh for " + root);
-      myRootsToRefresh.add(root);
+      LOG.debug("Postponed refresh for " + root)
+      rootsToRefresh.add(root)
     }
   }
 
   @RequiresEdt
-  public boolean hasPostponedRoots() {
-    return !myRootsToRefresh.isEmpty();
+  fun hasPostponedRoots(): Boolean {
+    return !rootsToRefresh.isEmpty()
   }
 
   @RequiresEdt
-  public void refreshPostponedRoots() {
-    Set<VirtualFile> toRefresh = new HashSet<>(myRootsToRefresh);
-    myRootsToRefresh.removeAll(toRefresh); // clear the set, but keep roots which could possibly arrive after collecting them in the var.
-    myLogData.refresh(toRefresh);
+  fun refreshPostponedRoots() {
+    val toRefresh = rootsToRefresh.toSet()
+    rootsToRefresh.removeAll(toRefresh) // clear the set, but keep roots which could possibly arrive after collecting them in the var.
+    logData.refresh(toRefresh)
   }
 
-  public @NotNull Set<VcsLogWindow> getLogWindows() {
-    return myLogWindows;
+  fun getLogWindowsInformation(): String {
+    return logWindows.joinToString("\n") { window ->
+      val isVisible = if (window.isVisible()) " (visible)" else ""
+      val isDisposed = if (Disposer.isDisposed(window.refresher)) " (disposed)" else ""
+      window.toString() + isVisible + isDisposed
+    }
   }
 
-  public @NotNull String getLogWindowsInformation() {
-    return StringUtil.join(myLogWindows, window -> {
-      String isVisible = window.isVisible() ? " (visible)" : "";
-      String isDisposed = Disposer.isDisposed(window.getRefresher()) ? " (disposed)" : "";
-      return window + isVisible + isDisposed;
-    }, "\n");
+  open class VcsLogWindow(val ui: VcsLogUiEx) {
+    val id: String
+      get() = ui.getId()
+
+    val refresher: VisiblePackRefresher
+      get() = ui.getRefresher()
+
+    open fun isVisible(): Boolean {
+      return true
+    }
+
+    override fun toString(): @NonNls String {
+      return "VcsLogWindow '" + ui.getId() + "'"
+    }
   }
 
-  public static class VcsLogWindow {
-    private final @NotNull VcsLogUiEx myUi;
-
-    public VcsLogWindow(@NotNull VcsLogUiEx ui) {
-      myUi = ui;
-    }
-
-    public @NotNull VcsLogUiEx getUi() {
-      return myUi;
-    }
-
-    public @NotNull VisiblePackRefresher getRefresher() {
-      return myUi.getRefresher();
-    }
-
-    public boolean isVisible() {
-      return true;
-    }
-
-    public @NotNull String getId() {
-      return myUi.getId();
-    }
-
-    @Override
-    public @NonNls String toString() {
-      return "VcsLogWindow '" + myUi.getId() + "'";
+  companion object {
+    @JvmStatic
+    fun keepUpToDate(): Boolean {
+      return `is`("vcs.log.keep.up.to.date") && !PowerSaveMode.isEnabled()
     }
   }
 }

@@ -207,7 +207,7 @@ open class VcsLogManager @Internal constructor(
 
   @Internal
   fun getLogWindowsInformation(): String {
-    return postponableRefresher.logWindowsInformation
+    return postponableRefresher.getLogWindowsInformation()
   }
 
   @RequiresEdt
