@@ -87,10 +87,10 @@ public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
     VcsProjectLog projectLog = project.getServiceIfCreated(VcsProjectLog.class);
     if (projectLog == null) return Collections.emptySet();
     VcsLogManager logManager = projectLog.getLogManager();
-    if (!(logManager instanceof VcsProjectLogManager)) return Collections.emptySet();
+    if (logManager == null) return Collections.emptySet();
 
     MainVcsLogUi mainUi = projectLog.getMainLogUi();
-    Set<String> additionalTabIds = ((VcsProjectLogManager)logManager).getTabsManager().getTabs();
+    Set<String> additionalTabIds = logManager.getTabs();
     List<? extends MainVcsLogUi> additionalToolWindowUis = getAdditionalLogUis(logManager.getLogUis(VcsLogTabLocation.TOOL_WINDOW), additionalTabIds);
     List<? extends MainVcsLogUi> additionalEditorUis = getAdditionalLogUis(logManager.getLogUis(VcsLogTabLocation.EDITOR), additionalTabIds);
     if (mainUi == null && additionalToolWindowUis.isEmpty() && additionalEditorUis.isEmpty()) return Collections.emptySet();

@@ -77,7 +77,7 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
 
   /** The instance of the [MainVcsLogUi] or null if the log was not initialized yet. */
   val mainLogUi: VcsLogUiImpl?
-    get() = getVcsLogContentProvider(project)?.ui as VcsLogUiImpl?
+    get() = cachedLogManager?.mainUi as VcsLogUiImpl?
 
   private val listenersDisposable = Disposer.newDisposable()
 
@@ -150,7 +150,7 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
   @ApiStatus.Internal
   @RequiresEdt
   fun openLogTab(filters: VcsLogFilterCollection, location: VcsLogTabLocation): MainVcsLogUi? {
-    return cachedLogManager?.tabsManager?.openAnotherLogTab(filters = filters, location = location)
+    return cachedLogManager?.openNewLogTab(filters = filters, location = location)
   }
 
   internal fun createLogInBackground(forceInit: Boolean) {

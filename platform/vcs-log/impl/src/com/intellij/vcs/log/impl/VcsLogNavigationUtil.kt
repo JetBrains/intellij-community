@@ -115,10 +115,9 @@ object VcsLogNavigationUtil {
     if (mainLogContent != null) {
       ChangesViewContentManager.getInstanceImpl(project)?.initLazyContent(mainLogContent)
 
-      val mainLogContentProvider = getVcsLogContentProvider(project)
-      if (mainLogContentProvider != null) {
-        val mainLogUi = mainLogContentProvider.waitMainUiCreation().await()
-        if (mainLogUi != null && !selectedUis.contains(mainLogUi)) {
+      val mainLogUi = manager.awaitMainUi()
+      if (mainLogUi != null) {
+        if (!selectedUis.contains(mainLogUi)) {
           mainLogUi.refresher.setValid(true, false) // since the main ui is not visible, it needs to be validated to find the commit
           if (predicate(mainLogUi) && mainLogUi.showCommitSync(hash, root, requestFocus)) {
             window.contentManager.setSelectedContent(mainLogContent)

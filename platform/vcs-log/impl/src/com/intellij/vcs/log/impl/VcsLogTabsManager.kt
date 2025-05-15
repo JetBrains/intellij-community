@@ -42,9 +42,6 @@ class VcsLogTabsManager(
   private var toolWindowListenerInstalled = false
   private var isDisposed: Boolean = false
 
-  // for statistics
-  val tabs: Set<String> get() = uiProperties.tabs.keys
-
   fun createTabs() {
     val savedTabs = uiProperties.tabs
     if (savedTabs.isEmpty()) return
@@ -181,7 +178,7 @@ internal class VcsLogToolwindowManagerListener(private val project: Project) : T
     if (toolWindow.id == ChangesViewContentManager.TOOLWINDOW_ID) {
       val projectLog = VcsProjectLog.getInstance(project)
       projectLog.createLogInBackground(true)
-      projectLog.logManager?.asSafely<VcsProjectLogManager>()?.tabsManager?.toolWindowShown(toolWindow)
+      projectLog.logManager?.asSafely<VcsProjectLogManager>()?.toolWindowShown(toolWindow)
     }
   }
 }

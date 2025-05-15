@@ -8,11 +8,11 @@ import com.google.common.util.concurrent.SettableFuture
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.content.Content
 import com.intellij.util.Consumer
+import com.intellij.util.asSafely
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.AsyncProcessIcon
@@ -43,7 +43,7 @@ class VcsLogContentProvider(private val project: Project) : ChangesViewContentPr
   private var logCreationCallback: SettableFuture<MainVcsLogUi?>? = null
 
   init {
-    projectLog.logManager?.let { addMainUi(it) }
+    projectLog.logManager?.asSafely<VcsProjectLogManager>()?.let { addMainUi(it) }
   }
 
   override fun initTabContent(content: Content) {
@@ -68,7 +68,7 @@ class VcsLogContentProvider(private val project: Project) : ChangesViewContentPr
   }
 
   @RequiresEdt
-  internal fun addMainUi(logManager: VcsLogManager) {
+  internal fun addMainUi(logManager: VcsProjectLogManager) {
     ThreadingAssertions.assertEventDispatchThread()
     if (ui == null) {
       thisLogger<VcsLogContentProvider>().debug("Creating main Log ui for ${project.name}")
@@ -163,13 +163,4 @@ class VcsLogContentProvider(private val project: Project) : ChangesViewContentPr
     const val TAB_NAME: @NonNls String = "Log" // used as tab id, not user-visible
     const val MAIN_LOG_ID: @NonNls String = "MAIN"
   }
-}
-
-internal fun getVcsLogContentProvider(project: Project): VcsLogContentProvider? {
-  for (ep in ChangesViewContentEP.EP_NAME.getExtensions(project)) {
-    if (ep.getClassName() == VcsLogContentProvider::class.java.name) {
-      return ep.cachedInstance as VcsLogContentProvider?
-    }
-  }
-  return null
 }

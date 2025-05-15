@@ -94,7 +94,13 @@ object VcsLogContentUtil {
       return
     }
 
-    val runConsumer = Runnable { getVcsLogContentProvider(project)!!.executeOnMainUiCreated(consumer) }
+    val runConsumer = Runnable {
+      VcsProjectLog.runWhenLogIsReady(project) { mgr ->
+        mgr.runInMainUi {
+          consumer.consume(it)
+        }
+      }
+    }
     if (!window.isVisible) {
       window.activate(runConsumer)
     }

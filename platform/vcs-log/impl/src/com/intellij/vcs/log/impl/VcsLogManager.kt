@@ -68,6 +68,10 @@ open class VcsLogManager @Internal constructor(
   val colorManager: VcsLogColorManager = VcsLogColorManagerFactory.create(logProviders.keys)
   private val statusBarProgress = VcsLogStatusBarProgress(project, logProviders, dataManager.index.indexingRoots, dataManager.progress)
 
+  // for statistics
+  @get:Internal
+  open val tabs: Set<String> get() = emptySet()
+
   @get:RequiresEdt
   var isDisposed: Boolean = false
     private set
@@ -108,6 +112,14 @@ open class VcsLogManager @Internal constructor(
     postponableRefresher.refreshPostponedRoots()
   }
 
+  internal open suspend fun awaitMainUi(): MainVcsLogUi? {
+    return null
+  }
+
+  internal open fun runInMainUi(consumer: (MainVcsLogUi) -> Unit) {
+    error("${this::class.simpleName} has no main UI")
+  }
+
   @Internal
   fun createLogUi(logId: String, location: VcsLogTabLocation, filters: VcsLogFilterCollection?): MainVcsLogUi {
     return createLogUi(getMainLogUiFactory(logId, filters), location, true)
@@ -144,14 +156,26 @@ open class VcsLogManager @Internal constructor(
     }
 
     val ui = factory.createLogUi(project, dataManager)
-    Disposer.register(ui, lazyTabsWatcher.value.addTabToWatch(ui, location, isClosedOnDispose))
+    registerLogUi(ui, location, isClosedOnDispose)
 
     return ui
   }
 
+  private fun registerLogUi(ui: VcsLogUiEx, location: VcsLogTabLocation, isClosedOnDispose: Boolean) {
+    val registrationDisposable = lazyTabsWatcher.value.addTabToWatch(ui, location, isClosedOnDispose)
+    Disposer.register(ui, registrationDisposable)
+  }
+
   @Internal
-  fun <U : VcsLogUiEx, W : VcsLogWindow> registerLogWindow(ui: U, window: W) {
-    Disposer.register(ui, postponableRefresher.addLogWindow(window))
+  fun registerLogWindow(disposable: Disposable, window: VcsLogWindow) {
+    ThreadingAssertions.assertEventDispatchThread()
+    if (isDisposed) {
+      LOG.error("Trying to register VcsLogUi on a disposed VcsLogManager instance")
+      throw ProcessCanceledException()
+    }
+
+    val registrationDisposable = postponableRefresher.addLogWindow(window)
+    Disposer.register(disposable, registrationDisposable)
   }
 
   fun getLogUis(): List<VcsLogUi> {
