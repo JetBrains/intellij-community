@@ -4661,6 +4661,10 @@ pc:com.intellij.ui.AbstractFieldPanel$Viewer
 - p:createCenterPanel():javax.swing.JComponent
 - p:doOKAction():V
 - getPreferredFocusedComponent():javax.swing.JComponent
+f:com.intellij.ui.ActionLinkButton
+- com.intellij.ui.components.ActionLink
+- <init>(java.lang.String,kotlin.jvm.functions.Function1):V
+- getUIClassID():java.lang.String
 a:com.intellij.ui.AddDeleteListPanel
 - com.intellij.ui.PanelWithButtons
 - com.intellij.util.ui.ComponentWithEmptyText
