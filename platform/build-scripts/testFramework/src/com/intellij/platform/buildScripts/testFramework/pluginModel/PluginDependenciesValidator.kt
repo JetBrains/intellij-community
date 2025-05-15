@@ -178,7 +178,7 @@ class PluginDependenciesValidator private constructor(
       IdeaPluginDescriptorImpl.Type.PluginMainDescriptor -> {
         when (source.pluginId) {
           PluginManagerCore.CORE_ID -> {
-            """|since the main module on the core plugin cannot depend on other modules,
+            """|since the main module of the core plugin cannot depend on other modules,
                |$extractToContentModule""".trimMargin()
           }
           target.pluginId -> {
