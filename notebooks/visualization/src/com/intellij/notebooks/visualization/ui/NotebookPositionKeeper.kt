@@ -139,7 +139,7 @@ class NotebookPositionKeeper(val editor: EditorImpl) : Disposable.Default {
     val newY = editor.offsetToXY(topLeftCornerOffset).y - viewportShift
     if (visibleArea.y == newY)
       return
-    scrollToY(-newY)
+    scrollToY(newY)
   }
 
   private fun scrollToY(newY: Int) {
