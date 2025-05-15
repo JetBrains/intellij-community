@@ -143,7 +143,7 @@ interface MavenWorkspaceConfigurator {
   }
 
   enum class FolderType {
-    SOURCE, RESOURCE, TEST_SOURCE, TEST_RESOURCE
+    SOURCE, RESOURCE, TEST_SOURCE, TEST_RESOURCE, GENERATED_SOURCE, GENERATED_TEST_SOURCE
   }
 
   fun JpsModuleSourceRootType<*>.toFolderType(): FolderType {

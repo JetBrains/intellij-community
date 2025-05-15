@@ -229,13 +229,16 @@ internal class WorkspaceFolderImporter(
           Stream.empty()
         }
       }.forEach {
-        val rootType = when (it.type) {
-          MavenWorkspaceConfigurator.FolderType.SOURCE -> JavaSourceRootType.SOURCE
-          MavenWorkspaceConfigurator.FolderType.TEST_SOURCE -> JavaSourceRootType.TEST_SOURCE
-          MavenWorkspaceConfigurator.FolderType.RESOURCE -> JavaResourceRootType.RESOURCE
-          MavenWorkspaceConfigurator.FolderType.TEST_RESOURCE -> JavaResourceRootType.TEST_RESOURCE
+        val path = toAbsolutePath(it.path)
+        val folder = when (it.type) {
+          MavenWorkspaceConfigurator.FolderType.SOURCE -> ContentRootCollector.SourceFolder(path, JavaSourceRootType.SOURCE)
+          MavenWorkspaceConfigurator.FolderType.TEST_SOURCE -> ContentRootCollector.SourceFolder(path, JavaSourceRootType.TEST_SOURCE)
+          MavenWorkspaceConfigurator.FolderType.RESOURCE -> ContentRootCollector.SourceFolder(path, JavaResourceRootType.RESOURCE)
+          MavenWorkspaceConfigurator.FolderType.TEST_RESOURCE -> ContentRootCollector.SourceFolder(path, JavaResourceRootType.TEST_RESOURCE)
+          MavenWorkspaceConfigurator.FolderType.GENERATED_SOURCE -> ContentRootCollector.GeneratedSourceFolder(path, JavaSourceRootType.SOURCE)
+          MavenWorkspaceConfigurator.FolderType.GENERATED_TEST_SOURCE -> ContentRootCollector.GeneratedSourceFolder(path, JavaSourceRootType.TEST_SOURCE)
         }
-        result.add(ContentRootCollector.SourceFolder(toAbsolutePath(it.path), rootType))
+        result.add(folder)
       }
     }
   }
