@@ -870,9 +870,8 @@ public final class PyTypeChecker {
           assert entry.getValue() instanceof PyPositionalVariadicType;
           result.typeVarTuples.put(typeVarTuple, (PyPositionalVariadicType)entry.getValue());
         }
-        else if (entry.getKey() instanceof PyParamSpecType specType) {
-          assert entry.getValue() instanceof PyCallableParameterVariadicType;
-          result.paramSpecs.put(specType, (PyCallableParameterVariadicType)entry.getValue());
+        else if (entry.getKey() instanceof PyParamSpecType specType && entry.getValue() instanceof PyCallableParameterVariadicType paramSpecType) {
+          result.paramSpecs.put(specType, paramSpecType);
         }
       }
       PyCollectionType genericDefinitionType = as(provider.getGenericType(classType.getPyClass(), context), PyCollectionType.class);
