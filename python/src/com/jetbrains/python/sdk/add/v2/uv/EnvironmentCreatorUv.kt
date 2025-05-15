@@ -77,7 +77,7 @@ internal class EnvironmentCreatorUv(
     }
 
     val python = homePath?.let { Path.of(it) }
-    return setupNewUvSdkAndEnvUnderProgress(project, workingDir, baseSdks, python)
+    return setupNewUvSdkAndEnvUnderProgress(project, workingDir, baseSdks, python).asPythonResult()
   }
 
   override suspend fun detectExecutable() {

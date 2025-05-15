@@ -3,8 +3,6 @@ package com.jetbrains.python.sdk.uv
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.errorProcessing.asKotlinResult
-import com.jetbrains.python.onSuccess
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
@@ -52,7 +50,7 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
     }
     else {
       uv.removeDependency(pkg)
-    }.asKotlinResult()
+    }
 
     result.getOrElse {
       return Result.failure(it)
@@ -67,7 +65,7 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
       outdatedPackages = packages.associateBy { it.name }
     }
 
-    return uv.listPackages().asKotlinResult()
+    return uv.listPackages()
   }
 
   suspend fun sync(): Result<String> {
