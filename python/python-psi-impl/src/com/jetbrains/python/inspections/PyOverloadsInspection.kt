@@ -55,6 +55,15 @@ class PyOverloadsInspection : PyInspection() {
 
       if (overloads.isEmpty()) return
 
+      if (overloads.size == 1) {
+        registerProblem(overloads[0].nameIdentifier, if (owner is PyClass) {
+          PyPsiBundle.message("INSP.overloads.at.least.two.overload.decorated.methods.must.be.present")
+        }
+        else {
+          PyPsiBundle.message("INSP.overloads.at.least.two.overload.decorated.functions.must.be.present")
+        })
+      }
+
       var requiresImplementation = true
       if (owner is PyClass) {
         if (isProtocol(owner, myTypeEvalContext)) {

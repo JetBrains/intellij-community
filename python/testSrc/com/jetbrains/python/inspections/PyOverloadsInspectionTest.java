@@ -16,7 +16,6 @@
 package com.jetbrains.python.inspections;
 
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
-import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 public class PyOverloadsInspectionTest extends PyInspectionTestCase {
@@ -41,14 +40,13 @@ public class PyOverloadsInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  public void testSingleOverload() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
     return PyOverloadsInspection.class;
-  }
-
-  @Override
-  protected void doTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> super.doTest());
   }
 }
