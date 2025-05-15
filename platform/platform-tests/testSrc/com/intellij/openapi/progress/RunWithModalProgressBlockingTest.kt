@@ -15,7 +15,6 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.util.application
-import com.intellij.util.concurrency.ImplicitBlockingContextTest
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.sync.Semaphore
@@ -24,7 +23,6 @@ import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
-import org.junit.jupiter.api.extension.ExtendWith
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.ContinuationInterceptor
@@ -33,7 +31,6 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * @see WithModalProgressTest
  */
-@ExtendWith(ImplicitBlockingContextTest.Enabler::class)
 class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
 
   @Test

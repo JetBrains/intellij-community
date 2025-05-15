@@ -10,7 +10,10 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.util.Processor
 import com.intellij.util.SystemProperties
-import com.intellij.util.concurrency.*
+import com.intellij.util.concurrency.captureCallableThreadContext
+import com.intellij.util.concurrency.capturePropagationContext
+import com.intellij.util.concurrency.captureRunnableThreadContext
+import com.intellij.util.concurrency.isCheckContextAssertions
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Runnable
@@ -92,9 +95,6 @@ private val tlCoroutineContext: ThreadLocal<InstalledThreadContext> = ThreadLoca
 }
 
 private inline fun currentThreadContextOrFallback(getter: (CoroutineContext?) -> CoroutineContext?): CoroutineContext? {
-  if (!useImplicitBlockingContext) {
-    return tlCoroutineContext.get().context
-  }
   @OptIn(InternalCoroutinesApi::class)
   val suspendingContext = IntellijCoroutines.currentThreadCoroutineContext()
   val (snapshot, overridingContext) = tlCoroutineContext.get()

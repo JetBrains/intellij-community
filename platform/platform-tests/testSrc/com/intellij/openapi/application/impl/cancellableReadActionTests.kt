@@ -10,17 +10,14 @@ import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.util.concurrency.ImplicitBlockingContextTest
 import com.intellij.util.concurrency.Semaphore
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.assertThrows
-import org.junit.jupiter.api.extension.ExtendWith
 import java.util.concurrent.CancellationException
 import javax.swing.SwingUtilities
 
 @TestApplication
-@ExtendWith(ImplicitBlockingContextTest.Enabler::class)
 abstract class CancellableReadActionTests {
 
   @BeforeEach

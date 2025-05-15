@@ -9,7 +9,6 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.util.concurrency.ImplicitBlockingContextTest
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.io.await
 import kotlinx.coroutines.Dispatchers
@@ -19,14 +18,12 @@ import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.RepeatedTest
-import org.junit.jupiter.api.extension.ExtendWith
 import kotlin.test.assertFalse
 
 
 private const val REPETITIONS: Int = 100
 
 @TestApplication
-@ExtendWith(ImplicitBlockingContextTest.Enabler::class)
 class ReadWritePropagationTest {
   private fun checkInheritanceViaStructureConcurrency(wrapper: suspend (() -> Unit) -> Unit, checker: () -> Boolean): Unit = timeoutRunBlocking {
     wrapper {

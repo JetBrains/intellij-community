@@ -42,8 +42,6 @@ private object Holder {
   // in order to disable it in RT modules
   var propagateThreadContext: Boolean = SystemProperties.getBooleanProperty("ide.propagate.context", true)
   val checkIdeAssertion: Boolean = SystemProperties.getBooleanProperty("ide.check.context.assertion", false)
-
-  var useImplicitBlockingContext: Boolean = SystemProperties.getBooleanProperty("ide.enable.implicit.blocking.context", true)
 }
 
 @TestOnly
@@ -59,27 +57,11 @@ fun runWithContextPropagationEnabled(runnable: Runnable) {
   }
 }
 
-@TestOnly
-@ApiStatus.Internal
-fun runWithImplicitBlockingContextEnabled(runnable: Runnable) {
-  val propagateThreadContext = Holder.useImplicitBlockingContext
-  Holder.useImplicitBlockingContext = true
-  try {
-    runnable.run()
-  }
-  finally {
-    Holder.useImplicitBlockingContext = propagateThreadContext
-  }
-}
-
 internal val isPropagateThreadContext: Boolean
   get() = Holder.propagateThreadContext
 
 internal val isCheckContextAssertions: Boolean
   get() = Holder.checkIdeAssertion
-
-internal val useImplicitBlockingContext: Boolean
-  get() = Holder.useImplicitBlockingContext
 
 @Internal
 class BlockingJob(val blockingJob: Job) : AbstractCoroutineContextElement(BlockingJob), IntelliJContextElement {

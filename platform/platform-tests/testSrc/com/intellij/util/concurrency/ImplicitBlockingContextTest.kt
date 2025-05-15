@@ -11,29 +11,11 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
-import org.junit.jupiter.api.extension.ExtensionContext
-import org.junit.jupiter.api.extension.InvocationInterceptor
-import org.junit.jupiter.api.extension.ReflectiveInvocationContext
-import java.lang.reflect.Method
 import kotlin.coroutines.*
 
 @OptIn(InternalCoroutinesApi::class)
 @TestApplication
-@ExtendWith(ImplicitBlockingContextTest.Enabler::class)
 class ImplicitBlockingContextTest {
-
-  class Enabler : InvocationInterceptor {
-    override fun interceptTestMethod(
-      invocation: InvocationInterceptor.Invocation<Void>,
-      invocationContext: ReflectiveInvocationContext<Method>,
-      extensionContext: ExtensionContext,
-    ) {
-      runWithImplicitBlockingContextEnabled {
-        invocation.proceed()
-      }
-    }
-  }
 
   @Test
   fun noThreadContextByDefault() {

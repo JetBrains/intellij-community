@@ -6,7 +6,6 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.progress.*
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.util.concurrency.runWithImplicitBlockingContextEnabled
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions
@@ -20,7 +19,7 @@ private const val repetitions: Int = 100
 class SuspendingWriteActionTest {
 
   @RepeatedTest(repetitions)
-  fun context() = runWithImplicitBlockingContextEnabled {
+  fun context() {
     timeoutRunBlocking {
       val application = ApplicationManager.getApplication()
       val rootJob = coroutineContext.job
