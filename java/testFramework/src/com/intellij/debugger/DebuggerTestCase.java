@@ -356,7 +356,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   protected void createBreakpoints(final String className) {
     final PsiFile psiFile = ReadAction.compute(() -> {
       PsiClass psiClass = JavaPsiFacade.getInstance(myProject).findClass(className, GlobalSearchScope.allScope(myProject));
-      assertNotNull(className, psiClass);
+      assertNotNull("Class for breakpoint installation not found " + className, psiClass);
       return psiClass.getContainingFile();
     });
 
