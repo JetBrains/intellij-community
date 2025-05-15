@@ -7,7 +7,9 @@ def create_image(arr):
     try:
         from PIL import Image
 
+        data_type = arr.dtype.name
         arr_to_convert = arr
+
         arr_to_convert = np.where(arr_to_convert == None, 0, arr_to_convert)
         arr_to_convert = np.nan_to_num(arr_to_convert, nan=0)
 
@@ -19,14 +21,17 @@ def create_image(arr):
         elif arr_to_convert.ndim == 3 and arr_to_convert.shape[2] == 1:
             arr_to_convert = arr_to_convert[:, :, 0]
 
-        arr_min, arr_max = np.min(arr_to_convert), np.max(arr_to_convert)
-        if arr_min == arr_max:  # handle constant values
-            arr_to_convert = np.full_like(arr_to_convert, 127, dtype=np.uint8)
-        elif 0 <= arr_min <= 1 and 0 <= arr_max <= 1:
+        arr_min, arr_max = arr_to_convert.min(), arr_to_convert.max()
+        is_float = np.issubdtype(arr_to_convert.dtype, np.floating)
+        is_bool = np.issubdtype(arr_to_convert.dtype, np.bool)
+
+        if (is_float or is_bool) and 0 <= arr_min <= 1 and 0 <= arr_max <= 1: # bool and float in [0; 1]
             arr_to_convert = (arr_to_convert * 255).astype(np.uint8)
-        elif arr_min < 0 or arr_max > 255:
-            arr_to_convert = ((arr_to_convert - arr_min) * 255 / (arr_max - arr_min)).astype(np.uint8)
-        else:
+        elif arr_min != arr_max and (arr_min < 0 or arr_max > 255):
+            arr_to_convert = ((arr_to_convert - arr_min) * 255 / (arr_max - arr_min)).astype(np.uint8) # other values out of [0; 255]
+        elif arr_min == arr_max and (arr_min < 0 or arr_max > 255):
+            arr_to_convert = (np.ones_like(arr_to_convert) * 127).astype(np.uint8)
+        else: # values in [0; 255]
             arr_to_convert = arr_to_convert.astype(np.uint8)
 
         arr_to_convert_ndim = arr_to_convert.ndim
@@ -37,7 +42,7 @@ def create_image(arr):
         else:
             mode = RGB_MODE
 
-        return save_image_to_storage(Image.fromarray(arr_to_convert, mode=mode))
+        return save_image_to_storage(Image.fromarray(arr_to_convert, mode=mode), data_type=data_type)
 
     except ImportError:
         return "Error: Pillow library is not installed."

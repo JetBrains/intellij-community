@@ -539,7 +539,7 @@ public class PyDebugValue extends XNamedValue {
         int[] shape = extractShape(debugValue);
         yield isValidArrayShape(shape);
       }
-      case NodeTypes.IMAGE_NODE_TYPE, NodeTypes.FIGURE_NODE_TYPE -> true;
+      case NodeTypes.IMAGE_NODE_TYPE, NodeTypes.PNG_IMAGE_NODE_TYPE, NodeTypes.JPEG_IMAGE_NODE_TYPE, NodeTypes.FIGURE_NODE_TYPE -> true;
       default -> false;
     };
   }
