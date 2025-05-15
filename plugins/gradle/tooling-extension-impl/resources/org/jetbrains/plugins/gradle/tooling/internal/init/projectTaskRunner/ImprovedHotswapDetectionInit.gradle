@@ -1,15 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-
-import org.gradle.BuildAdapter
-import org.gradle.BuildResult
-import org.gradle.api.Task
-import org.gradle.api.execution.TaskExecutionAdapter
-import org.gradle.api.tasks.TaskState
-
-import java.security.MessageDigest
-
-import static groovy.io.FileType.FILES
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+//file:noinspection GrPackage
 
 /**
  * This init script generates a file containing a list of task output
@@ -17,7 +7,7 @@ import static groovy.io.FileType.FILES
  *
  * This script hooks into Gradle task execution lifecycle. For a very
  * similar script that uses Gradle Build Services introduced in Gradle 6.8,
- * see GradleImprovedHotswapDetectionInitScriptUsingService.groovy
+ * see ImprovedHotswapDetectionUsingServiceInit.gradle
  *
  * The files are determined to be modified by hashing output files
  * before and after gradle execution.
@@ -46,15 +36,18 @@ import static groovy.io.FileType.FILES
  * This fileGenerated call triggers Java hotswap
  */
 
-Map<Task,Map<File,String>> beforeTaskFileHashes = [:]
-def effectiveTasks = []
+@SuppressWarnings('GroovyAssignabilityCheck')
+interface Properties {
+  public static final File outputFile = new File(OUTPUT_PATH)
+}
 
-def outputFile = new File("%s")
+Map<Task, Map<File, String>> beforeTaskFileHashes = [:]
+List<Task> effectiveTasks = []
 
 gradle.taskGraph.addTaskExecutionListener(new TaskExecutionAdapter() {
   void beforeExecute(Task task) {
     if (task.outputs.hasOutput) {
-      beforeTaskFileHashes.put(task, GradleImprovedHotswapDetectionUtils.hashTaskOutputs(task.outputs.files.files))
+      beforeTaskFileHashes.put(task, ImprovedHotswapDetectionUtils.hashTaskOutputs(task.outputs.files.files))
     }
   }
 
@@ -68,7 +61,7 @@ gradle.taskGraph.addTaskExecutionListener(new TaskExecutionAdapter() {
 gradle.addBuildListener(new BuildAdapter() {
   void buildFinished(BuildResult result) {
     effectiveTasks.each { Task task ->
-      GradleImprovedHotswapDetectionUtils.detectModifiedTaskOutputs(task, outputFile, beforeTaskFileHashes)
+      ImprovedHotswapDetectionUtils.detectModifiedTaskOutputs(task, Properties.outputFile, beforeTaskFileHashes)
     }
   }
 })

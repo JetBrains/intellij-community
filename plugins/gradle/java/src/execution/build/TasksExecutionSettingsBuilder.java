@@ -22,6 +22,7 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.task.VersionSpecificInitScript;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
@@ -76,17 +77,17 @@ public class TasksExecutionSettingsBuilder {
     return ContainerUtil.concat(modulesToBuild, modulesOfResourcesToBuild, modulesOfFiles);
   }
 
-  public void addInitScripts(String rootProjectPath, VersionSpecificInitScript... initScript) {
+  public void addInitScripts(String rootProjectPath, Iterable<VersionSpecificInitScript> initScript) {
     Collection<VersionSpecificInitScript> versionSpecificInitScripts = versionedInitScripts.getModifiable(rootProjectPath);
-    Collections.addAll(versionSpecificInitScripts, initScript);
+    ContainerUtil.addAll(versionSpecificInitScripts, initScript);
   }
 
   public Collection<VersionSpecificInitScript> getVersionedInitScripts(String rootProjectPath) {
     return versionedInitScripts.get(rootProjectPath);
   }
 
-  public Collection<String> getInitScripts(String rootProjectPath) {
-    return initScripts.get(rootProjectPath);
+  public String getInitScript(String rootProjectPath) {
+    return GradleInitScriptUtil.joinInitScripts(initScripts.get(rootProjectPath));
   }
 
   public boolean containsTasksToExecuteFor(String rootProjectPath) {

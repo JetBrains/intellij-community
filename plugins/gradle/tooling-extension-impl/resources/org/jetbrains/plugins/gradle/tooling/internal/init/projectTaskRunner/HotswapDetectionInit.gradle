@@ -1,0 +1,25 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+//file:noinspection GrPackage
+
+@SuppressWarnings('GroovyAssignabilityCheck')
+interface Properties {
+  public static final File outputFile = new File(OUTPUT_PATH)
+}
+
+List<Task> effectiveTasks = []
+
+gradle.taskGraph.addTaskExecutionListener(new TaskExecutionAdapter() {
+  void afterExecute(Task task, TaskState state) {
+    if ((state.didWork || (state.skipped && state.skipMessage == 'FROM-CACHE')) && task.outputs.hasOutput) {
+      effectiveTasks.add(task)
+    }
+  }
+})
+
+gradle.addBuildListener(new BuildAdapter() {
+  void buildFinished(BuildResult result) {
+    effectiveTasks.each { Task task ->
+      task.outputs.files.files.each { Properties.outputFile.append(it.path + '\\n') }
+    }
+  }
+})

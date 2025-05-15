@@ -58,6 +58,9 @@ const val IDEA_PLUGIN_CONFIGURATOR_SCRIPT_NAME: String = "ijIdeaPluginConfigurat
 @ApiStatus.Internal
 const val ARTIFACT_DOWNLOADER_SCRIPT_NAME: String = "ijArtifactDownloader"
 
+@ApiStatus.Internal
+const val HOTSWAP_DETECTION_SCRIPT_NAME: String = "ijHotswapDetection"
+
 @JvmField
 val GRADLE_TOOLING_EXTENSION_CLASSES: Set<Class<*>> = setOf(
   SystemInfoRt::class.java, // intellij.platform.util.rt
@@ -155,7 +158,7 @@ fun loadTaskInitScript(
   taskName: String,
   taskType: String,
   toolingExtensionClasses: Set<Class<*>>,
-  taskConfiguration: String?
+  taskConfiguration: String?,
 ): String {
   return joinInitScripts(
     loadToolingExtensionProvidingInitScript(GRADLE_TOOLING_EXTENSION_CLASSES + toolingExtensionClasses),
@@ -179,7 +182,7 @@ fun createWrapperInitScript(
   gradleVersion: GradleVersion?,
   jarFile: File,
   scriptFile: File,
-  fileWithPathToProperties: File
+  fileWithPathToProperties: File,
 ): Path {
   val initScript = loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/WrapperInit.gradle", mapOf(
     "GRADLE_VERSION" to (gradleVersion?.version?.toGroovyStringLiteral() ?: "null"),
@@ -215,6 +218,57 @@ fun loadJvmOptionsInitScript(
     "TASKS" to tasks.toGroovyListLiteral { toGroovyStringLiteral() },
     "JVM_ARGS" to jvmArgs.toGroovyListLiteral { toGroovyStringLiteral() }
   ))
+}
+
+@ApiStatus.Internal
+fun loadHotswapDetectionInitScript(
+  isImprovedHotswapDetectionEnabled: Boolean,
+  outputPath: String,
+): List<VersionSpecificInitScript> {
+  return listOf(
+    LazyVersionSpecificInitScript(
+      filePrefix = HOTSWAP_DETECTION_SCRIPT_NAME,
+      isApplicable = { isImprovedHotswapDetectionEnabled && GradleVersionUtil.isGradleOlderThan(it, "6.8") },
+      scriptSupplier = {
+        joinInitScripts(
+          loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/projectTaskRunner/ImprovedHotswapDetectionUtils.gradle"),
+          loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/projectTaskRunner/ImprovedHotswapDetectionInit.gradle", mapOf(
+            "OUTPUT_PATH" to outputPath.toGroovyStringLiteral(),
+          ))
+        )
+      }
+    ),
+    LazyVersionSpecificInitScript(
+      filePrefix = HOTSWAP_DETECTION_SCRIPT_NAME,
+      isApplicable = { isImprovedHotswapDetectionEnabled && GradleVersionUtil.isGradleAtLeast(it, "6.8") },
+      scriptSupplier = {
+        joinInitScripts(
+          loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/projectTaskRunner/ImprovedHotswapDetectionUtils.gradle"),
+          loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/projectTaskRunner/ImprovedHotswapDetectionUsingServiceInit.gradle", mapOf(
+            "OUTPUT_PATH" to outputPath.toGroovyStringLiteral(),
+          ))
+        )
+      }
+    ),
+    LazyVersionSpecificInitScript(
+      filePrefix = HOTSWAP_DETECTION_SCRIPT_NAME,
+      isApplicable = { !isImprovedHotswapDetectionEnabled && GradleVersionUtil.isGradleOlderThan(it, "6.8") },
+      scriptSupplier = {
+        loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/projectTaskRunner/HotswapDetectionInit.gradle", mapOf(
+          "OUTPUT_PATH" to outputPath.toGroovyStringLiteral(),
+        ))
+      }
+    ),
+    LazyVersionSpecificInitScript(
+      filePrefix = HOTSWAP_DETECTION_SCRIPT_NAME,
+      isApplicable = { !isImprovedHotswapDetectionEnabled && GradleVersionUtil.isGradleAtLeast(it, "6.8") },
+      scriptSupplier = {
+        loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/projectTaskRunner/HotswapDetectionUsingServiceInit.gradle", mapOf(
+          "OUTPUT_PATH" to outputPath.toGroovyStringLiteral(),
+        ))
+      }
+    )
+  )
 }
 
 private val JUNIT_3_COMPARISON_FAILURE = listOf("junit.framework.ComparisonFailure")
@@ -297,7 +351,7 @@ fun joinInitScripts(vararg initScripts: String): String {
   return joinInitScripts(initScripts.asList())
 }
 
-fun joinInitScripts(initScripts: List<String>): String {
+fun joinInitScripts(initScripts: Iterable<String>): String {
   return initScripts.joinToString(System.lineSeparator())
 }
 

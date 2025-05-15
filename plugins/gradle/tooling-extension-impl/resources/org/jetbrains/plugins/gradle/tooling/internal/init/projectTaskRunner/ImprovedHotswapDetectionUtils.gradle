@@ -1,4 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+//file:noinspection GrPackage
 
 import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.FromString
@@ -8,7 +9,8 @@ import java.security.MessageDigest
 
 import static groovy.io.FileType.FILES
 
-class GradleImprovedHotswapDetectionUtils {
+class ImprovedHotswapDetectionUtils {
+
   static void detectModifiedTaskOutputs(Task task, File outputFile, Map<Task,Map<File,String>> beforeTaskFileHashes) {
     def state = task.state
     def didWork = state.didWork
