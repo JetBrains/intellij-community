@@ -40,7 +40,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.PythonSdkUtil
 
 /**
- * Marks references that fail to resolve. Also tracks unused imports and provides "optimize imports" support.
+ * Marks references that fail to resolve.
  */
 class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() {
   @JvmField
