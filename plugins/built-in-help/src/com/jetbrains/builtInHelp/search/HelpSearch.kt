@@ -16,6 +16,8 @@ import org.apache.lucene.search.highlight.Scorer
 import org.apache.lucene.store.NIOFSDirectory
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
+import java.io.BufferedReader
+import java.io.InputStreamReader
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -24,7 +26,6 @@ import java.util.*
 class HelpSearch {
 
   companion object {
-    private val resources = setOf("_0.cfe", "_0.cfs", "_0.si", "segments_1")
 
     @NonNls
     private const val NOT_FOUND = "[]"
@@ -41,21 +42,26 @@ class HelpSearch {
         if (indexDir != null)
           try {
             val indexDirPath = indexDir.toAbsolutePath().toString()
+            Files.createDirectories(indexDir)
 
-            resources.forEach { resource ->
-              ResourceUtil.getResourceAsStream(HelpSearch::class.java.classLoader,
-                                               "search",
-                                               resource).use { resourceStream ->
-                if (resourceStream == null) return@forEach
-
-                Paths.get(indexDirPath, resource)
-                  .safeOutputStream().use { resourceOutput ->
-                    resourceOutput.write(resourceStream.readAllBytes())
+            //Read required names from rlist and then load resources based off of them
+            ResourceUtil.getResourceAsStream(HelpSearch::class.java.classLoader, "search", "rlist")
+              .use { resourceList ->
+                BufferedReader(InputStreamReader(resourceList)).useLines { lines ->
+                  lines.forEach { line ->
+                    val path = Paths.get(indexDirPath, line)
+                    ResourceUtil.getResourceAsStream(HelpSearch::class.java.classLoader,
+                                                     "search", line)
+                      ?.use { resourceStream ->
+                        path.safeOutputStream().use { resourceOutput ->
+                          resourceOutput.write(resourceStream.readAllBytes())
+                        }
+                      }
                   }
+                }
               }
-            }
 
-            indexDirectory = NIOFSDirectory.open(indexDir) as NIOFSDirectory
+            indexDirectory = NIOFSDirectory(indexDir)
             reader = DirectoryReader.open(indexDirectory)
 
             val searcher = IndexSearcher(reader)

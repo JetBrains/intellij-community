@@ -15,9 +15,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
-import kotlin.io.path.extension
-import kotlin.io.path.isRegularFile
-import kotlin.io.path.name
+import kotlin.io.path.*
 import kotlin.streams.asSequence
 
 class HelpIndexer
@@ -27,7 +25,12 @@ internal constructor(indexDir: String) {
   private val writer: IndexWriter
 
   init {
-    val dir = FSDirectory.open(Paths.get(indexDir))
+    val targetPath = Paths.get(indexDir)
+    //Make sure it's empty
+    targetPath.toFile().deleteRecursively()
+    targetPath.createDirectories()
+
+    val dir = FSDirectory.open(targetPath)
     val config = IndexWriterConfig(analyzer)
     writer = IndexWriter(dir, config)
   }
@@ -99,6 +102,9 @@ internal constructor(indexDir: String) {
       val indexer = HelpIndexer(dirToStore)
       indexer.indexDirectory(dirToIndex)
       indexer.closeIndex()
+      //Store the list of generated files for the search to work
+      Path.of(dirToStore, "rlist")
+        .writeLines(Path.of(dirToStore).walk().map { it.name })
     }
 
     @Throws(IOException::class)

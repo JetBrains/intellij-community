@@ -31,11 +31,6 @@ internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): Plug
     spec.directoryName = "${productName.replace(" ", "")}Help"
     spec.excludeFromModule(BUILT_IN_HELP_MODULE_NAME, "com/jetbrains/builtInHelp/indexer/**")
     spec.withPatch { patcher, buildContext ->
-/*      patcher.patchModuleOutput(
-        moduleName = BUILT_IN_HELP_MODULE_NAME,
-        path = "META-INF/services/org.apache.lucene.codecs.Codec",
-        content = "org.apache.lucene.codecs.lucene50.Lucene50Codec"
-      )*/
       patcher.patchModuleOutput(
         moduleName = BUILT_IN_HELP_MODULE_NAME,
         path = "META-INF/plugin.xml",
@@ -43,6 +38,7 @@ internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): Plug
         overwrite = PatchOverwriteMode.TRUE
       )
     }
+    spec.withProjectLibrary("lucene-core")
     spec.withGeneratedResources { targetDir, buildContext ->
       val assetJar = targetDir.resolve("lib/help-$productLowerCase-assets.jar")
       buildResourcesForHelpPlugin(
