@@ -8,6 +8,7 @@ import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
@@ -31,7 +32,7 @@ import kotlin.io.path.relativeTo
 private const val DUMP_DESCRIPTORS_PROPERTY = "idea.dump.plugin.descriptors"
 private val targetFile: Path get() = PathManager.getLogDir().resolve("plugin-descriptors-data.json")
 
-private class DumpPluginDescriptorsAction : DumbAwareAction() {
+private class DumpPluginDescriptorsAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Duplicated {
   override fun actionPerformed(e: AnActionEvent) {
     service<PluginDescriptionDumper>().dump(e.project)
   }
