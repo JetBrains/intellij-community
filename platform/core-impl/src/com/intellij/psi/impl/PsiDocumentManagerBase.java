@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
@@ -60,14 +61,14 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   public static final Logger LOG = Logger.getInstance(PsiDocumentManagerBase.class);
   private static final Key<Document> HARD_REF_TO_DOCUMENT = Key.create("HARD_REFERENCE_TO_DOCUMENT");
 
-  private boolean isInsideCommitHandler = false; //accessed from EDT only
+  private boolean isInsideCommitHandler; //accessed from EDT only
 
   private final Map<Document, List<Runnable>> documentCommitActions = CollectionFactory.createConcurrentWeakMap();
   private final Map<Object, Runnable> identifiedAllDocumentCommitActions = new LinkedHashMap<>(); //accessed from EDT only
   private final List<Runnable> allDocumentCommitActions = new ArrayList<>(); //accessed from EDT only
 
   @ApiStatus.Internal
-  public final Project myProject;
+  protected final Project myProject;
   private final PsiManager myPsiManager;
   private final DocumentCommitProcessor myDocumentCommitProcessor;
 
@@ -93,6 +94,16 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     myPsiManager = PsiManager.getInstance(project);
     myDocumentCommitProcessor = ApplicationManager.getApplication().getService(DocumentCommitProcessor.class);
     mySynchronizer = new PsiToDocumentSynchronizer(this, project.getMessageBus());
+    project.getMessageBus().connect(this).subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
+      @Override
+      public void fileContentLoaded(final @NotNull VirtualFile virtualFile, @NotNull Document document) {
+        PsiFile psiFile = ReadAction.compute(() -> {
+          // todo IJPL-339 figure out which psi file to pass here or get rid of psi file at all
+          return myProject.isDisposed() || !virtualFile.isValid() ? null : getCachedPsiFile(virtualFile, CodeInsightContexts.anyContext());
+        });
+        fireDocumentCreated(document, psiFile);
+      }
+    });
   }
 
   @Override
@@ -176,8 +187,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return virtualFile;
   }
 
-  @ApiStatus.Internal
-  public @Nullable PsiFile getCachedPsiFile(@NotNull VirtualFile virtualFile, @NotNull CodeInsightContext context) {
+  private @Nullable PsiFile getCachedPsiFile(@NotNull VirtualFile virtualFile, @NotNull CodeInsightContext context) {
     return getFileManager().getCachedPsiFile(virtualFile, context);
   }
 
@@ -286,7 +296,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     Runnable commitAllDocumentsRunnable = () -> {
       Semaphore semaphore = new Semaphore(1);
       AppUIExecutor.onWriteThread().later().submit(() -> {
-        PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(new Runnable() {
+        getInstance(myProject).performWhenAllCommitted(new Runnable() {
           @Override
           public void run() {
             semaphore.up();
@@ -805,8 +815,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   public void doPostponedOperationsAndUnblockDocument(@NotNull Document doc) {
   }
 
-  @ApiStatus.Internal
-  public void fireDocumentCreated(@NotNull Document document, PsiFile file) {
+  private void fireDocumentCreated(@NotNull Document document, PsiFile file) {
     myProject.getMessageBus().syncPublisher(PsiDocumentListener.TOPIC).documentCreated(document, file, myProject);
     for (Listener listener : myListeners) {
       listener.documentCreated(document, file);

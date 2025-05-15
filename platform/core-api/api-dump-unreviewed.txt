@@ -1817,6 +1817,20 @@ c:com.intellij.openapi.fileEditor.FileDocumentManager$WriteAccessStatus
 - getHyperlinkListener():javax.swing.event.HyperlinkListener
 - getReadOnlyMessage():java.lang.String
 - hasWriteAccess():Z
+com.intellij.openapi.fileEditor.FileDocumentManagerListener
+- java.util.EventListener
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- sf:TOPIC:com.intellij.util.messages.Topic
+- afterDocumentUnbound(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document):V
+- beforeAllDocumentsSaving():V
+- beforeAnyDocumentSaving(com.intellij.openapi.editor.Document,Z):V
+- beforeDocumentSaving(com.intellij.openapi.editor.Document):V
+- beforeFileContentReload(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document):V
+- fileContentLoaded(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document):V
+- fileContentReloaded(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document):V
+- fileWithNoDocumentChanged(com.intellij.openapi.vfs.VirtualFile):V
+- unsavedDocumentDropped(com.intellij.openapi.editor.Document):V
+- unsavedDocumentsDropped():V
 com.intellij.openapi.fileTypes.BinaryFileDecompiler
 - a:decompile(com.intellij.openapi.vfs.VirtualFile):java.lang.CharSequence
 f:com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
