@@ -357,17 +357,22 @@
     <psi.referenceContributor implementation="com.jetbrains.python.testing.pyTestParametrized.PyTestParametrizedContributor"
                               language="Python"/>
 
-    <applicationConfigurable groupId="tools" instance="com.jetbrains.python.documentation.PythonDocumentationConfigurable"
+    <applicationConfigurable groupId="tools"
+                             instance="com.jetbrains.python.documentation.PythonDocumentationConfigurable"
                              id="com.jetbrains.python.documentation.PythonDocumentationConfigurable"
-                             key="external.documentation.python.plugin"/>
-    <applicationConfigurable parentId="project.propDebugger"
-                             instance="com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeRenderersConfigurable"
+                             key="external.documentation.python.plugin"/> <!--id is used in PyCharmCorePluginConfigurator-->
+
+    <applicationConfigurable groupId="project.propDebugger"
                              id="debugger.dataViews.python.type.renderers"
-                             key="configurable.PyUserTypeRenderersConfigurable.display.name"/>
-    <projectConfigurable groupId="tools" instance="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
+                             instance="com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeRenderersConfigurable"
+                             key="configurable.PyUserTypeRenderersConfigurable.display.name"/> <!--id is used in PyCharmCorePluginConfigurator-->
+
+    <projectConfigurable groupId="tools"
                          id="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
+                         instance="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
                          bundle="messages.PyBundle"
-                         key="configurable.PyIntegratedToolsModulesConfigurable.display.name"/>
+                         key="configurable.PyIntegratedToolsModulesConfigurable.display.name"/> <!--id is used in PyCharmProjectConfigurableStartupActivity-->
+
     <search.optionContributor implementation="com.jetbrains.python.PySearchableOptionContributor"/>
 
     <treeStructureProvider implementation="com.jetbrains.python.projectView.PyTreeStructureProvider"/>
@@ -379,10 +384,12 @@
     <projectService serviceImplementation="com.jetbrains.python.console.PyConsoleOptions"/>
     <toolWindowExtractorMode id="Python Console" mode="mirror"/>
 
-    <projectConfigurable groupId="build" groupWeight="119" id="reference.idesettings.debugger.python"
+    <projectConfigurable groupId="build"
+                         groupWeight="119"
+                         id="reference.idesettings.debugger.python"
                          instance="com.jetbrains.python.debugger.PyDebuggerConfigurable"
                          bundle="messages.PyBundle"
-                         key="configurable.PyDebuggerConfigurable.display.name"/>
+                         key="configurable.PyDebuggerConfigurable.display.name"/> <!--id is used in PyCharmProjectConfigurableStartupActivity-->
 
     <codeBlockProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyCodeBlockProvider"/>
 

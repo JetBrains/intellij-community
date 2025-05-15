@@ -35,22 +35,37 @@
                         serviceImplementation="com.intellij.pycharm.community.ide.impl.PyCharmPythonIdeLanguageCustomization"
                         overrides="true"/>
 
+    <!--Settings -->
+    <backgroundPostStartupActivity id="PyCharmProjectConfigurableStartupActivity"
+                                   implementation="com.intellij.pycharm.community.ide.impl.PyCharmProjectConfigurableStartupActivity"/>
+
+    <groupConfigurable id="python.group.settings"
+                       parentId="root"
+                       weight="1000"
+                       bundle="messages.PyBundle"
+                       displayNameKey="settings.python.group.title"
+                       descriptionKey="settings.python.group.title"/>
+
     <projectConfigurable groupId="project"
                          id="com.intellij.pycharm.community.ide.impl.configuration.PythonContentEntriesConfigurable"
                          bundle="messages.PyBundle"
                          key="configurable.PythonContentEntriesConfigurable.display.name"
                          provider="com.intellij.pycharm.community.ide.impl.configuration.PythonContentEntriesConfigurableProvider"/>
-    <projectConfigurable groupId="project"
+
+    <projectConfigurable groupId="python.group.settings"
                          id="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
                          bundle="messages.PyBundle"
                          key="configurable.PyActiveSdkModuleConfigurable.python.interpreter.display.name"
                          instance="com.intellij.pycharm.community.ide.impl.PyCharmPyActiveSdkModuleConfigurable"
-                         groupWeight="5"/> <!-- id is used in InterpreterSettingsQuickFix.showPythonInterpreterSettings -->
-    <projectConfigurable groupId="project"
+                         groupWeight="200"/> <!-- id is used in InterpreterSettingsQuickFix.showPythonInterpreterSettings -->
+
+    <projectConfigurable groupId="python.group.settings"
                          id="com.intellij.pycharm.community.ide.impl.configuration.PyDependenciesConfigurable"
                          bundle="messages.PyBundle"
                          key="configurable.PyDependenciesConfigurable.display.name"
-                         provider="com.intellij.pycharm.community.ide.impl.configuration.PyDependenciesConfigurableProvider"/>
+                         provider="com.intellij.pycharm.community.ide.impl.configuration.PyDependenciesConfigurableProvider"
+                         groupWeight="5"/>
+
     <applicationConfigurable id="memory.settings" groupWeight="45"
                              key="settings.memory.group.title"
                              bundle="messages.PyBundle"

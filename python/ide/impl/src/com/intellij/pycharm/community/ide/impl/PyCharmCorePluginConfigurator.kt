@@ -14,7 +14,10 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.ex.ConfigurableGroupEP
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.pycharm.community.ide.impl.settings.PythonMainConfigurable
 import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings
@@ -88,5 +91,36 @@ private class PyCharmCorePluginConfigurator : ApplicationInitializedListener {
     }
 
     serviceAsync<Experiments>().setFeatureEnabled("terminal.shell.command.handling", false)
+
+    patchConfigurables()
+  }
+
+  @Suppress("DialogTitleCapitalization")
+  private fun patchConfigurables() {
+    for (ep in Configurable.APPLICATION_CONFIGURABLE.extensionList) {
+      when (ep.id) {
+        "DSTables" -> {
+          ep.groupId = PythonMainConfigurable.ID
+          ep.groupWeight = 50
+        }
+        "debugger.dataViews.python.type.renderers" -> {
+          ep.groupId = PythonMainConfigurable.ID
+          ep.key = "configurable.PyUserTypeRenderersConfigurable.pycharm.display.name"
+          ep.bundle="messages.PyBundle"
+          ep.groupWeight = 30
+        }
+        "com.jetbrains.python.documentation.PythonDocumentationConfigurable" -> {
+          ep.groupId = PythonMainConfigurable.ID
+          ep.key = "external.documentation.pycharm"
+          ep.bundle="messages.PyBundle"
+          ep.groupWeight = 10
+        }
+      }
+    }
+
+    ConfigurableGroupEP.find("jupyter.settings")?.apply {
+      parentId = PythonMainConfigurable.ID
+      weight = 70
+    }
   }
 }
