@@ -54,7 +54,9 @@ object DocMarkdownToHtmlConverter {
         "blockquote", "dd", "dl", "dt",
         "hr", "li", "ol", "ul", "pre", "p",  // Table,
 
-        "caption", "col", "colgroup", "table", "tbody", "td", "tfoot", "th", "thead", "tr"
+        "caption", "col", "colgroup", "table", "tbody", "td", "tfoot", "th", "thead", "tr",
+
+        "details", "summary"
       ))
     }
 
