@@ -47,7 +47,7 @@ class PluginModelFacade(private val pluginModel: MyPluginModel) {
   }
 
   fun installOrUpdatePlugin(component: JComponent, model: PluginUiModel, updateDescriptor: PluginUiModel?, modalityState: ModalityState) {
-    getController(model).installOrUpdatePlugin(component, model, updateDescriptor?.getDescriptor(), modalityState)
+    getController(model).installOrUpdatePlugin(component, model, updateDescriptor, modalityState)
   }
 
   fun addUninstalled(model: PluginUiModel) {

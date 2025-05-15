@@ -17,7 +17,7 @@ interface PluginModelController {
   fun isPluginInstallingOrUpdating(model: PluginUiModel): Boolean
   fun getState(model: PluginUiModel): PluginEnabledState
   fun disable(models: List<PluginUiModel>)
-  fun installOrUpdatePlugin(component: JComponent, model: PluginUiModel, updateDescriptor: IdeaPluginDescriptor?, modalityState: ModalityState)
+  fun installOrUpdatePlugin(component: JComponent, model: PluginUiModel, updateDescriptor: PluginUiModel?, modalityState: ModalityState)
   fun addUninstalled(model: PluginUiModel)
   fun enable(models: List<PluginUiModel>)
   fun getIcon(model: PluginUiModel, big: Boolean, error: Boolean, disabled: Boolean): Icon

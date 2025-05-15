@@ -1009,7 +1009,7 @@ public final class PluginManagerConfigurable
           PluginLogo.startBatchMode();
 
           PluginsGroup installing = new PluginsGroup(IdeBundle.message("plugins.configurable.installing"), PluginsGroupType.INSTALLING);
-          installing.addDescriptors(MyPluginModel.getInstallingPlugins());
+          installing.addModels(MyPluginModel.getInstallingPlugins());
           if (!installing.getModels().isEmpty()) {
             installing.sortByName();
             installing.titleWithCount();
@@ -1354,7 +1354,7 @@ public final class PluginManagerConfigurable
       PluginsGroup group = myInstalledSearchPanel.getGroup();
 
       if (group.ui != null && group.ui.findComponent(descriptor.getPluginId()) != null) {
-        myInstalledSearchPanel.getPanel().removeFromGroup(group, new PluginUiModelAdapter(descriptor));
+        myInstalledSearchPanel.getPanel().removeFromGroup(group, descriptor);
         group.titleWithCount();
         myInstalledSearchPanel.fullRepaint();
 

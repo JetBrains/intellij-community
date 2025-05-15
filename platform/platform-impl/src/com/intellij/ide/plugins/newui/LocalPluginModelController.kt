@@ -41,8 +41,8 @@ class LocalPluginModelController(private val localPluginModel: MyPluginModel) : 
     localPluginModel.disable(models.map { it.getDescriptor() })
   }
 
-  override fun installOrUpdatePlugin(component: JComponent, model: PluginUiModel, updateDescriptor: IdeaPluginDescriptor?, modalityState: ModalityState) {
-    localPluginModel.installOrUpdatePlugin(component, model.getDescriptor(), updateDescriptor, modalityState)
+  override fun installOrUpdatePlugin(component: JComponent, model: PluginUiModel, updateDescriptor: PluginUiModel?, modalityState: ModalityState) {
+    localPluginModel.installOrUpdatePlugin(component, model, updateDescriptor, modalityState)
   }
 
   override fun addUninstalled(model: PluginUiModel) {
@@ -148,7 +148,7 @@ class LocalPluginModelController(private val localPluginModel: MyPluginModel) : 
   }
 
   override fun finishInstall(model: PluginUiModel, installedModel: PluginUiModel?, finishedSuccessfully: Boolean, showErrors: Boolean, restartRequired: Boolean) {
-    return localPluginModel.finishInstall(model.getDescriptor(), installedModel?.getDescriptor() as? IdeaPluginDescriptorImpl, finishedSuccessfully, showErrors, restartRequired)
+    return localPluginModel.finishInstall(model, installedModel, finishedSuccessfully, showErrors, restartRequired)
   }
 
   override fun getErrors(model: PluginUiModel): List<HtmlChunk> {
