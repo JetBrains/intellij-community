@@ -15,7 +15,6 @@ import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.codehaus.stax2.XMLStreamReader2
 import org.codehaus.stax2.typed.TypedXMLStreamException
-import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.io.InputStream
 import java.text.ParseException
@@ -728,16 +727,6 @@ private fun readDependencies(reader: XMLStreamReader2, builder: PluginDescriptor
     reader.skipElement()
   }
   assert(reader.isEndElement)
-}
-
-@ApiStatus.Internal
-interface ReadModuleContext {
-  val interner: XmlInterner
-
-  val elementOsFilter: (OS) -> Boolean
-
-  val isMissingIncludeIgnored: Boolean
-    get() = false
 }
 
 private fun readInclude(
