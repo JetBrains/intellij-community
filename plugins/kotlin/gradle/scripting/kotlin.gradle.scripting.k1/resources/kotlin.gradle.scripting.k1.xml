@@ -3,12 +3,22 @@
     <module name="kotlin.gradle.scripting.shared"/>
     <plugin id="org.jetbrains.plugins.gradle"/>
   </dependencies>
+  <projectListeners>
+    <listener
+            class="org.jetbrains.kotlin.gradle.scripting.k1.ProjectGradleSettingsListener"
+            topic="org.jetbrains.plugins.gradle.settings.GradleSettingsListener"/>
+  </projectListeners>
+  <extensions defaultExtensionNs="org.jetbrains.kotlin.scripting.idea">
+    <scriptingSupport implementation="org.jetbrains.kotlin.gradle.scripting.k1.roots.GradleScriptingSupport"/>
+  </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
     <syncContributor implementation="org.jetbrains.kotlin.gradle.scripting.k1.KotlinDslScriptSyncContributor"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator"
+                    serviceImplementation="org.jetbrains.kotlin.gradle.scripting.k1.roots.GradleBuildRootsLocatorImpl"/>
     <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.gradle.scripting.k1.importing.KotlinDslSyncListener"/>
     <editorNotificationProvider implementation="org.jetbrains.kotlin.gradle.scripting.k1.GradleScriptNotificationProvider"/>
   </extensions>

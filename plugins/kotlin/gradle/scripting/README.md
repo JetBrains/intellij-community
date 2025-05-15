@@ -42,15 +42,15 @@ The [CompositeScriptConfigurationManager] will provide redirection of [ScriptCon
 
 ## Gradle CustomScriptingSupport
 
-`GradleBuildRootsManager` implementing `ScriptingSupport` described above.
+`GradleBuildRootsLocator` implementing `ScriptingSupport` described above.
 
 There are many Gradle builds can be linked with a single IntelliJ project (don't confuse with the Gradle project and included build). This complicates implementation a bit, as we should manage this builds separately: each of them may have its own script definitions, Gradle version and java home. Typically, the IntelliJ project has no more than one [GradleBuildRoot].
 
-`GradleBuildRootsManager` actually managing linked Gradle builds. See it's KDoc for more details.
+`GradleBuildRootsLocator` actually managing linked Gradle builds. See it's KDoc for more details.
 
 The script configuration is stored in FS by using the IntelliJ VFS file attributes.
 
-Note that we can provide custom scripting support only for projects that using Gradle 6.0 and later, as gathering script models unavailable in older Gradle versions. `GradleBuildRootsManager` falling back to default scripting support for such linked Gradle builds. It is extended through: see "DefaultScriptingSupport extensions for older Gradle versions" for more details.
+Note that we can provide custom scripting support only for projects that using Gradle 6.0 and later, as gathering script models unavailable in older Gradle versions. `GradleBuildRootsLocator` falling back to default scripting support for such linked Gradle builds. It is extended through: see "DefaultScriptingSupport extensions for older Gradle versions" for more details.
 
 ## Watching files states across IntelliJ restarts
 
@@ -58,7 +58,7 @@ To have consistent sate of scripts, we should also be aware of external script c
 
 The first tricky part is that scripts are depending on each other: so, when one script is changed, we actually should invalidate all other scripts as we don't know dependencies between them (Gradle will provide this information later, but it is not yet implemented). Actually, we should know the last modified timestamp of all scripts excepting a particular one. This can be achieved by storing timestamps of two last modified files. [LastModifiedFiles] utility is responsible for that.
 
-Another tricky part is that we should track only scripts belong the Gradle project and should ignore all other `*.gradle.kts` files (in `testData` for example). This is achieved by storing Gradle project roots, as scripts can be exactly near Gradle project roots (excepting included and precompiled scripts which are not fully supported yet). This can be gathered from the Gradle project import information or from GradleProjectSettings when the import has not occurred yet. `GradleBuildRootsManager` does it.
+Another tricky part is that we should track only scripts belong the Gradle project and should ignore all other `*.gradle.kts` files (in `testData` for example). This is achieved by storing Gradle project roots, as scripts can be exactly near Gradle project roots (excepting included and precompiled scripts which are not fully supported yet). This can be gathered from the Gradle project import information or from GradleProjectSettings when the import has not occurred yet. `GradleBuildRootsLocator` does it.
 
 ## Out of project Gradle scripts
 
@@ -72,4 +72,4 @@ We are showing notification before loading as we knew what changes will cause it
 - implementing `org.jetbrains.kotlin.scripting.idea.listener` extension point and calling `suggestToUpdateConfigurationIfOutOfDate` instead of `ensureUpToDatedConfigurationSuggested` on document changes.
 - implementing `org.jetbrains.kotlin.scripting.idea.loader` extension point and overriding `getInputsStamp`
 
-We are also managing out of project scripts the same way as it is done in `GradleBuildRootsManager`.
+We are also managing out of project scripts the same way as it is done in `GradleBuildRootsLocator`.

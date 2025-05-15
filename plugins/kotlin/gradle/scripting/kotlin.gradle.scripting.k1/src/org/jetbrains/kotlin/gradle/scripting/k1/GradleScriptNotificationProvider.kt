@@ -17,9 +17,9 @@ import com.intellij.ui.EditorNotificationProvider
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.gradle.scripting.shared.isGradleKotlinScript
 import org.jetbrains.kotlin.gradle.scripting.shared.legacy.GradleStandaloneScriptActionsManager
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.*
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.ScriptUnderRoot
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsManager
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.Imported
 import org.jetbrains.kotlin.gradle.scripting.shared.runPartialGradleImport
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
@@ -27,22 +27,21 @@ import org.jetbrains.kotlin.idea.hasUnknownScriptExt
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
-import java.util.function.Function
 import javax.swing.JComponent
 
 internal class GradleScriptNotificationProvider : EditorNotificationProvider {
 
     override fun collectNotificationData(
-      project: Project,
-      file: VirtualFile,
-    ): Function<in FileEditor, out JComponent?>? {
+        project: Project,
+        file: VirtualFile,
+    ): java.util.function.Function<in FileEditor, out JComponent?>? {
         if (!isGradleKotlinScript(file) || !file.isKotlinFileType()) {
             return null
         }
 
-        val standaloneScriptActions = GradleStandaloneScriptActionsManager.Companion.getInstance(project)
-        val rootsManager = GradleBuildRootsManager.Companion.getInstance(project)
-        val scriptUnderRoot = rootsManager?.findScriptBuildRoot(file) ?: return null
+        val standaloneScriptActions = GradleStandaloneScriptActionsManager.getInstance(project)
+        val rootsManager = GradleBuildRootsLocator.getInstance(project)
+        val scriptUnderRoot = rootsManager.findScriptBuildRoot(file) ?: return null
 
         // todo: this actions will be usefull only when gradle fix https://github.com/gradle/gradle/issues/12640
         fun EditorNotificationPanel.showActionsToFixNotEvaluated() {
@@ -63,7 +62,7 @@ internal class GradleScriptNotificationProvider : EditorNotificationProvider {
             }
         }
 
-        return Function { fileEditor ->
+        return java.util.function.Function { fileEditor ->
             when (scriptUnderRoot.notificationKind) {
                 dontCare -> null
                 legacy -> {

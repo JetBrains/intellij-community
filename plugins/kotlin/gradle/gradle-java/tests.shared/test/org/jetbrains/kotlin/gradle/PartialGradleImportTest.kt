@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.gradle
 
 import org.jetbrains.kotlin.gradle.scripting.shared.importing.KotlinDslScriptModel
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRoot
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsManager
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.Imported
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.New
 import org.jetbrains.kotlin.gradle.scripting.shared.runPartialGradleImport
@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleI
 import org.jetbrains.kotlin.idea.completion.test.assertInstanceOf
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
-import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertTrue
 import kotlin.text.Typography.dollar
@@ -111,8 +110,8 @@ abstract class PartialGradleImportTest : MultiplePluginVersionGradleImportingTes
     }
 
     protected fun assertSingleGradleBuildRoot(): GradleBuildRoot {
-        val gradleBuildRoots = GradleBuildRootsManager.getInstance(myProject)?.getAllRoots() ?: error("Failed to get GradleBuildRoots")
-        assertEquals(1, gradleBuildRoots.size, "Expected exactly one GradleBuildRoot. Found $gradleBuildRoots")
+        val gradleBuildRoots = GradleBuildRootsLocator.getInstance(myProject)?.getAllRoots() ?: error("Failed to get GradleBuildRoots")
+        assertEquals("Expected exactly one GradleBuildRoot. Found $gradleBuildRoots",1, gradleBuildRoots.size)
         return gradleBuildRoots.single()
     }
 

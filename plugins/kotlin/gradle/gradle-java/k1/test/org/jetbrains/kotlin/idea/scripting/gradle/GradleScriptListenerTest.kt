@@ -10,7 +10,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.util.ui.EDT.dispatchAllInvocationEvents
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.gradle.scripting.shared.legacy.GradleStandaloneScriptActionsManager
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsManager
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.script.AbstractScriptConfigurationLoadingTest
@@ -238,7 +238,7 @@ open class GradleScriptListenerTest : AbstractScriptConfigurationLoadingTest() {
     }
 
     private fun markFileChanged(virtualFile: VirtualFile, ts: Long) {
-        GradleBuildRootsManager.getInstance(project)!!.fileChanged(virtualFile.path, ts)
+        GradleBuildRootsLocator.getInstance(project).fileChanged(virtualFile.path, ts)
     }
 
     fun testLoadedConfigurationWhenExternalFileChanged() {

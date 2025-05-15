@@ -6,7 +6,7 @@ import KotlinGradleScriptingBundle
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsManager
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.Imported
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.WithoutScriptModels
 import org.jetbrains.kotlin.idea.core.script.SCRIPT_DEFINITIONS_SOURCES
@@ -143,7 +143,7 @@ class GradleScriptDefinitionsContributor(private val project: Project) : ScriptD
             if (definitionsByRoots.isEmpty()) {
                 // can be empty in case when import wasn't done from IDE start up,
                 // otherwise KotlinDslSyncListener should run reloadIfNeeded for valid roots
-                GradleBuildRootsManager.getInstance(project)?.getAllRoots()?.forEach {
+                GradleBuildRootsLocator.getInstance(project)?.getAllRoots()?.forEach {
                     val workingDir = it.pathPrefix
                     val (gradleHome, javaHome) = when (it) {
                         is Imported -> {

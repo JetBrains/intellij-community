@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.gradle.scripting.shared.isGradleKotlinScript
 import org.jetbrains.kotlin.gradle.scripting.shared.legacy.GradleStandaloneScriptActionsManager
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.*
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsManager
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.Imported
 import org.jetbrains.kotlin.gradle.scripting.shared.runPartialGradleImport
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
@@ -43,8 +42,8 @@ internal class GradleScriptNotificationProvider : EditorNotificationProvider {
         }
 
         val standaloneScriptActions = GradleStandaloneScriptActionsManager.getInstance(project)
-        val rootsManager = GradleBuildRootsManager.getInstance(project)
-        val scriptUnderRoot = rootsManager?.findScriptBuildRoot(file) ?: return null
+        val rootsManager = GradleBuildRootsLocator.getInstance(project)
+        val scriptUnderRoot = rootsManager.findScriptBuildRoot(file) ?: return null
 
         // todo: this actions will be usefull only when gradle fix https://github.com/gradle/gradle/issues/12640
         fun EditorNotificationPanel.showActionsToFixNotEvaluated() {

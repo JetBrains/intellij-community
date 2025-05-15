@@ -9,7 +9,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUt
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JdkUtil
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsManager
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
@@ -32,7 +32,7 @@ abstract class AbstractKotlinDslSyncListener : ExternalSystemTaskNotificationLis
         // project may be null in case of new project
         val project = id.findProject() ?: return
         task.projectId = id.ideProjectId
-        GradleBuildRootsManager.getInstance(project)?.markImportingInProgress(projectPath)
+        GradleBuildRootsLocator.getInstance(project)?.markImportingInProgress(projectPath)
     }
 
     override fun onEnd(projectPath: String, id: ExternalSystemTaskId) {
@@ -87,7 +87,7 @@ abstract class AbstractKotlinDslSyncListener : ExternalSystemTaskNotificationLis
         // project may be null in case of new project
         val project = id.findProject() ?: return
 
-        GradleBuildRootsManager.getInstance(project)?.markImportingInProgress(sync.workingDir, false)
+        GradleBuildRootsLocator.getInstance(project)?.markImportingInProgress(sync.workingDir, false)
 
         if (sync.failed) {
             reportErrors(project, sync)

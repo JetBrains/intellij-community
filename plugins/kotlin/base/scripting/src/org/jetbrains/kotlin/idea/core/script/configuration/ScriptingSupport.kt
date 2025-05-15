@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.core.script.configuration
 
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangeListener
@@ -47,7 +48,7 @@ interface ScriptingSupport {
     fun getConfigurationImmediately(file: VirtualFile): ScriptCompilationConfigurationWrapper? = null
 
     companion object {
-        val EPN: ProjectExtensionPointName<ScriptingSupport> =
+        val EP_NAME: ProjectExtensionPointName<ScriptingSupport> =
             ProjectExtensionPointName("org.jetbrains.kotlin.scripting.idea.scriptingSupport")
     }
 }

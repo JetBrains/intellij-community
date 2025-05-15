@@ -23,8 +23,6 @@ import kotlin.io.path.exists
  * Each [GradleBuildRoot] may have it's own Gradle version, Java home and other settings.
  *
  * Typically, IntelliJ project have no more than one [GradleBuildRoot].
- *
- * See [GradleBuildRootsManager] for more details.
  */
 sealed class GradleBuildRoot(
     private val lastModifiedFiles: LastModifiedFiles

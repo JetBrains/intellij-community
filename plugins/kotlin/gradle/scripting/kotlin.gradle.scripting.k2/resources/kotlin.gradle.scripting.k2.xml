@@ -15,8 +15,9 @@
     <syncContributor implementation="org.jetbrains.kotlin.gradle.scripting.k2.importing.KotlinDslScriptSyncContributor"/>
   </extensions>
 
-
   <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator"
+                    serviceImplementation="org.jetbrains.kotlin.gradle.scripting.k2.roots.GradleBuildRootsLocatorImpl"/>
     <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.gradle.scripting.k2.importing.KotlinDslSyncListener"/>
 
     <editorNotificationProvider
@@ -32,7 +33,6 @@
                      language="kotlin" editorAttributes="DEPRECATED_ATTRIBUTES"
                      key="inspection.kotlin.options.to.compiler.options.display.name" bundle="messages.KotlinBundle"/>
   </extensions>
-
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <kotlinScripDeferredResolutionPolicy implementation="org.jetbrains.kotlin.gradle.scripting.k2.GradleScripDeferredResolvePolicy"/>

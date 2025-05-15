@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.gradle.scripting.shared
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsManager
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
 import org.jetbrains.kotlin.idea.core.script.configuration.cache.CachedConfigurationInputs
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -29,7 +29,7 @@ data class GradleKotlinScriptConfigurationInputs(
             if (actualStamp.sections != this.sections) return false
 
             return buildRoot == null ||
-                    GradleBuildRootsManager.getInstance(project)
+                    GradleBuildRootsLocator.getInstance(project)
                         ?.getBuildRootByWorkingDir(buildRoot)
                         ?.areRelatedFilesChangedBefore(file, lastModifiedTs) ?: false
         } catch (cancel: ProcessCanceledException) {

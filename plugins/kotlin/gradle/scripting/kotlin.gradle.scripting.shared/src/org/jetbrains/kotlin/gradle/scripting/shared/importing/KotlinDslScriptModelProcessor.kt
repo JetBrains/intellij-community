@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import org.gradle.tooling.model.kotlin.dsl.EditorReportSeverity
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
 import org.jetbrains.kotlin.gradle.scripting.shared.getGradleScriptInputsStamp
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsManager
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
 import org.jetbrains.kotlin.idea.gradleTooling.BrokenKotlinDslScriptsModel
 import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
@@ -148,7 +148,7 @@ fun saveScriptModels(project: Project, build: KotlinDslGradleBuildSync) {
         // todo: use real info about projects
         build.projectRoots.addAll(build.models.map { toSystemIndependentName(File(it.file).parent) })
 
-        GradleBuildRootsManager.getInstance(project)?.update(build)
+        GradleBuildRootsLocator.getInstance(project)?.update(build)
     }
 }
 

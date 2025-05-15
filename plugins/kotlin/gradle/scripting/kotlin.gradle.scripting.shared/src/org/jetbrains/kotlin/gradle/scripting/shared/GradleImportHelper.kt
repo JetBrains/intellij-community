@@ -20,7 +20,7 @@ import org.gradle.tooling.model.kotlin.dsl.KotlinDslModelsParameters
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.scripting.shared.importing.KotlinDslScriptModelResolver
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRoot
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsManager
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
@@ -57,7 +57,7 @@ fun autoReloadScriptConfigurations(project: Project, file: VirtualFile): Boolean
 
 fun scriptConfigurationsNeedToBeUpdated(project: Project, file: VirtualFile) {
     if (autoReloadScriptConfigurations(project, file)) {
-        GradleBuildRootsManager.getInstance(project)?.getScriptInfo(file)?.buildRoot?.let {
+        GradleBuildRootsLocator.getInstance(project)?.getScriptInfo(file)?.buildRoot?.let {
             runPartialGradleImport(project, it)
         }
     } else {
@@ -70,7 +70,7 @@ internal class LoadKtGradleConfigurationAction : AnAction() {
         val project = e.project ?: return
         val editor = e.getData(CommonDataKeys.EDITOR) ?: return
         val file = getKotlinScriptFile(editor) ?: return
-        val root = GradleBuildRootsManager.getInstance(project)?.getScriptInfo(file)?.buildRoot ?: return
+        val root = GradleBuildRootsLocator.getInstance(project)?.getScriptInfo(file)?.buildRoot ?: return
 
         runPartialGradleImport(project, root)
     }
@@ -103,7 +103,7 @@ internal class LoadKtGradleConfigurationAction : AnAction() {
             return false
         }
 
-        return GradleBuildRootsManager.getInstance(project)?.isConfigurationOutOfDate(file) == true
+        return GradleBuildRootsLocator.getInstance(project)?.isConfigurationOutOfDate(file) == true
     }
 
     private fun getKotlinScriptFile(editor: Editor): VirtualFile? {

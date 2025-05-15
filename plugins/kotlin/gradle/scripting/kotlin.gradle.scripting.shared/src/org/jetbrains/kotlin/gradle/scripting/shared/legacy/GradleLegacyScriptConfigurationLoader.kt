@@ -12,7 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.gradle.scripting.shared.getGradleScriptInputsStamp
 import org.jetbrains.kotlin.gradle.scripting.shared.isGradleKotlinScript
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsManager
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
 import org.jetbrains.kotlin.idea.core.script.configuration.cache.CachedConfigurationInputs
 import org.jetbrains.kotlin.idea.core.script.configuration.loader.DefaultScriptConfigurationLoader
 import org.jetbrains.kotlin.idea.core.script.configuration.loader.ScriptConfigurationLoadingContext
@@ -25,9 +25,6 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
  * TODO(gradle6): remove
  */
 class GradleLegacyScriptConfigurationLoader(project: Project, private val coroutineScope: CoroutineScope) : DefaultScriptConfigurationLoader(project) {
-    private val buildRootsManager
-        get() = GradleBuildRootsManager.getInstanceSafe(project)
-
     override fun interceptBackgroundLoading(file: VirtualFile, isFirstLoad: Boolean, doLoad: () -> Unit): Boolean {
         if (!isGradleKotlinScript(file)) return false
 
@@ -58,7 +55,8 @@ class GradleLegacyScriptConfigurationLoader(project: Project, private val corout
 
         hideInterceptedNotification(vFile)
 
-        if (!buildRootsManager.isAffectedGradleProjectFile(vFile.path)) {
+        val buildRootsManager = GradleBuildRootsLocator.getInstance(project)
+        if (buildRootsManager != null && !buildRootsManager.isAffectedGradleProjectFile(vFile.path)) {
             // not known gradle file and not configured as standalone script
             // skip
             return true

@@ -55,7 +55,7 @@ class CompositeScriptConfigurationManager(val project: Project, val scope: Corou
         get() = updater.classpathRoots
 
     private val plugins
-        get() = ScriptingSupport.EPN.getPoint(project).extensionList
+        get() = ScriptingSupport.EP_NAME.getPoint(project).extensionList
 
     val default = DefaultScriptingSupport(this)
 

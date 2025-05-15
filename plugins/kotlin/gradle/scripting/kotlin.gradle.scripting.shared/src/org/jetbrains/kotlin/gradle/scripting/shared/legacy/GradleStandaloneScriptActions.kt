@@ -2,8 +2,9 @@
 
 package org.jetbrains.kotlin.gradle.scripting.shared.legacy
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsManager
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 
@@ -13,7 +14,7 @@ class GradleStandaloneScriptActions(
     val isFirstLoad: Boolean,
     private val doLoad: () -> Unit
 ) {
-    val project get() = manager.project
+    val project: Project get() = manager.project
 
     private val scriptDefinition
         get() = file.findScriptDefinition(project)
@@ -45,7 +46,7 @@ class GradleStandaloneScriptActions(
     }
 
     fun updateNotification() {
-        GradleBuildRootsManager.getInstance(project)?.updateNotifications(false) {
+        GradleBuildRootsLocator.getInstance(project)?.updateNotifications(false) {
             it == file.path
         }
     }

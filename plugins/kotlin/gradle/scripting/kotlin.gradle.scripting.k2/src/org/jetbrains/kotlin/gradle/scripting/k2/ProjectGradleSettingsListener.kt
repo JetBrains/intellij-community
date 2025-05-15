@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptModel
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptRefinedConfigurationProvider
 import org.jetbrains.kotlin.gradle.scripting.shared.getGradleVersion
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootData
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsManager
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.Imported
 import org.jetbrains.kotlin.idea.core.script.k2.DefaultScriptResolutionStrategy
 import org.jetbrains.kotlin.psi.KtFile
@@ -28,9 +28,8 @@ class ProjectGradleSettingsListener(
     private val coroutineScope: CoroutineScope
 ) : GradleSettingsListener {
 
-    private val buildRootsManager: GradleBuildRootsManager = GradleBuildRootsManager.getInstanceSafe(project)
-
     override fun onProjectsLinked(settings: MutableCollection<GradleProjectSettings>) {
+        val buildRootsManager = GradleBuildRootsLocator.getInstance(project)
         settings.forEach {
             coroutineScope.launchTracked(Dispatchers.IO) {
                 val gradleVersion = getGradleVersion(project, it)
@@ -43,6 +42,7 @@ class ProjectGradleSettingsListener(
     }
 
     override fun onProjectsLoaded(settings: Collection<GradleProjectSettings>) {
+        val buildRootsManager = GradleBuildRootsLocator.getInstance(project)
         settings.forEach {
             coroutineScope.launchTracked(Dispatchers.IO) {
                 val gradleVersion = getGradleVersion(project, it)
@@ -57,17 +57,22 @@ class ProjectGradleSettingsListener(
     }
 
     override fun onProjectsUnlinked(linkedProjectPaths: MutableSet<String>) {
+        val buildRootsManager = GradleBuildRootsLocator.getInstance(project)
+
         linkedProjectPaths.forEach {
             buildRootsManager.remove(it)
         }
     }
 
     override fun onGradleHomeChange(oldPath: String?, newPath: String?, linkedProjectPath: String) {
+        val buildRootsManager = GradleBuildRootsLocator.getInstance(project)
+
         val version = GradleInstallationManager.getGradleVersion(newPath?.let { Path.of(it) })
         buildRootsManager.reloadBuildRoot(linkedProjectPath, version)
     }
 
     override fun onGradleDistributionTypeChange(currentValue: DistributionType?, linkedProjectPath: String) {
+        val buildRootsManager = GradleBuildRootsLocator.getInstance(project)
         buildRootsManager.reloadBuildRoot(linkedProjectPath, null)
     }
 

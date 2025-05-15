@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.scripting.gradle
 
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsManager
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
 import org.jetbrains.kotlin.gradle.scripting.shared.settings.StandaloneScriptsStorage
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.script.AbstractScriptConfigurationLoadingTest
@@ -44,6 +44,6 @@ class GradleBuildRootIndexTest : AbstractScriptConfigurationLoadingTest() {
     }
 
     fun `test standalone scripts on start`() {
-        assertNotNull(GradleBuildRootsManager.getInstance(project))
+        assertNotNull(GradleBuildRootsLocator.getInstance(project))
     }
 }

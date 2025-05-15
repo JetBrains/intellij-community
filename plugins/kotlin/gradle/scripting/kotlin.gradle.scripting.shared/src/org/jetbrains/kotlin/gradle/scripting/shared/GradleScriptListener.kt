@@ -8,17 +8,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import org.jetbrains.kotlin.gradle.scripting.shared.legacy.GradleLegacyScriptListener
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsManager
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangeListener
 
 class GradleScriptListener(project: Project) : ScriptChangeListener(project) {
     // todo(gradle6): remove
-    private val legacy = GradleLegacyScriptListener(project)
-
-    private val buildRootsManager: GradleBuildRootsManager
-        get() = GradleBuildRootsManager.getInstance(project) ?: error("GradleBuildRootsManager not found")
+    private val buildRootsManager: GradleBuildRootsLocator
+        get() = GradleBuildRootsLocator.getInstance(project)
 
     init {
         // listen changes using VFS events, including gradle-configuration related files
@@ -40,31 +37,20 @@ class GradleScriptListener(project: Project) : ScriptChangeListener(project) {
 
     override fun isApplicable(vFile: VirtualFile) =
         // todo(gradle6): replace with `isCustomScriptingSupport(vFile)`
-        legacy.isApplicable(vFile)
-
-    private fun isCustomScriptingSupport(vFile: VirtualFile) =
-        buildRootsManager.isApplicable(vFile)
+        isGradleKotlinScript(vFile)
 
     override fun editorActivated(vFile: VirtualFile) {
-        if (isCustomScriptingSupport(vFile)) {
-            buildRootsManager.updateNotifications(restartAnalyzer = false) { it == vFile.path }
-        } else {
-            legacy.editorActivated(vFile)
-        }
+        buildRootsManager.updateNotifications(restartAnalyzer = false) { it == vFile.path }
     }
 
     override fun documentChanged(vFile: VirtualFile) {
         fileChanged(vFile.path, System.currentTimeMillis())
-
-        if (!isCustomScriptingSupport(vFile)) {
-            legacy.documentChanged(vFile)
-        }
     }
 }
 
 private class GradleScriptFileChangeListener(
     private val watcher: GradleScriptListener,
-    private val buildRootsManager: GradleBuildRootsManager
+    private val buildRootsManager: GradleBuildRootsLocator
 ) : VirtualFileChangesListener {
 
     val changedFiles = mutableListOf<String>()

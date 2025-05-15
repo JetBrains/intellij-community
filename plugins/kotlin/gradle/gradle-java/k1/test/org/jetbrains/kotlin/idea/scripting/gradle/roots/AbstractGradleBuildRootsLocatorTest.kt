@@ -1,17 +1,20 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.scripting.gradle.roots
 
 import com.intellij.mock.MockProjectEx
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleKotlinScriptConfigurationInputs
 import org.jetbrains.kotlin.gradle.scripting.shared.LastModifiedFiles
 import org.jetbrains.kotlin.gradle.scripting.shared.importing.KotlinDslScriptModel
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.*
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 
 abstract class AbstractGradleBuildRootsLocatorTest : TestCase() {
     private val scripts = mutableMapOf<String, ScriptFixture>()
@@ -23,9 +26,9 @@ abstract class AbstractGradleBuildRootsLocatorTest : TestCase() {
 
     override fun setUp() {
         super.setUp()
-        val newDisposable = Disposer.newDisposable()
-        locator = MyRootsLocator(newDisposable)
-        disposable = newDisposable
+        disposable = Disposer.newDisposable()
+        val project = MockProjectEx(disposable)
+        locator = MyRootsLocator(project, project.coroutineScope)
     }
 
     override fun tearDown() {
@@ -35,9 +38,21 @@ abstract class AbstractGradleBuildRootsLocatorTest : TestCase() {
         )
     }
 
-    private inner class MyRootsLocator(disposable: Disposable) : GradleBuildRootsLocator(MockProjectEx(disposable)) {
+    private inner class MyRootsLocator(project: Project, coroutineScope: CoroutineScope) : GradleBuildRootsLocator(project, coroutineScope) {
         override fun getScriptFirstSeenTs(path: String): Long = scripts[path]?.introductionTs ?: 0
         override fun getScriptInfo(localPath: String): GradleScriptInfo? = scripts[localPath]?.info
+
+        override fun loadLinkedRoot(
+            settings: GradleProjectSettings,
+            version: String
+        ): GradleBuildRoot = Legacy(settings)
+
+        override fun add(newRoot: GradleBuildRoot) {}
+
+        override fun remove(rootPath: String) {}
+
+        override fun updateNotifications(restartAnalyzer: Boolean, shouldUpdatePath: (String) -> Boolean) {}
+
         fun accessRoots() = roots
     }
 
