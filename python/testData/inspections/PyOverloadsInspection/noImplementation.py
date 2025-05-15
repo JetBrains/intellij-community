@@ -2,7 +2,7 @@ from typing import overload
 
 
 @overload
-def foo(value: None) -> None:
+def <warning descr="A series of @overload-decorated functions should always be followed by an implementation that is not @overload-ed">foo</warning>(value: None) -> None:
     pass
 
 
@@ -12,13 +12,13 @@ def foo(value: int) -> str:
 
 
 @overload
-def <warning descr="A series of @overload-decorated functions should always be followed by an implementation that is not @overload-ed">foo</warning>(value: str) -> str:
+def foo(value: str) -> str:
     pass
 
 
 class A:
     @overload
-    def foo(self, value: None) -> None:
+    def <warning descr="A series of @overload-decorated methods should always be followed by an implementation that is not @overload-ed">foo</warning>(self, value: None) -> None:
         pass
 
     @overload
@@ -26,5 +26,5 @@ class A:
         pass
 
     @overload
-    def <warning descr="A series of @overload-decorated methods should always be followed by an implementation that is not @overload-ed">foo</warning>(self, value: str) -> str:
+    def foo(self, value: str) -> str:
         pass

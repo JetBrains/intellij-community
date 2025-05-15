@@ -53,16 +53,12 @@ class PyOverloadsInspection : PyInspection() {
       val implementation = functions.lastOrNull { !PyiUtil.isOverload(it, myTypeEvalContext) }
 
       if (implementation == null) {
-        functions
-          .maxByOrNull { it.textOffset }
-          ?.let {
-            registerProblem(it.nameIdentifier, if (owner is PyClass) {
-              PyPsiBundle.message("INSP.overloads.series.overload.decorated.methods.should.always.be.followed.by.implementation")
-            }
-            else {
-              PyPsiBundle.message("INSP.overloads.series.overload.decorated.functions.should.always.be.followed.by.implementation")
-            })
-          }
+        registerProblem(functions.first().nameIdentifier, if (owner is PyClass) {
+          PyPsiBundle.message("INSP.overloads.series.overload.decorated.methods.should.always.be.followed.by.implementation")
+        }
+        else {
+          PyPsiBundle.message("INSP.overloads.series.overload.decorated.functions.should.always.be.followed.by.implementation")
+        })
       }
       else {
         if (implementation != functions.last()) {
