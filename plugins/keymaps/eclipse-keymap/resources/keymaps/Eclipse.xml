@@ -390,6 +390,7 @@
     <keyboard-shortcut first-keystroke="shift alt H"/>
   </action>
   <action id="Vcs.MoveChangedLinesToChangelist"/>
+  <action id="ChangesView.ShowCommitOptions"/>
   <action id="ChangesView.Move"/>
   <action id="ShowIntentionActions">
     <keyboard-shortcut first-keystroke="ctrl 1"/>

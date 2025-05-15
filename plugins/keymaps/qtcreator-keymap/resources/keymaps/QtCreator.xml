@@ -78,6 +78,7 @@
     <keyboard-shortcut first-keystroke="alt 4"/>
   </action>
   <action id="Vcs.ToggleAmendCommitMode"/>
+  <action id="ChangesView.ShowCommitOptions"/>
   <action id="ShowBookmarks">
     <keyboard-shortcut first-keystroke="alt M"/>
   </action>

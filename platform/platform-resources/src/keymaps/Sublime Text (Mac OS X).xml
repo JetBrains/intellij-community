@@ -253,6 +253,7 @@
     <keyboard-shortcut first-keystroke="control v"/>
   </action>
   <action id="Vcs.QuickListPopupAction"/>
+  <action id="ChangesView.ShowCommitOptions"/>
   <action id="EditorScrollToCenter">
     <keyboard-shortcut first-keystroke="control l"/>
     <keyboard-shortcut first-keystroke="meta k" second-keystroke="meta c"/>
