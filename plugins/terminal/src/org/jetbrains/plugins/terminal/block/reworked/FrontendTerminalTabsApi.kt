@@ -10,7 +10,10 @@ import com.intellij.platform.project.projectId
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.update.UiNotifyConnector
+import fleet.util.logging.logger
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.terminal.ShellStartupOptions
@@ -23,6 +26,49 @@ import java.util.concurrent.CompletableFuture
 
 @Service(Service.Level.PROJECT)
 internal class FrontendTerminalTabsApi(private val project: Project, private val coroutineScope: CoroutineScope) {
+  private val renameTabRequests = Channel<RenameTabRequest>(capacity = 100, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  init {
+    coroutineScope.launch(Dispatchers.IO) {
+      try {
+        for (request in renameTabRequests) {
+          doSendRenameRequest(request)
+        }
+      }
+      finally {
+        renameTabRequests.close()
+      }
+    }
+  }
+
+  private suspend fun doSendRenameRequest(request: RenameTabRequest) {
+    try {
+      TerminalTabsManagerApi.getInstance().renameTerminalTab(
+        project.projectId(),
+        request.tabId,
+        request.newName,
+        request.isUserDefinedName,
+      )
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Exception) {
+      LOG.error(e, "Failed to rename tab: ${request}")
+    }
+  }
+
+  fun renameTerminalTab(tabId: Int, newName: String, isUserDefinedName: Boolean) {
+    val request = RenameTabRequest(tabId, newName, isUserDefinedName)
+    val result = renameTabRequests.trySend(request)
+    if (result.isClosed) {
+      LOG.warn("Rename tab requests channel is closed, $request won't be sent, exception: ${result.exceptionOrNull()}")
+    }
+    else if (result.isFailure) {
+      LOG.error("Failed to send rename request to the channel: $request, exception: ${result.exceptionOrNull()}")
+    }
+  }
+
   fun getStoredTerminalTabs(): CompletableFuture<List<TerminalSessionTab>> {
     return coroutineScope.async {
       TerminalTabsManagerApi.getInstance().getTerminalTabs(project.projectId())
@@ -38,12 +84,6 @@ internal class FrontendTerminalTabsApi(private val project: Project, private val
   fun closeTerminalTab(tabId: Int) {
     coroutineScope.launch {
       TerminalTabsManagerApi.getInstance().closeTerminalTab(project.projectId(), tabId)
-    }
-  }
-
-  fun renameTerminalTab(tabId: Int, newName: String, isUserDefinedName: Boolean) {
-    coroutineScope.launch {
-      TerminalTabsManagerApi.getInstance().renameTerminalTab(project.projectId(), tabId, newName, isUserDefinedName)
     }
   }
 
@@ -127,8 +167,16 @@ internal class FrontendTerminalTabsApi(private val project: Project, private val
     }
   }
 
+  private data class RenameTabRequest(
+    val tabId: Int,
+    val newName: String,
+    val isUserDefinedName: Boolean,
+  )
+
   companion object {
     @JvmStatic
     fun getInstance(project: Project): FrontendTerminalTabsApi = project.service()
+
+    private val LOG = logger<FrontendTerminalTabsApi>()
   }
 }

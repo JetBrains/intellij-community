@@ -17,10 +17,17 @@ interface TerminalTabsManagerApi : RemoteApi<Unit> {
 
   suspend fun createNewTerminalTab(projectId: ProjectId): TerminalSessionTab
 
+  /** Idempotent: calls after the first one will do nothing. */
   suspend fun startTerminalSessionForTab(projectId: ProjectId, tabId: Int, options: ShellStartupOptionsDto): TerminalSessionTab
 
+  /** Idempotent: calls after the first one will do nothing. */
   suspend fun closeTerminalTab(projectId: ProjectId, tabId: Int)
 
+  /**
+   * Not idempotent: be careful with calling this method multiple times with the same [tabId].
+   * **RPC DOES NOT** guarantee that if this method was called sequentially on the frontend,
+   * it will be executed in the same order on the backend.
+   */
   suspend fun renameTerminalTab(projectId: ProjectId, tabId: Int, newName: String, isUserDefinedName: Boolean)
 
   companion object {
