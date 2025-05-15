@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nls
 class SeFilesProvider(private val contributorWrapper: SeAsyncWeightedContributorWrapper<Any>) : SeItemsProvider,
                                                                                                 SeSearchScopesProvider,
                                                                                                 SeTypeVisibilityStateProvider {
-  override val id: String get() = ID
+  override val id: String get() = SeProviderIdUtils.FILES_ID
   override val displayName: @Nls String
     get() = contributorWrapper.contributor.fullGroupName
 
@@ -40,8 +40,4 @@ class SeFilesProvider(private val contributorWrapper: SeAsyncWeightedContributor
 
   override suspend fun getTypeVisibilityStates(): List<SeTypeVisibilityStatePresentation> =
     targetsProviderDelegate.getTypeVisibilityStates<FileTypeRef>()
-
-  companion object {
-    const val ID: String = "com.intellij.FileSearchEverywhereItemProvider"
-  }
 }

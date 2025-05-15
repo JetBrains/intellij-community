@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeItem
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.providers.getExtendedDescription
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
@@ -19,7 +20,7 @@ import org.jetbrains.annotations.Nls
 
 @Internal
 class SeActionsAdaptedProvider(private val legacyContributor: ActionSearchEverywhereContributor) : SeItemsProvider {
-  override val id: String get() = ID
+  override val id: String get() = SeProviderIdUtils.ACTIONS_ID
   override val displayName: @Nls String
     get() = legacyContributor.fullGroupName
 
@@ -54,9 +55,5 @@ class SeActionsAdaptedProvider(private val legacyContributor: ActionSearchEveryw
 
   override fun dispose() {
     Disposer.dispose(legacyContributor)
-  }
-
-  companion object {
-    const val ID: String = "com.intellij.ActionsItemsProvider"
   }
 }

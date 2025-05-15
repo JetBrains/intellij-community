@@ -8,10 +8,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.searchEverywhere.SeItem
-import com.intellij.platform.searchEverywhere.SeItemPresentation
-import com.intellij.platform.searchEverywhere.SeItemsProvider
-import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
 import com.intellij.platform.searchEverywhere.providers.getExtendedDescription
@@ -71,6 +68,6 @@ open class SeTopHitItemsProvider(
   }
 
   companion object {
-    fun id(isHost: Boolean): String = TopHitSEContributor::class.java.getSimpleName().let { if (isHost) "$it-Host" else it }
+    fun id(isHost: Boolean): String = if (isHost) SeProviderIdUtils.TOP_HIT_HOST_ID else SeProviderIdUtils.TOP_HIT_ID
   }
 }

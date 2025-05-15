@@ -9,6 +9,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeItemsProviderFactory
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @Internal
 class SeActionsProviderFactory : SeItemsProviderFactory {
   override val id: String
-    get() = SeActionsAdaptedProvider.ID
+    get() = SeProviderIdUtils.ACTIONS_ID
 
   override suspend fun getItemsProvider(project: Project?, dataContext: DataContext): SeItemsProvider {
     return withContext(Dispatchers.EDT) {

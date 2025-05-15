@@ -273,7 +273,8 @@ open class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEvery
   }
 
   companion object {
-    private const val ID = "TextSearchContributor"
+    @ApiStatus.Internal
+    const val ID: String = "TextSearchContributor"
     private const val ADVANCED_OPTION_ID = "se.text.search"
     private val SE_TEXT_SELECTED_SCOPE = Key.create<String>("SE_TEXT_SELECTED_SCOPE")
 

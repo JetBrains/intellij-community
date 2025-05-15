@@ -10,13 +10,14 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeItemsProviderFactory
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.providers.SeAsyncWeightedContributorWrapper
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 class SeRecentFilesProviderFactory : SeItemsProviderFactory {
   override val id: String
-    get() = SeRecentFilesProvider.ID
+    get() = SeProviderIdUtils.RECENT_FILES_ID
 
   override suspend fun getItemsProvider(project: Project?, dataContext: DataContext): SeItemsProvider {
     val legacyContributor = readAction {

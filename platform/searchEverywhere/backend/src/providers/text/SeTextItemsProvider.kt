@@ -35,7 +35,7 @@ class SeTextSearchItem(val item: SearchEverywhereItem, private val weight: Int, 
 
 @ApiStatus.Internal
 class SeTextItemsProvider(private val contributorWrapper: SeAsyncWeightedContributorWrapper<Any>) : SeItemsProvider {
-  override val id: String get() = ID
+  override val id: String get() = SeProviderIdUtils.TEXT_ID
   override val displayName: @Nls String
     get() = contributorWrapper.contributor.fullGroupName
 
@@ -73,9 +73,5 @@ class SeTextItemsProvider(private val contributorWrapper: SeAsyncWeightedContrib
 
   override fun dispose() {
     Disposer.dispose(contributorWrapper)
-  }
-
-  companion object {
-    const val ID: String = "com.intellij.TextSearchEverywhereItemProvider"
   }
 }

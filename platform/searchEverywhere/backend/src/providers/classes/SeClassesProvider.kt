@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nls
 class SeClassesProvider(private val contributorWrapper: SeAsyncWeightedContributorWrapper<Any>) : SeItemsProvider,
                                                                                                   SeSearchScopesProvider,
                                                                                                   SeTypeVisibilityStateProvider {
-  override val id: String get() = ID
+  override val id: String get() = SeProviderIdUtils.CLASSES_ID
   override val displayName: @Nls String
     get() = contributorWrapper.contributor.fullGroupName
 
@@ -39,8 +39,4 @@ class SeClassesProvider(private val contributorWrapper: SeAsyncWeightedContribut
   override suspend fun getSearchScopesInfo(): SeSearchScopesInfo? = targetsProviderDelegate.getSearchScopesInfo()
   override suspend fun getTypeVisibilityStates(): List<SeTypeVisibilityStatePresentation> =
     targetsProviderDelegate.getTypeVisibilityStates<LanguageRef>()
-
-  companion object {
-    const val ID: String = "com.intellij.ClassSearchEverywhereItemProvider"
-  }
 }

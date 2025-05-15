@@ -10,13 +10,13 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeItemsProviderFactory
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.providers.SeAsyncWeightedContributorWrapper
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class SeTextItemsProviderFactory : SeItemsProviderFactory {
-  override val id: String
-    get() = SeTextItemsProvider.ID
+  override val id: String get() = SeProviderIdUtils.TEXT_ID
 
   override suspend fun getItemsProvider(project: Project?, dataContext: DataContext): SeItemsProvider? {
     if (project == null || !TextSearchContributor.enabled()) return null
