@@ -2,6 +2,7 @@ package com.intellij.settingsSync
 
 import com.intellij.idea.TestFor
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.settingsSync.core.SettingsSyncLocalSettings
 import com.intellij.settingsSync.core.SettingsSyncMain
 import com.intellij.settingsSync.core.SettingsSyncSettings
 import com.intellij.settingsSync.core.SettingsSyncStatusTracker
@@ -136,7 +137,7 @@ internal class SettingsSyncAuthTest() : BasePlatformTestCase() {
 
     communicator.checkServerState()
     //assertFalse(authServiceSpy.isLoggedIn())
-    assertTrue(SettingsSyncStatusTracker.getInstance().currentStatus is SettingsSyncStatusTracker.SyncStatus.ActionRequired)
+    assertNotNull(authServiceSpy.getPendingUserAction("jba"))
   }
 
   @Test

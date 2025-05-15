@@ -91,6 +91,13 @@ object RemoteCommunicatorHolder : SettingsSyncEventListener {
     }
   }
 
+  fun isPendingAction(): Boolean {
+    if (!SettingsSyncSettings.getInstance().syncEnabled)
+      return false
+    val userId = SettingsSyncLocalSettings.getInstance().userId ?: return false
+    return getCurrentProvider()?.authService?.getPendingUserAction(userId) != null
+  }
+
   fun createRemoteCommunicator(provider: SettingsSyncCommunicatorProvider,
                                userId: String,
                                parentDisposable: Disposable? = null): SettingsSyncRemoteCommunicator? {
