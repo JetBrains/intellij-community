@@ -143,7 +143,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     return null;
   }
 
-  private static void showDisabledDetectionNotification(@NotNull Project project) {
+  public static void showDisabledDetectionNotification(@NotNull Project project) {
     DetectionDisabledNotification notification = new DetectionDisabledNotification(project);
     notification.notify(project);
   }

@@ -13,6 +13,7 @@ import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.*
+import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings
 import com.intellij.util.messages.MessageBusConnection
@@ -32,12 +33,13 @@ class CodeStyleStatusBarWidget(project: Project) : EditorBasedStatusBarPopup(pro
     val psiFile = getPsiFile() ?: return WidgetState.HIDDEN
     val settings = CodeStyle.getSettings(psiFile)
     val indentOptions = CodeStyle.getIndentOptions(psiFile)
-    return if (settings is TransientCodeStyleSettings) {
-      createWidgetState(psiFile = psiFile, indentOptions = indentOptions, uiContributor = getUiContributor(settings))
+    if (settings is TransientCodeStyleSettings) {
+      val uiContributorFromModifier = getUiContributor(settings)
+      if (uiContributorFromModifier != null) {
+        return createWidgetState(psiFile = psiFile, indentOptions = indentOptions, uiContributor = uiContributorFromModifier)
+      }
     }
-    else {
-      createWidgetState(psiFile = psiFile, indentOptions = indentOptions, uiContributor = getUiContributor(file, indentOptions))
-    }
+    return createWidgetState(psiFile = psiFile, indentOptions = indentOptions, uiContributor = getUiContributor(file, indentOptions))
   }
 
   private fun getPsiFile(): PsiFile? {
@@ -52,9 +54,17 @@ class CodeStyleStatusBarWidget(project: Project) : EditorBasedStatusBarPopup(pro
     val psiFile = getPsiFile()
     if (state is MyWidgetState && editor != null && psiFile != null) {
       val uiContributor = state.uiContributor
-      val actions = getActions(uiContributor, psiFile)
+      val actions = ArrayList<AnAction>()
+      actions.addAll(getActions(uiContributor, psiFile))
+      for (modifier in CodeStyleSettingsModifier.EP_NAME.extensionList) {
+        val activatingAction = modifier.getActivatingAction(uiContributor, psiFile)
+        if (activatingAction != null) {
+          actions.add(activatingAction);
+        }
+      }
+
       val actionGroup: ActionGroup = object : ActionGroup() {
-        override fun getChildren(e: AnActionEvent?): Array<AnAction> = actions
+        override fun getChildren(e: AnActionEvent?): Array<AnAction> = actions.toTypedArray()
       }
 
       return JBPopupFactory.getInstance().createActionGroupPopup(uiContributor?.actionGroupTitle,

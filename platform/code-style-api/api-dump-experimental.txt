@@ -28,8 +28,10 @@ c:com.intellij.psi.codeStyle.PackageEntry
 - *sf:ALL_MODULE_IMPORTS:com.intellij.psi.codeStyle.PackageEntry
 *:com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- getActivatingAction(com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor,com.intellij.psi.PsiFile):com.intellij.openapi.actionSystem.AnAction
 - getDisablingFunction(com.intellij.openapi.project.Project):java.util.function.Consumer
 - a:getName():java.lang.String
 - a:getStatusBarUiContributor(com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings):com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor
 - mayOverrideSettingsOf(com.intellij.openapi.project.Project):Z
 - a:modifySettings(com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings,com.intellij.psi.PsiFile):Z
+- modifySettingsAndUiCustomization(com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings,com.intellij.psi.PsiFile):Z

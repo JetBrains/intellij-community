@@ -197,10 +197,12 @@ internal class CodeStyleCachedValueProvider(val fileSupplier: Supplier<VirtualFi
           LOG.debug { "Created TransientCodeStyleSettings for ${file.name}" }
           for (modifier in CodeStyleSettingsModifier.EP_NAME.extensionList) {
             LOG.debug { "Modifying ${file.name}: ${modifier.javaClass.name}" }
-            if (modifier.modifySettings(modifiableSettings, psiFile)) {
+            if (modifier.modifySettingsAndUiCustomization(modifiableSettings, psiFile)) {
               LOG.debug { "Modified ${file.name}: ${modifier.javaClass.name}" }
-              modifiableSettings.setModifier(modifier)
               currSettings = modifiableSettings
+            }
+            if (modifiableSettings.modifier != null) {
+              LOG.debug { "Indenter for ${file.name}: ${modifier.javaClass.name}" }
               break
             }
           }
