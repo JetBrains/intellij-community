@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.terminal.block.reworked
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.project.projectId
@@ -17,52 +19,46 @@ import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSessionTab
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalPortForwardingId
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalTabsManagerApi
 import org.jetbrains.plugins.terminal.block.reworked.session.toDto
-import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.util.concurrent.CompletableFuture
 
-internal object TerminalSessionStartHelper {
-  @JvmStatic
-  fun getStoredTerminalTabs(project: Project): CompletableFuture<List<TerminalSessionTab>> {
-    return terminalProjectScope(project).async {
+@Service(Service.Level.PROJECT)
+internal class FrontendTerminalTabsApi(private val project: Project, private val coroutineScope: CoroutineScope) {
+  fun getStoredTerminalTabs(): CompletableFuture<List<TerminalSessionTab>> {
+    return coroutineScope.async {
       TerminalTabsManagerApi.getInstance().getTerminalTabs(project.projectId())
     }.asCompletableFuture()
   }
 
-  @JvmStatic
-  fun createNewTerminalTab(project: Project): CompletableFuture<TerminalSessionTab> {
-    return terminalProjectScope(project).async {
+  fun createNewTerminalTab(): CompletableFuture<TerminalSessionTab> {
+    return coroutineScope.async {
       TerminalTabsManagerApi.getInstance().createNewTerminalTab(project.projectId())
     }.asCompletableFuture()
   }
 
-  @JvmStatic
-  fun closeTerminalTab(project: Project, tabId: Int) {
-    terminalProjectScope(project).launch {
+  fun closeTerminalTab(tabId: Int) {
+    coroutineScope.launch {
       TerminalTabsManagerApi.getInstance().closeTerminalTab(project.projectId(), tabId)
     }
   }
 
-  @JvmStatic
-  fun renameTerminalTab(project: Project, tabId: Int, newName: String, isUserDefinedName: Boolean) {
-    terminalProjectScope(project).launch {
+  fun renameTerminalTab(tabId: Int, newName: String, isUserDefinedName: Boolean) {
+    coroutineScope.launch {
       TerminalTabsManagerApi.getInstance().renameTerminalTab(project.projectId(), tabId, newName, isUserDefinedName)
     }
   }
 
-  @JvmStatic
   @RequiresEdt
   fun startTerminalSessionForWidget(
-    project: Project,
     widget: TerminalWidget,
     options: ShellStartupOptions,
     sessionTab: TerminalSessionTab,
     deferSessionStartUntilUiShown: Boolean,
   ) {
     val doStart = Runnable {
-      doStartTerminalSessionForWidget(project, widget, options, sessionTab)
+      doStartTerminalSessionForWidget(widget, options, sessionTab)
     }
     if (deferSessionStartUntilUiShown) {
-      // Can't use coroutine `launchOnceOnShow` here because terminal toolwindow is adding and removing component
+      // Can't use coroutine `launchOnceOnShow` here because the terminal toolwindow is adding and removing component
       // from the hierarchy several times during tabs restore.
       // It cancels the coroutine, leaving the terminal session stuck not started.
       UiNotifyConnector.doWhenFirstShown(widget.component, doStart, parent = widget)
@@ -71,13 +67,12 @@ internal object TerminalSessionStartHelper {
   }
 
   private fun doStartTerminalSessionForWidget(
-    project: Project,
     widget: TerminalWidget,
     options: ShellStartupOptions,
     sessionTab: TerminalSessionTab,
   ) {
-    val job = terminalProjectScope(project).launch(Dispatchers.EDT, CoroutineStart.UNDISPATCHED) {
-      doStartTerminalSession(project, widget, options, sessionTab)
+    val job = coroutineScope.launch(Dispatchers.EDT, CoroutineStart.UNDISPATCHED) {
+      doStartTerminalSession(widget, options, sessionTab)
     }
     Disposer.register(widget) {
       job.cancel()
@@ -85,7 +80,6 @@ internal object TerminalSessionStartHelper {
   }
 
   private suspend fun doStartTerminalSession(
-    project: Project,
     widget: TerminalWidget,
     options: ShellStartupOptions,
     sessionTab: TerminalSessionTab,
@@ -95,10 +89,10 @@ internal object TerminalSessionStartHelper {
       sessionTab
     }
     else {
-      // Start new terminal session
+      // Start the new terminal session
       val optionsWithSize = updateTerminalSizeFromWidget(options, widget)
       withContext(Dispatchers.IO) {
-        startTerminalSessionForTab(project, optionsWithSize, sessionTab.id)
+        startTerminalSessionForTab(optionsWithSize, sessionTab.id)
       }
     }
 
@@ -108,7 +102,7 @@ internal object TerminalSessionStartHelper {
     widget.connectToSession(session)
 
     if (startedSessionTab.portForwardingId != null) {
-      setupPortForwarding(project, startedSessionTab.portForwardingId, widget)
+      setupPortForwarding(startedSessionTab.portForwardingId, widget)
     }
   }
 
@@ -121,15 +115,20 @@ internal object TerminalSessionStartHelper {
     else options
   }
 
-  private suspend fun startTerminalSessionForTab(project: Project, options: ShellStartupOptions, tabId: Int): TerminalSessionTab {
+  private suspend fun startTerminalSessionForTab(options: ShellStartupOptions, tabId: Int): TerminalSessionTab {
     val api = TerminalTabsManagerApi.getInstance()
     return api.startTerminalSessionForTab(project.projectId(), tabId, options.toDto())
   }
 
-  private suspend fun setupPortForwarding(project: Project, id: TerminalPortForwardingId, widget: TerminalWidget) {
+  private suspend fun setupPortForwarding(id: TerminalPortForwardingId, widget: TerminalWidget) {
     val component = TerminalPortForwardingUiProvider.getInstance(project).createComponent(id, disposable = widget)
     if (component != null) {
       widget.addNotification(component, disposable = widget)
     }
+  }
+
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project): FrontendTerminalTabsApi = project.service()
   }
 }

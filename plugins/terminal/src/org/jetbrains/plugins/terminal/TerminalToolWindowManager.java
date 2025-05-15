@@ -63,7 +63,7 @@ import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementManager;
 import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementState;
 import org.jetbrains.plugins.terminal.arrangement.TerminalCommandHistoryManager;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
-import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionStartHelper;
+import org.jetbrains.plugins.terminal.block.reworked.FrontendTerminalTabsApi;
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSessionTab;
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector;
 import org.jetbrains.plugins.terminal.fus.TerminalFocusFusService;
@@ -230,7 +230,7 @@ public final class TerminalToolWindowManager implements Disposable {
         return null;
       });
 
-    TerminalSessionStartHelper.getStoredTerminalTabs(myProject).thenAccept(tabs -> {
+    FrontendTerminalTabsApi.getInstance(myProject).getStoredTerminalTabs().thenAccept(tabs -> {
       ApplicationManager.getApplication().invokeLater(() -> {
         doRestoreTabsFromBackend(tabs);
         // Store tabs to the local state too. To not lose the stored tabs in case of disabling the Gen2 Terminal.
@@ -582,7 +582,7 @@ public final class TerminalToolWindowManager implements Disposable {
     Integer tabId = getTabIdByWidget(widget);
     if (tabId != null) {
       boolean isDefinedByUser = Objects.equals(generatedName, title.getUserDefinedTitle());
-      TerminalSessionStartHelper.renameTerminalTab(myProject, tabId, generatedName, isDefinedByUser);
+      FrontendTerminalTabsApi.getInstance(myProject).renameTerminalTab(tabId, generatedName, isDefinedByUser);
     }
 
     content.setDisplayName(generatedName);
@@ -729,7 +729,7 @@ public final class TerminalToolWindowManager implements Disposable {
           Integer sessionTabId = getTabIdByWidget(widget);
           boolean isProjectClosing = myToolWindow.getContentManager().isDisposed();
           if (sessionTabId != null && !isProjectClosing) {
-            TerminalSessionStartHelper.closeTerminalTab(myProject, sessionTabId);
+            FrontendTerminalTabsApi.getInstance(myProject).closeTerminalTab(sessionTabId);
             bindTabIdToWidget(widget, null);
           }
         }
@@ -741,14 +741,16 @@ public final class TerminalToolWindowManager implements Disposable {
           // Update the tab title on backend because all previous updates were ignored since we didn't have a tab ID.
           updateTabTitle(widget, myToolWindow, content);
         }
-        TerminalSessionStartHelper.startTerminalSessionForWidget(myProject, widget, startupOptions, tab, deferSessionStartUntilUiShown);
+        FrontendTerminalTabsApi
+          .getInstance(myProject)
+          .startTerminalSessionForWidget(widget, startupOptions, tab, deferSessionStartUntilUiShown);
       };
 
       if (existingTab != null) {
         bindTabIdAndStartSession.accept(existingTab);
       }
       else {
-        TerminalSessionStartHelper.createNewTerminalTab(myProject).thenAccept((tab) -> {
+        FrontendTerminalTabsApi.getInstance(myProject).createNewTerminalTab().thenAccept((tab) -> {
           ApplicationManager.getApplication().invokeLater(() -> {
             if (!myProject.isDisposed()) {
               bindTabIdAndStartSession.accept(tab);
