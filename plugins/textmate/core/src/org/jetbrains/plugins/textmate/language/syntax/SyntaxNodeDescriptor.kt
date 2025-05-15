@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.textmate.language.syntax
 
 import org.jetbrains.plugins.textmate.Constants
-import kotlin.jvm.JvmField
 
 /**
  * Syntax rule of languages from TextMate bundle.
@@ -37,10 +36,31 @@ interface SyntaxNodeDescriptor {
 
   companion object {
     @JvmField
-    val EMPTY_NODE: SyntaxNodeDescriptor = SyntaxNodeDescriptorImpl(null,
-                                                                    emptyList(),
-                                                                    emptyList(),
-                                                                    emptyArray(),
-                                                                    emptyArray())
+    val EMPTY_NODE: SyntaxNodeDescriptor = object : SyntaxNodeDescriptor {
+      override fun getStringAttribute(key: Constants.StringKey): CharSequence? {
+        return null
+      }
+
+      override fun hasBackReference(key: Constants.StringKey): Boolean {
+        return false
+      }
+
+      override fun getCaptureRules(key: Constants.CaptureKey): Array<TextMateCapture?>? {
+        return null
+      }
+
+      override fun hasBackReference(key: Constants.CaptureKey, group: Int): Boolean {
+        return false
+      }
+
+      override val children: List<SyntaxNodeDescriptor> = emptyList()
+      override val injections: List<InjectionNodeDescriptor> = emptyList()
+
+      override fun findInRepository(ruleId: Int): SyntaxNodeDescriptor = this
+      override val scopeName: CharSequence?
+        get() = null
+      override val parentNode: SyntaxNodeDescriptor?
+        get() = null
+    }
   }
 }
