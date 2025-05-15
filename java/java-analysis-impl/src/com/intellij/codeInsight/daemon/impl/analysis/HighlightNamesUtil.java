@@ -45,10 +45,10 @@ public final class HighlightNamesUtil {
     highlight(containingFile, holder, visitor -> psiElement.accept(visitor));
   }
 
-  public static void highlight(@NotNull PsiFile file, @NotNull HighlightInfoHolder holder, @NotNull Consumer<? super @NotNull JavaElementVisitor> consumer) {
+  public static void highlight(@NotNull PsiFile psiFile, @NotNull HighlightInfoHolder holder, @NotNull Consumer<? super @NotNull JavaElementVisitor> consumer) {
     JavaNamesHighlightVisitor visitor = new JavaNamesHighlightVisitor();
-    if (!visitor.suitableForFile(file)) return;
-    visitor.analyze(file, false, holder, () -> consumer.accept(visitor));
+    if (!visitor.suitableForFile(psiFile)) return;
+    visitor.analyze(psiFile, false, holder, () -> consumer.accept(visitor));
   }
 
   static @Nullable HighlightInfo highlightMethodName(@NotNull PsiMember methodOrClass,
@@ -263,10 +263,10 @@ public final class HighlightNamesUtil {
   }
 
   private static TextAttributes getScopeAttributes(@NotNull PsiElement element, @NotNull TextAttributesScheme colorsScheme) {
-    PsiFile file = element.getContainingFile();
-    if (file == null) return null;
+    PsiFile psiFile = element.getContainingFile();
+    if (psiFile == null) return null;
     TextAttributes result = null;
-    DependencyValidationManagerImpl validationManager = (DependencyValidationManagerImpl)DependencyValidationManager.getInstance(file.getProject());
+    DependencyValidationManagerImpl validationManager = (DependencyValidationManagerImpl)DependencyValidationManager.getInstance(psiFile.getProject());
     List<Pair<NamedScope,NamedScopesHolder>> scopes = validationManager.getScopeBasedHighlightingCachedScopes();
     for (Pair<NamedScope, NamedScopesHolder> scope : scopes) {
       NamedScope namedScope = scope.getFirst();
@@ -276,7 +276,7 @@ public final class HighlightNamesUtil {
         continue;
       }
       PackageSet packageSet = namedScope.getValue();
-      if (packageSet != null && packageSet.contains(file, scope.getSecond())) {
+      if (packageSet != null && packageSet.contains(psiFile, scope.getSecond())) {
         result = TextAttributes.merge(attributes, result);
       }
     }

@@ -32,11 +32,11 @@ public abstract class GotoElementUnderCaretUsageBase extends BaseCodeInsightActi
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     Comparator<Integer> ordering = myDirection.ordering;
     int caretOffset = editor.getCaretModel().getOffset();
-    int startOffset = file.getTextRange().getStartOffset();
-    int endOffset = file.getTextRange().getEndOffset();
+    int startOffset = psiFile.getTextRange().getStartOffset();
+    int endOffset = psiFile.getTextRange().getEndOffset();
     Ref<Integer> first = new Ref<>();
     Ref<Integer> next = new Ref<>();
     DaemonCodeAnalyzerEx.processHighlights(((MarkupModelEx)editor.getMarkupModel()), project, null, startOffset, endOffset, info -> {

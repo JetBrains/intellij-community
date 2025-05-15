@@ -41,18 +41,18 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
+  public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile psiFile) {
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
       return;
     }
 
-    final PsiElementClassMember target = chooseTarget(file, editor, project);
+    final PsiElementClassMember target = chooseTarget(psiFile, editor, project);
     if (target == null) return;
 
     DumbService dumbService = DumbService.getInstance(project);
     final PsiMethodMember[] candidates = dumbService.computeWithAlternativeResolveEnabled(
-      () -> chooseMethods(target, file, editor, project));
+      () -> chooseMethods(target, psiFile, editor, project));
     if (candidates == null || candidates.length == 0) return;
 
     ApplicationManager.getApplication().runWriteAction(() -> {
@@ -68,7 +68,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
           });
 
         List<PsiGenerationInfo<PsiMethod>> results = dumbService.computeWithAlternativeResolveEnabled(
-          () -> GenerateMembersUtil.insertMembersAtOffset(file, offset, prototypes));
+          () -> GenerateMembersUtil.insertMembersAtOffset(psiFile, offset, prototypes));
 
         if (!results.isEmpty()) {
           PsiMethod firstMethod = results.get(0).getPsiMember();

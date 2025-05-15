@@ -21,14 +21,14 @@ internal object GotoTypeDeclarationHandler2 : CodeInsightActionHandler {
 
   override fun startInWriteAction(): Boolean = false
 
-  override fun invoke(project: Project, editor: Editor, file: PsiFile) {
+  override fun invoke(project: Project, editor: Editor, psiFile: PsiFile) {
     val offset = editor.caretModel.offset
     val dumbService = DumbService.getInstance(project)
     val result: NavigationActionResult? = try {
       underModalProgress(project, CodeInsightBundle.message("progress.title.resolving.reference")) {
         dumbService.computeWithAlternativeResolveEnabled<NavigationActionResult?, Throwable> {
           handleLookup(project, editor, offset)
-          ?: gotoTypeDeclaration(file, offset)?.result()
+          ?: gotoTypeDeclaration(psiFile, offset)?.result()
         }
       }
     }

@@ -166,8 +166,8 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry impleme
     }
 
     @Override
-    public void visitFile(@NotNull PsiFile file) {
-      addDescriptors(checkFile(file, myHolder.getManager(), myIsOnTheFly));
+    public void visitFile(@NotNull PsiFile psiFile) {
+      addDescriptors(checkFile(psiFile, myHolder.getManager(), myIsOnTheFly));
     }
 
     private void addDescriptors(ProblemDescriptor @Nullable [] descriptors) {

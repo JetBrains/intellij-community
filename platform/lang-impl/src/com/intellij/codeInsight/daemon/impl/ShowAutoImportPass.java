@@ -54,21 +54,21 @@ import java.util.function.BooleanSupplier;
 public final class ShowAutoImportPass extends TextEditorHighlightingPass {
   private final Editor myEditor;
 
-  private final PsiFile myFile;
+  private final PsiFile myPsiFile;
 
   private final TextRange myVisibleRange;
   private final boolean hasDirtyTextRange;
   private final List<BooleanSupplier> autoImportActions = Collections.synchronizedList(new ArrayList<>());
 
   @RequiresBackgroundThread
-  ShowAutoImportPass(@NotNull PsiFile file, @NotNull Editor editor, @NotNull ProperTextRange visibleRange) {
-    super(file.getProject(), editor.getDocument(), false);
+  ShowAutoImportPass(@NotNull PsiFile psiFile, @NotNull Editor editor, @NotNull ProperTextRange visibleRange) {
+    super(psiFile.getProject(), editor.getDocument(), false);
     ApplicationManager.getApplication().assertIsNonDispatchThread();
 
     myEditor = editor;
     myVisibleRange = visibleRange;
-    myFile = file;
-    hasDirtyTextRange = FileStatusMap.getDirtyTextRange(editor.getDocument(), file, Pass.UPDATE_ALL) != null;
+    myPsiFile = psiFile;
+    hasDirtyTextRange = FileStatusMap.getDirtyTextRange(editor.getDocument(), psiFile, Pass.UPDATE_ALL) != null;
   }
 
   @Override
@@ -92,10 +92,10 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
 
     for (HighlightInfo info : infos) {
       for (ReferenceImporter importer : ReferenceImporter.EP_NAME.getExtensionList()) {
-        if (!importer.isAddUnambiguousImportsOnTheFlyEnabled(myFile)) {
+        if (!importer.isAddUnambiguousImportsOnTheFlyEnabled(myPsiFile)) {
           continue;
         }
-        BooleanSupplier action = importer.computeAutoImportAtOffset(myEditor, myFile, info.getActualStartOffset(), false);
+        BooleanSupplier action = importer.computeAutoImportAtOffset(myEditor, myPsiFile, info.getActualStartOffset(), false);
         if (action != null) {
           result.add(action);
         }
@@ -119,7 +119,7 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
       }
 
       try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162974")) {
-        if (!myFile.isValid()) {
+        if (!myPsiFile.isValid()) {
           return;
         }
         if (myEditor.isDisposed() || myEditor instanceof EditorWindow window && !window.isValid()) {
@@ -151,7 +151,7 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
   private void importUnambiguousImports() {
     ThreadingAssertions.assertEventDispatchThread();
     try (AccessToken ignore = SlowOperations.knownIssue("IDEA-335057, EA-843299")) {
-      if (!autoImportActions.isEmpty() && mayAutoImportNow(myFile, true, ThreeState.UNSURE)) {
+      if (!autoImportActions.isEmpty() && mayAutoImportNow(myPsiFile, true, ThreeState.UNSURE)) {
         for (BooleanSupplier autoImportAction : autoImportActions) {
           autoImportAction.getAsBoolean();
         }
@@ -196,7 +196,7 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
 
   private boolean showAddImportHint(@NotNull HighlightInfo info) {
     for (HintAction action : extractHints(info)) {
-      if (action.isAvailable(myProject, myEditor, myFile) && action.showHint(myEditor)) {
+      if (action.isAvailable(myProject, myEditor, myPsiFile) && action.showHint(myEditor)) {
         return true;
       }
     }
@@ -205,7 +205,7 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
 
   private boolean isImportHintEnabled() {
     return DaemonCodeAnalyzerSettings.getInstance().isImportHintEnabled() &&
-           DaemonCodeAnalyzer.getInstance(myProject).isImportHintsEnabled(myFile);
+           DaemonCodeAnalyzer.getInstance(myProject).isImportHintsEnabled(myPsiFile);
   }
 
   @VisibleForTesting

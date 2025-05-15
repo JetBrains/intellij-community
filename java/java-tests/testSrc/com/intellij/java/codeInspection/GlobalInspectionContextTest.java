@@ -111,7 +111,7 @@ public class GlobalInspectionContextTest extends JavaCodeInsightTestCase {
       public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
         return new PsiElementVisitor() {
           @Override
-          public void visitFile(@NotNull PsiFile file) {
+          public void visitFile(@NotNull PsiFile psiFile) {
             run.set(true);
             ProgressIndicator indicator = ProgressWrapper.unwrapAll(ProgressManager.getGlobalProgressIndicator());
             if (!(indicator instanceof DaemonProgressIndicator)) {
@@ -174,7 +174,7 @@ public class GlobalInspectionContextTest extends JavaCodeInsightTestCase {
     AtomicBoolean doRunInspection = new AtomicBoolean(true);
     GlobalSimpleInspectionTool myTool = new GlobalSimpleInspectionTool() {
       @Override
-      public void checkFile(@NotNull PsiFile file,
+      public void checkFile(@NotNull PsiFile psiFile,
                             @NotNull InspectionManager manager,
                             @NotNull ProblemsHolder problemsHolder,
                             @NotNull GlobalInspectionContext globalContext,
@@ -183,7 +183,7 @@ public class GlobalInspectionContextTest extends JavaCodeInsightTestCase {
         while (doRunInspection.get()) {
           ProgressManager.checkCanceled();
         }
-        problemsHolder.registerProblem(manager.createProblemDescriptor(file, "Finished: "+getShortName(), (LocalQuickFix)null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true));
+        problemsHolder.registerProblem(manager.createProblemDescriptor(psiFile, "Finished: " + getShortName(), (LocalQuickFix)null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true));
       }
 
       @NotNull

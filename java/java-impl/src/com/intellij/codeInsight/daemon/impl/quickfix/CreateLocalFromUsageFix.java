@@ -72,13 +72,13 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) {
     PsiReferenceExpression element = myReferenceExpression.getElement();
     if (element == null) return;
     String varName = element.getReferenceName();
     if (CreateFromUsageUtils.isValidReference(element, false) || varName == null) return;
 
-    if (file.isPhysical()) {
+    if (psiFile.isPhysical()) {
       IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
     }
 
@@ -89,7 +89,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     final PsiType preferredType = TypeSelectorManagerImpl.getPreferredType(expectedTypes, expectedTypes[0]);
     PsiType type = preferredType != null ? preferredType : expectedTypes[0];
     if (LambdaUtil.notInferredType(type)) {
-      type = PsiType.getJavaLangObject(element.getManager(), file.getResolveScope());
+      type = PsiType.getJavaLangObject(element.getManager(), psiFile.getResolveScope());
     }
 
     PsiExpression initializer = null;
@@ -123,12 +123,12 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
 
     PsiVariable var = (PsiVariable)decl.getDeclaredElements()[0];
     boolean isFinal =
-      JavaCodeStyleSettings.getInstance(file).GENERATE_FINAL_LOCALS &&
+      JavaCodeStyleSettings.getInstance(psiFile).GENERATE_FINAL_LOCALS &&
       !CreateFromUsageUtils.isAccessedForWriting(expressions);
     PsiUtil.setModifierProperty(var, PsiModifier.FINAL, isFinal);
 
     var = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(var);
-    if (var == null || !file.isPhysical()) return;
+    if (var == null || !psiFile.isPhysical()) return;
     TemplateBuilderImpl builder = new TemplateBuilderImpl(var);
     final PsiTypeElement typeElement = var.getTypeElement();
     LOG.assertTrue(typeElement != null);
@@ -137,7 +137,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     builder.setEndVariableAfter(var.getNameIdentifier());
     Template template = builder.buildTemplate();
 
-    final Editor newEditor = CodeInsightUtil.positionCursor(project, file, var);
+    final Editor newEditor = CodeInsightUtil.positionCursor(project, psiFile, var);
     if (newEditor == null) return;
     TextRange range = var.getTextRange();
     newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
@@ -147,7 +147,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
       public void templateFinished(@NotNull Template template, boolean brokenOff) {
         PsiDocumentManager.getInstance(project).commitDocument(newEditor.getDocument());
         final int offset = newEditor.getCaretModel().getOffset();
-        final PsiLocalVariable localVariable = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiLocalVariable.class, false);
+        final PsiLocalVariable localVariable = PsiTreeUtil.findElementOfClassAtOffset(psiFile, offset, PsiLocalVariable.class, false);
         if (localVariable != null) {
           TypeSelectorManagerImpl.typeSelected(localVariable.getType(), defaultType.getType());
 

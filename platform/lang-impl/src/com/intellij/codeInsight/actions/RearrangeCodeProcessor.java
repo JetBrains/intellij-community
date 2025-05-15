@@ -37,18 +37,18 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
     mySelectionModel = selectionModel;
   }
 
-  public RearrangeCodeProcessor(@NotNull PsiFile file, @NotNull SelectionModel selectionModel) {
-    super(file.getProject(), file, getProgressText(), CodeInsightBundle.message("command.rearrange.code"), false);
+  public RearrangeCodeProcessor(@NotNull PsiFile psiFile, @NotNull SelectionModel selectionModel) {
+    super(psiFile.getProject(), psiFile, getProgressText(), CodeInsightBundle.message("command.rearrange.code"), false);
     mySelectionModel = selectionModel;
   }
 
-  public RearrangeCodeProcessor(@NotNull PsiFile file) {
-    super(file.getProject(), file, getProgressText(), CodeInsightBundle.message("command.rearrange.code"), false);
+  public RearrangeCodeProcessor(@NotNull PsiFile psiFile) {
+    super(psiFile.getProject(), psiFile, getProgressText(), CodeInsightBundle.message("command.rearrange.code"), false);
   }
 
   @SuppressWarnings("unused") // Used in Rider
-  public RearrangeCodeProcessor(@NotNull PsiFile file, TextRange[] ranges) {
-    super(file.getProject(), file, getProgressText(), CodeInsightBundle.message("command.rearrange.code"), false);
+  public RearrangeCodeProcessor(@NotNull PsiFile psiFile, TextRange[] ranges) {
+    super(psiFile.getProject(), psiFile, getProgressText(), CodeInsightBundle.message("command.rearrange.code"), false);
     for (TextRange range : ranges) {
       if (range != null) {
         myRanges.add(range);
@@ -73,16 +73,16 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
   }
 
   @Override
-  protected @NotNull FutureTask<Boolean> prepareTask(final @NotNull PsiFile file, final boolean processChangedTextOnly) {
+  protected @NotNull FutureTask<Boolean> prepareTask(final @NotNull PsiFile psiFile, final boolean processChangedTextOnly) {
     return new FutureTask<>(() -> {
       try {
-        Collection<TextRange> ranges = getRangesToFormat(file, processChangedTextOnly);
-        Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
+        Collection<TextRange> ranges = getRangesToFormat(psiFile, processChangedTextOnly);
+        Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
 
-        if (document != null && Rearranger.EXTENSION.forLanguage(file.getLanguage()) != null) {
+        if (document != null && Rearranger.EXTENSION.forLanguage(psiFile.getLanguage()) != null) {
           PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(document);
           PsiDocumentManager.getInstance(myProject).commitDocument(document);
-          Runnable command = prepareRearrangeCommand(file, ranges);
+          Runnable command = prepareRearrangeCommand(psiFile, ranges);
           try {
             CommandProcessor.getInstance().executeCommand(myProject, command, CodeInsightBundle.message("command.rearrange.code"), null);
           }
@@ -94,16 +94,16 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
         return true;
       }
       catch (FilesTooBigForDiffException e) {
-        handleFileTooBigException(LOG, e, file);
+        handleFileTooBigException(LOG, e, psiFile);
         return false;
       }
     });
   }
 
-  private @NotNull Runnable prepareRearrangeCommand(final @NotNull PsiFile file, final @NotNull Collection<TextRange> ranges) {
+  private @NotNull Runnable prepareRearrangeCommand(final @NotNull PsiFile psiFile, final @NotNull Collection<TextRange> ranges) {
     ArrangementEngine engine = ArrangementEngine.getInstance();
     return () -> {
-      engine.arrange(file, ranges);
+      engine.arrange(psiFile, ranges);
       if (getInfoCollector() != null) {
         String info = engine.getUserNotificationInfo();
         getInfoCollector().setRearrangeCodeNotification(info);
@@ -111,16 +111,16 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
     };
   }
 
-  public Collection<TextRange> getRangesToFormat(@NotNull PsiFile file, boolean processChangedTextOnly) throws FilesTooBigForDiffException {
+  public Collection<TextRange> getRangesToFormat(@NotNull PsiFile psiFile, boolean processChangedTextOnly) throws FilesTooBigForDiffException {
     if (mySelectionModel != null) {
       return getSelectedRanges(mySelectionModel);
     }
 
     if (processChangedTextOnly) {
-      return VcsFacade.getInstance().getChangedTextRanges(myProject, file);
+      return VcsFacade.getInstance().getChangedTextRanges(myProject, psiFile);
     }
 
-    return !myRanges.isEmpty() ? myRanges : new SmartList<>(file.getTextRange());
+    return !myRanges.isEmpty() ? myRanges : new SmartList<>(psiFile.getTextRange());
   }
 
   public static @NlsContexts.ProgressText String getProgressText() {

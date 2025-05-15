@@ -19,15 +19,15 @@ public class ConvertAbsolutePathToRelativeIntentionAction extends BaseIntentionA
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     int offset = editor.getCaretModel().getOffset();
-    PsiElement element = file.findElementAt(offset);
+    PsiElement element = psiFile.findElementAt(offset);
     if (element == null ||
         element instanceof PsiWhiteSpace) {
       return false;
     }
 
-    PsiReference reference = file.findReferenceAt(offset);
+    PsiReference reference = psiFile.findReferenceAt(offset);
     FileReference fileReference = reference == null ? null : FileReference.findFileReference(reference);
 
     if (fileReference != null) {
@@ -42,8 +42,8 @@ public class ConvertAbsolutePathToRelativeIntentionAction extends BaseIntentionA
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiReference reference = file.findReferenceAt(editor.getCaretModel().getOffset());
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    PsiReference reference = psiFile.findReferenceAt(editor.getCaretModel().getOffset());
     FileReference fileReference = reference == null ? null : FileReference.findFileReference(reference);
     if (fileReference != null) {
       FileReference lastReference = fileReference.getFileReferenceSet().getLastReference();

@@ -45,12 +45,12 @@ public class LocalQuickFixAsIntentionAdapter implements IntentionAction, Customi
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     return myProblemDescriptor.getStartElement() != null;
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     myFix.applyFix(project, myProblemDescriptor);
   }
 
@@ -67,8 +67,8 @@ public class LocalQuickFixAsIntentionAdapter implements IntentionAction, Customi
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project,
                                                        @NotNull Editor editor,
-                                                       @NotNull PsiFile file) {
-    return myFix.generatePreview(project, myProblemDescriptor.getDescriptorForPreview(file));
+                                                       @NotNull PsiFile psiFile) {
+    return myFix.generatePreview(project, myProblemDescriptor.getDescriptorForPreview(psiFile));
   }
 
   @Override

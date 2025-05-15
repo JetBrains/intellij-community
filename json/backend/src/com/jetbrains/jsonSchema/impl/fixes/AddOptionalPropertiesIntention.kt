@@ -38,18 +38,18 @@ open class AddOptionalPropertiesIntention : IntentionAction {
     return JsonBundle.message("intention.add.not.required.properties.text")
   }
 
-  override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
-    val containingObject = findContainingObjectNode(editor, file) ?: return false
+  override fun isAvailable(project: Project, editor: Editor, psiFile: PsiFile): Boolean {
+    val containingObject = findContainingObjectNode(editor, psiFile) ?: return false
     if (JsonSchemaQuickFixSuppressor.EXTENSION_POINT_NAME.extensionList.any {
-      it.shouldSuppressFix(file, AddOptionalPropertiesIntention::class.java)
+      it.shouldSuppressFix(psiFile, AddOptionalPropertiesIntention::class.java)
     }) return false
     return JsonCachedValues.hasComputedSchemaObjectForFile(containingObject.containingFile)
   }
 
-  override fun invoke(project: Project, editor: Editor, file: PsiFile) {
+  override fun invoke(project: Project, editor: Editor, psiFile: PsiFile) {
     runWithModalProgressBlocking(project, JsonBundle.message("intention.add.not.required.properties.text")) {
       val (objectPointer, missingProperties) = readAction {
-        val containingObject = findContainingObjectNode(editor, file)?.createSmartPointer() ?: return@readAction null
+        val containingObject = findContainingObjectNode(editor, psiFile)?.createSmartPointer() ?: return@readAction null
         val missingProperties = collectMissingPropertiesFromSchema(containingObject, containingObject.project)
                                   ?.missingKnownProperties ?: return@readAction null
         containingObject to missingProperties
@@ -75,8 +75,8 @@ open class AddOptionalPropertiesIntention : IntentionAction {
     return JsonOriginalPsiWalker.INSTANCE.getSyntaxAdapter(project)
   }
 
-  override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
-    val containingObject = findContainingObjectNode(editor, file) ?: return IntentionPreviewInfo.EMPTY
+  override fun generatePreview(project: Project, editor: Editor, psiFile: PsiFile): IntentionPreviewInfo {
+    val containingObject = findContainingObjectNode(editor, psiFile) ?: return IntentionPreviewInfo.EMPTY
     val missingProperties = collectMissingPropertiesFromSchema(containingObject.createSmartPointer(), containingObject.project)
                               ?.missingKnownProperties ?: return IntentionPreviewInfo.EMPTY
     AddMissingPropertyFix(missingProperties, getSyntaxAdapter(project))

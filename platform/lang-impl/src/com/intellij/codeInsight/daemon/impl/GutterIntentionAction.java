@@ -57,7 +57,7 @@ public class GutterIntentionAction extends AbstractIntentionAction
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     RelativePoint relativePoint = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
     AnActionEvent event = AnActionEvent.createFromInputEvent(
       relativePoint.toMouseEvent(), ActionPlaces.INTENTION_MENU,
@@ -109,7 +109,7 @@ public class GutterIntentionAction extends AbstractIntentionAction
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     return IntentionPreviewInfo.EMPTY;
   }
 }

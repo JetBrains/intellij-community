@@ -130,7 +130,7 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+  public void invoke(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
     invoke();
   }
 

@@ -52,7 +52,7 @@ public class GrCreateLocalVariableFromUsageFix extends Intention {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     return myOwner.isValid() && myRefExpression.isValid();
   }
 
@@ -67,7 +67,7 @@ public class GrCreateLocalVariableFromUsageFix extends Intention {
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     TypeConstraint[] constraints = GroovyExpectedTypesProvider.calculateTypeConstraints(myRefExpression);
     PsiType type = constraints.length == 0 || constraints[0].getType().equals(PsiTypes.voidType()) ? JavaPsiFacade.getInstance(project).getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(project)) : constraints[0].getType();
     GrVariableDeclaration declaration = GroovyPsiElementFactory.getInstance(project)

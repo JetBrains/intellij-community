@@ -32,19 +32,19 @@ final class LineMarkersPassFactory implements TextEditorHighlightingPassFactoryR
     return createLineMarkersPass(psiFile, editor, myMode, Pass.LINE_MARKERS);
   }
 
-  static @NotNull TextEditorHighlightingPass createLineMarkersPass(@NotNull PsiFile file, @NotNull Editor editor, @NotNull LineMarkersPass.Mode myMode,
+  static @NotNull TextEditorHighlightingPass createLineMarkersPass(@NotNull PsiFile psiFile, @NotNull Editor editor, @NotNull LineMarkersPass.Mode myMode,
                                                                    int passId) {
-    TextRange dirtyTextRange = FileStatusMap.getDirtyTextRange(editor.getDocument(), file, passId);
+    TextRange dirtyTextRange = FileStatusMap.getDirtyTextRange(editor.getDocument(), psiFile, passId);
     Document document = editor.getDocument();
-    Project project = file.getProject();
+    Project project = psiFile.getProject();
     if (dirtyTextRange == null || myMode == LineMarkersPass.Mode.NONE) {
       return new ProgressableTextEditorHighlightingPass.EmptyPass(project, document);
     }
 
-    HighlightingSession session = HighlightingSessionImpl.getFromCurrentIndicator(file);
+    HighlightingSession session = HighlightingSessionImpl.getFromCurrentIndicator(psiFile);
     ProperTextRange visibleRange = session.getVisibleRange();
     TextRange priorityBounds = expandRangeToCoverWholeLines(document, visibleRange);
     TextRange restrictRange = expandRangeToCoverWholeLines(document, dirtyTextRange);
-    return new LineMarkersPass(project, file, document, priorityBounds, restrictRange, myMode, session);
+    return new LineMarkersPass(project, psiFile, document, priorityBounds, restrictRange, myMode, session);
   }
 }

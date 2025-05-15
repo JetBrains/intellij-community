@@ -22,13 +22,13 @@ class EditorConfigInvertValueIntention : IntentionAction {
   override fun getFamilyName(): String = EditorConfigBundle.get("intention.invert-option-value")
   override fun startInWriteAction(): Boolean = true
 
-  override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
-    val value = getDescribableElement(editor, file) ?: return false
+  override fun isAvailable(project: Project, editor: Editor, psiFile: PsiFile): Boolean {
+    val value = getDescribableElement(editor, psiFile) ?: return false
     return getInvertedValue(value) != null
   }
 
-  override fun invoke(project: Project, editor: Editor, file: PsiFile) {
-    val optionValue = getDescribableElement(editor, file) ?: return
+  override fun invoke(project: Project, editor: Editor, psiFile: PsiFile) {
+    val optionValue = getDescribableElement(editor, psiFile) ?: return
     val notValue = getInvertedValue(optionValue) ?: return
     val document = editor.document
     val textRange = optionValue.textRange

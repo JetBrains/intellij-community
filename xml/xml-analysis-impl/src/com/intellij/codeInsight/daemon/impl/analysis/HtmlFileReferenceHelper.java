@@ -29,10 +29,10 @@ import java.util.Collections;
 public class HtmlFileReferenceHelper extends FileReferenceHelper {
   @Override
   public @NotNull Collection<PsiFileSystemItem> getContexts(@NotNull Project project, @NotNull VirtualFile vFile) {
-    final PsiFile file = PsiManager.getInstance(project).findFile(vFile);
-    final Module module = file != null ? ModuleUtilCore.findModuleForPsiElement(file) : null;
-    if (module == null || !(file instanceof XmlFile)) return Collections.emptyList();
-    final String basePath = HtmlUtil.getHrefBase((XmlFile)file);
+    final PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
+    final Module module = psiFile != null ? ModuleUtilCore.findModuleForPsiElement(psiFile) : null;
+    if (module == null || !(psiFile instanceof XmlFile)) return Collections.emptyList();
+    final String basePath = HtmlUtil.getHrefBase((XmlFile)psiFile);
     if (basePath != null && !HtmlUtil.hasHtmlPrefix(basePath)) {
       for (VirtualFile virtualFile : getBaseRoots(module)) {
         final VirtualFile base = virtualFile.findFileByRelativePath(basePath);

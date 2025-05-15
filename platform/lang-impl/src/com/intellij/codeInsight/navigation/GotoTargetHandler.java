@@ -64,24 +64,24 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     String featureId = getFeatureUsedKey();
     if (featureId != null) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(featureId);
     }
 
     try {
-      GotoData gotoData = getSourceAndTargetElements(editor, file);
+      GotoData gotoData = getSourceAndTargetElements(editor, psiFile);
       Consumer<JBPopup> showPopupProcedure = popup -> {
         if (!editor.isDisposed()) {
           popup.showInBestPositionFor(editor);
         }
       };
       if (gotoData != null) {
-        show(project, editor, file, gotoData, showPopupProcedure);
+        show(project, editor, psiFile, gotoData, showPopupProcedure);
       }
       else {
-        chooseFromAmbiguousSources(editor, file, data -> show(project, editor, file, data, showPopupProcedure));
+        chooseFromAmbiguousSources(editor, psiFile, data -> show(project, editor, psiFile, data, showPopupProcedure));
       }
     }
     catch (IndexNotReadyException e) {

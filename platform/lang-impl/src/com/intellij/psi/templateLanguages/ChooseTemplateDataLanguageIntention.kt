@@ -24,15 +24,15 @@ internal class ChooseTemplateDataLanguageIntention : IntentionAction {
     return LangBundle.message("template.data.language.chooser.intention.title")
   }
 
-  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
-    return file?.viewProvider is ConfigurableTemplateLanguageFileViewProvider
+  override fun isAvailable(project: Project, editor: Editor?, psiFile: PsiFile?): Boolean {
+    return psiFile?.viewProvider is ConfigurableTemplateLanguageFileViewProvider
   }
 
-  override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-    if (file == null || editor == null || file.viewProvider !is ConfigurableTemplateLanguageFileViewProvider) return
+  override fun invoke(project: Project, editor: Editor?, psiFile: PsiFile?) {
+    if (psiFile == null || editor == null || psiFile.viewProvider !is ConfigurableTemplateLanguageFileViewProvider) return
 
     val sortedLanguages = ContainerUtil.sorted(getTemplateableLanguages(), Comparator.comparing { obj: Language -> obj.displayName })
-    ListPopupImpl(project, TemplateDataLanguageChooserPopupStep(sortedLanguages, file.virtualFile, project))
+    ListPopupImpl(project, TemplateDataLanguageChooserPopupStep(sortedLanguages, psiFile.virtualFile, project))
       .showInBestPositionFor(editor)
   }
 }

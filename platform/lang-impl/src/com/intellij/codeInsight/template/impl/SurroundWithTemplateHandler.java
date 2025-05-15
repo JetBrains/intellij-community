@@ -30,14 +30,14 @@ public final class SurroundWithTemplateHandler implements CodeInsightActionHandl
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(final @NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile psiFile) {
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     if (!editor.getSelectionModel().hasSelection()) {
       SurroundWithHandler.selectLogicalLineContentsAtCaret(editor);
       if (!editor.getSelectionModel().hasSelection()) return;
     }
 
-    List<AnAction> group = createActionGroup(editor, file, new HashSet<>());
+    List<AnAction> group = createActionGroup(editor, psiFile, new HashSet<>());
     if (group.isEmpty()) {
       HintManager.getInstance().showErrorHint(editor, CodeInsightBundle.message("templates.surround.no.defined"));
       return;

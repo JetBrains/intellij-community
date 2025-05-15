@@ -72,20 +72,20 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
   }
 
   @Override
-  protected @NotNull FutureTask<Boolean> prepareTask(@NotNull PsiFile file, boolean processChangedTextOnly) {
+  protected @NotNull FutureTask<Boolean> prepareTask(@NotNull PsiFile psiFile, boolean processChangedTextOnly) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    if (DumbService.isDumb(file.getProject())) {
+    if (DumbService.isDumb(psiFile.getProject())) {
       return emptyTask();
     }
 
-    List<Runnable> runnables = collectOptimizers(file);
+    List<Runnable> runnables = collectOptimizers(psiFile);
 
     if (runnables.isEmpty()) {
       return emptyTask();
     }
 
     List<BooleanSupplier> hints = ApplicationManager.getApplication().isDispatchThread()
-                                  ? Collections.emptyList() : collectAutoImports(file);
+                                  ? Collections.emptyList() : collectAutoImports(psiFile);
 
     return new FutureTask<>(() -> {
       ThreadingAssertions.assertEventDispatchThread();
@@ -96,7 +96,7 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
           myOptimizerNotifications.add(getNotificationInfo(runnable));
         }
         putNotificationInfoIntoCollector();
-        fixAllImportsSilently(file, hints);
+        fixAllImportsSilently(psiFile, hints);
       }
       finally {
         CoreCodeStyleUtil.setSequentialProcessingAllowed(true);

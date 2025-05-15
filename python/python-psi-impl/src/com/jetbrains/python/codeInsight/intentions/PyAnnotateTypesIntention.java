@@ -34,10 +34,10 @@ public final class PyAnnotateTypesIntention extends PyBaseIntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof PyFile) || file instanceof PyDocstringFile) return false;
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (!(psiFile instanceof PyFile) || psiFile instanceof PyDocstringFile) return false;
 
-    final PyFunction function = findSuitableFunction(editor, file);
+    final PyFunction function = findSuitableFunction(editor, psiFile);
     if (function == null) return false;
 
     if (function.getTypeComment() != null) {

@@ -24,11 +24,11 @@ class EditorConfigAddDeclarationPartIntention : IntentionAction {
   override fun getFamilyName(): @Nls String = EditorConfigBundle.get("intention.add-declaration-part")
   override fun startInWriteAction(): Boolean = true
 
-  override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean =
-    findDeclaration(EditorConfigPsiTreeUtil.findIdentifierUnderCaret(editor, file)) != null
+  override fun isAvailable(project: Project, editor: Editor, psiFile: PsiFile): Boolean =
+    findDeclaration(EditorConfigPsiTreeUtil.findIdentifierUnderCaret(editor, psiFile)) != null
 
-  override fun invoke(project: Project, editor: Editor, file: PsiFile) {
-    val element = findDeclaration(EditorConfigPsiTreeUtil.findIdentifierUnderCaret(editor, file)) ?: return
+  override fun invoke(project: Project, editor: Editor, psiFile: PsiFile) {
+    val element = findDeclaration(EditorConfigPsiTreeUtil.findIdentifierUnderCaret(editor, psiFile)) ?: return
     val section = element.section
     val option = element.option
     val descriptor = element.getDescriptor(false) as? EditorConfigDeclarationDescriptor ?: return

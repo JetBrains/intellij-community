@@ -47,8 +47,8 @@ public abstract class PsiElementVisitor {
     visitElement(element);
   }
 
-  public void visitFile(@NotNull PsiFile file) {
-    visitElement(file);
+  public void visitFile(@NotNull PsiFile psiFile) {
+    visitElement(psiFile);
   }
 
   public void visitOuterLanguageElement(@NotNull OuterLanguageElement element) {

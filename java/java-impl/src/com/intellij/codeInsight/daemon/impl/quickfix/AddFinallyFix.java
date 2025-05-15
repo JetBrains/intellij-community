@@ -31,9 +31,9 @@ public class AddFinallyFix extends PsiUpdateModCommandAction<PsiTryStatement> {
   }
 
   private static void moveCaretToFinallyBlock(@NotNull ModPsiUpdater updater, @NotNull PsiCodeBlock block) {
-    PsiFile file = block.getContainingFile();
-    Document document = file.getViewProvider().getDocument();
-    Project project = file.getProject();
+    PsiFile psiFile = block.getContainingFile();
+    Document document = psiFile.getViewProvider().getDocument();
+    Project project = psiFile.getProject();
     updater.moveCaretTo(Objects.requireNonNull(block.getRBrace()));
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
     TextRange finallyBlockRange = block.getTextRange();

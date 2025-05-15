@@ -34,7 +34,7 @@ public final class UnInjectLanguageAction implements IntentionAction, LowPriorit
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     return new IntentionPreviewInfo.Html(IntelliLangBundle.message("intelliLang.uninject.language.action.preview"));
   }
 
@@ -44,18 +44,18 @@ public final class UnInjectLanguageAction implements IntentionAction, LowPriorit
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     final int offset = editor.getCaretModel().getOffset();
-    PsiElement element = InjectedLanguageUtil.findInjectedPsiNoCommit(file, offset);
+    PsiElement element = InjectedLanguageUtil.findInjectedPsiNoCommit(psiFile, offset);
     if (element == null) {
-      return InjectedReferencesContributor.isInjected(file.findReferenceAt(offset));
+      return InjectedReferencesContributor.isInjected(psiFile.findReferenceAt(offset));
     }
     return element.getUserData(LanguageInjectionSupport.INJECTOR_SUPPORT) != null;
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    ApplicationManager.getApplication().runReadAction(() -> invokeImpl(project, editor, file));
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile psiFile) throws IncorrectOperationException {
+    ApplicationManager.getApplication().runReadAction(() -> invokeImpl(project, editor, psiFile));
   }
 
   public static void invokeImpl(Project project, Editor editor, PsiFile file) {

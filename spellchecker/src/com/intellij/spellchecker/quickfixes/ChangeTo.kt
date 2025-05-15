@@ -50,18 +50,18 @@ internal class ChangeTo(typo: String, element: PsiElement, private val range: Te
 
     override fun getFamilyName(): String = fixName
 
-    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile): Boolean {
+    override fun isAvailable(project: Project, editor: Editor?, psiFile: PsiFile): Boolean {
       val suggestions = getSuggestions(project)
       if (suggestions.size <= index) return false
-      if (getRange(file.viewProvider.document) == null) return false
+      if (getRange(psiFile.viewProvider.document) == null) return false
       suggestion = suggestions[index]
       return true
     }
 
-    override fun applyFix(project: Project, file: PsiFile, editor: Editor?) {
+    override fun applyFix(project: Project, psiFile: PsiFile, editor: Editor?) {
       val suggestion = suggestion ?: return
 
-      val document = file.viewProvider.document
+      val document = psiFile.viewProvider.document
       val myRange = getRange(document) ?: return
 
       removeHighlightersWithExactRange(document, project, myRange)

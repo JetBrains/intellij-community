@@ -53,10 +53,10 @@ internal class CreateMethodAction(
     return message("create.element.in.class", kind.`object`(), what, where)
   }
 
-  override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
-    val copyClass = PsiTreeUtil.findSameElementInCopy(target, file)
-    val previewRequest = if (request is CreateMethodFromJavaUsageRequest && request.call.containingFile == file.originalFile) {
-      val copyCall = PsiTreeUtil.findSameElementInCopy(request.call, file) // copy call when possible to get proper anchor
+  override fun generatePreview(project: Project, editor: Editor, psiFile: PsiFile): IntentionPreviewInfo {
+    val copyClass = PsiTreeUtil.findSameElementInCopy(target, psiFile)
+    val previewRequest = if (request is CreateMethodFromJavaUsageRequest && request.call.containingFile == psiFile.originalFile) {
+      val copyCall = PsiTreeUtil.findSameElementInCopy(request.call, psiFile) // copy call when possible to get proper anchor
       CreateMethodFromJavaUsageRequest(copyCall, request.modifiers)
     } else request
     JavaMethodRenderer(project, abstract, copyClass, previewRequest).doMagic()

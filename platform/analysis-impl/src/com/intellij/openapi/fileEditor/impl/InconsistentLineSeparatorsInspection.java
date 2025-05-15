@@ -28,14 +28,14 @@ public final class InconsistentLineSeparatorsInspection extends LocalInspectionT
   public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       @Override
-      public void visitFile(@NotNull PsiFile file) {
-        if (!file.getLanguage().equals(file.getViewProvider().getBaseLanguage())) {
+      public void visitFile(@NotNull PsiFile psiFile) {
+        if (!psiFile.getLanguage().equals(psiFile.getViewProvider().getBaseLanguage())) {
           // There is a possible case that more than a single virtual file/editor contains more than one language (e.g. php and html).
           // We want to process a virtual file once than, hence, ignore all non-base psi files.
           return;
         }
 
-        VirtualFile virtualFile = file.getVirtualFile();
+        VirtualFile virtualFile = psiFile.getVirtualFile();
         if (virtualFile == null || !AbstractConvertLineSeparatorsAction.shouldProcess(virtualFile)) {
           return;
         }
@@ -47,7 +47,7 @@ public final class InconsistentLineSeparatorsInspection extends LocalInspectionT
           List<String> allSorted = ContainerUtil.sorted(allLineSeparators);
           String presentableSeparators = StringUtil.join(allSorted, sep->StringUtil.escapeStringCharacters(sep), ", ");
           holder.registerProblem(
-            file,
+            psiFile,
             AnalysisBundle.message("inspection.message.line.separators.in.current.file.differ.from.project.defaults", presentableSeparators,
                                    StringUtil.escapeStringCharacters(projectLineSeparator)),
             new ChangeLineSeparatorFix());

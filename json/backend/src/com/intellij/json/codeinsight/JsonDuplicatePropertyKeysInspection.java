@@ -96,13 +96,13 @@ public class JsonDuplicatePropertyKeysInspection extends LocalInspectionTool {
     }
 
     @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
       return IntentionPreviewInfo.EMPTY;
     }
 
     @Override
     public void invoke(@NotNull Project project,
-                       @NotNull PsiFile file,
+                       @NotNull PsiFile psiFile,
                        @Nullable Editor editor,
                        @NotNull PsiElement startElement,
                        @NotNull PsiElement endElement) {

@@ -179,9 +179,9 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
     Document document = editor.getDocument();
     CodeInsightContext context = EditorContextManager.getEditorContext(editor, myProject);
-    PsiFile fileFromDoc = documentManager.getPsiFile(document, context);
-    if (!(fileFromDoc instanceof PsiCompiledElement)) {
-      assert fileFromDoc == psiFile : "Files are different: " + psiFile + ";" + fileFromDoc;
+    PsiFile psiFileFromDoc = documentManager.getPsiFile(document, context);
+    if (!(psiFileFromDoc instanceof PsiCompiledElement)) {
+      assert psiFileFromDoc == psiFile : "Files are different: " + psiFile + ";" + psiFileFromDoc;
       Document documentFromFile = documentManager.getDocument(psiFile);
       assert documentFromFile == document : "Documents are different. Doc: " + document + "; Doc from file: " + documentFromFile +"; File: "+psiFile +"; Virtual file: "+
                                             PsiUtilCore.getVirtualFile(psiFile);

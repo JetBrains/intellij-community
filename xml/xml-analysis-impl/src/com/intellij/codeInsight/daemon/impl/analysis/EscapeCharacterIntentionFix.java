@@ -41,11 +41,11 @@ public class EscapeCharacterIntentionFix extends LocalQuickFixAndIntentionAction
 
   @Override
   public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
+                     @NotNull PsiFile psiFile,
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    PsiFile topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
+    PsiFile topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(psiFile);
     Document document = topLevelFile.getViewProvider().getDocument();
     assert document != null;
     var startOffset = InjectedLanguageManager.getInstance(project).injectedToHost(startElement, startElement.getTextRange()).getStartOffset();

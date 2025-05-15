@@ -33,8 +33,8 @@ public class GenerateSuperMethodCallHandler implements CodeInsightActionHandler 
   private static final Logger LOG = Logger.getInstance(GenerateSuperMethodCallHandler.class);
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiMethod method = canInsertSuper(editor, file);
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    PsiMethod method = canInsertSuper(editor, psiFile);
     LOG.assertTrue(method != null);
     PsiMethod template = (PsiMethod)method.copy();
 
@@ -42,7 +42,7 @@ public class GenerateSuperMethodCallHandler implements CodeInsightActionHandler 
     PsiCodeBlock templateBody = template.getBody();
     LOG.assertTrue(templateBody != null, template);
     PsiStatement superCall = templateBody.getStatements()[0];
-    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
     PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class);
     LOG.assertTrue(codeBlock != null);
     PsiElement toGo;

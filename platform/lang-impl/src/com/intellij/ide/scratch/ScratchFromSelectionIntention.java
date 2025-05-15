@@ -27,17 +27,17 @@ public final class ScratchFromSelectionIntention implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project,
                              Editor editor,
-                             PsiFile file) {
+                             PsiFile psiFile) {
     if (editor == null) return false;
     if (!EditorUtil.isRealFileEditor(editor)) return false;
     return !EditorUtil.getSelectionInAnyMode(editor).isEmpty();
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     if (editor == null || EditorUtil.getSelectionInAnyMode(editor).isEmpty()) return;
     ScratchFileCreationHelper.Context context = ScratchFileActions.createContext(
-      project, file, editor, ((EditorEx)editor).getDataContext());
+      project, psiFile, editor, ((EditorEx)editor).getDataContext());
     doCreateNewScratch(project, context);
   }
 

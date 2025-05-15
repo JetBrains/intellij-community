@@ -36,14 +36,14 @@ public class GenerateDomElementAction extends CodeInsightAction {
   protected @NotNull CodeInsightActionHandler getHandler() {
     return new CodeInsightActionHandler() {
       @Override
-      public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
+      public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile psiFile) {
         final Runnable runnable = () -> {
-          final DomElement element = myProvider.generate(project, editor, file);
+          final DomElement element = myProvider.generate(project, editor, psiFile);
           myProvider.navigate(element);
         };
         
         if (GenerateDomElementAction.this.startInWriteAction()) {
-          WriteCommandAction.writeCommandAction(project, file).run(() -> runnable.run());
+          WriteCommandAction.writeCommandAction(project, psiFile).run(() -> runnable.run());
         }
         else {
           runnable.run();
@@ -62,7 +62,7 @@ public class GenerateDomElementAction extends CodeInsightAction {
   }
 
   @Override
-  protected boolean isValidForFile(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
+  protected boolean isValidForFile(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile psiFile) {
     final DomElement element = DomUtil.getContextElement(editor);
     return element != null && myProvider.isAvailableForElement(element);
   }

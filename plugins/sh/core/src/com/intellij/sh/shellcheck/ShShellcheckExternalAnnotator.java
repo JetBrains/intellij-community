@@ -71,14 +71,14 @@ public class ShShellcheckExternalAnnotator
   }
 
   @Override
-  public @Nullable CollectedInfo collectInformation(@NotNull PsiFile file) {
-    if (!(file instanceof ShFile)) return null;
-    VirtualFile virtualFile = file.getVirtualFile();
+  public @Nullable CollectedInfo collectInformation(@NotNull PsiFile psiFile) {
+    if (!(psiFile instanceof ShFile)) return null;
+    VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) return null;
     VirtualFile parent = virtualFile.getParent();
     if (parent == null) return null;
-    return new CollectedInfo(file.getProject(), parent.getPath(), file.getText(), file.getModificationStamp(),
-                             getShellcheckExecutionParams(file));
+    return new CollectedInfo(psiFile.getProject(), parent.getPath(), psiFile.getText(), psiFile.getModificationStamp(),
+                             getShellcheckExecutionParams(psiFile));
   }
 
   @Override
@@ -130,14 +130,14 @@ public class ShShellcheckExternalAnnotator
   }
 
   @Override
-  public void apply(@NotNull PsiFile file, ShellcheckResponse shellcheckResponse, @NotNull AnnotationHolder holder) {
-    super.apply(file, shellcheckResponse, holder);
-    Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+  public void apply(@NotNull PsiFile psiFile, ShellcheckResponse shellcheckResponse, @NotNull AnnotationHolder holder) {
+    super.apply(psiFile, shellcheckResponse, holder);
+    Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
     if (document == null) {
       return;
     }
 
-    Collection<OuterLanguageElement> outerElements = PsiTreeUtil.findChildrenOfType(file, OuterLanguageElement.class);
+    Collection<OuterLanguageElement> outerElements = PsiTreeUtil.findChildrenOfType(psiFile, OuterLanguageElement.class);
     List<TextRange> rangesOfOuterElements = ContainerUtil.map(outerElements, el -> el.getTextRange());
 
     for (Result result : shellcheckResponse.results) {
@@ -147,7 +147,7 @@ public class ShShellcheckExternalAnnotator
       TextRange range = TextRange.create(startOffset, endOffset == startOffset ? endOffset + 1 : endOffset);
 
       // We skip results which out of scope for current file or intersect with outer language elements
-      if (!file.getTextRange().contains(range) || ContainerUtil.exists(rangesOfOuterElements, it -> it.contains(range))) continue;
+      if (!psiFile.getTextRange().contains(range) || ContainerUtil.exists(rangesOfOuterElements, it -> it.contains(range))) continue;
 
       long code = result.code;
       String message = result.message;

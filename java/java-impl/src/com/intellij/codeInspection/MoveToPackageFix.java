@@ -62,7 +62,7 @@ public class MoveToPackageFix extends LocalQuickFixAndIntentionActionOnPsiElemen
 
   @Override
   public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
+                     @NotNull PsiFile psiFile,
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {

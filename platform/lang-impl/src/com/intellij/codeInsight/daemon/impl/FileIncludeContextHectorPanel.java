@@ -23,11 +23,11 @@ import java.awt.*;
 public final class FileIncludeContextHectorPanel extends HectorComponentPanel {
   private ComboboxWithBrowseButton myContextFile;
   private JPanel myPanel;
-  private final PsiFile myFile;
+  private final PsiFile myPsiFile;
   private final FileIncludeManager myIncludeManager;
 
-  public FileIncludeContextHectorPanel(PsiFile file, FileIncludeManager includeManager) {
-    myFile = file;
+  public FileIncludeContextHectorPanel(PsiFile psiFile, FileIncludeManager includeManager) {
+    myPsiFile = psiFile;
     myIncludeManager = includeManager;
 
     myPanel.setBackground(UIUtil.getToolTipActionBackground());
@@ -55,7 +55,7 @@ public final class FileIncludeContextHectorPanel extends HectorComponentPanel {
     JComboBox comboBox = myContextFile.getComboBox();
 
     comboBox.setRenderer(new MyListCellRenderer(comboBox));
-    VirtualFile[] includingFiles = myIncludeManager.getIncludingFiles(myFile.getVirtualFile(), false);
+    VirtualFile[] includingFiles = myIncludeManager.getIncludingFiles(myPsiFile.getVirtualFile(), false);
     comboBox.setModel(new DefaultComboBoxModel(includingFiles));
     myContextFile.setTextFieldPreferredWidth(30);
   }
@@ -89,7 +89,7 @@ public final class FileIncludeContextHectorPanel extends HectorComponentPanel {
 
     private @Nullable @NlsSafe String getPath(Object value) {
       VirtualFile file = (VirtualFile)value;
-      ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myFile.getProject()).getFileIndex();
+      ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myPsiFile.getProject()).getFileIndex();
       if (file != null) {
         VirtualFile root = fileIndex.getSourceRootForFile(file);
         if (root == null) {

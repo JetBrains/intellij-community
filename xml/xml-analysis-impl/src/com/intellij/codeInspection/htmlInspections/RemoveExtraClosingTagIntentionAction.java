@@ -39,15 +39,15 @@ public class RemoveExtraClosingTagIntentionAction implements LocalQuickFix, Inte
   }
 
   @Override
-  public boolean isAvailable(final @NotNull Project project, final Editor editor, final PsiFile file) {
-    PsiElement psiElement = file.findElementAt(editor.getCaretModel().getOffset());
+  public boolean isAvailable(final @NotNull Project project, final Editor editor, final PsiFile psiFile) {
+    PsiElement psiElement = psiFile.findElementAt(editor.getCaretModel().getOffset());
     return psiElement instanceof XmlToken && 
            (psiElement.getParent() instanceof XmlTag || psiElement.getParent() instanceof PsiErrorElement);
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    doFix(Objects.requireNonNull(file.findElementAt(editor.getCaretModel().getOffset())).getParent());
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile psiFile) throws IncorrectOperationException {
+    doFix(Objects.requireNonNull(psiFile.findElementAt(editor.getCaretModel().getOffset())).getParent());
   }
 
   @Override

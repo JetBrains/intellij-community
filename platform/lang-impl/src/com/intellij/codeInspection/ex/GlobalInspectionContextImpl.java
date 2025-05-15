@@ -1141,18 +1141,18 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         private int myCount;
 
         @Override
-        public void visitFile(@NotNull PsiFile file) {
+        public void visitFile(@NotNull PsiFile psiFile) {
           if (LOG.isDebugEnabled()) {
-            LOG.debug("Code cleanup: searching for problems in file " + file);
+            LOG.debug("Code cleanup: searching for problems in file " + psiFile);
           }
 
-          progressIndicator.setText(AbstractLayoutCodeProcessor.getPresentablePath(getProject(), file));
+          progressIndicator.setText(AbstractLayoutCodeProcessor.getPresentablePath(getProject(), psiFile));
           progressIndicator.setFraction((double)++myCount / fileCount);
 
-          if (isBinary(file)) return;
+          if (isBinary(psiFile)) return;
           List<LocalInspectionToolWrapper> lTools = new ArrayList<>();
           for (Tools tools : inspectionTools) {
-            InspectionToolWrapper<?, ?> tool = tools.getEnabledTool(file, includeDoNotShow);
+            InspectionToolWrapper<?, ?> tool = tools.getEnabledTool(psiFile, includeDoNotShow);
             if (tool != null && profile instanceof InspectionProfileImpl profileImpl) {
               @NotNull Set<InspectionToolWrapper<?, ?>> other = new HashSet<>();
               profileImpl.collectDependentInspections(tool, other, getProject());
@@ -1173,9 +1173,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           }
 
           if (!lTools.isEmpty()) {
-            InspectionProfileWrapper.runWithCustomInspectionWrapper(file,
+            InspectionProfileWrapper.runWithCustomInspectionWrapper(psiFile,
                 p -> new InspectionProfileWrapper(profile, ((InspectionProfileImpl)p).getProfileManager()),
-                () -> findProblemsInFile(file, lTools, range, searchScope, descriptors, files, shouldApplyFix));
+                                                                    () -> findProblemsInFile(psiFile, lTools, range, searchScope, descriptors, files, shouldApplyFix));
           }
         }
       }));

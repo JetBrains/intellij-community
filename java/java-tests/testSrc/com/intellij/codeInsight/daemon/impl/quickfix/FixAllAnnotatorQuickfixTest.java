@@ -92,12 +92,12 @@ public class FixAllAnnotatorQuickfixTest extends LightQuickFixTestCase {
       }
 
       @Override
-      public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+      public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
         return true;
       }
 
       @Override
-      public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
         fail();
       }
 

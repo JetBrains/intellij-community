@@ -23,9 +23,9 @@ public final class GroovyOverrideMethodsHandler implements LanguageCodeInsightAc
   }
 
   @Override
-  public void invoke(final @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(final @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
-    PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, true);
+    PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, psiFile, true);
     if (aClass instanceof GrTypeDefinition typeDefinition) {
 
       if (GroovyOverrideImplementExploreUtil.getMethodSignaturesToOverride(typeDefinition).isEmpty()) {

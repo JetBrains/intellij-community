@@ -57,12 +57,12 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
   }
 
   @Override
-  public final void invoke(final @NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile file) {
+  public final void invoke(final @NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile psiFile) {
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
       return;
     }
-    final PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, false);
+    final PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, psiFile, false);
     if (aClass == null || aClass.isInterface()) return; //?
     LOG.assertTrue(aClass.isValid());
     LOG.assertTrue(aClass.getContainingFile() != null);

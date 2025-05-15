@@ -79,14 +79,14 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public boolean suitableForFile(@NotNull PsiFile file) {
-    HighlightingLevelManager highlightingLevelManager = HighlightingLevelManager.getInstance(file.getProject());
-    if (highlightingLevelManager.runEssentialHighlightingOnly(file)) {
+  public boolean suitableForFile(@NotNull PsiFile psiFile) {
+    HighlightingLevelManager highlightingLevelManager = HighlightingLevelManager.getInstance(psiFile.getProject());
+    if (highlightingLevelManager.runEssentialHighlightingOnly(psiFile)) {
       return false;
     }
 
     // both PsiJavaFile and PsiCodeFragment must match
-    return file instanceof PsiImportHolder && !InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file);
+    return psiFile instanceof PsiImportHolder && !InjectedLanguageManager.getInstance(psiFile.getProject()).isInjectedFragment(psiFile);
   }
 
   @Override
@@ -100,17 +100,17 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public boolean analyze(@NotNull PsiFile file, boolean updateWholeFile, @NotNull HighlightInfoHolder holder, @NotNull Runnable highlight) {
+  public boolean analyze(@NotNull PsiFile psiFile, boolean updateWholeFile, @NotNull HighlightInfoHolder holder, @NotNull Runnable highlight) {
     try {
-      prepare(holder, file);
+      prepare(holder, psiFile);
       if (updateWholeFile) {
         GlobalInspectionContextBase.assertUnderDaemonProgress();
-        Project project = file.getProject();
-        Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+        Project project = psiFile.getProject();
+        Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
         highlight.run();
         ProgressManager.checkCanceled();
         if (document != null) {
-          new UnusedImportsVisitor(file, document).collectHighlights(holder);
+          new UnusedImportsVisitor(psiFile, document).collectHighlights(holder);
         }
       }
       else {
@@ -124,8 +124,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     return true;
   }
 
-  private void prepare(@NotNull HighlightInfoHolder holder, @NotNull PsiFile file) {
-    myCollector = new JavaErrorCollector(file, error -> reportError(error, holder));
+  private void prepare(@NotNull HighlightInfoHolder holder, @NotNull PsiFile psiFile) {
+    myCollector = new JavaErrorCollector(psiFile, error -> reportError(error, holder));
   }
 
   private void reportError(@NotNull JavaCompilationError<?, ?> error, @NotNull HighlightInfoHolder holder) {

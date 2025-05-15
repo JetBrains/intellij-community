@@ -19,13 +19,13 @@ public class AnnotationMethodReturnTypeFix extends MethodReturnTypeFix {
 
   @Override
   public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
+                     @NotNull PsiFile psiFile,
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    super.invoke(project, file, editor, startElement, endElement);
+    super.invoke(project, psiFile, editor, startElement, endElement);
     if (!myFromDefaultValue && startElement instanceof PsiAnnotationMethod) {
-      WriteCommandAction.writeCommandAction(project, file).run(() -> {
+      WriteCommandAction.writeCommandAction(project, psiFile).run(() -> {
         final PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)startElement).getDefaultValue();
         if (defaultValue != null) {
           if (editor != null) {

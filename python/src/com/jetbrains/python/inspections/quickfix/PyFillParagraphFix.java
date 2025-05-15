@@ -24,12 +24,12 @@ public class PyFillParagraphFix extends BaseIntentionAction implements  HighPrio
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     return true;
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     final FillParagraphAction action = new FillParagraphAction();
     action.actionPerformedImpl(project, editor);
   }

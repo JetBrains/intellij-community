@@ -13,8 +13,8 @@ public interface PsiDocumentTransactionListener {
   Topic<PsiDocumentTransactionListener> TOPIC =
     new Topic<>("psi.DocumentTransactionListener", PsiDocumentTransactionListener.class, Topic.BroadcastDirection.TO_PARENT);
 
-  void transactionStarted(@NotNull Document document, @NotNull PsiFile file);
+  void transactionStarted(@NotNull Document document, @NotNull PsiFile psiFile);
 
-  default void transactionCompleted(@NotNull Document document, @NotNull PsiFile file) {
+  default void transactionCompleted(@NotNull Document document, @NotNull PsiFile psiFile) {
   }
 }

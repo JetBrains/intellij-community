@@ -18,11 +18,11 @@ public class GenerateSuperMethodCallAction extends BaseCodeInsightAction impleme
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, final @NotNull PsiFile file) {
-    if (!(file instanceof PsiJavaFile)) {
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, final @NotNull PsiFile psiFile) {
+    if (!(psiFile instanceof PsiJavaFile)) {
       return false;
     }
     return DumbService.getInstance(project).computeWithAlternativeResolveEnabled(
-      () -> GenerateSuperMethodCallHandler.canInsertSuper(editor, file) != null);
+      () -> GenerateSuperMethodCallHandler.canInsertSuper(editor, psiFile) != null);
   }
 }

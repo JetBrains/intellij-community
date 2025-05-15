@@ -13,8 +13,8 @@ import java.util.List;
 
 public final class JsonFocusModeProvider implements FocusModeProvider {
   @Override
-  public @NotNull List<? extends Segment> calcFocusZones(@NotNull PsiFile file) {
-    return SyntaxTraverser.psiTraverser(file)
+  public @NotNull List<? extends Segment> calcFocusZones(@NotNull PsiFile psiFile) {
+    return SyntaxTraverser.psiTraverser(psiFile)
       .postOrderDfsTraversal()
       .filter(e -> e instanceof JsonObject ||
                    e instanceof JsonArray)

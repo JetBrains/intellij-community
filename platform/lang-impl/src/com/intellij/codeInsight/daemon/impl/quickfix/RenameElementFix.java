@@ -55,21 +55,21 @@ public class RenameElementFix extends LocalQuickFixAndIntentionActionOnPsiElemen
 
   @Override
   public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
+                     @NotNull PsiFile psiFile,
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    if (isAvailable(project, null, file)) {
-      LOG.assertTrue(file == startElement.getContainingFile());
-      if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
+    if (isAvailable(project, null, psiFile)) {
+      LOG.assertTrue(psiFile == startElement.getContainingFile());
+      if (!FileModificationService.getInstance().prepareFileForWrite(psiFile)) return;
       RenameProcessor processor = new RenameProcessor(project, startElement, myNewName, false, false);
       processor.run();
     }
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiElement element = PsiTreeUtil.findSameElementInCopy(getStartElement(), file);
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    PsiElement element = PsiTreeUtil.findSameElementInCopy(getStartElement(), psiFile);
     if (!(element instanceof PsiNamedElement named)) return IntentionPreviewInfo.EMPTY;
     named.setName(myNewName);
     return IntentionPreviewInfo.DIFF;
@@ -77,7 +77,7 @@ public class RenameElementFix extends LocalQuickFixAndIntentionActionOnPsiElemen
 
   @Override
   public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
+                             @NotNull PsiFile psiFile,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     return RenameUtil.isValidName(project, startElement, myNewName);

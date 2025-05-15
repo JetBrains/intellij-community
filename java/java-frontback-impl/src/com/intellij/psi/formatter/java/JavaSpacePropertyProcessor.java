@@ -703,7 +703,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitFile(@NotNull PsiFile file) {
+  public void visitFile(@NotNull PsiFile psiFile) {
     if (myType1 == JavaElementType.PACKAGE_STATEMENT) {
       int lf = mySettings.BLANK_LINES_AFTER_PACKAGE + 1;
       myResult = Spacing.createSpacing(0, 0, lf, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);

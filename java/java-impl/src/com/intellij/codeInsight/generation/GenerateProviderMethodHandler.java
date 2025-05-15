@@ -17,11 +17,11 @@ import org.jetbrains.annotations.Nullable;
 
 public class GenerateProviderMethodHandler implements CodeInsightActionHandler {
   @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (!(file instanceof PsiJavaFile)) return;
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    if (!(psiFile instanceof PsiJavaFile)) return;
 
     int offset = editor.getCaretModel().getOffset();
-    PsiElement context = getContext(file.findElementAt(offset));
+    PsiElement context = getContext(psiFile.findElementAt(offset));
     if (context == null) return;
 
     PsiClass targetClass = PsiTreeUtil.getParentOfType(context, PsiClass.class, false);
@@ -29,7 +29,7 @@ public class GenerateProviderMethodHandler implements CodeInsightActionHandler {
     if (!JigsawUtil.checkProviderMethodAccessible(targetClass)) return;
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(targetClass)) return;
 
-    WriteCommandAction.writeCommandAction(project, file)
+    WriteCommandAction.writeCommandAction(project, psiFile)
       .run(() -> JigsawUtil.addProviderMethod(targetClass, editor, getOffset(context, offset)));
   }
 

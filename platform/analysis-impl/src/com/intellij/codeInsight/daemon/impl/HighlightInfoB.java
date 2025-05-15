@@ -282,9 +282,9 @@ public final class HighlightInfoB implements HighlightInfo.Builder {
   }
 
   static boolean isAcceptedByFilters(@NotNull HighlightInfo info, @Nullable PsiElement psiElement) {
-    PsiFile file = psiElement == null ? null : psiElement.getContainingFile();
+    PsiFile psiFile = psiElement == null ? null : psiElement.getContainingFile();
     for (HighlightInfoFilter filter : HighlightInfoFilter.EXTENSION_POINT_NAME.getExtensionList()) {
-      if (!filter.accept(info, file)) {
+      if (!filter.accept(info, psiFile)) {
         return false;
       }
     }

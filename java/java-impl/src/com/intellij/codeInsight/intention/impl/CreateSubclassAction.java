@@ -67,9 +67,9 @@ public class CreateSubclassAction extends BaseIntentionAction implements DumbAwa
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     final int position = editor.getCaretModel().getOffset();
-    PsiElement element = file.findElementAt(position);
+    PsiElement element = psiFile.findElementAt(position);
     PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
     if (psiClass == null || psiClass.isAnnotationType() || psiClass.isEnum() || psiClass instanceof PsiAnonymousClass ||
         psiClass.hasModifierProperty(PsiModifier.FINAL)) {
@@ -104,7 +104,7 @@ public class CreateSubclassAction extends BaseIntentionAction implements DumbAwa
       }
     }
 
-    if (shouldCreateInnerClass(psiClass) && !canModify(file)) {
+    if (shouldCreateInnerClass(psiClass) && !canModify(psiFile)) {
       return false;
     }
 
@@ -125,18 +125,18 @@ public class CreateSubclassAction extends BaseIntentionAction implements DumbAwa
   }
 
   @Override
-  public void invoke(final @NotNull Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
-    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+  public void invoke(final @NotNull Project project, Editor editor, final PsiFile psiFile) throws IncorrectOperationException {
+    PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
 
     LOG.assertTrue(psiClass != null);
     if (shouldCreateInnerClass(psiClass)) {
-      if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
+      if (!FileModificationService.getInstance().prepareFileForWrite(psiFile)) return;
       createInnerClass(psiClass);
       return;
     }
     if (PsiUtil.isLocalClass(psiClass)) {
-      if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
+      if (!FileModificationService.getInstance().prepareFileForWrite(psiFile)) return;
       createLocalClass(psiClass);
       return;
     }

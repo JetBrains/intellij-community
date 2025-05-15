@@ -36,11 +36,11 @@ final class GeneralHighlightingPassFactory implements MainHighlightingPassFactor
 
   @Override
   @NotNull
-  public TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file,
+  public TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile psiFile,
                                                                @NotNull Document document,
                                                                @NotNull HighlightInfoProcessor highlightInfoProcessor) {
     // no applying to the editor - for read-only analysis only
-    return new GeneralHighlightingPass(file, document, 0, file.getTextLength(),
+    return new GeneralHighlightingPass(psiFile, document, 0, psiFile.getTextLength(),
                                        true, new ProperTextRange(0, document.getTextLength()), null, true, true,
                                        true, HighlightInfoUpdater.EMPTY);
   }

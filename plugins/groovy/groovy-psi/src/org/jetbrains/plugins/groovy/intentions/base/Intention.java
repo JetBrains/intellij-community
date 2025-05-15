@@ -30,8 +30,8 @@ public abstract class Intention implements IntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PsiElement element = findMatchingElement(file, editor);
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    final PsiElement element = findMatchingElement(psiFile, editor);
     if (element == null) {
       return;
     }
@@ -105,8 +105,8 @@ public abstract class Intention implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return findMatchingElement(file, editor) != null;
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    return findMatchingElement(psiFile, editor) != null;
   }
 
   @Override

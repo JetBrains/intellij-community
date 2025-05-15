@@ -48,7 +48,7 @@ import java.util.concurrent.CancellationException;
 public final class LineMarkersPass extends TextEditorHighlightingPass implements DumbAware {
   private static final Logger LOG = Logger.getInstance(LineMarkersPass.class);
 
-  private final @NotNull PsiFile myFile;
+  private final @NotNull PsiFile myPsiFile;
   private final @NotNull TextRange myPriorityBounds;
   private final @NotNull TextRange myRestrictRange;
 
@@ -56,14 +56,14 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
   private final HighlightingSession myHighlightingSession;
 
   LineMarkersPass(@NotNull Project project,
-                  @NotNull PsiFile file,
+                  @NotNull PsiFile psiFile,
                   @NotNull Document document,
                   @NotNull TextRange priorityBounds,
                   @NotNull TextRange restrictRange,
                   @NotNull LineMarkersPass.Mode mode,
                   @NotNull HighlightingSession session) {
     super(project, document, false);
-    myFile = file;
+    myPsiFile = psiFile;
     myPriorityBounds = priorityBounds;
     myRestrictRange = restrictRange;
     myMode = mode;
@@ -93,12 +93,13 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
       return Collections.emptyList();
     }
     List<LineMarkerInfo<?>> lineMarkers = new ArrayList<>();
-    FileViewProvider viewProvider = myFile.getViewProvider();
+    FileViewProvider viewProvider = myPsiFile.getViewProvider();
     int passId = getId();
     for (Language language : viewProvider.getLanguages()) {
       PsiFile root = viewProvider.getPsi(language);
       if (root == null) {
-        LOG.error(viewProvider+" for file " +myFile+" returned null root for language "+language+" despite listing it as one of its own languages: "+viewProvider.getLanguages());
+        LOG.error(viewProvider + " for file " +
+                  myPsiFile + " returned null root for language " + language + " despite listing it as one of its own languages: " + viewProvider.getLanguages());
         continue;
       }
       HighlightingLevelManager highlightingLevelManager = HighlightingLevelManager.getInstance(myProject);
@@ -207,7 +208,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
 
     if (myMode == Mode.FAST) return;
 
-    if (InjectionUtils.shouldCollectLineMarkersForInjectedFiles(myFile)) {
+    if (InjectionUtils.shouldCollectLineMarkersForInjectedFiles(myPsiFile)) {
       Set<PsiFile> visitedInjectedFiles = new HashSet<>();
       // line markers for injected could be slow
       //noinspection ForLoopReplaceableByForEach
@@ -284,13 +285,13 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
     });
   }
 
-  public static @NotNull Collection<LineMarkerInfo<?>> queryLineMarkers(@NotNull PsiFile file, @NotNull Document document) {
-    if (file.getNode() == null) {
+  public static @NotNull Collection<LineMarkerInfo<?>> queryLineMarkers(@NotNull PsiFile psiFile, @NotNull Document document) {
+    if (psiFile.getNode() == null) {
       // binary file? see IDEADEV-2809
       return Collections.emptyList();
     }
-    LineMarkersPass pass = new LineMarkersPass(file.getProject(), file, document, file.getTextRange(), file.getTextRange(), Mode.ALL,
-                                               HighlightingSessionImpl.getFromCurrentIndicator(file));
+    LineMarkersPass pass = new LineMarkersPass(psiFile.getProject(), psiFile, document, psiFile.getTextRange(), psiFile.getTextRange(), Mode.ALL,
+                                               HighlightingSessionImpl.getFromCurrentIndicator(psiFile));
     return pass.doCollectMarkers();
   }
 

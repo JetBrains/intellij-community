@@ -57,7 +57,7 @@ public class FlipOperandsFix extends AbstractFix {
     }
 
     @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
         final XmlAttribute attribute = PsiTreeUtil.getContextOfType(myToken, XmlAttribute.class, true);
         assert attribute != null;
 

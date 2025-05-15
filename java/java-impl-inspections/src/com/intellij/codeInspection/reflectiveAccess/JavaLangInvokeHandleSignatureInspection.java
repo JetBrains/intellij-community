@@ -420,7 +420,7 @@ public final class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJ
 
     @Override
     public void invoke(@NotNull Project project,
-                       @NotNull PsiFile file,
+                       @NotNull PsiFile psiFile,
                        @Nullable Editor editor,
                        @NotNull PsiElement startElement,
                        @NotNull PsiElement endElement) {
@@ -445,11 +445,11 @@ public final class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJ
     }
 
     @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
       if (mySignatures.isEmpty()) return IntentionPreviewInfo.EMPTY;
       // Show first even if lookup is displayed
       ReflectiveSignature signature = mySignatures.get(0);
-      PsiElement element = PsiTreeUtil.findSameElementInCopy(getStartElement(), file);
+      PsiElement element = PsiTreeUtil.findSameElementInCopy(getStartElement(), psiFile);
       if (element == null) return IntentionPreviewInfo.EMPTY;
       applyFix(project, element, signature);
       return IntentionPreviewInfo.DIFF;

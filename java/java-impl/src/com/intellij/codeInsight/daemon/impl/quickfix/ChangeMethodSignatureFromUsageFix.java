@@ -140,7 +140,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     if (!myTargetMethod.isValid() || myTargetMethod.getContainingClass() == null) return false;
     if (ContainerUtil.exists(myTargetMethod.getParameterList().getParameters(), p -> !p.isValid())) {
       return false;
@@ -179,7 +179,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     HashSet<ParameterInfoImpl> newParams = new HashSet<>();
     HashSet<ParameterInfoImpl> removedParams = new HashSet<>();
     HashSet<ParameterInfoImpl> changedParams = new HashSet<>();
@@ -220,15 +220,15 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
   }
 
   @Override
-  public void invoke(final @NotNull Project project, Editor editor, final PsiFile file) {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
+  public void invoke(final @NotNull Project project, Editor editor, final PsiFile psiFile) {
+    if (!FileModificationService.getInstance().prepareFileForWrite(psiFile)) return;
 
     final PsiMethod method = SuperMethodWarningUtil.checkSuperMethod(myTargetMethod);
     if (method == null) return;
     myNewParametersInfo = getNewParametersInfo(myExpressions, myTargetMethod, mySubstitutor);
 
     final List<ParameterInfoImpl> parameterInfos =
-      performChange(project, editor, file, method, myMinUsagesNumberToShowDialog, myNewParametersInfo, myChangeAllUsages, false, null);
+      performChange(project, editor, psiFile, method, myMinUsagesNumberToShowDialog, myNewParametersInfo, myChangeAllUsages, false, null);
     if (parameterInfos != null) {
       myNewParametersInfo = parameterInfos.toArray(new ParameterInfoImpl[0]);
     }
@@ -236,7 +236,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
 
   static List<ParameterInfoImpl> performChange(@NotNull Project project,
                                                final Editor editor,
-                                               final PsiFile file,
+                                               final PsiFile psiFile,
                                                @NotNull PsiMethod method,
                                                final int minUsagesNumber,
                                                final ParameterInfoImpl[] newParametersInfo,
@@ -268,7 +268,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
           .createChangeSignatureProcessor(method, false, null, method.getName(), method.getReturnType(), newParametersInfo, null, null,
                                           null, callback);
       processor.run();
-      ApplicationManager.getApplication().runWriteAction(() -> UndoUtil.markPsiFileForUndo(file));
+      ApplicationManager.getApplication().runWriteAction(() -> UndoUtil.markPsiFileForUndo(psiFile));
       return Arrays.asList(newParametersInfo);
     }
     else {

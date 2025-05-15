@@ -21,12 +21,12 @@ public abstract class IntentionsUI {
 
   private final AtomicReference<CachedIntentions> myCachedIntentions = new AtomicReference<>();
 
-  public @NotNull CachedIntentions getCachedIntentions(@NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull CachedIntentions getCachedIntentions(@NotNull Editor editor, @NotNull PsiFile psiFile) {
     return myCachedIntentions.updateAndGet(cachedIntentions -> {
-      if (cachedIntentions != null && editor == cachedIntentions.getEditor() && file == cachedIntentions.getFile()) {
+      if (cachedIntentions != null && editor == cachedIntentions.getEditor() && psiFile == cachedIntentions.getFile()) {
         return cachedIntentions;
       }
-      return new CachedIntentions(myProject, file, editor);
+      return new CachedIntentions(myProject, psiFile, editor);
     });
   }
 

@@ -70,7 +70,7 @@ internal class GotoDeclarationOnlyHandler2(private val reporter: GotoDeclaration
 
   override fun startInWriteAction(): Boolean = false
 
-  override fun invoke(project: Project, editor: Editor, file: PsiFile) {
+  override fun invoke(project: Project, editor: Editor, psiFile: PsiFile) {
     if (navigateToLookupItem(project, editor)) {
       return
     }
@@ -81,7 +81,7 @@ internal class GotoDeclarationOnlyHandler2(private val reporter: GotoDeclaration
     val offset = editor.caretModel.offset
     val actionResult: NavigationActionResult? = try {
       underModalProgress(project, CodeInsightBundle.message("progress.title.resolving.reference")) {
-        gotoDeclaration(project, editor, file, offset)?.result()
+        gotoDeclaration(project, editor, psiFile, offset)?.result()
       }
     }
     catch (_: IndexNotReadyException) {
@@ -93,7 +93,7 @@ internal class GotoDeclarationOnlyHandler2(private val reporter: GotoDeclaration
 
     if (actionResult == null) {
       reporter?.reportDeclarationSearchFinished(GotoDeclarationReporter.DeclarationsFound.NONE)
-      notifyNowhereToGo(project, editor, file, offset)
+      notifyNowhereToGo(project, editor, psiFile, offset)
     }
     else {
       gotoDeclaration(project, editor, actionResult, reporter)

@@ -24,7 +24,7 @@ final class ShowErrorDescriptionHandler implements CodeInsightActionHandler {
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     HighlightInfo info = findInfoUnderCaret(project, editor);
     if (info != null) {
       EditorMouseHoverPopupManager.getInstance().showInfoTooltip(editor, info, editor.getCaretModel().getOffset(), myRequestFocus, true, false, true);

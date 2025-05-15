@@ -163,16 +163,16 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   }
 
   @Override
-  public void checkFile(@NotNull PsiFile file,
+  public void checkFile(@NotNull PsiFile psiFile,
                         @NotNull InspectionManager manager,
                         @NotNull ProblemsHolder ignored,
                         @NotNull GlobalInspectionContext globalContext,
                         @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    if (!file.getLanguage().isKindOf("JAVA")) return;
+    if (!psiFile.getLanguage().isKindOf("JAVA")) return;
     // don't use supplied problems holder to get nice warnings attached to members instead of anchored at the file level
-    ProblemsHolder problemsHolder = new ProblemsHolder(manager, file, false);
+    ProblemsHolder problemsHolder = new ProblemsHolder(manager, psiFile, false);
     PsiElementVisitor visitor = localInspectionBase.buildVisitor(problemsHolder, false);
-    file.accept(new PsiRecursiveElementWalkingVisitor() {
+    psiFile.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
         element.accept(visitor);

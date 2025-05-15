@@ -38,7 +38,7 @@ public class RemoveUnusedParameterFix extends LocalQuickFixAndIntentionActionOnP
 
   @Override
   public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
+                             @NotNull PsiFile psiFile,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     final PsiParameter myParameter = (PsiParameter)startElement;
@@ -49,7 +49,7 @@ public class RemoveUnusedParameterFix extends LocalQuickFixAndIntentionActionOnP
 
   @Override
   public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
+                     @NotNull PsiFile psiFile,
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
@@ -59,7 +59,7 @@ public class RemoveUnusedParameterFix extends LocalQuickFixAndIntentionActionOnP
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     final PsiParameter myParameter = (PsiParameter)getStartElement();
     PsiMethod psiMethod = PsiTreeUtil.getParentOfType(myParameter, PsiMethod.class);
     if (psiMethod == null) {
@@ -82,7 +82,7 @@ public class RemoveUnusedParameterFix extends LocalQuickFixAndIntentionActionOnP
     String after = getMethodDescription(copyMethod);
 
     PsiFile containingFile = myParameter.getContainingFile();
-    if (containingFile == file.getOriginalFile()) {
+    if (containingFile == psiFile.getOriginalFile()) {
       return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, before, after);
     }
     else {

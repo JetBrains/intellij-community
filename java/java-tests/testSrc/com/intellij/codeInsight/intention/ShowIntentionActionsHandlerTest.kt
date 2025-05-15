@@ -60,13 +60,13 @@ class ShowIntentionActionsHandlerTest : LightJavaCodeInsightTestCase() {
       return "test"
     }
 
-    override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
-      assertionOnIsAvailable(project, editor, file)
-      editorToFile.add(editor to file)
+    override fun isAvailable(project: Project, editor: Editor, psiFile: PsiFile): Boolean {
+      assertionOnIsAvailable(project, editor, psiFile)
+      editorToFile.add(editor to psiFile)
       return false
     }
 
-    override fun invoke(project: Project, editor: Editor, file: PsiFile) {
+    override fun invoke(project: Project, editor: Editor, psiFile: PsiFile) {
     }
 
     override fun startInWriteAction(): Boolean {

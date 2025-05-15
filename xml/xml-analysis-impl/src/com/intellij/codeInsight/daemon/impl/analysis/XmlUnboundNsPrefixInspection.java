@@ -34,8 +34,8 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
 
       private boolean isXmlFile(XmlElement element) {
         if (isXml == null) {
-          final PsiFile file = element.getContainingFile();
-          isXml = file instanceof XmlFile && !InjectedLanguageManager.getInstance(element.getProject()).isInjectedFragment(file);
+          final PsiFile psiFile = element.getContainingFile();
+          isXml = psiFile instanceof XmlFile && !InjectedLanguageManager.getInstance(element.getProject()).isInjectedFragment(psiFile);
         }
         return isXml.booleanValue();
       }

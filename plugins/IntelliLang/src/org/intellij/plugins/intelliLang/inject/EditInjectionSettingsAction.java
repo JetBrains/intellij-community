@@ -45,8 +45,8 @@ final class EditInjectionSettingsAction implements IntentionAction, LowPriorityA
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    ApplicationManager.getApplication().runReadAction(() -> invokeImpl(project, editor, file));
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile psiFile) throws IncorrectOperationException {
+    ApplicationManager.getApplication().runReadAction(() -> invokeImpl(project, editor, psiFile));
   }
 
   private static void invokeImpl(@NotNull Project project, Editor editor, PsiFile file) {

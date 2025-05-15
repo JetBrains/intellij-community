@@ -151,7 +151,7 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
     final int SLEEP = 2_000;
     ExternalAnnotator<Integer, Integer> annotator = new ExternalAnnotator<>() {
       @Override
-      public Integer collectInformation(@NotNull PsiFile file) {
+      public Integer collectInformation(@NotNull PsiFile psiFile) {
         return 0;
       }
 
@@ -162,7 +162,7 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
       }
 
       @Override
-      public void apply(@NotNull PsiFile file, Integer annotationResult, @NotNull AnnotationHolder holder) {
+      public void apply(@NotNull PsiFile psiFile, Integer annotationResult, @NotNull AnnotationHolder holder) {
         run.set(true);
       }
     };
@@ -558,7 +558,7 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
         @Override
         public void daemonAnnotatorStatisticsGenerated(@NotNull AnnotationSession session,
                                                        @NotNull Collection<? extends AnnotatorStatistics> statistics,
-                                                       @NotNull PsiFile file) {
+                                                       @NotNull PsiFile psiFile) {
           AnnotatorStatistics stat = assertOneElement(ContainerUtil.filter(statistics, stat1 -> stat1.annotator instanceof MyInfoAnnotator));
           firstStatistics.compareAndExchange(null, stat);
         }

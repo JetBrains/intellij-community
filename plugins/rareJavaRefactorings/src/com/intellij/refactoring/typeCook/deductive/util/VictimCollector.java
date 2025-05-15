@@ -85,9 +85,9 @@ public class VictimCollector extends Visitor {
   @Override public void visitReferenceExpression(final @NotNull PsiReferenceExpression expression) {
   }
 
-  @Override public void visitFile(@NotNull PsiFile file) {
-    if (file instanceof PsiJavaFile) {
-      super.visitFile(file);
+  @Override public void visitFile(@NotNull PsiFile psiFile) {
+    if (psiFile instanceof PsiJavaFile) {
+      super.visitFile(psiFile);
     }
   }
 

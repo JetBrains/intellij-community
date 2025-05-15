@@ -108,7 +108,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     return !project.isDisposed() &&
            !myCurrentModule.isDisposed() &&
            !myModules.isEmpty() &&
@@ -116,7 +116,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
   }
 
   @Override
-  public void invoke(@NotNull Project project, @Nullable Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, @Nullable Editor editor, PsiFile psiFile) {
     if (myModules.size() == 1) {
       addDependencyOnModule(project, editor, ContainerUtil.getFirstItem(myModules));
     }
@@ -145,7 +145,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     return new IntentionPreviewInfo.Html(
       HtmlChunk.text(JavaBundle.message("adds.module.dependencies.preview",
                                         myModules.size(),
@@ -174,9 +174,9 @@ class AddModuleDependencyFix extends OrderEntryFix {
             List<BooleanSupplier> autoImportActions = new ArrayList<>();
             if (ref != null) {
               PsiElement element = ref.getElement();
-              PsiFile file = element.getContainingFile();
+              PsiFile psiFile = element.getContainingFile();
               for (ReferenceImporter importer : ReferenceImporter.EP_NAME.getExtensionList()) {
-                BooleanSupplier action = importer.computeAutoImportAtOffset(editor, file, element.getTextOffset(), false);
+                BooleanSupplier action = importer.computeAutoImportAtOffset(editor, psiFile, element.getTextOffset(), false);
                 if (action != null) {
                   autoImportActions.add(action);
                 }

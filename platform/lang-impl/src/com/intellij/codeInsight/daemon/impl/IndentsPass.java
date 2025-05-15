@@ -46,17 +46,17 @@ public final class IndentsPass extends TextEditorHighlightingPass implements Dum
   private static final Key<Long> LAST_TIME_INDENTS_BUILT = Key.create("LAST_TIME_INDENTS_BUILT");
 
   private final Editor myEditor;
-  private final PsiFile  myFile;
+  private final PsiFile myPsiFile;
 
   private volatile List<TextRange> myRanges = Collections.emptyList();
   private volatile List<IndentGuideDescriptor> myDescriptors = Collections.emptyList();
 
   private static final CustomHighlighterRenderer RENDERER = new IndentGuideRenderer();
 
-  public IndentsPass(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public IndentsPass(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     super(project, editor.getDocument(), false);
     myEditor = editor;
-    myFile = file;
+    myPsiFile = psiFile;
   }
 
   @Override
@@ -211,12 +211,12 @@ public final class IndentsPass extends TextEditorHighlightingPass implements Dum
     CharSequence text = document.getImmutableCharSequence();
     int lineStartOffset = document.getLineStartOffset(startLine);
     int firstNonWsOffset = CharArrayUtil.shiftForward(text, lineStartOffset, " \t");
-    FileType type = PsiUtilBase.getPsiFileAtOffset(myFile, firstNonWsOffset).getFileType();
-    Language language = PsiUtilCore.getLanguageAtOffset(myFile, firstNonWsOffset);
+    FileType type = PsiUtilBase.getPsiFileAtOffset(myPsiFile, firstNonWsOffset).getFileType();
+    Language language = PsiUtilCore.getLanguageAtOffset(myPsiFile, firstNonWsOffset);
     BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(type, language);
     HighlighterIterator iterator = myEditor.getHighlighter().createIterator(firstNonWsOffset);
     if (braceMatcher.isLBraceToken(iterator, text, type)) {
-      int codeConstructStart = braceMatcher.getCodeConstructStart(myFile, firstNonWsOffset);
+      int codeConstructStart = braceMatcher.getCodeConstructStart(myPsiFile, firstNonWsOffset);
       return document.getLineNumber(codeConstructStart);
     }
     else {
@@ -256,7 +256,7 @@ public final class IndentsPass extends TextEditorHighlightingPass implements Dum
      * Calculates line indents for the {@link #myDocument target document}.
      */
     void calculate() {
-      FileType fileType = myFile.getFileType();
+      FileType fileType = myPsiFile.getFileType();
       int tabSize = getTabSize();
 
       for (int line = 0; line < lineIndents.length; line++) {
@@ -308,7 +308,7 @@ public final class IndentsPass extends TextEditorHighlightingPass implements Dum
             IElementType tokenType = iterator.getTokenType();
             if (BraceMatchingUtil.isRBraceToken(iterator, myChars, fileType) ||
                 tokenType != null &&
-                !CodeBlockSupportHandler.findMarkersRanges(myFile, tokenType.getLanguage(), nonWhitespaceOffset).isEmpty()) {
+                !CodeBlockSupportHandler.findMarkersRanges(myPsiFile, tokenType.getLanguage(), nonWhitespaceOffset).isEmpty()) {
               indent = topIndent;
             }
           }

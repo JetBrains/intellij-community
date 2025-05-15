@@ -26,12 +26,12 @@ public class XmlRecursiveElementVisitor extends XmlElementVisitor implements Psi
   }
 
   @Override
-  public void visitFile(final @NotNull PsiFile file) {
+  public void visitFile(final @NotNull PsiFile psiFile) {
     if (myVisitAllFileRoots) {
-      final FileViewProvider viewProvider = file.getViewProvider();
+      final FileViewProvider viewProvider = psiFile.getViewProvider();
       final List<PsiFile> allFiles = viewProvider.getAllFiles();
       if (allFiles.size() > 1) {
-        if (file == viewProvider.getPsi(viewProvider.getBaseLanguage())) {
+        if (psiFile == viewProvider.getPsi(viewProvider.getBaseLanguage())) {
           for (PsiFile lFile : allFiles) {
             lFile.acceptChildren(this);
           }
@@ -40,6 +40,6 @@ public class XmlRecursiveElementVisitor extends XmlElementVisitor implements Psi
       }
     }
 
-    super.visitFile(file);
+    super.visitFile(psiFile);
   }
 }

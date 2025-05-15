@@ -81,17 +81,17 @@ public final class GrabDependencies implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!isCorrectModule(file)) return false;
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (!isCorrectModule(psiFile)) return false;
 
     int offset = editor.getCaretModel().getOffset();
-    final GrAnnotation anno = PsiTreeUtil.findElementOfClassAtOffset(file, offset, GrAnnotation.class, false);
+    final GrAnnotation anno = PsiTreeUtil.findElementOfClassAtOffset(psiFile, offset, GrAnnotation.class, false);
     if (anno != null && isGrabAnnotation(anno)) {
       return true;
     }
 
-    PsiElement at = file.findElementAt(offset);
-    if (at != null && isUnresolvedRefName(at) && findGrab(file) != null) {
+    PsiElement at = psiFile.findElementAt(offset);
+    if (at != null && isUnresolvedRefName(at) && findGrab(psiFile) != null) {
       return true;
     }
 
@@ -145,14 +145,14 @@ public final class GrabDependencies implements IntentionAction {
   }
 
   @Override
-  public void invoke(final @NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final Module module = ModuleUtilCore.findModuleForPsiElement(file);
+  public void invoke(final @NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    final Module module = ModuleUtilCore.findModuleForPsiElement(psiFile);
     assert module != null;
 
-    final VirtualFile vfile = file.getOriginalFile().getVirtualFile();
+    final VirtualFile vfile = psiFile.getOriginalFile().getVirtualFile();
     assert vfile != null;
 
-    if (JavaPsiFacade.getInstance(project).findClass("org.apache.ivy.core.report.ResolveReport", file.getResolveScope()) == null) {
+    if (JavaPsiFacade.getInstance(project).findClass("org.apache.ivy.core.report.ResolveReport", psiFile.getResolveScope()) == null) {
       Messages.showErrorDialog(
         GroovyBundle.message("grab.error.ivy.missing.message"),
         GroovyBundle.message("grab.error.ivy.missing.title")
@@ -160,7 +160,7 @@ public final class GrabDependencies implements IntentionAction {
       return;
     }
 
-    Map<String, String> queries = prepareQueries(file);
+    Map<String, String> queries = prepareQueries(psiFile);
 
     final Map<@NlsSafe String, GeneralCommandLine> lines = new HashMap<>();
     for (@NlsSafe String grabText : queries.keySet()) {

@@ -445,9 +445,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     Editor schemaEditor = null;
     for (Editor editor : allEditors) {
       Document document = editor.getDocument();
-      PsiFile file = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
-      if (file == null) continue;
-      if (location.equals(file.getName())) {
+      PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
+      if (psiFile == null) continue;
+      if (location.equals(psiFile.getName())) {
         schemaEditor = editor;
         break;
       }
@@ -1087,13 +1087,13 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     try {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-      PsiFile file = getFile();
+      PsiFile psiFile = getFile();
       Editor editor = getEditor();
-      Project project = file.getProject();
+      Project project = psiFile.getProject();
       CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project);
       TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
       Runnable callbackWhileWaiting = () -> type(' ');
-      myDaemonCodeAnalyzer.runPasses(file, editor.getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, true, callbackWhileWaiting);
+      myDaemonCodeAnalyzer.runPasses(psiFile, editor.getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, true, callbackWhileWaiting);
     }
     catch (ProcessCanceledException ignored) {
       return;
@@ -1109,21 +1109,21 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    PsiFile file = getFile();
-    Project project = file.getProject();
+    PsiFile psiFile = getFile();
+    Project project = psiFile.getProject();
     CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project);
     List<HighlightInfo> errors = doHighlighting(HighlightSeverity.ERROR);
     assertEmpty(errors);
     List<HighlightInfo> initialWarnings = doHighlighting(HighlightSeverity.WARNING);
     assertEmpty(initialWarnings);
-    int N_BLOCKS = codeBlocks(file).size();
+    int N_BLOCKS = codeBlocks(psiFile).size();
     assertTrue("codeblocks :"+N_BLOCKS, N_BLOCKS > 1000);
     Random random = new Random();
     int N = 10;
     // try with both serialized and not-serialized passes
     myDaemonCodeAnalyzer.serializeCodeInsightPasses(false);
     for (int i=0; i<N*2; i++) {
-      PsiCodeBlock block = codeBlocks(file).get(random.nextInt(N_BLOCKS));
+      PsiCodeBlock block = codeBlocks(psiFile).get(random.nextInt(N_BLOCKS));
       getEditor().getCaretModel().moveToOffset(block.getLBrace().getTextOffset() + 1);
       type("\n/*xxx*/");
       List<HighlightInfo> warnings = doHighlighting(HighlightSeverity.WARNING);
@@ -1139,9 +1139,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   @NotNull
-  private List<PsiCodeBlock> codeBlocks(@NotNull PsiFile file) {
+  private List<PsiCodeBlock> codeBlocks(@NotNull PsiFile psiFile) {
     List<PsiCodeBlock> blocks = new ArrayList<>();
-    file.accept(new JavaRecursiveElementWalkingVisitor() {
+    psiFile.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitCodeBlock(@NotNull PsiCodeBlock block) {
         blocks.add(block);
@@ -1644,8 +1644,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         }
 
         class TestDumbAwareHighlightingPassesStartEvenInDumbModePass extends EditorBoundHighlightingPass implements DumbAware {
-          TestDumbAwareHighlightingPassesStartEvenInDumbModePass(Editor editor, PsiFile file) {
-            super(editor, file, false);
+          TestDumbAwareHighlightingPassesStartEvenInDumbModePass(Editor editor, PsiFile psiFile) {
+            super(editor, psiFile, false);
           }
 
           @Override

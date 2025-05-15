@@ -14,17 +14,17 @@ public abstract class BaseElementAtCaretIntentionAction extends BaseIntentionAct
   private volatile boolean useElementToTheLeft;
 
   @Override
-  public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (editor == null || file == null || !checkFile(file)) return false;
+  public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (editor == null || psiFile == null || !checkFile(psiFile)) return false;
 
     useElementToTheLeft = false;
     int offset = editor.getCaretModel().getOffset();
-    PsiElement elementToTheRight = file.findElementAt(offset);
+    PsiElement elementToTheRight = psiFile.findElementAt(offset);
     if (elementToTheRight != null && isAvailable(project, editor, elementToTheRight)) {
       return true;
     }
 
-    PsiElement elementToTheLeft = offset > 0 ? file.findElementAt(offset - 1) : null;
+    PsiElement elementToTheLeft = offset > 0 ? psiFile.findElementAt(offset - 1) : null;
     if (elementToTheLeft != null && isAvailable(project, editor, elementToTheLeft)) {
       useElementToTheLeft = true;
       return true;
@@ -49,10 +49,10 @@ public abstract class BaseElementAtCaretIntentionAction extends BaseIntentionAct
   public abstract boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element);
 
   @Override
-  public final void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (editor == null || file == null) return;
+  public final void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    if (editor == null || psiFile == null) return;
 
-    PsiElement element = getElement(editor, file);
+    PsiElement element = getElement(editor, psiFile);
     if (element == null) return;
 
     invoke(project, editor, element);

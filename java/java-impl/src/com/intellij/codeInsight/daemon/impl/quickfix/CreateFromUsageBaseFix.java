@@ -37,7 +37,7 @@ import java.util.function.Consumer;
 public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     PsiElement element = getElement();
     if (element == null || isValidElement(element)) {
       return false;

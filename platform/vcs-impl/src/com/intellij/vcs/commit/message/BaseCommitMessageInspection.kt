@@ -89,8 +89,8 @@ abstract class BaseCommitMessageInspection : LocalInspectionTool() {
   }
 
   class EmptyIntentionActionFilter : IntentionActionFilter {
-    override fun accept(intentionAction: IntentionAction, file: PsiFile?): Boolean {
-      return file == null || !CommitMessage.isCommitMessage(file) || (intentionAction !is EmptyIntentionAction)
+    override fun accept(intentionAction: IntentionAction, psiFile: PsiFile?): Boolean {
+      return psiFile == null || !CommitMessage.isCommitMessage(psiFile) || (intentionAction !is EmptyIntentionAction)
     }
   }
 
@@ -120,13 +120,13 @@ abstract class BaseCommitMessageInspection : LocalInspectionTool() {
       return getName()
     }
 
-    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
+    override fun isAvailable(project: Project, editor: Editor?, psiFile: PsiFile?): Boolean {
       return true
     }
 
     @Throws(IncorrectOperationException::class)
-    override fun invoke(project: Project, editor: Editor?, file: PsiFile) {
-      val document = getDocument(file) ?: return
+    override fun invoke(project: Project, editor: Editor?, psiFile: PsiFile) {
+      val document = getDocument(psiFile) ?: return
       doApplyFix(project, document, null)
     }
 

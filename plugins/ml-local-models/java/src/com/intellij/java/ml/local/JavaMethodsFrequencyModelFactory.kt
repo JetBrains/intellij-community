@@ -9,8 +9,8 @@ import com.intellij.psi.*
 class JavaMethodsFrequencyModelFactory : MethodsFrequencyModelFactory() {
   override fun fileVisitor(usagesTracker: MethodsUsagesTracker): PsiElementVisitor = object : JavaRecursiveElementWalkingVisitor() {
 
-    override fun visitFile(file: PsiFile) {
-      super.visitFile(file)
+    override fun visitFile(psiFile: PsiFile) {
+      super.visitFile(psiFile)
       usagesTracker.dump()
     }
 

@@ -51,16 +51,16 @@ public class RenameFileFix implements IntentionAction, LocalQuickFix {
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiFile file = descriptor.getPsiElement().getContainingFile();
-    if (isAvailable(project, null, file)) {
-      WriteCommandAction.writeCommandAction(project).run(() -> invoke(project, null, file));
+    PsiFile psiFile = descriptor.getPsiElement().getContainingFile();
+    if (isAvailable(project, null, psiFile)) {
+      WriteCommandAction.writeCommandAction(project).run(() -> invoke(project, null, psiFile));
     }
   }
 
   @Override
-  public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (file == null || !file.isValid()) return false;
-    VirtualFile vFile = file.getVirtualFile();
+  public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (psiFile == null || !psiFile.isValid()) return false;
+    VirtualFile vFile = psiFile.getVirtualFile();
     if (vFile == null) return false;
     VirtualFile parent = vFile.getParent();
     if (parent == null) return false;
@@ -70,12 +70,12 @@ public class RenameFileFix implements IntentionAction, LocalQuickFix {
 
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    VirtualFile vFile = file.getVirtualFile();
-    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    VirtualFile vFile = psiFile.getVirtualFile();
+    Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
     FileDocumentManager.getInstance().saveDocument(document);
     try {
-      vFile.rename(file.getManager(), myNewFileName);
+      vFile.rename(psiFile.getManager(), myNewFileName);
     }
     catch (IOException e) {
       MessagesEx.error(project, e.getMessage()).showLater();
@@ -88,8 +88,8 @@ public class RenameFileFix implements IntentionAction, LocalQuickFix {
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return IntentionPreviewInfo.rename(file, myNewFileName);
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return IntentionPreviewInfo.rename(psiFile, myNewFileName);
   }
 
   @Override

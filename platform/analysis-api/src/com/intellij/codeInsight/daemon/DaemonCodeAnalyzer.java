@@ -32,19 +32,19 @@ public abstract class DaemonCodeAnalyzer {
 
   public abstract void disableUpdateByTimer(@NotNull Disposable parentDisposable);
 
-  public abstract boolean isHighlightingAvailable(@NotNull PsiFile file);
+  public abstract boolean isHighlightingAvailable(@NotNull PsiFile psiFile);
 
-  public abstract void setImportHintsEnabled(@NotNull PsiFile file, boolean value);
+  public abstract void setImportHintsEnabled(@NotNull PsiFile psiFile, boolean value);
 
   @Deprecated(forRemoval = true)
   @ApiStatus.Internal
   public abstract void resetImportHintsEnabledForProject();
 
-  public abstract void setHighlightingEnabled(@NotNull PsiFile file, boolean value);
+  public abstract void setHighlightingEnabled(@NotNull PsiFile psiFile, boolean value);
 
-  public abstract boolean isImportHintsEnabled(@NotNull PsiFile file);
+  public abstract boolean isImportHintsEnabled(@NotNull PsiFile psiFile);
 
-  public abstract boolean isAutohintsAvailable(@NotNull PsiFile file);
+  public abstract boolean isAutohintsAvailable(@NotNull PsiFile psiFile);
 
   /**
    * Force re-highlighting for all files.
@@ -56,11 +56,11 @@ public abstract class DaemonCodeAnalyzer {
   /**
    * Force re-highlighting for a specific file.
    *
-   * @param file the file to rehighlight.
+   * @param psiFile the file to rehighlight.
    */
-  public abstract void restart(@NotNull PsiFile file);
+  public abstract void restart(@NotNull PsiFile psiFile);
 
-  public abstract void autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file);
+  public abstract void autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile psiFile);
 
   @ApiStatus.Internal
   public boolean isRunning() {
@@ -156,7 +156,7 @@ public abstract class DaemonCodeAnalyzer {
     @ApiStatus.Internal
     default void daemonAnnotatorStatisticsGenerated(@NotNull AnnotationSession session,
                                                     @NotNull Collection<? extends AnnotatorStatistics> statistics,
-                                                    @NotNull PsiFile file) {
+                                                    @NotNull PsiFile psiFile) {
     }
   }
 }

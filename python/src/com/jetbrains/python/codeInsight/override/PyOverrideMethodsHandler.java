@@ -32,10 +32,10 @@ public final class PyOverrideMethodsHandler implements LanguageCodeInsightAction
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    final PyClass aClass = PyOverrideImplementUtil.getContextClass(editor, file);
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    final PyClass aClass = PyOverrideImplementUtil.getContextClass(editor, psiFile);
     if (aClass != null) {
-      PyOverrideImplementUtil.chooseAndOverrideMethods(project, editor, aClass, TypeEvalContext.userInitiated(project, file));
+      PyOverrideImplementUtil.chooseAndOverrideMethods(project, editor, aClass, TypeEvalContext.userInitiated(project, psiFile));
     }
   }
 

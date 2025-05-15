@@ -67,8 +67,8 @@ public class ConvertFieldToAtomicIntention extends BaseElementAtCaretIntentionAc
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiVariable variable = getVariable(getElement(editor, file));
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    PsiVariable variable = getVariable(getElement(editor, psiFile));
     if (variable == null) return IntentionPreviewInfo.EMPTY;
     PsiType type = variable.getType();
     String toType = myFromToMap.get(type);

@@ -69,7 +69,7 @@ public class ChangeParameterClassFix extends LocalQuickFixAndIntentionActionOnPs
 
   @Override
   public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
+                             @NotNull PsiFile psiFile,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     PsiClass classToExtendFrom = myClassToExtendFromPointer != null ? myClassToExtendFromPointer.getElement() : null;
@@ -86,7 +86,7 @@ public class ChangeParameterClassFix extends LocalQuickFixAndIntentionActionOnPs
 
   @Override
   public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
+                     @NotNull PsiFile psiFile,
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
@@ -123,10 +123,10 @@ public class ChangeParameterClassFix extends LocalQuickFixAndIntentionActionOnPs
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     PsiClass aClass = (PsiClass)getStartElement();
-    PsiFile fileCopy = (PsiFile)aClass.getContainingFile().copy();
-    PsiClass classCopy = PsiTreeUtil.findSameElementInCopy(aClass, fileCopy);
+    PsiFile psiFileCopy = (PsiFile)aClass.getContainingFile().copy();
+    PsiClass classCopy = PsiTreeUtil.findSameElementInCopy(aClass, psiFileCopy);
     PsiClass classToExtendFrom = requireNonNull(myClassToExtendFromPointer).getElement();
     new ExtendsListModCommandFix(classCopy, classToExtendFrom, myTypeToExtendFrom, true).invokeImpl(classCopy);
     Collection<CandidateInfo> overrideImplement = OverrideImplementExploreUtil.getMethodsToOverrideImplement(classCopy, true);
@@ -136,7 +136,7 @@ public class ChangeParameterClassFix extends LocalQuickFixAndIntentionActionOnPs
       PsiMethodMember::new
     );
     if (!toImplement.isEmpty()) {
-      boolean insertOverrideAnnotation = JavaCodeStyleSettings.getInstance(file).INSERT_OVERRIDE_ANNOTATION;
+      boolean insertOverrideAnnotation = JavaCodeStyleSettings.getInstance(psiFile).INSERT_OVERRIDE_ANNOTATION;
       var prototypes = OverrideImplementUtil.overrideOrImplementMethods(classCopy, toImplement, false, insertOverrideAnnotation);
       PsiElement brace = classCopy.getRBrace();
       if (brace == null) return IntentionPreviewInfo.EMPTY;

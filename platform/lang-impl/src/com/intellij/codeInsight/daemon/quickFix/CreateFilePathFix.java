@@ -202,7 +202,7 @@ public class CreateFilePathFix extends AbstractCreateFileFix {
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     String extension = StringUtil.substringAfterLast(myNewFileName, ".");
     Icon icon =
       extension == null ? AllIcons.FileTypes.Any_type : FileTypeRegistry.getInstance().getFileTypeByExtension(extension).getIcon();

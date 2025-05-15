@@ -125,13 +125,13 @@ public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements C
   public void invoke(@NotNull Project project, @NotNull PsiElement element) throws IncorrectOperationException {
     if (!isAvailable(project, element)) return;
     PsiElement container = getContainer(element);
-    PsiFile file = element.getContainingFile();
+    PsiFile psiFile = element.getContainingFile();
     if (container == null) return;
 
     if (replaceSuppressionComments(container)) return;
 
     createSuppression(project, element, container);
-    UndoUtil.markPsiFileForUndo(file);
+    UndoUtil.markPsiFileForUndo(psiFile);
   }
 
   protected boolean replaceSuppressionComments(@NotNull PsiElement container) {

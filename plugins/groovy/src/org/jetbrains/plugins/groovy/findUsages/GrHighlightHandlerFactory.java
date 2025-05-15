@@ -33,7 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
  */
 public final class GrHighlightHandlerFactory extends HighlightUsagesHandlerFactoryBase {
   @Override
-  public HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target) {
+  public HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile psiFile, @NotNull PsiElement target) {
     ASTNode node = target.getNode();
     if (node == null) return null;
 
@@ -45,10 +45,10 @@ public final class GrHighlightHandlerFactory extends HighlightUsagesHandlerFacto
       if (!(parent instanceof GrReferenceList)) return null;
       PsiElement grand = parent.getParent();
       if (!(grand instanceof GrTypeDefinition)) return null;
-      return new GrHighlightOverridingMethodsHandler(editor, file, target, (GrTypeDefinition)grand);
+      return new GrHighlightOverridingMethodsHandler(editor, psiFile, target, (GrTypeDefinition)grand);
     }
     else if (type == GroovyTokenTypes.kRETURN || type == GroovyTokenTypes.kTHROW) {
-      return new GrHighlightExitPointHandler(editor, file, target);
+      return new GrHighlightExitPointHandler(editor, psiFile, target);
     }
     return null;
   }

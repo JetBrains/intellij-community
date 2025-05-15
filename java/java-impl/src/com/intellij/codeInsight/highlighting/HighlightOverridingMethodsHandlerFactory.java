@@ -9,13 +9,13 @@ import org.jetbrains.annotations.NotNull;
 
 public final class HighlightOverridingMethodsHandlerFactory extends HighlightUsagesHandlerFactoryBase {
   @Override
-  public HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target) {
+  public HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile psiFile, @NotNull PsiElement target) {
     if (target instanceof PsiKeyword && (JavaKeywords.EXTENDS.equals(target.getText()) || JavaKeywords.IMPLEMENTS.equals(target.getText()))) {
       PsiElement parent = target.getParent();
       if (!(parent instanceof PsiReferenceList)) return null;
       PsiElement grand = parent.getParent();
       if (!(grand instanceof PsiClass)) return null;
-      return new HighlightOverridingMethodsHandler(editor, file, target, (PsiClass) grand);
+      return new HighlightOverridingMethodsHandler(editor, psiFile, target, (PsiClass) grand);
     }
     return null;
   }

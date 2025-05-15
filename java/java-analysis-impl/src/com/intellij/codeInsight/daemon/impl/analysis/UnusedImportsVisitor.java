@@ -43,28 +43,28 @@ import java.util.function.Function;
 class UnusedImportsVisitor extends JavaElementVisitor {
   private final LocalRefUseInfo myRefCountHolder;
   private final @NotNull Project myProject;
-  private final PsiFile myFile;
+  private final PsiFile myPsiFile;
   private final @NotNull Document myDocument;
   private final @NotNull CodeInsightContext myContext;
   private boolean requiresFix = false;
   private int myCurrentEntryIndex = -1;
   private boolean errorFound;
 
-  UnusedImportsVisitor(@NotNull PsiFile file, @NotNull Document document) throws ProcessCanceledException {
+  UnusedImportsVisitor(@NotNull PsiFile psiFile, @NotNull Document document) throws ProcessCanceledException {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    myProject = file.getProject();
-    myFile = file;
+    myProject = psiFile.getProject();
+    myPsiFile = psiFile;
     myDocument = document;
-    myRefCountHolder = LocalRefUseInfo.forFile(file);
-    myContext = FileViewProviderUtil.getCodeInsightContext(file);
+    myRefCountHolder = LocalRefUseInfo.forFile(psiFile);
+    myContext = FileViewProviderUtil.getCodeInsightContext(psiFile);
   }
 
   void collectHighlights(@NotNull HighlightInfoHolder holder) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
 
     HighlightDisplayKey unusedImportKey = HighlightDisplayKey.find(UnusedImportInspection.SHORT_NAME);
-    PsiJavaFile javaFile = ObjectUtils.tryCast(myFile, PsiJavaFile.class);
+    PsiJavaFile javaFile = ObjectUtils.tryCast(myPsiFile, PsiJavaFile.class);
     PsiImportList importList = javaFile == null ? null : javaFile.getImportList();
     if (unusedImportKey != null && isUnusedImportEnabled(unusedImportKey) && importList != null) {
       PsiImportStatementBase[] imports = importList.getAllImportStatements();
@@ -81,9 +81,9 @@ class UnusedImportsVisitor extends JavaElementVisitor {
     }
     ModCommandAction fixNotOnFly = null;
     if (requiresFix) {
-      ModCommandAction fix = QuickFixFactory.getInstance().createOptimizeImportsFix(true, myFile);
-      OptimizeImportRestarter.getInstance(myProject).scheduleOnDaemonFinish(myFile, fix);
-      fixNotOnFly = QuickFixFactory.getInstance().createOptimizeImportsFix(false, myFile);
+      ModCommandAction fix = QuickFixFactory.getInstance().createOptimizeImportsFix(true, myPsiFile);
+      OptimizeImportRestarter.getInstance(myProject).scheduleOnDaemonFinish(myPsiFile, fix);
+      fixNotOnFly = QuickFixFactory.getInstance().createOptimizeImportsFix(false, myPsiFile);
     }
     HighlightDisplayKey misSortedKey = HighlightDisplayKey.find(MissortedImportsInspection.SHORT_NAME);
     if (misSortedKey != null && isToolEnabled(misSortedKey) && fixNotOnFly != null && importList != null) {
@@ -105,24 +105,24 @@ class UnusedImportsVisitor extends JavaElementVisitor {
   private boolean isUnusedImportEnabled(@NotNull HighlightDisplayKey unusedImportKey) {
     if (isToolEnabled(unusedImportKey)) return true;
     for (ImplicitUsageProvider provider : ImplicitUsageProvider.EP_NAME.getExtensionList()) {
-      if (provider instanceof UnusedImportProvider uip && uip.isUnusedImportEnabled(myFile)) return true;
+      if (provider instanceof UnusedImportProvider uip && uip.isUnusedImportEnabled(myPsiFile)) return true;
     }
     return false;
   }
 
   private boolean isToolEnabled(@NotNull HighlightDisplayKey displayKey) {
-    if (!(myFile instanceof PsiJavaFile)) {
+    if (!(myPsiFile instanceof PsiJavaFile)) {
       return false;
     }
-    InspectionProfile profile = getCurrentProfile(myFile);
-    return profile.isToolEnabled(displayKey, myFile) &&
-           HighlightingLevelManager.getInstance(myProject).shouldInspect(myFile) &&
-           !HighlightingLevelManager.getInstance(myProject).runEssentialHighlightingOnly(myFile);
+    InspectionProfile profile = getCurrentProfile(myPsiFile);
+    return profile.isToolEnabled(displayKey, myPsiFile) &&
+           HighlightingLevelManager.getInstance(myProject).shouldInspect(myPsiFile) &&
+           !HighlightingLevelManager.getInstance(myProject).runEssentialHighlightingOnly(myPsiFile);
   }
 
-  private static @NotNull InspectionProfile getCurrentProfile(@NotNull PsiFile file) {
-    Function<? super InspectionProfile, ? extends InspectionProfileWrapper> custom = InspectionProfileWrapper.getCustomInspectionProfileWrapper(file);
-    InspectionProfileImpl currentProfile = InspectionProjectProfileManager.getInstance(file.getProject()).getCurrentProfile();
+  private static @NotNull InspectionProfile getCurrentProfile(@NotNull PsiFile psiFile) {
+    Function<? super InspectionProfile, ? extends InspectionProfileWrapper> custom = InspectionProfileWrapper.getCustomInspectionProfileWrapper(psiFile);
+    InspectionProfileImpl currentProfile = InspectionProjectProfileManager.getInstance(psiFile.getProject()).getCurrentProfile();
     return custom != null ? custom.apply(currentProfile).getInspectionProfile() : currentProfile;
   }
 
@@ -181,16 +181,16 @@ class UnusedImportsVisitor extends JavaElementVisitor {
 
   private void registerRedundantImport(@NotNull HighlightInfoHolder holder,
                                        @NotNull PsiImportStatementBase importStatement, @NotNull HighlightDisplayKey unusedImportKey) {
-    VirtualFile virtualFile = PsiUtilCore.getVirtualFile(myFile);
+    VirtualFile virtualFile = PsiUtilCore.getVirtualFile(myPsiFile);
     Set<String> imports = virtualFile != null ? virtualFile.getCopyableUserData(ImportsHighlightUtil.IMPORTS_FROM_TEMPLATE) : null;
     boolean predefinedImport = imports != null && imports.contains(importStatement.getText());
     String description = !predefinedImport ? JavaAnalysisBundle.message("unused.import.statement") :
                          JavaAnalysisBundle.message("text.unused.import.in.template");
-    InspectionProfile profile = getCurrentProfile(myFile);
-    TextAttributesKey key = ObjectUtils.notNull(profile.getEditorAttributes(unusedImportKey.getShortName(), myFile),
+    InspectionProfile profile = getCurrentProfile(myPsiFile);
+    TextAttributesKey key = ObjectUtils.notNull(profile.getEditorAttributes(unusedImportKey.getShortName(), myPsiFile),
                                                 JavaHighlightInfoTypes.UNUSED_IMPORT.getAttributesKey());
     HighlightInfoType.HighlightInfoTypeImpl configHighlightType =
-      new HighlightInfoType.HighlightInfoTypeImpl(profile.getErrorLevel(unusedImportKey, myFile).getSeverity(), key);
+      new HighlightInfoType.HighlightInfoTypeImpl(profile.getErrorLevel(unusedImportKey, myPsiFile).getSeverity(), key);
 
     ProblemGroup problemGroup = new ExternalSourceProblemGroup() {
       @Override

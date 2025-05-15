@@ -24,10 +24,10 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.Internal
 public class IntentionFilterOwnerActionFilter implements IntentionActionFilter {
   @Override
-  public boolean accept(@NotNull IntentionAction intentionAction, @Nullable PsiFile file) {
-    if (!(file instanceof IntentionFilterOwner)) return true;
+  public boolean accept(@NotNull IntentionAction intentionAction, @Nullable PsiFile psiFile) {
+    if (!(psiFile instanceof IntentionFilterOwner)) return true;
 
-    final IntentionFilterOwner.IntentionActionsFilter actionsFilter = ((IntentionFilterOwner)file).getIntentionActionsFilter();
+    final IntentionFilterOwner.IntentionActionsFilter actionsFilter = ((IntentionFilterOwner)psiFile).getIntentionActionsFilter();
     if (actionsFilter == null || actionsFilter == IntentionFilterOwner.IntentionActionsFilter.EVERYTHING_AVAILABLE) return true;
 
     return actionsFilter.isAvailable(intentionAction);

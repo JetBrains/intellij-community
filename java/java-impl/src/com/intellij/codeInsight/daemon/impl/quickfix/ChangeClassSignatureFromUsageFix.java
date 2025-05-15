@@ -36,7 +36,7 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     if (!myClass.isValid() || !myParameterList.isValid() || myClass instanceof PsiCompiledElement) {
       return false;
     }
@@ -56,8 +56,8 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiReferenceParameterList parameterList = PsiTreeUtil.findSameElementInCopy(myParameterList, file);
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    PsiReferenceParameterList parameterList = PsiTreeUtil.findSameElementInCopy(myParameterList, psiFile);
     PsiTypeParameter[] classTypeParameters = myClass.getTypeParameters();
     List<TypeParameterInfoView> parameters = createTypeParameters(JavaCodeFragmentFactory.getInstance(project),
                                                                   Arrays.asList(classTypeParameters),
@@ -69,7 +69,7 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     final PsiTypeParameterList classTypeParameterList = myClass.getTypeParameterList();
     if (classTypeParameterList == null) {
       return;

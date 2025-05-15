@@ -45,9 +45,9 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     int caretOffset = editor.getCaretModel().getOffset();
-    gotoNextError(project, editor, file, caretOffset);
+    gotoNextError(project, editor, psiFile, caretOffset);
   }
 
   @Override
@@ -55,7 +55,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     return false;
   }
 
-  private void gotoNextError(Project project, Editor editor, PsiFile file, int caretOffset) {
+  private void gotoNextError(Project project, Editor editor, PsiFile psiFile, int caretOffset) {
     SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
     int maxSeverity = settings.isNextErrorActionGoesToErrorsFirst() ? severityRegistrar.getSeveritiesCount() - 1
@@ -81,7 +81,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
         return;
       }
     }
-    showMessageWhenNoHighlights(project, file, editor, caretOffset);
+    showMessageWhenNoHighlights(project, psiFile, editor, caretOffset);
   }
 
   private HighlightInfo findInfo(@NotNull Project project, @NotNull Editor editor, int caretOffset, @NotNull HighlightSeverity minSeverity) {
@@ -124,10 +124,10 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     }
   }
 
-  private void showMessageWhenNoHighlights(Project project, PsiFile file, Editor editor, int caretOffset) {
+  private void showMessageWhenNoHighlights(Project project, PsiFile psiFile, Editor editor, int caretOffset) {
     DaemonCodeAnalyzerImpl codeHighlighter = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
     HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
-    if (codeHighlighter.isErrorAnalyzingFinished(file)) {
+    if (codeHighlighter.isErrorAnalyzingFinished(psiFile)) {
       hintManager.showInformationHint(editor, InspectionsBundle.message("no.errors.found.in.this.file"));
       return;
     }
@@ -148,7 +148,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
       @Override
       public void daemonFinished() {
         hint.hide();
-        gotoNextError(project, editor, file, caretOffset);
+        gotoNextError(project, editor, psiFile, caretOffset);
       }
     });
 

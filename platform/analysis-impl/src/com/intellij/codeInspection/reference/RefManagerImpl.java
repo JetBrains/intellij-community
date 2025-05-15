@@ -706,9 +706,9 @@ public class RefManagerImpl extends RefManager {
     }
 
     @Override
-    public void visitFile(@NotNull PsiFile file) {
-      if (!(file instanceof PsiBinaryFile) && !file.getFileType().isBinary()) {
-        final FileViewProvider viewProvider = file.getViewProvider();
+    public void visitFile(@NotNull PsiFile psiFile) {
+      if (!(psiFile instanceof PsiBinaryFile) && !psiFile.getFileType().isBinary()) {
+        final FileViewProvider viewProvider = psiFile.getViewProvider();
         final Set<Language> relevantLanguages = viewProvider.getLanguages();
         for (Language language : relevantLanguages) {
           try {
@@ -719,16 +719,16 @@ public class RefManagerImpl extends RefManager {
           }
           catch (Throwable e) {
             if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-              LOG.error(file.getName(), e);
+              LOG.error(psiFile.getName(), e);
             }
             else {
-              LOG.error(new RuntimeExceptionWithAttachments(e, new Attachment("diagnostics.txt", file.getName())));
+              LOG.error(new RuntimeExceptionWithAttachments(e, new Attachment("diagnostics.txt", psiFile.getName())));
             }
           }
         }
         myPsiManager.dropResolveCaches();
       }
-      final VirtualFile virtualFile = file.getVirtualFile();
+      final VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile != null) {
         executeTask(() -> {
           String relative =

@@ -35,8 +35,8 @@ public class RenameFileModCommand implements ModCommandAction {
 
   @Override
   public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
-    PsiFile file = context.file();
-    VirtualFile vFile = file.getVirtualFile();
+    PsiFile psiFile = context.file();
+    VirtualFile vFile = psiFile.getVirtualFile();
     if (vFile == null) return null;
     VirtualFile parent = vFile.getParent();
     if (parent == null) return null;

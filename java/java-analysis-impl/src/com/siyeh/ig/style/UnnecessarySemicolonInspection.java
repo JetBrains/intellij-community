@@ -96,9 +96,9 @@ public final class UnnecessarySemicolonInspection extends BaseInspection impleme
 
   private class UnnecessarySemicolonVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitFile(@NotNull PsiFile file) {
-      checkTopLevelSemicolons(file);
-      super.visitFile(file);
+    public void visitFile(@NotNull PsiFile psiFile) {
+      checkTopLevelSemicolons(psiFile);
+      super.visitFile(psiFile);
     }
 
     @Override

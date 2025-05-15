@@ -62,8 +62,8 @@ public final class CleanupInspectionIntention implements IntentionAction, HighPr
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    String message = findAndFix(project, file);
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    String message = findAndFix(project, psiFile);
 
     if (message != null) {
       HintManager.getInstance().showErrorHint(editor, message);
@@ -115,7 +115,7 @@ public final class CleanupInspectionIntention implements IntentionAction, HighPr
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     return myQuickfix.getClass() != EmptyIntentionAction.class &&
            (myQuickfix.startInWriteAction() || myQuickfix instanceof BatchQuickFix || myQuickfix instanceof ModCommandQuickFix) &&
            editor != null && !(myToolWrapper instanceof LocalInspectionToolWrapper wrapper && wrapper.isUnfair());

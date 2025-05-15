@@ -74,11 +74,11 @@ abstract class WrapInSupplierQuickFix<T : PsiNamedElement>(elementToWrap: T) : L
    * and updates all its references by changing the initializer of the application service element to a [Supplier.get] call
    * and performing 'Inline' refactoring on it, therefore deleting the application service element.
    */
-  override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
+  override fun invoke(project: Project, psiFile: PsiFile, startElement: PsiElement, endElement: PsiElement) {
     CommandProcessor.getInstance().runUndoTransparentAction {
       val element = findElement(startElement)
 
-      if (!FileModificationService.getInstance().prepareFileForWrite(file)) return@runUndoTransparentAction
+      if (!FileModificationService.getInstance().prepareFileForWrite(psiFile)) return@runUndoTransparentAction
 
       ApplicationManager.getApplication().runWriteAction {
         val supplierField = createSupplierElement(project, element)

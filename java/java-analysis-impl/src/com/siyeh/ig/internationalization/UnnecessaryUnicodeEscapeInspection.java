@@ -95,18 +95,18 @@ public final class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
   private static class UnnecessaryUnicodeEscapeVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitFile(@NotNull PsiFile file) {
-      super.visitFile(file);
-      if (InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file) || !file.isPhysical()) {
+    public void visitFile(@NotNull PsiFile psiFile) {
+      super.visitFile(psiFile);
+      if (InjectedLanguageManager.getInstance(psiFile.getProject()).isInjectedFragment(psiFile) || !psiFile.isPhysical()) {
         return;
       }
-      final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+      final Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
       if (document == null) {
         return;
       }
-      final VirtualFile virtualFile = file.getVirtualFile();
-      final String text = file.getText();
-      final Charset charset = LoadTextUtil.extractCharsetFromFileContent(file.getProject(), virtualFile, text);
+      final VirtualFile virtualFile = psiFile.getVirtualFile();
+      final String text = psiFile.getText();
+      final Charset charset = LoadTextUtil.extractCharsetFromFileContent(psiFile.getProject(), virtualFile, text);
       final CharsetEncoder encoder = charset.newEncoder().onUnmappableCharacter(CodingErrorAction.REPORT);
       final CharBuffer charBuffer = CharBuffer.allocate(1);
       final ByteBuffer byteBuffer = ByteBuffer.allocate(10);
@@ -165,7 +165,7 @@ public final class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
           if (coderResult.isError()) {
             continue;
           }
-          PsiElement element = file.findElementAt(i);
+          PsiElement element = psiFile.findElementAt(i);
           if (element == null) {
             return;
           }

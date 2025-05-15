@@ -18,8 +18,8 @@ class ExternalDumbAwareAnnotatorTest : CodeInsightFixtureTestCase<ModuleFixtureB
     myFixture.configureByText("a.java", "class A {}")
     var test = 0
     val annotator: ExternalAnnotator<Int, Int> = object : ExternalAnnotator<Int, Int>(), DumbAware {
-      override fun collectInformation(file: PsiFile): Int {
-        assert(DumbService.getInstance(file.project).isDumb)
+      override fun collectInformation(psiFile: PsiFile): Int {
+        assert(DumbService.getInstance(psiFile.project).isDumb)
         return 1
       }
 

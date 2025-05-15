@@ -24,9 +24,9 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     int offset = editor.getCaretModel().getOffset();
-    final PsiMethod method = findMethod(file, offset);
+    final PsiMethod method = findMethod(psiFile, offset);
 
     if (method == null || !method.isValid() || method.isConstructor()) return false;
     setText(getIntentionName(method));
@@ -37,7 +37,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
     if (containingClass == null) return false;
     final boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
     if (isAbstract || !method.hasModifierProperty(PsiModifier.PRIVATE) && !method.hasModifierProperty(PsiModifier.STATIC)) {
-      if (!isAbstract && !isOnIdentifier(file, offset)) return false;
+      if (!isAbstract && !isOnIdentifier(psiFile, offset)) return false;
       MyElementProcessor processor = new MyElementProcessor(method);
       if (containingClass.isEnum()) {
         for (PsiField field : containingClass.getFields()) {
@@ -135,8 +135,8 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiMethod method = findMethod(file, editor.getCaretModel().getOffset());
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    PsiMethod method = findMethod(psiFile, editor.getCaretModel().getOffset());
     if (method == null) return;
     if (UIUtil.isShowing(editor.getContentComponent())) {
       invokeHandler(project, editor, method);

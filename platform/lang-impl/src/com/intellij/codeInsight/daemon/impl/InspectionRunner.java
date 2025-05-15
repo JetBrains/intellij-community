@@ -626,14 +626,14 @@ class InspectionRunner {
     }
   }
 
-  private static boolean shouldInspect(@NotNull PsiFile file) {
+  private static boolean shouldInspect(@NotNull PsiFile psiFile) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    HighlightingLevelManager highlightingLevelManager = HighlightingLevelManager.getInstance(file.getProject());
+    HighlightingLevelManager highlightingLevelManager = HighlightingLevelManager.getInstance(psiFile.getProject());
     // for ESSENTIAL mode, it depends on the current phase: when we run regular LocalInspectionPass then don't, when we run Save All handler then run everything
     return highlightingLevelManager != null
-           && highlightingLevelManager.shouldInspect(file)
-           && !highlightingLevelManager.runEssentialHighlightingOnly(file);
+           && highlightingLevelManager.shouldInspect(psiFile)
+           && !highlightingLevelManager.runEssentialHighlightingOnly(psiFile);
   }
 
   @NotNull

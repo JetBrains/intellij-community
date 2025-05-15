@@ -15,8 +15,8 @@ import java.awt.*;
 
 public class XmlTagTreeBreadcrumbsPresentationProvider extends BreadcrumbsPresentationProvider {
   private static boolean isMyContext(@NotNull PsiElement deepestElement) {
-    final PsiFile file = deepestElement.getContainingFile();
-    if (file == null || !XmlTagTreeHighlightingUtil.isTagTreeHighlightingActive(file)) {
+    final PsiFile psiFile = deepestElement.getContainingFile();
+    if (psiFile == null || !XmlTagTreeHighlightingUtil.isTagTreeHighlightingActive(psiFile)) {
       return false;
     }
     return true;

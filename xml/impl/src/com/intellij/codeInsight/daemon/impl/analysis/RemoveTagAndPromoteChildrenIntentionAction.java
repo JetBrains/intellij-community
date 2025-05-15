@@ -28,8 +28,8 @@ public class RemoveTagAndPromoteChildrenIntentionAction implements IntentionActi
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    XmlTag tag = getTag(editor, file);
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    XmlTag tag = getTag(editor, psiFile);
     if (tag == null) return false;
     int offset = editor.getCaretModel().getOffset();
     ASTNode startEnd = XmlChildRole.START_TAG_END_FINDER.findChild(tag.getNode());
@@ -40,8 +40,8 @@ public class RemoveTagAndPromoteChildrenIntentionAction implements IntentionActi
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    new XmlEnclosingTagUnwrapper().unwrap(editor, getTag(editor, file));
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    new XmlEnclosingTagUnwrapper().unwrap(editor, getTag(editor, psiFile));
   }
 
   @Override
@@ -49,14 +49,14 @@ public class RemoveTagAndPromoteChildrenIntentionAction implements IntentionActi
     return true;
   }
 
-  private static XmlTag getTag(Editor editor, PsiFile file) {
+  private static XmlTag getTag(Editor editor, PsiFile psiFile) {
     int offset = editor.getCaretModel().getOffset();
-    PsiElement element = file.findElementAt(offset);
+    PsiElement element = psiFile.findElementAt(offset);
     PsiElement parent = element != null ? element.getParent() : null;
     if (parent instanceof XmlTag) return (XmlTag)parent;
     if (parent instanceof XmlAttribute) return null;
 
-    element = file.findElementAt(offset - 1);
+    element = psiFile.findElementAt(offset - 1);
     parent = element != null ? element.getParent() : null;
     if (parent instanceof XmlTag) return (XmlTag)parent;
     return null;

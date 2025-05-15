@@ -28,7 +28,7 @@ import java.util.StringJoiner;
 
 final class TodoHighlightVisitor implements HighlightVisitor {
   @Override
-  public boolean suitableForFile(@NotNull PsiFile file) {
+  public boolean suitableForFile(@NotNull PsiFile psiFile) {
     return true;
   }
 

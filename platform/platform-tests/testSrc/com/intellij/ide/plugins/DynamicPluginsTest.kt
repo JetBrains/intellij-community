@@ -1005,9 +1005,9 @@ private class MyAction2 : AnAction() {
 private class MyIntentionAction : IntentionAction {
   override fun startInWriteAction() = false
   override fun getFamilyName() = "foo"
-  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?) = false
+  override fun isAvailable(project: Project, editor: Editor?, psiFile: PsiFile?) = false
   override fun getText(): String = "foo"
-  override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+  override fun invoke(project: Project, editor: Editor?, psiFile: PsiFile?) {
   }
 }
 

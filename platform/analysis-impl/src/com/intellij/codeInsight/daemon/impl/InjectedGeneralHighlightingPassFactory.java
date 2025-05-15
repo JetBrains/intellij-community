@@ -77,9 +77,9 @@ final class InjectedGeneralHighlightingPassFactory implements MainHighlightingPa
     return TextRange.create(startOffSet, endOffSet);
   }
 
-  private @Nullable List<TextRange> computeReducedRanges(@NotNull PsiFile file, @NotNull Editor editor) {
+  private @Nullable List<TextRange> computeReducedRanges(@NotNull PsiFile psiFile, @NotNull Editor editor) {
     for (InjectedLanguageHighlightingRangeReducer reducer : myLanguageHighlightingRangeReducers) {
-      List<TextRange> reduced = reducer.reduceRange(file, editor);
+      List<TextRange> reduced = reducer.reduceRange(psiFile, editor);
       if (reduced != null && !reduced.isEmpty()) {
         return reduced;
       }
@@ -89,10 +89,10 @@ final class InjectedGeneralHighlightingPassFactory implements MainHighlightingPa
 
 
   @Override
-  public TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file,
+  public TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile psiFile,
                                                                @NotNull Document document,
                                                                @NotNull HighlightInfoProcessor highlightInfoProcessor) {
-    return new InjectedGeneralHighlightingPass(file, document, null, 0, document.getTextLength(), true, new ProperTextRange(0,document.getTextLength()), null,
+    return new InjectedGeneralHighlightingPass(psiFile, document, null, 0, document.getTextLength(), true, new ProperTextRange(0, document.getTextLength()), null,
                                                true, true, true, HighlightInfoUpdater.EMPTY);
   }
 }

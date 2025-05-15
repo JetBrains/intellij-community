@@ -92,10 +92,10 @@ public class GroovyStaticImportMethodFix extends Intention {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     myCandidates = null;
 
-    if (!file.getManager().isInProject(file)) return false;
+    if (!psiFile.getManager().isInProject(psiFile)) return false;
 
     GrReferenceExpression invokedExpression = getMethodExpression();
     if (invokedExpression == null || invokedExpression.getQualifierExpression() != null) return false;

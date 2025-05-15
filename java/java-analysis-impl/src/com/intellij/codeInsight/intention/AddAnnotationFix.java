@@ -50,16 +50,16 @@ public class AddAnnotationFix extends AddAnnotationPsiFix implements IntentionAc
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (InjectedLanguageManager.getInstance(project).isInjectedFragment(file)) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (InjectedLanguageManager.getInstance(project).isInjectedFragment(psiFile)) {
       PsiElement psiElement = getStartElement();
-      if (psiElement == null || psiElement.getContainingFile() != file) return false;
+      if (psiElement == null || psiElement.getContainingFile() != psiFile) return false;
     }
     return isAvailable();
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     applyFix();
   }
 }

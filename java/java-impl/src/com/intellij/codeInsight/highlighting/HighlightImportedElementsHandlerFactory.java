@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 public final class HighlightImportedElementsHandlerFactory extends HighlightUsagesHandlerFactoryBase {
 
   @Override
-  public @Nullable HighlightUsagesHandlerBase<PsiMember> createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target) {
+  public @Nullable HighlightUsagesHandlerBase<PsiMember> createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile psiFile, @NotNull PsiElement target) {
     if (!(target instanceof PsiKeyword) || !JavaKeywords.IMPORT.equals(target.getText())) {
       return null;
     }
@@ -25,6 +25,6 @@ public final class HighlightImportedElementsHandlerFactory extends HighlightUsag
     if (!(grand instanceof PsiImportList)) {
       return null;
     }
-    return new HighlightImportedElementsHandler(editor, file, target, (PsiImportStatementBase) parent);
+    return new HighlightImportedElementsHandler(editor, psiFile, target, (PsiImportStatementBase) parent);
   }
 }

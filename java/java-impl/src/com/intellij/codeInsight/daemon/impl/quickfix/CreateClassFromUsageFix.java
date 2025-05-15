@@ -24,10 +24,10 @@ public final class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     PsiJavaCodeReferenceElement element = getRefElement();
     if (element == null) return IntentionPreviewInfo.EMPTY;
-    element = PsiTreeUtil.findSameElementInCopy(element, file);
+    element = PsiTreeUtil.findSameElementInCopy(element, psiFile);
     String superClassName = getSuperClassName(element);
     PsiClass aClass = myKind.create(JavaPsiFacade.getElementFactory(project), element.getReferenceName());
     if (StringUtil.isNotEmpty(superClassName) &&
@@ -51,7 +51,7 @@ public final class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
 
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     PsiJavaCodeReferenceElement element = getRefElement();
     if (element == null || !FileModificationService.getInstance().preparePsiElementForWrite(element)) {

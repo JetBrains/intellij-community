@@ -27,14 +27,14 @@ public abstract class CreateDomElementAction<T extends DomElement> extends Simpl
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    createElement(getContextElement(editor), editor, file, project);
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    createElement(getContextElement(editor), editor, psiFile, project);
   }
 
   protected abstract void createElement(T context, Editor editor, PsiFile file, Project project);
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     return getContextElement(editor) != null;
   }
 

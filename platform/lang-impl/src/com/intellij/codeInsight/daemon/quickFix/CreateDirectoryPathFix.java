@@ -77,7 +77,7 @@ public final class CreateDirectoryPathFix extends AbstractCreateFileFix {
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     HtmlChunk description = getDescription(AllIcons.Nodes.Folder);
     return description == null ? IntentionPreviewInfo.EMPTY : new IntentionPreviewInfo.Html(description);
   }

@@ -39,12 +39,12 @@ public final class XmlTagTreeHighlightingUtil {
   }
 
   @ApiStatus.Internal
-  public static boolean isTagTreeHighlightingActive(PsiFile file) {
+  public static boolean isTagTreeHighlightingActive(PsiFile psiFile) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return false;
     }
 
-    if (!hasXmlViewProvider(file) && !HtmlUtil.supportsXmlTypedHandlers(file)) {
+    if (!hasXmlViewProvider(psiFile) && !HtmlUtil.supportsXmlTypedHandlers(psiFile)) {
       return false;
     }
 
@@ -54,8 +54,8 @@ public final class XmlTagTreeHighlightingUtil {
     return true;
   }
 
-  public static boolean hasXmlViewProvider(@NotNull PsiFile file) {
-    for (PsiFile f : file.getViewProvider().getAllFiles()) {
+  public static boolean hasXmlViewProvider(@NotNull PsiFile psiFile) {
+    for (PsiFile f : psiFile.getViewProvider().getAllFiles()) {
       if (f instanceof XmlFile) {
         return true;
       }

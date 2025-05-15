@@ -51,8 +51,8 @@ public final class LongLineInspection extends LocalInspectionTool {
     return new PsiElementVisitor() {
 
       @Override
-      public void visitFile(@NotNull PsiFile file) {
-        final TextRange range = restrictRange.intersection(file.getTextRange());
+      public void visitFile(@NotNull PsiFile psiFile) {
+        final TextRange range = restrictRange.intersection(psiFile.getTextRange());
         if (range == null || range.isEmpty()) return;
 
         int line = document.getLineNumber(range.getStartOffset());
@@ -69,7 +69,7 @@ public final class LongLineInspection extends LocalInspectionTool {
               String message =
                 LangBundle.message("inspection.message.line.longer.than.allowed.by.code.style.columns", codeStyleRightMargin);
               final TextRange problemRange = new TextRange(i, lineEnd);
-              final PsiElement element = findElementInRange(file, problemRange);
+              final PsiElement element = findElementInRange(psiFile, problemRange);
               if (!ignoreFor(element)) {
                 holder.registerProblem(element, problemRange.shiftLeft(element.getTextRange().getStartOffset()), message);
               }

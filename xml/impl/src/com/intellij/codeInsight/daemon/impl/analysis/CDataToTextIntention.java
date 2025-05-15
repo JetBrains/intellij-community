@@ -30,13 +30,13 @@ public class CDataToTextIntention implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return getCData(editor, file) != null;
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    return getCData(editor, psiFile) != null;
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiElement cdata = getCData(editor, file);
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    PsiElement cdata = getCData(editor, psiFile);
     if (cdata == null) return;
 
     ASTNode node = cdata.getNode();
@@ -62,13 +62,13 @@ public class CDataToTextIntention implements IntentionAction {
                                        cdatas.get(cdatas.size() - 1).getTextRange().getEndOffset(), text.toString());
   }
 
-  private static PsiElement getCData(Editor editor, PsiFile file) {
+  private static PsiElement getCData(Editor editor, PsiFile psiFile) {
     int offset = editor.getCaretModel().getOffset();
-    PsiElement element = file.findElementAt(offset);
+    PsiElement element = psiFile.findElementAt(offset);
     PsiElement parent = element != null ? element.getParent() : null;
     if (parent != null && parent.getNode() != null && parent.getNode().getElementType() == XmlElementType.XML_CDATA) return parent;
 
-    element = file.findElementAt(offset - 1);
+    element = psiFile.findElementAt(offset - 1);
     parent = element != null ? element.getParent() : null;
     if (parent != null && parent.getNode() != null && parent.getNode().getElementType() == XmlElementType.XML_CDATA) return parent;
     return null;

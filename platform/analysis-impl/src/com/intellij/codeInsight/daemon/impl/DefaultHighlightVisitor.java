@@ -36,12 +36,12 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   }
 
   @Override
-  public boolean suitableForFile(@NotNull PsiFile file) {
+  public boolean suitableForFile(@NotNull PsiFile psiFile) {
     return myHighlightErrorElements;
   }
 
   @Override
-  public boolean analyze(@NotNull PsiFile file,
+  public boolean analyze(@NotNull PsiFile psiFile,
                          boolean updateWholeFile,
                          @NotNull HighlightInfoHolder holder,
                          @NotNull Runnable action) {

@@ -102,9 +102,9 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
   }
 
   void clearSyntaxErrorFlag(@NotNull PsiTreeChangeEvent event) {
-    PsiFile file = event.getFile();
-    if (file == null) return;
-    VirtualFile virtualFile = file.getVirtualFile();
+    PsiFile psiFile = event.getFile();
+    if (psiFile == null) return;
+    VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) return;
     ProblemFileInfo info = myProblems.get(virtualFile);
     if (info != null) {

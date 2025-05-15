@@ -71,8 +71,8 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
       getScope().acceptIdempotentVisitor(new PsiRecursiveElementVisitor() {
         @Override
-        public void visitFile(final @NotNull PsiFile file) {
-          visit(file, fileIndex, psiManager);
+        public void visitFile(final @NotNull PsiFile psiFile) {
+          visit(psiFile, fileIndex, psiManager);
         }
       });
       return null;

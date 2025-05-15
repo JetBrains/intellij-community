@@ -468,8 +468,8 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
     }
 
     class PsiFileElementVisitor : PsiElementVisitor() {
-      override fun visitFile(file: PsiFile) {
-        MavenLog.LOG.warn("Visiting file $file, text ${file.text}")
+      override fun visitFile(psiFile: PsiFile) {
+        MavenLog.LOG.warn("Visiting file $psiFile, text ${psiFile.text}")
       }
     }
   }

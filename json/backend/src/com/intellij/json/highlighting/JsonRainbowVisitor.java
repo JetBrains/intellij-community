@@ -31,8 +31,8 @@ public final class JsonRainbowVisitor extends RainbowVisitor {
   }
 
   @Override
-  public boolean suitableForFile(@NotNull PsiFile file) {
-    return file instanceof JsonFile;
+  public boolean suitableForFile(@NotNull PsiFile psiFile) {
+    return psiFile instanceof JsonFile;
   }
 
   @Override

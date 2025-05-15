@@ -26,21 +26,21 @@ final class SurroundWithAction extends BaseCodeInsightAction {
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, final @NotNull PsiFile file) {
-    final Language language = file.getLanguage();
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, final @NotNull PsiFile psiFile) {
+    final Language language = psiFile.getLanguage();
     if (!LanguageSurrounders.INSTANCE.allForLanguage(language).isEmpty()) {
       return true;
     }
-    final PsiFile baseFile = PsiUtilCore.getTemplateLanguageFile(file);
-    if (baseFile != null && baseFile != file && !LanguageSurrounders.INSTANCE.allForLanguage(baseFile.getLanguage()).isEmpty()) {
+    final PsiFile baseFile = PsiUtilCore.getTemplateLanguageFile(psiFile);
+    if (baseFile != null && baseFile != psiFile && !LanguageSurrounders.INSTANCE.allForLanguage(baseFile.getLanguage()).isEmpty()) {
       return true;
     }
 
-    if (file instanceof PsiBinaryFile) {
+    if (psiFile instanceof PsiBinaryFile) {
       return true;
     }
 
-    if (!TemplateManagerImpl.listApplicableTemplates(TemplateActionContext.surrounding(file, editor)).isEmpty()) {
+    if (!TemplateManagerImpl.listApplicableTemplates(TemplateActionContext.surrounding(psiFile, editor)).isEmpty()) {
       return true;
     }
 

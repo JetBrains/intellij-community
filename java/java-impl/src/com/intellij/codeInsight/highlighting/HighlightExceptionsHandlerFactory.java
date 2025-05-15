@@ -18,23 +18,23 @@ import static com.intellij.openapi.util.Predicates.alwaysTrue;
 
 public final class HighlightExceptionsHandlerFactory extends HighlightUsagesHandlerFactoryBase {
   @Override
-  public HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target) {
+  public HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile psiFile, @NotNull PsiElement target) {
     if (target instanceof PsiKeyword) {
       PsiElement parent = target.getParent();
       if (JavaKeywords.TRY.equals(target.getText()) && parent instanceof PsiTryStatement) {
-        return createHighlightTryHandler(editor, file, target, parent);
+        return createHighlightTryHandler(editor, psiFile, target, parent);
       }
       if (JavaKeywords.CATCH.equals(target.getText()) && parent instanceof PsiCatchSection) {
-        return createHighlightCatchHandler(editor, file, target, parent);
+        return createHighlightCatchHandler(editor, psiFile, target, parent);
       }
       if (JavaKeywords.THROWS.equals(target.getText())) {
-        return createThrowsHandler(editor, file, target);
+        return createThrowsHandler(editor, psiFile, target);
       }
     }
     if (target instanceof PsiIdentifier) {
       PsiElement parent = target.getParent();
       if (parent instanceof PsiJavaCodeReferenceElement) {
-        return createHighlightExceptionUsagesFromThrowsHandler(editor, file, target, (PsiJavaCodeReferenceElement)parent);
+        return createHighlightExceptionUsagesFromThrowsHandler(editor, psiFile, target, (PsiJavaCodeReferenceElement)parent);
       }
     }
     return null;

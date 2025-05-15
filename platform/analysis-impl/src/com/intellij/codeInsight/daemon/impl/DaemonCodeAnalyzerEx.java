@@ -116,7 +116,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
                                                              @NotNull Document document,
                                                              @NotNull ProgressIndicator progress);
 
-  public abstract boolean isErrorAnalyzingFinished(@NotNull PsiFile file);
+  public abstract boolean isErrorAnalyzingFinished(@NotNull PsiFile psiFile);
 
   public abstract @NotNull FileStatusMap getFileStatusMap();
 

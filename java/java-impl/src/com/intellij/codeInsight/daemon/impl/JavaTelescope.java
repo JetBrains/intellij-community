@@ -41,25 +41,25 @@ final class JavaTelescope {
     }
   }
 
-  static @Nullable UsagesHint usagesHint(@NotNull PsiMember member, @NotNull PsiFile file) {
-    int totalUsageCount = UsagesCountManager.getInstance(member.getProject()).countMemberUsages(file, member);
+  static @Nullable UsagesHint usagesHint(@NotNull PsiMember member, @NotNull PsiFile psiFile) {
+    int totalUsageCount = UsagesCountManager.getInstance(member.getProject()).countMemberUsages(psiFile, member);
     if (totalUsageCount == TOO_MANY_USAGES) return null;
     if (totalUsageCount < AdvancedSettings.getInt("code.vision.java.minimal.usages")) return null;
     return new UsagesHint(JavaBundle.message("usages.telescope", totalUsageCount), totalUsageCount);
   }
 
-  public static int usagesCount(@NotNull PsiFile file, List<PsiMember> members, SearchScope scope) {
-    Project project = file.getProject();
+  public static int usagesCount(@NotNull PsiFile psiFile, List<PsiMember> members, SearchScope scope) {
+    Project project = psiFile.getProject();
     ProgressIndicator progress = ObjectUtils.notNull(ProgressIndicatorProvider.getGlobalProgressIndicator(), /*todo remove*/new EmptyProgressIndicator());
     AtomicInteger totalUsageCount = new AtomicInteger();
 
     if (Registry.is("java.telescope.usages.single.threaded", true)) {
       for (PsiMember member : members) {
-        if (!countUsagesForMember(file, scope, member, project, totalUsageCount)) break;
+        if (!countUsagesForMember(psiFile, scope, member, project, totalUsageCount)) break;
       }
     } else {
       JobLauncher.getInstance().invokeConcurrentlyUnderProgress(members, progress, member -> {
-        return countUsagesForMember(file, scope, member, project, totalUsageCount);
+        return countUsagesForMember(psiFile, scope, member, project, totalUsageCount);
       });
     }
 
@@ -69,12 +69,12 @@ final class JavaTelescope {
   /**
    * Counts usages for the provided {@code member} and returns {@code true} if consecutive members should be processed.
    */
-  private static boolean countUsagesForMember(@NotNull PsiFile file,
+  private static boolean countUsagesForMember(@NotNull PsiFile psiFile,
                                               SearchScope scope,
                                               PsiMember member,
                                               Project project,
                                               AtomicInteger totalUsageCount) {
-    int count = usagesCount(project, file, member, scope);
+    int count = usagesCount(project, psiFile, member, scope);
     int newCount = totalUsageCount.updateAndGet(old -> count == TOO_MANY_USAGES ? TOO_MANY_USAGES : old + count);
     if (newCount == TOO_MANY_USAGES) return false;
     return true;

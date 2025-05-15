@@ -681,8 +681,8 @@ public final class HighlightFixUtil {
     if (DumbService.getInstance(variable.getProject()).isDumb()) return;
 
     String shortName = classType.getClassName();
-    PsiFile file = parameterList.getContainingFile();
-    Project project = file.getProject();
+    PsiFile psiFile = parameterList.getContainingFile();
+    Project project = psiFile.getProject();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     PsiShortNamesCache shortNamesCache = PsiShortNamesCache.getInstance(project);
     PsiClass[] classes = shortNamesCache.getClassesByName(shortName, GlobalSearchScope.allScope(project));
@@ -848,11 +848,11 @@ public final class HighlightFixUtil {
     registerChangeParameterClassFix(sink, lType, rType);
   }
 
-  private static @NotNull LanguageLevel getApplicableLevel(@NotNull PsiFile file, @NotNull JavaFeature feature) {
+  private static @NotNull LanguageLevel getApplicableLevel(@NotNull PsiFile psiFile, @NotNull JavaFeature feature) {
     LanguageLevel standardLevel = feature.getStandardLevel();
     LanguageLevel featureLevel = feature.getMinimumLevel();
     if (featureLevel.isPreview()) {
-      JavaSdkVersion sdkVersion = JavaSdkVersionUtil.getJavaSdkVersion(file);
+      JavaSdkVersion sdkVersion = JavaSdkVersionUtil.getJavaSdkVersion(psiFile);
       if (sdkVersion != null) {
         if (standardLevel != null && sdkVersion.isAtLeast(JavaSdkVersion.fromLanguageLevel(standardLevel))) {
           return standardLevel;

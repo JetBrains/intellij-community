@@ -389,9 +389,9 @@ public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
     }
 
     @Override
-    public void visitFile(@NotNull PsiFile file) {
-      if (file instanceof PsiJavaFile && !(file instanceof ServerPageFile)) {
-        VirtualFile vFile = file.getVirtualFile();
+    public void visitFile(@NotNull PsiFile psiFile) {
+      if (psiFile instanceof PsiJavaFile && !(psiFile instanceof ServerPageFile)) {
+        VirtualFile vFile = psiFile.getVirtualFile();
         if (vFile != null && vFile.isInLocalFileSystem()) {
           mySourceFiles.add(vFile);
 

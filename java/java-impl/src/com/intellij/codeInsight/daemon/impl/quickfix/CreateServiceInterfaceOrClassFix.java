@@ -60,7 +60,7 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     if (myInterfaceName == null) return false;
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
@@ -69,7 +69,7 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     String qualifierText = StringUtil.getPackageName(myInterfaceName);
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
 
@@ -90,10 +90,10 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
       Map<Module, PsiDirectory[]> psiRootDirs = getModuleRootDirs(psiPackage);
       if (!psiRootDirs.isEmpty()) {
         if (ApplicationManager.getApplication().isUnitTestMode()) {
-          PsiDirectory rootDir = file.getUserData(SERVICE_ROOT_DIR);
-          CreateClassKind classKind = file.getUserData(SERVICE_CLASS_KIND);
+          PsiDirectory rootDir = psiFile.getUserData(SERVICE_ROOT_DIR);
+          CreateClassKind classKind = psiFile.getUserData(SERVICE_CLASS_KIND);
           if (rootDir != null && classKind != null) {
-            WriteAction.run(() -> createClassInRoot(myInterfaceName, classKind, rootDir, file, null));
+            WriteAction.run(() -> createClassInRoot(myInterfaceName, classKind, rootDir, psiFile, null));
           }
           return;
         }
@@ -102,7 +102,7 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
           PsiDirectory rootDir = dialog.getRootDir();
           if (rootDir != null) {
             CreateClassKind classKind = dialog.getClassKind();
-            PsiClass psiClass = WriteAction.compute(() -> createClassInRoot(myInterfaceName, classKind, rootDir, file, null));
+            PsiClass psiClass = WriteAction.compute(() -> createClassInRoot(myInterfaceName, classKind, rootDir, psiFile, null));
             positionCursor(psiClass);
           }
         }
@@ -111,7 +111,7 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, "", "public interface " + myInterfaceName + " {}");
   }
 

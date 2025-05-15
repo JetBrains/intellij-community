@@ -39,11 +39,11 @@ class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBase<PsiL
 
 
   HighlightSuppressedWarningsHandler(@NotNull Editor editor,
-                                     @NotNull PsiFile file,
+                                     @NotNull PsiFile psiFile,
                                      @NotNull PsiAnnotation target,
                                      @Nullable PsiLiteralExpression suppressedExpression,
                                      @NotNull ProperTextRange priorityRange) {
-    super(editor, file);
+    super(editor, psiFile);
     myTarget = target;
     mySuppressedExpression = suppressedExpression;
     myPriorityRange = priorityRange;

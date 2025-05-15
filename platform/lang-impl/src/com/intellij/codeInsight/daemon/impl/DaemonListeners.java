@@ -212,15 +212,15 @@ public final class DaemonListeners implements Disposable {
         }
 
         // worthBothering() checks for getCachedPsiFile, so call getPsiFile
-        PsiFile file = editorProject == null ? null : PsiDocumentManager.getInstance(editorProject).getPsiFile(document);
+        PsiFile psiFile = editorProject == null ? null : PsiDocumentManager.getInstance(editorProject).getPsiFile(document);
         ErrorStripeUpdateManager errorStripeManager = ErrorStripeUpdateManager.getInstance(myProject);
         // ScratchLineMarkersTestGenerated/FileEditorManagerTest is failed for some reason, so, let's execute now if test in EDT
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           //noinspection deprecation
-          errorStripeManager.repaintErrorStripePanel(editor, file);
+          errorStripeManager.repaintErrorStripePanel(editor, psiFile);
         }
         else {
-          errorStripeManager.launchRepaintErrorStripePanel(editorMarkup, file);
+          errorStripeManager.launchRepaintErrorStripePanel(editorMarkup, psiFile);
         }
       }
 
@@ -401,13 +401,13 @@ public final class DaemonListeners implements Disposable {
     });
     connection.subscribe(FileHighlightingSettingListener.SETTING_CHANGE, (root, setting) ->
       ApplicationManager.getApplication().runWriteAction(() -> {
-        PsiFile file = root.getContainingFile();
-        if (file != null) {
+        PsiFile psiFile = root.getContainingFile();
+        if (psiFile != null) {
           // force clearing all PSI caches, including those in WholeFileInspectionFactory
           PsiManager.getInstance(myProject).dropPsiCaches();
           for (Editor editor : myActiveEditors) {
-            if (Objects.equals(editor.getVirtualFile(), file.getVirtualFile())) {
-              ErrorStripeUpdateManager.getInstance(myProject).launchRepaintErrorStripePanel(editor, file);
+            if (Objects.equals(editor.getVirtualFile(), psiFile.getVirtualFile())) {
+              ErrorStripeUpdateManager.getInstance(myProject).launchRepaintErrorStripePanel(editor, psiFile);
             }
           }
         }

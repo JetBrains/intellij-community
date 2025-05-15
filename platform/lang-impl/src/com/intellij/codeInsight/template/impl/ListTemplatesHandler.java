@@ -38,16 +38,16 @@ public final class ListTemplatesHandler implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance(ListTemplatesHandler.class);
 
   @Override
-  public void invoke(final @NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(final @NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile psiFile) {
     EditorUtil.fillVirtualSpaceUntilCaret(editor);
 
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
     int offset = editor.getCaretModel().getOffset();
     List<TemplateImpl> applicableTemplates = TemplateManagerImpl.listApplicableTemplateWithInsertingDummyIdentifier(
-      TemplateActionContext.expanding(file, editor));
+      TemplateActionContext.expanding(psiFile, editor));
 
     Map<TemplateImpl, String> matchingTemplates = filterTemplatesByPrefix(applicableTemplates, editor, offset, false, true);
-    MultiMap<String, CustomLiveTemplateLookupElement> customTemplatesLookupElements = getCustomTemplatesLookupItems(editor, file, offset);
+    MultiMap<String, CustomLiveTemplateLookupElement> customTemplatesLookupElements = getCustomTemplatesLookupItems(editor, psiFile, offset);
 
     if (matchingTemplates.isEmpty()) {
       for (TemplateImpl template : applicableTemplates) {
@@ -62,7 +62,7 @@ public final class ListTemplatesHandler implements CodeInsightActionHandler {
       return;
     }
 
-    showTemplatesLookup(project, editor, file, matchingTemplates, customTemplatesLookupElements);
+    showTemplatesLookup(project, editor, psiFile, matchingTemplates, customTemplatesLookupElements);
   }
 
   public static Map<TemplateImpl, String> filterTemplatesByPrefix(@NotNull Collection<? extends TemplateImpl> templates, @NotNull Editor editor,

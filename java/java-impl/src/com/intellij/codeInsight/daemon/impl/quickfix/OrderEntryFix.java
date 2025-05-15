@@ -51,9 +51,9 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
   private static @Nullable SmartPsiFileRange createReferencePointer(@NotNull PsiReference reference) {
     PsiElement element = reference.getElement();
     int offset = element.getTextRange().getStartOffset() + reference.getRangeInElement().getStartOffset();
-    PsiFile file = element.getContainingFile();
-    if (areReferencesEquivalent(reference, file.findReferenceAt(offset))) {
-      return SmartPointerManager.getInstance(element.getProject()).createSmartPsiFileRangePointer(file, TextRange.from(offset, 0));
+    PsiFile psiFile = element.getContainingFile();
+    if (areReferencesEquivalent(reference, psiFile.findReferenceAt(offset))) {
+      return SmartPointerManager.getInstance(element.getProject()).createSmartPsiFileRangePointer(psiFile, TextRange.from(offset, 0));
     }
     return null;
   }
@@ -66,9 +66,9 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
   }
 
   @Nullable PsiReference restoreReference() {
-    PsiFile file = myReferencePointer == null ? null : myReferencePointer.getContainingFile();
+    PsiFile psiFile = myReferencePointer == null ? null : myReferencePointer.getContainingFile();
     Segment range = myReferencePointer == null ? null : myReferencePointer.getPsiRange();
-    return file == null || range == null ? null : file.findReferenceAt(range.getStartOffset());
+    return psiFile == null || range == null ? null : psiFile.findReferenceAt(range.getStartOffset());
   }
 
   @Override

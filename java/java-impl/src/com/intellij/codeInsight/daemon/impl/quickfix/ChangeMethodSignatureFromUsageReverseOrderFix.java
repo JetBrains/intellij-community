@@ -27,9 +27,9 @@ public class ChangeMethodSignatureFromUsageReverseOrderFix extends ChangeMethodS
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     if (myTargetMethod.isValid() && myExpressions.length > myTargetMethod.getParameterList().getParametersCount()) {
-      if (super.isAvailable(project, editor, file)) {
+      if (super.isAvailable(project, editor, psiFile)) {
         final ArrayList<ParameterInfoImpl> result = new ArrayList<>();
         if (super.findNewParamsPlace(myExpressions, myTargetMethod, mySubstitutor,
                                      new StringBuilder(), new HashSet<>(), myTargetMethod.getParameterList().getParameters(), result)) {

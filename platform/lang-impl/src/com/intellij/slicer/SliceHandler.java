@@ -22,8 +22,8 @@ public abstract class SliceHandler implements CodeInsightActionHandler {
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
-    PsiElement expression = getExpressionAtCaret(editor, file);
+  public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile psiFile) {
+    PsiElement expression = getExpressionAtCaret(editor, psiFile);
     if (expression == null) {
       HintManager.getInstance().showErrorHint(editor, LangBundle.message("hint.text.cannot.find.what.to.analyze"));
       return;

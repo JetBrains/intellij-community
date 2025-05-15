@@ -63,7 +63,7 @@ class GotoDeclarationOrUsageHandler2 internal constructor(private val reporter: 
 
   override fun startInWriteAction(): Boolean = false
 
-  override fun invoke(project: Project, editor: Editor, file: PsiFile) {
+  override fun invoke(project: Project, editor: Editor, psiFile: PsiFile) {
     if (navigateToLookupItem(project, editor)) {
       return
     }
@@ -77,12 +77,12 @@ class GotoDeclarationOrUsageHandler2 internal constructor(private val reporter: 
         project,
         CodeInsightBundle.message("progress.title.resolving.reference")
       ) {
-        gotoDeclarationOrUsages(project, editor, file, offset)?.result()
+        gotoDeclarationOrUsages(project, editor, psiFile, offset)?.result()
       }
       when (actionResult) {
         null -> {
           reporter?.reportDeclarationSearchFinished(GotoDeclarationReporter.DeclarationsFound.NONE)
-          notifyNowhereToGo(project, editor, file, offset)
+          notifyNowhereToGo(project, editor, psiFile, offset)
         }
         is GTDUActionResult.GTD -> {
           GTDUCollector.recordPerformed(GTDUCollector.GTDUChoice.GTD)
@@ -91,7 +91,7 @@ class GotoDeclarationOrUsageHandler2 internal constructor(private val reporter: 
         is GTDUActionResult.SU -> {
           reporter?.reportDeclarationSearchFinished(GotoDeclarationReporter.DeclarationsFound.NONE)
           GTDUCollector.recordPerformed(GTDUCollector.GTDUChoice.SU)
-          showUsages(project, editor, file, actionResult.targetVariants)
+          showUsages(project, editor, psiFile, actionResult.targetVariants)
         }
       }
     }

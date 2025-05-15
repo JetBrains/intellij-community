@@ -349,7 +349,7 @@ public class CommitMessage extends JPanel implements Disposable, UiCompatibleDat
 
   static final class CommitMessageTrafficLightRendererContributor implements TrafficLightRendererContributor {
     @Override
-    public @Nullable TrafficLightRenderer createRenderer(@NotNull Editor editor, @Nullable PsiFile file) {
+    public @Nullable TrafficLightRenderer createRenderer(@NotNull Editor editor, @Nullable PsiFile psiFile) {
       Project project = editor.getProject();
       if (project == null || !isCommitMessage(editor.getDocument())) return null;
       return new ConditionalTrafficLightRenderer(project, editor);

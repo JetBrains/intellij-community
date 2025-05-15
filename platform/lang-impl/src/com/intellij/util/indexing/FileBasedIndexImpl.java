@@ -194,13 +194,13 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     connection.subscribe(PsiDocumentTransactionListener.TOPIC, new PsiDocumentTransactionListener() {
       @Override
-      public void transactionStarted(final @NotNull Document doc, final @NotNull PsiFile file) {
-        myTransactionMap = myTransactionMap.plus(doc, file);
+      public void transactionStarted(final @NotNull Document doc, final @NotNull PsiFile psiFile) {
+        myTransactionMap = myTransactionMap.plus(doc, psiFile);
         clearUpToDateIndexesForUnsavedOrTransactedDocs();
       }
 
       @Override
-      public void transactionCompleted(final @NotNull Document doc, final @NotNull PsiFile file) {
+      public void transactionCompleted(final @NotNull Document doc, final @NotNull PsiFile psiFile) {
         myTransactionMap = myTransactionMap.minus(doc);
       }
     });

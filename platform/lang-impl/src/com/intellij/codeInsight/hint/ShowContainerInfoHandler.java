@@ -28,11 +28,11 @@ public final class ShowContainerInfoHandler implements CodeInsightActionHandler 
   private static final Key<PsiElement> CONTAINER_KEY = Key.create("CONTAINER_KEY");
 
   @Override
-  public void invoke(final @NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(final @NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile psiFile) {
 
     PsiElement container = getProcessedHint(editor);
 
-    StructureViewBuilder builder = LanguageStructureViewBuilder.getInstance().getStructureViewBuilder(file);
+    StructureViewBuilder builder = LanguageStructureViewBuilder.getInstance().getStructureViewBuilder(psiFile);
     if (builder instanceof TreeBasedStructureViewBuilder) {
       StructureViewModel model = ((TreeBasedStructureViewBuilder) builder).createStructureViewModel(editor);
       boolean goOneLevelUp = true;

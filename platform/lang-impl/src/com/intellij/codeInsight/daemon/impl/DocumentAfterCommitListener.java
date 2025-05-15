@@ -57,11 +57,11 @@ public final class DocumentAfterCommitListener {
 
     project.getMessageBus().connect().subscribe(PsiDocumentTransactionListener.TOPIC, new PsiDocumentTransactionListener() {
       @Override
-      public void transactionStarted(@NotNull Document doc, @NotNull PsiFile file) {
+      public void transactionStarted(@NotNull Document doc, @NotNull PsiFile psiFile) {
       }
 
       @Override
-      public void transactionCompleted(@NotNull Document document, @NotNull PsiFile file) {
+      public void transactionCompleted(@NotNull Document document, @NotNull PsiFile psiFile) {
         updateChangesForDocument(document, documentCommittedListener);
         document.putUserData(UPDATE_ON_COMMIT_ENGAGED, null); // ensure we don't call updateChangesForDocument() twice which can lead to the whole file re-highlight
       }

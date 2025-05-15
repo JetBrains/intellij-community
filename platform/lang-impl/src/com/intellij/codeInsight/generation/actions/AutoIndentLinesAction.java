@@ -41,9 +41,9 @@ public final class AutoIndentLinesAction extends BaseCodeInsightAction implement
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, final @NotNull PsiFile file) {
-    final FileType fileType = file.getFileType();
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, final @NotNull PsiFile psiFile) {
+    final FileType fileType = psiFile.getFileType();
     return fileType instanceof LanguageFileType &&
-           LanguageFormatting.INSTANCE.forContext(((LanguageFileType)fileType).getLanguage(), file) != null;
+           LanguageFormatting.INSTANCE.forContext(((LanguageFileType)fileType).getLanguage(), psiFile) != null;
   }
 }

@@ -25,12 +25,12 @@ import java.util.Arrays;
 
 public class JavaGotoSuperHandler implements PresentableCodeInsightActionHandler {
   @Override
-  public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
+  public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile psiFile) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed(GotoSuperAction.FEATURE_ID);
 
     int offset = editor.getCaretModel().getOffset();
     new PsiTargetNavigator<>(() -> Arrays.asList(DumbService.getInstance(project).computeWithAlternativeResolveEnabled(
-      () -> findSuperElements(file, offset))))
+      () -> findSuperElements(psiFile, offset))))
       .elementsConsumer((elements, navigator) -> {
         if (!elements.isEmpty() && elements.iterator().next() instanceof PsiMethod) {
           boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature(elements.toArray(PsiMethod.EMPTY_ARRAY));

@@ -28,13 +28,13 @@ public final class GotoSuperAction extends PresentableActionHandlerBasedAction i
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
+  public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile psiFile) {
     int offset = editor.getCaretModel().getOffset();
-    final Language language = PsiUtilCore.getLanguageAtOffset(file, offset);
+    final Language language = PsiUtilCore.getLanguageAtOffset(psiFile, offset);
 
     final CodeInsightActionHandler codeInsightActionHandler = CodeInsightActions.GOTO_SUPER.forLanguage(language);
     if (codeInsightActionHandler != null) {
-      DumbService.getInstance(project).withAlternativeResolveEnabled(() -> codeInsightActionHandler.invoke(project, editor, file));
+      DumbService.getInstance(project).withAlternativeResolveEnabled(() -> codeInsightActionHandler.invoke(project, editor, psiFile));
     }
   }
 

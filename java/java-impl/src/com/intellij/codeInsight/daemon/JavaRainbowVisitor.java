@@ -14,8 +14,8 @@ import org.jetbrains.annotations.Nullable;
 
 public final class JavaRainbowVisitor extends RainbowVisitor {
   @Override
-  public boolean suitableForFile(@NotNull PsiFile file) {
-    return file instanceof PsiJavaFile;
+  public boolean suitableForFile(@NotNull PsiFile psiFile) {
+    return psiFile instanceof PsiJavaFile;
   }
 
   @Override

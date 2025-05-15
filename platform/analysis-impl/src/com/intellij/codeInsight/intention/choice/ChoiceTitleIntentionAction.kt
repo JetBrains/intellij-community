@@ -29,7 +29,7 @@ open class ChoiceTitleIntentionAction(@IntentionFamilyName private val family: S
 
   override fun getFamilyName(): String = family
 
-  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = true
+  override fun isAvailable(project: Project, editor: Editor?, psiFile: PsiFile?): Boolean = true
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {}
 

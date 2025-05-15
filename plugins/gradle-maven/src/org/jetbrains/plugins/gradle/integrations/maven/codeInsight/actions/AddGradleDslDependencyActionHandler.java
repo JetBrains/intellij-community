@@ -31,9 +31,9 @@ import java.util.List;
 class AddGradleDslDependencyActionHandler implements CodeInsightActionHandler {
 
   @Override
-  public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
+  public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile psiFile) {
     if (!EditorModificationUtil.checkModificationAllowed(editor) ||
-        !FileModificationService.getInstance().preparePsiElementsForWrite(file)) return;
+        !FileModificationService.getInstance().preparePsiElementsForWrite(psiFile)) return;
 
     final List<MavenId> ids;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -45,10 +45,10 @@ class AddGradleDslDependencyActionHandler implements CodeInsightActionHandler {
 
     if (ids.isEmpty()) return;
 
-    WriteCommandAction.writeCommandAction(project, file)
+    WriteCommandAction.writeCommandAction(project, psiFile)
                       .withName(GradleBundle.message("gradle.codeInsight.action.add_maven_dependency.text")).run(() -> {
       GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
-      List<GrMethodCall> closableBlocks = PsiTreeUtil.getChildrenOfTypeAsList(file, GrMethodCall.class);
+      List<GrMethodCall> closableBlocks = PsiTreeUtil.getChildrenOfTypeAsList(psiFile, GrMethodCall.class);
       GrCall dependenciesBlock = ContainerUtil.find(closableBlocks, call -> {
         GrExpression expression = call.getInvokedExpression();
         return "dependencies".equals(expression.getText());
@@ -60,7 +60,7 @@ class AddGradleDslDependencyActionHandler implements CodeInsightActionHandler {
           buf.append(String.format("implementation '%s'\n", getMavenArtifactKey(mavenId)));
         }
         dependenciesBlock = (GrCall)factory.createStatementFromText("dependencies{\n" + buf + "}");
-        file.add(dependenciesBlock);
+        psiFile.add(dependenciesBlock);
       }
       else {
         GrClosableBlock closableBlock = ArrayUtil.getFirstElement(dependenciesBlock.getClosureArguments());

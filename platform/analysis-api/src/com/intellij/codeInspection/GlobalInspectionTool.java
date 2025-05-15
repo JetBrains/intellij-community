@@ -127,13 +127,13 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
    * Only called when {@link #isGlobalSimpleInspectionTool()} returns true.
    * Processes and reports problems for a single psi file without using the reference graph.
    *
-   * @param file           the file to check
+   * @param psiFile           the file to check
    * @param manager        the inspection manager instance for the project on which the inspection was run.
    * @param problemsHolder used to register problems found.
    * @param globalContext  the context for the current global inspection run.
    * @param processor      the collector for problems reported by the inspection (see also {@code problemsHolder}).
    */
-  public void checkFile(@NotNull PsiFile file,
+  public void checkFile(@NotNull PsiFile psiFile,
                         @NotNull InspectionManager manager,
                         @NotNull ProblemsHolder problemsHolder,
                         @NotNull GlobalInspectionContext globalContext,

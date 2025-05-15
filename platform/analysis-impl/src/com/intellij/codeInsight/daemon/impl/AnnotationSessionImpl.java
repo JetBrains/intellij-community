@@ -21,13 +21,13 @@ public final class AnnotationSessionImpl extends AnnotationSession {
   private volatile TextRange myHighlightRange;
   private volatile HighlightSeverity myMinimumSeverity;
 
-  private AnnotationSessionImpl(@NotNull PsiFile file) {
-    super(file);
+  private AnnotationSessionImpl(@NotNull PsiFile psiFile) {
+    super(psiFile);
   }
 
   @ApiStatus.Internal
-  public static @NotNull AnnotationSession create(@NotNull PsiFile file) {
-    return new AnnotationSessionImpl(file);
+  public static @NotNull AnnotationSession create(@NotNull PsiFile psiFile) {
+    return new AnnotationSessionImpl(psiFile);
   }
 
   /**

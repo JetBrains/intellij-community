@@ -94,8 +94,8 @@ public class CreateFieldFromUsageTest extends LightQuickFixTestCase {
   }
 
   @Override
-  protected ActionHint parseActionHintImpl(@NotNull PsiFile file, @NotNull String contents) {
-    return ActionHint.parse(file, contents, false);
+  protected ActionHint parseActionHintImpl(@NotNull PsiFile psiFile, @NotNull String contents) {
+    return ActionHint.parse(psiFile, contents, false);
   }
 
   public static class PreviewTest extends LightJavaCodeInsightFixtureTestCase {

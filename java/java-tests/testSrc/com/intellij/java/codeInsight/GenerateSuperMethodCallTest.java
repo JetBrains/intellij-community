@@ -49,8 +49,8 @@ public class GenerateSuperMethodCallTest extends LightJavaCodeInsightTestCase {
     boolean mustBeAvailable = new File(getTestDataPath() + after).exists();
     boolean isValid = new GenerateSuperMethodCallAction() {
       @Override
-      protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull final PsiFile file) {
-        return super.isValidForFile(project, editor, file);
+      protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull final PsiFile psiFile) {
+        return super.isValidForFile(project, editor, psiFile);
       }
     }.isValidForFile(getProject(), getEditor(), getFile());
     assertEquals(mustBeAvailable, isValid);

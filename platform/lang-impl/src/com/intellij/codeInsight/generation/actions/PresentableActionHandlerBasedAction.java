@@ -46,23 +46,23 @@ public abstract class PresentableActionHandlerBasedAction extends BaseCodeInsigh
 
   @Override
   protected void update(@NotNull Presentation presentation, @NotNull Project project,
-                        @NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext, @Nullable String actionPlace) {
+                        @NotNull Editor editor, @NotNull PsiFile psiFile, @NotNull DataContext dataContext, @Nullable String actionPlace) {
     // avoid evaluating isValidFor several times unnecessary
 
-    CodeInsightActionHandler handler = getValidHandler(editor, file);
+    CodeInsightActionHandler handler = getValidHandler(editor, psiFile);
     presentation.setEnabled(handler != null);
     if (handler instanceof ContextAwareActionHandler && !ActionPlaces.isMainMenuOrActionSearch(actionPlace)) {
-      presentation.setVisible(((ContextAwareActionHandler)handler).isAvailableForQuickList(editor, file, dataContext));
+      presentation.setVisible(((ContextAwareActionHandler)handler).isAvailableForQuickList(editor, psiFile, dataContext));
     }
 
     if (presentation.isVisible() && handler instanceof PresentableCodeInsightActionHandler) {
-      ((PresentableCodeInsightActionHandler)handler).update(editor, file, presentation, actionPlace);
+      ((PresentableCodeInsightActionHandler)handler).update(editor, psiFile, presentation, actionPlace);
     }
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, final @NotNull PsiFile file) {
-    return getValidHandler(editor, file) != null;
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, final @NotNull PsiFile psiFile) {
+    return getValidHandler(editor, psiFile) != null;
   }
 
   private @Nullable CodeInsightActionHandler getValidHandler(@NotNull Editor editor, @NotNull PsiFile file) {

@@ -40,8 +40,8 @@ public class CollapseTagIntention implements LocalQuickFix, IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return isAvailable(getTag(editor, file));
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    return isAvailable(getTag(editor, psiFile));
   }
 
   public static boolean isAvailable(XmlTag tag) {
@@ -51,8 +51,8 @@ public class CollapseTagIntention implements LocalQuickFix, IntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    XmlTag tag = getTag(editor, file);
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    XmlTag tag = getTag(editor, psiFile);
     if (tag != null) {
       applyFix(project, tag);
     }

@@ -18,16 +18,16 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.Internal
 public final class DelegateMethodsHandler implements CodeInsightActionHandler{
   @Override
-  public void invoke(final @NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(final @NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile psiFile) {
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)){
       return;
     }
 
-    Language language = PsiUtilCore.getLanguageAtOffset(file, editor.getCaretModel().getOffset());
+    Language language = PsiUtilCore.getLanguageAtOffset(psiFile, editor.getCaretModel().getOffset());
     final LanguageCodeInsightActionHandler codeInsightActionHandler = CodeInsightActions.DELEGATE_METHODS.forLanguage(language);
     if (codeInsightActionHandler != null) {
-      codeInsightActionHandler.invoke(project, editor, file);
+      codeInsightActionHandler.invoke(project, editor, psiFile);
     }
   }
 

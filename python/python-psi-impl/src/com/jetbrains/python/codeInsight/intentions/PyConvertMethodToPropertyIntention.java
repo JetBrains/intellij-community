@@ -32,11 +32,11 @@ public final class PyConvertMethodToPropertyIntention extends PyBaseIntentionAct
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof PyFile)) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (!(psiFile instanceof PyFile)) {
       return false;
     }
-    final PsiElement element = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
+    final PsiElement element = PyUtil.findNonWhitespaceAtOffset(psiFile, editor.getCaretModel().getOffset());
     final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
     if (function == null) return false;
     final PyClass containingClass = function.getContainingClass();

@@ -75,9 +75,9 @@ public final class PyConvertTypeCommentToVariableAnnotationIntention extends PyB
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (file instanceof PyFile && LanguageLevel.forElement(file).isAtLeast(LanguageLevel.PYTHON36)) {
-      final PsiComment comment = findCommentUnderCaret(editor, file);
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (psiFile instanceof PyFile && LanguageLevel.forElement(psiFile).isAtLeast(LanguageLevel.PYTHON36)) {
+      final PsiComment comment = findCommentUnderCaret(editor, psiFile);
       return comment != null && isSuitableTypeComment(comment);
     }
     return false;

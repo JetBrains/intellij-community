@@ -52,7 +52,7 @@ public class WrongPropertyKeyValueDelimiterInspection extends PropertiesInspecti
     }
 
     @Override
-    public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement element, @NotNull PsiElement endElement) {
+    public void invoke(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull PsiElement element, @NotNull PsiElement endElement) {
       ((PropertyImpl) element).replaceKeyValueDelimiterWithDefault();
     }
 

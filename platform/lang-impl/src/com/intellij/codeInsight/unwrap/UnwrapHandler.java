@@ -46,10 +46,10 @@ public class UnwrapHandler implements CodeInsightActionHandler {
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
-    List<MyUnwrapAction> options = collectOptions(project, editor, file);
-    selectOption(options, editor, file);
+    List<MyUnwrapAction> options = collectOptions(project, editor, psiFile);
+    selectOption(options, editor, psiFile);
   }
 
   private static @NotNull List<MyUnwrapAction> collectOptions(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {

@@ -114,9 +114,9 @@ public final class LazyQuickFixUpdaterImpl implements LazyQuickFixUpdater {
 
   @TestOnly
   @RequiresEdt
-  public void waitForBackgroundJobIfStartedInTests(@NotNull PsiFile file, @NotNull Editor editor, @NotNull HighlightInfo info, long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+  public void waitForBackgroundJobIfStartedInTests(@NotNull PsiFile psiFile, @NotNull Editor editor, @NotNull HighlightInfo info, long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    AppExecutorUtil.getAppExecutorService().submit(() -> waitQuickFixesSynchronously(file, editor, info))
+    AppExecutorUtil.getAppExecutorService().submit(() -> waitQuickFixesSynchronously(psiFile, editor, info))
     .get(timeout, unit);
   }
 }

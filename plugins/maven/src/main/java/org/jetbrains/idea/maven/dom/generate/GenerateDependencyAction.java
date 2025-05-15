@@ -108,8 +108,8 @@ public class GenerateDependencyAction extends GenerateDomElementAction {
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return super.isValidForFile(project, editor, file)
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return super.isValidForFile(project, editor, psiFile)
            && ofNullable(getPlugin(getId("com.jetbrains.packagesearch.intellij-plugin"))).map(p -> !p.isEnabled()).orElse(true);
   }
 }

@@ -130,7 +130,7 @@ public class LazyQuickFixTest extends LightQuickFixTestCase {
                 }
 
                 @Override
-                public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
+                public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) {
                   invoked = true;
                 }
               });
@@ -183,7 +183,7 @@ public class LazyQuickFixTest extends LightQuickFixTestCase {
     private HighlightInfoHolder myHolder;
 
     @Override
-    public boolean suitableForFile(@NotNull PsiFile file) {
+    public boolean suitableForFile(@NotNull PsiFile psiFile) {
       return true;
     }
 
@@ -203,7 +203,7 @@ public class LazyQuickFixTest extends LightQuickFixTestCase {
     }
 
     @Override
-    public boolean analyze(@NotNull PsiFile file,
+    public boolean analyze(@NotNull PsiFile psiFile,
                            boolean updateWholeFile,
                            @NotNull HighlightInfoHolder holder,
                            @NotNull Runnable action) {

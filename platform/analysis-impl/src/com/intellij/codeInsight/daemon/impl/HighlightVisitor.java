@@ -19,7 +19,7 @@ public interface HighlightVisitor extends PossiblyDumbAware {
   ArrayFactory<HighlightVisitor> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new HighlightVisitor[count];
   ExtensionPointName<HighlightVisitor> EP_HIGHLIGHT_VISITOR = new ExtensionPointName<>("com.intellij.highlightVisitor");
 
-  boolean suitableForFile(@NotNull PsiFile file);
+  boolean suitableForFile(@NotNull PsiFile psiFile);
 
   /**
    * @return true if this highlighter covers the errors reported by {@link DefaultHighlightVisitor}, so the latter should be turned off.
@@ -35,7 +35,7 @@ public interface HighlightVisitor extends PossiblyDumbAware {
    */
   void visit(@NotNull PsiElement element);
 
-  boolean analyze(@NotNull PsiFile file, boolean updateWholeFile, @NotNull HighlightInfoHolder holder, @NotNull Runnable action);
+  boolean analyze(@NotNull PsiFile psiFile, boolean updateWholeFile, @NotNull HighlightInfoHolder holder, @NotNull Runnable action);
 
   @NotNull
   HighlightVisitor clone();

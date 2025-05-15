@@ -88,7 +88,7 @@ public class CreateMethodFromMethodReferenceFix extends CreateFromUsageBaseFix {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     chooseTargetClass(project, editor, this::invokeImpl);
   }
 

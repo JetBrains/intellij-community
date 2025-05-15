@@ -70,13 +70,13 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return getDelegate().isAvailable(project, editor, file);
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    return getDelegate().isAvailable(project, editor, psiFile);
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    getDelegate().invoke(project, editor, file);
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    getDelegate().invoke(project, editor, psiFile);
   }
 
   @Override
@@ -85,8 +85,8 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return getDelegate().generatePreview(project, editor, file);
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return getDelegate().generatePreview(project, editor, psiFile);
   }
 
   @Override

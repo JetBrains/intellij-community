@@ -48,19 +48,19 @@ public class AddExceptionToCatchFix implements ModCommandAction {
   }
   
   private static void invoke(@NotNull PsiTryStatement tryStatement, @NotNull List<PsiClassType> unhandledExceptions, @NotNull ModPsiUpdater updater) {
-    PsiFile file = tryStatement.getContainingFile();
+    PsiFile psiFile = tryStatement.getContainingFile();
     PsiCodeBlock catchBlockToSelect = null;
 
     try {
       if (tryStatement.getFinallyBlock() == null && tryStatement.getCatchBlocks().length == 0) {
         for (PsiClassType unhandledException : unhandledExceptions) {
-          addCatchStatement(tryStatement, unhandledException, file);
+          addCatchStatement(tryStatement, unhandledException, psiFile);
         }
         catchBlockToSelect = tryStatement.getCatchBlocks()[0];
       }
       else {
         for (PsiClassType unhandledException : unhandledExceptions) {
-          PsiCodeBlock codeBlock = addCatchStatement(tryStatement, unhandledException, file);
+          PsiCodeBlock codeBlock = addCatchStatement(tryStatement, unhandledException, psiFile);
           if (catchBlockToSelect == null) catchBlockToSelect = codeBlock;
         }
       }
@@ -69,7 +69,7 @@ public class AddExceptionToCatchFix implements ModCommandAction {
       LOG.error(e);
     }
     if (catchBlockToSelect != null) {
-      catchBlockToSelect = (PsiCodeBlock)CodeStyleManager.getInstance(file.getProject()).reformat(catchBlockToSelect);
+      catchBlockToSelect = (PsiCodeBlock)CodeStyleManager.getInstance(psiFile.getProject()).reformat(catchBlockToSelect);
       TextRange range = SurroundWithUtil.getRangeToSelect(catchBlockToSelect);
       updater.select(range);
     }
@@ -90,7 +90,7 @@ public class AddExceptionToCatchFix implements ModCommandAction {
 
   private static PsiCodeBlock addCatchStatement(PsiTryStatement tryStatement,
                                                 PsiClassType exceptionType,
-                                                PsiFile file) throws IncorrectOperationException {
+                                                PsiFile psiFile) throws IncorrectOperationException {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(tryStatement.getProject());
 
     if (tryStatement.getTryBlock() == null) {
@@ -113,7 +113,7 @@ public class AddExceptionToCatchFix implements ModCommandAction {
     PsiParameter[] parameters = tryStatement.getCatchBlockParameters();
     PsiTypeElement typeElement = parameters[parameters.length - 1].getTypeElement();
     if (typeElement != null) {
-      JavaCodeStyleManager.getInstance(file.getProject()).shortenClassReferences(typeElement);
+      JavaCodeStyleManager.getInstance(psiFile.getProject()).shortenClassReferences(typeElement);
     }
 
     PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
@@ -152,18 +152,18 @@ public class AddExceptionToCatchFix implements ModCommandAction {
 
   @Override
   public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
-    PsiFile file = context.file();
-    if (!(file instanceof PsiJavaFile)) return null;
+    PsiFile psiFile = context.file();
+    if (!(psiFile instanceof PsiJavaFile)) return null;
 
-    PsiElement element = findElement(file, context.offset());
+    PsiElement element = findElement(psiFile, context.offset());
     if (element == null) return null;
     
     return Presentation.of(QuickFixBundle.message("add.catch.clause.text"));
   }
 
-  private @Nullable PsiElement findElement(final PsiFile file, final int offset) {
-    PsiElement element = file.findElementAt(offset);
-    if (element instanceof PsiWhiteSpace) element = file.findElementAt(offset - 1);
+  private @Nullable PsiElement findElement(final PsiFile psiFile, final int offset) {
+    PsiElement element = psiFile.findElementAt(offset);
+    if (element instanceof PsiWhiteSpace) element = psiFile.findElementAt(offset - 1);
     if (element == null) return null;
     PsiElement parentStatement = CommonJavaRefactoringUtil.getParentStatement(element, false);
     if (parentStatement instanceof PsiDeclarationStatement) {

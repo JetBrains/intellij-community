@@ -26,18 +26,18 @@ public abstract class BaseGenerateAction extends CodeInsightAction implements Ge
   protected void update(@NotNull Presentation presentation,
                         @NotNull Project project,
                         @NotNull Editor editor,
-                        @NotNull PsiFile file,
+                        @NotNull PsiFile psiFile,
                         @NotNull DataContext dataContext,
                         @Nullable String actionPlace) {
-    super.update(presentation, project, editor, file, dataContext, actionPlace);
+    super.update(presentation, project, editor, psiFile, dataContext, actionPlace);
     if (myHandler instanceof ContextAwareActionHandler && presentation.isEnabled()) {
-      presentation.setEnabled(((ContextAwareActionHandler)myHandler).isAvailableForQuickList(editor, file, dataContext));
+      presentation.setEnabled(((ContextAwareActionHandler)myHandler).isAvailableForQuickList(editor, psiFile, dataContext));
     }
   }
 
   @Override
-  protected void update(@NotNull Presentation presentation, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    presentation.setEnabledAndVisible(isValidForFile(project, editor, file));
+  protected void update(@NotNull Presentation presentation, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    presentation.setEnabledAndVisible(isValidForFile(project, editor, psiFile));
   }
 
   @Override
@@ -59,11 +59,11 @@ public abstract class BaseGenerateAction extends CodeInsightAction implements Ge
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (!(file instanceof PsiJavaFile)) return false;
-    if (file instanceof PsiCompiledElement) return false;
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    if (!(psiFile instanceof PsiJavaFile)) return false;
+    if (psiFile instanceof PsiCompiledElement) return false;
 
-    PsiClass targetClass = getTargetClass(editor, file);
+    PsiClass targetClass = getTargetClass(editor, psiFile);
     return targetClass != null && isValidForClass(targetClass);
   }
 

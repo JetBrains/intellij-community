@@ -26,7 +26,7 @@ final class CollapseSelectionAction extends BaseCodeInsightAction implements Dum
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     return CollapseSelectionHandler.isEnabled(editor);
   }
 }

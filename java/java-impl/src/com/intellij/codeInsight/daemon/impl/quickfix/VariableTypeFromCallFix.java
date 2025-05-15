@@ -46,12 +46,12 @@ public final class VariableTypeFromCallFix implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     return myExpressionType.isValid() && myVar.isValid() && PsiTypesUtil.allTypeParametersResolved(myVar, myExpressionType);
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, final Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     var scope = PsiSearchHelper.getInstance(project).getUseScope(myVar);
     var handler = CommonJavaRefactoringUtil.getRefactoringSupport().getChangeTypeSignatureHandler();
     handler.runHighlightingTypeMigrationSilently(project, editor, scope, myVar, myExpressionType);

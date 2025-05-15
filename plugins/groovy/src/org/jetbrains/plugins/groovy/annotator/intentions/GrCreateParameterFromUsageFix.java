@@ -47,15 +47,15 @@ public class GrCreateParameterFromUsageFix extends Intention implements MethodOr
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     int offset = editor.getCaretModel().getOffset();
-    PsiMethod method = PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiMethod.class);
+    PsiMethod method = PsiTreeUtil.getParentOfType(psiFile.findElementAt(offset), PsiMethod.class);
     if (method == null) {
       return IntentionPreviewInfo.EMPTY;
     }
     PsiMethod copy = ((PsiMethod)method.copy());
     PsiParameterList list = copy.getParameterList();
-    list.add(GroovyPsiElementFactory.getInstance(project).createParameter(myName, PsiType.getJavaLangObject(PsiManager.getInstance(project), file.getResolveScope())));
+    list.add(GroovyPsiElementFactory.getInstance(project).createParameter(myName, PsiType.getJavaLangObject(PsiManager.getInstance(project), psiFile.getResolveScope())));
     return new IntentionPreviewInfo.CustomDiff(GroovyFileType.GROOVY_FILE_TYPE, method.getText(), copy.getText());
   }
 

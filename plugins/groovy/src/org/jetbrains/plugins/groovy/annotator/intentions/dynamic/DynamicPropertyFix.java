@@ -36,7 +36,7 @@ public abstract class DynamicPropertyFix extends GroovyFix implements IntentionA
   protected abstract @Nullable String getRefName();
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     return new IntentionPreviewInfo.CustomDiff(GroovyFileType.GROOVY_FILE_TYPE, "Dynamic namespace", "", "Object " + getRefName());
   }
 

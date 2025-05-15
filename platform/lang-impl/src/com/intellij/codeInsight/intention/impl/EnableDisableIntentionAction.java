@@ -27,7 +27,7 @@ public final class EnableDisableIntentionAction extends AbstractEditIntentionSet
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     IntentionManagerSettings mySettings = IntentionManagerSettings.getInstance();
     mySettings.setEnabled(myAction, !mySettings.isEnabled(myAction));
   }

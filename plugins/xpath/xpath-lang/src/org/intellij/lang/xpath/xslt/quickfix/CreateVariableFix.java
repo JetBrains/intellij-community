@@ -55,7 +55,7 @@ public class CreateVariableFix extends AbstractFix {
     }
 
     @Override
-    public void invoke(final @NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    public void invoke(final @NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
         editor = editor == null ? null : InjectedLanguageEditorUtil.getTopLevelEditor(editor);
 
         XmlTag tag = PsiTreeUtil.getContextOfType(myReference, XmlTag.class, true);

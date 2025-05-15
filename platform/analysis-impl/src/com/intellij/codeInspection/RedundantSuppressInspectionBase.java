@@ -50,15 +50,15 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
   }
 
   @Override
-  public void checkFile(@NotNull PsiFile file,
+  public void checkFile(@NotNull PsiFile psiFile,
                         @NotNull InspectionManager manager,
                         @NotNull ProblemsHolder problemsHolder,
                         @NotNull GlobalInspectionContext globalContext,
                         @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    InspectionSuppressor extension = ContainerUtil.find(LanguageInspectionSuppressors.INSTANCE.allForLanguage(file.getLanguage()), s -> s instanceof RedundantSuppressionDetector);
+    InspectionSuppressor extension = ContainerUtil.find(LanguageInspectionSuppressors.INSTANCE.allForLanguage(psiFile.getLanguage()), s -> s instanceof RedundantSuppressionDetector);
     if (!(extension instanceof RedundantSuppressionDetector redundantSuppressionDetector)) return;
     InspectionProfileImpl profile = getProfile(manager, globalContext);
-    CommonProblemDescriptor[] descriptors = checkElement(file, redundantSuppressionDetector, manager, profile);
+    CommonProblemDescriptor[] descriptors = checkElement(psiFile, redundantSuppressionDetector, manager, profile);
     for (CommonProblemDescriptor descriptor : descriptors) {
       if (descriptor instanceof ProblemDescriptor problemDescriptor) {
         PsiElement psiElement = problemDescriptor.getPsiElement();
@@ -71,7 +71,7 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
           }
         }
       }
-      problemsHolder.registerProblem(file, descriptor.getDescriptionTemplate());
+      problemsHolder.registerProblem(psiFile, descriptor.getDescriptionTemplate());
     }
   }
 

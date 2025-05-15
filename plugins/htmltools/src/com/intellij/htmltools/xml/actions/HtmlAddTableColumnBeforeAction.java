@@ -14,8 +14,8 @@ public final class HtmlAddTableColumnBeforeAction extends CodeInsightAction {
   public HtmlAddTableColumnBeforeAction() {
     myHandler = new CodeInsightActionHandler() {
       @Override
-      public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
-        TableColumnAdder.addColumn(project, editor, file, true);
+      public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile psiFile) {
+        TableColumnAdder.addColumn(project, editor, psiFile, true);
       }
     };
   }
@@ -26,7 +26,7 @@ public final class HtmlAddTableColumnBeforeAction extends CodeInsightAction {
   }
 
   @Override
-  protected boolean isValidForFile(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
-    return TableColumnAdder.isActionAvailable(editor, file);
+  protected boolean isValidForFile(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile psiFile) {
+    return TableColumnAdder.isActionAvailable(editor, psiFile);
   }
 }

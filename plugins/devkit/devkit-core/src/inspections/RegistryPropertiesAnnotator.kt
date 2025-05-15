@@ -99,18 +99,18 @@ private class RegistryPropertiesAnnotator : Annotator, DumbAware {
   private class ShowEPDeclarationIntention(private val propertyName: String) : IntentionAction, DumbAware {
     override fun startInWriteAction(): Boolean = false
 
-    override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+    override fun generatePreview(project: Project, editor: Editor, psiFile: PsiFile): IntentionPreviewInfo {
       return IntentionPreviewInfo.EMPTY
     }
 
     override fun getFamilyName(): String = DevKitBundle.message("registry.properties.annotator.show.ep.family.name")
 
-    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = true
+    override fun isAvailable(project: Project, editor: Editor?, psiFile: PsiFile?): Boolean = true
 
     override fun getText(): String = DevKitBundle.message("registry.properties.annotator.show.ep.name", propertyName)
 
-    override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-      val propertiesFile = file as PropertiesFile
+    override fun invoke(project: Project, editor: Editor?, psiFile: PsiFile?) {
+      val propertiesFile = psiFile as PropertiesFile
       val defaultValue = propertiesFile.findPropertyByKey(propertyName)!!.value
       val description = propertiesFile.findPropertyByKey(propertyName + DESCRIPTION_SUFFIX)?.value
       @NonNls var restartRequiredText = ""
@@ -137,11 +137,11 @@ private class RegistryPropertiesAnnotator : Annotator, DumbAware {
     @Nls
     override fun getFamilyName(): String = DevKitBundle.message("registry.properties.annotator.add.description.family.name")
 
-    override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean = true
+    override fun isAvailable(project: Project, editor: Editor, psiFile: PsiFile): Boolean = true
 
     @Throws(IncorrectOperationException::class)
-    override fun invoke(project: Project, editor: Editor, file: PsiFile) {
-      val propertiesFile = file as PropertiesFile
+    override fun invoke(project: Project, editor: Editor, psiFile: PsiFile) {
+      val propertiesFile = psiFile as PropertiesFile
 
       val originalProperty = propertiesFile.findPropertyByKey(myPropertyName) as PropertyImpl?
       val descriptionProperty = propertiesFile.addPropertyAfter(myPropertyName + DESCRIPTION_SUFFIX, "Description", originalProperty)

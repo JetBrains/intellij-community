@@ -146,12 +146,12 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
   }
 
   @Override
-  public @Nullable State collectInformation(@NotNull PsiFile file) {
-    VirtualFile vFile = file.getVirtualFile();
+  public @Nullable State collectInformation(@NotNull PsiFile psiFile) {
+    VirtualFile vFile = psiFile.getVirtualFile();
     if (vFile == null || !FileTypeRegistry.getInstance().isFileOfType(vFile, PythonFileType.INSTANCE)) {
       return null;
     }
-    Sdk sdk = PythonSdkType.findLocalCPython(DocStringParser.getModuleForElement(file));
+    Sdk sdk = PythonSdkType.findLocalCPython(DocStringParser.getModuleForElement(psiFile));
     if (sdk == null) {
       if (!myReportedMissingInterpreter) {
         myReportedMissingInterpreter = true;
@@ -167,17 +167,17 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
       }
       return null;
     }
-    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(file.getProject()).getCurrentProfile();
+    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(psiFile.getProject()).getCurrentProfile();
     final HighlightDisplayKey key = HighlightDisplayKey.find(PyPep8Inspection.INSPECTION_SHORT_NAME);
-    if (!profile.isToolEnabled(key, file)) {
+    if (!profile.isToolEnabled(key, psiFile)) {
       return null;
     }
-    if (file instanceof PyFileImpl && !((PyFileImpl)file).isAcceptedFor(PyPep8Inspection.class)) {
+    if (psiFile instanceof PyFileImpl && !((PyFileImpl)psiFile).isAcceptedFor(PyPep8Inspection.class)) {
       return null;
     }
-    final PyPep8Inspection inspection = (PyPep8Inspection)profile.getUnwrappedTool(PyPep8Inspection.INSPECTION_SHORT_NAME, file);
-    final CodeStyleSettings commonSettings = CodeStyle.getSettings(file);
-    final PyCodeStyleSettings customSettings = CodeStyle.getCustomSettings(file, PyCodeStyleSettings.class);
+    final PyPep8Inspection inspection = (PyPep8Inspection)profile.getUnwrappedTool(PyPep8Inspection.INSPECTION_SHORT_NAME, psiFile);
+    final CodeStyleSettings commonSettings = CodeStyle.getSettings(psiFile);
+    final PyCodeStyleSettings customSettings = CodeStyle.getCustomSettings(psiFile, PyCodeStyleSettings.class);
 
     final List<String> ignoredErrors = Lists.newArrayList(inspection.ignoredErrors);
     if (!customSettings.SPACE_AFTER_NUMBER_SIGN) {
@@ -193,8 +193,8 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
                      // The local SDK used to launch the pycodestyle.py script is not necessarily of the same version as the project SDK, 
                      // so LanguageLevel.forElement(file) might lead to launching the script incompatible with the "runner" interpreter.
                      PySdkUtil.getLanguageLevelForSdk(sdk),
-                     file.getText(),
-                     profile.getErrorLevel(key, file),
+                     psiFile.getText(),
+                     profile.getErrorLevel(key, psiFile),
                      ignoredErrors,
                      commonSettings.getRightMargin(PythonLanguage.getInstance()),
                      customSettings.HANG_CLOSING_BRACKETS);
@@ -255,14 +255,14 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
   }
 
   @Override
-  public void apply(@NotNull PsiFile file, Results annotationResult, @NotNull AnnotationHolder holder) {
-    if (annotationResult == null || !file.isValid()) return;
-    final String text = file.getText();
-    Project project = file.getProject();
-    final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+  public void apply(@NotNull PsiFile psiFile, Results annotationResult, @NotNull AnnotationHolder holder) {
+    if (annotationResult == null || !psiFile.isValid()) return;
+    final String text = psiFile.getText();
+    Project project = psiFile.getProject();
+    final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
 
-    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(file.getProject()).getCurrentProfile();
-    final PyPep8Inspection inspection = (PyPep8Inspection)profile.getUnwrappedTool(PyPep8Inspection.INSPECTION_SHORT_NAME, file);
+    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(psiFile.getProject()).getCurrentProfile();
+    final PyPep8Inspection inspection = (PyPep8Inspection)profile.getUnwrappedTool(PyPep8Inspection.INSPECTION_SHORT_NAME, psiFile);
 
     for (Problem problem : annotationResult.problems) {
       final int line = problem.myLine - 1;
@@ -274,22 +274,22 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
       else {
         offset = StringUtil.lineColToOffset(text, line, column);
       }
-      PsiElement problemElement = file.findElementAt(offset);
+      PsiElement problemElement = psiFile.findElementAt(offset);
       // E3xx - blank lines warnings
       if (!(problemElement instanceof PsiWhiteSpace) && problem.myCode.startsWith("E3")) {
-        final PsiElement elementBefore = file.findElementAt(Math.max(0, offset - 1));
+        final PsiElement elementBefore = psiFile.findElementAt(Math.max(0, offset - 1));
         if (elementBefore instanceof PsiWhiteSpace) {
           problemElement = elementBefore;
         }
       }
       // W292 no newline at end of file
       if (problemElement == null && document != null && offset == document.getTextLength() && problem.myCode.equals("W292")) {
-        problemElement = file.findElementAt(Math.max(0, offset - 1));
+        problemElement = psiFile.findElementAt(Math.max(0, offset - 1));
       }
 
-      if (ignoreDueToSettings(file, problem, problemElement) ||
-          ignoredDueToProblemSuppressors(problem, file, problemElement) ||
-          ignoredDueToNoqaComment(problem, file, document)) {
+      if (ignoreDueToSettings(psiFile, problem, problemElement) ||
+          ignoredDueToProblemSuppressors(problem, psiFile, problemElement) ||
+          ignoredDueToNoqaComment(problem, psiFile, document)) {
         continue;
       }
 
@@ -472,14 +472,14 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
     }
 
     @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
       return true;
     }
 
     @Override
-    public void invoke(@NotNull Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
+    public void invoke(@NotNull Project project, Editor editor, final PsiFile psiFile) throws IncorrectOperationException {
       InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, it -> {
-        PyPep8Inspection tool = (PyPep8Inspection)it.getUnwrappedTool(PyPep8Inspection.INSPECTION_SHORT_NAME, file);
+        PyPep8Inspection tool = (PyPep8Inspection)it.getUnwrappedTool(PyPep8Inspection.INSPECTION_SHORT_NAME, psiFile);
         if (!tool.ignoredErrors.contains(myCode)) {
           tool.ignoredErrors.add(myCode);
         }

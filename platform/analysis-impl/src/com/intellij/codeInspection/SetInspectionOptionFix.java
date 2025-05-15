@@ -78,8 +78,8 @@ public class SetInspectionOptionFix extends IntentionAndQuickFixAction implement
   }
 
   @Override
-  public void applyFix(@NotNull Project project, PsiFile file, @Nullable Editor editor) {
-    VirtualFile vFile = file.getVirtualFile();
+  public void applyFix(@NotNull Project project, PsiFile psiFile, @Nullable Editor editor) {
+    VirtualFile vFile = psiFile.getVirtualFile();
     Object oldValue = getOption(project, vFile);
     setOption(project, vFile, myValue);
     if (oldValue != null) {
@@ -103,8 +103,8 @@ public class SetInspectionOptionFix extends IntentionAndQuickFixAction implement
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return generatePreviewForFile(file);
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return generatePreviewForFile(psiFile);
   }
 
   private @NotNull IntentionPreviewInfo generatePreviewForFile(@NotNull PsiFile psiFile) {

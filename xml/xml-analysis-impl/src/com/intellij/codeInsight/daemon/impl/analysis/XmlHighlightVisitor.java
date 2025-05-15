@@ -72,7 +72,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   @Override
-  public boolean analyze(final @NotNull PsiFile file,
+  public boolean analyze(final @NotNull PsiFile psiFile,
                          final boolean updateWholeFile,
                          @NotNull HighlightInfoHolder holder,
                          @NotNull Runnable action) {
@@ -372,8 +372,8 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       .range(child)
       .descriptionAndTooltip(localizedMessage)
       .registerFix(removeAttributeIntention, List.of(), null, null, null);
-    PsiFile file = tag.getContainingFile();
-    if (file != null) {
+    PsiFile psiFile = tag.getContainingFile();
+    if (psiFile != null) {
       for (XmlUndefinedElementFixProvider fixProvider : XmlUndefinedElementFixProvider.EP_NAME.getExtensionList()) {
         IntentionAction[] fixes = fixProvider.createFixes(attribute);
         if (fixes != null) {
@@ -608,8 +608,8 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   @Override
-  public boolean suitableForFile(final @NotNull PsiFile file) {
-    return file instanceof XmlFile || XmlTagTreeHighlightingUtil.hasXmlViewProvider(file);
+  public boolean suitableForFile(final @NotNull PsiFile psiFile) {
+    return psiFile instanceof XmlFile || XmlTagTreeHighlightingUtil.hasXmlViewProvider(psiFile);
   }
 
   @Override

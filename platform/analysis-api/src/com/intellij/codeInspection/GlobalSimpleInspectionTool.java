@@ -20,7 +20,7 @@ public abstract class GlobalSimpleInspectionTool extends GlobalInspectionTool {
                                  @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {}
 
   @Override
-  public abstract void checkFile(@NotNull PsiFile file,
+  public abstract void checkFile(@NotNull PsiFile psiFile,
                                  @NotNull InspectionManager manager,
                                  @NotNull ProblemsHolder problemsHolder,
                                  @NotNull GlobalInspectionContext globalContext,

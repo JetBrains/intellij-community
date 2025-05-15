@@ -37,7 +37,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) {
     PsiNewExpression newExpression = getNewExpression();
     if (newExpression == null) {
       return;
@@ -52,12 +52,12 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     PsiNewExpression element = myNewExpression.getElement();
     if (element == null) return IntentionPreviewInfo.EMPTY;
     PsiJavaCodeReferenceElement classReference = getReferenceElement(element);
     if (classReference == null) return IntentionPreviewInfo.EMPTY;
-    PsiClass aClass = (PsiClass)file.add(getKind().create(JavaPsiFacade.getElementFactory(project), classReference.getReferenceName()));
+    PsiClass aClass = (PsiClass)psiFile.add(getKind().create(JavaPsiFacade.getElementFactory(project), classReference.getReferenceName()));
     setupClassFromNewExpression(aClass, element);
     setupGenericParameters(aClass, classReference);
     CodeStyleManager.getInstance(project).reformat(aClass);

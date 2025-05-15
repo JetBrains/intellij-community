@@ -117,14 +117,14 @@ public final class ImportFromToImportIntention extends PyBaseIntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof PyFile)) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (!(psiFile instanceof PyFile)) {
       return false;
     }
 
-    InfoHolder info = InfoHolder.collect(getElementFromEditor(editor, file));
+    InfoHolder info = InfoHolder.collect(getElementFromEditor(editor, psiFile));
     info.myModuleReference = null;
-    final PsiElement position = file.findElementAt(editor.getCaretModel().getOffset());
+    final PsiElement position = psiFile.findElementAt(editor.getCaretModel().getOffset());
     info.myFromImportStatement = PsiTreeUtil.getParentOfType(position, PyFromImportStatement.class);
     PyPsiUtils.assertValid(info.myFromImportStatement);
     if (info.myFromImportStatement != null && !info.myFromImportStatement.isFromFuture()) {
@@ -137,7 +137,7 @@ public final class ImportFromToImportIntention extends PyBaseIntentionAction {
           PyPsiUtils.assertValid(ref);
           if (ref != null) {
             PsiElement target = ref.getReference().resolve();
-            final TypeEvalContext context = TypeEvalContext.codeAnalysis(file.getProject(), file);
+            final TypeEvalContext context = TypeEvalContext.codeAnalysis(psiFile.getProject(), psiFile);
             if (target instanceof PyExpression && context.getType((PyExpression)target) instanceof PyModuleType) {
               return false;
             }

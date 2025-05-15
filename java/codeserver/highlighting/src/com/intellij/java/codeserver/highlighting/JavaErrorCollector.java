@@ -19,11 +19,11 @@ public final class JavaErrorCollector {
    * Create a collector to collect Java errors. After creation every single PSI element in the desired range should be passed into
    * {@link #processElement(PsiElement)} to actually gather errors
    * 
-   * @param file Java file to process
+   * @param psiFile Java file to process
    * @param consumer a consumer to get errors
    */
-  public JavaErrorCollector(@NotNull PsiFile file, @NotNull Consumer<@NotNull JavaCompilationError<?, ?>> consumer) {
-    myVisitor = new JavaErrorVisitor(file, consumer);
+  public JavaErrorCollector(@NotNull PsiFile psiFile, @NotNull Consumer<@NotNull JavaCompilationError<?, ?>> consumer) {
+    myVisitor = new JavaErrorVisitor(psiFile, consumer);
   }
 
   /**

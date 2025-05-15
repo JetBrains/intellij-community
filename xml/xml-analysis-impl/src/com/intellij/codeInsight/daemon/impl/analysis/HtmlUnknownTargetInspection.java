@@ -25,8 +25,8 @@ public class HtmlUnknownTargetInspection extends XmlPathReferenceInspection {
   }
 
   static boolean notRemoteBase(PsiReference reference) {
-    final PsiFile file = reference.getElement().getContainingFile();
-    final String basePath = file instanceof XmlFile ? HtmlUtil.getHrefBase((XmlFile)file) : null;
+    final PsiFile psiFile = reference.getElement().getContainingFile();
+    final String basePath = psiFile instanceof XmlFile ? HtmlUtil.getHrefBase((XmlFile)psiFile) : null;
     return basePath == null || !HtmlUtil.hasHtmlPrefix(basePath);
   }
 }

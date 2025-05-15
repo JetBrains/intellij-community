@@ -27,7 +27,7 @@ public final class MethodDownAction extends BaseCodeInsightAction implements Dum
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, final @NotNull PsiFile file) {
-    return MethodUpAction.checkValidForFile(file);
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, final @NotNull PsiFile psiFile) {
+    return MethodUpAction.checkValidForFile(psiFile);
   }
 }

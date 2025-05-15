@@ -43,9 +43,9 @@ public final class ShowControlFlowHandler implements CodeInsightActionHandler {
 
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     final int offset = editor.getCaretModel().getOffset();
-    final PsiElement position = file.findElementAt(offset);
+    final PsiElement position = psiFile.findElementAt(offset);
     if (position == null) {
       return;
     }

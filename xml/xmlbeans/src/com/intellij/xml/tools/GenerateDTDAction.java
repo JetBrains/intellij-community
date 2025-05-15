@@ -30,8 +30,8 @@ final class GenerateDTDAction extends BaseCodeInsightAction {
   protected @NotNull CodeInsightActionHandler getHandler(){
     return new CodeInsightActionHandler(){
       @Override
-      public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-        final XmlDocument document = findSuitableXmlDocument(file);
+      public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+        final XmlDocument document = findSuitableXmlDocument(psiFile);
         if (document != null) {
           final @NonNls StringBuilder buffer = new StringBuilder();
           buffer.append("<!DOCTYPE ").append(document.getRootTag().getName()).append(" [\n");
@@ -49,7 +49,7 @@ final class GenerateDTDAction extends BaseCodeInsightAction {
                   buffer.insert(text.length(),nextSibling.getText());
                 }
               }
-              tempFile = (XmlFile)PsiFileFactory.getInstance(file.getProject()).createFileFromText("dummy.xml", buffer.toString());
+              tempFile = (XmlFile)PsiFileFactory.getInstance(psiFile.getProject()).createFileFromText("dummy.xml", buffer.toString());
               prolog.replace(tempFile.getDocument().getProlog());
             }
           catch (IncorrectOperationException e) {
@@ -80,7 +80,7 @@ final class GenerateDTDAction extends BaseCodeInsightAction {
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file){
-    return file.getLanguage() == XMLLanguage.INSTANCE && findSuitableXmlDocument(file) != null;
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile){
+    return psiFile.getLanguage() == XMLLanguage.INSTANCE && findSuitableXmlDocument(psiFile) != null;
   }
 }

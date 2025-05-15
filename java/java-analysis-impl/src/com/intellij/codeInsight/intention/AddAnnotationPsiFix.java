@@ -141,7 +141,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements Lo
 
   @Override
   public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
+                             @NotNull PsiFile psiFile,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     return isAvailable((PsiModifierListOwner)startElement, myAnnotation);
@@ -186,11 +186,11 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements Lo
   
   @Override
   public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
+                     @NotNull PsiFile psiFile,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)startElement;
-    ActionContext context = ActionContext.from(null, file);
+    ActionContext context = ActionContext.from(null, psiFile);
     AddAnnotationModCommandAction delegate = new AddAnnotationModCommandAction(
       myAnnotation, modifierListOwner, myPairs, myAnnotationPlace, myAnnotationsToRemove);
     if (delegate.getPresentation(context) == null) return;

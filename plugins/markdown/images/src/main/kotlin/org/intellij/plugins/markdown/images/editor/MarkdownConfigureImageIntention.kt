@@ -28,7 +28,7 @@ internal class MarkdownConfigureImageIntention: PsiElementBaseIntentionAction() 
     }
   }
 
-  override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+  override fun generatePreview(project: Project, editor: Editor, psiFile: PsiFile): IntentionPreviewInfo {
     return IntentionPreviewInfo.EMPTY
   }
 

@@ -36,9 +36,9 @@ public final class PyGenerateDocstringIntention extends PyBaseIntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof PyFile) || file instanceof PyDocstringFile) return false;
-    PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (!(psiFile instanceof PyFile) || psiFile instanceof PyDocstringFile) return false;
+    PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(psiFile, editor.getCaretModel().getOffset());
     if (elementAt == null) {
       return false;
     }

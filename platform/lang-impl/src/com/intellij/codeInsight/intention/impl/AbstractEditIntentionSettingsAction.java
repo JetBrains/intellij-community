@@ -34,7 +34,7 @@ public abstract class AbstractEditIntentionSettingsAction implements IntentionAc
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     return myEnabled;
   }
 

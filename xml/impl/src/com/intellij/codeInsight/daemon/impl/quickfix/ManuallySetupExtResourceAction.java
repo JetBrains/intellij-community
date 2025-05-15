@@ -19,8 +19,8 @@ public class ManuallySetupExtResourceAction extends BaseExtResourceAction {
   }
 
   @Override
-  protected void doInvoke(final @NotNull PsiFile file, final int offset, final @NotNull String uri, final Editor editor) throws IncorrectOperationException {
-    final MapExternalResourceDialog dialog = new MapExternalResourceDialog(uri, file.getProject(), file, null);
+  protected void doInvoke(final @NotNull PsiFile psiFile, final int offset, final @NotNull String uri, final Editor editor) throws IncorrectOperationException {
+    final MapExternalResourceDialog dialog = new MapExternalResourceDialog(uri, psiFile.getProject(), psiFile, null);
     if (dialog.showAndGet()) {
       ApplicationManager.getApplication().runWriteAction(() -> {
         String location = dialog.getResourceLocation();

@@ -33,17 +33,17 @@ final class XmlSplitTagAction implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(final @NotNull Project project, final Editor editor, final PsiFile file) {
-    if (file instanceof XmlFile) {
+  public boolean isAvailable(final @NotNull Project project, final Editor editor, final PsiFile psiFile) {
+    if (psiFile instanceof XmlFile) {
       if (editor != null) {
         final int offset = editor.getCaretModel().getOffset();
-        final PsiElement psiElement = file.findElementAt(offset);
+        final PsiElement psiElement = psiFile.findElementAt(offset);
         if (psiElement != null) {
           final PsiElement parent = psiElement.getParent();
           if (parent instanceof XmlText && !parent.getText().trim().isEmpty()) {
             final PsiElement grandParent = parent.getParent();
             if (grandParent != null && !isInsideUnsplittableElement(grandParent)) {
-              return InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, offset) == null;
+              return InjectedLanguageManager.getInstance(project).findInjectedElementAt(psiFile, offset) == null;
             }
           }
         }
@@ -63,10 +63,10 @@ final class XmlSplitTagAction implements IntentionAction {
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile psiFile) throws IncorrectOperationException {
     if (editor != null) {
       final int offset = editor.getCaretModel().getOffset();
-      final PsiElement psiElement = file.findElementAt(offset);
+      final PsiElement psiElement = psiFile.findElementAt(offset);
       if (psiElement != null) {
         final PsiElement containingTag = psiElement.getParent().getParent();
         if (containingTag instanceof XmlTag tag) {
@@ -78,7 +78,7 @@ final class XmlSplitTagAction implements IntentionAction {
           editor.getCaretModel().moveToOffset(offset + toInsert.length());
           PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
 
-          CodeStyleManager.getInstance(project).reformatRange(file, tagRange.getStartOffset(), tagRange.getEndOffset() + toInsert.length());
+          CodeStyleManager.getInstance(project).reformatRange(psiFile, tagRange.getStartOffset(), tagRange.getEndOffset() + toInsert.length());
         }
       }
     }

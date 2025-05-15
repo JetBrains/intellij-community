@@ -23,10 +23,10 @@ abstract class IntentionActionGroup<T : IntentionAction>(private val actions: Li
 
   final override fun startInWriteAction(): Boolean = false
 
-  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
-    if (editor == null || file == null) return false
+  override fun isAvailable(project: Project, editor: Editor?, psiFile: PsiFile?): Boolean {
+    if (editor == null || psiFile == null) return false
 
-    val availableActions = actions.filter { it.isAvailable(project, editor, file) }
+    val availableActions = actions.filter { it.isAvailable(project, editor, psiFile) }
     if (availableActions.isEmpty()) return false
 
     text = availableActions.singleOrNull()?.text ?: getGroupText(availableActions)
@@ -40,14 +40,14 @@ abstract class IntentionActionGroup<T : IntentionAction>(private val actions: Li
   @Nls(capitalization = Nls.Capitalization.Sentence)
   protected abstract fun getGroupText(actions: List<T>): String
 
-  final override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-    if (editor == null || file == null) return
+  final override fun invoke(project: Project, editor: Editor?, psiFile: PsiFile?) {
+    if (editor == null || psiFile == null) return
 
-    val availableActions = actions.filter { it.isAvailable(project, editor, file) }
+    val availableActions = actions.filter { it.isAvailable(project, editor, psiFile) }
     if (availableActions.isEmpty()) return
 
     fun invokeAction(action: IntentionAction) {
-      ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, action, action.text, IntentionSource.CONTEXT_ACTIONS)
+      ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, action.text, IntentionSource.CONTEXT_ACTIONS)
     }
 
     val singleAction = availableActions.singleOrNull()
@@ -55,7 +55,7 @@ abstract class IntentionActionGroup<T : IntentionAction>(private val actions: Li
       invokeAction(singleAction)
     }
     else {
-      chooseAction(project, editor, file, actions, ::invokeAction)
+      chooseAction(project, editor, psiFile, actions, ::invokeAction)
     }
   }
 

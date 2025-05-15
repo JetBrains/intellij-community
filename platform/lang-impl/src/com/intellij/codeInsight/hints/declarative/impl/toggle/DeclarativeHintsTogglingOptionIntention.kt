@@ -31,11 +31,11 @@ class DeclarativeHintsTogglingOptionIntention(
     return text
   }
 
-  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
+  override fun isAvailable(project: Project, editor: Editor?, psiFile: PsiFile?): Boolean {
     return true
   }
 
-  override fun invoke(project: Project, editor: Editor, file: PsiFile) {
+  override fun invoke(project: Project, editor: Editor, psiFile: PsiFile) {
     val settings = DeclarativeInlayHintsSettings.getInstance()
 
     when (mode) {

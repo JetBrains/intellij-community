@@ -39,13 +39,13 @@ public final class LocalRefUseInfo {
   private final @NotNull Set<PsiImportStatementBase> myUsedImports;
 
   /**
-   * @param file Java/JSP file to get local reference use info for.
+   * @param psiFileRoot Java/JSP file to get local reference use info for.
    * @return LocalRefUseInfo container (compute if it was not ready yet)
    */
-  public static @NotNull LocalRefUseInfo forFile(@NotNull PsiFile file) {
-    return CachedValuesManager.getCachedValue(file, () -> {
-      Builder builder = new Builder(file);
-      for (PsiFile psiFile : file.getViewProvider().getAllFiles()) {
+  public static @NotNull LocalRefUseInfo forFile(@NotNull PsiFile psiFileRoot) {
+    return CachedValuesManager.getCachedValue(psiFileRoot, () -> {
+      Builder builder = new Builder(psiFileRoot);
+      for (PsiFile psiFile : psiFileRoot.getViewProvider().getAllFiles()) {
         psiFile.accept(builder);
       }
       LocalRefUseInfo result = builder.build();
@@ -61,9 +61,9 @@ public final class LocalRefUseInfo {
     this.myUsedImports = myImportStatements;
   }
 
-  public @NotNull GlobalUsageHelper getGlobalUsageHelper(@NotNull PsiFile file, @Nullable UnusedDeclarationInspectionBase deadCodeInspection) {
-    FileViewProvider viewProvider = file.getViewProvider();
-    Project project = file.getProject();
+  public @NotNull GlobalUsageHelper getGlobalUsageHelper(@NotNull PsiFile psiFile, @Nullable UnusedDeclarationInspectionBase deadCodeInspection) {
+    FileViewProvider viewProvider = psiFile.getViewProvider();
+    Project project = psiFile.getProject();
 
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     VirtualFile virtualFile = viewProvider.getVirtualFile();
@@ -262,15 +262,15 @@ public final class LocalRefUseInfo {
   }
 
   private static class Builder extends JavaRecursiveElementWalkingVisitor {
-    private final @NotNull PsiFile myFile;
+    private final @NotNull PsiFile myPsiFile;
     private final @NotNull Set<PsiAnchor> myDclsUsedMap;
     private final @NotNull MultiMap<PsiElement, PsiReference> myLocalRefsMap;
     private final @NotNull Set<PsiImportStatementBase> myImportStatements;
 
-    Builder(@NotNull PsiFile file) {
+    Builder(@NotNull PsiFile psiFile) {
       myImportStatements = new HashSet<>();
       myDclsUsedMap = new HashSet<>();
-      myFile = file;
+      myPsiFile = psiFile;
       myLocalRefsMap = MultiMap.createLinkedSet();
     }
 
@@ -308,7 +308,7 @@ public final class LocalRefUseInfo {
     @Override
     public void visitElement(@NotNull PsiElement element) {
       super.visitElement(element);
-      if(myFile instanceof ServerPageFile) {
+      if(myPsiFile instanceof ServerPageFile) {
         // in JSP, XmlAttributeValue may contain java references
         try {
           for (PsiReference reference : element.getReferences()) {
@@ -323,8 +323,8 @@ public final class LocalRefUseInfo {
     }
 
     private void registerReferencesFromInjectedFragments(@NotNull PsiElement element) {
-      InjectedLanguageManager manager = InjectedLanguageManager.getInstance(myFile.getProject());
-      manager.enumerateEx(element, myFile, false, (injectedPsi, places) -> {
+      InjectedLanguageManager manager = InjectedLanguageManager.getInstance(myPsiFile.getProject());
+      manager.enumerateEx(element, myPsiFile, false, (injectedPsi, places) -> {
         if (InjectedLanguageJavaReferenceSupplier.containsPsiMemberReferences(injectedPsi.getLanguage().getID())) {
           injectedPsi.accept(new PsiRecursiveElementWalkingVisitor() {
             @Override
@@ -366,7 +366,7 @@ public final class LocalRefUseInfo {
       PsiElement refElement = resolveResult.getElement();
       PsiFile psiFile = refElement == null ? null : refElement.getContainingFile();
       if (psiFile != null) psiFile = (PsiFile)psiFile.getNavigationElement(); // look at navigation elements because all references resolve into Cls elements when highlighting library source
-      if (refElement != null && psiFile != null && myFile.getViewProvider().equals(psiFile.getViewProvider())) {
+      if (refElement != null && psiFile != null && myPsiFile.getViewProvider().equals(psiFile.getViewProvider())) {
         registerLocalRef(ref, refElement.getNavigationElement());
       }
 
@@ -420,7 +420,7 @@ public final class LocalRefUseInfo {
     public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement ref) {
       super.visitReferenceElement(ref);
       if (!(ref instanceof PsiImportStaticReferenceElement)) {
-        JavaResolveResult result = resolveOptimised(ref, myFile);
+        JavaResolveResult result = resolveOptimised(ref, myPsiFile);
         if (result != null) {
           registerReference(ref, result);
         }
@@ -430,7 +430,7 @@ public final class LocalRefUseInfo {
     @Override
     public void visitReferenceExpression(@NotNull PsiReferenceExpression ref) {
       super.visitReferenceExpression(ref);
-      JavaResolveResult result = resolveOptimised(ref, myFile);
+      JavaResolveResult result = resolveOptimised(ref, myPsiFile);
       if (result != null) {
         registerReference(ref, result);
       }

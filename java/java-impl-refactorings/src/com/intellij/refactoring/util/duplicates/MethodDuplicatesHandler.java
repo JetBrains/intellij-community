@@ -191,23 +191,23 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
 
     scope.accept(new PsiRecursiveElementVisitor() {
       private int myFileCount;
-      @Override public void visitFile(final @NotNull PsiFile file) {
+      @Override public void visitFile(final @NotNull PsiFile psiFile) {
         if (progressIndicator != null){
           if (progressIndicator.isCanceled()) return;
           progressIndicator.setFraction(((double)myFileCount++)/fileCount);
-          final VirtualFile virtualFile = file.getVirtualFile();
+          final VirtualFile virtualFile = psiFile.getVirtualFile();
           if (virtualFile != null) {
             progressIndicator.setText2(ProjectUtil.calcRelativeToProjectPath(virtualFile, project));
           }
         }
-        final Module targetModule = ModuleUtilCore.findModuleForPsiElement(file);
+        final Module targetModule = ModuleUtilCore.findModuleForPsiElement(psiFile);
         if (targetModule == null) return;
         for (Map.Entry<PsiMember, Set<Module>> entry : memberWithModulesMap.entrySet()) {
           final Set<Module> dependencies = entry.getValue();
           if (dependencies == null || !dependencies.contains(targetModule)) continue;
 
           final PsiMember member = entry.getKey();
-          final List<Match> matchList = hasDuplicates(file, member);
+          final List<Match> matchList = hasDuplicates(psiFile, member);
           for (Iterator<Match> iterator = matchList.iterator(); iterator.hasNext(); ) {
             Match match = iterator.next();
             final PsiElement matchStart = match.getMatchStart();

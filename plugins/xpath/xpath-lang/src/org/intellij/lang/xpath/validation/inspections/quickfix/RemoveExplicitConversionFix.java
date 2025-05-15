@@ -45,10 +45,10 @@ public class RemoveExplicitConversionFix extends ReplaceElementFix<XPathExpressi
 
   @Override
   public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
+                             @NotNull PsiFile psiFile,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
-    return super.isAvailable(project, file, startElement, endElement)
+    return super.isAvailable(project, psiFile, startElement, endElement)
         && ((XPathFunctionCall)startElement).getArgumentList().length == 1;
     }
 

@@ -24,14 +24,14 @@ public final class SliceBackwardAction extends CodeInsightAction {
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (LanguageSlicing.getProvider(file) == null) {
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    if (LanguageSlicing.getProvider(psiFile) == null) {
       return false;
     }
     if (editor.getSelectionModel().hasSelection()) {
       return false;
     }
-    PsiElement expression = getHandler().getExpressionAtCaret(editor, file);
+    PsiElement expression = getHandler().getExpressionAtCaret(editor, psiFile);
     return expression != null;
   }
 }

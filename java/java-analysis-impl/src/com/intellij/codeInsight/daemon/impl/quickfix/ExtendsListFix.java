@@ -72,7 +72,7 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
 
   @Override
   public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
+                             @NotNull PsiFile psiFile,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     if (!myTypeToExtendFrom.isValid()) return false;
@@ -92,7 +92,7 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
 
   @Override
   public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
+                     @NotNull PsiFile psiFile,
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {

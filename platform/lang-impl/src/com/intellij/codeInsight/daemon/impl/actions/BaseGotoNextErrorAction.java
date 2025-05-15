@@ -49,8 +49,8 @@ public abstract class BaseGotoNextErrorAction extends BaseCodeInsightAction impl
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return DaemonCodeAnalyzer.getInstance(project).isHighlightingAvailable(file);
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return DaemonCodeAnalyzer.getInstance(project).isHighlightingAvailable(psiFile);
   }
 
   @Internal

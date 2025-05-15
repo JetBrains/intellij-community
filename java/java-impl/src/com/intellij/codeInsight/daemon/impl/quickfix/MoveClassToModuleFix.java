@@ -91,14 +91,14 @@ class MoveClassToModuleFix implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     return !myModules.isEmpty() && ContainerUtil.all(myModules.keySet(), PsiElement::isValid);
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     if (myModules.size() == 1) {
-      moveClass(project, editor, file, myModules.keySet().iterator().next());
+      moveClass(project, editor, psiFile, myModules.keySet().iterator().next());
     }
     else {
       LOG.assertTrue(editor != null);
@@ -119,14 +119,14 @@ class MoveClassToModuleFix implements IntentionAction {
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChosenCallback(value -> moveClass(project, editor, file, value))
+        .setItemChosenCallback(value -> moveClass(project, editor, psiFile, value))
         .createPopup()
         .showInBestPositionFor(editor);
     }
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     @NlsSafe String name = myReferenceName;
     if (name == null) {
       return IntentionPreviewInfo.EMPTY;
@@ -140,7 +140,7 @@ class MoveClassToModuleFix implements IntentionAction {
       .append(myCurrentModule.getName());
     return new IntentionPreviewInfo.Html(builder.wrapWith("p"));  }
 
-  private void moveClass(Project project, Editor editor, PsiFile file, PsiClass aClass) {
+  private void moveClass(Project project, Editor editor, PsiFile psiFile, PsiClass aClass) {
     RefactoringActionHandler moveHandler = RefactoringActionHandlerFactory.getInstance().createMoveHandler();
     DataContext dataContext = EditorUtil.getEditorDataContext(editor);
     String fqName = aClass.getQualifiedName();
@@ -151,7 +151,7 @@ class MoveClassToModuleFix implements IntentionAction {
                           SimpleDataContext.getSimpleContext(LangDataKeys.TARGET_PSI_ELEMENT, directory, dataContext);
 
     moveHandler.invoke(project, new PsiElement[]{aClass}, context);
-    PsiReference reference = file.findReferenceAt(editor.getCaretModel().getOffset());
+    PsiReference reference = psiFile.findReferenceAt(editor.getCaretModel().getOffset());
     PsiClass newClass = JavaPsiFacade.getInstance(project).findClass(fqName, GlobalSearchScope.moduleScope(myCurrentModule));
     if (reference != null && newClass != null) {
       QuestionAction action = new AddImportAction(project, reference, editor, newClass);

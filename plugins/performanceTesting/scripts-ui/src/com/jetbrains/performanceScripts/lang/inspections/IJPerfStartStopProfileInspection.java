@@ -85,13 +85,13 @@ class IJPerfStartStopProfileInspection implements Annotator {
     }
 
     @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
       return true;
     }
 
     @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      file.addBefore(createCRLF(project), file.add(createStopCommand(project)));
+    public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+      psiFile.addBefore(createCRLF(project), psiFile.add(createStopCommand(project)));
     }
 
     private static IJPerfFile createFile(Project project, String text) {

@@ -54,11 +54,11 @@ public class EditorConfigGenerateLanguagePropertiesAction extends CodeInsightAct
   @Override
   protected boolean isValidForFile(@NotNull Project project,
                                    @NotNull Editor editor,
-                                   @NotNull PsiFile file) {
-    if (file instanceof EditorConfigPsiFile) {
+                                   @NotNull PsiFile psiFile) {
+    if (psiFile instanceof EditorConfigPsiFile) {
       int currOffset = editor.getCaretModel().getOffset();
-      if (currOffset == file.getTextLength() && currOffset > 0) currOffset --;
-      PsiElement contextElement = file.findElementAt(currOffset);
+      if (currOffset == psiFile.getTextLength() && currOffset > 0) currOffset --;
+      PsiElement contextElement = psiFile.findElementAt(currOffset);
       if (contextElement != null) {
         if (contextElement instanceof PsiWhiteSpace) {
           PsiElement prev = contextElement.getPrevSibling();
@@ -88,8 +88,8 @@ public class EditorConfigGenerateLanguagePropertiesAction extends CodeInsightAct
 
     @Override
     public void invoke(@NotNull Project project,
-                       @NotNull Editor editor, @NotNull PsiFile file) {
-      ListPopup languagePopup = createLanguagePopup(project, file, editor);
+                       @NotNull Editor editor, @NotNull PsiFile psiFile) {
+      ListPopup languagePopup = createLanguagePopup(project, psiFile, editor);
       languagePopup.showInBestPositionFor(editor);
     }
 

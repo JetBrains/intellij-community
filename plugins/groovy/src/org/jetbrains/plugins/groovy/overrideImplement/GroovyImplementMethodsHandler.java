@@ -23,9 +23,9 @@ public final class GroovyImplementMethodsHandler implements LanguageCodeInsightA
   }
 
   @Override
-  public void invoke(final @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(final @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
-    PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, true);
+    PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, psiFile, true);
     if (aClass instanceof GrTypeDefinition typeDefinition) {
       if (GroovyOverrideImplementExploreUtil.getMethodSignaturesToImplement(typeDefinition).isEmpty()) {
         HintManager.getInstance().showErrorHint(editor, JavaBundle.message("implement.method.no.methods.to.implement"));

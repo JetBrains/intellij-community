@@ -220,8 +220,8 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     doTestFor(fileSuffix, createWrapper(testDataPath));
   }
 
-  protected ActionHint parseActionHintImpl(@NotNull PsiFile file, @NotNull String contents) {
-    return ActionHint.parse(file, contents);
+  protected ActionHint parseActionHintImpl(@NotNull PsiFile psiFile, @NotNull String contents) {
+    return ActionHint.parse(psiFile, contents);
   }
 
   protected @NotNull QuickFixTestCase createWrapper() {

@@ -190,9 +190,9 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
       return new PsiElementVisitor() {
         @Override
-        public void visitFile(@NotNull PsiFile file) {
+        public void visitFile(@NotNull PsiFile psiFile) {
           TimeoutUtil.sleep(1000); // make it run longer than LIP
-          super.visitFile(file);
+          super.visitFile(psiFile);
         }
 
         @Override
@@ -258,15 +258,15 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
   public void testWholeFileInspectionRestartedEvenIfThereWasAModificationInsideCodeBlockInOtherFile() throws Exception {
     MyTrackingInspection tool = registerInspection(new MyWholeInspection());
 
-    PsiFile file = configureByText(JavaFileType.INSTANCE, "class X { void f() { <caret> } }");
-    PsiFile otherFile = createFile(myModule, file.getContainingDirectory().getVirtualFile(), "otherFile.txt", "xxx");
+    PsiFile psiFile = configureByText(JavaFileType.INSTANCE, "class X { void f() { <caret> } }");
+    PsiFile otherPsiFile = createFile(myModule, psiFile.getContainingDirectory().getVirtualFile(), "otherFile.txt", "xxx");
     List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
     assertEmpty(infos);
     int visitedCount = tool.visited.size();
     assertTrue(tool.visited.toString(), visitedCount > 0);
     tool.visited.clear();
 
-    Document otherDocument = Objects.requireNonNull(PsiDocumentManager.getInstance(getProject()).getDocument(otherFile));
+    Document otherDocument = Objects.requireNonNull(PsiDocumentManager.getInstance(getProject()).getDocument(otherPsiFile));
     WriteCommandAction.runWriteCommandAction(getProject(), () -> otherDocument.setText("zzz"));
 
     infos = doHighlighting(HighlightSeverity.WARNING);
@@ -277,7 +277,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     tool.visited.clear();
 
     //ensure started on another file
-    configureByExistingFile(otherFile.getVirtualFile());
+    configureByExistingFile(otherPsiFile.getVirtualFile());
     infos = doHighlighting(HighlightSeverity.WARNING);
     assertEmpty(infos);
 
@@ -520,7 +520,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
         }
 
         @Override
-        public void visitFile(@NotNull PsiFile file) {
+        public void visitFile(@NotNull PsiFile psiFile) {
           // use this contrived form to be able to bail out immediately by modifying toSleepMs in the other thread
           while (toSleepMs.addAndGet(-100) > 0) {
             TimeoutUtil.sleep(100);
@@ -918,7 +918,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
       public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
         return new PsiElementVisitor() {
           @Override
-          public void visitFile(@NotNull PsiFile file) {
+          public void visitFile(@NotNull PsiFile psiFile) {
             throw new MyException();
           }
         };

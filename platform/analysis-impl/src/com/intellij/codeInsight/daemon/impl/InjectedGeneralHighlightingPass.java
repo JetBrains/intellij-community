@@ -120,12 +120,12 @@ public final class InjectedGeneralHighlightingPass extends ProgressableTextEdito
     for (DocumentWindow documentRange : cachedInjected) {
       ProgressManager.checkCanceled();
       if (!documentRange.isValid()) continue;
-      PsiFile file = psiDocumentManager.getPsiFile(documentRange);
-      if (file == null) continue;
-      PsiElement context = injectedLanguageManager.getInjectionHost(file);
+      PsiFile psiFile = psiDocumentManager.getPsiFile(documentRange);
+      if (psiFile == null) continue;
+      PsiElement context = injectedLanguageManager.getInjectionHost(psiFile);
       if (context != null
           && context.isValid()
-          && !file.getProject().isDisposed()
+          && !psiFile.getProject().isDisposed()
           && (myUpdateAll || myRestrictRange.contains(context.getTextRange()))) { // consider strict if partial update
         if (myReducedRanges != null && !ContainerUtil.exists(myReducedRanges, reducedRange -> reducedRange.contains(context.getTextRange()))) { // skip if not in reduced
           continue;

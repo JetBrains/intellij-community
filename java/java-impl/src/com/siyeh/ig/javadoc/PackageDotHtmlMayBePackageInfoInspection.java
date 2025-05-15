@@ -144,16 +144,16 @@ public final class PackageDotHtmlMayBePackageInfoInspection extends BaseInspecti
   private static class PackageDotHtmlMayBePackageInfoVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitFile(@NotNull PsiFile file) {
-      super.visitFile(file);
-      if (!(file instanceof XmlFile)) {
+    public void visitFile(@NotNull PsiFile psiFile) {
+      super.visitFile(psiFile);
+      if (!(psiFile instanceof XmlFile)) {
         return;
       }
-      final @NonNls String fileName = file.getName();
+      final @NonNls String fileName = psiFile.getName();
       if (!"package.html".equals(fileName)) {
         return;
       }
-      final PsiDirectory directory = file.getContainingDirectory();
+      final PsiDirectory directory = psiFile.getContainingDirectory();
       if (directory == null) {
         return;
       }
@@ -162,7 +162,7 @@ public final class PackageDotHtmlMayBePackageInfoInspection extends BaseInspecti
         return;
       }
       final boolean exists = directory.findFile("package-info.java") != null;
-      registerError(file, aPackage, exists);
+      registerError(psiFile, aPackage, exists);
     }
 
     public static String getPackage(@NotNull PsiDirectory directory) {

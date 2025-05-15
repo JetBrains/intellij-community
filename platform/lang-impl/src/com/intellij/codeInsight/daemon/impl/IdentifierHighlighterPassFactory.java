@@ -27,16 +27,16 @@ public final class IdentifierHighlighterPassFactory {
   private static final Key<Boolean> ourTestingIdentifierHighlighting = Key.create("TestingIdentifierHighlighting");
 
   @ApiStatus.Internal
-  public boolean shouldHighlightingIdentifiers(@NotNull PsiFile file, @NotNull Editor editor) {
+  public boolean shouldHighlightingIdentifiers(@NotNull PsiFile psiFile, @NotNull Editor editor) {
     return CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET &&
            (!editor.isOneLineMode() || !((EditorEx)editor).isEmbeddedIntoDialogWrapper()) &&
-           checkDumbMode(file) &&
+           checkDumbMode(psiFile) &&
            isEnabled() &&
-           (file.isPhysical() || file.getOriginalFile().isPhysical());
+           (psiFile.isPhysical() || psiFile.getOriginalFile().isPhysical());
   }
 
-  private static boolean checkDumbMode(@NotNull PsiFile file) {
-    return !DumbService.isDumb(file.getProject()) || Registry.is("identifier.highlighter.pass.in.dumb.mode");
+  private static boolean checkDumbMode(@NotNull PsiFile psiFile) {
+    return !DumbService.isDumb(psiFile.getProject()) || Registry.is("identifier.highlighter.pass.in.dumb.mode");
   }
 
   public static boolean isEnabled() {

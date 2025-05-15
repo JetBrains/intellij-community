@@ -33,7 +33,7 @@ class GrazieRuleSettingsAction(private val ruleName: String, private val rule: R
     return if (other is GrazieAddExceptionQuickFix) 1 else 0
   }
 
-  override fun applyFix(project: Project, file: PsiFile?, editor: Editor?) {
+  override fun applyFix(project: Project, psiFile: PsiFile?, editor: Editor?) {
     val state1 = GrazieConfig.get()
 
     val ok: Boolean

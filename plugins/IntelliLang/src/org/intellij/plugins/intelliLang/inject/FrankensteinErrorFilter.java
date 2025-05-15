@@ -21,13 +21,13 @@ final class FrankensteinErrorFilter extends HighlightErrorFilter implements High
   }
 
   @Override
-  public boolean accept(@NotNull HighlightInfo highlightInfo, @Nullable PsiFile file) {
+  public boolean accept(@NotNull HighlightInfo highlightInfo, @Nullable PsiFile psiFile) {
     if (highlightInfo.getSeverity() != HighlightSeverity.WARNING &&
         highlightInfo.getSeverity() != HighlightSeverity.WEAK_WARNING) return true;
-    if (!isFrankenstein(file)) return true;
+    if (!isFrankenstein(psiFile)) return true;
     int start = highlightInfo.getStartOffset();
     int end = highlightInfo.getEndOffset();
-    String text = file.getText().substring(start, end);
+    String text = psiFile.getText().substring(start, end);
     return !"missingValue".equals(text);
   }
 

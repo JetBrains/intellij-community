@@ -79,11 +79,11 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
    * Must be implemented, as default implementation won't work anyway
    */
   @Override
-  public abstract @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file);
+  public abstract @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile);
 
   @Override
   public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
+                             @NotNull PsiFile psiFile,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     long current = System.currentTimeMillis();
@@ -104,11 +104,11 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
 
   @Override
   public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
+                     @NotNull PsiFile psiFile,
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    if (isAvailable(project, null, file)) {
+    if (isAvailable(project, null, psiFile)) {
       if (myDirectories.size() == 1) {
         apply(myStartElement.getProject(), myDirectories.get(0), editor);
       }

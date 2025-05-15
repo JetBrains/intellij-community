@@ -62,8 +62,8 @@ public final class IntroduceVariableIntentionAction extends BaseRefactoringInten
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiElement element = getElement(editor, file);
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    PsiElement element = getElement(editor, psiFile);
     if (element == null) return IntentionPreviewInfo.EMPTY;
     PsiType type = getTypeOfUnfilledParameter(editor, element);
     if (type != null) return new IntroduceEmptyVariableHandlerImpl().generatePreview(editor, element.getContainingFile(), type);

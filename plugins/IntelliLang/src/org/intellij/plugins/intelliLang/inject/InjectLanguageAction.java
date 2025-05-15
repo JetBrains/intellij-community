@@ -114,20 +114,20 @@ public final class InjectLanguageAction implements IntentionAction, LowPriorityA
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiLanguageInjectionHost host = findInjectionHost(editor, file);
+  public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    PsiLanguageInjectionHost host = findInjectionHost(editor, psiFile);
     if (host == null) return false;
-    if (!InjectionUtils.isInjectLanguageActionEnabled(file)) return false;
+    if (!InjectionUtils.isInjectLanguageActionEnabled(psiFile)) return false;
     List<Pair<PsiElement, TextRange>> injectedPsi = InjectedLanguageManager.getInstance(project).getInjectedPsiFiles(host);
     if (injectedPsi == null || injectedPsi.isEmpty()) {
-      return !InjectedReferencesContributor.isInjected(file.findReferenceAt(editor.getCaretModel().getOffset()));
+      return !InjectedReferencesContributor.isInjected(psiFile.findReferenceAt(editor.getCaretModel().getOffset()));
     }
     return false;
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiLanguageInjectionHost host = findInjectionHost(editor, file);
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    PsiLanguageInjectionHost host = findInjectionHost(editor, psiFile);
     if (host == null) return IntentionPreviewInfo.EMPTY;
     String text = StringUtil.shortenTextWithEllipsis(ElementManipulators.getValueText(host), 40, 10);
     return new IntentionPreviewInfo.Html(IntelliLangBundle.message("intelliLang.inject.language.action.preview", text));
@@ -157,9 +157,9 @@ public final class InjectLanguageAction implements IntentionAction, LowPriorityA
   @Override
   public void invoke(@NotNull Project project,
                      @NotNull Editor editor,
-                     @NotNull PsiFile file) throws IncorrectOperationException {
+                     @NotNull PsiFile psiFile) throws IncorrectOperationException {
     doChooseLanguageToInject(editor, injectable -> {
-      invokeImpl(project, editor, file, injectable);
+      invokeImpl(project, editor, psiFile, injectable);
       return false;
     });
   }
