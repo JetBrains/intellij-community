@@ -1,19 +1,17 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands
 
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.components.service
-import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.DumbService.Companion.isDumb
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.application.smartReadAction
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
-import com.intellij.util.Alarm
-import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.seconds
 
 class WaitForSmartCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
   companion object {
     const val PREFIX: String = CMD_PREFIX + "waitForSmart"
+    private val LOG = logger<WaitForSmartCommand>()
 
     /**
      * Wait for 3 seconds after the dumb mode completes.
@@ -31,27 +29,14 @@ class WaitForSmartCommand(text: String, line: Int) : PlaybackCommandCoroutineAda
      * But for now we use this `waitForSmart` only in indexes-related tests and
      * call it before every "comparing" command (checkIndices/compareIndexes/etc)
      */
-    private const val SMART_MODE_MINIMUM_DELAY = 3000
+    private const val SMART_MODE_MINIMUM_DELAY_SECONDS = 3
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    val alarm = Alarm(context.project.service<CodeAnalysisStateListener>().cs)
-    val completion = CompletableDeferred<Unit>()
-    completeWhenSmartModeIsLongEnough(context.project, completion, alarm)
-    completion.await()
-  }
-
-  private fun completeWhenSmartModeIsLongEnough(project: Project, completion: CompletableDeferred<Unit>, alarm: Alarm) {
-    DumbService.getInstance(project).runWhenSmart {
-      alarm.addRequest(
-        {
-          if (runReadAction { isDumb(project) }) {
-            completeWhenSmartModeIsLongEnough(project, completion, alarm)
-          }
-          else {
-            completion.complete(Unit)
-          }
-        }, SMART_MODE_MINIMUM_DELAY)
+    smartReadAction(context.project) {
     }
+    LOG.info("%waitForSmart dumb mode finished, waiting $SMART_MODE_MINIMUM_DELAY_SECONDS seconds more...")
+    delay(SMART_MODE_MINIMUM_DELAY_SECONDS.seconds)
+    LOG.info("%waitForSmart command finished")
   }
 }
