@@ -11,9 +11,6 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.jetbrains.python.errorProcessing.MessageError
-import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.onSuccess
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.uv.impl.getUvExecutable
@@ -35,9 +32,9 @@ class PyUvSdkConfiguration : PyProjectSdkConfigurationExtension {
   @RequiresBackgroundThread
   override fun createAndAddSdkForConfigurator(module: Module): Sdk? {
     return runBlockingCancellable {
-      createUv(module).getOr {
-        LOGGER.warn(it.error.message)
-        return@runBlockingCancellable null
+      createUv(module).getOrElse {
+        LOGGER.warn(it)
+        null
       }
     }
   }
@@ -45,19 +42,19 @@ class PyUvSdkConfiguration : PyProjectSdkConfigurationExtension {
   @RequiresBackgroundThread
   override fun createAndAddSdkForInspection(module: Module): Sdk? {
     return runBlockingCancellable {
-      createUv(module).getOr {
-        LOGGER.warn(it.error.message)
-        return@runBlockingCancellable null
+      createUv(module).getOrElse {
+        LOGGER.warn(it)
+        null
       }
     }
   }
 
   override fun supportsHeadlessModel(): Boolean = true
 
-  private suspend fun createUv(module: Module): PyResult<Sdk> {
+  private suspend fun createUv(module: Module): Result<Sdk> {
     val workingDir = tryResolvePath(module.basePath)
     if (workingDir == null) {
-      return PyResult.failure(MessageError("Can't determine working dir for the module"))
+      return Result.failure(IllegalStateException("Can't determine working dir for the module"))
     }
 
     val sdk = setupNewUvSdkAndEnvUnderProgress(module.project, workingDir, ProjectJdkTable.getInstance().allJdks.toList(), null)

@@ -1,13 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv
 
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.services.systemPython.SystemPythonProvider
 import com.intellij.python.community.services.systemPython.UICustomization
 import com.jetbrains.python.PythonBinary
-import com.jetbrains.python.errorProcessing.asKotlinResult
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
 import com.jetbrains.python.sdk.uv.impl.hasUvExecutable
@@ -21,7 +19,7 @@ internal class UvSystemPythonProvider : SystemPythonProvider {
     }
 
     val uv = createUvLowLevel(Path.of("."))
-    return uv.listUvPythons().asKotlinResult()
+    return uv.listUvPythons()
   }
 
   @Suppress("HardCodedStringLiteral") // tool name is untranslatable
