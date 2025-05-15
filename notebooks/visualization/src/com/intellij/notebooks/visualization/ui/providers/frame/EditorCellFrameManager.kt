@@ -36,6 +36,7 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
     editorCell.isSelected.afterDistinctChange(this) {
       updateCellFrameShow()
     }
+
     editorCell.isHovered.afterDistinctChange(this) {
       updateCellFrameShow()
     }
@@ -43,7 +44,6 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
     editorCell.isUnfolded.afterDistinctChange(this) {
       updateCellFrameShow()
     }
-
 
     editor.notebookAppearance.cellFrameSelectedColor.afterChange(this) {
       updateCellFrameShow()
@@ -142,7 +142,6 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
       state.set(CellFrameState(false))
     }
   }
-
 
   companion object {
     fun create(editorCell: EditorCell): EditorCellFrameManager? =
