@@ -1,24 +1,35 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
+import com.intellij.openapi.application.EdtImmediate
+import com.intellij.openapi.application.UiImmediate
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.IJSwingUtilities
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.data.VcsLogStorageImpl
+import com.intellij.vcs.log.impl.VcsLogTabsManager.Companion.onDisplayNameChange
 import com.intellij.vcs.log.ui.MainVcsLogUi
+import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.util.VcsLogUtil
-import kotlinx.coroutines.guava.await
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.getAndUpdate
 import java.util.function.BiConsumer
 
 internal class VcsProjectLogManager(
   project: Project,
+  private val parentCs: CoroutineScope,
   uiProperties: VcsLogProjectTabsProperties,
   logProviders: Map<VirtualFile, VcsLogProvider>,
   recreateHandler: BiConsumer<in VcsLogErrorHandler.Source, in Throwable>,
@@ -27,21 +38,50 @@ internal class VcsProjectLogManager(
   private val tabsManager = VcsLogTabsManager(project, uiProperties, this)
   override val tabs: Set<String> = uiProperties.tabs.keys
 
-  val mainUi: MainVcsLogUi?
-    get() = getVcsLogContentProvider(project)?.ui
+  private lateinit var mainUiCs: CoroutineScope
+
+  private val mainUiState = MutableStateFlow<MainVcsLogUi?>(null)
+  val mainUi: MainVcsLogUi? get() = mainUiState.value
 
   @RequiresEdt
   fun createUi() {
-    getVcsLogContentProvider(project)?.addMainUi(this)
+    mainUiCs = parentCs.childScope("UI scope of $name", Dispatchers.UiImmediate)
+
+    // need EDT because of immediate toolbar update
+    mainUiCs.launch(Dispatchers.EdtImmediate) {
+      project.serviceAsync<VcsLogContentProvider.ContentHolder>().contentState.collect { content ->
+        if (content != null) {
+          val ui = createLogUi(getMainLogUiFactory(MAIN_LOG_ID, null), VcsLogTabLocation.TOOL_WINDOW, false)
+          content.displayName = VcsLogTabsUtil.generateDisplayName(ui)
+          ui.onDisplayNameChange {
+            content.displayName = VcsLogTabsUtil.generateDisplayName(ui)
+          }
+
+          val panel = VcsLogPanel(this@VcsProjectLogManager, ui)
+          content.component = panel
+          IJSwingUtilities.updateComponentTreeUI(content.component)
+          mainUiState.value = ui
+        }
+        else {
+          mainUiState.getAndUpdate { null }?.let {
+            Disposer.dispose(it)
+          }
+        }
+      }
+    }
+
     tabsManager.createTabs()
   }
 
-  override suspend fun awaitMainUi(): MainVcsLogUi? {
-    return getVcsLogContentProvider(project)?.waitMainUiCreation()?.await()
-  }
+  override suspend fun awaitMainUi(): MainVcsLogUi = mainUiCs.async {
+    mainUiState.filterNotNull().first()
+  }.await()
 
   override fun runInMainUi(consumer: (MainVcsLogUi) -> Unit) {
-    getVcsLogContentProvider(project)!!.executeOnMainUiCreated(consumer)
+    mainUiCs.launch {
+      val mainUi = mainUiState.filterNotNull().first()
+      consumer(mainUi)
+    }
   }
 
   @RequiresEdt
@@ -52,7 +92,10 @@ internal class VcsProjectLogManager(
   @RequiresEdt
   override fun disposeUi() {
     Disposer.dispose(tabsManager)
-    getVcsLogContentProvider(project)?.disposeMainUi()
+    mainUiCs.cancel()
+    mainUiState.getAndUpdate { null }?.let {
+      Disposer.dispose(it)
+    }
     super.disposeUi()
   }
 
@@ -74,13 +117,4 @@ internal class VcsProjectLogManager(
 
 internal fun getProjectLogName(logProviders: Map<VirtualFile, VcsLogProvider>): String {
   return "Vcs Project Log for " + VcsLogUtil.getProvidersMapText(logProviders)
-}
-
-private fun getVcsLogContentProvider(project: Project): VcsLogContentProvider? {
-  for (ep in ChangesViewContentEP.EP_NAME.getExtensions(project)) {
-    if (ep.getClassName() == VcsLogContentProvider::class.java.name) {
-      return ep.cachedInstance as VcsLogContentProvider?
-    }
-  }
-  return null
 }

@@ -217,7 +217,7 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
     }
 
     LOG.debug { "Creating ${getProjectLogName(logProviders)}" }
-    val result = VcsProjectLogManager(project, uiProperties, logProviders) { s, t ->
+    val result = VcsProjectLogManager(project, coroutineScope, uiProperties, logProviders) { s, t ->
       errorHandler.recreateOnError(s, t)
     }
     cachedLogManager = result

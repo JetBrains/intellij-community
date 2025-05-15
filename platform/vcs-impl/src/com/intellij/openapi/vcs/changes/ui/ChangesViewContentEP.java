@@ -160,11 +160,6 @@ public final class ChangesViewContentEP implements PluginAware {
   }
 
   @ApiStatus.Internal
-  public @Nullable ChangesViewContentProvider getCachedInstance() {
-    return myInstance;
-  }
-
-  @ApiStatus.Internal
   public @Nullable Predicate<Project> newPredicateInstance(@NotNull Project project) {
     if (predicateClassName == null) {
       return null;

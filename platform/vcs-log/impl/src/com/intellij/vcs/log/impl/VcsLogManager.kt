@@ -126,16 +126,13 @@ open class VcsLogManager @Internal constructor(
     return createLogUi(getMainLogUiFactory(logId, filters), location, true)
   }
 
-  internal fun createLogUi(logId: String, location: VcsLogTabLocation, isClosedOnDispose: Boolean = true): MainVcsLogUi {
-    return createLogUi(getMainLogUiFactory(logId, null), location, isClosedOnDispose)
-  }
-
   @Internal
   fun <U : VcsLogUiEx> createLogUi(factory: VcsLogUiFactory<U>, location: VcsLogTabLocation): U {
     return createLogUi(factory, location, true)
   }
 
-  private fun getMainLogUiFactory(logId: String, filters: VcsLogFilterCollection?): VcsLogUiFactory<out MainVcsLogUi> {
+  @Internal
+  protected fun getMainLogUiFactory(logId: String, filters: VcsLogFilterCollection?): VcsLogUiFactory<out MainVcsLogUi> {
     val factoryProvider = CustomVcsLogUiFactoryProvider.LOG_CUSTOM_UI_FACTORY_PROVIDER_EP.findFirstSafe(project) {
       it.isActive(dataManager.logProviders)
     }
@@ -145,7 +142,8 @@ open class VcsLogManager @Internal constructor(
     return factoryProvider.createLogUiFactory(logId, this, filters)
   }
 
-  private fun <U : VcsLogUiEx> createLogUi(
+  @Internal
+  protected fun <U : VcsLogUiEx> createLogUi(
     factory: VcsLogUiFactory<U>,
     location: VcsLogTabLocation,
     isClosedOnDispose: Boolean,
