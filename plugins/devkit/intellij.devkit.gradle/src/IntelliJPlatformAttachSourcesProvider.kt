@@ -28,7 +28,6 @@ internal enum class ApiSourceArchive(
   val archiveName: String,
 ) {
   CSS("com.intellij.css", "attachSources.api.action.displayName.css", "src_css-api.zip"),
-  DATABASE("com.intellij.database", "attachSources.api.action.displayName.database", "src_database-openapi.zip"),
   JAM("com.intellij.java", "attachSources.api.action.displayName.jam", "src_jam-openapi.zip"),
   JAVAEE("com.intellij.javaee", "attachSources.api.action.displayName.javaee", "src_javaee-openapi.zip"),
   PERSISTENCE("com.intellij.persistence", "attachSources.api.action.displayName.persistence", "src_persistence-openapi.zip"),
