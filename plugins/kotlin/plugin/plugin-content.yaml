@@ -1,13 +1,3 @@
-- name: lib/amper.dependency.resolution.kotlin.base.scripting.jar
-  library: amper.dependency.resolution.kotlin.base.scripting
-  module: kotlin.base.scripting
-  files:
-  - name: $MAVEN_REPOSITORY$/org/jetbrains/amper/dependency-resolution/0/dependency-resolution-0.jar
-  - name: $MAVEN_REPOSITORY$/org/jetbrains/amper/concurrency/0/concurrency-0.jar
-  - name: $MAVEN_REPOSITORY$/org/jetbrains/amper/nio-filechannels/0/nio-filechannels-0.jar
-  - name: $MAVEN_REPOSITORY$/org/jetbrains/amper/telemetry/0/telemetry-0.jar
-  - name: $MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/serialization-jvm/0/serialization-jvm-0.jar
-  - name: $MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/core-jvm/0/core-jvm-0.jar
 - name: lib/completion-ranking-kotlin.jar
   library: completion-ranking-kotlin
   module: kotlin.ml-completion
@@ -366,11 +356,6 @@
   files:
   - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2/scripting-compiler-plugin-for-ide-2.jar
   reason: withProjectLibrary
-- name: lib/maven-artifact.jar
-  library: amper.dependency.resolution.kotlin.base.scripting
-  module: kotlin.base.scripting
-  files:
-  - name: $MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/3/maven-artifact-3.jar
 - name: lib/vavr.jar
   library: vavr
   files:
