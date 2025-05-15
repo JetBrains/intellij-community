@@ -27,6 +27,7 @@ jvm_library(
     "//platform/util/text-matching",
     "//java/codeserver/highlighting",
     "//java/codeserver/core",
+    "//platform/workspace/storage",
     "//java/java-syntax:syntax",
   ]
 )

@@ -48,6 +48,7 @@ jvm_library(
     "//aether-dependency-resolver",
     "//java/openapi:java",
     "//platform/util-class-loader:util-classLoader",
+    "//platform/workspace/storage",
     "//plugins/kotlin/base/facet",
     "//plugins/kotlin/base/indices",
     "//plugins/kotlin/base/project-structure",

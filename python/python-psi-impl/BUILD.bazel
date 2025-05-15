@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "//jps/model-api:model",
+    "//platform/workspace/storage",
     "//python/python-psi-api:psi",
     "@lib//:guava",
     "//platform/util",

@@ -26,6 +26,7 @@ jvm_library(
     "@lib//:guava",
     "//platform/editor-ui-api:editor-ui",
     "//platform/refactoring",
+    "//platform/workspace/storage",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/resources:kotlin-base-resources",

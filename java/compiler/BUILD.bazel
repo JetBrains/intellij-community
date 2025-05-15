@@ -21,6 +21,7 @@ jvm_library(
     "//java/idea-ui:ui",
     "//platform/editor-ui-api:editor-ui",
     "//jps/model-api:model",
+    "//platform/workspace/storage",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//jps/model-impl",

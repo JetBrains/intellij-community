@@ -43,6 +43,7 @@ jvm_library(
     "//platform/backend/workspace",
     "//platform/settings",
     "@lib//:kotlinx-serialization-core",
+    "//platform/workspace/storage",
     "@lib//:kotlinx-serialization-json",
   ],
   runtime_deps = [":configurationStore-impl_resources"]

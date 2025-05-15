@@ -15,6 +15,7 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "@lib//:assert_j",
     "//java/java-impl:impl",
+    "//platform/workspace/storage",
     "//platform/workspace/jps",
   ]
 )

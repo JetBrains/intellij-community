@@ -55,6 +55,7 @@ jvm_library(
     "//plugins/gradle",
     "//android/gradle-dsl-flags",
     "//android/gradle-dsl",
+    "//platform/workspace/storage",
     "//android/gradle-dsl-declarative",
   ]
 )

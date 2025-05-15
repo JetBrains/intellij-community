@@ -27,6 +27,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/testFramework",
+    "//platform/workspace/storage",
     "//plugins/repository-search",
     "//plugins/repository-search:repository-search_test_lib",
     "@lib//:assert_j",

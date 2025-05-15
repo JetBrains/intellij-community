@@ -23,6 +23,7 @@ jvm_library(
     "//platform/smRunner:smRunner_test_lib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
+    "//platform/workspace/storage",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/gradle:gradle-common",

@@ -33,6 +33,7 @@ jvm_library(
     "//java/execution/impl",
     "//java/java-impl:impl",
     "//java/compiler/impl",
+    "//platform/workspace/storage",
     "//plugins/properties:properties-backend",
     "//xml/impl",
     "//java/openapi:java",

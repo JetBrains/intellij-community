@@ -42,6 +42,7 @@ jvm_library(
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlin-reflect",
     "@lib//:jna",
+    "//platform/workspace/storage",
     "@lib//:jbr-api",
   ],
   runtime_deps = [":internal_resources"]

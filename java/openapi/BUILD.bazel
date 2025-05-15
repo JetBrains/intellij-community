@@ -30,6 +30,7 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/extensions",
     "//platform/icons",
+    "//platform/workspace/storage",
     "//xml/openapi:xml",
     "//platform/platform-api:ide",
     "//platform/lang-api:lang",

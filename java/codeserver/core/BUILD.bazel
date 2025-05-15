@@ -24,6 +24,7 @@ jvm_library(
     "//java/java-frontback-psi-api:frontback-psi",
     "//java/java-psi-api:psi",
     "//java/java-psi-impl:psi-impl",
+    "//platform/workspace/storage",
     "//java/java-indexing-api:indexing",
   ],
   runtime_deps = [":core_resources"]

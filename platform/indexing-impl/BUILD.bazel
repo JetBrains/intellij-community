@@ -27,6 +27,7 @@ jvm_library(
     "//platform/util/nanoxml",
     "@lib//:aalto-xml",
     "//platform/util/xmlDom",
+    "//platform/workspace/storage",
     "//platform/util/storages",
   ],
   exports = ["//platform/indexing-api:indexing"]

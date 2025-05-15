@@ -22,6 +22,8 @@ jvm_library(
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
     "//platform/platform-impl/rpc",
+    "//platform/diagnostic",
+    "@lib//:opentelemetry",
   ],
   runtime_deps = [":shared_resources"]
 )

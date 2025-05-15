@@ -19,6 +19,7 @@ jvm_library(
     "//java/testFramework",
     "//java/openapi:java",
     "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
+    "//platform/workspace/storage",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/formatter",
     "//plugins/kotlin/base/plugin",

@@ -42,6 +42,7 @@ jvm_library(
     "//plugins/java-i18n:java-i18n_test_lib",
     "//java/compiler/impl",
     "//java/compiler/instrumentation-util",
+    "//platform/workspace/storage",
     "//plugins/junit",
     "//plugins/testng",
     "//plugins/testng:testng_test_lib",

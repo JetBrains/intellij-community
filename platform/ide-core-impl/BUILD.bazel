@@ -33,6 +33,7 @@ jvm_library(
     "//platform/diagnostic",
     "//platform/util/coroutines",
     "@lib//:hash4j",
+    "//platform/workspace/storage",
     "//platform/backend/observation",
   ],
   runtime_deps = [":ide-core-impl_resources"]

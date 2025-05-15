@@ -37,6 +37,7 @@ jvm_library(
     "//platform/backend/workspace",
     "//platform/analysis-impl",
     "//platform/util/coroutines",
+    "//platform/workspace/storage",
     "//platform/dvcs-impl/shared",
   ],
   runtime_deps = [":vcs-dvcs-impl_resources"]
@@ -79,6 +80,7 @@ jvm_library(
     "//platform/backend/workspace",
     "//platform/analysis-impl",
     "//platform/util/coroutines",
+    "//platform/workspace/storage",
     "//platform/dvcs-impl/shared",
   ],
   runtime_deps = [":vcs-dvcs-impl_resources"]

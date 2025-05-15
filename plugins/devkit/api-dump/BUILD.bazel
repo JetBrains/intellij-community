@@ -20,6 +20,7 @@ jvm_library(
     "//platform/ide-core",
     "//platform/analysis-api:analysis",
     "//platform/util",
+    "//platform/workspace/storage",
     "//platform/projectModel-impl",
   ],
   runtime_deps = [":api-dump_resources"]

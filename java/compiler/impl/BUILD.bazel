@@ -37,6 +37,7 @@ jvm_library(
     "//platform/workspace/jps",
     "//platform/platform-util-io-impl:ide-util-io-impl",
     "//platform/platform-util-netty:ide-util-netty",
+    "//platform/workspace/storage",
     "//platform/wsl-impl",
     "//platform/backend/workspace",
     "//platform/tracing:tracing-rt",

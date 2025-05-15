@@ -43,6 +43,7 @@ jvm_library(
     "//platform/feedback",
     "//platform/util/jdom",
     "//platform/backend/workspace",
+    "//platform/workspace/storage",
     "//xml/dom-openapi:dom",
     "//platform/util/coroutines",
     "//platform/backend/observation",
@@ -97,6 +98,7 @@ jvm_library(
     "//platform/testFramework/junit5/eel",
     "//platform/testFramework/junit5/eel:eel_test_lib",
     "//platform/eel-provider",
+    "//platform/workspace/storage",
     "//libraries/io",
   ]
 )

@@ -113,6 +113,7 @@ jvm_library(
     "//platform/syntax/syntax-api:syntax",
     "//platform/syntax/syntax-util:util",
     "//platform/syntax/syntax-psi:psi",
+    "//platform/workspace/storage",
     "//platform/experiment",
   ],
   exports = [
@@ -191,6 +192,7 @@ jvm_library(
     "@lib//:hamcrest",
     "//platform/backend/workspace",
     "@lib//:objenesis",
+    "//platform/workspace/storage",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "@lib//:kotlinx-collections-immutable",

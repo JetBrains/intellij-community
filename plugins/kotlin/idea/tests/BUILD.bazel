@@ -40,6 +40,7 @@ jvm_library(
     "@lib//:fastutil-min",
     "//platform/usageView-impl",
     "//platform/vcs-api:vcs",
+    "//platform/workspace/storage",
     "//plugins/kotlin/plugin/k1",
     "//plugins/kotlin/code-insight/api",
     "//plugins/kotlin/base/util",

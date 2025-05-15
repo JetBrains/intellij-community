@@ -32,6 +32,7 @@ jvm_library(
     "//java/execution/impl",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/testFramework",
+    "//platform/workspace/storage",
     "//java/idea-ui:ui",
     "//java/debugger/impl",
     "//java/execution/openapi:java-execution",
