@@ -5,7 +5,6 @@ import com.intellij.tools.build.bazel.jvmIncBuilder.impl.*;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.BytecodeInstrumenter;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.CompilerRunner;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputSink;
-import com.intellij.tools.build.bazel.jvmIncBuilder.runner.RunnerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.impl.PathSource;
@@ -24,15 +23,6 @@ import static org.jetbrains.jps.javac.Iterators.*;
 
 /** @noinspection SSBasedInspection*/
 public class BazelIncBuilder {
-
-  private static final List<RunnerFactory<? extends CompilerRunner>> ourCompilers = List.of(
-  );
-  private static final List<RunnerFactory<? extends CompilerRunner>> ourRoundCompilers = List.of(
-    KotlinCompilerRunner::new, JavaCompilerRunner::new
-  );
-  private static final List<RunnerFactory<? extends BytecodeInstrumenter>> ourInstrumenters = List.of(
-    NotNullInstrumenter::new, FormsInstrumenter::new
-  );
 
   public ExitCode build(BuildContext context) {
     // todo: support cancellation checks
@@ -110,9 +100,9 @@ public class BazelIncBuilder {
         }
       }
 
-      List<CompilerRunner> compilers = collect(map(ourCompilers, f -> f.create(context, storageManager)), new ArrayList<>());
-      List<CompilerRunner> roundCompilers = collect(map(ourRoundCompilers, f -> f.create(context, storageManager)), new ArrayList<>());
-      List<BytecodeInstrumenter> instrumenters = collect(map(ourInstrumenters, f -> f.create(context, storageManager)), new ArrayList<>());
+      List<CompilerRunner> compilers = collect(map(RunnerRegistry.getCompilers(), f -> f.create(context, storageManager)), new ArrayList<>());
+      List<CompilerRunner> roundCompilers = collect(map(RunnerRegistry.getRoundCompilers(), f -> f.create(context, storageManager)), new ArrayList<>());
+      List<BytecodeInstrumenter> instrumenters = collect(map(RunnerRegistry.getIntrumenters(), f -> f.create(context, storageManager)), new ArrayList<>());
 
       boolean isInitialRound = true;
 

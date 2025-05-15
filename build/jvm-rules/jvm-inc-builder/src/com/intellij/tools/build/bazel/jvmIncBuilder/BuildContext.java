@@ -6,6 +6,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.NodeSourcePathMapper;
 
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
 
 public interface BuildContext extends DiagnosticSink {
   String getTargetName();
@@ -14,6 +16,7 @@ public interface BuildContext extends DiagnosticSink {
 
   boolean isCanceled();
 
+  Map<CLFlags, List<String>> getFlags();
   /**
    * @return the BazelWorker working dir (can be a sandbox dir)
    * Source and library inputs should be resolved against the base dir
@@ -37,7 +40,7 @@ public interface BuildContext extends DiagnosticSink {
 
   NodeSourceSnapshot getBinaryDependencies();
 
-  BuilderArgs getBuilderArgs();
+  BuilderOptions getBuilderOptions();
 
   NodeSourcePathMapper getPathMapper();
 

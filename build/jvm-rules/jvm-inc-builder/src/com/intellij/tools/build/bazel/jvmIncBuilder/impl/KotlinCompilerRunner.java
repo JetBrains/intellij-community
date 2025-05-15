@@ -37,15 +37,11 @@ import org.jetbrains.kotlin.progress.CompilationCanceledException;
 import org.jetbrains.kotlin.progress.CompilationCanceledStatus;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 
 import static com.intellij.tools.build.bazel.jvmIncBuilder.impl.KotlinPluginsKt.configurePlugins;
-import static org.jetbrains.jps.javac.Iterators.flat;
-import static org.jetbrains.jps.javac.Iterators.map;
+import static org.jetbrains.jps.javac.Iterators.*;
 import static org.jetbrains.kotlin.cli.common.ExitCode.OK;
 import static org.jetbrains.kotlin.cli.common.arguments.ParseCommandLineArgumentsKt.parseCommandLineArguments;
 import static org.jetbrains.kotlin.cli.plugins.PluginsOptionsParserKt.processCompilerPluginOptions;
@@ -55,18 +51,43 @@ import static org.jetbrains.kotlin.cli.plugins.PluginsOptionsParserKt.processCom
 public class KotlinCompilerRunner implements CompilerRunner {
   private final BuildContext myContext;
   private final StorageManager myStorageManager;
+  private final K2JVMCompilerArguments myKotlinCompilerArgs;
   @NotNull NodeSourcePathMapper pathMapper;
 
   private LookupTrackerImpl lookupTracker;
   private InlineConstTrackerImpl inlineConstTracker;
   private EnumWhenTrackerImpl enumWhenTracker;
   private ImportTrackerImpl importTracker;
-  private @NotNull Map<@NotNull String, @NotNull String> pluginIdToPluginClasspath;
+  private final @NotNull Map<@NotNull String, @NotNull String> myPluginIdToPluginClasspath = new HashMap<>();
 
   public KotlinCompilerRunner(BuildContext context, StorageManager storageManager)  {
     myContext = context;
     myStorageManager = storageManager;
     pathMapper = context.getPathMapper();
+
+    myKotlinCompilerArgs = buildKotlinCompilerArguments(myContext);
+    // additional setup directly from flags
+    // todo: find corresponding cli option for every setting if possible
+    Map<CLFlags, List<String>> flags = context.getFlags();
+    myKotlinCompilerArgs.setSkipPrereleaseCheck(true);
+    myKotlinCompilerArgs.setAllowUnstableDependencies(true);
+    myKotlinCompilerArgs.setDisableStandardScript(true);
+    myKotlinCompilerArgs.setAllowKotlinPackage(CLFlags.ALLOW_KOTLIN_PACKAGE.isFlagSet(flags));
+    myKotlinCompilerArgs.setWhenGuards(CLFlags.WHEN_GUARDS.isFlagSet(flags));
+    myKotlinCompilerArgs.setLambdas(CLFlags.LAMBDAS.getOptionalScalarValue(flags));
+    myKotlinCompilerArgs.setJvmDefault(CLFlags.JVM_DEFAULT.getOptionalScalarValue(flags));
+    myKotlinCompilerArgs.setInlineClasses(CLFlags.INLINE_CLASSES.isFlagSet(flags));
+    myKotlinCompilerArgs.setContextReceivers(CLFlags.CONTEXT_RECEIVERS.isFlagSet(flags));
+    Iterable<String> friends = CLFlags.FRIENDS.getValue(flags);
+    if (!isEmpty(friends)) {
+      myKotlinCompilerArgs.setFriendPaths(ensureCollection(map(friends, p -> context.getBaseDir().resolve(p).normalize().toString())).toArray(String[]::new));
+    }
+    
+    // classpath map for compiler plugins
+    Iterator<String> pluginCp = CLFlags.PLUGIN_CLASSPATH.getValue(flags).iterator();
+    for (String pluginId : CLFlags.PLUGIN_ID.getValue(flags)) {
+      myPluginIdToPluginClasspath.put(pluginId, pluginCp.hasNext()? pluginCp.next() : "");
+    }
   }
 
   @Override
@@ -82,20 +103,23 @@ public class KotlinCompilerRunner implements CompilerRunner {
   @Override
   public ExitCode compile(Iterable<NodeSource> sources, Iterable<NodeSource> deletedSources, DiagnosticSink diagnostic, OutputSink out) {
     try {
-      K2JVMCompilerArguments kotlinCompilerArgs = buildKotlinCompilerArguments(myContext);
       KotlinIncrementalCacheImpl incCache = new KotlinIncrementalCacheImpl(myStorageManager, flat(deletedSources, sources));
-      Services services = buildServices(kotlinCompilerArgs.getModuleName(), incCache);
+      Services services = buildServices(myKotlinCompilerArgs.getModuleName(), incCache);
       MessageCollector messageCollector = new KotlinMessageCollector(diagnostic, this);
-      List<GeneratedJvmClass> generatedClasses = new ArrayList<>(); // todo: make sure if we really need to process generated outputs after the compilation and not "in place"
+      // todo: make sure if we really need to process generated outputs after the compilation and not "in place"
+      List<GeneratedClass> generatedClasses = new ArrayList<>();
       AbstractCliPipeline<K2JVMCompilerArguments> pipeline = createPipeline(out, generatedFile -> {
         if (generatedFile instanceof GeneratedJvmClass jvmClass) {
-          generatedClasses.add(jvmClass);
+          String jvmClassName = jvmClass.getOutputClass().getClassName().getInternalName();
+          for (File sourceFile : jvmClass.getSourceFiles()) {
+            generatedClasses.add(new GeneratedClass(jvmClassName, sourceFile));
+          }
         }
       });
 
       boolean completedOk = false;
       try {
-        org.jetbrains.kotlin.cli.common.ExitCode exitCode = pipeline.execute(kotlinCompilerArgs, services, messageCollector);
+        org.jetbrains.kotlin.cli.common.ExitCode exitCode = pipeline.execute(myKotlinCompilerArgs, services, messageCollector);
         completedOk = exitCode == OK;
         return completedOk? ExitCode.OK : ExitCode.ERROR;
       }
@@ -121,25 +145,24 @@ public class KotlinCompilerRunner implements CompilerRunner {
     }
   }
 
-  private void processTrackers(OutputSink out, List<GeneratedJvmClass> generated) {
+  private record GeneratedClass(String jvmClassName, File source) {}
+
+  private void processTrackers(OutputSink out, List<GeneratedClass> generated) {
     ensureTrackersInitialized();
     processLookupTracker(lookupTracker, out);
 
-    for (GeneratedJvmClass jvmClass : generated) {
-      for (File sourceFile : jvmClass.getSourceFiles()) {
-        processInlineConstTracker(inlineConstTracker, sourceFile, jvmClass, out);
-        processBothEnumWhenAndImportTrackers(enumWhenTracker, importTracker, sourceFile, jvmClass, out);
-      }
+    for (GeneratedClass outputClass : generated) {
+      processInlineConstTracker(inlineConstTracker, outputClass, out);
+      processBothEnumWhenAndImportTrackers(enumWhenTracker, importTracker, outputClass, out);
     }
   }
 
 
   private static void processInlineConstTracker(InlineConstTrackerImpl inlineConstTracker,
-                                                File sourceFile,
-                                                GeneratedJvmClass output,
+                                                GeneratedClass output,
                                                 OutputSink callback) {
     Map<String, Collection<ConstantRef>> constMap = inlineConstTracker.getInlineConstMap();
-    Collection<ConstantRef> constantRefs = constMap.get(sourceFile.getPath());
+    Collection<ConstantRef> constantRefs = constMap.get(output.source.getPath());
     if (constantRefs == null) return;
 
     List<CompilerDataSink.ConstantRef> cRefs = new ArrayList<>();
@@ -163,18 +186,16 @@ public class KotlinCompilerRunner implements CompilerRunner {
     }
 
     if (!cRefs.isEmpty()) {
-      String className = output.getOutputClass().getClassName().getInternalName();
-      callback.registerConstantReferences(className, cRefs);
+      callback.registerConstantReferences(output.jvmClassName, cRefs);
     }
   }
 
-  private static void processBothEnumWhenAndImportTrackers(EnumWhenTrackerImpl enumWhenTracker, ImportTrackerImpl importTracker,
-                                                           File sourceFile, GeneratedJvmClass output, OutputSink callback) {
+  private static void processBothEnumWhenAndImportTrackers(EnumWhenTrackerImpl enumWhenTracker, ImportTrackerImpl importTracker, GeneratedClass output, OutputSink callback) {
     Map<String, Collection<String>> whenMap = enumWhenTracker.getWhenExpressionFilePathToEnumClassMap();
     Map<String, Collection<String>> importMap = importTracker.getFilePathToImportedFqNamesMap();
 
-    Collection<String> enumFqNameClasses = whenMap.get(sourceFile.getPath());
-    Collection<String> importedFqNames = importMap.get(sourceFile.getPath());
+    Collection<String> enumFqNameClasses = whenMap.get(output.source.getPath());
+    Collection<String> importedFqNames = importMap.get(output.source.getPath());
 
     if (enumFqNameClasses == null && importedFqNames == null) return;
 
@@ -182,7 +203,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
                                        ContainerUtil.map(enumFqNameClasses, name -> name + ".*") :
                                        new ArrayList<>();
 
-    callback.registerImports(output.getOutputClass().getClassName().getInternalName(),
+    callback.registerImports(output.jvmClassName,
                              importedFqNames != null ? importedFqNames : new ArrayList<>(),
                              enumClassesWithStar);
   }
@@ -235,7 +256,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
     return configuration -> {
       OutputFileSystem outputFileSystem = new OutputFileSystem(new KotlinVirtualFileProvider(out));
       configuration.add(CLIConfigurationKeys.CONTENT_ROOTS, new VirtualJvmClasspathRoot(outputFileSystem.root, false, true));
-      configurePlugins(pluginIdToPluginClasspath, myContext.getBaseDir(), registeredPluginInfo -> {
+      configurePlugins(myPluginIdToPluginClasspath, myContext.getBaseDir(), registeredPluginInfo -> {
         assert registeredPluginInfo.getCompilerPluginRegistrar() != null;
         configuration.add(CompilerPluginRegistrar.Companion.getCOMPILER_PLUGIN_REGISTRARS(), registeredPluginInfo.getCompilerPluginRegistrar());
         if (!registeredPluginInfo.getPluginOptions().isEmpty()) {
@@ -285,17 +306,15 @@ public class KotlinCompilerRunner implements CompilerRunner {
     };
   }
 
-  private K2JVMCompilerArguments buildKotlinCompilerArguments(BuildContext myContext) {
-    List<String> builderArgs = myContext.getBuilderArgs().getKotlinCompilerArgs();
-    pluginIdToPluginClasspath = extractPluginIdToPluginClasspathMap(builderArgs);
+  private static K2JVMCompilerArguments buildKotlinCompilerArguments(BuildContext context) {
+    // todo: hash compiler configuration
     K2JVMCompilerArguments arguments = new K2JVMCompilerArguments();
-    parseCommandLineArguments(builderArgs, arguments, true);
+    parseCommandLineArguments(context.getBuilderOptions().getKotlinOptions(), arguments, true);
     return arguments;
   }
 
-  private static @NotNull Map<@NotNull String, @NotNull String> extractPluginIdToPluginClasspathMap(List<String> args) {
-    // TODO: val plugins = args.optionalList(JvmBuilderFlags.PLUGIN_ID).zip(args.optionalList(JvmBuilderFlags.PLUGIN_CLASSPATH))
-    throw new IllegalStateException("Not implemented");
+  private static <T> Collection<T> ensureCollection(Iterable<T> seq) {
+    return seq instanceof Collection<T>? (Collection<T>)seq : collect(seq, new ArrayList<>());
   }
 
   private void ensureTrackersInitialized() {

@@ -36,10 +36,9 @@ public class JavaCompilerRunner implements CompilerRunner {
   private static final String PATCH_MODULE_OPTION = "--patch-module";
   private static final String JAVAC_VM_OPTION_PREFIX = "-J-";
   private static final Set<String> FILTERED_OPTIONS = Set.of(
-     "-d"
+     "-d", "--boot-class-path", "-bootclasspath", "--class-path", "-classpath", "-cp", "-sourcepath", "--module-path", "-p", "--module-source-path"
   );
   private static final Set<String> FILTERED_SINGLE_OPTIONS = Set.of(
-    "--boot-class-path", "-bootclasspath", "--class-path", "-classpath", "-cp", "-sourcepath", "--module-path", "-p", "--module-source-path"
   );
 
   private final BuildContext myContext;
@@ -325,7 +324,7 @@ public class JavaCompilerRunner implements CompilerRunner {
   private static @NotNull List<String> getFilteredOptions(BuildContext context) {
     List<String> options = new ArrayList<>();
     boolean skip = false;
-    for (String arg : filter(context.getBuilderArgs().getJavaCompilerArgs(), a -> !FILTERED_SINGLE_OPTIONS.contains(a) && !a.startsWith(JAVAC_VM_OPTION_PREFIX))) {
+    for (String arg : filter(context.getBuilderOptions().getJavaOptions(), a -> !FILTERED_SINGLE_OPTIONS.contains(a) && !a.startsWith(JAVAC_VM_OPTION_PREFIX))) {
       if (skip) {
         skip = false;
       }
