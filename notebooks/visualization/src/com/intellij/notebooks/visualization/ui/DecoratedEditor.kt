@@ -31,7 +31,7 @@ import kotlin.math.min
 class DecoratedEditor private constructor(
   private val editorImpl: EditorImpl,
   private val manager: NotebookCellInlayManager,
-) : NotebookEditor, Disposable {
+) : NotebookEditor, Disposable.Default {
   override val hoveredCell: AtomicProperty<EditorCell?> = AtomicProperty(null)
   override val singleFileDiffMode: AtomicProperty<Boolean> = AtomicProperty(false)
 
@@ -39,21 +39,15 @@ class DecoratedEditor private constructor(
     Disposer.register(this, it)
   }
 
-
   init {
     wrapEditorComponent(editorImpl)
     notebookEditorKey.set(editorImpl, this)
-  }
-
-  override fun dispose() {
   }
 
   private fun wrapEditorComponent(editor: EditorImpl) {
     val nestedScrollingSupport = NestedScrollingSupportImpl()
 
     NotebookAWTMouseDispatcher(editor.scrollPane).apply {
-
-
       eventDispatcher.addListener { event ->
         if (event is MouseWheelEvent) {
           nestedScrollingSupport.processMouseWheelEvent(event)
@@ -81,11 +75,8 @@ class DecoratedEditor private constructor(
           if (editorImpl.getMouseEventArea(event) != EditorMouseEventArea.EDITING_AREA) {
             editorImpl.setMode(NotebookEditorMode.COMMAND)
           }
-          val shouldConsumeEvent = updateSelectionAfterClick(hoveredCell.interval, event.isCtrlPressed(),
+          updateSelectionAfterClick(hoveredCell.interval, event.isCtrlPressed(),
                                                              event.isShiftPressed(), event.button)
-          if (shouldConsumeEvent) {
-            event.consume()
-          }
         }
       }
 
@@ -163,10 +154,7 @@ class DecoratedEditor private constructor(
     updateSelectionAfterClick(clickedCell, ctrlPressed, shiftPressed, mouseButton)
   }
 
-  /**
-   * Return should event be consumed.
-   */
-  fun updateSelectionAfterClick(clickedCell: NotebookCellLines.Interval, ctrlPressed: Boolean, shiftPressed: Boolean, mouseButton: Int): Boolean {
+  fun updateSelectionAfterClick(clickedCell: NotebookCellLines.Interval, ctrlPressed: Boolean, shiftPressed: Boolean, mouseButton: Int) {
     val model = editorImpl.cellSelectionModel!!
     when {
       ctrlPressed -> {
@@ -203,10 +191,8 @@ class DecoratedEditor private constructor(
       }
       mouseButton == MouseEvent.BUTTON1 && !model.isSelectedCell(clickedCell) -> {
         model.selectSingleCell(clickedCell)
-        return false
       }
     }
-    return false
   }
 
   companion object {
