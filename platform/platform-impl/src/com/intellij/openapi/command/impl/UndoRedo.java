@@ -49,7 +49,7 @@ abstract class UndoRedo {
   }
 
   Collection<DocumentReference> getDocRefs() {
-    return myEditor == null ? Collections.emptySet() : UndoManagerImpl.getDocumentReferences(myEditor);
+    return myEditor == null ? Collections.emptySet() : UndoDocumentUtil.getDocumentReferences(myEditor);
   }
 
   protected abstract UndoRedoStacksHolder getStacksHolder();

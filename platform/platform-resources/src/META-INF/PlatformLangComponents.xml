@@ -190,7 +190,7 @@
   </extensions>
 
   <applicationListeners>
-    <listener class="com.intellij.openapi.command.impl.UndoManagerImpl$MyCommandListener"
+    <listener class="com.intellij.openapi.command.impl.UndoCommandListener"
               topic="com.intellij.openapi.command.CommandListener"/>
 
     <listener class="com.intellij.openapi.editor.impl.VisibleEditorsTracker$MyCommandListener"
@@ -266,7 +266,7 @@
               topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener"/>
   </applicationListeners>
   <projectListeners>
-    <listener class="com.intellij.openapi.command.impl.UndoManagerImpl$MyCommandListener"
+    <listener class="com.intellij.openapi.command.impl.UndoCommandListener"
               topic="com.intellij.openapi.command.CommandListener"/>
 
     <listener class="com.intellij.notification.impl.NotificationsModelConsumingListener"

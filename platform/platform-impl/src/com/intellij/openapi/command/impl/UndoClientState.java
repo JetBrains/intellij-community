@@ -2,32 +2,20 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.codeWithMe.ClientId;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.client.ClientAppSession;
 import com.intellij.openapi.client.ClientProjectSession;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.DocumentReference;
-import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ExternalChangeAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,12 +46,12 @@ final class UndoClientState implements Disposable {
   private int commandLevel = 0;
 
   @SuppressWarnings("unused")
-  private UndoClientState(@NotNull ClientProjectSession session) {
+  UndoClientState(@NotNull ClientProjectSession session) {
     this(getUndoManager(session.getProject()), session.getClientId());
   }
 
   @SuppressWarnings("unused")
-  private UndoClientState(@NotNull ClientAppSession session) {
+  UndoClientState(@NotNull ClientAppSession session) {
     this(getUndoManager(ApplicationManager.getApplication()), session.getClientId());
   }
 
@@ -91,7 +79,7 @@ final class UndoClientState implements Disposable {
       boolean isTransparent = CommandProcessor.getInstance().isUndoTransparentActionInProgress();
       currentCommandMerger = new CommandMerger(this, isTransparent);
       if (project != null && recordOriginalReference) {
-        originatorReference = getDocRefForCurrentEditor(project, editorProvider);
+        originatorReference = UndoDocumentUtil.getDocReference(project, editorProvider);
       }
     }
     LOG.assertTrue(currentCommandMerger != null);
@@ -195,7 +183,7 @@ final class UndoClientState implements Disposable {
   void compactIfNeeded() {
     if (!isUndoOrRedoInProgress() && commandTimestamp % COMMAND_TO_RUN_COMPACT == 0) {
       Set<DocumentReference> docsOnStacks = collectReferencesWithoutMergers();
-      docsOnStacks.removeIf(doc -> isDocumentOpened(doc));
+      docsOnStacks.removeIf(doc -> UndoDocumentUtil.isDocumentOpened(undoManager.getProject(), doc));
       if (docsOnStacks.size() > FREE_QUEUES_LIMIT) {
         DocumentReference[] docsBackSorted = docsOnStacks.toArray(DocumentReference.EMPTY_ARRAY);
         Arrays.sort(docsBackSorted, Comparator.comparingInt(doc -> getLastCommandTimestamp(doc)));
@@ -288,17 +276,14 @@ final class UndoClientState implements Disposable {
     sb.append(clientId);
     sb.append("\n");
     if (currentCommandMerger == null) {
-      sb.append("null CurrentMerger");
-      sb.append("\n");
+      sb.append("null CurrentMerger\n");
     }
     else {
-      sb.append("CurrentMerger");
-      sb.append("\n  ");
+      sb.append("CurrentMerger\n  ");
       sb.append(currentCommandMerger.dumpState());
       sb.append("\n");
     }
-    sb.append("Merger");
-    sb.append("\n  ");
+    sb.append("Merger\n  ");
     sb.append(commandMerger.dumpState());
     sb.append("\n");
     for (DocumentReference doc : docRefs) {
@@ -339,22 +324,6 @@ final class UndoClientState implements Disposable {
     return String.join("\n", reversed);
   }
 
-  private boolean isDocumentOpened(@NotNull DocumentReference doc) {
-    Project project = undoManager.getProject();
-    VirtualFile file = doc.getFile();
-    if (file != null) {
-      if (project != null && FileEditorManager.getInstance(project).isFileOpen(file)) {
-        return true;
-      }
-    } else {
-      Document document = doc.getDocument();
-      if (document != null && EditorFactory.getInstance().editors(document, project).findAny().isPresent()) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   private @NotNull Set<DocumentReference> collectReferencesWithoutMergers() {
     Set<DocumentReference> result = new HashSet<>();
     undoStacksHolder.collectAllAffectedDocuments(result);
@@ -375,29 +344,6 @@ final class UndoClientState implements Disposable {
     undoStacksHolder.collectAllAffectedDocuments(affected);
     undoStacksHolder.clearStacks(true, affected);
     return affected;
-  }
-
-  private static @Nullable DocumentReference getDocRefForCurrentEditor(
-    @NotNull Project project,
-    @NotNull CurrentEditorProvider editorProvider
-  ) {
-    Editor editor = null;
-    Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
-      editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
-    } else {
-      FileEditor fileEditor = editorProvider.getCurrentEditor(project);
-      if (fileEditor instanceof TextEditor textEditor) {
-        editor = textEditor.getEditor();
-      }
-    }
-    if (editor != null) {
-      VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
-      if (file != null && file.isValid()) {
-        return DocumentReferenceManager.getInstance().create(file);
-      }
-    }
-    return null;
   }
 
   private boolean isUndoOrRedoInProgress() {

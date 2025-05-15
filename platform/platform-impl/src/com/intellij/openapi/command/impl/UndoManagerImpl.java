@@ -8,8 +8,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.client.*;
-import com.intellij.openapi.command.CommandEvent;
-import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.*;
@@ -18,7 +16,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -30,10 +27,7 @@ import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.ThreadingAssertions;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -148,7 +142,7 @@ public class UndoManagerImpl extends UndoManager {
     return myProject == null ? UndoProvider.EP_NAME.getExtensionList() : UndoProvider.PROJECT_EP_NAME.getExtensionList(myProject);
   }
 
-  private void onCommandStarted(final Project project, UndoConfirmationPolicy undoConfirmationPolicy, boolean recordOriginalReference) {
+  void onCommandStarted(final Project project, UndoConfirmationPolicy undoConfirmationPolicy, boolean recordOriginalReference) {
     UndoClientState state = getClientState();
     if (state == null || !state.isInsideCommand()) {
       for (UndoProvider undoProvider : getUndoProviders()) {
@@ -166,7 +160,7 @@ public class UndoManagerImpl extends UndoManager {
     LOG.assertTrue(state == null || !state.isInsideCommand() || !(state.getCurrentProject() instanceof DummyProject));
   }
 
-  private void onCommandFinished(final Project project, final @NlsContexts.Command String commandName, final Object commandGroupId) {
+  void onCommandFinished(final Project project, final @NlsContexts.Command String commandName, final Object commandGroupId) {
     UndoClientState state = getClientState();
     if (state != null) {
       state.commandFinished(myProject, getEditorProvider(), commandName, commandGroupId);
@@ -279,7 +273,7 @@ public class UndoManagerImpl extends UndoManager {
 
   @ApiStatus.Internal
   public @Nullable ResetUndoHistoryToken createResetUndoHistoryToken(@NotNull FileEditor editor) {
-    Collection<DocumentReference> references = getDocumentReferences(editor);
+    Collection<DocumentReference> references = UndoDocumentUtil.getDocumentReferences(editor);
     if (references.size() != 1)
       return null;
 
@@ -389,13 +383,14 @@ public class UndoManagerImpl extends UndoManager {
   boolean isUndoOrRedoAvailable(@Nullable FileEditor editor, boolean undo) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    Collection<DocumentReference> refs = getDocRefs(editor);
+    Collection<DocumentReference> refs = UndoDocumentUtil.getDocRefs(editor);
     return refs != null && isUndoOrRedoAvailable(getClientState(editor), refs, undo);
   }
 
   boolean isUndoOrRedoAvailable(@NotNull DocumentReference ref) {
     Set<DocumentReference> refs = Collections.singleton(ref);
-    return isUndoOrRedoAvailable(getClientState(), refs, true) || isUndoOrRedoAvailable(getClientState(), refs, false);
+    return isUndoOrRedoAvailable(getClientState(), refs, true) ||
+           isUndoOrRedoAvailable(getClientState(), refs, false);
   }
 
   /**
@@ -501,35 +496,6 @@ public class UndoManagerImpl extends UndoManager {
     return stackHolder.canBeUndoneOrRedone(refs);
   }
 
-  private static Collection<DocumentReference> getDocRefs(@Nullable FileEditor editor) {
-    if (editor instanceof TextEditor textEditor && textEditor.getEditor().isViewer()) {
-      return null;
-    }
-    if (editor == null) {
-      return Collections.emptyList();
-    }
-    return getDocumentReferences(editor);
-  }
-
-  static @NotNull Collection<DocumentReference> getDocumentReferences(@NotNull FileEditor editor) {
-    List<DocumentReference> result = new ArrayList<>();
-
-    if (editor instanceof DocumentReferenceProvider) {
-      result.addAll(((DocumentReferenceProvider)editor).getDocumentReferences());
-      return result;
-    }
-
-    Document[] documents = TextEditorProvider.getDocuments(editor);
-    for (Document each : documents) {
-      Document original = getOriginal(each);
-      // KirillK : in AnAction.update we may have an editor with an invalid file
-      VirtualFile f = FileDocumentManager.getInstance().getFile(each);
-      if (f != null && !f.isValid()) continue;
-      result.add(DocumentReferenceManager.getInstance().create(original));
-    }
-    return result;
-  }
-
   private static @NotNull UndoRedoStacksHolder getStackHolder(@NotNull UndoClientState state, boolean isUndo) {
     return isUndo ? state.getUndoStacksHolder() : state.getRedoStacksHolder();
   }
@@ -566,7 +532,7 @@ public class UndoManagerImpl extends UndoManager {
 
   private long getNextNanoTime(@NotNull FileEditor editor, boolean isUndo) {
     UndoClientState clientState = getClientState(editor);
-    Collection<DocumentReference> references = getDocRefs(editor);
+    Collection<DocumentReference> references = UndoDocumentUtil.getDocRefs(editor);
     if (clientState == null || references == null) {
       return -1L;
     }
@@ -582,7 +548,7 @@ public class UndoManagerImpl extends UndoManager {
 
   private boolean isNextAskConfirmation(@NotNull FileEditor editor, boolean isUndo) {
     UndoClientState clientState = getClientState(editor);
-    Collection<DocumentReference> references = getDocRefs(editor);
+    Collection<DocumentReference> references = UndoDocumentUtil.getDocRefs(editor);
     if (clientState == null || references == null) {
       return false;
     }
@@ -621,7 +587,7 @@ public class UndoManagerImpl extends UndoManager {
     if (state == null) {
       return null;
     }
-    Collection<DocumentReference> refs = getDocRefs(editor);
+    Collection<DocumentReference> refs = UndoDocumentUtil.getDocRefs(editor);
     if (refs == null) return null;
     if (isUndo && state.getCommandMerger().isUndoAvailable(refs)) {
       return state.getCommandMerger().getCommandName();
@@ -642,15 +608,6 @@ public class UndoManagerImpl extends UndoManager {
   @NotNull
   SharedUndoRedoStacksHolder getSharedRedoStacksHolder() {
     return mySharedRedoStacksHolder;
-  }
-
-  private static @NotNull Document getOriginal(@NotNull Document document) {
-    Document result = document.getUserData(ORIGINAL_DOCUMENT);
-    return result == null ? document : result;
-  }
-
-  static boolean isCopy(@NotNull Document d) {
-    return d.getUserData(ORIGINAL_DOCUMENT) != null;
   }
 
   @TestOnly
@@ -740,7 +697,7 @@ public class UndoManagerImpl extends UndoManager {
 
     String stacks;
     UndoClientState state = getClientState(editor);
-    Collection<DocumentReference> docRefs = getDocRefs(editor);
+    Collection<DocumentReference> docRefs = UndoDocumentUtil.getDocRefs(editor);
     if (state == null && docRefs == null) {
       stacks = "no state, no docs";
     } else if (state != null && docRefs == null) {
@@ -765,7 +722,7 @@ public class UndoManagerImpl extends UndoManager {
 
   private @Nullable UndoableGroup getLastAction(@Nullable FileEditor editor, boolean isUndo) {
     UndoClientState clientState = getClientState(editor);
-    Collection<DocumentReference> references = getDocRefs(editor);
+    Collection<DocumentReference> references = UndoDocumentUtil.getDocRefs(editor);
     if (clientState == null || references == null) {
       return null;
     }
@@ -777,54 +734,5 @@ public class UndoManagerImpl extends UndoManager {
   @Override
   public String toString() {
     return "UndoManager for " + ObjectUtils.notNull(myProject, "application");
-  }
-
-  static final class MyCommandListener implements CommandListener {
-    private boolean isStarted;
-    private final Project project;
-    private final UndoManagerImpl manager;
-
-    @SuppressWarnings("unused")
-    MyCommandListener(Project project) {
-      this.project = project;
-      manager = (UndoManagerImpl)project.getService(UndoManager.class);
-    }
-
-    @SuppressWarnings("unused")
-    MyCommandListener() {
-      project = null;
-      manager = (UndoManagerImpl)getGlobalInstance();
-    }
-
-    @Override
-    public void commandStarted(@NotNull CommandEvent event) {
-      if (!isStarted && (project == null || !project.isDisposed())) {
-        manager.onCommandStarted(event.getProject(), event.getUndoConfirmationPolicy(), event.shouldRecordActionForOriginalDocument());
-      }
-    }
-
-    @Override
-    public void commandFinished(@NotNull CommandEvent event) {
-      if (isStarted || (project != null && project.isDisposed())) {
-        return;
-      }
-      manager.onCommandFinished(event.getProject(), event.getCommandName(), event.getCommandGroupId());
-    }
-
-    @Override
-    public void undoTransparentActionStarted() {
-      if ((project == null || !project.isDisposed()) && !manager.isInsideCommand()) {
-        isStarted = true;
-        manager.onCommandStarted(project, UndoConfirmationPolicy.DEFAULT, true);
-      }
-    }
-
-    @Override
-    public void undoTransparentActionFinished() {
-      if (isStarted && (project == null || !project.isDisposed())) {
-        isStarted = false;
-        manager.onCommandFinished(project, "", null);
-      }
-    }
   }
 }

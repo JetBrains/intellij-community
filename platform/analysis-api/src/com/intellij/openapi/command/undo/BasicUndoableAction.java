@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import java.util.Arrays;
 
 public abstract class BasicUndoableAction implements UndoableAction {
   private final DocumentReference[] myRefs;
@@ -51,5 +52,15 @@ public abstract class BasicUndoableAction implements UndoableAction {
   @Override
   public void setPerformedNanoTime(long l) {
     myPerformedTimestamp = l;
+  }
+
+  @Override
+  public String toString() {
+    return "%s{refs=%s%s, performed=%sms}".formatted(
+      getClass().getName().replace(getClass().getPackageName() + ".", ""),
+      Arrays.toString(getAffectedDocuments()),
+      isGlobal() ? ", global" : "",
+      getPerformedNanoTime() / 1000
+    );
   }
 }

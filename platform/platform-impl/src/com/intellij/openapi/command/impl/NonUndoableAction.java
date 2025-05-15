@@ -49,4 +49,10 @@ final class NonUndoableAction implements UndoableAction {
   public void setPerformedNanoTime(long l) {
     myPerformedTimestamp = l;
   }
+
+  @Override
+  public String toString() {
+    return "NonUndoableAction{ref=%s%s, performed=%sms}"
+      .formatted(myRefs[0], isGlobal() ? ", global" : "", getPerformedNanoTime() / 1000);
+  }
 }
