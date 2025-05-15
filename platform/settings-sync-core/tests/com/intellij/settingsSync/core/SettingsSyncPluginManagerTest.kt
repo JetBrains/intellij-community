@@ -463,6 +463,57 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
   }
 
   @Test
+  @TestFor(issues = ["IJPL-181864", "IJPL-186339"])
+  fun `don't touch ultimate plugins if ultimate functionality is disabled`() {
+    val ultimate = TestPluginDescriptor(
+      "com.intellij.modules.ultimate",
+      bundled = true
+    )
+    val ultimoEins = TestPluginDescriptor(
+      "com.intellij.eins",
+      listOf(TestPluginDependency("com.intellij.modules.ultimate", isOptional = false)),
+      bundled = true
+    )
+
+    val ultimoZwoa = TestPluginDescriptor(
+      "com.intellij.zwoa",
+      listOf(TestPluginDependency("com.intellij.eins", isOptional = false)),
+      bundled = true
+    )
+
+    val ultimoDrei = TestPluginDescriptor(
+      "com.intellij.drei",
+      listOf(TestPluginDependency("com.intellij.eins", isOptional = false)),
+      bundled = true
+    )
+    testPluginManager.addPluginDescriptors(ultimoEins.withEnabled(false),
+                                           ultimoZwoa.withEnabled(false),
+                                           ultimoDrei.withEnabled(false),
+                                           ultimate.withEnabled(false),
+                                           git4idea, cvsOutdated.withEnabled(false))
+    val pushedState = state {
+      ultimoDrei(enabled = false)
+      git4idea(enabled = true)
+      cvsOutdated(enabled = false)
+    }
+
+    pushToIdeAndWait(pushedState)
+
+    assertIdeState {
+      git4idea(enabled = true)
+      cvsOutdated(enabled = false)
+      ultimoEins(enabled = false)
+      ultimoZwoa(enabled = false)
+      ultimoDrei(enabled = false)
+      ultimate(enabled = false)
+    }
+    assertPluginManagerState {
+      cvsOutdated(enabled = false) // remains the same as it's incompatible
+      ultimoDrei(enabled = false)
+    }
+  }
+
+  @Test
   @TestFor(issues = ["IJPL-157266"])
   fun `disable syncing of incompatible plugin`(){
     val weirdPlugin = TestPluginDescriptor(
