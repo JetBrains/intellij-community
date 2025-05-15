@@ -2,9 +2,11 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.concurrency.currentThreadContext
+import com.intellij.concurrency.installThreadContext
 import com.intellij.core.rwmutex.*
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.ComputationState.Companion.thisLevelPermit
+import com.intellij.openapi.application.impl.NestedLocksThreadingSupport.isWriteActionPending
 import com.intellij.openapi.application.impl.NestedLocksThreadingSupport.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.Cancellation
@@ -12,6 +14,7 @@ import com.intellij.openapi.util.coroutines.runSuspend
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ReflectionUtil
 import com.jetbrains.rd.util.forEachReversed
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.Runnable
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
@@ -611,10 +614,10 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
         fireWriteIntentActionFinished(listener, computation.javaClass)
         if (permitToRelease != null) {
           /**
-         * The permit to release can be changed because of [releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack] inside
-         */
-        val newPermitToRelease = (computationState.getThisThreadPermit() as ParallelizablePermit.WriteIntent).writeIntentPermit
-        computationState.releaseWriteIntentPermit(newPermitToRelease)
+           * The permit to release can be changed because of [releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack] inside
+           */
+          val newPermitToRelease = (computationState.getThisThreadPermit() as ParallelizablePermit.WriteIntent).writeIntentPermit
+          computationState.releaseWriteIntentPermit(newPermitToRelease)
         }
       }
     }
@@ -1345,7 +1348,11 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
       return action()
     }
     finally {
-      state.acquireWriteIntentPermit()
+      // non-cancellable section here because we need to prohibit prompt cancellation of lock acquisition in this `finally`
+      // otherwise the outer release in `runWriteIntentReadAction` would fail with NPE
+      installThreadContext(currentThreadContext().minusKey(Job), true).use {
+        state.acquireWriteIntentPermit()
+      }
     }
   }
 
