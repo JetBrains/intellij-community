@@ -340,6 +340,18 @@ class PyTypeHintsInspection : PyInspection() {
       }
     }
 
+    override fun visitPyTypeAliasStatement(node: PyTypeAliasStatement) {
+      val typeExpression = node.typeExpression ?: return
+      if (!isValidTypeHint(typeExpression, myTypeEvalContext)) {
+        registerProblem(typeExpression, PyPsiBundle.message("INSP.type.hints.type.hint.is.not.valid"))
+      }
+
+      val scopeOwner = ScopeUtil.getScopeOwner(node)
+      if (scopeOwner != null && !(scopeOwner is PyClass || scopeOwner is PyFile)) {
+        registerProblem(node, PyPsiBundle.message("INSP.type.hints.type.statement.incorrect.scope"))
+      }
+    }
+
     override fun visitPyFunction(node: PyFunction) {
       super.visitPyFunction(node)
 

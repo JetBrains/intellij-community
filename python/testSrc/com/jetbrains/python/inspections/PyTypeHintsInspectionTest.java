@@ -2947,6 +2947,45 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
   }
 
 
+  // PY-76851
+  public void testInvalidTypeAliasStatement() {
+    doTestByText("""
+               var1 = 1
+               type BadTypeAlias1 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">eval(<warning descr="Generics should be specified through square brackets">"".join(<warning descr="Generics should be specified through square brackets">map(chr, [105, 110, 116])</warning>)</warning>)</warning>
+               type BadTypeAlias2 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">[int, str]</warning>
+               type BadTypeAlias3 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">((int, str),)</warning>
+               type BadTypeAlias4 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">[int for i in <warning descr="Generics should be specified through square brackets">range(1)</warning>]</warning>
+               type BadTypeAlias5 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">{"a": "b"}</warning>
+               type BadTypeAlias6 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">(lambda: int)()</warning>
+               type BadTypeAlias7 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">[int][0]</warning>
+               type BadTypeAlias8 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">int if 1 < 3 else str</warning>
+               type BadTypeAlias9 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">var1</warning>
+               type BadTypeAlias10 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">True</warning>
+               type BadTypeAlias11 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">1</warning>
+               type BadTypeAlias12 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">list or set</warning>
+               type BadTypeAlias13 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">f"{'int'}"</warning>
+               """);
+  }
+
+  // PY-76851
+  public void testTypeAliasStatementScope() {
+    doTestByText("""
+               type B = int
+               class C:
+                   type D = int
+               def func():
+                   <warning descr="A 'type' statement can be used only within a module or class scope">type A = int</warning>
+               """);
+  }
+
+  // PY-76851
+  public void testRecursiveTypeAliasStatements() {
+    doTestByText("""
+               type RecursiveTypeAlias3 = RecursiveTypeAlias3
+               #type RecursiveTypeAlias4[T] = T | RecursiveTypeAlias4[str]
+               """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
