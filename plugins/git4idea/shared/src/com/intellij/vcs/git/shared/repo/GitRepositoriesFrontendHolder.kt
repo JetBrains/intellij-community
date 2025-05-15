@@ -62,13 +62,7 @@ class GitRepositoriesFrontendHolder(
     initLock.withLock {
       if (initialized) return
 
-      val syncScope = cs.childScope("Git repository state synchronization")
-
-      GitRepositoryApi.getInstance().getRepositories(project.projectId()).forEach {
-        repositories[it.repositoryId] = convertToRepositoryInfo(it)
-      }
-
-      syncScope.launch {
+      cs.childScope("Git repository state synchronization").launch {
         GitRepositoryApi.getInstance().getRepositoriesEvents(project.projectId()).collect { event ->
           LOG.debug("Received repository event: $event")
 
@@ -103,6 +97,11 @@ class GitRepositoriesFrontendHolder(
           widgetUpdateFlow.tryEmit(Unit)
         }
       }
+
+      val initialRecord = GitRepositoryApi.getInstance().getRepositories(project.projectId()).map { repositoryDto ->
+        repositoryDto.repositoryId to convertToRepositoryInfo(repositoryDto)
+      }
+      repositories.putAll(initialRecord)
 
       initialized = true
     }
