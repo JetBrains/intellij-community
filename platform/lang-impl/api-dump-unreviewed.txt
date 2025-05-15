@@ -2010,6 +2010,7 @@ c:com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 - p:completionFinished(com.intellij.codeInsight.completion.CompletionProgressIndicator,Z):V
 - s:createHandler(com.intellij.codeInsight.completion.CompletionType):com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 - s:createHandler(com.intellij.codeInsight.completion.CompletionType,Z,Z,Z):com.intellij.codeInsight.completion.CodeCompletionHandlerBase
+- s:createHandler(com.intellij.codeInsight.completion.CompletionType,Z,Z,Z,java.lang.String):com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 - handleCompletionElementSelected(com.intellij.codeInsight.lookup.LookupElement,C,com.intellij.codeInsight.completion.OffsetMap,com.intellij.codeInsight.completion.OffsetsInFile,com.intellij.openapi.editor.Editor,java.lang.Integer):V
 - f:invokeCompletion(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):V
 - f:invokeCompletion(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I):V

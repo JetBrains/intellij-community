@@ -56,11 +56,7 @@ import com.intellij.util.indexing.DumbModeAccessType;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
 import kotlinx.coroutines.Deferred;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -95,12 +91,20 @@ public class CodeCompletionHandlerBase {
   }
 
   public static CodeCompletionHandlerBase createHandler(@NotNull CompletionType completionType, boolean invokedExplicitly, boolean autopopup, boolean synchronous) {
-    AnAction codeCompletionAction = ActionManager.getInstance().getAction("CodeCompletion");
+    return createHandler(completionType, invokedExplicitly, autopopup, synchronous, "CodeCompletion");
+  }
+
+  public static CodeCompletionHandlerBase createHandler(@NotNull CompletionType completionType,
+                                                        boolean invokedExplicitly,
+                                                        boolean autopopup,
+                                                        boolean synchronous,
+                                                        String actionId) {
+    AnAction codeCompletionAction = ActionManager.getInstance().getAction(actionId);
     if (codeCompletionAction instanceof OverridingAction) {
-      codeCompletionAction = ((ActionManagerImpl) ActionManager.getInstance()).getBaseAction((OverridingAction) codeCompletionAction);
+      codeCompletionAction = ((ActionManagerImpl)ActionManager.getInstance()).getBaseAction((OverridingAction)codeCompletionAction);
     }
     assert (codeCompletionAction instanceof BaseCodeCompletionAction);
-    BaseCodeCompletionAction baseCodeCompletionAction = (BaseCodeCompletionAction) codeCompletionAction;
+    BaseCodeCompletionAction baseCodeCompletionAction = (BaseCodeCompletionAction)codeCompletionAction;
     return baseCodeCompletionAction.createHandler(completionType, invokedExplicitly, autopopup, synchronous);
   }
 
@@ -148,7 +152,8 @@ public class CodeCompletionHandlerBase {
     invokeCompletionWithTracing(project, editor, time, hasModifiers, editor.getCaretModel().getPrimaryCaret());
   }
 
-  private void invokeCompletion(@NotNull Project project, @NotNull Editor editor, int time, boolean hasModifiers, @NotNull Caret caret) {
+  @ApiStatus.Internal
+  protected void invokeCompletion(@NotNull Project project, @NotNull Editor editor, int time, boolean hasModifiers, @NotNull Caret caret) {
       markCaretAsProcessed(caret);
 
       if (invokedExplicitly) {

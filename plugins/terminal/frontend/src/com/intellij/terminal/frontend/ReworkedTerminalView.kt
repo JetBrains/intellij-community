@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.frontend
 
+import com.intellij.codeInsight.completion.CompletionPhase
 import com.intellij.codeInsight.highlighting.BackgroundHighlightingUtil
 import com.intellij.find.SearchReplaceComponent
 import com.intellij.openapi.Disposable
@@ -150,6 +151,8 @@ internal class ReworkedTerminalView(
     blocksModel = TerminalBlocksModelImpl(outputEditor.document)
     TerminalBlocksDecorator(outputEditor, blocksModel, scrollingModel, coroutineScope.childScope("TerminalBlocksDecorator"))
     outputEditor.putUserData(TerminalBlocksModel.KEY, blocksModel)
+
+    outputEditor.putUserData(CompletionPhase.CUSTOM_CODE_COMPLETION_ACTION_ID, "Terminal.CommandCompletion")
 
     val fusActivity = FrontendLatencyService.getInstance().startFrontendOutputActivity(
       outputEditor = outputEditor as EditorImpl,

@@ -9,8 +9,6 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.util.PsiUtilBase
-import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
@@ -44,7 +42,7 @@ internal class TerminalCommandCompletion(
                      caret)
   }
 
-  private fun invokeCompletion(
+  override fun invokeCompletion(
     project: Project,
     editor: Editor,
     time: Int,

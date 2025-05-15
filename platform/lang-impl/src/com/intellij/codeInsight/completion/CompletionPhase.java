@@ -43,6 +43,8 @@ import java.util.concurrent.ExecutorService;
 
 public abstract class CompletionPhase implements Disposable {
   public static final Key<TypedEvent> AUTO_POPUP_TYPED_EVENT = Key.create("AutoPopupTypedEvent");
+  @ApiStatus.Internal
+  public static final Key<String> CUSTOM_CODE_COMPLETION_ACTION_ID = Key.create("CodeCompletionActionID");
 
   private static final Logger LOG = Logger.getInstance(CompletionPhase.class);
 
@@ -176,7 +178,12 @@ public abstract class CompletionPhase implements Disposable {
             LOG.trace("Starting completion phase :: completionEditor=" + completionEditor);
             phase.requestCompleted();
             int time = prevIndicator == null ? 0 : prevIndicator.getInvocationCount();
-            CodeCompletionHandlerBase handler = CodeCompletionHandlerBase.createHandler(completionType, false, autopopup, false);
+
+            String customId = completionEditor.getUserData(CUSTOM_CODE_COMPLETION_ACTION_ID);
+            if (customId == null) {
+              customId = "CodeCompletion";
+            }
+            CodeCompletionHandlerBase handler = CodeCompletionHandlerBase.createHandler(completionType, false, autopopup, false, customId);
             handler.invokeCompletion(project, completionEditor, time, false);
           }
           else if (phase == CompletionServiceImpl.getCompletionPhase()) {

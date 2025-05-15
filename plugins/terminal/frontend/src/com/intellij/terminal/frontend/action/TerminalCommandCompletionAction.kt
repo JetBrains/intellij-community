@@ -37,4 +37,13 @@ class TerminalCommandCompletionAction : BaseCodeCompletionAction() {
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+  override fun createHandler(
+    completionType: CompletionType,
+    invokedExplicitly: Boolean,
+    autopopup: Boolean,
+    synchronous: Boolean,
+  ): CodeCompletionHandlerBase {
+    return TerminalCommandCompletion(completionType, invokedExplicitly, autopopup, synchronous)
+  }
 }
