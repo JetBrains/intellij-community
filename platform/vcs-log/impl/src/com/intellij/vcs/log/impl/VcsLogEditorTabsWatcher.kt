@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
-import com.intellij.vcs.log.impl.PostponableLogRefresher.VcsLogWindow
 import com.intellij.vcs.log.ui.VcsLogUiEx
 import org.jetbrains.annotations.NonNls
 

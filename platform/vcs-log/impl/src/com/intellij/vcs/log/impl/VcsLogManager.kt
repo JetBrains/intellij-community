@@ -25,11 +25,11 @@ import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.VcsLogStatusBarProgress
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
-import com.intellij.vcs.log.impl.PostponableLogRefresher.VcsLogWindow
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.*
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl
+import com.intellij.vcs.log.visible.VisiblePackRefresher
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.collection
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
@@ -77,13 +77,16 @@ open class VcsLogManager @Internal constructor(
     }
   }
 
+  private val logWindows = mutableSetOf<VcsLogWindow>()
+  private val windowCreationTraces = mutableMapOf<String?, Throwable?>()
+
   private fun selectionChanged(tabId: String) {
-    val logWindow = postponableRefresher.logWindows.find { window -> window.id == tabId }
-    if (logWindow != null) {
-      LOG.debug("Selected log window '$logWindow'")
-      VcsLogUsageTriggerCollector.triggerTabNavigated(project)
-      postponableRefresher.refresherActivated(logWindow.refresher, false)
+    VcsLogUsageTriggerCollector.triggerTabNavigated(project)
+    if (LOG.isDebugEnabled) {
+      val window = logWindows.find { it.id == tabId }
+      LOG.debug("Activated log window '${window ?: tabId}'")
     }
+    postponableRefresher.refresherActivated(tabId)
   }
 
   val colorManager: VcsLogColorManager = VcsLogColorManagerFactory.create(logProviders.keys)
@@ -106,7 +109,7 @@ open class VcsLogManager @Internal constructor(
 
   @get:RequiresEdt
   val isLogVisible: Boolean
-    get() = postponableRefresher.isLogVisible
+    get() = logWindows.any { it.isVisible() }
 
   /**
    * If this Log has a full data pack and there are no postponed refreshes. Does not check if there are refreshes in progress.
@@ -185,16 +188,10 @@ open class VcsLogManager @Internal constructor(
     }
 
     val ui = factory.createLogUi(project, dataManager)
-    registerLogUi(ui, location, isClosedOnDispose)
-
-    return ui
-  }
-
-  private fun registerLogUi(ui: VcsLogUiEx, location: VcsLogTabLocation, isClosedOnDispose: Boolean) {
     val extension = watchers.value[location]
     val window = extension?.createLogTab(ui, isClosedOnDispose) ?: VcsLogWindow(ui)
-    val registrationDisposable = postponableRefresher.addLogWindow(window)
-    Disposer.register(ui, registrationDisposable)
+    registerLogWindow(ui, window)
+    return ui
   }
 
   @Internal
@@ -205,12 +202,27 @@ open class VcsLogManager @Internal constructor(
       throw ProcessCanceledException()
     }
 
-    val registrationDisposable = postponableRefresher.addLogWindow(window)
-    Disposer.register(disposable, registrationDisposable)
+    val windowId = window.id
+    if (logWindows.any { it.id == windowId }) {
+      throw CannotAddVcsLogWindowException("Log window with id '" + windowId + "' was already added. " +
+                                           "Existing windows:\n" + getLogWindowsInformation(),
+                                           windowCreationTraces[windowId])
+    }
+
+    logWindows.add(window)
+    windowCreationTraces[windowId] = Throwable("Creation trace for $window")
+
+    postponableRefresher.registerRefresher(disposable, window.id, window.asRefresher())
+
+    Disposer.register(disposable) {
+      LOG.debug("Removing disposed log window $window")
+      logWindows.remove(window)
+      windowCreationTraces.remove(windowId)
+    }
   }
 
   fun getLogUis(): List<VcsLogUi> {
-    return postponableRefresher.logWindows.map { it.ui }
+    return logWindows.map { it.ui }
   }
 
   @Internal
@@ -227,14 +239,18 @@ open class VcsLogManager @Internal constructor(
     if (!watchers.isInitialized()) return emptyList()
     val watcherExtension = watchers.value[location]
     if (watcherExtension == null) {
-      return postponableRefresher.logWindows.filter { tab -> watchers.value.values.none { it.isOwnerOf(tab) } }
+      return logWindows.filter { tab -> watchers.value.values.none { it.isOwnerOf(tab) } }
     }
-    return postponableRefresher.logWindows.filter(watcherExtension::isOwnerOf)
+    return logWindows.filter(watcherExtension::isOwnerOf)
   }
 
   @Internal
   fun getLogWindowsInformation(): String {
-    return postponableRefresher.getLogWindowsInformation()
+    return logWindows.joinToString("\n") { window ->
+      val isVisible = if (window.isVisible()) " (visible)" else ""
+      val isDisposed = if (Disposer.isDisposed(window.refresher)) " (disposed)" else ""
+      window.toString() + isVisible + isDisposed
+    }
   }
 
   @RequiresEdt
@@ -243,7 +259,7 @@ open class VcsLogManager @Internal constructor(
     ThreadingAssertions.assertEventDispatchThread()
     if (watchers.isInitialized()) {
       for (extension in watchers.value.values) {
-        extension.closeTabs(postponableRefresher.logWindows.filter(extension::isOwnerOf))
+        extension.closeTabs(logWindows.filter(extension::isOwnerOf))
       }
     }
     Disposer.dispose(statusBarProgress)
@@ -270,6 +286,23 @@ open class VcsLogManager @Internal constructor(
     // the above method first disposes ui in EDT, then disposes everything else in a background
     ApplicationManager.getApplication().assertIsNonDispatchThread()
     LOG.debug("Disposed " + name)
+  }
+
+  private fun refreshLogOnVcsEvents(
+    disposableParent: Disposable,
+    logProviders: Map<VirtualFile, VcsLogProvider>,
+    refresher: PostponableLogRefresher,
+  ) {
+    val providers2roots = MultiMap.create<VcsLogProvider, VirtualFile>()
+    logProviders.forEach { (key, value) -> providers2roots.putValue(value, key) }
+
+    val wrappedRefresher = VcsLogRefresher { root ->
+      ApplicationManager.getApplication().invokeLater({ refresher.refresh(root, ::isLogVisible) }, ModalityState.any())
+    }
+    for ((key, value) in providers2roots.entrySet()) {
+      val disposable = key.subscribeToRootRefreshEvents(value, wrappedRefresher)
+      Disposer.register(disposableParent, disposable)
+    }
   }
 
   private inner class MyErrorHandler : VcsLogErrorHandler {
@@ -378,6 +411,18 @@ open class VcsLogManager @Internal constructor(
       }
       return logProviders
     }
+
+    private fun VcsLogWindow.asRefresher(): PostponableLogRefresher.Refresher =
+      object : PostponableLogRefresher.Refresher {
+        override fun setDataPack(dataPack: DataPack) {
+          LOG.debug("Refreshing log window ${this@asRefresher}")
+          refresher.setDataPack(isVisible(), dataPack)
+        }
+
+        override fun validate(refresh: Boolean) {
+          refresher.setValid(true, refresh)
+        }
+      }
   }
 }
 
@@ -404,22 +449,22 @@ suspend fun VcsLogManager.waitForRefresh() {
   }
 }
 
-private fun generateName(logProviders: Map<VirtualFile, VcsLogProvider>) =
-  "Vcs Log for " + VcsLogUtil.getProvidersMapText(logProviders)
+@Internal
+open class VcsLogWindow(val ui: VcsLogUiEx) {
+  val id: String
+    get() = ui.getId()
 
-private fun refreshLogOnVcsEvents(
-  disposableParent: Disposable,
-  logProviders: Map<VirtualFile, VcsLogProvider>,
-  refresher: PostponableLogRefresher,
-) {
-  val providers2roots = MultiMap.create<VcsLogProvider, VirtualFile>()
-  logProviders.forEach { (key, value) -> providers2roots.putValue(value, key) }
+  val refresher: VisiblePackRefresher
+    get() = ui.getRefresher()
 
-  val wrappedRefresher = VcsLogRefresher { root ->
-    ApplicationManager.getApplication().invokeLater({ refresher.refresh(root) }, ModalityState.any())
+  open fun isVisible(): Boolean {
+    return true
   }
-  for ((key, value) in providers2roots.entrySet()) {
-    val disposable = key.subscribeToRootRefreshEvents(value, wrappedRefresher)
-    Disposer.register(disposableParent, disposable)
+
+  override fun toString(): @NonNls String {
+    return "VcsLogWindow '" + ui.getId() + "'"
   }
 }
+
+private fun generateName(logProviders: Map<VirtualFile, VcsLogProvider>) =
+  "Vcs Log for " + VcsLogUtil.getProvidersMapText(logProviders)

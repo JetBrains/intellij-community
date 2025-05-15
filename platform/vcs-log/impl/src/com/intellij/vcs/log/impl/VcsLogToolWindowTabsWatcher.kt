@@ -14,7 +14,6 @@ import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.content.TabbedContent
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.vcs.log.impl.PostponableLogRefresher.VcsLogWindow
 import com.intellij.vcs.log.impl.VcsLogToolWindowTabsWatcher.VcsLogToolWindowTab
 import com.intellij.vcs.log.ui.VcsLogUiEx
 import org.jetbrains.annotations.NonNls

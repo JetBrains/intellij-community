@@ -8,75 +8,69 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.ui.VcsLogUiEx
-import com.intellij.vcs.log.visible.VisiblePackRefresher
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NonNls
 
 private val LOG = logger<PostponableLogRefresher>()
 
 @ApiStatus.Internal
 class PostponableLogRefresher internal constructor(private val logData: VcsLogData) {
   private val rootsToRefresh = mutableSetOf<VirtualFile?>()
-  private val _logWindows = mutableSetOf<VcsLogWindow>()
-  val logWindows: Set<VcsLogWindow> get() = _logWindows
-  private val creationTraces = mutableMapOf<String?, Throwable?>()
+  private val refreshers = mutableMapOf<String, Refresher>()
 
   init {
     logData.addDataPackChangeListener(DataPackChangeListener { dataPack ->
-      LOG.debug("Refreshing log windows " + logWindows)
-      for (window in logWindows) {
-        window.refresher.setDataPack(window.isVisible(), dataPack)
+      for (refresher in refreshers.values) {
+        refresher.setDataPack(dataPack)
       }
     })
   }
 
-  fun addLogWindow(window: VcsLogWindow): Disposable {
-    val windowId = window.id
-    if (logWindows.any { it.id == windowId }) {
-      throw CannotAddVcsLogWindowException("Log window with id '" + windowId + "' was already added. " +
-                                           "Existing windows:\n" + getLogWindowsInformation(),
-                                           creationTraces[windowId])
+  fun registerRefresher(disposable: Disposable, id: String, refresher: Refresher) {
+    require(refreshers.putIfAbsent(id, refresher) == null) {
+      "Refresher with id $id is already registered"
     }
-
-    _logWindows.add(window)
-    creationTraces[windowId] = Throwable("Creation trace for " + window)
-    refresherActivated(window.refresher, true)
-    return Disposable {
-      LOG.debug("Removing disposed log window " + window)
-      _logWindows.remove(window)
-      creationTraces.remove(windowId)
+    refresherActivated(refresher, true)
+    Disposer.register(disposable) {
+      refreshers.remove(id)
     }
   }
 
-  private fun canRefreshNow(): Boolean {
-    if (keepUpToDate()) return true
-    return this.isLogVisible
+  fun refresherActivated(id: String) {
+    val refresher = refreshers[id]
+    if (refresher != null) {
+      refresherActivated(refresher, false)
+    }
   }
 
-  val isLogVisible: Boolean
-    get() = logWindows.any { it.isVisible() }
-
-  fun refresherActivated(refresher: VisiblePackRefresher, firstTime: Boolean) {
+  private fun refresherActivated(refresher: Refresher, firstTime: Boolean) {
     logData.initialize()
 
     if (!rootsToRefresh.isEmpty()) {
       refreshPostponedRoots()
     }
     else {
-      refresher.setValid(true, firstTime)
+      refresher.validate(firstTime)
     }
   }
 
   @RequiresEdt
-  fun refresh(root: VirtualFile) {
-    if (canRefreshNow()) {
+  fun refresh(root: VirtualFile, shouldPostpone: () -> Boolean) {
+    val refreshNow: Boolean
+    if (keepUpToDate()) {
+      refreshNow = true
+    }
+    else {
+      refreshNow = shouldPostpone()
+    }
+
+    if (refreshNow) {
       logData.refresh(setOf(root), true)
     }
     else {
-      LOG.debug("Postponed refresh for " + root)
+      LOG.debug("Postponed refresh for $root")
       rootsToRefresh.add(root)
     }
   }
@@ -93,28 +87,9 @@ class PostponableLogRefresher internal constructor(private val logData: VcsLogDa
     logData.refresh(toRefresh)
   }
 
-  fun getLogWindowsInformation(): String {
-    return logWindows.joinToString("\n") { window ->
-      val isVisible = if (window.isVisible()) " (visible)" else ""
-      val isDisposed = if (Disposer.isDisposed(window.refresher)) " (disposed)" else ""
-      window.toString() + isVisible + isDisposed
-    }
-  }
-
-  open class VcsLogWindow(val ui: VcsLogUiEx) {
-    val id: String
-      get() = ui.getId()
-
-    val refresher: VisiblePackRefresher
-      get() = ui.getRefresher()
-
-    open fun isVisible(): Boolean {
-      return true
-    }
-
-    override fun toString(): @NonNls String {
-      return "VcsLogWindow '" + ui.getId() + "'"
-    }
+  interface Refresher {
+    fun setDataPack(dataPack: DataPack)
+    fun validate(refresh: Boolean)
   }
 
   companion object {
