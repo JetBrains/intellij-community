@@ -485,7 +485,7 @@ class SePopupContentPane(private val vm: SePopupVm) : JPanel(), Disposable {
   companion object {
     const val DEFAULT_FROZEN_COUNT: Int = 10
     const val DEFAULT_FREEZING_DELAY_MS: Long = 800
-    const val DEFAULT_RESULT_THROTTLING_MS: Long = 2000
+    const val DEFAULT_RESULT_THROTTLING_MS: Long = 900
     const val DEFAULT_RESULT_COUNT_TO_STOP_THROTTLING: Int = 15
 
     @JvmStatic
