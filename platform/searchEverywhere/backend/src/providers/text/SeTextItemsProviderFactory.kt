@@ -19,6 +19,8 @@ class SeTextItemsProviderFactory : SeItemsProviderFactory {
     get() = SeTextItemsProvider.ID
 
   override suspend fun getItemsProvider(project: Project?, dataContext: DataContext): SeItemsProvider? {
+    if (project == null || !TextSearchContributor.enabled()) return null
+
     val legacyContributor = readAction {
       val actionEvent = AnActionEvent.createEvent(dataContext, null, "", ActionUiKind.NONE, null)
       @Suppress("UNCHECKED_CAST")

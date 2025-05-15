@@ -277,7 +277,7 @@ open class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEvery
     private const val ADVANCED_OPTION_ID = "se.text.search"
     private val SE_TEXT_SELECTED_SCOPE = Key.create<String>("SE_TEXT_SELECTED_SCOPE")
 
-    private fun enabled() = AdvancedSettings.getBoolean(ADVANCED_OPTION_ID)
+    fun enabled(): Boolean = AdvancedSettings.getBoolean(ADVANCED_OPTION_ID)
 
     class Factory : SearchEverywhereContributorFactory<SearchEverywhereItem> {
       override fun isAvailable(project: Project): Boolean = enabled()
