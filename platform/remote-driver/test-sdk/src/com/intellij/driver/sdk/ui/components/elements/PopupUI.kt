@@ -40,6 +40,15 @@ class PopupMenuUiComponent(data: ComponentData) : UiComponent(data) {
     }
   }
 
+  fun selectContains(vararg items: String) {
+    items.forEach { item ->
+      waitForOne(message = "Find item: $item", timeout = 5.seconds,
+                 getter = { menuItems.list() },
+                 checker = { it.getText().contains(item) })
+        .click()
+    }
+  }
+
   fun itemsList() = menuItems.list().map { it.getText() }
 }
 

@@ -93,3 +93,20 @@ fun Driver.invokeAction(actionId: String, now: Boolean = true, component: Compon
   }
   check(!actionCallback.isRejected()) { "Action $actionId was rejected with error: ${actionCallback.getError()}" }
 }
+
+fun Driver.retryInvokeAction(action: String) {
+  val maxAttempts = 10
+  var currentAttempt = 0
+  while (true) {
+    try {
+      invokeAction(action)
+      break
+    }
+    catch (e: RuntimeException) {
+      if (currentAttempt++ > maxAttempts) {
+        throw e
+      }
+      Thread.sleep(500)
+    }
+  }
+}
