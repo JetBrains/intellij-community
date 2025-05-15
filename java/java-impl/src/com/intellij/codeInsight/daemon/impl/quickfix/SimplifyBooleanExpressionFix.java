@@ -12,6 +12,7 @@ import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
@@ -471,13 +472,7 @@ public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiE
       }
       if (parent instanceof PsiSwitchLabelStatementBase label && PsiTreeUtil.isAncestor(label.getGuardExpression(), newExpression, false)) {
         if (Boolean.TRUE.equals(value)) {
-          CommentTracker tracker = new CommentTracker();
-          PsiExpression guardExpression = label.getGuardExpression();
-          PsiKeyword psiKeyword = PsiTreeUtil.getPrevSiblingOfType(guardExpression, PsiKeyword.class);
-          if (psiKeyword != null && psiKeyword.getTokenType() == WHEN_KEYWORD) {
-            tracker.delete(psiKeyword);
-          }
-          tracker.delete(guardExpression);
+          deleteUnnecessaryGuard(label);
           return;
         }
         if (Boolean.FALSE.equals(value)) {
@@ -488,6 +483,67 @@ public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiE
     }
     if (!simplifyIfOrLoopStatement(newExpression)) {
       ParenthesesUtils.removeParentheses(newExpression, false);
+    }
+  }
+
+  private static void deleteUnnecessaryGuard(@NotNull PsiSwitchLabelStatementBase label) {
+    CommentTracker tracker = new CommentTracker();
+    PsiExpression guardExpression = label.getGuardExpression();
+    if (guardExpression == null) return;
+    PsiKeyword psiKeyword = PsiTreeUtil.getPrevSiblingOfType(guardExpression, PsiKeyword.class);
+
+    if (psiKeyword != null && psiKeyword.getTokenType() == WHEN_KEYWORD) {
+      tracker.delete(psiKeyword);
+    }
+    tracker.delete(guardExpression);
+    PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(label, PsiSwitchBlock.class);
+    if (switchBlock == null) return;
+    PsiExpression selector = switchBlock.getExpression();
+    if (selector == null) return;
+    PsiType selectorType = selector.getType();
+    if (selectorType == null) return;
+    PsiCaseLabelElementList elementList = label.getCaseLabelElementList();
+    if (elementList == null) return;
+    PsiCaseLabelElement target = null;
+    for (PsiCaseLabelElement element : elementList.getElements()) {
+      boolean isUnconditional = JavaPsiPatternUtil.isUnconditionalForType(element, selectorType, false);
+      if (isUnconditional) {
+        target = element;
+        break;
+      }
+    }
+    if (target == null) return;
+    boolean afterTarget = false;
+    for (PsiElement element : JavaPsiSwitchUtil.getSwitchBranches(switchBlock)) {
+      if (!element.isValid()) continue;
+      if (element == target) {
+        afterTarget = true;
+        continue;
+      }
+      if (!afterTarget) continue;
+      if (element instanceof PsiSwitchLabelStatementBase base && base.isDefaultCase()) {
+        tracker.delete(element);
+        continue;
+      }
+      boolean deleteCaseElement = false;
+      if (element instanceof PsiCaseLabelElement caseLabelElement &&
+          (caseLabelElement instanceof PsiDefaultCaseLabelElement ||
+           JavaPsiPatternUtil.isUnconditionalForType(caseLabelElement, selectorType, false) ||
+           JavaPsiSwitchUtil.isDominated(caseLabelElement, target, selectorType))) {
+        deleteCaseElement = true;
+      }
+      if (deleteCaseElement) {
+        PsiSwitchLabelStatementBase statementBase = PsiTreeUtil.getParentOfType(element, PsiSwitchLabelStatementBase.class);
+        if (statementBase == null) continue;
+        PsiCaseLabelElementList labelElementList = statementBase.getCaseLabelElementList();
+        if (labelElementList == null) continue;
+        if (labelElementList.getElements().length == 1) {
+          tracker.delete(statementBase);
+        }
+        else {
+          tracker.delete(element);
+        }
+      }
     }
   }
 
