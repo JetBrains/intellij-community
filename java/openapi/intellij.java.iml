@@ -16,6 +16,7 @@
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.extensions" exported="" />
     <orderEntry type="module" module-name="intellij.platform.icons" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
     <orderEntry type="module" module-name="intellij.xml" exported="" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.lang" exported="" />

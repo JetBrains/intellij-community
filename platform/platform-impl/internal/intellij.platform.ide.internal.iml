@@ -37,6 +37,7 @@
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlin-reflect" level="project" />
     <orderEntry type="library" name="jna" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
     <orderEntry type="library" name="jbr-api" level="project" />
   </component>
 </module>

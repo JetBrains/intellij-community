@@ -156,6 +156,7 @@
     <orderEntry type="module" module-name="intellij.platform.syntax.i18n" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.syntax.util" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.pasta" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
     <orderEntry type="module" module-name="intellij.platform.plugins.parser.impl" />
   </component>
 </module>

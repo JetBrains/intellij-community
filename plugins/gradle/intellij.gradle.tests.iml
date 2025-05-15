@@ -42,6 +42,7 @@
     <orderEntry type="module" module-name="intellij.groovy" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.storage" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution.dashboard" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.backend.observation" scope="TEST" />

@@ -27,6 +27,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.nanoxml" />
     <orderEntry type="library" name="aalto-xml" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
     <orderEntry type="module" module-name="intellij.platform.util.io.storages" />
   </component>
 </module>
