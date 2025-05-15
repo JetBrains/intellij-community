@@ -32,6 +32,7 @@ import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.Icon
 
 internal fun unscaledProjectIconSize() = Registry.intValue("ide.project.icon.size", 20)
@@ -52,6 +53,8 @@ private fun getDotIdeaPath(path: Path): Path {
 }
 
 private val projectIconCache = ContainerUtil.createSoftValueMap<Pair<String, Int>, ProjectIcon>()
+
+private val cacheEpoch = AtomicInteger()
 
 @Internal
 class RecentProjectIconHelper {
@@ -75,6 +78,7 @@ class RecentProjectIconHelper {
     fun createIcon(data: ByteArray, svg: Boolean): Icon = createIcon(data, svg, unscaledProjectIconSize())
 
     fun refreshProjectIcon(path: @SystemIndependent String) {
+      cacheEpoch.incrementAndGet()
       projectIconCache.keys
         .filter { it.first == path }
         .forEach { projectIconCache.remove(it) }
@@ -146,9 +150,11 @@ class RecentProjectIconHelper {
       return EmptyIcon.create(iconSize)
     }
 
-    return IconDeferrer.getInstance().defer(EmptyIcon.create(iconSize), Triple(path, isProjectValid, iconSize)) {
-      getCustomIcon(path = it.first, isProjectValid = it.second, iconSize)
-      ?: getGeneratedProjectIcon(path = it.first, isProjectValid = it.second, iconSize, name)
+    return IconDeferrer.getInstance().defer(
+      EmptyIcon.create(iconSize),
+      LocalProjectIconKey(cacheEpoch.get(), path, isProjectValid, iconSize, name),
+    ) {
+      it.loadIcon()
     }
   }
 
@@ -158,14 +164,44 @@ class RecentProjectIconHelper {
     iconSize: Int = unscaledProjectIconSize(),
     name: String? = null,
   ): Icon {
-    return IconDeferrer.getInstance().defer(EmptyIcon.create(iconSize), Triple(id, isProjectValid, iconSize)) {
-      getGeneratedProjectIcon(path = it.first, isProjectValid = it.second, iconSize, name)
+    return IconDeferrer.getInstance().defer(
+      EmptyIcon.create(iconSize),
+      NonLocalProjectIconKey(cacheEpoch.get(), id, isProjectValid, iconSize, name),
+    ) {
+      it.loadIcon()
     }
   }
 
 
   fun hasCustomIcon(project: Project): Boolean =
     ProjectWindowCustomizerService.projectPath(project)?.let { getCustomIconFileInfo(it) } != null
+}
+
+private sealed class DeferredIconKey {
+  abstract fun loadIcon(): Icon
+}
+
+private data class LocalProjectIconKey(
+  val cacheEpoch: Int,
+  val path: @SystemIndependent String,
+  val isProjectValid: Boolean,
+  val iconSize: Int,
+  val name: String?,
+) : DeferredIconKey() {
+  override fun loadIcon(): Icon =
+    getCustomIcon(path, isProjectValid, iconSize)
+    ?: getGeneratedProjectIcon(path, isProjectValid, iconSize, name)
+}
+
+private data class NonLocalProjectIconKey(
+  val cacheEpoch: Int,
+  val id: String,
+  val isProjectValid: Boolean,
+  val iconSize: Int,
+  val name: String?,
+) : DeferredIconKey() {
+  override fun loadIcon(): Icon =
+    getGeneratedProjectIcon(path = id, isProjectValid, iconSize, name)
 }
 
 private fun getCustomIconFileInfo(path: @SystemIndependent String): Pair<Path, BasicFileAttributes>? {
