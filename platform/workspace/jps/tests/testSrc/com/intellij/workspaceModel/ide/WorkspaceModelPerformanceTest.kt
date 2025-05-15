@@ -14,17 +14,28 @@ import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ClassLevelProjectModelExtension
 import com.intellij.testFramework.workspaceModel.updateProjectModel
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.api.extension.*
 
+class SuspendIndexingExtension : BeforeAllCallback, AfterAllCallback {
+  override fun beforeAll(context: ExtensionContext?) {
+    System.setProperty("idea.suspend.indexes.initialization", "true")
+  }
+
+  override fun afterAll(context: ExtensionContext?) {
+    System.setProperty("idea.suspend.indexes.initialization", "false")
+  }
+}
+
+@ExtendWith(SuspendIndexingExtension::class)
 @TestApplication
 @RunInEdt(writeIntent = true)
 class WorkspaceModelPerformanceTest {
