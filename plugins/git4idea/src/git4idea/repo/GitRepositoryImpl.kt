@@ -173,7 +173,6 @@ class GitRepositoryImpl private constructor(
     ApplicationManager.getApplication().assertIsNonDispatchThread()
     val previousInfo = repoInfo
     repoInfo = readRepoInfo()
-    project.messageBus.syncPublisher(GitRepositoryFrontendSynchronizer.TOPIC).repositoryUpdated(this)
     notifyIfRepoChanged(this, previousInfo, repoInfo)
   }
 
@@ -278,7 +277,6 @@ class GitRepositoryImpl private constructor(
         val initialRepoInfo = repoInfo
         val updater = GitRepositoryUpdater(this, this.repositoryFiles)
         updater.installListeners()
-        project.messageBus.syncPublisher(GitRepositoryFrontendSynchronizer.TOPIC).repositoryCreated(this)
         notifyIfRepoChanged(this, null, initialRepoInfo)
         this.untrackedFilesHolder.invalidate()
         this.resolvedConflictsFilesHolder.invalidate()
@@ -288,6 +286,10 @@ class GitRepositoryImpl private constructor(
     private fun notifyIfRepoChanged(repository: GitRepository, previousInfo: GitRepoInfo?, info: GitRepoInfo) {
       val project = repository.project
       if (!project.isDisposed && info != previousInfo) {
+        project.messageBus.syncPublisher(GitRepositoryFrontendSynchronizer.TOPIC).apply {
+          if (previousInfo == null) repositoryCreated(repository) else repositoryUpdated(repository)
+        }
+
         GitRepositoryManager.getInstance(project).notifyListenersAsync(repository, previousInfo, info)
         LOG.debug("Repository $repository changed")
       }
