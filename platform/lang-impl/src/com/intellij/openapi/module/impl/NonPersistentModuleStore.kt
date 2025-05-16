@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl
 
 import com.intellij.configurationStore.DummyStreamProvider
@@ -14,29 +14,37 @@ import java.nio.file.Path
 
 @ApiStatus.Internal
 internal class NonPersistentModuleStore : ModuleStore {
-  override val storageManager: StateStorageManager = NonPersistentStateStorageManager
-  override val isStoreInitialized: Boolean = true
+  override val storageManager: StateStorageManager
+    get() = NonPersistentStateStorageManager
+
+  override val isStoreInitialized: Boolean
+    get() = true
+
   override fun setPath(path: Path) {
   }
 
   override fun setPath(path: Path, virtualFile: VirtualFile?, isNew: Boolean) {
   }
 
-  override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {}
+  override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
+  }
 
   override fun unloadComponent(component: Any) {}
 
-  override fun initPersistencePlainComponent(component: Any, key: String, pluginId: PluginId) {}
+  override fun initPersistencePlainComponent(component: Any, key: String, pluginId: PluginId) {
+  }
 
   override fun reloadStates(componentNames: Set<String>) {}
 
-  override fun reloadState(componentClass: Class<out PersistentStateComponent<*>>) {}
+  override fun reloadState(componentClass: Class<out PersistentStateComponent<*>>) {
+  }
 
   override fun isReloadPossible(componentNames: Set<String>): Boolean = true
 
   override suspend fun save(forceSavingAllSettings: Boolean) {}
 
-  override fun saveComponent(component: PersistentStateComponent<*>) {}
+  override fun saveComponent(component: PersistentStateComponent<*>) {
+  }
 
   override fun removeComponent(name: String) {
   }
@@ -49,7 +57,8 @@ internal class NonPersistentModuleStore : ModuleStore {
 }
 
 private object NonPersistentStateStorageManager : StateStorageManager {
-  override val componentManager: ComponentManager? = null
+  override val componentManager: ComponentManager?
+    get() = null
 
   override fun getStateStorage(storageSpec: Storage): StateStorage = NonPersistentStateStorage
 

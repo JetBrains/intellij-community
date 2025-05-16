@@ -164,7 +164,7 @@ abstract class ClientSessionImpl(
   }
 
   final override fun toString(): String {
-    return "${javaClass.name}(type=${type}, clientId=$clientId)"
+    return "${javaClass.name}(type=$type, clientId=$clientId)"
   }
 
   override fun debugString(short: Boolean): String {

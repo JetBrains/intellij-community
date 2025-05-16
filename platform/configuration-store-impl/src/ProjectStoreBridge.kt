@@ -172,7 +172,7 @@ private class DirectJpsStorageContentWriter(
     val exceptions = CopyOnWriteArrayList<IOException>()
 
     // todo (IJPL-157852): we can use several threads
-    filesWithComponents.forEach { (_, components) ->
+    for ((_, components) in filesWithComponents) {
       try {
         components.flush(moduleManager)
       }
@@ -402,7 +402,7 @@ internal class StorageJpsConfigurationReader(private val project: Project, priva
     if (ProjectUtil.isRemotePath(FileUtilRt.toSystemDependentName(filePath)) && !TrustedProjects.isProjectTrusted(project)) {
       throw IOException(ConfigurationStoreBundle.message("error.message.details.configuration.files.from.remote.locations.in.safe.mode"))
     }
-    if (componentName == "") {
+    if (componentName.isEmpty()) {
       //this is currently used for loading Eclipse project configuration from the.classpath file
       val file = VirtualFileManager.getInstance().findFileByUrl(fileUrl)
       val component = file?.inputStream?.use { JDOMUtil.load(it) }
@@ -414,7 +414,7 @@ internal class StorageJpsConfigurationReader(private val project: Project, priva
       val component = getCachingReader().loadComponent(fileUrl, componentName, customModuleFilePath)
       return@addMeasuredTime component
     }
-    if (FileUtilRt.extensionEquals(filePath, "iml") || isExternalModuleFile(filePath)) {
+    if (filePath.endsWith(".iml") || isExternalModuleFile(filePath)) {
       //todo fetch data from ModuleStore (https://jetbrains.team/p/wm/issues/51)
       val component = getCachingReader().loadComponent(fileUrl, componentName, customModuleFilePath)
       return@addMeasuredTime component
@@ -424,11 +424,11 @@ internal class StorageJpsConfigurationReader(private val project: Project, priva
       val stateMap = storage.getStorageData()
       val component = if (storage is DirectoryBasedStorage) {
         val elementContent = stateMap.getElement(PathUtilRt.getFileName(filePath))
-        if (elementContent != null) {
-          Element(ComponentStorageUtil.COMPONENT).setAttribute(ComponentStorageUtil.NAME, componentName).addContent(elementContent)
+        if (elementContent == null) {
+          null
         }
         else {
-          null
+          Element(ComponentStorageUtil.COMPONENT).setAttribute(ComponentStorageUtil.NAME, componentName).addContent(elementContent)
         }
       }
       else {
@@ -453,7 +453,7 @@ internal class StorageJpsConfigurationReader(private val project: Project, priva
 
   override fun getExpandMacroMap(fileUrl: String): ExpandMacroToPathMap {
     val filePath = JpsPathUtil.urlToPath(fileUrl)
-    if (FileUtil.extensionEquals(filePath, "iml") || isExternalModuleFile(filePath)) {
+    if (filePath.endsWith(".iml") || isExternalModuleFile(filePath)) {
       return getCachingReader().getExpandMacroMap(fileUrl)
     }
     else {

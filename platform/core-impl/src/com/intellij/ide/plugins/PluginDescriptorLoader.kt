@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("PluginDescriptorLoader")
 @file:Internal
+@file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.ide.plugins
 
@@ -440,7 +441,7 @@ internal fun CoroutineScope.scheduleLoading(
     val loadingResult = PluginLoadingResult()
     loadingResult.initAndAddAll(descriptorLoadingResult = discoveredPlugins, initContext = initContext)
     val pluginSet = PluginManagerCore.initializeAndSetPlugins(loadingContext.copyDescriptorLoadingErrors(), initContext, loadingResult)
-    this@scheduleLoading.launch { // logging is not as a part of plugin set job for performance reasons
+    this@scheduleLoading.launch { // logging is not as a part of a plugin set job for performance reasons
       logPlugins(pluginSet.allPlugins, initContext, loadingResult, logSupplier = {
         // make sure that logger is ready to use (not a console logger)
         logDeferred?.await()
@@ -470,7 +471,7 @@ private suspend fun logPlugins(
     val pluginId = descriptor.pluginId
     val target = if (!PluginManagerCore.isLoaded(descriptor)) {
       if (!initContext.isPluginDisabled(pluginId)) {
-        // plugin will be logged as part of "Problems found loading plugins"
+        // the plugin will be logged as part of "Problems found loading plugins"
         continue
       }
       disabledPlugins.add(pluginId)
@@ -872,7 +873,7 @@ private fun CoroutineScope.loadCoreModules(
 }
 
 /**
- * @returns `(corePluginDeferred, isSingleDescriptorCore)` (well, the last one is probably not precise description, FIXME)
+ * @returns `(corePluginDeferred, isSingleDescriptorCore)` (well, the last one is probably not a precise description, FIXME)
  */
 fun CoroutineScope.loadCorePlugin(
   platformPrefix: String,
@@ -1233,7 +1234,7 @@ private fun loadDescriptorFromResource(
 
         val relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation()
         if (pathResolver.isRunningFromSources || (relevantJarsRoot != null && file.startsWith(relevantJarsRoot))) {
-          // support for archived compile outputs (each module in separate jar)
+          // support for archived compile outputs (each module in a separate jar)
           basePath = file.parent
           dataLoader = object : DataLoader by loader {
             // should be similar as in LocalFsDataLoader
@@ -1267,7 +1268,7 @@ private fun loadDescriptorFromResource(
         val subRaw = pathResolver.resolveModuleFile(loadingContext, dataLoader, subDescriptorFile)
         val subDescriptor = descriptor.createSub(subRaw, subDescriptorFile, module)
         if (runFromSources && subDescriptor.packagePrefix == null) {
-          // no package in run from sources - load module from main classpath
+          // no package in run from sources - load module from the main classpath
           subDescriptor.jarFiles = Collections.emptyList()
         }
         module.assignDescriptor(subDescriptor)

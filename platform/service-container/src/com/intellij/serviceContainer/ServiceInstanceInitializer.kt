@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.PluginException
@@ -24,21 +24,24 @@ internal abstract class ServiceInstanceInitializer(
   private val pluginId: PluginId,
   private val serviceDescriptor: ServiceDescriptor?,
 ) : InstanceInitializer {
-
   override suspend fun createInstance(parentScope: CoroutineScope, instanceClass: Class<*>): Any {
     checkWriteAction(instanceClass)
     val instance = try {
-      instantiate(resolver = componentManager.dependencyResolver,
-                  parentScope = parentScope,
-                  instanceClass = instanceClass,
-                  supportedSignatures = componentManager.supportedSignaturesOfLightServiceConstructors)
+      instantiate(
+        resolver = componentManager.dependencyResolver,
+        parentScope = parentScope,
+        instanceClass = instanceClass,
+        supportedSignatures = componentManager.supportedSignaturesOfLightServiceConstructors,
+      )
     }
     catch (e: InstantiationException) {
       LOG.error(e)
-      instantiateWithContainer(resolver = componentManager.dependencyResolver,
-                               parentScope = parentScope,
-                               instanceClass = instanceClass,
-                               pluginId = pluginId)
+      instantiateWithContainer(
+        resolver = componentManager.dependencyResolver,
+        parentScope = parentScope,
+        instanceClass = instanceClass,
+        pluginId = pluginId,
+      )
     }
     catch (e: PluginException) {
       throw e
@@ -62,7 +65,7 @@ internal abstract class ServiceInstanceInitializer(
     // so it leaks to initializeComponent call, where it might cause ReadMostlyRWLock.throwIfImpatient() to throw,
     // for example, if a service obtains a read action in loadState.
     // Non-cancellable section is required to silence throwIfImpatient().
-    // In general, we want initialization to be cancellable, and it must be cancelled only on parent scope cancellation,
+    // In general, we want initialization to be cancellable, and it must be canceled only on parent scope cancellation,
     // which happens only on project/application shutdown, or on plugin unload.
     Cancellation.withNonCancelableSection().use {
       // loadState may invokeLater => don't capture the context
@@ -81,7 +84,6 @@ internal open class ServiceDescriptorInstanceInitializer(
   private val pluginDescriptor: PluginDescriptor,
   private val serviceDescriptor: ServiceDescriptor,
 ) : ServiceInstanceInitializer(componentManager, pluginDescriptor.pluginId, serviceDescriptor) {
-
   override fun loadInstanceClass(keyClass: Class<*>?): Class<*> {
     if (keyClass != null && keyClassName == instanceClassName) {
       // avoid classloading
@@ -99,7 +101,6 @@ internal class ServiceClassInstanceInitializer(
   pluginId: PluginId,
   serviceDescriptor: ServiceDescriptor?,
 ) : ServiceInstanceInitializer(componentManager, pluginId, serviceDescriptor) {
-
   override val instanceClassName: String get() = instanceClass.name
 
   override fun loadInstanceClass(keyClass: Class<*>?): Class<*> = instanceClass
@@ -112,12 +113,12 @@ private fun checkWriteAction(instanceClass: Class<*>) {
   if (!checkServiceFromWriteAccess) {
     return
   }
-  val app = ApplicationManager.getApplication()
-            ?: return
+  val app = ApplicationManager.getApplication() ?: return
   if (app.isWriteAccessAllowed && !app.isUnitTestMode && PersistentStateComponent::class.java.isAssignableFrom(instanceClass)) {
     LOG.warn(Throwable("Getting service from write-action leads to possible deadlock. Service implementation ${instanceClass.name}"))
   }
 }
 
 @ApiStatus.Internal
+@JvmField
 var checkServiceFromWriteAccess: Boolean = true

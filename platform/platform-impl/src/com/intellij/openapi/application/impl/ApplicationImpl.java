@@ -1285,7 +1285,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     boolean writeActionInProgress = isWriteActionInProgress();
     boolean writeAccessAllowed =isWriteAccessAllowed();
     return "Application"
-           + (getContainerState().get() == ContainerState.COMPONENT_CREATED ? "" : " (containerState " + getContainerStateName() + ") ")
+           + (containerState.get() == ContainerState.COMPONENT_CREATED ? "" : " (containerState " + getContainerStateName() + ") ")
            + (isUnitTestMode() ? " (unit test)" : "")
            + (isInternal() ? " (internal)" : "")
            + (isHeadlessEnvironment() ? " (headless)" : "")
@@ -1336,7 +1336,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public boolean isComponentCreated() {
-    return getContainerState().get().compareTo(ContainerState.COMPONENT_CREATED) >= 0;
+    return containerState.get().compareTo(ContainerState.COMPONENT_CREATED) >= 0;
   }
 
   @ApiStatus.Internal
