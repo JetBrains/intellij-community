@@ -12,8 +12,8 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jetbrains-annotations",
     "@lib//:ktor-client-core",
-    "//libraries/io",
     "@lib//:ktor-client-java",
-  ]
+  ],
+  runtime_deps = ["@lib//:kotlinx-io-core"]
 )
 ### auto-generated section `build intellij.platform.util.http` end
