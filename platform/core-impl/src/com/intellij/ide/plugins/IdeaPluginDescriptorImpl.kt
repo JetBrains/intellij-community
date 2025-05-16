@@ -40,7 +40,7 @@ sealed class IdeaPluginDescriptorImpl(
   useCoreClassLoader: Boolean = false,
   isIndependentFromCoreClassLoader: Boolean = false,
   descriptorPath: String? = null
-) : IdeaPluginDescriptorEx {
+) : IdeaPluginDescriptorImplPublic {
 
   /** see [type], [checkTypeInvariants] */
   @ApiStatus.Internal
@@ -77,7 +77,7 @@ sealed class IdeaPluginDescriptorImpl(
   private val name: String = raw.name ?: id.idString
 
   override val moduleName: String? = moduleName
-  override val moduleLoadingRule: ModuleLoadingRule? = moduleLoadingRule
+  val moduleLoadingRule: ModuleLoadingRule? = moduleLoadingRule
 
   private val version: String? = raw.version
   private val sinceBuild: String? = raw.sinceBuild
@@ -101,8 +101,8 @@ sealed class IdeaPluginDescriptorImpl(
   private val pluginDependencies: List<PluginDependencyImpl> = raw.depends
     .let(::fixDepends)
     .let(::convertDepends)
-  override val incompatiblePlugins: List<PluginId> = raw.incompatibleWith.map(PluginId::getId)
-  override val pluginAliases: List<PluginId> = raw.pluginAliases.map(PluginId::getId)
+  val incompatiblePlugins: List<PluginId> = raw.incompatibleWith.map(PluginId::getId)
+  val pluginAliases: List<PluginId> = raw.pluginAliases.map(PluginId::getId)
     .let(::addCorePluginAliases)
 
   /**
@@ -112,31 +112,31 @@ sealed class IdeaPluginDescriptorImpl(
     raw.contentModules.takeIf { it.isNotEmpty() }?.let { PluginContentDescriptor(convertContentModules(it)) }
     ?: PluginContentDescriptor.EMPTY
 
-  override val contentModules: List<ContentModule>
+  val contentModules: List<ContentModule>
     get() = content.modules
   override val moduleDependencies: ModuleDependencies = raw.dependencies.let(::convertDependencies)
-  override val packagePrefix: String? = raw.`package`
+  val packagePrefix: String? = raw.`package`
 
-  override val appContainerDescriptor: ContainerDescriptor = raw.appElementsContainer.convert()
-  override val projectContainerDescriptor: ContainerDescriptor = raw.projectElementsContainer.convert()
-  override val moduleContainerDescriptor: ContainerDescriptor = raw.moduleElementsContainer.convert()
+  val appContainerDescriptor: ContainerDescriptor = raw.appElementsContainer.convert()
+  val projectContainerDescriptor: ContainerDescriptor = raw.projectElementsContainer.convert()
+  val moduleContainerDescriptor: ContainerDescriptor = raw.moduleElementsContainer.convert()
 
-  override val extensions: Map<String, List<ExtensionDescriptor>> = raw.extensions
+  val extensions: Map<String, List<ExtensionDescriptor>> = raw.extensions
     .let(::convertExtensions)
     .let(::sortExtensions)
 
   private val resourceBundleBaseName: String? = raw.resourceBundleBaseName
     .also { warnIfResourceBundleIsDefinedForCorePlugin(it) }
-  override val actions: List<ActionElement> = raw.actions
+  val actions: List<ActionElement> = raw.actions
 
   private val isRestartRequired: Boolean = raw.isRestartRequired
   private val isImplementationDetail: Boolean = raw.isImplementationDetail
   private val isBundledUpdateAllowed: Boolean = raw.isBundledUpdateAllowed
-  override val isUseIdeaClassLoader: Boolean = raw.isUseIdeaClassLoader
+  val isUseIdeaClassLoader: Boolean = raw.isUseIdeaClassLoader
 
   private val isBundled: Boolean = isBundled
-  override val isIndependentFromCoreClassLoader: Boolean = isIndependentFromCoreClassLoader
-  override val useCoreClassLoader: Boolean = useCoreClassLoader
+  val isIndependentFromCoreClassLoader: Boolean = isIndependentFromCoreClassLoader
+  val useCoreClassLoader: Boolean = useCoreClassLoader
 
   private val pluginPath: Path = pluginPath
   private val descriptorPath: String? = descriptorPath
@@ -145,7 +145,7 @@ sealed class IdeaPluginDescriptorImpl(
   @Transient
   var jarFiles: List<Path>? = null
 
-  override var isMarkedForLoading: Boolean = true
+  var isMarkedForLoading: Boolean = true
   private var _pluginClassLoader: ClassLoader? = null
   @Volatile
   private var loadedDescriptionText: @Nls String? = null
