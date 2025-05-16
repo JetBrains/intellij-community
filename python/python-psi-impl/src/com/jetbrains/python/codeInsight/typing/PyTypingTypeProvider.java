@@ -1686,6 +1686,9 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     // While evaluating type hints of enclosing functions' parameters, resolving to the same TypeVar
     // definition shouldn't trigger the protection against recursive aliases, so we manually remove
     // it from the top for the time being.
+    if (context.getTypeAliasStack().isEmpty()) {
+      return null;
+    }
     PyQualifiedNameOwner typeVarDeclaration = context.getTypeAliasStack().pop();
     assert typeVarDeclaration instanceof PyTargetExpression;
     try {
