@@ -11,7 +11,7 @@ import org.intellij.images.editor.ImageDocument
 import org.intellij.images.scientific.statistics.ScientificImageActionsCollector
 import org.intellij.images.scientific.utils.BinarizationThresholdConfig
 import org.intellij.images.scientific.utils.ScientificUtils
-import org.intellij.images.scientific.utils.ScientificUtils.IS_NORMALIZED_KEY
+import org.intellij.images.scientific.utils.ScientificUtils.NORMALIZATION_APPLIED_KEY
 import org.intellij.images.scientific.utils.ScientificUtils.ROTATION_ANGLE_KEY
 import org.intellij.images.scientific.utils.ScientificUtils.saveImageToFile
 import org.intellij.images.scientific.utils.launchBackground
@@ -26,7 +26,7 @@ class BinarizeImageAction : AnAction() {
     val document = e.getData(ImageDocument.IMAGE_DOCUMENT_DATA_KEY) ?: return
     val thresholdConfig = BinarizationThresholdConfig.getInstance()
     val currentAngle = imageFile.getUserData(ROTATION_ANGLE_KEY) ?: 0
-    imageFile.putUserData(IS_NORMALIZED_KEY, false)
+    imageFile.putUserData(NORMALIZATION_APPLIED_KEY, false)
 
     launchBackground {
       val rotatedOriginal = if (currentAngle != 0) ScientificUtils.rotateImage(originalImage, currentAngle) else originalImage
