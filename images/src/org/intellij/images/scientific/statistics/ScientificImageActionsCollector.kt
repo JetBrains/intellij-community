@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 
 object ScientificImageActionsCollector : CounterUsagesCollector() {
   @JvmStatic
-  private val GROUP = EventLogGroup("scientific.image.actions", 6)
+  private val GROUP = EventLogGroup("scientific.image.actions", 7)
   override fun getGroup(): EventLogGroup = GROUP
 
   private val imageFormatField = EventFields.String("image_format", listOf("png", "jpg", "jpeg", "bmp", "svg"))
@@ -58,8 +58,8 @@ object ScientificImageActionsCollector : CounterUsagesCollector() {
     invokedChannelSelectionEvent.log(channelIndex)
   }
 
-  fun logNormalizedImageInvoked(isNormalized: Boolean) {
-    invokedNormalizedImageEvent.log(isNormalized)
+  fun logNormalizedImageInvoked(normalizationApplied: Boolean) {
+    invokedNormalizedImageEvent.log(normalizationApplied)
   }
 
   fun logReverseChannelsOrderInvoked() {

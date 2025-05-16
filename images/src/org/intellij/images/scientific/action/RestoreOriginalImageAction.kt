@@ -8,7 +8,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import org.intellij.images.editor.ImageDocument.IMAGE_DOCUMENT_DATA_KEY
 import org.intellij.images.scientific.statistics.ScientificImageActionsCollector
 import org.intellij.images.scientific.utils.ScientificUtils
-import org.intellij.images.scientific.utils.ScientificUtils.IS_NORMALIZED_KEY
+import org.intellij.images.scientific.utils.ScientificUtils.NORMALIZATION_APPLIED_KEY
 import org.intellij.images.scientific.utils.ScientificUtils.ORIGINAL_IMAGE_KEY
 import org.intellij.images.scientific.utils.ScientificUtils.ROTATION_ANGLE_KEY
 import org.intellij.images.scientific.utils.ScientificUtils.saveImageToFile
@@ -22,7 +22,7 @@ class RestoreOriginalImageAction : DumbAwareAction() {
     val originalImage = imageFile.getUserData(ORIGINAL_IMAGE_KEY) ?: return
     val document = e.getData(IMAGE_DOCUMENT_DATA_KEY) ?: return
     val currentAngle = imageFile.getUserData(ROTATION_ANGLE_KEY) ?: 0
-    imageFile.putUserData(IS_NORMALIZED_KEY, false)
+    imageFile.putUserData(NORMALIZATION_APPLIED_KEY, false)
 
     launchBackground {
       val rotatedOriginal = if (currentAngle != 0) ScientificUtils.rotateImage(originalImage, currentAngle) else originalImage

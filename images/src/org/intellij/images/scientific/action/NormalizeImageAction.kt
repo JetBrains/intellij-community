@@ -10,7 +10,7 @@ import org.intellij.images.editor.ImageDocument.IMAGE_DOCUMENT_DATA_KEY
 import org.intellij.images.scientific.statistics.ScientificImageActionsCollector
 import org.intellij.images.scientific.utils.ScientificUtils
 import org.intellij.images.scientific.utils.ScientificUtils.CURRENT_NOT_NORMALIZED_IMAGE_KEY
-import org.intellij.images.scientific.utils.ScientificUtils.IS_NORMALIZED_KEY
+import org.intellij.images.scientific.utils.ScientificUtils.NORMALIZATION_APPLIED_KEY
 import org.intellij.images.scientific.utils.ScientificUtils.ORIGINAL_IMAGE_KEY
 import org.intellij.images.scientific.utils.ScientificUtils.ROTATION_ANGLE_KEY
 import org.intellij.images.scientific.utils.ScientificUtils.saveImageToFile
@@ -23,8 +23,8 @@ class NormalizeImageAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val imageFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
     e.presentation.isEnabledAndVisible = imageFile?.getUserData(ScientificUtils.SCIENTIFIC_MODE_KEY) != null
-    val isNormalized = imageFile?.getUserData(IS_NORMALIZED_KEY) ?: false
-    e.presentation.text = if (isNormalized) ImagesBundle.message("action.restore.original.text") else ImagesBundle.message("action.normalize.image.text")
+    val normalizationApplied = imageFile?.getUserData(NORMALIZATION_APPLIED_KEY) ?: false
+    e.presentation.text = if (normalizationApplied) ImagesBundle.message("action.restore.original.text") else ImagesBundle.message("action.normalize.image.text")
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -32,23 +32,23 @@ class NormalizeImageAction : DumbAwareAction() {
     val originalImage = imageFile.getUserData(ORIGINAL_IMAGE_KEY) ?: return
     val document = e.getData(IMAGE_DOCUMENT_DATA_KEY) ?: return
     val currentAngle = imageFile.getUserData(ROTATION_ANGLE_KEY) ?: 0
-    val isNormalized = imageFile.getUserData(IS_NORMALIZED_KEY) ?: false
+    val normalizationApplied = imageFile.getUserData(NORMALIZATION_APPLIED_KEY) ?: false
 
     launchBackground {
-      if (!isNormalized) {
+      if (!normalizationApplied) {
         imageFile.putUserData(CURRENT_NOT_NORMALIZED_IMAGE_KEY, ScientificUtils.rotateImage(document.value, 360 - currentAngle))
         val normalizedImage = ScientificUtils.normalizeImage(document.value)
         saveImageToFile(imageFile, normalizedImage)
         document.value = normalizedImage
-        imageFile.putUserData(IS_NORMALIZED_KEY, true)
+        imageFile.putUserData(NORMALIZATION_APPLIED_KEY, true)
       } else {
         val notNormalizedImage = imageFile.getUserData(CURRENT_NOT_NORMALIZED_IMAGE_KEY) ?: originalImage
         val rotatedNotNormalizedImage = if (currentAngle != 0) ScientificUtils.rotateImage(notNormalizedImage, currentAngle) else notNormalizedImage
         saveImageToFile(imageFile, rotatedNotNormalizedImage)
         document.value = rotatedNotNormalizedImage
-        imageFile.putUserData(IS_NORMALIZED_KEY, false)
+        imageFile.putUserData(NORMALIZATION_APPLIED_KEY, false)
       }
-      ScientificImageActionsCollector.logNormalizedImageInvoked(isNormalized)
+      ScientificImageActionsCollector.logNormalizedImageInvoked(normalizationApplied)
     }
   }
 }

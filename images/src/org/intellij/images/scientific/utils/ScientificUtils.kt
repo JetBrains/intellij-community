@@ -23,8 +23,8 @@ object ScientificUtils {
   val ORIGINAL_IMAGE_KEY: Key<BufferedImage> = Key("ORIGINAL_IMAGE")
   val DATA_TYPE_KEY: Key<String> = Key("DATA_TYPE")
   val ROTATION_ANGLE_KEY: Key<Int> = Key.create("IMAGE_ROTATION_ANGLE")
-  val CURRENT_NOT_NORMALIZED_IMAGE_KEY: Key<BufferedImage> = Key("CURRENT_NOT_NORMALIZED_IMAGE_KEY")
-  val IS_NORMALIZED_KEY: Key<Boolean> = Key<Boolean>("IS_NORMALIZED")
+  val CURRENT_NOT_NORMALIZED_IMAGE_KEY: Key<BufferedImage> = Key("CURRENT_NOT_NORMALIZED_IMAGE")
+  val NORMALIZATION_APPLIED_KEY: Key<Boolean> = Key<Boolean>("NORMALIZATION_APPLIED")
   const val DEFAULT_IMAGE_FORMAT: String = "png"
 
   internal suspend fun saveImageToFile(imageFile: VirtualFile, image: BufferedImage): Unit = withContext(Dispatchers.IO) {

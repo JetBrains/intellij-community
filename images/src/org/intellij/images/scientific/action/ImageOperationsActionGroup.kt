@@ -53,6 +53,7 @@ class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, 
     val comboBox = ComboBox(comboBoxModel).apply {
       selectedItem = selectedMode
       isOpaque = false
+      maximumRowCount = comboBoxModel.size
       renderer = object : DefaultListCellRenderer() {
         override fun getListCellRendererComponent(list: JList<out Any>?, value: Any?, index: Int, isSelected: Boolean, cellHasFocus: Boolean): JComponent {
           val component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
