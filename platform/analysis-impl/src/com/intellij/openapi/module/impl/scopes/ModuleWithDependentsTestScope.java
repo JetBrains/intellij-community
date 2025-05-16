@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 // Tests only (module plus dependencies) scope
 // Delegates to ModuleWithDependentsScope with extra flag testOnly to reduce memory for holding modules and CPU for traversing dependencies.
-class ModuleWithDependentsTestScope extends DelegatingGlobalSearchScope implements ActualCodeInsightContextInfo {
+final class ModuleWithDependentsTestScope extends DelegatingGlobalSearchScope implements ActualCodeInsightContextInfo {
   ModuleWithDependentsTestScope(@NotNull Module module) {
     // the additional equality argument allows to distinguish ModuleWithDependentsTestScope from ModuleWithDependentsScope
     super(new ModuleWithDependentsScope(module), true);
