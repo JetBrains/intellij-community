@@ -17,10 +17,11 @@
 - f:getContent():java.lang.String
 - f:getName():java.lang.String
 *f:com.intellij.platform.syntax.SyntaxElementType
-- <init>(java.lang.String):V
 - equals(java.lang.Object):Z
 - f:getIndex():I
 - hashCode():I
+*f:com.intellij.platform.syntax.SyntaxElementTypeKt
+- *sf:SyntaxElementType(java.lang.String):com.intellij.platform.syntax.SyntaxElementType
 *f:com.intellij.platform.syntax.SyntaxElementTypeSet
 - java.util.Set
 - kotlin.jvm.internal.markers.KMappedMarker
