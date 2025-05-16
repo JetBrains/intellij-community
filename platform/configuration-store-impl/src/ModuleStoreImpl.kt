@@ -1,4 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog")
+
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ModuleFileType
@@ -11,11 +13,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.project.ProjectStoreOwner
 import com.intellij.project.isDirectoryBased
 import org.jdom.Element
 import java.io.IOException
-import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.concurrent.write
 import kotlin.io.path.invariantSeparatorsPathString
@@ -27,15 +27,15 @@ internal open class ModuleStoreImpl(module: Module) : ComponentStoreImpl(), Modu
 
   override val project: Project = module.project
 
-  override val storageManager: StateStorageManagerImpl =
-    ModuleStateStorageManager(TrackingPathMacroSubstitutorImpl(pathMacroManager), module)
+  override val storageManager: StateStorageManagerImpl = ModuleStateStorageManager(TrackingPathMacroSubstitutorImpl(pathMacroManager), module)
 
   @Volatile
   final override var isStoreInitialized: Boolean = false
     private set
 
-  override fun createSaveSessionProducerManager(): SaveSessionProducerManager =
-    SaveSessionProducerManager(storageManager.isUseVfsForWrite, collectVfsEvents = true)
+  override fun createSaveSessionProducerManager(): SaveSessionProducerManager {
+    return SaveSessionProducerManager(isUseVfsForWrite = storageManager.isUseVfsForWrite, collectVfsEvents = true)
+  }
 
   final override fun isReportStatisticAllowed(stateSpec: State, storageSpec: Storage): Boolean = false
 
@@ -101,7 +101,7 @@ internal open class ModuleStoreImpl(module: Module) : ComponentStoreImpl(), Modu
         // https://youtrack.jetbrains.com/issue/IDEA-147530
 
         if (isMacroAdded) {
-          // preload to ensure that we will get FileNotFound error (no module file) during initialization,
+          // preload to ensure that we will get a FileNotFound error (no module file) during initialization
           // and not later in some unexpected place (because otherwise will be loaded by demand)
           preloadStorageData(isNew)
         }
@@ -136,7 +136,7 @@ private class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubst
           file.rename(storage, newName)
         }
         else if (storage.file.fileName.toString() != newName) {
-          // old file didn't exist or renaming failed
+          // the old file didn't exist or renaming failed
           val newFile = storage.file.parent.resolve(newName)
           storage.setFile(virtualFile = null, ioFileIfChanged = newFile)
           pathRenamed(newPath = newFile, event = null)
@@ -198,16 +198,25 @@ private class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubst
     get() = (componentManager as Module?)?.project?.isExternalStorageEnabled == true
 
   override val isUseVfsForWrite: Boolean
-    get() = !useBackgroundSave
+    get() = !useBackgroundSave()
 
   override fun createFileBasedStorage(
     file: Path,
-    fileSpec: String,
+    collapsedPath: String,
     roamingType: RoamingType,
     usePathMacroManager: Boolean,
     rootTagName: String?
   ): StateStorage {
     val provider = if (roamingType == RoamingType.DISABLED) null else streamProvider
-    return TrackedFileStorage(storageManager = this, file, fileSpec, rootTagName, roamingType, macroSubstitutor, provider, controller = null)
+    return TrackedFileStorage(
+      storageManager = this,
+      file = file,
+      fileSpec = collapsedPath,
+      rootElementName = rootTagName,
+      roamingType = roamingType,
+      pathMacroManager = macroSubstitutor,
+      provider = provider,
+      controller = null,
+    )
   }
 }

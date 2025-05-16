@@ -682,8 +682,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       throw AssertionError("This method must be called under remote client id")
     }
 
-    val perClientComponent = (storageManager.componentManager ?: application).getService(componentClass)
-                             ?: return
+    val perClientComponent = (storageManager.componentManager ?: application).getService(componentClass) ?: return
     if (perClientComponent === info.component) {
       LOG.error(
         "Failed to reload per-client component '${info.stateSpec?.name ?: componentClass.simpleName}': " +
@@ -693,7 +692,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
 
     val newInfo = ComponentInfoImpl(info.pluginId, perClientComponent, info.stateSpec)
-    initComponent(newInfo, changedStorages.ifEmpty { null }, reloadData = ThreeState.YES)
+    initComponent(info = newInfo, changedStorages = changedStorages.ifEmpty { null }, reloadData = ThreeState.YES)
   }
 
   final override fun reloadState(componentClass: Class<out PersistentStateComponent<*>>) {
@@ -701,11 +700,11 @@ abstract class ComponentStoreImpl : IComponentStore {
     val info = components.get(stateSpec.name) ?: return
     (info.component as? PersistentStateComponent<*>)?.let {
       if (stateSpec.perClient && !ClientId.isCurrentlyUnderLocalId) {
-        reloadPerClientState(it.javaClass, info, emptySet())
+        reloadPerClientState(componentClass = it.javaClass, info = info, changedStorages = emptySet())
         return
       }
 
-      initComponent(info, changedStorages = emptySet(), reloadData = ThreeState.YES)
+      initComponent(info = info, changedStorages = emptySet(), reloadData = ThreeState.YES)
     }
   }
 
@@ -722,7 +721,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
     
     val isChangedStoragesEmpty = changedStorages.isEmpty()
-    initComponent(info, changedStorages = if (isChangedStoragesEmpty) null else changedStorages, reloadData = ThreeState.UNSURE)
+    initComponent(info = info, changedStorages = if (isChangedStoragesEmpty) null else changedStorages, reloadData = ThreeState.UNSURE)
     return true
   }
 

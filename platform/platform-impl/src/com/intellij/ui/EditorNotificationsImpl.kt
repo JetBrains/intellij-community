@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 @file:OptIn(FlowPreview::class)
 
@@ -56,9 +56,7 @@ private val PENDING_UPDATE: Key<Boolean> = Key.create("pending.notification.upda
 private val FILE_LEVEL_INTENTIONS: Key<List<IntentionActionWithOptions>> = Key.create("file.level.intentions")
 
 @ApiStatus.Internal
-class EditorNotificationsImpl(private val project: Project,
-                              coroutineScope: CoroutineScope) : EditorNotifications(), Disposable {
-
+class EditorNotificationsImpl(private val project: Project, coroutineScope: CoroutineScope) : EditorNotifications(), Disposable {
   /**
    * The scope passed in constructor can be a project scope,
    * for example, in [com.intellij.httpClient.http.request.utils.prepareEditorNotifications].
