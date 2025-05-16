@@ -5,8 +5,6 @@ package com.intellij.ide.plugins
 import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.core.CoreBundle
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl.Type
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl.Type.PluginMainDescriptor
 import com.intellij.idea.AppMode
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
@@ -42,17 +40,6 @@ sealed class IdeaPluginDescriptorImpl(
   isIndependentFromCoreClassLoader: Boolean = false,
   descriptorPath: String? = null
 ) : IdeaPluginDescriptorImplPublic {
-
-  /** see [type], [checkTypeInvariants] */
-  @ApiStatus.Internal
-  enum class Type {
-    PluginMainDescriptor,
-
-    ContentModuleDescriptor,
-
-    DependsSubDescriptor
-  }
-
   init {
     if (moduleName != null) {
       require(moduleLoadingRule != null) { "'moduleLoadingRule' parameter must be specified when creating a module descriptor, but it is missing for '$moduleName'" }
@@ -135,14 +122,6 @@ sealed class IdeaPluginDescriptorImpl(
   private var _pluginClassLoader: ClassLoader? = null
   @Volatile
   private var loadedDescriptionText: @Nls String? = null
-
-  val type: Type get() {
-    return when {
-      moduleName != null -> Type.ContentModuleDescriptor
-      descriptorPath != null -> Type.DependsSubDescriptor
-      else -> Type.PluginMainDescriptor
-    }
-  }
 
   override fun getPluginId(): PluginId = id
 
@@ -638,15 +617,6 @@ fun IdeaPluginDescriptorImpl.createSubInTest(
   descriptorPath: String,
   module: PluginContentDescriptor.ModuleItem,
 ): ContentModuleDescriptor = createContentModule(subBuilder, descriptorPath, module)
-
-@get:ApiStatus.Internal
-val IdeaPluginDescriptorImpl.isMainPluginDescriptor: Boolean get() = type == Type.PluginMainDescriptor
-
-@get:ApiStatus.Internal
-val IdeaPluginDescriptorImpl.isContentModuleDescriptor: Boolean get() = type == Type.ContentModuleDescriptor
-
-@get:ApiStatus.Internal
-val IdeaPluginDescriptorImpl.isDependsSubDescriptor: Boolean get() = type == Type.DependsSubDescriptor
 
 /**
  * Main plugin descriptor, instantiated from "plugin.xml" (or from platform XMLs for Core).
