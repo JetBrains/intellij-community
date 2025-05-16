@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.util.Processor
 import com.intellij.util.containers.SortedList
 import com.intellij.util.containers.sequenceOfNotNull
+import com.intellij.util.containers.tail
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.ast.PyAstFunction
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
@@ -69,6 +70,8 @@ class PyOverloadsInspection : PyInspection() {
 
       checkClassMethodAndStaticMethodConsistency(overloads, implementation)
 
+      checkOverride(overloads, implementation)
+
       var requiresImplementation = true
       if (owner is PyClass) {
         if (isProtocol(owner, myTypeEvalContext)) {
@@ -117,6 +120,34 @@ class PyOverloadsInspection : PyInspection() {
         }
         if (modifiers.contains(PyAstFunction.Modifier.STATICMETHOD) && modifier != PyAstFunction.Modifier.STATICMETHOD) {
           registerProblem(function.nameIdentifier, PyPsiBundle.message("INSP.overloads.use.staticmethod.inconsistently"))
+        }
+      }
+    }
+
+    private fun checkOverride(overloads: List<PyFunction>, implementation: PyFunction?) {
+      if (implementation == null) {
+        for (overload in overloads.tail()) {
+          if (isOverride(overload, myTypeEvalContext)) {
+            registerProblem(overload.nameIdentifier,
+                            PyPsiBundle.message("INSP.overloads.override.should.be.placed.only.on.the.first.overload"))
+          }
+        }
+      }
+      else {
+        for (overload in overloads) {
+          if (isOverride(overload, myTypeEvalContext)) {
+            registerProblem(overload.nameIdentifier,
+                            PyPsiBundle.message("INSP.overloads.override.should.be.placed.on.the.implementation"))
+          }
+        }
+      }
+    }
+
+    private fun isOverride(function: PyFunction, context: TypeEvalContext): Boolean {
+      val decoratorList = function.decoratorList ?: return false
+      return decoratorList.decorators.any { decorator ->
+        PyKnownDecoratorUtil.asKnownDecorators(decorator, myTypeEvalContext).any {
+          it == PyKnownDecorator.TYPING_OVERRIDE || it == PyKnownDecorator.TYPING_EXTENSIONS_OVERRIDE
         }
       }
     }

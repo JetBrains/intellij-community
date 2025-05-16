@@ -23,20 +23,15 @@ class PyOverridesInspection : PyInspection() {
     override fun visitPyFunction(node: PyFunction) {
       super.visitPyFunction(node)
 
-      if (!PyKnownDecoratorUtil.getKnownDecorators(node, myTypeEvalContext)
-          .any { it == PyKnownDecorator.TYPING_OVERRIDE ||
-                 it == PyKnownDecorator.TYPING_EXTENSIONS_OVERRIDE }) {
-        return
-      }
-
-      val overrideDecorator = node.decoratorList?.decorators?.firstOrNull {
-        "override" == it.qualifiedName?.lastComponent
+      val overrideDecorator = node.decoratorList?.decorators?.firstOrNull { decorator ->
+        PyKnownDecoratorUtil.asKnownDecorators(decorator, myTypeEvalContext).any {
+          it == PyKnownDecorator.TYPING_OVERRIDE || it == PyKnownDecorator.TYPING_EXTENSIONS_OVERRIDE
+        }
       } ?: return
 
       val superMethods = PySuperMethodsSearch.search(node, myTypeEvalContext).findAll()
       if (superMethods.isEmpty()) {
         registerProblem(overrideDecorator, PyPsiBundle.message("INSP.override.missing.super.method"))
-        return
       }
     }
   }

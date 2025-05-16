@@ -48,6 +48,10 @@ public class PyOverloadsInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  public void testOverridenMethods() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
