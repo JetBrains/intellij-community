@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBList
 import java.awt.CardLayout
 import java.awt.Component
@@ -64,7 +65,7 @@ internal class JBCefTestAppFrame : JFrame() {
 
     addWindowListener(object : WindowAdapter() {
       override fun windowClosing(e: WindowEvent?) {
-        testCases.forEach(Disposable::dispose)
+        testCases.forEach { Disposer.dispose(it) }
       }
     })
   }
