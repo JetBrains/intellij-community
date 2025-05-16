@@ -418,7 +418,10 @@ fn find_ide_home(current_exe: &Path) -> Result<(PathBuf, PathBuf)> {
 
 fn traverse_parents(mut candidate: PathBuf) -> Result<Option<(PathBuf, PathBuf)>> {
     for _ in 0..IDE_HOME_LOOKUP_DEPTH {
-        candidate = candidate.parent_or_err()?;
+        candidate = match candidate.parent() {
+            Some(parent) => parent.to_path_buf(),
+            None => { break; }
+        };
         debug!("Probing for IDE home: {:?}", candidate);
         let product_info_path = candidate.join(PRODUCT_INFO_REL_PATH);
         if product_info_path.is_file() {
