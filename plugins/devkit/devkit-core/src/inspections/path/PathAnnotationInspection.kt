@@ -776,6 +776,27 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
             }
           }
 
+          if (resolvedUElement is UVariable) {
+            val initializer = resolvedUElement.uastInitializer
+            if (initializer is UQualifiedReferenceExpression) {
+              val resolvedInitializer = initializer.resolveToUElement()
+              if (resolvedInitializer is UAnnotated) {
+                if (resolvedInitializer.findAnnotation(NativePath::class.java.canonicalName) != null) {
+                  return Native
+                }
+                if (resolvedInitializer.findAnnotation(MultiRoutingFileSystemPath::class.java.canonicalName) != null) {
+                  return MultiRouting
+                }
+                if (resolvedInitializer.findAnnotation(LocalPath::class.java.canonicalName) != null) {
+                  return LocalPathInfo
+                }
+                if (resolvedInitializer.findAnnotation(Filename::class.java.canonicalName) != null) {
+                  return FilenameInfo
+                }
+              }
+            }
+          }
+
           (resolvedUElement as? UVariable)?.uastInitializer?.getUCallExpression()?.let { callExpression ->
             if (callExpression.receiverType?.isInheritorOf("java.nio.file.Path") == true
                 && callExpression.methodName == "toString") {
