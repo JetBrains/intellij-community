@@ -264,7 +264,7 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     session.fileColorsComputer.sendRequest(file)
   }
 
-  override suspend fun showExecutionPoint(sessionId: XDebugSessionId) {
+  override suspend fun switchToTopFrame(sessionId: XDebugSessionId) {
     val session = sessionId.findValue() ?: return
     withContext(Dispatchers.EDT) {
       session.showExecutionPoint()

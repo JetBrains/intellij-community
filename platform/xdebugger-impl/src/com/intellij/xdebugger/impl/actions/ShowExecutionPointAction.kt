@@ -25,7 +25,7 @@ class ShowExecutionPointAction : XDebuggerActionBase(), ActionRemoteBehaviorSpec
 private val ourHandler = object : XDebuggerProxySuspendedActionHandler() {
   override fun perform(session: XDebugSessionProxy, dataContext: DataContext) {
     performDebuggerActionAsync(session.project, dataContext) {
-      XDebugSessionApi.getInstance().showExecutionPoint(session.id)
+      XDebugSessionApi.getInstance().switchToTopFrame(session.id)
     }
   }
 }
