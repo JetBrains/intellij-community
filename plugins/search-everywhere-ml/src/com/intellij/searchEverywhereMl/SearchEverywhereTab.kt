@@ -5,6 +5,7 @@ import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributo
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID
 import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment.ExperimentType
 import com.intellij.util.PlatformUtils
@@ -174,9 +175,15 @@ sealed interface SearchEverywhereTab {
     override val currentExperimentType: ExperimentType
       get() {
         val experimentType = super.currentExperimentType
-        if (experimentType == ExperimentType.Typos) {
-          val enabled = AdvancedSettings.getBoolean("searcheverywhere.ml.typos.enable")
-          if (!enabled) return ExperimentType.NoExperiment
+        try {
+          if (experimentType == ExperimentType.Typos) {
+            val enabled = AdvancedSettings.getBoolean("searcheverywhere.ml.typos.enable")
+            if (!enabled) return ExperimentType.NoExperiment
+          }
+        } catch (ex: IllegalArgumentException) {
+          thisLogger().error("Exception thrown while getting typos advanced setting. " +
+                             "The typos submodule may be missing.", ex)
+          return ExperimentType.NoExperiment
         }
 
         return experimentType
