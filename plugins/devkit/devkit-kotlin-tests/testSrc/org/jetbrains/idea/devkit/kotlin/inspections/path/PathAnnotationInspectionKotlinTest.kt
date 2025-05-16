@@ -27,6 +27,8 @@ class PathAnnotationInspectionKotlinTest : PathAnnotationInspectionTestBase(), E
     IndexingTestUtil.waitUntilIndexesAreReady(project)
   }
 
+
+
   fun testFileSystemGetPath() {
     doTest("""
       @file:Suppress("UNUSED_VARIABLE")
@@ -290,6 +292,57 @@ class PathAnnotationInspectionKotlinTest : PathAnnotationInspectionTestBase(), E
     }">trimmedPath</warning>) // warning, trimmed Path.toString() is not recognized as special
           }
       }      
+      """)
+  }
+
+  /**
+   * The following test is ignored because it fails due to a bug in UAST: "KTIJ-18821 UAST missing annotations on local variable types".
+   */
+  fun testFalseNegative() {
+    doTest("""
+      @file:Suppress("UNUSED_VARIABLE")
+
+      import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
+      import java.nio.file.Path
+      
+      class FalseNegativeTest {
+          fun testMethod(
+              @MultiRoutingFileSystemPath annotatedParameter: String, 
+              annotatedParameterType: @MultiRoutingFileSystemPath String
+          ) {
+              val firstPath = Path.of(annotatedParameter)
+              val secondPath = Path.of(annotatedParameterType)
+          }
+      }
+      """)
+  }
+
+  /**
+   * The following test is ignored because it fails due to a bug in UAST: "KTIJ-18821 UAST missing annotations on local variable types".
+   */
+  fun testFalseNegative2() {
+    doTest("""
+      @file:Suppress("UNUSED_VARIABLE")
+
+      import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
+      import java.nio.file.Path
+
+      data class DataClass(
+          @MultiRoutingFileSystemPath val annotatedProperty: String, 
+          val annotatedPropertyType: @MultiRoutingFileSystemPath String,
+      )
+      
+      class FalseNegativeTest {
+          fun testMethod(data: DataClass) {
+              //val firstPath = Path.of(data.annotatedProperty)
+              //val secondPath = Path.of(data.annotatedPropertyType)
+
+              val firstPathString = data.annotatedProperty
+              val sameFirstPath = Path.of(firstPathString)
+              //val secondPathString = data.annotatedPropertyType
+              //val sameSecondPath = Path.of(secondPathString)
+          }
+      }
       """)
   }
 

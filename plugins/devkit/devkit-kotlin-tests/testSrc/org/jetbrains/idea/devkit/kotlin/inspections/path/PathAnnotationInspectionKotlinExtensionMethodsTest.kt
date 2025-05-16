@@ -1,12 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.inspections.path
 
-import com.intellij.testFramework.IndexingTestUtil
-import com.intellij.testFramework.LightProjectDescriptor
 import org.intellij.lang.annotations.Language
-import org.jetbrains.idea.devkit.inspections.PathAnnotationInspectionTestBase
-import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 
 /**
  * Tests for PathAnnotationInspection with Kotlin extension methods from kotlin.io.path.
@@ -15,19 +10,7 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
  * - `Path.name`, `Path.nameWithoutExtension`, `Path.extension` should be considered as returning `@Filename`
  * - `Path.pathString`, `Path.absolutePathString()` should be considered as returning `@MultiRoutingFileSystemPath`
  */
-class PathAnnotationInspectionKotlinExtensionMethodsTest : PathAnnotationInspectionTestBase() {
-  override fun getFileExtension(): String = "kt"
-
-  override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
-
-
-
-  override fun setUp() {
-    super.setUp()
-    ConfigLibraryUtil.configureKotlinRuntime(myFixture.module)
-    IndexingTestUtil.waitUntilIndexesAreReady(project)
-  }
-
+class PathAnnotationInspectionKotlinExtensionMethodsTest : PathAnnotationInspectionKotlinTestBase() {
   fun testPathNameExtensionMethod() {
     doTest("""
       @file:Suppress("UNUSED_VARIABLE")
