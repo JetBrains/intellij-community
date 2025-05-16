@@ -33,6 +33,10 @@ class MdnDocumentationCssProvider : DocumentationCssProvider {
             margin: 0;
             line-height: 100%;
         }
+        
+        .mdn-bottom-margin {
+            margin-bottom: ${afterSpacing * 2}px
+        }
     """.trimIndent()
   }
 }
