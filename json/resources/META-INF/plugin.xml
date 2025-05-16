@@ -3,8 +3,7 @@
   <!-- The plugin id is intentionally kept equal to its main module id
   because historically the module was bundled into the platform,
   and dependent plugins used only module dependency -->
-  <id>com.intellij.json</id>
-  <module value="com.intellij.modules.json"/>
+  <id>com.intellij.modules.json</id>
   <vendor>JetBrains</vendor>
   <category>Languages</category>
   <description><![CDATA[
