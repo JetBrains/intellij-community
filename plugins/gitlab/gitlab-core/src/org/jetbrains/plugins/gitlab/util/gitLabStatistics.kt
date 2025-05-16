@@ -8,19 +8,29 @@ import com.intellij.internal.statistic.eventLog.events.EventId2
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
+import com.intellij.internal.statistic.utils.StatisticsUtil.roundToPowerOfTwo
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gitlab.api.GitLabEdition
-import org.jetbrains.plugins.gitlab.api.GitLabGQLQuery
-import org.jetbrains.plugins.gitlab.api.GitLabServerMetadata
-import org.jetbrains.plugins.gitlab.api.GitLabVersion
+import org.jetbrains.plugins.gitlab.GitLabProjectsManager
+import org.jetbrains.plugins.gitlab.api.*
+import org.jetbrains.plugins.gitlab.api.request.isProjectForked
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabProjectDefaultAccountHolder
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestMetricsDTO
+import org.jetbrains.plugins.gitlab.mergerequest.api.request.getMergeRequestMetrics
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue
 
 @ApiStatus.Internal
 object GitLabStatistics {
-  //region State
+  //region Application
   private val STATE_GROUP = EventLogGroup("vcs.gitlab", 1)
 
   private val ACCOUNTS_EVENT: EventId2<Int, Boolean> =
@@ -38,8 +48,62 @@ object GitLabStatistics {
   }
   //endregion
 
+  //region Project
+  private val PROJECT_METRICS_GROUP = EventLogGroup(
+    "vcs.gitlab.project", 1,
+    recorder = "FUS",
+    description = "Collects metrics about GitLab merge requests in a project."
+  )
+
+  private val PROJECT_METRICS_MR_STATISTICS_ALL = PROJECT_METRICS_GROUP.registerEvent(
+    "mr.statistics.all",
+    EventFields.Int("value", description = "Total number of MRs in project (rounded up to the first power of 2)."),
+    description = "#MR statistics: open."
+  )
+  private val PROJECT_METRICS_MR_STATISTICS_OPEN = PROJECT_METRICS_GROUP.registerEvent(
+    "mr.statistics.open",
+    EventFields.Int("value", description = "Total number of open MRs in project (rounded up to the first power of 2)."),
+    description = "#MR statistics: open."
+  )
+  private val PROJECT_METRICS_MR_STATISTICS_OPEN_AUTHOR = PROJECT_METRICS_GROUP.registerEvent(
+    "mr.statistics.open.author",
+    EventFields.Int("value",
+                    description = "Total number of open MRs in project authored by the current user (rounded up to the first power of 2)."),
+    description = "#MR statistics: open > author."
+  )
+  private val PROJECT_METRICS_MR_STATISTICS_OPEN_ASSIGNEE = PROJECT_METRICS_GROUP.registerEvent(
+    "mr.statistics.open.assignee",
+    EventFields.Int("value",
+                    description = "Total number of open MRs in project assigned to the current user (rounded up to the first power of 2)."),
+    description = "#MR statistics: open > assignee."
+  )
+  private val PROJECT_METRICS_MR_STATISTICS_OPEN_REVIEW_ASSIGNED = PROJECT_METRICS_GROUP.registerEvent(
+    "mr.statistics.open.reviewer",
+    EventFields.Int("value",
+                    description = "Total number of open MRs in project assigned to the current user as reviewer (rounded up to the first power of 2)."),
+    description = "#MR statistics: open > reviewer."
+  )
+
+  internal class GitLabProjectMetricsCollector : ProjectUsagesCollector() {
+    override fun getGroup(): EventLogGroup = PROJECT_METRICS_GROUP
+
+    override suspend fun collect(project: Project): Set<MetricEvent> {
+      val metricsLoader = project.serviceAsync<GitLabMetricsLoader>()
+      val metrics = metricsLoader.getMetrics() ?: return emptySet()
+
+      return setOfNotNull(
+        PROJECT_METRICS_MR_STATISTICS_ALL.metric(roundToPowerOfTwo(metrics.allMRCount.count)),
+        PROJECT_METRICS_MR_STATISTICS_OPEN.metric(roundToPowerOfTwo(metrics.openMRCount.count)),
+        PROJECT_METRICS_MR_STATISTICS_OPEN_AUTHOR.metric(roundToPowerOfTwo(metrics.openAuthoredMRCount.count)),
+        PROJECT_METRICS_MR_STATISTICS_OPEN_ASSIGNEE.metric(roundToPowerOfTwo(metrics.openAssignedMRCount.count)),
+        PROJECT_METRICS_MR_STATISTICS_OPEN_REVIEW_ASSIGNED.metric(roundToPowerOfTwo(metrics.openReviewAssignedMRCount.count)),
+      )
+    }
+  }
+  //endregion
+
   //region Counters
-   private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 23)
+  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 24)
 
   /**
    * Server metadata was fetched
@@ -263,6 +327,7 @@ object GitLabStatistics {
 
 enum class GitLabApiRequestName {
   REST_GET_CURRENT_USER,
+  REST_GET_PROJECT_IS_FORKED,
   REST_GET_PROJECT_NAMESPACE,
   REST_GET_PROJECT_USERS,
   REST_GET_COMMIT,
@@ -289,12 +354,13 @@ enum class GitLabApiRequestName {
   GQL_GET_CURRENT_USER,
   GQL_GET_MERGE_REQUEST,
   GQL_FIND_MERGE_REQUEST,
+  GQL_GET_MERGE_REQUEST_METRICS,
   GQL_GET_MERGE_REQUEST_COMMITS,
   GQL_GET_MERGE_REQUEST_DISCUSSIONS,
   GQL_GET_PROJECT,
   GQL_GET_PROJECT_LABELS,
-  GQL_GET_PROJECT_REPOSITORY,
   GQL_GET_PROJECT_WORK_ITEMS,
+  GQL_GET_PROJECT_IS_FORKED,
   GQL_GET_MEMBER_PROJECTS_FOR_CLONE,
   GQL_GET_MEMBER_PROJECTS_FOR_SNIPPETS,
   GQL_TOGGLE_MERGE_REQUEST_DISCUSSION_RESOLVE,
@@ -319,11 +385,13 @@ enum class GitLabApiRequestName {
       GitLabGQLQuery.GET_CURRENT_USER -> GQL_GET_CURRENT_USER
       GitLabGQLQuery.GET_MERGE_REQUEST -> GQL_GET_MERGE_REQUEST
       GitLabGQLQuery.FIND_MERGE_REQUESTS -> GQL_FIND_MERGE_REQUEST
+      GitLabGQLQuery.GET_MERGE_REQUEST_METRICS -> GQL_GET_MERGE_REQUEST_METRICS
       GitLabGQLQuery.GET_MERGE_REQUEST_COMMITS -> GQL_GET_MERGE_REQUEST_COMMITS
       GitLabGQLQuery.GET_MERGE_REQUEST_DISCUSSIONS -> GQL_GET_MERGE_REQUEST_DISCUSSIONS
       GitLabGQLQuery.GET_PROJECT -> GQL_GET_PROJECT
       GitLabGQLQuery.GET_PROJECT_LABELS -> GQL_GET_PROJECT_LABELS
       GitLabGQLQuery.GET_PROJECT_WORK_ITEMS -> GQL_GET_PROJECT_WORK_ITEMS
+      GitLabGQLQuery.GET_PROJECT_IS_FORKED -> GQL_GET_PROJECT_IS_FORKED
       GitLabGQLQuery.GET_MEMBER_PROJECTS_FOR_CLONE -> GQL_GET_MEMBER_PROJECTS_FOR_CLONE
       GitLabGQLQuery.GET_MEMBER_PROJECTS_FOR_SNIPPETS -> GQL_GET_MEMBER_PROJECTS_FOR_SNIPPETS
       GitLabGQLQuery.TOGGLE_MERGE_REQUEST_DISCUSSION_RESOLVE -> GQL_TOGGLE_MERGE_REQUEST_DISCUSSION_RESOLVE
@@ -344,4 +412,57 @@ enum class GitLabApiRequestName {
     }
   }
 }
+
+@Service(Service.Level.PROJECT)
+internal class GitLabMetricsLoader(private val project: Project) {
+  companion object {
+    private val LOG = logger<GitLabMetricsLoader>()
+  }
+
+  private suspend fun getApi(serverPath: GitLabServerPath): Pair<GitLabApi, GitLabAccount>? {
+    val accountManager = serviceAsync<GitLabAccountManager>()
+    val defaultAccountManager = project.serviceAsync<GitLabProjectDefaultAccountHolder>()
+
+    val account = defaultAccountManager.account.takeIf { it?.server == serverPath }
+                  ?: accountManager.accountsState.value.firstOrNull { it.server == serverPath }
+                  ?: return null
+    val token = accountManager.findCredentials(account) ?: return null
+    return service<GitLabApiManager>().getClient(serverPath, token) to account
+  }
+
+  private suspend fun chooseRepo(): GitLabProjectMapping? {
+    val repositoriesManager = project.serviceAsync<GitLabProjectsManager>()
+    val repositoriesState = repositoriesManager.knownRepositoriesState
+
+    val knownRepos = repositoriesState.value
+
+    if (knownRepos.isEmpty()) return null
+    if (knownRepos.size == 1) return knownRepos.single()
+
+    val nonFork = withContext(Dispatchers.IO) {
+      knownRepos.firstOrNull { repo ->
+        val (api, _) = getApi(repo.repository.serverPath) ?: return@firstOrNull false
+        !api.isProjectForked(repo.repository)
+      }
+    }
+    if (nonFork != null) return nonFork
+
+    return knownRepos.find { it.gitRemote.name == "origin" }
+           ?: knownRepos.firstOrNull()
+  }
+
+  suspend fun getMetrics(): GitLabMergeRequestMetricsDTO? {
+    try {
+      val chosenRepoMapping = chooseRepo() ?: return null
+
+      val (api, account) = getApi(chosenRepoMapping.repository.serverPath) ?: return null
+      return api.graphQL.getMergeRequestMetrics(chosenRepoMapping.repository, account.name).body()
+    }
+    catch (e: Exception) {
+      LOG.warn("Failed to load metrics", e)
+      return null
+    }
+  }
+}
+
 

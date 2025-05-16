@@ -70,12 +70,10 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.statistics">
-    <applicationUsagesCollector
-      implementation="org.jetbrains.plugins.gitlab.util.GitLabStatistics$GitLabAccountsStatisticsCollector"/>
-    <counterUsagesCollector
-      implementationClass="org.jetbrains.plugins.gitlab.util.GitLabStatistics$GitLabCountersCollector"/>
-    <notificationIdsHolder
-      implementation="org.jetbrains.plugins.gitlab.notification.GitLabNotificationIdsHolder"/>
+    <applicationUsagesCollector implementation="org.jetbrains.plugins.gitlab.util.GitLabStatistics$GitLabAccountsStatisticsCollector"/>
+    <counterUsagesCollector implementationClass="org.jetbrains.plugins.gitlab.util.GitLabStatistics$GitLabCountersCollector"/>
+    <projectUsagesCollector implementation="org.jetbrains.plugins.gitlab.util.GitLabStatistics$GitLabProjectMetricsCollector"/>
+    <notificationIdsHolder implementation="org.jetbrains.plugins.gitlab.notification.GitLabNotificationIdsHolder"/>
     <actionCustomPlaceAllowlist id="GitLabActionCustomPlaceAllowlist"
                                 places="GitLabMergeRequestListPopup;GitLabMergeRequestChangesTreePopup;GitLabMergeRequestDetailsPopup"/>
   </extensions>

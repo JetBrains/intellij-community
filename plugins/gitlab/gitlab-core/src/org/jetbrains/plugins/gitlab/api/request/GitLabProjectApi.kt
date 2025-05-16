@@ -30,6 +30,34 @@ suspend fun GitLabApi.GraphQL.findProject(project: GitLabProjectCoordinates): Ht
   }
 }
 
+@SinceGitLab("16.9")
+private suspend fun GitLabApi.GraphQL.isProjectForked(project: GitLabProjectCoordinates): HttpResponse<out Boolean> {
+  val parameters = mapOf(
+    "projectId" to project.projectPath.fullPath(),
+  )
+  val request = gitLabQuery(GitLabGQLQuery.GET_PROJECT_IS_FORKED, parameters)
+  return withErrorStats(GitLabGQLQuery.GET_PROJECT_IS_FORKED) {
+    loadResponse<Boolean>(request, "project", "isForked")
+  }
+}
+
+@SinceGitLab("12.0")
+private suspend fun GitLabApi.Rest.isProjectForked(project: GitLabProjectCoordinates): HttpResponse<out GitLabProjectIsForkedDTO> {
+  val uri = project.restApiUri
+  val request = request(uri).GET().build()
+  return withErrorStats(GitLabApiRequestName.REST_GET_PROJECT_IS_FORKED) {
+    loadJsonValue(request)
+  }
+}
+
+suspend fun GitLabApi.isProjectForked(project: GitLabProjectCoordinates): Boolean =
+  if (getMetadata().version < GitLabVersion(16, 9)) {
+    rest.isProjectForked(project).body().isForked
+  }
+  else {
+    graphQL.isProjectForked(project).body()
+  }
+
 @SinceGitLab("13.1", note = "No exact version")
 fun GitLabApi.GraphQL.createAllProjectLabelsFlow(project: GitLabProjectCoordinates): Flow<List<GitLabLabelDTO>> =
   ApiPageUtil.createGQLPagesFlow { page ->
