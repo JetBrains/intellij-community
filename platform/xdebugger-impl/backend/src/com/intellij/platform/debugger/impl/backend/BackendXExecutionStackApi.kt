@@ -21,14 +21,6 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.emptyFlow
 
 internal class BackendXExecutionStackApi : XExecutionStackApi {
-  override suspend fun getTopFrame(executionStackId: XExecutionStackId): Flow<XStackFrameDto> {
-    val executionStackModel = executionStackId.findValue() ?: return emptyFlow()
-    return channelFlow {
-      // TODO: send dto!!
-      executionStackModel.executionStack.topFrame
-    }
-  }
-
   override suspend fun computeStackFrames(executionStackId: XExecutionStackId, firstFrameIndex: Int): Flow<XStackFramesEvent> {
     val executionStackModel = executionStackId.findValue() ?: return emptyFlow()
     return channelFlow {

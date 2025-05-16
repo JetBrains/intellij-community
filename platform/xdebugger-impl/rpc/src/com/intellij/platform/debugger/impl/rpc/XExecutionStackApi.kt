@@ -15,8 +15,6 @@ import org.jetbrains.annotations.ApiStatus
 @Rpc
 interface XExecutionStackApi : RemoteApi<Unit> {
 
-  suspend fun getTopFrame(executionStackId: XExecutionStackId): Flow<XStackFrameDto>
-
   suspend fun computeStackFrames(executionStackId: XExecutionStackId, firstFrameIndex: Int): Flow<XStackFramesEvent>
 
   suspend fun computeVariables(xStackFrameId: XStackFrameId): Flow<XValueComputeChildrenEvent>
