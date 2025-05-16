@@ -2,6 +2,8 @@
 package com.intellij.diff.actions.impl
 
 import com.intellij.diff.actions.impl.DiffDifferenceNavigationAction.Companion.isAvailable
+import com.intellij.diff.tools.combined.CombinedNextDifferenceAction
+import com.intellij.diff.tools.combined.CombinedPrevDifferenceAction
 import com.intellij.diff.tools.util.CrossFilePrevNextDifferenceIterableSupport
 import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.diff.tools.util.PrevNextDifferenceIterable
@@ -52,7 +54,9 @@ internal abstract class DiffDifferenceNavigationAction : AnAction(), DumbAware, 
    */
   override fun suppress(actions: List<AnAction>, context: DataContext): List<AnAction>? {
     if (isAvailable(context)) {
-      return actions.filterNot { it == this }
+      return actions.filterNot { it == this
+                                 || it is CombinedNextDifferenceAction
+                                 || it is CombinedPrevDifferenceAction }
     }
     return null
   }
