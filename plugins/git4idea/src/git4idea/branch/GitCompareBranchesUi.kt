@@ -4,6 +4,7 @@ package git4idea.branch
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
@@ -71,15 +72,23 @@ internal class GitCompareBranchesUi(internal val project: Project,
     }
   }
 
-  internal fun create(logManager: VcsLogManager): JComponent {
+  internal fun create(logManager: VcsLogManager, onDispose: () -> Unit): JComponent {
     val topLogUiFactory = MyLogUiFactory("git-compare-branches-top-" + UUID.randomUUID(),
                                          MyPropertiesForHardcodedFilters(project.service<GitCompareBranchesTopLogProperties>()),
                                          logManager.colorManager, rangeFilter, rootFilter)
     val bottomLogUiFactory = MyLogUiFactory("git-compare-branches-bottom-" + UUID.randomUUID(),
                                             MyPropertiesForHardcodedFilters(project.service<GitCompareBranchesBottomLogProperties>()),
                                             logManager.colorManager, rangeFilter.asReversed(), rootFilter)
-    val topLogUi = logManager.createLogUi(topLogUiFactory, VcsLogTabLocation.EDITOR)
-    val bottomLogUi = logManager.createLogUi(bottomLogUiFactory, VcsLogTabLocation.EDITOR)
+    val topLogUi = logManager.createLogUi(topLogUiFactory, VcsLogTabLocation.EDITOR).also {
+      Disposer.register(it) {
+        onDispose()
+      }
+    }
+    val bottomLogUi = logManager.createLogUi(bottomLogUiFactory, VcsLogTabLocation.EDITOR).also {
+      Disposer.register(it) {
+        onDispose()
+      }
+    }
     return OnePixelSplitter(true).apply {
       firstComponent = VcsLogPanel(logManager, topLogUi)
       secondComponent = VcsLogPanel(logManager, bottomLogUi)

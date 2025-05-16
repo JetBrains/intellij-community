@@ -2,7 +2,6 @@
 package com.intellij.vcs.log.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindow
@@ -42,28 +41,12 @@ internal class VcsLogToolWindowTabsWatcher(private val project: Project,
     tabSelectedCallback = callback
   }
 
-  override fun createLogTab(ui: VcsLogUiEx, isClosedOnDispose: Boolean): VcsLogToolWindowTab {
-    return VcsLogToolWindowTab(ui, isClosedOnDispose)
+  override fun createLogTab(ui: VcsLogUiEx): VcsLogToolWindowTab {
+    return VcsLogToolWindowTab(ui)
   }
 
   override fun isOwnerOf(tab: VcsLogWindow): Boolean {
     return tab is VcsLogToolWindowTab
-  }
-
-  override fun closeTabs(tabs: List<VcsLogWindow>) {
-    val tabIds = tabs.filterIsInstance<VcsLogToolWindowTab>().filter { it.isClosedOnDispose }.map { it.id }
-    if (tabIds.isEmpty()) return
-
-    toolWindow?.let { window ->
-      for (tabId in tabIds) {
-        val closed = VcsLogContentUtil.closeLogTab(window.contentManager, tabId)
-        LOG.assertTrue(closed, """
-           Could not find content component for tab ${tabId}
-           Existing content: ${window.contentManager.contents.contentToString()}
-           Tabs to close: $tabIds
-           """.trimIndent())
-      }
-    }
   }
 
   private fun installContentListeners() {
@@ -81,7 +64,7 @@ internal class VcsLogToolWindowTabsWatcher(private val project: Project,
     Disposer.dispose(toolwindowListenerDisposable)
   }
 
-  inner class VcsLogToolWindowTab(ui: VcsLogUiEx, val isClosedOnDispose: Boolean) : VcsLogWindow(ui) {
+  inner class VcsLogToolWindowTab(ui: VcsLogUiEx) : VcsLogWindow(ui) {
     override fun isVisible(): Boolean {
       val selectedTab = getSelectedToolWindowTabId(toolWindow)
       return id == selectedTab
@@ -154,8 +137,6 @@ internal class VcsLogToolWindowTabsWatcher(private val project: Project,
   }
 
   companion object {
-    private val LOG = Logger.getInstance(VcsLogToolWindowTabsWatcher::class.java)
-
     private fun getSelectedToolWindowTabId(toolWindow: ToolWindow?): String? {
       if (toolWindow == null || !toolWindow.isVisible) {
         return null

@@ -5,7 +5,6 @@ import com.intellij.vcs.log.ui.VcsLogUiEx
 
 internal interface VcsLogTabsWatcher<T : VcsLogWindow> {
   fun setTabSelectedCallback(callback: (String) -> Unit)
-  fun createLogTab(ui: VcsLogUiEx, isClosedOnDispose: Boolean): T
+  fun createLogTab(ui: VcsLogUiEx): T
   fun isOwnerOf(tab: VcsLogWindow): Boolean
-  fun closeTabs(tabs: List<VcsLogWindow>)
 }

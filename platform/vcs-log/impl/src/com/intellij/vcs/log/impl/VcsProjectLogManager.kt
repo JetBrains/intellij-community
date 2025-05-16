@@ -58,7 +58,7 @@ internal class VcsProjectLogManager(
     mainUiCs.launch(Dispatchers.EdtImmediate) {
       project.serviceAsync<VcsLogContentProvider.ContentHolder>().contentState.collect { content ->
         if (content != null) {
-          val ui = createLogUi(getMainLogUiFactory(MAIN_LOG_ID, null), VcsLogTabLocation.TOOL_WINDOW, false)
+          val ui = createLogUi(getMainLogUiFactory(MAIN_LOG_ID, null), VcsLogTabLocation.TOOL_WINDOW)
           content.displayName = VcsLogTabsUtil.generateDisplayName(ui)
           ui.onDisplayNameChange {
             content.displayName = VcsLogTabsUtil.generateDisplayName(ui)

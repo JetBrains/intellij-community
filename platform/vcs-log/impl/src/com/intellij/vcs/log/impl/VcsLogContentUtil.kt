@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.impl
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
@@ -76,17 +77,16 @@ object VcsLogContentUtil {
     tabDisplayName: Function<U, @NlsContexts.TabTitle String>,
     focus: Boolean,
   ) {
+    val component = VcsLogPanel(logManager, logUi)
     @Suppress("HardCodedStringLiteral")
-    val tabDescriptor = TabDescriptor(VcsLogPanel(logManager, logUi), Supplier { tabDisplayName.apply(logUi) }, logUi)
-    ContentUtilEx.addTabbedContent(toolWindow.contentManager, tabGroupId, tabDescriptor, focus)
+    val tabDescriptor = TabDescriptor(component, Supplier { tabDisplayName.apply(logUi) }, logUi)
+    val contentManager = toolWindow.contentManager
+    ContentUtilEx.addTabbedContent(contentManager, tabGroupId, tabDescriptor, focus)
+    Disposer.register(logUi) {
+      ContentUtilEx.closeContentTab(contentManager) { it === component }
+    }
     if (focus) {
       toolWindow.activate(null)
-    }
-  }
-
-  internal fun closeLogTab(manager: ContentManager, tabId: String): Boolean {
-    return ContentUtilEx.closeContentTab(manager) { c: JComponent ->
-      getLogUi(c)?.id == tabId
     }
   }
 

@@ -4,10 +4,12 @@ package com.intellij.vcs.log.ui.editor
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.openapi.vfs.VirtualFileSystem
@@ -45,6 +47,10 @@ internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.Vcs
     VcsLogUtil.runWhenVcsAndLogIsReady(project) { logManager ->
       try {
         val ui = logManager.createLogUi(tabId, VcsLogTabLocation.EDITOR, filters)
+        Disposer.register(ui) {
+          isValid = false
+          FileEditorManager.getInstance(project).closeFile(this)
+        }
         tabName = VcsLogTabsUtil.generateDisplayName(ui)
         ui.onDisplayNameChange {
           tabName = VcsLogTabsUtil.generateDisplayName(ui)

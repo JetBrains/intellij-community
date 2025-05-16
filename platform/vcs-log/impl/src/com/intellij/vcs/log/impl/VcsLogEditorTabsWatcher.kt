@@ -2,7 +2,6 @@
 package com.intellij.vcs.log.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
@@ -22,21 +21,15 @@ internal class VcsLogEditorTabsWatcher(private val project: Project,
     tabSelectedCallback = callback
   }
 
-  override fun createLogTab(ui: VcsLogUiEx, isClosedOnDispose: Boolean): VcsLogEditorTab {
-    return VcsLogEditorTab(ui, isClosedOnDispose)
+  override fun createLogTab(ui: VcsLogUiEx): VcsLogEditorTab {
+    return VcsLogEditorTab(ui)
   }
 
   override fun isOwnerOf(tab: VcsLogWindow): Boolean {
     return tab is VcsLogEditorTab
   }
 
-  override fun closeTabs(tabs: List<VcsLogWindow>) {
-    val editorTabs = tabs.filterIsInstance<VcsLogEditorTab>().filter { it.isClosedOnDispose }.map { it.id }
-    val closed = VcsLogEditorUtil.closeLogTabs(project, editorTabs)
-    LOG.assertTrue(closed, "Could not close tabs: $editorTabs")
-  }
-
-  inner class VcsLogEditorTab(ui: VcsLogUiEx, val isClosedOnDispose: Boolean) : VcsLogWindow(ui) {
+  inner class VcsLogEditorTab(ui: VcsLogUiEx) : VcsLogWindow(ui) {
     override fun isVisible(): Boolean {
       return getSelectedEditorTabIds(project).contains(id)
     }
@@ -57,8 +50,6 @@ internal class VcsLogEditorTabsWatcher(private val project: Project,
   }
 
   companion object {
-    private val LOG = Logger.getInstance(VcsLogEditorTabsWatcher::class.java)
-
     private fun getSelectedEditorTabIds(project: Project): Set<String> {
       return VcsLogEditorUtil.findSelectedLogIds(project)
     }

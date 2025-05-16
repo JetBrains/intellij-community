@@ -156,12 +156,7 @@ open class VcsLogManager @Internal constructor(
 
   @Internal
   fun createLogUi(logId: String, location: VcsLogTabLocation, filters: VcsLogFilterCollection?): MainVcsLogUi {
-    return createLogUi(getMainLogUiFactory(logId, filters), location, true)
-  }
-
-  @Internal
-  fun <U : VcsLogUiEx> createLogUi(factory: VcsLogUiFactory<U>, location: VcsLogTabLocation): U {
-    return createLogUi(factory, location, true)
+    return createLogUi(getMainLogUiFactory(logId, filters), location)
   }
 
   @Internal
@@ -176,11 +171,7 @@ open class VcsLogManager @Internal constructor(
   }
 
   @Internal
-  protected fun <U : VcsLogUiEx> createLogUi(
-    factory: VcsLogUiFactory<U>,
-    location: VcsLogTabLocation,
-    isClosedOnDispose: Boolean,
-  ): U {
+  fun <U : VcsLogUiEx> createLogUi(factory: VcsLogUiFactory<U>, location: VcsLogTabLocation): U {
     ThreadingAssertions.assertEventDispatchThread()
     if (isDisposed) {
       LOG.error("Trying to create new VcsLogUi on a disposed VcsLogManager instance")
@@ -189,7 +180,7 @@ open class VcsLogManager @Internal constructor(
 
     val ui = factory.createLogUi(project, dataManager)
     val extension = watchers.value[location]
-    val window = extension?.createLogTab(ui, isClosedOnDispose) ?: VcsLogWindow(ui)
+    val window = extension?.createLogTab(ui) ?: VcsLogWindow(ui)
     registerLogWindow(ui, window)
     return ui
   }
@@ -257,11 +248,7 @@ open class VcsLogManager @Internal constructor(
   internal open fun disposeUi() {
     isDisposed = true
     ThreadingAssertions.assertEventDispatchThread()
-    if (watchers.isInitialized()) {
-      for (extension in watchers.value.values) {
-        extension.closeTabs(logWindows.filter(extension::isOwnerOf))
-      }
-    }
+    logWindows.map { it.ui }.forEach { Disposer.dispose(it) }
     Disposer.dispose(statusBarProgress)
   }
 
