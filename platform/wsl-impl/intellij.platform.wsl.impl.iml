@@ -16,6 +16,6 @@
     <orderEntry type="library" name="lz4-java" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" />
     <orderEntry type="library" name="ktor-network-tls" level="project" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinx.io" />
+    <orderEntry type="library" scope="RUNTIME" name="kotlinx-io-core" level="project" />
   </component>
 </module>
