@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.typeIfSafeToResolve
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureProcessor
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.getThisReceiverOwner
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isOverridable
@@ -236,22 +237,6 @@ private fun removeUnusedTypeParameters(typeParameters: List<KtTypeParameter>) {
                 EditCommaSeparatedListHelper.removeItem(typeParameter)
         }
     }
-}
-
-/**
- * Returns the owner symbol of the given receiver value, or null if no owner could be found.
- */
-context(KaSession)
-private fun KaReceiverValue.getThisReceiverOwner(): KaSymbol? {
-    val symbol = when (this) {
-        is KaExplicitReceiverValue -> {
-            val thisRef = (KtPsiUtil.deparenthesize(expression) as? KtThisExpression)?.instanceReference ?: return null
-            thisRef.resolveExpression()
-        }
-        is KaImplicitReceiverValue -> symbol
-        is KaSmartCastedReceiverValue -> original.getThisReceiverOwner()
-    }
-    return symbol?.containingSymbol
 }
 
 /**

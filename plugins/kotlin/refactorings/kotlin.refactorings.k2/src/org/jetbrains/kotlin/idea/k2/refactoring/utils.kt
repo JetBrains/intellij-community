@@ -13,7 +13,10 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
@@ -23,6 +26,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
+import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.idea.refactoring.canMoveLambdaOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -197,4 +201,20 @@ fun KaScope.findCallableMemberBySignature(
                 parametersMatch() &&
                 (ignoreReturnType || callable.returnType.semanticallyEquals(callableSignature.returnType))
     }
+}
+
+/**
+ * Returns the owner symbol of the given receiver value, or null if no owner could be found.
+ */
+context(KaSession)
+fun KaReceiverValue.getThisReceiverOwner(): KaSymbol? {
+    val symbol = when (this) {
+        is KaExplicitReceiverValue -> {
+            val thisRef = (KtPsiUtil.deparenthesize(expression) as? KtThisExpression)?.instanceReference ?: return null
+            thisRef.resolveExpression()
+        }
+        is KaImplicitReceiverValue -> symbol
+        is KaSmartCastedReceiverValue -> original.getThisReceiverOwner()
+    }
+    return symbol?.containingSymbol
 }

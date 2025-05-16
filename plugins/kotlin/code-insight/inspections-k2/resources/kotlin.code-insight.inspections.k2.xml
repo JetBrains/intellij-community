@@ -14,6 +14,16 @@
             serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.NotPropertiesServiceImpl"/>
 
     <localInspection
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.RedundantInnerClassModifierInspection"
+            groupPath="Kotlin"
+            groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+            enabledByDefault="true"
+            cleanupTool="true"
+            level="WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+            language="kotlin"
+            key="inspection.redundant.inner.class.modifier.descriptor" bundle="messages.KotlinBundle"/>
+
+    <localInspection
             implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased.RedundantUnitReturnTypeInspection"
             groupPath="Kotlin"
             groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"

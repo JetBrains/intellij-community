@@ -23,6 +23,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/redundantVisibilityModifier", pattern = pattern)
             model("${idea}/inspectionsLocal/redundantWith", pattern = pattern)
             model("${idea}/inspectionsLocal/implicitThis")
+            model("${idea}/inspectionsLocal/redundantInnerClassModifier")
             model("${idea}/inspectionsLocal/doubleNegation")
             model("${idea}/inspectionsLocal/safeCastWithReturn")
             model("${idea}/inspectionsLocal/enumValuesSoftDeprecate")

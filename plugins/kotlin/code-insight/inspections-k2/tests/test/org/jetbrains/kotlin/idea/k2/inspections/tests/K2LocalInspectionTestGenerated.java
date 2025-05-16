@@ -431,6 +431,230 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier")
+    public static class RedundantInnerClassModifier extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("extendClass.kt")
+        public void testExtendClass() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/extendClass.kt");
+        }
+
+        @TestMetadata("extendClass2.kt")
+        public void testExtendClass2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/extendClass2.kt");
+        }
+
+        @TestMetadata("extendInnerClass.kt")
+        public void testExtendInnerClass() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/extendInnerClass.kt");
+        }
+
+        @TestMetadata("extendInnerClass2.kt")
+        public void testExtendInnerClass2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/extendInnerClass2.kt");
+        }
+
+        @TestMetadata("extendJavaNestedClass.kt")
+        public void testExtendJavaNestedClass() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/extendJavaNestedClass.kt");
+        }
+
+        @TestMetadata("extendJavaNestedInterface.kt")
+        public void testExtendJavaNestedInterface() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/extendJavaNestedInterface.kt");
+        }
+
+        @TestMetadata("extendJavaNestedStaticClass.kt")
+        public void testExtendJavaNestedStaticClass() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/extendJavaNestedStaticClass.kt");
+        }
+
+        @TestMetadata("hasConstructorCallOfOuterClassMember.kt")
+        public void testHasConstructorCallOfOuterClassMember() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/hasConstructorCallOfOuterClassMember.kt");
+        }
+
+        @TestMetadata("hasConstructorCallOfOuterClassMember2.kt")
+        public void testHasConstructorCallOfOuterClassMember2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/hasConstructorCallOfOuterClassMember2.kt");
+        }
+
+        @TestMetadata("hasConstructorCallOfOuterClassMember3.kt")
+        public void testHasConstructorCallOfOuterClassMember3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/hasConstructorCallOfOuterClassMember3.kt");
+        }
+
+        @TestMetadata("hasJUnitNestedAnnotation.kt")
+        public void testHasJUnitNestedAnnotation() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/hasJUnitNestedAnnotation.kt");
+        }
+
+        @TestMetadata("hasOuterClassCompanionObjectReference.kt")
+        public void testHasOuterClassCompanionObjectReference() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassCompanionObjectReference.kt");
+        }
+
+        @TestMetadata("hasOuterClassMemberReference.kt")
+        public void testHasOuterClassMemberReference() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassMemberReference.kt");
+        }
+
+        @TestMetadata("hasOuterClassMemberReference2.kt")
+        public void testHasOuterClassMemberReference2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassMemberReference2.kt");
+        }
+
+        @TestMetadata("hasOuterClassMemberReference3.kt")
+        public void testHasOuterClassMemberReference3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassMemberReference3.kt");
+        }
+
+        @TestMetadata("hasOuterClassMemberReference4.kt")
+        public void testHasOuterClassMemberReference4() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassMemberReference4.kt");
+        }
+
+        @TestMetadata("hasOuterClassMemberReference5.kt")
+        public void testHasOuterClassMemberReference5() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassMemberReference5.kt");
+        }
+
+        @TestMetadata("hasOuterClassMemberReferenceFromNotThis.kt")
+        public void testHasOuterClassMemberReferenceFromNotThis() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassMemberReferenceFromNotThis.kt");
+        }
+
+        @TestMetadata("hasOuterClassMemberReferenceFromNotThis2.kt")
+        public void testHasOuterClassMemberReferenceFromNotThis2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassMemberReferenceFromNotThis2.kt");
+        }
+
+        @TestMetadata("hasOuterClassMemberReferenceFromNotThis3.kt")
+        public void testHasOuterClassMemberReferenceFromNotThis3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassMemberReferenceFromNotThis3.kt");
+        }
+
+        @TestMetadata("hasOuterClassMemberReferenceFromNotThis4.kt")
+        public void testHasOuterClassMemberReferenceFromNotThis4() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassMemberReferenceFromNotThis4.kt");
+        }
+
+        @TestMetadata("hasOuterClassMemberReferenceFromNotThis5.kt")
+        public void testHasOuterClassMemberReferenceFromNotThis5() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassMemberReferenceFromNotThis5.kt");
+        }
+
+        @TestMetadata("hasOuterClassMemberReferenceInSuperTypeConstructorCall.kt")
+        public void testHasOuterClassMemberReferenceInSuperTypeConstructorCall() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassMemberReferenceInSuperTypeConstructorCall.kt");
+        }
+
+        @TestMetadata("hasOuterClassMemberReferenceInSuperTypeConstructorCall2.kt")
+        public void testHasOuterClassMemberReferenceInSuperTypeConstructorCall2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassMemberReferenceInSuperTypeConstructorCall2.kt");
+        }
+
+        @TestMetadata("hasOuterClassObjectReference.kt")
+        public void testHasOuterClassObjectReference() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassObjectReference.kt");
+        }
+
+        @TestMetadata("hasOuterClassTypeReference.kt")
+        public void testHasOuterClassTypeReference() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassTypeReference.kt");
+        }
+
+        @TestMetadata("hasSuperClassMemberReference.kt")
+        public void testHasSuperClassMemberReference() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/hasSuperClassMemberReference.kt");
+        }
+
+        @TestMetadata("hasSuperJavaClassMemberReference.kt")
+        public void testHasSuperJavaClassMemberReference() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/hasSuperJavaClassMemberReference.kt");
+        }
+
+        @TestMetadata("hasSuperJavaClassMemberReference2.kt")
+        public void testHasSuperJavaClassMemberReference2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/hasSuperJavaClassMemberReference2.kt");
+        }
+
+        @TestMetadata("inAnonymousObject.kt")
+        public void testInAnonymousObject() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/inAnonymousObject.kt");
+        }
+
+        @TestMetadata("inInnerClass.kt")
+        public void testInInnerClass() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/inInnerClass.kt");
+        }
+
+        @TestMetadata("inLocalClass.kt")
+        public void testInLocalClass() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/inLocalClass.kt");
+        }
+
+        @TestMetadata("innerClassConstructorCall.kt")
+        public void testInnerClassConstructorCall() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/innerClassConstructorCall.kt");
+        }
+
+        @TestMetadata("innerClassConstructorCall2.kt")
+        public void testInnerClassConstructorCall2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/innerClassConstructorCall2.kt");
+        }
+
+        @TestMetadata("innerClassConstructorCall3.kt")
+        public void testInnerClassConstructorCall3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/innerClassConstructorCall3.kt");
+        }
+
+        @TestMetadata("innerClassConstructorCall4.kt")
+        public void testInnerClassConstructorCall4() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/innerClassConstructorCall4.kt");
+        }
+
+        @TestMetadata("innerClassConstructorCall5.kt")
+        public void testInnerClassConstructorCall5() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/innerClassConstructorCall5.kt");
+        }
+
+        @TestMetadata("innerClassConstructorCall6.kt")
+        public void testInnerClassConstructorCall6() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/innerClassConstructorCall6.kt");
+        }
+
+        @TestMetadata("noOuterClassMemberReference.kt")
+        public void testNoOuterClassMemberReference() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/noOuterClassMemberReference.kt");
+        }
+
+        @TestMetadata("noOuterClassMemberReference2.kt")
+        public void testNoOuterClassMemberReference2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/noOuterClassMemberReference2.kt");
+        }
+
+        @TestMetadata("noOuterClassMemberReference3.kt")
+        public void testNoOuterClassMemberReference3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/noOuterClassMemberReference3.kt");
+        }
+
+        @TestMetadata("noOuterClassTypeReference.kt")
+        public void testNoOuterClassTypeReference() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/noOuterClassTypeReference.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/doubleNegation")
     public static class DoubleNegation extends AbstractK2LocalInspectionTest {
         @java.lang.Override
