@@ -34,23 +34,12 @@ sealed class IdeaPluginDescriptorImpl(
   raw: RawPluginDescriptor,
   pluginPath: Path,
   isBundled: Boolean,
-  moduleName: String?,
-  moduleLoadingRule: ModuleLoadingRule? = null,
   useCoreClassLoader: Boolean = false,
   isIndependentFromCoreClassLoader: Boolean = false,
   descriptorPath: String? = null
 ) : IdeaPluginDescriptorImplPublic {
-  init {
-    if (moduleName != null) {
-      require(moduleLoadingRule != null) { "'moduleLoadingRule' parameter must be specified when creating a module descriptor, but it is missing for '$moduleName'" }
-    }
-  }
-
   private val id: PluginId = PluginId.getId(raw.id ?: raw.name ?: throw RuntimeException("Neither id nor name are specified"))
   private val name: String = raw.name ?: id.idString
-
-  open val moduleName: String? = moduleName
-  open val moduleLoadingRule: ModuleLoadingRule? = moduleLoadingRule
 
   private val version: String? = raw.version
   private val sinceBuild: String? = raw.sinceBuild
@@ -211,7 +200,7 @@ sealed class IdeaPluginDescriptorImpl(
 
   override fun toString(): String =
     "${this::class.simpleName}(name=$name, id=$id, version=$version, " +
-    (if (moduleName == null) "" else "moduleName=$moduleName, ") +
+    (if (contentModuleName == null) "" else "moduleName=$contentModuleName, ") +
     (if (packagePrefix == null) "" else "package=$packagePrefix, ") +
     "isBundled=$isBundled, " +
     "descriptorPath=${descriptorPath ?: "plugin.xml"}, " +
@@ -426,7 +415,7 @@ sealed class IdeaPluginDescriptorImpl(
   }
 
   private fun warnIfResourceBundleIsDefinedForCorePlugin(resourceBundle: String?) {
-    if (resourceBundle != null && id == PluginManagerCore.CORE_ID && moduleName == null) {
+    if (resourceBundle != null && id == PluginManagerCore.CORE_ID && contentModuleName == null) {
       LOG.warn("<resource-bundle>$resourceBundle</resource-bundle> tag is found in an xml descriptor" +
                " included into the platform part of the IDE but the platform part uses predefined bundles " +
                "(e.g. ActionsBundle for actions) anyway; this tag must be replaced by a corresponding attribute in some inner tags " +
@@ -623,14 +612,12 @@ class PluginMainDescriptor(
   raw = raw,
   pluginPath = pluginPath,
   isBundled = isBundled,
-  moduleName = null,
-  moduleLoadingRule = null,
   useCoreClassLoader = useCoreClassLoader,
   isIndependentFromCoreClassLoader = false,
   descriptorPath = null
 ) {
   init {
-    assert(moduleName == null && moduleLoadingRule == null && descriptorPath == null) { this }
+    assert(descriptorPath == null) { this }
   }
 }
 
@@ -650,14 +637,12 @@ class DependsSubDescriptor(
   raw,
   pluginPath,
   isBundled,
-  null,
-  null,
   useCoreClassLoader,
   isIndependentFromCoreClassLoader,
   descriptorPath
 ) {
   init {
-    assert(moduleName == null && moduleLoadingRule == null && descriptorPath != null) { this }
+    assert(descriptorPath != null) { this }
     if (content.modules.isNotEmpty()) {
       LOG.error("Unexpected `content` elements in a `depends` sub-descriptor: ${content.modules.joinToString()}\n in $this")
     }
@@ -687,14 +672,12 @@ class ContentModuleDescriptor(
   raw,
   pluginPath,
   isBundled,
-  moduleName,
-  moduleLoadingRule,
   useCoreClassLoader,
   isIndependentFromCoreClassLoader,
   descriptorPath
 ) {
-  override val moduleName: String = moduleName
-  override val moduleLoadingRule: ModuleLoadingRule = moduleLoadingRule
+  val moduleName: String = moduleName
+  val moduleLoadingRule: ModuleLoadingRule = moduleLoadingRule
 
   init {
     assert(descriptorPath != null) { this }
@@ -708,7 +691,7 @@ class ContentModuleDescriptor(
 }
 
 internal val IdeaPluginDescriptorImpl.isRequiredContentModule: Boolean
-  get() = moduleLoadingRule?.required == true
+  get() = (this as? ContentModuleDescriptor)?.moduleLoadingRule?.required == true
 
 @ApiStatus.Internal
 @TestOnly
