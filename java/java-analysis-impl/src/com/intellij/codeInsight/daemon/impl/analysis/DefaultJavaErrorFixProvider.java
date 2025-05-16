@@ -21,6 +21,7 @@ import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
 import com.intellij.java.codeserver.highlighting.errors.JavaMismatchedCallContext;
 import com.intellij.java.syntax.parser.JavaKeywords;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.JvmModifiersOwner;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
@@ -1030,7 +1031,10 @@ public final class DefaultJavaErrorFixProvider extends AbstractJavaErrorFixProvi
       return type != null && type.isInferredType() ? new ReplaceVarWithExplicitTypeFix(type) : null;
     });
     fixes(ANNOTATION_NOT_APPLICABLE, (error, sink) -> {
-      if (!BaseIntentionAction.canModify(requireNonNull(error.psi().resolveAnnotationType()))) return;
+      PsiClass annotationType = error.psi().resolveAnnotationType();
+      if (annotationType == null || !BaseIntentionAction.canModify(annotationType) || annotationType.getLanguage() != JavaLanguage.INSTANCE) {
+        return;
+      }
       error.context().forEach(targetType -> sink.accept(myFactory.createAddAnnotationTargetFix(error.psi(), targetType)));
     });
     fix(ANNOTATION_NOT_ALLOWED_STATIC, error -> new MoveAnnotationOnStaticMemberQualifyingTypeFix(error.psi()));
