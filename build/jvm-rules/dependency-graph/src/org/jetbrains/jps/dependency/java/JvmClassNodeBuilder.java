@@ -3,9 +3,6 @@ package org.jetbrains.jps.dependency.java;
 
 import com.dynatrace.hash4j.hashing.HashStream64;
 import com.dynatrace.hash4j.hashing.Hashing;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Ref;
-import com.intellij.util.SmartList;
 import kotlin.metadata.Attributes;
 import kotlin.metadata.KmDeclarationContainer;
 import kotlin.metadata.KmFunction;
@@ -17,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.NodeBuilder;
 import org.jetbrains.jps.dependency.ReferenceID;
 import org.jetbrains.jps.dependency.Usage;
+import org.jetbrains.jps.dependency.impl.Ref;
 import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.signature.SignatureReader;
@@ -29,12 +27,14 @@ import java.lang.reflect.Array;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuilder {
-  
-  private static final Iterable<JvmDifferentiateStrategy> ourDifferentiateStrategies = Iterators.collect(ServiceLoader.load(JvmDifferentiateStrategy.class), new SmartList<>());
+  private static final Logger LOG = Logger.getLogger("#" + JvmClassNodeBuilder.class.getName());
 
-  private static final Logger LOG = Logger.getInstance(JvmClassNodeBuilder.class);
+  private static final Iterable<JvmDifferentiateStrategy> ourDifferentiateStrategies = Iterators.collect(ServiceLoader.load(JvmDifferentiateStrategy.class), new ArrayList<>());
+
   public static final String LAMBDA_FACTORY_CLASS = "java/lang/invoke/LambdaMetafactory";
   private static final String KOTLIN_LAMBDA_USAGE_CLASS_MARKER = "$sam$";
   private static final int ASM_API_VERSION = Opcodes.API_VERSION;
@@ -372,7 +372,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
         new SignatureReader(sig).accept(mySignatureCrawler);
       }
       catch (Exception e) {
-        LOG.info("Problems parsing signature \"" + sig + "\" in " + myFileName, e);
+        LOG.log(Level.INFO, "Problems parsing signature \"" + sig + "\" in " + myFileName, e);
       }
     }
   }
@@ -432,7 +432,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
   private final Set<ModuleRequires> myModuleRequires = new HashSet<>();
   private final Set<ModulePackage> myModuleExports = new HashSet<>();
 
-  private final List<JvmMetadata<?, ?>> myMetadata = new SmartList<>();
+  private final List<JvmMetadata<?, ?>> myMetadata = new ArrayList<>(2);
 
   private JvmClassNodeBuilder(final String fn, boolean isGenerated, boolean isLibraryMode) {
     super(ASM_API_VERSION);
@@ -697,7 +697,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
 
           @Override
           public AnnotationVisitor visitArray(String name) {
-            myAcc = new SmartList<>();
+            myAcc = new ArrayList<>();
             return this;
           }
 

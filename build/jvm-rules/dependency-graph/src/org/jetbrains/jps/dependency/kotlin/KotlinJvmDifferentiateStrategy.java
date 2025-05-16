@@ -1,9 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.kotlin;
 
-import com.intellij.openapi.util.Pair;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.SmartHashSet;
 import kotlin.metadata.*;
 import kotlin.metadata.jvm.JvmExtensionsKt;
 import kotlin.metadata.jvm.JvmMethodSignature;
@@ -11,8 +8,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.Difference;
+import org.jetbrains.jps.dependency.impl.Pair;
 import org.jetbrains.jps.dependency.java.*;
-import org.jetbrains.jps.javac.Iterators;
 
 import java.util.*;
 import java.util.function.Function;
@@ -355,7 +352,7 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
             // this will affect all usages from both java and kotlin code
             for (JvmMethod method : withJvmOverloads(changedClass, jvmMethod)) {
               for (Pair<JvmClass, JvmMethod> pair : future.getOverridingMethods(changedClass, method, method::isSameByJavaRules)) {
-                affectNodeSources(context, pair.getFirst().getReferenceID(), "Affect class where the function is overridden: ", future);
+                affectNodeSources(context, pair.first.getReferenceID(), "Affect class where the function is overridden: ", future);
               }
               affectMemberUsages(context, changedClass.getReferenceID(), method, future.collectSubclassesWithoutMethod(changedClass.getReferenceID(), method));
             }
@@ -402,7 +399,7 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
         }
 
         List<JvmMethodSignature> propertyAccessors = Arrays.asList(JvmExtensionsKt.getGetterSignature(removedProp), JvmExtensionsKt.getSetterSignature(removedProp));
-        List<JvmMethod> accessorMethods = collect(filter(map(propertyAccessors, acc -> acc != null? getJvmMethod(change.getNow(), acc) : null), m -> m != null && !m.isPrivate()), new SmartList<>());
+        List<JvmMethod> accessorMethods = collect(filter(map(propertyAccessors, acc -> acc != null? getJvmMethod(change.getNow(), acc) : null), m -> m != null && !m.isPrivate()), new ArrayList<>());
 
         if (!accessorMethods.isEmpty()) {
           // property in kotlin code was replaced with a function(s), but at the bytecode level corresponding methods are preserved
@@ -628,7 +625,7 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
     }
     else {
       Set<JvmNodeReferenceID> targets = collect(
-        flat(utils.allSupertypes(cls.getReferenceID()), utils.collectSubclassesWithoutMethod(cls.getReferenceID(), clsMethod)), new SmartHashSet<>()
+        flat(utils.allSupertypes(cls.getReferenceID()), utils.collectSubclassesWithoutMethod(cls.getReferenceID(), clsMethod)), new HashSet<>()
       );
       targets.add(cls.getReferenceID());
       affectLookupUsages(context, targets, KJvmUtils.getMethodKotlinName(cls, clsMethod), utils, constraint);
@@ -656,7 +653,7 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
         getters.put(methodName.substring(methodName.startsWith("is")? 2 : 3), method);
       }
       else if (isSetter(method)) {
-        setters.computeIfAbsent(methodName.substring(3), k -> new SmartList<>()).add(method);
+        setters.computeIfAbsent(methodName.substring(3), k -> new ArrayList<>()).add(method);
       }
     }
     return map(getters.entrySet(), e -> {
@@ -746,7 +743,7 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
 
   private void affectSealedClass(DifferentiateContext context, JvmNodeReferenceID sealedClassId, String affectReason, Utils utils, boolean affectSubclassUsages) {
     // for sealed classes all direct subclasses must be affected too
-    Set<NodeSource> sourcesToAffect = collect(Iterators.flat(Iterators.map(KJvmUtils.withAllSubclassesIfSealed(utils, sealedClassId), utils::getNodeSources)), new HashSet<>());
+    Set<NodeSource> sourcesToAffect = collect(flat(map(KJvmUtils.withAllSubclassesIfSealed(utils, sealedClassId), utils::getNodeSources)), new HashSet<>());
     if (find(sourcesToAffect, src -> !context.isCompiled(src)) != null) {
       // only affect if at least one file in the set is not yet compiled in this session
       affectSources(context, sourcesToAffect, affectReason, true);

@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.impl;
 
-import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.NodeSource;
 import org.jetbrains.jps.dependency.NodeSourcePathMapper;
@@ -25,12 +24,12 @@ public final class PathSourceMapper implements NodeSourcePathMapper {
 
   @Override
   public NodeSource toNodeSource(File file) {
-    return toNodeSource(FileUtilRt.toCanonicalPath(file.getAbsolutePath(), File.separatorChar, true));
+    return toNodeSource(file.toPath());
   }
 
   @Override
   public NodeSource toNodeSource(Path path) {
-    return toNodeSource(FileUtilRt.toCanonicalPath(path.toString(), File.separatorChar, true));
+    return toNodeSource(path.normalize().toString());
   }
 
   @Override

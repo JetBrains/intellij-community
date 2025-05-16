@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.kotlin;
 
-import com.intellij.openapi.diagnostic.Logger;
 import kotlin.metadata.KmClass;
 import kotlin.metadata.KmDeclarationContainer;
 import kotlin.metadata.KmTypeAlias;
@@ -11,11 +10,13 @@ import org.jetbrains.jps.dependency.java.*;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static org.jetbrains.jps.javac.Iterators.*;
 
 public final class KotlinSourceOnlyDifferentiateStrategy implements DifferentiateStrategy {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.dependency.kotlin.KotlinSourceOnlyDifferentiateStrategy");
+  private static final Logger LOG = Logger.getLogger("#org.jetbrains.jps.dependency.kotlin.KotlinSourceOnlyDifferentiateStrategy");
 
   @Override
   public boolean differentiate(DifferentiateContext context, Iterable<Node<?, ?>> nodesBefore, Iterable<Node<?, ?>> nodesAfter, Iterable<Node<?, ?>> nodesWithErrors) {
@@ -69,7 +70,7 @@ public final class KotlinSourceOnlyDifferentiateStrategy implements Differentiat
 
       for (NodeSource src : filter(supertypeSources, unmodifiedKtSources)) {
         if (!isEmpty(filter(flat(map(graph.getNodes(src), Node::getUsages)), affectedUsages::contains))) {
-          LOG.debug("Parent Kotlin class in a class hierarchy is not marked for compilation, while it may be using a potentially changed type alias or has compiler-inferred types based on potentially changed types. Affecting  " + src);
+          LOG.log(Level.FINE, "Parent Kotlin class in a class hierarchy is not marked for compilation, while it may be using a potentially changed type alias or has compiler-inferred types based on potentially changed types. Affecting  " + src);
           affectedSources.add(src);
         }
       }
@@ -86,7 +87,7 @@ public final class KotlinSourceOnlyDifferentiateStrategy implements Differentiat
 
     if (!affectedSealedClasses.isEmpty()) {
       for (NodeSource src : filter(unique(flat(map(flat(map(affectedSealedClasses, id -> KJvmUtils.withAllSubclassesIfSealed(present, id))), present::getNodeSources))), s -> !baseSources.contains(s))) {
-        LOG.debug("Sealed class or subclass of a sealed class is about to be recompiled => sealed classes should be always compiled together with all its subclasses. Affecting  " + src);
+        LOG.log(Level.FINE, "Sealed class or subclass of a sealed class is about to be recompiled => sealed classes should be always compiled together with all its subclasses. Affecting  " + src);
         context.affectNodeSource(src);
       }
     }

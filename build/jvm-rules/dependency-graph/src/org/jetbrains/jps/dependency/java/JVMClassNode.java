@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.GraphDataInput;
 import org.jetbrains.jps.dependency.GraphDataOutput;
@@ -13,10 +12,7 @@ import org.jetbrains.jps.dependency.impl.RW;
 import org.jetbrains.jps.javac.Iterators;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Supplier;
 
 public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Difference> extends Proto implements Node<T, D> {
@@ -38,7 +34,7 @@ public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Diffe
     myId = new JvmNodeReferenceID(getName());
     outFilePath = in.readUTF();
 
-    List<Usage> usages = new SmartList<>();
+    List<Usage> usages = new ArrayList<>();
     try {
       int groupCount = in.readInt();
       while(groupCount-- > 0) {
@@ -49,7 +45,7 @@ public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Diffe
       myUsages = usages;
     }
 
-    myMetadata = RW.readCollection(in, in::readGraphElement, new SmartList<>());
+    myMetadata = RW.readCollection(in, in::readGraphElement, new ArrayList<>());
   }
 
   @Override
@@ -59,7 +55,7 @@ public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Diffe
 
     Map<Class<? extends Usage>, List<Usage>> usageGroups = new HashMap<>();
     for (Usage usage : myUsages) {
-      usageGroups.computeIfAbsent(usage.getClass(), k -> new SmartList<>()).add(usage);
+      usageGroups.computeIfAbsent(usage.getClass(), k -> new ArrayList<>()).add(usage);
     }
     
     out.writeInt(usageGroups.size());

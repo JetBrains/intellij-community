@@ -3,11 +3,11 @@ package org.jetbrains.jps.dependency.java;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.impl.Containers;
+import org.jetbrains.jps.dependency.impl.Pair;
 import org.jetbrains.jps.javac.Iterators;
 
 import java.util.*;

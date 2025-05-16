@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
-import com.intellij.util.ArrayUtilRt;
 import kotlin.metadata.*;
 import kotlin.metadata.jvm.JvmExtensionsKt;
 import kotlin.metadata.jvm.KotlinClassHeader;
@@ -24,7 +23,7 @@ import java.util.function.Supplier;
  * The created annotation instance can be further introspected with <a href="https://github.com/JetBrains/kotlin/tree/master/libraries/kotlinx-metadata/jvm">kotlinx-metadata-jvm</a> library
  */
 public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff> {
-  private static final String[] EMPTY_STRING_ARRAY = ArrayUtilRt.EMPTY_STRING_ARRAY;
+  private static final String[] EMPTY_STRING_ARRAY = new String[0];
   private static final int[] EMPTY_INT_ARRAY = new int[0];
 
   private final int myKind;

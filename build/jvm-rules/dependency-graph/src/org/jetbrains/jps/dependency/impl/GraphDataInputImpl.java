@@ -1,8 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.impl;
 
-import com.intellij.util.io.DataInputOutputUtil;
-import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.ExternalizableGraphElement;
@@ -74,12 +72,36 @@ public class GraphDataInputImpl implements GraphDataInput {
 
   @Override
   public int readInt() throws IOException {
-    return DataInputOutputUtil.readINT(myDelegate);
+    final int val = myDelegate.readUnsignedByte();
+    if (val < 192) {
+      return val;
+    }
+
+    int res = val - 192;
+    for (int sh = 6; ; sh += 7) {
+      int next = myDelegate.readUnsignedByte();
+      res |= (next & 0x7F) << sh;
+      if ((next & 0x80) == 0) {
+        return res;
+      }
+    }
   }
 
   @Override
   public long readLong() throws IOException {
-    return DataInputOutputUtil.readLONG(myDelegate);
+    final int val = myDelegate.readUnsignedByte();
+    if (val < 192) {
+      return val;
+    }
+
+    long res = val - 192;
+    for (int sh = 6; ; sh += 7) {
+      int next = myDelegate.readUnsignedByte();
+      res |= (long)(next & 0x7F) << sh;
+      if ((next & 0x80) == 0) {
+        return res;
+      }
+    }
   }
 
   @Override
@@ -99,7 +121,7 @@ public class GraphDataInputImpl implements GraphDataInput {
 
   @Override
   public @NotNull String readUTF() throws IOException {
-    return IOUtil.readUTF(myDelegate);
+    return RW.readUTF(myDelegate);
   }
 
   @Override

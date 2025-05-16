@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.GraphDataInput;
 import org.jetbrains.jps.dependency.GraphDataOutput;
@@ -13,6 +12,7 @@ import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.org.objectweb.asm.Type;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -29,7 +29,7 @@ public final class JvmMethod extends ProtoMember implements DiffCapable<JvmMetho
 
     super(flags, signature, name, TypeRepr.getType(Type.getReturnType(descriptor)), annotations, defaultValue);
     myParamAnnotations = parameterAnnotations;
-    myExceptions = Iterators.collect(Iterators.map(exceptions, s -> new TypeRepr.ClassType(s)), new SmartList<>());
+    myExceptions = Iterators.collect(Iterators.map(exceptions, s -> new TypeRepr.ClassType(s)), new ArrayList<>());
     myArgTypes = TypeRepr.getTypes(Type.getArgumentTypes(descriptor));
   }
 

@@ -1,12 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
-import com.intellij.openapi.util.Pair;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.Difference;
+import org.jetbrains.jps.dependency.impl.Pair;
 
 import java.lang.annotation.RetentionPolicy;
 import java.util.*;
@@ -109,7 +107,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
     }
     else if (change.getNow().isSealed()) {
       ReferenceID fromClass = change.getNow().getReferenceID();
-      Set<ReferenceID> permitted = collect(map(filter(change.getNow().getUsages(), u -> u instanceof ClassPermitsUsage), Usage::getElementOwner), new SmartHashSet<>());
+      Set<ReferenceID> permitted = collect(map(filter(change.getNow().getUsages(), u -> u instanceof ClassPermitsUsage), Usage::getElementOwner), new HashSet<>());
       debug("Affecting non-permitted subclasses of a sealed class: ", fromClass);
       for (ReferenceID cl : filter(future.directSubclasses(fromClass), c -> !permitted.contains(c))) {
         affectNodeSources(context, cl, "Affecting source file of a non-permitted subclass: ", future);
@@ -325,13 +323,13 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
 
         if (!changedMethod.isPrivate() && !changedMethod.isConstructor() && !changedMethod.isStatic()) {
           if (!changedMethod.isFinal()) {
-            for (JvmNodeReferenceID subClass : unique(map(future.getOverridingMethods(changedClass, changedMethod, changedMethod::isSameByJavaRules), p -> p.getFirst().getReferenceID()))) {
+            for (JvmNodeReferenceID subClass : unique(map(future.getOverridingMethods(changedClass, changedMethod, changedMethod::isSameByJavaRules), p -> p.first.getReferenceID()))) {
               affectNodeSources(context, subClass, "Affect source file of a class which overrides the changed method: ", future);
             }
           }
           for (JvmNodeReferenceID id : propagated) {
             for (JvmClass subClass : future.getNodes(id, JvmClass.class)) {
-              Iterable<Pair<JvmClass, JvmMethod>> overriddenInSubclass = filter(future.getOverriddenMethods(subClass, changedMethod::isSameByJavaRules), p -> !Objects.equals(p.getFirst().getReferenceID(), id));
+              Iterable<Pair<JvmClass, JvmMethod>> overriddenInSubclass = filter(future.getOverriddenMethods(subClass, changedMethod::isSameByJavaRules), p -> !Objects.equals(p.first.getReferenceID(), id));
               if (!isEmpty(overriddenInSubclass)) {
                 debug("Changed method is inherited in some subclass & overrides/implements some interface method which this subclass implements. ", subClass.getName());
                 affectNodeSources(context, subClass.getReferenceID(), "Affecting subclass source file: ", future);
@@ -384,7 +382,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
       }
     }
 
-    Iterable<Difference.Change<JvmMethod, JvmMethod.Diff>> moreAccessible = collect(filter(methodChanges, ch -> ch.getDiff().accessExpanded()), new SmartList<>());
+    Iterable<Difference.Change<JvmMethod, JvmMethod.Diff>> moreAccessible = collect(filter(methodChanges, ch -> ch.getDiff().accessExpanded()), new ArrayList<>());
     if (!isEmpty(moreAccessible)) {
       Iterable<Utils.OverloadDescriptor> overloaded = future.findAllOverloads(changedClass, method -> {
         JVMFlags mostAccessible = null;
@@ -455,7 +453,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
           return future.getOverriddenMethods(changedClass, removedMethod::isSameByJavaRules);
         });
         boolean isClearlyOverridden = removedMethod.getSignature().isEmpty() && !extendsLibraryClass.get() && !isEmpty(overridden) && isEmpty(
-          filter(overridden, p -> !p.getSecond().getType().equals(removedMethod.getType()) || !p.getSecond().getSignature().isEmpty() || removedMethod.isMoreAccessibleThan(p.getSecond()))
+          filter(overridden, p -> !p.second.getType().equals(removedMethod.getType()) || !p.second.getSignature().isEmpty() || removedMethod.isMoreAccessibleThan(p.second))
         );
         if (!isClearlyOverridden) {
           debug("No overridden methods found, affecting method usages");
@@ -465,15 +463,15 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
 
       if (removedMethod.isOverridable()) {
         for (Pair<JvmClass, JvmMethod> overriding : future.getOverridingMethods(changedClass, removedMethod, removedMethod::isSameByJavaRules)) {
-          affectNodeSources(context, overriding.getFirst().getReferenceID(), "Affecting file by overriding: ", future);
+          affectNodeSources(context, overriding.first.getReferenceID(), "Affecting file by overriding: ", future);
         }
       }
 
       if (!removedMethod.isConstructor() && !removedMethod.isAbstract() && !removedMethod.isStatic()) {
         for (JvmNodeReferenceID id : propagated) {
           for (JvmClass subClass : future.getNodes(id, JvmClass.class)) {
-            Iterable<Pair<JvmClass, JvmMethod>> overriddenForSubclass = filter(future.getOverriddenMethods(subClass, removedMethod::isSameByJavaRules), p -> p.getSecond().isAbstract() || removedMethod.isSame(p.getSecond()));
-            boolean allOverriddenAbstract = !isEmpty(overriddenForSubclass) && isEmpty(filter(overriddenForSubclass, p -> !p.getSecond().isAbstract()));
+            Iterable<Pair<JvmClass, JvmMethod>> overriddenForSubclass = filter(future.getOverriddenMethods(subClass, removedMethod::isSameByJavaRules), p -> p.second.isAbstract() || removedMethod.isSame(p.second));
+            boolean allOverriddenAbstract = !isEmpty(overriddenForSubclass) && isEmpty(filter(overriddenForSubclass, p -> !p.second.isAbstract()));
             if (allOverriddenAbstract || future.inheritsFromLibraryClass(subClass)) {
               debug("Removed method is not abstract & overrides some abstract method which is not then over-overridden in subclass ", subClass.getName());
               affectNodeSources(context, subClass.getReferenceID(), "Affecting subclass source file: ", future);
@@ -539,8 +537,8 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
       debug("Processing affected by specificity methods");
 
       for (Pair<JvmClass, JvmMethod> pair : future.getOverriddenMethods(changedClass, lessSpecificCond)) {
-        JvmClass cls = pair.getFirst();
-        JvmMethod overriddenMethod = pair.getSecond();
+        JvmClass cls = pair.first;
+        JvmMethod overriddenMethod = pair.second;
         // isInheritor(cls, changedClass) == false
 
         debug("Method: ", overriddenMethod.getName());
@@ -550,8 +548,8 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
       }
 
       for (Pair<JvmClass, JvmMethod> pair : future.getOverridingMethods(changedClass, addedMethod, lessSpecificCond)) {
-        JvmClass cls = pair.getFirst();
-        JvmMethod overridingMethod = pair.getSecond();
+        JvmClass cls = pair.first;
+        JvmMethod overridingMethod = pair.second;
         // isInheritor(cls, changedClass) == true
 
         debug("Method: ", overridingMethod.getName());
@@ -614,7 +612,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
           else {
             String outerClassName = cl.getOuterFqName();
             if (!outerClassName.isEmpty()) {
-              Iterable<JvmClass> outerClasses = collect(future.getClassesByName(outerClassName), new SmartList<>());
+              Iterable<JvmClass> outerClasses = collect(future.getClassesByName(outerClassName), new ArrayList<>());
               if (isEmpty(outerClasses) || !isEmpty(filter(outerClasses, ocl -> {
                 return future.isFieldVisible(ocl, addedField);
               }))) {
@@ -793,7 +791,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
     JvmModule.Diff diff = change.getDiff();
     boolean affectSelf = false;
     boolean affectDeps = false;
-    Set<String> constraintPackageNames = new SmartHashSet<>();
+    Set<String> constraintPackageNames = new HashSet<>();
 
     if (diff.versionChanged()) {
       String version = changedModule.getVersion();

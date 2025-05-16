@@ -14,7 +14,6 @@ jvm_library(
     "//:caffeine",
     "//:intellij-deps-fastutil",
     "@rules_jvm//jps-builders-6:build-javac-rt",  # for Iterator utils
-    "//:jps", # for platform/util_rt
   ]
 )
 

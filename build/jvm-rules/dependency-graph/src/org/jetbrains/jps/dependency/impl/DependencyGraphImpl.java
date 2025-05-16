@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.impl;
 
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
@@ -173,7 +172,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
 
       boolean isNodeAffected(Node<?, ?> node) {
         if (!affectedUsages.isEmpty()) {
-          List<Predicate<Node<?, ?>>> deferred = new SmartList<>();
+          List<Predicate<Node<?, ?>>> deferred = new ArrayList<>();
           for (Predicate<Node<?, ?>> constr : filter(map(node.getUsages(), affectedUsages::get), Objects::nonNull)) {
             if (constr == ANY_CONSTRAINT) {
               return true;
@@ -252,7 +251,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
       for (var node : flat(map(flat(inputSources, deleted), graphView::getNodes))) {
         Iterable<NodeSource> nodeSources = graphView.getSources(node.getReferenceID());
         if (count(nodeSources) > 1) {
-          List<NodeSource> filteredNodeSources = collect(filter(nodeSources, srcFilter::test), new SmartList<>());
+          List<NodeSource> filteredNodeSources = collect(filter(nodeSources, srcFilter::test), new ArrayList<>());
           // all sources associated with the node should be either marked 'dirty' or deleted
           if (find(filteredNodeSources, s -> !inputSources.contains(s)) != null) {
             for (NodeSource s : filteredNodeSources) {

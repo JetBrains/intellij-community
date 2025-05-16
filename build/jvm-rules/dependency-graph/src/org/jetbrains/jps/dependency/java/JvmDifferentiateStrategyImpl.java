@@ -1,16 +1,17 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.Difference;
+import org.jetbrains.jps.dependency.impl.Pair;
 
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static org.jetbrains.jps.javac.Iterators.*;
 
@@ -18,7 +19,7 @@ import static org.jetbrains.jps.javac.Iterators.*;
  * This class provides implementation common to all jvm strategies
  */
 public abstract class JvmDifferentiateStrategyImpl implements JvmDifferentiateStrategy{
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.dependency.java.JvmDifferentiateStrategyImpl");
+  private static final Logger LOG = Logger.getLogger("#org.jetbrains.jps.dependency.java.JvmDifferentiateStrategyImpl");
 
   protected final <T extends AnnotationInstance, D extends AnnotationInstance.Diff<T>> boolean isAffectedByAnnotations(
     Proto element, Difference.Specifier<T, D> annotationsDiff, Set<AnnotationGroup.AffectionKind> affectionKinds, Predicate<? super TypeRepr.ClassType> annotationSelector
@@ -181,7 +182,7 @@ public abstract class JvmDifferentiateStrategyImpl implements JvmDifferentiateSt
       if (changedMethod.isAbstract() || toRecompile.contains(AnnotationGroup.AffectionScope.subclasses)) {
         for (Pair<JvmClass, JvmMethod> pair : recurse(Pair.create(changedClass, changedMethod), p -> p.second.isOverridable()? future.getOverridingMethods(p.first, p.second, p.second::isSameByJavaRules) : Collections.emptyList(), false)) {
           JvmNodeReferenceID clsId = pair.first.getReferenceID();
-          JvmMethod meth = pair.getSecond();
+          JvmMethod meth = pair.second;
           affectMemberUsages(context, clsId, meth, future.collectSubclassesWithoutMethod(clsId, meth));
         }
       }
@@ -235,7 +236,7 @@ public abstract class JvmDifferentiateStrategyImpl implements JvmDifferentiateSt
   }
 
   protected boolean isDebugEnabled() {
-    return LOG.isDebugEnabled();
+    return LOG.isLoggable(Level.FINE);
   }
 
   protected void debug(String message, Object... details) {
@@ -249,7 +250,7 @@ public abstract class JvmDifferentiateStrategyImpl implements JvmDifferentiateSt
   }
 
   protected void debug(String message) {
-    LOG.debug(message);
+    LOG.log(Level.FINE, message);
   }
 
   protected void affectSubclasses(DifferentiateContext context, Utils utils, ReferenceID fromClass, boolean affectUsages) {

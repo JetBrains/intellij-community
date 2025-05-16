@@ -1,22 +1,22 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.SmartList;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.Difference;
 
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static org.jetbrains.jps.javac.Iterators.*;
 
 public final class GeneralJvmDifferentiateStrategy implements DifferentiateStrategy {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.dependency.java.GeneralJvmDifferentiateStrategy");
+  private static final Logger LOG = Logger.getLogger("#org.jetbrains.jps.dependency.java.GeneralJvmDifferentiateStrategy");
 
   private static final Iterable<JvmDifferentiateStrategy> ourExtensions = collect(
     ServiceLoader.load(JvmDifferentiateStrategy.class),
-    new SmartList<>()
+    new ArrayList<>()
   );
 
   @Override
@@ -63,7 +63,7 @@ public final class GeneralJvmDifferentiateStrategy implements DifferentiateStrat
           Iterable<NodeSource> nodeSources = present.getNodeSources(cl.getReferenceID());
           if (parentsMarked) {
             for (NodeSource source : filter(nodeSources, s -> !isMarked(s) && inCurrentChunk.test(s))) {
-              LOG.debug("Intermediate class in a class hierarchy is not marked for compilation, while one of its subclasses and superclasses are going to be recompiled. Affecting  " + source.toString());
+              LOG.log(Level.FINE, "Intermediate class in a class hierarchy is not marked for compilation, while one of its subclasses and superclasses are going to be recompiled. Affecting  " + source.toString());
               context.affectNodeSource(source);
             }
           }

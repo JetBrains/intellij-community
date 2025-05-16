@@ -1,9 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.impl;
 
-import com.intellij.util.SmartList;
-import com.intellij.util.io.DataInputOutputUtil;
-import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.ExternalizableGraphElement;
@@ -12,6 +9,7 @@ import org.jetbrains.jps.dependency.GraphDataOutput;
 
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,12 +59,28 @@ public class GraphDataOutputImpl implements GraphDataOutput {
 
   @Override
   public void writeInt(int v) throws IOException {
-    DataInputOutputUtil.writeINT(myDelegate, v);
+    if (0 > v || v >= 192) {
+      myDelegate.writeByte(192 + (v & 0x3F));
+      v >>>= 6;
+      while (v >= 128) {
+        myDelegate.writeByte((v & 0x7F) | 0x80);
+        v >>>= 7;
+      }
+    }
+    myDelegate.writeByte(v);
   }
 
   @Override
   public void writeLong(long v) throws IOException {
-    DataInputOutputUtil.writeLONG(myDelegate, v);
+    if (0 > v || v >= 192) {
+      myDelegate.writeByte(192 + (int)(v & 0x3F));
+      v >>>= 6;
+      while (v >= 128) {
+        myDelegate.writeByte((int)(v & 0x7F) | 0x80);
+        v >>>= 7;
+      }
+    }
+    myDelegate.writeByte((int) v);
   }
 
   @Override
@@ -91,7 +105,7 @@ public class GraphDataOutputImpl implements GraphDataOutput {
 
   @Override
   public void writeUTF(@NotNull String s) throws IOException {
-    IOUtil.writeUTF(myDelegate, s);
+    RW.writeUTF(myDelegate, s);
   }
 
   @Override
@@ -110,7 +124,7 @@ public class GraphDataOutputImpl implements GraphDataOutput {
       Map<ExternalizableGraphElement, List<FactoredExternalizableGraphElement<?>>> elemGroups = new HashMap<>();
       for (T e : col) {
         FactoredExternalizableGraphElement<?> fe = (FactoredExternalizableGraphElement<?>)e;
-        elemGroups.computeIfAbsent(fe.getFactorData(), k -> new SmartList<>()).add(fe);
+        elemGroups.computeIfAbsent(fe.getFactorData(), k -> new ArrayList<>()).add(fe);
       }
       writeInt(elemGroups.size());
       for (Map.Entry<ExternalizableGraphElement, List<FactoredExternalizableGraphElement<?>>> entry : elemGroups.entrySet()) {
