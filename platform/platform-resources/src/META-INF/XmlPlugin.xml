@@ -257,6 +257,7 @@
     <lang.documentationProvider language="HTML" implementationClass="com.intellij.xml.util.documentation.HtmlDocumentationProvider"
                                 id="html"/>
     <lang.documentationProvider language="XHTML" implementationClass="com.intellij.xml.util.documentation.XHtmlDocumentationProvider"/>
+    <documentationCssProvider implementation="com.intellij.documentation.mdn.MdnDocumentationCssProvider"/>
 
     <lang.surroundDescriptor language="XML" implementationClass="com.intellij.lang.xml.XmlSurroundDescriptor"/>
     <lang.surroundDescriptor language="HTML" implementationClass="com.intellij.lang.xml.XmlSurroundDescriptor" id="html-xml"/>
