@@ -29,6 +29,7 @@ import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.TestUtils;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -133,9 +134,8 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
     private void checkPackageLocalAccess(@NotNull UElement sourceNode, PsiJvmMember targetElement, final String accessType) {
       PsiElement sourcePsi = sourceNode.getSourcePsi();
       if (sourcePsi != null) {
-        Module targetModule = ModuleUtilCore.findModuleForPsiElement(targetElement);
-        Module sourceModule = ModuleUtilCore.findModuleForPsiElement(sourcePsi);
-        if (isPackageLocalAccessSuspicious(sourceModule, targetModule) &&
+        SuspiciousPackagePrivateAccess suspiciousAccess = verifyPackagePrivateAccess(sourcePsi, targetElement);
+        if (suspiciousAccess != null &&
             PsiTreeUtil.getParentOfType(sourcePsi, PsiComment.class) == null) {
           List<IntentionAction> fixes =
             JvmElementActionFactories.createModifierActions(targetElement, MemberRequestsKt.modifierRequest(JvmModifier.PUBLIC, true));
@@ -143,8 +143,16 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
             StringUtil.removeHtmlTags(StringUtil.capitalize(RefactoringUIUtil.getDescription(targetElement, true)));
           LocalQuickFix[] quickFixes =
             IntentionWrapper.wrapToQuickFixes(fixes.toArray(IntentionAction.EMPTY_ARRAY), targetElement.getContainingFile());
-          myProblemsHolder.registerProblem(sourcePsi, InspectionGadgetsBundle.message("inspection.suspicious.package.private.access.description", elementDescription, accessType, targetModule.getName()),
-                                           quickFixes);
+          String message;
+          if (suspiciousAccess.accessedFromTests) {
+            message = InspectionGadgetsBundle.message("inspection.suspicious.package.private.access.from.tests.description", 
+                                                      elementDescription, accessType);
+          }
+          else {
+            message = InspectionGadgetsBundle.message("inspection.suspicious.package.private.access.description", elementDescription, 
+                                                      accessType, suspiciousAccess.targetModule.getName());
+          }
+          myProblemsHolder.registerProblem(sourcePsi, message, quickFixes);
         }
       }
     }
@@ -153,9 +161,8 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
       PsiElement sourcePsi = sourceNode.getSourcePsi();
       PsiElement nameIdentifier = UElementKt.getSourcePsiElement(sourceNode.getUastAnchor());
       if (sourcePsi != null && nameIdentifier != null && targetElement.hasModifier(JvmModifier.PACKAGE_LOCAL)) {
-        Module targetModule = ModuleUtilCore.findModuleForPsiElement(targetElement);
-        Module sourceModule = ModuleUtilCore.findModuleForPsiElement(sourcePsi);
-        if (isPackageLocalAccessSuspicious(sourceModule, targetModule)) {
+        SuspiciousPackagePrivateAccess accessResult = verifyPackagePrivateAccess(sourcePsi, targetElement);
+        if (accessResult != null) {
           List<IntentionAction> fixes =
             JvmElementActionFactories.createModifierActions(targetElement, MemberRequestsKt.modifierRequest(JvmModifier.PUBLIC, true));
           String elementDescription =
@@ -164,21 +171,41 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
             StringUtil.removeHtmlTags(RefactoringUIUtil.getDescription(targetElement.getParent(), false));
           LocalQuickFix[] quickFixes =
             IntentionWrapper.wrapToQuickFixes(fixes.toArray(IntentionAction.EMPTY_ARRAY), targetElement.getContainingFile());
-          String problem = InspectionGadgetsBundle
-            .message("inspection.suspicious.package.private.access.problem", elementDescription, classDescription, targetModule.getName());
+          String problem;
+          if (accessResult.accessedFromTests) {
+            problem = InspectionGadgetsBundle.message("inspection.suspicious.package.private.access.from.tests.problem", elementDescription,
+                                                      classDescription);
+          }
+          else {
+            problem = InspectionGadgetsBundle.message("inspection.suspicious.package.private.access.problem", elementDescription, 
+                                                      classDescription, accessResult.targetModule.getName());
+          }
           myProblemsHolder.registerProblem(nameIdentifier, problem, quickFixes);
         }
       }
     }
 
-    private boolean isPackageLocalAccessSuspicious(Module sourceModule, Module targetModule) {
-      if (targetModule == null || sourceModule == null || targetModule.equals(sourceModule)) {
-        return false;
+    private @Nullable SuspiciousPackagePrivateAccess verifyPackagePrivateAccess(@NotNull PsiElement sourceElement, @NotNull PsiElement targetElement) {
+      Module targetModule = ModuleUtilCore.findModuleForPsiElement(targetElement);
+      Module sourceModule = ModuleUtilCore.findModuleForPsiElement(sourceElement);
+      if (targetModule == null || sourceModule == null) {
+        return null;
+      }
+      if (targetModule.equals(sourceModule)) {
+        if (TestUtils.isInTestSourceContent(sourceElement) && !TestUtils.isInTestSourceContent(targetElement)) {
+          return new SuspiciousPackagePrivateAccess(targetModule, true);
+        }
+        return null;
       }
       ModulesSet sourceGroup = myModuleNameToModulesSet.get(sourceModule.getName());
       ModulesSet targetGroup = myModuleNameToModulesSet.get(targetModule.getName());
-      return sourceGroup == null || sourceGroup != targetGroup;
+      if (sourceGroup == null || sourceGroup != targetGroup) {
+        return new SuspiciousPackagePrivateAccess(targetModule, false);
+      }
+      return null;
     }
+    
+    private record SuspiciousPackagePrivateAccess(Module targetModule, boolean accessedFromTests) {}
   }
 
   private static boolean canAccessProtectedMember(UElement sourceNode, PsiMember member, PsiClass accessObjectType) {
