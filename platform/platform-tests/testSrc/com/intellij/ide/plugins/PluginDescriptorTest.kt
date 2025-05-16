@@ -3,10 +3,10 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.platform.testFramework.PluginBuilder
-import com.intellij.platform.testFramework.loadAndInitDescriptorInTest
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.testFramework.PluginBuilder
+import com.intellij.platform.testFramework.loadAndInitDescriptorInTest
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -112,16 +112,12 @@ class PluginDescriptorTest {
       .hasMessageEndingWith(" optional descriptors form a cycle: a.xml, b.xml")
   }
 
-  // todo revisit
   @Test
-  fun `strict depends makes only one another optional depends on the same plugin strict too and is removed`() {
+  fun `multiple depends on the same plugin with both strict and optional`() {
     val descriptor = loadDescriptorFromTestDataDir("duplicateDepends-strict")
     assertThat(descriptor).isNotNull()
-    // fixme what is that result o_O
-    assertThat(descriptor.dependencies.map { it.pluginId.idString }).isEqualTo(listOf("foo", "foo"))
-    assertThat(descriptor.dependencies.map { it.isOptional }).isEqualTo(listOf(false, true))
-    //assertThat(descriptor.pluginDependencies.map { it.pluginId }).isEqualTo(listOf("foo", "foo", "foo"))
-    //assertThat(descriptor.pluginDependencies.map { it.isOptional }).isEqualTo(listOf(false, false, false))
+    assertThat(descriptor.dependencies.map { it.pluginId.idString }).isEqualTo(listOf("foo", "foo", "foo"))
+    assertThat(descriptor.dependencies.map { it.isOptional }).isEqualTo(listOf(true, false, true))
   }
 
   @Test

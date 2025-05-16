@@ -60,7 +60,6 @@ sealed class IdeaPluginDescriptorImpl(
   private val url: String? = raw.url
 
   internal val pluginDependencies: List<PluginDependencyImpl> = raw.depends
-    .let(::fixDepends)
     .let(::convertDepends)
   val incompatiblePlugins: List<PluginId> = raw.incompatibleWith.map(PluginId::getId)
   val pluginAliases: List<PluginId> = raw.pluginAliases.map(PluginId::getId)
@@ -427,43 +426,6 @@ sealed class IdeaPluginDescriptorImpl(
       depends.mapTo(ArrayList(depends.size)) {
         PluginDependencyImpl(PluginId.getId(it.pluginId), it.configFile, it.isOptional)
       }
-
-    /** https://youtrack.jetbrains.com/issue/IDEA-206274 */
-    private fun fixDepends(depends: List<DependsElement>): List<DependsElement> {
-      val unchanged = 0.toByte()
-      val removed = 1.toByte()
-      val nonOptional = 2.toByte()
-      var elemState: ByteArray? = null
-      fun getState(index: Int) = elemState?.get(index) ?: unchanged
-      fun setState(index: Int, value: Byte) {
-        if (elemState == null) {
-          elemState = ByteArray(depends.size) { unchanged }
-        }
-        elemState[index] = value
-      }
-      fun isOptional(index: Int) = depends[index].isOptional && getState(index) == unchanged
-      for ((index, item) in depends.withIndex()) {
-        if (isOptional(index)) continue
-        for ((candidateIndex, candidate) in depends.withIndex()) {
-          if (isOptional(candidateIndex) && candidate.pluginId == item.pluginId) {
-            setState(candidateIndex, nonOptional)
-            setState(index, removed)
-            break
-          }
-        }
-      }
-      if (elemState == null) {
-        return depends
-      }
-      return depends.mapIndexedNotNull { index, _ ->
-        when (getState(index)) {
-          unchanged -> depends[index]
-          removed -> null
-          nonOptional -> DependsElement(depends[index].pluginId, false, depends[index].configFile)
-          else -> throw IllegalStateException("Unknown state ${getState(index)}")
-        }
-      }
-    }
 
     // FIXME sorting is likely unnecessary.
     //  Instead, users of ExtensionPoint change listeners must not touch other services/extension points.
