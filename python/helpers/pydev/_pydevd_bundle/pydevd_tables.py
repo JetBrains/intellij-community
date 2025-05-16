@@ -141,7 +141,7 @@ def __get_image_provider(output):
         import _pydevd_bundle.tables.images.pydevd_numpy_image as image_provider
     elif type_qualified_name in ['PIL.Image.Image', 'PIL.PngImagePlugin.PngImageFile', 'PIL.JpegImagePlugin.JpegImageFile']:
         import _pydevd_bundle.tables.images.pydevd_pillow_image as image_provider
-    elif type_qualified_name == 'matplotlib.figure.Figure':
+    elif type_qualified_name in ['matplotlib.figure.Figure', 'plotly.graph_objs._figure.Figure']:
         import _pydevd_bundle.tables.images.pydevd_matplotlib_image as image_provider
 
     return image_provider
