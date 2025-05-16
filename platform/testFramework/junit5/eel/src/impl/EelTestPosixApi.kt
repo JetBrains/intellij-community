@@ -6,9 +6,7 @@ import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.impl.fs.PosixNioBasedEelFileSystemApi
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
-import com.intellij.platform.eel.provider.utils.toEelArch
 import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelUnitTestFileSystem
-import com.intellij.util.system.CpuArch
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -27,6 +25,7 @@ internal class EelTestPosixApi(override val descriptor: EelTestDescriptor, fileS
       override suspend fun spawnProcess(generatedBuilder: EelExecApi.ExecuteProcessOptions) = TODO()
       override suspend fun fetchLoginShellEnvVariables(): Map<String, String> = emptyMap()
       override suspend fun findExeFilesInPath(binaryName: String) = TODO()
+      override suspend fun createExternalCli(options: EelExecApi.ExternalCliOptions): EelResult<EelExecApi.ExternalCliEntrypoint, EelFileSystemApi.CreateTemporaryEntryError> = TODO()
     }
 
 }

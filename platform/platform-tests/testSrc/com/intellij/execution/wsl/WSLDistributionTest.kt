@@ -15,6 +15,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.use
 import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelExecApi.ExternalCliEntrypoint
+import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.IjentProcessInfo
@@ -575,6 +577,9 @@ private class MockIjentExecApi(private val adapter: GeneralCommandLine, private 
 
   override suspend fun fetchLoginShellEnvVariables(): Map<String, String> = mapOf("SHELL" to TEST_SHELL)
   override suspend fun findExeFilesInPath(binaryName: String): List<EelPath> = listOf(EelPath.parse("/bin/$binaryName", descriptor))
+  override suspend fun createExternalCli(options: EelExecApi.ExternalCliOptions): EelResult<ExternalCliEntrypoint, EelFileSystemApi.CreateTemporaryEntryError> {
+    throw UnsupportedOperationException()
+  }
 }
 
 private val TEST_ROOT_USER_SET by lazy { Key.create<Boolean>("TEST_ROOT_USER_SET") }

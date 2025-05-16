@@ -43,6 +43,10 @@ class EelLocalExecPosixApi : EelExecPosixApi {
   override suspend fun findExeFilesInPath(binaryName: String): List<EelPath> =
     findExeFilesInPath(binaryName, LOG)
 
+  override suspend fun createExternalCli(options: EelExecApi.ExternalCliOptions): EelResult<EelExecApi.ExternalCliEntrypoint, EelFileSystemApi.CreateTemporaryEntryError> {
+    TODO("Not yet implemented")
+  }
+
   private companion object {
     val LOG = logger<EelLocalExecPosixApi>()
   }
@@ -66,6 +70,10 @@ class EelLocalExecWindowsApi : EelExecWindowsApi {
 
   override suspend fun findExeFilesInPath(binaryName: String): List<EelPath> =
     findExeFilesInPath(binaryName, LOG)
+
+  override suspend fun createExternalCli(options: EelExecApi.ExternalCliOptions): EelResult<EelExecApi.ExternalCliEntrypoint, EelFileSystemApi.CreateTemporaryEntryError> {
+    TODO("Not yet implemented")
+  }
 
   private companion object {
     val LOG = logger<EelLocalExecWindowsApi>()
