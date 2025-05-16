@@ -7,7 +7,7 @@ import com.intellij.ide.plugins.PluginXmlPathResolver
 import com.intellij.ide.plugins.toXIncludeLoader
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
-import com.intellij.platform.plugins.parser.impl.ReadModuleContext
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorReaderContext
 import com.intellij.platform.plugins.parser.impl.XIncludeLoader
 import com.intellij.platform.plugins.parser.impl.consume
 import com.intellij.platform.runtime.product.IncludedRuntimeModule
@@ -25,7 +25,7 @@ internal class ModuleBasedPluginXmlPathResolver(
 ) : PathResolver {
 
   override fun resolveModuleFile(
-    readContext: ReadModuleContext,
+    readContext: PluginDescriptorReaderContext,
     dataLoader: DataLoader,
     path: String,
   ): PluginDescriptorBuilder {
@@ -62,7 +62,7 @@ internal class ModuleBasedPluginXmlPathResolver(
   }
 
   override fun resolvePath(
-    readContext: ReadModuleContext,
+    readContext: PluginDescriptorReaderContext,
     dataLoader: DataLoader,
     relativePath: String,
   ): PluginDescriptorBuilder? {

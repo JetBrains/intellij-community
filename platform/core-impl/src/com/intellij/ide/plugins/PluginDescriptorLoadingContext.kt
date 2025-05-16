@@ -5,7 +5,7 @@ import com.intellij.core.CoreBundle
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
-import com.intellij.platform.plugins.parser.impl.ReadModuleContext
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorReaderContext
 import com.intellij.platform.plugins.parser.impl.elements.OS
 import com.intellij.util.xml.dom.XmlInterner
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
@@ -25,7 +25,7 @@ class PluginDescriptorLoadingContext(
   override val isMissingIncludeIgnored: Boolean = false,
   @JvmField val isMissingSubDescriptorIgnored: Boolean = false,
   checkOptionalConfigFileUniqueness: Boolean = false
-) : AutoCloseable, ReadModuleContext {
+) : AutoCloseable, PluginDescriptorReaderContext {
   // synchronization will ruin parallel loading, so, string pool is local for thread
   private val threadLocalXmlFactory = ThreadLocal.withInitial(Supplier {
     val factory = MyXmlInterner()

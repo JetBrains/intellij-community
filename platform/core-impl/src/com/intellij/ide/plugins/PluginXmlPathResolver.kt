@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.plugins.parser.impl.LoadPathUtil
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
-import com.intellij.platform.plugins.parser.impl.ReadModuleContext
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorReaderContext
 import com.intellij.platform.plugins.parser.impl.XIncludeLoader
 import com.intellij.platform.plugins.parser.impl.consume
 import com.intellij.util.lang.ZipEntryResolverPool
@@ -51,7 +51,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
     return null
   }
 
-  override fun resolvePath(readContext: ReadModuleContext, dataLoader: DataLoader, relativePath: String): PluginDescriptorBuilder? {
+  override fun resolvePath(readContext: PluginDescriptorReaderContext, dataLoader: DataLoader, relativePath: String): PluginDescriptorBuilder? {
     val path = LoadPathUtil.toLoadPath(relativePath)
     dataLoader.load(path, pluginDescriptorSourceOnly = false)?.let { input ->
       return PluginDescriptorFromXmlStreamConsumer(readContext, toXIncludeLoader(dataLoader)).let {
@@ -80,7 +80,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
   }
 
   override fun resolveModuleFile(
-    readContext: ReadModuleContext,
+    readContext: PluginDescriptorReaderContext,
     dataLoader: DataLoader,
     path: String,
   ): PluginDescriptorBuilder {

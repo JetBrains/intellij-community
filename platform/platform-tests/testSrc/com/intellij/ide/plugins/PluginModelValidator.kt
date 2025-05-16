@@ -11,7 +11,7 @@ import com.intellij.platform.plugins.parser.impl.XIncludeLoader
 import com.intellij.platform.plugins.parser.impl.elements.ContentElement
 import com.intellij.platform.plugins.parser.impl.elements.DependenciesElement
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule
-import com.intellij.platform.plugins.testFramework.ValidationReadModuleContext
+import com.intellij.platform.plugins.testFramework.ValidationPluginDescriptorReaderContext
 import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.NamedFailure
@@ -664,7 +664,7 @@ class PluginModelValidator(
     if (!file.exists()) return null
     
     val xmlInput = createNonCoalescingXmlStreamReader(file.inputStream(), file.pathString)
-    val rawPluginDescriptor = PluginDescriptorFromXmlStreamConsumer(ValidationReadModuleContext, xIncludeLoader).let {
+    val rawPluginDescriptor = PluginDescriptorFromXmlStreamConsumer(ValidationPluginDescriptorReaderContext, xIncludeLoader).let {
       it.consume(xmlInput)
       it.build()
     }

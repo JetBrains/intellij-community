@@ -3,7 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
-import com.intellij.platform.plugins.parser.impl.ReadModuleContext
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorReaderContext
 import com.intellij.platform.plugins.parser.impl.consume
 import com.intellij.platform.plugins.parser.impl.elements.OS
 import com.intellij.util.io.write
@@ -44,7 +44,7 @@ fun module(outDir: Path, ownerId: String, moduleId: String, @Language("XML") des
 
 @TestOnly
 fun readModuleDescriptorForTest(input: ByteArray): PluginDescriptorBuilder {
-  return PluginDescriptorFromXmlStreamConsumer(readContext = object : ReadModuleContext {
+  return PluginDescriptorFromXmlStreamConsumer(readContext = object : PluginDescriptorReaderContext {
     override val interner = NoOpXmlInterner
     override val isMissingIncludeIgnored = false
     override val elementOsFilter: (OS) -> Boolean

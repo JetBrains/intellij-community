@@ -6,7 +6,7 @@ import com.intellij.util.xml.dom.XmlInterner
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-interface ReadModuleContext {
+interface PluginDescriptorReaderContext {
   val interner: XmlInterner
 
   val elementOsFilter: (OS) -> Boolean

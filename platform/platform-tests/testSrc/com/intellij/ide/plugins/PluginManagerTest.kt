@@ -10,7 +10,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
-import com.intellij.platform.plugins.parser.impl.ReadModuleContext
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorReaderContext
 import com.intellij.platform.plugins.parser.impl.XIncludeLoader.LoadedXIncludeReference
 import com.intellij.platform.plugins.parser.impl.consume
 import com.intellij.platform.runtime.product.ProductMode
@@ -398,7 +398,7 @@ class PluginManagerTest {
       override fun loadXIncludeReference(dataLoader: DataLoader, path: String): LoadedXIncludeReference? = throw UnsupportedOperationException()
 
       override fun resolvePath(
-        readContext: ReadModuleContext,
+        readContext: PluginDescriptorReaderContext,
         dataLoader: DataLoader,
         relativePath: String,
       ): PluginDescriptorBuilder {
@@ -421,7 +421,7 @@ class PluginManagerTest {
       }
 
       override fun resolveModuleFile(
-        readContext: ReadModuleContext,
+        readContext: PluginDescriptorReaderContext,
         dataLoader: DataLoader,
         path: String,
       ): PluginDescriptorBuilder {

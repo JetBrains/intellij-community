@@ -2,7 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
-import com.intellij.platform.plugins.parser.impl.ReadModuleContext
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorReaderContext
 import com.intellij.platform.plugins.parser.impl.XIncludeLoader
 import com.intellij.platform.plugins.parser.impl.XIncludeLoader.LoadedXIncludeReference
 import org.jetbrains.annotations.ApiStatus
@@ -18,10 +18,10 @@ interface PathResolver {
    */
   fun loadXIncludeReference(dataLoader: DataLoader, path: String): LoadedXIncludeReference?
 
-  fun resolvePath(readContext: ReadModuleContext, dataLoader: DataLoader, relativePath: String): PluginDescriptorBuilder?
+  fun resolvePath(readContext: PluginDescriptorReaderContext, dataLoader: DataLoader, relativePath: String): PluginDescriptorBuilder?
 
   // module in a new file name format must always be resolved
-  fun resolveModuleFile(readContext: ReadModuleContext, dataLoader: DataLoader, path: String): PluginDescriptorBuilder
+  fun resolveModuleFile(readContext: PluginDescriptorReaderContext, dataLoader: DataLoader, path: String): PluginDescriptorBuilder
 
   /**
    * Returns custom classes roots for a content module [moduleName] if any. 

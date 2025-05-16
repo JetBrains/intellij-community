@@ -14,12 +14,12 @@ import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.platform.plugins.parser.impl.LoadPathUtil
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorReaderContext
 import com.intellij.platform.plugins.parser.impl.RawPluginDescriptor
-import com.intellij.platform.plugins.parser.impl.ReadModuleContext
 import com.intellij.platform.plugins.parser.impl.XIncludeLoader
 import com.intellij.platform.plugins.parser.impl.consume
 import com.intellij.platform.plugins.testFramework.PluginSetTestBuilder
-import com.intellij.platform.plugins.testFramework.ValidationReadModuleContext
+import com.intellij.platform.plugins.testFramework.ValidationPluginDescriptorReaderContext
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
@@ -107,14 +107,14 @@ class PluginDependenciesValidator private constructor(
 
       for (descriptor in sourceDescriptors) {
         for (pluginDependency in descriptor.dependencies) {
-          if (pluginDependency.isOptional && !pluginDependency.pluginId.idString.startsWith("com.intellij.modules.") 
+          if (pluginDependency.isOptional && !pluginDependency.pluginId.idString.startsWith("com.intellij.modules.")
               && pluginDependency.subDescriptor != null && pluginDependency.subDescriptor?.pluginClassLoader == null) {
             //println("Skip checking '$sourceModuleName' because an optional dependency from its plugin '${descriptor.pluginId.idString}' on '${pluginDependency.pluginId}' is not loaded")
             continue@checkSourceModule
           }
         }
       }
-      
+
       val moduleDependenciesAtRuntime =
         sourceDescriptors
           .asSequence()
@@ -135,7 +135,7 @@ class PluginDependenciesValidator private constructor(
             unusedIgnoredDependenciesPatterns.remove(ignoredDependencyPattern)
             return@processModules
           }
-          
+
           val allExpectedTargets = jpsModuleToRuntimeDescriptors[targetModuleName]
           if (allExpectedTargets == null) {
             //println("Skipping reporting '$sourceModuleName' -> '$targetModuleName' because no runtime descriptors found\n")
@@ -297,7 +297,7 @@ class PluginDependenciesValidator private constructor(
   //todo reuse?
   private fun loadRawPluginDescriptor(file: Path, xIncludeLoader: PluginMainModuleFromSourceXIncludeLoader): RawPluginDescriptor {
     val xmlInput = createNonCoalescingXmlStreamReader(file.inputStream(), file.pathString)
-    val rawPluginDescriptor = PluginDescriptorFromXmlStreamConsumer(ValidationReadModuleContext, xIncludeLoader).let {
+    val rawPluginDescriptor = PluginDescriptorFromXmlStreamConsumer(ValidationPluginDescriptorReaderContext, xIncludeLoader).let {
       it.consume(xmlInput)
       it.build()
     }
@@ -369,7 +369,7 @@ class PluginDependenciesValidator private constructor(
       return xIncludeLoader.loadXIncludeReference(path)
     }
 
-    override fun resolvePath(readContext: ReadModuleContext, dataLoader: DataLoader, relativePath: String): PluginDescriptorBuilder? {
+    override fun resolvePath(readContext: PluginDescriptorReaderContext, dataLoader: DataLoader, relativePath: String): PluginDescriptorBuilder? {
       val path = LoadPathUtil.toLoadPath(relativePath)
       for (pluginModule in layout.jpsModulesInClasspath) {
         val module = jpsModules[pluginModule] ?: continue
@@ -386,7 +386,7 @@ class PluginDependenciesValidator private constructor(
       return null
     }
 
-    override fun resolveModuleFile(readContext: ReadModuleContext, dataLoader: DataLoader, path: String): PluginDescriptorBuilder {
+    override fun resolveModuleFile(readContext: PluginDescriptorReaderContext, dataLoader: DataLoader, path: String): PluginDescriptorBuilder {
       val jpsModuleName = customConfigFileToModule[path] ?: path.removeSuffix(".xml")
       val jpsModule = jpsModules[jpsModuleName] 
                       ?: error("Cannot find module '$jpsModuleName' referenced in '${layout.mainJpsModule}' plugin")

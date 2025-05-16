@@ -4,7 +4,7 @@ package com.intellij.ide.plugins
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
-import com.intellij.platform.plugins.parser.impl.ReadModuleContext
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorReaderContext
 import com.intellij.platform.plugins.parser.impl.consume
 import com.intellij.platform.plugins.parser.impl.elements.OS
 import com.intellij.platform.runtime.product.ProductMode
@@ -31,7 +31,7 @@ fun readAndInitDescriptorFromBytesForTest(path: Path, isBundled: Boolean, input:
     override fun load(path: String, pluginDescriptorSourceOnly: Boolean) = throw UnsupportedOperationException()
     override fun toString() = throw UnsupportedOperationException()
   }
-  val rawBuilder = PluginDescriptorFromXmlStreamConsumer(object : ReadModuleContext {
+  val rawBuilder = PluginDescriptorFromXmlStreamConsumer(object : PluginDescriptorReaderContext {
     override val interner = NoOpXmlInterner
     override val elementOsFilter: (OS) -> Boolean
       get() = { it.convert().isSuitableForOs() }

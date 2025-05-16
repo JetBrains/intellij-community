@@ -6,7 +6,7 @@ import com.intellij.ide.plugins.PathResolver
 import com.intellij.ide.plugins.toXIncludeLoader
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
-import com.intellij.platform.plugins.parser.impl.ReadModuleContext
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorReaderContext
 import com.intellij.platform.plugins.parser.impl.consume
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
@@ -19,7 +19,7 @@ internal class RunningFromSourceModuleBasedPathResolver(
   private val moduleRepository: RuntimeModuleRepository,
   private val fallbackResolver: PathResolver,
 ) : PathResolver by fallbackResolver {
-  override fun resolveModuleFile(readContext: ReadModuleContext, dataLoader: DataLoader, path: String): PluginDescriptorBuilder {
+  override fun resolveModuleFile(readContext: PluginDescriptorReaderContext, dataLoader: DataLoader, path: String): PluginDescriptorBuilder {
     val moduleName = path.removeSuffix(".xml")
     val moduleDescriptor = moduleRepository.resolveModule(RuntimeModuleId.module(moduleName)).resolvedModule
     if (moduleDescriptor != null) {

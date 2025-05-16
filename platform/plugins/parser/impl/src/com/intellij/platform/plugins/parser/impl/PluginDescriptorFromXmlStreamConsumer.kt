@@ -6,12 +6,12 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class PluginDescriptorFromXmlStreamConsumer private constructor(
-  val readContext: ReadModuleContext,
+  val readContext: PluginDescriptorReaderContext,
   val xIncludeLoader: XIncludeLoader?,
   includeBase: String?,
 ) : PluginXmlStreamConsumer {
   constructor(
-    readContext: ReadModuleContext,
+    readContext: PluginDescriptorReaderContext,
     xIncludeLoader: XIncludeLoader?,
   ) : this(readContext, xIncludeLoader, null)
 
@@ -48,7 +48,7 @@ class PluginDescriptorFromXmlStreamConsumer private constructor(
 
   companion object {
     internal fun withIncludeBase(
-      readContext: ReadModuleContext,
+      readContext: PluginDescriptorReaderContext,
       xIncludeLoader: XIncludeLoader?,
       includeBase: String?,
     ): PluginDescriptorFromXmlStreamConsumer = PluginDescriptorFromXmlStreamConsumer(readContext, xIncludeLoader, includeBase)
