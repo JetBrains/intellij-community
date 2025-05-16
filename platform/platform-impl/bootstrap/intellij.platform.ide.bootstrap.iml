@@ -34,11 +34,12 @@
     <orderEntry type="module" module-name="intellij.platform.ide.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.bootstrap.eel" />
     <orderEntry type="module" module-name="fleet.kernel" />
+    <orderEntry type="module" module-name="intellij.platform.ide.bootstrap.kernel" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="library" name="jna" level="project" />
     <orderEntry type="library" name="hash4j" level="project" />
     <orderEntry type="library" name="jbr-api" level="project" />
     <orderEntry type="library" name="googlecode.plist.dd" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.ide.bootstrap.kernel" />
   </component>
 </module>

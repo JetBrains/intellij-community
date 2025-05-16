@@ -34,12 +34,13 @@ jvm_library(
     "//platform/platform-impl/ui",
     "//platform/platform-impl/bootstrap/eel",
     "//fleet/kernel",
+    "//platform/platform-impl/bootstrap/kernel",
+    "//platform/util/jdom",
     "@lib//:jna",
     "@lib//:hash4j",
     "@lib//:jbr-api",
     "@lib//:googlecode-plist-dd",
     "@lib//:netty-codec-http",
-    "//platform/platform-impl/bootstrap/kernel",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.bootstrap` end
