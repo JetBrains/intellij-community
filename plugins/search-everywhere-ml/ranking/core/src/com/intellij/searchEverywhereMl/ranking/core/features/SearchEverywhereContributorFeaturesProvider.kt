@@ -80,7 +80,7 @@ internal class SearchEverywhereContributorFeaturesProvider {
   /**
    * Collects Essential Contributor (EC) features for a contributor.
    *
-   * EC features are the predictions of the EC model, which itself needs contributor features to make predictions.
+   * Note: EC features are the predictions of the EC model, which itself needs contributor features to make predictions.
    */
   fun getEssentialContributorFeatures(contributor: SearchEverywhereContributor<*>): List<EventPair<*>> {
     val marker = SearchEverywhereEssentialContributorMarker.getInstanceOrNull()
