@@ -141,6 +141,8 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   public static final Pattern TYPE_IGNORE_PATTERN = Pattern.compile("#\\s*type:\\s*ignore\\s*(\\[[^]#]*])?($|(\\s.*))", Pattern.CASE_INSENSITIVE);
 
   public static final String ASSERT_TYPE = "typing.assert_type";
+  public static final String REVEAL_TYPE = "typing.reveal_type";
+  public static final String REVEAL_TYPE_EXT = "typing_extensions.reveal_type";
   public static final String CAST = "typing.cast";
   public static final String CAST_EXT = "typing_extensions.cast";
 
