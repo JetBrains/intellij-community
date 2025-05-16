@@ -6,24 +6,25 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.util.Processor
 import com.intellij.util.containers.SortedList
+import com.intellij.util.containers.sequenceOfNotNull
 import com.jetbrains.python.PyPsiBundle
+import com.jetbrains.python.ast.PyAstFunction
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.codeInsight.typing.isProtocol
-import com.jetbrains.python.psi.PyClass
-import com.jetbrains.python.psi.PyFile
-import com.jetbrains.python.psi.PyFunction
-import com.jetbrains.python.psi.PyKnownDecoratorUtil
-import com.jetbrains.python.psi.PyUtil
+import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyClassImpl
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
+import java.util.EnumSet
 
 class PyOverloadsInspection : PyInspection() {
 
-  override fun buildVisitor(holder: ProblemsHolder,
-                            isOnTheFly: Boolean,
-                            session: LocalInspectionToolSession): PsiElementVisitor = Visitor(
+  override fun buildVisitor(
+    holder: ProblemsHolder,
+    isOnTheFly: Boolean,
+    session: LocalInspectionToolSession,
+  ): PsiElementVisitor = Visitor(
     holder,PyInspectionVisitor.getContext(session))
 
   private class Visitor(holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
@@ -64,6 +65,10 @@ class PyOverloadsInspection : PyInspection() {
         })
       }
 
+      val implementation = implementations.lastOrNull()
+
+      checkClassMethodAndStaticMethodConsistency(overloads, implementation)
+
       var requiresImplementation = true
       if (owner is PyClass) {
         if (isProtocol(owner, myTypeEvalContext)) {
@@ -78,17 +83,14 @@ class PyOverloadsInspection : PyInspection() {
         }
       }
 
-      val implementation = implementations.lastOrNull()
-      if (requiresImplementation) {
-        if (implementation !== functions.last()) {
-          val problemElement = if (implementation == null) functions.first() else functions.last()
-          registerProblem(problemElement.nameIdentifier, if (owner is PyClass) {
-            PyPsiBundle.message("INSP.overloads.series.overload.decorated.methods.should.always.be.followed.by.implementation")
-          }
-          else {
-            PyPsiBundle.message("INSP.overloads.series.overload.decorated.functions.should.always.be.followed.by.implementation")
-          })
+      if (requiresImplementation && implementation !== functions.last()) {
+        val problemElement = if (implementation == null) functions.first() else functions.last()
+        registerProblem(problemElement.nameIdentifier, if (owner is PyClass) {
+          PyPsiBundle.message("INSP.overloads.series.overload.decorated.methods.should.always.be.followed.by.implementation")
         }
+        else {
+          PyPsiBundle.message("INSP.overloads.series.overload.decorated.functions.should.always.be.followed.by.implementation")
+        })
       }
 
       if (implementation != null) {
@@ -103,6 +105,19 @@ class PyOverloadsInspection : PyInspection() {
               PyPsiBundle.message("INSP.overloads.this.function.overload.signature.not.compatible.with.implementation")
             })
           }
+      }
+    }
+
+    private fun checkClassMethodAndStaticMethodConsistency(overloads: List<PyFunction>, implementation: PyFunction?) {
+      val modifiers = overloads.mapNotNullTo(EnumSet.noneOf(PyAstFunction.Modifier::class.java)) { it.modifier }
+      for (function in overloads.asSequence() + sequenceOfNotNull(implementation)) {
+        val modifier = function.modifier
+        if (modifiers.contains(PyAstFunction.Modifier.CLASSMETHOD) && modifier != PyAstFunction.Modifier.CLASSMETHOD) {
+          registerProblem(function.nameIdentifier, PyPsiBundle.message("INSP.overloads.use.classmethod.inconsistently"))
+        }
+        if (modifiers.contains(PyAstFunction.Modifier.STATICMETHOD) && modifier != PyAstFunction.Modifier.STATICMETHOD) {
+          registerProblem(function.nameIdentifier, PyPsiBundle.message("INSP.overloads.use.staticmethod.inconsistently"))
+        }
       }
     }
 
