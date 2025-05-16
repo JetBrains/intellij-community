@@ -652,7 +652,7 @@ val IdeaPluginDescriptorImpl.isDependsSubDescriptor: Boolean get() = type == Typ
  * Main plugin descriptor, instantiated from "plugin.xml" (or from platform XMLs for Core).
  */
 @ApiStatus.Internal
-class MainPluginDescriptor(
+class PluginMainDescriptor(
   raw: RawPluginDescriptor,
   pluginPath: Path,
   isBundled: Boolean,

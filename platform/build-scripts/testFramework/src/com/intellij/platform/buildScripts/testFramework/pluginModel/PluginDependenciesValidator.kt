@@ -3,7 +3,7 @@ package com.intellij.platform.buildScripts.testFramework.pluginModel
 
 import com.intellij.ide.plugins.DataLoader
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.ide.plugins.MainPluginDescriptor
+import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.ModuleLoadingRule
 import com.intellij.ide.plugins.PathResolver
 import com.intellij.ide.plugins.PluginDescriptorLoadingContext
@@ -279,7 +279,7 @@ class PluginDependenciesValidator private constructor(
     val pluginDescriptorPath = findResourceFile(mainModule, pluginLayout.pluginDescriptorPath)
     require(pluginDescriptorPath != null) { "Cannot find plugin descriptor file in '${mainModule.name}' module" }
     val xIncludeLoader = PluginMainModuleFromSourceXIncludeLoader(pluginLayout)
-    val descriptor = MainPluginDescriptor(
+    val descriptor = PluginMainDescriptor(
       raw = loadRawPluginDescriptor(pluginDescriptorPath, xIncludeLoader),
       pluginPath = pluginDir,
       isBundled = pluginLayout.mainJpsModule in mainModulesOfBundledPlugins,

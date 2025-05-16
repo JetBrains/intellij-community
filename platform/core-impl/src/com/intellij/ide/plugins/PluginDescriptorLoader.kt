@@ -182,7 +182,7 @@ private fun loadDescriptorFromStream(
     }
     it.build()
   }
-  val descriptor = MainPluginDescriptor(
+  val descriptor = PluginMainDescriptor(
     raw = raw,
     pluginPath = pluginDir ?: fileOrDir,
     isBundled = isBundled,
@@ -713,7 +713,7 @@ private fun loadPluginDescriptor(
     loadingContext.patchPlugin(it.getBuilder())
     it.build()
   }
-  val descriptor = MainPluginDescriptor(raw, pluginDir, isBundled = true)
+  val descriptor = PluginMainDescriptor(raw, pluginDir, isBundled = true)
   for (module in descriptor.content.modules) {
     var classPath: List<Path>? = null
     val subDescriptorFile = module.configFile ?: "${module.name}.xml"
@@ -938,7 +938,7 @@ private fun loadCoreProductPlugin(
     it.build()
   }
   val libDir = Paths.get(PathManager.getLibPath())
-  val descriptor = MainPluginDescriptor(raw = raw, pluginPath = libDir, isBundled = true, useCoreClassLoader = useCoreClassLoader)
+  val descriptor = PluginMainDescriptor(raw = raw, pluginPath = libDir, isBundled = true, useCoreClassLoader = useCoreClassLoader)
   loadContentModuleDescriptors(descriptor = descriptor, pathResolver = pathResolver, libDir = libDir, loadingContext = loadingContext, dataLoader = dataLoader, isRunningFromSourcesWithoutDevBuild = isRunningFromSourcesWithoutDevBuild)
   descriptor.loadPluginDependencyDescriptors(loadingContext = loadingContext, pathResolver = pathResolver, dataLoader = dataLoader)
   return descriptor
@@ -1263,7 +1263,7 @@ private fun loadDescriptorFromResource(
     }
     // it is very important to not set `useCoreClassLoader = true` blindly
     // - product modules must use their own class loader if not running from sources
-    val descriptor = MainPluginDescriptor(raw = raw, pluginPath = basePath, isBundled = true, useCoreClassLoader = useCoreClassLoader)
+    val descriptor = PluginMainDescriptor(raw = raw, pluginPath = basePath, isBundled = true, useCoreClassLoader = useCoreClassLoader)
 
     if (libDir == null) {
       val runFromSources = pathResolver.isRunningFromSourcesWithoutDevBuild || PluginManagerCore.isUnitTestMode || forceUseCoreClassloader()
@@ -1335,7 +1335,7 @@ private fun readDescriptorFromJarStream(input: InputStream, path: Path): IdeaPlu
       try {
         val raw = readBasicDescriptorData(stream)
         if (raw != null) {
-          return MainPluginDescriptor(raw = raw, pluginPath = path, isBundled = false)
+          return PluginMainDescriptor(raw = raw, pluginPath = path, isBundled = false)
         }
       }
       catch (e: XMLStreamException) {

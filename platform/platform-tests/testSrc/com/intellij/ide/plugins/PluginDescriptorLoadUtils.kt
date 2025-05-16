@@ -45,7 +45,7 @@ fun readAndInitDescriptorFromBytesForTest(path: Path, isBundled: Boolean, input:
     rawBuilder.id = id.idString
   }
   val raw = rawBuilder.build()
-  val result = MainPluginDescriptor(raw = raw, pluginPath = path, isBundled = isBundled)
+  val result = PluginMainDescriptor(raw = raw, pluginPath = path, isBundled = isBundled)
   loadPluginSubDescriptors(
     descriptor = result,
     pathResolver = pathResolver,
@@ -71,7 +71,7 @@ fun readAndInitDescriptorFromBytesForTest(
     loadingContext.patchPlugin(it.getBuilder())
     it.build()
   }
-  val result = MainPluginDescriptor(raw = raw, pluginPath = path, isBundled = isBundled)
+  val result = PluginMainDescriptor(raw = raw, pluginPath = path, isBundled = isBundled)
   loadPluginSubDescriptors(
     descriptor = result,
     pathResolver = pathResolver,
