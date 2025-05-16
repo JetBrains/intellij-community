@@ -23,6 +23,7 @@ import com.intellij.openapi.util.buildNsUnawareJdom
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.ResourceUtil
 import com.intellij.util.ThreeState
@@ -32,6 +33,7 @@ import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.SettingsInternalApi
 import com.intellij.util.xmlb.XmlSerializerUtil
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -784,7 +786,7 @@ interface ExternalStorageWithInternalPart {
 }
 
 /**
- * Provides a way to temporarily ignore a known component extending deprecated JDOMExternalizable interface to avoid having unnecessary
+ * Provides a way to temporarily ignore a known component extending the deprecated JDOMExternalizable interface to avoid having unnecessary
  * errors in the log. Each entry must be accompanied by a link to the corresponding YouTrack issue.
  */
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
@@ -816,8 +818,7 @@ private fun notifyUnknownMacros(store: IComponentStore, project: Project, compon
   }
 
   val macros = LinkedHashSet(immutableMacros)
-  @Suppress("DEPRECATION")
-  com.intellij.openapi.application.AppUIExecutor.onUiThread().expireWith(project).submit {
+  project.service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT) {
     var notified: MutableList<String>? = null
     val manager = NotificationsManager.getNotificationsManager()
     for (notification in manager.getNotificationsOfType(
@@ -828,15 +829,16 @@ private fun notifyUnknownMacros(store: IComponentStore, project: Project, compon
       notified.addAll(notification.macros)
     }
     if (!notified.isNullOrEmpty()) {
+      @Suppress("ConvertArgumentToSet")
       macros.removeAll(notified)
     }
 
     if (macros.isEmpty()) {
-      return@submit
+      return@launch
     }
 
     LOG.debug("Reporting unknown path macros $macros in component $componentName")
-    doNotify(macros, project, substitutorToStore = java.util.Map.of(substitutor, store))
+    doNotify(macros = macros, project = project, substitutorToStore = java.util.Map.of(substitutor, store))
   }
 }
 
