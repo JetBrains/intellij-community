@@ -98,8 +98,12 @@ internal abstract class SearchMap<T> internal constructor(
                                           params: WebSymbolsNameMatchQueryParams,
                                           scope: Stack<WebSymbolsScope>): List<WebSymbol> =
     collectPatternsToProcess(qualifiedName)
-      .asSequence()
-      .distinct()
+      .let {
+        if (it.size > 2)
+          it.asSequence().distinct()
+        else
+          it.asSequence()
+      }
       .innerMapAndFilter(params)
       .flatMap { rootContribution ->
         rootContribution.match(qualifiedName.name, params, scope)
@@ -107,7 +111,7 @@ internal abstract class SearchMap<T> internal constructor(
       .toList()
 
   private fun collectPatternsToProcess(qualifiedName: WebSymbolQualifiedName): Collection<T> {
-    val toProcess = mutableSetOf<T>()
+    val toProcess = SmartList<T>()
     for (p in 0..qualifiedName.name.length) {
       val check = SearchMapEntry(qualifiedName.qualifiedKind, CharSequenceSubSequence(qualifiedName.name, 0, p))
       val entry = patterns.ceilingEntry(check)
