@@ -208,7 +208,7 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
       ProjectFileIndex projectFileIndex = myProjectRootManager.getFileIndex();
       List<OrderEntry> entries = projectFileIndex.getOrderEntriesForFile(notNullVFile);
       if (entries.isEmpty() &&
-          (WorkspaceFileIndex.getInstance(myProject).findFileSet(notNullVFile, true, false, true, true, true) != null ||
+          (WorkspaceFileIndex.getInstance(myProject).findFileSet(notNullVFile, true, false, false, true, true, true) != null ||
            myAdditionalIndexableFileSet.isInSet(notNullVFile))) {
         return allScope;
       }

@@ -66,12 +66,13 @@ internal object CandidateCollector {
         val workspaceModel = WorkspaceModel.Companion.getInstance(project)
         val workspaceFileIndex = WorkspaceFileIndex.Companion.getInstance(project) as WorkspaceFileIndexEx
         val fileSets = workspaceFileIndex.getFileInfo(
-            originalVirtualFileForOutsider ?: virtualFile,
-            honorExclusion = false,
-            includeContentSets = true,
-            includeExternalSets = true,
-            includeExternalSourceSets = true,
-            includeCustomKindSets = true
+          originalVirtualFileForOutsider ?: virtualFile,
+          honorExclusion = false,
+          includeContentSets = true,
+          includeContentNonIndexableSets = true,
+          includeExternalSets = true,
+          includeExternalSourceSets = true,
+          includeCustomKindSets = true
         ).fileSets
 
         return fileSets

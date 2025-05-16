@@ -36,6 +36,7 @@ internal class ProjectModelEntityContextProvider : CodeInsightContextProvider {
       file = file,
       honorExclusion = true,
       includeContentSets = true,
+      includeContentNonIndexableSets = true,
       includeExternalSets = true,
       includeExternalSourceSets = true,
       includeCustomKindSets = true

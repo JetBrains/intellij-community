@@ -76,7 +76,7 @@ class CustomKindFileSetTest {
       assertFalse(module.moduleContentScope.contains(file))
       assertFalse(module.moduleScope.contains(file))
       assertIteratedContent(projectModel.project, mustNotContain = listOf(root, file))
-      val fileSet = fileIndex.findFileSet(file, true, true, true, true, true)
+      val fileSet = fileIndex.findFileSet(file, true, true, true, true, true, true)
       assertNotNull(fileSet)
       assertEquals(WorkspaceFileKind.CUSTOM, fileSet!!.kind)
     }

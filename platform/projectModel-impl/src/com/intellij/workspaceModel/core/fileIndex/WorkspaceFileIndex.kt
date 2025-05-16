@@ -80,6 +80,7 @@ interface WorkspaceFileIndex {
   fun findFileSet(file: VirtualFile,
                   honorExclusion: Boolean,
                   includeContentSets: Boolean,
+                  includeContentNonIndexableSets: Boolean,
                   includeExternalSets: Boolean,
                   includeExternalSourceSets: Boolean,
                   includeCustomKindSets: Boolean
@@ -103,6 +104,7 @@ interface WorkspaceFileIndex {
   fun findFileSets(file: VirtualFile,
                    honorExclusion: Boolean,
                    includeContentSets: Boolean,
+                   includeContentNonIndexableSets: Boolean,
                    includeExternalSets: Boolean,
                    includeExternalSourceSets: Boolean,
                    includeCustomKindSets: Boolean
@@ -116,6 +118,7 @@ interface WorkspaceFileIndex {
     file: VirtualFile,
     honorExclusion: Boolean,
     includeContentSets: Boolean,
+    includeContentNonIndexableSets: Boolean,
     includeExternalSets: Boolean,
     includeExternalSourceSets: Boolean,
     includeCustomKindSets: Boolean,
@@ -131,6 +134,7 @@ interface WorkspaceFileIndex {
     file: VirtualFile,
     honorExclusion: Boolean,
     includeContentSets: Boolean,
+    includeContentNonIndexableSets: Boolean,
     includeExternalSets: Boolean,
     includeExternalSourceSets: Boolean,
     includeCustomKindSets: Boolean,

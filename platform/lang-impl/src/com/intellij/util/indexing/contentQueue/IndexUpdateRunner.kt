@@ -437,7 +437,7 @@ class IndexUpdateRunner(
      * @see UsedMemorySoftLimiter
      */
     private val SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY: Long = SystemProperties.getLongProperty(
-      "idea.indexing.total-loaded-file-content-soft-limit-bytes",        
+      "idea.indexing.total-loaded-file-content-soft-limit-bytes",
       INDEXING_PARALLELIZATION * 4L * FileUtilRt.MEGABYTE
     )
 

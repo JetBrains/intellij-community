@@ -19,12 +19,15 @@ class EmptyWorkspaceFileIndexData private constructor(private val debugName: Str
     val RESET: EmptyWorkspaceFileIndexData = EmptyWorkspaceFileIndexData("reset")
   }
   
-  override fun getFileInfo(file: VirtualFile,
-                           honorExclusion: Boolean,
-                           includeContentSets: Boolean,
-                           includeExternalSets: Boolean,
-                           includeExternalSourceSets: Boolean,
-                           includeCustomKindSets: Boolean): WorkspaceFileInternalInfo {
+  override fun getFileInfo(
+    file: VirtualFile,
+    honorExclusion: Boolean,
+    includeContentSets: Boolean,
+    includeContentNonIndexableSets: Boolean,
+    includeExternalSets: Boolean,
+    includeExternalSourceSets: Boolean,
+    includeCustomKindSets: Boolean
+  ): WorkspaceFileInternalInfo {
     return WorkspaceFileInternalInfo.NonWorkspace.NOT_UNDER_ROOTS
   }
 

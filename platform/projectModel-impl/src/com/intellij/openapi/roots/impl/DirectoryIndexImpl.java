@@ -131,7 +131,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   public @NotNull List<OrderEntry> getOrderEntries(@NotNull VirtualFile fileOrDir) {
     checkAvailability();
     if (myProject.isDefault()) return Collections.emptyList();
-    WorkspaceFileInternalInfo fileInfo = myWorkspaceFileIndex.getFileInfo(fileOrDir, true, true, true, true, false);
+    WorkspaceFileInternalInfo fileInfo = myWorkspaceFileIndex.getFileInfo(fileOrDir, true, true, true, true, true, false);
     WorkspaceFileSetWithCustomData<?> fileSet = fileInfo.findFileSet(data -> true);
     if (fileSet == null) return Collections.emptyList();
     return getRootIndex().getOrderEntries(fileSet.getRoot());

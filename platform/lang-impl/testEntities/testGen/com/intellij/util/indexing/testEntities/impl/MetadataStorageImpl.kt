@@ -34,6 +34,11 @@ OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = 
 
         addMetadata(typeMetadata)
 
+        typeMetadata = EntityMetadata(fqName = "com.intellij.util.indexing.testEntities.NonIndexableTestEntity", entityDataFqName = "com.intellij.util.indexing.testEntities.impl.NonIndexableTestEntityData", supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"), properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")), withDefault = false),
+OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "root", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")), withDefault = false)), extProperties = listOf(), isAbstract = false)
+        
+        addMetadata(typeMetadata)
+        
         typeMetadata = EntityMetadata(fqName = "com.intellij.util.indexing.testEntities.ParentTestEntity", entityDataFqName = "com.intellij.util.indexing.testEntities.impl.ParentTestEntityData", supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"), properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")), withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "child", valueType = ValueTypeMetadata.EntityReference(connectionType = ConnectionId.ConnectionType.ONE_TO_ONE, entityFqName = "com.intellij.util.indexing.testEntities.ChildTestEntity", isChild = true, isNullable = true), withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "customParentProperty", valueType = primitiveTypeStringNotNullable, withDefault = false)), extProperties = listOf(), isAbstract = false)
@@ -44,6 +49,7 @@ OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = 
     override fun initializeMetadataHash() {
         addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.ChildTestEntity", metadataHash = -1326732737)
         addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.IndexingTestEntity", metadataHash = -233870197)
+        addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.NonIndexableTestEntity", metadataHash = -15259978)
         addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.ParentTestEntity", metadataHash = 451967055)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 1279624819)
         addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.TestModuleEntitySource", metadataHash = -1815413801)

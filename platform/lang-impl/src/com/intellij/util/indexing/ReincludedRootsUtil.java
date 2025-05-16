@@ -102,7 +102,7 @@ public final class ReincludedRootsUtil {
       VirtualFileUrlManager fileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager();
       for (VirtualFile file : files) {
         WorkspaceFileSet fileSet = ReadAction.nonBlocking(() -> {
-          return workspaceFileIndex.findFileSet(file, true, true, true, true, true);
+          return workspaceFileIndex.findFileSet(file, true, true, true, true, true, true);
         }).expireWith(project).executeSynchronously();
 
         if (fileSet == null) {

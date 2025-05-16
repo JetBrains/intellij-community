@@ -18,6 +18,7 @@ interface WorkspaceFileIndexData {
   fun getFileInfo(file: VirtualFile,
                   honorExclusion: Boolean,
                   includeContentSets: Boolean,
+                  includeContentNonIndexableSets: Boolean,
                   includeExternalSets: Boolean,
                   includeExternalSourceSets: Boolean,
                   includeCustomKindSets: Boolean): WorkspaceFileInternalInfo

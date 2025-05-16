@@ -184,6 +184,7 @@ class IndexingIteratorsProviderImpl(
       parent,
       honorExclusion = false,
       includeContentSets = true,
+      includeContentNonIndexableSets = true,
       includeExternalSets = false,
       includeExternalSourceSets = false,
       includeCustomKindSets = false

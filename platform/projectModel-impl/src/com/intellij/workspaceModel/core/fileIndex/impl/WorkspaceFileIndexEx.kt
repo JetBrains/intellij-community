@@ -27,6 +27,7 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
   fun getFileInfo(file: VirtualFile,
                   honorExclusion: Boolean,
                   includeContentSets: Boolean,
+                  includeContentNonIndexableSets: Boolean,
                   includeExternalSets: Boolean,
                   includeExternalSourceSets: Boolean,
                   includeCustomKindSets: Boolean): WorkspaceFileInternalInfo
@@ -41,8 +42,9 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
    */
   fun <E: WorkspaceEntity> findContainingEntities(file: VirtualFile,
                                                   entityClass: Class<E>,
-                                                  honorExclusion: Boolean, 
-                                                  includeContentSets: Boolean, 
+                                                  honorExclusion: Boolean,
+                                                  includeContentSets: Boolean,
+                                                  includeContentNonIndexableSets: Boolean,
                                                   includeExternalSets: Boolean,
                                                   includeExternalSourceSets: Boolean,
                                                   includeCustomKindSets: Boolean): Collection<E>
@@ -56,6 +58,7 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
     file: VirtualFile,
     honorExclusion: Boolean,
     includeContentSets: Boolean,
+    includeContentNonIndexableSets: Boolean,
     includeExternalSets: Boolean,
     includeExternalSourceSets: Boolean,
     includeCustomKindSets: Boolean,

@@ -98,12 +98,15 @@ internal class WorkspaceFileIndexDataImpl(
     }
   }
 
-  override fun getFileInfo(file: VirtualFile,
-                           honorExclusion: Boolean,
-                           includeContentSets: Boolean,
-                           includeExternalSets: Boolean,
-                           includeExternalSourceSets: Boolean,
-                           includeCustomKindSets: Boolean): WorkspaceFileInternalInfo = WorkspaceFileIndexDataMetrics.getFileInfoTimeNanosec.addMeasuredTime {
+  override fun getFileInfo(
+    file: VirtualFile,
+    honorExclusion: Boolean,
+    includeContentSets: Boolean,
+    includeContentNonIndexableSets: Boolean,
+    includeExternalSets: Boolean,
+    includeExternalSourceSets: Boolean,
+    includeCustomKindSets: Boolean
+  ): WorkspaceFileInternalInfo = WorkspaceFileIndexDataMetrics.getFileInfoTimeNanosec.addMeasuredTime {
     if (!file.isValid) return@addMeasuredTime WorkspaceFileInternalInfo.NonWorkspace.INVALID
     if (file.fileSystem is NonPhysicalFileSystem && file.parent == null) {
       return@addMeasuredTime WorkspaceFileInternalInfo.NonWorkspace.NOT_UNDER_ROOTS
@@ -111,7 +114,8 @@ internal class WorkspaceFileIndexDataImpl(
     ensureIsUpToDate()
 
     val originalAcceptedKindMask =
-      (if (includeContentSets) WorkspaceFileKindMask.CONTENT or WorkspaceFileKindMask.CONTENT_NON_INDEXABLE else 0) or
+      (if (includeContentSets) WorkspaceFileKindMask.CONTENT else 0) or
+        (if (includeContentNonIndexableSets) WorkspaceFileKindMask.CONTENT_NON_INDEXABLE else 0) or
         (if (includeExternalSets) WorkspaceFileKindMask.EXTERNAL_BINARY else 0) or
         (if (includeExternalSourceSets) WorkspaceFileKindMask.EXTERNAL_SOURCE else 0) or
         (if (includeCustomKindSets) WorkspaceFileKindMask.CUSTOM else 0)
@@ -377,7 +381,7 @@ internal class WorkspaceFileIndexDataImpl(
   }
 
   override fun getPackageName(dir: VirtualFile): String? = WorkspaceFileIndexDataMetrics.getPackageNameTimeNanosec.addMeasuredTime {
-    val fileSet = when (val info = getFileInfo(dir, true, true, true, true, true)) {
+    val fileSet = when (val info = getFileInfo(dir, true, true, true, true, true, true)) {
                     is WorkspaceFileSetWithCustomData<*> -> info.takeIf { it.data is JvmPackageRootDataInternal }
                     is MultipleWorkspaceFileSets -> info.find(JvmPackageRootDataInternal::class.java)
                     else -> null
@@ -401,7 +405,7 @@ internal class WorkspaceFileIndexDataImpl(
     val query = CollectionQuery(packageDirectoryCache.getDirectoriesByPackageName(packageName))
     return@addMeasuredTime if (includeLibrarySources) query
     else query.filtering {
-      getFileInfo(it, true, true, true, false, true) !is WorkspaceFileInternalInfo.NonWorkspace
+      getFileInfo(it, true, true, true, true, false, true) !is WorkspaceFileInternalInfo.NonWorkspace
     }
   }
 
