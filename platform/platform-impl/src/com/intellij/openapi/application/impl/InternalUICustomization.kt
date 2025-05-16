@@ -21,6 +21,8 @@ import java.awt.Graphics
 import java.awt.Paint
 import java.awt.Rectangle
 import javax.swing.JComponent
+import javax.swing.JFrame
+import javax.swing.JLayeredPane
 import javax.swing.JPanel
 
 @ApiStatus.Experimental
@@ -60,7 +62,8 @@ open class InternalUICustomization {
       return isProjectCustomDecorationActive
     }
 
-  open val isToolWindowPaneCustomization: Boolean = false
+  open fun createToolWindowPaneLayered(splitter: JComponent, frame: JFrame): JLayeredPane? = null
+
   /**
    * TODO
    * in the case of singleStripe, it is necessary to remove or recycle all actions related to the statusbar.

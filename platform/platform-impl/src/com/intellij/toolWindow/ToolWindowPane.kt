@@ -40,7 +40,6 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleContextCache
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -49,11 +48,13 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.*
 import java.awt.geom.Point2D
-import java.awt.geom.RoundRectangle2D
 import java.awt.image.BufferedImage
 import java.lang.ref.SoftReference
 import java.util.concurrent.Future
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JFrame
+import javax.swing.JLayeredPane
+import javax.swing.LayoutFocusTraversalPolicy
 import kotlin.math.max
 import kotlin.math.min
 
@@ -177,7 +178,9 @@ class ToolWindowPane private constructor(
     updateToolStripesVisibility(uiSettings)
 
     // layered pane
-    layeredPane = FrameLayeredPane(if (isWideScreen) horizontalSplitter else verticalSplitter, frame = frame)
+    val splitter = if (isWideScreen) horizontalSplitter else verticalSplitter
+    val customPane = InternalUICustomization.getInstance()?.createToolWindowPaneLayered(splitter, frame)
+    layeredPane = customPane as? FrameLayeredPane ?: FrameLayeredPane(splitter, frame = frame)
 
     // compose layout
     buttonManager.setupToolWindowPane(this)
@@ -839,7 +842,7 @@ private class ImageCache(imageProvider: (ScaleContext) -> ImageRef) : ScaleConte
   }
 }
 
-private class FrameLayeredPane(splitter: JComponent, frame: JFrame) : JLayeredPane() {
+internal open class FrameLayeredPane(splitter: JComponent, frame: JFrame) : JLayeredPane() {
   private val imageProvider: (ScaleContext) -> ImageRef = {
     val width = max(max(1, width), frame.width)
     val height = max(max(1, height), frame.height)
@@ -924,43 +927,6 @@ private class FrameLayeredPane(splitter: JComponent, frame: JFrame) : JLayeredPa
         LOG.error("unknown anchor $anchor")
       }
     }
-  }
-
-  override fun paintChildren(g: Graphics) {
-    val cornerRadius = getIslandArc()
-
-    if (cornerRadius == 0) {
-      super.paintChildren(g)
-      return
-    }
-
-    val clip = g.clip
-    g.clip = null
-    val cornerRadiusF = cornerRadius.toFloat()
-    g.clip = RoundRectangle2D.Float(x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), cornerRadiusF, cornerRadiusF)
-
-    super.paintChildren(g)
-
-    g.clip = null
-    g.clip = clip
-
-    val color = UIManager.get("Island.borderColor")
-
-    if (color is Color) {
-      val config = GraphicsUtil.setupRoundedBorderAntialiasing(g)
-      g.color = color
-      g.drawRoundRect(0, 0, width - 1, height - 1, cornerRadius, cornerRadius)
-      config.restore()
-    }
-  }
-
-  override fun isPaintingOrigin(): Boolean = getIslandArc() > 0
-
-  private fun getIslandArc(): Int {
-    if (InternalUICustomization.getInstance()?.isToolWindowPaneCustomization == true) {
-      return JBUI.getInt("Island.arc", 0)
-    }
-    return 0
   }
 }
 
