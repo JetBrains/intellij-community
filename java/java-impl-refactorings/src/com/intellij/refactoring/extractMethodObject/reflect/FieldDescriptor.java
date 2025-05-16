@@ -45,14 +45,16 @@ public final class FieldDescriptor implements ItemToReplaceDescriptor {
     return null;
   }
 
+  public boolean isUpdate() {
+    return myExpression.getParent() instanceof PsiAssignmentExpression parentAssignment && parentAssignment.getLExpression() == myExpression;
+  }
+
   @Override
   public void replace(@NotNull PsiClass outerClass,
                       @NotNull PsiElementFactory elementFactory,
                       @NotNull PsiMethodCallExpression callExpression) {
-    PsiElement parent = myExpression.getParent();
-    if (parent instanceof PsiAssignmentExpression &&
-        Objects.equals(myExpression, ((PsiAssignmentExpression)parent).getLExpression())) {
-      grantUpdateAccess((PsiAssignmentExpression)parent, outerClass, callExpression, elementFactory);
+    if (isUpdate()) {
+      grantUpdateAccess((PsiAssignmentExpression)myExpression.getParent(), outerClass, callExpression, elementFactory);
     }
     else {
       grantReadAccess(outerClass, callExpression, elementFactory);

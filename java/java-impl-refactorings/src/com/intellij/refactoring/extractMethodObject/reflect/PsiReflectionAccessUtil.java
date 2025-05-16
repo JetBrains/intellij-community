@@ -158,6 +158,10 @@ final class PsiReflectionAccessUtil {
 
     if (TypeConversionUtil.isPrimitiveAndNotNull(type)) return true;
 
+    if (type instanceof PsiCapturedWildcardType capturedWildcardType) {
+      return isAccessibleType(capturedWildcardType.getWildcard());
+    }
+
     if (type instanceof PsiWildcardType wildcardType) {
       var bound = wildcardType.getBound();
       return bound == null || isAccessibleType(bound);
