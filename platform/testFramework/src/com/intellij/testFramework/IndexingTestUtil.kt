@@ -28,6 +28,7 @@ class IndexingTestUtil private constructor() {
     @JvmStatic
     @JvmOverloads
     fun waitUntilIndexesAreReadyInAllOpenedProjects(indexWaitingTimeout: Duration = DEFAULT_TIMEOUT) {
+      if (forceSkipWaiting) return
       for (project in ProjectManager.getInstance().openProjects) {
         IndexWaiter(project).waitUntilFinished(indexWaitingTimeout)
       }
@@ -36,12 +37,18 @@ class IndexingTestUtil private constructor() {
     @JvmStatic
     @JvmOverloads
     fun waitUntilIndexesAreReady(project: Project, indexWaitingTimeout: Duration = DEFAULT_TIMEOUT) {
+      if (forceSkipWaiting) return
       IndexWaiter(project).waitUntilFinished(indexWaitingTimeout)
     }
 
     suspend fun suspendUntilIndexesAreReady(project: Project, indexWaitingTimeout: kotlin.time.Duration = DEFAULT_TIMEOUT.toKotlinDuration()) {
+      if (forceSkipWaiting) return
       IndexWaiter(project).suspendUntilIndexesAreReady(indexWaitingTimeout.toJavaDuration())
     }
+
+    var forceSkipWaiting: Boolean
+      get() = System.getProperty("IndexingTestUtil.force.skip.waiting", "false").toBoolean()
+      set(v) { System.setProperty("IndexingTestUtil.force.skip.waiting", v.toString()) }
   }
 }
 

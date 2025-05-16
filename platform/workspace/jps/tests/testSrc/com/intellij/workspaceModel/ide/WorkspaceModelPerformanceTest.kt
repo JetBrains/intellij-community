@@ -14,6 +14,7 @@ import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
@@ -28,10 +29,12 @@ import org.junit.jupiter.api.extension.*
 class SuspendIndexingExtension : BeforeAllCallback, AfterAllCallback {
   override fun beforeAll(context: ExtensionContext?) {
     System.setProperty("idea.suspend.indexes.initialization", "true")
+    IndexingTestUtil.forceSkipWaiting = true
   }
 
   override fun afterAll(context: ExtensionContext?) {
     System.setProperty("idea.suspend.indexes.initialization", "false")
+    IndexingTestUtil.forceSkipWaiting = false
   }
 }
 
