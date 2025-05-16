@@ -55,7 +55,7 @@
     <projectConfigurable groupId="python.group.settings"
                          id="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
                          bundle="messages.PyBundle"
-                         key="configurable.PyActiveSdkModuleConfigurable.python.interpreter.display.name"
+                         key="configurable.PyActiveSdkModuleConfigurable.pycharm.interpreter.display.name"
                          instance="com.intellij.pycharm.community.ide.impl.PyCharmPyActiveSdkModuleConfigurable"
                          groupWeight="200"/> <!-- id is used in InterpreterSettingsQuickFix.showPythonInterpreterSettings -->
 
