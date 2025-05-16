@@ -11,14 +11,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withModalProgress
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.containers.mapSmartSet
 import git4idea.DialogManager
 import git4idea.i18n.GitBundle
 import git4idea.remote.hosting.GitShareProjectService
 import git4idea.remote.hosting.knownRepositories
 import git4idea.repo.GitRepository
-import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GithubRepo
@@ -60,8 +58,7 @@ object GHShareProjectUtil {
     if (!gitSpService.showExistingRemotesDialog(githubServiceName, gitRepository, projectManager.knownRepositories))
       return
 
-    val shareDialogResult = project.service<GHShareProjectService>()
-                              .showShareProjectDialog(gitRepository, projectName) ?: return
+    val shareDialogResult = showShareProjectDialog(project, gitRepository, projectName) ?: return
 
     val account: GithubAccount = shareDialogResult.account!!
 
@@ -90,23 +87,18 @@ object GHShareProjectUtil {
 
     return requestExecutor.executeSuspend(GithubApiRequests.CurrentUser.Repos.create(account.server, name, description, isPrivate))
   }
-}
 
-@Service(Service.Level.PROJECT)
-private class GHShareProjectService(private val project: Project, private val cs: CoroutineScope) {
-  fun showShareProjectDialog(
+  private fun showShareProjectDialog(
+    project: Project,
     gitRepository: GitRepository?,
     projectName: String,
   ): GithubShareDialog.Result? {
-    val cs = cs.childScope("showShareProjectDialog")
-
     val loadedInfo = Collections.synchronizedMap(mutableMapOf<GithubAccount, Pair<Boolean, Set<String>>>())
 
     val shareDialog = GithubShareDialog(
       project,
-      cs,
       gitRepository?.remotes?.map { it.name }?.toSet() ?: emptySet(),
-      { account, comp -> loadedInfo.getOrPut(account) { loadEnsuringTokenExistsToken(account, comp) } },
+      { account, comp -> loadedInfo.getOrPut(account) { loadEnsuringTokenExistsToken(project, account, comp) } },
       projectName
     )
 
@@ -115,7 +107,7 @@ private class GHShareProjectService(private val project: Project, private val cs
     return if (shareDialog.isOK) shareDialog.getResult() else null
   }
 
-  private suspend fun loadEnsuringTokenExistsToken(account: GithubAccount, comp: Component): Pair<Boolean, Set<String>> {
+  private suspend fun loadEnsuringTokenExistsToken(project: Project, account: GithubAccount, comp: Component): Pair<Boolean, Set<String>> {
     while (true) {
       try {
         return withModalProgress(ModalTaskOwner.project(project), GitBundle.message("share.process.loading.account.info", account), TaskCancellation.cancellable()) {
