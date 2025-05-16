@@ -65,7 +65,7 @@ public abstract class DocumentationEditorPane extends JBHtmlPane implements Disp
         .keyboardActions(keyboardActions)
         .imageResolverFactory(component -> new JBHtmlPaneImageResolver(component, it -> imageResolver.resolveImage(it)))
         .iconResolver(name -> iconResolver.apply(name))
-        .customStyleSheetProvider(bg -> getDocumentationPaneAdditionalCssRules())
+        .customStyleSheetProvider(pane -> getDocumentationPaneAdditionalCssRules(num -> (int)(pane.getContentsScaleFactor() * num)))
         .extensions(ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_IMAGES)
         .build()
     );

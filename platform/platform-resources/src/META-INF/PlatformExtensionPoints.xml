@@ -488,6 +488,7 @@
 
     <extensionPoint name="jcef.appRequiredArgumentsProvider" interface="com.intellij.ui.jcef.JBCefAppRequiredArgumentsProvider" dynamic="false"/>
     <extensionPoint name="documentationActionProvider" interface="com.intellij.codeInsight.documentation.DocumentationActionProvider" dynamic="true"/>
+    <extensionPoint name="documentationCssProvider" interface="com.intellij.codeInsight.documentation.DocumentationCssProvider" dynamic="true"/>
 
     <extensionPoint name="newProjectWizard.language" interface="com.intellij.ide.wizard.LanguageNewProjectWizard" dynamic="true"/>
     <extensionPoint name="newProjectWizard.languageGenerator" interface="com.intellij.ide.wizard.language.LanguageGeneratorNewProjectWizard" dynamic="true"/>
@@ -573,7 +574,7 @@
     <extensionPoint name="idePerformanceListener" interface="com.intellij.diagnostic.PerformanceListener" dynamic="true"/>
 
     <extensionPoint name="mac.dockMenuActions" interface="com.intellij.ui.mac.MacDockMenuActions" dynamic="false"/>
-    
+
     <extensionPoint name="textEditorNecromancerAwaker" interface="com.intellij.openapi.editor.impl.zombie.NecromancerAwaker" dynamic="true"/>
 
     <extensionPoint name="toolbarQuickAction" beanClass="com.intellij.ide.ui.customization.ToolbarAddQuickActionInfoBean" dynamic="true">
