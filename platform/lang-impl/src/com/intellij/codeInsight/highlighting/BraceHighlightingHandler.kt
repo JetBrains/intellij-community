@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.util.HighlighterIteratorWrapper
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter
 import com.intellij.openapi.editor.highlighter.EditorHighlighter
@@ -352,15 +353,29 @@ class BraceHighlightingHandler internal constructor(
   @RequiresEdt
   private fun highlightBrace(braceRange: TextRange, matched: Boolean) {
     val attributesKey = if (matched) CodeInsightColors.MATCHED_BRACE_ATTRIBUTES else CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES
-    val rbraceHighlighter = editor.markupModel
+    removeExistingBraceHighlightsAround(braceRange)
+    val braceHighlighter = editor.markupModel
       .addRangeHighlighter(attributesKey, braceRange.startOffset, braceRange.endOffset, LAYER, HighlighterTargetArea.EXACT_RANGE)
-    rbraceHighlighter.isGreedyToLeft = false
-    rbraceHighlighter.isGreedyToRight = false
-    registerHighlighter(rbraceHighlighter)
+    braceHighlighter.isGreedyToLeft = false
+    braceHighlighter.isGreedyToRight = false
+    getHighlightersList(editor).add(braceHighlighter)
   }
 
-  private fun registerHighlighter(highlighter: RangeHighlighter) {
-    getHighlightersList(editor).add(highlighter)
+  private fun removeExistingBraceHighlightsAround(range: TextRange) {
+    ThreadingAssertions.assertEventDispatchThread()
+    val toRemove: MutableList<RangeHighlighter> = mutableListOf()
+    (editor.markupModel as MarkupModelEx).processRangeHighlightersOverlappingWith(range.startOffset, range.endOffset) { highlighter ->
+      if ((highlighter.textAttributesKey == CodeInsightColors.MATCHED_BRACE_ATTRIBUTES
+          || highlighter.textAttributesKey == CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES)
+          && highlighter.textRange == range
+          && highlighter.layer == LAYER) {
+        toRemove.add(highlighter)
+      }
+      true
+    }
+    for (highlighter in toRemove) {
+      highlighter.dispose()
+    }
   }
 
   @RequiresEdt
