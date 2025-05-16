@@ -278,7 +278,7 @@ class PluginManagerTest {
     }
 
     private fun checkCompatibility(ideVersion: String?, sinceBuild: String?, untilBuild: String?): PluginNonLoadReason? {
-      val desc = object : TestIdeaPluginDescriptorEx() {
+      val desc = object : TestIdeaPluginDescriptor() {
         override fun getPluginId(): PluginId = PluginId.getId("test")
         override fun getName(): @NlsSafe String? = pluginId.idString
         override fun getSinceBuild(): @NlsSafe String? = sinceBuild
@@ -290,7 +290,7 @@ class PluginManagerTest {
     }
 
     private fun checkCompatibility(platformId: String): Boolean {
-      val desc = object : TestIdeaPluginDescriptorEx() {
+      val desc = object : TestIdeaPluginDescriptor() {
         override fun getPluginId(): PluginId = PluginId.getId("test")
         override fun getName(): @NlsSafe String? = pluginId.idString
         override fun getSinceBuild(): @NlsSafe String? = null

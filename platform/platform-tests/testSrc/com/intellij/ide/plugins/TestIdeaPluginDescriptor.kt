@@ -1,49 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.plugins.parser.impl.elements.ActionElement
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
 import java.util.*
 
-abstract class TestIdeaPluginDescriptorEx : IdeaPluginDescriptorEx {
-  override val moduleLoadingRule: ModuleLoadingRule?
-    get() = throw AssertionError("unexpected call")
-  override val incompatiblePlugins: List<PluginId>
-    get() = throw AssertionError("unexpected call")
-  override val pluginAliases: List<PluginId>
-    get() = throw AssertionError("unexpected call")
-  override val packagePrefix: String?
-    get() = throw AssertionError("unexpected call")
-  override val contentModules: List<ContentModule>
-    get() = throw AssertionError("unexpected call")
-  override val actions: List<ActionElement>
-    get() = throw AssertionError("unexpected call")
-  override val appContainerDescriptor: ContainerDescriptor
-    get() = throw AssertionError("unexpected call")
-  override val projectContainerDescriptor: ContainerDescriptor
-    get() = throw AssertionError("unexpected call")
-  override val moduleContainerDescriptor: ContainerDescriptor
-    get() = throw AssertionError("unexpected call")
-  override val extensions: Map<String, List<ExtensionDescriptor>>
-    get() = throw AssertionError("unexpected call")
-  override val useCoreClassLoader: Boolean
-    get() = throw AssertionError("unexpected call")
-  override val isUseIdeaClassLoader: Boolean
-    get() = throw AssertionError("unexpected call")
-  override val isIndependentFromCoreClassLoader: Boolean
-    get() = throw AssertionError("unexpected call")
-  override var isMarkedForLoading: Boolean
-    get() = throw AssertionError("unexpected call")
-    set(value) { throw AssertionError("unexpected call") }
-  override val moduleName: String?
-    get() = throw AssertionError("unexpected call")
-  override val moduleDependencies: ModuleDependencies
-    get() = throw AssertionError("unexpected call")
-
+abstract class TestIdeaPluginDescriptor : IdeaPluginDescriptor {
   override fun getDependencies(): List<IdeaPluginDependency> {
     throw AssertionError("unexpected call")
   }
