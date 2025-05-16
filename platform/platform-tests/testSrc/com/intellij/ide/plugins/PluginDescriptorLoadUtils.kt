@@ -33,6 +33,7 @@ fun readAndInitDescriptorFromBytesForTest(path: Path, isBundled: Boolean, input:
   }
   val rawBuilder = PluginDescriptorFromXmlStreamConsumer(object : PluginDescriptorReaderContext {
     override val interner = NoOpXmlInterner
+    override val isMissingIncludeIgnored = false
     override val elementOsFilter: (OS) -> Boolean
       get() = { it.convert().isSuitableForOs() }
   }, pathResolver.toXIncludeLoader(dataLoader)).let {

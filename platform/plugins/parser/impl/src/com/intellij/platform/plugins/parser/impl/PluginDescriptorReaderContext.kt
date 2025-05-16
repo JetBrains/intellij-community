@@ -12,5 +12,4 @@ interface PluginDescriptorReaderContext {
   val elementOsFilter: (OS) -> Boolean
 
   val isMissingIncludeIgnored: Boolean
-    get() = false
 }

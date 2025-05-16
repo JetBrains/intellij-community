@@ -7,8 +7,9 @@ import com.intellij.util.xml.dom.NoOpXmlInterner
 import com.intellij.util.xml.dom.XmlInterner
 
 object ValidationPluginDescriptorReaderContext : PluginDescriptorReaderContext {
-    override val interner: XmlInterner
-      get() = NoOpXmlInterner
-    override val elementOsFilter: (OS) -> Boolean
-      get() = { true }
-  }
+  override val interner: XmlInterner
+    get() = NoOpXmlInterner
+  override val elementOsFilter: (OS) -> Boolean
+    get() = { true }
+  override val isMissingIncludeIgnored: Boolean = false
+}
