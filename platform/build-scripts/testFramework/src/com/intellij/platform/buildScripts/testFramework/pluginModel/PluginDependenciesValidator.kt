@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.PluginDescriptorLoadingContext
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginSet
 import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.ide.plugins.contentModuleName
 import com.intellij.ide.plugins.loadPluginSubDescriptors
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.platform.plugins.parser.impl.LoadPathUtil
@@ -142,7 +143,7 @@ class PluginDependenciesValidator private constructor(
             //println("Skipping reporting '$sourceModuleName' -> '$targetModuleName' because no runtime descriptors found\n")
             return@processModules
           }
-          val expectedTargets = allExpectedTargets.filter { it.moduleName?.contains("/") != true }.takeIf { it.isNotEmpty() } ?: allExpectedTargets
+          val expectedTargets = allExpectedTargets.filter { it.contentModuleName?.contains("/") != true }.takeIf { it.isNotEmpty() } ?: allExpectedTargets
           val sourceDescriptorsString = if (sourceDescriptors.size == 1) {
             "${sourceDescriptors.first().shortPresentation} doesn't have dependency"
           }
@@ -185,7 +186,7 @@ class PluginDependenciesValidator private constructor(
     val target = targetDescriptors.singleOrNull() ?: return null
 
     val dependencyTag = when (target.type) {
-      IdeaPluginDescriptorImpl.Type.ContentModuleDescriptor -> "<module name=\"${target.moduleName}\"/>"
+      IdeaPluginDescriptorImpl.Type.ContentModuleDescriptor -> "<module name=\"${target.contentModuleName}\"/>"
       IdeaPluginDescriptorImpl.Type.PluginMainDescriptor -> "<plugin id=\"${target.pluginId.idString}\"/>"
       else -> return null
     }
@@ -226,7 +227,7 @@ class PluginDependenciesValidator private constructor(
         }
       }
       IdeaPluginDescriptorImpl.Type.ContentModuleDescriptor -> {
-        "add the following tag in ${source.moduleName}.xml:\n$dependenciesTag"
+        "add the following tag in ${source.contentModuleName}.xml:\n$dependenciesTag"
       }
       IdeaPluginDescriptorImpl.Type.DependsSubDescriptor -> {
         """since files included via <depends> tag cannot declare additional dependencies,
@@ -250,7 +251,7 @@ class PluginDependenciesValidator private constructor(
   private val IdeaPluginDescriptorImpl.shortPresentation: String
     get() = when (type) {
       IdeaPluginDescriptorImpl.Type.PluginMainDescriptor -> "main plugin module of '${pluginId}'"
-      IdeaPluginDescriptorImpl.Type.ContentModuleDescriptor -> "content module '${moduleName}' of plugin '${pluginId}'"
+      IdeaPluginDescriptorImpl.Type.ContentModuleDescriptor -> "content module '${contentModuleName}' of plugin '${pluginId}'"
       IdeaPluginDescriptorImpl.Type.DependsSubDescriptor -> "depends sub descriptor of plugin '${pluginId}'"
     }
 

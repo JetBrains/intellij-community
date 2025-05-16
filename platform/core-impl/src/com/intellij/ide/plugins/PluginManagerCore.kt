@@ -303,7 +303,7 @@ object PluginManagerCore {
       for (descriptor in getPluginSet().allPlugins) {
         if (pluginIds.contains(descriptor.getPluginId())) {
           descriptor.isMarkedForLoading = enabled
-          if (descriptor.moduleName == null) {
+          if (descriptor !is ContentModuleDescriptor) {
             descriptors.add(descriptor)
           }
         }

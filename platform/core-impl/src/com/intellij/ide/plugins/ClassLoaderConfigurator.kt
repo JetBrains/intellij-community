@@ -96,11 +96,11 @@ class ClassLoaderConfigurator(
     }
     else {
       assert(module.isContentModuleDescriptor)
-      return configureContentModule(module)
+      return configureContentModule(module as ContentModuleDescriptor)
     }
   }
 
-  private fun configureContentModule(module: IdeaPluginDescriptorImpl): Boolean {
+  private fun configureContentModule(module: ContentModuleDescriptor): Boolean {
     if (module.packagePrefix == null && module.pluginId != PluginManagerCore.CORE_ID && module.jarFiles == null && module.moduleLoadingRule != ModuleLoadingRule.EMBEDDED) {
       throw PluginException("Package is not specified (module=$module)", module.pluginId)
     }
@@ -520,7 +520,7 @@ fun sortDependenciesInPlace(dependencies: Array<IdeaPluginDescriptorImpl>) {
     return
   }
 
-  fun getWeight(module: IdeaPluginDescriptorImpl) = if (module.moduleName == null) 1 else 0
+  fun getWeight(module: IdeaPluginDescriptorImpl) = if (module is ContentModuleDescriptor) 0 else 1
 
   // java sort is stable, so, it is safe to not use topological comparator here
   dependencies.sortWith { o1, o2 ->

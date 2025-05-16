@@ -1,4 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("CanBePrimaryConstructorProperty")
 package com.intellij.ide.plugins
 
 import com.intellij.AbstractBundle
@@ -29,7 +30,6 @@ import java.util.*
 private val LOG: Logger
   get() = PluginManagerCore.logger
 
-@Suppress("CanBePrimaryConstructorProperty")
 @ApiStatus.Internal
 sealed class IdeaPluginDescriptorImpl(
   raw: RawPluginDescriptor,
@@ -76,8 +76,8 @@ sealed class IdeaPluginDescriptorImpl(
   private val id: PluginId = PluginId.getId(raw.id ?: raw.name ?: throw RuntimeException("Neither id nor name are specified"))
   private val name: String = raw.name ?: id.idString
 
-  val moduleName: String? = moduleName
-  val moduleLoadingRule: ModuleLoadingRule? = moduleLoadingRule
+  open val moduleName: String? = moduleName
+  open val moduleLoadingRule: ModuleLoadingRule? = moduleLoadingRule
 
   private val version: String? = raw.version
   private val sinceBuild: String? = raw.sinceBuild
@@ -156,10 +156,6 @@ sealed class IdeaPluginDescriptorImpl(
       descriptorPath != null -> Type.DependsSubDescriptor
       else -> Type.PluginMainDescriptor
     }
-  }
-
-  init {
-    checkTypeInvariants()
   }
 
   override fun getPluginId(): PluginId = id
@@ -473,7 +469,7 @@ sealed class IdeaPluginDescriptorImpl(
     }
   }
 
-  private fun checkTypeInvariants() {
+  internal fun checkTypeInvariants() {
     when (type) {
       Type.PluginMainDescriptor -> {
         assert(moduleName == null && moduleLoadingRule == null && descriptorPath == null) { this }
@@ -710,7 +706,11 @@ class MainPluginDescriptor(
   useCoreClassLoader = useCoreClassLoader,
   isIndependentFromCoreClassLoader = false,
   descriptorPath = null
-)
+) {
+  init {
+    checkTypeInvariants()
+  }
+}
 
 @ApiStatus.Internal
 class DependsSubDescriptor(
@@ -729,7 +729,11 @@ class DependsSubDescriptor(
   useCoreClassLoader,
   isIndependentFromCoreClassLoader,
   descriptorPath
-)
+) {
+  init {
+    checkTypeInvariants()
+  }
+}
 
 @ApiStatus.Internal
 class ContentModuleDescriptor(
@@ -750,7 +754,14 @@ class ContentModuleDescriptor(
   useCoreClassLoader,
   isIndependentFromCoreClassLoader,
   descriptorPath
-)
+) {
+  override val moduleName: String = moduleName
+  override val moduleLoadingRule: ModuleLoadingRule = moduleLoadingRule
+
+  init {
+    checkTypeInvariants()
+  }
+}
 
 internal val IdeaPluginDescriptorImpl.isRequiredContentModule: Boolean
   get() = moduleLoadingRule?.required == true

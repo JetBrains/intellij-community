@@ -250,12 +250,10 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
       loadDescriptorFromDir(mainResourceRoot, context, zipFilePool, resolver, isBundled = isBundled, pluginDir = pluginDir)
         .also { descriptor ->
           descriptor?.content?.modules?.forEach { module ->
-            val requireDescriptor = module.requireDescriptor()
-            if (requireDescriptor.packagePrefix == null) {
-              val moduleName = requireDescriptor.moduleName
-              if (moduleName != null) {
-                requireDescriptor.jarFiles = moduleRepository.getModule(RuntimeModuleId.module(moduleName)).resourceRootPaths
-              }
+            val contentModule = module.requireDescriptor()
+            if (contentModule.packagePrefix == null) {
+              val moduleName = contentModule.moduleName
+              contentModule.jarFiles = moduleRepository.getModule(RuntimeModuleId.module(moduleName)).resourceRootPaths
             }
           }
         }

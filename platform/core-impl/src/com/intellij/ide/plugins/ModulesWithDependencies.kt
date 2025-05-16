@@ -72,7 +72,7 @@ internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection
 
     // Check modules as well, for example, intellij.diagram.impl.vcs.
     // We are not yet ready to recommend adding a dependency on extracted VCS modules since the coordinates are not finalized.
-    if (module.pluginId != PluginManagerCore.CORE_ID || module.moduleName != null) {
+    if (module.pluginId != PluginManagerCore.CORE_ID || module is ContentModuleDescriptor) {
       val strictCheck = module.isBundled || PluginManagerCore.isVendorJetBrains(module.vendor ?: "")
       if (!strictCheck || doesDependOnPluginAlias(module, VCS_ALIAS_ID)) {
         moduleMap.get("intellij.platform.vcs.impl")?.let { dependenciesCollector.add(it) }
@@ -109,7 +109,7 @@ internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection
       }
     }
 
-    if (module.moduleName != null && module.pluginId != PluginManagerCore.CORE_ID) {
+    if (module.pluginId != PluginManagerCore.CORE_ID && module is ContentModuleDescriptor) {
       // add main as an implicit dependency for optional content modules 
       val main = moduleMap.get(module.pluginId.idString)!!
       assert(main !== module)
@@ -157,8 +157,8 @@ internal fun toCoreAwareComparator(comparator: Comparator<IdeaPluginDescriptorIm
   // don't use sortWith here - avoid loading kotlin stdlib
   return Comparator { o1, o2 ->
     when {
-      o1.moduleName == null && o1.pluginId == PluginManagerCore.CORE_ID -> -1
-      o2.moduleName == null && o2.pluginId == PluginManagerCore.CORE_ID -> 1
+      o1 !is ContentModuleDescriptor && o1.pluginId == PluginManagerCore.CORE_ID -> -1
+      o2 !is ContentModuleDescriptor && o2.pluginId == PluginManagerCore.CORE_ID -> 1
       else -> comparator.compare(o1, o2)
     }
   }
@@ -177,7 +177,7 @@ private fun collectDirectDependenciesInOldFormat(rootDescriptor: IdeaPluginDescr
   for (dependency in rootDescriptor.dependencies) {
     // check for missing optional dependency
     val dep = idMap.get(dependency.pluginId.idString) ?: continue
-    if (dep.pluginId != PluginManagerCore.CORE_ID || dep.moduleName != null) {
+    if (dep.pluginId != PluginManagerCore.CORE_ID || dep is ContentModuleDescriptor) {
       // ultimate plugin it is combined plugin, where some included XML can define dependency on ultimate explicitly and for now not clear,
       // can be such requirements removed or not
       if (rootDescriptor === dep) {

@@ -7,6 +7,7 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.contentModuleName
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
@@ -469,7 +470,7 @@ ${if (exception == null) "" else exception.message}""")
 
   override fun getPluginId(): PluginId = pluginId
 
-  override fun getModuleId(): String? = (pluginDescriptor as IdeaPluginDescriptorImpl).moduleName
+  override fun getModuleId(): String? = (pluginDescriptor as IdeaPluginDescriptorImpl).contentModuleName
 
   override fun getPluginDescriptor(): PluginDescriptor = pluginDescriptor
 
