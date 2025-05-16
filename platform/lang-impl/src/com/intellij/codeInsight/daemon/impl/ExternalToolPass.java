@@ -47,7 +47,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 @ApiStatus.Internal
-public final class ExternalToolPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
+final class ExternalToolPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
   private static final Logger LOG = Logger.getInstance(ExternalToolPass.class);
 
   private final List<MyData<?,?>> myAnnotationData = Collections.synchronizedList(new ArrayList<>());

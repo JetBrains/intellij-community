@@ -36,7 +36,7 @@ import java.util.*;
  * Perform injections, run highlight visitors and annotators on discovered injected files
  */
 @ApiStatus.Internal
-public final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
+final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
   private final @Nullable List<? extends @NotNull TextRange> myReducedRanges;
   private final boolean myUpdateAll;
   private final ProperTextRange myPriorityRange;
@@ -47,18 +47,18 @@ public final class InjectedGeneralHighlightingPass extends ProgressableTextEdito
   private final boolean myHighlightErrorElements;
   private final HighlightInfoUpdater myHighlightInfoUpdater;
 
-  public InjectedGeneralHighlightingPass(@NotNull PsiFile psiFile,
-                                         @NotNull Document document,
-                                         @Nullable List<? extends @NotNull TextRange> reducedRanges,
-                                         int startOffset,
-                                         int endOffset,
-                                         boolean updateAll,
-                                         @NotNull ProperTextRange priorityRange,
-                                         @Nullable Editor editor,
-                                         boolean runAnnotators,
-                                         boolean runVisitors,
-                                         boolean highlightErrorElements,
-                                         @NotNull HighlightInfoUpdater highlightInfoUpdater) {
+  InjectedGeneralHighlightingPass(@NotNull PsiFile psiFile,
+                                  @NotNull Document document,
+                                  @Nullable List<? extends @NotNull TextRange> reducedRanges,
+                                  int startOffset,
+                                  int endOffset,
+                                  boolean updateAll,
+                                  @NotNull ProperTextRange priorityRange,
+                                  @Nullable Editor editor,
+                                  boolean runAnnotators,
+                                  boolean runVisitors,
+                                  boolean highlightErrorElements,
+                                  @NotNull HighlightInfoUpdater highlightInfoUpdater) {
     super(psiFile.getProject(), document, AnalysisBundle.message("highlighting.pass.injected.presentable.name"), psiFile, editor, TextRange.create(startOffset, endOffset), true, HighlightInfoProcessor.getEmpty());
     myReducedRanges = reducedRanges;
     myUpdateAll = updateAll;
