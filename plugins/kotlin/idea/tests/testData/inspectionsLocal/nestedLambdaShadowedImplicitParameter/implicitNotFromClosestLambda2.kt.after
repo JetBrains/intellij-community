@@ -8,9 +8,9 @@ fun baz(d: (a: Any, b: Any) -> Unit) {}
 fun test() {
     foo {
         bar(it)
-        foo { it ->
+        foo { it1 ->
             baz { a, b ->
-                bar(it)
+                bar(it1)
             }
         }
     }
