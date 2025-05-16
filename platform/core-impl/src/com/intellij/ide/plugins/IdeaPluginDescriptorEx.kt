@@ -45,6 +45,3 @@ interface IdeaPluginDescriptorEx : IdeaPluginDescriptorImplPublic {
 
   var isMarkedForLoading: Boolean
 }
-
-internal val IdeaPluginDescriptorEx.isRequiredContentModule: Boolean
-  get() = moduleLoadingRule?.required == true

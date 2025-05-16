@@ -751,3 +751,6 @@ class ContentModuleDescriptor(
   isIndependentFromCoreClassLoader,
   descriptorPath
 )
+
+internal val IdeaPluginDescriptorImpl.isRequiredContentModule: Boolean
+  get() = moduleLoadingRule?.required == true
