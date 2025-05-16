@@ -1441,11 +1441,6 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
                 runTest("../testData/basic/common/getOperator/NotForSafeCall.kt");
             }
 
-            @TestMetadata("PreferOperator.kt")
-            public void testPreferOperator() throws Exception {
-                runTest("../testData/basic/common/getOperator/PreferOperator.kt");
-            }
-
             @TestMetadata("Simple.kt")
             public void testSimple() throws Exception {
                 runTest("../testData/basic/common/getOperator/Simple.kt");

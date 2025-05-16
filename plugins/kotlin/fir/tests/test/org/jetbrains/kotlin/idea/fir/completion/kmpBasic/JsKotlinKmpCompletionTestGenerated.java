@@ -1515,11 +1515,6 @@ public abstract class JsKotlinKmpCompletionTestGenerated extends AbstractKotlinK
             runTest("../../completion/testData/basic/common/getOperator/NotForSafeCall.kt");
         }
 
-        @TestMetadata("PreferOperator.kt")
-        public void testPreferOperator() throws Exception {
-            runTest("../../completion/testData/basic/common/getOperator/PreferOperator.kt");
-        }
-
         @TestMetadata("Simple.kt")
         public void testSimple() throws Exception {
             runTest("../../completion/testData/basic/common/getOperator/Simple.kt");

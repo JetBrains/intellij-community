@@ -2,8 +2,6 @@
 
 package org.jetbrains.kotlin.idea.completion.lookups.factories
 
-import com.intellij.codeInsight.completion.CompositeDeclarativeInsertHandler
-import com.intellij.codeInsight.completion.DeclarativeInsertHandler
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import org.jetbrains.annotations.ApiStatus
@@ -17,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.GetOperatorInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.TypeLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
@@ -86,18 +85,8 @@ object KotlinFirLookupElementFactory {
         options: CallableInsertionOptions,
         expectedType: KaType? = null,
     ): LookupElementBuilder {
-        val brackets = "[]"
-        // Removes the dot and places the caret inside the brackets
-        val insertHandler = CompositeDeclarativeInsertHandler.withUniversalHandler(
-            "\n\t",
-            DeclarativeInsertHandler.Builder()
-                .addOperation(offsetFrom = -1 - brackets.length, offsetTo = -brackets.length, newText = "")
-                .withOffsetToPutCaret(-1)
-                .withPopupOptions(DeclarativeInsertHandler.PopupOptions.ParameterInfo)
-                .build()
-        )
-        val indexingLookupElement = createCallableLookupElement(Name.identifier(brackets), signature, options, expectedType)
-            .withInsertHandler(insertHandler)
+        val indexingLookupElement = createCallableLookupElement(Name.identifier("[]"), signature, options, expectedType)
+            .withInsertHandler(GetOperatorInsertionHandler)
         indexingLookupElement.priority = ItemPriority.GET_OPERATOR
         return indexingLookupElement
     }
