@@ -82,7 +82,7 @@ suspend fun <T> withBackgroundProgress(
 
 suspend fun <T> withModalProgress(
   project: Project,
-  title: @ProgressTitle String,
+  title: @ModalProgressTitle String,
   action: suspend CoroutineScope.() -> T,
 ): T {
   return withModalProgress(ModalTaskOwner.project(project), title, TaskCancellation.cancellable(), action)
@@ -110,7 +110,7 @@ suspend fun <T> withModalProgress(
  */
 suspend fun <T> withModalProgress(
   owner: ModalTaskOwner,
-  title: @ProgressTitle String,
+  title: @ModalProgressTitle String,
   cancellation: TaskCancellation,
   action: suspend CoroutineScope.() -> T,
 ): T {
@@ -121,7 +121,7 @@ suspend fun <T> withModalProgress(
 @RequiresEdt
 fun <T> runWithModalProgressBlocking(
   project: Project,
-  title: @ProgressTitle String,
+  title: @ModalProgressTitle String,
   action: suspend CoroutineScope.() -> T,
 ): T {
   return runWithModalProgressBlocking(ModalTaskOwner.project(project), title, TaskCancellation.cancellable(), action)
