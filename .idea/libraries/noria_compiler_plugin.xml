@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="noria-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="jetbrains.fleet:noria-compiler-plugin:2.1.20-0.3">
+    <properties include-transitive-deps="false" maven-id="jetbrains.fleet:noria-compiler-plugin:2.2.0-RC-0.1">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/jetbrains/fleet/noria-compiler-plugin/2.1.20-0.3/noria-compiler-plugin-2.1.20-0.3.jar">
-          <sha256sum>cf31e89cd0a2268bd187457a2a8a3649842bd42e3d0f6484c9183dbd16104c09</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/jetbrains/fleet/noria-compiler-plugin/2.2.0-RC-0.1/noria-compiler-plugin-2.2.0-RC-0.1.jar">
+          <sha256sum>1e5a89c8da5edea5d35dc858c6051e3b5c7f614860206dbf92900d02acb81c30</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/jetbrains/fleet/noria-compiler-plugin/2.1.20-0.3/noria-compiler-plugin-2.1.20-0.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/jetbrains/fleet/noria-compiler-plugin/2.2.0-RC-0.1/noria-compiler-plugin-2.2.0-RC-0.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/jetbrains/fleet/noria-compiler-plugin/2.1.20-0.3/noria-compiler-plugin-2.1.20-0.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/jetbrains/fleet/noria-compiler-plugin/2.2.0-RC-0.1/noria-compiler-plugin-2.2.0-RC-0.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
