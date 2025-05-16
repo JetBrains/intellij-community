@@ -330,7 +330,7 @@ class ClassLoaderConfigurator(
   ): PluginClassLoader {
     val resolveScopeManager: ResolveScopeManager?
     // main plugin descriptor
-    if (module.moduleName == null) {
+    if (module !is ContentModuleDescriptor) {
       resolveScopeManager = if (module.pluginId.idString == "com.intellij.diagram") {
         // multiple packages - intellij.diagram and intellij.diagram.impl modules
         createScopeWithExtraPackage("com.intellij.diagram.")
