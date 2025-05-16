@@ -241,11 +241,6 @@ open class VcsLogManager @Internal constructor(
   }
 
   @Internal
-  fun getVisibleLogUis(location: VcsLogTabLocation): List<VcsLogUi> {
-    return managedUis.values.filter { uiLocations[it.id] == location && it.isVisible() }
-  }
-
-  @Internal
   fun getLogUiInformation(): String =
     managedUis.values.joinToString("\n") { ui ->
       val isVisible = if (ui.isVisible()) " (visible)" else ""

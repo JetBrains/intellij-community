@@ -8,10 +8,7 @@ import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.ui.content.Content
-import com.intellij.ui.content.ContentManager
-import com.intellij.ui.content.TabDescriptor
-import com.intellij.ui.content.TabGroupId
+import com.intellij.ui.content.*
 import com.intellij.util.Consumer
 import com.intellij.util.ContentUtilEx
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -38,6 +35,40 @@ object VcsLogContentUtil {
     val uis = VcsLogUiHolder.getLogUis(c)
     require(uis.size <= 1) { "Component $c has more than one log ui: $uis" }
     return uis.singleOrNull()
+  }
+
+  private fun componentsSequence(toolWindow: ToolWindow): Sequence<JComponent> {
+    val contentManager = toolWindow.contentManagerIfCreated ?: return emptySequence()
+    return sequence {
+      for (content in contentManager.getContents()) {
+        if (content is TabbedContent) {
+          content.tabs.forEach { pair ->
+            pair.second?.let { yield(it) }
+          }
+        }
+        else {
+          yield(content.component)
+        }
+      }
+    }
+  }
+
+  internal fun <U : VcsLogUi> findLogUi(toolWindow: ToolWindow, clazz: Class<U>, select: Boolean, condition: (U) -> Boolean): U? {
+    componentsSequence(toolWindow).forEach {
+      val logUi = getLogUi(it)
+
+      if (logUi != null && clazz.isInstance(logUi)) {
+        @Suppress("UNCHECKED_CAST")
+        logUi as U
+        if (condition(logUi)) {
+          if (select) {
+            ContentUtilEx.selectContent(toolWindow.contentManager, it, true)
+          }
+          return logUi
+        }
+      }
+    }
+    return null
   }
 
   internal fun selectLogUi(project: Project, logUi: VcsLogUi, requestFocus: Boolean = true): Boolean {

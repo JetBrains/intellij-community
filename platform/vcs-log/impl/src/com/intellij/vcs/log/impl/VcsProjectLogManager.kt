@@ -146,15 +146,19 @@ internal class VcsProjectLogManager(
       }
     }
 
-    val selectedUis = getVisibleLogUis(VcsLogTabLocation.TOOL_WINDOW).filterIsInstance<MainVcsLogUi>()
-    selectedUis.find { ui -> predicate(ui) && ui.showCommitSync(hash, root, requestFocus) }?.let { return it }
+    val selectedUi = VcsLogContentUtil.findSelectedLogUi(window) as? MainVcsLogUi
+    if (selectedUi != null && predicate(selectedUi)) {
+      if (selectedUi.showCommitSync(hash, root, requestFocus)) {
+        return selectedUi
+      }
+    }
 
-    val mainLogContent = VcsLogContentUtil.findMainLog(window.contentManager)
-    if (mainLogContent != null) {
-      ChangesViewContentManager.getInstanceImpl(project)?.initLazyContent(mainLogContent)
+    if (selectedUi?.id != MAIN_LOG_ID) {
+      val mainLogContent = VcsLogContentUtil.findMainLog(window.contentManager)
+      if (mainLogContent != null) {
+        ChangesViewContentManager.initLazyContent(mainLogContent)
 
-      val mainLogUi = awaitMainUi()
-      if (!selectedUis.contains(mainLogUi)) {
+        val mainLogUi = awaitMainUi()
         mainLogUi.refresher.setValid(true, false) // since the main ui is not visible, it needs to be validated to find the commit
         if (predicate(mainLogUi) && mainLogUi.showCommitSync(hash, root, requestFocus)) {
           window.contentManager.setSelectedContent(mainLogContent)
@@ -163,14 +167,12 @@ internal class VcsProjectLogManager(
       }
     }
 
-    val otherUis = getLogUis(VcsLogTabLocation.TOOL_WINDOW).filterIsInstance<MainVcsLogUi>() - selectedUis.toSet()
-    otherUis.find { ui ->
-      ui.refresher.setValid(true, false)
-      predicate(ui) && ui.showCommitSync(hash, root, requestFocus)
-    }?.let { ui ->
-      VcsLogContentUtil.selectLogUi(project, ui, requestFocus)
-      return ui
+    val existingUi = VcsLogContentUtil.findLogUi(window, MainVcsLogUi::class.java, true) {
+      if (it === selectedUi && it === mainUi) return@findLogUi false
+      it.refresher.setValid(true, false)
+      predicate(it) && it.showCommitSync(hash, root, requestFocus)
     }
+    if (existingUi != null) return existingUi
 
     val newUi = openNewLogTab(VcsLogTabLocation.TOOL_WINDOW, VcsLogFilterObject.EMPTY_COLLECTION)
     if (newUi.showCommit(hash, root, requestFocus)) return newUi

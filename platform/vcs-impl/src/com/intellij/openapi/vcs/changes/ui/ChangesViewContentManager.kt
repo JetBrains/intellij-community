@@ -26,6 +26,7 @@ import com.intellij.util.messages.MessageBusConnection
 import com.intellij.vcs.commit.CommitMode
 import com.intellij.vcs.commit.CommitModeManager
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.function.Predicate
 
@@ -208,13 +209,6 @@ class ChangesViewContentManager private constructor(private val project: Project
     return content.resolveToolWindowId()
   }
 
-  fun initLazyContent(content: Content) {
-    val provider = content.getUserData(CONTENT_PROVIDER_SUPPLIER_KEY)?.invoke() ?: return
-    content.putUserData(CONTENT_PROVIDER_SUPPLIER_KEY, null)
-    provider.initTabContent(content)
-    IJSwingUtilities.updateComponentTreeUI(content.component)
-  }
-
   private inner class ContentProvidersListener(val toolWindow: ToolWindow) : ContentManagerListener, ToolWindowManagerListener {
     override fun stateChanged(toolWindowManager: ToolWindowManager) {
       if (toolWindow.isVisible) {
@@ -323,6 +317,14 @@ class ChangesViewContentManager private constructor(private val project: Project
     @JvmStatic
     fun shouldHaveSplitterDiffPreview(project: Project, isContentVertical: Boolean): Boolean {
       return !isContentVertical || !isCommitToolWindowShown(project)
+    }
+
+    @ApiStatus.Internal
+    fun initLazyContent(content: Content) {
+      val provider = content.getUserData(CONTENT_PROVIDER_SUPPLIER_KEY)?.invoke() ?: return
+      content.putUserData(CONTENT_PROVIDER_SUPPLIER_KEY, null)
+      provider.initTabContent(content)
+      IJSwingUtilities.updateComponentTreeUI(content.component)
     }
 
     /**

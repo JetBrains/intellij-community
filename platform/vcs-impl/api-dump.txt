@@ -2873,7 +2873,6 @@ f:com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 - sf:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ui.ChangesViewContentI
 - sf:getToolWindowFor(com.intellij.openapi.project.Project,java.lang.String):com.intellij.openapi.wm.ToolWindow
 - sf:getToolWindowIdFor(com.intellij.openapi.project.Project,java.lang.String):java.lang.String
-- f:initLazyContent(com.intellij.ui.content.Content):V
 - sf:isCommitToolWindowShown(com.intellij.openapi.project.Project):Z
 - f:isContentSelected(java.lang.String):Z
 - sf:isToolWindowTabVertical(com.intellij.openapi.project.Project,java.lang.String):Z
