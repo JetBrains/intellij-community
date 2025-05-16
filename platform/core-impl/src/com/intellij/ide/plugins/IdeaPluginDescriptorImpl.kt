@@ -610,14 +610,6 @@ sealed class IdeaPluginDescriptorImpl(
   }
 }
 
-@ApiStatus.Internal
-@TestOnly
-fun IdeaPluginDescriptorImpl.createSubInTest(
-  subBuilder: PluginDescriptorBuilder,
-  descriptorPath: String,
-  module: PluginContentDescriptor.ModuleItem,
-): ContentModuleDescriptor = createContentModule(subBuilder, descriptorPath, module)
-
 /**
  * Main plugin descriptor, instantiated from "plugin.xml" (or from platform XMLs for Core).
  */
@@ -717,3 +709,11 @@ class ContentModuleDescriptor(
 
 internal val IdeaPluginDescriptorImpl.isRequiredContentModule: Boolean
   get() = moduleLoadingRule?.required == true
+
+@ApiStatus.Internal
+@TestOnly
+fun IdeaPluginDescriptorImpl.createSubInTest(
+  subBuilder: PluginDescriptorBuilder,
+  descriptorPath: String,
+  module: PluginContentDescriptor.ModuleItem,
+): ContentModuleDescriptor = createContentModule(subBuilder, descriptorPath, module)
