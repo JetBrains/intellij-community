@@ -17,7 +17,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -45,7 +44,6 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -54,7 +52,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 @ApiStatus.Internal
-public final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass implements PossiblyDumbAware {
+final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass implements PossiblyDumbAware {
   private static final Logger LOG = Logger.getInstance(LocalInspectionsPass.class);
   private final TextRange myPriorityRange;
   private final boolean myIgnoreSuppressed;
@@ -444,7 +442,7 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
   private @NotNull List<LocalInspectionToolWrapper> getInspectionTools(@NotNull InspectionProfileWrapper profile) {
     List<InspectionToolWrapper<?, ?>> toolWrappers = profile.getInspectionProfile().getInspectionTools(getFile());
 
-    if (LOG.isDebugEnabled() && runDuplicateCheck) {
+    if (LOG.isDebugEnabled()) {
       // this triggers heavy class loading of all inspections, do not run if DEBUG not enabled
       InspectionProfileWrapper.checkInspectionsDuplicates(toolWrappers);
     }
@@ -510,14 +508,6 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
       return true;
     }
   }
-
-  @TestOnly
-  public static void forceNoDuplicateCheckInTests(@NotNull Disposable parent) {
-    Disposer.register(parent, () -> runDuplicateCheck = true);
-    runDuplicateCheck = false;
-  }
-
-  private static boolean runDuplicateCheck = true;
 
   private static final class DumbToolWrapperCondition implements Condition<LocalInspectionToolWrapper> {
     private final boolean myDumbMode;

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInspection.*
+import com.intellij.codeInspection.ex.InspectionProfileWrapper
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.java.JavaLanguage
@@ -89,17 +90,17 @@ class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
 
     val unrelatedToolWrapper = createUnrelatedToolWrapper()
     enableInspectionTool(project, unrelatedToolWrapper, testRootDisposable)
-    LocalInspectionsPass.forceNoDuplicateCheckInTests(testRootDisposable)
-
-    @Language("JAVA")
-    val text = """
+    InspectionProfileWrapper.runWithNoDuplicateCheckInTests {
+      @Language("JAVA")
+      val text = """
       // comment
     """
-    configureByText(JavaFileType.INSTANCE, text)
+      configureByText(JavaFileType.INSTANCE, text)
 
-    doHighlightingInDumbMode()
+      doHighlightingInDumbMode()
 
-    assertFalse(unrelatedToolWrapper.isToolInstantiated())
+      assertFalse(unrelatedToolWrapper.isToolInstantiated())
+    }
   }
 
   fun testLocalInspectionDontInitializeUnrelatedTools() {
@@ -107,17 +108,17 @@ class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
 
     val unrelatedToolWrapper = createUnrelatedToolWrapper()
     enableInspectionTool(project, unrelatedToolWrapper, testRootDisposable)
-    LocalInspectionsPass.forceNoDuplicateCheckInTests(testRootDisposable)
-
-    @Language("JAVA")
-    val text = """
+    InspectionProfileWrapper.runWithNoDuplicateCheckInTests {
+      @Language("JAVA")
+      val text = """
       // comment
     """
-    configureByText(JavaFileType.INSTANCE, text)
+      configureByText(JavaFileType.INSTANCE, text)
 
-    doHighlighting()
+      doHighlighting()
 
-    assertFalse(unrelatedToolWrapper.isToolInstantiated())
+      assertFalse(unrelatedToolWrapper.isToolInstantiated())
+    }
   }
 
   fun testJavaSuppressor() {

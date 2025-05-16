@@ -11,8 +11,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.HashSet;
 import java.util.List;
@@ -34,6 +36,7 @@ public class InspectionProfileWrapper {
 
   // check whether some inspection got registered twice by accident. 've bit once.
   private static boolean alreadyChecked;
+  private static boolean runDuplicateCheck = true;
 
   protected final InspectionProfile myProfile;
   protected final InspectionProfileManager myProfileManager;
@@ -54,7 +57,7 @@ public class InspectionProfileWrapper {
   }
 
   public static void checkInspectionsDuplicates(@NotNull List<? extends InspectionToolWrapper<?, ?>> toolWrappers) {
-    if (alreadyChecked) {
+    if (!runDuplicateCheck || alreadyChecked) {
       return;
     }
 
@@ -104,5 +107,17 @@ public class InspectionProfileWrapper {
   @Deprecated
   public static void setCustomInspectionProfileWrapperTemporarily(@NotNull PsiFile file, @NotNull Function<? super InspectionProfile, ? extends InspectionProfileWrapper> function) {
     file.putUserData(CUSTOMIZATION_KEY, function);
+  }
+
+  @TestOnly
+  @ApiStatus.Internal
+  public static void runWithNoDuplicateCheckInTests(@NotNull Runnable runnable) {
+    runDuplicateCheck = false;
+    try {
+      runnable.run();
+    }
+    finally {
+      runDuplicateCheck = true;
+    }
   }
 }
