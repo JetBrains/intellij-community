@@ -12,7 +12,7 @@ fun ObjectAssert<PluginSet>.hasExactlyEnabledPlugins(vararg ids: String) = apply
 fun ObjectAssert<PluginSet>.doesNotHaveEnabledPlugins() = hasExactlyEnabledPlugins()
 
 fun ObjectAssert<PluginSet>.hasExactlyEnabledModulesWithoutMainDescriptors(vararg ids: String) = apply {
-  extracting { it.getEnabledModules().mapNotNull { plugin -> plugin.moduleName } }
+  extracting { it.getEnabledModules().mapNotNull { plugin -> plugin.contentModuleName } }
     .asList()
     .containsExactlyInAnyOrder(*ids)
 }

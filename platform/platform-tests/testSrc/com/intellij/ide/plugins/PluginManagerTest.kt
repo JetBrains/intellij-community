@@ -257,7 +257,7 @@ class PluginManagerTest {
       val text = StringBuilder()
       for (descriptor in loadPluginResult.pluginSet.getEnabledModules()) {
         text.append(if (descriptor.isEnabled()) "+ " else "  ").append(descriptor.getPluginId().idString)
-        if (descriptor.moduleName != null) {
+        if (descriptor is ContentModuleDescriptor) {
           text.append(" | ").append(descriptor.moduleName)
         }
         text.append('\n')

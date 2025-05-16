@@ -5,6 +5,7 @@ package com.intellij.ide.fileTemplates.impl
 
 import com.intellij.configurationStore.StreamProvider
 import com.intellij.ide.fileTemplates.FileTemplateManager
+import com.intellij.ide.plugins.ContentModuleDescriptor
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
@@ -186,7 +187,7 @@ private fun loadDefaultTemplates(prefixes: List<String>): FileTemplateLoadResult
     } else if (loader is PluginAwareClassLoader && LocalizationUtil.isLocalizationPluginDescriptor(loader.pluginDescriptor) && !LocalizationUtil.isCurrentLocalizationPluginDescriptor(loader.pluginDescriptor)) {
       continue
     }
-    if (module.moduleName != null && module.jarFiles.isNullOrEmpty()) {
+    if (module is ContentModuleDescriptor && module.jarFiles.isNullOrEmpty()) {
       // not isolated module - skip, as resource will be loaded from plugin classpath
       continue
     }

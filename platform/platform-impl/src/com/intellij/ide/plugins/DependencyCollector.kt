@@ -82,7 +82,7 @@ internal class DependencySupportBean() : PluginAware {
   }
 
   override fun setPluginDescriptor(pluginDescriptor: PluginDescriptor) {
-    if (pluginDescriptor is IdeaPluginDescriptorImpl && pluginDescriptor.moduleName == null) {
+    if (pluginDescriptor is IdeaPluginDescriptorImpl && pluginDescriptor !is ContentModuleDescriptor) {
       this.pluginDescriptor = pluginDescriptor
     }
     else {

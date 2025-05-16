@@ -94,7 +94,7 @@ private class PluginDescriptionDumper(val coroutineScope: CoroutineScope) {
     val classLoaderIds = parentClassLoaders.associateWith { classLoader ->
       when (classLoader) {
         is PluginClassLoader -> {
-          val moduleSuffix = (classLoader.pluginDescriptor as? IdeaPluginDescriptorImpl)?.moduleName?.let { ":$it" } ?: ""
+          val moduleSuffix = (classLoader.pluginDescriptor as? IdeaPluginDescriptorImpl)?.contentModuleName?.let { ":$it" } ?: ""
           "PluginClassLoader[${classLoader.pluginId.idString}$moduleSuffix]"
         }
         ClassLoader.getSystemClassLoader() -> "java.SystemClassLoader"

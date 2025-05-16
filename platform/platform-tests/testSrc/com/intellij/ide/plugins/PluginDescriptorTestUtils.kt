@@ -43,7 +43,7 @@ fun ObjectAssert<out IdeaPluginDescriptorImpl>.isNotMarkedEnabled() = apply {
 }
 
 fun ObjectAssert<out IdeaPluginDescriptorImpl>.hasExactlyEnabledContentModules(vararg ids: String) = apply {
-  extracting { it.content.modules.mapNotNull { it.getDescriptorOrNull()?.takeIf { it.isEnabled }?.moduleName } }
+  extracting { it.content.modules.mapNotNull { it.getDescriptorOrNull()?.takeIf { it.isEnabled }?.contentModuleName } }
     .asList()
     .containsExactly(*ids)
 }

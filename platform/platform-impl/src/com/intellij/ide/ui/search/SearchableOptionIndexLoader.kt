@@ -7,6 +7,7 @@ import com.intellij.BundleBase.replaceMnemonicAmpersand
 import com.intellij.DynamicBundle
 import com.intellij.IntelliJResourceBundle
 import com.intellij._doResolveBundle
+import com.intellij.ide.plugins.ContentModuleDescriptor
 import com.intellij.ide.plugins.PluginManagerCore.getPluginSet
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar.AdditionalLocationProvider
@@ -209,7 +210,7 @@ private fun processSearchableOptions(processor: MySearchableOptionProcessor) {
       continue
     }
 
-    val classifier = if (module.moduleName == null) "p-${module.pluginId.idString}" else "m-${module.moduleName}"
+    val classifier = if (module !is ContentModuleDescriptor) "p-${module.pluginId.idString}" else "m-${module.moduleName}"
 
     val fileName = "$classifier-${SearchableOptionsRegistrar.SEARCHABLE_OPTIONS_XML_NAME}.json"
     val data = classLoader.getResourceAsBytes(fileName, false)

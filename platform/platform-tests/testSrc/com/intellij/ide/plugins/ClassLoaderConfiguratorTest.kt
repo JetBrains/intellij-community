@@ -46,7 +46,7 @@ internal class ClassLoaderConfiguratorTest {
                                                   descriptorContent = null))
     val plugins = arrayOf(kotlin, gradle, kotlinGradleJava, kotlinCompilerGradle)
     sortDependenciesInPlace(plugins)
-    assertThat(plugins.last().moduleName).isNull()
+    assertThat(plugins.last().contentModuleName).isNull()
   }
 
   @Test
@@ -58,7 +58,7 @@ internal class ClassLoaderConfiguratorTest {
       Path.of(""),
       false,
     )
-    fun createModuleDescriptor(name: String): IdeaPluginDescriptorImpl {
+    fun createModuleDescriptor(name: String): ContentModuleDescriptor {
       return plugin.createSubInTest(
         subBuilder = PluginDescriptorBuilder.builder().apply { `package` = name },
         descriptorPath = "",
