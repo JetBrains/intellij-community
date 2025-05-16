@@ -29,8 +29,9 @@ import java.util.*
 private val LOG: Logger
   get() = PluginManagerCore.logger
 
+@Suppress("CanBePrimaryConstructorProperty")
 @ApiStatus.Internal
-abstract class IdeaPluginDescriptorImpl internal constructor(
+sealed class IdeaPluginDescriptorImpl(
   raw: RawPluginDescriptor,
   pluginPath: Path,
   isBundled: Boolean,
