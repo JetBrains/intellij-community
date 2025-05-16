@@ -50,6 +50,8 @@ fun generateMapping(
   outputPath.writer().use { writer ->
     writer.printClass(fileName, packageName, mappings, "$properties $output $packageName")
   }
+
+  println("Done! Result: $outputPath")
 }
 
 private fun OutputStreamWriter.printClass(
