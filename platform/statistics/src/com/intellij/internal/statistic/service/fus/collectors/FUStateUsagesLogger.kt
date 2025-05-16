@@ -17,6 +17,7 @@ import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
@@ -82,6 +83,10 @@ class FUStateUsagesLogger private constructor(coroutineScope: CoroutineScope) : 
         logUsagesAsStateEvents(project = project, group = group, metrics = data, logger = logger)
       }
       catch (e: Throwable) {
+        if (Logger.shouldRethrow(e)) {
+          throw e
+        }
+
         if (project != null && project.isDisposed) {
           return
         }
