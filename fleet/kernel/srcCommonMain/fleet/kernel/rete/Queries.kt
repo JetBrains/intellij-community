@@ -149,6 +149,12 @@ fun <T> Query<T>.filter(p: (T) -> Boolean): Query<T> =
   flatMap { t -> if (p(t)) setOf(t) else emptySet() }
 
 /**
+ * Returns a query containing only matches of the original query that are instances of specified type parameter [R].
+ * */
+inline fun <reified R> Query<*>.filterIsInstance(): Query<R> =
+  flatMap { t -> if (t is R) setOf(t) else emptySet() }
+
+/**
  * version of [filter] working with [Match]
  * [p] has to be a *pure* function of a database
  * */
