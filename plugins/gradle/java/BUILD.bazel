@@ -113,6 +113,7 @@ jvm_library(
     "//java/debugger/impl",
     "//plugins/maven-server-api:maven-server",
     "@lib//:mockito",
+    "@lib//:mockito-kotlin",
     "//java/execution/impl",
     "//plugins/groovy",
     "//plugins/groovy:groovy_test_lib",

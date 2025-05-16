@@ -3,10 +3,19 @@ package org.jetbrains.plugins.gradle.execution.build
 
 import com.intellij.execution.application.ApplicationConfigurationType
 import com.intellij.execution.scratch.JavaScratchConfigurationType
+import com.intellij.openapi.concurrency.awaitPromise
+import com.intellij.openapi.externalSystem.util.DEFAULT_SYNC_TIMEOUT
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
+import com.intellij.task.ProjectTaskContext
+import com.intellij.task.ProjectTaskRunner
+import com.intellij.task.TaskRunnerResults
+import com.intellij.task.impl.ModuleBuildTaskImpl
+import com.intellij.util.asDisposable
+import kotlinx.coroutines.*
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleProjectTaskRunnerTest : GradleProjectTaskRunnerTestCase() {
@@ -43,6 +52,50 @@ class GradleProjectTaskRunnerTest : GradleProjectTaskRunnerTestCase() {
         val configurationType = JavaScratchConfigurationType.getInstance()
         setupGradleDelegationMode(delegatedBuild, delegatedRun, testDisposable)
         assertGradleProjectTaskRunnerCanRun(configurationType, shouldBuild = false, shouldRun = false)
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun `test GradleProjectTaskRunner#run for ApplicationConfiguration's BuildTask`(
+    gradleVersion: GradleVersion,
+  ) {
+    testJavaProject(gradleVersion) {
+      runBlocking {
+        setupGradleDelegationMode(delegatedBuild = true, delegatedRun = false, asDisposable())
+
+        val numAttempts = 1000
+
+        var unsafeExecutionCounter = 0
+        mockGradleConnectionService(asDisposable()) {
+          unsafeExecutionCounter++
+        }
+
+        val projectTaskRunner = ProjectTaskRunner.EP_NAME.findExtensionOrFail(GradleProjectTaskRunner::class.java)
+
+        val configurationType = ApplicationConfigurationType.getInstance()
+        val configuration = createTestConfiguration(configurationType, module)
+
+        coroutineScope {
+          repeat(numAttempts) { sessionId ->
+            launch {
+              val buildTask = ModuleBuildTaskImpl(module)
+              val buildTaskContext = ProjectTaskContext(sessionId, configuration)
+
+              val buildPromise = projectTaskRunner.run(project, buildTaskContext, buildTask)
+              val buildResult = withContext(NonCancellable) {
+                buildPromise.awaitPromise(DEFAULT_SYNC_TIMEOUT)
+              }
+
+              Assertions.assertEquals(TaskRunnerResults.SUCCESS, buildResult)
+            }
+          }
+        }
+
+        Assertions.assertEquals(numAttempts, unsafeExecutionCounter) {
+          "The Gradle executions should be synchronised by the IDE Gradle integration."
+        }
       }
     }
   }

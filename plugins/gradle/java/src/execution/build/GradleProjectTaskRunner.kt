@@ -32,6 +32,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.asPromise
 import org.jetbrains.plugins.gradle.GradleJavaCoroutineScope.gradleCoroutineScope
@@ -50,9 +52,20 @@ class GradleProjectTaskRunner : ProjectTaskRunner() {
 
   override fun isFileGeneratedEventsSupported(): Boolean = true
 
+  /**
+   * Only one project build task is allowed to be executed by Gradle at the same moment.
+   * It is necessary to reduce the number of working Gradle daemons in parallel.
+   *
+   * The GradleProjectTaskRunner API allows running several project build tasks in a batch.
+   * However, they should be provided as one run transaction.
+   */
+  private val mutex = Mutex()
+
   override fun run(project: Project, context: ProjectTaskContext, vararg tasks: ProjectTask): Promise<Result> {
     return project.gradleCoroutineScope.async<Result> {
-      run(project, context, tasks.asList())
+      mutex.withLock {
+        run(project, context, tasks.asList())
+      }
       SUCCESS
     }.asCompletableFuture().asPromise()
   }

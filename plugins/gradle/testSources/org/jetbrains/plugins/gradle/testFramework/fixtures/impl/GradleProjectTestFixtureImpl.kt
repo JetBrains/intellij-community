@@ -38,7 +38,8 @@ internal class GradleProjectTestFixtureImpl(
   private val configureProject: FileTestFixture.Builder.() -> Unit
 ) : GradleProjectTestFixture {
 
-  private lateinit var gradleJvmFixture: GradleJvmTestFixture
+  override lateinit var gradleJvmFixture: GradleJvmTestFixture
+    private set
 
   override lateinit var fileFixture: FileTestFixture
     private set
