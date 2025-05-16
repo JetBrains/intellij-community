@@ -16,7 +16,6 @@ import com.intellij.util.ContentUtilEx
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogUi
-import com.intellij.vcs.log.impl.VcsLogManager.VcsLogUiFactory
 import com.intellij.vcs.log.ui.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -61,14 +60,12 @@ object VcsLogContentUtil {
     project: Project,
     logManager: VcsLogManager,
     tabGroupId: TabGroupId,
+    ui: U,
     tabDisplayName: Function<U, @NlsContexts.TabTitle String>,
-    factory: VcsLogUiFactory<out U>,
     focus: Boolean,
-  ): U {
+  ) {
     val toolWindow = getToolWindowOrThrow(project)
-    val ui = logManager.createLogUi(factory, VcsLogTabLocation.TOOL_WINDOW)
     openLogTab(logManager, toolWindow, tabGroupId, ui, tabDisplayName, focus)
-    return ui
   }
 
   internal fun <U : VcsLogUiEx> openLogTab(
@@ -79,8 +76,9 @@ object VcsLogContentUtil {
     tabDisplayName: Function<U, @NlsContexts.TabTitle String>,
     focus: Boolean,
   ) {
-    ContentUtilEx.addTabbedContent(toolWindow.contentManager, tabGroupId,
-                                   TabDescriptor(VcsLogPanel(logManager, logUi), Supplier { tabDisplayName.apply(logUi) }, logUi), focus)
+    @Suppress("HardCodedStringLiteral")
+    val tabDescriptor = TabDescriptor(VcsLogPanel(logManager, logUi), Supplier { tabDisplayName.apply(logUi) }, logUi)
+    ContentUtilEx.addTabbedContent(toolWindow.contentManager, tabGroupId, tabDescriptor, focus)
     if (focus) {
       toolWindow.activate(null)
     }

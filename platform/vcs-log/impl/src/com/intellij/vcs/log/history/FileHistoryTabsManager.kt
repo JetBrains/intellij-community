@@ -14,9 +14,9 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.impl.VcsLogContentUtil
 import com.intellij.vcs.log.impl.VcsLogManager
+import com.intellij.vcs.log.impl.VcsLogTabLocation
 import com.intellij.vcs.log.impl.VcsProjectLog
 import kotlinx.coroutines.CoroutineScope
-import java.util.function.Function
 
 @Service(Service.Level.PROJECT)
 internal class FileHistoryTabsManager(val project: Project, coroutineScope: CoroutineScope) {
@@ -51,12 +51,12 @@ internal class FileHistoryTabsManager(val project: Project, coroutineScope: Coro
 
   private fun doOpenFileHistoryTab(logManager: VcsLogManager, path: FilePath, root: VirtualFile, hash: Hash?, focus: Boolean): FileHistoryUi {
     val suffix = if (hash != null) " (" + hash.toShortString() + ")" else ""
-    val fileHistoryUi = VcsLogContentUtil.openLogTab(project, logManager, tabGroupId, Function { path.name + suffix },
-                                                     FileHistoryUiFactory(path, root, hash), focus)
-    Disposer.register(fileHistoryUi, Disposable {
+    val ui = logManager.createLogUi(FileHistoryUiFactory(path, root, hash), VcsLogTabLocation.TOOL_WINDOW)
+    VcsLogContentUtil.openLogTab(project, logManager, tabGroupId, ui, { path.name + suffix }, focus)
+    Disposer.register(ui, Disposable {
       if (!isLogDisposing) historyTabs.remove(FileHistoryTab(path, root, hash))
     })
-    return fileHistoryUi
+    return ui
   }
 
   private data class FileHistoryTab(val path: FilePath, val root: VirtualFile, val hash: Hash?)

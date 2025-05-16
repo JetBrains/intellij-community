@@ -38,7 +38,6 @@ import git4idea.merge.MergeChangeCollector
 import git4idea.repo.GitRepository
 import java.util.*
 import java.util.concurrent.CompletableFuture
-import java.util.function.Function
 
 private val LOG = logger<GitUpdateInfoAsLog>()
 
@@ -165,8 +164,8 @@ class GitUpdateInfoAsLog(private val project: Project,
 
   private fun createLogUi(logManager: VcsLogManager, logUiFactory: MyLogUiFactory, select: Boolean) {
     val tabName = DateFormatUtil.formatDateTime(System.currentTimeMillis())
-    VcsLogContentUtil.openLogTab(project, logManager, tabGroupId,
-                                 Function { tabName }, logUiFactory, select)
+    val ui = logManager.createLogUi(logUiFactory, VcsLogTabLocation.TOOL_WINDOW)
+    VcsLogContentUtil.openLogTab(project, logManager, tabGroupId, ui, { tabName }, select)
   }
 
   private val tabGroupId = TabGroupId("Update Info", VcsBundle.messagePointer("vcs.update.tab.name"))
