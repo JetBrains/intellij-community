@@ -41,21 +41,6 @@ abstract class IdeaPluginDescriptorImpl internal constructor(
   descriptorPath: String? = null
 ) : IdeaPluginDescriptorEx {
 
-  constructor(
-    raw: RawPluginDescriptor,
-    pluginPath: Path,
-    isBundled: Boolean,
-    useCoreClassLoader: Boolean = false
-  ): this(
-    raw = raw,
-    pluginPath = pluginPath,
-    isBundled = isBundled,
-    moduleName = null,
-    moduleLoadingRule = null,
-    useCoreClassLoader = useCoreClassLoader,
-    isIndependentFromCoreClassLoader = false,
-    descriptorPath = null)
-
   /** see [type], [checkTypeInvariants] */
   @ApiStatus.Internal
   enum class Type {
@@ -716,10 +701,14 @@ class MainPluginDescriptor(
   isBundled: Boolean,
   useCoreClassLoader: Boolean = false
 ): IdeaPluginDescriptorImpl(
-  raw,
-  pluginPath,
-  isBundled,
-  useCoreClassLoader
+  raw = raw,
+  pluginPath = pluginPath,
+  isBundled = isBundled,
+  moduleName = null,
+  moduleLoadingRule = null,
+  useCoreClassLoader = useCoreClassLoader,
+  isIndependentFromCoreClassLoader = false,
+  descriptorPath = null
 )
 
 @ApiStatus.Internal
