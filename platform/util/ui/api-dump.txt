@@ -4728,9 +4728,15 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$Toolbar
 - s:verticalToolbarInsets():java.awt.Insets
 f:com.intellij.util.ui.JBUI$CurrentTheme$Tooltip
 - sf:CORNER_RADIUS:com.intellij.util.ui.JBValue
-- <init>():V
+- s:background():java.awt.Color
 - s:borderColor():java.awt.Color
+- s:font():java.awt.Font
+- s:foreground():java.awt.Color
+- s:grayedForeground():java.awt.Color
+- s:separatorColor():java.awt.Color
 - s:shortcutForeground():java.awt.Color
+f:com.intellij.util.ui.JBUI$CurrentTheme$Tooltip$Actions
+- s:background():java.awt.Color
 com.intellij.util.ui.JBUI$CurrentTheme$Tree
 - sf:ARC:com.intellij.util.ui.JBValue
 - sf:BACKGROUND:java.awt.Color

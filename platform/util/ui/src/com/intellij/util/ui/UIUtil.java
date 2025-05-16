@@ -782,15 +782,15 @@ public final class UIUtil {
   }
 
   public static @NotNull Color getToolTipBackground() {
-    return JBColor.namedColor("ToolTip.background", new JBColor(Gray.xF2, new Color(0x3c3f41)));
+    return JBUI.CurrentTheme.Tooltip.background();
   }
 
   public static @NotNull Color getToolTipActionBackground() {
-    return JBColor.namedColor("ToolTip.Actions.background", new JBColor(Gray.xEB, new Color(0x43474a)));
+    return JBUI.CurrentTheme.Tooltip.Actions.background();
   }
 
   public static @NotNull Color getToolTipForeground() {
-    return JBColor.namedColor("ToolTip.foreground", new JBColor(Gray.x00, Gray.xBF));
+    return JBUI.CurrentTheme.Tooltip.foreground();
   }
 
   public static Color getComboBoxDisabledForeground() {
@@ -854,7 +854,7 @@ public final class UIUtil {
   }
 
   public static Font getToolTipFont() {
-    return UIManager.getFont("ToolTip.font");
+    return JBUI.CurrentTheme.Tooltip.font();
   }
 
   public static void setSliderIsFilled(final @NotNull JSlider slider, final boolean value) {
@@ -3131,7 +3131,7 @@ public final class UIUtil {
   }
 
   public static @NotNull Color getTooltipSeparatorColor() {
-    return JBColor.namedColor("Tooltip.separatorColor", 0xd1d1d1, 0x545658);
+    return JBUI.CurrentTheme.Tooltip.separatorColor();
   }
 
   /**

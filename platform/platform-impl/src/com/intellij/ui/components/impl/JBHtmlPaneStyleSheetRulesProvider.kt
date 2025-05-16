@@ -22,12 +22,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.Gray
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.*
 import com.intellij.util.containers.addAllIfNotNull
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StyleSheetUtil
-import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
 import org.jsoup.nodes.Element
@@ -125,8 +124,8 @@ internal class JBHtmlPaneStyleSheetRulesProvider {
   ): String {
     val spacingBefore = scale(configuration.spaceBeforeParagraph)
     val spacingAfter = scale(configuration.spaceAfterParagraph)
-    val hrColor = ColorUtil.toHtmlColor(UIUtil.getTooltipSeparatorColor())
-    val blockquoteBorderColor = Gray.get(0x90)
+    val hrColor = ColorUtil.toHtmlColor(JBUI.CurrentTheme.Tooltip.separatorColor())
+    val grayedForeground = ColorUtil.toHtmlColor(JBUI.CurrentTheme.Tooltip.grayedForeground())
     val paragraphSpacing = """padding: ${spacingBefore}px 0 ${spacingAfter}px 0"""
 
     @Language("CSS")
@@ -154,12 +153,12 @@ internal class JBHtmlPaneStyleSheetRulesProvider {
       td pre { padding: ${scale(1)}px 0 0 0; margin: 0 0 0 0 }
       blockquote { 
           padding: 0 0 0 ${scale(10)}px; 
-          border-left: ${toHtmlColor(blockquoteBorderColor)} solid ${scale(2)}px;
+          border-left: ${grayedForeground} solid ${scale(2)}px;
           margin: ${spacingBefore}px 0 ${spacingAfter}px 0;
       }
       blockquote p { border: none; }
       .$CLASS_CENTERED { text-align: center }
-      .$CLASS_GRAYED { color: #909090 }
+      .$CLASS_GRAYED { color: ${grayedForeground}}
       hr { 
          padding: ${scale(1)}px 0 0 0; 
          margin: ${spacingBefore} 0 ${spacingAfter}px 0; 
