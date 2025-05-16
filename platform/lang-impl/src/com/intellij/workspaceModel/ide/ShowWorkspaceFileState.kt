@@ -29,6 +29,7 @@ internal class ShowWorkspaceFileState : DumbAwareAction() {
       .findFileSets(virtualFile,
                     false,
                     true,
+                    false,
                     true,
                     true,
                     true
