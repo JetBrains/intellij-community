@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -21,7 +21,7 @@ public final class CompoundProjectViewNodeDecorator implements ProjectViewNodeDe
   private static final ProjectViewNodeDecorator EMPTY = new CompoundProjectViewNodeDecorator(null);
   private static final Key<ProjectViewNodeDecorator> KEY = Key.create("ProjectViewNodeDecorator");
   private static final Logger LOG = Logger.getInstance(CompoundProjectViewNodeDecorator.class);
-  private final Project myProject;
+  private final Project project;
 
   /**
    * @return a shared instance for the specified project
@@ -36,16 +36,21 @@ public final class CompoundProjectViewNodeDecorator implements ProjectViewNodeDe
   }
 
   private CompoundProjectViewNodeDecorator(@Nullable Project project) {
-    myProject = project;
+    this.project = project;
   }
 
   @Override
   public void decorate(@NotNull ProjectViewNode node, @NotNull PresentationData data) {
     forEach(decorator -> decorator.decorate(node, data));
   }
+
   private void forEach(@NotNull Consumer<? super ProjectViewNodeDecorator> consumer) {
-    if (myProject == null || myProject.isDisposed()) return; // empty or disposed
-    for (ProjectViewNodeDecorator decorator : EP.getExtensions(myProject)) {
+    if (project == null || project.isDisposed()) {
+      // empty or disposed
+      return;
+    }
+
+    for (ProjectViewNodeDecorator decorator : EP.getExtensions(project)) {
       try {
         consumer.accept(decorator);
       }

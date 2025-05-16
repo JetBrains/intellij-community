@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -29,9 +29,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class PackageElementNode extends ProjectViewNode<PackageElement> implements ValidateableNode {
-  public PackageElementNode(@NotNull Project project,
-                            @NotNull PackageElement value,
-                            final ViewSettings viewSettings) {
+  public PackageElementNode(@NotNull Project project, @NotNull PackageElement value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 
@@ -48,9 +46,9 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> implemen
     return false;
   }
 
-  private boolean isUnderContent(final VirtualFile file) {
+  private boolean isUnderContent(@NotNull VirtualFile file) {
     PackageElement element = getValue();
-    final Module module = element == null ? null : element.getModule();
+    Module module = element == null ? null : element.getModule();
     if (module == null) {
       return ModuleUtilCore.projectContainsFile(getProject(), file, isLibraryElement());
     }
@@ -87,7 +85,6 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> implemen
     }
     return children;
   }
-
 
   @Override
   public boolean validate() {
@@ -169,11 +166,11 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> implemen
   @Override
   public boolean canRepresent(final Object element) {
     if (super.canRepresent(element)) return true;
-    final PackageElement value = getValue();
+    PackageElement value = getValue();
     if (value == null) return true;
     if (element instanceof PackageElement packageElement) {
-      final String otherPackage = packageElement.getPackage().getQualifiedName();
-      final String aPackage = value.getPackage().getQualifiedName();
+      String otherPackage = packageElement.getPackage().getQualifiedName();
+      String aPackage = value.getPackage().getQualifiedName();
       if (otherPackage.equals(aPackage)) {
         return true;
       }
@@ -209,7 +206,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> implemen
 
   @Override
   public String getTitle() {
-    final PackageElement packageElement = getValue();
+    PackageElement packageElement = getValue();
     if (packageElement == null) {
       return super.getTitle();
     }
@@ -218,7 +215,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> implemen
 
   @Override
   public @Nullable String getQualifiedNameSortKey() {
-    final PackageElement packageElement = getValue();
+    PackageElement packageElement = getValue();
     if (packageElement != null) {
       return packageElement.getPackage().getQualifiedName();
     }
@@ -226,7 +223,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> implemen
   }
 
   @Override
-  public int getTypeSortWeight(final boolean sortByType) {
+  public int getTypeSortWeight(boolean sortByType) {
     return 4;
   }
 
@@ -238,6 +235,5 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> implemen
       }
     }
     return false;
-
   }
 }

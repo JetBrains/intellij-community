@@ -1,14 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("OVERRIDE_DEPRECATION", "ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.intellij.openapi.module.impl
 
 import com.intellij.configurationStore.RenameableStateStorageManager
 import com.intellij.ide.highlighter.ModuleFileType
-import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.IComponentStore
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
@@ -35,7 +33,6 @@ open class ModuleImpl(
   project: Project,
   val componentManager: ComponentManager,
 ) : DelegatingComponentManagerEx, ModuleEx, Queryable {
-
   private val project: Project
   protected var imlFilePointer: VirtualFilePointer? = null
 
@@ -65,8 +62,7 @@ open class ModuleImpl(
     this.name = name
   }
 
-  internal fun getModuleComponentManager(): ModuleComponentManager =
-    componentManager.getComponentManagerImpl() as ModuleComponentManager
+  internal fun getModuleComponentManager(): ModuleComponentManager = componentManager.getComponentManagerImpl() as ModuleComponentManager
 
   override fun init() {
     // do not measure (activityNamePrefix method not overridden by this class)
@@ -92,13 +88,12 @@ open class ModuleImpl(
     get() = componentManager as ComponentManagerEx
 
   override fun isDisposed(): Boolean {
-    // in case of light project in tests when it's temporarily disposed, the module should be treated as disposed too.
+    // in case of a light project in tests when it's temporarily disposed, the module should be treated as disposed too.
     @Suppress("TestOnlyProblems")
     return componentManager.isDisposed() || (project as ProjectEx).isLight && project.isDisposed()
   }
 
-  override fun getMessageBus(): MessageBus =
-    delegateComponentManager.messageBus
+  override fun getMessageBus(): MessageBus = delegateComponentManager.messageBus
 
   override fun getModuleFile(): VirtualFile? = imlFilePointer?.file
 
@@ -189,11 +184,11 @@ open class ModuleImpl(
     info.put("name", getName())
   }
 
-  override fun <T : Any?> getUserData(key: Key<T?>): T? =
-    componentManager.getUserData(key)
+  override fun <T : Any?> getUserData(key: Key<T?>): T? = componentManager.getUserData(key)
 
-  override fun <T : Any?> putUserData(key: Key<T?>, value: T?) =
+  override fun <T : Any?> putUserData(key: Key<T?>, value: T?) {
     componentManager.putUserData(key, value)
+  }
 }
 
 @State(name = "DeprecatedModuleOptionManager", useLoadedStateAsExisting = false)
@@ -211,7 +206,7 @@ internal class DeprecatedModuleOptionManager(private val module: Module)
   class State {
     @Property(surroundWithTag = false)
     @MapAnnotation(surroundKeyWithTag = false, surroundValueWithTag = false, surroundWithTag = false, entryTagName = "option")
-    val options: MutableMap<String, String?> = HashMap()
+    val options = HashMap<String, String?>()
   }
 
   private var state = State()

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.configurationStore.RenameableStateStorageManager
@@ -49,25 +49,6 @@ class ModuleBridgeImpl(
   virtualFilePointer = virtualFileUrl as? VirtualFileUrlBridge,
   componentManager = componentManager
 ), ModuleBridge {
-
-  //override fun beforeChanged(event: VersionedStorageChange) = moduleBridgeBeforeChangedTimeMs.addMeasuredTime {
-  //  val moduleEntityChanges = event.getChanges(ModuleEntity::class.java)
-  //  moduleEntityChanges.forEach {
-  //    if (it !is EntityChange.Removed<ModuleEntity>) return@forEach
-  //    if (it.entity.symbolicId != moduleEntityId) return@forEach
-  //
-  //    if (event.storageBefore.moduleMap.getDataByEntity(it.entity) != this@ModuleBridgeImpl) return@forEach
-  //
-  //    val currentStore = entityStorage.current
-  //    entityStorage = VersionedEntityStorageOnSnapshot(currentStore.toSnapshot())
-  //    assert(moduleEntityId in entityStorage.current) {
-  //      // If we ever get this assertion, replace use `event.storeBefore` instead of current
-  //      // As it made in ArtifactBridge
-  //      "Cannot resolve module $moduleEntityId. Current store: $currentStore"
-  //    }
-  //  }
-  //}
-
   override fun rename(newName: String, newModuleFileUrl: VirtualFileUrl?, notifyStorage: Boolean) {
     imlFilePointer = newModuleFileUrl as VirtualFileUrlBridge
     rename(newName, notifyStorage)
@@ -113,8 +94,10 @@ class ModuleBridgeImpl(
     project.serviceAsync<FacetManagerFactory>().getFacetManager(this)
   }
 
-  override fun initFacets() = facetsInitializationTimeMs.addMeasuredTime {
-    FacetManager.getInstance(this).allFacets.forEach(Facet<*>::initFacet)
+  override fun initFacets() {
+    facetsInitializationTimeMs.addMeasuredTime {
+      FacetManager.getInstance(this).allFacets.forEach(Facet<*>::initFacet)
+    }
   }
 
   override fun registerComponents(
