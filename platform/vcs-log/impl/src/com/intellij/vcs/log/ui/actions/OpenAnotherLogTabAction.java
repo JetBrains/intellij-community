@@ -5,25 +5,23 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogUi;
+import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsLogTabLocation;
 import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
-import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Collection;
 
 @ApiStatus.Internal
 public abstract class OpenAnotherLogTabAction extends DumbAwareAction {
@@ -103,13 +101,13 @@ public abstract class OpenAnotherLogTabAction extends DumbAwareAction {
 
     @Override
     protected @NotNull VcsLogFilterCollection getFilters(@NotNull Project project, @NotNull AnActionEvent e) {
-      VcsLogManager logManager = VcsProjectLog.getInstance(project).getLogManager();
-      if (logManager == null) return VcsLogFilterObject.collection();
+      ToolWindow toolWindow = e.getData(PlatformDataKeys.TOOL_WINDOW);
+      if (toolWindow == null) return VcsLogFilterObject.collection();
 
-      Collection<? extends VcsLogUi> uis = ContainerUtil.filterIsInstance(logManager.getVisibleLogUis(VcsLogTabLocation.TOOL_WINDOW),
-                                                                          MainVcsLogUi.class);
-      if (uis.isEmpty()) return VcsLogFilterObject.collection();
-      return ContainerUtil.getFirstItem(uis).getFilterUi().getFilters();
+      VcsLogUi logUi = VcsLogContentUtil.findSelectedLogUi(toolWindow);
+      if (logUi == null) return VcsLogFilterObject.collection();
+
+      return logUi.getFilterUi().getFilters();
     }
   }
 

@@ -51,6 +51,13 @@ object VcsLogContentUtil {
     return ContentUtilEx.selectContent(manager, component, requestFocus)
   }
 
+  @Internal
+  @JvmStatic
+  fun findSelectedLogUi(toolWindow: ToolWindow): VcsLogUi? {
+    val content = toolWindow.contentManagerIfCreated?.selectedContent ?: return null
+    return getLogUi(content.component)
+  }
+
   internal fun getId(content: Content): String? {
     return getLogUi(content.component)?.id
   }
