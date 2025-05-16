@@ -419,7 +419,7 @@ private suspend fun VcsLogManager.initialize(force: Boolean) {
     return
   }
 
-  if (PostponableLogRefresher.keepUpToDate()) {
+  if (VcsLogManager.keepUpToDate()) {
     val invalidator = CachesInvalidator.EP_NAME.findExtensionOrFail(VcsLogCachesInvalidator::class.java)
     if (invalidator.isValid) {
       blockingContext {
@@ -430,10 +430,8 @@ private suspend fun VcsLogManager.initialize(force: Boolean) {
   }
 
   withContext(Dispatchers.EDT) {
-    if (isLogVisible) {
-      blockingContext {
-        scheduleInitialization()
-      }
+    blockingContext {
+      scheduleInitialization(false)
     }
   }
 }

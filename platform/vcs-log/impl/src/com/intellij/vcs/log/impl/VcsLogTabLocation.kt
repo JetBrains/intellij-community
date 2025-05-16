@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.impl
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.asSafely
 import com.intellij.vcs.log.VcsLogUi
 import org.jetbrains.annotations.ApiStatus
 
@@ -34,7 +35,7 @@ enum class VcsLogTabLocation {
      * @return true is the tab was found and selected (if selection was necessary), false otherwise.
      */
     fun <U : VcsLogUi> VcsLogManager.findLogUi(location: VcsLogTabLocation, clazz: Class<U>, select: Boolean, condition: (U) -> Boolean): U? {
-      val logUi = getLogUis(location).filterIsInstance(clazz).find(condition) ?: return null
+      val logUi = asSafely<VcsProjectLogManager>()?.getLogUis(location)?.filterIsInstance(clazz)?.find(condition) ?: return null
       if (select) {
         val project = dataManager.project
         when (location) {

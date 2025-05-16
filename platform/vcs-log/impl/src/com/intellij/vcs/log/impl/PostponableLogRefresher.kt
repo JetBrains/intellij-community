@@ -1,11 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
-import com.intellij.ide.PowerSaveMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.data.DataPack
@@ -57,21 +55,13 @@ class PostponableLogRefresher internal constructor(private val logData: VcsLogDa
   }
 
   @RequiresEdt
-  fun refresh(root: VirtualFile, shouldPostpone: () -> Boolean) {
-    val refreshNow: Boolean
-    if (keepUpToDate()) {
-      refreshNow = true
-    }
-    else {
-      refreshNow = shouldPostpone()
-    }
-
-    if (refreshNow) {
-      logData.refresh(setOf(root), true)
-    }
-    else {
+  fun refresh(root: VirtualFile, postponed: Boolean) {
+    if (postponed) {
       LOG.debug("Postponed refresh for $root")
       rootsToRefresh.add(root)
+    }
+    else {
+      logData.refresh(setOf(root), true)
     }
   }
 
@@ -90,12 +80,5 @@ class PostponableLogRefresher internal constructor(private val logData: VcsLogDa
   interface Refresher {
     fun setDataPack(dataPack: DataPack)
     fun validate(refresh: Boolean)
-  }
-
-  companion object {
-    @JvmStatic
-    fun keepUpToDate(): Boolean {
-      return `is`("vcs.log.keep.up.to.date") && !PowerSaveMode.isEnabled()
-    }
   }
 }

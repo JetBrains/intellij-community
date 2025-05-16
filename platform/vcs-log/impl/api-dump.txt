@@ -528,7 +528,6 @@ c:com.intellij.vcs.log.impl.VcsLogManager
 - f:getUiProperties():com.intellij.vcs.log.impl.VcsLogTabsProperties
 - f:isDisposed():Z
 - f:isLogUpToDate():Z
-- f:isLogVisible():Z
 f:com.intellij.vcs.log.impl.VcsLogManager$Companion
 - f:findLogProviders(java.util.Collection,com.intellij.openapi.project.Project):java.util.Map
 f:com.intellij.vcs.log.impl.VcsLogManagerKt

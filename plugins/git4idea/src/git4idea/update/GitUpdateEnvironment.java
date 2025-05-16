@@ -14,7 +14,7 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.update.UpdateSession;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.impl.PostponableLogRefresher;
+import com.intellij.vcs.log.impl.VcsLogManager;
 import git4idea.branch.GitBranchPair;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.UpdateMethod;
@@ -67,7 +67,7 @@ public final class GitUpdateEnvironment implements UpdateEnvironment {
   public boolean hasCustomNotification() {
     // If the log won't be refreshed after update, we won't be able to build a visible pack for the updated range.
     // Unless we force refresh it by hands, but if we do it, calculating update project info would take enormous amount of time & memory.
-    boolean keepLogUpToDate = PostponableLogRefresher.keepUpToDate();
+    boolean keepLogUpToDate = VcsLogManager.keepUpToDate();
     return Registry.is("git.update.project.info.as.log") && keepLogUpToDate;
   }
 
