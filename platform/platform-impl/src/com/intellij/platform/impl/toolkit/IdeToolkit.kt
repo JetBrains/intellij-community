@@ -4,6 +4,7 @@ package com.intellij.platform.impl.toolkit
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.IncorrectOperationException
 import org.jetbrains.annotations.ApiStatus.Internal
 import sun.awt.AWTAccessor
 import sun.awt.LightweightFrame
@@ -39,7 +40,12 @@ class IdeToolkit : SunToolkit() {
 
   fun peerCreated(target: Component, peer: ComponentPeer, disposable: Disposable) {
     targetCreatedPeer(target, peer)
-    Disposer.register(disposable) { targetDisposedPeer(target, peer) }
+    if (!Disposer.tryRegister(disposable) { targetDisposedPeer(target, peer) }) {
+      throw IncorrectOperationException("Provided disposable " +
+                                        "($disposable, class=${disposable.javaClass}, hash=${System.identityHashCode(disposable)}) " +
+                                        "has already been disposed (see the cause for stacktrace), cannot register $target for disposal",
+                                        Disposer.getDisposalTrace(disposable))
+    }
   }
 
   override fun createWindow(target: Window): WindowPeer = clientInstance().createWindow(target)
