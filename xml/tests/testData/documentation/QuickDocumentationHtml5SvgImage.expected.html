@@ -1,7 +1,11 @@
 <div class='definition'><pre>image</pre></div>
-<div class='content'><details style='margin-bottom: 4px'><summary><table style='border-spacing: 0; border-width: 0'><tr><td width=2 valign=top style='padding: 0 4px 0 0'><icon src='com.intellij.xml.frontback.impl.icons.XmlFrontbackImplIcons.BaselineHigh'></icon>
-<td style='padding: 0; width:100%'>Widely available across major browsers
-</td></tr></table></summary><p class='grayed' style='margin: 0; padding: 0 0 4px 0; line-height: 100%'>Chrome 1, Chrome Android 18, Edge 12, Firefox 1.5, Firefox Android 4, Opera 8, Safari 3, Safari iOS 2. <i>Baseline&nbsp;since&nbsp;2018</i></details>
+<div class='content'><details class='mdn-baseline'><summary>
+<table class='mdn-baseline'><tr><td width=2 valign=top class='mdn-baseline-icon'><icon src='com.intellij.xml.frontback.impl.icons.XmlFrontbackImplIcons.BaselineHigh'></icon>
+<td class='mdn-baseline-info'>Widely available across major browsers
+</td></tr></table></summary>
+<p><span class='grayed'>Chrome&nbsp;1, Chrome Android&nbsp;18, Edge&nbsp;12, Firefox&nbsp;1.5, Firefox Android&nbsp;4, Opera&nbsp;8, Safari&nbsp;3, Safari iOS&nbsp;2</span>
+<p class='grayed'>Baseline since 2018
+</details>
 The <strong><code>&lt;image&gt;</code></strong> <a href="https://developer.mozilla.org/en-us/docs/Web/SVG">SVG</a> element includes images inside SVG documents. It can display <a href="https://developer.mozilla.org/en-us/docs/Glossary/Raster_image">raster image</a> files or other SVG files.
 <p>The only image formats SVG software must support are <a href="https://developer.mozilla.org/en-us/docs/Glossary/JPEG">JPEG</a>, <a href="https://developer.mozilla.org/en-us/docs/Glossary/PNG">PNG</a>, and other SVG files. Animated <a href="https://developer.mozilla.org/en-us/docs/Glossary/GIF">GIF</a> behavior is undefined.
 <p>SVG files displayed with <code>&lt;image&gt;</code> are <a href="https://developer.mozilla.org/en-us/docs/Web/SVG/Guides/SVG_as_an_image">treated as an image</a>: external resources aren't loaded, <a href="https://developer.mozilla.org/en-us/docs/Web/CSS/:visited"><code>:visited</code></a> styles <a href="https://developer.mozilla.org/en-us/docs/Web/CSS/CSS_selectors/Privacy_and_the_visited_selector">aren't applied</a>, and they cannot be interactive. To include dynamic SVG elements, try <a href="https://developer.mozilla.org/en-us/docs/Web/SVG/Reference/Element/use"><code>&lt;use&gt;</code></a> with an external URL. To include SVG files and run scripts inside them, try <a href="https://developer.mozilla.org/en-us/docs/Web/HTML/Reference/Elements/object"><code>&lt;object&gt;</code></a> inside of <a href="https://developer.mozilla.org/en-us/docs/Web/SVG/Reference/Element/foreignObject"><code>&lt;foreignObject&gt;</code></a>.
