@@ -5,6 +5,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.observation.ActivityKey
+import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
@@ -12,7 +13,6 @@ import com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 
@@ -35,7 +35,7 @@ internal class TrackedLibrarySynchronizationQueue(val project: Project, val scop
         val libraryChanges = event.getChanges(LibraryEntity::class.java)
         val libraryPropertiesChanges = event.getChanges(LibraryPropertiesEntity::class.java)
         if (libraryChanges.isNotEmpty() || libraryPropertiesChanges.isNotEmpty()) {
-          requestDependenciesSync().await()
+          requestDependenciesSync()
         }
       }
     }
@@ -45,9 +45,12 @@ internal class TrackedLibrarySynchronizationQueue(val project: Project, val scop
     launchLoadChannelConsumer()
   }
 
+  /**
+   * Do not wait for completion of loading deps, but keeps LoadDependenciesActivityKey active until all libraries are loaded.
+   */
   suspend fun loadDependencies() {
     project.trackActivity(LoadDependenciesActivityKey) {
-      requestDependenciesSync().await()
+      requestDependenciesSync()
     }
   }
 
@@ -71,20 +74,12 @@ internal class TrackedLibrarySynchronizationQueue(val project: Project, val scop
     }
   }
 
-  /**
-   * @return A deferred object that completes when the activity tracking has started.
-   */
-  private fun requestDependenciesSync(): Deferred<Unit> {
-    val trackingStarted = CompletableDeferred<Unit>()
-    scope.launch {
-      project.trackActivity(LoadDependenciesActivityKey) {
-        trackingStarted.complete(Unit)
-        val deferred = CompletableDeferred<Unit>()
-        if (channel.trySend(deferred).isSuccess) {
-          deferred.await()
-        }
+  private fun requestDependenciesSync() {
+    scope.launchTracked {
+      val deferred = CompletableDeferred<Unit>()
+      if (channel.trySend(deferred).isSuccess) {
+        deferred.await()
       }
     }
-    return trackingStarted
   }
 }
