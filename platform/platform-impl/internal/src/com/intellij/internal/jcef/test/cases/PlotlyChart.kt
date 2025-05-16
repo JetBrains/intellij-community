@@ -104,6 +104,12 @@ internal class PlotlyChart : Disposable {
     "Plotly.purge('$CHART_DIV')"
   )
 
+  fun addTraces(
+    @Language("JavaScript") trace: String,
+  ) = runJS(
+    "Plotly.addTraces('$CHART_DIV', $trace)"
+  )
+
   private fun runJS(@Language("JavaScript") js: String) {
     if (ready) {
       browser.cefBrowser.executeJavaScript(js, null, 0)
