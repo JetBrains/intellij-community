@@ -3,7 +3,6 @@ package com.intellij.codeInsight.highlighting;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
@@ -49,19 +48,14 @@ public class BraceHighlightingHandlerTest extends LightPlatformCodeInsightTestCa
   public static String getEditorTextWithHighlightedBraces(@NotNull Editor editor, @NotNull PsiFile psiFile) {
     Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
     List<Pair<Integer, String>> markers = new ArrayList<>();
-    Alarm alarm = new Alarm();
-    try {
-      new BraceHighlightingHandler(psiFile.getProject(), editor, alarm, psiFile).updateBraces();
-      RangeHighlighter[] highlighters = editor.getMarkupModel().getAllHighlighters();
-      for (RangeHighlighter highlighter : highlighters) {
-        if (highlighter.getLayer() == BraceHighlightingHandler.LAYER) {
-          markers.add(Pair.create(highlighter.getStartOffset(), "<brace>"));
-          markers.add(Pair.create(highlighter.getEndOffset(), "</brace>"));
-        }
+    Alarm alarm = psiFile.getProject().getService(BackgroundHighlighter.class).alarm;
+    new BraceHighlightingHandler(psiFile.getProject(), editor, alarm, psiFile).updateBraces();
+    RangeHighlighter[] highlighters = editor.getMarkupModel().getAllHighlighters();
+    for (RangeHighlighter highlighter : highlighters) {
+      if (highlighter.getLayer() == BraceHighlightingHandler.LAYER) {
+        markers.add(Pair.create(highlighter.getStartOffset(), "<brace>"));
+        markers.add(Pair.create(highlighter.getEndOffset(), "</brace>"));
       }
-    }
-    finally {
-      Disposer.dispose(alarm);
     }
 
     hostEditor.getCaretModel().getAllCarets().forEach(it -> markers.add(Pair.create(it.getOffset(), "<caret>")));

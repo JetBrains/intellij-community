@@ -5,7 +5,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -60,25 +59,20 @@ public class HeavyBraceHighlighterTest extends LightPlatformCodeInsightTestCase 
   public static String getEditorTextWithHighlightedBraces(@NotNull Editor editor, @NotNull PsiFile psiFile) {
     Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
     List<Pair<Integer, String>> markers = new ArrayList<>();
-    Alarm alarm = new Alarm();
-    try {
-      Pair<TextRange, TextRange> match = HeavyBraceHighlighter.match(psiFile, editor.getCaretModel().getOffset());
-      if (match != null) {
-        FileType fileType = PsiUtilBase.getPsiFileAtOffset(psiFile, match.first.getStartOffset()).getFileType();
+    Alarm alarm = psiFile.getProject().getService(BackgroundHighlighter.class).alarm;
+    Pair<TextRange, TextRange> match = HeavyBraceHighlighter.match(psiFile, editor.getCaretModel().getOffset());
+    if (match != null) {
+      FileType fileType = PsiUtilBase.getPsiFileAtOffset(psiFile, match.first.getStartOffset()).getFileType();
 
-        new BraceHighlightingHandler(psiFile.getProject(), editor, alarm, psiFile)
-          .highlightBraces(match.first, match.second, true, false, fileType);
-      }
-      RangeHighlighter[] highlighters = editor.getMarkupModel().getAllHighlighters();
-      for (RangeHighlighter highlighter : highlighters) {
-        if (highlighter.getLayer() == BraceHighlightingHandler.LAYER) {
-          markers.add(Pair.create(highlighter.getStartOffset(), "<brace>"));
-          markers.add(Pair.create(highlighter.getEndOffset(), "</brace>"));
-        }
-      }
+      new BraceHighlightingHandler(psiFile.getProject(), editor, alarm, psiFile)
+        .highlightBraces(match.first, match.second, true, false, fileType);
     }
-    finally {
-      Disposer.dispose(alarm);
+    RangeHighlighter[] highlighters = editor.getMarkupModel().getAllHighlighters();
+    for (RangeHighlighter highlighter : highlighters) {
+      if (highlighter.getLayer() == BraceHighlightingHandler.LAYER) {
+        markers.add(Pair.create(highlighter.getStartOffset(), "<brace>"));
+        markers.add(Pair.create(highlighter.getEndOffset(), "</brace>"));
+      }
     }
 
     hostEditor.getCaretModel().getAllCarets().forEach(it -> markers.add(Pair.create(it.getOffset(), "<caret>")));
