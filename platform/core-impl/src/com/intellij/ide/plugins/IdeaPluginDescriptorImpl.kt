@@ -76,7 +76,7 @@ sealed class IdeaPluginDescriptorImpl(
   private val id: PluginId = PluginId.getId(raw.id ?: raw.name ?: throw RuntimeException("Neither id nor name are specified"))
   private val name: String = raw.name ?: id.idString
 
-  override val moduleName: String? = moduleName
+  val moduleName: String? = moduleName
   val moduleLoadingRule: ModuleLoadingRule? = moduleLoadingRule
 
   private val version: String? = raw.version
