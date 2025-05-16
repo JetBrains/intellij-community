@@ -23,12 +23,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.html.dtd.HtmlSymbolDeclaration
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.*
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.asSafely
 import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.WebSymbolsBundle
 import com.intellij.xml.frontback.impl.icons.XmlFrontbackImplIcons
 import com.intellij.xml.util.HtmlUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -231,9 +231,8 @@ class MdnSymbolDocumentationAdapter(
   override val sections: Map<String, String>
     get() {
       val result = doc.sections.toMutableMap()
-      if (doc.compatibility != null) {
+      if (doc.compatibility != null && doc.baseline == null) {
         doc.compatibility!!.entries.forEach { (id, map) ->
-          if (id == defaultBcdContext && doc.baseline != null) return@forEach
           val actualId = if (id == defaultBcdContext) "browser_compatibility" else id
           val bundleKey = "mdn.documentation.section.compat.$actualId"
           val sectionName: String = if (actualId.startsWith("support_of_") && !MdnBundle.hasKey(bundleKey)) {
@@ -242,9 +241,7 @@ class MdnSymbolDocumentationAdapter(
           else {
             MdnBundle.message(bundleKey)
           }
-          result[sectionName] = map.entries
-            .joinToString(", ") { it.key.displayName + (if (it.value.isNotEmpty()) " " + it.value else "") }
-            .ifBlank { MdnBundle.message("mdn.documentation.section.compat.supported_by.none") }
+          result[sectionName] = map.renderList()
         }
       }
       doc.status?.asSequence()
@@ -275,16 +272,18 @@ class MdnSymbolDocumentationAdapter(
     val baseline = doc.baseline ?: return ""
     val supportedEngines = doc.compatibility?.get(defaultBcdContext)
     val notSupportedEngines = supportedEngines?.let { BASELINE_BROWSERS.filter { supportedEngines[it] == null }.toMutableSet() }
-    val supportedEnginesString = supportedEngines?.entries
-      ?.joinToString(", ") { it.key.displayName + (if (it.value.isNotEmpty()) " " + it.value else "") }
-      ?.ifBlank { MdnBundle.message("mdn.documentation.section.compat.supported_by.none") }
     val result = StringBuilder()
-    if (supportedEnginesString != null) {
-      result.append("<details style='margin-bottom: ${JBUIScale.scale(4)}px'><summary>")
+
+    // CSS classes defined in com.intellij.codeInsight.documentation.DocumentationHtmlUtil.getDocumentationPaneAdditionalCssRules
+    if (!doc.compatibility.isNullOrEmpty()) {
+      result.append("<details class='mdn-baseline'><summary>\n")
     }
-    result.append("<table style='border-spacing: 0; border-width: 0'><tr><td width=2 valign=top style='padding: 0 ${JBUIScale.scale(4)}px 0 0'>" +
+    else {
+      result.append("<div>\n")
+    }
+    result.append("<table class='mdn-baseline'><tr><td width=2 valign=top class='mdn-baseline-icon'>" +
                   "<icon src='" + XmlFrontbackImplIcons::class.java.name + ".Baseline${baseline.level.name.lowercase().capitalize()}'></icon>\n" +
-                  "<td style='padding: 0; width:100%'>")
+                  "<td class='mdn-baseline-info'>")
     when (baseline.level) {
       BaselineLevel.NONE -> {
         if (notSupportedEngines != null && notSupportedEngines.size == BASELINE_BROWSERS.size)
@@ -300,30 +299,50 @@ class MdnSymbolDocumentationAdapter(
       }
     }
     result.append("\n</td></tr></table>")
-    if (supportedEnginesString != null) {
-      result.append("</summary>")
-      result.append("<p class='grayed' style='margin: 0; padding: 0 0 ${JBUIScale.scale(4)}px 0; line-height: 100%'>")
-      result.append(supportedEnginesString)
+    if (!doc.compatibility.isNullOrEmpty()) {
+      result.append("</summary>\n")
+      doc.compatibility?.forEach { (id, map) ->
+        result.append("<p>")
+        if (id != defaultBcdContext) {
+          val bundleKey = "mdn.documentation.section.compat.$id"
+          val sectionName: String = if (id.startsWith("support_of_") && !MdnBundle.hasKey(bundleKey)) {
+            MdnBundle.message("mdn.documentation.section.compat.support_of", id.substring("support_of_".length))
+          }
+          else {
+            MdnBundle.message(bundleKey)
+          }
+          result.append(sectionName.removeSuffix(":"))
+          result.append(": ")
+        }
+        result.append("<span class='grayed'>")
+        result.append(map.renderList())
+        result.append("</span>\n")
+      }
       if (notSupportedEngines != null && notSupportedEngines.isNotEmpty()) {
         notSupportedEngines.removeAll(notSupportedEngines.mapNotNull { it.mobileRuntime })
-        result.append(" <i>(")
+        result.append("<p class='grayed'>")
         result.append(MdnBundle.message("mdn.documentation.baseline.not-supported-by",
                                         notSupportedEngines.map { it.displayName }.sorted().joinToString(", ")))
-        result.append(")</i>")
-      } else {
+      }
+      else {
         (baseline.highDate ?: baseline.lowDate)?.dropWhile { !it.isDigit() }?.let { date ->
-          result.append(". <i>")
-          result.append(MdnBundle.message("mdn.documentation.baseline.since", date.takeWhile { it.isDigit() })
-                          .replace(" ", "&nbsp;"))
-          result.append("</i>")
+          result.append("<p class='grayed'>")
+          result.append(MdnBundle.message("mdn.documentation.baseline.since", date.takeWhile { it.isDigit() }))
         }
       }
-      result.append("</details>")
+      result.append("\n</details>")
+    }
+    else {
+      result.append("</div>")
     }
     result.append("\n")
     return result.toString()
   }
 
+  private fun Map<MdnJavaScriptRuntime, String>.renderList() =
+    entries
+      .joinToString(", ") { it.key.displayName + (if (it.value.isNotEmpty()) "&nbsp;" + it.value else "") }
+      .ifBlank { MdnBundle.message("mdn.documentation.section.compat.supported_by.none") }
 }
 
 typealias CompatibilityMap = Map<String, Map<MdnJavaScriptRuntime, String>>
@@ -618,7 +637,8 @@ enum class MdnCssSymbolKind {
     }
 }
 
-val webApiFragmentStarts = arrayOf('a', 'e', 'l', 'r', 'u')
+@ApiStatus.Internal
+val webApiFragmentStarts: Array<Char> = arrayOf('a', 'e', 'l', 'r', 'u')
 
 private class CompatibilityMapDeserializer : JsonDeserializer<CompatibilityMap>() {
 
