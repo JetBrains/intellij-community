@@ -1,0 +1,23 @@
+query($projectId: ID!, $username: String!) {
+  project(fullPath: $projectId) {
+    allMRCount: mergeRequests(state: all) {
+      count
+    }
+
+    openMRCount: mergeRequests(state: opened) {
+      count
+    }
+
+    openAssignedMRCount: mergeRequests(state: opened, assigneeUsername: $username) {
+      count
+    }
+
+    openAuthoredMRCount: mergeRequests(state: opened, authorUsername: $username) {
+      count
+    }
+
+    openReviewAssignedMRCount: mergeRequests(state: opened, reviewerUsername: $username) {
+      count
+    }
+  }
+}

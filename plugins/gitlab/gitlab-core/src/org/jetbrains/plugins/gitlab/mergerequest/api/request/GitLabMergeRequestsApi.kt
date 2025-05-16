@@ -7,12 +7,14 @@ import com.intellij.collaboration.api.graphql.loadResponse
 import com.intellij.collaboration.api.json.loadJsonValue
 import com.intellij.collaboration.util.resolveRelative
 import com.intellij.collaboration.util.withQuery
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabReviewerDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestByBranchDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestMetricsDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestRebaseDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
 import org.jetbrains.plugins.gitlab.mergerequest.data.asApiParameter
@@ -38,6 +40,22 @@ suspend fun GitLabApi.GraphQL.loadMergeRequest(
   val request = gitLabQuery(GitLabGQLQuery.GET_MERGE_REQUEST, parameters)
   return withErrorStats(GitLabGQLQuery.GET_MERGE_REQUEST) {
     loadResponse(request, "project", "mergeRequest")
+  }
+}
+
+@ApiStatus.Internal
+@SinceGitLab("14.0", note = "No exact version")
+suspend fun GitLabApi.GraphQL.getMergeRequestMetrics(
+  project: GitLabProjectCoordinates,
+  username: String,
+): HttpResponse<out GitLabMergeRequestMetricsDTO?> {
+  val parameters = mapOf(
+    "projectId" to project.projectPath.fullPath(),
+    "username" to username
+  )
+  val request = gitLabQuery(GitLabGQLQuery.GET_MERGE_REQUEST_METRICS, parameters)
+  return withErrorStats(GitLabGQLQuery.GET_MERGE_REQUEST_METRICS) {
+    loadResponse(request, "project")
   }
 }
 

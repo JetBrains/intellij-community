@@ -20,6 +20,7 @@ import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.GitTextFilePatchWithHistory
 import git4idea.changes.createVcsChange
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
@@ -63,7 +64,7 @@ internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
   discussionsViewOption: StateFlow<DiscussionsViewOption>,
   override val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
 ) : GitLabMergeRequestEditorReviewFileViewModel {
-  private val cs = parentCs.childScope(javaClass.name)
+  private val cs = parentCs.childScope(javaClass.name, Dispatchers.Default)
 
   override val headContent: StateFlow<ComputedResult<String>?> = flow {
     ComputedResult.compute {
