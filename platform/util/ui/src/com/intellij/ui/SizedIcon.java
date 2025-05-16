@@ -16,6 +16,10 @@ import java.awt.*;
 import static java.lang.Math.ceil;
 import static java.lang.Math.floor;
 
+/**
+ * Wraps an icon with a fixed size.
+ * The delegate icon is shown in the middle as-is, without additional scaling.
+ */
 public final class SizedIcon extends JBCachingScalableIcon implements MenuBarIconProvider, DarkIconProvider, RetrievableIcon {
   private final int myWidth;
   private final int myHeight;

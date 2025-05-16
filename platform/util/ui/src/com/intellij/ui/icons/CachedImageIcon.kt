@@ -76,6 +76,7 @@ open class CachedImageIcon private constructor(
   private val iconCache: ScaledIconCache = ScaledIconCache(),
 ) : CopyableIcon, ScalableIcon, DarkIconProvider, IconPathProvider, IconWithToolTip {
   private var pathTransformModCount = -1
+  private var loaderModCount = -1
 
   override val originalPath: String?
     get() = originalLoader?.path
@@ -94,6 +95,7 @@ open class CachedImageIcon private constructor(
 
     // if url is explicitly specified, it means that path should be not transformed
     pathTransformModCount = pathTransformGlobalModCount.get()
+    loaderModCount = originalLoader?.modificationCount ?: -1
   }
 
   @Internal
@@ -198,17 +200,21 @@ open class CachedImageIcon private constructor(
       iconCache.clear()
     }
 
-    if (pathTransformModCount == pathTransformGlobalModCount.get()) {
-      return
+    if (pathTransformModCount != pathTransformGlobalModCount.get()) {
+      loader = originalLoader
+      pathTransformModCount = pathTransformGlobalModCount.get()
+      iconCache.clear()
+      if (originalPath != null) {
+        loader?.patch(transform = pathTransform.get())?.let {
+          this.loader = it
+        }
+      }
     }
 
-    loader = originalLoader
-    pathTransformModCount = pathTransformGlobalModCount.get()
-    iconCache.clear()
-    if (originalPath != null) {
-      loader?.patch(transform = pathTransform.get())?.let {
-        this.loader = it
-      }
+    val currentLoaderModCount = originalLoader?.modificationCount ?: -1
+    if (loaderModCount != currentLoaderModCount) {
+      loaderModCount = currentLoaderModCount
+      iconCache.clear()
     }
   }
 
@@ -276,6 +282,7 @@ open class CachedImageIcon private constructor(
       iconCache = if (reuseIconCache) iconCache else ScaledIconCache(),
     )
     result.pathTransformModCount = pathTransformModCount
+    result.loaderModCount = loaderModCount
     return result
   }
 
