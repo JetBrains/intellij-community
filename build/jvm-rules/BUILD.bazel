@@ -22,6 +22,7 @@ label_flag(
     visibility = ["//visibility:public"],
 )
 
+
 kt_kotlinc_options(
     name = "default-kotlinc-opts-value",
     visibility = ["//visibility:public"],
@@ -70,7 +71,6 @@ jvm_import(
         "//src/jvm-builder:__subpackages__",
         "//src/jvm-builder-core:__subpackages__",
         "//src/kotlin/kotlin-builder:__subpackages__",
-        "//src/jvm-builder:__subpackages__",
         "//jvm-inc-builder:__subpackages__",
         "//jps-builders-6:__subpackages__",
         "//dependency-graph:__subpackages__",
