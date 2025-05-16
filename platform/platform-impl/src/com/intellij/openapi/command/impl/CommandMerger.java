@@ -377,7 +377,7 @@ public final class CommandMerger {
   }
 
   private @Nullable UndoRedo createUndoOrRedo(FileEditor editor, boolean isUndo) {
-    if (!myManager.isUndoOrRedoAvailable(editor, isUndo)) return null;
+    if (!myManager.isUndoRedoAvailable(editor, isUndo)) return null;
     return isUndo ? new Undo(myState, editor) : new Redo(myState, editor);
   }
 

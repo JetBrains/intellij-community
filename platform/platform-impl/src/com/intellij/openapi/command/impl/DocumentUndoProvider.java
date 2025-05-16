@@ -134,6 +134,8 @@ public final class DocumentUndoProvider implements DocumentListener {
     if (file != null && UndoUtil.isForceUndoFlagSet(file)) {
       return true;
     }
-    return !UndoManagerImpl.isRefresh() || undoManager.isUndoOrRedoAvailable(ref);
+    return !UndoManagerImpl.isRefresh() ||
+           undoManager.isUndoRedoAvailable(ref, true) ||
+           undoManager.isUndoRedoAvailable(ref, false);
   }
 }
