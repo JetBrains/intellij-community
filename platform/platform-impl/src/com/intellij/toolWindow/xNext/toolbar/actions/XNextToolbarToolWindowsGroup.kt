@@ -80,7 +80,11 @@ private class XNextToolWindowAction(val toolWindowAction: ActivateToolWindowActi
     val project = e.project ?: return
     val twm = ToolWindowManager.getInstance(project)
     val toolWindowId = toolWindowAction.toolWindowId
-    val toolWindow = twm.getToolWindow(toolWindowId) ?: return
+    val toolWindow = twm.getToolWindow(toolWindowId) ?: run {
+      super.actionPerformed(e)
+      return
+    }
+
     if (toolWindow.isVisible == state) {
       return
     }
