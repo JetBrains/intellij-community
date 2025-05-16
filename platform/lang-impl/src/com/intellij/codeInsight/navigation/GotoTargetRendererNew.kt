@@ -50,6 +50,7 @@ internal class GotoTargetRendererNew(presentationProvider: (Any) -> TargetPresen
 
 private fun <T> createFullTargetPresentationRenderer(presentationProvider: (T) -> TargetPresentation): ListCellRenderer<T> {
   return listCellRenderer {
+    rowHeight = null
     val presentation = presentationProvider.invoke(value)
     fillMainTargetPresentation(presentation)
     presentation.locationText?.let { locationText ->
@@ -66,6 +67,7 @@ private fun <T> createFullTargetPresentationRenderer(presentationProvider: (T) -
 
 private fun <T> createTargetPresentationRenderer(presentationProvider: (T) -> TargetPresentation): ListCellRenderer<T> {
   return listCellRenderer {
+    rowHeight = null
     val presentation = presentationProvider.invoke(value)
     fillMainTargetPresentation(presentation)
   }

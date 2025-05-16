@@ -67,6 +67,14 @@ interface LcrRow<T> {
   var toolTipText: @NlsContexts.Tooltip String?
 
   /**
+   * Height of the row (excluding separator) or null for auto height calculation.
+   * By default [com.intellij.util.ui.JBUI.CurrentTheme.List.rowHeight] is used
+   */
+  @get:ApiStatus.Internal
+  @set:ApiStatus.Internal
+  var rowHeight: Int?
+
+  /**
    * The gap between the previous cell and the next one. Not used for the first cell
    */
   fun gap(gap: Gap)
