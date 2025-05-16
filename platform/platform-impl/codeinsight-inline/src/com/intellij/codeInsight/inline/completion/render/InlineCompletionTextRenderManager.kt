@@ -128,7 +128,7 @@ internal class InlineCompletionTextRenderManager private constructor(
 
   private inner class UpdateOnResizeListener : VisibleAreaListener {
     override fun visibleAreaChanged(e: VisibleAreaEvent) {
-      if (e.oldRectangle.width != e.newRectangle.width && renderer.isSoftWrappingEnabled()) {
+      if (e.oldRectangle?.width != e.newRectangle.width && renderer.isSoftWrappingEnabled()) {
         recreateRenderer()
       }
     }
