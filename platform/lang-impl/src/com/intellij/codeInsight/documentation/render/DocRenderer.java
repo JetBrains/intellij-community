@@ -507,8 +507,16 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
                        rendererLocation.y + boundsWithinRenderer.y + (int)locationInPane.getY());
     }
 
+    @Override
+    public void revalidate() {
+      super.revalidate();
+      myCachedHeight = -1;
+      myCachedWidth = -1;
+      scheduleUpdate();
+    }
+
     private void scheduleUpdate() {
-      if (myUpdateScheduled.compareAndSet(false, true)) {
+      if (myUpdateScheduled != null && myUpdateScheduled.compareAndSet(false, true)) {
         SwingUtilities.invokeLater(() -> {
           myRepaintScheduled.set(false);
           myUpdateScheduled.set(false);
