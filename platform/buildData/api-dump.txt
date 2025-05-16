@@ -7,7 +7,7 @@ f:com.intellij.platform.buildData.productInfo.CustomCommandLaunchData
 - f:getEnvVarBaseName():java.lang.String
 - f:getMainClass():java.lang.String
 - f:getVmOptionsFilePath():java.lang.String
-bc:com.intellij.platform.buildData.productInfo.CustomCommandLaunchData$$serializer
+bf:com.intellij.platform.buildData.productInfo.CustomCommandLaunchData$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.platform.buildData.productInfo.CustomCommandLaunchData$$serializer
 - f:childSerializers():kotlinx.serialization.KSerializer[]
@@ -21,7 +21,7 @@ f:com.intellij.platform.buildData.productInfo.CustomProperty
 - sf:Companion:com.intellij.platform.buildData.productInfo.CustomProperty$Companion
 - f:getKey():java.lang.String
 - f:getValue():java.lang.String
-bc:com.intellij.platform.buildData.productInfo.CustomProperty$$serializer
+bf:com.intellij.platform.buildData.productInfo.CustomProperty$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.platform.buildData.productInfo.CustomProperty$$serializer
 - f:childSerializers():kotlinx.serialization.KSerializer[]
@@ -37,7 +37,7 @@ f:com.intellij.platform.buildData.productInfo.CustomPropertyNames
 f:com.intellij.platform.buildData.productInfo.ProductFlavorData
 - sf:Companion:com.intellij.platform.buildData.productInfo.ProductFlavorData$Companion
 - f:id:java.lang.String
-bc:com.intellij.platform.buildData.productInfo.ProductFlavorData$$serializer
+bf:com.intellij.platform.buildData.productInfo.ProductFlavorData$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.platform.buildData.productInfo.ProductFlavorData$$serializer
 - f:childSerializers():kotlinx.serialization.KSerializer[]
@@ -64,7 +64,7 @@ f:com.intellij.platform.buildData.productInfo.ProductInfoData
 - f:getSvgIconPath():java.lang.String
 - f:getVersion():java.lang.String
 - f:getVersionSuffix():java.lang.String
-bc:com.intellij.platform.buildData.productInfo.ProductInfoData$$serializer
+bf:com.intellij.platform.buildData.productInfo.ProductInfoData$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.platform.buildData.productInfo.ProductInfoData$$serializer
 - f:childSerializers():kotlinx.serialization.KSerializer[]
@@ -86,7 +86,7 @@ f:com.intellij.platform.buildData.productInfo.ProductInfoLaunchData
 - f:getOs():java.lang.String
 - f:getStartupWmClass():java.lang.String
 - f:getVmOptionsFilePath():java.lang.String
-bc:com.intellij.platform.buildData.productInfo.ProductInfoLaunchData$$serializer
+bf:com.intellij.platform.buildData.productInfo.ProductInfoLaunchData$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.platform.buildData.productInfo.ProductInfoLaunchData$$serializer
 - f:childSerializers():kotlinx.serialization.KSerializer[]

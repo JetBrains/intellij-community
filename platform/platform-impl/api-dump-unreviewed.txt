@@ -1176,7 +1176,7 @@ f:com.intellij.diagnostic.logs.LogCategory
 - f:getCategory():java.lang.String
 - f:getLevel():com.intellij.diagnostic.logs.DebugLogLevel
 - hashCode():I
-bc:com.intellij.diagnostic.logs.LogCategory$$serializer
+bf:com.intellij.diagnostic.logs.LogCategory$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.diagnostic.logs.LogCategory$$serializer
 - f:childSerializers():kotlinx.serialization.KSerializer[]
@@ -12395,7 +12395,7 @@ f:com.intellij.toolWindow.ToolWindowDescriptor
 - f:setOrder(I):V
 - f:setVisible(Z):V
 - f:setWeight(F):V
-bc:com.intellij.toolWindow.ToolWindowDescriptor$$serializer
+bf:com.intellij.toolWindow.ToolWindowDescriptor$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.toolWindow.ToolWindowDescriptor$$serializer
 - f:childSerializers():kotlinx.serialization.KSerializer[]
@@ -12549,7 +12549,7 @@ f:com.intellij.toolWindow.ToolWindowLayoutDescriptor
 - f:getV2():java.util.List
 - hashCode():I
 - f:withUpdatedLayout(java.util.List,Z,java.util.Map):com.intellij.toolWindow.ToolWindowLayoutDescriptor
-bc:com.intellij.toolWindow.ToolWindowLayoutDescriptor$$serializer
+bf:com.intellij.toolWindow.ToolWindowLayoutDescriptor$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.toolWindow.ToolWindowLayoutDescriptor$$serializer
 - f:childSerializers():kotlinx.serialization.KSerializer[]
@@ -12582,7 +12582,7 @@ f:com.intellij.toolWindow.ToolWindowLayoutStorageManagerState
 - f:withUpdatedLayout(java.lang.String,java.util.List,Z,java.util.Map):com.intellij.toolWindow.ToolWindowLayoutStorageManagerState
 - bs:withUpdatedLayout$default(com.intellij.toolWindow.ToolWindowLayoutStorageManagerState,java.lang.String,java.util.List,Z,java.util.Map,I,java.lang.Object):com.intellij.toolWindow.ToolWindowLayoutStorageManagerState
 - f:withoutLayout(java.lang.String):com.intellij.toolWindow.ToolWindowLayoutStorageManagerState
-bc:com.intellij.toolWindow.ToolWindowLayoutStorageManagerState$$serializer
+bf:com.intellij.toolWindow.ToolWindowLayoutStorageManagerState$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.toolWindow.ToolWindowLayoutStorageManagerState$$serializer
 - f:childSerializers():kotlinx.serialization.KSerializer[]
@@ -12605,7 +12605,7 @@ f:com.intellij.toolWindow.ToolWindowLayoutStorageManagerStateV1
 - f:getV1():java.util.List
 - f:getV2():java.util.List
 - hashCode():I
-bc:com.intellij.toolWindow.ToolWindowLayoutStorageManagerStateV1$$serializer
+bf:com.intellij.toolWindow.ToolWindowLayoutStorageManagerStateV1$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.toolWindow.ToolWindowLayoutStorageManagerStateV1$$serializer
 - f:childSerializers():kotlinx.serialization.KSerializer[]

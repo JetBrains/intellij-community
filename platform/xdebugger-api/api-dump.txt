@@ -430,7 +430,7 @@ f:com.intellij.xdebugger.evaluation.ExpressionInfo
 - f:getDisplayText():java.lang.String
 - f:getExpressionText():java.lang.String
 - f:getTextRange():com.intellij.openapi.util.TextRange
-bc:com.intellij.xdebugger.evaluation.ExpressionInfo$$serializer
+bf:com.intellij.xdebugger.evaluation.ExpressionInfo$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.xdebugger.evaluation.ExpressionInfo$$serializer
 - f:childSerializers():kotlinx.serialization.KSerializer[]

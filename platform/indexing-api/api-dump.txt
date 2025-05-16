@@ -86,7 +86,7 @@ c:com.intellij.find.FindModel
 - f:setWholeWordsOnly(Z):V
 - f:setWithSubdirectories(Z):V
 - bsf:write$Self(com.intellij.find.FindModel,kotlinx.serialization.encoding.CompositeEncoder,kotlinx.serialization.descriptors.SerialDescriptor):V
-bc:com.intellij.find.FindModel$$serializer
+bf:com.intellij.find.FindModel$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.find.FindModel$$serializer
 - f:childSerializers():kotlinx.serialization.KSerializer[]

@@ -19,7 +19,7 @@ f:com.intellij.ide.plugins.advertiser.FeaturePluginData
 - bs:copy$default(com.intellij.ide.plugins.advertiser.FeaturePluginData,java.lang.String,com.intellij.ide.plugins.advertiser.PluginData,I,java.lang.Object):com.intellij.ide.plugins.advertiser.FeaturePluginData
 - equals(java.lang.Object):Z
 - hashCode():I
-bc:com.intellij.ide.plugins.advertiser.FeaturePluginData$$serializer
+bf:com.intellij.ide.plugins.advertiser.FeaturePluginData$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.ide.plugins.advertiser.FeaturePluginData$$serializer
 - f:childSerializers():kotlinx.serialization.KSerializer[]
@@ -51,7 +51,7 @@ f:com.intellij.ide.plugins.advertiser.PluginData
 - f:getPluginId():com.intellij.openapi.extensions.PluginId
 - f:getPluginName():java.lang.String
 - hashCode():I
-bc:com.intellij.ide.plugins.advertiser.PluginData$$serializer
+bf:com.intellij.ide.plugins.advertiser.PluginData$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.ide.plugins.advertiser.PluginData$$serializer
 - f:childSerializers():kotlinx.serialization.KSerializer[]
@@ -72,7 +72,7 @@ f:com.intellij.ide.plugins.advertiser.PluginDataSet
 - equals(java.lang.Object):Z
 - f:getDataSet():java.util.Set
 - hashCode():I
-bc:com.intellij.ide.plugins.advertiser.PluginDataSet$$serializer
+bf:com.intellij.ide.plugins.advertiser.PluginDataSet$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.ide.plugins.advertiser.PluginDataSet$$serializer
 - f:childSerializers():kotlinx.serialization.KSerializer[]
@@ -96,7 +96,7 @@ f:com.intellij.ide.plugins.advertiser.PluginFeatureMap
 - equals(java.lang.Object):Z
 - f:get(java.lang.String):java.util.Set
 - hashCode():I
-bc:com.intellij.ide.plugins.advertiser.PluginFeatureMap$$serializer
+bf:com.intellij.ide.plugins.advertiser.PluginFeatureMap$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.ide.plugins.advertiser.PluginFeatureMap$$serializer
 - f:childSerializers():kotlinx.serialization.KSerializer[]
