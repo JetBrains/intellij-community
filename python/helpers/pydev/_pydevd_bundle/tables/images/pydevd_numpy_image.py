@@ -23,7 +23,7 @@ def create_image(arr):
 
         arr_min, arr_max = arr_to_convert.min(), arr_to_convert.max()
         is_float = np.issubdtype(arr_to_convert.dtype, np.floating)
-        is_bool = np.issubdtype(arr_to_convert.dtype, np.bool)
+        is_bool = np.issubdtype(arr_to_convert.dtype, np.bool_)
 
         if (is_float or is_bool) and 0 <= arr_min <= 1 and 0 <= arr_max <= 1: # bool and float in [0; 1]
             arr_to_convert = (arr_to_convert * 255).astype(np.uint8)
