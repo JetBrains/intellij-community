@@ -51,18 +51,19 @@ internal class SearchEverywhereEssentialContributorMlMarker : SearchEverywhereEs
     }
   }
 
-  override fun isContributorEssential(contributor: SearchEverywhereContributor<*>): Boolean? {
+  private fun computeProbability(contributor: SearchEverywhereContributor<*>): Float {
     val features = getFeatures(contributor).associate { it.field.name to it.data }
-    return model.predictTrue(features)
+    return model.predict(features).toFloat()
+  }
+
+  override fun isContributorEssential(contributor: SearchEverywhereContributor<*>): Boolean? {
+    return computeProbability(contributor) >= TRUE_THRESHOLD
   }
 
   internal fun getContributorEssentialPrediction(contributor: SearchEverywhereContributor<*>): Float? {
-    contributorPredictionCache[contributor]?.let { return it }
-
-    val features = getFeatures(contributor).associate { it.field.name to it.data }
-    val prediction = model.predict(features).toFloat()
-    contributorPredictionCache[contributor] = prediction
-    return prediction
+    return contributorPredictionCache.getOrPut(contributor) {
+      computeProbability(contributor)
+    }
   }
 
   private fun getFeatures(contributor: SearchEverywhereContributor<*>): List<EventPair<*>> {

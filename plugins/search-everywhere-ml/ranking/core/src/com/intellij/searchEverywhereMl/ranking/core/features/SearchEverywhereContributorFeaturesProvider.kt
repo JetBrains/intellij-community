@@ -49,6 +49,12 @@ internal class SearchEverywhereContributorFeaturesProvider {
     return CONTRIBUTOR_INFO_ID.with(contributor.searchProviderId)
   }
 
+  /**
+   * Collects features for a contributor.
+   * 
+   * Note: Essential Contributor (EC) features are intentionally not included here to avoid a circular dependency.
+   * Instead, EC features are collected separately in getEssentialContributorFeatures().
+   */
   fun getFeatures(contributor: SearchEverywhereContributor<*>, mixedListInfo: SearchEverywhereMixedListInfo,
                   sessionStartTime: Long): List<EventPair<*>> {
     val contributor_id = contributor.searchProviderId
@@ -71,10 +77,14 @@ internal class SearchEverywhereContributorFeaturesProvider {
     return info + getStatisticianFeatures(contributor)
   }
 
+  /**
+   * Collects Essential Contributor (EC) features for a contributor.
+   *
+   * EC features are the predictions of the EC model, which itself needs contributor features to make predictions.
+   */
   fun getEssentialContributorFeatures(contributor: SearchEverywhereContributor<*>): List<EventPair<*>> {
     val marker = SearchEverywhereEssentialContributorMarker.getInstanceOrNull()
-    val isEssentialContributor = marker?.isContributorEssential(contributor) ?:
-                                   (contributor is EssentialContributor && contributor.isEssential())
+    val isEssentialContributor = EssentialContributor.checkEssential(contributor)
 
     val result = mutableListOf<EventPair<*>>()
     result.add(IS_ESSENTIAL_CONTRIBUTOR.with(isEssentialContributor))
