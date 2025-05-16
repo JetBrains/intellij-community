@@ -18,7 +18,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.jetbrains.jps.javac.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.*;
 
 public final class KotlinIncrementalCacheImpl implements IncrementalCache {
   private static final String KOTLIN_MODULE_EXTENSION = ".kotlin_module";

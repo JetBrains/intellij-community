@@ -9,7 +9,7 @@ import org.jetbrains.jps.dependency.NodeSource;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.jetbrains.jps.javac.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.*;
 
 public final class SnapshotDeltaImpl extends ElementSnapshotDeltaImpl<NodeSource> implements NodeSourceSnapshotDelta {
   private static final String RECOMPILED_SOURCE_DIGEST = "";

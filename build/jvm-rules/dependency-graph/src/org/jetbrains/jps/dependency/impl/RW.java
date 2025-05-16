@@ -3,7 +3,7 @@ package org.jetbrains.jps.dependency.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.javac.Iterators;
+import org.jetbrains.jps.util.Iterators;
 
 import java.io.DataInput;
 import java.io.DataOutput;

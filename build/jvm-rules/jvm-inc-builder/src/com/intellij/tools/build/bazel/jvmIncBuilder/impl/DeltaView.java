@@ -7,7 +7,7 @@ import org.jetbrains.jps.dependency.*;
 
 import java.util.*;
 
-import static org.jetbrains.jps.javac.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.*;
 
 public class DeltaView implements Delta {
   private final Set<NodeSource> mySources;

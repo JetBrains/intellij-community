@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.Difference;
-import org.jetbrains.jps.dependency.impl.Pair;
+import org.jetbrains.jps.util.Pair;
 
 import java.util.*;
 import java.util.function.Function;
@@ -13,7 +13,7 @@ import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static org.jetbrains.jps.javac.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.*;
 
 /**
  * This class provides implementation common to all jvm strategies

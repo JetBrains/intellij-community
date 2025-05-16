@@ -4,7 +4,7 @@ package com.intellij.tools.build.bazel.jvmIncBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.ExternalizableGraphElement;
 import org.jetbrains.jps.dependency.GraphDataOutput;
-import org.jetbrains.jps.javac.Iterators;
+import org.jetbrains.jps.util.Iterators;
 
 import java.io.IOException;
 import java.util.function.Predicate;

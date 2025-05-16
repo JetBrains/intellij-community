@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.java.SubclassesIndex;
 import org.jetbrains.jps.dependency.kotlin.TypealiasesIndex;
-import org.jetbrains.jps.javac.Iterators;
+import org.jetbrains.jps.util.Iterators;
 
 import java.util.Collections;
 import java.util.HashSet;

@@ -10,7 +10,7 @@ import org.jetbrains.jps.dependency.ReferenceID;
 import org.jetbrains.jps.dependency.impl.BackDependencyIndexImpl;
 import org.jetbrains.jps.dependency.java.JvmClass;
 import org.jetbrains.jps.dependency.java.JvmNodeReferenceID;
-import org.jetbrains.jps.javac.Iterators;
+import org.jetbrains.jps.util.Iterators;
 
 import java.util.Collections;
 

@@ -1,12 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.javac.Iterators.Function;
+import org.jetbrains.jps.util.Iterators;
+import org.jetbrains.jps.util.Iterators.Function;
+import org.jetbrains.jps.util.Pair;
+import org.jetbrains.jps.util.Ref;
 
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -384,7 +385,7 @@ public final class APIWrappers {
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         try {
           final Pair<Method, Object> call = getCallHandlerMethod(method);
-          return call.getFirst().invoke(call.getSecond(), args);
+          return call.first.invoke(call.second, args);
         }
         catch (InvocationTargetException e) {
           final Throwable cause = e.getCause();

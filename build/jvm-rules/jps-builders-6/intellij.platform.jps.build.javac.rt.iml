@@ -9,7 +9,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.util.rt" />
     <orderEntry type="library" name="jetbrains-annotations-java5" level="project" />
     <orderEntry type="library" name="javax.annotation-api" level="project" />
     <orderEntry type="library" name="jps-javac-extension" level="project" />

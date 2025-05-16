@@ -14,7 +14,7 @@ import org.jetbrains.jps.dependency.impl.GraphDataInputImpl;
 import org.jetbrains.jps.dependency.impl.GraphDataOutputImpl;
 import org.jetbrains.jps.dependency.impl.PathSource;
 import org.jetbrains.jps.dependency.impl.PathSourceMapper;
-import org.jetbrains.jps.javac.Iterators;
+import org.jetbrains.jps.util.Iterators;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -28,8 +28,8 @@ import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
 
-import static org.jetbrains.jps.javac.Iterators.flat;
-import static org.jetbrains.jps.javac.Iterators.map;
+import static org.jetbrains.jps.util.Iterators.flat;
+import static org.jetbrains.jps.util.Iterators.map;
 
 public class ConfigurationState {
   private static final ConfigurationState EMPTY = new ConfigurationState(new PathSourceMapper(), NodeSourceSnapshot.EMPTY, NodeSourceSnapshot.EMPTY);

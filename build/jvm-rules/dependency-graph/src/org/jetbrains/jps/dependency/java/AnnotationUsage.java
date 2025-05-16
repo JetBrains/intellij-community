@@ -4,7 +4,7 @@ package org.jetbrains.jps.dependency.java;
 import org.jetbrains.jps.dependency.GraphDataInput;
 import org.jetbrains.jps.dependency.GraphDataOutput;
 import org.jetbrains.jps.dependency.impl.RW;
-import org.jetbrains.jps.javac.Iterators;
+import org.jetbrains.jps.util.Iterators;
 
 import java.io.IOException;
 

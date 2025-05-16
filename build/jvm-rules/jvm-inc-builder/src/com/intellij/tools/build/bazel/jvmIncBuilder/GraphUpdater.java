@@ -4,7 +4,7 @@ package com.intellij.tools.build.bazel.jvmIncBuilder;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.SnapshotDeltaImpl;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.impl.DifferentiateParametersBuilder;
-import org.jetbrains.jps.javac.Iterators;
+import org.jetbrains.jps.util.Iterators;
 
 import java.io.File;
 import java.util.HashSet;
@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
-import static org.jetbrains.jps.javac.Iterators.contains;
+import static org.jetbrains.jps.util.Iterators.contains;
 
 public final class GraphUpdater {
   private static final String MODULE_INFO_FILE_NAME = "module-info.java";

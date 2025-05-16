@@ -1,16 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.diff;
 
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.impl.Containers;
-import org.jetbrains.jps.javac.Iterators;
+import org.jetbrains.jps.util.Iterators;
 
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 
-import static org.jetbrains.jps.javac.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.*;
 
 public interface Difference {
 

@@ -122,12 +122,13 @@ import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.javac.ExternalJavacProcess;
-import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
+import org.jetbrains.jps.util.Iterators;
 import org.jvnet.winp.Priority;
 import org.jvnet.winp.WinProcess;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;

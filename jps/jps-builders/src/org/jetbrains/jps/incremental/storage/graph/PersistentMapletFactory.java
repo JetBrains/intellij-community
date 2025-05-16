@@ -19,7 +19,7 @@ import org.jetbrains.jps.dependency.impl.CachingMaplet;
 import org.jetbrains.jps.dependency.impl.CachingMultiMaplet;
 import org.jetbrains.jps.dependency.impl.GraphDataInputImpl;
 import org.jetbrains.jps.dependency.impl.GraphDataOutputImpl;
-import org.jetbrains.jps.javac.Iterators;
+import org.jetbrains.jps.util.Iterators;
 
 import java.io.*;
 import java.nio.file.Path;

@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-import static org.jetbrains.jps.javac.Iterators.filter;
-import static org.jetbrains.jps.javac.Iterators.map;
+import static org.jetbrains.jps.util.Iterators.filter;
+import static org.jetbrains.jps.util.Iterators.map;
 
 public final class RunnerRegistry {
   private static final List<Entry<?>> ourRunners = List.of(

@@ -20,8 +20,8 @@ import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.incremental.storage.PathStringDescriptors;
-import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.jps.service.JpsServiceManager;
+import org.jetbrains.jps.util.Iterators;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 

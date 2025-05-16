@@ -12,7 +12,7 @@ import org.jetbrains.jps.dependency.java.JVMFlags;
 import org.jetbrains.jps.dependency.java.JvmClass;
 import org.jetbrains.jps.dependency.serializer.JvmClassTestUtil;
 import org.jetbrains.jps.incremental.storage.graph.PersistentMapletFactory;
-import org.jetbrains.jps.javac.Iterators;
+import org.jetbrains.jps.util.Iterators;
 
 import java.io.File;
 import java.io.IOException;

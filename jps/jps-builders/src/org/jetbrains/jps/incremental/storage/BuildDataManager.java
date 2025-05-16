@@ -25,7 +25,7 @@ import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.incremental.storage.dataTypes.LibraryRoots;
 import org.jetbrains.jps.incremental.storage.graph.PersistentMapletFactory;
-import org.jetbrains.jps.javac.Iterators;
+import org.jetbrains.jps.util.Iterators;
 
 import java.io.IOException;
 import java.nio.file.Path;

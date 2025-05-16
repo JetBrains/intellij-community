@@ -40,7 +40,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
-import static org.jetbrains.jps.javac.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.*;
 
 /**
  * Update state of libraries used in the given project. Detect API changes and mark sources depending on changed APIs for recompilation

@@ -61,48 +61,6 @@ f:org.jetbrains.jps.javac.ExternalRefCollectorCompilerToolExtension
 - org.jetbrains.jps.javac.AbstractRefCollectorCompilerToolExtension
 - sf:ENABLED_PARAM:java.lang.String
 - <init>():V
-f:org.jetbrains.jps.javac.Iterators
-- <init>():V
-- s:asIterable(java.lang.Object):java.lang.Iterable
-- s:asIterable(java.lang.Object[]):java.lang.Iterable
-- s:asIterator(java.lang.Iterable):java.util.Iterator
-- s:asIterator(java.lang.Object):java.util.Iterator
-- s:collect(java.lang.Iterable,java.util.Collection):java.util.Collection
-- s:contains(java.lang.Iterable,java.lang.Object):Z
-- s:count(java.lang.Iterable):I
-- s:equals(java.lang.Iterable,java.lang.Iterable):Z
-- s:equals(java.lang.Iterable,java.lang.Iterable,org.jetbrains.jps.javac.Iterators$BiFunction):Z
-- s:filter(java.lang.Iterable,org.jetbrains.jps.javac.Iterators$BooleanFunction):java.lang.Iterable
-- s:filter(java.util.Iterator,org.jetbrains.jps.javac.Iterators$BooleanFunction):java.util.Iterator
-- s:filterWithOrder(java.lang.Iterable,java.lang.Iterable):java.lang.Iterable
-- s:filterWithOrder(java.util.Iterator,java.util.Iterator):java.util.Iterator
-- s:find(java.lang.Iterable,org.jetbrains.jps.javac.Iterators$BooleanFunction):java.lang.Object
-- s:flat(java.lang.Iterable):java.lang.Iterable
-- s:flat(java.lang.Iterable,java.lang.Iterable):java.lang.Iterable
-- s:flat(java.util.Collection):java.lang.Iterable
-- s:flat(java.util.Iterator):java.util.Iterator
-- s:flat(java.util.Iterator,java.util.Iterator):java.util.Iterator
-- s:hashCode(java.lang.Iterable):I
-- s:isEmpty(java.lang.Iterable):Z
-- s:isEmptyCollection(java.lang.Iterable):Z
-- s:lazy(org.jetbrains.jps.javac.Iterators$Provider):java.lang.Iterable
-- s:map(java.lang.Iterable,org.jetbrains.jps.javac.Iterators$Function):java.lang.Iterable
-- s:map(java.util.Iterator,org.jetbrains.jps.javac.Iterators$Function):java.util.Iterator
-- s:notNullFilter():org.jetbrains.jps.javac.Iterators$BooleanFunction
-- s:recurse(java.lang.Object,org.jetbrains.jps.javac.Iterators$Function,Z):java.lang.Iterable
-- s:recurseDepth(java.lang.Object,org.jetbrains.jps.javac.Iterators$Function,Z):java.lang.Iterable
-- s:reverse(java.util.List):java.lang.Iterable
-- s:unique(java.lang.Iterable):java.lang.Iterable
-- s:unique(java.util.Iterator):java.util.Iterator
-- s:uniqueBy(java.lang.Iterable,org.jetbrains.jps.javac.Iterators$Provider):java.lang.Iterable
-org.jetbrains.jps.javac.Iterators$BiFunction
-- a:fun(java.lang.Object,java.lang.Object):java.lang.Object
-org.jetbrains.jps.javac.Iterators$BooleanFunction
-- a:fun(java.lang.Object):Z
-org.jetbrains.jps.javac.Iterators$Function
-- a:fun(java.lang.Object):java.lang.Object
-org.jetbrains.jps.javac.Iterators$Provider
-- a:get():java.lang.Object
 a:org.jetbrains.jps.javac.JavaCompilerToolExtension
 - <init>():V
 - beforeCompileTaskExecution(org.jetbrains.jps.builders.java.JavaCompilingTool,javax.tools.JavaCompiler$CompilationTask,java.lang.Iterable,org.jetbrains.jps.javac.DiagnosticOutputConsumer):V
@@ -160,3 +118,60 @@ c:org.jetbrains.jps.javac.PlainMessageDiagnostic
 - getPosition():J
 - getSource():javax.tools.JavaFileObject
 - getStartPosition():J
+f:org.jetbrains.jps.util.Iterators
+- <init>():V
+- s:asIterable(java.lang.Object):java.lang.Iterable
+- s:asIterable(java.lang.Object[]):java.lang.Iterable
+- s:asIterator(java.lang.Iterable):java.util.Iterator
+- s:asIterator(java.lang.Object):java.util.Iterator
+- s:collect(java.lang.Iterable,java.util.Collection):java.util.Collection
+- s:contains(java.lang.Iterable,java.lang.Object):Z
+- s:count(java.lang.Iterable):I
+- s:equals(java.lang.Iterable,java.lang.Iterable):Z
+- s:equals(java.lang.Iterable,java.lang.Iterable,org.jetbrains.jps.util.Iterators$BiFunction):Z
+- s:filter(java.lang.Iterable,org.jetbrains.jps.util.Iterators$BooleanFunction):java.lang.Iterable
+- s:filter(java.util.Iterator,org.jetbrains.jps.util.Iterators$BooleanFunction):java.util.Iterator
+- s:filterWithOrder(java.lang.Iterable,java.lang.Iterable):java.lang.Iterable
+- s:filterWithOrder(java.util.Iterator,java.util.Iterator):java.util.Iterator
+- s:find(java.lang.Iterable,org.jetbrains.jps.util.Iterators$BooleanFunction):java.lang.Object
+- s:flat(java.lang.Iterable):java.lang.Iterable
+- s:flat(java.lang.Iterable,java.lang.Iterable):java.lang.Iterable
+- s:flat(java.util.Collection):java.lang.Iterable
+- s:flat(java.util.Iterator):java.util.Iterator
+- s:flat(java.util.Iterator,java.util.Iterator):java.util.Iterator
+- s:hashCode(java.lang.Iterable):I
+- s:isEmpty(java.lang.Iterable):Z
+- s:isEmptyCollection(java.lang.Iterable):Z
+- s:lazy(org.jetbrains.jps.util.Iterators$Provider):java.lang.Iterable
+- s:map(java.lang.Iterable,org.jetbrains.jps.util.Iterators$Function):java.lang.Iterable
+- s:map(java.util.Iterator,org.jetbrains.jps.util.Iterators$Function):java.util.Iterator
+- s:notNullFilter():org.jetbrains.jps.util.Iterators$BooleanFunction
+- s:recurse(java.lang.Object,org.jetbrains.jps.util.Iterators$Function,Z):java.lang.Iterable
+- s:recurseDepth(java.lang.Object,org.jetbrains.jps.util.Iterators$Function,Z):java.lang.Iterable
+- s:reverse(java.util.List):java.lang.Iterable
+- s:unique(java.lang.Iterable):java.lang.Iterable
+- s:unique(java.util.Iterator):java.util.Iterator
+- s:uniqueBy(java.lang.Iterable,org.jetbrains.jps.util.Iterators$Provider):java.lang.Iterable
+org.jetbrains.jps.util.Iterators$BiFunction
+- a:fun(java.lang.Object,java.lang.Object):java.lang.Object
+org.jetbrains.jps.util.Iterators$BooleanFunction
+- a:fun(java.lang.Object):Z
+org.jetbrains.jps.util.Iterators$Function
+- a:fun(java.lang.Object):java.lang.Object
+org.jetbrains.jps.util.Iterators$Provider
+- a:get():java.lang.Object
+c:org.jetbrains.jps.util.Pair
+- f:first:java.lang.Object
+- f:second:java.lang.Object
+- <init>(java.lang.Object,java.lang.Object):V
+- s:create(java.lang.Object,java.lang.Object):org.jetbrains.jps.util.Pair
+- f:equals(java.lang.Object):Z
+- hashCode():I
+c:org.jetbrains.jps.util.Ref
+- <init>():V
+- <init>(java.lang.Object):V
+- s:create():org.jetbrains.jps.util.Ref
+- s:create(java.lang.Object):org.jetbrains.jps.util.Ref
+- s:deref(org.jetbrains.jps.util.Ref):java.lang.Object
+- f:get():java.lang.Object
+- f:set(java.lang.Object):V

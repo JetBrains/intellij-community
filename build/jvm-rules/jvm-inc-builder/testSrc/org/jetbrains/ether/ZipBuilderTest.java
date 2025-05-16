@@ -4,7 +4,7 @@ package org.jetbrains.ether;
 import com.intellij.tools.build.bazel.jvmIncBuilder.ZipOutputBuilder;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.ZipOutputBuilderImpl;
 import junit.framework.TestCase;
-import org.jetbrains.jps.javac.Iterators;
+import org.jetbrains.jps.util.Iterators;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -17,8 +17,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.intellij.tools.build.bazel.jvmIncBuilder.ZipOutputBuilder.isDirectoryName;
-import static org.jetbrains.jps.javac.Iterators.collect;
-import static org.jetbrains.jps.javac.Iterators.isEmpty;
+import static org.jetbrains.jps.util.Iterators.collect;
+import static org.jetbrains.jps.util.Iterators.isEmpty;
 
 public class ZipBuilderTest extends TestCase {
   private Path myRootDir;

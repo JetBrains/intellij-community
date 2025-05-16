@@ -15,7 +15,7 @@ import org.jetbrains.jps.dependency.Node;
 import org.jetbrains.jps.dependency.NodeSource;
 import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.java.*;
-import org.jetbrains.jps.javac.Iterators;
+import org.jetbrains.jps.util.Iterators;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 

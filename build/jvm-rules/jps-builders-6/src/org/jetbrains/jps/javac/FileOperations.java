@@ -4,7 +4,8 @@ package org.jetbrains.jps.javac;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.tools.*;
+import javax.tools.JavaFileManager;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.IOException;
 import java.util.Set;
@@ -30,6 +31,9 @@ interface FileOperations {
   Archive openArchive(File file, final String contentEncoding, final JavaFileManager.Location location) throws IOException;
 
   boolean isFile(File file);
+
+  @Nullable
+  File getParentFile(File file);
 
   @NotNull
   Iterable<File> listFiles(File file, boolean recursively) throws IOException;

@@ -1,19 +1,24 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
-import com.intellij.openapi.util.text.StringUtilRt;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.javac.Iterators.BooleanFunction;
-import org.jetbrains.jps.javac.Iterators.Function;
+import org.jetbrains.jps.util.Iterators;
+import org.jetbrains.jps.util.Iterators.BooleanFunction;
+import org.jetbrains.jps.util.Iterators.Function;
 
-import javax.tools.*;
+import javax.tools.JavaFileManager;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+/** @noinspection IO_FILE_USAGE*/
 final class DefaultFileOperations implements FileOperations {
   private static final Iterable<File> NULL_ITERABLE = new Iterable<File>() {
     @NotNull
@@ -96,6 +101,30 @@ final class DefaultFileOperations implements FileOperations {
   }
 
   @Override
+  public @Nullable File getParentFile(File file) {
+    int skipCount = 0;
+    File parentFile = file;
+    while (true) {
+      parentFile = parentFile.getParentFile();
+      if (parentFile == null) {
+        return null;
+      }
+      if (".".equals(parentFile.getName())) {
+        continue;
+      }
+      if ("..".equals(parentFile.getName())) {
+        skipCount++;
+        continue;
+      }
+      if (skipCount > 0) {
+        skipCount--;
+        continue;
+      }
+      return parentFile;
+    }
+  }
+
+  @Override
   public void clearCaches(@Nullable File file) {
     if (file != null) {
       myDirectoryCache.clear();
@@ -158,7 +187,7 @@ final class DefaultFileOperations implements FileOperations {
       return false;
     }
     final String name = root.getName();
-    return StringUtilRt.endsWithIgnoreCase(name, ".jar") || StringUtilRt.endsWithIgnoreCase(name, ".zip");
+    return endsWithIgnoreCase(name, ".jar") || endsWithIgnoreCase(name, ".zip");
   }
 
   @Nullable
@@ -281,4 +310,35 @@ final class DefaultFileOperations implements FileOperations {
       return path.substring(0, idx);
     }
   }
+
+  @NotNull
+  public static String toSystemIndependentName(@NotNull String path) {
+    return path.replace('\\', '/');
+  }
+
+  /**
+   * Simplified variant of {@link File#toURI()}. Unlike the latter, doesn't check whether a given file is a directory,
+   * so URIs never have a trailing slash (but are nevertheless compatible with {@link File#File(URI)}).
+   */
+  @NotNull
+  public static URI fileToUri(@NotNull File file) {
+    String path = file.getAbsolutePath();
+    if (File.separatorChar != '/') path = path.replace(File.separatorChar, '/');
+    if (!path.startsWith("/")) path = '/' + path;
+    if (path.startsWith("//")) path = "//" + path;
+    try {
+      return new URI("file", null, path, null);
+    }
+    catch (URISyntaxException e) {
+      throw new IllegalArgumentException(path, e);  // unlikely, as `File#toURI()` doesn't declare any exceptions
+    }
+  }
+
+  @Contract(pure = true)
+  private static boolean endsWithIgnoreCase(@NotNull String text, @NotNull String suffix) {
+    int textLen = text.length();
+    int suffixLen = suffix.length();
+    return textLen >= suffixLen && text.regionMatches(true, textLen - suffixLen, suffix, 0, suffixLen);
+  }
+
 }

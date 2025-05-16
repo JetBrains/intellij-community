@@ -8,13 +8,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.Node;
 import org.jetbrains.jps.dependency.ReferenceID;
 import org.jetbrains.jps.dependency.java.*;
-import org.jetbrains.jps.javac.Iterators;
+import org.jetbrains.jps.util.Iterators;
 
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Objects;
 
-import static org.jetbrains.jps.javac.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.*;
 
 final class KJvmUtils {
 

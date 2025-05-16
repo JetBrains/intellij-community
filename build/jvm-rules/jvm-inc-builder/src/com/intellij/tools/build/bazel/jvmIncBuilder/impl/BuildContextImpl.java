@@ -12,7 +12,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
 
-import static org.jetbrains.jps.javac.Iterators.map;
+import static org.jetbrains.jps.util.Iterators.map;
 
 /** @noinspection IO_FILE_USAGE*/
 public class BuildContextImpl implements BuildContext {

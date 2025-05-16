@@ -3,7 +3,7 @@ package org.jetbrains.jps.dependency;
 
 import org.jetbrains.annotations.NotNull;
 
-import static org.jetbrains.jps.javac.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.*;
 
 /**
  * A readonly composite backward dependency index view on top of several index parts. Index parts are supposed to be semantically the same.

@@ -11,8 +11,9 @@ import org.jetbrains.jps.builders.java.CannotCreateJavaCompilerException;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
 import org.jetbrains.jps.incremental.LineOutputWriter;
-import org.jetbrains.jps.javac.Iterators.BooleanFunction;
-import org.jetbrains.jps.javac.Iterators.Function;
+import org.jetbrains.jps.util.Iterators;
+import org.jetbrains.jps.util.Iterators.BooleanFunction;
+import org.jetbrains.jps.util.Iterators.Function;
 
 import javax.annotation.processing.Processor;
 import javax.tools.*;

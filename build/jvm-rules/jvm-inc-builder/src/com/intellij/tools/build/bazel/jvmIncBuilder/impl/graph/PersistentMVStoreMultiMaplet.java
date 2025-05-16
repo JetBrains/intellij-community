@@ -8,7 +8,7 @@ import org.h2.mvstore.type.BasicDataType;
 import org.h2.mvstore.type.DataType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.MultiMaplet;
-import org.jetbrains.jps.javac.Iterators;
+import org.jetbrains.jps.util.Iterators;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;

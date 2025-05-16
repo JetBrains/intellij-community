@@ -4,14 +4,14 @@ package org.jetbrains.jps.dependency.java;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.Difference;
-import org.jetbrains.jps.dependency.impl.Pair;
+import org.jetbrains.jps.util.Pair;
 
 import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import static org.jetbrains.jps.javac.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.*;
 
 public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImpl {
 

@@ -1,10 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
-import org.jetbrains.jps.javac.Iterators.BooleanFunction;
-import org.jetbrains.jps.javac.Iterators.Function;
+import org.jetbrains.jps.util.Iterators.BooleanFunction;
+import org.jetbrains.jps.util.Iterators.Function;
 
-import javax.tools.*;
+import javax.tools.JavaFileObject;
 import java.util.*;
 
 final class FileObjectKindFilter<T> {

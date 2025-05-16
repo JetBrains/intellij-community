@@ -7,7 +7,7 @@ import com.intellij.tools.build.bazel.jvmIncBuilder.Message;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.jetbrains.jps.javac.Iterators.find;
+import static org.jetbrains.jps.util.Iterators.find;
 
 public final class PostponedDiagnosticSink implements DiagnosticSink {
   private final List<Message> myMessages = new ArrayList<>();

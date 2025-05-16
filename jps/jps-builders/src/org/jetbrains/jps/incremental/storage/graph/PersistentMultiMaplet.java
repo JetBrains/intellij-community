@@ -5,7 +5,7 @@ import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.dependency.MultiMaplet;
-import org.jetbrains.jps.javac.Iterators;
+import org.jetbrains.jps.util.Iterators;
 
 import java.io.DataInput;
 import java.io.DataInputStream;

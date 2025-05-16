@@ -19,7 +19,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.function.Predicate;
 
-import static org.jetbrains.jps.javac.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.*;
 
 /** @noinspection SSBasedInspection*/
 public class BazelIncBuilder {

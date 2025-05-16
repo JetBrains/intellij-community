@@ -12,8 +12,8 @@ import java.util.*;
 
 import static com.intellij.tools.build.bazel.jvmIncBuilder.ZipOutputBuilder.getParentEntryName;
 import static com.intellij.tools.build.bazel.jvmIncBuilder.ZipOutputBuilder.isDirectoryName;
-import static org.jetbrains.jps.javac.Iterators.collect;
-import static org.jetbrains.jps.javac.Iterators.filter;
+import static org.jetbrains.jps.util.Iterators.collect;
+import static org.jetbrains.jps.util.Iterators.filter;
 
 public class AbiJarBuilder extends ZipOutputBuilderImpl {
   private static final String PACKAGE_INDEX_STORAGE_ENTRY_NAME = "__abi_package_index__";

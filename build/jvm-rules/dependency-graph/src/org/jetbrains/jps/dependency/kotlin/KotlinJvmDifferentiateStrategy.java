@@ -8,14 +8,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.Difference;
-import org.jetbrains.jps.dependency.impl.Pair;
 import org.jetbrains.jps.dependency.java.*;
+import org.jetbrains.jps.util.Pair;
 
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static org.jetbrains.jps.javac.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.*;
 
 /**
  * This strategy augments Java strategy with some Kotlin-specific rules. Should be used in projects containing both Java and Kotlin code.

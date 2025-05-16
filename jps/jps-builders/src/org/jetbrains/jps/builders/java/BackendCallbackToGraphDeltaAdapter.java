@@ -7,7 +7,7 @@ import kotlin.metadata.*;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.java.*;
-import org.jetbrains.jps.javac.Iterators;
+import org.jetbrains.jps.util.Iterators;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.io.File;

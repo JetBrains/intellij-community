@@ -2,13 +2,14 @@
 package org.jetbrains.jps.javac;
 
 import com.google.protobuf.ByteString;
-import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.BinaryContent;
 import org.jetbrains.jps.javac.rpc.JavacRemoteProto;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileManager;
+import javax.tools.JavaFileObject;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
@@ -76,7 +77,7 @@ public final class JavacProtoUtil {
     final JavacRemoteProto.Message.Response.OutputObject.Builder msgBuilder = JavacRemoteProto.Message.Response.OutputObject.newBuilder();
 
     msgBuilder.setKind(convertKind(fileObject.getKind()));
-    msgBuilder.setFilePath(FileUtilRt.toSystemIndependentName(fileObject.getFile().getPath()));
+    msgBuilder.setFilePath(DefaultFileOperations.toSystemIndependentName(fileObject.getFile().getPath()));
     msgBuilder.setIsGenerated(fileObject.isGenerated());
 
     final BinaryContent content = fileObject.getContent();
@@ -89,7 +90,7 @@ public final class JavacProtoUtil {
     }
     final File outputRoot = fileObject.getOutputRoot();
     if (outputRoot != null) {
-      msgBuilder.setOutputRoot(FileUtilRt.toSystemIndependentName(outputRoot.getPath()));
+      msgBuilder.setOutputRoot(DefaultFileOperations.toSystemIndependentName(outputRoot.getPath()));
     }
     final String relativePath = fileObject.getRelativePath();
     if (relativePath != null) {
@@ -124,7 +125,7 @@ public final class JavacProtoUtil {
 
   public static JavacRemoteProto.Message.Response createSourceFileLoadedResponse(File srcFile) {
     final JavacRemoteProto.Message.Response.OutputObject outObjMsg = JavacRemoteProto.Message.Response.OutputObject.newBuilder()
-      .setKind(convertKind(JavaFileObject.Kind.SOURCE)).setIsGenerated(false).setFilePath(FileUtilRt.toSystemIndependentName(srcFile.getPath())).build();
+      .setKind(convertKind(JavaFileObject.Kind.SOURCE)).setIsGenerated(false).setFilePath(DefaultFileOperations.toSystemIndependentName(srcFile.getPath())).build();
 
     final JavacRemoteProto.Message.Response.Builder builder = JavacRemoteProto.Message.Response.newBuilder();
     builder.setResponseType(JavacRemoteProto.Message.Response.Type.SRC_FILE_LOADED).setOutputObject(outObjMsg);

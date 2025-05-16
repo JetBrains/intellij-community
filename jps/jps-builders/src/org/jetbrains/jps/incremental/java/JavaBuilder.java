@@ -56,6 +56,7 @@ import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
+import org.jetbrains.jps.util.Iterators;
 
 import javax.tools.Diagnostic;
 import javax.tools.DiagnosticListener;

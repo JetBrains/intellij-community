@@ -3,7 +3,7 @@ package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.Usage;
-import org.jetbrains.jps.javac.Iterators;
+import org.jetbrains.jps.util.Iterators;
 import org.jetbrains.org.objectweb.asm.Type;
 
 import java.util.Arrays;

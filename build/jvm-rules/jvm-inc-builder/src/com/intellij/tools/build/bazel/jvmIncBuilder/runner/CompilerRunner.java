@@ -9,8 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.NodeSource;
 import org.jetbrains.jps.dependency.NodeSourcePathMapper;
 
-import static org.jetbrains.jps.javac.Iterators.isEmpty;
-import static org.jetbrains.jps.javac.Iterators.map;
+import static org.jetbrains.jps.util.Iterators.isEmpty;
+import static org.jetbrains.jps.util.Iterators.map;
 
 public interface CompilerRunner extends Runner{
   boolean canCompile(NodeSource src);

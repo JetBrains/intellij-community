@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.DependencyGraph;
 import org.jetbrains.jps.dependency.GraphConfiguration;
 import org.jetbrains.jps.dependency.impl.DependencyGraphImpl;
-import org.jetbrains.jps.javac.Iterators;
+import org.jetbrains.jps.util.Iterators;
 
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
@@ -26,8 +26,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
-import static org.jetbrains.jps.javac.Iterators.collect;
-import static org.jetbrains.jps.javac.Iterators.isEmpty;
+import static org.jetbrains.jps.util.Iterators.collect;
+import static org.jetbrains.jps.util.Iterators.isEmpty;
 
 public class StorageManager implements Closeable {
   private final BuildContext myContext;

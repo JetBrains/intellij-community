@@ -2,7 +2,8 @@
 package org.jetbrains.jps.javac;
 
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.javac.Iterators.Function;
+import org.jetbrains.jps.util.Iterators;
+import org.jetbrains.jps.util.Iterators.Function;
 
 import java.io.Closeable;
 import java.io.File;

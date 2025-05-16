@@ -13,7 +13,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static org.jetbrains.jps.javac.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.*;
 
 public final class KotlinSourceOnlyDifferentiateStrategy implements DifferentiateStrategy {
   private static final Logger LOG = Logger.getLogger("#org.jetbrains.jps.dependency.kotlin.KotlinSourceOnlyDifferentiateStrategy");

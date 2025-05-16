@@ -4,7 +4,7 @@ package org.jetbrains.jps.dependency.impl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.java.JvmNodeReferenceID;
-import org.jetbrains.jps.javac.Iterators;
+import org.jetbrains.jps.util.Iterators;
 
 import java.util.HashMap;
 import java.util.HashSet;

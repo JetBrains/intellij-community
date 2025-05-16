@@ -10,8 +10,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
 
-import static org.jetbrains.jps.javac.Iterators.filter;
-import static org.jetbrains.jps.javac.Iterators.map;
+import static org.jetbrains.jps.util.Iterators.filter;
+import static org.jetbrains.jps.util.Iterators.map;
 
 public interface ClassDataZipEntry {
   // zip entry name

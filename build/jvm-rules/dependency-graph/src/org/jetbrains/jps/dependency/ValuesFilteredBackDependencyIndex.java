@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Predicate;
 
-import static org.jetbrains.jps.javac.Iterators.filter;
+import static org.jetbrains.jps.util.Iterators.filter;
 
 /**
  * A readonly value-filtered backward dependency index view on top of another back dependency index

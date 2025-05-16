@@ -24,7 +24,7 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 import static com.intellij.tools.build.bazel.jvmIncBuilder.ZipOutputBuilder.*;
-import static org.jetbrains.jps.javac.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.*;
 
 public class ZipOutputBuilderImpl implements ZipOutputBuilder {
   private final Map<String, EntryData> myEntries = new TreeMap<>();

@@ -25,7 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-import static org.jetbrains.jps.javac.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.*;
 
 /** @noinspection IO_FILE_USAGE*/
 public class JavaCompilerRunner implements CompilerRunner {

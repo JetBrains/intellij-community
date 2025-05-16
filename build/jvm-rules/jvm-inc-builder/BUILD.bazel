@@ -6,7 +6,8 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
-    "@rules_jvm//dependency-graph",
+    "//dependency-graph",
+    "//jps-builders-6:build-javac-rt",
     "//:jps-javac-extension",
     "//:annotations",
     "//:h2-mvstore",
@@ -16,7 +17,6 @@ jvm_library(
     "//:caffeine",
     "//:intellij-deps-fastutil",
     "//:qdox",
-    "@rules_jvm//jps-builders-6:build-javac-rt",
     "//:jps",    # for instrumentation-util and instrumenters
     "//:kotlin-compose-compiler-plugin",
     "//:kotlin-serialization-compiler-plugin",

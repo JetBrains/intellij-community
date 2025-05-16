@@ -11,7 +11,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-import static org.jetbrains.jps.javac.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.*;
 
 public class ElementSnapshotDeltaImpl<T extends ExternalizableGraphElement> implements ElementSnapshotDelta<T> {
   private final ElementSnapshot<T> myBaseSnapshot;

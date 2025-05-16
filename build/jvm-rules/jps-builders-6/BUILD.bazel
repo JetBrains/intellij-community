@@ -22,7 +22,6 @@ jvm_library(
     "//:protobuf-java",
     "//:netty-transport-jps",
     "//:netty-codec-jps",
-    "//:jps", # for platform/util_rt
   ],
   runtime_deps = [":build-javac-rt_resources"]
 )

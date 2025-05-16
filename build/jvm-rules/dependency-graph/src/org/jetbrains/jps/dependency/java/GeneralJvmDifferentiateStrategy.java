@@ -9,7 +9,7 @@ import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static org.jetbrains.jps.javac.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.*;
 
 public final class GeneralJvmDifferentiateStrategy implements DifferentiateStrategy {
   private static final Logger LOG = Logger.getLogger("#org.jetbrains.jps.dependency.java.GeneralJvmDifferentiateStrategy");
