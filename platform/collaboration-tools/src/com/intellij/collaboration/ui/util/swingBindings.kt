@@ -16,7 +16,10 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.observable.util.addDocumentListener
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.util.coroutines.childScope
@@ -40,6 +43,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.awt.BorderLayout
 import java.awt.Color
 import javax.swing.*
 import javax.swing.border.Border
@@ -604,3 +608,39 @@ fun <JC : JComponent> Cell<JC>.bindValidationOnApplyIn(cs: CoroutineScope, bindi
 
   return this
 }
+
+@ApiStatus.Internal
+abstract class DialogWrapperAsync(project: Project?) : DialogWrapper(project) {
+  abstract suspend fun CoroutineScope.createCenterPanelAsync(): DialogPanel
+
+  final override fun createCenterPanel(): JComponent? {
+    val panel = DialogPanel(BorderLayout())
+
+    panel.launchOnShow("${javaClass.name}#createCenterPanel") {
+      val cs = this
+      var integratedPanel: DialogPanel? = null
+      try {
+        val newPanel = cs.createCenterPanelAsync()
+        withContext(NonCancellable) {
+          panel.registerIntegratedPanel(newPanel)
+          panel.add(newPanel, BorderLayout.CENTER)
+          integratedPanel = newPanel
+        }
+
+        panel.revalidate()
+        panel.repaint()
+
+        awaitCancellation()
+      }
+      finally {
+        integratedPanel?.let {
+          panel.unregisterIntegratedPanel(it)
+          panel.remove(it)
+        }
+      }
+    }
+
+    return panel
+  }
+}
+

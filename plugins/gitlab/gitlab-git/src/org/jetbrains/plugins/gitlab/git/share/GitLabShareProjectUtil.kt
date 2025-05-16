@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.git.share
 
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
@@ -15,7 +14,6 @@ import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.GitLabSettings
 import org.jetbrains.plugins.gitlab.api.request.createProject
 import org.jetbrains.plugins.gitlab.git.share.ui.GitLabShareProjectDialogComponentFactory
-import org.jetbrains.plugins.gitlab.git.share.ui.GitLabShareProjectDialogResult
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 object GitLabShareProjectUtil {
@@ -35,8 +33,7 @@ object GitLabShareProjectUtil {
     if (!gitSpService.showExistingRemotesDialog(gitlabServiceName, gitRepository, projectManager.knownRepositories))
       return
 
-    val shareDialogResult = project.service<GitLabShareProjectService>()
-                              .showShareProjectDialog(projectName) ?: return
+    val shareDialogResult = GitLabShareProjectDialogComponentFactory.showIn(project, projectName) ?: return
 
     val api = shareDialogResult.api
 
@@ -57,13 +54,4 @@ object GitLabShareProjectUtil {
       }
     )
   }
-}
-
-@Service(Service.Level.PROJECT)
-private class GitLabShareProjectService(
-  private val project: Project,
-  private val cs: CoroutineScope,
-) {
-  fun showShareProjectDialog(projectName: String): GitLabShareProjectDialogResult? =
-    GitLabShareProjectDialogComponentFactory.showIn(cs, project, projectName)
 }

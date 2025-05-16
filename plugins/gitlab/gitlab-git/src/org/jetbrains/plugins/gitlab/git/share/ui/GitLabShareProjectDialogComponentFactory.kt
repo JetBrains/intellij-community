@@ -8,12 +8,9 @@ import com.intellij.collaboration.ui.util.*
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.observable.util.not
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.platform.util.coroutines.childScope
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComboboxSpeedSearch
@@ -22,6 +19,7 @@ import git4idea.DialogManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGroupDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNamespaceDTO
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
@@ -35,22 +33,18 @@ import javax.swing.JLabel
  */
 internal object GitLabShareProjectDialogComponentFactory {
   fun showIn(
-    parentCs: CoroutineScope,
     project: Project,
     projectName: String,
   ): GitLabShareProjectDialogResult? {
-    val dialog = object : DialogWrapper(project) {
-      private val cs: CoroutineScope = parentCs.childScope(javaClass.name, Dispatchers.EDT + ModalityState.stateForComponent(window).asContextElement())
-      val vm = GitLabShareProjectDialogViewModel(project, cs, projectName)
+    var result: GitLabShareProjectDialogResult? = null
 
-      init {
-        title = GitLabBundle.message("action.GitLab.Share.text")
-        setOKButtonText(GitLabBundle.message("share.dialog.okButton.text"))
+    suspend fun CoroutineScope.createCenterPanelImpl(): DialogPanel = withContext(Dispatchers.EDT) {
+      panel {
+        val cs = this@createCenterPanelImpl
 
-        init()
-      }
+        val vm = GitLabShareProjectDialogViewModel(project, cs, projectName)
+        onApply { result = vm.state }
 
-      override fun createCenterPanel(): JComponent? = panel {
         row {
           comboBox(vm.accounts.toComboBoxModelIn(cs), renderer = { _, value, _, _, _ ->
             if (value == null) return@comboBox JLabel(GitLabBundle.message("share.dialog.account.none"))
@@ -147,8 +141,19 @@ internal object GitLabShareProjectDialogComponentFactory {
       }
     }
 
+    val dialog = object : DialogWrapperAsync(project) {
+      init {
+        title = GitLabBundle.message("action.GitLab.Share.text")
+        setOKButtonText(GitLabBundle.message("share.dialog.okButton.text"))
+
+        init()
+      }
+
+      override suspend fun CoroutineScope.createCenterPanelAsync(): DialogPanel = createCenterPanelImpl()
+    }
+
     DialogManager.show(dialog)
 
-    return if (dialog.isOK) dialog.vm.state else null
+    return if (dialog.isOK) result else null
   }
 }
