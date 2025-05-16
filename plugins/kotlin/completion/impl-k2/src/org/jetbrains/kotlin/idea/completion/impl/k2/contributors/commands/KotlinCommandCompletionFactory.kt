@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands
 
+import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.command.CommandCompletionFactory
 import com.intellij.codeInsight.completion.command.commands.IntentionCommandOffsetProvider
 import com.intellij.openapi.project.DumbAware
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvid
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name.identifier
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
@@ -44,6 +46,20 @@ class KotlinCommandCompletionFactory : CommandCompletionFactory, DumbAware {
             }
         }
         return true
+    }
+
+    override fun supportFiltersWithDoublePrefix(): Boolean = false
+
+    override fun forcePrioritize(parameters: CompletionParameters): Boolean {
+        if (!super.forcePrioritize(parameters)) return false
+        val binaryExpressionParent = parameters.position.parent?.parent
+        if (binaryExpressionParent !is KtBinaryExpression) return false
+        if (binaryExpressionParent.operationToken != KtTokens.RANGE) return false
+        val left = binaryExpressionParent.left ?: return false
+        return analyze(left) {
+            val expressionType = left.expressionType ?: return false
+            expressionType.isBooleanType || !expressionType.isPrimitive
+        }
     }
 
     @OptIn(KaImplementationDetail::class, KaExperimentalApi::class)

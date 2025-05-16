@@ -105,8 +105,10 @@ internal class CommandCompletionService(
     if (installed == true) return
     lookup.putUserData(INSTALLED_ADDITIONAL_MATCHER_KEY, true)
     lookup.showIfMeaningless() // stop hiding
-    lookup.arranger.registerAdditionalMatcher(CommandCompletionLookupItemFilter)
-    lookup.arranger.prefixChanged(lookup)
+    if (completionFactory.supportFiltersWithDoublePrefix()) {
+      lookup.arranger.registerAdditionalMatcher(CommandCompletionLookupItemFilter)
+      lookup.arranger.prefixChanged(lookup)
+    }
     lookup.requestResize()
     lookup.refreshUi(false, true)
     lookup.ensureSelectionVisible(true)

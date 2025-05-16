@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.fir.completion
 
+import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.completion.command.CommandCompletionLookupElement
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.impl.LookupImpl
@@ -310,7 +312,8 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
 
     fun testMoveMethod() {
         Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
-        myFixture.configureByText(KotlinFileType.INSTANCE, """
+        myFixture.configureByText(
+            KotlinFileType.INSTANCE, """
       class Main {
       
           fun a(a2: String): String {
@@ -319,17 +322,20 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
           }.<caret>
       
       }
-      """.trimIndent())
+      """.trimIndent()
+        )
         val elements = myFixture.completeBasic()
         assertTrue(elements.any { element -> element.lookupString.equals("Move element", ignoreCase = true) })
     }
 
     fun testCopyClass() {
         Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
-        myFixture.configureByText(KotlinFileType.INSTANCE, """
+        myFixture.configureByText(
+            KotlinFileType.INSTANCE, """
       public class Main.<caret> {
       }
-      """.trimIndent())
+      """.trimIndent()
+        )
         val elements = myFixture.completeBasic()
         assertTrue(elements.any { element -> element.lookupString.equals("Copy class", ignoreCase = true) })
     }
@@ -372,7 +378,8 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
 
     fun testNoCreateFromUsagesAfterDoubleDot() {
         Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
-        myFixture.configureByText(KotlinFileType.INSTANCE, """
+        myFixture.configureByText(
+            KotlinFileType.INSTANCE, """
         enum class Color {
           RED, GREEN, BLUE, YELLOW, BROWN
         }
@@ -380,14 +387,16 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         class A {
           val color = Color.BROWN..<caret>
         }
-      """.trimIndent())
+      """.trimIndent()
+        )
         val elements = myFixture.completeBasic()
         assertNull(elements.firstOrNull { element -> element.lookupString.contains("Create method from", ignoreCase = true) })
     }
 
     fun testCreateFromUsagesBeforeSemiComa() {
         Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
-        myFixture.configureByText(KotlinFileType.INSTANCE, """
+        myFixture.configureByText(
+            KotlinFileType.INSTANCE, """
         enum class Color {
           RED, GREEN, BLUE, YELLOW, BROWN
         }
@@ -395,9 +404,43 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         class A {
           val color = Color.BROWN.<caret>;
         }
-      """.trimIndent())
+      """.trimIndent()
+        )
         val elements = myFixture.completeBasic()
         assertTrue(elements.any { element -> element.lookupString.contains("Create method from", ignoreCase = true) })
+    }
+
+    fun testFirstCompletion() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            fun foo() : String {
+                return "1"
+            }
+            
+            fun bar(){
+                foo()..<caret>
+            }
+            """.trimIndent()
+        )
+        val elements = myFixture.complete(CompletionType.BASIC, 0)
+        assertTrue(elements[0].`as`(CommandCompletionLookupElement::class.java) != null)
+    }
+    fun testNotFirstCompletion() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            fun foo() : Int {
+                return 1
+            }
+            
+            fun bar(){
+                foo()..<caret>
+            }
+            """.trimIndent()
+        )
+        val elements = myFixture.complete(CompletionType.BASIC, 0)
+        assertFalse(elements[0].`as`(CommandCompletionLookupElement::class.java) != null)
     }
 
     private fun selectItem(item: LookupElement, completionChar: Char = 0.toChar()) {

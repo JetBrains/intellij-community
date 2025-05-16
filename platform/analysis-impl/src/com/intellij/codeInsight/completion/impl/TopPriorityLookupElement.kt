@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.impl
 
+import com.intellij.codeInsight.completion.impl.TopPriorityLookupElement.FORCE_FIRST_SELECT
 import com.intellij.codeInsight.completion.impl.TopPriorityLookupElement.NEVER_AUTOSELECT_TOP_PRIORITY_ITEM
 import com.intellij.codeInsight.completion.impl.TopPriorityLookupElement.TOP_PRIORITY_ITEM
 import com.intellij.codeInsight.lookup.LookupElement
@@ -18,6 +19,14 @@ object TopPriorityLookupElement {
    */
   @JvmField
   internal val TOP_PRIORITY_ITEM: Key<Boolean> = Key.create("completion.lookup.top.priority.item")
+
+  /**
+   * If [com.intellij.codeInsight.lookup.LookupElement] does not contain [TOP_PRIORITY_ITEM], it doesn't affect any behavior.
+   *
+   * Otherwise, If [com.intellij.codeInsight.lookup.LookupElement] contains this key and at the first place, it will be semi-selected
+   */
+  @JvmField
+  internal val FORCE_FIRST_SELECT: Key<Boolean> = Key.create("completion.lookup.force.autoselect.top.priority.item")
 
   /**
    * If [com.intellij.codeInsight.lookup.LookupElement] does not contain [TOP_PRIORITY_ITEM], it doesn't affect any behavior.
@@ -41,6 +50,19 @@ object TopPriorityLookupElement {
   fun <T : LookupElement> prioritizeToTop(item: T, neverAutoselect: Boolean): T {
     item.putUserData(TOP_PRIORITY_ITEM, true)
     item.putUserData(NEVER_AUTOSELECT_TOP_PRIORITY_ITEM, neverAutoselect)
+    return item
+  }
+
+  /**
+   * Makes [item] a top-priority element which is always placed at the top of a lookup and tried to be selected.
+   **
+   * @see TOP_PRIORITY_ITEM
+   * @see FORCE_FIRST_SELECT
+   */
+  @ApiStatus.Internal
+  fun <T : LookupElement> prioritizeToTopAndSelect(item: T): T {
+    item.putUserData(TOP_PRIORITY_ITEM, true)
+    item.putUserData(FORCE_FIRST_SELECT, true)
     return item
   }
 }

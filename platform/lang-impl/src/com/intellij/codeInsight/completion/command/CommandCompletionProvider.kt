@@ -4,6 +4,7 @@ package com.intellij.codeInsight.completion.command
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.completion.command.configuration.ApplicationCommandCompletionService
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
+import com.intellij.codeInsight.completion.impl.TopPriorityLookupElement
 import com.intellij.codeInsight.completion.ml.MLWeigherUtil
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
@@ -127,6 +128,9 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
         }
       }))
 
+    val forcePrioritize = commandCompletionType is InvocationCommandType.FullSuffix &&
+                          commandCompletionFactory.forcePrioritize(parameters)
+
     // Fetch commands applicable to the position
     processCommandsForContext(commandCompletionFactory,
                               originalFile.project,
@@ -140,6 +144,9 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
       commands.forEach { command ->
         CommandCompletionCollector.shown(command::class.java, originalFile.language, commandCompletionType::class.java)
         val lookupElement = createLookupElement(command, adjustedParameters, commandCompletionFactory, prefix)
+        if (forcePrioritize) {
+          TopPriorityLookupElement.prioritizeToTopAndSelect(lookupElement)
+        }
         val customPrefixMatcher = command.customPrefixMatcher(prefix)
         if (customPrefixMatcher != null) {
           val alwaysShowMatcher = resultSet.withPrefixMatcher(customPrefixMatcher)

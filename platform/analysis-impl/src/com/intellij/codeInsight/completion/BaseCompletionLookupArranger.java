@@ -6,7 +6,6 @@ import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.completion.impl.TopPriorityLookupElement;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.EmptyLookupItem;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Predicate;
 
+import static com.intellij.codeInsight.completion.impl.TopPriorityLookupElement.FORCE_FIRST_SELECT;
 import static com.intellij.codeInsight.util.CodeCompletionKt.CodeCompletion;
 
 public class BaseCompletionLookupArranger extends LookupArranger implements CompletionLookupArranger {
@@ -505,7 +505,11 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   }
 
   private int getItemToSelect(LookupElementListPresenter lookup, List<? extends LookupElement> items, boolean onExplicitAction, @Nullable LookupElement mostRelevant) {
-    if (items.isEmpty() || lookup.getLookupFocusDegree() == LookupFocusDegree.UNFOCUSED) {
+    if (items.isEmpty() ||
+        lookup.getLookupFocusDegree() == LookupFocusDegree.UNFOCUSED ||
+        (lookup.getLookupFocusDegree() == LookupFocusDegree.SEMI_FOCUSED &&
+         items.get(0) != null &&
+         items.get(0).getUserData(FORCE_FIRST_SELECT) == Boolean.TRUE)) {
       return 0;
     }
 

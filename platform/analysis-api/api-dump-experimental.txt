@@ -3,8 +3,10 @@
 - commandProviders(com.intellij.openapi.project.Project,com.intellij.lang.Language):java.util.List
 - createFile(com.intellij.psi.PsiFile,java.lang.String):com.intellij.psi.PsiFile
 - filterSuffix():java.lang.Character
+- forcePrioritize(com.intellij.codeInsight.completion.CompletionParameters):Z
 - isApplicable(com.intellij.psi.PsiFile,I):Z
 - suffix():C
+- supportFiltersWithDoublePrefix():Z
 *f:com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,Z):V
 - f:component1():com.intellij.openapi.project.Project
