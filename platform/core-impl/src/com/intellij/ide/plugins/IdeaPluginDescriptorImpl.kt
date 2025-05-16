@@ -98,7 +98,7 @@ sealed class IdeaPluginDescriptorImpl(
   private val vendorUrl: String? = raw.vendorUrl
   private val url: String? = raw.url
 
-  private val pluginDependencies: List<PluginDependencyImpl> = raw.depends
+  internal val pluginDependencies: List<PluginDependencyImpl> = raw.depends
     .let(::fixDepends)
     .let(::convertDepends)
   val incompatiblePlugins: List<PluginId> = raw.incompatibleWith.map(PluginId::getId)
@@ -469,35 +469,6 @@ sealed class IdeaPluginDescriptorImpl(
     }
   }
 
-  internal fun checkTypeInvariants() {
-    when (type) {
-      Type.PluginMainDescriptor -> {
-        assert(moduleName == null && moduleLoadingRule == null && descriptorPath == null) { this }
-      }
-      Type.ContentModuleDescriptor -> {
-        assert(moduleName != null && moduleLoadingRule != null && descriptorPath != null) { this }
-        if (pluginDependencies.isNotEmpty()) {
-          LOG.error("Unexpected `depends` dependencies in a content module: ${pluginDependencies.joinToString()}\n in $this")
-        }
-        if (content.modules.isNotEmpty()) {
-          LOG.error("Unexpected `content` elements in a content module: ${content.modules.joinToString()}\n in $this")
-        }
-      }
-      Type.DependsSubDescriptor -> {
-        assert(moduleName == null && moduleLoadingRule == null && descriptorPath != null) { this }
-        if (content.modules.isNotEmpty()) {
-          LOG.error("Unexpected `content` elements in a `depends` sub-descriptor: ${content.modules.joinToString()}\n in $this")
-        }
-        if (moduleDependencies.modules.isNotEmpty()) {
-          LOG.error("Unexpected `module` dependencies in a `depends` sub-descriptor: ${moduleDependencies.modules.joinToString()}\n in $this")
-        }
-        if (moduleDependencies.plugins.isNotEmpty()) {
-          LOG.error("Unexpected `plugin` dependencies in a `depends` sub-descriptor: ${moduleDependencies.plugins.joinToString()}\n in $this")
-        }
-      }
-    }
-  }
-
   @ApiStatus.Internal
   companion object {
     private fun convertDepends(depends: List<DependsElement>): MutableList<PluginDependencyImpl> =
@@ -708,7 +679,7 @@ class MainPluginDescriptor(
   descriptorPath = null
 ) {
   init {
-    checkTypeInvariants()
+    assert(moduleName == null && moduleLoadingRule == null && descriptorPath == null) { this }
   }
 }
 
@@ -731,7 +702,16 @@ class DependsSubDescriptor(
   descriptorPath
 ) {
   init {
-    checkTypeInvariants()
+    assert(moduleName == null && moduleLoadingRule == null && descriptorPath != null) { this }
+    if (content.modules.isNotEmpty()) {
+      LOG.error("Unexpected `content` elements in a `depends` sub-descriptor: ${content.modules.joinToString()}\n in $this")
+    }
+    if (moduleDependencies.modules.isNotEmpty()) {
+      LOG.error("Unexpected `module` dependencies in a `depends` sub-descriptor: ${moduleDependencies.modules.joinToString()}\n in $this")
+    }
+    if (moduleDependencies.plugins.isNotEmpty()) {
+      LOG.error("Unexpected `plugin` dependencies in a `depends` sub-descriptor: ${moduleDependencies.plugins.joinToString()}\n in $this")
+    }
   }
 }
 
@@ -759,7 +739,13 @@ class ContentModuleDescriptor(
   override val moduleLoadingRule: ModuleLoadingRule = moduleLoadingRule
 
   init {
-    checkTypeInvariants()
+    assert(descriptorPath != null) { this }
+    if (pluginDependencies.isNotEmpty()) {
+      LOG.error("Unexpected `depends` dependencies in a content module: ${pluginDependencies.joinToString()}\n in $this")
+    }
+    if (content.modules.isNotEmpty()) {
+      LOG.error("Unexpected `content` elements in a content module: ${content.modules.joinToString()}\n in $this")
+    }
   }
 }
 
