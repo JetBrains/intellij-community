@@ -150,6 +150,7 @@
   - name: kotlin.compiler-plugins.kotlinx-serialization.gradle
   - name: kotlin.compiler-plugins.kotlinx-serialization.k2
   - name: kotlin.compiler-plugins.kotlinx-serialization.maven
+  - name: kotlin.compiler-plugins.kotlin-dataframe.maven
   - name: kotlin.compiler-plugins.noarg.common
   - name: kotlin.compiler-plugins.noarg.gradle
   - name: kotlin.compiler-plugins.noarg.maven

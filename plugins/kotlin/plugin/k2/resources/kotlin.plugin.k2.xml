@@ -298,6 +298,7 @@
     <module name="kotlin.compiler-plugins.kapt"/>
     <module name="kotlin.compiler-plugins.kotlinx-serialization.k2"/>
     <module name="kotlin.compiler-plugins.kotlinx-serialization.maven"/>
+    <module name="kotlin.compiler-plugins.kotlin-dataframe.maven"/>
     <module name="kotlin.compiler-plugins.lombok.maven"/>
     <module name="kotlin.compiler-plugins.assignment.maven"/>
 

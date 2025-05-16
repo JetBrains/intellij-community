@@ -206,6 +206,7 @@ jvm_library(
     "//plugins/kotlin/compiler-plugins/kotlinx-serialization/common",
     "//plugins/kotlin/compiler-plugins/kotlinx-serialization/gradle",
     "//plugins/kotlin/compiler-plugins/kotlinx-serialization/maven",
+    "//plugins/kotlin/compiler-plugins/kotlin-dataframe/maven",
     "//plugins/kotlin/compiler-plugins/allopen/common-k1:kotlin-compiler-plugins-allopen-common-k1",
     "//plugins/kotlin/compiler-plugins/allopen/gradle",
     "//plugins/kotlin/compiler-plugins/allopen/maven",

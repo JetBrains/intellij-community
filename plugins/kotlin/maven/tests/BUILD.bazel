@@ -76,6 +76,7 @@ jvm_library(
     "//plugins/kotlin/compiler-plugins/assignment/maven",
     "//plugins/kotlin/compiler-plugins/kotlinx-serialization/common",
     "//plugins/kotlin/compiler-plugins/kotlinx-serialization/maven",
+    "//plugins/kotlin/compiler-plugins/kotlin-dataframe/maven",
   ]
 )
 ### auto-generated section `build kotlin.maven.tests` end
