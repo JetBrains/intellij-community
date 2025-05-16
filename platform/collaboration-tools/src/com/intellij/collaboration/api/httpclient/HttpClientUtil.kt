@@ -131,18 +131,12 @@ class ByteArrayProducingBodyPublisher(
 
 @Deprecated("Should be replaced by a Ktor HTTP-client by 24.3")
 class LazyBodyHandler<T>(
-  private val delegate: BodyHandler<T>,
+  private val delegateHandler: BodyHandler<T>,
 ) : BodyHandler<suspend () -> T> {
-  override fun apply(responseInfo: ResponseInfo?): BodySubscriber<(suspend () -> T)?>? {
-    val delegateSubscriber = delegate.apply(responseInfo)
-
-    return object : BodySubscriber<(suspend () -> T)?> by delegateSubscriber {
-      override fun getBody(): CompletionStage<(suspend () -> T)?>? {
-        return CompletableFuture.completedFuture {
-          delegateSubscriber.body.await()
-        }
-      }
-    }
+  override fun apply(responseInfo: ResponseInfo): BodySubscriber<suspend () -> T> {
+    val delegateSubscriber: BodySubscriber<T> = delegateHandler.apply(responseInfo)
+    val subscriber: BodySubscriber<suspend () -> T> = BodySubscribers.mapping(delegateSubscriber) { { it } }
+    return subscriber
   }
 }
 

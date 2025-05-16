@@ -98,8 +98,9 @@ class GradleConfiguratorPlatformSpecificTest3 : KotlinGradleImportingTestCase() 
 
         runInEdtAndWait {
             myTestFixture.project.executeWriteCommand("") {
+                val moduleBridge = myTestFixture.module as ModuleBridge
                 KotlinWithGradleConfigurator.addKotlinLibraryToModule(
-                    object : ModuleBridge  by myTestFixture.module {
+                    object : ModuleBridge  by moduleBridge {
                         override fun getName(): String = "jvmMain"
                     },
                     DependencyScope.COMPILE,
