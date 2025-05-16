@@ -534,6 +534,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
                                                                Function<? super PsiElement, ? extends PsiCodeFragment> fragmentFactory)
     throws EvaluateException {
     try {
+      if (Registry.is("debugger.compiling.evaluator.force")) throw new UnsupportedExpressionException("force compilation");
       return EvaluatorBuilderImpl.build(text, contextPsiElement, contextSourcePosition, project);
     }
     catch (UnsupportedExpressionException ex) {

@@ -195,6 +195,10 @@
                  description="Maximum duration (in ms) of obtaining an evaluatable context for a Pause"/>
     <registryKey key="debugger.collectible.value.retries.error" defaultValue="true"
                  description="Drop an error if there were too many debugger collectible value retries"/>
+    <registryKey key="debugger.compiling.evaluator" defaultValue="true"
+                 description="Allow to compile the code before evaluation if needed"/>
+    <registryKey key="debugger.compiling.evaluator.force" defaultValue="false"
+                 description="Always compile the code before evaluation"/>
   </extensions>
 
   <actions>

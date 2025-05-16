@@ -1244,7 +1244,7 @@ Most likely there was an uncaught exception in asynchronous execution that resul
     }
   }
 
-  protected void setRegistryPropertyForTest(@NotNull String property, @SuppressWarnings("SameParameterValue") @NotNull String value) {
+  public void setRegistryPropertyForTest(@NotNull String property, @SuppressWarnings("SameParameterValue") @NotNull String value) {
     RegistryValue registryValue = Registry.get(property);
     if (registryValue.isMultiValue()) {
       registryValue.setSelectedOption(value);

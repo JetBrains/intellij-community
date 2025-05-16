@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XValueModifier;
@@ -65,6 +66,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
       PsiCodeFragment code = getEvaluationCode(evaluationContext);
       PsiElement psiContext = ContextUtil.getContextElement(evaluationContext, position);
       try {
+        if (Registry.is("debugger.compiling.evaluator.force")) throw new UnsupportedExpressionException("force compilation");
         return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(getEvaluationText(), psiContext).getEvaluatorBuilder().build(code, position);
       }
       catch (UnsupportedExpressionException ex) {
