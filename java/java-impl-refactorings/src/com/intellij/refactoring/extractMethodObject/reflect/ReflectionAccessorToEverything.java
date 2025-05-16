@@ -82,12 +82,6 @@ public class ReflectionAccessorToEverything {
       super.visitMethodCallExpression(expression);
       addIfNotNull(MethodDescriptor.createIfInaccessible(myOuterClass, expression));
     }
-
-    @Override
-    public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
-      super.visitMethodReferenceExpression(expression);
-      addIfNotNull(MethodReferenceDescriptor.createIfInaccessible(expression));
-    }
   }
 
   private class MyInaccessibleFieldVisitor extends ReplaceVisitor {
