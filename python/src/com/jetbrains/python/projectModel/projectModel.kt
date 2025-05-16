@@ -12,17 +12,21 @@ import kotlin.io.path.visitFileTree
  * These modules might depend on each other, but it's not a requirement.
  * The root itself can be a valid module root, but it's not a requirement.
  */
-data class ExternalProjectGraph(val root: Path, val projects: List<ExternalProject>)
+data class ExternalProjectGraph<P : ExternalProject>(val root: Path, val projects: List<P>)
 
 /**
  * Defines a project module in a particular directory with its unique name, and a set of module dependencies
  * (usually editable Python path dependencies to other modules in the same IJ project).
  */
-data class ExternalProject(val name: String, val root: Path, val dependencies: List<ExternalProjectDependency>)
+interface ExternalProject {
+  val name: String
+  val root: Path
+  val dependencies: List<ExternalProjectDependency>
+}
 
 data class ExternalProjectDependency(val name: String, val path: Path)
 
-interface PythonProjectModelResolver {
+interface PythonProjectModelResolver<P : ExternalProject> {
   /**
    * If the `root` directory is considered a project root in a particular project management system
    * (e.g. it contains pyproject.toml or other such marker files), traverse it and return a subgraph describing modules
@@ -41,7 +45,7 @@ interface PythonProjectModelResolver {
    * this method should return `null` for `libs/` but module graphs containing *only* modules `project1` and `project2`
    * for the directories `project1/` and `project2` respectively, even if there is a dependency between them.
    */
-  fun discoverProjectRootSubgraph(root: Path): ExternalProjectGraph?
+  fun discoverProjectRootSubgraph(root: Path): ExternalProjectGraph<P>?
 
   /**
    * Find all project model graphs within the given directory (presumably the root directory of an IJ project).
@@ -56,13 +60,13 @@ interface PythonProjectModelResolver {
    *   project2/
    *     pyproject.toml
    * ```
-   * If `project1` depends on `project2` (or vice-versa), this methods should return a single graph with its 
+   * If `project1` depends on `project2` (or vice-versa), this methods should return a single graph with its
    * root in `libs/` containing modules for both `project1` and `project2`.
    * If these two projects are independents, there will be two graphs for `project1` and `project2` respectively.
    */
   @OptIn(ExperimentalPathApi::class)
-  fun discoverIndependentProjectGraphs(root: Path): List<ExternalProjectGraph> {
-    val graphs = mutableListOf<ExternalProjectGraph>()
+  fun discoverIndependentProjectGraphs(root: Path): List<ExternalProjectGraph<P>> {
+    val graphs = mutableListOf<ExternalProjectGraph<P>>()
     root.visitFileTree {
       onPreVisitDirectory { dir, _ ->
         val buildSystemRoot = discoverProjectRootSubgraph(dir)
@@ -91,7 +95,7 @@ interface ProjectModelSyncListener {
   fun onFinish(projectRoot: Path): Unit = Unit
 }
 
-private fun mergeRootsReferringToEachOther(roots: MutableList<ExternalProjectGraph>): List<ExternalProjectGraph> {
+private fun <P : ExternalProject> mergeRootsReferringToEachOther(roots: List<ExternalProjectGraph<P>>): List<ExternalProjectGraph<P>> {
   fun commonAncestorPath(paths: Iterable<Path>): Path {
     val normalized = paths.map { it.normalize() }
     return normalized.reduce { p1, p2 -> FileUtil.findAncestor(p1, p2)!! }
@@ -106,7 +110,7 @@ private fun mergeRootsReferringToEachOther(roots: MutableList<ExternalProjectGra
   }
 
   val expandedProjectRootsByRootPath = expandedProjectRoots.sortedBy { it.root }
-  val mergedProjectRoots = mutableListOf<ExternalProjectGraph>()
+  val mergedProjectRoots = mutableListOf<ExternalProjectGraph<P>>()
   for (root in expandedProjectRootsByRootPath) {
     if (mergedProjectRoots.isEmpty()) {
       mergedProjectRoots.add(root)

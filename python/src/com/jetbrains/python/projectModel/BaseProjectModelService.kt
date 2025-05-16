@@ -19,10 +19,10 @@ import kotlin.reflect.KClass
 /**
  * Syncs the project model described in pyproject.toml files with the IntelliJ project model.
  */
-abstract class BaseProjectModelService<E : EntitySource> {
+abstract class BaseProjectModelService<E : EntitySource, P : ExternalProject> {
   abstract val systemName: @NlsSafe String
 
-  abstract val projectModelResolver: PythonProjectModelResolver
+  abstract val projectModelResolver: PythonProjectModelResolver<P>
 
   abstract fun getSettings(project: Project): ProjectModelSettings
 

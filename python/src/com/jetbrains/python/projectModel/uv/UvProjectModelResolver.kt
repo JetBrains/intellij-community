@@ -8,81 +8,139 @@ import com.jetbrains.python.projectModel.ExternalProjectGraph
 import com.jetbrains.python.projectModel.PythonProjectModelResolver
 import org.apache.tuweni.toml.Toml
 import org.apache.tuweni.toml.TomlTable
+import java.nio.file.FileVisitResult
 import java.nio.file.Path
+import java.nio.file.PathMatcher
 import kotlin.io.path.*
 
 private const val DEFAULT_VENV_DIR = ".venv"
 
+data class UvProject(
+  override val name: String,
+  override val root: Path,
+  override val dependencies: List<ExternalProjectDependency>,
+  val isWorkspace: Boolean,
+  val parentWorkspace: UvProject?,
+) : ExternalProject
+
+private data class UvPyProjectToml(
+  val projectName: String,
+  val root: Path,
+  val workspaceDependencies: List<String>,
+  val pathDependencies: Map<String, Path>,
+  val workspaceMemberPathMatchers: List<PathMatcher>,
+  val workspaceExcludePathMatchers: List<PathMatcher>,
+) {
+  val isWorkspace = workspaceMemberPathMatchers.isNotEmpty()
+}
+
 @OptIn(ExperimentalPathApi::class)
-object UvProjectModelResolver : PythonProjectModelResolver {
-  override fun discoverProjectRootSubgraph(root: Path): ExternalProjectGraph? {
+object UvProjectModelResolver : PythonProjectModelResolver<UvProject> {
+  override fun discoverProjectRootSubgraph(root: Path): ExternalProjectGraph<UvProject>? {
     if (!root.resolve(UvConstants.PYPROJECT_TOML).exists()) {
       return null
     }
-    val rootUvProject = readUvPyProjectToml(root / "pyproject.toml")
-    if (rootUvProject == null) {
-      return null
-    }
-    val workspaceMemberMatchers = rootUvProject.workspaceMemberGlobs.map { getPathMatcher(it) }
-    val workspaceExcludeMatchers = rootUvProject.workspaceExcludeGlobs.map { getPathMatcher(it) }
-    // TODO check if we can speed up traversal by not traversing further into workspace member directories
-    // Can workspace members contain editable path dependencies inside?
-    val allUvProjects: List<UvPyProjectToml> = root
-      .walk()
-      // TODO skip excluded project directories
-      .filterNot { it.startsWith(root / DEFAULT_VENV_DIR) }
-      .filter { it.name == UvConstants.PYPROJECT_TOML }
-      .mapNotNull(::readUvPyProjectToml)
-      .toList()
-    val workspaceMembers: Map<String, UvPyProjectToml>
-    if (workspaceMemberMatchers.isEmpty()) {
-      workspaceMembers = emptyMap()
-    }
-    else {
-      workspaceMembers = allUvProjects
-        .filter { uvProject ->
-          if (uvProject == rootUvProject) return@filter true
-          val relProjectPath = uvProject.root.relativeTo(root)
-          return@filter workspaceExcludeMatchers.none { it.matches(relProjectPath) } 
-                        && workspaceMemberMatchers.any { it.matches(relProjectPath) }
-        }.associateBy { it.projectName }
-    }
-    
-    return ExternalProjectGraph(
-      root = root,
-      projects = allUvProjects
-        .map { uvProject -> 
-          val pathDependencies = uvProject.editablePathDependencies.map { ExternalProjectDependency(it.key, it.value) }
-          val resolvedWorkspaceDependencies = uvProject.workspaceDependencies.mapNotNull {
-            val workspaceMember = workspaceMembers[it]
-            if (workspaceMember != null) ExternalProjectDependency(it, workspaceMember.root) 
-            else null 
-          }
-          ExternalProject(
-            name = uvProject.projectName,
-            root =uvProject.root,
-            dependencies = pathDependencies + resolvedWorkspaceDependencies
-          )
+    val workspaceMembers = mutableMapOf<UvPyProjectToml, MutableMap<String, UvPyProjectToml>>()
+    val standaloneProjects = mutableListOf<UvPyProjectToml>()
+    val workspaceStack = ArrayDeque<UvPyProjectToml>()
+    root.visitFileTree {
+      onPreVisitDirectory { dir, _ ->
+        if (dir.name == DEFAULT_VENV_DIR) {
+          return@onPreVisitDirectory FileVisitResult.SKIP_SUBTREE
         }
-    )
+        val projectToml = readUvPyProjectToml(dir / "pyproject.toml")
+        if (projectToml == null) {
+          return@onPreVisitDirectory FileVisitResult.CONTINUE
+        }
+        if (projectToml.isWorkspace) {
+          workspaceStack.add(projectToml)
+          workspaceMembers.put(projectToml, mutableMapOf())
+          return@onPreVisitDirectory FileVisitResult.CONTINUE
+        }
+        if (workspaceStack.isNotEmpty()) {
+          val closestWorkspace = workspaceStack.last()
+          val relProjectPath = projectToml.root.relativeTo(closestWorkspace.root)
+          val isWorkspaceMember = closestWorkspace.workspaceExcludePathMatchers.none { it.matches(relProjectPath) } &&
+                                  closestWorkspace.workspaceMemberPathMatchers.any { it.matches(relProjectPath) }
+          if (isWorkspaceMember) {
+            workspaceMembers[closestWorkspace]!!.put(projectToml.projectName, projectToml)
+            return@onPreVisitDirectory FileVisitResult.CONTINUE
+          }
+        }
+        standaloneProjects.add(projectToml)
+        return@onPreVisitDirectory FileVisitResult.CONTINUE
+      }
+
+      onPostVisitDirectory { dir, _ ->
+        if (workspaceStack.lastOrNull()?.root == dir) {
+          workspaceStack.removeLast()
+        }
+        FileVisitResult.CONTINUE
+      }
+    }
+    val allUvProjects = mutableListOf<UvProject>()
+    standaloneProjects.mapTo(allUvProjects) {
+      UvProject(
+        name = it.projectName,
+        root = it.root,
+        dependencies = it.pathDependencies.map { dep -> ExternalProjectDependency(name = dep.key, path = dep.value) },
+        isWorkspace = false,
+        parentWorkspace = null,
+      )
+    }
+
+    for ((wsRootToml, wsMembersByNames) in workspaceMembers) {
+      fun resolved(wsDependencies: List<String>): Map<String, Path> {
+        return wsDependencies.mapNotNull { name -> wsMembersByNames[name]?.let { name to it.root } }.toMap()
+      }
+      val wsRootProject = UvProject(
+        name = wsRootToml.projectName,
+        root = wsRootToml.root,
+        dependencies = (wsRootToml.pathDependencies + resolved(wsRootToml.workspaceDependencies))
+          .map { ExternalProjectDependency(name = it.key, path = it.value) },
+        isWorkspace = true,
+        parentWorkspace = null,
+      )
+      allUvProjects.add(wsRootProject)
+      for ((_, wsMemberToml) in wsMembersByNames) {
+        allUvProjects.add(UvProject(
+          name = wsMemberToml.projectName,
+          root = wsMemberToml.root,
+          dependencies = (wsMemberToml.pathDependencies + resolved(wsMemberToml.workspaceDependencies))
+            .map { ExternalProjectDependency(name = it.key, path = it.value) },
+          isWorkspace = false,
+          parentWorkspace = wsRootProject,
+        ))
+      }
+    }
+    return ExternalProjectGraph(root = root, projects = allUvProjects)
   }
 
   private fun readUvPyProjectToml(pyprojectTomlPath: Path): UvPyProjectToml? {
+    if (!(pyprojectTomlPath.exists())) {
+      return null
+    }
     val pyprojectToml = Toml.parse(pyprojectTomlPath)
     val projectName = pyprojectToml.getString("project.name")
     if (projectName == null) {
       return null
     }
     val workspaceTable = pyprojectToml.getTable("tool.uv.workspace")
-    val includeGlobs = mutableListOf<String>()
-    val excludeGlobs = mutableListOf<String>()
+    val includeGlobs: List<PathMatcher> 
+    val excludeGlobs: List<PathMatcher>
     if (workspaceTable != null) {
-      workspaceTable.getArrayOrEmpty("members")
+      includeGlobs = workspaceTable.getArrayOrEmpty("members")
         .toList()
-        .mapNotNullTo(includeGlobs) { it as? String }
-      workspaceTable.getArrayOrEmpty("exclude")
+        .filterIsInstance<String>()
+        .map { getPathMatcher(it) }
+      excludeGlobs = workspaceTable.getArrayOrEmpty("exclude")
         .toList()
-        .mapNotNullTo(excludeGlobs) { it as? String }
+        .filterIsInstance<String>()
+        .map { getPathMatcher(it) }
+    }
+    else {
+      includeGlobs = emptyList()
+      excludeGlobs = emptyList()
     }
     val workspaceDependencies = mutableListOf<String>()
     val editablePathDependencies = mutableMapOf<String, Path>()
@@ -95,7 +153,7 @@ object UvProjectModelResolver : PythonProjectModelResolver {
           }
           else if (depSpec.getBoolean("editable") == true) {
             val depPath = depSpec.getString("path")?.let { pyprojectTomlPath.parent.resolve(it).normalize() }
-            if (depPath != null && depPath.isDirectory() && depPath.resolve(UvConstants.PYPROJECT_TOML).exists()) {
+            if (depPath != null && depPath.isDirectory() && (depPath / UvConstants.PYPROJECT_TOML).exists()) {
               editablePathDependencies[depName] = depPath
             }
           }
@@ -105,18 +163,9 @@ object UvProjectModelResolver : PythonProjectModelResolver {
       projectName = projectName,
       root = pyprojectTomlPath.parent,
       workspaceDependencies = workspaceDependencies,
-      editablePathDependencies = editablePathDependencies,
-      workspaceMemberGlobs = includeGlobs,
-      workspaceExcludeGlobs = excludeGlobs,
+      pathDependencies = editablePathDependencies,
+      workspaceMemberPathMatchers = includeGlobs,
+      workspaceExcludePathMatchers = excludeGlobs,
     )
   }
-
-  private data class UvPyProjectToml(
-    val projectName: String,
-    val root: Path,
-    val workspaceDependencies: List<String>,
-    val editablePathDependencies: Map<String, Path>,
-    val workspaceMemberGlobs: List<String>,
-    val workspaceExcludeGlobs: List<String>,
-  )
 }

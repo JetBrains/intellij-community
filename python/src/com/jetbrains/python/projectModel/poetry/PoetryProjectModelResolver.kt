@@ -10,9 +10,15 @@ import org.apache.tuweni.toml.TomlTable
 import java.nio.file.Path
 import kotlin.io.path.*
 
+data class PoetryProject(
+  override val name: String,
+  override val root: Path,
+  override val dependencies: List<ExternalProjectDependency>
+) : ExternalProject
+
 @OptIn(ExperimentalPathApi::class)
-object PoetryProjectModelResolver : PythonProjectModelResolver {
-  override fun discoverProjectRootSubgraph(root: Path): ExternalProjectGraph? {
+object PoetryProjectModelResolver : PythonProjectModelResolver<PoetryProject> {
+  override fun discoverProjectRootSubgraph(root: Path): ExternalProjectGraph<PoetryProject>? {
     if (!root.resolve(PoetryConstants.PYPROJECT_TOML).exists()) {
       return null
     }
@@ -23,7 +29,7 @@ object PoetryProjectModelResolver : PythonProjectModelResolver {
     if (poetryProjects.isNotEmpty()) {
       val modules = poetryProjects
         .map {
-          ExternalProject(
+          PoetryProject(
             name = it.projectName,
             root = it.root,
             dependencies = it.editablePathDependencies.map { entry ->

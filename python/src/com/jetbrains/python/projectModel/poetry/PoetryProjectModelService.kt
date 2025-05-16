@@ -17,8 +17,8 @@ import kotlin.reflect.KClass
 /**
  * Syncs the project model described in pyproject.toml files with the IntelliJ project model.
  */
-object PoetryProjectModelService : BaseProjectModelService<PoetryEntitySource>() {
-  override val projectModelResolver: PythonProjectModelResolver
+object PoetryProjectModelService : BaseProjectModelService<PoetryEntitySource, PoetryProject>() {
+  override val projectModelResolver: PythonProjectModelResolver<PoetryProject>
     get() = PoetryProjectModelResolver
 
   override val systemName: @NlsSafe String

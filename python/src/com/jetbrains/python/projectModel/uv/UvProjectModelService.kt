@@ -17,8 +17,8 @@ import kotlin.reflect.KClass
 /**
  * Syncs the project model described in pyproject.toml files with the IntelliJ project model.
  */
-object UvProjectModelService : BaseProjectModelService<UvEntitySource>() {
-  override val projectModelResolver: PythonProjectModelResolver
+object UvProjectModelService : BaseProjectModelService<UvEntitySource, UvProject>() {
+  override val projectModelResolver: PythonProjectModelResolver<UvProject>
     get() = UvProjectModelResolver
 
   override val systemName: @NlsSafe String
