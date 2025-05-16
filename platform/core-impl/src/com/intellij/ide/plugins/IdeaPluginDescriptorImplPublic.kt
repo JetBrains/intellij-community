@@ -15,10 +15,14 @@ interface IdeaPluginDescriptorImplPublic : IdeaPluginDescriptor
 val IdeaPluginDescriptorImplPublic.contentModuleName: String?
   get() = (this as? ContentModuleDescriptor)?.moduleName
 
+@get:ApiStatus.Experimental
+val IdeaPluginDescriptorImplPublic.isRequiredContentModule: Boolean
+  get() = (this as? ContentModuleDescriptor)?.moduleLoadingRule?.required == true
+
 /**
  * aka `<dependencies>` element from plugin.xml
  *
- * Note that it's different from [getDependencies] (which is for `<depends>`)
+ * Note that it's different from [IdeaPluginDescriptor.getDependencies] (which is for `<depends>`)
  */
 @get:ApiStatus.Experimental
 val IdeaPluginDescriptorImplPublic.moduleDependencies: ModuleDependencies

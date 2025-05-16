@@ -649,9 +649,6 @@ class ContentModuleDescriptor(
   override fun getDescriptorPath(): String = descriptorPath
 }
 
-internal val IdeaPluginDescriptorImpl.isRequiredContentModule: Boolean
-  get() = (this as? ContentModuleDescriptor)?.moduleLoadingRule?.required == true
-
 @ApiStatus.Internal
 @TestOnly
 fun IdeaPluginDescriptorImpl.createSubInTest(
