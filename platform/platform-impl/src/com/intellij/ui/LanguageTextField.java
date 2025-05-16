@@ -116,7 +116,9 @@ public class LanguageTextField extends EditorTextField {
     EditorEx editor = super.createEditor();
     if (myLanguage != null && (myProject == null || !myProject.isDisposed())) {
       FileType fileType = myLanguage.getAssociatedFileType();
-      editor.setHighlighter(HighlighterFactory.createHighlighter(myProject, fileType));
+      if (fileType != null) {
+        editor.setHighlighter(HighlighterFactory.createHighlighter(myProject, fileType));
+      }
     }
     editor.setEmbeddedIntoDialogWrapper(true);
     return editor;
