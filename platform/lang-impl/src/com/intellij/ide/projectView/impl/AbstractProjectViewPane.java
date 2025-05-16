@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.*;
@@ -119,7 +119,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
         rebuildCompletely(true);
       }
     }, this);
-    ProjectViewNodeDecorator.EP.addExtensionPointListener(project, new ExtensionPointListener<>() {
+    CompoundProjectViewNodeDecorator.EP.addExtensionPointListener(project, new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull ProjectViewNodeDecorator extension, @NotNull PluginDescriptor pluginDescriptor) {
         rebuildCompletely(false);

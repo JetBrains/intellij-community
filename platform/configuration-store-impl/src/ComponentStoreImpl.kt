@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(SettingsInternalApi::class)
 package com.intellij.configurationStore
 
@@ -74,8 +74,7 @@ internal fun setRoamableComponentSaveThreshold(thresholdInSeconds: Int) {
   NOT_ROAMABLE_COMPONENT_SAVE_THRESHOLD = thresholdInSeconds
 }
 
-@ApiStatus.Internal
-class ComponentStoreImplReloadListener : ConfigFolderChangedListener {
+private class ComponentStoreImplReloadListener : ConfigFolderChangedListener {
   override fun onChange(changedFileSpecs: Set<String>, deletedFileSpecs: Set<String>) {
     val componentStore = ApplicationManager.getApplication().stateStore as ComponentStoreImpl
     componentStore.reloadComponents(changedFileSpecs, deletedFileSpecs)
@@ -199,8 +198,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   @Suppress("DEPRECATION")
-  private fun getComponentName(component: Any): String =
-    if (component is NamedComponent) component.componentName else component.javaClass.name
+  private fun getComponentName(component: Any): String = if (component is NamedComponent) component.componentName else component.javaClass.name
 
   override fun unloadComponent(component: Any) {
     @Suppress("DEPRECATION")
@@ -345,8 +343,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  internal open fun createSaveSessionProducerManager(): SaveSessionProducerManager =
-    SaveSessionProducerManager(isUseVfsForWrite = false, collectVfsEvents = false)
+  internal open fun createSaveSessionProducerManager(): SaveSessionProducerManager = SaveSessionProducerManager(isUseVfsForWrite = false, collectVfsEvents = false)
 
   private suspend fun commitComponent(
     sessionManager: SaveSessionProducerManager,
@@ -557,8 +554,9 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  protected open fun isReportStatisticAllowed(stateSpec: State, storageSpec: Storage): Boolean =
-    !storageSpec.deprecated && stateSpec.reportStatistic && storageSpec.value != StoragePathMacros.CACHE_FILE
+  protected open fun isReportStatisticAllowed(stateSpec: State, storageSpec: Storage): Boolean {
+    return !storageSpec.deprecated && stateSpec.reportStatistic && storageSpec.value != StoragePathMacros.CACHE_FILE
+  }
 
   protected open fun doCreateStateGetter(
     reloadData: Boolean,
@@ -577,15 +575,17 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
 
     return object : StateGetter<Any> {
-      override fun getState(mergeInto: Any?): Any? =
-        storage.getState(component, componentName, info.pluginId, stateClass, mergeInto, reloadData)
+      override fun getState(mergeInto: Any?): Any? {
+        return storage.getState(component = component, componentName = componentName, pluginId = info.pluginId, stateClass = stateClass, mergeInto = mergeInto, reload = reloadData)
+      }
 
       override fun archiveState(): Any? = null
     }
   }
 
-  protected open fun isUseLoadedStateAsExisting(storage: StateStorage): Boolean =
-    (storage as? XmlElementStorage)?.roamingType != RoamingType.DISABLED && isUseLoadedStateAsExistingVmProperty
+  protected open fun isUseLoadedStateAsExisting(storage: StateStorage): Boolean {
+    return (storage as? XmlElementStorage)?.roamingType != RoamingType.DISABLED && isUseLoadedStateAsExistingVmProperty
+  }
 
   protected open fun getPathMacroManagerForDefaults(): PathMacroManager? = null
 
@@ -657,7 +657,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   override fun reloadStates(componentNames: Set<String>) {
-    reinitComponents(componentNames, changedStorages = emptySet(), notReloadableComponents = emptySet())
+    reinitComponents(componentNames = componentNames, changedStorages = emptySet(), notReloadableComponents = emptySet())
   }
 
   internal fun batchReloadStates(componentNames: Set<String>, messageBus: MessageBus) {
@@ -742,10 +742,10 @@ abstract class ComponentStoreImpl : IComponentStore {
       }
     }
 
-    @Suppress("UsePropertyAccessSyntax")
     if (componentNames.isEmpty()) {
       return emptySet()
     }
+
     LOG.debug { "Reload components: $componentNames" }
     val notReloadableComponents = getNotReloadableComponents(componentNames)
     reinitComponents(componentNames, changedStorages, notReloadableComponents)
@@ -831,7 +831,6 @@ private fun notifyUnknownMacros(store: IComponentStore, project: Project, compon
       macros.removeAll(notified)
     }
 
-    @Suppress("UsePropertyAccessSyntax")
     if (macros.isEmpty()) {
       return@submit
     }
@@ -841,12 +840,15 @@ private fun notifyUnknownMacros(store: IComponentStore, project: Project, compon
   }
 }
 
-internal suspend fun getStateForComponent(component: PersistentStateComponent<*>, stateSpec: State): Any? = when {
-  component is SerializablePersistentStateComponent<*> -> component.state
-  //maybe readaction
-  stateSpec.getStateRequiresEdt -> withContext(Dispatchers.EDT) { writeIntentReadAction { component.state } }
-  else -> readAction { component.state }
+internal suspend fun getStateForComponent(component: PersistentStateComponent<*>, stateSpec: State): Any? {
+  return when {
+    component is SerializablePersistentStateComponent<*> -> component.state
+    // maybe read action
+    stateSpec.getStateRequiresEdt -> withContext(Dispatchers.EDT) { writeIntentReadAction { component.state } }
+    else -> readAction { component.state }
+  }
 }
 
-private fun isStorageChanged(changedStorages: Set<StateStorage>, storage: StateStorage): Boolean =
-  changedStorages.contains(storage) || (storage is ExternalStorageWithInternalPart && changedStorages.contains(storage.internalStorage))
+private fun isStorageChanged(changedStorages: Set<StateStorage>, storage: StateStorage): Boolean {
+  return changedStorages.contains(storage) || (storage is ExternalStorageWithInternalPart && changedStorages.contains(storage.internalStorage))
+}

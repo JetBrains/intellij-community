@@ -54,38 +54,38 @@ c:com.intellij.ide.projectView.PresentationData
 - java.lang.Cloneable
 - <init>():V
 - <init>(java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.editor.colors.TextAttributesKey):V
-- addText(com.intellij.ide.util.treeView.PresentableNodeDescriptor$ColoredFragment):V
-- addText(java.lang.String,com.intellij.ui.SimpleTextAttributes):V
+- f:addText(com.intellij.ide.util.treeView.PresentableNodeDescriptor$ColoredFragment):V
+- f:addText(java.lang.String,com.intellij.ui.SimpleTextAttributes):V
 - applyFrom(com.intellij.ide.projectView.PresentationData):V
 - clear():V
-- clearText():V
+- f:clearText():V
 - clone():com.intellij.ide.projectView.PresentationData
 - copyFrom(com.intellij.ide.projectView.PresentationData):V
 - equals(java.lang.Object):Z
 - f:getBackground():java.awt.Color
-- getColoredText():java.util.List
+- f:getColoredText():java.util.List
 - getEqualityObjects():java.lang.Object[]
-- getForcedTextForeground():java.awt.Color
+- f:getForcedTextForeground():java.awt.Color
 - getIcon(Z):javax.swing.Icon
 - getLocationPrefix():java.lang.String
 - getLocationString():java.lang.String
 - getLocationSuffix():java.lang.String
 - getPresentableText():java.lang.String
 - getTextAttributesKey():com.intellij.openapi.editor.colors.TextAttributesKey
-- getTooltip():java.lang.String
-- hasSeparatorAbove():Z
+- f:getTooltip():java.lang.String
+- f:hasSeparatorAbove():Z
 - hashCode():I
-- isChanged():Z
-- setAttributesKey(com.intellij.openapi.editor.colors.TextAttributesKey):V
+- f:isChanged():Z
+- f:setAttributesKey(com.intellij.openapi.editor.colors.TextAttributesKey):V
 - f:setBackground(java.awt.Color):V
-- setChanged(Z):V
-- setForcedTextForeground(java.awt.Color):V
-- setIcon(javax.swing.Icon):V
-- setLocationString(java.lang.String):V
-- setPresentableText(java.lang.String):V
-- setSeparatorAbove(Z):V
-- setTooltip(java.lang.String):V
-- updateFrom(com.intellij.navigation.ItemPresentation):V
+- f:setChanged(Z):V
+- f:setForcedTextForeground(java.awt.Color):V
+- f:setIcon(javax.swing.Icon):V
+- f:setLocationString(java.lang.String):V
+- f:setPresentableText(java.lang.String):V
+- f:setSeparatorAbove(Z):V
+- f:setTooltip(java.lang.String):V
+- f:updateFrom(com.intellij.navigation.ItemPresentation):V
 com.intellij.ide.projectView.RootsProvider
 - a:getRoots():java.util.Collection
 com.intellij.ide.projectView.SettingsProvider
@@ -903,7 +903,7 @@ a:com.intellij.ide.util.treeView.PresentableNodeDescriptor
 - p:shouldUpdateData():Z
 - f:update():Z
 - pa:update(com.intellij.ide.projectView.PresentationData):V
-c:com.intellij.ide.util.treeView.PresentableNodeDescriptor$ColoredFragment
+f:com.intellij.ide.util.treeView.PresentableNodeDescriptor$ColoredFragment
 - <init>(java.lang.String,com.intellij.ui.SimpleTextAttributes):V
 - <init>(java.lang.String,java.lang.String,com.intellij.ui.SimpleTextAttributes):V
 - equals(java.lang.Object):Z

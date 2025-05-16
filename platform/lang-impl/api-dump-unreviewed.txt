@@ -9958,7 +9958,6 @@ a:com.intellij.ide.projectView.ProjectView
 - a:setSortKey(java.lang.String,com.intellij.ide.projectView.NodeSortKey):V
 - setUseFileNestingRules(Z):V
 com.intellij.ide.projectView.ProjectViewNodeDecorator
-- sf:EP:com.intellij.openapi.extensions.ProjectExtensionPointName
 - a:decorate(com.intellij.ide.projectView.ProjectViewNode,com.intellij.ide.projectView.PresentationData):V
 - decorate(com.intellij.packageDependencies.ui.PackageDependenciesNode,com.intellij.ui.ColoredTreeCellRenderer):V
 a:com.intellij.ide.projectView.ProjectViewPsiTreeChangeListener
@@ -10180,10 +10179,6 @@ f:com.intellij.ide.projectView.impl.CompoundIconProvider
 - <init>():V
 - s:findIcon(com.intellij.psi.PsiElement,I):javax.swing.Icon
 - getIcon(com.intellij.psi.PsiElement,I):javax.swing.Icon
-f:com.intellij.ide.projectView.impl.CompoundProjectViewNodeDecorator
-- com.intellij.ide.projectView.ProjectViewNodeDecorator
-- decorate(com.intellij.ide.projectView.ProjectViewNode,com.intellij.ide.projectView.PresentationData):V
-- s:get(com.intellij.openapi.project.Project):com.intellij.ide.projectView.ProjectViewNodeDecorator
 f:com.intellij.ide.projectView.impl.CompoundTreeStructureProvider
 - com.intellij.ide.projectView.TreeStructureProvider
 - s:get(com.intellij.openapi.project.Project):com.intellij.ide.projectView.TreeStructureProvider

@@ -1,113 +1,85 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.projectView;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.projectView
 
-import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
-import com.intellij.navigation.ColoredItemPresentation;
-import com.intellij.navigation.ItemPresentation;
-import com.intellij.navigation.ItemPresentationWithSeparator;
-import com.intellij.navigation.LocationPresentation;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsContexts.Tooltip;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.FontUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.update.ComparableObject;
-import com.intellij.util.ui.update.ComparableObjectCheck;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.awt.*;
-import java.util.List;
+import com.intellij.ide.util.treeView.PresentableNodeDescriptor
+import com.intellij.navigation.ColoredItemPresentation
+import com.intellij.navigation.ItemPresentation
+import com.intellij.navigation.ItemPresentationWithSeparator
+import com.intellij.navigation.LocationPresentation
+import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.util.FontUtil
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.update.ComparableObject
+import com.intellij.util.ui.update.ComparableObjectCheck
+import java.awt.Color
+import java.awt.Font
+import javax.swing.Icon
 
 /**
- * Default implementation of the {@link ItemPresentation} interface.
+ * Default implementation of the [ItemPresentation] interface.
  */
+open class PresentationData : ColoredItemPresentation, ComparableObject, LocationPresentation, Cloneable {
+  var coloredText: MutableList<PresentableNodeDescriptor.ColoredFragment> = ContainerUtil.createLockFreeCopyOnWriteList()
+    private set
 
-public class PresentationData implements ColoredItemPresentation, ComparableObject, LocationPresentation, Cloneable {
-  private List<PresentableNodeDescriptor.ColoredFragment> myColoredText = ContainerUtil.createLockFreeCopyOnWriteList();
+  var background: Color? = null
+  private var icon: Icon? = null
 
-  private @Nullable Color myBackground;
-  private Icon myIcon;
+  private var locationString: @NlsSafe String? = null
+  private var presentableText: @NlsSafe String? = null
 
-  private @NlsSafe String myLocationString;
-  private @NlsSafe String myPresentableText;
+  var tooltip: @NlsContexts.Tooltip String? = null
+  private var attributesKey: TextAttributesKey? = null
 
-  private @Tooltip String myTooltip;
-  private TextAttributesKey myAttributesKey;
+  var forcedTextForeground: Color? = null
 
-  private Color myForcedTextForeground;
+  private var font: Font? = null
 
-  private Font myFont;
+  private var separatorAbove = false
 
-  private boolean mySeparatorAbove = false;
-
-  private boolean myChanged;
-  private @NlsSafe String myLocationPrefix;
-  private @NlsSafe String myLocationSuffix;
+  var isChanged: Boolean = false
+  private var locationPrefix: @NlsSafe String? = null
+  private var locationSuffix: @NlsSafe String? = null
 
   /**
    * Creates an instance with the specified parameters.
    *
    * @param presentableText the name of the object to be presented in most renderers across the program.
    * @param locationString  the location of the object (for example, the package of a class). The location
-   *                        string is used by some renderers and usually displayed as grayed text next to
-   *                        the item name.
-   * @param icon            the icon shown for the node when it is collapsed in a tree, or when it is displayed
-   *                        in a non-tree view.
+   * string is used by some renderers and usually displayed as grayed text next to
+   * the item name.
+   * @param icon            the icon shown for the node when it is collapsed in a tree or when it is displayed
+   * in a non-tree view.
    * @param attributesKey   the attributes for rendering the item text.
    */
-  public PresentationData(@NlsSafe String presentableText, @NlsSafe String locationString, Icon icon,
-                          @Nullable TextAttributesKey attributesKey) {
-    myIcon = icon;
-    myLocationString = locationString;
-    myPresentableText = presentableText;
-    myAttributesKey = attributesKey;
+  constructor(
+    presentableText: @NlsSafe String?,
+    locationString: @NlsSafe String?,
+    icon: Icon?,
+    attributesKey: TextAttributesKey?
+  ) {
+    this.icon = icon
+    this.locationString = locationString
+    this.presentableText = presentableText
+    this.attributesKey = attributesKey
   }
-
 
   /**
    * Creates an instance with no parameters specified.
    */
-  public PresentationData() {
-  }
+  constructor()
 
-  public final @Nullable Color getBackground() {
-    return myBackground;
-  }
+  override fun getIcon(open: Boolean): Icon? = icon
 
-  public final void setBackground(@Nullable Color background) {
-    myBackground = background;
-  }
+  override fun getLocationString(): String? = locationString
 
-  @Override
-  public Icon getIcon(boolean open) {
-    return myIcon;
-  }
+  override fun getPresentableText(): String? = presentableText
 
-  public @Nullable Color getForcedTextForeground() {
-    return myForcedTextForeground;
-  }
-
-  public void setForcedTextForeground(@Nullable Color forcedTextForeground) {
-    myForcedTextForeground = forcedTextForeground;
-  }
-
-  @Override
-  public String getLocationString() {
-    return myLocationString;
-  }
-
-  @Override
-  public String getPresentableText() {
-    return myPresentableText;
-  }
-
-  public void setIcon(Icon icon) {
-    myIcon = icon;
+  fun setIcon(icon: Icon?) {
+    this.icon = icon
   }
 
   /**
@@ -116,9 +88,8 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
    *
    * @param locationString the location of the object.
    */
-
-  public void setLocationString(@NlsSafe String locationString) {
-    myLocationString = locationString;
+  fun setLocationString(locationString: @NlsSafe String?) {
+    this.locationString = locationString
   }
 
   /**
@@ -126,190 +97,145 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
    *
    * @param presentableText the name of the object.
    */
-  public void setPresentableText(@NlsSafe String presentableText) {
-    myPresentableText = presentableText;
+  fun setPresentableText(presentableText: @NlsSafe String?) {
+    this.presentableText = presentableText
   }
-
 
   /**
    * Copies the presentation parameters from the specified presentation instance.
    *
    * @param presentation the instance to copy the parameters from.
    */
-  public void updateFrom(ItemPresentation presentation) {
-    if (presentation instanceof PresentationData presentationData) {
-      setBackground(presentationData.getBackground());
-      for (PresentableNodeDescriptor.ColoredFragment fragment : presentationData.getColoredText()) {
-        addText(fragment);
+  fun updateFrom(presentation: ItemPresentation) {
+    if (presentation is PresentationData) {
+      background = presentation.background
+      for (fragment in presentation.coloredText) {
+        addText(fragment)
       }
     }
-    setIcon(presentation.getIcon(false));
-    setPresentableText(presentation.getPresentableText());
-    setLocationString(presentation.getLocationString());
-    if (presentation instanceof ColoredItemPresentation) {
-      setAttributesKey(((ColoredItemPresentation)presentation).getTextAttributesKey());
+    setIcon(presentation.getIcon(false))
+    presentableText = presentation.getPresentableText()
+    locationString = presentation.locationString
+    if (presentation is ColoredItemPresentation) {
+      setAttributesKey(presentation.getTextAttributesKey())
     }
-    setSeparatorAbove(presentation instanceof ItemPresentationWithSeparator);
-    if (presentation instanceof LocationPresentation) {
-      myLocationPrefix = ((LocationPresentation)presentation).getLocationPrefix();
-      myLocationSuffix = ((LocationPresentation)presentation).getLocationSuffix();
+    setSeparatorAbove(presentation is ItemPresentationWithSeparator)
+    if (presentation is LocationPresentation) {
+      locationPrefix = presentation.getLocationPrefix()
+      locationSuffix = presentation.getLocationSuffix()
     }
   }
 
-  public boolean hasSeparatorAbove() {
-    return mySeparatorAbove;
+  fun hasSeparatorAbove(): Boolean = separatorAbove
+
+  fun setSeparatorAbove(b: Boolean) {
+    separatorAbove = b
   }
 
-  public void setSeparatorAbove(final boolean b) {
-    mySeparatorAbove = b;
-  }
-
-  @Override
-  public TextAttributesKey getTextAttributesKey() {
-    return myAttributesKey;
-  }
+  override fun getTextAttributesKey(): TextAttributesKey? = attributesKey
 
   /**
    * Sets the attributes for rendering the item text.
    *
    * @param attributesKey the attributes for rendering the item text.
    */
-  public void setAttributesKey(final TextAttributesKey attributesKey) {
-    myAttributesKey = attributesKey;
+  fun setAttributesKey(attributesKey: TextAttributesKey?) {
+    this.attributesKey = attributesKey
   }
 
-  public @Tooltip String getTooltip() {
-    return myTooltip;
+  fun addText(coloredFragment: PresentableNodeDescriptor.ColoredFragment) {
+    coloredText.add(coloredFragment)
   }
 
-  public void setTooltip(@Nullable @Tooltip String tooltip) {
-    myTooltip = tooltip;
+  fun addText(text: @NlsContexts.Label String?, attributes: SimpleTextAttributes?) {
+    coloredText.add(PresentableNodeDescriptor.ColoredFragment(text, attributes))
   }
 
-  public boolean isChanged() {
-    return myChanged;
+  fun clearText() {
+    coloredText.clear()
   }
 
-  public void setChanged(boolean changed) {
-    myChanged = changed;
+  open fun clear() {
+    background = null
+    icon = null
+    clearText()
+    attributesKey = null
+    font = null
+    forcedTextForeground = null
+    locationString = null
+    presentableText = null
+    tooltip = null
+    isChanged = false
+    separatorAbove = false
+    locationSuffix = null
+    locationPrefix = null
   }
 
-  public @NotNull List<PresentableNodeDescriptor.ColoredFragment> getColoredText() {
-    return myColoredText;
+  override fun getEqualityObjects(): Array<Any?> {
+    return arrayOf(background, icon, coloredText, attributesKey, font, forcedTextForeground, presentableText,
+                   locationString, separatorAbove, locationPrefix, locationSuffix)
   }
 
-  public void addText(PresentableNodeDescriptor.ColoredFragment coloredFragment) {
-    myColoredText.add(coloredFragment);
+  override fun hashCode(): Int {
+    return ComparableObjectCheck.hashCode(this, super.hashCode())
   }
 
-  public void addText(@NlsContexts.Label String text, SimpleTextAttributes attributes) {
-    myColoredText.add(new PresentableNodeDescriptor.ColoredFragment(text, attributes));
-  }
-
-  public void clearText() {
-    myColoredText.clear();
-  }
-
-  public void clear() {
-    myBackground = null;
-    myIcon = null;
-    clearText();
-    myAttributesKey = null;
-    myFont = null;
-    myForcedTextForeground = null;
-    myLocationString = null;
-    myPresentableText = null;
-    myTooltip = null;
-    myChanged = false;
-    mySeparatorAbove = false;
-    myLocationSuffix = null;
-    myLocationPrefix = null;
-  }
-
-  @Override
-  public Object @NotNull [] getEqualityObjects() {
-    return new Object[]{myBackground, myIcon, myColoredText, myAttributesKey, myFont, myForcedTextForeground, myPresentableText,
-      myLocationString, mySeparatorAbove, myLocationPrefix, myLocationSuffix};
-  }
-
-  @Override
-  public int hashCode() {
-    return ComparableObjectCheck.hashCode(this, super.hashCode());
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (obj == this) {
-      return true;
+  override fun equals(other: Any?): Boolean {
+    if (other === this) {
+      return true
     }
-    if (obj == null || obj.getClass() != getClass()) {
-      return false;
+    if (other == null || other.javaClass != javaClass) {
+      return false
     }
-    return ComparableObjectCheck.equals(this, obj);
+    return ComparableObjectCheck.equals(this, other)
   }
 
-  public void copyFrom(PresentationData from) {
-    if (from == this) {
-      return;
-    }
-    myBackground = from.myBackground;
-    myAttributesKey = from.myAttributesKey;
-    myIcon = from.myIcon;
-    clearText();
-    myColoredText.addAll(from.myColoredText);
-    myFont = from.myFont;
-    myForcedTextForeground = from.myForcedTextForeground;
-    myLocationString = from.myLocationString;
-    myPresentableText = from.myPresentableText;
-    myTooltip = from.myTooltip;
-    mySeparatorAbove = from.mySeparatorAbove;
-    myLocationPrefix = from.myLocationPrefix;
-    myLocationSuffix = from.myLocationSuffix;
-  }
-
-  @Override
-  public PresentationData clone() {
-    PresentationData clone;
-    try {
-      clone = (PresentationData)super.clone();
-      clone.myColoredText = ContainerUtil.createLockFreeCopyOnWriteList(myColoredText);
-      return clone;
-    }
-    catch (CloneNotSupportedException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public void applyFrom(PresentationData from) {
-    myBackground = getValue(myBackground, from.myBackground);
-    myAttributesKey = getValue(myAttributesKey, from.myAttributesKey);
-    myIcon = getValue(myIcon, from.myIcon);
-
-    if (myColoredText.isEmpty()) {
-      myColoredText.addAll(from.myColoredText);
+  open fun copyFrom(from: PresentationData) {
+    if (from === this) {
+      return
     }
 
-    myFont = getValue(myFont, from.myFont);
-    myForcedTextForeground = getValue(myForcedTextForeground, from.myForcedTextForeground);
-    myLocationString = getValue(myLocationString, from.myLocationString);
-    myPresentableText = getValue(myPresentableText, from.myPresentableText);
-    myTooltip = getValue(myTooltip, from.myTooltip);
-    mySeparatorAbove = mySeparatorAbove || from.mySeparatorAbove;
-    myLocationPrefix = getValue(myLocationPrefix, from.myLocationPrefix);
-    myLocationSuffix = getValue(myLocationSuffix, from.myLocationSuffix);
+    background = from.background
+    attributesKey = from.attributesKey
+    icon = from.icon
+    clearText()
+    coloredText.addAll(from.coloredText)
+    font = from.font
+    forcedTextForeground = from.forcedTextForeground
+    locationString = from.locationString
+    presentableText = from.presentableText
+    tooltip = from.tooltip
+    separatorAbove = from.separatorAbove
+    locationPrefix = from.locationPrefix
+    locationSuffix = from.locationSuffix
   }
 
-  private static <T> T getValue(T ownValue, T fromValue) {
-    return ownValue != null ? ownValue : fromValue;
+  public override fun clone(): PresentationData {
+    val clone = super.clone() as PresentationData
+    clone.coloredText = ContainerUtil.createLockFreeCopyOnWriteList(coloredText)
+    return clone
   }
 
-  @Override
-  public String getLocationPrefix() {
-    return myLocationPrefix == null ? FontUtil.spaceAndThinSpace() : myLocationPrefix;
+  open fun applyFrom(from: PresentationData) {
+    background = background ?: from.background
+    attributesKey = attributesKey ?: from.attributesKey
+    icon = icon ?: from.icon
+
+    if (coloredText.isEmpty()) {
+      coloredText.addAll(from.coloredText)
+    }
+
+    font = font ?: from.font
+    forcedTextForeground = forcedTextForeground ?: from.forcedTextForeground
+    locationString = locationString ?: from.locationString
+    presentableText = presentableText ?: from.presentableText
+    tooltip = tooltip ?: from.tooltip
+    separatorAbove = separatorAbove || from.separatorAbove
+    locationPrefix = locationPrefix ?: from.locationPrefix
+    locationSuffix = locationSuffix ?: from.locationSuffix
   }
 
-  @Override
-  public String getLocationSuffix() {
-    return StringUtil.notNullize(myLocationSuffix);
-  }
+  override fun getLocationPrefix(): String = locationPrefix ?: FontUtil.spaceAndThinSpace()
+
+  override fun getLocationSuffix(): String = locationSuffix ?: ""
 }
