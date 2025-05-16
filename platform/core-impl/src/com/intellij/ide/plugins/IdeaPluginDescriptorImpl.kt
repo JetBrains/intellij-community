@@ -231,7 +231,7 @@ sealed class IdeaPluginDescriptorImpl(
   override fun hashCode(): Int = 31 * id.hashCode() + (descriptorPath?.hashCode() ?: 0)
 
   override fun toString(): String =
-    "$type(name=$name, id=$id, version=$version, " +
+    "${this::class.simpleName}(name=$name, id=$id, version=$version, " +
     (if (moduleName == null) "" else "moduleName=$moduleName, ") +
     (if (packagePrefix == null) "" else "package=$packagePrefix, ") +
     "isBundled=$isBundled, " +
@@ -351,7 +351,7 @@ sealed class IdeaPluginDescriptorImpl(
   }
 
   fun initialize(context: PluginInitializationContext): PluginNonLoadReason? {
-    assert(type == Type.PluginMainDescriptor)
+    assert(this is PluginMainDescriptor)
     content.modules.forEach { it.requireDescriptor() }
     if (context.isPluginDisabled(id)) {
       return onInitError(PluginIsMarkedDisabled(this))

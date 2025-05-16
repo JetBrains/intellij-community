@@ -1,12 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.testFramework.pluginModel
 
+import com.intellij.ide.plugins.ContentModuleDescriptor
 import com.intellij.ide.plugins.DataLoader
+import com.intellij.ide.plugins.DependsSubDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.ModuleLoadingRule
 import com.intellij.ide.plugins.PathResolver
 import com.intellij.ide.plugins.PluginDescriptorLoadingContext
+import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginSet
 import com.intellij.ide.plugins.cl.PluginClassLoader
@@ -185,10 +187,10 @@ class PluginDependenciesValidator private constructor(
     val source = sourceDescriptors.singleOrNull() ?: return null
     val target = targetDescriptors.singleOrNull() ?: return null
 
-    val dependencyTag = when (target.type) {
-      IdeaPluginDescriptorImpl.Type.ContentModuleDescriptor -> "<module name=\"${target.contentModuleName}\"/>"
-      IdeaPluginDescriptorImpl.Type.PluginMainDescriptor -> "<plugin id=\"${target.pluginId.idString}\"/>"
-      else -> return null
+    val dependencyTag = when (target) {
+      is ContentModuleDescriptor -> "<module name=\"${target.contentModuleName}\"/>"
+      is PluginMainDescriptor -> "<plugin id=\"${target.pluginId.idString}\"/>"
+      is DependsSubDescriptor -> return null
     }
     val dependenciesTag =
       """
@@ -201,8 +203,8 @@ class PluginDependenciesValidator private constructor(
       |and the following tag should be added in it:
       |$dependenciesTag
       """.trimMargin()
-    return when (source.type) {
-      IdeaPluginDescriptorImpl.Type.PluginMainDescriptor -> {
+    return when (source) {
+      is PluginMainDescriptor -> {
         when (source.pluginId) {
           PluginManagerCore.CORE_ID -> {
             """|since the main module of the core plugin cannot depend on other modules,
@@ -226,10 +228,10 @@ class PluginDependenciesValidator private constructor(
           }
         }
       }
-      IdeaPluginDescriptorImpl.Type.ContentModuleDescriptor -> {
+      is ContentModuleDescriptor -> {
         "add the following tag in ${source.contentModuleName}.xml:\n$dependenciesTag"
       }
-      IdeaPluginDescriptorImpl.Type.DependsSubDescriptor -> {
+      is DependsSubDescriptor -> {
         """since files included via <depends> tag cannot declare additional dependencies,
           |$extractToContentModule""".trimMargin()
       }
@@ -249,10 +251,10 @@ class PluginDependenciesValidator private constructor(
   }
 
   private val IdeaPluginDescriptorImpl.shortPresentation: String
-    get() = when (type) {
-      IdeaPluginDescriptorImpl.Type.PluginMainDescriptor -> "main plugin module of '${pluginId}'"
-      IdeaPluginDescriptorImpl.Type.ContentModuleDescriptor -> "content module '${contentModuleName}' of plugin '${pluginId}'"
-      IdeaPluginDescriptorImpl.Type.DependsSubDescriptor -> "depends sub descriptor of plugin '${pluginId}'"
+    get() = when (this) {
+      is PluginMainDescriptor -> "main plugin module of '${pluginId}'"
+      is ContentModuleDescriptor -> "content module '${contentModuleName}' of plugin '${pluginId}'"
+      is DependsSubDescriptor -> "depends sub descriptor of plugin '${pluginId}'"
     }
 
   private fun loadPluginSet(): PluginSet {

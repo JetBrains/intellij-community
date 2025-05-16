@@ -85,7 +85,7 @@ class ClassLoaderConfigurator(
   fun configureModule(module: IdeaPluginDescriptorImpl): Boolean {
     checkPackagePrefixUniqueness(module)
 
-    if (module.isMainPluginDescriptor) {
+    if (module is PluginMainDescriptor) {
       if (module.useCoreClassLoader || module.pluginId == PluginManagerCore.CORE_ID) {
         setClassLoaderForModuleAndDependsSubDescriptors(module, coreLoader)
       }
@@ -95,7 +95,7 @@ class ClassLoaderConfigurator(
       return true
     }
     else {
-      assert(module.isContentModuleDescriptor)
+      assert(module is ContentModuleDescriptor)
       return configureContentModule(module as ContentModuleDescriptor)
     }
   }
@@ -193,7 +193,7 @@ class ClassLoaderConfigurator(
   }
 
   private fun configureMainPluginModule(mainDescriptor: IdeaPluginDescriptorImpl): MainPluginDescriptorClassPathInfo {
-    assert(mainDescriptor.isMainPluginDescriptor)
+    assert(mainDescriptor is PluginMainDescriptor)
     val exisingMainInfo = mainToClassPath.get(mainDescriptor.pluginId)
     if (exisingMainInfo != null) {
       return exisingMainInfo
@@ -263,7 +263,7 @@ class ClassLoaderConfigurator(
   }
 
   private fun configureCorePluginContentModuleClassLoader(module: IdeaPluginDescriptorImpl, deps: Array<IdeaPluginDescriptorImpl>) {
-    assert(module.isContentModuleDescriptor)
+    assert(module is ContentModuleDescriptor)
     val jarFiles = module.jarFiles
     if (jarFiles != null) {
       module.pluginClassLoader = PluginClassLoader(
