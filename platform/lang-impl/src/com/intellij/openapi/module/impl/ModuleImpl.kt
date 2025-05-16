@@ -95,7 +95,7 @@ open class ModuleImpl(
 
   override fun getMessageBus(): MessageBus = delegateComponentManager.messageBus
 
-  override fun getModuleFile(): VirtualFile? = imlFilePointer?.file
+  final override fun getModuleFile(): VirtualFile? = imlFilePointer?.file
 
   override fun rename(newName: String, notifyStorage: Boolean) {
     name = newName
@@ -107,7 +107,7 @@ open class ModuleImpl(
   protected val store: IComponentStore
     get() = componentManager.getService(IComponentStore::class.java)!!
 
-  override fun canStoreSettings(): Boolean = store !is NonPersistentModuleStore
+  final override fun canStoreSettings(): Boolean = store !is NonPersistentModuleStore
 
   override fun getModuleNioFile(): Path {
     return if (isPersistent) store.storageManager.expandMacro(StoragePathMacros.MODULE_FILE) else Path.of("")

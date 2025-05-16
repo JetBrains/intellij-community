@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.ide.plugins.PluginManagerCore
@@ -37,6 +37,7 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializati
 import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileContentReader
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.fireModulesAdded
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ModuleRootListenerBridgeImpl
@@ -51,25 +52,26 @@ import kotlin.coroutines.coroutineContext
 
 private val LOG = logger<ModuleManagerComponentBridge>()
 
+
+private class ModuleManagerInitProjectActivity : InitProjectActivity {
+  override suspend fun run(project: Project) {
+    val modules = (project.serviceAsync<ModuleManager>() as ModuleManagerComponentBridge).modules().toList()
+    coroutineContext.ensureActive()
+    span("firing modules_added event") {
+      fireModulesAdded(project, modules)
+    }
+    span("deprecated module component moduleAdded calling") {
+      for (module in modules) {
+        module.markAsLoaded()
+      }
+    }
+  }
+}
+
 @ApiStatus.Internal
 open class ModuleManagerComponentBridge(private val project: Project, coroutineScope: CoroutineScope)
   : ModuleManagerBridgeImpl(project = project, coroutineScope = coroutineScope, moduleRootListenerBridge = ModuleRootListenerBridgeImpl) {
   private val virtualFileManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
-
-  internal class ModuleManagerInitProjectActivity : InitProjectActivity {
-    override suspend fun run(project: Project) {
-      val modules = (project.serviceAsync<ModuleManager>() as ModuleManagerComponentBridge).modules().toList()
-      coroutineContext.ensureActive()
-      span("firing modules_added event") {
-        fireModulesAdded(project, modules)
-      }
-      span("deprecated module component moduleAdded calling") {
-        for (module in modules) {
-          module.markAsLoaded()
-        }
-      }
-    }
-  }
 
   init {
     // default project doesn't have facets

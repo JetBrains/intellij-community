@@ -58,7 +58,7 @@
     <workspace.bridgeInitializer
       implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridgeInitializer"/>
     <initProjectActivity
-      implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge$ModuleManagerInitProjectActivity"
+      implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerInitProjectActivity"
       order="first"/>
 
     <projectService serviceInterface="com.intellij.facet.ProjectWideFacetListenersRegistry"
