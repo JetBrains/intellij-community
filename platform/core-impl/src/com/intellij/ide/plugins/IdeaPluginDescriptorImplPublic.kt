@@ -9,15 +9,17 @@ import org.jetbrains.annotations.ApiStatus
  * A migration guide will be provided when alternatives will become available
  */
 @ApiStatus.Experimental
-interface IdeaPluginDescriptorImplPublic : IdeaPluginDescriptor {
-  /**
-   * aka `<dependencies>` element from plugin.xml
-   *
-   * Note that it's different from [getDependencies] (which is for `<depends>`)
-   */
-  val moduleDependencies: ModuleDependencies
-}
+interface IdeaPluginDescriptorImplPublic : IdeaPluginDescriptor
 
 @get:ApiStatus.Experimental
 val IdeaPluginDescriptorImplPublic.contentModuleName: String?
   get() = (this as? ContentModuleDescriptor)?.moduleName
+
+/**
+ * aka `<dependencies>` element from plugin.xml
+ *
+ * Note that it's different from [getDependencies] (which is for `<depends>`)
+ */
+@get:ApiStatus.Experimental
+val IdeaPluginDescriptorImplPublic.moduleDependencies: ModuleDependencies
+  get() = (this as IdeaPluginDescriptorImpl).moduleDependencies

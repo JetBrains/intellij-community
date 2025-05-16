@@ -114,7 +114,7 @@ sealed class IdeaPluginDescriptorImpl(
 
   val contentModules: List<ContentModule>
     get() = content.modules
-  override val moduleDependencies: ModuleDependencies = raw.dependencies.let(::convertDependencies)
+  val moduleDependencies: ModuleDependencies = raw.dependencies.let(::convertDependencies)
   val packagePrefix: String? = raw.`package`
 
   val appContainerDescriptor: ContainerDescriptor = raw.appElementsContainer.convert()

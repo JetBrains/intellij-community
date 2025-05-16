@@ -8,9 +8,9 @@ c:com.intellij.extapi.psi.StubBasedPsiElementBase
 - *f:getStubOrPsiChild(com.intellij.psi.tree.IElementType,java.lang.Class):com.intellij.psi.PsiElement
 *:com.intellij.ide.plugins.IdeaPluginDescriptorImplPublic
 - com.intellij.ide.plugins.IdeaPluginDescriptor
-- a:getModuleDependencies():com.intellij.ide.plugins.ModuleDependencies
 *f:com.intellij.ide.plugins.IdeaPluginDescriptorImplPublicKt
 - *sf:getContentModuleName(com.intellij.ide.plugins.IdeaPluginDescriptorImplPublic):java.lang.String
+- *sf:getModuleDependencies(com.intellij.ide.plugins.IdeaPluginDescriptorImplPublic):com.intellij.ide.plugins.ModuleDependencies
 *f:com.intellij.ide.plugins.ModuleDependencies
 - <init>(java.util.List,java.util.List):V
 - f:getModules():java.util.List
