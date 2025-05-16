@@ -40,6 +40,7 @@ fun generateMapping(
 
   val outputPath = Path(output)
   if (!outputPath.exists()) {
+    outputPath.createParentDirectories()
     outputPath.createFile()
   }
 
