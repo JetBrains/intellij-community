@@ -149,6 +149,7 @@ internal data class ProviderRecentProjectItem(
   val branchName: @NlsSafe String? get() = recentProject.branchName
   val providerPath: @NlsSafe String? get() = recentProject.providerPath
   val icon: Icon? get() = recentProject.icon
+  val providerIcon: Icon? get() = recentProject.providerIcon
   val activationTimestamp: Long? get() = recentProject.activationTimestamp
 
   fun openProject() {

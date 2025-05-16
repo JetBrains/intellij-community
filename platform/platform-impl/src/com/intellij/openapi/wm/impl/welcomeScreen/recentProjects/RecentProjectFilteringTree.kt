@@ -390,7 +390,6 @@ class RecentProjectFilteringTree(
       private val projectNameLabel = JLabel()
       private val providerPathLabel = ComponentPanelBuilder.createNonWrappingCommentComponent("").apply {
         foreground = NamedColorUtil.getInactiveTextColor()
-        icon = AllIcons.Nodes.Console
       }
       private val projectPathLabel = ComponentPanelBuilder.createNonWrappingCommentComponent("").apply {
         foreground = NamedColorUtil.getInactiveTextColor()
@@ -437,7 +436,8 @@ class RecentProjectFilteringTree(
                            providerPath = null,
                            tooltip = tooltip,
                            projectIcon = projectIcon,
-                           isProjectValid = isProjectValid)
+                           isProjectValid = isProjectValid,
+                           providerIcon = null)
 
         if (isProjectValid) {
           buttonViewModel.prepareActionsButton(projectActions, rowHovered, AllIcons.Ide.Notification.Gear,
@@ -462,7 +462,8 @@ class RecentProjectFilteringTree(
                            providerPath = item.providerPath,
                            tooltip = null,
                            projectIcon = projectIcon,
-                           isProjectValid = isProjectValid)
+                           isProjectValid = isProjectValid,
+                           providerIcon = item.providerIcon)
 
         buttonViewModel.prepareActionsButton(projectActions, rowHovered, AllIcons.Ide.Notification.Gear,
                                              AllIcons.Ide.Notification.GearHover)
@@ -478,6 +479,7 @@ class RecentProjectFilteringTree(
         tooltip: @NlsSafe String?,
         projectIcon: Icon,
         isProjectValid: Boolean,
+        providerIcon: Icon?,
       ) {
         updateScaleHelper.saveScaleAndUpdateUIIfChanged(this)
         projectNameLabel.apply {
@@ -490,6 +492,8 @@ class RecentProjectFilteringTree(
         providerPathLabel.apply {
           text = providerPath ?: ""
           isVisible = providerPath != null
+          icon = providerIcon
+          verticalTextPosition = SwingConstants.CENTER
         }
         projectPathLabel.apply {
           text = projectPath ?: ""
