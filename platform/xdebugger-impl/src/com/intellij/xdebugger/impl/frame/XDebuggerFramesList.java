@@ -30,6 +30,7 @@ import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
@@ -400,7 +401,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
         return false;
       }
       var selectedValue = list.getSelectedValue();
-      if (!(selectedValue instanceof XStackFrame)) {
+      if (!(selectedValue instanceof XStackFrame frame)) {
         return false;
       }
       try {
@@ -408,7 +409,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
         if (dropFrameHandler == null) {
           return false;
         }
-        return dropFrameHandler.canDrop((XStackFrame)selectedValue);
+        return dropFrameHandler.canDropFrame(frame) == ThreeState.YES;
       } catch (Throwable ignore) {
       }
       return false;
@@ -538,7 +539,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
    *   <li>Flag if hovered frame can be dropped</li>
    * </ol>
    *
-   * @see XDropFrameHandler#canDrop(XStackFrame)
+   * @see XDropFrameHandler#canDropFrame(XStackFrame)
    * @see #findDropFrameHandler(XDebuggerFramesList)
    */
   private static final class XDebuggerFrameListMouseListener extends HoverListener {
@@ -616,9 +617,9 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
         ClientProperty.put(list, HOVER_INDEX, index);
         if (index >= 0 && index < list.getModel().getSize()) {
           var value = list.getModel().getElementAt(index);
-          if (value instanceof XStackFrame) {
+          if (value instanceof XStackFrame frame) {
             var dropFrameHandler = findDropFrameHandler(list);
-            ClientProperty.put(list, CAN_DROP_FRAME, dropFrameHandler != null && dropFrameHandler.canDrop((XStackFrame)value));
+            ClientProperty.put(list, CAN_DROP_FRAME, dropFrameHandler != null && dropFrameHandler.canDropFrame(frame) == ThreeState.YES);
           }
         }
         if (renderer != null && getCanDropFrame(list)) {
@@ -773,7 +774,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
       if (index >= 0 && index < model.getSize()) {
         var handler = findDropFrameHandler(list);
         var frame = ObjectUtils.tryCast(model.getElementAt(index), XStackFrame.class);
-        if (frame != null && handler != null && handler.canDrop(frame)) {
+        if (frame != null && handler != null && handler.canDropFrame(frame) == ThreeState.YES) {
           handler.drop(frame);
           inputEvent.consume();
         }

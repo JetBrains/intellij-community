@@ -18,6 +18,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ThreeState;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
@@ -146,8 +147,9 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     return myMethodOccurrence.isRecursive();
   }
 
-  public boolean canDrop() {
-    return !myFrame.isBottom() && myMethodOccurrence.canDrop();
+  public ThreeState canDrop() {
+    if (myFrame.isBottom()) return ThreeState.NO;
+    return myMethodOccurrence.canDrop();
   }
 
   public @Nullable ValueMarkup getValueMarkup() {

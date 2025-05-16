@@ -14,7 +14,8 @@ a:com.intellij.xdebugger.XDebugProcess
 a:com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 - *:isEvaluateExpressionFieldEnabled():Z
 *:com.intellij.xdebugger.frame.XDropFrameHandler
-- a:canDrop(com.intellij.xdebugger.frame.XStackFrame):Z
+- canDrop(com.intellij.xdebugger.frame.XStackFrame):Z
+- canDropFrame(com.intellij.xdebugger.frame.XStackFrame):com.intellij.util.ThreeState
 - a:drop(com.intellij.xdebugger.frame.XStackFrame):V
 a:com.intellij.xdebugger.frame.XExecutionStack
 - *sf:SELECTED_STACKS:com.intellij.openapi.actionSystem.DataKey

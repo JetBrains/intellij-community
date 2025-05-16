@@ -20,6 +20,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
@@ -47,11 +48,12 @@ public class JvmDropFrameActionHandler implements XDropFrameHandler {
   public JvmDropFrameActionHandler(@NotNull DebuggerSession process) { myDebugSession = process; }
 
   @Override
-  public boolean canDrop(@NotNull XStackFrame frame) {
+  public ThreeState canDropFrame(@NotNull XStackFrame frame) {
     if (frame instanceof JavaStackFrame javaStackFrame) {
-        return javaStackFrame.getStackFrameProxy().getVirtualMachine().canPopFrames() && javaStackFrame.getDescriptor().canDrop();
+      if (!javaStackFrame.getStackFrameProxy().getVirtualMachine().canPopFrames()) return ThreeState.NO;
+      return javaStackFrame.getDescriptor().canDrop();
     }
-    return false;
+    return ThreeState.NO;
   }
 
   @Override

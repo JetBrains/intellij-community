@@ -7,6 +7,7 @@ import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.util.ThreeState
 import com.intellij.xdebugger.impl.rpc.XSourcePositionDto
 import com.intellij.xdebugger.impl.rpc.XStackFrameId
 import kotlinx.serialization.Serializable
@@ -33,7 +34,7 @@ data class XStackFrameDto(
   val initialPresentation: XStackFramePresentation,
   val captionInfo: XStackFrameCaptionInfo = XStackFrameCaptionInfo.noInfo,
   val customBackgroundInfo: XStackFrameCustomBackgroundInfo? = null,
-  val canDrop: Boolean,
+  val canDrop: ThreeState,
 )
 
 @ApiStatus.Internal

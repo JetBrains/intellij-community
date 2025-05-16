@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.actions
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.util.ThreeState
 import com.intellij.xdebugger.frame.XDropFrameHandler
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
@@ -16,7 +17,7 @@ class ResetFrameAction : DumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    DebuggerUIUtil.setActionEnabled(e, withHandler(e, false) { handler, stackFrame -> handler.canDrop(stackFrame) })
+    DebuggerUIUtil.setActionEnabled(e, withHandler(e, false) { handler, stackFrame -> handler.canDropFrame(stackFrame) == ThreeState.YES })
   }
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
+import com.intellij.util.ThreeState;
 import com.sun.jdi.Method;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -38,15 +39,16 @@ public class MethodsTracker {
     }
 
     // check that all methods are not native to be able to drop a frame
-    public boolean canDrop() {
+    ThreeState canDrop() {
       for (int i = 0; i <= myFrameIndex + 1; i++) {
         MethodOccurrence occurrence = myCache.get(i);
         Method method = occurrence != null ? occurrence.myMethod : null;
+        if (method == null && i == myFrameIndex + 1) return ThreeState.UNSURE;
         if (method == null || method.isNative()) {
-          return false;
+          return ThreeState.NO;
         }
       }
-      return true;
+      return ThreeState.YES;
     }
   }
 

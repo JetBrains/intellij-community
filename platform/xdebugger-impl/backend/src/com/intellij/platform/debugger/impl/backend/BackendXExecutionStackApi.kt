@@ -4,9 +4,9 @@ package com.intellij.platform.debugger.impl.backend
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.debugger.impl.rpc.XExecutionStackApi
-import com.intellij.platform.debugger.impl.rpc.XStackFrameDto
 import com.intellij.platform.debugger.impl.rpc.XStackFramesEvent
 import com.intellij.platform.debugger.impl.rpc.XValueComputeChildrenEvent
+import com.intellij.util.ThreeState
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
@@ -69,7 +69,8 @@ internal class BackendXExecutionStackApi : XExecutionStackApi {
     val stack = stackFrameId.findValue() ?: return false
     return withContext(Dispatchers.EDT) {
       val dropFrameHandler = session.debugProcess.dropFrameHandler ?: return@withContext false
-      dropFrameHandler.canDrop(stack.stackFrame)
+      // TODO suspend here until yes/no answer
+      dropFrameHandler.canDropFrame(stack.stackFrame) == ThreeState.YES
     }
   }
 

@@ -16,6 +16,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.ui.ColoredTextContainer
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.util.ThreeState
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.EvaluationMode
 import com.intellij.xdebugger.frame.XExecutionStack
@@ -327,8 +328,9 @@ private fun XStackFrame.customBackgroundInfo(): XStackFrameCustomBackgroundInfo?
   return XStackFrameCustomBackgroundInfo(backgroundColor?.rpcId())
 }
 
-private fun XStackFrame.canDrop(session: XDebugSessionImpl): Boolean {
-  return session.debugProcess.dropFrameHandler?.canDrop(this) ?: false
+private fun XStackFrame.canDrop(session: XDebugSessionImpl): ThreeState {
+  val handler = session.debugProcess.dropFrameHandler ?: return ThreeState.NO
+  return handler.canDropFrame(this)
 }
 
 private fun XStackFrame.initialPresentation(): XStackFramePresentation {

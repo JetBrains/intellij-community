@@ -16,6 +16,7 @@ import com.intellij.platform.debugger.impl.rpc.XStackFrameCustomBackgroundInfo
 import com.intellij.platform.debugger.impl.rpc.XStackFrameEqualityObject
 import com.intellij.platform.debugger.impl.rpc.toSimpleTextAttributes
 import com.intellij.ui.ColoredTextContainer
+import com.intellij.util.ThreeState
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.frame.XCompositeNode
@@ -26,6 +27,7 @@ import com.intellij.xdebugger.impl.rpc.XStackFrameId
 import com.intellij.xdebugger.impl.rpc.sourcePosition
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import java.awt.Color
 
 internal class FrontendXStackFrame(
   val id: XStackFrameId,
@@ -36,7 +38,7 @@ internal class FrontendXStackFrame(
   private val equalityObject: XStackFrameEqualityObject?,
   private val evaluatorDto: XDebuggerEvaluatorDto,
   private val captionInfo: XStackFrameCaptionInfo,
-  canDrop: Boolean,
+  canDrop: ThreeState,
 ) : XStackFrame(), XDebuggerFramesList.ItemWithSeparatorAbove {
   private val evaluator by lazy {
     createFrontendXDebuggerEvaluator(project, suspendContextLifetimeScope, evaluatorDto, id)
@@ -52,10 +54,10 @@ internal class FrontendXStackFrame(
   //  Is it worth it?
   val requiresCustomBackground: Boolean
     get() = customBackgroundInfo != null
-  val customBackgroundColor: java.awt.Color?
+  val customBackgroundColor: Color?
     get() = customBackgroundInfo?.backgroundColor?.color()
 
-  val canDropFlow = MutableStateFlow(if (canDrop) CanDropState.CAN_DROP else CanDropState.UNSURE)
+  val canDropFlow: MutableStateFlow<CanDropState> = MutableStateFlow(CanDropState.fromThreeState(canDrop))
 
   override fun getSourcePosition(): XSourcePosition? {
     return sourcePosition?.sourcePosition()
@@ -71,7 +73,7 @@ internal class FrontendXStackFrame(
     return evaluatorDto.canEvaluateInDocument
   }
 
-  override fun getEvaluator(): XDebuggerEvaluator? = evaluator
+  override fun getEvaluator(): XDebuggerEvaluator = evaluator
 
   override fun customizePresentation(component: ColoredTextContainer) {
     // TODO[IJPL-177087]: what if presentation changes over time for the same backend stack frame?
@@ -106,16 +108,15 @@ internal class FrontendXStackFrame(
     return id.hashCode()
   }
 
-  /**
-  canDrop can depend on other frames in the stack,
-  and thus it can change after other stacks are loaded.
-  Hypothesis: canDrop can only change once and only from false to true,
-  ergo,
-  - if an RPC request returns true, then it's final -- CAN_DROP; no more recomputations
-  - if an RPC request returns false, we can't say if it's final or not -- UNSURE; should request more if necessary
-  - COMPUTING means that we haven't received a response yet; don't do more requests
-   */
-  internal enum class CanDropState(val canDrop: Boolean = false) {
-    UNSURE, COMPUTING, CAN_DROP(true)
+  internal enum class CanDropState(val state: ThreeState) {
+    UNSURE(ThreeState.UNSURE), COMPUTING(ThreeState.UNSURE), YES(ThreeState.YES), NO(ThreeState.NO);
+
+    companion object {
+      fun fromThreeState(state: ThreeState): CanDropState = when (state) {
+        ThreeState.YES -> YES
+        ThreeState.NO -> NO
+        ThreeState.UNSURE -> UNSURE
+      }
+    }
   }
 }
