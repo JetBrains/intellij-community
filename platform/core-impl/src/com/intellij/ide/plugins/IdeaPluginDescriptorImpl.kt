@@ -67,14 +67,14 @@ abstract class IdeaPluginDescriptorImpl internal constructor(
     PluginMainDescriptor,
 
     /**
-     * Descriptor instantiated as a sub-descriptor of some [PluginMainDescriptor] using a content module info. See [createSub].
+     * Descriptor instantiated as a sub-descriptor of some [PluginMainDescriptor] using a content module info. See [createContentModule].
      *
      * `descriptorPath`, `moduleName`, `moduleLoadingRule` properties are _not_ `null`.
      */
     ContentModuleDescriptor,
 
     /**
-     * Descriptor instantiated as a sub-descriptor of some [PluginMainDescriptor] _or_ another [DependsSubDescriptor] in [loadPluginDependencyDescriptors]. See [createSub].
+     * Descriptor instantiated as a sub-descriptor of some [PluginMainDescriptor] _or_ another [DependsSubDescriptor] in [loadPluginDependencyDescriptors]. See [createDependsSubDescriptor].
      *
      * `descriptorPath` is _not_ null, `moduleName` and `moduleLoadingRule` properties are `null`.
      */
@@ -270,12 +270,12 @@ abstract class IdeaPluginDescriptorImpl internal constructor(
     "descriptorPath=${descriptorPath ?: "plugin.xml"}, " +
     "path=${PluginUtils.pluginPathToUserString(pluginPath)})"
 
-  internal fun createSub(
+  internal fun createDependsSubDescriptor(
     subBuilder: PluginDescriptorBuilder,
     descriptorPath: String,
   ): DependsSubDescriptor = createSubImpl(subBuilder, descriptorPath, null) as DependsSubDescriptor
 
-  internal fun createSub(
+  internal fun createContentModule(
     subBuilder: PluginDescriptorBuilder,
     descriptorPath: String,
     module: PluginContentDescriptor.ModuleItem,
@@ -373,7 +373,7 @@ abstract class IdeaPluginDescriptorImpl internal constructor(
       checkCycle(configFile, visitedFiles)
       visitedFiles.add(configFile)
       try {
-        val subDescriptor = createSub(raw, configFile)
+        val subDescriptor = createDependsSubDescriptor(raw, configFile)
         subDescriptor.loadPluginDependencyDescriptors(context, pathResolver, dataLoader, visitedFiles)
         dependency.setSubDescriptor(subDescriptor)
       } finally {
@@ -698,7 +698,7 @@ fun IdeaPluginDescriptorImpl.createSubInTest(
   subBuilder: PluginDescriptorBuilder,
   descriptorPath: String,
   module: PluginContentDescriptor.ModuleItem,
-): ContentModuleDescriptor = createSub(subBuilder, descriptorPath, module)
+): ContentModuleDescriptor = createContentModule(subBuilder, descriptorPath, module)
 
 @get:ApiStatus.Internal
 val IdeaPluginDescriptorImpl.isMainPluginDescriptor: Boolean get() = type == Type.PluginMainDescriptor
