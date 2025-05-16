@@ -6,6 +6,7 @@ import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.core.CoreBundle
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl.Type
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl.Type.PluginMainDescriptor
 import com.intellij.idea.AppMode
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
@@ -45,25 +46,10 @@ sealed class IdeaPluginDescriptorImpl(
   /** see [type], [checkTypeInvariants] */
   @ApiStatus.Internal
   enum class Type {
-    /**
-     * Main plugin descriptor, instantiated from "plugin.xml" (or from platform XMLs for Core).
-     *
-     * `descriptorPath`, `moduleName`, `moduleLoadingRule` properties are `null`.
-     */
     PluginMainDescriptor,
 
-    /**
-     * Descriptor instantiated as a sub-descriptor of some [PluginMainDescriptor] using a content module info. See [createContentModule].
-     *
-     * `descriptorPath`, `moduleName`, `moduleLoadingRule` properties are _not_ `null`.
-     */
     ContentModuleDescriptor,
 
-    /**
-     * Descriptor instantiated as a sub-descriptor of some [PluginMainDescriptor] _or_ another [DependsSubDescriptor] in [loadPluginDependencyDescriptors]. See [createDependsSubDescriptor].
-     *
-     * `descriptorPath` is _not_ null, `moduleName` and `moduleLoadingRule` properties are `null`.
-     */
     DependsSubDescriptor
   }
 
@@ -662,6 +648,9 @@ val IdeaPluginDescriptorImpl.isContentModuleDescriptor: Boolean get() = type == 
 @get:ApiStatus.Internal
 val IdeaPluginDescriptorImpl.isDependsSubDescriptor: Boolean get() = type == Type.DependsSubDescriptor
 
+/**
+ * Main plugin descriptor, instantiated from "plugin.xml" (or from platform XMLs for Core).
+ */
 @ApiStatus.Internal
 class MainPluginDescriptor(
   raw: RawPluginDescriptor,
@@ -683,6 +672,10 @@ class MainPluginDescriptor(
   }
 }
 
+/**
+ * Descriptor instantiated as a sub-descriptor of some [PluginMainDescriptor] _or_ another [DependsSubDescriptor] in [loadPluginDependencyDescriptors].
+ * See [createDependsSubDescriptor].
+ */
 @ApiStatus.Internal
 class DependsSubDescriptor(
   raw: RawPluginDescriptor,
@@ -715,6 +708,9 @@ class DependsSubDescriptor(
   }
 }
 
+/**
+ * Descriptor instantiated as a sub-descriptor of some [PluginMainDescriptor] using a content module info. See [createContentModule].
+ */
 @ApiStatus.Internal
 class ContentModuleDescriptor(
   raw: RawPluginDescriptor,
