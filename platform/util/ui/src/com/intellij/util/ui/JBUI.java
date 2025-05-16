@@ -810,8 +810,8 @@ public final class JBUI {
       }
 
       interface Tooltip {
-        Color BACKGROUND = JBColor.namedColor("Editor.ToolTip.background", UIUtil.getToolTipBackground());
-        Color FOREGROUND = JBColor.namedColor("Editor.ToolTip.foreground", UIUtil.getToolTipForeground());
+        Color BACKGROUND = JBColor.namedColor("Editor.ToolTip.background", CurrentTheme.Tooltip.BACKGROUND);
+        Color FOREGROUND = JBColor.namedColor("Editor.ToolTip.foreground", CurrentTheme.Tooltip.FOREGROUND);
         Color BORDER = JBColor.namedColor("Editor.ToolTip.border", 0xC9CCD6, 0x43454A);
         Color ERROR_BACKGROUND = JBColor.namedColor("Editor.ToolTip.errorBackground", 0x0, 0x0);
         Color ERROR_BORDER = JBColor.namedColor("Editor.ToolTip.errorBorder", 0x0, 0x0);
@@ -1909,8 +1909,35 @@ public final class JBUI {
     public static final class Tooltip {
       public static final JBValue CORNER_RADIUS = new JBValue.UIInteger("ToolTip.borderCornerRadius", 4);
 
+      private static final @NotNull Color SEPARATOR_COLOR = JBColor.namedColor("Tooltip.separatorColor", 0xd1d1d1, 0x545658);
+      private static final @NotNull Color FOREGROUND = JBColor.namedColor("Tooltip.foreground", new JBColor(Gray.x00, Gray.xBF));
+      private static final @NotNull Color BACKGROUND = JBColor.namedColor("Tooltip.background", new JBColor(Gray.xF2, new Color(0x3c3f41)));
+      private static final @NotNull Color GRAYED_FOREGROUND =
+        JBColor.namedColor("Tooltip.grayedForeground", new JBColor(
+          JBColor.namedColor("ColorPalette.Gray7", Gray.x90),
+          JBColor.namedColor("ColorPalette.Gray8", Gray.x90))
+        );
+      private static final @NotNull Color SHORTCUT_FOREGROUND =
+        JBColor.namedColor("ToolTip.shortcutForeground", new JBColor(0x787878, 0x999999));
+
+      public static @NotNull Color foreground() {
+        return FOREGROUND;
+      }
+
+      public static @NotNull Color background() {
+        return BACKGROUND;
+      }
+
+      public static @NotNull Color separatorColor() {
+        return SEPARATOR_COLOR;
+      }
+
+      public static @NotNull Color grayedForeground() {
+        return GRAYED_FOREGROUND;
+      }
+
       public static @NotNull Color shortcutForeground() {
-        return JBColor.namedColor("ToolTip.shortcutForeground", new JBColor(0x787878, 0x999999));
+        return SHORTCUT_FOREGROUND;
       }
 
       /**
@@ -1918,6 +1945,23 @@ public final class JBUI {
        */
       public static @NotNull Color borderColor() {
         return JBColor.namedColor("ToolTip.borderColor", new JBColor(0xadadad, 0x636569));
+      }
+
+      public static Font font() {
+        return UIManager.getFont("ToolTip.font");
+      }
+
+      private Tooltip() { }
+
+      public static final class Actions {
+        private static final @NotNull Color BACKGROUND =
+          JBColor.namedColor("ToolTip.Actions.background", new JBColor(Gray.xEB, new Color(0x43474a)));
+
+        public static @NotNull Color background() {
+          return BACKGROUND;
+        }
+
+        private Actions() { }
       }
     }
 
@@ -1937,7 +1981,7 @@ public final class JBUI {
       }
 
       public static @NotNull Color foreground(boolean useContrastColors) {
-        Color base = JBColor.namedColor("GotItTooltip.foreground", UIUtil.getToolTipForeground());
+        Color base = JBColor.namedColor("GotItTooltip.foreground", Tooltip.FOREGROUND);
         if (useContrastColors) {
           return JBColor.namedColor("Tooltip.Learning.foreground", base);
         }
@@ -1945,7 +1989,7 @@ public final class JBUI {
       }
 
       public static @NotNull Color background(boolean useContrastColors) {
-        Color base = JBColor.namedColor("GotItTooltip.background", UIUtil.getToolTipBackground());
+        Color base = JBColor.namedColor("GotItTooltip.background", Tooltip.BACKGROUND);
         if (useContrastColors) {
           return JBColor.namedColor("Tooltip.Learning.background", base);
         }
@@ -2197,7 +2241,7 @@ public final class JBUI {
       }
 
       public static @NotNull Color foregroundColor() {
-        return JBColor.namedColor("Notification.ToolWindow.errorForeground", UIUtil.getToolTipForeground());
+        return JBColor.namedColor("Notification.ToolWindow.errorForeground", Tooltip.FOREGROUND);
       }
 
       public static @NotNull Color borderColor() {
@@ -2211,7 +2255,7 @@ public final class JBUI {
       }
 
       public static @NotNull Color foregroundColor() {
-        return JBColor.namedColor("Notification.ToolWindow.informativeForeground", UIUtil.getToolTipForeground());
+        return JBColor.namedColor("Notification.ToolWindow.informativeForeground", Tooltip.FOREGROUND);
       }
 
       public static @NotNull Color borderColor() {
@@ -2225,7 +2269,7 @@ public final class JBUI {
       }
 
       public static @NotNull Color foregroundColor() {
-        return JBColor.namedColor("Notification.ToolWindow.warningForeground", UIUtil.getToolTipForeground());
+        return JBColor.namedColor("Notification.ToolWindow.warningForeground", Tooltip.FOREGROUND);
       }
 
       public static @NotNull Color borderColor() {

@@ -71,7 +71,7 @@ object DocumentationHtmlUtil {
   @JvmStatic
   fun getDocumentationPaneAdditionalCssRules(): StyleSheet {
     val linkColor = ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.Foreground.ENABLED)
-    val sectionColor = ColorUtil.toHtmlColor(DocumentationComponent.SECTION_COLOR)
+    val sectionColor = ColorUtil.toHtmlColor(JBUI.CurrentTheme.Tooltip.grayedForeground())
 
     // When updating styles here, consider updating styles in DocRenderer#getStyleSheet
     val contentOuterPadding = scale(contentOuterPadding)
