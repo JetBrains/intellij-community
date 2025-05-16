@@ -184,7 +184,7 @@ class CheckerRunner(val text: TextContent) {
   // used in rider
   @ApiStatus.Experimental
   fun findSentence(problem: TextProblem): String? {
-    return sentences.find { problem.highlightRanges.any { range -> range.intersects(it.range.first, it.range.last + 1) } }?.token
+    return sentences.find { sentence -> problem.highlightRanges.any { range -> range.intersectsStrict(sentence.range.first, sentence.range.last) } }?.token
   }
 
   fun toFixes(problem: TextProblem, descriptor: ProblemDescriptor): Array<LocalQuickFix> {
