@@ -17,11 +17,14 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.editor.colors.EditorColorsListener
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.EditorGutterFreePainterAreaState
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontInfo
@@ -101,6 +104,19 @@ object TerminalUiUtils {
     editor.scrollPane.horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
     editor.gutterComponentEx.isPaintBackground = false
     editor.gutterComponentEx.setRightFreePaintersAreaState(EditorGutterFreePainterAreaState.HIDE)
+
+    val terminalColorScheme = TerminalColorScheme()
+    editor.colorsScheme = terminalColorScheme
+    editor.putUserData(TerminalColorScheme.KEY, terminalColorScheme)
+    val editorDisposable = Disposer.newDisposable()
+    EditorUtil.disposeWithEditor(editor, editorDisposable)
+    ApplicationManager.getApplication().messageBus.connect(editorDisposable).run {
+      subscribe(EditorColorsManager.TOPIC, EditorColorsListener { scheme ->
+        if (scheme != null) {
+          terminalColorScheme.globalScheme = scheme
+        }
+      })
+    }
 
     editor.settings.apply {
       isShowingSpecialChars = false
@@ -295,17 +311,16 @@ object TerminalUiUtils {
 }
 
 fun EditorImpl.applyFontSettings(newSettings: JBTerminalSystemSettingsProviderBase) {
-  colorsScheme.apply {
-    val newPreferences = FontPreferencesImpl()
-    newSettings.fontPreferences.copyTo(newPreferences)
-    // the font size in the settings is unscaled, we need to get the scaled one separately
-    for (fontFamily in newPreferences.effectiveFontFamilies) {
-      newPreferences.setFontSize(fontFamily, newSettings.terminalFontSize)
-    }
-    fontPreferences = newPreferences
-    // for some reason, even though fontPreferences contains lineSpacing, the editor doesn't take it from there
-    lineSpacing = newSettings.lineSpacing
+  val colorScheme = checkNotNull(getUserData(TerminalColorScheme.KEY)) { "Should've been set on creation" }
+  val newPreferences = FontPreferencesImpl()
+  newSettings.fontPreferences.copyTo(newPreferences)
+  // the font size in the settings is unscaled, we need to get the scaled one separately
+  for (fontFamily in newPreferences.effectiveFontFamilies) {
+    newPreferences.setFontSize(fontFamily, newSettings.terminalFontSize)
   }
+  colorScheme.fontPreferences = newPreferences
+  // for some reason, even though fontPreferences contains lineSpacing, the editor doesn't take it from there
+  colorScheme.lineSpacing = newSettings.lineSpacing
   settings.apply {
     characterGridWidthMultiplier = newSettings.columnSpacing
   }
