@@ -60,6 +60,7 @@ import kotlin.io.path.invariantSeparatorsPathString
 private val jpsElementFactory = JpsElementFactory.getInstance()
 private val javaHome = Path.of(System.getProperty("java.home")).normalize() ?: error("No java.home system property")
 
+private val JAVA_VERSION_HASH = Hashing.xxh3_64().hashBytesToLong(System.getProperty("java.version")?.toByteArray() ?: error("No java.version system property"))
 private val KOTLINC_VERSION_HASH = Hashing.xxh3_64().hashBytesToLong((KotlinCompilerVersion.getVersion() ?: "@snapshot@").toByteArray())
 
 internal fun loadJpsModel(
@@ -71,6 +72,7 @@ internal fun loadJpsModel(
   val model = jpsElementFactory.createModel()
 
   val digests = TargetConfigurationDigestContainer()
+  digests.set(TargetConfigurationDigestProperty.TOOL_JVM_VERSION, JAVA_VERSION_HASH)
   digests.set(TargetConfigurationDigestProperty.KOTLIN_VERSION, KOTLINC_VERSION_HASH)
 
   // properties not needed for us (not implemented for java)

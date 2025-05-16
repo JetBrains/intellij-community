@@ -10,6 +10,7 @@ interface PathRelativizer {
 }
 
 enum class TargetConfigurationDigestProperty(@JvmField val description: String) {
+  TOOL_JVM_VERSION("tool java runtime version"),
   KOTLIN_VERSION("kotlinc version"),
   COMPILER("kotlinc/javac configuration"),
   DEPENDENCY_PATH_LIST("dependency path list"),
