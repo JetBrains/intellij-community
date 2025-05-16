@@ -2,8 +2,8 @@
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.cl.PluginClassLoader
-import com.intellij.platform.testFramework.PluginBuilder
 import com.intellij.platform.plugins.testFramework.PluginSetTestBuilder
+import com.intellij.platform.testFramework.PluginBuilder
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsExtension
@@ -603,6 +603,28 @@ internal class PluginDependenciesTest {
       .doesNotHaveTransitiveParentClassloaders(baz, bazModule)
     assertThat(barSub.moduleDependencies.modules).hasSize(1)
     assertThat(err).hasMessageContainingAll("Unexpected `module` dependencies in a `depends` sub-descriptor")
+  }
+
+  @Test
+  fun `optional content modules implicitly depend on main module, while required do not`() {
+    PluginBuilder.empty()
+      .id("foo")
+      .module("embedded.module", PluginBuilder.empty().packagePrefix("embedded"), loadingRule = ModuleLoadingRule.EMBEDDED)
+      .module("required.module", PluginBuilder.empty().packagePrefix("required"), loadingRule = ModuleLoadingRule.REQUIRED)
+      .module("optional.module", PluginBuilder.empty().packagePrefix("optional"), loadingRule = ModuleLoadingRule.OPTIONAL)
+      .build(pluginDirPath.resolve("foo"))
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("foo")
+    val foo = pluginSet.getEnabledPlugin("foo")
+    val (opt, req, emb) = pluginSet.getEnabledModules("optional.module", "required.module", "embedded.module")
+    assertThat(emb.pluginClassLoader).isSameAs(foo.pluginClassLoader)
+    assertThat(foo)
+      .doesNotHaveTransitiveParentClassloaders(req, opt)
+    assertThat(req)
+      .doesNotHaveTransitiveParentClassloaders(foo, opt)
+    assertThat(opt)
+      .hasDirectParentClassloaders(foo)
+      .doesNotHaveTransitiveParentClassloaders(req)
   }
 
   private fun foo() = PluginBuilder.empty().id("foo").build(pluginDirPath.resolve("foo"))
