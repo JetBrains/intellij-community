@@ -1,12 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.path
 
-import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.codeInspection.isInheritorOf
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.annotations.Filename
 import com.intellij.platform.eel.annotations.LocalPath
@@ -612,283 +610,9 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
   }
 
   /**
-   * Contains information about path annotation status.
-   */
-  private sealed interface PathAnnotationInfo {
-
-    sealed class Specified : PathAnnotationInfo {
-      abstract fun getAnnotationClass(): Class<*>
-      val shortAnnotationName: String = getAnnotationClass().simpleName.let { "@$it" }
-      abstract val quickFix: () -> LocalQuickFix
-    }
-
-    object MultiRouting : Specified() {
-      override fun getAnnotationClass(): Class<*> = MultiRoutingFileSystemPath::class.java
-      override val quickFix: () -> LocalQuickFix = { AddMultiRoutingAnnotationFix() }
-    }
-
-    object Native : Specified() {
-      override fun getAnnotationClass(): Class<*> = NativePath::class.java
-      override val quickFix: () -> LocalQuickFix = { AddNativePathAnnotationFix() }
-    }
-
-    object LocalPathInfo : Specified() {
-      override fun getAnnotationClass(): Class<*> = LocalPath::class.java
-      override val quickFix: () -> LocalQuickFix = { AddLocalPathAnnotationFix() }
-    }
-
-    object FilenameInfo : Specified() {
-      override fun getAnnotationClass(): Class<*> = Filename::class.java
-      override val quickFix: () -> LocalQuickFix = { AddFilenameAnnotationFix() }
-    }
-
-    object Unspecified : PathAnnotationInfo
-
-    companion object {
-      /**
-       * Checks if the given string is a valid filename (no forward or backward slashes).
-       */
-      fun isValidFilename(str: String): Boolean {
-        return !str.contains('/') && !str.contains('\\')
-      }
-
-      fun forExpression(expression: UExpression): PathAnnotationInfo {
-        if (expression is UQualifiedReferenceExpression) {
-          val uElement = expression.resolveToUElement()
-          if (uElement is UMethod) {
-            if (uElement.containingClass?.qualifiedName == "kotlin.io.path.PathsKt__PathUtilsKt") {
-              val identifierName = uElement.nameIdentifier?.text
-              if (identifierName != null) {
-                if (identifierName in setOf("name", "nameWithoutExtension", "extension")) {
-                  return FilenameInfo
-                }
-                if (identifierName in setOf("pathString")) {
-                  return MultiRouting
-                }
-              }
-            }
-          }
-        }
-
-        val callExpression = expression.getUCallExpression()
-        if (callExpression != null) {
-          if (callExpression.receiverType?.isInheritorOf("java.nio.file.Path") == true) {
-            // Check for Path.toString() which returns @MultiRoutingFileSystemPath
-            if (callExpression.methodName == "toString") {
-              return MultiRouting
-            }
-
-            // Check for Kotlin extension methods that return @Filename
-            val methodName = callExpression.methodName
-            if (methodName != null && VirtualPathAnnotationRegistry.isKotlinExtensionMethodReturningFilename(methodName)) {
-              return FilenameInfo
-            }
-
-            // Check for Kotlin extension methods that return @MultiRoutingFileSystemPath
-            if (methodName != null && VirtualPathAnnotationRegistry.isKotlinExtensionMethodReturningMultiRoutingPath(methodName)) {
-              return MultiRouting
-            }
-          }
-
-          // Check if the argument is a call to System.getProperty("user.home")
-          if (isSystemGetPropertyAbsolutePathResult(expression)) {
-            return LocalPathInfo
-          }
-
-          // Check if the argument is a call to a method that effectively returns a @LocalPath annotated string
-          if (isMethodReturningLocalPathResult(expression)) {
-            return LocalPathInfo
-          }
-        }
-
-        // Check if the expression is a reference to a variable that is initialized with a Kotlin extension method
-        if (expression is UReferenceExpression) {
-          val resolved = expression.resolve()
-          if (resolved is com.intellij.psi.PsiVariable) {
-            val initializer = resolved.initializer
-            if (initializer != null) {
-              // Check if the initializer is a method call
-              if (initializer is com.intellij.psi.PsiMethodCallExpression) {
-                val methodExpression = initializer.methodExpression
-                val qualifierExpression = methodExpression.qualifierExpression
-                val methodName = methodExpression.referenceName
-
-                // Check if the method is called on a Path object
-                if (qualifierExpression != null && methodName != null) {
-                  val qualifierType = qualifierExpression.type
-                  if (qualifierType != null && qualifierType.canonicalText == "java.nio.file.Path") {
-                    // Check for Kotlin extension methods that return @Filename
-                    val filenameExtensionMethods = setOf("getName", "getNameWithoutExtension", "getExtension")
-                    if (methodName in filenameExtensionMethods) {
-                      return FilenameInfo
-                    }
-
-                    // Check for Kotlin extension methods that return @MultiRoutingFileSystemPath
-                    val multiRoutingExtensionMethods = setOf("getPathString", "absolutePathString")
-                    if (methodName in multiRoutingExtensionMethods) {
-                      return MultiRouting
-                    }
-                  }
-                }
-              }
-
-              // Check if the initializer text contains Kotlin extension method calls
-              val initializerText = initializer.text
-
-              // Check for Kotlin extension methods that return @Filename
-              for (methodName in VirtualPathAnnotationRegistry.getKotlinExtensionMethodsReturningFilename()) {
-                if (initializerText.contains(".$methodName")) {
-                  return FilenameInfo
-                }
-              }
-
-              // Check for Kotlin extension methods that return @MultiRoutingFileSystemPath
-              for (methodName in VirtualPathAnnotationRegistry.getKotlinExtensionMethodsReturningMultiRoutingPath()) {
-                if (initializerText.contains(".$methodName")) {
-                  return MultiRouting
-                }
-              }
-            }
-          }
-        }
-
-        // Check if the expression has a path annotation
-        val sourcePsi = expression.sourcePsi
-        if (sourcePsi != null && sourcePsi is PsiModifierListOwner) {
-          return forModifierListOwner(sourcePsi)
-        }
-
-        // Check if the expression is a reference to a variable with a path annotation
-        if (expression is UReferenceExpression) {
-          val resolvedUElement = expression.resolveToUElement()
-          if (resolvedUElement is UAnnotated) {
-            if (resolvedUElement.findAnnotation(NativePath::class.java.canonicalName) != null) {
-              return Native
-            }
-            if (resolvedUElement.findAnnotation(MultiRoutingFileSystemPath::class.java.canonicalName) != null) {
-              return MultiRouting
-            }
-            if (resolvedUElement.findAnnotation(LocalPath::class.java.canonicalName) != null) {
-              return LocalPathInfo
-            }
-            if (resolvedUElement.findAnnotation(Filename::class.java.canonicalName) != null) {
-              return FilenameInfo
-            }
-          }
-
-          if (resolvedUElement is UVariable) {
-            val initializer = resolvedUElement.uastInitializer
-            if (initializer is UQualifiedReferenceExpression) {
-              val resolvedInitializer = initializer.resolveToUElement()
-              if (resolvedInitializer is UAnnotated) {
-                if (resolvedInitializer.findAnnotation(NativePath::class.java.canonicalName) != null) {
-                  return Native
-                }
-                if (resolvedInitializer.findAnnotation(MultiRoutingFileSystemPath::class.java.canonicalName) != null) {
-                  return MultiRouting
-                }
-                if (resolvedInitializer.findAnnotation(LocalPath::class.java.canonicalName) != null) {
-                  return LocalPathInfo
-                }
-                if (resolvedInitializer.findAnnotation(Filename::class.java.canonicalName) != null) {
-                  return FilenameInfo
-                }
-              }
-            }
-          }
-
-          (resolvedUElement as? UVariable)?.uastInitializer?.getUCallExpression()?.let { callExpression ->
-            if (callExpression.receiverType?.isInheritorOf("java.nio.file.Path") == true
-                && callExpression.methodName == "toString") {
-              return MultiRouting
-            }
-          }
-
-          val resolved = expression.resolve()
-          if (resolved is PsiModifierListOwner) {
-            val info = forModifierListOwner(resolved)
-            if (info !is Unspecified) {
-              return info
-            }
-
-            // Check if the reference is to a variable with a string constant initializer that denotes a filename
-            if (resolved is com.intellij.psi.PsiVariable) {
-              val initializer = resolved.initializer
-              if (initializer != null) {
-                // Check if the initializer is a call to System.getProperty("user.home")
-                if (initializer is com.intellij.psi.PsiMethodCallExpression) {
-                  val methodExpression = initializer.methodExpression
-                  val qualifierExpression = methodExpression.qualifierExpression
-                  val methodName = methodExpression.referenceName
-
-                  if (methodName == "getProperty" && qualifierExpression != null) {
-                    val qualifierText = qualifierExpression.text
-                    if (qualifierText == "System") {
-                      val args = initializer.argumentList.expressions
-                      if (args.size >= 1) {
-                        val arg = args[0]
-                        if (arg is com.intellij.psi.PsiLiteralExpression) {
-                          val value = arg.value
-                          if (value is String && isSystemPropertyAbsolutePathValue(value)) {
-                            return LocalPathInfo
-                          }
-                        }
-                      }
-                    }
-                  }
-
-                  // Check if the initializer is a call to a method that effectively returns a @LocalPath annotated string
-                  val method = initializer.resolveMethod()
-                  if (method != null && VirtualPathAnnotationRegistry.isMethodReturningLocalPath(method)) {
-                    return LocalPathInfo
-                  }
-                }
-
-                val evaluatedValue = expression.evaluate()
-                if (evaluatedValue is String && isValidFilename(evaluatedValue)) {
-                  return FilenameInfo
-                }
-
-                // Try to evaluate the initializer as a string constant
-                val constantValue = com.intellij.psi.JavaPsiFacade.getInstance(resolved.project)
-                  .constantEvaluationHelper.computeConstantExpression(initializer)
-                if (constantValue is String && isValidFilename(constantValue)) {
-                  return FilenameInfo
-                }
-              }
-            }
-          }
-        }
-
-        // We don't check if the expression is a string literal or constant that denotes a filename here
-        // because we want to handle that in the visitCallExpression method
-
-        return Unspecified
-      }
-
-      fun forModifierListOwner(owner: PsiModifierListOwner): PathAnnotationInfo {
-        // Check if the owner has a path annotation
-        if (AnnotationUtil.isAnnotated(owner, MultiRoutingFileSystemPath::class.java.name, AnnotationUtil.CHECK_TYPE)) {
-          return MultiRouting
-        }
-        if (AnnotationUtil.isAnnotated(owner, NativePath::class.java.name, AnnotationUtil.CHECK_TYPE)) {
-          return Native
-        }
-        if (AnnotationUtil.isAnnotated(owner, LocalPath::class.java.name, AnnotationUtil.CHECK_TYPE)) {
-          return LocalPathInfo
-        }
-        if (AnnotationUtil.isAnnotated(owner, Filename::class.java.name, AnnotationUtil.CHECK_TYPE)) {
-          return FilenameInfo
-        }
-        return Unspecified
-      }
-    }
-  }
-
-  /**
    * Quick fix to add @MultiRoutingFileSystemPath annotation.
    */
-  private class AddMultiRoutingAnnotationFix() : LocalQuickFix {
+  internal class AddMultiRoutingAnnotationFix() : LocalQuickFix {
     override fun getFamilyName(): String = DevKitBundle.message("inspections.intention.family.name.add.multiroutingfilesystempath.annotation")
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
@@ -922,7 +646,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
   /**
    * Quick fix to add @NativePath annotation.
    */
-  private class AddNativePathAnnotationFix() : LocalQuickFix {
+  internal class AddNativePathAnnotationFix() : LocalQuickFix {
     override fun getFamilyName(): String = DevKitBundle.message("inspections.intention.family.name.add.nativepath.annotation")
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
@@ -956,7 +680,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
   /**
    * Quick fix to add @LocalPath annotation.
    */
-  private class AddLocalPathAnnotationFix() : LocalQuickFix {
+  internal class AddLocalPathAnnotationFix() : LocalQuickFix {
     override fun getFamilyName(): String = DevKitBundle.message("inspections.intention.family.name.add.localpath.annotation")
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
@@ -990,7 +714,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
   /**
    * Quick fix to add @Filename annotation.
    */
-  private class AddFilenameAnnotationFix() : LocalQuickFix {
+  internal class AddFilenameAnnotationFix() : LocalQuickFix {
     override fun getFamilyName(): String = DevKitBundle.message("inspections.intention.family.name.add.filename.annotation")
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
@@ -1076,141 +800,4 @@ private fun findVariableToAnnotate(element: PsiElement): PsiModifierListOwner? {
   }
 
   return null
-}
-
-/**
- * Checks if the expression is a call to System.getProperty("user.home").
- */
-private fun isSystemGetPropertyAbsolutePathResult(expression: UExpression): Boolean {
-  val callExpression = expression.getUCallExpression() ?: return false
-  val method = callExpression.resolve()
-  if (method is com.intellij.psi.PsiMethod) {
-    val containingClass = method.containingClass
-    if (containingClass != null && containingClass.qualifiedName == "java.lang.System" && method.name == "getProperty") {
-      val arguments = callExpression.valueArguments
-      val arg = arguments.firstOrNull() // it is expected to be the first and the only argument of `System.getProperty()` method call
-      if (arg != null) {
-        if (arg is UInjectionHost) {
-          val stringValue = arg.evaluateToString()
-          if (stringValue != null && isSystemPropertyAbsolutePathValue(stringValue)) {
-            return true
-          }
-        }
-        else if (arg is ULiteralExpression) {
-          val value = arg.value
-          if (value is String && isSystemPropertyAbsolutePathValue(value)) {
-            return true
-          }
-        }
-      }
-    }
-  }
-  return false
-}
-
-/**
- * Checks if the expression is a call to a method that effectively returns a `@LocalPath` annotated string.
- */
-private fun isMethodReturningLocalPathResult(expression: UExpression): Boolean {
-  val callExpression = expression.getUCallExpression() ?: return false
-  val method = callExpression.resolve()
-  if (method is com.intellij.psi.PsiMethod) {
-    return VirtualPathAnnotationRegistry.isMethodReturningLocalPath(method)
-  }
-  return false
-}
-
-private fun isSystemPropertyAbsolutePathValue(propertyName: String): Boolean =
-  setOf("java.home", "user.home", "user.dir", "java.io.tmpdir").contains(propertyName)
-
-/**
- * Registry of methods that effectively return or accept path annotated strings.
- * This registry is used to virtually associate path annotations with methods without modifying the methods themselves.
- */
-private object VirtualPathAnnotationRegistry {
-  /**
-   * Map of fully qualified method names to their effective path annotation type.
-   * The key is in the format "fully.qualified.ClassName.methodName".
-   */
-  private val methodsReturningLocalPath = setOf(
-    "com.intellij.openapi.application.PathManager.getHomePath",
-    "com.intellij.openapi.application.PathManager.getBinPath",
-    "com.intellij.openapi.application.PathManager.getConfigPath",
-    "com.intellij.openapi.application.PathManager.getSystemPath",
-    "com.intellij.util.SystemProperties.getUserHome",
-    "com.intellij.util.SystemProperties.getJavaHome"
-  )
-
-  /**
-   * Map of fully qualified method names to their effective path annotation type for parameters.
-   * The key is in the format "fully.qualified.ClassName.methodName".
-   */
-  private val methodsAcceptingLocalPath = setOf(
-    "com.intellij.openapi.application.PathManager.isUnderHomeDirectory"
-  )
-
-  /**
-   * Set of Kotlin extension method names that effectively return a `@Filename` annotated string.
-   */
-  private val kotlinExtensionMethodsReturningFilename = setOf(
-    "name",
-    "nameWithoutExtension",
-    "extension"
-  )
-
-  /**
-   * Set of Kotlin extension method names that effectively return a `@MultiRoutingFileSystemPath` annotated string.
-   */
-  private val kotlinExtensionMethodsReturningMultiRoutingPath = setOf(
-    "pathString",
-    "absolutePathString"
-  )
-
-  /**
-   * Checks if the method effectively returns a `@LocalPath` annotated string.
-   */
-  fun isMethodReturningLocalPath(method: com.intellij.psi.PsiMethod): Boolean {
-    val containingClass = method.containingClass ?: return false
-    val qualifiedName = containingClass.qualifiedName ?: return false
-    val methodName = method.name
-    return methodsReturningLocalPath.contains("$qualifiedName.$methodName")
-  }
-
-  /**
-   * Checks if the method effectively accepts a `@LocalPath` annotated string as a parameter.
-   */
-  fun isMethodAcceptingLocalPath(method: com.intellij.psi.PsiMethod): Boolean {
-    val containingClass = method.containingClass ?: return false
-    val qualifiedName = containingClass.qualifiedName ?: return false
-    val methodName = method.name
-    return methodsAcceptingLocalPath.contains("$qualifiedName.$methodName")
-  }
-
-  /**
-   * Checks if the method name is a Kotlin extension method that effectively returns a `@Filename` annotated string.
-   */
-  fun isKotlinExtensionMethodReturningFilename(methodName: String): Boolean {
-    return kotlinExtensionMethodsReturningFilename.contains(methodName)
-  }
-
-  /**
-   * Checks if the method name is a Kotlin extension method that effectively returns a `@MultiRoutingFileSystemPath` annotated string.
-   */
-  fun isKotlinExtensionMethodReturningMultiRoutingPath(methodName: String): Boolean {
-    return kotlinExtensionMethodsReturningMultiRoutingPath.contains(methodName)
-  }
-
-  /**
-   * Returns all Kotlin extension method names that effectively return a `@Filename` annotated string.
-   */
-  fun getKotlinExtensionMethodsReturningFilename(): Set<String> {
-    return kotlinExtensionMethodsReturningFilename
-  }
-
-  /**
-   * Returns all Kotlin extension method names that effectively return a `@MultiRoutingFileSystemPath` annotated string.
-   */
-  fun getKotlinExtensionMethodsReturningMultiRoutingPath(): Set<String> {
-    return kotlinExtensionMethodsReturningMultiRoutingPath
-  }
 }
