@@ -144,7 +144,10 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
               SeLog.log(SeLog.THROTTLING) { "Throttled flow completed" }
               resultListModel.removeLoadingItem()
               if (!resultListModel.isValid) resultListModel.reset()
-              if (resultListModel.isEmpty) updateEmptyStatus()
+              if (resultListModel.isEmpty) {
+                textField.setSearchInProgress(false)
+                updateEmptyStatus()
+              }
             }
           }.collect { event ->
             withContext(Dispatchers.EDT) {
