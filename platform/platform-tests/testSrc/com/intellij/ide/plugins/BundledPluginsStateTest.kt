@@ -35,7 +35,7 @@ class BundledPluginsStateTest {
 
   companion object {
     private fun getIdeaDescriptor(id: String, category: String?): IdeaPluginDescriptorImpl {
-      val descriptor = IdeaPluginDescriptorImpl(
+      val descriptor = MainPluginDescriptor(
         raw = PluginDescriptorBuilder.builder().apply {
           this.category = category
           this.id = id

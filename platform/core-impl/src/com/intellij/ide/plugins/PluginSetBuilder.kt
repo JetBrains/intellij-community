@@ -124,7 +124,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
         }
       }
       else if (!module.isRequiredContentModule && !enabledPluginIds.containsKey(module.pluginId)) {
-        disabledModuleToProblematicPlugin.put(module.moduleName, module.pluginId)
+        disabledModuleToProblematicPlugin.put(module.moduleName!!, module.pluginId)
         continue
       }
 
@@ -132,7 +132,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
         if (!enabledModuleV2Ids.containsKey(ref.name) && !enabledRequiredContentModules.containsKey(ref.name)) {
           logMessages.add("Module ${module.moduleName ?: module.pluginId} is not enabled because dependency ${ref.name} is not available")
           if (module.moduleName != null) {
-            disabledModuleToProblematicPlugin.put(module.moduleName, disabledModuleToProblematicPlugin.get(ref.name) ?: PluginId.getId(ref.name))
+            disabledModuleToProblematicPlugin.put(module.moduleName!!, disabledModuleToProblematicPlugin.get(ref.name) ?: PluginId.getId(ref.name))
           }
           continue@m
         }
@@ -141,7 +141,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
         if (!enabledPluginIds.containsKey(ref.id)) {
           logMessages.add("Module ${module.moduleName ?: module.pluginId} is not enabled because dependency ${ref.id} is not available")
           if (module.moduleName != null) {
-            disabledModuleToProblematicPlugin.put(module.moduleName, ref.id)
+            disabledModuleToProblematicPlugin.put(module.moduleName!!, ref.id)
           }
           continue@m
         }
@@ -149,7 +149,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
 
       if (module.packagePrefix != null) {
         // do this as late as possible, because if we mark the module disabled a bit later, it would still be registered for a given prefix
-        val alreadyRegistered = usedPackagePrefixes.putIfAbsent(module.packagePrefix, module)
+        val alreadyRegistered = usedPackagePrefixes.putIfAbsent(module.packagePrefix!!, module)
         if (alreadyRegistered != null) {
           module.isMarkedForLoading = false
           isDisabledDueToPackagePrefixConflict.put(module.moduleName ?: module.pluginId.idString, alreadyRegistered)
@@ -193,10 +193,10 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
         }
       }
       else if (module.isRequiredContentModule && module.pluginId != PluginManagerCore.CORE_ID) {
-        enabledRequiredContentModules.put(module.moduleName, module)
+        enabledRequiredContentModules.put(module.moduleName!!, module)
       }
       else {
-        markModuleAsEnabled(module.moduleName, module)
+        markModuleAsEnabled(module.moduleName!!, module)
       }
     }
 

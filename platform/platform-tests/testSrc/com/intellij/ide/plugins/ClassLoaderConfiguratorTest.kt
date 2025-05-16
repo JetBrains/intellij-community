@@ -27,8 +27,8 @@ internal class ClassLoaderConfiguratorTest {
   @Test
   fun `plugin must be after child`() {
     val emptyPath = Path.of("")
-    val kotlin = IdeaPluginDescriptorImpl(PluginDescriptorBuilder.builder().apply { id = "org.jetbrains.kotlin" }.build(), emptyPath, isBundled = false)
-    val gradle = IdeaPluginDescriptorImpl(PluginDescriptorBuilder.builder().apply { id = "org.jetbrains.plugins.gradle" }.build(), emptyPath, isBundled = false)
+    val kotlin = MainPluginDescriptor(PluginDescriptorBuilder.builder().apply { id = "org.jetbrains.kotlin" }.build(), emptyPath, isBundled = false)
+    val gradle = MainPluginDescriptor(PluginDescriptorBuilder.builder().apply { id = "org.jetbrains.plugins.gradle" }.build(), emptyPath, isBundled = false)
     val emptyBuilder = PluginDescriptorBuilder.builder()
     val kotlinGradleJava = kotlin.createSubInTest(
       subBuilder = emptyBuilder,
@@ -51,7 +51,7 @@ internal class ClassLoaderConfiguratorTest {
 
   @Test
   fun `child with common package prefix must be after included sibling`() {
-    val plugin = IdeaPluginDescriptorImpl(
+    val plugin = MainPluginDescriptor(
       PluginDescriptorBuilder.builder().apply {
         id = "com.example"
       }.build(),

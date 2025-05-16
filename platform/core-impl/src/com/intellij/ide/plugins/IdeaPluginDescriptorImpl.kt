@@ -30,7 +30,7 @@ private val LOG: Logger
   get() = PluginManagerCore.logger
 
 @ApiStatus.Internal
-class IdeaPluginDescriptorImpl private constructor(
+abstract class IdeaPluginDescriptorImpl internal constructor(
   raw: RawPluginDescriptor,
   pluginPath: Path,
   isBundled: Boolean,
@@ -292,16 +292,27 @@ class IdeaPluginDescriptorImpl private constructor(
       }
     }
     val raw = subBuilder.build()
-    val result = IdeaPluginDescriptorImpl(
-      raw = raw,
-      pluginPath = pluginPath,
-      isBundled = isBundled,
-      moduleName = module?.name,
-      moduleLoadingRule = module?.loadingRule,
-      useCoreClassLoader = useCoreClassLoader,
-      isIndependentFromCoreClassLoader = raw.isIndependentFromCoreClassLoader,
-      descriptorPath = descriptorPath)
-    return result
+    return if (module == null) {
+      DependsSubDescriptor(
+        raw = raw,
+        pluginPath = pluginPath,
+        isBundled = isBundled,
+        useCoreClassLoader = useCoreClassLoader,
+        isIndependentFromCoreClassLoader = raw.isIndependentFromCoreClassLoader,
+        descriptorPath = descriptorPath
+      )
+    } else {
+      ContentModuleDescriptor(
+        raw = raw,
+        pluginPath = pluginPath,
+        isBundled = isBundled,
+        moduleName = module.name,
+        moduleLoadingRule = module.loadingRule,
+        useCoreClassLoader = useCoreClassLoader,
+        isIndependentFromCoreClassLoader = raw.isIndependentFromCoreClassLoader,
+        descriptorPath = descriptorPath
+      )
+    }
   }
 
   internal fun loadPluginDependencyDescriptors(loadingContext: PluginDescriptorLoadingContext, pathResolver: PathResolver, dataLoader: DataLoader): Unit =
@@ -686,3 +697,56 @@ val IdeaPluginDescriptorImpl.isContentModuleDescriptor: Boolean get() = type == 
 
 @get:ApiStatus.Internal
 val IdeaPluginDescriptorImpl.isDependsSubDescriptor: Boolean get() = type == Type.DependsSubDescriptor
+
+@ApiStatus.Internal
+class MainPluginDescriptor(
+  raw: RawPluginDescriptor,
+  pluginPath: Path,
+  isBundled: Boolean,
+  useCoreClassLoader: Boolean = false
+): IdeaPluginDescriptorImpl(
+  raw,
+  pluginPath,
+  isBundled,
+  useCoreClassLoader
+)
+
+@ApiStatus.Internal
+class DependsSubDescriptor(
+  raw: RawPluginDescriptor,
+  pluginPath: Path,
+  isBundled: Boolean,
+  useCoreClassLoader: Boolean = false,
+  isIndependentFromCoreClassLoader: Boolean = false,
+  descriptorPath: String? = null
+): IdeaPluginDescriptorImpl(
+  raw,
+  pluginPath,
+  isBundled,
+  null,
+  null,
+  useCoreClassLoader,
+  isIndependentFromCoreClassLoader,
+  descriptorPath
+)
+
+@ApiStatus.Internal
+class ContentModuleDescriptor(
+  raw: RawPluginDescriptor,
+  pluginPath: Path,
+  isBundled: Boolean,
+  moduleName: String,
+  moduleLoadingRule: ModuleLoadingRule,
+  useCoreClassLoader: Boolean = false,
+  isIndependentFromCoreClassLoader: Boolean = false,
+  descriptorPath: String? = null
+): IdeaPluginDescriptorImpl(
+  raw,
+  pluginPath,
+  isBundled,
+  moduleName,
+  moduleLoadingRule,
+  useCoreClassLoader,
+  isIndependentFromCoreClassLoader,
+  descriptorPath
+)
