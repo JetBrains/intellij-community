@@ -36,7 +36,6 @@ sealed class IdeaPluginDescriptorImpl(
   isBundled: Boolean,
   useCoreClassLoader: Boolean = false,
   isIndependentFromCoreClassLoader: Boolean = false,
-  descriptorPath: String? = null
 ) : IdeaPluginDescriptorImplPublic {
   private val id: PluginId = PluginId.getId(raw.id ?: raw.name ?: throw RuntimeException("Neither id nor name are specified"))
   private val name: String = raw.name ?: id.idString
@@ -101,7 +100,6 @@ sealed class IdeaPluginDescriptorImpl(
   val useCoreClassLoader: Boolean = useCoreClassLoader
 
   private val pluginPath: Path = pluginPath
-  private val descriptorPath: String? = descriptorPath
 
   var isDeleted: Boolean = false
   @Transient
@@ -175,7 +173,7 @@ sealed class IdeaPluginDescriptorImpl(
   override fun getResourceBundleBaseName(): String? = resourceBundleBaseName
 
   override fun getPluginPath(): Path = pluginPath
-  override fun getDescriptorPath(): String? = descriptorPath
+  override fun getDescriptorPath(): String? = null
 
   override fun getPluginClassLoader(): ClassLoader? = _pluginClassLoader
 
@@ -614,7 +612,6 @@ class PluginMainDescriptor(
   isBundled = isBundled,
   useCoreClassLoader = useCoreClassLoader,
   isIndependentFromCoreClassLoader = false,
-  descriptorPath = null
 ) {
   init {
     assert(descriptorPath == null) { this }
@@ -632,14 +629,13 @@ class DependsSubDescriptor(
   isBundled: Boolean,
   useCoreClassLoader: Boolean = false,
   isIndependentFromCoreClassLoader: Boolean = false,
-  descriptorPath: String
+  private val descriptorPath: String
 ): IdeaPluginDescriptorImpl(
   raw,
   pluginPath,
   isBundled,
   useCoreClassLoader,
   isIndependentFromCoreClassLoader,
-  descriptorPath
 ) {
   init {
     if (content.modules.isNotEmpty()) {
@@ -652,6 +648,8 @@ class DependsSubDescriptor(
       LOG.error("Unexpected `plugin` dependencies in a `depends` sub-descriptor: ${moduleDependencies.plugins.joinToString()}\n in $this")
     }
   }
+
+  override fun getDescriptorPath(): String = descriptorPath
 }
 
 /**
@@ -666,18 +664,14 @@ class ContentModuleDescriptor(
   moduleLoadingRule: ModuleLoadingRule,
   useCoreClassLoader: Boolean = false,
   isIndependentFromCoreClassLoader: Boolean = false,
-  descriptorPath: String
+  private val descriptorPath: String
 ): IdeaPluginDescriptorImpl(
   raw,
   pluginPath,
   isBundled,
   useCoreClassLoader,
   isIndependentFromCoreClassLoader,
-  descriptorPath
 ) {
-  val moduleName: String = moduleName
-  val moduleLoadingRule: ModuleLoadingRule = moduleLoadingRule
-
   init {
     if (pluginDependencies.isNotEmpty()) {
       LOG.error("Unexpected `depends` dependencies in a content module: ${pluginDependencies.joinToString()}\n in $this")
@@ -686,6 +680,11 @@ class ContentModuleDescriptor(
       LOG.error("Unexpected `content` elements in a content module: ${content.modules.joinToString()}\n in $this")
     }
   }
+
+  val moduleName: String = moduleName
+  val moduleLoadingRule: ModuleLoadingRule = moduleLoadingRule
+
+  override fun getDescriptorPath(): String = descriptorPath
 }
 
 internal val IdeaPluginDescriptorImpl.isRequiredContentModule: Boolean
