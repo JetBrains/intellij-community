@@ -764,12 +764,17 @@ private fun buildDoc(
 
 fun buildSubSection(items: Map<String, String>): String {
   val result = StringBuilder()
-  items.forEach { (name, doc) ->
-    result.append("<p><code>")
+  items.entries.forEachIndexed { index, (name, doc) ->
+    if (index < items.size - 1) {
+      result.append("<p class='mdn-bottom-margin'>")
+    } else {
+      result.append("<p>")
+    }
+    result.append("<code>")
       .append(name)
       .append("</code> &ndash; ")
       .append(doc)
-      .append("<br><span style='font-size:0.2em'>&nbsp;</span>\n")
+      .append("\n")
   }
   return result.toString()
 }
