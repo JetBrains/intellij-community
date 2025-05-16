@@ -21,6 +21,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.assertInstanceOf
 import com.intellij.testFramework.requireIs
 import com.intellij.util.CommonProcessors
 import com.intellij.util.io.DirectoryContentSpec
@@ -44,12 +45,15 @@ import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.addDependency
 import org.jetbrains.kotlin.idea.test.util.compileScriptsIntoDirectory
+import org.jetbrains.kotlin.platform.CommonPlatforms
+import org.jetbrains.kotlin.platform.jvm.JvmPlatform
 import org.jetbrains.kotlin.psi.KotlinDeclarationNavigationPolicy
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtScript
 import org.jetbrains.kotlin.test.util.jarRoot
 import org.jetbrains.kotlin.test.util.moduleLibrary
+import org.jetbrains.kotlin.test.util.multiRootProjectLibrary
 import org.jetbrains.kotlin.test.util.projectLibrary
 import org.junit.Assert
 import java.io.File
@@ -453,6 +457,106 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         val libraryModule = kaModuleWithAssertion<KaLibraryModule>(getFile("KotlinCompileDaemon.class"), contextualModule = kaModuleD)
 
         assertEquals(libraryUnrelated.name, libraryModule.libraryName)
+    }
+
+    fun `test kotlin metadata files are ignored in a JVM library module containing common files`() {
+        // We need a library module which includes both JVM and common files. Then it is marked as a JVM library but also contains
+        // `.kotlin_metadata` files that should be ignored. See KT-74907.
+        //
+        // Trying this with a 2.x stdlib fails because that version of `kotlin-stdlib-common` doesn't contain `.kotlin_metadata` files, only
+        // `.knm` files.
+        val hybridLibrary = multiRootProjectLibrary(
+            classRoots = listOf(
+                TestKotlinArtifacts.kotlinStdlibLegacy1922.jarRoot,
+                TestKotlinArtifacts.kotlinStdlibCommonLegacy1922.jarRoot,
+            ),
+        )
+
+        val module = createModule("a").apply { addDependency(hybridLibrary) }
+        val kaSourceModule = module.toKaSourceModule(KaSourceModuleKind.PRODUCTION)
+
+        val libraryScope = LibraryScope(project, hybridLibrary)
+
+        val classFile = getFile("AbstractCollection.class", libraryScope)
+        val libraryModule = kaModuleWithAssertion<KaLibraryModule>(classFile, contextualModule = kaSourceModule)
+        assertInstanceOf<JvmPlatform>(libraryModule.targetPlatform.single())
+
+        val metadataFile = getFile("AbstractCollection.kotlin_metadata", libraryScope)
+        kaModuleWithAssertion<KaNotUnderContentRootModule>(metadataFile, contextualModule = kaSourceModule)
+
+        assertTrue(classFile.virtualFile in libraryModule.contentScope)
+        assertFalse(metadataFile.virtualFile in libraryModule.contentScope)
+    }
+
+    fun `test knm files are ignored in a JVM library module containing common files`() {
+        // See the `.kotlin_metadata` test above for the motivation. Here, we have a 2.x `kotlin-stdlib-common` which contains `.knm` files.
+        val hybridLibrary = multiRootProjectLibrary(
+            classRoots = listOf(
+                TestKotlinArtifacts.kotlinStdlib.jarRoot,
+                TestKotlinArtifacts.kotlinStdlibCommon.jarRoot,
+            ),
+        )
+
+        val module = createModule("a").apply { addDependency(hybridLibrary) }
+        val kaSourceModule = module.toKaSourceModule(KaSourceModuleKind.PRODUCTION)
+
+        val libraryScope = LibraryScope(project, hybridLibrary)
+
+        val classFile = getFile("AbstractCollection.class", libraryScope)
+        val libraryModule = kaModuleWithAssertion<KaLibraryModule>(classFile, contextualModule = kaSourceModule)
+        assertInstanceOf<JvmPlatform>(libraryModule.targetPlatform.single())
+
+        val metadataFile = getFile("00_collections.knm", libraryScope)
+        kaModuleWithAssertion<KaNotUnderContentRootModule>(metadataFile, contextualModule = kaSourceModule)
+
+        assertTrue(classFile.virtualFile in libraryModule.contentScope)
+        assertFalse(metadataFile.virtualFile in libraryModule.contentScope)
+    }
+
+    fun `test common library is preferred over JVM and common library hybrid for knm file`() {
+        // See KT-74907. If a `.knm` file is contained in both a JVM and a common library, the common library should be returned as a module
+        // of the `.knm` file.
+        val hybridLibraryName = "hybrid-library"
+        val hybridLibrary = multiRootProjectLibrary(
+            libraryName = hybridLibraryName,
+            classRoots = listOf(
+                TestKotlinArtifacts.kotlinStdlib.jarRoot,
+                TestKotlinArtifacts.kotlinStdlibCommon.jarRoot,
+            ),
+        )
+
+        val commonLibraryName = "common-library"
+        val commonLibrary = projectLibrary(
+            libraryName = commonLibraryName,
+            classesRoot = TestKotlinArtifacts.kotlinStdlibCommon.jarRoot,
+        )
+
+        val module = createModule("a").apply {
+            addDependency(hybridLibrary)
+            addDependency(commonLibrary)
+        }
+        val kaSourceModule = module.toKaSourceModule(KaSourceModuleKind.PRODUCTION)
+
+        val libraryScope = LibraryScope(project, hybridLibrary)
+
+        // When we get a module for the `.class` file, the JVM/common library is the only possible candidate.
+        val classFile = getFile("AbstractCollection.class", libraryScope)
+        val hybridLibraryModule = kaModuleWithAssertion<KaLibraryModule>(classFile, contextualModule = kaSourceModule)
+        assertEquals(hybridLibraryName, hybridLibraryModule.libraryName)
+        assertInstanceOf<JvmPlatform>(hybridLibraryModule.targetPlatform.single())
+
+        // When we get a module for the `.knm` file, the common and hybrid libraries are both candidates, but the hybrid library should be
+        // filtered out by the content scope check.
+        val metadataFile = getFile("00_collections.knm", libraryScope)
+        val commonLibraryModule = kaModuleWithAssertion<KaLibraryModule>(metadataFile, contextualModule = kaSourceModule)
+        assertEquals(commonLibraryName, commonLibraryModule.libraryName)
+        assertEquals(CommonPlatforms.defaultCommonPlatform, commonLibraryModule.targetPlatform)
+
+        assertTrue(classFile.virtualFile in hybridLibraryModule.contentScope)
+        assertFalse(metadataFile.virtualFile in hybridLibraryModule.contentScope)
+
+        assertFalse(classFile.virtualFile in commonLibraryModule.contentScope)
+        assertTrue(metadataFile.virtualFile in commonLibraryModule.contentScope)
     }
 
     fun `test source module`() {
@@ -984,7 +1088,7 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
     private inline fun <reified T : KaModule> kaModuleWithAssertion(
       element: PsiElement,
       contextualModule: KaModule? = null
-    ): T = KotlinProjectStructureProvider.Companion.getModule(
+    ): T = KotlinProjectStructureProvider.getModule(
         project,
         element,
         useSiteModule = contextualModule,

@@ -160,6 +160,11 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
             runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/javaFields.kt");
         }
 
+        @TestMetadata("JavaIoImport.kt")
+        public void testJavaIoImport() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/JavaIoImport.kt");
+        }
+
         @TestMetadata("JavaRecord.kt")
         public void testJavaRecord() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/JavaRecord.kt");

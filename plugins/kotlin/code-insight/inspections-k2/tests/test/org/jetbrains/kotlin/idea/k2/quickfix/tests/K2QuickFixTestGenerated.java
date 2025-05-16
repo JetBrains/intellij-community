@@ -2008,16 +2008,6 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             runTest("../../../idea/tests/testData/quickfix/optIn/propertyInConstructorAddOptInToConstructor.kt");
         }
 
-        @TestMetadata("switchOn.kt")
-        public void testSwitchOn() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/optIn/switchOn.kt");
-        }
-
-        @TestMetadata("switchOnWithAnotherMarker.kt")
-        public void testSwitchOnWithAnotherMarker() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/optIn/switchOnWithAnotherMarker.kt");
-        }
-
         @TestMetadata("typeAlias.kt")
         public void testTypeAlias() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/optIn/typeAlias.kt");

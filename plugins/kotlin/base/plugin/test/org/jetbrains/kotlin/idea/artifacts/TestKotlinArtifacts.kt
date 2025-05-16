@@ -97,6 +97,10 @@ object TestKotlinArtifacts {
     @JvmStatic val kotlinStdlibWasmJs: File by lazy { getKlib("kotlin-stdlib-wasm-js") }
     @JvmStatic val kotlinStdlibWasmWasi: File by lazy { getKlib("kotlin-stdlib-wasm-wasi") }
     @JvmStatic val kotlinStdlibSources: File by lazy { getSourcesJar("kotlin-stdlib") }
+    @JvmStatic val kotlinStdlibLegacy1922: File by lazy { downloadOrReportUnavailability("kotlin-stdlib", "1.9.22") }
+    // In 1.x, `kotlin-stdlib-common` still contained `.kotlin_metadata` files. 2.x versions of the library contain `.knm` files, since it's
+    // now a klib.
+    @JvmStatic val kotlinStdlibCommonLegacy1922: File by lazy { downloadOrReportUnavailability("kotlin-stdlib-common", "1.9.22") }
     @JvmStatic val kotlinTest: File by lazy { getJar("kotlin-test") }
     @JvmStatic val kotlinTestJs: File by lazy { getKlib("kotlin-test-js") }
     @JvmStatic val kotlinTestJunit: File by lazy { getJar("kotlin-test-junit") }

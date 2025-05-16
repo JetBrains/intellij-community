@@ -4652,8 +4652,10 @@ c:com.intellij.psi.search.GlobalSearchScope$FilesScope
 - getFiles():com.intellij.openapi.vfs.VirtualFileSet
 f:com.intellij.psi.search.GlobalSearchScopeUtil
 - <init>():V
+- s:flattenIntersectionScope(com.intellij.psi.search.GlobalSearchScope):java.util.List
 - s:flattenUnionScope(com.intellij.psi.search.GlobalSearchScope):java.util.List
 - s:getLocalScopeFiles(com.intellij.psi.search.LocalSearchScope):java.util.Set
+- s:isIntersectionScope(com.intellij.psi.search.GlobalSearchScope):Z
 - s:toGlobalSearchScope(com.intellij.psi.search.SearchScope,com.intellij.openapi.project.Project):com.intellij.psi.search.GlobalSearchScope
 c:com.intellij.psi.search.LocalSearchScope
 - com.intellij.psi.search.SearchScope

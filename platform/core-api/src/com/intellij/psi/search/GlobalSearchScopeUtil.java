@@ -46,4 +46,30 @@ public final class GlobalSearchScopeUtil {
     }
     return Collections.singletonList(scope);
   }
+
+  /**
+   * Whether the given scope is an {@link IntersectionScope}.
+   */
+  public static boolean isIntersectionScope(@NotNull GlobalSearchScope scope) {
+    return scope instanceof IntersectionScope;
+  }
+
+  /**
+   * Recursively unwraps nested {@link IntersectionScope}s and returns a list of all contained non-intersection scopes.
+   */
+  public static @NotNull List<GlobalSearchScope> flattenIntersectionScope(@NotNull GlobalSearchScope scope) {
+    ArrayList<GlobalSearchScope> result = new ArrayList<>();
+    flattenIntersectionScopeInto(scope, result);
+    return result;
+  }
+
+  private static void flattenIntersectionScopeInto(@NotNull GlobalSearchScope scope, @NotNull List<GlobalSearchScope> result) {
+    if (scope instanceof IntersectionScope) {
+      IntersectionScope intersectionScope = (IntersectionScope)scope;
+      flattenIntersectionScopeInto(intersectionScope.myScope1, result);
+      flattenIntersectionScopeInto(intersectionScope.myScope2, result);
+    } else {
+      result.add(scope);
+    }
+  }
 }
