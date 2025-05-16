@@ -35,7 +35,7 @@ fun scaleIconOrLoadCustomVersion(icon: Icon, scale: Float): Icon {
   return if (icon is ScalableIcon) icon.scale(scale) else IconUtil.scale(icon = icon, ancestor = null, scale = scale)
 }
 
-private fun loadIconCustomVersion(icon: CachedImageIcon, width: Int, height: Int, isDark: Boolean? = null): Icon? {
+private fun loadIconCustomVersion(icon: CachedImageIcon, width: Int, height: Int): Icon? {
   val coords = icon.getCoords() ?: return null
   val path = coords.first
   if (!path.endsWith(".svg")) {
@@ -47,12 +47,7 @@ private fun loadIconCustomVersion(icon: CachedImageIcon, width: Int, height: Int
   if (foundIcon is CachedImageIcon &&
       foundIcon.getIconWidth() == JBUIScale.scale(width) &&
       foundIcon.getIconHeight() == JBUIScale.scale(height)) {
-    if (isDark == null) {
-      return foundIcon.withAnotherIconModifications(icon)
-    }
-    else {
-      return foundIcon.getDarkIcon(isDark = isDark)
-    }
+    return foundIcon.withAnotherIconModifications(icon)
   }
   return null
 }
@@ -77,17 +72,9 @@ fun loadIconCustomVersionOrScale(icon: ScalableIcon, size: Int): Icon {
     }
   }
 
-  return loadIconCustomVersionOrScale(icon = cachedIcon, size = size, isDark = null)
-}
-
-@ApiStatus.Internal
-fun loadIconCustomVersionOrScale(icon: CachedImageIcon, size: Int, isDark: Boolean? = null, isDarkForScale: Boolean? = null): Icon {
-  if (icon.iconWidth == JBUIScale.scale(size)) {
-    return if (isDark == null) icon else icon.getDarkIcon(isDark)
-  }
-
-  loadIconCustomVersion(icon = icon, width = size, height = size, isDark = isDark)?.let {
+  loadIconCustomVersion(icon = cachedIcon, width = size, height = size)?.let {
     return it
   }
-  return icon.scale(scale = (JBUIScale.scale(1.0f) * size) / icon.getRawIconWidth(), isDark = isDarkForScale)
+
+  return cachedIcon.scale(scale = (JBUIScale.scale(1.0f) * size) / cachedIcon.getRawIconWidth())
 }
