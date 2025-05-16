@@ -77,6 +77,8 @@ internal class PsiSyntaxBuilderImpl(
 
   internal val textArray: CharArray? = CharArrayUtil.fromSequenceWithoutCopying(text)
 
+  private var customComparator: TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState>? = null
+
   private var productionResult: ProductionResult? = null
 
   init {
@@ -133,13 +135,16 @@ internal class PsiSyntaxBuilderImpl(
     builder.setDebugMode(value)
   }
 
+  override fun setCustomComparator(comparator: TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState>) {
+    customComparator = comparator
+  }
+
   private fun merge(oldRoot: ASTNode, newRoot: CompositeNode, lastCommittedText: CharSequence): DiffLog {
     val diffLog = DiffLog()
     val builder = ConvertFromTokensToASTBuilder(newRoot, diffLog)
     val treeStructure = MyTreeStructure(newRoot, null)
     val customLanguageASTComparators = CustomLanguageASTComparator.getMatchingComparators(this.file!!)
-    val data = getUserData(CUSTOM_COMPARATOR)
-    val comparator = MyComparator(treeStructure, customLanguageASTComparators, data)
+    val comparator = MyComparator(treeStructure, customLanguageASTComparators, customComparator)
     val indicator = ProgressIndicatorProvider.getGlobalProgressIndicator() ?: EmptyProgressIndicator()
     BlockSupportImpl.diffTrees(oldRoot, builder, comparator, treeStructure, indicator, lastCommittedText)
     return diffLog
@@ -337,11 +342,6 @@ internal class PsiSyntaxBuilderImpl(
   }
 
   companion object {
-    // todo replace with proper API?
-    // function stored in PsiSyntaxBuilderImpl's user data that is called during reparse when the algorithm is not sure what to merge
-    @JvmField
-    val CUSTOM_COMPARATOR: Key<TripleFunction<ASTNode?, LighterASTNode?, FlyweightCapableTreeStructure<LighterASTNode>?, ThreeState>> = Key.create("CUSTOM_COMPARATOR")
-
     // todo let's try to get rid of this method
     @JvmStatic
     fun registerWhitespaceToken(type: IElementType) {

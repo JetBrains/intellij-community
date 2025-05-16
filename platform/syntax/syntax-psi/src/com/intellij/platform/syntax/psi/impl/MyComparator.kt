@@ -21,7 +21,7 @@ import com.intellij.util.diff.ShallowNodeComparator
 internal class MyComparator(
   private val treeStructure: MyTreeStructure,
   private val customLanguageASTComparators: MutableList<out CustomLanguageASTComparator>,
-  private val custom: TripleFunction<ASTNode?, LighterASTNode?, FlyweightCapableTreeStructure<LighterASTNode>?, ThreeState>?,
+  private val custom: TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState>?,
 ) : ShallowNodeComparator<ASTNode?, LighterASTNode?> {
   override fun deepEqual(oldNode: ASTNode, newNode: LighterASTNode): ThreeState {
     ProgressIndicatorProvider.checkCanceled()
