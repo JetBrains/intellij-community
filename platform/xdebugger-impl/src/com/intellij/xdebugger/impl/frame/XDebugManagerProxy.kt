@@ -30,6 +30,8 @@ interface XDebugManagerProxy {
 
   fun getBreakpointManagerProxy(project: Project): XBreakpointManagerProxy
 
+  fun canUpdateInlineDebuggerFrames(): Boolean
+
   companion object {
     private val EP_NAME = ExtensionPointName.create<XDebugManagerProxy>("com.intellij.xdebugger.managerProxy")
 

@@ -56,6 +56,10 @@ private class MonolithXDebugManagerProxy : XDebugManagerProxy {
   override fun getBreakpointManagerProxy(project: Project): XBreakpointManagerProxy {
     return XBreakpointManagerProxy.Monolith(XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl)
   }
+
+  override fun canUpdateInlineDebuggerFrames(): Boolean {
+    return true
+  }
 }
 
 private suspend fun <ID, T> withCoroutineScopeForId(block: suspend (ID) -> T, idProvider: (CoroutineScope) -> ID): T {

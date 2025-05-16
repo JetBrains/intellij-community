@@ -44,4 +44,10 @@ private class FrontendXDebugManagerProxy : XDebugManagerProxy {
   override fun getBreakpointManagerProxy(project: Project): XBreakpointManagerProxy {
     return FrontendXDebuggerManager.getInstance(project).breakpointsManager
   }
+
+  override fun canUpdateInlineDebuggerFrames(): Boolean {
+    val frontendType = FrontendApplicationInfo.getFrontendType()
+    val isCwm = (frontendType is FrontendType.RemoteDev && !frontendType.isLuxSupported) // CWM case
+    return !isCwm
+  }
 }

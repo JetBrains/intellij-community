@@ -87,8 +87,12 @@ private class FrontendDebuggerActionCoroutineScope(val cs: CoroutineScope)
 private class FrontendDebuggerActionProjectCoroutineScope(val project: Project, val cs: CoroutineScope)
 
 internal fun updateInlineDebuggerData(session: XDebugSessionProxy, xValue: XValue, callback: XInlineDebuggerDataCallback) {
+  val manager = XDebugManagerProxy.getInstance()
+  if (!manager.canUpdateInlineDebuggerFrames()) {
+    return
+  }
   session.currentSuspendContextCoroutineScope?.launch {
-    XDebugManagerProxy.getInstance().withId(xValue, session) { xValueId ->
+    manager.withId(xValue, session) { xValueId ->
       val (canCompute, positionFlow) = XValueApi.getInstance().computeInlineData(xValueId) ?: return@withId
       if (canCompute != ThreeState.UNSURE) {
         positionFlow.toFlow().collect {
