@@ -9,11 +9,11 @@ internal class PluginDependencyImpl internal constructor(
   override val isOptional: Boolean,
 ) : PluginDependency {
   @Transient
-  private var _subDescriptor: IdeaPluginDescriptorImpl? = null
+  private var _subDescriptor: DependsSubDescriptor? = null
 
-  override val subDescriptor: IdeaPluginDescriptorImpl? get() = _subDescriptor
+  override val subDescriptor: DependsSubDescriptor? get() = _subDescriptor
 
-  internal fun setSubDescriptor(subDescriptor: IdeaPluginDescriptorImpl?) {
+  internal fun setSubDescriptor(subDescriptor: DependsSubDescriptor?) {
     _subDescriptor = subDescriptor
   }
 

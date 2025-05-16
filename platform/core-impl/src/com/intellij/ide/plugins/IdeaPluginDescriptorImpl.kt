@@ -273,6 +273,17 @@ abstract class IdeaPluginDescriptorImpl internal constructor(
   internal fun createSub(
     subBuilder: PluginDescriptorBuilder,
     descriptorPath: String,
+  ): DependsSubDescriptor = createSubImpl(subBuilder, descriptorPath, null) as DependsSubDescriptor
+
+  internal fun createSub(
+    subBuilder: PluginDescriptorBuilder,
+    descriptorPath: String,
+    module: PluginContentDescriptor.ModuleItem,
+  ): ContentModuleDescriptor = createSubImpl(subBuilder, descriptorPath, module) as ContentModuleDescriptor
+
+  private fun createSubImpl(
+    subBuilder: PluginDescriptorBuilder,
+    descriptorPath: String,
     module: PluginContentDescriptor.ModuleItem?,
   ): IdeaPluginDescriptorImpl {
     subBuilder.id = id.idString
@@ -318,7 +329,7 @@ abstract class IdeaPluginDescriptorImpl internal constructor(
   internal fun loadPluginDependencyDescriptors(loadingContext: PluginDescriptorLoadingContext, pathResolver: PathResolver, dataLoader: DataLoader): Unit =
     loadPluginDependencyDescriptors(loadingContext, pathResolver, dataLoader, ArrayList(3))
 
-  private fun loadPluginDependencyDescriptors(context: PluginDescriptorLoadingContext,
+  internal fun loadPluginDependencyDescriptors(context: PluginDescriptorLoadingContext,
                                               pathResolver: PathResolver,
                                               dataLoader: DataLoader,
                                               visitedFiles: MutableList<String>) {
@@ -362,7 +373,7 @@ abstract class IdeaPluginDescriptorImpl internal constructor(
       checkCycle(configFile, visitedFiles)
       visitedFiles.add(configFile)
       try {
-        val subDescriptor = createSub(raw, configFile, module = null)
+        val subDescriptor = createSub(raw, configFile)
         subDescriptor.loadPluginDependencyDescriptors(context, pathResolver, dataLoader, visitedFiles)
         dependency.setSubDescriptor(subDescriptor)
       } finally {
@@ -686,8 +697,8 @@ abstract class IdeaPluginDescriptorImpl internal constructor(
 fun IdeaPluginDescriptorImpl.createSubInTest(
   subBuilder: PluginDescriptorBuilder,
   descriptorPath: String,
-  module: PluginContentDescriptor.ModuleItem?,
-): IdeaPluginDescriptorImpl = createSub(subBuilder, descriptorPath, module)
+  module: PluginContentDescriptor.ModuleItem,
+): ContentModuleDescriptor = createSub(subBuilder, descriptorPath, module)
 
 @get:ApiStatus.Internal
 val IdeaPluginDescriptorImpl.isMainPluginDescriptor: Boolean get() = type == Type.PluginMainDescriptor
