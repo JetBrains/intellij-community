@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.application.impl.manyIslands
+package com.intellij.openapi.application.impl.islands
 
 import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.ui.GradientTextureCache
@@ -10,7 +10,7 @@ import java.awt.Component
 import java.awt.Graphics2D
 import java.awt.RenderingHints
 
-internal class ManyIslandsGradientPainter(private val frame: IdeFrame, private val endColor: Color) : AbstractPainter() {
+internal class IslandsGradientPainter(private val frame: IdeFrame, private val endColor: Color) : AbstractPainter() {
   private val gradientCache: GradientTextureCache = GradientTextureCache()
 
   private val projectWindowCustomizer = ProjectWindowCustomizerService.getInstance()

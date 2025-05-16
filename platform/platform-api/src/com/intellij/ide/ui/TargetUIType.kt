@@ -2,5 +2,5 @@
 package com.intellij.ide.ui
 
 enum class TargetUIType {
-  NEW, CLASSIC, NEXT, UNSPECIFIED
+  NEW, CLASSIC, NEXT, UNSPECIFIED, ISLAND, ISLANDS
 }

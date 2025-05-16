@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.application.impl.manyIslands
+package com.intellij.openapi.application.impl.islands
 
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
@@ -13,7 +13,7 @@ import java.awt.Graphics
 import java.awt.Paint
 import javax.swing.JComponent
 
-internal class ManyIslandsRoundedBorder(fillColor: (JComponent) -> Paint?) :
+internal class IslandsRoundedBorder(fillColor: (JComponent) -> Paint?) :
   XNextRoundedBorder(
     fillColor,
     fillColor,
@@ -26,11 +26,11 @@ internal class ManyIslandsRoundedBorder(fillColor: (JComponent) -> Paint?) :
 
   companion object {
     fun createToolWindowBorder(component: JComponent, child: JComponent) {
-      component.border = ManyIslandsRoundedBorder { child.background }
+      component.border = IslandsRoundedBorder { child.background }
     }
 
     fun createEditorBorder(component: EditorsSplitters) {
-      component.border = ManyIslandsRoundedBorder {
+      component.border = IslandsRoundedBorder {
         UIUtil.findComponentOfType(it, JBEditorTabs::class.java)?.background ?: it.background
       }
     }

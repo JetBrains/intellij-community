@@ -6,6 +6,7 @@ import com.intellij.application.options.colors.SchemesPanel
 import com.intellij.application.options.colors.SchemesPanelFactory
 import com.intellij.application.options.editor.CheckboxDescriptor
 import com.intellij.application.options.editor.checkBox
+import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle.message
@@ -21,6 +22,7 @@ import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.IdeZ
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.ThemeAutodetectSelector
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.impl.islands.IslandsUICustomization
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.PlatformEditorBundle
@@ -224,6 +226,22 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
         disposable?.whenDisposed {
           colorAndFontsOptions.disposeUIResources()
+        }
+
+        if (IslandsUICustomization.isIslandsAvailable) {
+          row {
+            label(message("ide.islands.combo.option"))
+              .comment(message("ide.restart.required.comment"))
+              .gap(RightGap.SMALL)
+            icon(AllIcons.General.Beta)
+
+            val items = listOf("default", "island", "islands")
+            val cell = comboBox(items, textListCellRenderer { message("ide.islands.type.$it") })
+              .bindItem({ IslandsUICustomization.getIslandsType() }, {})
+            cell.onApply {
+              IslandsUICustomization.setIslandsType(cell.component.item)
+            }
+          }
         }
       }
 

@@ -957,8 +957,7 @@ private class FrameLayeredPane(splitter: JComponent, frame: JFrame) : JLayeredPa
   override fun isPaintingOrigin(): Boolean = getIslandArc() > 0
 
   private fun getIslandArc(): Int {
-    val customization = InternalUICustomization.getInstance()
-    if (customization == null || customization.isDefaultCustomization) {
+    if (InternalUICustomization.getInstance()?.isToolWindowPaneCustomization == true) {
       return JBUI.getInt("Island.arc", 0)
     }
     return 0

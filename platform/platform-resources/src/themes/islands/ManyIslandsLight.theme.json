@@ -1,0 +1,140 @@
+{
+  "name": "Many Islands Light",
+  "dark": false,
+  "author": "JetBrains",
+  "parentTheme": "ExperimentalLightWithLightHeader",
+  "editorScheme": "Light",
+  "colors": {
+    "BackgroundLight": "Gray14",
+    "BackgroundMid": "Gray14",
+    "BackgroundDark": "Gray12",
+    "BackgroundDarkest": "Gray11",
+
+    "BorderDark": "Gray12",
+    "BorderLight": "Gray12",
+    "BorderTransparent": "#00000000",
+    "ToolWindowBorder": "#00000006",
+
+    "PanelBackground": "Gray13",
+    "HoverBackground": "Gray12",
+
+    "PopupBackground": "Gray14",
+    "PopupBackgroundDark": "Gray13",
+    "PopupBorder": "Gray11",
+
+    "TooltipBackground": "Gray14",
+    "TooltipBorder": "Gray12",
+
+    "InputBackground": "Gray14",
+    "ComboboxBackground": "Gray14",
+    "ComponentBorder": "Gray9"
+  },
+
+  "ui": {
+    "Island": {
+      "arc": 20,
+      "border1.insets": "6,6,6,6"
+    },
+
+    "MainWindow.background": "BackgroundDark",
+    "Borders.color": "BorderDark",
+    "Borders.ContrastBorderColor": "BorderDark",
+
+    "MainToolbar": {
+      "background": "BackgroundDark",
+      "borderColor": "BorderTransparent"
+    },
+
+    "StatusBar": {
+      "background": "BackgroundDark",
+      "borderColor": "BorderTransparent"
+    },
+
+    "ToolWindow": {
+      "background": "BackgroundMid",
+      "borderColor": "ToolWindowBorder",
+      "Header": {
+        "background": "BackgroundMid",
+        "inactiveBackground": "BackgroundMid",
+        "borderColor": "BorderDark"
+      },
+      "HeaderTab": {
+        "hoverBackground": "HoverBackground",
+        "hoverInactiveBackground": "HoverBackground"
+      },
+      "Stripe": {
+        "background": "BackgroundDark",
+        "borderColor": "BorderTransparent"
+      }
+    },
+
+    "EditorTabs": {
+      "background": "BackgroundLight",
+      "underTabsBorderColor": "BackgroundDark",
+      "underlinedBorder": "Blue10",
+      "underlinedTabBackground": "Blue11",
+      "inactiveUnderlinedTabBorder": "Gray12",
+      "inactiveUnderlinedTabBackground": "Gray12",
+      "hoverBackground": "Gray13"
+    },
+
+    "Editor.SearchField.background": "BackgroundLight",
+
+    "Editor.ToolTip": {
+      "background": "TooltipBackground",
+      "border": "TooltipBackground"
+    },
+
+    "Code.Block": {
+      "borderColor": "BorderDark",
+      "EditorPane.borderColor": "BorderDark"
+    },
+
+    "FileColor": {
+      "Yellow": "#fff9eb",
+      "Green": "#edfaef"
+    },
+
+    "Popup": {
+      "background": "PopupBackground",
+      "Header.activeBackground": "PopupBackground",
+      "Advertiser.background": "PopupBackgroundDark",
+      "Advertiser.borderColor": "PopupBackgroundDark",
+      "borderColor": "PopupBorder"
+    },
+    "ComplexPopup.Header.background": "PopupBackgroundDark",
+    "CompletionPopup.Advertiser.background": "PopupBackgroundDark",
+
+    "Menu": {
+      "background": "PopupBackground",
+      "borderColor": "PopupBorder"
+    },
+    "MenuItem.background": "PopupBackground",
+    "PopupMenu.background": "PopupBackground",
+
+    "ToolTip": {
+      "background": "TooltipBackground",
+      "borderColor": "TooltipBorder"
+    },
+    "GotItTooltip": {
+      "background": "TooltipBackground",
+      "borderColor": "TooltipBorder"
+    },
+    "Tooltip.Learning": {
+      "background": "Blue6",
+      "borderColor": "Blue6"
+    },
+
+    "HelpBrowser.UserMessage.background": "#DFE1E5CC",
+
+    "RecentProject.Color1.MainToolbarGradientStart": "#f5ece9",
+    "RecentProject.Color2.MainToolbarGradientStart": "#edebe1",
+    "RecentProject.Color3.MainToolbarGradientStart": "#e3e8dc",
+    "RecentProject.Color4.MainToolbarGradientStart": "#e4e9ed",
+    "RecentProject.Color5.MainToolbarGradientStart": "#e7e6f0",
+    "RecentProject.Color6.MainToolbarGradientStart": "#f3edf5",
+    "RecentProject.Color7.MainToolbarGradientStart": "#f0ebf5",
+    "RecentProject.Color8.MainToolbarGradientStart": "#e1ebe9",
+    "RecentProject.Color9.MainToolbarGradientStart": "#e1ebe3"
+  }
+}

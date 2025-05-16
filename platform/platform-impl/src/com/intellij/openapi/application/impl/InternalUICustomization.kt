@@ -60,7 +60,7 @@ open class InternalUICustomization {
       return isProjectCustomDecorationActive
     }
 
-  open val isDefaultCustomization: Boolean = true
+  open val isToolWindowPaneCustomization: Boolean = false
   /**
    * TODO
    * in the case of singleStripe, it is necessary to remove or recycle all actions related to the statusbar.

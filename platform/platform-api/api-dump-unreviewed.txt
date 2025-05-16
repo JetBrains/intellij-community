@@ -1082,6 +1082,8 @@ f:com.intellij.ide.ui.SplitterProportionsDataImpl$SplitterProportionsConverter
 e:com.intellij.ide.ui.TargetUIType
 - java.lang.Enum
 - sf:CLASSIC:com.intellij.ide.ui.TargetUIType
+- sf:ISLAND:com.intellij.ide.ui.TargetUIType
+- sf:ISLANDS:com.intellij.ide.ui.TargetUIType
 - sf:NEW:com.intellij.ide.ui.TargetUIType
 - sf:NEXT:com.intellij.ide.ui.TargetUIType
 - sf:UNSPECIFIED:com.intellij.ide.ui.TargetUIType

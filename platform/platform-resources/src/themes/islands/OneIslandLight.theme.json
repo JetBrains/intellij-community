@@ -1,0 +1,183 @@
+{
+  "name": "One Island Light",
+  "dark": false,
+  "author": "JetBrains",
+  "parentTheme": "ExperimentalLightWithLightHeader",
+  "editorScheme": "Light",
+  "colors": {
+    "BackgroundLight": "Gray14",
+    "BackgroundMid": "Gray13",
+    "BackgroundDark": "Gray12",
+    "BackgroundDarkest": "Gray11",
+
+    "BorderDark": "Gray12",
+    "BorderLight": "Gray12",
+    "BorderTransparent": "#00000000",
+    "ToolWindowBorder": "#00000006",
+
+    "PanelBackground": "Gray13",
+    "HoverBackground": "Gray12",
+
+    "PopupBackground": "Gray14",
+    "PopupBackgroundDark": "Gray13",
+    "PopupBorder": "Gray11",
+
+    "TooltipBackground": "Gray14",
+    "TooltipBorder": "Gray12",
+
+    "InputBackground": "Gray14",
+    "ComboboxBackground": "Gray14",
+    "ComponentBorder": "Gray9"
+  },
+
+  "ui": {
+    "Island.arc": 20,
+
+    "MainWindow.background": "BackgroundDark",
+    "Borders.color": "BorderDark",
+    "Borders.ContrastBorderColor": "BorderDark",
+
+    "MainToolbar": {
+      "background": "BackgroundDark",
+      "borderColor": "BorderTransparent"
+    },
+
+    "StatusBar": {
+      "background": "BackgroundDark",
+      "borderColor": "BorderTransparent"
+    },
+
+    "ToolWindow": {
+      "background": "BackgroundMid",
+      "borderColor": "ToolWindowBorder",
+      "Header": {
+        "background": "BackgroundMid",
+        "inactiveBackground": "BackgroundMid",
+        "borderColor": "BorderDark"
+      },
+      "HeaderTab": {
+        "hoverBackground": "HoverBackground",
+        "hoverInactiveBackground": "HoverBackground"
+      },
+      "Stripe": {
+        "background": "BackgroundDark",
+        "borderColor": "BorderTransparent"
+      }
+    },
+
+    "EditorTabs": {
+      "background": "BackgroundLight",
+      "underlinedTabBackground": "BackgroundLight",
+      "hoverBackground": "BackgroundLight",
+      "underTabsBorderColor": "BackgroundDark"
+    },
+    "Editor.SearchField.background": "BackgroundLight",
+    "Editor.ToolTip": {
+      "background": "TooltipBackground",
+      "border": "TooltipBackground"
+    },
+
+    "Code.Block": {
+      "borderColor": "BorderDark",
+      "EditorPane.borderColor": "BorderDark"
+    },
+
+    "Popup": {
+      "background": "PopupBackground",
+      "Header.activeBackground": "PopupBackground",
+      "Advertiser.background": "PopupBackgroundDark",
+      "Advertiser.borderColor": "PopupBackgroundDark",
+      "borderColor": "PopupBorder"
+    },
+    "ComplexPopup.Header.background": "PopupBackgroundDark",
+    "CompletionPopup.Advertiser.background": "PopupBackgroundDark",
+
+    "Menu": {
+      "background": "PopupBackground",
+      "borderColor": "PopupBorder"
+    },
+    "MenuItem.background": "PopupBackground",
+    "PopupMenu.background": "PopupBackground",
+
+    "ToolTip": {
+      "background": "TooltipBackground",
+      "borderColor": "TooltipBorder"
+    },
+    "GotItTooltip": {
+      "background": "TooltipBackground",
+      "borderColor": "TooltipBorder"
+    },
+    "Tooltip.Learning": {
+      "background": "Blue6",
+      "borderColor": "Blue6"
+    },
+
+    "HelpBrowser.UserMessage.background": "#DFE1E5CC",
+
+    "RecentProject": {
+      "Color1": {
+        "MainToolbarGradientStart": "#F5D4C1",
+        "Avatar": {
+          "Start": "#E08855",
+          "End": "#E9806F"
+        }
+      },
+      "Color2": {
+        "MainToolbarGradientStart": "#EEE2BD",
+        "Avatar": {
+          "Start": "#B08B14",
+          "End": "#BB7F19"
+        }
+      },
+      "Color3": {
+        "MainToolbarGradientStart": "#DBE7C9",
+        "Avatar": {
+          "Start": "#A1A359",
+          "End": "#87AA59"
+        }
+      },
+      "Color4": {
+        "MainToolbarGradientStart": "#CADFEA",
+        "Avatar": {
+          "Start": "#3B92B8",
+          "End": "#6183EC"
+        }
+      },
+      "Color5": {
+        "MainToolbarGradientStart": "#DBD8EF",
+        "Avatar": {
+          "Start": "#3574F0",
+          "End": "#7A64F0"
+        }
+      },
+      "Color6": {
+        "MainToolbarGradientStart": "#EED7F5",
+        "Avatar": {
+          "Start": "#C84D8F",
+          "End": "#A956CF"
+        }
+      },
+      "Color7": {
+        "MainToolbarGradientStart": "#DFCCF4",
+        "Avatar": {
+          "Start": "#955AE0",
+          "End": "#A84DE0"
+        }
+      },
+      "Color8": {
+        "MainToolbarGradientStart": "#BEE4E1",
+        "Avatar": {
+          "Start": "#24A394",
+          "End": "#279CCD"
+        }
+      },
+      "Color9": {
+        "MainToolbarGradientStart": "#CCEBD1",
+        "Avatar": {
+          "Start": "#5FAD65",
+          "End": "#3D968B"
+        }
+      }
+    }
+  }
+}
