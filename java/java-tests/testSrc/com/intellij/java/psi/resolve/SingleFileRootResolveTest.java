@@ -71,7 +71,7 @@ public final class SingleFileRootResolveTest extends LightJavaCodeInsightFixture
     PsiClass aClass = JavaPsiFacade.getInstance(getProject()).findClass("com.example.A", GlobalSearchScope.projectScope(getProject()));
     assertNotNull(aClass);
     // Works for single-file roots as well
-    String pkg = PackageIndex.getInstance(getProject()).getPackageNameByDirectory(aClass.getContainingFile().getVirtualFile());
+    String pkg = PackageIndex.getInstance(getProject()).getPackageName(aClass.getContainingFile().getVirtualFile());
     assertEquals("com.example", pkg);
   }
   

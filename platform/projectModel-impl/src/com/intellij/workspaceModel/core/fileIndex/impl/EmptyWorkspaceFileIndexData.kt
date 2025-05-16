@@ -35,7 +35,7 @@ class EmptyWorkspaceFileIndexData private constructor(private val debugName: Str
   override fun markDirty(entityPointers: Collection<EntityPointer<WorkspaceEntity>>, filesToInvalidate: Collection<VirtualFile>) {}
   override fun onEntitiesChanged(event: VersionedStorageChange, storageKind: EntityStorageKind) {}
   override fun updateDirtyEntities() {}
-  override fun getPackageName(dir: VirtualFile): String? = null
+  override fun getPackageName(dirOrFile: VirtualFile): String? = null
   override fun getDirectoriesByPackageName(packageName: String, includeLibrarySources: Boolean): Query<VirtualFile> = EmptyQuery.getEmptyQuery()
   override fun getFilesByPackageName(packageName: String): Query<VirtualFile> = EmptyQuery.getEmptyQuery()
   override fun resetCustomContributors() {}

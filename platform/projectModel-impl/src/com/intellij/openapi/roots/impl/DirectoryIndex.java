@@ -45,7 +45,7 @@ public abstract class DirectoryIndex {
     return getDirectoriesByPackageName(packageName, true).filtering(scope::contains);
   }
 
-  public abstract @Nullable String getPackageName(@NotNull VirtualFile dir);
+  public abstract @Nullable String getPackageName(@NotNull VirtualFile fileOrDir);
 
   public abstract @NotNull List<OrderEntry> getOrderEntries(@NotNull VirtualFile fileOrDir);
 

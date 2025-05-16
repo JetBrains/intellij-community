@@ -21,7 +21,7 @@ final class LightEditDirectoryIndex extends DirectoryIndex {
   }
 
   @Override
-  public @Nullable String getPackageName(@NotNull VirtualFile dir) {
+  public @Nullable String getPackageName(@NotNull VirtualFile fileOrDir) {
     return null;
   }
 

@@ -50,10 +50,10 @@ interface WorkspaceFileIndexData {
   fun analyzeVfsChanges(events: List<VFileEvent>): VfsChangeApplier?
 
   /**
-   * Returns package name for [directory] if it's located under source root or classes root of Java library, or `null` otherwise.
+   * Returns package name for [dirOrFile] if it's located under source root or classes root of Java library, or `null` otherwise.
    * This is an internal function, plugins must use [com.intellij.openapi.roots.PackageIndex.getPackageNameByDirectory] instead.
    */
-  fun getPackageName(dir: VirtualFile): String?
+  fun getPackageName(dirOrFile: VirtualFile): String?
 
   /**
    * Returns a query producing directories which correspond to [packageName].

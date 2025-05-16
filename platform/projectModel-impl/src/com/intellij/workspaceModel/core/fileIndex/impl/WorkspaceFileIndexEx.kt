@@ -81,10 +81,11 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
                                        fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean): Boolean
 
   /**
-   * Returns package name for [directory] if it's located under source root or classes root of Java library, or `null` otherwise.
+   * Returns package name for [fileOrDir] if it's a single file source root, or a directory located under source root or 
+   * classes root of a Java library. Returns `null` otherwise.
    * This is an internal function, plugins must use [com.intellij.openapi.roots.PackageIndex.getPackageNameByDirectory] instead.
    */
-  fun getPackageName(directory: VirtualFile): String?
+  fun getPackageName(fileOrDir: VirtualFile): String?
 
   /**
    * Returns a query producing directories which correspond to [packageName]. 

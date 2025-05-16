@@ -61,11 +61,8 @@ internal class SearchEverywhereJavaPsiElementFeatureProvider : SearchEverywhereE
       val packageIndex = PackageIndex.getInstance(project)
 
       // Parents of some files may still not be directories
-      val openedFileDirectory = openedFile.parent?.takeIf { it.isDirectory }
-      val foundFileDirectory = if (file.isDirectory) file else file.parent?.takeIf { it.isDirectory }
-
-      val openedFilePackageName = openedFileDirectory?.let { packageIndex.getPackageNameByDirectory(it) }
-      val foundFilePackageName = foundFileDirectory?.let { packageIndex.getPackageNameByDirectory(it) }
+      val openedFilePackageName = packageIndex.getPackageName(openedFile)
+      val foundFilePackageName = packageIndex.getPackageName(file)
 
       Pair(openedFilePackageName, foundFilePackageName)
     }.run {

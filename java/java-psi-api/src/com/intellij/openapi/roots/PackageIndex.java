@@ -68,10 +68,24 @@ public abstract class PackageIndex {
   public abstract @NotNull Query<VirtualFile> getDirsByPackageName(@NotNull @NlsSafe String packageName, boolean includeLibrarySources);
 
   /**
-   * Returns the name of the package corresponding to the specified directory or a specific file if the file is a single-file root.
+   * Returns the name of the package corresponding to the specified directory or a specific file, including the files 
+   * that are single file source roots.
    *
-   * @return the package name, or null if the supplied directory does not correspond to any package, 
-   * or the supplied file is not a single-file root.
+   * @return the package name, or null if the supplied directory or file does not correspond to any package.
+   */
+  public @Nullable String getPackageName(@NotNull VirtualFile fileOrDir) {
+    if (fileOrDir.isDirectory()) {
+      return getPackageNameByDirectory(fileOrDir);
+    }
+    VirtualFile parent = fileOrDir.getParent();
+    return parent == null || !parent.isDirectory() ? null : getPackageNameByDirectory(parent);
+  }
+
+  /**
+   * Returns the name of the package corresponding to the specified directory.
+   * Prefer using {@link #getPackageName(VirtualFile)} if single-file source roots are possible.
+   *
+   * @return the package name, or null if the supplied directory does not correspond to any package.
    */
   public abstract @Nullable String getPackageNameByDirectory(@NotNull VirtualFile dir);
 }

@@ -122,9 +122,9 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   }
 
   @Override
-  public String getPackageName(@NotNull VirtualFile dir) {
+  public String getPackageName(@NotNull VirtualFile fileOrDir) {
     checkAvailability();
-    return myWorkspaceFileIndex.getPackageName(dir);
+    return myWorkspaceFileIndex.getPackageName(fileOrDir);
   }
 
   @Override

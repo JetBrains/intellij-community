@@ -279,10 +279,8 @@ public class TreeModelBuilder {
 
   public @Nullable PackageDependenciesNode getFileParentNode(VirtualFile vFile) {
     LOG.assertTrue(vFile != null);
-    final VirtualFile containingDirectory = vFile.getParent();
-    LOG.assertTrue(containingDirectory != null);
     PsiPackage aPackage = null;
-    final String packageName = PackageIndex.getInstance(myProject).getPackageNameByDirectory(containingDirectory);
+    final String packageName = PackageIndex.getInstance(myProject).getPackageName(vFile);
     if (packageName != null) {
       aPackage = myJavaPsiFacade.findPackage(packageName);
     }

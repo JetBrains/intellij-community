@@ -370,8 +370,8 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
     getMainIndexData().visitFileSets(visitor)
   }
 
-  override fun getPackageName(directory: VirtualFile): String? {
-    return getMainIndexData().getPackageName(directory)
+  override fun getPackageName(fileOrDir: VirtualFile): String? {
+    return getMainIndexData().getPackageName(fileOrDir)
   }
 
   override fun getDirectoriesByPackageName(packageName: String, includeLibrarySources: Boolean): Query<VirtualFile> {

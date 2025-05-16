@@ -42,7 +42,15 @@ public final class ModulePackageIndexImpl extends ModulePackageIndex {
   }
 
   @Override
+  public @Nullable String getPackageName(@NotNull VirtualFile fileOrDir) {
+    return myDirectoryIndex.getPackageName(fileOrDir);
+  }
+
+  @Override
   public @Nullable String getPackageNameByDirectory(@NotNull VirtualFile dir) {
+    if (!dir.isDirectory()) {
+      LOG.error(dir.getPresentableUrl() + " is not a directory");
+    }
     return myDirectoryIndex.getPackageName(dir);
   }
 }
