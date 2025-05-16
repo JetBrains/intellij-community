@@ -89,6 +89,7 @@ class K2IDEProjectStructureProvider(private val project: Project) : IDEProjectSt
         val candidates = CandidateCollector.collectCandidates(psiFile, virtualFile, project)
             .onEach { ProgressManager.checkCanceled() }
             .flatMap { createKaModules(it) }
+            .filter { virtualFile == null || virtualFile in it.contentScope }
 
         ModuleChooser.chooseModule(candidates, useSiteModule)?.let { return it }
         return KaNotUnderContentRootModuleImpl(psiFile, project)

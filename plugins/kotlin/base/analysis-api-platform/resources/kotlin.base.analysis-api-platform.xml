@@ -51,16 +51,26 @@
             serviceImplementation="org.jetbrains.kotlin.analysis.api.platform.statistics.KotlinGlobalOpenTelemetryProvider"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleOutputProvider"
-            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinModuleOutputProvider"/>
+            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.projectStructure.IdeKotlinModuleOutputProvider"/>
 
     <postStartupActivity
             implementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinStatisticsStartupActivity"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <kotlinContentScopeRefiner implementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinResolveScopeEnlargerBridge"/>
-    <kotlinGlobalSearchScopeMergeStrategy implementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinCombinableSourceAndClassRootsScopeMergeStrategy"/>
-    <kotlinGlobalSearchScopeMergeStrategy implementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.KotlinUnionScopeMergeStrategy" order="first"/>
+    <kotlinContentScopeRefiner implementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.projectStructure.scopes.IdeKotlinResolveScopeEnlargerBridge"/>
+
+    <kotlinGlobalSearchScopeMergeStrategy
+            implementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.projectStructure.scopes.IdeKotlinUnionScopeMergeStrategy"
+            order="first"/>
+
+    <!-- We merge intersection scopes right after flattening union scopes. This allows the merger to profit from nested union scopes being
+         flattened (which may contain intersection scopes), while also cutting down on the number of scopes passed to later mergers. -->
+    <kotlinGlobalSearchScopeMergeStrategy
+            implementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.projectStructure.scopes.IdeKotlinIntersectionScopeMergeStrategy"
+            order="first"/>
+
+    <kotlinGlobalSearchScopeMergeStrategy implementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.projectStructure.scopes.IdeKotlinCombinableSourceAndClassRootsScopeMergeStrategy"/>
   </extensions>
 
   <projectListeners>

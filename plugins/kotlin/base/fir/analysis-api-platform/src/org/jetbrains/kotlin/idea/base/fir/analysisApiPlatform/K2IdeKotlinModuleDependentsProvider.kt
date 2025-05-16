@@ -6,8 +6,8 @@ import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinAnchorM
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
-import org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinAnchorModuleProvider
-import org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinModuleDependentsProvider
+import org.jetbrains.kotlin.idea.base.analysisApiPlatform.projectStructure.IdeKotlinAnchorModuleProvider
+import org.jetbrains.kotlin.idea.base.analysisApiPlatform.projectStructure.IdeKotlinModuleDependentsProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.symbolicId
 import org.jetbrains.kotlin.utils.addIfNotNull
 

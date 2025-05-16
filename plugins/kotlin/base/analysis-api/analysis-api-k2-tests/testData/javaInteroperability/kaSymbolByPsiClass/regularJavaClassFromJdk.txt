@@ -1,4 +1,4 @@
 @java.lang.FunctionalInterface
-interface Runnable {
+fun interface Runnable {
   fun run()
 }
