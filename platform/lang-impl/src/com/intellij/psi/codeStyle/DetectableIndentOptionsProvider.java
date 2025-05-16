@@ -64,7 +64,6 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     }
 
     TimeStampedIndentOptions options;
-    //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (document) {
       options = getValidCachedIndentOptions(project, file, document);
 
@@ -124,7 +123,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
 
   @TestOnly
   public static @Nullable DetectableIndentOptionsProvider getInstance() {
-    return FileIndentOptionsProvider.EP_NAME.findExtension(DetectableIndentOptionsProvider.class);
+    return EP_NAME.findExtension(DetectableIndentOptionsProvider.class);
   }
 
 
@@ -181,9 +180,8 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      CodeStyle.getSettings(myProject).AUTODETECT_INDENTS = true;
-      CodeStyleSettingsManager.getInstance(myProject).fireCodeStyleSettingsChanged();
       myNotification.expire();
+      setIndentDetectionEnabled(myProject, true);
     }
   }
 
@@ -283,10 +281,8 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
       return DumbAwareAction.create(
         ApplicationBundle.message("code.style.indent.detector.disable"),
         e -> {
-          CodeStyle.getSettings(project).AUTODETECT_INDENTS = false;
           myDiscardedOptions.clear();
-          CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged();
-          showDisabledDetectionNotification(project);
+          setIndentDetectionEnabled(project, false);
         });
     }
 
@@ -304,5 +300,14 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
         areDetected(getIndentOptions()) ||
         myDiscardedOptions.containsKey(file);
     }
+  }
+
+  public static void setIndentDetectionEnabled(@NotNull Project project, boolean detectionEnabled) {
+    CodeStyleSettings settings = CodeStyle.getSettings(project);
+    settings.AUTODETECT_INDENTS = detectionEnabled;
+    settings.getModificationTracker().incModificationCount();
+    CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged();
+    if (!detectionEnabled)
+      showDisabledDetectionNotification(project);
   }
 }
