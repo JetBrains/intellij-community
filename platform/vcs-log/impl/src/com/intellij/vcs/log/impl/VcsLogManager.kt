@@ -44,6 +44,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.event.HierarchyEvent
 import java.awt.event.HierarchyListener
+import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.BiConsumer
 
@@ -136,6 +137,17 @@ open class VcsLogManager @Internal constructor(
   }
 
   @Internal
+  fun generateNewLogId(): String {
+    val existingIds = managedUis.keys
+    var newId: String
+    do {
+      newId = UUID.randomUUID().toString()
+    }
+    while (existingIds.contains(newId))
+    return newId
+  }
+
+  @Internal
   fun createLogUi(logId: String, location: VcsLogTabLocation, filters: VcsLogFilterCollection?): MainVcsLogUi {
     return createLogUi(getMainLogUiFactory(logId, filters), location)
   }
@@ -215,6 +227,10 @@ open class VcsLogManager @Internal constructor(
     }
   }
 
+  /**
+   * Returns the list of all Log UIs managed by this manager
+   * You typically don't want to use this, as it may return custom UI's, which are not really Log UIs
+   */
   fun getLogUis(): List<VcsLogUi> {
     return managedUis.values.toList()
   }

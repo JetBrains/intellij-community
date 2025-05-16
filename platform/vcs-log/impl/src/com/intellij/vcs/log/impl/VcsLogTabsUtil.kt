@@ -10,8 +10,6 @@ import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.util.GraphOptionsUtil.presentationForTabTitle
 import com.intellij.vcs.log.visible.filters.getPresentation
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NonNls
-import java.util.*
 
 @ApiStatus.Internal
 object VcsLogTabsUtil {
@@ -32,15 +30,5 @@ object VcsLogTabsUtil {
     @NlsSafe
     val presentation = listOf(optionsPresentation, filtersPresentation).filter { it.isNotEmpty() }.joinToString(separator = " ")
     return StringUtil.shortenTextWithEllipsis(presentation, 150, 20)
-  }
-
-  fun generateTabId(manager: VcsLogManager): @NonNls String {
-    val existingIds = manager.getLogUis().map { it.id }.toSet()
-    var newId: String
-    do {
-      newId = UUID.randomUUID().toString()
-    }
-    while (existingIds.contains(newId))
-    return newId
   }
 }

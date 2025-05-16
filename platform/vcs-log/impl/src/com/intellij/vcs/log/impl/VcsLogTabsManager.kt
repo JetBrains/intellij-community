@@ -89,7 +89,7 @@ internal class VcsLogTabsManager(
 
   fun openAnotherLogTab(filters: VcsLogFilterCollection, location: VcsLogTabLocation): MainVcsLogUi {
     require(!isDisposed) { "Already disposed" }
-    val tabId = VcsLogTabsUtil.generateTabId(logManager)
+    val tabId = logManager.generateNewLogId()
     uiProperties.resetState(tabId)
     if (location === VcsLogTabLocation.EDITOR) {
       val editors = openEditorLogTab(tabId, true, filters)
