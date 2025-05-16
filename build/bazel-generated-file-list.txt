@@ -1367,5 +1367,6 @@ xml/xml-psi-api
 xml/xml-psi-impl
 xml/xml-structure-view-api
 xml/xml-structure-view-impl
+xml/xml-syntax
 xml/xml-ui-common
 xml/xmlbeans

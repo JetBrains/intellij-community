@@ -1,4 +1,7 @@
 <idea-plugin>
+  <dependencies>
+    <module name="intellij.xml.syntax"/>
+  </dependencies>
   <extensionPoints>
     <extensionPoint name="embeddedTokenTypesProvider" interface="com.intellij.lexer.EmbeddedTokenTypesProvider" dynamic="true"/>
 
