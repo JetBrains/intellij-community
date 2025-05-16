@@ -25,7 +25,13 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//java/idea-ui:ui",
     "//platform/util:util-ui",
+    "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
+    "//platform/ide-core-impl",
+    "//plugins/kotlin/base/plugin",
+    "//platform/core-impl",
+    "//java/java-psi-api:psi",
+    "//platform/backend/observation",
   ],
   runtime_deps = [":kotlin-gradle-scripting-k1_resources"]
 )

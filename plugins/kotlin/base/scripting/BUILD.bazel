@@ -68,12 +68,6 @@ jvm_library(
     "//java/idea-ui:ui",
     "@lib//:kotlinc-kotlin-scripting-dependencies",
     "//plugins/kotlin/scripting",
-    "@lib//:kotlin-base-scripting-amper-dependency-resolution-kotlin-base-scripting",
-    "@lib//:slf4j-api",
-  ],
-  exports = [
-    "@lib//:kotlin-base-scripting-amper-dependency-resolution-kotlin-base-scripting",
-    "@lib//:slf4j-api",
   ],
   runtime_deps = [":scripting_resources"]
 )
@@ -135,8 +129,6 @@ jvm_library(
     "//java/idea-ui:ui",
     "@lib//:kotlinc-kotlin-scripting-dependencies",
     "//plugins/kotlin/scripting",
-    "@lib//:kotlin-base-scripting-amper-dependency-resolution-kotlin-base-scripting",
-    "@lib//:slf4j-api",
   ],
   runtime_deps = [":scripting_resources"]
 )

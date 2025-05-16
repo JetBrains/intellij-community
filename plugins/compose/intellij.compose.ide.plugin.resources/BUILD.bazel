@@ -37,6 +37,7 @@ jvm_library(
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//platform/core-ui",
     "//platform/platform-impl:ide-impl",
+    "//platform/statistics",
   ],
   runtime_deps = [":ide-plugin-resources_resources"]
 )
@@ -87,6 +88,8 @@ jvm_library(
     "//platform/external-system-api/testFramework",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
   ],
   runtime_deps = [":ide-plugin-resources_resources"]
 )

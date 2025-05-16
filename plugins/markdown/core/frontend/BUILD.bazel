@@ -24,6 +24,7 @@ jvm_library(
     "//platform/kernel/shared:kernel",
     "//platform/platform-impl/rpc",
     "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
   ],
   exports = ["//plugins/markdown/core:markdown"],
   runtime_deps = [":frontend_resources"]

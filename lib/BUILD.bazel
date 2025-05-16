@@ -3340,62 +3340,6 @@ jvm_import(
   source_jar = "@urlencoder-lib-jvm-1_6_0-sources_http//file"
 )
 
-java_library(
-  name = "kotlin-base-scripting-amper-dependency-resolution-kotlin-base-scripting",
-  exports = [
-    ":dependency-resolution-0_7_0-dev-2798_http_import",
-    ":concurrency-0_7_0-dev-2798_http_import",
-    ":nio-filechannels-0_7_0-dev-2798_http_import",
-    ":telemetry-0_7_0-dev-2798_http_import",
-    ":serialization-jvm-0_86_2_http_import",
-    ":core-jvm-0_86_2_http_import",
-    ":maven-artifact-3_9_9_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "dependency-resolution-0_7_0-dev-2798_http_import",
-  jar = "@dependency-resolution-0_7_0-dev-2798_http//file",
-  source_jar = "@dependency-resolution-0_7_0-dev-2798-sources_http//file"
-)
-
-jvm_import(
-  name = "concurrency-0_7_0-dev-2798_http_import",
-  jar = "@concurrency-0_7_0-dev-2798_http//file",
-  source_jar = "@concurrency-0_7_0-dev-2798-sources_http//file"
-)
-
-jvm_import(
-  name = "nio-filechannels-0_7_0-dev-2798_http_import",
-  jar = "@nio-filechannels-0_7_0-dev-2798_http//file",
-  source_jar = "@nio-filechannels-0_7_0-dev-2798-sources_http//file"
-)
-
-jvm_import(
-  name = "telemetry-0_7_0-dev-2798_http_import",
-  jar = "@telemetry-0_7_0-dev-2798_http//file",
-  source_jar = "@telemetry-0_7_0-dev-2798-sources_http//file"
-)
-
-jvm_import(
-  name = "serialization-jvm-0_86_2_http_import",
-  jar = "@serialization-jvm-0_86_2_http//file",
-  source_jar = "@serialization-jvm-0_86_2-sources_http//file"
-)
-
-jvm_import(
-  name = "core-jvm-0_86_2_http_import",
-  jar = "@core-jvm-0_86_2_http//file",
-  source_jar = "@core-jvm-0_86_2-sources_http//file"
-)
-
-jvm_import(
-  name = "maven-artifact-3_9_9_http_import",
-  jar = "@maven-artifact-3_9_9_http//file",
-  source_jar = "@maven-artifact-3_9_9-sources_http//file"
-)
-
 jvm_import(
   name = "kotlin-gradle-plugin-idea",
   jar = "@kotlin-gradle-plugin-idea-1_9_20-dev-8162_http//file",
@@ -5223,6 +5167,12 @@ jvm_import(
   name = "plexus-interpolation-1_27_http_import",
   jar = "@plexus-interpolation-1_27_http//file",
   source_jar = "@plexus-interpolation-1_27-sources_http//file"
+)
+
+jvm_import(
+  name = "maven-artifact-3_9_9_http_import",
+  jar = "@maven-artifact-3_9_9_http//file",
+  source_jar = "@maven-artifact-3_9_9-sources_http//file"
 )
 
 jvm_import(
@@ -8595,8 +8545,8 @@ jvm_import(
 
 jvm_import(
   name = "rhizomedb-compiler-plugin",
-  jar = "@rhizomedb-compiler-plugin-2_1_20-0_3_http//file",
-  source_jar = "@rhizomedb-compiler-plugin-2_1_20-0_3-sources_http//file",
+  jar = "@rhizomedb-compiler-plugin-2_1_20-0_5_http//file",
+  source_jar = "@rhizomedb-compiler-plugin-2_1_20-0_5-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

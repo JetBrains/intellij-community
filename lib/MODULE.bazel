@@ -4661,104 +4661,6 @@ http_file(
 )
 
 http_file(
-  name = "dependency-resolution-0_7_0-dev-2798_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper/org/jetbrains/amper/dependency-resolution/0.7.0-dev-2798/dependency-resolution-0.7.0-dev-2798.jar",
-  sha256 = "96c438673a54ec342737642b957f2620d68690a6320a6e368743219292da94c3",
-  downloaded_file_path = "dependency-resolution-0.7.0-dev-2798.jar"
-)
-
-http_file(
-  name = "concurrency-0_7_0-dev-2798_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper/org/jetbrains/amper/concurrency/0.7.0-dev-2798/concurrency-0.7.0-dev-2798.jar",
-  sha256 = "503e5a2d563e16a4258527113215dfbf7e18b2c46db979e173b106ef01b18cdc",
-  downloaded_file_path = "concurrency-0.7.0-dev-2798.jar"
-)
-
-http_file(
-  name = "nio-filechannels-0_7_0-dev-2798_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper/org/jetbrains/amper/nio-filechannels/0.7.0-dev-2798/nio-filechannels-0.7.0-dev-2798.jar",
-  sha256 = "3cf45155a7913e2c28d9827a354f5136cf21a47ba8d4a308761b4e36f814a8ef",
-  downloaded_file_path = "nio-filechannels-0.7.0-dev-2798.jar"
-)
-
-http_file(
-  name = "telemetry-0_7_0-dev-2798_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper/org/jetbrains/amper/telemetry/0.7.0-dev-2798/telemetry-0.7.0-dev-2798.jar",
-  sha256 = "944a80fb6f1c5a0231e4a7d335508c5042968e2cf9a293fd5fb9ae55ea8d7d45",
-  downloaded_file_path = "telemetry-0.7.0-dev-2798.jar"
-)
-
-http_file(
-  name = "serialization-jvm-0_86_2_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/pdvrieze/xmlutil/serialization-jvm/0.86.2/serialization-jvm-0.86.2.jar",
-  sha256 = "06b644a2b65fbf798f49fb7666d718f1123ee98ef7199edcbe23e8aaa4300c51",
-  downloaded_file_path = "serialization-jvm-0.86.2.jar"
-)
-
-http_file(
-  name = "core-jvm-0_86_2_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/pdvrieze/xmlutil/core-jvm/0.86.2/core-jvm-0.86.2.jar",
-  sha256 = "cc15566a7984d29719023c58af7952bf8ddbceadea792f599c81d854d45dc710",
-  downloaded_file_path = "core-jvm-0.86.2.jar"
-)
-
-http_file(
-  name = "maven-artifact-3_9_9_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-artifact/3.9.9/maven-artifact-3.9.9.jar",
-  sha256 = "30f015d1c1a393e19c18cd4f43532089c36d4ca328608ce3dda78b74d3d31515",
-  downloaded_file_path = "maven-artifact-3.9.9.jar"
-)
-
-http_file(
-  name = "dependency-resolution-0_7_0-dev-2798-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper/org/jetbrains/amper/dependency-resolution/0.7.0-dev-2798/dependency-resolution-0.7.0-dev-2798-sources.jar",
-  sha256 = "54e55332742bcccd680b2ea0109f191a8b6d3dc7aa46ea2182125d8894456d73",
-  downloaded_file_path = "dependency-resolution-0.7.0-dev-2798-sources.jar"
-)
-
-http_file(
-  name = "concurrency-0_7_0-dev-2798-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper/org/jetbrains/amper/concurrency/0.7.0-dev-2798/concurrency-0.7.0-dev-2798-sources.jar",
-  sha256 = "ce3342eda6e4e209f1432acbf8e1b6e14d12cc75b4c37d4c8db6a6207400d495",
-  downloaded_file_path = "concurrency-0.7.0-dev-2798-sources.jar"
-)
-
-http_file(
-  name = "nio-filechannels-0_7_0-dev-2798-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper/org/jetbrains/amper/nio-filechannels/0.7.0-dev-2798/nio-filechannels-0.7.0-dev-2798-sources.jar",
-  sha256 = "2d4072061527872e5d7bada5199fdabb2c4ae50c18ff545e24bd0484d2a790b0",
-  downloaded_file_path = "nio-filechannels-0.7.0-dev-2798-sources.jar"
-)
-
-http_file(
-  name = "telemetry-0_7_0-dev-2798-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper/org/jetbrains/amper/telemetry/0.7.0-dev-2798/telemetry-0.7.0-dev-2798-sources.jar",
-  sha256 = "d873a61397c4941b623a463050b89bc10ac4b726ef913614909a9be2c0820407",
-  downloaded_file_path = "telemetry-0.7.0-dev-2798-sources.jar"
-)
-
-http_file(
-  name = "serialization-jvm-0_86_2-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/pdvrieze/xmlutil/serialization-jvm/0.86.2/serialization-jvm-0.86.2-sources.jar",
-  sha256 = "056a95809270b7f96c5cb6e685f640bb83a5495b2db86e8986221898eca512a9",
-  downloaded_file_path = "serialization-jvm-0.86.2-sources.jar"
-)
-
-http_file(
-  name = "core-jvm-0_86_2-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/pdvrieze/xmlutil/core-jvm/0.86.2/core-jvm-0.86.2-sources.jar",
-  sha256 = "ccce84ed7d4637ce4530d1f517a25e07b58e315a1f137ca9fbaa34f0d107eb67",
-  downloaded_file_path = "core-jvm-0.86.2-sources.jar"
-)
-
-http_file(
-  name = "maven-artifact-3_9_9-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-artifact/3.9.9/maven-artifact-3.9.9-sources.jar",
-  sha256 = "75dd90e3efd827f64005f314d09ee5778faee1c11c19c13922da4a4165bb46f7",
-  downloaded_file_path = "maven-artifact-3.9.9-sources.jar"
-)
-
-http_file(
   name = "kotlin-gradle-plugin-idea-1_9_20-dev-8162_http",
   url = "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies/org/jetbrains/kotlin/kotlin-gradle-plugin-idea/1.9.20-dev-8162/kotlin-gradle-plugin-idea-1.9.20-dev-8162.jar",
   sha256 = "8d1af87632d95148f122a9fa0ae2903c19ee6fab7d01e017f76e0d2c9a022c20",
@@ -7321,6 +7223,13 @@ http_file(
 )
 
 http_file(
+  name = "maven-artifact-3_9_9_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-artifact/3.9.9/maven-artifact-3.9.9.jar",
+  sha256 = "30f015d1c1a393e19c18cd4f43532089c36d4ca328608ce3dda78b74d3d31515",
+  downloaded_file_path = "maven-artifact-3.9.9.jar"
+)
+
+http_file(
   name = "maven-builder-support-3_9_9_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-builder-support/3.9.9/maven-builder-support-3.9.9.jar",
   sha256 = "2ca4a967bdd12a9e85d40e012374f86e63d4a1030c199da4832e3d0a1c6770d8",
@@ -7402,6 +7311,13 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/plexus/plexus-interpolation/1.27/plexus-interpolation-1.27-sources.jar",
   sha256 = "aef15feee7005390a97304e0d64457fab9e792ef0de9932c87dd3d2898fee566",
   downloaded_file_path = "plexus-interpolation-1.27-sources.jar"
+)
+
+http_file(
+  name = "maven-artifact-3_9_9-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-artifact/3.9.9/maven-artifact-3.9.9-sources.jar",
+  sha256 = "75dd90e3efd827f64005f314d09ee5778faee1c11c19c13922da4a4165bb46f7",
+  downloaded_file_path = "maven-artifact-3.9.9-sources.jar"
 )
 
 http_file(
@@ -12326,17 +12242,17 @@ http_file(
 )
 
 http_file(
-  name = "rhizomedb-compiler-plugin-2_1_20-0_3_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/rhizomedb-compiler-plugin/2.1.20-0.3/rhizomedb-compiler-plugin-2.1.20-0.3.jar",
-  sha256 = "cb33679a2fe1ba108c8c065f486177fa133fea3341e2df024b6a7a7c4714c607",
-  downloaded_file_path = "rhizomedb-compiler-plugin-2.1.20-0.3.jar"
+  name = "rhizomedb-compiler-plugin-2_1_20-0_5_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/rhizomedb-compiler-plugin/2.1.20-0.5/rhizomedb-compiler-plugin-2.1.20-0.5.jar",
+  sha256 = "4a72bd4f988180e9933117bb98c0a13fb2dbe2f3d058e35562ce66bf79373e52",
+  downloaded_file_path = "rhizomedb-compiler-plugin-2.1.20-0.5.jar"
 )
 
 http_file(
-  name = "rhizomedb-compiler-plugin-2_1_20-0_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/rhizomedb-compiler-plugin/2.1.20-0.3/rhizomedb-compiler-plugin-2.1.20-0.3-sources.jar",
-  sha256 = "466acdec82fa11a7d1cdf4f4528594c26489b5e2117e128f09f771d4a0c5f4b2",
-  downloaded_file_path = "rhizomedb-compiler-plugin-2.1.20-0.3-sources.jar"
+  name = "rhizomedb-compiler-plugin-2_1_20-0_5-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/rhizomedb-compiler-plugin/2.1.20-0.5/rhizomedb-compiler-plugin-2.1.20-0.5-sources.jar",
+  sha256 = "e8d577ed0da840540f94efa95e72efeb47d18c883d100d2896997404cdd9e708",
+  downloaded_file_path = "rhizomedb-compiler-plugin-2.1.20-0.5-sources.jar"
 )
 
 http_file(
