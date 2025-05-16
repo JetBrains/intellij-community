@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl;
 
 import com.intellij.openapi.module.Module;
@@ -17,12 +17,4 @@ public interface ModuleEx extends Module {
   }
 
   void clearScopesCache();
-
-  /**
-   * @return true if this module can store settings in its IComponentStore
-   */
-  @ApiStatus.Internal
-  default boolean canStoreSettings() {
-    return true;
-  }
 }

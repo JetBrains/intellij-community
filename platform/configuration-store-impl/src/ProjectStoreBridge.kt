@@ -87,6 +87,10 @@ open class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(proje
     (project.serviceAsync<WorkspaceModelCache>() as WorkspaceModelCacheImpl).doCacheSavingOnProjectClose()
 
     for (module in moduleManager.modules) {
+      if (!module.canStoreSettings()) {
+        continue
+      }
+
       val moduleStore = module.serviceAsync<IComponentStore>() as? ComponentStoreImpl ?: continue
       val moduleSessionManager = moduleStore.createSaveSessionProducerManager()
       moduleStore.commitComponents(isForce = forceSavingAllSettings, sessionManager = moduleSessionManager, saveResult = saveResult)
