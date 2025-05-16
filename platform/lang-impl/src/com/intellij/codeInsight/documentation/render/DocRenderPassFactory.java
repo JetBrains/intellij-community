@@ -94,7 +94,7 @@ public final class DocRenderPassFactory implements TextEditorHighlightingPassFac
     return items;
   }
 
-  static boolean isValidRange(@NotNull Document document, @NotNull TextRange range) {
+  private static boolean isValidRange(@NotNull Document document, @NotNull TextRange range) {
     int startOffset = range.getStartOffset();
     int endOffset = range.getEndOffset();
     int textLength = document.getTextLength();
