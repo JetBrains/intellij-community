@@ -632,7 +632,7 @@ class DependsSubDescriptor(
   isBundled: Boolean,
   useCoreClassLoader: Boolean = false,
   isIndependentFromCoreClassLoader: Boolean = false,
-  descriptorPath: String? = null
+  descriptorPath: String
 ): IdeaPluginDescriptorImpl(
   raw,
   pluginPath,
@@ -642,7 +642,6 @@ class DependsSubDescriptor(
   descriptorPath
 ) {
   init {
-    assert(descriptorPath != null) { this }
     if (content.modules.isNotEmpty()) {
       LOG.error("Unexpected `content` elements in a `depends` sub-descriptor: ${content.modules.joinToString()}\n in $this")
     }
@@ -667,7 +666,7 @@ class ContentModuleDescriptor(
   moduleLoadingRule: ModuleLoadingRule,
   useCoreClassLoader: Boolean = false,
   isIndependentFromCoreClassLoader: Boolean = false,
-  descriptorPath: String? = null
+  descriptorPath: String
 ): IdeaPluginDescriptorImpl(
   raw,
   pluginPath,
@@ -680,7 +679,6 @@ class ContentModuleDescriptor(
   val moduleLoadingRule: ModuleLoadingRule = moduleLoadingRule
 
   init {
-    assert(descriptorPath != null) { this }
     if (pluginDependencies.isNotEmpty()) {
       LOG.error("Unexpected `depends` dependencies in a content module: ${pluginDependencies.joinToString()}\n in $this")
     }
