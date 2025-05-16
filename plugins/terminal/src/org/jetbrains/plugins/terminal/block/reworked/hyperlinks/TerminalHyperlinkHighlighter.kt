@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.reworked.hyperlinks
 
-import com.intellij.execution.filters.HyperlinkInfo
+import com.intellij.execution.impl.EditorHyperlinkListener
 import com.intellij.execution.impl.EditorHyperlinkSupport
 import com.intellij.execution.impl.ExpirableTokenProvider
 import com.intellij.openapi.application.EDT
@@ -70,7 +70,7 @@ class TerminalHyperlinkHighlighter private constructor(
     // as the lifetime of this entire thing matches the lifetime of the editor.
     // However, it's better to write unnecessarily correct code than to figure out later that it unexpectedly broke.
     val hyperlinkSupport = hyperlinkSupport
-    val listener: (HyperlinkInfo) -> Unit = {
+    val listener = EditorHyperlinkListener {
       ReworkedTerminalUsageCollector.logHyperlinkFollowed(it.javaClass)
     }
     hyperlinkSupport.addEditorHyperlinkListener(listener)
