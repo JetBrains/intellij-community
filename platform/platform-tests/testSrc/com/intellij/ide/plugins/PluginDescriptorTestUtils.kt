@@ -6,57 +6,57 @@ import org.assertj.core.api.InstanceOfAssertFactories
 import org.assertj.core.api.ObjectAssert
 
 
-fun ObjectAssert<IdeaPluginDescriptorImpl>.hasDirectParentClassloaders(vararg parentDescriptors: IdeaPluginDescriptorImpl) = apply {
+fun ObjectAssert<out IdeaPluginDescriptorImpl>.hasDirectParentClassloaders(vararg parentDescriptors: IdeaPluginDescriptorImpl) = apply {
   extracting { (it.classLoader as PluginClassLoader)._getParents() }
     .asInstanceOf(InstanceOfAssertFactories.LIST)
     .contains(*parentDescriptors)
 }
 
-fun ObjectAssert<IdeaPluginDescriptorImpl>.doesNotHaveDirectParentClassloaders(vararg parentDescriptors: IdeaPluginDescriptorImpl) = apply {
+fun ObjectAssert<out IdeaPluginDescriptorImpl>.doesNotHaveDirectParentClassloaders(vararg parentDescriptors: IdeaPluginDescriptorImpl) = apply {
   extracting { (it.classLoader as PluginClassLoader)._getParents() }
     .asInstanceOf(InstanceOfAssertFactories.LIST)
     .doesNotContain(*parentDescriptors)
 }
 
-fun ObjectAssert<IdeaPluginDescriptorImpl>.hasTransitiveParentClassloaders(vararg parentDescriptors: IdeaPluginDescriptorImpl) = apply {
+fun ObjectAssert<out IdeaPluginDescriptorImpl>.hasTransitiveParentClassloaders(vararg parentDescriptors: IdeaPluginDescriptorImpl) = apply {
   extracting { (it.classLoader as PluginClassLoader).getAllParentsClassLoaders() }
     .asInstanceOf(InstanceOfAssertFactories.ARRAY)
     .contains(*parentDescriptors.map { it.classLoader }.toTypedArray())
 }
 
-fun ObjectAssert<IdeaPluginDescriptorImpl>.doesNotHaveTransitiveParentClassloaders(vararg parentDescriptors: IdeaPluginDescriptorImpl) = apply {
+fun ObjectAssert<out IdeaPluginDescriptorImpl>.doesNotHaveTransitiveParentClassloaders(vararg parentDescriptors: IdeaPluginDescriptorImpl) = apply {
   extracting { (it.classLoader as PluginClassLoader).getAllParentsClassLoaders() }
     .asInstanceOf(InstanceOfAssertFactories.ARRAY)
     .doesNotContain(*parentDescriptors.map { it.classLoader }.toTypedArray())
 }
 
-fun ObjectAssert<IdeaPluginDescriptorImpl>.isMarkedEnabled() = apply {
+fun ObjectAssert<out IdeaPluginDescriptorImpl>.isMarkedEnabled() = apply {
   extracting { it.isEnabled }
     .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
     .isTrue
 }
 
-fun ObjectAssert<IdeaPluginDescriptorImpl>.isNotMarkedEnabled() = apply {
+fun ObjectAssert<out IdeaPluginDescriptorImpl>.isNotMarkedEnabled() = apply {
   extracting { it.isEnabled }
     .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
     .isFalse
 }
 
-fun ObjectAssert<IdeaPluginDescriptorImpl>.hasExactlyEnabledContentModules(vararg ids: String) = apply {
+fun ObjectAssert<out IdeaPluginDescriptorImpl>.hasExactlyEnabledContentModules(vararg ids: String) = apply {
   extracting { it.content.modules.mapNotNull { it.getDescriptorOrNull()?.takeIf { it.isEnabled }?.moduleName } }
     .asList()
     .containsExactly(*ids)
 }
 
-fun ObjectAssert<IdeaPluginDescriptorImpl>.doesNotHaveEnabledContentModules() = hasExactlyEnabledContentModules()
+fun ObjectAssert<out IdeaPluginDescriptorImpl>.doesNotHaveEnabledContentModules() = hasExactlyEnabledContentModules()
 
-fun ObjectAssert<IdeaPluginDescriptorImpl>.hasExactlyApplicationServices(vararg impls: String) = apply {
+fun ObjectAssert<out IdeaPluginDescriptorImpl>.hasExactlyApplicationServices(vararg impls: String) = apply {
   extracting { it.appContainerDescriptor.services.mapNotNull { it.serviceImplementation } }
     .asList()
     .containsExactly(*impls)
 }
 
-fun ObjectAssert<IdeaPluginDescriptorImpl>.hasExactlyExtensionPointsNames(vararg names: String) = apply {
+fun ObjectAssert<out IdeaPluginDescriptorImpl>.hasExactlyExtensionPointsNames(vararg names: String) = apply {
   extracting { it.appContainerDescriptor.extensionPoints.map { it.name } }
     .asList()
     .containsExactly(*names)
