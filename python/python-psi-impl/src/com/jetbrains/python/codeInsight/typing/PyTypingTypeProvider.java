@@ -1559,6 +1559,12 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     return null;
   }
 
+  @ApiStatus.Internal
+  public static @Nullable PyTypeParameterType getTypeParameterTypeFromTypeParameter(@NotNull PyTypeParameter typeParameter,
+                                                                                    @NotNull TypeEvalContext context) {
+    return staticWithCustomContext(context, c -> getTypeParameterTypeFromTypeParameter(typeParameter, c));
+  }
+
   private static @Nullable PyTypeParameterType getTypeParameterTypeFromTypeParameter(@NotNull PsiElement element, @NotNull Context context) {
     if (element instanceof PyTypeParameter typeParameter) {
       String name = typeParameter.getName();

@@ -2648,6 +2648,169 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                """);
   }
 
+  // PY-76870
+  public void testTypeVarDefaultCanBeSubclassOfBound() {
+    doTestByText("""
+               from typing import TypeVar, List
+               
+               T1 = TypeVar('T1', bound=int, default=bool)
+               """);
+  }
+
+  // PY-76870
+  public void testTypeVarDefaultCanNotBeSubclassOfConstraint() {
+    doTestByText("""
+               from typing import TypeVar, List
+               
+               T1 = TypeVar('T1', int, str, default=<warning descr="Default type of TypeVar must be one of the constraint types">bool</warning>)
+               """);
+  }
+
+  // PY-76870
+  public void testTypeVarDefaultTypeMatchesConstraints() {
+    doTestByText("""
+               from typing import TypeVar, List
+               
+               # Default type matches one of the constraints
+               T1 = TypeVar('T1', str, int, default=str)
+               T2 = TypeVar('T2', str, int, default=int)
+               
+               # Default type doesn't match any of the constraints
+               T3 = TypeVar('T3', str, int, default=<warning descr="Default type of TypeVar must be one of the constraint types">bool</warning>)
+               T4 = TypeVar('T4', str, int, default=<warning descr="Default type of TypeVar must be one of the constraint types">List[int]</warning>)
+               """);
+  }
+
+  // PY-76870
+  public void testTypeVarDefaultTypeReferringToTypeVarMatchesBound() {
+    doTestByText("""
+               from typing import TypeVar
+               
+               Y1 = TypeVar("Y1", bound=int)
+               Invalid = TypeVar("Invalid", float, str, default=<warning descr="Default type of TypeVar must be one of the constraint types">Y1</warning>)
+               """);
+  }
+
+  // PY-76870
+  public void testTypeVarDefaultTypeReferringToTypeVarMatchesConstraints() {
+    doTestByText("""
+               from typing import TypeVar
+               
+               Y1 = TypeVar("Y1", int, str)
+               AlsoOk2 = TypeVar("AlsoOk2", int, str, bool, default=Y1)  # OK
+               AlsoInvalid2 = TypeVar("AlsoInvalid2", bool, complex, default=<warning descr="Default type of TypeVar must be one of the constraint types">Y1</warning>)
+               """);
+  }
+
+  // PY-76870
+  public void testTypeVarDefaultTypeReferringToTypeVarWithoutConstraints() {
+    doTestByText("""
+               from typing import TypeVar
+               T = TypeVar("T")
+               Invalid = TypeVar("Invalid", str, int, default=<warning descr="Default type of TypeVar must be one of the constraint types">T</warning>)
+               """);
+  }
+
+  // PY-76870
+  public void testTypeVarDefaultBoundMatchedAgainstBound() {
+    doTestByText("""
+               from typing import TypeVar
+               
+               X1 = TypeVar("X1", bound=int)
+               Ok1 = TypeVar("Ok1", default=X1, bound=float)
+               """);
+  }
+
+  // PY-76870
+  public void testTypeVarDefaultBoundNotMatchedAgainstConstraints() {
+    doTestByText("""
+               from typing import TypeVar
+               
+               Y3 = TypeVar("Y3", bound=int)
+               Invalid3 = TypeVar("Invalid3", str, complex, default=<warning descr="Default type of TypeVar must be one of the constraint types">Y3</warning>)
+               """);
+  }
+
+  // PY-76870
+  public void testTypeVarDefaultBoundNotMatchedAgainstBound() {
+    doTestByText("""
+               from typing import TypeVar
+               
+               X1 = TypeVar("X1", bound=int)
+               Invalid1 = TypeVar("Invalid1", default=<warning descr="Default type of TypeVar is not a subtype of the bound">X1</warning>, bound=str)
+               """);
+  }
+
+  // PY-76870
+  public void testTypeVarDefaultConstraintsNotMatchedAgainstBound() {
+    doTestByText("""
+               from typing import TypeVar
+               
+               Y4 = TypeVar("Y4", int, str)
+               Invalid4 = TypeVar("Invalid4", bound=str, default=<warning descr="Default type of TypeVar is not a subtype of the bound">Y4</warning>)
+               """);
+  }
+
+  // PY-76870
+  public void testTypeVarDefaultChecksNewSyntax() {
+    doTestByText("""
+               # NOT OK
+               def foo1[T1: int = <warning descr="Default type of TypeVar is not a subtype of the bound">str</warning>](): ...
+               def foo2[T1: (int, bool) = <warning descr="Default type of TypeVar must be one of the constraint types">str</warning>](): ...
+               def foo3[T1: int, T2: str = <warning descr="Default type of TypeVar is not a subtype of the bound">T1</warning>](): ...
+               def foo4[T1: (int, bool), T2: str = <warning descr="Default type of TypeVar is not a subtype of the bound">T1</warning>](): ...
+               def foo5[T1: (int, bool), T2: (int, str) = <warning descr="Default type of TypeVar must be one of the constraint types">T1</warning>](): ...
+               def foo6[T1: (int, str, float), T2: (int, float) = <warning descr="Default type of TypeVar must be one of the constraint types">T1</warning>](): ...
+               def foo7[T1: (int, str) = <warning descr="Default type of TypeVar must be one of the constraint types">bool</warning>](): ...
+               
+               # OK
+               def bar1[T1: int = bool](): ...
+               def bar2[T1: (int, str) = str](): ...
+               def bar3[T1: bool, T2: int = T1](): ...
+               def bar4[T1: (int, str), T2: (str, int) = T1](): ...
+               def bar5[T1: (int, str), T2: (str, int, float) = T1](): ...
+               """);
+  }
+
+  // PY-76870
+  public void testTypeVarDefaultTypeMatchedWithObject() {
+    doTestByText("""
+                   from typing import TypeVar, Any
+                   
+                   T = TypeVar('T')
+                   T1 = TypeVar('T1', bound=object, default=T)
+                   T2 = TypeVar('T2', int, object, default=T)
+                   """);
+  }
+
+  // PY-76870
+  public void testTypeVarDefaultAnyInConstraintsAndBound() {
+    doTestByText("""
+               from typing import TypeVar, Any
+               T1 = TypeVar("T1", int, str)
+               Ok1 = TypeVar("Ok1", int, str, Any, default=T1)
+               T2 = TypeVar("T2", int, str, Any)
+               Ok2 = TypeVar("Ok2", int, str, Any, default=T2)
+               T3 = TypeVar("T3", bound=Any)
+               Ok3 = TypeVar("Ok3", bound=Any, default=T3)
+               T4 = TypeVar("T4", bound=str)
+               Ok4 = TypeVar("Ok4", bound=Any, default=T4)
+               T5 = TypeVar("T5", bound=Any)
+               Ok5 = TypeVar("Ok5", bound=Any, default=T5)
+               
+               Y1 = TypeVar("Y1", int, str, Any)
+               NotOk1 = TypeVar("NotOk1", int, str, default=<warning descr="Default type of TypeVar must be one of the constraint types">Y1</warning>)
+               Y2 = TypeVar("Y2", bound=Any)
+               NotOk2 = TypeVar("NotOk2", int, str, default=<warning descr="Default type of TypeVar must be one of the constraint types">Y2</warning>)
+               Y3 = TypeVar("Y3", bound=str)
+               NotOk3 = TypeVar("NotOk3", int, Any, default=<warning descr="Default type of TypeVar must be one of the constraint types">Y3</warning>)
+               Y4 = TypeVar("Y4", str, Any)
+               NotOk4 = TypeVar("NotOk4", int, Any, default=<warning descr="Default type of TypeVar must be one of the constraint types">Y4</warning>)
+               Y5 = TypeVar("Y5", bound=Any)
+               NotOk5 = TypeVar("NotOk5", int, str, Any, default=<warning descr="Default type of TypeVar must be one of the constraint types">Y5</warning>)
+               """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

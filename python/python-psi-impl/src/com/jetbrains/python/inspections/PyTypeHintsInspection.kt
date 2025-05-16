@@ -127,7 +127,11 @@ class PyTypeHintsInspection : PyInspection() {
       val defaultExpression = typeParameter.defaultExpression
       if (defaultExpression == null) return
       when(typeParameter.kind) {
-        PyAstTypeParameter.Kind.TypeVar -> checkTypeVarDefaultType(defaultExpression)
+        PyAstTypeParameter.Kind.TypeVar -> {
+          val typeVarType = PyTypingTypeProvider.getTypeParameterTypeFromTypeParameter(typeParameter, myTypeEvalContext) as? PyTypeVarType
+                            ?: return
+          checkTypeVarDefaultType(defaultExpression, typeVarType)
+        }
         PyAstTypeParameter.Kind.ParamSpec -> checkParamSpecDefaultValue(defaultExpression)
         PyAstTypeParameter.Kind.TypeVarTuple -> checkTypeVarTupleDefaultValue(defaultExpression, typeParameter)
       }
@@ -470,9 +474,12 @@ class PyTypeHintsInspection : PyInspection() {
                         ProblemHighlightType.GENERIC_ERROR)
       }
 
-      default?.let { checkTypeVarDefaultType(it) }
-
-      // TODO match bounds and constraints
+      default?.let {
+        val type = Ref.deref(PyTypingTypeProvider.getType(call, myTypeEvalContext))
+        if (type is PyTypeVarType) {
+          checkTypeVarDefaultType(it, type)
+        }
+      }
 
       constraints.asSequence().plus(bound).forEach {
         if (it != null) {
@@ -490,19 +497,18 @@ class PyTypeHintsInspection : PyInspection() {
       }
     }
 
-    private fun checkTypeVarDefaultType(defaultExpression: PyExpression) {
-      val type = Ref.deref(PyTypingTypeProvider.getType(defaultExpression, myTypeEvalContext))
-      when (type) {
-        is PyParamSpecType -> registerProblem(defaultExpression, PyPsiBundle.message("INSP.type.hints.cannot.be.used.in.default.type.of.type.var", "ParamSpec"))
-        is PyTypeVarTupleType -> registerProblem(defaultExpression, PyPsiBundle.message("INSP.type.hints.cannot.be.used.in.default.type.of.type.var", "TypeVarTuple"))
+    private fun checkTypeVarDefaultType(defaultExpression: PyExpression, typeVarType: PyTypeVarType) {
+      val typeRef = typeVarType.defaultType
+      if (typeRef == null) {
+        registerProblem(defaultExpression, PyPsiBundle.message("INSP.type.hints.default.type.must.be.type.expression"))
+        return
       }
 
-      checkIsCorrectTypeExpression(defaultExpression)
-    }
-
-    private fun checkIsCorrectTypeExpression(expression: PyExpression) {
-      if (PyTypingTypeProvider.getType(expression, myTypeEvalContext) == null) {
-        registerProblem(expression, PyPsiBundle.message("INSP.type.hints.default.type.must.be.type.expression"))
+      val defaultType = typeRef.get()
+      when (defaultType) {
+        is PyParamSpecType -> registerProblem(defaultExpression, PyPsiBundle.message("INSP.type.hints.cannot.be.used.in.default.type.of.type.var", "ParamSpec"))
+        is PyTypeVarTupleType -> registerProblem(defaultExpression, PyPsiBundle.message("INSP.type.hints.cannot.be.used.in.default.type.of.type.var", "TypeVarTuple"))
+        else -> validateTypeVarDefaultType(typeVarType, defaultType, defaultExpression)
       }
     }
 
@@ -520,7 +526,9 @@ class PyTypeHintsInspection : PyInspection() {
       if (defaultExpression is PyEllipsisLiteralExpression) return
       if (defaultExpression is PyListLiteralExpression) {
         defaultExpression.elements.forEach {
-          checkIsCorrectTypeExpression(it)
+          if (PyTypingTypeProvider.getType(it, myTypeEvalContext) == null) {
+            registerProblem(it, PyPsiBundle.message("INSP.type.hints.default.type.must.be.type.expression"))
+          }
         }
         return
       }
@@ -1367,6 +1375,29 @@ class PyTypeHintsInspection : PyInspection() {
         .filterIsInstance<PyQualifiedNameOwner>()
         .mapNotNull { it.qualifiedName }
         .any { names.contains(it) }
+    }
+
+    private fun validateTypeVarDefaultType(typeVarType: PyTypeVarType, defaultType: PyType?, defaultExpression: PyExpression) {
+      val defaultTypes = when (defaultType) {
+        is PyTypeVarType -> defaultType.constraints.ifEmpty {
+          val objectType = PyBuiltinCache.getInstance(defaultExpression).objectType ?: return
+          listOf(defaultType.bound ?: objectType)
+        }
+        else -> listOf(defaultType)
+      }
+
+      when {
+        typeVarType.bound != null -> {
+          if (!defaultTypes.all { PyTypeChecker.match (typeVarType.bound, it, myTypeEvalContext) }) {
+            registerProblem(defaultExpression, PyPsiBundle.message("INSP.type.hints.default.type.do.not.match.bounds"))
+          }
+        }
+        typeVarType.constraints.isNotEmpty() -> {
+          if (!typeVarType.constraints.containsAll(defaultTypes)) {
+            registerProblem(defaultExpression, PyPsiBundle.message("INSP.type.hints.default.type.do.not.match.constraints"))
+          }
+        }
+      }
     }
   }
 
