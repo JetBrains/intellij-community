@@ -175,3 +175,9 @@ c:org.jetbrains.jps.util.Ref
 - s:deref(org.jetbrains.jps.util.Ref):java.lang.Object
 - f:get():java.lang.Object
 - f:set(java.lang.Object):V
+f:org.jetbrains.jps.util.SystemInfo
+- sf:isFileSystemCaseSensitive:Z
+- sf:isMac:Z
+- sf:isOS2:Z
+- sf:isWindows:Z
+- <init>():V
