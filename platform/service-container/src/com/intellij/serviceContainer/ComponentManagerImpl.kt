@@ -264,9 +264,6 @@ abstract class ComponentManagerImpl(
       return getService(IComponentStore::class.java) ?: error("Cannot get service: ${IComponentStore::class.java.name}")
     }
 
-  @Suppress("FunctionName")
-  open suspend fun _getComponentStore(): IComponentStore = getServiceAsync(IComponentStore::class.java)
-
   internal fun getComponentInstance(componentKey: Any): Any? {
     assertComponentsSupported()
     val holder = ignoreDisposal {
