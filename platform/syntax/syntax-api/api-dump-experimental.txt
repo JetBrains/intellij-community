@@ -48,6 +48,7 @@
 *f:com.intellij.platform.syntax.SyntaxElementTypeSetKt
 - *sf:asSyntaxElementTypeSet(java.util.Collection):com.intellij.platform.syntax.SyntaxElementTypeSet
 - *sf:emptySyntaxElementTypeSet():com.intellij.platform.syntax.SyntaxElementTypeSet
+- sf:flattenSyntaxElementTypeSets(com.intellij.platform.syntax.SyntaxElementTypeSet[]):com.intellij.platform.syntax.SyntaxElementTypeSet
 - *sf:syntaxElementTypeSetOf(com.intellij.platform.syntax.SyntaxElementType[]):com.intellij.platform.syntax.SyntaxElementTypeSet
 *f:com.intellij.platform.syntax.element.SyntaxTokenTypes
 - sf:INSTANCE:com.intellij.platform.syntax.element.SyntaxTokenTypes

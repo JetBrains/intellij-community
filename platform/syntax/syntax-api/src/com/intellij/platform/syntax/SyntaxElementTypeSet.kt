@@ -86,3 +86,5 @@ class SyntaxElementTypeSet internal constructor(
     return newSet.asSyntaxElementTypeSet()
   }
 }
+
+fun flattenSyntaxElementTypeSets(vararg sets: SyntaxElementTypeSet) = sets.asList().flatten().asSyntaxElementTypeSet()
