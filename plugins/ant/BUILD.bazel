@@ -11,7 +11,7 @@ jvm_library(
   name = "ant",
   module_name = "intellij.ant",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//java/openapi:java",
     "@lib//ant/lib:ant-antlr",
@@ -52,7 +52,7 @@ jvm_library(
 jvm_library(
   name = "ant_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/src/**/*.kt", "tests/src/**/*.java"], allow_empty = True),
+  srcs = glob(["tests/src/**/*.kt", "tests/src/**/*.java", "tests/src/**/*.form"], allow_empty = True),
   associates = [":ant"],
   deps = [
     "//java/openapi:java",

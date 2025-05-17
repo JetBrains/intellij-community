@@ -16,7 +16,7 @@ java_library(
 jvm_library(
   name = "tests_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testGen/**/*.kt", "testGen/**/*.java", "testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testGen/**/*.kt", "testGen/**/*.java", "testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "//platform/editor-ui-api:editor-ui",
     "//platform/foldings",

@@ -23,7 +23,7 @@ jvm_library(
   name = "kotlin-refactorings-k2",
   module_name = "kotlin.refactorings.k2",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom",
   deps = [
     "//platform/editor-ui-api:editor-ui",

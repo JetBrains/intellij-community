@@ -17,7 +17,7 @@ jvm_library(
   name = "xpath",
   module_name = "intellij.xpath",
   visibility = ["//visibility:public"],
-  srcs = glob(["xpath-lang/src/**/*.kt", "xpath-lang/src/**/*.java", "xpath-view/src/**/*.kt", "xpath-view/src/**/*.java", "xpath-lang/gen/**/*.kt", "xpath-lang/gen/**/*.java"], allow_empty = True),
+  srcs = glob(["xpath-lang/src/**/*.kt", "xpath-lang/src/**/*.java", "xpath-lang/src/**/*.form", "xpath-view/src/**/*.kt", "xpath-view/src/**/*.java", "xpath-view/src/**/*.form", "xpath-lang/gen/**/*.kt", "xpath-lang/gen/**/*.java"], allow_empty = True),
   deps = [
     "//platform/editor-ui-api:editor-ui",
     "//jps/model-api:model",
@@ -51,7 +51,7 @@ jvm_library(
 jvm_library(
   name = "xpath_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["xpath-lang/test/**/*.kt", "xpath-lang/test/**/*.java"], allow_empty = True),
+  srcs = glob(["xpath-lang/test/**/*.kt", "xpath-lang/test/**/*.java", "xpath-lang/test/**/*.form"], allow_empty = True),
   associates = [":xpath"],
   deps = [
     "//platform/editor-ui-api:editor-ui",

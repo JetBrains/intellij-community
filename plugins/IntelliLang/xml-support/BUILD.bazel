@@ -16,7 +16,7 @@ jvm_library(
   name = "xml-langInjection",
   module_name = "intellij.xml.langInjection",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",

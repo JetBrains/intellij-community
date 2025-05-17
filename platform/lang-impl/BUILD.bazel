@@ -22,7 +22,7 @@ jvm_library(
   name = "lang-impl",
   module_name = "intellij.platform.lang.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   javac_opts = ":custom-javac-options",
   deps = [
     "//platform/boot",

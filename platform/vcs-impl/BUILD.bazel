@@ -11,7 +11,7 @@ jvm_library(
   name = "vcs-impl",
   module_name = "intellij.platform.vcs.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
     "//platform/editor-ui-api:editor-ui",
     "//jps/model-api:model",
@@ -67,7 +67,7 @@ jvm_library(
 jvm_library(
   name = "vcs-impl_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   associates = [":vcs-impl"],
   deps = [
     "//platform/editor-ui-api:editor-ui",

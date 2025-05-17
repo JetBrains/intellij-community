@@ -11,7 +11,7 @@ jvm_library(
   name = "ui",
   module_name = "intellij.performanceTesting.ui",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
     "//platform/core-impl",
@@ -29,7 +29,7 @@ jvm_library(
 jvm_library(
   name = "ui_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   associates = [":ui"],
   deps = [
     "//platform/core-api:core",

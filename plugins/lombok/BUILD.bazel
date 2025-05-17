@@ -23,7 +23,7 @@ jvm_library(
   name = "lombok",
   module_name = "intellij.lombok",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "lang/src/**/*.kt", "lang/src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "src/main/java/**/*.form", "lang/src/**/*.kt", "lang/src/**/*.java"], allow_empty = True),
   deps = [
     "//plugins/lombok/generated",
     "//platform/editor-ui-api:editor-ui",
@@ -50,7 +50,7 @@ jvm_library(
 jvm_library(
   name = "lombok_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/test/java/**/*.kt", "src/test/java/**/*.java"], allow_empty = True),
+  srcs = glob(["src/test/java/**/*.kt", "src/test/java/**/*.java", "src/test/java/**/*.form"], allow_empty = True),
   associates = [":lombok"],
   deps = [
     "//plugins/lombok/generated",

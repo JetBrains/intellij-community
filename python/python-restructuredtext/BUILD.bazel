@@ -36,7 +36,7 @@ jvm_library(
   name = "restructuredtext-python",
   module_name = "intellij.restructuredtext.python",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/editor-ui-api:editor-ui",

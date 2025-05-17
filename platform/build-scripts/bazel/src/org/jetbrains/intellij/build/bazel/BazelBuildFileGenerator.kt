@@ -7,6 +7,7 @@ import com.intellij.openapi.util.NlsSafe
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaResourceRootType
+import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -658,7 +659,14 @@ private fun computeSources(module: JpsModule, contentRoots: List<Path>, bazelBui
       }
 
       if (type == JavaSourceRootType.SOURCE || type == JavaSourceRootType.TEST_SOURCE) {
-        sequenceOf(SourceDirDescriptor(glob = listOf("$prefix**/*.kt", "$prefix**/*.java"), excludes = excludes))
+        val rootProperties = root.properties
+        if ((rootProperties !is JavaSourceRootProperties || !rootProperties.isForGeneratedSources) && moduleWithForm.contains (module.name)) {
+          // rootDir.walk().any { it.extension == "form" }
+          sequenceOf(SourceDirDescriptor(glob = listOf("$prefix**/*.kt", "$prefix**/*.java", "$prefix**/*.form"), excludes = excludes))
+        }
+        else {
+          sequenceOf(SourceDirDescriptor(glob = listOf("$prefix**/*.kt", "$prefix**/*.java"), excludes = excludes))
+        }
       }
       else {
         sequenceOf(SourceDirDescriptor(glob = listOf("$prefix**/*"), excludes = excludes))

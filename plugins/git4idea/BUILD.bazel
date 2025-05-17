@@ -29,7 +29,7 @@ jvm_library(
   name = "vcs-git",
   module_name = "intellij.vcs.git",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   deps = [
     "//platform/editor-ui-api:editor-ui",
@@ -106,7 +106,7 @@ jvm_library(
 jvm_library(
   name = "vcs-git_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom",
   associates = [":vcs-git"],
   deps = [

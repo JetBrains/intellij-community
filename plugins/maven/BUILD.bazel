@@ -21,7 +21,7 @@ jvm_library(
   name = "maven",
   module_name = "intellij.maven",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "src/main/gen/**/*.kt", "src/main/gen/**/*.java"], allow_empty = True),
+  srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "src/main/java/**/*.form", "src/main/gen/**/*.kt", "src/main/gen/**/*.java"], allow_empty = True),
   deps = [
     "//platform/editor-ui-api:editor-ui",
     "//platform/ide-core-impl",

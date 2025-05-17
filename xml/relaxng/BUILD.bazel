@@ -11,7 +11,7 @@ jvm_library(
   name = "relaxng",
   module_name = "intellij.relaxng",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/editor-ui-api:editor-ui",
     "//platform/lang-api:lang",
@@ -36,7 +36,7 @@ jvm_library(
 jvm_library(
   name = "relaxng_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   associates = [":relaxng"],
   deps = [
     "//platform/editor-ui-api:editor-ui",

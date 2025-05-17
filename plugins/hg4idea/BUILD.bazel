@@ -11,7 +11,7 @@ jvm_library(
   name = "vcs-hg",
   module_name = "intellij.vcs.hg",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/editor-ui-api:editor-ui",
     "//platform/vcs-api:vcs",
@@ -38,7 +38,7 @@ jvm_library(
 jvm_library(
   name = "vcs-hg_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   associates = [":vcs-hg"],
   deps = [
     "//platform/editor-ui-api:editor-ui",

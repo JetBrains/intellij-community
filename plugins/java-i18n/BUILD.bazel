@@ -11,7 +11,7 @@ jvm_library(
   name = "java-i18n",
   module_name = "intellij.java.i18n",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/editor-ui-api:editor-ui",
     "//platform/foldings",
@@ -49,7 +49,7 @@ jvm_library(
 jvm_library(
   name = "java-i18n_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   associates = [":java-i18n"],
   deps = [
     "//platform/editor-ui-api:editor-ui",

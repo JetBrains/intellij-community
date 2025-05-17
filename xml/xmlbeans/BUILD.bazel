@@ -11,7 +11,7 @@ jvm_library(
   name = "xmlbeans",
   module_name = "intellij.xml.xmlbeans",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//xml/impl",
     "@lib//:xml-xmlbeans-_xml_beans",
@@ -32,7 +32,7 @@ jvm_library(
 jvm_library(
   name = "xmlbeans_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   associates = [":xmlbeans"],
   deps = [
     "//xml/impl",

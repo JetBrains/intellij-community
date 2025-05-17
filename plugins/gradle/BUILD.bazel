@@ -17,7 +17,7 @@ jvm_library(
   name = "gradle",
   module_name = "intellij.gradle",
   visibility = ["//visibility:public"],
-  srcs = glob(["generated/**/*.kt", "generated/**/*.java", "src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  srcs = glob(["generated/**/*.kt", "generated/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
     "//platform/editor-ui-api:editor-ui",
     "//platform/external-system-api:externalSystem",

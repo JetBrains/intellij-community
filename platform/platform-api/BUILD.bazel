@@ -22,7 +22,7 @@ jvm_library(
   name = "ide",
   module_name = "intellij.platform.ide",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   javac_opts = ":custom-javac-options",
   deps = [
     "//platform/util",

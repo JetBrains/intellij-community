@@ -5,7 +5,7 @@ jvm_library(
   name = "impl-refactorings",
   module_name = "intellij.java.impl.refactorings",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/editor-ui-api:editor-ui",
     "//platform/foldings",

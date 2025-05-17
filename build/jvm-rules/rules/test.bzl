@@ -145,7 +145,7 @@ Setup a simple kotlin_test.
             doc = """The list of source files that are processed to create the target, this can contain both Java and Kotlin
               files. Java analysis occurs first so Kotlin classes may depend on Java classes in the same compilation unit.""",
             default = [],
-            allow_files = [".kt", ".java"],
+            allow_files = [".kt", ".java", ".form"],
         ),
         "_bazel_test_runner": attr.label(
             default = Label("@bazel_tools//tools/jdk:TestRunner_deploy.jar"),

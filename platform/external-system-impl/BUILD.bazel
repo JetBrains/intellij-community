@@ -11,7 +11,7 @@ jvm_library(
   name = "externalSystem-impl",
   module_name = "intellij.platform.externalSystem.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
     "//platform/editor-ui-api:editor-ui",
     "//platform/external-system-api:externalSystem",

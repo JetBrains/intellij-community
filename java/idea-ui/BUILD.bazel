@@ -11,7 +11,7 @@ jvm_library(
   name = "ui",
   module_name = "intellij.java.ui",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
     "//java/openapi:java",
     "//java/compiler/openapi:java-compiler",
