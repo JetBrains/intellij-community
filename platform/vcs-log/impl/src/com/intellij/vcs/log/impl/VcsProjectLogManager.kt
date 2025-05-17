@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.getAndUpdate
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.function.BiConsumer
 
 internal class VcsProjectLogManager(
@@ -43,7 +44,6 @@ internal class VcsProjectLogManager(
 ) : VcsLogManager(project, uiProperties, logProviders, getProjectLogName(logProviders), false,
                   VcsLogSharedSettings.isIndexSwitchedOn(project), recreateHandler) {
   private val tabsManager = VcsLogTabsManager(project, uiProperties, this)
-  override val tabs: Set<String> = uiProperties.tabs.keys
 
   private lateinit var mainUiCs: CoroutineScope
 
@@ -58,7 +58,7 @@ internal class VcsProjectLogManager(
     mainUiCs.launch(Dispatchers.EdtImmediate) {
       project.serviceAsync<VcsLogContentProvider.ContentHolder>().contentState.collect { content ->
         if (content != null) {
-          val ui = createLogUi(getMainLogUiFactory(MAIN_LOG_ID, null), VcsLogTabLocation.TOOL_WINDOW)
+          val ui = createLogUi(getMainLogUiFactory(MAIN_LOG_ID, null))
           content.displayName = VcsLogTabsUtil.generateDisplayName(ui)
           ui.onDisplayNameChange {
             content.displayName = VcsLogTabsUtil.generateDisplayName(ui)
@@ -112,6 +112,18 @@ internal class VcsProjectLogManager(
   @RequiresEdt
   fun openNewLogTab(filters: VcsLogFilterCollection): MainVcsLogUi {
     return tabsManager.openAnotherLogTab(filters, VcsLogTabLocation.TOOL_WINDOW)
+  }
+
+  override fun getLogUis(): List<VcsLogUi> {
+    val tabsIds = tabsManager.getTabs()
+    return super.getLogUis().filter { it.id in tabsIds }
+  }
+
+  // for statistics
+  @Internal
+  fun getLogUis(location: VcsLogTabLocation): List<MainVcsLogUi> {
+    val tabsIds = tabsManager.getTabs(location)
+    return getLogUis().asSequence().filter { it.id in tabsIds }.filterIsInstance<MainVcsLogUi>().toList()
   }
 
   /**

@@ -19,7 +19,6 @@ import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.impl.CannotAddVcsLogWindowException
 import com.intellij.vcs.log.impl.VcsLogEditorUtil
-import com.intellij.vcs.log.impl.VcsLogTabLocation
 import com.intellij.vcs.log.impl.VcsLogTabsManager.Companion.onDisplayNameChange
 import com.intellij.vcs.log.impl.VcsLogTabsUtil
 import com.intellij.vcs.log.ui.VcsLogPanel
@@ -46,7 +45,7 @@ internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.Vcs
     val panel = JBPanelWithEmptyText(BorderLayout()).withEmptyText(VcsLogBundle.message("vcs.log.is.loading"))
     VcsLogUtil.runWhenVcsAndLogIsReady(project) { logManager ->
       try {
-        val ui = logManager.createLogUi(tabId, VcsLogTabLocation.EDITOR, filters)
+        val ui = logManager.createLogUi(tabId, filters)
         Disposer.register(ui) {
           isValid = false
           FileEditorManager.getInstance(project).closeFile(this)

@@ -146,13 +146,7 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
 
   @RequiresEdt
   fun openLogTab(filters: VcsLogFilterCollection): MainVcsLogUi? {
-    return openLogTab(filters = filters, location = VcsLogTabLocation.TOOL_WINDOW)
-  }
-
-  @ApiStatus.Internal
-  @RequiresEdt
-  fun openLogTab(filters: VcsLogFilterCollection, location: VcsLogTabLocation): MainVcsLogUi? {
-    return cachedLogManager?.openNewLogTab(filters = filters, location = location)
+    return cachedLogManager?.openNewLogTab(VcsLogTabLocation.TOOL_WINDOW, filters)
   }
 
   internal fun createLogInBackground(forceInit: Boolean) {

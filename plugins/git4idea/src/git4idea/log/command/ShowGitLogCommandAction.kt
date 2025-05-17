@@ -9,7 +9,6 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.vcs.log.impl.VcsLogContentUtil
 import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
-import com.intellij.vcs.log.impl.VcsLogTabLocation
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import git4idea.GitVcs
@@ -33,7 +32,7 @@ internal class ShowGitLogCommandAction : DumbAwareAction() {
       val uiFactory = GitLogCommandUiFactory("command-log-" + UUID.randomUUID().toString(),
                                              VcsLogFilterObject.collection(), project.service<VcsLogProjectTabsProperties>(),
                                              vcsLogManager.colorManager)
-      val ui = vcsLogManager.createLogUi(uiFactory, VcsLogTabLocation.TOOL_WINDOW)
+      val ui = vcsLogManager.createLogUi(uiFactory)
       ui.filterUi.addFilterListener { VcsLogContentUtil.updateLogUiName(project, ui) }
 
       VcsLogContentUtil.openLogTab(project, vcsLogManager, VcsLogContentUtil.DEFAULT_TAB_GROUP_ID,

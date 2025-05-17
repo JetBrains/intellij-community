@@ -35,7 +35,6 @@ import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.impl.VcsLogContentUtil
 import com.intellij.vcs.log.impl.VcsLogManager
-import com.intellij.vcs.log.impl.VcsLogTabLocation
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.ui.VcsLogUiEx
@@ -74,7 +73,7 @@ internal class GitShowExternalLogAction : DumbAwareAction() {
     val window = getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
     if (project.isDefault || !ProjectLevelVcsManager.getInstance(project).hasActiveVcss() || window == null) {
       ProgressManager.getInstance().run(ShowLogTask(project, roots, vcs, true) { disposable ->
-        val ui = createLogUi(calcLogId(roots), VcsLogTabLocation.STANDALONE, null)
+        val ui = createLogUi(calcLogId(roots), null)
         Disposer.register(disposable, ui)
         val content = MyContentComponent(VcsLogPanel(this, ui), roots)
         showLogContentWindow(project, content, GitBundle.message("git.log.external.window.title"), disposable)
@@ -97,8 +96,7 @@ fun showExternalGitLogInToolwindow(
   tabDescription: @NlsContexts.Tooltip String,
 ) {
   showExternalGitLogInToolwindow(project, toolWindow, {
-    val location = if (toolWindow.id == ChangesViewContentManager.TOOLWINDOW_ID) VcsLogTabLocation.TOOL_WINDOW else VcsLogTabLocation.STANDALONE
-    createLogUi(calcLogId(roots), location, null)
+    createLogUi(calcLogId(roots), null)
   }, vcs, roots, tabTitle, tabDescription)
 }
 

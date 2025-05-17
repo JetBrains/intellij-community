@@ -6,15 +6,11 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.util.ObjectUtils;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogUi;
-import com.intellij.vcs.log.impl.VcsLogContentUtil;
-import com.intellij.vcs.log.impl.VcsLogManager;
-import com.intellij.vcs.log.impl.VcsLogTabLocation;
-import com.intellij.vcs.log.impl.VcsProjectLog;
+import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.util.VcsLogUtil;
@@ -22,6 +18,7 @@ import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public abstract class OpenAnotherLogTabAction extends DumbAwareAction {
@@ -39,19 +36,27 @@ public abstract class OpenAnotherLogTabAction extends DumbAwareAction {
       return;
     }
 
-    VcsProjectLog projectLog = VcsProjectLog.getInstance(project);
-    VcsLogManager logManager = ObjectUtils.chooseNotNull(e.getData(VcsLogInternalDataKeys.LOG_MANAGER), projectLog.getLogManager());
+    VcsLogManager logManager = getMainLogManager(e);
     if (logManager == null) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
 
-    // only for main log (it is a question, how and where we want to open tabs for external logs)
-    e.getPresentation().setEnabledAndVisible(projectLog.getLogManager() == logManager);
-
     String vcsName = VcsLogUtil.getVcsDisplayName(project, logManager);
     e.getPresentation().setText(getText(vcsName));
     e.getPresentation().setDescription(getDescription(vcsName));
+  }
+
+  private static @Nullable VcsProjectLogManager getMainLogManager(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    if (project == null) return null;
+    VcsProjectLog projectLog = VcsProjectLog.getInstance(project);
+    VcsLogManager mainLogManager = projectLog.getLogManager();
+    if (!(mainLogManager instanceof VcsProjectLogManager actualManager)) return null;
+    // only for main log (it is a question, how and where we want to open tabs for external logs)
+    VcsLogManager dataLogManager = e.getData(VcsLogInternalDataKeys.LOG_MANAGER);
+    if (dataLogManager != null && dataLogManager != actualManager) return null;
+    return actualManager;
   }
 
   protected @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getDescription(@Nls @NotNull String vcsName) {
@@ -68,6 +73,8 @@ public abstract class OpenAnotherLogTabAction extends DumbAwareAction {
 
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
+    VcsProjectLogManager logManager = getMainLogManager(e);
+    if (logManager == null) return;
 
     VcsLogFilterCollection filters;
     if (Registry.is("vcs.log.copy.filters.to.new.tab")) {
@@ -76,7 +83,7 @@ public abstract class OpenAnotherLogTabAction extends DumbAwareAction {
     else {
       filters = VcsLogFilterObject.collection();
     }
-    VcsProjectLog.getInstance(project).openLogTab(filters, getLocation(e));
+    logManager.openNewLogTab(getLocation(e), filters);
   }
 
   protected @NotNull VcsLogFilterCollection getFilters(@NotNull Project project, @NotNull AnActionEvent e) {

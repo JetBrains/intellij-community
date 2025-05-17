@@ -522,7 +522,7 @@ c:com.intellij.vcs.log.impl.VcsLogManager
 - sf:findLogProviders(java.util.Collection,com.intellij.openapi.project.Project):java.util.Map
 - f:getColorManager():com.intellij.vcs.log.ui.VcsLogColorManager
 - f:getDataManager():com.intellij.vcs.log.data.VcsLogData
-- f:getLogUis():java.util.List
+- getLogUis():java.util.List
 - pf:getProject():com.intellij.openapi.project.Project
 - f:getUiProperties():com.intellij.vcs.log.impl.VcsLogTabsProperties
 - f:isDisposed():Z

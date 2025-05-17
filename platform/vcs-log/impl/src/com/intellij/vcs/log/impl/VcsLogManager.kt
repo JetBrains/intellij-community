@@ -70,14 +70,9 @@ open class VcsLogManager @Internal constructor(
 
   private val managedUis = mutableMapOf<String, VcsLogUiEx>()
   private val uiRegistrationTraces = mutableMapOf<String, Throwable>()
-  private val uiLocations = mutableMapOf<String, VcsLogTabLocation>()
 
   val colorManager: VcsLogColorManager = VcsLogColorManagerFactory.create(logProviders.keys)
   private val statusBarProgress = VcsLogStatusBarProgress(project, logProviders, dataManager.index.indexingRoots, dataManager.progress)
-
-  // for statistics
-  @get:Internal
-  open val tabs: Set<String> get() = emptySet()
 
   @get:RequiresEdt
   var isDisposed: Boolean = false
@@ -144,8 +139,8 @@ open class VcsLogManager @Internal constructor(
   }
 
   @Internal
-  fun createLogUi(logId: String, location: VcsLogTabLocation, filters: VcsLogFilterCollection?): MainVcsLogUi {
-    return createLogUi(getMainLogUiFactory(logId, filters), location)
+  fun createLogUi(logId: String, filters: VcsLogFilterCollection?): MainVcsLogUi {
+    return createLogUi(getMainLogUiFactory(logId, filters))
   }
 
   @Internal
@@ -160,7 +155,7 @@ open class VcsLogManager @Internal constructor(
   }
 
   @Internal
-  fun <U : VcsLogUiEx> createLogUi(factory: VcsLogUiFactory<U>, location: VcsLogTabLocation): U {
+  fun <U : VcsLogUiEx> createLogUi(factory: VcsLogUiFactory<U>): U {
     ThreadingAssertions.assertEventDispatchThread()
     if (isDisposed) {
       LOG.error("Trying to create new VcsLogUi on a disposed VcsLogManager instance")
@@ -177,7 +172,6 @@ open class VcsLogManager @Internal constructor(
     }
     managedUis[id] = ui
     uiRegistrationTraces[id] = Throwable("Creation trace for $ui")
-    uiLocations[id] = location
 
     installRefresher(ui)
 
@@ -185,7 +179,6 @@ open class VcsLogManager @Internal constructor(
       LOG.debug("Removing disposed log ui $ui")
       managedUis.remove(id)
       uiRegistrationTraces.remove(id)
-      uiLocations.remove(id)
     }
     return ui
   }
@@ -225,15 +218,9 @@ open class VcsLogManager @Internal constructor(
 
   /**
    * Returns the list of all Log UIs managed by this manager
-   * You typically don't want to use this, as it may return custom UI's, which are not really Log UIs
    */
-  fun getLogUis(): List<VcsLogUi> {
+  open fun getLogUis(): List<VcsLogUi> {
     return managedUis.values.toList()
-  }
-
-  @Internal
-  fun getLogUis(location: VcsLogTabLocation): List<VcsLogUi> {
-    return managedUis.values.filter { uiLocations[it.id] == location }
   }
 
   @Internal

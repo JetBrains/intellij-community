@@ -20,7 +20,10 @@ import com.intellij.vcs.log.VcsLogRangeFilter
 import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.impl.*
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties
+import com.intellij.vcs.log.impl.VcsLogContentUtil
+import com.intellij.vcs.log.impl.VcsLogManager
+import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.VcsLogUiEx
@@ -163,7 +166,7 @@ class GitUpdateInfoAsLog(private val project: Project,
 
   private fun createLogUi(logManager: VcsLogManager, logUiFactory: MyLogUiFactory, select: Boolean) {
     val tabName = DateFormatUtil.formatDateTime(System.currentTimeMillis())
-    val ui = logManager.createLogUi(logUiFactory, VcsLogTabLocation.TOOL_WINDOW)
+    val ui = logManager.createLogUi(logUiFactory)
     VcsLogContentUtil.openLogTab(project, logManager, tabGroupId, ui, { tabName }, select)
   }
 
