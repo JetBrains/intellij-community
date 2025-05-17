@@ -3,6 +3,7 @@
     <module name="intellij.xml.psi"/>
     <module name="intellij.xml.parser"/>
     <module name="intellij.regexp"/>
+    <module name="intellij.xml.syntax"/>
   </dependencies>
 
   <projectListeners>
@@ -30,6 +31,8 @@
     <lang.parserDefinition language="XML" implementationClass="com.intellij.lang.xml.XMLParserDefinition"/>
     <lang.parserDefinition language="HTML" implementationClass="com.intellij.lang.html.HTMLParserDefinition"/>
     <lang.parserDefinition language="XHTML" implementationClass="com.intellij.lang.xhtml.XHTMLParserDefinition"/>
+
+    <syntax.syntaxDefinition language="XML" implementationClass="com.intellij.lang.xml.XmlSyntaxDefinitionExtension"/>
 
     <applicationService serviceInterface="com.intellij.html.embedding.BasicHtmlRawTextElementFactory"
                         serviceImplementation="com.intellij.lang.html.HtmlRawTextElementFactoryImpl"/>

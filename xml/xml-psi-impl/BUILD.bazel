@@ -42,6 +42,8 @@ jvm_library(
     "//platform/markdown-utils",
     "//platform/polySymbols",
     "//RegExpSupport:regexp",
+    "//platform/syntax/syntax-psi:psi",
+    "//xml/xml-syntax:syntax",
   ],
   runtime_deps = [
     ":psi-impl_resources",

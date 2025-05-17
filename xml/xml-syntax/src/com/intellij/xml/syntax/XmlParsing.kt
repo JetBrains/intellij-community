@@ -1,64 +1,52 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.psi.impl.source.parsing.xml
+package com.intellij.xml.syntax
 
-import com.intellij.lang.PsiBuilder
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.psi.TokenType
-import com.intellij.psi.tree.ICustomParsingType
-import com.intellij.psi.tree.IElementType
-import com.intellij.psi.tree.ILazyParseableElementType
-import com.intellij.psi.xml.XmlElementType.XML_ATTRIBUTE
-import com.intellij.psi.xml.XmlElementType.XML_ATTRIBUTE_VALUE
-import com.intellij.psi.xml.XmlElementType.XML_CDATA
-import com.intellij.psi.xml.XmlElementType.XML_COMMENT
-import com.intellij.psi.xml.XmlElementType.XML_DOCTYPE
-import com.intellij.psi.xml.XmlElementType.XML_DOCUMENT
-import com.intellij.psi.xml.XmlElementType.XML_ENTITY_REF
-import com.intellij.psi.xml.XmlElementType.XML_PROCESSING_INSTRUCTION
-import com.intellij.psi.xml.XmlElementType.XML_PROLOG
-import com.intellij.psi.xml.XmlElementType.XML_TAG
-import com.intellij.psi.xml.XmlElementType.XML_TEXT
-import com.intellij.psi.xml.XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER
-import com.intellij.psi.xml.XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER
-import com.intellij.psi.xml.XmlTokenType.XML_BAD_CHARACTER
-import com.intellij.psi.xml.XmlTokenType.XML_CDATA_END
-import com.intellij.psi.xml.XmlTokenType.XML_CDATA_START
-import com.intellij.psi.xml.XmlTokenType.XML_CHAR_ENTITY_REF
-import com.intellij.psi.xml.XmlTokenType.XML_COMMENT_CHARACTERS
-import com.intellij.psi.xml.XmlTokenType.XML_COMMENT_END
-import com.intellij.psi.xml.XmlTokenType.XML_COMMENT_START
-import com.intellij.psi.xml.XmlTokenType.XML_CONDITIONAL_COMMENT_END
-import com.intellij.psi.xml.XmlTokenType.XML_CONDITIONAL_COMMENT_END_START
-import com.intellij.psi.xml.XmlTokenType.XML_CONDITIONAL_COMMENT_START
-import com.intellij.psi.xml.XmlTokenType.XML_CONDITIONAL_COMMENT_START_END
-import com.intellij.psi.xml.XmlTokenType.XML_DOCTYPE_END
-import com.intellij.psi.xml.XmlTokenType.XML_DOCTYPE_START
-import com.intellij.psi.xml.XmlTokenType.XML_EMPTY_ELEMENT_END
-import com.intellij.psi.xml.XmlTokenType.XML_END_TAG_START
-import com.intellij.psi.xml.XmlTokenType.XML_ENTITY_REF_TOKEN
-import com.intellij.psi.xml.XmlTokenType.XML_EQ
-import com.intellij.psi.xml.XmlTokenType.XML_NAME
-import com.intellij.psi.xml.XmlTokenType.XML_PI_END
-import com.intellij.psi.xml.XmlTokenType.XML_PI_START
-import com.intellij.psi.xml.XmlTokenType.XML_REAL_WHITE_SPACE
-import com.intellij.psi.xml.XmlTokenType.XML_START_TAG_START
-import com.intellij.psi.xml.XmlTokenType.XML_TAG_CHARACTERS
-import com.intellij.psi.xml.XmlTokenType.XML_TAG_END
-import com.intellij.util.containers.Stack
-import com.intellij.xml.parsing.XmlParserBundle.message
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.platform.syntax.SyntaxElementType
+import com.intellij.platform.syntax.element.SyntaxTokenTypes
+import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
+import com.intellij.xml.syntax.XmlSyntaxElementType.XML_ATTRIBUTE
+import com.intellij.xml.syntax.XmlSyntaxElementType.XML_ATTRIBUTE_VALUE
+import com.intellij.xml.syntax.XmlSyntaxElementType.XML_CDATA
+import com.intellij.xml.syntax.XmlSyntaxElementType.XML_COMMENT
+import com.intellij.xml.syntax.XmlSyntaxElementType.XML_DOCTYPE
+import com.intellij.xml.syntax.XmlSyntaxElementType.XML_DOCUMENT
+import com.intellij.xml.syntax.XmlSyntaxElementType.XML_ENTITY_REF
+import com.intellij.xml.syntax.XmlSyntaxElementType.XML_PROCESSING_INSTRUCTION
+import com.intellij.xml.syntax.XmlSyntaxElementType.XML_PROLOG
+import com.intellij.xml.syntax.XmlSyntaxElementType.XML_TAG
+import com.intellij.xml.syntax.XmlSyntaxElementType.XML_TEXT
+import com.intellij.xml.syntax.XmlSyntaxTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER
+import com.intellij.xml.syntax.XmlSyntaxTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER
+import com.intellij.xml.syntax.XmlSyntaxTokenType.XML_BAD_CHARACTER
+import com.intellij.xml.syntax.XmlSyntaxTokenType.XML_CDATA_END
+import com.intellij.xml.syntax.XmlSyntaxTokenType.XML_CDATA_START
+import com.intellij.xml.syntax.XmlSyntaxTokenType.XML_CHAR_ENTITY_REF
+import com.intellij.xml.syntax.XmlSyntaxTokenType.XML_COMMENT_CHARACTERS
+import com.intellij.xml.syntax.XmlSyntaxTokenType.XML_COMMENT_END
+import com.intellij.xml.syntax.XmlSyntaxTokenType.XML_COMMENT_START
+import com.intellij.xml.syntax.XmlSyntaxTokenType.XML_CONDITIONAL_COMMENT_END
+import com.intellij.xml.syntax.XmlSyntaxTokenType.XML_CONDITIONAL_COMMENT_END_START
+import com.intellij.xml.syntax.XmlSyntaxTokenType.XML_CONDITIONAL_COMMENT_START
+import com.intellij.xml.syntax.XmlSyntaxTokenType.XML_CONDITIONAL_COMMENT_START_END
+import com.intellij.xml.syntax.XmlSyntaxTokenType.XML_DOCTYPE_END
+import com.intellij.xml.syntax.XmlSyntaxTokenType.XML_DOCTYPE_START
+import com.intellij.xml.syntax.XmlSyntaxTokenType.XML_EMPTY_ELEMENT_END
+import com.intellij.xml.syntax.XmlSyntaxTokenType.XML_END_TAG_START
+import com.intellij.xml.syntax.XmlSyntaxTokenType.XML_ENTITY_REF_TOKEN
+import com.intellij.xml.syntax.XmlSyntaxTokenType.XML_EQ
+import com.intellij.xml.syntax.XmlSyntaxTokenType.XML_NAME
+import com.intellij.xml.syntax.XmlSyntaxTokenType.XML_PI_END
+import com.intellij.xml.syntax.XmlSyntaxTokenType.XML_PI_START
+import com.intellij.xml.syntax.XmlSyntaxTokenType.XML_REAL_WHITE_SPACE
+import com.intellij.xml.syntax.XmlSyntaxTokenType.XML_START_TAG_START
+import com.intellij.xml.syntax.XmlSyntaxTokenType.XML_TAG_CHARACTERS
+import com.intellij.xml.syntax.XmlSyntaxTokenType.XML_TAG_END
 
-/**
- * Use [com.intellij.xml.syntax.XmlParsing] instead.
- *
- * @author max
- */
-@ApiStatus.Obsolete
 open class XmlParsing(
-  @JvmField
-  protected val myBuilder: PsiBuilder,
+  @JvmField protected val myBuilder: SyntaxTreeBuilder,
 ) {
-  private val tagNamesStack = Stack<String>()
+  private val tagNamesStack = ArrayDeque<String>()
 
   fun parseDocument() {
     val document = mark()
@@ -70,11 +58,11 @@ open class XmlParsing(
     parseProlog()
 
     var rootTagCount = 0
-    var error: PsiBuilder.Marker? = null
+    var error: SyntaxTreeBuilder.Marker? = null
 
     fun flushError() {
       error?.let {
-        it.error(message("xml.parsing.unexpected.tokens"))
+        it.error(XmlSyntaxBundle.message("xml.parsing.unexpected.tokens"))
         error = null
       }
     }
@@ -106,11 +94,11 @@ open class XmlParsing(
       }
     }
 
-    error?.error(message("xml.parsing.top.level.element.is.not.completed"))
+    error?.error(XmlSyntaxBundle.message("xml.parsing.top.level.element.is.not.completed"))
 
     if (rootTagCount == 0) {
       val rootTag = mark()
-      mark().error(message("xml.parsing.absent.root.tag"))
+      mark().error(XmlSyntaxBundle.message("xml.parsing.absent.root.tag"))
       rootTag.done(XML_TAG)
     }
 
@@ -124,7 +112,7 @@ open class XmlParsing(
 
     while (token() !== XML_DOCTYPE_END && !eof()) advance()
     if (eof()) {
-      error(message("xml.parsing.unexpected.end.of.file"))
+      error(XmlSyntaxBundle.message("xml.parsing.unexpected.end.of.file"))
     }
     else {
       advance()
@@ -150,8 +138,8 @@ open class XmlParsing(
         val endName = myBuilder.tokenText
         if (tagName != endName && endName in tagNamesStack) {
           footer.rollbackTo()
-          tagNamesStack.pop()
-          tag.doneBefore(XML_TAG, content, message("xml.parsing.named.element.is.not.closed", tagName))
+          tagNamesStack.removeLast()
+          tag.doneBefore(XML_TAG, content, XmlSyntaxBundle.message("xml.parsing.named.element.is.not.closed", tagName))
           content.drop()
           return
         }
@@ -159,7 +147,7 @@ open class XmlParsing(
         advance()
       }
       else {
-        error(message("xml.parsing.closing.tag.name.missing"))
+        error(XmlSyntaxBundle.message("xml.parsing.closing.tag.name.missing"))
       }
       footer.drop()
 
@@ -168,7 +156,7 @@ open class XmlParsing(
              && token() !== XML_END_TAG_START
              && !eof()
       ) {
-        error(message("xml.parsing.unexpected.token"))
+        error(XmlSyntaxBundle.message("xml.parsing.unexpected.token"))
         advance()
       }
 
@@ -176,31 +164,31 @@ open class XmlParsing(
         advance()
       }
       else {
-        error(message("xml.parsing.closing.tag.is.not.done"))
+        error(XmlSyntaxBundle.message("xml.parsing.closing.tag.is.not.done"))
       }
     }
     else {
-      error(message("xml.parsing.unexpected.end.of.file"))
+      error(XmlSyntaxBundle.message("xml.parsing.unexpected.end.of.file"))
     }
 
     content.drop()
-    tagNamesStack.pop()
+    tagNamesStack.removeLast()
     tag.done(XML_TAG)
   }
 
-  private fun parseTagHeader(multipleRootTagError: Boolean, tag: PsiBuilder.Marker): String? {
+  private fun parseTagHeader(multipleRootTagError: Boolean, tag: SyntaxTreeBuilder.Marker): String? {
     if (multipleRootTagError) {
       val error = mark()
       advance()
-      error.error(message("xml.parsing.multiple.root.tags"))
+      error.error(XmlSyntaxBundle.message("xml.parsing.multiple.root.tags"))
     }
     else {
       advance()
     }
 
     val tagName: String?
-    if (token() !== XML_NAME || myBuilder.rawLookup(-1) === TokenType.WHITE_SPACE) {
-      error(message("xml.parsing.tag.name.expected"))
+    if (token() !== XML_NAME || myBuilder.rawLookup(-1) === SyntaxTokenTypes.WHITE_SPACE) {
+      error(XmlSyntaxBundle.message("xml.parsing.tag.name.expected"))
       tagName = ""
     }
     else {
@@ -208,7 +196,7 @@ open class XmlParsing(
       checkNotNull(tagName)
       advance()
     }
-    tagNamesStack.push(tagName)
+    tagNamesStack.addLast(tagName)
 
     while (true) {
       val tt = token()
@@ -221,7 +209,7 @@ open class XmlParsing(
 
     if (token() === XML_EMPTY_ELEMENT_END) {
       advance()
-      tagNamesStack.pop()
+      tagNamesStack.removeLast()
       tag.done(XML_TAG)
       return null
     }
@@ -230,14 +218,14 @@ open class XmlParsing(
       advance()
     }
     else {
-      error(message("xml.parsing.tag.start.is.not.closed"))
-      tagNamesStack.pop()
+      error(XmlSyntaxBundle.message("xml.parsing.tag.start.is.not.closed"))
+      tagNamesStack.removeLast()
       tag.done(XML_TAG)
       return null
     }
 
     if (tagNamesStack.size > BALANCING_DEPTH_THRESHOLD) {
-      error(message("xml.parsing.way.too.unbalanced"))
+      error(XmlSyntaxBundle.message("xml.parsing.way.too.unbalanced"))
       tag.done(XML_TAG)
       return null
     }
@@ -246,7 +234,7 @@ open class XmlParsing(
   }
 
   fun parseTagContent() {
-    var xmlText: PsiBuilder.Marker? = null
+    var xmlText: SyntaxTreeBuilder.Marker? = null
 
     fun terminateText() {
       xmlText?.let {
@@ -293,12 +281,12 @@ open class XmlParsing(
         startText()
         val error = mark()
         advance()
-        error.error(message("xml.parsing.unescaped.ampersand.or.nonterminated.character.entity.reference"))
+        error.error(XmlSyntaxBundle.message("xml.parsing.unescaped.ampersand.or.nonterminated.character.entity.reference"))
       }
-      else if (tt is ICustomParsingType || tt is ILazyParseableElementType) {
-        terminateText()
-        advance()
-      }
+      //else if (tt is ICustomParsingType || tt is ILazyParseableElementType) { TODO figure out this!!!
+      //  terminateText()
+      //  advance()
+      //}
       else {
         startText()
         advance()
@@ -308,11 +296,11 @@ open class XmlParsing(
     terminateText()
   }
 
-  protected open fun isCommentToken(tt: IElementType?): Boolean {
+  protected open fun isCommentToken(tt: SyntaxElementType?): Boolean {
     return tt === XML_COMMENT_START
   }
 
-  protected fun mark(): PsiBuilder.Marker {
+  protected fun mark(): SyntaxTreeBuilder.Marker {
     return myBuilder.mark()
   }
 
@@ -347,7 +335,7 @@ open class XmlParsing(
       else if (tt === XML_BAD_CHARACTER) {
         val error = mark()
         advance()
-        error.error(message("xml.parsing.bad.character"))
+        error.error(XmlSyntaxBundle.message("xml.parsing.bad.character"))
         continue
       }
       if (tt === XML_COMMENT_END) {
@@ -384,7 +372,7 @@ open class XmlParsing(
       parseAttributeValue()
     }
     else {
-      error(message("xml.parsing.expected.attribute.eq.sign"))
+      error(XmlSyntaxBundle.message("xml.parsing.expected.attribute.eq.sign"))
     }
     att.done(XML_ATTRIBUTE)
   }
@@ -406,7 +394,7 @@ open class XmlParsing(
         if (tt === XML_BAD_CHARACTER) {
           val error = mark()
           advance()
-          error.error(message("xml.parsing.unescaped.ampersand.or.nonterminated.character.entity.reference"))
+          error.error(XmlSyntaxBundle.message("xml.parsing.unescaped.ampersand.or.nonterminated.character.entity.reference"))
         }
         else if (tt === XML_ENTITY_REF_TOKEN) {
           parseReference()
@@ -420,11 +408,11 @@ open class XmlParsing(
         advance()
       }
       else {
-        error(message("xml.parsing.unclosed.attribute.value"))
+        error(XmlSyntaxBundle.message("xml.parsing.unclosed.attribute.value"))
       }
     }
     else {
-      error(message("xml.parsing.attribute.value.expected"))
+      error(XmlSyntaxBundle.message("xml.parsing.attribute.value.expected"))
     }
 
     attValue.done(XML_ATTRIBUTE_VALUE)
@@ -450,7 +438,7 @@ open class XmlParsing(
     val pi = mark()
     advance()
     if (token() !== XML_NAME) {
-      error(message("xml.parsing.processing.instruction.name.expected"))
+      error(XmlSyntaxBundle.message("xml.parsing.processing.instruction.name.expected"))
     }
     else {
       advance()
@@ -469,7 +457,7 @@ open class XmlParsing(
           advance()
         }
         else {
-          error(message("xml.parsing.expected.attribute.eq.sign"))
+          error(XmlSyntaxBundle.message("xml.parsing.expected.attribute.eq.sign"))
         }
         parseAttributeValue()
       }
@@ -479,13 +467,13 @@ open class XmlParsing(
       advance()
     }
     else {
-      error(message("xml.parsing.unterminated.processing.instruction"))
+      error(XmlSyntaxBundle.message("xml.parsing.unterminated.processing.instruction"))
     }
 
     pi.done(XML_PROCESSING_INSTRUCTION)
   }
 
-  protected fun token(): IElementType? {
+  protected fun token(): SyntaxElementType? {
     return myBuilder.tokenType
   }
 
@@ -501,14 +489,13 @@ open class XmlParsing(
     myBuilder.error(message)
   }
 
-  private fun checkCurrentToken(type: IElementType) {
+  private fun checkCurrentToken(type: SyntaxElementType) {
     check(token() === type) { "Expected: $type, got: ${token()}" }
   }
 
-  private inline fun checkCurrentToken(type: IElementType, error: () -> String) {
+  private inline fun checkCurrentToken(type: SyntaxElementType, error: () -> String) {
     check(token() === type, error)
   }
 }
 
 private const val BALANCING_DEPTH_THRESHOLD = 1000
-

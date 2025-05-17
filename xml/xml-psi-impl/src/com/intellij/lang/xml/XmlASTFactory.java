@@ -7,6 +7,7 @@ package com.intellij.lang.xml;
 
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.impl.PsiBuilderImpl;
+import com.intellij.platform.syntax.psi.ExtraWhitespaces;
 import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
 import com.intellij.psi.impl.source.html.HtmlTagImpl;
 import com.intellij.psi.impl.source.tree.*;
@@ -136,6 +137,17 @@ public class XmlASTFactory extends ASTFactory {
   }
 
   static {
+    /*
+      XML has a special whitespace kind `XmlTokenType.XML_REAL_WHITE_SPACE`.
+      On AST construction, a leaf with this token type gets replaced with a plain PsiWhiteSpaceImpl
+      (which has the plain WHITE_SPACE token type), see `XmlASTFactory.createLeaf`, so XML_REAL_WHITE_SPACE exists during parsing only.
+
+      But when we want to reparse the file, we end up in a situation when a new not-yet-built tree is
+      compared with the existing tree. And here, we need to deal with inconsistency in token types between XML_REAL_WHITE_SPACE in the new tree and WHITE_SPACE in the old tree.
+
+      To overcome this situation, this hack is introduced
+     */
     PsiBuilderImpl.registerWhitespaceToken(XML_REAL_WHITE_SPACE);
+    ExtraWhitespaces.registerExtraWhitespace(XML_REAL_WHITE_SPACE);
   }
 }

@@ -13,7 +13,12 @@ import com.intellij.psi.xml.XmlTokenType
 import com.intellij.util.ThreeState
 import com.intellij.util.TripleFunction
 import com.intellij.util.diff.FlyweightCapableTreeStructure
+import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Use [com.intellij.xml.syntax.XmlParser] instead
+ */
+@ApiStatus.Obsolete
 open class XmlParser : PsiParser, LightPsiParser {
   override fun parse(
     root: IElementType,
@@ -36,7 +41,7 @@ open class XmlParser : PsiParser, LightPsiParser {
 }
 
 // tries to match an old and new XmlTag by name
-private val REPARSE_XML_TAG_BY_NAME: TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState> =
+internal val REPARSE_XML_TAG_BY_NAME: TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState> =
   TripleFunction(::reparseXmlTagByName)
 
 private fun reparseXmlTagByName(
