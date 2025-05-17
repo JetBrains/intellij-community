@@ -121,7 +121,7 @@ class PyOverloadsInspection : PyInspection() {
     private fun checkOverride(overloads: List<PyFunction>, implementation: PyFunction?) {
       if (implementation == null) {
         for (overload in overloads.tail()) {
-          if (isOverride(overload, myTypeEvalContext)) {
+          if (isOverride(overload)) {
             registerProblem(overload.nameIdentifier,
                             PyPsiBundle.message("INSP.overloads.override.should.be.placed.only.on.the.first.overload"))
           }
@@ -129,7 +129,7 @@ class PyOverloadsInspection : PyInspection() {
       }
       else {
         for (overload in overloads) {
-          if (isOverride(overload, myTypeEvalContext)) {
+          if (isOverride(overload)) {
             registerProblem(overload.nameIdentifier,
                             PyPsiBundle.message("INSP.overloads.override.should.be.placed.on.the.implementation"))
           }
@@ -137,7 +137,7 @@ class PyOverloadsInspection : PyInspection() {
       }
     }
 
-    private fun isOverride(function: PyFunction, context: TypeEvalContext): Boolean {
+    private fun isOverride(function: PyFunction): Boolean {
       val decoratorList = function.decoratorList ?: return false
       return decoratorList.decorators.any { decorator ->
         PyKnownDecoratorUtil.asKnownDecorators(decorator, myTypeEvalContext).any {
