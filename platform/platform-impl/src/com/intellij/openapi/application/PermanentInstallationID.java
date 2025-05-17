@@ -53,7 +53,10 @@ public final class PermanentInstallationID {
 
       // for Windows attempt to use PermanentUserId, so that DotNet products and IDEA would use the same ID.
       if (SystemInfo.isWindows) {
-        installationId = syncWithSharedFile("PermanentUserId", installationId, preferences, INSTALLATION_ID_KEY);
+        var permanentUserId = syncWithSharedFile("PermanentUserId", installationId, preferences, INSTALLATION_ID_KEY);
+        if (!permanentUserId.isBlank()) {
+           installationId = permanentUserId;
+        }
       }
 
       // make sure values in older location and in the new location are the same
