@@ -21,14 +21,14 @@ internal object CondaParseUtils {
   }
 
   @Serializable
-  private data class CondaOutput(val actions: CondaOutputActions)
+  private data class CondaOutput(val actions: CondaOutputActions = CondaOutputActions())
 
   @Serializable
   private data class CondaOutputActions(
     @SerialName("LINK")
-    val link: List<CondaPackageInfo>,
+    val link: List<CondaPackageInfo> = emptyList(),
     @SerialName("UNLINK")
-    val unlink: List<CondaPackageInfo>,
+    val unlink: List<CondaPackageInfo> = emptyList(),
   )
 
   @Serializable

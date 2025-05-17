@@ -2,6 +2,8 @@
 package com.jetbrains.python.packaging
 
 import com.intellij.openapi.util.text.StringUtil
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.errorProcessing.failure
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 
@@ -35,6 +37,16 @@ fun pyRequirement(name: String, relation: PyRequirementRelation, version: String
   return PyRequirementImpl(name, listOf(versionSpec), listOf(name + relation.presentableText + version), "")
 }
 
+
+fun String.parseVersionSpec(): PyResult<PyRequirementVersionSpec> {
+  val value = trim()
+  val relation = PyRequirementRelation.entries.lastOrNull { value.startsWith(it.presentableText) }
+                 ?: return failure("Could not parse relation from: $value")
+
+  val version = value.removePrefix(relation.presentableText)
+  return PyResult.success(pyRequirementVersionSpec(relation, version))
+}
+
 /**
  * This method could be used to obtain [PyRequirementVersionSpec] instances with specified relation and version.
  * If given version could not be normalized, then specified relation will be replaced with [PyRequirementRelation.STR_EQ].
@@ -64,9 +76,11 @@ fun pyRequirementVersionSpec(relation: PyRequirementRelation, version: PyPackage
 /**
  * Instances of this class MUST be obtained from [pyRequirementVersionSpec].
  */
-private data class PyRequirementVersionSpecImpl(private val relation: PyRequirementRelation,
-                                                private val parsedVersion: PyPackageVersion?,
-                                                private val version: String) : PyRequirementVersionSpec {
+private data class PyRequirementVersionSpecImpl(
+  private val relation: PyRequirementRelation,
+  private val parsedVersion: PyPackageVersion?,
+  private val version: String,
+) : PyRequirementVersionSpec {
 
   override fun getRelation() = relation
   override fun getVersion() = version

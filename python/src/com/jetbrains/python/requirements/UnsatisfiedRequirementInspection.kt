@@ -29,7 +29,6 @@ import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDia
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.runPackagingTool
 import com.jetbrains.python.packaging.management.toInstallRequest
-import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.requirements.psi.NameReq
 import com.jetbrains.python.requirements.psi.Requirement
@@ -134,7 +133,7 @@ private class InstallRequirementQuickFix(requirement: Requirement) : LocalQuickF
       val file = descriptor.psiElement.containingFile ?: return
       val sdk = getPythonSdk(file) ?: return
       val versionSpecStr = if (requirement is NameReq) requirement.versionspec?.text else null
-      val versionSpec = versionSpecStr?.let { pyRequirementVersionSpec(PyRequirementRelation.EQ, it) } // TODO CHECK
+      val versionSpec = versionSpecStr?.parseVersionSpec()?.getOr { return }
       val name = requirement.displayName
 
       project.service<PyPackagingToolWindowService>().serviceScope.launch(Dispatchers.IO) {
@@ -162,7 +161,7 @@ private class InstallRequirementQuickFix(requirement: Requirement) : LocalQuickF
         }
         val manager = PythonPackageManager.forSdk(project, sdk)
         val specs = infos.mapNotNull { (name, versionSpecStr) ->
-          val versionSpec = versionSpecStr?.let { pyRequirementVersionSpec(PyRequirementRelation.EQ, it) } // TODO CHECK
+          val versionSpec = versionSpecStr?.parseVersionSpec()?.getOr { return@mapNotNull null }
           manager.createPackageSpecificationWithSpec(name, versionSpec)
         }
 
