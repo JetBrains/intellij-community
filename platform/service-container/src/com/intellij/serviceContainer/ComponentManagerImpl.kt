@@ -37,11 +37,7 @@ import com.intellij.openapi.extensions.impl.createExtensionPoints
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Condition
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.openapi.util.JDOMExternalizable
-import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.util.*
 import com.intellij.platform.instanceContainer.internal.*
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -54,7 +50,6 @@ import com.intellij.util.messages.impl.*
 import com.intellij.util.runSuppressing
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.intellij.IntellijCoroutines
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.picocontainer.ComponentAdapter
@@ -528,20 +523,6 @@ abstract class ComponentManagerImpl(
     activity?.end()
 
     LOG.assertTrue(containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.COMPONENT_CREATED))
-  }
-
-  @TestOnly
-  fun registerComponentImplementation(key: Class<*>, implementation: Class<*>, shouldBeRegistered: Boolean) {
-    val oldHolder = checkState {
-      componentContainer.getInstanceHolder(keyClass = key)
-    }
-    val oldClassLoader = oldHolder?.instanceClass()?.classLoader as? PluginAwareClassLoader
-    val pluginId = oldClassLoader?.pluginId ?: PluginId.getId("test registerComponentImplementation")
-    componentContainer.registerInitializer(
-      keyClass = key,
-      initializer = ComponentClassInstanceInitializer(this, pluginId, key, implementation),
-      override = shouldBeRegistered,
-    )
   }
 
   @TestOnly
