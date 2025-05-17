@@ -2,11 +2,13 @@
 package com.intellij.platform.syntax.util.runtime
 
 import com.intellij.platform.syntax.i18n.ResourceBundle
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 import kotlin.jvm.JvmStatic
 
+@ApiStatus.Experimental
 object SyntaxRuntimeBundle {
   private const val BUNDLE: @NonNls String = "messages.SyntaxRuntimeBundle"
     

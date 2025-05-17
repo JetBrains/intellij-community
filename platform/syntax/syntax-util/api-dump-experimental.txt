@@ -258,3 +258,7 @@
 *:com.intellij.platform.syntax.util.runtime.SyntaxParserRuntimeFactory
 - a:buildParserRuntime(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$ParserUserState):com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime
 - bs:buildParserRuntime$default(com.intellij.platform.syntax.util.runtime.SyntaxParserRuntimeFactory,com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$ParserUserState,I,java.lang.Object):com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime
+*f:com.intellij.platform.syntax.util.runtime.SyntaxRuntimeBundle
+- sf:INSTANCE:com.intellij.platform.syntax.util.runtime.SyntaxRuntimeBundle
+- sf:message(java.lang.String,java.lang.Object[]):java.lang.String
+- sf:messagePointer(java.lang.String,java.lang.Object[]):kotlin.jvm.functions.Function0
