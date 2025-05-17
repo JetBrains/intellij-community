@@ -220,7 +220,6 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
   companion object {
     private const val TESTS_DIR = "typing/conformance/tests"
     private val TESTS_DIR_ABSOLUTE_PATH = Path.of(PythonTestUtil.getTestDataPath(), TESTS_DIR)
-    private val IGNORED_TESTS = Files.readAllLines(TESTS_DIR_ABSOLUTE_PATH / "_ignored.txt").toSet()
     private val failures = mutableListOf<Failure>()
 
     private class Failure(val testFileName: String, val missingErrorsCount: Int, val unexpectedErrorsCount: Int)
@@ -228,10 +227,10 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
     @JvmStatic
     @Parameterized.Parameters(name = "{0}")
     fun parameters(): List<String> {
+      val ignoredTests = Files.readAllLines(Path.of(PythonTestUtil.getTestDataPath(), "typing/ignored.txt")).toSet()
       return TESTS_DIR_ABSOLUTE_PATH.listDirectoryEntries()
         .map(Path::name)
-        .filter { !it.startsWith('_') }
-        .filter { it !in IGNORED_TESTS }
+        .filter { !it.startsWith('_') && it !in ignoredTests }
     }
 
     @AfterClass
