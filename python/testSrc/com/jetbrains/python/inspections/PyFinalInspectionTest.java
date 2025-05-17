@@ -4,6 +4,7 @@ package com.jetbrains.python.inspections;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.pyi.PyiFileType;
 import org.jetbrains.annotations.NotNull;
 
 public class PyFinalInspectionTest extends PyInspectionTestCase {
@@ -109,6 +110,55 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
                                def <warning descr="'aaa.A.foo' is marked as '@final' and should not be overridden">foo</warning>(self, a):
                                    return super().foo(a)""")
     );
+  }
+
+  public void testOverridingOverloadedFinalMethod2() {
+    doTestByText("""
+                   from typing import final, overload
+      
+                   class Base:
+                       @overload
+                       def foo(self, x: int) -> int: ...
+                   
+                       @overload
+                       def foo(self, x: str) -> str: ...
+                   
+                       @final
+                       def foo(self, x: int | str) -> int | str:
+                           pass
+                   
+                   class Derived(Base):
+                       @overload
+                       def foo(self, x: int) -> int: ...
+                   
+                       @overload
+                       def foo(self, x: str) -> str: ...
+                   
+                       def <warning descr="'aaa.Base.foo' is marked as '@final' and should not be overridden">foo</warning>(self, x: int | str) -> int | str:
+                           pass""");
+  }
+
+  public void testOverridingOverloadedFinalMethodNoImplementation() {
+    final PsiFile currentFile = myFixture.configureByText(PyiFileType.INSTANCE, """
+      from typing import final, overload
+      
+      class Base:
+          @overload
+          @final
+          def foo(self, x: int) -> int: ...
+      
+          @overload
+          def foo(self, x: str) -> str: ...
+      
+      class Derived(Base):
+          @overload
+          def <warning descr="'aaa.Base.foo' is marked as '@final' and should not be overridden">foo</warning>(self, x: int) -> int: ...
+      
+          @overload
+          def foo(self, x: str) -> str: ..."""
+    );
+    configureInspection();
+    assertSdkRootsNotParsed(currentFile);
   }
 
   // PY-34945

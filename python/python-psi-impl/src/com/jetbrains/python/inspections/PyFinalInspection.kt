@@ -76,7 +76,10 @@ class PyFinalInspection : PyInspection() {
 
       val cls = node.containingClass
       if (cls != null) {
-        if (!PyiUtil.isOverload(node, myTypeEvalContext)) {
+        val isOverload = PyiUtil.isOverload(node, myTypeEvalContext)
+        if (!isOverload ||
+            PyiUtil.getImplementation(node, myTypeEvalContext) == null &&
+            PyiUtil.getOverloads(node, myTypeEvalContext).firstOrNull() === node) {
           PySuperMethodsSearch
             .search(node, myTypeEvalContext)
             .asIterable()
