@@ -61,6 +61,8 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//platform/polySymbols:polySymbols-testFramework",
     "//libraries/xerces",
+    "//platform/syntax/syntax-scripts:scripts",
+    "//xml/xml-syntax:syntax",
   ],
   runtime_deps = [
     ":tests_test_resources",

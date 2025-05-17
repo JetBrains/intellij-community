@@ -21,6 +21,7 @@ jvm_library(
     "//platform/syntax/syntax-api:syntax",
     "//platform/syntax/syntax-psi:psi",
     "//xml/xml-syntax:syntax",
+    "//platform/syntax/syntax-util:util",
   ],
   runtime_deps = [":parser_resources"]
 )

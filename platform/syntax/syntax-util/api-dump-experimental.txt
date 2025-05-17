@@ -23,6 +23,24 @@
 - getTokenStart():I
 - getTokenType():com.intellij.platform.syntax.SyntaxElementType
 - start(java.lang.CharSequence,I,I,I):V
+*f:com.intellij.platform.syntax.util.lexer.FilterLexer
+- com.intellij.platform.syntax.util.lexer.DelegateLexer
+- <init>(com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.util.lexer.FilterLexer$Filter):V
+- <init>(com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.util.lexer.FilterLexer$Filter,Z[]):V
+- b:<init>(com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.util.lexer.FilterLexer$Filter,Z[],I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- advance():V
+- getCurrentPosition():com.intellij.platform.syntax.lexer.LexerPosition
+- f:getOriginal():com.intellij.platform.syntax.lexer.Lexer
+- f:getPrevTokenEnd():I
+- f:locateToken():V
+- restore(com.intellij.platform.syntax.lexer.LexerPosition):V
+- start(java.lang.CharSequence,I,I,I):V
+*:com.intellij.platform.syntax.util.lexer.FilterLexer$Filter
+- a:reject(com.intellij.platform.syntax.SyntaxElementType):Z
+*f:com.intellij.platform.syntax.util.lexer.FilterLexer$SetFilter
+- com.intellij.platform.syntax.util.lexer.FilterLexer$Filter
+- <init>(com.intellij.platform.syntax.SyntaxElementTypeSet):V
+- reject(com.intellij.platform.syntax.SyntaxElementType):Z
 *c:com.intellij.platform.syntax.util.lexer.FlexAdapter
 - com.intellij.platform.syntax.util.lexer.LexerBase
 - <init>(com.intellij.platform.syntax.util.lexer.FlexLexer):V

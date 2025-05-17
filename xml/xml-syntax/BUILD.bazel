@@ -15,6 +15,10 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/syntax/syntax-api:syntax",
+    "//platform/util/multiplatform",
+    "@lib//:jetbrains-annotations",
+    "//platform/syntax/syntax-i18n:i18n",
+    "//platform/syntax/syntax-util:util",
   ],
   runtime_deps = [":syntax_resources"]
 )
