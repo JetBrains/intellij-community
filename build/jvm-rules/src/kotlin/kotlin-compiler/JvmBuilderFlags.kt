@@ -123,7 +123,7 @@ fun configureCommonCompilerArgs(kotlinArgs: K2JVMCompilerArguments, args: ArgMap
   args.optionalSingle(JvmBuilderFlags.JVM_DEFAULT)?.let {
     kotlinArgs.jvmDefault = it
   }
-  configHash.putString(kotlinArgs.jvmDefault)
+  configHash.putString(kotlinArgs.jvmDefault ?: "")
 
   if (args.boolFlag(JvmBuilderFlags.INLINE_CLASSES)) {
     kotlinArgs.inlineClasses = true
