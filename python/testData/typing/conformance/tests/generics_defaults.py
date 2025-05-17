@@ -82,8 +82,8 @@ assert_type(Class_ParamSpec[[bool, bool]](), Class_ParamSpec[bool, bool])
 
 
 # > ``TypeVarTuple`` defaults are defined using the same syntax as
-# > ``TypeVar`` \ s but use an unpacked tuple of types instead of a single type
-# > or another in-scope ``TypeVarTuple`` (see `Scoping Rules`_).
+# > ``TypeVar`` \ s, but instead of a single type, they use an unpacked tuple
+# > of types or an unpacked, in-scope ``TypeVarTuple`` (see `Scoping Rules`_).
 
 DefaultTs = TypeVarTuple("DefaultTs", default=Unpack[tuple[str, int]])
 
@@ -94,6 +94,9 @@ class Class_TypeVarTuple(Generic[*DefaultTs]): ...
 assert_type(Class_TypeVarTuple, type[Class_TypeVarTuple[*tuple[str, int]]])
 assert_type(Class_TypeVarTuple(), Class_TypeVarTuple[str, int])
 assert_type(Class_TypeVarTuple[int, bool](), Class_TypeVarTuple[int, bool])
+
+
+AnotherDefaultTs = TypeVarTuple("AnotherDefaultTs", default=Unpack[DefaultTs])
 
 
 # > If both ``bound`` and ``default`` are passed, ``default`` must be a

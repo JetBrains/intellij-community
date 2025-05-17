@@ -118,7 +118,7 @@ class Child(Base):  # E[override-final]
     # there's no `Base.bad_override` method):
 
     @overload  # E[bad_override] marked as override but doesn't exist in base
-    @override
+    @override # E[bad_override]
     def bad_override(self, x: int) -> int:  # E[bad_override]
         ...
     @overload

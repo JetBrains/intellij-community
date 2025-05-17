@@ -194,7 +194,7 @@ class Child(Base):  # E[override-final]
     @overload
     def bad_override(self, x: str) -> str: ...
 
-    @override
+    @override  # E[bad_override]
     def bad_override(self, x: int | str) -> int | str:  # E[bad_override]
         ...
 
