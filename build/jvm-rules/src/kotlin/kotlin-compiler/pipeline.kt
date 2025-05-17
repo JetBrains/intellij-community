@@ -7,7 +7,6 @@ import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.messages.GroupingMessageCollector
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
-import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler
 import org.jetbrains.kotlin.cli.pipeline.AbstractCliPipeline
 import org.jetbrains.kotlin.cli.pipeline.ArgumentsPipelineArtifact
 import org.jetbrains.kotlin.cli.pipeline.CheckCompilationErrors
@@ -18,6 +17,8 @@ import org.jetbrains.kotlin.cli.pipeline.SuccessfulPipelineExecutionException
 import org.jetbrains.kotlin.config.Services
 import org.jetbrains.kotlin.config.phaser.PhaseConfig
 import org.jetbrains.kotlin.config.phaser.invokeToplevel
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.util.PerformanceManagerImpl
 
 fun executeJvmPipeline(
   pipeline: AbstractCliPipeline<K2JVMCompilerArguments>,
@@ -32,7 +33,7 @@ fun executeJvmPipeline(
     services,
     rootDisposable,
     messageCollector,
-    K2JVMCompiler.K2JVMCompilerPerformanceManager(),
+    PerformanceManagerImpl(JvmPlatforms.defaultJvmPlatform, "bazel kotlin compiler"),
   )
 
   try {

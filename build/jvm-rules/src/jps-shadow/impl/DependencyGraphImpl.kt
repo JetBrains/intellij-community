@@ -68,6 +68,13 @@ class DependencyGraphImpl(containerFactory: MvStoreContainerFactory) : GraphImpl
     return delta
   }
 
+  override fun differentiate(p0: Delta?, p1: DifferentiateParameters?, p2: Iterable<Graph?>?): DifferentiateResult {
+    throw UnsupportedOperationException()
+  }
+
+  override fun flush() {
+  }
+
   @Synchronized
   override fun differentiate(delta: Delta, params: DifferentiateParameters): DifferentiateResult {
     val allProcessedSources: Set<NodeSource> = if (delta.isSourceOnly) {
@@ -162,6 +169,8 @@ class DependencyGraphImpl(containerFactory: MvStoreContainerFactory) : GraphImpl
         override fun getDeletedNodes() = deletedNodes
 
         override fun getAffectedSources() = java.util.Set.of<NodeSource>()
+
+        override fun isIntegrable(): Boolean = true
       }
     }
 
@@ -236,7 +245,7 @@ class DependencyGraphImpl(containerFactory: MvStoreContainerFactory) : GraphImpl
 
     for (diffStrategy in differentiateStrategies) {
       if (!diffStrategy.differentiate(diffContext, nodesBefore, nodesAfter, nodesWithErrors)) {
-       return DifferentiateResult.createNonIncremental("", params, delta, deletedNodes)
+       return DifferentiateResult.createNonIncremental("", params, delta, true, deletedNodes)
       }
     }
 
@@ -299,7 +308,7 @@ class DependencyGraphImpl(containerFactory: MvStoreContainerFactory) : GraphImpl
             val isAffected = checkAffected(depNode)
             if (isAffected == null) {
               // non-incremental
-              return DifferentiateResult.createNonIncremental("", params, delta, deletedNodes)
+              return DifferentiateResult.createNonIncremental("", params, delta, true, deletedNodes)
             }
             if (isAffected) {
               affectSource = true
@@ -359,6 +368,8 @@ class DependencyGraphImpl(containerFactory: MvStoreContainerFactory) : GraphImpl
       override fun getDeletedNodes() = deletedNodes
 
       override fun getAffectedSources() = affectedSources.asSet()
+
+      override fun isIntegrable(): Boolean = true
     }
   }
 

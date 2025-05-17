@@ -9,7 +9,6 @@ import org.jetbrains.jps.dependency.diff.DiffCapable
 import org.jetbrains.jps.dependency.diff.Difference
 import org.jetbrains.jps.dependency.readList
 import org.jetbrains.jps.dependency.writeCollection
-import org.jetbrains.jps.javac.Iterators
 import org.jetbrains.org.objectweb.asm.Type
 import java.util.function.Predicate
 import kotlin.jvm.JvmField
@@ -91,7 +90,13 @@ class JvmMethod : ProtoMember, DiffCapable<JvmMethod, JvmMethod.Diff> {
   }
 
   override fun diffHashCode(): Int {
-    return 31 * (31 * Iterators.hashCode(argTypes) + type.hashCode()) + name.hashCode()
+    return 31 * (31 * run {
+      var result = 1
+      for (elem in argTypes) {
+        result = 31 * result + elem.hashCode()
+      }
+      result
+    } + type.hashCode()) + name.hashCode()
   }
 
   override fun equals(other: Any?): Boolean = other is JvmMethod && isSame(other)

@@ -5,28 +5,28 @@
       version: 4.30.2
     # kotlin JPS plugin
     - id: org.jetbrains.kotlin:kotlin-build-tools-api
-      version: 2.1.20
+      version: 2.2.0-RC
     - id: org.jetbrains.kotlin:kotlin-util-klib
-      version: 2.1.20
+      version: 2.2.0-RC
     - id: org.jetbrains.kotlin:kotlin-util-klib-metadata
-      version: 2.1.20
+      version: 2.2.0-RC
     # kotlin compiler
     - id: org.jetbrains.kotlin:kotlin-build-tools-impl
-      version: 2.1.20
+      version: 2.2.0-RC
     #- id: org.jetbrains.kotlin:kotlin-compiler
-    #  version: 2.1.20-RC
+    #  version: 2.2.0-RC-RC
     #  runtimeDeps:
     #    - "@lib//:jetbrains-annotations"
     #    - "@lib//:kotlinx-coroutines-core"
     - id: org.jetbrains.kotlin:kotlin-metadata-jvm
-      version: 2.1.20
+      version: 2.2.0-RC
     - id: org.jetbrains.kotlin:kotlin-jps-plugin
-      version: 2.1.20
+      version: 2.2.0-RC
     # kotlin compiler plugins
     - id: org.jetbrains.kotlin:kotlin-serialization-compiler-plugin
-      version: 2.1.20
+      version: 2.2.0-RC
     - id: org.jetbrains.kotlin:kotlin-compose-compiler-plugin
-      version: 2.1.20
+      version: 2.2.0-RC
     # other libs
     - id: com.dynatrace.hash4j:hash4j
       version: 0.22.0
@@ -66,7 +66,7 @@
     - id: org.jetbrains:annotations
       version: 26.0.2
     - id: org.jetbrains.kotlin:kotlin-stdlib
-      version: 2.1.20
+      version: 2.2.0-RC
     - id: org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm
       version: 0.3.8
     - id: org.slf4j:slf4j-api

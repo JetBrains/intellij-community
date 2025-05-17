@@ -64,11 +64,6 @@ _kt_kotlinc_options(
     x_jdk_release = "17",
 )
 
-# java_import(
-#     name = "jps",
-#     jars = ["jps-build-standalone.jar"],
-#     visibility = ["//visibility:public"],
-# )
 jvm_import(
     name = "jps",
     jar = "@jps-standalone_http//file",
@@ -113,28 +108,11 @@ jvm_import(
     visibility = ["//visibility:public"],
 )
 
-# jvm_import(
-#     name = "kotlin-compiler",
-#     jar = "@kotlin-compiler//file",
-#     source_jar = "@kotlin-compiler-sources//file",
-#     visibility = ["//visibility:public"],
-#     runtime_deps = [
-#         "@lib//:jetbrains-annotations",
-#         "@lib//:kotlinx-coroutines-core"
-#     ],
-# )
-
 alias(
     name = "kotlin-compiler",
     actual = "@kotlin-compiler_http//:kotlin-compiler",
     visibility = ["//visibility:public"],
 )
-# java_import(
-#     name = "kotlin-compiler",
-#     jars = ["kotlin-compiler.jar"],
-#     srcjar = "@kotlin-compiler-sources//file",
-#     visibility = ["//visibility:public"],
-# )
 
 jvm_provided_library(
     name = "kotlin-compiler-provided",

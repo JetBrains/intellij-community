@@ -20,8 +20,6 @@ import org.jetbrains.kotlin.cli.common.moduleChunk
 import org.jetbrains.kotlin.cli.common.modules.ModuleBuilder
 import org.jetbrains.kotlin.cli.common.modules.ModuleChunk
 import org.jetbrains.kotlin.cli.common.setupCommonArguments
-import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler.K2JVMCompilerPerformanceManager
-import org.jetbrains.kotlin.cli.jvm.compiler.KotlinToJVMBytecodeCompiler
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinToJVMBytecodeCompiler.toBackendInput
 import org.jetbrains.kotlin.cli.jvm.config.JvmClasspathRoot
 import org.jetbrains.kotlin.cli.jvm.config.JvmModulePathRoot
@@ -34,7 +32,6 @@ import org.jetbrains.kotlin.cli.pipeline.AbstractConfigurationPhase
 import org.jetbrains.kotlin.cli.pipeline.ArgumentsPipelineArtifact
 import org.jetbrains.kotlin.cli.pipeline.CheckCompilationErrors
 import org.jetbrains.kotlin.cli.pipeline.ConfigurationPipelineArtifact
-import org.jetbrains.kotlin.cli.pipeline.PerformanceNotifications
 import org.jetbrains.kotlin.cli.pipeline.PipelineContext
 import org.jetbrains.kotlin.cli.pipeline.PipelinePhase
 import org.jetbrains.kotlin.cli.pipeline.jvm.JvmBinaryPipelineArtifact
@@ -42,6 +39,8 @@ import org.jetbrains.kotlin.cli.pipeline.jvm.JvmFir2IrPipelineArtifact
 import org.jetbrains.kotlin.cli.pipeline.jvm.JvmFir2IrPipelinePhase
 import org.jetbrains.kotlin.cli.pipeline.jvm.JvmFrontendPipelinePhase
 import org.jetbrains.kotlin.cli.plugins.processCompilerPluginOptions
+import org.jetbrains.kotlin.codegen.ClassBuilderFactories
+import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.config.CompilerConfiguration
@@ -57,6 +56,10 @@ import org.jetbrains.kotlin.fir.backend.utils.extractFirDeclarations
 import org.jetbrains.kotlin.metadata.deserialization.BinaryVersion
 import org.jetbrains.kotlin.metadata.deserialization.MetadataVersion
 import org.jetbrains.kotlin.modules.JavaRootPath
+import org.jetbrains.kotlin.modules.TargetId
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.util.PerformanceManager
+import org.jetbrains.kotlin.util.PerformanceManagerImpl
 import java.io.File
 import java.nio.file.Path
 
@@ -165,6 +168,7 @@ fun configureModule(
   return module
 }
 
+@Suppress("unused")
 @OptIn(ExperimentalCompilerApi::class)
 fun getDebugInfoAboutPlugins(args: ArgMap<JvmBuilderFlags>, baseDir: Path, pluginProvider: CompilerPluginProvider): String {
   val sb = StringBuilder()
@@ -199,7 +203,7 @@ private class BazelJvmCliPipeline(
   private val checkCancelled: () -> Unit,
   private val consumer: (OutputFileCollection) -> Unit,
 ) : AbstractCliPipeline<K2JVMCompilerArguments>() {
-  override val defaultPerformanceManager: K2JVMCompilerPerformanceManager = K2JVMCompilerPerformanceManager()
+  override val defaultPerformanceManager: PerformanceManager = PerformanceManagerImpl(JvmPlatforms.defaultJvmPlatform, "bazel kotlin compiler")
 
   override fun createCompoundPhase(arguments: K2JVMCompilerArguments): CompilerPhase<PipelineContext, ArgumentsPipelineArtifact<K2JVMCompilerArguments>, *> {
     return createRegularPipeline()
@@ -234,24 +238,19 @@ private class BazelJvmBackendPipelinePhase(
   private val checkCancelled: () -> Unit,
 ) : PipelinePhase<JvmFir2IrPipelineArtifact, JvmBinaryPipelineArtifact>(
   name = "JvmBackendPipelineStep",
-  preActions = setOf(
-    PerformanceNotifications.GenerationStarted,
-    PerformanceNotifications.IrLoweringStarted
-  ),
   postActions = setOf(
-    PerformanceNotifications.IrGenerationFinished,
-    PerformanceNotifications.GenerationFinished,
     CheckCompilationErrors.CheckDiagnosticCollector
   )
 ) {
   override fun executePhase(input: JvmFir2IrPipelineArtifact): JvmBinaryPipelineArtifact {
-    val (fir2IrResult, configuration, environment, diagnosticCollector) = input
-    val project = environment.project
+    val project = input.environment.project
+    val fir2IrResult = input.result
     val classResolver = FirJvmBackendClassResolver(fir2IrResult.components)
     val jvmBackendExtension = FirJvmBackendExtension(
       fir2IrResult.components,
       fir2IrResult.irActualizedResult?.actualizedExpectDeclarations?.extractFirDeclarations()
     )
+    val configuration = input.configuration
     val baseBackendInput = fir2IrResult.toBackendInput(configuration, jvmBackendExtension)
     val codegenFactory = JvmIrCodegenFactory(configuration)
 
@@ -260,33 +259,25 @@ private class BazelJvmBackendPipelinePhase(
 
     val module = configuration.moduleChunk!!.modules.single()
     checkCancelled()
-    val codegenInput = KotlinToJVMBytecodeCompiler.runLowerings(
+
+    val state = GenerationState(
       project = project,
-      //configuration = configurationWithoutOutputDir,
+      module = fir2IrResult.irModuleFragment.descriptor,
       configuration = configuration,
-      moduleDescriptor = fir2IrResult.irModuleFragment.descriptor,
-      module = module,
-      codegenFactory = codegenFactory,
-      backendInput = baseBackendInput,
-      diagnosticsReporter = diagnosticCollector,
-      firJvmBackendClassResolver = classResolver,
-      reportGenerationStarted = false,
+      builderFactory = ClassBuilderFactories.BINARIES,
+      targetId = module?.let(::TargetId),
+      moduleName = module?.getModuleName() ?: configuration.moduleName,
+      onIndependentPartCompilationEnd = {},
+      diagnosticReporter = input.diagnosticCollector,
+      jvmBackendClassResolver = classResolver,
     )
 
+    val codegenInput = codegenFactory.invokeLowerings(state, baseBackendInput)
     checkCancelled()
-
-    val generationState = KotlinToJVMBytecodeCompiler.runCodegen(
-      codegenInput = codegenInput,
-      state = codegenInput.state,
-      codegenFactory = codegenFactory,
-      diagnosticsReporter = diagnosticCollector,
-      configuration = codegenInput.state.configuration,
-      reportGenerationFinished = false,
-    )
-
+    codegenFactory.invokeCodegen(codegenInput)
     checkCancelled()
-    consumer(generationState.factory)
+    consumer(codegenInput.state.factory)
 
-    return JvmBinaryPipelineArtifact(listOf(generationState))
+    return JvmBinaryPipelineArtifact(listOf(codegenInput.state))
   }
 }
