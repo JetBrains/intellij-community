@@ -119,11 +119,6 @@ abstract class FirUastApiTest : AbstractFirUastTest() {
             doCheck("uast-kotlin/tests/testData/EnumValueMembers.kt", ::checkCallbackForEnumValueMembers)
         }
 
-        @TestMetadata("SimpleAnnotated.kt")
-        fun testSimpleAnnotated() {
-            doCheck("uast-kotlin/tests/testData/SimpleAnnotated.kt", ::checkCallbackForSimpleAnnotated)
-        }
-
         @TestMetadata("SuperCalls.kt")
         fun testSuperCalls() {
             doCheck("uast-kotlin/tests/testData/SuperCalls.kt", ::checkCallbackForSuperCalls)

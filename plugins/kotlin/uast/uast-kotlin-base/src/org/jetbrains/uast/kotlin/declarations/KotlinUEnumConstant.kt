@@ -5,7 +5,6 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
@@ -36,8 +35,6 @@ class KotlinUEnumConstant(
     override val javaPsi = unwrap<UEnumConstant, PsiEnumConstant>(psi)
 
     override val psi = javaPsi
-
-    override fun acceptsAnnotationTarget(target: AnnotationUseSiteTarget?): Boolean = true
 
     override fun getContainingFile(): PsiFile {
         return super.getContainingFile()
