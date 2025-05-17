@@ -21,7 +21,6 @@ import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.*
-import com.intellij.vcs.log.impl.VcsLogTabLocation.Companion.findLogUi
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.VcsLogUiEx
@@ -144,7 +143,7 @@ class GitUpdateInfoAsLog(private val project: Project,
       }
       return
     }
-    val logUi = logManager.findLogUi(VcsLogTabLocation.TOOL_WINDOW, VcsLogUiEx::class.java, select) {
+    val logUi = VcsLogContentUtil.findLogUi(project, VcsLogUiEx::class.java, select) {
       isUpdateTabId(it.id) && it.filterUi.filters.get(RANGE_FILTER) == rangeFilter
     }
     if (logUi != null) return

@@ -71,6 +71,11 @@ object VcsLogContentUtil {
     return null
   }
 
+  @Internal
+  fun <U : VcsLogUi> findLogUi(project: Project, clazz: Class<U>, select: Boolean, condition: (U) -> Boolean): U? {
+    return getToolWindow(project)?.let { findLogUi(it, clazz, select, condition) }
+  }
+
   internal fun selectLogUi(project: Project, logUi: VcsLogUi, requestFocus: Boolean = true): Boolean {
     val toolWindow = getToolWindow(project) ?: return false
     val manager = toolWindow.contentManager
