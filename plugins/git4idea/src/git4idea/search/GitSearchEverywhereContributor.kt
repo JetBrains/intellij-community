@@ -25,7 +25,6 @@ import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsRef
 import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.impl.VcsLogContentUtil
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToCommit
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.render.LabelIcon
@@ -179,7 +178,7 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
     }
 
     if (hash != null && root != null) {
-      VcsLogContentUtil.runInMainLog(project) { it.jumpToCommit(hash, root, false, true) }
+      VcsProjectLog.runInMainLog(project) { it.jumpToCommit(hash, root, false, true) }
       return true
     }
     return false

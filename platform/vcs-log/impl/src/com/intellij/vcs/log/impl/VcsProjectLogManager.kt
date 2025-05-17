@@ -80,14 +80,27 @@ internal class VcsProjectLogManager(
     tabsManager.createTabs()
   }
 
-  override suspend fun awaitMainUi(): MainVcsLogUi = mainUiCs.async {
-    mainUiState.filterNotNull().first()
-  }.await()
-
   override fun runInMainUi(consumer: (MainVcsLogUi) -> Unit) {
-    mainUiCs.launch {
-      val mainUi = mainUiState.filterNotNull().first()
-      consumer(mainUi)
+    val toolWindow = VcsLogContentUtil.getToolWindow(project)
+    if (toolWindow == null) {
+      VcsLogContentUtil.showLogIsNotAvailableMessage(project)
+      return
+    }
+
+    val doRun = Runnable {
+      VcsLogContentUtil.selectMainLog(toolWindow)
+      // EDT because we want to execute immediately on button press, and it is handled via EDT
+      mainUiCs.launch(Dispatchers.EdtImmediate) {
+        val mainUi = mainUiState.filterNotNull().first()
+        consumer(mainUi)
+      }
+    }
+
+    if (!toolWindow.isVisible) {
+      toolWindow.activate(doRun)
+    }
+    else {
+      doRun.run()
     }
   }
 
@@ -179,7 +192,7 @@ internal class VcsProjectLogManager(
       if (mainLogContent != null) {
         ChangesViewContentManager.initLazyContent(mainLogContent)
 
-        val mainLogUi = awaitMainUi()
+        val mainLogUi = mainUiState.filterNotNull().first()
         mainLogUi.refresher.setValid(true, false) // since the main ui is not visible, it needs to be validated to find the commit
         if (predicate(mainLogUi) && mainLogUi.showCommitSync(hash, root, requestFocus)) {
           window.contentManager.setSelectedContent(mainLogContent)

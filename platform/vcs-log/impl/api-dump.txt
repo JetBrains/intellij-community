@@ -485,7 +485,6 @@ f:com.intellij.vcs.log.impl.VcsLogApplicationSettings$State
 f:com.intellij.vcs.log.impl.VcsLogContentUtil
 - sf:INSTANCE:com.intellij.vcs.log.impl.VcsLogContentUtil
 - sf:runInMainLog(com.intellij.openapi.project.Project,com.intellij.util.Consumer):V
-- f:selectMainLog(com.intellij.openapi.project.Project):Z
 com.intellij.vcs.log.impl.VcsLogErrorHandler
 - a:displayMessage(java.lang.String):V
 - a:handleError(com.intellij.vcs.log.impl.VcsLogErrorHandler$Source,java.lang.Throwable):V
@@ -612,13 +611,17 @@ f:com.intellij.vcs.log.impl.VcsProjectLog
 - sf:getLogProviders(com.intellij.openapi.project.Project):java.util.Map
 - f:getMainLogUi():com.intellij.vcs.log.ui.VcsLogUiImpl
 - sf:getSupportedVcs(com.intellij.openapi.project.Project):java.util.Set
+- sf:isAvailable(com.intellij.openapi.project.Project):Z
 - f:isDisposing():Z
 - f:openLogTab(com.intellij.vcs.log.VcsLogFilterCollection):com.intellij.vcs.log.ui.MainVcsLogUi
+- sf:runInMainLog(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):V
 f:com.intellij.vcs.log.impl.VcsProjectLog$Companion
 - f:awaitLogIsReady(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.vcs.log.impl.VcsProjectLog
 - f:getLogProviders(com.intellij.openapi.project.Project):java.util.Map
 - f:getSupportedVcs(com.intellij.openapi.project.Project):java.util.Set
+- f:isAvailable(com.intellij.openapi.project.Project):Z
+- f:runInMainLog(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):V
 - f:runWhenLogIsReady(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):V
 - f:waitWhenLogIsReady(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.vcs.log.impl.VcsProjectLog$ProjectLogListener

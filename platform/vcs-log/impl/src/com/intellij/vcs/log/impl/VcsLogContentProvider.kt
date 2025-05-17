@@ -9,7 +9,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
 import com.intellij.ui.content.Content
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.vcs.log.VcsLogBundle
-import com.intellij.vcs.log.impl.VcsProjectLog.Companion.getLogProviders
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.util.function.Predicate
 import java.util.function.Supplier
@@ -20,9 +19,8 @@ import java.util.function.Supplier
  * Delegates to the VcsLogManager.
  */
 internal class VcsLogContentProvider(private val project: Project) : ChangesViewContentProvider {
-  private val projectLog = VcsProjectLog.getInstance(project)
-
   override fun initTabContent(content: Content) {
+    val projectLog = VcsProjectLog.getInstance(project)
     if (projectLog.isDisposing) return
 
     thisLogger<VcsLogContentProvider>().debug("Adding main Log ui container to the content for ${project.name}")
@@ -48,9 +46,7 @@ internal class VcsLogContentProvider(private val project: Project) : ChangesView
   }
 
   internal class VcsLogVisibilityPredicate : Predicate<Project> {
-    override fun test(project: Project): Boolean {
-      return !getLogProviders(project).isEmpty()
-    }
+    override fun test(project: Project): Boolean = VcsProjectLog.isAvailable(project)
   }
 
   internal class DisplayNameSupplier : Supplier<String> {

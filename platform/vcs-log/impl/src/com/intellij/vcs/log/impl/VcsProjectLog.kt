@@ -333,6 +333,11 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
     }
 
     @JvmStatic
+    fun isAvailable(project: Project): Boolean {
+      return !getLogProviders(project).isEmpty()
+    }
+
+    @JvmStatic
     fun getSupportedVcs(project: Project): Set<VcsKey> {
       return getLogProviders(project).values.mapTo(mutableSetOf()) { it.supportedVcs }
     }
@@ -355,21 +360,41 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
      */
     @RequiresEdt
     fun runWhenLogIsReady(project: Project, action: (VcsLogManager) -> Unit) {
-      val projectLog = getInstance(project)
-      val manager = projectLog.logManager
+      getInstance(project).runWhenLogIsReady(action)
+    }
+
+    /**
+     * Executes the given action if and when the main UI has been initialized.
+     */
+    @JvmStatic
+    @RequiresEdt
+    fun runInMainLog(project: Project, consumer: (MainVcsLogUi) -> Unit) {
+      if (!isAvailable(project)) {
+        VcsLogContentUtil.showLogIsNotAvailableMessage(project)
+        return
+      }
+
+      getInstance(project).runWhenLogIsReady { manager ->
+        manager.runInMainUi {
+          consumer(it)
+        }
+      }
+    }
+
+    private inline fun VcsProjectLog.runWhenLogIsReady(crossinline action: (VcsLogManager) -> Unit) {
+      val manager = logManager
       if (manager != null) {
         action(manager)
         return
       }
 
       // schedule showing the log, wait its initialization, and then open the tab
-      projectLog.coroutineScope.launch {
+      coroutineScope.launch {
         withBackgroundProgress(project, VcsLogBundle.message("vcs.log.creating.process")) {
-          awaitLogIsReady(project)
-
-          withContext(Dispatchers.EDT) {
-            projectLog.logManager?.let {
-              action(it)
+          val logManager = awaitLogIsReady(project)
+          if (logManager != null) {
+            withContext(Dispatchers.EDT) {
+              action(logManager)
             }
           }
         }

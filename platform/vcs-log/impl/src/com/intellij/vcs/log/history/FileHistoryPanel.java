@@ -31,9 +31,9 @@ import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
-import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.*;
 import com.intellij.vcs.log.ui.details.CommitDetailsListPanel;
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel;
@@ -132,8 +132,9 @@ class FileHistoryPanel extends JPanel implements UiDataProvider, Disposable {
 
     myDetailsPanel = new CommitDetailsListPanel(myProject, this, () -> {
       return new CommitDetailsPanel(commit -> {
-        VcsLogContentUtil.runInMainLog(myProject, ui -> {
+        VcsProjectLog.runInMainLog(myProject, ui -> {
           VcsLogNavigationUtil.jumpToCommit(ui, commit.getHash(), commit.getRoot(), false, true);
+          return Unit.INSTANCE;
         });
         return Unit.INSTANCE;
       });

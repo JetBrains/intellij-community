@@ -20,11 +20,11 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.HashImpl;
-import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
 import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcsUtil.VcsUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,7 +99,10 @@ public class ShowCommitInLogAction extends DumbAwareAction {
    */
   @ApiStatus.Internal
   public static void jumpToRevision(@NotNull Project project, @NotNull Hash hash) {
-    VcsLogContentUtil.runInMainLog(project, logUi -> jumpToRevisionUnderProgress(project, logUi, hash));
+    VcsProjectLog.runInMainLog(project, logUi -> {
+      jumpToRevisionUnderProgress(project, logUi, hash);
+      return Unit.INSTANCE;
+    });
   }
 
   private static void jumpToRevisionUnderProgress(@NotNull Project project,

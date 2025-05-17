@@ -118,10 +118,6 @@ open class VcsLogManager @Internal constructor(
     postponableRefresher.refreshPostponedRoots()
   }
 
-  internal open suspend fun awaitMainUi(): MainVcsLogUi? {
-    return null
-  }
-
   internal open fun runInMainUi(consumer: (MainVcsLogUi) -> Unit) {
     error("${this::class.simpleName} has no main UI")
   }

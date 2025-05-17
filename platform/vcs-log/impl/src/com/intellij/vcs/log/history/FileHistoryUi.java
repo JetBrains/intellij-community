@@ -15,9 +15,9 @@ import com.intellij.vcs.log.data.DataPackBase;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.impl.CommonUiProperties;
-import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogNotificationIdsHolder;
 import com.intellij.vcs.log.ui.highlighters.CurrentBranchHighlighter;
@@ -27,14 +27,15 @@ import com.intellij.vcs.log.ui.table.column.TableColumnWidthProperty;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
@@ -143,8 +144,9 @@ public class FileHistoryUi extends AbstractVcsLogUi {
         VcsLogNavigationUtil.jumpToRevisionAsync(myProject, myRoot, (Hash)commitId, null);
       }
       else {
-        VcsLogContentUtil.runInMainLog(myProject, ui -> {
+        VcsProjectLog.runInMainLog(myProject, ui -> {
           ui.jumpTo(commitId, rowGetter, SettableFuture.create(), false, true);
+          return Unit.INSTANCE;
         });
       }
     }));

@@ -122,26 +122,13 @@ object VcsLogContentUtil {
     }
   }
 
+  @Deprecated("Use {@link VcsProjectLog#runInMainLog} instead",
+              ReplaceWith("VcsProjectLog.runInMainLog(project, consumer)", "com.intellij.vcs.log.impl.VcsProjectLog"))
+  @RequiresEdt
   @JvmStatic
   fun runInMainLog(project: Project, consumer: Consumer<in MainVcsLogUi>) {
-    val window = getToolWindow(project)
-    if (window == null || !selectMainLog(window.contentManager)) {
-      showLogIsNotAvailableMessage(project)
-      return
-    }
-
-    val runConsumer = Runnable {
-      VcsProjectLog.runWhenLogIsReady(project) { mgr ->
-        mgr.runInMainUi {
-          consumer.consume(it)
-        }
-      }
-    }
-    if (!window.isVisible) {
-      window.activate(runConsumer)
-    }
-    else {
-      runConsumer.run()
+    VcsProjectLog.runInMainLog(project) {
+      consumer.consume(it)
     }
   }
 
@@ -157,15 +144,17 @@ object VcsLogContentUtil {
     return cm.contents.find { MAIN_LOG_TAB_NAME == it.tabName }
   }
 
-  private fun selectMainLog(cm: ContentManager): Boolean {
+  internal fun selectMainLog(toolWindow: ToolWindow): Boolean {
+    val cm = toolWindow.contentManager
     val mainContent = findMainLog(cm) ?: return false
     cm.setSelectedContent(mainContent)
     return true
   }
 
+  @Internal
   fun selectMainLog(project: Project): Boolean {
     val toolWindow = getToolWindow(project) ?: return false
-    return selectMainLog(toolWindow.contentManager)
+    return selectMainLog(toolWindow)
   }
 
   @Internal
