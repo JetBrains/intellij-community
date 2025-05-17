@@ -65,6 +65,40 @@
 - getTokenStart():I
 - getTokenType():com.intellij.platform.syntax.SyntaxElementType
 - start(java.lang.CharSequence,I,I,I):V
+*f:com.intellij.platform.syntax.util.lexer.StringEscapesTokenTypes
+- sf:INSTANCE:com.intellij.platform.syntax.util.lexer.StringEscapesTokenTypes
+- f:getINVALID_CHARACTER_ESCAPE_TOKEN():com.intellij.platform.syntax.SyntaxElementType
+- f:getINVALID_UNICODE_ESCAPE_TOKEN():com.intellij.platform.syntax.SyntaxElementType
+- f:getSTRING_LITERAL_ESCAPES():com.intellij.platform.syntax.SyntaxElementTypeSet
+- f:getVALID_STRING_ESCAPE_TOKEN():com.intellij.platform.syntax.SyntaxElementType
+*c:com.intellij.platform.syntax.util.lexer.StringLiteralLexer
+- com.intellij.platform.syntax.util.lexer.LexerBase
+- *sf:Companion:com.intellij.platform.syntax.util.lexer.StringLiteralLexer$Companion
+- sf:NO_QUOTE_CHAR:C
+- <init>(C,com.intellij.platform.syntax.SyntaxElementType,Z,java.lang.String,Z,Z):V
+- b:<init>(C,com.intellij.platform.syntax.SyntaxElementType,Z,java.lang.String,Z,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- advance():V
+- getBufferEnd():I
+- getBufferSequence():java.lang.CharSequence
+- p:getHexCodedEscapeSeq():com.intellij.platform.syntax.SyntaxElementType
+- pf:getOriginalLiteralToken():com.intellij.platform.syntax.SyntaxElementType
+- pf:getQuoteChar():C
+- p:getShouldAllowSlashZero():Z
+- pf:getStandardLimitedHexCodedEscapeSeq(I):com.intellij.platform.syntax.SyntaxElementType
+- getState():I
+- getTokenEnd():I
+- getTokenStart():I
+- getTokenType():com.intellij.platform.syntax.SyntaxElementType
+- p:getUnicodeEscapeSequenceType():com.intellij.platform.syntax.SyntaxElementType
+- p:handleSingleSlashEscapeSequence():com.intellij.platform.syntax.SyntaxElementType
+- p:locateAdditionalEscapeSequence(I,I):I
+- p:locateHexEscapeSequence(I,I):I
+- p:locateUnicodeEscapeSequence(I,I):I
+- start(java.lang.CharSequence,I,I,I):V
+*f:com.intellij.platform.syntax.util.lexer.StringLiteralLexer$Companion
+*f:com.intellij.platform.syntax.util.lexer.StringLiteralLexerKt
+- *sf:isHexDigit(C):Z
+- *sf:isOctalDigit(C):Z
 *f:com.intellij.platform.syntax.util.parser.SyntaxBuilderUtil
 - sf:INSTANCE:com.intellij.platform.syntax.util.parser.SyntaxBuilderUtil
 - f:advance(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,I):V
