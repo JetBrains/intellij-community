@@ -1,10 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
 import com.intellij.util.containers.ConcurrentLongObjectMap
 import java.util.*
 
-internal class DefaultJava11Shim : Java11Shim {
+internal class DefaultJava11Shim : Java11Shim() {
   override fun <K : Any, V> copyOf(map: Map<K, V>): Map<K, V> {
     return Collections.unmodifiableMap(map)
   }

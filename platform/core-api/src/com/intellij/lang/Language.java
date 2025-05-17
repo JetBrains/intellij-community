@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import com.intellij.diagnostic.ImplementationConflictException;
@@ -47,9 +47,9 @@ public abstract class Language extends UserDataHolderBase {
   public static final Language[] EMPTY_ARRAY = new Language[0];
 
   private static final Object staticLock = new Object();
-  private static volatile Map<Class<? extends Language>, @NotNull Language> registeredLanguages = Java11Shim.Companion.getINSTANCE().mapOf();
-  private static volatile Map<String, PersistentList<Language>> registeredMimeTypes = Java11Shim.Companion.getINSTANCE().mapOf();
-  private static volatile Map<String, Language> registeredIds = Java11Shim.Companion.getINSTANCE().mapOf();
+  private static volatile Map<Class<? extends Language>, @NotNull Language> registeredLanguages = Java11Shim.INSTANCE.mapOf();
+  private static volatile Map<String, PersistentList<Language>> registeredMimeTypes = Java11Shim.INSTANCE.mapOf();
+  private static volatile Map<String, Language> registeredIds = Java11Shim.INSTANCE.mapOf();
 
   private final Language myBaseLanguage;
   private final String myID;

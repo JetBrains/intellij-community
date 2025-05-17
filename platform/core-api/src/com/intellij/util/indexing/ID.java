@@ -34,8 +34,8 @@ public class ID<K, V> extends IndexId<K,V> {
   private static final Map<String, ID<?, ?>> idObjects = new ConcurrentHashMap<>();
 
   private static final Object lock = new Object();
-  private static volatile Map<@NotNull ID<?, ?>, @NotNull PluginId> idToPluginId = Java11Shim.Companion.getINSTANCE().mapOf();
-  private static volatile Map<@NotNull ID<?, ?>, @NotNull Throwable> idToRegistrationStackTrace = Java11Shim.Companion.getINSTANCE().mapOf();
+  private static volatile Map<@NotNull ID<?, ?>, @NotNull PluginId> idToPluginId = Java11Shim.INSTANCE.mapOf();
+  private static volatile Map<@NotNull ID<?, ?>, @NotNull Throwable> idToRegistrationStackTrace = Java11Shim.INSTANCE.mapOf();
   @ApiStatus.Internal
   public static final int MAX_NUMBER_OF_INDICES = Short.MAX_VALUE;
 
@@ -210,7 +210,7 @@ public class ID<K, V> extends IndexId<K,V> {
 
   @ApiStatus.Internal
   protected static @Nullable PluginId getCallerPluginId() {
-    Class<?> aClass = Java11Shim.Companion.getINSTANCE().getCallerClass(3);
+    Class<?> aClass = Java11Shim.INSTANCE.getCallerClass(3);
     if (aClass == null) {
       return null;
     }

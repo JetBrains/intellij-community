@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.diagnostic.PluginException;
@@ -27,9 +27,9 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
 
   /** Guarded by {@link #lock} */
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  private Map<String, PersistentList<T>> explicitExtensions = Java11Shim.Companion.getINSTANCE().mapOf();
+  private Map<String, PersistentList<T>> explicitExtensions = Java11Shim.INSTANCE.mapOf();
 
-  private volatile @UnmodifiableView Map<String, List<T>> cache = Java11Shim.Companion.getINSTANCE().mapOf();
+  private volatile @UnmodifiableView Map<String, List<T>> cache = Java11Shim.INSTANCE.mapOf();
   private final String epName;
   private final SimpleModificationTracker tracker = new SimpleModificationTracker();
 
@@ -141,7 +141,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   protected final @NotNull @Unmodifiable List<KeyedLazyInstance<T>> getExtensions() {
     ExtensionPoint<@NotNull KeyedLazyInstance<T>> point = getPoint();
     if (point == null) {
-      return Java11Shim.Companion.getINSTANCE().listOf();
+      return Java11Shim.INSTANCE.listOf();
     }
     else {
       addExtensionPointListener(point);
@@ -185,13 +185,13 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
       return result;
     }
     else if (r2 != null) {
-      return Java11Shim.Companion.getINSTANCE().listOf(r1, r2);
+      return Java11Shim.INSTANCE.listOf(r1, r2);
     }
     else if (r1 != null) {
-      return Java11Shim.Companion.getINSTANCE().listOf(r1);
+      return Java11Shim.INSTANCE.listOf(r1);
     }
     else {
-      return Java11Shim.Companion.getINSTANCE().listOf();
+      return Java11Shim.INSTANCE.listOf();
     }
   }
 
@@ -295,7 +295,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     @Override
     public void areaReplaced(@NotNull ExtensionsArea area) {
       synchronized (lock) {
-        cache = Java11Shim.Companion.getINSTANCE().mapOf();
+        cache = Java11Shim.INSTANCE.mapOf();
         tracker.incModificationCount();
       }
     }
