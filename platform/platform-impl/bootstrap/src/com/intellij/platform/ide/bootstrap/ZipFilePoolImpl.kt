@@ -1,10 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.util.lang.ZipEntryResolverPool
-import com.intellij.util.lang.ZipEntryResolverPool.EntryResolver
 import com.intellij.util.lang.ZipFile
 import com.intellij.util.lang.ZipFilePool
 import org.jetbrains.annotations.ApiStatus
@@ -55,7 +54,7 @@ class ZipFilePoolImpl : ZipFilePool(), ZipEntryResolverPool {
   }
 }
 
-private class MyEntryResolver(@JvmField val zipFile: ZipFile) : EntryResolver {
+private class MyEntryResolver(@JvmField val zipFile: ZipFile) : ZipFilePool.EntryResolver {
   override fun loadZipEntry(path: String) = zipFile.getInputStream(path)
   override fun close() {} // no-op since it's pooled
   override fun toString() = zipFile.toString()
