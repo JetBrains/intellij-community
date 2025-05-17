@@ -2500,25 +2500,6 @@ f:com.intellij.util.TextWithIcon
 - <init>(java.lang.String,javax.swing.Icon):V
 - getIcon():javax.swing.Icon
 - getText():java.lang.String
-e:com.intellij.util.ThreeState
-- java.lang.Enum
-- sf:Companion:com.intellij.util.ThreeState$Companion
-- sf:NO:com.intellij.util.ThreeState
-- sf:UNSURE:com.intellij.util.ThreeState
-- sf:YES:com.intellij.util.ThreeState
-- sf:fromBoolean(Z):com.intellij.util.ThreeState
-- s:getEntries():kotlin.enums.EnumEntries
-- f:isAtLeast(com.intellij.util.ThreeState):Z
-- f:merge(com.intellij.util.ThreeState):com.intellij.util.ThreeState
-- sf:merge(java.lang.Iterable):com.intellij.util.ThreeState
-- sf:mostPositive(java.lang.Iterable):com.intellij.util.ThreeState
-- f:toBoolean():Z
-- s:valueOf(java.lang.String):com.intellij.util.ThreeState
-- s:values():com.intellij.util.ThreeState[]
-f:com.intellij.util.ThreeState$Companion
-- f:fromBoolean(Z):com.intellij.util.ThreeState
-- f:merge(java.lang.Iterable):com.intellij.util.ThreeState
-- f:mostPositive(java.lang.Iterable):com.intellij.util.ThreeState
 com.intellij.util.ThrowableConvertor
 - a:convert(java.lang.Object):java.lang.Object
 com.intellij.util.ThrowablePairConsumer
