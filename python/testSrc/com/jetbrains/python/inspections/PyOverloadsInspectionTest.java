@@ -48,7 +48,11 @@ public class PyOverloadsInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  public void testOverridenMethods() {
+  public void testOverriddenMethods() {
+    doTest();
+  }
+
+  public void testFinalMethods() {
     doTest();
   }
 

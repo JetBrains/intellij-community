@@ -11,6 +11,7 @@ import com.intellij.util.containers.tail
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.ast.PyAstFunction
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.isProtocol
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyClassImpl
@@ -61,7 +62,7 @@ class PyOverloadsInspection : PyInspection() {
 
       checkClassMethodAndStaticMethodConsistency(overloads, implementation)
 
-      checkOverride(overloads, implementation)
+      checkOverrideAndFinal(overloads, implementation)
 
       var requiresImplementation = true
       if (owner.containingFile is PyiFile) {
@@ -118,12 +119,16 @@ class PyOverloadsInspection : PyInspection() {
       }
     }
 
-    private fun checkOverride(overloads: List<PyFunction>, implementation: PyFunction?) {
+    private fun checkOverrideAndFinal(overloads: List<PyFunction>, implementation: PyFunction?) {
       if (implementation == null) {
         for (overload in overloads.tail()) {
           if (isOverride(overload)) {
             registerProblem(overload.nameIdentifier,
                             PyPsiBundle.message("INSP.overloads.override.should.be.placed.only.on.the.first.overload"))
+          }
+          if (PyTypingTypeProvider.isFinal(overload, myTypeEvalContext)) {
+            registerProblem(overload.nameIdentifier,
+                            PyPsiBundle.message("INSP.overloads.final.should.be.placed.only.on.the.first.overload"))
           }
         }
       }
@@ -132,6 +137,10 @@ class PyOverloadsInspection : PyInspection() {
           if (isOverride(overload)) {
             registerProblem(overload.nameIdentifier,
                             PyPsiBundle.message("INSP.overloads.override.should.be.placed.on.the.implementation"))
+          }
+          if (PyTypingTypeProvider.isFinal(overload, myTypeEvalContext)) {
+            registerProblem(overload.nameIdentifier,
+                            PyPsiBundle.message("INSP.overloads.final.should.be.placed.on.the.implementation"))
           }
         }
       }

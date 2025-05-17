@@ -8,6 +8,14 @@ class PyiOverloadsInspectionTest : PyInspectionTestCase() {
     doTest()
   }
 
+  fun testOverriddenMethods() {
+    doTest()
+  }
+
+  fun testFinalMethods() {
+    doTest()
+  }
+
   override fun getTestFilePath(): String {
     return "$testCaseDirectory${getTestName(isLowerCaseTestFile)}.pyi"
   }

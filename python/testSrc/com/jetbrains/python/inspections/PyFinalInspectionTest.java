@@ -234,46 +234,6 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-34945
-  public void testOverloadedFinalMethod() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON35,
-      () -> doTestByText("""
-                           from typing import overload
-                           from typing_extensions import final
-
-                           class A:
-                               @overload
-                               def foo(self, a: int) -> int: ...
-
-                               @overload
-                               def foo(self, a: str) -> str: ...
-
-                               @final
-                               def foo(self, a):
-                                   pass
-
-                           class B:
-                               @final
-                               @overload
-                               def <warning descr="'@final' should be placed on the implementation">foo</warning>(self, a: int) -> int: ...
-
-                               @overload
-                               def foo(self, a: str) -> str: ...
-
-                               def foo(self, a):
-                                   pass
-                           """)
-    );
-  }
-
-  // PY-34945
-  public void testOverloadedFinalMethodInStub() {
-    final PsiFile currentFile = myFixture.configureByFile(getTestFilePath() + "i");
-    configureInspection();
-    assertSdkRootsNotParsed(currentFile);
-  }
-
-  // PY-34945
   public void testFinalParameter() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
