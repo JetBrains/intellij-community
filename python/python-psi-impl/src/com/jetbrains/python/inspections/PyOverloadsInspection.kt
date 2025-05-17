@@ -25,25 +25,16 @@ class PyOverloadsInspection : PyInspection() {
     holder: ProblemsHolder,
     isOnTheFly: Boolean,
     session: LocalInspectionToolSession,
-  ): PsiElementVisitor = Visitor(
-    holder,PyInspectionVisitor.getContext(session))
+  ): PsiElementVisitor = Visitor(holder, PyInspectionVisitor.getContext(session))
 
   private class Visitor(holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
 
     override fun visitPyClass(node: PyClass) {
-      if (node.containingFile is PyiFile) return
-
-      super.visitPyClass(node)
-
-      processScope(node, { node.visitMethods(it, false, myTypeEvalContext) })
+      processScope(node) { node.visitMethods(it, false, myTypeEvalContext) }
     }
 
     override fun visitPyFile(node: PyFile) {
-      if (node is PyiFile) return
-
-      super.visitPyFile(node)
-
-      processScope(node, { processor -> node.topLevelFunctions.forEach { processor.process(it) } })
+      processScope(node) { processor -> node.topLevelFunctions.forEach { processor.process(it) } }
     }
 
     private fun processScope(owner: ScopeOwner, processorUsage: (GroupingFunctionsByNameProcessor) -> Unit) {
@@ -73,7 +64,10 @@ class PyOverloadsInspection : PyInspection() {
       checkOverride(overloads, implementation)
 
       var requiresImplementation = true
-      if (owner is PyClass) {
+      if (owner.containingFile is PyiFile) {
+        requiresImplementation = false
+      }
+      else if (owner is PyClass) {
         if (isProtocol(owner, myTypeEvalContext)) {
           requiresImplementation = false
         }
