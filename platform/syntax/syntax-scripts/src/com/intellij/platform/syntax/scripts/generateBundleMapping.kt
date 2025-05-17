@@ -48,7 +48,7 @@ fun generateMapping(
 
   val fileName = outputPath.nameWithoutExtension
   outputPath.writer().use { writer ->
-    writer.printClass(fileName, packageName, mappings, "$properties $output $packageName")
+    writer.printClass(fileName, packageName, mappings, "<full path to ${propertiesPath.name}> <full path to ${outputPath.name}> $packageName")
   }
 
   println("Done! Result: $outputPath")
