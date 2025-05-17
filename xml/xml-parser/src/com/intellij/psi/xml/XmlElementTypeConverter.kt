@@ -4,6 +4,8 @@ package com.intellij.psi.xml
 import com.intellij.platform.syntax.psi.ElementTypeConverter
 import com.intellij.platform.syntax.psi.ElementTypeConverterFactory
 import com.intellij.platform.syntax.psi.elementTypeConverterOf
+import com.intellij.xml.syntax.XmlSyntaxElementType
+import com.intellij.xml.syntax.XmlSyntaxTokenType
 import org.jetbrains.annotations.ApiStatus
 
 internal class XmlElementTypeConverterExtension : ElementTypeConverterFactory {
