@@ -1,14 +1,14 @@
 # https://bazel.build/docs/bazel-and-java#hermetic-testing
 # The code is compiled for, executed, and tested on this JVM.
-build --java_language_version=21
+build --java_language_version=17
 build --java_runtime_version=remotejdk_21
 
 # https://bazel.build/docs/bazel-and-java#config-build-tools-java
 # A second pair of JDK and JVM used to build and execute tools, which are used in the build process, but are not in the build results.
 # That JDK and JVM are controlled using --tool_java_language_version and --tool_java_runtime_version
-build --tool_java_language_version=21
+build --tool_java_language_version=17
 # Java runtime the tools should use
-build --tool_java_runtime_version=remotejdk_21
+build --tool_java_runtime_version=remotejdk_17
 
 common --@rules_jvm//:koltin_inc_threshold=0 --@rules_jvm//:java_inc_threshold=0
 

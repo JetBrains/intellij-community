@@ -22,7 +22,6 @@ label_flag(
     visibility = ["//visibility:public"],
 )
 
-
 kt_kotlinc_options(
     name = "default-kotlinc-opts-value",
     visibility = ["//visibility:public"],
@@ -48,10 +47,12 @@ int_flag(
 _kt_kotlinc_options(
     name = "rules_jvm_bootstrap_kotlinc_options",
     include_stdlibs = "none",
+    jvm_target = "17",
     visibility = [
         "//src:__subpackages__",
         "//zip:__pkg__",
     ],
+    x_jdk_release = "17",
 )
 
 # java_import(
@@ -67,13 +68,13 @@ jvm_import(
     jar = "@jps-standalone_http//file",
     source_jar = "@jps-standalone_http//file",
     visibility = [
+        "//dependency-graph:__subpackages__",
+        "//jps-builders-6:__subpackages__",
+        "//jvm-inc-builder:__subpackages__",
         "//src/jps-shadow:__subpackages__",
         "//src/jvm-builder:__subpackages__",
         "//src/jvm-builder-core:__subpackages__",
         "//src/kotlin/kotlin-builder:__subpackages__",
-        "//jvm-inc-builder:__subpackages__",
-        "//jps-builders-6:__subpackages__",
-        "//dependency-graph:__subpackages__",
     ],
 )
 
@@ -84,6 +85,7 @@ jvm_import(
         "//jps-builders-6:__subpackages__",
     ],
 )
+
 jvm_import(
     name = "netty-codec-jps",
     jar = "@netty-codec-jps_http//file",
@@ -92,8 +94,6 @@ jvm_import(
     ],
 )
 
-
-
 jvm_import(
     name = "jps-javac-extension",
     jar = "@jps-javac-extension//file",
@@ -101,11 +101,10 @@ jvm_import(
 )
 
 jvm_import(
-  name = "javax-annotation-api",
-  jar = "@javax_annotation-api-1_3_2_http//file",
-  visibility = ["//visibility:public"]
+    name = "javax-annotation-api",
+    jar = "@javax_annotation-api-1_3_2_http//file",
+    visibility = ["//visibility:public"],
 )
-
 
 # jvm_import(
 #     name = "kotlin-compiler",
