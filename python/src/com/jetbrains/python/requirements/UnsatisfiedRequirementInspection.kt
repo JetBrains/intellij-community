@@ -133,7 +133,7 @@ private class InstallRequirementQuickFix(requirement: Requirement) : LocalQuickF
       val file = descriptor.psiElement.containingFile ?: return
       val sdk = getPythonSdk(file) ?: return
       val versionSpecStr = if (requirement is NameReq) requirement.versionspec?.text else null
-      val versionSpec = versionSpecStr?.parseVersionSpec()?.getOr { return }
+      val versionSpec = versionSpecStr?.let { pyRequirementVersionSpec(it) }?.getOr { return }
       val name = requirement.displayName
 
       project.service<PyPackagingToolWindowService>().serviceScope.launch(Dispatchers.IO) {
@@ -161,7 +161,7 @@ private class InstallRequirementQuickFix(requirement: Requirement) : LocalQuickF
         }
         val manager = PythonPackageManager.forSdk(project, sdk)
         val specs = infos.mapNotNull { (name, versionSpecStr) ->
-          val versionSpec = versionSpecStr?.parseVersionSpec()?.getOr { return@mapNotNull null }
+          val versionSpec = versionSpecStr?.let { pyRequirementVersionSpec(it) }?.getOr { return@mapNotNull null }
           manager.createPackageSpecificationWithSpec(name, versionSpec)
         }
 

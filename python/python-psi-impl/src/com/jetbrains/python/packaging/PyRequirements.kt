@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.failure
@@ -38,8 +39,8 @@ fun pyRequirement(name: String, relation: PyRequirementRelation, version: String
 }
 
 
-fun String.parseVersionSpec(): PyResult<PyRequirementVersionSpec> {
-  val value = trim()
+fun pyRequirementVersionSpec(relationWithVersion: @NlsSafe String): PyResult<PyRequirementVersionSpec> {
+  val value = relationWithVersion.trim()
   val relation = PyRequirementRelation.entries.lastOrNull { value.startsWith(it.presentableText) }
                  ?: return failure("Could not parse relation from: $value")
 
