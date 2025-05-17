@@ -127,7 +127,7 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pro
       result.checkSuccess(thisLogger())
       if (result.isTimeout) throw PyExecutionException(message("conda.packaging.exception.timeout"), operation, arguments, result)
       if (result.exitCode != 0) {
-        throw PyExecutionException(message("conda.packaging.exception.non.zero"), operation, arguments, result)
+        throw PyExecutionException(message("conda.packaging.exception.non.zero"), env.fullCondaPathOnTarget, listOf(operation) + arguments, result)
       }
       else result.stdout
     }
