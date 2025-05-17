@@ -29,7 +29,6 @@ import com.intellij.vcs.log.data.VcsLogStatusBarProgress
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.*
-import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.collection
@@ -49,7 +48,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.BiConsumer
 
 open class VcsLogManager @Internal constructor(
-  protected val project: Project,
+  @Internal protected val project: Project,
   val uiProperties: VcsLogTabsProperties,
   logProviders: Map<VirtualFile, VcsLogProvider>,
   internal val name: String,
@@ -57,14 +56,6 @@ open class VcsLogManager @Internal constructor(
   isIndexEnabled: Boolean,
   private val recreateMainLogHandler: BiConsumer<in VcsLogErrorHandler.Source, in Throwable>?,
 ) : Disposable {
-
-  private constructor(project: Project, uiProperties: VcsLogTabsProperties, logProviders: Map<VirtualFile, VcsLogProvider>)
-    : this(project, uiProperties, logProviders, generateName(logProviders), true, false, null)
-
-  @Internal
-  constructor(project: Project, uiProperties: VcsLogTabsProperties, roots: Collection<VcsRoot>)
-    : this(project, uiProperties, findLogProviders(roots, project))
-
   val dataManager: VcsLogData = VcsLogData(project, logProviders, MyErrorHandler(), isIndexEnabled, this)
   private val postponableRefresher = PostponableLogRefresher(dataManager)
 
@@ -244,6 +235,7 @@ open class VcsLogManager @Internal constructor(
    *
    * @param callback activity to run after log is disposed. Is executed in background thread. null means execution of additional activity after disposing is not required.
    */
+  @Internal
   @RequiresEdt
   fun dispose(callback: Runnable?) {
     disposeUi()
@@ -253,6 +245,7 @@ open class VcsLogManager @Internal constructor(
     }
   }
 
+  @Internal
   @RequiresBackgroundThread
   override fun dispose() {
     // since disposing log triggers flushing indexes on disk we do not want to do it in EDT
@@ -423,6 +416,3 @@ suspend fun VcsLogManager.waitForRefresh() {
     continuation.invokeOnCancellation { dataManager.removeDataPackChangeListener(dataPackListener) }
   }
 }
-
-private fun generateName(logProviders: Map<VirtualFile, VcsLogProvider>) =
-  "Vcs Log for " + VcsLogUtil.getProvidersMapText(logProviders)

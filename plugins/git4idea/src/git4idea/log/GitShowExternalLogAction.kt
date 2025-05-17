@@ -38,6 +38,7 @@ import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.ui.VcsLogUiEx
+import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.collection
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromRoots
 import git4idea.GitUtil
@@ -192,8 +193,10 @@ private fun createLogManager(project: Project,
   for (root in roots) {
     repositoryManager.addExternalRepository(root, GitRepositoryImpl.createInstance(root, project, disposable))
   }
-  val manager = VcsLogManager(project, ApplicationManager.getApplication().getService(GitExternalLogTabsProperties::class.java),
-                              roots.map { VcsRoot(vcs, it) })
+  val properties = ApplicationManager.getApplication().getService(GitExternalLogTabsProperties::class.java)
+  val logProviders = VcsLogManager.findLogProviders(roots.map { VcsRoot(vcs, it) }, project)
+  val name = "Vcs Log for " + VcsLogUtil.getProvidersMapText(logProviders)
+  val manager = VcsLogManager(project, properties, logProviders, name, true, false, null)
   Disposer.register(disposable, Disposable { manager.dispose { roots.forEach { repositoryManager.removeExternalRepository(it) } } })
   return manager
 }

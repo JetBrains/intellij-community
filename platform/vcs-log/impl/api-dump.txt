@@ -517,13 +517,10 @@ com.intellij.vcs.log.impl.VcsLogIndexer$PathsEncoder
 c:com.intellij.vcs.log.impl.VcsLogManager
 - com.intellij.openapi.Disposable
 - sf:Companion:com.intellij.vcs.log.impl.VcsLogManager$Companion
-- dispose():V
-- f:dispose(java.lang.Runnable):V
 - sf:findLogProviders(java.util.Collection,com.intellij.openapi.project.Project):java.util.Map
 - f:getColorManager():com.intellij.vcs.log.ui.VcsLogColorManager
 - f:getDataManager():com.intellij.vcs.log.data.VcsLogData
 - getLogUis():java.util.List
-- pf:getProject():com.intellij.openapi.project.Project
 - f:getUiProperties():com.intellij.vcs.log.impl.VcsLogTabsProperties
 - f:isDisposed():Z
 - f:isLogUpToDate():Z
