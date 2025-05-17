@@ -7,6 +7,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.startOffset
@@ -34,24 +35,24 @@ class KotlinUnreachableCodeInspection : KotlinKtDiagnosticBasedInspectionBase<Kt
     ): Context? {
         val reachable = diagnostic.reachable
         val unreachable = diagnostic.unreachable
-        val singleUnreachable = unreachable.singleOrNull()
-        val unreachableElements = if (singleUnreachable != null) {
+        val firstUnreachable = unreachable.firstOrNull()
+        val unreachableElements = if (firstUnreachable != null) {
             val reachableTextRange = reachable.firstOrNull()
                 ?.let { reachable.fold(it.textRange) { range: TextRange, element: PsiElement -> range.union(element.textRange) } }
                 ?: return null
 
-            val singleUnreachableRange = singleUnreachable.textRange
+            val unreachableRange = unreachable.fold(firstUnreachable.textRange) { it, element -> it.union(element.textRange) }
 
-            val startOffset = singleUnreachableRange.startOffset
+            val startOffset = unreachableRange.startOffset
             val reachableStartOffset = reachableTextRange.startOffset
 
             val unreachableTextRange = if (startOffset <= reachableStartOffset) {
-                TextRange(startOffset, singleUnreachableRange.endOffset.coerceAtMost(reachableStartOffset))
+                TextRange(startOffset, unreachableRange.endOffset.coerceAtMost(reachableStartOffset))
             } else {
-                TextRange(reachableStartOffset, singleUnreachableRange.endOffset.coerceAtMost(reachableTextRange.endOffset))
+                TextRange(reachableStartOffset, unreachableRange.endOffset.coerceAtMost(reachableTextRange.endOffset))
             }
 
-            calculateUnreachableElements(element, unreachableTextRange, singleUnreachableRange)
+            calculateUnreachableElements(element, unreachableTextRange, unreachableRange)
         } else {
             emptyList()
         }
@@ -66,10 +67,10 @@ class KotlinUnreachableCodeInspection : KotlinKtDiagnosticBasedInspectionBase<Kt
         var offset = unreachableTextRange.startOffset - element.startOffset
         while (offset < singleUnreachableRange.endOffset - element.startOffset) {
             val e = element.findElementAt(offset) ?: break
-            if (unreachableTextRange.contains(e.textRange)) {
+            if (e !is PsiWhiteSpace && unreachableTextRange.contains(e.textRange)) {
                 this += e.createSmartPointer()
             }
-            offset += e.textRange.length + 1
+            offset += e.textRange.length
         }
     }
 
@@ -94,9 +95,9 @@ class KotlinUnreachableCodeInspection : KotlinKtDiagnosticBasedInspectionBase<Kt
             if (unreachable.isEmpty()) {
                 element.delete()
             } else {
-                unreachable.forEach {
-                    it.element?.let(updater::getWritable)?.delete()
-                }
+                unreachable.mapNotNull {
+                    it.element?.let(updater::getWritable)
+                }.forEach(PsiElement::delete)
             }
         }
     }
@@ -118,7 +119,9 @@ class KotlinUnreachableCodeInspection : KotlinKtDiagnosticBasedInspectionBase<Kt
         isOnTheFly: Boolean
     ) {
         val unreachable = context.unreachable
-        if (unreachable.isEmpty()) {
+        val first = unreachable.firstOrNull()?.element
+        val last = unreachable.lastOrNull()?.element
+        if (first == null || last == null) {
             val problemDescriptor = holder.manager.createProblemDescriptor(
                 element,
                 context,
@@ -127,16 +130,13 @@ class KotlinUnreachableCodeInspection : KotlinKtDiagnosticBasedInspectionBase<Kt
             )
             holder.registerProblem(problemDescriptor)
         } else {
-            unreachable.forEach {
-                val e = it.element ?: return@forEach
-                val problemDescriptor = holder.manager.createProblemDescriptor(
-                    element,
-                    context,
-                    TextRange(0, e.textRange.length),
-                    isOnTheFly,
-                )
-                holder.registerProblem(problemDescriptor)
-            }
+            val problemDescriptor = holder.manager.createProblemDescriptor(
+                element,
+                context,
+                first.textRange.union(last.textRange).shiftLeft(element.startOffset),
+                isOnTheFly,
+            )
+            holder.registerProblem(problemDescriptor)
         }
     }
 }

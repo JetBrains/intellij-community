@@ -13790,6 +13790,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         public void testReturnReturn() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/kotlinUnreachableCode/returnReturn.kt");
         }
+
+        @TestMetadata("returnTryReturn.kt")
+        public void testReturnTryReturn() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/kotlinUnreachableCode/returnTryReturn.kt");
+        }
+
+        @TestMetadata("throwThrowThrow.kt")
+        public void testThrowThrowThrow() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/kotlinUnreachableCode/throwThrowThrow.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

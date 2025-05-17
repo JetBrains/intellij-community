@@ -1,5 +1,5 @@
 // IGNORE_K1
 // FIX: Remove unreachable code
 fun f(): Int {
-    return 42
+    <caret>throw throw throw Exception("Throw far away")
 }
