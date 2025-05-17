@@ -96,7 +96,11 @@ internal class BazelBuildFileGenerator(
     }
 
     val resourceDescriptors = computeResources(module = module, contentRoots = contentRoots, bazelBuildDir = bazelBuildDir, type = JavaResourceRootType.RESOURCE)
-    val extraResourceTarget = extraResourceTarget(module = module, contentRoots = contentRoots, bazelBuildDir = bazelBuildDir)
+    val extraResourceTarget = computeExtraResourceTarget(module = module, contentRoots = contentRoots, bazelBuildDir = bazelBuildDir)
+    if (extraResourceTarget.any() && !module.name.contains(".android.")) {
+      throw IllegalStateException("Extra resource target for module ${module.name} is not null")
+    }
+
     val moduleContent = ModuleDescriptor(
       module = module,
       contentRoots = contentRoots,
@@ -404,10 +408,10 @@ internal class BazelBuildFileGenerator(
         if (module.name == "fleet.util.multiplatform" || module.name == "intellij.platform.syntax.multiplatformSupport") {
           option("exported_compiler_plugins", arrayOf("@lib//:expects-plugin"))
         }
-        else if (module.name == "fleet.rhizomedb") {
+        //else if (module.name == "fleet.rhizomedb") {
           // https://youtrack.jetbrains.com/issue/IJI-2662/RhizomedbCommandLineProcessor-requires-output-dir-but-we-dont-have-it-for-Bazel-compilation
           //option("exported_compiler_plugins", arrayOf("@lib//:rhizomedb-plugin"))
-        }
+        //}
 
         var deps = moduleList.deps.get(moduleDescriptor)
         if (deps != null && deps.provided.isNotEmpty()) {
@@ -687,7 +691,7 @@ private fun computeResources(module: JpsModule, contentRoots: List<Path>, bazelB
 }
 
 @OptIn(ExperimentalPathApi::class)
-private fun extraResourceTarget(
+private fun computeExtraResourceTarget(
   module: JpsModule,
   contentRoots: List<Path>,
   bazelBuildDir: Path,
@@ -740,7 +744,7 @@ private fun isReferencedAsTestDep(
     }
   }
   for ((m, deps) in moduleList.deps) {
-    // kotlin.all-tests uses scope RUNTIME to depend on test module
+    // kotlin.all-tests uses scope RUNTIME to depend on the test module
     if (m.sources.isEmpty() && isUsed(deps, referencedModule)) {
       return true
     }
