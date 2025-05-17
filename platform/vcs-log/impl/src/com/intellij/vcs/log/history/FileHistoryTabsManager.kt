@@ -59,5 +59,10 @@ internal class FileHistoryTabsManager(val project: Project, coroutineScope: Coro
     return ui
   }
 
+  @RequiresEdt
+  fun findUi(select: Boolean, condition: (FileHistoryUi) -> Boolean): FileHistoryUi? {
+    return VcsLogContentUtil.findLogUi(project, FileHistoryUi::class.java, select, condition)
+  }
+
   private data class FileHistoryTab(val path: FilePath, val root: VirtualFile, val hash: Hash?)
 }

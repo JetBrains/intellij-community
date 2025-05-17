@@ -13,7 +13,6 @@ import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToGraphRow
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToHash
-import com.intellij.vcs.log.impl.VcsLogTabLocation.Companion.findLogUi
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogUiEx
@@ -64,7 +63,9 @@ private interface FileHistoryLogUiProvider {
 private object VcsLogDirectoryHistoryProvider : FileHistoryLogUiProvider {
   override fun canShowFileHistory(project: Project, paths: Collection<FilePath>, revisionNumber: String?): Boolean {
     if (paths.isEmpty()) return false
-    val dataManager = VcsProjectLog.getInstance(project).dataManager ?: return false
+    val projectLog = VcsProjectLog.getInstance(project)
+    if (projectLog.logManager !is VcsProjectLogManager) return false
+    val dataManager = projectLog.dataManager ?: return false
     return FileHistoryUtil.createLogPathsFilter(project, dataManager.logProviders, paths) != null
   }
 
@@ -74,20 +75,20 @@ private object VcsLogDirectoryHistoryProvider : FileHistoryLogUiProvider {
 
     triggerFileHistoryUsage(project, paths, hash)
 
-    val logManager = VcsProjectLog.getInstance(project).logManager!!
+    val logManager = VcsProjectLog.getInstance(project).logManager as? VcsProjectLogManager ?: return null
 
     val pathsFilter = FileHistoryUtil.createLogPathsFilter(project, logManager.dataManager.logProviders, paths)!!
     val hashFilter = createHashFilter(hash, root)
-    var ui = logManager.findLogUi(VcsLogTabLocation.TOOL_WINDOW, MainVcsLogUi::class.java, true) { logUi ->
+    var ui = logManager.findLogUi(MainVcsLogUi::class.java, true) { logUi ->
       matches(logUi.filterUi.filters, pathsFilter, hashFilter)
     }
     val firstTime = ui == null
     if (firstTime) {
       val filters = VcsLogFilterObject.collection(pathsFilter, hashFilter)
-      ui = VcsProjectLog.getInstance(project).openLogTab(filters) ?: return null
+      ui = logManager.openNewLogTab(filters)
       ui.properties[MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES] = true
     }
-    if (selectRow) selectRowWhenOpen(logManager, hash, root, ui!!, firstTime)
+    if (selectRow) selectRowWhenOpen(logManager, hash, root, ui, firstTime)
 
     return ui
   }
@@ -132,14 +133,16 @@ private object VcsLogSingleFileHistoryProvider : FileHistoryLogUiProvider {
 
     val logManager = VcsProjectLog.getInstance(project).logManager!!
 
-    var fileHistoryUi = logManager.findLogUi(VcsLogTabLocation.TOOL_WINDOW, FileHistoryUi::class.java, true) { ui ->
+    val tabsManager = project.service<FileHistoryTabsManager>()
+
+    var fileHistoryUi = tabsManager.findUi(true) { ui ->
       ui.matches(path, hash)
     }
     val firstTime = fileHistoryUi == null
     if (firstTime) {
-      fileHistoryUi = project.service<FileHistoryTabsManager>().openFileHistoryTab(logManager, path, root, hash)
+      fileHistoryUi = tabsManager.openFileHistoryTab(logManager, path, root, hash)
     }
-    if (selectRow) selectRowWhenOpen(logManager, hash, root, fileHistoryUi!!, firstTime)
+    if (selectRow) selectRowWhenOpen(logManager, hash, root, fileHistoryUi, firstTime)
 
     return fileHistoryUi
   }

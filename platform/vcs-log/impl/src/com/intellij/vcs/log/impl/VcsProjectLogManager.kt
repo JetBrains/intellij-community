@@ -96,6 +96,27 @@ internal class VcsProjectLogManager(
     return tabsManager.openAnotherLogTab(filters, location)
   }
 
+  @RequiresEdt
+  fun openNewLogTab(filters: VcsLogFilterCollection): MainVcsLogUi {
+    return tabsManager.openAnotherLogTab(filters, VcsLogTabLocation.TOOL_WINDOW)
+  }
+
+  /**
+   * Find a persistent log UI of the given class managed by this manager in a default location
+   */
+  fun <U : VcsLogUi> findLogUi(clazz: Class<U>, select: Boolean, condition: (U) -> Boolean): U? {
+    val toolWindow = VcsLogContentUtil.getToolWindow(project) ?: return null
+    val tabsIds = tabsManager.getTabs(VcsLogTabLocation.TOOL_WINDOW)
+
+    val ui = VcsLogContentUtil.findLogUi(toolWindow, clazz, select) {
+      it.id in tabsIds && condition(it)
+    }
+    if (ui != null && select && !toolWindow.isVisible) {
+      toolWindow.activate(null)
+    }
+    return ui
+  }
+
   override suspend fun showCommit(hash: Hash, root: VirtualFile, requestFocus: Boolean): Boolean =
     withContext(Dispatchers.EDT) {
       if (isDisposed) return@withContext false

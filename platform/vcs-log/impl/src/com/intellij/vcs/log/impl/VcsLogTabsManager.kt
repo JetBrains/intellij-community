@@ -156,6 +156,9 @@ internal class VcsLogTabsManager(
     toolWindowListenerInstalled = true
   }
 
+  fun getTabs(location: VcsLogTabLocation): Set<String> =
+    uiProperties.tabs.filterValues { it === location }.keys
+
   companion object {
     private val LOG = Logger.getInstance(VcsLogTabsManager::class.java)
 

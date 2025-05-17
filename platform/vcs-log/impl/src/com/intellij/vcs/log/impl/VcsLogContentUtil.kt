@@ -76,17 +76,6 @@ object VcsLogContentUtil {
     return getToolWindow(project)?.let { findLogUi(it, clazz, select, condition) }
   }
 
-  internal fun selectLogUi(project: Project, logUi: VcsLogUi, requestFocus: Boolean = true): Boolean {
-    val toolWindow = getToolWindow(project) ?: return false
-    val manager = toolWindow.contentManager
-    val component = ContentUtilEx.findContentComponent(manager) { c -> getLogUi(c)?.id == logUi.id } ?: return false
-
-    if (!toolWindow.isVisible) {
-      toolWindow.activate(null)
-    }
-    return ContentUtilEx.selectContent(manager, component, requestFocus)
-  }
-
   @Internal
   @JvmStatic
   fun findSelectedLogUi(toolWindow: ToolWindow): VcsLogUi? {
