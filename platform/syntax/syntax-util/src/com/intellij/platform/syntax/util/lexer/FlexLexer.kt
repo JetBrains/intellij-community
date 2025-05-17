@@ -6,7 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface FlexLexer {
-  fun yybegin(state: Int)
+  fun yybegin(newState: Int)
   fun yystate(): Int
   fun getTokenStart(): Int
   fun getTokenEnd(): Int
