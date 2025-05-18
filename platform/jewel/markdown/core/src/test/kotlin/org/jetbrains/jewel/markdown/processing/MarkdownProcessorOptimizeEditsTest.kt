@@ -1023,6 +1023,75 @@ public class MarkdownProcessorOptimizeEditsTest {
         )
     }
 
+    @Test
+    public fun `regression JEWEL-819 put in a row before empty lines`() {
+        val processor = MarkdownProcessor(markdownMode = MarkdownMode.EditorPreview(null))
+        val initialDocument =
+            """
+
+
+            ```gitignore
+            *.pyc
+
+            ```
+
+            # Python program to check if the number is an Armstrong number or not
+
+            # take input from the user
+            num = int(input("Enter a number: "))
+
+            """
+                .trimIndent()
+        processor.processWithQuickEdits(initialDocument)
+
+        val addFirstRow =
+            """
+                # Python program to check if the number is an Armstrong number or not
+
+
+                ```gitignore
+                *.pyc
+                
+                ```
+
+                # Python program to check if the number is an Armstrong number or not
+
+                # take input from the user
+                num = int(input("Enter a number: "))
+
+            """
+                .trimIndent()
+        val resultBlocks = processor.processWithQuickEdits(addFirstRow)
+        assertIndexesEqual(addFirstRow, processor.getCurrentIndexesInTest())
+        val info = processor.findChangedBlocks(initialDocument, addFirstRow, parseDocumentBlocks(initialDocument))
+        assertEquals(-1 to 0, info.firstBlock to info.blockAfterLast)
+        assertEquals(1, info.nLinesDelta)
+        assertEquals(
+            """
+                # Python program to check if the number is an Armstrong number or not
+
+
+            """
+                .trimIndent(),
+            info.updatedText,
+        )
+
+        assertHtmlEquals(
+            """
+                <h1>Python program to check if the number is an Armstrong number or not</h1>
+                <pre><code class="language-gitignore">*.pyc
+                
+                </code></pre>
+                <h1>Python program to check if the number is an Armstrong number or not</h1>
+                <h1>take input from the user</h1>
+                <p>num = int(input(&quot;Enter a number: &quot;))</p>
+
+            """
+                .trimIndent(),
+            resultBlocks,
+        )
+    }
+
     private fun assertHtmlEquals(@Language("html") text: String, actual: List<Block>) {
         assertEquals(text, actual.joinToString("") { htmlRenderer.render(it) })
     }

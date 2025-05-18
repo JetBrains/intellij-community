@@ -126,7 +126,8 @@ public class MarkdownProcessor(
         val firstBlock = blocksInfo.firstBlock
         val blockAfterLast = blocksInfo.blockAfterLast
         val updatedBlocks = parseRawMarkdown(blocksInfo.updatedText)
-        val firstBlockOffset = previousBlocks[firstBlock].sourceSpans.first()
+        val firstBlockOffset =
+            if (firstBlock == -1) SourceSpan.of(0, 0, 0, 0) else previousBlocks[firstBlock].sourceSpans.first()
         // sourceSpans in updatedBlocks start from line index 0, not from the actual line
         //      the update part starts in the document;
         for (block in updatedBlocks) {
@@ -160,7 +161,7 @@ public class MarkdownProcessor(
             }
         }
 
-        val newBlocks = previousBlocks.subList(0, firstBlock) + updatedBlocks + suffixBlocks
+        val newBlocks = previousBlocks.subList(0, firstBlock.coerceAtLeast(0)) + updatedBlocks + suffixBlocks
         currentState = State(rawMarkdown, newBlocks)
 
         return newBlocks
@@ -184,11 +185,11 @@ public class MarkdownProcessor(
                 previousText.subSequence(prefixPos, suffixPos).lineSequence().count()
         val previousIndexes = previousBlocks.map { block -> block.sourceSpans.first().inputIndex }
         // if modification starts at the edge, include previous by using less instead of less equal
-        val firstBlock = previousIndexes.indexOfLast { it < prefixPos }.takeIf { it != -1 } ?: 0
+        val firstBlock = previousIndexes.indexOfLast { it < prefixPos }
         val blockAfterLast = previousIndexes.indexOfFirst { it > suffixPos }
         val updatedText =
             updatedText.substring(
-                previousIndexes[firstBlock],
+                if (firstBlock == -1) 0 else previousIndexes[firstBlock],
                 if (blockAfterLast == -1) updatedText.length else previousIndexes[blockAfterLast] - 1 + nCharsDelta,
             )
         return FindChangedBlocksResult(firstBlock, blockAfterLast, updatedText, nLinesDelta)
