@@ -60,7 +60,7 @@ private fun getExecErrorMessage(
   additionalMessage: @NlsContexts.DialogTitle String?,
   execErrorReason: ExecErrorReason,
 ): @Nls String {
-  val commandLine = exec + args.joinToString(" ")
+  val commandLine = exec + " " + args.joinToString(" ")
   return when (val r = execErrorReason) {
     is ExecErrorReason.CantStart -> {
       PyCommunityBundle.message("python.execution.cant.start.error",
