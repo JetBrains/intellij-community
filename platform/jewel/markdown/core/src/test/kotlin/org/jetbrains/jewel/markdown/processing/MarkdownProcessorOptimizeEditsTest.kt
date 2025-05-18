@@ -345,6 +345,8 @@ public class MarkdownProcessorOptimizeEditsTest {
                 Paragraph 5
 
                 continue paragraph 5
+
+
                 ```
                 line 6-1
                 line 6-2
@@ -766,7 +768,6 @@ public class MarkdownProcessorOptimizeEditsTest {
                 .trimIndent()
         val processor = MarkdownProcessor(markdownMode = MarkdownMode.EditorPreview(null))
         val info = processor.findChangedBlocks(before, after, parseDocumentBlocks(before))
-        // modification starts at the first symbol
         assertEquals(
             """
                 # Block 1
@@ -1021,6 +1022,388 @@ public class MarkdownProcessorOptimizeEditsTest {
                 .trimIndent(),
             fifthRun,
         )
+    }
+
+    /** Regression for https://youtrack.jetbrains.com/issue/JEWEL-819/Crash-in-Markdown-edit-diff-computation */
+    @Test
+    public fun `regression JEWEL-819 put in a new row before empty lines`() {
+        val processor = MarkdownProcessor(markdownMode = MarkdownMode.EditorPreview(null))
+        val initialDocument =
+            """
+
+            ```gitignore
+            *.pyc
+
+            ```
+
+            # Python program to check if the number is an Armstrong number or not
+
+            # take input from the user
+            num = int(input("Enter a number: "))
+
+            """
+                .trimIndent()
+        processor.processWithQuickEdits(initialDocument)
+
+        val addFirstRow =
+            """
+                # Python program to check if the number is an Armstrong number or not
+
+                ```gitignore
+                *.pyc
+                
+                ```
+
+                # Python program to check if the number is an Armstrong number or not
+
+                # take input from the user
+                num = int(input("Enter a number: "))
+
+            """
+                .trimIndent()
+        processor.processWithQuickEdits(addFirstRow)
+        assertIndexesEqual(addFirstRow, processor.getCurrentIndexesInTest())
+        val info = processor.findChangedBlocks(initialDocument, addFirstRow, parseDocumentBlocks(initialDocument))
+        assertEquals(
+            """
+            # Python program to check if the number is an Armstrong number or not
+
+            ```gitignore
+            *.pyc
+
+            ```
+
+        """
+                .trimIndent(),
+            info.updatedText,
+        )
+        assertEquals(-1 to 1, info.firstBlock to info.blockAfterLast)
+        assertEquals(1, info.nLinesDelta)
+
+        val deleteFirstRow =
+            """
+
+            ```gitignore
+            *.pyc
+
+            ```
+
+            # Python program to check if the number is an Armstrong number or not
+
+            # take input from the user
+            num = int(input("Enter a number: "))
+
+                """
+                .trimIndent()
+
+        val forthRun = processor.processWithQuickEdits(deleteFirstRow)
+        assertIndexesEqual(deleteFirstRow, processor.getCurrentIndexesInTest())
+
+        assertHtmlEquals(
+            """
+            <pre><code class="language-gitignore">*.pyc
+
+            </code></pre>
+            <h1>Python program to check if the number is an Armstrong number or not</h1>
+            <h1>take input from the user</h1>
+            <p>num = int(input(&quot;Enter a number: &quot;))</p>
+
+            """
+                .trimIndent(),
+            forthRun,
+        )
+    }
+
+    @Test
+    public fun `put a row in between two blocks`() {
+        val processor = MarkdownProcessor(markdownMode = MarkdownMode.EditorPreview(null))
+        val initialDocument =
+            """
+
+
+            # Python program to check if the number is an Armstrong number or not
+
+            Some first sentence.
+            Some second sentence.
+
+            Some forth sentence.
+            Some fifth sentence.
+
+
+            """
+                .trimIndent()
+        processor.processWithQuickEdits(initialDocument)
+
+        val addMiddleRow =
+            """
+
+
+            # Python program to check if the number is an Armstrong number or not
+
+            Some first sentence.
+            Some second sentence.
+            Some third sentence.
+            Some forth sentence.
+            Some fifth sentence.
+
+
+            """
+                .trimIndent()
+        val resultRun = processor.processWithQuickEdits(addMiddleRow)
+        val info = processor.findChangedBlocks(initialDocument, addMiddleRow, parseDocumentBlocks(initialDocument))
+        assertEquals(
+            """
+            Some first sentence.
+            Some second sentence.
+            Some third sentence.
+            Some forth sentence.
+            Some fifth sentence.
+
+
+        """
+                .trimIndent(),
+            info.updatedText,
+        )
+        assertEquals(1 to 3, info.firstBlock to info.blockAfterLast)
+        assertEquals(0, info.nLinesDelta)
+        assertIndexesEqual(addMiddleRow, processor.getCurrentIndexesInTest())
+
+        assertHtmlEquals(
+            """
+            <h1>Python program to check if the number is an Armstrong number or not</h1>
+            <p>Some first sentence.
+            Some second sentence.
+            Some third sentence.
+            Some forth sentence.
+            Some fifth sentence.</p>
+
+            """
+                .trimIndent(),
+            resultRun,
+        )
+    }
+
+    @Test
+    public fun `put a row in between two blocks followed by another block`() {
+        val processor = MarkdownProcessor(markdownMode = MarkdownMode.EditorPreview(null))
+        val initialDocument =
+            """
+
+
+            # Python program to check if the number is an Armstrong number or not
+
+            Some first sentence.
+            Some second sentence.
+
+            Some forth sentence.
+            Some fifth sentence.
+            * some bullets
+
+
+            """
+                .trimIndent()
+        processor.processWithQuickEdits(initialDocument)
+
+        val addMiddleRow =
+            """
+
+
+            # Python program to check if the number is an Armstrong number or not
+
+            Some first sentence.
+            Some second sentence.
+            Some third sentence.
+            Some forth sentence.
+            Some fifth sentence.
+            * some bullets
+
+
+            """
+                .trimIndent()
+        val resultRun = processor.processWithQuickEdits(addMiddleRow)
+        val info = processor.findChangedBlocks(initialDocument, addMiddleRow, parseDocumentBlocks(initialDocument))
+        assertEquals(
+            """
+            Some first sentence.
+            Some second sentence.
+            Some third sentence.
+            Some forth sentence.
+            Some fifth sentence.
+        """
+                .trimIndent(),
+            info.updatedText,
+        )
+        assertEquals(1 to 3, info.firstBlock to info.blockAfterLast)
+        assertEquals(0, info.nLinesDelta)
+        assertIndexesEqual(addMiddleRow, processor.getCurrentIndexesInTest())
+
+        assertHtmlEquals(
+            """
+            <h1>Python program to check if the number is an Armstrong number or not</h1>
+            <p>Some first sentence.
+            Some second sentence.
+            Some third sentence.
+            Some forth sentence.
+            Some fifth sentence.</p>
+            <ul>
+            <li>some bullets</li>
+            </ul>
+
+            """
+                .trimIndent(),
+            resultRun,
+        )
+    }
+
+    @Test
+    public fun `find changed blocks editing last symbol`() {
+        val before =
+            """
+                # h0
+                P 1
+                continue p1
+
+                another block 2
+                * bullet list 3
+
+        """
+                .trimIndent()
+        val after =
+            """
+                # h0
+                P 1
+                continue px
+
+                another block 2
+                * bullet list 3
+
+        """
+                .trimIndent()
+        val processor = MarkdownProcessor(markdownMode = MarkdownMode.EditorPreview(null))
+        val info = processor.findChangedBlocks(before, after, parseDocumentBlocks(before))
+        assertEquals(1 to 2, info.firstBlock to info.blockAfterLast)
+        assertEquals(
+            """
+                P 1
+                continue px
+
+        """
+                .trimIndent(),
+            info.updatedText,
+        )
+        assertEquals(0, info.nLinesDelta)
+    }
+
+    @Test
+    public fun `delete line between paragraphs`() {
+        val before =
+            """
+                # h0
+                P 1
+                continue p1
+
+                another block 2
+                * bullet list 3
+
+        """
+                .trimIndent()
+        val after =
+            """
+                # h0
+                P 1
+                continue p1
+                another block 2
+                * bullet list 3
+
+        """
+                .trimIndent()
+        val processor = MarkdownProcessor(markdownMode = MarkdownMode.EditorPreview(null))
+        val info = processor.findChangedBlocks(before, after, parseDocumentBlocks(before))
+        assertEquals(1 to 3, info.firstBlock to info.blockAfterLast)
+        assertEquals(
+            """
+                P 1
+                continue p1
+                another block 2
+        """
+                .trimIndent(),
+            info.updatedText,
+        )
+        assertEquals(-1, info.nLinesDelta)
+    }
+
+    @Test
+    public fun `find changed blocks editing between paragraphs`() {
+        val before =
+            """
+                continue p1
+
+                another block 2
+                * bullet list 3
+
+        """
+                .trimIndent()
+        val after =
+            """
+                continue p1
+                inserted line
+                another block 2
+                * bullet list 3
+
+        """
+                .trimIndent()
+        val processor = MarkdownProcessor(markdownMode = MarkdownMode.EditorPreview(null))
+        val info = processor.findChangedBlocks(before, after, parseDocumentBlocks(before))
+        assertEquals(0 to 2, info.firstBlock to info.blockAfterLast)
+        assertEquals(
+            """
+                continue p1
+                inserted line
+                another block 2
+        """
+                .trimIndent(),
+            info.updatedText,
+        )
+        assertEquals(0, info.nLinesDelta)
+    }
+
+    @Test
+    public fun `check sublist end of block indexes`() {
+        val processor = MarkdownProcessor(markdownMode = MarkdownMode.EditorPreview(null))
+        val initialDocument =
+            """
+
+            # Another block
+
+            * Some first sentence.
+            * Some second sentence.
+             * Some forth sentence.
+             * Some forth sentence.
+               * Some forth sentence.
+
+            another paragraph
+            * some bullet
+
+            """
+                .trimIndent()
+        val resultBlocks = processor.processWithQuickEdits(initialDocument)
+        val startIndexes = resultBlocks.map { block -> block.sourceSpans.first().inputIndex }
+        val endIndexes = resultBlocks.map { block -> block.sourceSpans.last().let { it.inputIndex + it.length } }
+        listOf(
+                "# Another block",
+                """
+                * Some first sentence.
+                * Some second sentence.
+                 * Some forth sentence.
+                 * Some forth sentence.
+                   * Some forth sentence.
+            """
+                    .trimIndent(),
+                "another paragraph",
+            )
+            .forEachIndexed { i, expected ->
+                assertEquals(expected, initialDocument.substring(startIndexes[i], endIndexes[i]))
+            }
     }
 
     private fun assertHtmlEquals(@Language("html") text: String, actual: List<Block>) {
