@@ -69,8 +69,7 @@ class ModuleBridgeImpl(
     val shouldResetModuleStore = (imlFilePointer == null)
     imlFilePointer = newModuleFileUrl as VirtualFileUrlBridge
     if (shouldResetModuleStore) {
-      val existingStore = componentStoreRef.getAndSet(null)
-      existingStore?.release()
+      resetModuleStore()
     }
     val imlPath = newModuleFileUrl.toPath()
     (store.storageManager as? RenameableStateStorageManager)?.pathRenamed(imlPath, null)
@@ -198,7 +197,13 @@ class ModuleBridgeImpl(
     }
   }
 
+  internal fun resetModuleStore() {
+    val existingStore = componentStoreRef.getAndSet(null)
+    existingStore?.release()
+  }
+
   private val componentStoreRef = AtomicReference<IComponentStore?>()
+
   override val componentStore: IComponentStore
     get() {
       while (true) {
@@ -220,11 +225,5 @@ class ModuleBridgeImpl(
           newInstance.release()
         }
       }
-  }
-
-  override fun dispose() {
-    super.dispose()
-    val componentStore = componentStoreRef.getAndSet(null)
-    componentStore?.release()
-  }
+    }
 }

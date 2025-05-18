@@ -15,6 +15,7 @@ import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.components.impl.stores.ComponentStoreOwner
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.module.Module
@@ -22,6 +23,7 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.emptyConstructorMethodType
 import com.intellij.serviceContainer.findConstructorOrNull
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleBridgeImpl
 import org.jetbrains.annotations.ApiStatus
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -83,6 +85,14 @@ class ModuleComponentManager(parent: ComponentManagerImpl) : ComponentManagerImp
 
   override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor {
     return pluginDescriptor.moduleContainerDescriptor
+  }
+
+  override fun dispose() {
+    runCatching {
+      // TODO: this should better be moved to ModuleBridgeImpl.dispose(). But at the moment dispose() method is not invoked for modules.
+      (module as ModuleBridgeImpl).resetModuleStore()
+    }.getOrLogException(LOG)
+    super.dispose()
   }
 
   override fun debugString(short: Boolean): String = if (short) javaClass.simpleName else super.debugString(short = false)
