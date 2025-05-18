@@ -40,5 +40,6 @@
     <orderEntry type="library" scope="PROVIDED" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlinx-serialization-compiler-plugin" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.compose-compiler-plugin" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
   </component>
 </module>
