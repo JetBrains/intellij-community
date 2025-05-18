@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.application.options.CodeStyle;
@@ -84,7 +84,8 @@ public final class ImplementationViewComponent extends JPanel {
     return mySwitcher.getElements().length > 0;
   }
 
-  private record FileDescriptor(@NotNull VirtualFile file, int index, @NotNull TargetPresentation element) {
+  @ApiStatus.Internal
+  public record FileDescriptor(@NotNull VirtualFile file, int index, @NotNull TargetPresentation element) {
   }
 
   public ImplementationViewComponent(Collection<? extends ImplementationViewElement> elements,
