@@ -10,7 +10,6 @@ import com.intellij.diff.fragments.MergeLineFragment
 import com.intellij.diff.fragments.MergeLineFragmentImpl
 import com.intellij.diff.util.MergeRange
 import com.intellij.diff.util.Range
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.Strings
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntList
@@ -359,7 +358,7 @@ object ByLineRt {
         indexes.add(i)
       }
     }
-    return Pair.create(bigLines, indexes)
+    return Pair(bigLines, indexes)
   }
 
   private fun expandRanges(

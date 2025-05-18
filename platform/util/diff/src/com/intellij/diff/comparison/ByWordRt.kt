@@ -18,7 +18,6 @@ import com.intellij.diff.tools.util.text.LineOffsets
 import com.intellij.diff.util.DiffRangeUtil
 import com.intellij.diff.util.MergeRange
 import com.intellij.diff.util.Range
-import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.text.Strings
 import com.intellij.util.IntPair
 import com.intellij.util.text.MergingCharSequence
@@ -508,7 +507,7 @@ object ByWordRt {
     text21: CharSequence,
     text22: CharSequence,
     indicator: CancellationChecker,
-  ): Couple<FairDiffIterable> {
+  ): Pair<FairDiffIterable, FairDiffIterable> {
     val text2: CharSequence = MergingCharSequence(text21, text22)
     val changes = ByCharRt.comparePunctuation(text1, text2, indicator)
 
@@ -516,10 +515,10 @@ object ByWordRt {
 
     val iterable1 = DiffIterableUtil.fair(DiffIterableUtil.createUnchanged(ranges.first, text1.length, text21.length))
     val iterable2 = DiffIterableUtil.fair(DiffIterableUtil.createUnchanged(ranges.second, text1.length, text22.length))
-    return Couple.of(iterable1, iterable2)
+    return Pair(iterable1, iterable2)
   }
 
-  private fun splitIterable2Side(changes: FairDiffIterable, offset: Int): Couple<List<Range>> {
+  private fun splitIterable2Side(changes: FairDiffIterable, offset: Int): Pair<List<Range>, List<Range>> {
     val ranges1 = ArrayList<Range>()
     val ranges2 = ArrayList<Range>()
     for (ch in changes.iterateUnchanged()) {
@@ -535,7 +534,7 @@ object ByWordRt {
         ranges2.add(Range(ch.start1 + len2, ch.end1, 0, ch.end2 - offset))
       }
     }
-    return Couple.of(ranges1, ranges2)
+    return Pair(ranges1, ranges2)
   }
 
   @JvmStatic

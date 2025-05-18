@@ -6,8 +6,6 @@ import com.intellij.diff.comparison.DiffTooBigException
 import com.intellij.diff.comparison.expand
 import com.intellij.diff.fragments.DiffFragment
 import com.intellij.diff.util.Range
-import com.intellij.openapi.util.Comparing
-import com.intellij.openapi.util.Pair
 import com.intellij.util.containers.PeekableIteratorWrapper
 import com.intellij.util.diff.Diff
 import com.intellij.util.diff.FilesTooBigForDiffException
@@ -194,7 +192,7 @@ object DiffIterableUtil {
 
       assert(last1 == range.start1)
       assert(last2 == range.start2)
-      assert(!Comparing.equal<Boolean?>(lastEquals, equal))
+      assert(lastEquals != equal)
 
       last1 = range.end1
       last2 = range.end2
@@ -334,15 +332,14 @@ object DiffIterableUtil {
     }
 
     override fun next(): Pair<Range, Boolean> {
-      if (myNextUnchanged != null) {
-        val result = myNextUnchanged
+      myNextUnchanged?.let { result ->
         myNextUnchanged = null
-        return Pair.create(result, true)
+        return Pair(result, true)
       }
 
       val range = myChanges.next()
       myNextUnchanged = peekNextUnchanged(range.end1, range.end2)
-      return Pair.create(range, false)
+      return Pair(range, false)
     }
   }
 }

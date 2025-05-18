@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.comparison
 
-import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.util.text.Strings
 import com.intellij.util.diff.DiffConfig
 import org.jetbrains.annotations.Contract
@@ -13,7 +12,7 @@ object ComparisonUtil {
     if (text1 == null || text2 == null) return false
 
     when (policy) {
-      ComparisonPolicy.DEFAULT -> return StringUtilRt.equal(text1, text2, true)
+      ComparisonPolicy.DEFAULT -> return text1.equalsByContents(text2)
       ComparisonPolicy.TRIM_WHITESPACES -> return Strings.equalsTrimWhitespaces(text1, text2)
       ComparisonPolicy.IGNORE_WHITESPACES -> return Strings.equalsIgnoreWhitespaces(text1, text2)
     }
@@ -36,7 +35,7 @@ object ComparisonUtil {
   @Contract(pure = true)
   fun isEqualTexts(text1: CharSequence, text2: CharSequence, policy: ComparisonPolicy): Boolean {
     when (policy) {
-      ComparisonPolicy.DEFAULT -> return StringUtilRt.equal(text1, text2, true)
+      ComparisonPolicy.DEFAULT -> return text1.equalsByContents(text2)
       ComparisonPolicy.TRIM_WHITESPACES -> return equalsTrimWhitespaces(text1, text2)
       ComparisonPolicy.IGNORE_WHITESPACES -> return Strings.equalsIgnoreWhitespaces(text1, text2)
     }
@@ -85,4 +84,20 @@ object ComparisonUtil {
   fun getUnimportantLineCharCount(): Int {
     return DiffConfig.UNIMPORTANT_LINE_CHAR_COUNT
   }
+}
+
+// from StringUtilRt
+private fun CharSequence?.equalsByContents(other: CharSequence?): Boolean {
+  if (this === other) return true
+  if (this == null || other == null) return false
+
+  if (length != other.length) return false
+
+  for (i in 0..<length) {
+    if (this[i] != other[i]) {
+      return false
+    }
+  }
+
+  return true
 }

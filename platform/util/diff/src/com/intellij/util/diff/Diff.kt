@@ -2,7 +2,6 @@
 package com.intellij.util.diff
 
 import com.intellij.openapi.diagnostic.LoggerRt
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.LineTokenizer
 import com.intellij.util.containers.Enumerator
 import com.intellij.util.containers.HashingStrategy
@@ -41,7 +40,7 @@ object Diff {
     val endCut = getEndCut(objects1, objects2, startShift, strategy)
 
     val changeRef = doBuildChangesFast(objects1.size, objects2.size, startShift, endCut)
-    if (changeRef != null) return changeRef.get()
+    if (changeRef != null) return changeRef.value
 
     val trimmedLength = objects1.size + objects2.size - 2 * startShift - 2 * endCut
     val enumerator = Enumerator(trimmedLength, strategy)
@@ -57,7 +56,7 @@ object Diff {
     val endCut = getEndCut(array1, array2, startShift)
 
     val changeRef = doBuildChangesFast(array1.size, array2.size, startShift, endCut)
-    if (changeRef != null) return changeRef.get()
+    if (changeRef != null) return changeRef.value
 
     val copyArray = startShift != 0 || endCut != 0
     val ints1 = if (copyArray) Arrays.copyOfRange(array1, startShift, array1.size - endCut) else array1
@@ -65,14 +64,20 @@ object Diff {
     return doBuildChanges(ints1, ints2, ChangeBuilder(startShift))
   }
 
-  private fun doBuildChangesFast(length1: Int, length2: Int, startShift: Int, endCut: Int): Ref<Change?>? {
+  private fun doBuildChangesFast(length1: Int, length2: Int, startShift: Int, endCut: Int): Ref<Change>? {
     val trimmedLength1 = length1 - startShift - endCut
     val trimmedLength2 = length2 - startShift - endCut
     if (trimmedLength1 != 0 && trimmedLength2 != 0) return null
-    val change = if (trimmedLength1 != 0 || trimmedLength2 != 0) Change(startShift, startShift, trimmedLength1, trimmedLength2, null)
-    else null
-    return Ref<Change?>(change)
+    val change = if (trimmedLength1 != 0 || trimmedLength2 != 0) {
+      Change(startShift, startShift, trimmedLength1, trimmedLength2, null)
+    }
+    else {
+      null
+    }
+    return Ref(change)
   }
+
+  private data class Ref<T>(val value: T?)
 
   @Throws(FilesTooBigForDiffException::class)
   private fun doBuildChanges(ints1: IntArray, ints2: IntArray, builder: ChangeBuilder): Change? {

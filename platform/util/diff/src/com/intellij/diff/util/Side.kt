@@ -3,7 +3,6 @@ package com.intellij.diff.util
 
 import com.intellij.diff.fragments.DiffFragment
 import com.intellij.diff.fragments.LineFragment
-import com.intellij.openapi.util.Couple
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 
@@ -75,16 +74,6 @@ enum class Side(open val index: Int) {
   open fun <T : Any> selectNotNull(list: List<T>): T {
     assert(list.size == 2)
     return list[index]
-  }
-
-  @Contract(pure = true)
-  open fun <T> select(region: Couple<T>): T {
-    return if (isLeft) region.first else region.second
-  }
-
-  @Contract(pure = true)
-  open fun <T : Any> selectNotNull(region: Couple<T>): T {
-    return if (isLeft) region.first else region.second
   }
 
   //
