@@ -4,6 +4,7 @@ package com.intellij.diff.util
 import com.intellij.diff.fragments.DiffFragment
 import com.intellij.diff.fragments.LineFragment
 import com.intellij.openapi.util.Couple
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 
 enum class Side(open val index: Int) {
@@ -131,4 +132,13 @@ enum class Side(open val index: Int) {
       return if (index != -1) fromIndex(index) else null
     }
   }
+
+  // for preservation of source compatibility with Kotlin code after j2k
+
+  @Suppress("INAPPLICABLE_JVM_NAME")
+  @JvmName("isLeftDoNotUse")
+  @ApiStatus.Internal
+  @Deprecated("Use #isLeft instead", ReplaceWith("isLeft"))
+  fun isLeft(): Boolean = isLeft
+
 }
