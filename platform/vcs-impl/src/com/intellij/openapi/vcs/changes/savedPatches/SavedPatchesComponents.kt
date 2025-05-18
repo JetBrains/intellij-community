@@ -13,13 +13,15 @@ import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.vcs.commit.CommitActionsPanel
+import org.jetbrains.annotations.ApiStatus
 import java.awt.FlowLayout
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.border.CompoundBorder
 
-internal object SavedPatchesComponents {
+@ApiStatus.Internal
+object SavedPatchesComponents {
   fun createBottomComponent(bottomToolbar: ActionToolbar): JComponent {
     val bottomPanel = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)).apply {
       border = CompoundBorder(IdeBorderFactory.createBorder(SideBorder.TOP),
