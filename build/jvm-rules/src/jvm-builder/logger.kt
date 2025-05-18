@@ -42,8 +42,8 @@ internal class BazelLogger(category: String, private val span: Span) : Logger() 
     }
   }
 
-  override fun info(message: String, t: Throwable?) {
-    addEvent(LogLevel.INFO, message, t)
+  override fun info(message: String?, t: Throwable?) {
+    addEvent(LogLevel.INFO, message ?: "", t)
   }
 
   override fun warn(message: String, t: Throwable?) {
