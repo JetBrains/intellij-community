@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.function.Predicate;
 
@@ -37,14 +36,25 @@ public class BazelIncBuilder {
 
       GraphUpdater graphUpdater = new GraphUpdater(context.getTargetName());
 
-      if (context.isRebuild()) {
+      if (context.isRebuild() || !storageManager.getOutputBuilder().isInputZipExist()) {
+        // either rebuild is explicitly requested, or there is no previous data, need to compile whole target
         srcSnapshotDelta = new SnapshotDeltaImpl(context.getSources());
         srcSnapshotDelta.markRecompileAll(); // force rebuild
       }
       else {
+        // output checks
+        ZipOutputBuilderImpl outputBuilder = storageManager.getOutputBuilder();
+        AbiJarBuilder abiOutputBuilder = storageManager.getAbiOutputBuilder();
+        if (abiOutputBuilder != null && !abiOutputBuilder.isInputZipExist()) {
+          // populate abi builder from existing output builder
+          for (String entryName : outputBuilder.getEntryNames()) {
+            abiOutputBuilder.putEntry(entryName, outputBuilder.getContent(entryName));
+          }
+        }
+
         ConfigurationState pastState = ConfigurationState.loadSavedState(context);
         ConfigurationState presentState = new ConfigurationState(context.getPathMapper(), context.getSources(), context.getBinaryDependencies());
-        
+
         srcSnapshotDelta = new SnapshotDeltaImpl(pastState.getSources(), context.getSources());
         if (!srcSnapshotDelta.isRecompileAll() && pastState.getClasspathStructureDigest() != presentState.getClasspathStructureDigest()) {
           srcSnapshotDelta.markRecompileAll();
@@ -155,7 +165,7 @@ public class BazelIncBuilder {
             if (toCompile.isEmpty()) {
               continue;
             }
-            ExitCode code = runner.compile(toCompile, filter(srcSnapshotDelta.getModified(), runner::canCompile), diagnostic, outSink);
+            ExitCode code = runner.compile(toCompile, filter(srcSnapshotDelta.getDeleted(), runner::canCompile), diagnostic, outSink);
             if (code == ExitCode.CANCEL) {
               return code;
             }
@@ -215,15 +225,22 @@ public class BazelIncBuilder {
         new ConfigurationState(context.getPathMapper(), srcSnapshotDelta.asSnapshot(), context.getBinaryDependencies()).save(context);
       }
 
-      try { // backup current abi-jars content
+      try { // backup current deps content
         Files.createDirectories(DataPaths.getDependenciesBackupStoreDir(context));
 
-        for (Path path : map(flat(deletedLibraries, modifiedLibraries), context.getPathMapper()::toPath)) {
+        List<Path> toBackup = collect(map(modifiedLibraries, context.getPathMapper()::toPath), new ArrayList<>());
+        toBackup.add(context.getOutputZip());
+        Path abiOut = context.getAbiOutputZip();
+        if (abiOut != null) {
+          toBackup.add(abiOut);
+        }
+
+        for (Path path : flat(map(deletedLibraries, context.getPathMapper()::toPath), toBackup)) {
           Path backup = DataPaths.getJarBackupStoreFile(context, path);
           Files.deleteIfExists(backup);
         }
 
-        for (Path path : map(modifiedLibraries, context.getPathMapper()::toPath)) {
+        for (Path path : toBackup) {
           Path backup = DataPaths.getJarBackupStoreFile(context, path);
           try {
             Files.createLink(backup, path);
@@ -233,7 +250,7 @@ public class BazelIncBuilder {
           catch (Throwable e) {
             context.report(Message.create(null, Message.Kind.WARNING, e));
             // fallback to copy
-            Files.copy(path, backup, StandardCopyOption.REPLACE_EXISTING);
+            //Files.copy(path, backup, StandardCopyOption.REPLACE_EXISTING);
           }
         }
       }

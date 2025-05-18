@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.ref.WeakReference;
+import java.lang.ref.SoftReference;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -28,17 +28,24 @@ import static org.jetbrains.jps.util.Iterators.*;
 
 public class ZipOutputBuilderImpl implements ZipOutputBuilder {
   private final Map<String, EntryData> myEntries = new TreeMap<>();
-  private final Map<String, ZipEntry> myDirectories = new HashMap<>();
-  private final ZipFile myZipFile;
-  @NotNull
-  private final Path myOutputZip;
+  private final Map<String, ZipEntry> myExistingDirectories = new HashMap<>();
+
+  private final @NotNull Path myWriteZipPath;
+  private final @NotNull Path myReadZipPath;
+  private final @Nullable ZipFile myReadZipFile;
+
   private final MVStore myDataSwapStore;
   private final MVMap<String, byte[]> mySwap;
   private final Map<String, Set<String>> myDirIndex = new HashMap<>();
   private boolean myHasChanges;
 
-  public ZipOutputBuilderImpl(Path outputZip) throws IOException {
-    myOutputZip = outputZip;
+  public ZipOutputBuilderImpl(Path zipPath) throws IOException {
+    this(zipPath, zipPath);
+  }
+  
+  public ZipOutputBuilderImpl(@NotNull Path readZipPath, @NotNull Path writeZipPath) throws IOException {
+    myReadZipPath = readZipPath;
+    myWriteZipPath = writeZipPath;
     myDataSwapStore = new MVStore.Builder()
       .fileStore(new OffHeapStore())
       .autoCommitDisabled()
@@ -46,31 +53,34 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
       .open();
     myDataSwapStore.setVersionsToKeep(0);
     mySwap = myDataSwapStore.openMap("data-swap");
-    myZipFile = openZipFile(outputZip);
-    Enumeration<? extends ZipEntry> entries = myZipFile.entries();
-    while (entries.hasMoreElements()) {
-      ZipEntry entry = entries.nextElement();
-      addToPackageIndex(entry.getName());
-      if (entry.isDirectory()) {
-        myDirectories.put(entry.getName(), entry);
-      }
-      else {
-        myEntries.put(entry.getName(), EntryData.create(myZipFile, entry));
+    myReadZipFile = openZipFile(readZipPath);
+    if (myReadZipFile != null) {
+      // load existing entries
+      Enumeration<? extends ZipEntry> entries = myReadZipFile.entries();
+      while (entries.hasMoreElements()) {
+        ZipEntry entry = entries.nextElement();
+        addToPackageIndex(entry.getName());
+        if (entry.isDirectory()) {
+          myExistingDirectories.put(entry.getName(), entry);
+        }
+        else {
+          myEntries.put(entry.getName(), EntryData.create(myReadZipFile, entry));
+        }
       }
     }
   }
 
-  private static @NotNull ZipFile openZipFile(Path zipPath) throws IOException {
+  public boolean isInputZipExist() {
+    return myReadZipFile != null;
+  }
+  
+  private static @Nullable ZipFile openZipFile(Path zipPath) throws IOException {
     try {
       return new ZipFile(zipPath.toFile());
     }
-    catch (NoSuchFileException e) {
-      Files.createDirectories(zipPath.getParent());
-      try (var zos = new ZipOutputStream(Files.newOutputStream(zipPath))){
-        zos.setLevel(Deflater.BEST_SPEED);
-      }
-      return new ZipFile(zipPath.toFile());
+    catch (NoSuchFileException ignored) {
     }
+    return null;
   }
 
   @Override
@@ -118,26 +128,56 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
       changes = true;
     }
     changes |= removeFromPackageIndex(entryName);
-    myHasChanges |= changes;
+    if (changes) {
+      myHasChanges = true;
+    }
     return changes;
   }
 
   @Override
   public void close(boolean saveChanges) throws IOException {
     if (!myHasChanges || !saveChanges) {
-      myZipFile.close();
+      if (myReadZipFile != null) { 
+        myReadZipFile.close();
+        if (saveChanges && !myReadZipPath.equals(myWriteZipPath)) {
+          // ensure content at the destination path is the same as the source content
+          boolean useCopy = false;
+          if (!Files.exists(myWriteZipPath)) {
+            try {
+              Files.createLink(myWriteZipPath, myReadZipPath);
+            }
+            catch (Throwable ignored) {
+              useCopy = true; // fallback
+              // todo: logging
+            }
+          }
+          else if (!Files.isSameFile(myReadZipPath, myWriteZipPath)) {
+            useCopy = true;
+          }
+          if (useCopy) {
+            Files.copy(myReadZipPath, myWriteZipPath, StandardCopyOption.REPLACE_EXISTING);
+          }
+        }
+      }
     }
     else {
       // augment entry map with all currently present directory entries
       for (String dirName : myDirIndex.keySet()) {
-        ZipEntry existingEntry = myDirectories.get(dirName); 
+        ZipEntry existingEntry = myExistingDirectories.get(dirName);
         if (existingEntry == null && "/".equals(dirName)) {
           continue; // keep root '/' entry if it were present in the original zip
         }
-        myEntries.put(dirName, EntryData.create(myZipFile, existingEntry != null? existingEntry : new ZipEntry(dirName)));
+        if (existingEntry != null) {
+          myEntries.put(dirName, EntryData.create(myReadZipFile, existingEntry));
+        }
+        else {
+          myEntries.put(dirName, EntryData.create(dirName, EntryData.NO_DATA_BYTES));
+        }
       }
-      Path newOutputName = getNewOutputName();
-      try (var zos = new ZipOutputStream(Files.newOutputStream(newOutputName))) {
+      boolean useTempOutput = myReadZipPath.equals(myWriteZipPath);
+      Path outputPath = useTempOutput? getTempOutputPath() : myWriteZipPath;
+      try (var zos = new ZipOutputStream(openOutputStream(outputPath))) {
+        zos.setLevel(Deflater.BEST_SPEED);
         for (Iterator<Map.Entry<String, EntryData>> it = myEntries.entrySet().iterator(); it.hasNext(); ) {
           EntryData data = it.next().getValue();
           ZipEntry zipEntry = data.getZipEntry();
@@ -150,33 +190,35 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
         }
       }
       finally {
-        myZipFile.close();
+        if (myReadZipFile != null) {
+          myReadZipFile.close();
+        }
         myDataSwapStore.close();
-        Files.move(newOutputName, myOutputZip, StandardCopyOption.REPLACE_EXISTING);
+        if (useTempOutput) {
+          Files.move(outputPath, myWriteZipPath, StandardCopyOption.REPLACE_EXISTING);
+        }
       }
     }
   }
 
-  private @NotNull Path getNewOutputName() {
+  private static OutputStream openOutputStream(Path outputPath) throws IOException {
+    try {
+      return Files.newOutputStream(outputPath);
+    }
+    catch (NoSuchFileException e) {
+      Files.createDirectories(outputPath.getParent());
+      return Files.newOutputStream(outputPath);
+    }
+  }
+
+  private @NotNull Path getTempOutputPath() {
     // todo: handle situation when file exists
-    return myOutputZip.resolveSibling(myOutputZip.getFileName() + ".tmp");
+    return myWriteZipPath.resolveSibling(myWriteZipPath.getFileName() + ".tmp");
   }
 
   private interface EntryData {
     byte[] NO_DATA_BYTES = new byte[0];
     
-    EntryData DIR_DATA = new EntryData() {
-      @Override
-      public byte[] getContent() {
-        return NO_DATA_BYTES;
-      }
-
-      @Override
-      public ZipEntry getZipEntry() {
-        return null;
-      }
-    };
-
     byte[] getContent() throws IOException;
 
     ZipEntry getZipEntry();
@@ -272,7 +314,7 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
   }
 
   private static abstract class CachingDataEntry implements EntryData {
-    private WeakReference<byte[]> myCached;
+    private SoftReference<byte[]> myCached;
 
     CachingDataEntry(byte[] data) {
       cacheData(data);
@@ -281,7 +323,7 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
     protected abstract byte[] loadData() throws IOException;
 
     private byte[] cacheData(byte[] data) {
-      myCached = data != null? new WeakReference<>(data) : null;
+      myCached = data != null? new SoftReference<>(data) : null;
       return data;
     }
 

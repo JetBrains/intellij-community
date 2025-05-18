@@ -50,7 +50,8 @@ public class StorageManager implements Closeable {
     if (logger.isEnabled() && !myContext.isRebuild()) {
       // need this for tests
       Set<String> deleted = new HashSet<>();
-      try (var out = new ZipOutputBuilderImpl(output)) {
+      Path outBackup = DataPaths.getJarBackupStoreFile(myContext, output);
+      try (var out = new ZipOutputBuilderImpl(Files.exists(outBackup)? outBackup : output)) {
         collect(out.getEntryNames(), deleted);
       }
       if (!isEmpty(deleted)) {
@@ -96,7 +97,8 @@ public class StorageManager implements Closeable {
   public ZipOutputBuilderImpl getOutputBuilder() throws IOException {
     ZipOutputBuilderImpl builder = myOutputBuilder;
     if (builder == null) {
-      myOutputBuilder = builder = new ZipOutputBuilderImpl(myContext.getOutputZip());
+      Path previousOutput = DataPaths.getJarBackupStoreFile(myContext, myContext.getOutputZip());
+      myOutputBuilder = builder = new ZipOutputBuilderImpl(previousOutput, myContext.getOutputZip());
     }
     return builder;
   }
@@ -107,7 +109,8 @@ public class StorageManager implements Closeable {
     if (builder == null) {
       Path abiOutputPath = myContext.getAbiOutputZip();
       if (abiOutputPath != null) {
-        myAbiOutputBuilder = builder = new AbiJarBuilder(abiOutputPath, getInstrumentationClassFinder());
+        Path previousAbiOutput = DataPaths.getJarBackupStoreFile(myContext, abiOutputPath);
+        myAbiOutputBuilder = builder = new AbiJarBuilder(previousAbiOutput, abiOutputPath, getInstrumentationClassFinder());
       }
     }
     return builder;
