@@ -51,8 +51,7 @@ import static org.jetbrains.kotlin.cli.plugins.PluginsOptionsParserKt.processCom
 public class KotlinCompilerRunner implements CompilerRunner {
   private final BuildContext myContext;
   private final StorageManager myStorageManager;
-  private final K2JVMCompilerArguments myKotlinCompilerArgs;
-  @NotNull NodeSourcePathMapper pathMapper;
+  @NotNull NodeSourcePathMapper myPathMapper;
 
   private LookupTrackerImpl lookupTracker;
   private InlineConstTrackerImpl inlineConstTracker;
@@ -63,27 +62,10 @@ public class KotlinCompilerRunner implements CompilerRunner {
   public KotlinCompilerRunner(BuildContext context, StorageManager storageManager)  {
     myContext = context;
     myStorageManager = storageManager;
-    pathMapper = context.getPathMapper();
+    myPathMapper = context.getPathMapper();
 
-    myKotlinCompilerArgs = buildKotlinCompilerArguments(myContext);
-    // additional setup directly from flags
-    // todo: find corresponding cli option for every setting if possible
-    Map<CLFlags, List<String>> flags = context.getFlags();
-    myKotlinCompilerArgs.setSkipPrereleaseCheck(true);
-    myKotlinCompilerArgs.setAllowUnstableDependencies(true);
-    myKotlinCompilerArgs.setDisableStandardScript(true);
-    myKotlinCompilerArgs.setAllowKotlinPackage(CLFlags.ALLOW_KOTLIN_PACKAGE.isFlagSet(flags));
-    myKotlinCompilerArgs.setWhenGuards(CLFlags.WHEN_GUARDS.isFlagSet(flags));
-    myKotlinCompilerArgs.setLambdas(CLFlags.LAMBDAS.getOptionalScalarValue(flags));
-    myKotlinCompilerArgs.setJvmDefault(CLFlags.JVM_DEFAULT.getOptionalScalarValue(flags));
-    myKotlinCompilerArgs.setInlineClasses(CLFlags.INLINE_CLASSES.isFlagSet(flags));
-    myKotlinCompilerArgs.setContextReceivers(CLFlags.CONTEXT_RECEIVERS.isFlagSet(flags));
-    Iterable<String> friends = CLFlags.FRIENDS.getValue(flags);
-    if (!isEmpty(friends)) {
-      myKotlinCompilerArgs.setFriendPaths(ensureCollection(map(friends, p -> context.getBaseDir().resolve(p).normalize().toString())).toArray(String[]::new));
-    }
-    
     // classpath map for compiler plugins
+    Map<CLFlags, List<String>> flags = context.getFlags();
     Iterator<String> pluginCp = CLFlags.PLUGIN_CLASSPATH.getValue(flags).iterator();
     for (String pluginId : CLFlags.PLUGIN_ID.getValue(flags)) {
       myPluginIdToPluginClasspath.put(pluginId, pluginCp.hasNext()? pluginCp.next() : "");
@@ -103,8 +85,9 @@ public class KotlinCompilerRunner implements CompilerRunner {
   @Override
   public ExitCode compile(Iterable<NodeSource> sources, Iterable<NodeSource> deletedSources, DiagnosticSink diagnostic, OutputSink out) {
     try {
+      K2JVMCompilerArguments kotlinArgs = buildKotlinCompilerArguments(myContext, sources);
       KotlinIncrementalCacheImpl incCache = new KotlinIncrementalCacheImpl(myStorageManager, flat(deletedSources, sources));
-      Services services = buildServices(myKotlinCompilerArgs.getModuleName(), incCache);
+      Services services = buildServices(kotlinArgs.getModuleName(), incCache);
       MessageCollector messageCollector = new KotlinMessageCollector(diagnostic, this);
       // todo: make sure if we really need to process generated outputs after the compilation and not "in place"
       List<GeneratedClass> generatedClasses = new ArrayList<>();
@@ -119,7 +102,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
 
       boolean completedOk = false;
       try {
-        org.jetbrains.kotlin.cli.common.ExitCode exitCode = pipeline.execute(myKotlinCompilerArgs, services, messageCollector);
+        org.jetbrains.kotlin.cli.common.ExitCode exitCode = pipeline.execute(kotlinArgs, services, messageCollector);
         completedOk = exitCode == OK;
         return completedOk? ExitCode.OK : ExitCode.ERROR;
       }
@@ -297,7 +280,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
             relativePath.endsWith(".class")? OutputSink.OutputFile.Kind.bytecode : OutputSink.OutputFile.Kind.other;
 
           outputSink.addFile(
-            new OutputFileImpl(relativePath, kind, outputByteArray, false), map(generatedOutput.getSourceFiles(), pathMapper::toNodeSource)
+            new OutputFileImpl(relativePath, kind, outputByteArray, false), map(generatedOutput.getSourceFiles(), myPathMapper::toNodeSource)
           );
         }
       );
@@ -306,10 +289,29 @@ public class KotlinCompilerRunner implements CompilerRunner {
     };
   }
 
-  private static K2JVMCompilerArguments buildKotlinCompilerArguments(BuildContext context) {
+  private static K2JVMCompilerArguments buildKotlinCompilerArguments(BuildContext context, Iterable<NodeSource> sources) {
     // todo: hash compiler configuration
     K2JVMCompilerArguments arguments = new K2JVMCompilerArguments();
     parseCommandLineArguments(context.getBuilderOptions().getKotlinOptions(), arguments, true);
+    
+    // additional setup directly from flags
+    // todo: find corresponding cli option for every setting if possible
+    Map<CLFlags, List<String>> flags = context.getFlags();
+    arguments.setSkipPrereleaseCheck(true);
+    arguments.setAllowUnstableDependencies(true);
+    arguments.setDisableStandardScript(true);
+    arguments.setAllowKotlinPackage(CLFlags.ALLOW_KOTLIN_PACKAGE.isFlagSet(flags));
+    arguments.setWhenGuards(CLFlags.WHEN_GUARDS.isFlagSet(flags));
+    arguments.setLambdas(CLFlags.LAMBDAS.getOptionalScalarValue(flags));
+    arguments.setJvmDefault(CLFlags.JVM_DEFAULT.getOptionalScalarValue(flags));
+    arguments.setInlineClasses(CLFlags.INLINE_CLASSES.isFlagSet(flags));
+    arguments.setContextReceivers(CLFlags.CONTEXT_RECEIVERS.isFlagSet(flags));
+    Iterable<String> friends = CLFlags.FRIENDS.getValue(flags);
+    if (!isEmpty(friends)) {
+      arguments.setFriendPaths(ensureCollection(map(friends, p -> context.getBaseDir().resolve(p).normalize().toString())).toArray(String[]::new));
+    }
+    NodeSourcePathMapper pathMapper = context.getPathMapper();
+    arguments.setFreeArgs(collect(map(sources, ns -> pathMapper.toPath(ns).toString()), new ArrayList<>()));
     return arguments;
   }
 
