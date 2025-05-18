@@ -64,7 +64,7 @@ import org.jetbrains.jps.service.JpsServiceManager
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.Collections
+import java.util.*
 import java.util.function.BiConsumer
 import java.util.function.Function
 import javax.tools.Diagnostic
@@ -170,9 +170,9 @@ internal class BazelJavaBuilder(
       mappingsCallback = if (isIncremental) JavaBuilderUtil.getDependenciesRegistrar(context) else null,
     )
 
+    val classpath = module.container.getChild(BazelConfigurationHolder.KIND).classPath
     var filesWithErrors: Collection<File>? = null
     try {
-      val classpath = module.container.getChild(BazelConfigurationHolder.KIND).classPath
       val diagnosticSink = JavaDiagnosticSink(context = context, registrars = refRegistrars, out = out)
       val compiledOk = tracer.spanBuilder("compile java files")
         .also { spanBuilder ->
@@ -216,7 +216,7 @@ internal class BazelJavaBuilder(
       if (filesWithErrors != null) {
         JavaBuilderUtil.registerFilesWithErrors(context, filesWithErrors)
       }
-      if (jpsJavaFileProvider.registerOutputs(context)) {
+      if (jpsJavaFileProvider.registerOutputs(context, classpath)) {
         throw StopBuildException("Compilation failed")
       }
     }

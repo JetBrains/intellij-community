@@ -16,10 +16,12 @@ import kotlin.system.exitProcess
 
 enum class TestModules(@JvmField val sourcePaths: List<String>, private val paramsPath: String) {
   UTIL_BASE_KMP(listOf("platform/util/base/kmp/src", "platform/util/base/kmp/srcJvmMain"), "platform/util/base/kmp/util-base-kmp.jar-0.params"),
+  UTIL(listOf("platform/util/src"), "platform/util/util.jar-0.params"),
   UTIL_RT(listOf("platform/util-rt/src"), "platform/util-rt/util-rt.jar-0.params"),
   STAT_CONFIG(listOf("platform/statistics/config/src"), "platform/statistics/config/config.jar-0.params"),
   XML_DOM(listOf("platform/util/xmlDom/src"), "platform/util/xmlDom/xmlDom.jar-0.params"),
   PLATFORM_IMPL(listOf("platform/platform-impl/src"), "platform/platform-impl/ide-impl.jar-0.params"),
+  RUNTIME_REPOSITORY(listOf("platform/runtime/repository/src"), "platform/runtime/repository/repository.jar-0.params"),
   LANG_IMPL(listOf("platform/lang-impl/src", "platform/lang-impl/gen"), "platform/lang-impl/lang-impl.jar-0.params"),
   PLATFORM_BOOTSTRAP(listOf("platform/platform-impl/bootstrap/src"), "platform/platform-impl/bootstrap/ide-bootstrap.jar-0.params"),
   DEVKIT_CORE(listOf("plugins/devkit/devkit-core/src", "plugins/devkit/devkit-core/gen"), "plugins/devkit/devkit-core/core.jar-0.params"),

@@ -64,10 +64,7 @@ _kt_kotlinc_options(
 # java_import(
 #     name = "jps",
 #     jars = ["jps-build-standalone.jar"],
-#     visibility = [
-#       "//src/jps-builder:__subpackages__",
-#       "//src/jps-shadow:__subpackages__",
-#     ],
+#     visibility = ["//visibility:public"],
 # )
 jvm_import(
     name = "jps",
@@ -81,6 +78,7 @@ jvm_import(
         "//src/jvm-builder:__subpackages__",
         "//src/jvm-builder-core:__subpackages__",
         "//src/kotlin/kotlin-builder:__subpackages__",
+        "//src/tmh:__subpackages__",
     ],
 )
 

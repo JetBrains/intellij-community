@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.build.GeneratedFile
 import java.io.File
 import java.nio.file.Path
-import java.util.TreeMap
+import java.util.*
 
 const val ABI_IC_NODE_FORMAT_VERSION: Int = 1
 
@@ -122,6 +122,16 @@ class OutputSink internal constructor(
 
     if (isChanged) {
       this.isChanged = true
+    }
+  }
+
+  fun findByJavaInternalClassName(className: String): ByteArray? {
+    val data = fileToData.get("$className.class") ?: return null
+    if (data is ImmutableZipEntry) {
+      return data.getData(oldZipFile!!)
+    }
+    else {
+      return data as ByteArray
     }
   }
 

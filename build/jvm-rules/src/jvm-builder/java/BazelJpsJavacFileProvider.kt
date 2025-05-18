@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("UnstableApiUsage", "HardCodedStringLiteral")
+@file:Suppress("UnstableApiUsage", "HardCodedStringLiteral", "ReplaceGetOrSet")
 
 package org.jetbrains.bazel.jvm.worker.java
 
@@ -21,6 +21,7 @@ import java.io.OutputStream
 import java.io.Reader
 import java.io.Writer
 import java.net.URI
+import java.nio.file.Path
 import javax.lang.model.element.Modifier
 import javax.lang.model.element.NestingKind
 import javax.tools.FileObject
@@ -33,11 +34,11 @@ internal class BazelJpsJavacFileProvider(
   private val outputConsumer: BazelTargetBuildOutputConsumer,
   private val mappingsCallback: Backend?,
   private val outputSink: OutputSink,
-  expectedOutputFileCount: Int
+  expectedOutputFileCount: Int,
 ) : JpsJavacFileProvider {
   private val outputs = ArrayList<InMemoryJavaOutputFileObject>(expectedOutputFileCount)
 
-  fun registerOutputs(context: BazelCompileContext): Boolean {
+  fun registerOutputs(context: BazelCompileContext, classpath: Array<Path>): Boolean {
     val successfullyCompiled = ObjectLinkedOpenHashSet<File>(outputs.size)
     for (fileObject in outputs) {
       val content = fileObject.content
@@ -54,7 +55,6 @@ internal class BazelJpsJavacFileProvider(
       // first, handle [src->output] mapping and register paths for `files_generated` event
       outputConsumer.registerJavacCompiledClass(
         relativeOutputPath = fileObject.path,
-        compiled = null,
         sourceFile = sourceIoFile.toPath(),
       )
 
@@ -64,6 +64,8 @@ internal class BazelJpsJavacFileProvider(
         mappingsCallback.associate(fileObject.path, listOf(sourceIoFile.invariantSeparatorsPath), reader, false)
       }
     }
+
+    instrumentClasses(classpath, outputs, outputSink)
 
     var hasErrors = false
     outputSink.registerJavacOutput(outputs) { file, message ->
@@ -151,5 +153,3 @@ private class InMemoryJavaInputFileObject(
 
   override fun delete(): Boolean = throw IllegalStateException()
 }
-
-

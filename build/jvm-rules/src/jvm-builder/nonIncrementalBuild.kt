@@ -5,8 +5,8 @@ package org.jetbrains.bazel.jvm.worker
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.Tracer
 import kotlinx.coroutines.job
-import org.jetbrains.bazel.jvm.kotlin.NonIncrementalKotlinBuilder
 import org.jetbrains.bazel.jvm.kotlin.JvmBuilderFlags
+import org.jetbrains.bazel.jvm.kotlin.NonIncrementalKotlinBuilder
 import org.jetbrains.bazel.jvm.use
 import org.jetbrains.bazel.jvm.util.ArgMap
 import org.jetbrains.bazel.jvm.worker.core.BazelBuildRootIndex
@@ -74,7 +74,6 @@ internal suspend fun nonIncrementalBuildUsingJps(
           javaFileCount = moduleTarget.javaFileCount,
           isIncremental = false,
         ),
-        //NotNullInstrumentingBuilder(),
         NonIncrementalKotlinBuilder(job = coroutineContext.job, span = span),
       ).filterNotNull().toTypedArray()
       builders.sortBy { it.category.ordinal }

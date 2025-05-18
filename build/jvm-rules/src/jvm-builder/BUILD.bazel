@@ -34,6 +34,7 @@ kt_jvm_library(
         "//:arrow-vector",
         "//:arrow-memory-netty",
         "//:arrow-memory-core",
+        "//src/tmh",
     ],
 )
 

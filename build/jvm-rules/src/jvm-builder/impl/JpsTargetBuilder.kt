@@ -14,9 +14,6 @@ import it.unimi.dsi.fastutil.objects.ObjectArraySet
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ensureActive
-import org.jetbrains.bazel.jvm.worker.dependencies.DependencyAnalyzer
-import org.jetbrains.bazel.jvm.worker.state.RemovedFileInfo
-import org.jetbrains.bazel.jvm.worker.state.SourceFileStateResult
 import org.jetbrains.bazel.jvm.span
 import org.jetbrains.bazel.jvm.use
 import org.jetbrains.bazel.jvm.util.slowEqualsAwareHashStrategy
@@ -32,6 +29,9 @@ import org.jetbrains.bazel.jvm.worker.core.cleanOutputsCorrespondingToChangedFil
 import org.jetbrains.bazel.jvm.worker.core.initFsStateForCleanBuild
 import org.jetbrains.bazel.jvm.worker.core.markTargetUpToDate
 import org.jetbrains.bazel.jvm.worker.core.output.OutputSink
+import org.jetbrains.bazel.jvm.worker.dependencies.DependencyAnalyzer
+import org.jetbrains.bazel.jvm.worker.state.RemovedFileInfo
+import org.jetbrains.bazel.jvm.worker.state.SourceFileStateResult
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.builders.BuildRootDescriptor
 import org.jetbrains.jps.builders.BuildTarget
@@ -59,8 +59,6 @@ import java.nio.file.Path
 import java.util.Map
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
-import kotlin.collections.map
-import kotlin.collections.mapTo
 import kotlin.coroutines.coroutineContext
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -265,7 +263,6 @@ internal class JpsTargetBuilder(
                 FSOperations.markDirty(context, CompilationRound.NEXT, chunk, null)
                 // reverting to the beginning
                 nextPassRequired = true
-                outputConsumer.clear()
                 break
               }
               else {
@@ -288,7 +285,6 @@ internal class JpsTargetBuilder(
       } while (nextPassRequired)
     }
     finally {
-      outputConsumer.clear()
       for (builder in builders) {
         builder.chunkBuildFinished(context, chunk)
       }

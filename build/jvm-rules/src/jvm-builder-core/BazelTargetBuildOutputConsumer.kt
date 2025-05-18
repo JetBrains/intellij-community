@@ -22,24 +22,21 @@ class BazelTargetBuildOutputConsumer(
   @JvmField val outputSink: OutputSink,
 ) : ModuleLevelBuilder.OutputConsumer {
   private var registeredSourceCount = 0
-  private val classes = HashMap<String, CompiledClass>()
 
   override fun getTargetCompiledClasses(target: BuildTarget<*>): Collection<CompiledClass> {
     throw IllegalStateException("getTargetCompiledClasses is not and will be not supported")
   }
 
-  override fun getCompiledClasses(): Map<String, CompiledClass> = classes
+  override fun getCompiledClasses(): Map<String, CompiledClass> {
+    throw UnsupportedOperationException("getCompiledClasses is not and will be not supported")
+  }
 
-  override fun lookupClassBytes(className: String?): BinaryContent? = classes.get(className)?.content
+  override fun lookupClassBytes(className: String?): BinaryContent {
+    throw UnsupportedOperationException("lookupClassBytes is not and will be not supported")
+  }
 
   override fun registerCompiledClass(target: BuildTarget<*>?, compiled: CompiledClass) {
-    val className = compiled.className
-    if (className != null) {
-      classes.put(className, compiled)
-    }
-    if (target != null) {
-      registerOutputFile(target = target, outputFile = compiled.outputFile, sourcePaths = compiled.sourceFilesPaths)
-    }
+    throw UnsupportedOperationException("registerCompiledClass is not and will be not supported")
   }
 
   fun registerKotlincOutput(context: CompileContext, outputs: List<OutputFile>) {
@@ -91,12 +88,7 @@ class BazelTargetBuildOutputConsumer(
   fun registerJavacCompiledClass(
     relativeOutputPath: String,
     sourceFile: Path,
-    compiled: CompiledClass?,
   ) {
-    compiled?.className?.let {
-      classes.put(it, compiled)
-    }
-
     dataManager?.sourceToOutputMapping?.appendRawRelativeOutput(sourceFile, relativeOutputPath)
   }
 
@@ -105,8 +97,4 @@ class BazelTargetBuildOutputConsumer(
   }
 
   fun getNumberOfProcessedSources(): Int = registeredSourceCount
-
-  fun clear() {
-    classes.clear()
-  }
 }

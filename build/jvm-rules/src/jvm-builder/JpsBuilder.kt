@@ -388,7 +388,6 @@ private suspend fun initAndBuild(
                 javaFileCount = moduleTarget.javaFileCount,
               )
             },
-            //NotNullInstrumentingBuilder(),
             JavaBackwardReferenceIndexBuilder(),
             KotlinCompilerReferenceIndexBuilder(),
           ).filterNotNull().toTypedArray()
