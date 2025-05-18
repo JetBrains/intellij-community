@@ -15,16 +15,20 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.containers.JBIterable
 import com.intellij.util.ui.StatusText
 import org.jetbrains.annotations.ApiStatus
+import java.util.EventListener
 import java.util.concurrent.CompletableFuture
 import javax.swing.tree.DefaultTreeModel
 
 @ApiStatus.Internal
 class SavedPatchesChangesBrowser(project: Project, internal val isShowDiffWithLocal: () -> Boolean, parentDisposable: Disposable)
   : AsyncChangesBrowserBase(project, false, false), Disposable {
+
+  private val eventDispatcher = EventDispatcher.create(Listener::class.java)
 
   var changes: Collection<SavedPatchesProvider.ChangeObject> = emptyList()
     private set
@@ -72,6 +76,10 @@ class SavedPatchesChangesBrowser(project: Project, internal val isShowDiffWithLo
     }, EdtExecutorService.getInstance())
   }
 
+  fun addModelUpdateListener(disposable: Disposable, listener: Listener) {
+    eventDispatcher.addListener(listener, disposable)
+  }
+
   override fun createPopupMenuActions(): List<AnAction> {
     return super.createPopupMenuActions() + ActionManager.getInstance().getAction("Vcs.SavedPatches.ChangesBrowser.ContextMenu")
   }
@@ -105,7 +113,9 @@ class SavedPatchesChangesBrowser(project: Project, internal val isShowDiffWithLo
                       updateEmptyText: (StatusText) -> Unit) {
     changes = changeObjects
     updateEmptyText(viewer.emptyText)
-    viewer.rebuildTree()
+    viewer.requestRefresh {
+      eventDispatcher.multicaster.onModelUpdated()
+    }
   }
 
   public override fun getDiffRequestProducer(userObject: Any): ChangeDiffRequestChain.Producer? {
@@ -159,6 +169,10 @@ class SavedPatchesChangesBrowser(project: Project, internal val isShowDiffWithLo
 
   override fun dispose() {
     shutdown()
+  }
+
+  fun interface Listener : EventListener {
+    fun onModelUpdated()
   }
 
   private class ChangeObjectNode(change: SavedPatchesProvider.ChangeObject) :
