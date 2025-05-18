@@ -31,6 +31,7 @@ import git4idea.index.GitStageManagerKt;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.stash.ui.GitStashUIHandler;
 import git4idea.ui.GitUnstashDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,8 +39,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static git4idea.GitNotificationIdsHolder.UNSTASH_WITH_CONFLICTS;
-import static git4idea.stash.ui.GitStashContentProviderKt.isStashTabAvailable;
-import static git4idea.stash.ui.GitStashContentProviderKt.showStashes;
 
 public class GitStashChangesSaver extends GitChangesSaver {
 
@@ -126,8 +125,9 @@ public class GitStashChangesSaver extends GitChangesSaver {
   @Override
   public void showSavedChanges() {
     VirtualFile firstRoot = ContainerUtil.getFirstItem(myStashedRoots.keySet());
-    if (isStashTabAvailable()) {
-      showStashes(myProject, firstRoot);
+    GitStashUIHandler handler = myProject.getService(GitStashUIHandler.class);
+    if (handler.isStashTabAvailable()) {
+      handler.showStashes(firstRoot);
     } else {
       GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<>(myStashedRoots.keySet()), firstRoot);
     }
@@ -174,8 +174,9 @@ public class GitStashChangesSaver extends GitChangesSaver {
         .addAction(NotificationAction.createSimple(
           GitBundle.messagePointer("stash.unstash.unresolved.conflict.warning.notification.show.stash.action"), () -> {
             VirtualFile firstRoot = ContainerUtil.getFirstItem(myStashedRoots);
-            if (isStashTabAvailable()) {
-              showStashes(myProject, firstRoot);
+            GitStashUIHandler handler = myProject.getService(GitStashUIHandler.class);
+            if (handler.isStashTabAvailable()) {
+              handler.showStashes(firstRoot);
             } else {
               // we don't use #showSavedChanges to specify unmerged root first
               GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<>(myStashedRoots), firstRoot);

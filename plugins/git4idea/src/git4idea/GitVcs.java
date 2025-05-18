@@ -362,7 +362,7 @@ public final class GitVcs extends AbstractVcs {
   @Override
   public boolean isWithCustomShelves() {
     return GitVcsApplicationSettings.getInstance().isCombinedStashesAndShelvesTabEnabled() &&
-           GitStashContentProviderKt.isStashTabAvailable();
+           GitStashContentProviderKt.stashToolWindowRegistryOption().asBoolean();
   }
 
   @Override

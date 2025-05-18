@@ -6,6 +6,7 @@ package git4idea.stash
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -55,12 +56,9 @@ import git4idea.history.GitLogParser
 import git4idea.history.GitLogParser.GitLogOption
 import git4idea.history.GitLogUtil
 import git4idea.i18n.GitBundle
-import git4idea.index.isStagingAreaAvailable
 import git4idea.merge.GitConflictResolver
 import git4idea.repo.GitRepositoryManager
-import git4idea.stash.ui.isStashTabAvailable
-import git4idea.stash.ui.showStashes
-import git4idea.stash.ui.stashToolWindowRegistryOption
+import git4idea.stash.ui.GitStashUIHandler
 import git4idea.ui.StashInfo
 import git4idea.util.GitUIUtil
 import git4idea.util.GitUntrackedFilesHelper
@@ -291,17 +289,7 @@ object GitStashOperations {
   }
 
   fun showSuccessNotification(project: Project, successfulRoots: Collection<VirtualFile>, hasErrors: Boolean) {
-    val actions = buildList {
-      if (isStashTabAvailable()) {
-        add(NotificationAction.createSimple(GitBundle.message("stash.view.stashes.link")) { showStashes(project, successfulRoots.firstOrNull()) })
-      }
-      else if (isStagingAreaAvailable(project)) {
-        add(NotificationAction.createSimpleExpiring(GitBundle.message("stash.enable.stashes.link")) {
-          stashToolWindowRegistryOption().setValue(true)
-          showStashes(project, successfulRoots.firstOrNull())
-        })
-      }
-    }
+    val actions = project.service<GitStashUIHandler>().showStashesNotificationActions(successfulRoots)
     val message = getSuccessMessage(project, successfulRoots, hasErrors)
     VcsNotifier.getInstance(project).notifyMinorInfo(GitNotificationIdsHolder.STASH_SUCCESSFUL, "", message, *actions.toTypedArray())
   }

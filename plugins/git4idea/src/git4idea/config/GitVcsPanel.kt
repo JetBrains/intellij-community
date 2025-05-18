@@ -51,7 +51,7 @@ import git4idea.config.gpg.GpgSignConfigurableRow.Companion.createGpgSignRow
 import git4idea.i18n.GitBundle.message
 import git4idea.index.enableStagingArea
 import git4idea.repo.GitRepositoryManager
-import git4idea.stash.ui.isStashTabAvailable
+import git4idea.stash.ui.GitStashUIHandler
 import git4idea.stash.ui.setStashesAndShelvesTabEnabled
 import git4idea.update.GitUpdateProjectInfoLogProperties
 import git4idea.update.getUpdateMethods
@@ -266,7 +266,7 @@ internal class GitVcsPanel(private val project: Project) :
     row {
       checkBox(cdOverrideCredentialHelper)
     }
-    if (isStashTabAvailable()) {
+    if (project.service<GitStashUIHandler>().isStashTabAvailable()) {
       group(message("settings.stash")) {
         row {
           checkBox(cdCombineStashesAndShelves)
