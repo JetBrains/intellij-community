@@ -144,8 +144,7 @@ public class MarkdownProcessor(
             }
         }
         val nCharsDelta = rawMarkdown.length - previousText.length
-        val suffixBlocks =
-            if (blockAfterLast == -1) emptyList() else previousBlocks.subList(blockAfterLast, previousBlocks.size)
+        val suffixBlocks = previousBlocks.subList(blockAfterLast, previousBlocks.size)
         // Addressing the remaining blocks which shift by lines delta between new and old text.
         for (block in suffixBlocks) {
             block.traverseAll { node ->
@@ -161,38 +160,55 @@ public class MarkdownProcessor(
             }
         }
 
-        val newBlocks = previousBlocks.subList(0, firstBlock.coerceAtLeast(0)) + updatedBlocks + suffixBlocks
+        val prefixBlocks = if (firstBlock == -1) emptyList() else previousBlocks.subList(0, firstBlock.coerceAtLeast(0))
+        val newBlocks = prefixBlocks + updatedBlocks + suffixBlocks
         currentState = State(rawMarkdown, newBlocks)
 
         return newBlocks
     }
 
+    /**
+     * Identifies the range of `Block` objects in `previousBlocks` affected by changes between `previousText` and
+     * `updatedText`.
+     *
+     * This function is designed to intelligently handle changes occurring near block boundaries. It includes a block
+     * *before* the actual textual change to accommodate potential block merging.
+     */
     @VisibleForTesting
     internal fun findChangedBlocks(
         previousText: String,
-        updatedText: String,
+        fullUpdatedText: String,
         previousBlocks: List<Block>,
     ): FindChangedBlocksResult {
-        val nCharsDelta = updatedText.length - previousText.length
-        val commonPrefix = previousText.commonPrefixWith(updatedText)
+        val previousStartIndexes = previousBlocks.map { block -> block.sourceSpans.first().inputIndex }
+        val previousEndIndexes =
+            previousBlocks.map { block -> block.sourceSpans.last().let { it.inputIndex + it.length } }
+        val nCharsDelta = fullUpdatedText.length - previousText.length
+        val commonPrefix = previousText.commonPrefixWith(fullUpdatedText)
         val prefixPos = commonPrefix.length
         // remove prefixes to avoid overlap
         val commonSuffix =
-            previousText.removePrefix(commonPrefix).commonSuffixWith(updatedText.removePrefix(commonPrefix))
+            previousText.removePrefix(commonPrefix).commonSuffixWith(fullUpdatedText.removePrefix(commonPrefix))
         val suffixPos = previousText.length - commonSuffix.length
         val nLinesDelta =
-            updatedText.subSequence(prefixPos, updatedText.length - commonSuffix.length).lineSequence().count() -
-                previousText.subSequence(prefixPos, suffixPos).lineSequence().count()
-        val previousIndexes = previousBlocks.map { block -> block.sourceSpans.first().inputIndex }
-        // if modification starts at the edge, include previous by using less instead of less equal
-        val firstBlock = previousIndexes.indexOfLast { it < prefixPos }
-        val blockAfterLast = previousIndexes.indexOfFirst { it > suffixPos }
-        val updatedText =
-            updatedText.substring(
-                if (firstBlock == -1) 0 else previousIndexes[firstBlock],
-                if (blockAfterLast == -1) updatedText.length else previousIndexes[blockAfterLast] - 1 + nCharsDelta,
+            fullUpdatedText
+                .subSequence(prefixPos, fullUpdatedText.length - commonSuffix.length)
+                .lineSequence()
+                .count() - previousText.subSequence(prefixPos, suffixPos).lineSequence().count()
+        // if modification starts at the edge, include the previous block by using less instead of less equal
+        val firstBlock = previousStartIndexes.indexOfLast { it < prefixPos }
+        val blockAfterLast =
+            previousEndIndexes.indexOfFirst { suffixPos <= it }.let { if (it == -1) previousBlocks.size else it + 1 }
+        val changedText =
+            fullUpdatedText.substring(
+                if (firstBlock == -1) 0 else previousStartIndexes[firstBlock],
+                if (blockAfterLast == previousBlocks.size) {
+                    fullUpdatedText.length
+                } else {
+                    previousStartIndexes[blockAfterLast] - 1 + nCharsDelta
+                },
             )
-        return FindChangedBlocksResult(firstBlock, blockAfterLast, updatedText, nLinesDelta)
+        return FindChangedBlocksResult(firstBlock, blockAfterLast, changedText, nLinesDelta)
     }
 
     internal data class FindChangedBlocksResult(
