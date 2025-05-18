@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.include;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -29,7 +29,6 @@ import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,16 +37,13 @@ import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.util.*;
 
-/**
- * @author Dmitry Avdeev
- */
-public final class FileIncludeManagerImpl extends FileIncludeManager implements Disposable {
+final class FileIncludeManagerImpl extends FileIncludeManager implements Disposable {
   private final Project myProject;
   private final PsiManager myPsiManager;
   private final PsiFileFactory myPsiFileFactory;
   // We save PsiFiles involved in includes here. Otherwise, we'd have to reparse/recompute includes in plugin.xmls on each typing because
   // - include graph is cached in the PsiFile userdata
-  // - these PsiFiles are subjects to gc because FileManagerImpl stores FileViewProviders by weak references, and nobody retains plugin.xml's PsiFile
+  // - these PsiFiles are subject to gc because FileManagerImpl stores FileViewProviders by weak references, and nobody retains plugin.xml's PsiFile
   private final Set<Reference<PsiFile>> cache = ConcurrentCollectionFactory.createConcurrentSet();
   private final IncludeCacheHolder myIncludedHolder = new IncludeCacheHolder("compile time includes", "runtime includes") {
     @Override
@@ -99,11 +95,18 @@ public final class FileIncludeManagerImpl extends FileIncludeManager implements 
 
     GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
     for (String name : names) {
-      MultiMap<VirtualFile,FileIncludeInfoImpl> infoList = FileIncludeIndex.getIncludingFileCandidates(name, scope);
+      Map<VirtualFile, List<? extends FileIncludeInfo>> infoList = FileIncludeIndex.getIncludingFileCandidates(name, scope);
       for (VirtualFile candidate : infoList.keySet()) {
         PsiFile psiFile = myPsiManager.findFile(candidate);
-        if (psiFile == null || context.equals(psiFile)) continue;
-        for (FileIncludeInfo info : infoList.get(candidate)) {
+        if (psiFile == null || context.equals(psiFile)) {
+          continue;
+        }
+        List<? extends FileIncludeInfo> infos = infoList.get(candidate);
+        if (infos == null) {
+          continue;
+        }
+
+        for (FileIncludeInfo info : infos) {
           PsiFileSystemItem item = resolveFileInclude(info, psiFile);
           if (item != null && contextFile.equals(item.getVirtualFile())) {
             if (!processor.process(Pair.create(candidate, info))) {
@@ -129,7 +132,7 @@ public final class FileIncludeManagerImpl extends FileIncludeManager implements 
 
   private final Map<String, FileIncludeProvider> myProviderMap = new HashMap<>();
 
-  public FileIncludeManagerImpl(@NotNull Project project) {
+  FileIncludeManagerImpl(@NotNull Project project) {
     myProject = project;
     myPsiManager = PsiManager.getInstance(project);
     myPsiFileFactory = PsiFileFactory.getInstance(myProject);
@@ -277,7 +280,7 @@ public final class FileIncludeManagerImpl extends FileIncludeManager implements 
         Object dep = document == null ? file : document;
         deps.add(dep);
       }
-      // do not add PsiFile as dependency because it will be translated to PSI_MOD_COUNT which fires too often, even for unrelated files
+      // do not add PsiFile as a dependency because it will be translated to PSI_MOD_COUNT, which fires too often, even for unrelated files
       Document document = psiFile.getViewProvider().getDocument();
       if (document != null) {
         deps.add(document);
