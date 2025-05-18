@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("KDocUnresolvedReference")
 
 package com.intellij
@@ -92,6 +92,13 @@ open class AbstractBundle {
           return MissingResourceBundle(pathToBundle)
         }
       }
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    @Deprecated("do not use, for compatibility only")
+    fun resolveBundle(loader: ClassLoader, locale: Locale, pathToBundle: String): ResourceBundle {
+      return _doResolveBundle(loader = loader, locale = locale, pathToBundle = pathToBundle)
     }
   }
 
