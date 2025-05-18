@@ -28,7 +28,7 @@ abstract class AbstractGradleBuildRootsLocatorTest : TestCase() {
         super.setUp()
         disposable = Disposer.newDisposable()
         val project = MockProjectEx(disposable)
-        locator = MyRootsLocator(project, project.coroutineScope)
+        locator = MyRootsLocator(project, project.getCoroutineScope())
     }
 
     override fun tearDown() {
