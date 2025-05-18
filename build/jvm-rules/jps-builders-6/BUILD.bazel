@@ -1,28 +1,36 @@
-### auto-generated section `build intellij.platform.jps.build.javac.rt` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "build-javac-rt_resources",
-  files = glob(["resources/**/*"]),
-  strip_prefix = "resources"
+    name = "build-javac-rt_resources",
+    files = glob(["resources/**/*"]),
+    strip_prefix = "resources",
 )
 
 jvm_library(
-  name = "build-javac-rt",
-  module_name = "intellij.platform.jps.build.javac.rt",
-  visibility = ["//visibility:public"],
-  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  #kotlinc_opts = "@community//:k8",
-  deps = [
-    "//:annotations",
-    "//:javax-annotation-api",
-    "//:jps-javac-extension",
-    "//:netty-common",
-    "//:netty-buffer",
-    "//:protobuf-java",
-    "//:netty-transport-jps",
-    "//:netty-codec-jps",
-  ],
-  runtime_deps = [":build-javac-rt_resources"]
+    name = "build-javac-rt",
+    srcs = glob(
+        [
+            "gen/**/*.kt",
+            "gen/**/*.java",
+            "src/**/*.kt",
+            "src/**/*.java",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "//:strange-module-8",
+    module_name = "intellij.platform.jps.build.javac.rt",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":build-javac-rt_resources"],
+    # buildifier: leave-alone
+    deps = [
+        "//:annotations",
+        "//:javax-annotation-api",
+        "//:jps-javac-extension",
+        "//:netty-common",
+        "//:netty-buffer",
+        "//:protobuf-java",
+        "//:netty-transport-jps",
+        "//:netty-codec-jps",
+    ],
 )
 ### skip generation section `build intellij.platform.jps.build.javac.rt`
