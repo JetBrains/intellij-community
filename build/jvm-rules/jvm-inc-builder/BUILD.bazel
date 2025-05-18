@@ -1,36 +1,53 @@
-load("//:jvm.bzl", "jvm_import", "jvm_library", "jvm_test")
+load("@rules_java//java:defs.bzl", "java_binary")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_import")
+load("//:src/jvm-args.bzl", "get_jvm_flags")
 
-jvm_library(
-    name = "jvm-inc-builder",
-    srcs = glob(
-        [
-            "src/**/*.kt",
-            "src/**/*.java",
-        ],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "//:strange-module-8",
-    module_name = "intellij.tools.build.bazel.jvmIncBuilder",
-    visibility = ["//visibility:public"],
-    # buildifier: leave-alone
-    deps = [
-        "//dependency-graph",
-        "//jps-builders-6:build-javac-rt",
-        "//:jps-javac-extension",
-        "//:annotations",
-        "//:h2-mvstore",
-        "//:hash4j",
-        "//:asm-all",
-        "//:kotlin-metadata",
-        "//:caffeine",
-        "//:intellij-deps-fastutil",
-        "//:qdox",
-        "//:jps",  # for instrumentation-util and instrumenters
-        "//:kotlin-compose-compiler-plugin",
-        "//:kotlin-serialization-compiler-plugin",
-        "patched-kotlin-compiler-for-bazel",
-    ],
+kt_jvm_library(
+  name = "jvm-inc-builder-lib",
+  srcs = glob(
+      [
+          "src/**/*.kt",
+          "src/**/*.java",
+      ],
+      allow_empty = True,
+  ),
+  kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+  #module_name = "intellij.tools.build.bazel.jvmIncBuilder",
+  visibility = ["//visibility:public"],
+  # buildifier: leave-alone
+  deps = [
+    "//dependency-graph",
+    "//jps-builders-6:build-javac-rt",
+    "//:jps-javac-extension",
+    "//src/worker-framework",
+    "//src/worker-util",
+    "//:annotations",
+    "//:h2-mvstore",
+    "//:hash4j",
+    "//:asm-all",
+    "//:kotlin-metadata",
+    "//:caffeine",
+    "//:intellij-deps-fastutil",
+    "//:qdox",
+    "patched-kotlin-compiler-for-bazel",
+    "//:kotlin-compose-compiler-plugin",
+    "//:kotlin-serialization-compiler-plugin",
+    "//:jps", # temporary dep for instrumentation-util and instrumenters, must be the last dep in classpath
+  ]
 )
+
+java_binary(
+    name = "jvm-inc-builder",
+    jvm_flags = get_jvm_flags([
+        "-Dkotlin.environment.keepalive=true",
+        "-XX:+HeapDumpOnOutOfMemoryError",
+    ]),
+    main_class = "com.intellij.tools.build.bazel.jvmIncBuilder.BazelIncExecutor",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":jvm-inc-builder-lib"],
+)
+
 
 # todo: temporarily commented
 #jvm_library(
@@ -65,18 +82,18 @@ jvm_library(
 #)
 
 java_library(
-    name = "patched-kotlin-compiler-for-bazel",
-    visibility = ["//visibility:public"],
-    exports = [
-        ":kotlin-compiler-2_2_20-dev-2951_http_import",
-        ":kotlin-stdlib-jdk8-2_2_20-dev-2951_http_import",
-        ":kotlin-stdlib-2_2_20-dev-2951_http_import",
-        ":kotlin-stdlib-jdk7-2_2_20-dev-2951_http_import",
-        ":kotlin-script-runtime-2_2_20-dev-2951_http_import",
-        ":kotlin-reflect-1_6_10_http_import",
-        #":kotlinx-coroutines-core-jvm-1_8_0_http_import",
-        #":annotations-23_0_0_http_import",
-    ],
+  name = "patched-kotlin-compiler-for-bazel",
+  visibility = ["//visibility:private"],
+  exports = [
+    ":kotlin-compiler-2_2_20-dev-2951_http_import",
+    ":kotlin-stdlib-jdk8-2_2_20-dev-2951_http_import",
+    ":kotlin-stdlib-2_2_20-dev-2951_http_import",
+    ":kotlin-stdlib-jdk7-2_2_20-dev-2951_http_import",
+    ":kotlin-script-runtime-2_2_20-dev-2951_http_import",
+    ":kotlin-reflect-1_6_10_http_import",
+    #":kotlinx-coroutines-core-jvm-1_8_0_http_import",
+    #":annotations-23_0_0_http_import",
+  ],
 )
 
 jvm_import(

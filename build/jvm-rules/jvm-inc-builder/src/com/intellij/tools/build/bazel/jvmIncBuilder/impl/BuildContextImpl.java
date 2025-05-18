@@ -9,6 +9,7 @@ import org.jetbrains.jps.dependency.NodeSourcePathMapper;
 import org.jetbrains.jps.dependency.impl.PathSourceMapper;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -20,6 +21,7 @@ public class BuildContextImpl implements BuildContext {
   private final Map<CLFlags, List<String>> myFlags;
   private final Path myBaseDir;
   private final PathSourceMapper myPathMapper;
+  private final Appendable myMessageSink;
   private final @NotNull Path myOutJar;
   private final @Nullable Path myAbiJar;
   private final Path myDataDir;
@@ -31,7 +33,7 @@ public class BuildContextImpl implements BuildContext {
 
   private volatile boolean myHasErrors;
 
-  public BuildContextImpl(Path baseDir, String cachePrefix, Iterable<String> inputPaths, Iterable<String> inputDigests, Map<CLFlags, List<String>> flags) {
+  public BuildContextImpl(Path baseDir, Iterable<String> inputs, Iterable<byte[]> inputDigests, Map<CLFlags, List<String>> flags, Appendable messageSink) {
     myFlags = Map.copyOf(flags);
     myTargetName = CLFlags.TARGET_LABEL.getMandatoryScalarValue(flags);
     myBaseDir = baseDir;
@@ -45,23 +47,24 @@ public class BuildContextImpl implements BuildContext {
         return relative.toString().replace(baseDir.getFileSystem().getSeparator(), "/");
       }
     );
+    myMessageSink = messageSink;
     myOutJar = baseDir.resolve(CLFlags.OUT.getMandatoryScalarValue(flags)).normalize();
 
     String abiPath = CLFlags.ABI_OUT.getOptionalScalarValue(flags);
     myAbiJar = abiPath != null? baseDir.resolve(abiPath).normalize() : null;
 
-    myDataDir = myOutJar.resolveSibling(cachePrefix + truncateExtension(myOutJar.getFileName().toString()) + "-ic");
+    myDataDir = myOutJar.resolveSibling(truncateExtension(myOutJar.getFileName().toString()) + "-ic");
     
     myIsRebuild = CLFlags.NON_INCREMENTAL.isFlagSet(flags);
 
     Map<NodeSource, String> sourcesMap = new HashMap<>();
     Map<Path, String> otherInputsMap = new HashMap<>();
-    Iterator<String> digestsIterator = inputDigests.iterator();
-    for (String input : inputPaths) {
+    Base64.Encoder base64 = Base64.getEncoder().withoutPadding();
+    Iterator<String> digestsIterator = map(inputDigests, base64::encodeToString).iterator();
+    for (Path inputPath : map(inputs, input -> baseDir.resolve(input).normalize())) {
       String inputDigest = digestsIterator.hasNext()? digestsIterator.next() : "";
-      Path inputPath = baseDir.resolve(input).normalize();
       if (isSourceDependency(inputPath)) {
-        sourcesMap.put(myPathMapper.toNodeSource(input), inputDigest);
+        sourcesMap.put(myPathMapper.toNodeSource(inputPath), inputDigest);
       }
       else {
         otherInputsMap.put(inputPath, inputDigest);
@@ -229,10 +232,16 @@ public class BuildContextImpl implements BuildContext {
 
   @Override
   public void report(Message msg) {
-    if (msg.getKind() == Message.Kind.ERROR) {
-      myHasErrors = true;
+    try {
+      if (msg.getKind() == Message.Kind.ERROR) {
+        myHasErrors = true;
+        myMessageSink.append("Error: ");
+      }
+      myMessageSink.append(msg.getText()).append("\n");
     }
-    // todo
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override

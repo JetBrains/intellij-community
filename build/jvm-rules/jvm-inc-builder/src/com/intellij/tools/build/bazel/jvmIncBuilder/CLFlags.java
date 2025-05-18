@@ -10,6 +10,7 @@ import java.util.Map;
 // todo: temporary copy of JvmBuilderFlags enum from the workers framework;
 public enum CLFlags {
   NON_INCREMENTAL,
+  JAVA_COUNT,
   TARGET_LABEL,
   // classpath
   CP,
@@ -40,16 +41,6 @@ public enum CLFlags {
 
   ADD_EXPORT,
   ADD_READS;
-
-  private String toolOptionName;
-
-  CLFlags() {
-    this("");
-  }
-  
-  CLFlags(String toolOptionName) {
-    this.toolOptionName = toolOptionName;
-  }
 
   public boolean isFlagSet(Map<CLFlags, ? extends Collection<String>> flags) {
     Collection<String> value = flags.get(this);
@@ -83,7 +74,7 @@ public enum CLFlags {
   @NotNull
   public Iterable<String> getValue(Map<CLFlags, ? extends Collection<String>> flags) {
     Collection<String> value = flags.get(this);
-    return value != null && value.size() == 1? value : List.of();
+    return value != null? value : List.of();
   }
 
   public void appendIfSet(Map<CLFlags, ? extends Collection<String>> flags, @Nullable String optionName, List<String> options) {

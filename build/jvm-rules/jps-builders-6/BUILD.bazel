@@ -1,4 +1,5 @@
-load("//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("//:jvm.bzl", "jvm_resources")
 
 jvm_resources(
     name = "build-javac-rt_resources",
@@ -6,31 +7,31 @@ jvm_resources(
     strip_prefix = "resources",
 )
 
-jvm_library(
-    name = "build-javac-rt",
-    srcs = glob(
-        [
-            "gen/**/*.kt",
-            "gen/**/*.java",
-            "src/**/*.kt",
-            "src/**/*.java",
-        ],
-        allow_empty = True,
+kt_jvm_library(
+  name = "build-javac-rt",
+  srcs = glob(
+      [
+          "gen/**/*.kt",
+          "gen/**/*.java",
+          "src/**/*.kt",
+          "src/**/*.java",
+      ],
+      allow_empty = True,
     ),
-    kotlinc_opts = "//:strange-module-8",
-    module_name = "intellij.platform.jps.build.javac.rt",
-    visibility = ["//visibility:public"],
-    runtime_deps = [":build-javac-rt_resources"],
-    # buildifier: leave-alone
-    deps = [
-        "//:annotations",
-        "//:javax-annotation-api",
-        "//:jps-javac-extension",
-        "//:netty-common",
-        "//:netty-buffer",
-        "//:protobuf-java",
-        "//:netty-transport-jps",
-        "//:netty-codec-jps",
-    ],
+  kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+  #module_name = "intellij.platform.jps.build.javac.rt",
+  visibility = ["//visibility:public"],
+  runtime_deps = [":build-javac-rt_resources"],
+  # buildifier: leave-alone
+  deps = [
+    "//:annotations",
+    "//:javax-annotation-api",
+    "//:jps-javac-extension",
+    "//:netty-common",
+    "//:netty-buffer",
+    "//:protobuf-java",
+    "//:netty-transport-jps",
+    "//:netty-codec-jps",
+  ],
 )
 ### skip generation section `build intellij.platform.jps.build.javac.rt`

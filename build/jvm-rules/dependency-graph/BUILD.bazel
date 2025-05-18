@@ -1,28 +1,29 @@
-load("//:jvm.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-jvm_library(
-    name = "dependency-graph",
-    srcs = glob(
-        [
-            "src/**/*.kt",
-            "src/**/*.java",
-        ],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "//:strange-module-8",
-    module_name = "intellij.platform.jps.build.dependencyGraph",
-    visibility = ["//visibility:public"],
-    # buildifier: leave-alone
-    deps = [
-        "//:annotations",
-        "//:hash4j",
-        "//:asm-all",
-        "//:kotlin-metadata",
-        "//:kotlin-stdlib",
-        "//:caffeine",
-        "//:intellij-deps-fastutil",
-        "//jps-builders-6:build-javac-rt",  # for Iterator utils and utility data structures
-    ],
+kt_jvm_library(
+  name = "dependency-graph",
+  srcs = glob(
+      [
+          "src/**/*.kt",
+          "src/**/*.java",
+      ],
+      allow_empty = True,
+  ),
+  kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+  #module_name = "intellij.platform.jps.build.dependencyGraph",
+  visibility = ["//visibility:public"],
+  # buildifier: leave-alone
+  deps = [
+    "//:annotations",
+    "//:hash4j",
+    "//:asm-all",
+    "//:kotlin-metadata",
+    "//:kotlin-stdlib",
+    "//:caffeine",
+    "//:intellij-deps-fastutil",
+    "//jps-builders-6:build-javac-rt",  # for Iterator utils and utility data structures
+  ],
 )
 
 ### skip generation section `build intellij.platform.jps.build.dependencyGraph`

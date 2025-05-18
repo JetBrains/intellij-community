@@ -57,6 +57,9 @@ _kt_kotlinc_options(
     visibility = [
         "//src:__subpackages__",
         "//zip:__pkg__",
+        "//jvm-inc-builder:__subpackages__",
+        "//jps-builders-6:__subpackages__",
+        "//dependency-graph:__subpackages__",
     ],
     x_jdk_release = "17",
 )
