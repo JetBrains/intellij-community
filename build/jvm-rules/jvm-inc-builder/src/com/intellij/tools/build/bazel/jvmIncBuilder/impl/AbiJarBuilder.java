@@ -45,9 +45,12 @@ public class AbiJarBuilder extends ZipOutputBuilderImpl {
     if (content != null) {
       try {
         try (var is = new DataInputStream(new ByteArrayInputStream(content))) {
-          long digest = is.readLong();
-          String entryName = is.readUTF();
-          index.put(entryName, digest);
+          int size = is.readInt();
+          while (size-- > 0) {
+            long digest = is.readLong();
+            String entryName = is.readUTF();
+            index.put(entryName, digest);
+          }
         }
       }
       catch (IOException ignored) {
@@ -62,6 +65,7 @@ public class AbiJarBuilder extends ZipOutputBuilderImpl {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     try {
       try (var os = new DataOutputStream(out)) {
+        os.writeInt(index.size());
         for (Map.Entry<String, Long> entry : index.entrySet()) {
           os.writeLong(entry.getValue());
           os.writeUTF(entry.getKey());
