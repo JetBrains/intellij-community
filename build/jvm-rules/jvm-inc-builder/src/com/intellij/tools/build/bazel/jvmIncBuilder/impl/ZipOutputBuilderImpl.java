@@ -174,7 +174,7 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
           myEntries.put(dirName, EntryData.create(dirName, EntryData.NO_DATA_BYTES));
         }
       }
-      boolean useTempOutput = myReadZipPath.equals(myWriteZipPath);
+      boolean useTempOutput = myReadZipFile != null /*srcZip exists*/ && Files.exists(myWriteZipPath) && Files.isSameFile(myReadZipPath, myWriteZipPath);
       Path outputPath = useTempOutput? getTempOutputPath() : myWriteZipPath;
       try (var zos = new ZipOutputStream(openOutputStream(outputPath))) {
         zos.setLevel(Deflater.BEST_SPEED);

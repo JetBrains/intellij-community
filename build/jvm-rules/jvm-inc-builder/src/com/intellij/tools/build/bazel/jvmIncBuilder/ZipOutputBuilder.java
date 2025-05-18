@@ -3,10 +3,9 @@ package com.intellij.tools.build.bazel.jvmIncBuilder;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Closeable;
 import java.io.IOException;
 
-public interface ZipOutputBuilder extends Closeable {
+public interface ZipOutputBuilder extends CloseableExt {
 
   Iterable<String> getEntryNames();
 
@@ -23,8 +22,8 @@ public interface ZipOutputBuilder extends Closeable {
     close(true);
   }
 
+  @Override
   void close(boolean saveChanges) throws IOException;
-
 
   static @Nullable String getParentEntryName(String entryName) {
     if (entryName == null || entryName.isEmpty() || "/".equals(entryName)) {

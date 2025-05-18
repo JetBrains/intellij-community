@@ -29,7 +29,7 @@ import java.util.function.Function;
 import static org.jetbrains.jps.util.Iterators.collect;
 import static org.jetbrains.jps.util.Iterators.isEmpty;
 
-public class StorageManager implements Closeable {
+public class StorageManager implements CloseableExt {
   private final BuildContext myContext;
   private GraphConfiguration myGraphConfig;
   private ZipOutputBuilderImpl myOutputBuilder;
@@ -41,7 +41,7 @@ public class StorageManager implements Closeable {
   }
 
   public void cleanBuildState() throws IOException {
-    close();
+    close(false);
     Path output = myContext.getOutputZip();
     Path abiOutput = myContext.getAbiOutputZip();
     Path srcSnapshotStore = DataPaths.getConfigStateStoreFile(myContext);
@@ -137,22 +137,30 @@ public class StorageManager implements Closeable {
 
   @Override
   public void close() {
+    close(true);
+  }
+
+  @Override
+  public void close(boolean saveChanges) {
     GraphConfiguration config = myGraphConfig;
     if (config != null) {
       myGraphConfig = null;
-      safeClose(config.getGraph());
+      safeClose(config.getGraph(), saveChanges);
     }
 
-    safeClose(myOutputBuilder);
+    safeClose(myOutputBuilder, saveChanges);
     myOutputBuilder = null;
 
-    safeClose(myAbiOutputBuilder);
+    safeClose(myAbiOutputBuilder, saveChanges);
     myAbiOutputBuilder = null;
   }
 
-  private void safeClose(Closeable cl) {
+  private void safeClose(Closeable cl, boolean saveChanges) {
     try {
-      if (cl != null) {
+      if (cl instanceof CloseableExt) {
+        ((CloseableExt) cl).close(saveChanges);
+      }
+      else if (cl != null) {
         cl.close();
       }
     }
