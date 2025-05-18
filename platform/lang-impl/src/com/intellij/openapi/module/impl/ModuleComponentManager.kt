@@ -89,7 +89,7 @@ class ModuleComponentManager(parent: ComponentManagerImpl) : ComponentManagerImp
 
   override fun dispose() {
     runCatching {
-      // TODO: this should better be moved to ModuleBridgeImpl.dispose(). But at the moment dispose() method is not invoked for modules.
+      // TODO (IJPL-188338): this should better be moved to ModuleBridgeImpl.dispose(). But at the moment dispose() method is not invoked for modules.
       (module as ModuleBridgeImpl).resetModuleStore()
     }.getOrLogException(LOG)
     super.dispose()
