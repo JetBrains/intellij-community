@@ -252,7 +252,10 @@ public class JavaCompilerRunner implements CompilerRunner {
             int start = (int) diagnostic.getStartPosition();
             int end = (int) diagnostic.getEndPosition();
             if (end > start) {
-              msgBuilder.append("\ncode: \"").append(source.getCharContent(true).subSequence(start, end)).append("\"");
+              CharSequence charContent = source.getCharContent(true);
+              if (end < charContent.length()) {
+                msgBuilder.append("\ncode: \"").append(charContent.subSequence(start, end)).append("\"");
+              }
             }
           }
           catch (IOException ignored) {
