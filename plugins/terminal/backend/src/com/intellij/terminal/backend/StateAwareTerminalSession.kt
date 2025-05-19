@@ -6,14 +6,11 @@ import com.intellij.terminal.session.*
 import com.intellij.terminal.session.dto.toDto
 import com.intellij.terminal.session.dto.toStyleRange
 import com.intellij.terminal.session.dto.toTerminalState
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.terminal.block.reworked.*
@@ -36,6 +33,7 @@ import kotlin.time.TimeSource
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class StateAwareTerminalSession(
   private val delegate: BackendTerminalSession,
+  override val coroutineScope: CoroutineScope,
 ) : BackendTerminalSession {
   private val outputFlow = MutableSharedFlow<VersionedEvents>(replay = 1)
   private val modelsLock = Mutex()
@@ -79,12 +77,7 @@ internal class StateAwareTerminalSession(
     coroutineScope.launch(CoroutineName("StateAwareTerminalSession: models updating")) {
       val originalOutputFlow = delegate.getOutputFlow()
       originalOutputFlow.collect { events ->
-        val versionedEvents = VersionedEvents(events)
-        modelsLock.withLock {
-          doHandleEvents(events)
-          modelsVersion = versionedEvents.version
-        }
-        outputFlow.emit(versionedEvents)
+        handleOriginalEvents(events)
       }
     }
   }
@@ -115,8 +108,18 @@ internal class StateAwareTerminalSession(
   override val isClosed: Boolean
     get() = delegate.isClosed
 
-  override val coroutineScope: CoroutineScope
-    get() = delegate.coroutineScope
+  private suspend fun handleOriginalEvents(events: List<TerminalOutputEvent>) {
+    val versionedEvents = VersionedEvents(events)
+    try {
+      modelsLock.withLock {
+        doHandleEvents(events)
+        modelsVersion = versionedEvents.version
+      }
+    }
+    finally {
+      forwardEventsToOutputFlow(versionedEvents)
+    }
+  }
 
   private fun doHandleEvents(events: List<TerminalOutputEvent>) {
     for (event in events) {
@@ -128,6 +131,17 @@ internal class StateAwareTerminalSession(
       }
       catch (t: Throwable) {
         thisLogger().error(t)
+      }
+    }
+  }
+
+  private suspend fun forwardEventsToOutputFlow(versionedEvents: VersionedEvents) {
+    try {
+      outputFlow.emit(versionedEvents)
+    }
+    finally {
+      if (versionedEvents.events.any { it is TerminalSessionTerminatedEvent }) {
+        coroutineScope.cancel()
       }
     }
   }
