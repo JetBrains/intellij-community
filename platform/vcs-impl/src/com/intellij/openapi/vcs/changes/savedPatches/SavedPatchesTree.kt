@@ -106,12 +106,14 @@ class SavedPatchesTree(project: Project,
     })
   }
 
-  internal fun showFirstUnderProvider(provider: SavedPatchesProvider<*>) {
+  @ApiStatus.Internal
+  fun showFirstUnderProvider(provider: SavedPatchesProvider<*>) {
     val providerNode = findNodeForProvider(provider) ?: return
     showFirstUnderNode(providerNode)
   }
 
-  internal fun showFirstUnderObject(provider: SavedPatchesProvider<*>, userObject: Any) {
+  @ApiStatus.Internal
+  fun showFirstUnderObject(provider: SavedPatchesProvider<*>, userObject: Any) {
     val providerNode = findNodeForProvider(provider) ?: return
     val node = TreeUtil.findNodeWithObject(providerNode, userObject) ?: providerNode
     showFirstUnderNode(node)
