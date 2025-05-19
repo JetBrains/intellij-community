@@ -19,12 +19,14 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.emptyConstructorMethodType
 import com.intellij.serviceContainer.findConstructorOrNull
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleBridgeImpl
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 
@@ -35,7 +37,10 @@ private val LOG: Logger
 
 @ApiStatus.Internal
 class ModuleComponentManager(parent: ComponentManagerImpl) : ComponentManagerImpl(parent) {
-  lateinit var module: Module
+  private var module: Module? = null
+
+  @TestOnly
+  fun getModuleName(): @NlsSafe String = module!!.name
 
   override fun <T : Any> findConstructorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
     @Suppress("UNCHECKED_CAST")
