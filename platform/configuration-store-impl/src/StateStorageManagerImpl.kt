@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
 @file:OptIn(SettingsInternalApi::class)
 
@@ -23,7 +23,7 @@ import kotlin.concurrent.write
 import kotlin.io.path.invariantSeparatorsPathString
 
 /**
- * If componentManager not specified, storage will not add file tracker
+ * If componentManager not specified, storage will not add a file tracker
  */
 @ApiStatus.Internal
 open class StateStorageManagerImpl(
@@ -90,7 +90,7 @@ open class StateStorageManagerImpl(
   protected open fun normalizeFileSpec(fileSpec: String): String {
     val path = FileUtilRt.toSystemIndependentName(fileSpec)
     // fileSpec for directory-based storage could be erroneously specified as "name/"
-    return if (path.endsWith('/')) path.substring(0, path.length - 1) else path
+    return if (path.endsWith('/')) path.dropLast(1) else path
   }
 
   // storageCustomizer - to ensure that other threads will use fully constructed and configured storage (invoked under the same lock as created)

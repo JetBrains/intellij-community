@@ -69,7 +69,7 @@ sealed class SchemeManagerFactoryBase(
       schemeNameToFileName = schemeNameToFileName,
       fileChangeSubscriber = fileChangeSubscriber,
       settingsCategory = settingsCategory,
-      cs = coroutineScope,
+      coroutineScope = coroutineScope,
     )
     if (isAutoSave) {
       @Suppress("UNCHECKED_CAST")

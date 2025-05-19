@@ -1476,8 +1476,7 @@ internal fun doLoadClass(name: String, pluginDescriptor: PluginDescriptor, check
   }
 }
 
-private inline fun executeRegisterTask(mainPluginDescriptor: IdeaPluginDescriptorImpl,
-                                       crossinline task: (IdeaPluginDescriptorImpl) -> Unit) {
+private fun executeRegisterTask(mainPluginDescriptor: IdeaPluginDescriptorImpl, task: (IdeaPluginDescriptorImpl) -> Unit) {
   task(mainPluginDescriptor)
   executeRegisterTaskForOldContent(mainPluginDescriptor, task)
 }

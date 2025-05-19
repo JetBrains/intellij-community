@@ -477,19 +477,18 @@ abstract class ModuleManagerBridgeImpl(
     plugins: List<IdeaPluginDescriptorImpl>,
   ): ModuleBridge {
     val moduleFileUrl = getModuleVirtualFileUrl(moduleEntity)
-
     return createModule(
       symbolicId = moduleEntity.symbolicId,
       name = moduleEntity.name,
       virtualFileUrl = moduleFileUrl,
       entityStorage = versionedStorage,
-      diff = diff
+      diff = diff,
     ) { module ->
       module.registerComponents(
         modules = plugins,
         precomputedExtensionModel = precomputedExtensionModel,
         app = ApplicationManager.getApplication(),
-        listenerCallbacks = null
+        listenerCallbacks = null,
       )
 
       if (moduleFileUrl != null) {

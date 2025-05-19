@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
@@ -63,14 +65,16 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
   private val schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
   private val fileChangeSubscriber: FileChangeSubscriber? = null,
   private val settingsCategory: SettingsCategory = SettingsCategory.OTHER,
-  cs: CoroutineScope? = null,
+  coroutineScope: CoroutineScope? = null,
 ) : SchemeManagerBase<T, MUTABLE_SCHEME>(processor), SafeWriteRequestor, StorageManagerFileWriteRequestor {
   private val isUpdateVfs: Boolean = fileChangeSubscriber != null
 
+  @JvmField
   internal val isOldSchemeNaming: Boolean = schemeNameToFileName == OLD_NAME_CONVERTER
 
   private val isLoadingSchemes = AtomicBoolean()
 
+  @JvmField
   internal val schemeListManager: SchemeListManager<T> = SchemeListManager(this)
 
   internal val schemes: MutableList<T>
@@ -79,9 +83,11 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
   @Volatile
   internal var cachedVirtualDirectory: VirtualFile? = null
 
+  @JvmField
   internal val schemeExtension: String
   private val updateExtension: Boolean
 
+  @JvmField
   internal val filesToDelete: MutableSet<String> = ConcurrentCollectionFactory.createConcurrentSet()
 
   init {
@@ -95,7 +101,8 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
     }
 
     if (isUpdateVfs) {
-      cs!!.launch {  // tests should explicitly provide a scope when needed
+      // tests should explicitly provide a scope when needed
+      coroutineScope!!.launch {
         runCatching { refreshVirtualDirectory() }.getOrLogException(LOG)
       }
     }
