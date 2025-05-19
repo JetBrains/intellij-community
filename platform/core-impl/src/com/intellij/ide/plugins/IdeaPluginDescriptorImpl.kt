@@ -23,7 +23,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
-import java.io.IOException
 import java.nio.file.Path
 import java.time.ZoneOffset
 import java.util.*
@@ -135,62 +134,6 @@ sealed class IdeaPluginDescriptorImpl(
     }
   }
 
-  internal fun loadPluginDependencyDescriptors(loadingContext: PluginDescriptorLoadingContext, pathResolver: PathResolver, dataLoader: DataLoader): Unit =
-    loadPluginDependencyDescriptors(loadingContext, pathResolver, dataLoader, ArrayList(3))
-
-  internal fun loadPluginDependencyDescriptors(context: PluginDescriptorLoadingContext,
-                                              pathResolver: PathResolver,
-                                              dataLoader: DataLoader,
-                                              visitedFiles: MutableList<String>) {
-    for (dependency in pluginDependencies) {
-      // because of https://youtrack.jetbrains.com/issue/IDEA-206274, configFile maybe not only for optional dependencies
-      val configFile = dependency.configFile ?: continue
-      if (pathResolver.isFlat && context.checkOptionalConfigShortName(configFile, this)) {
-        continue
-      }
-
-      if (isKotlinPlugin(dependency.pluginId) && isIncompatibleWithKotlinPlugin(this)) {
-        LOG.warn("Plugin ${this} depends on Kotlin plugin via `${configFile}` " +
-                 "but the plugin is not compatible with the Kotlin plugin in the  ${if (isKotlinPluginK1Mode()) "K1" else "K2"} mode. " +
-                 "So, the `${configFile}` was not loaded")
-        continue
-      }
-
-      var resolveError: Exception? = null
-      val raw: PluginDescriptorBuilder? = try {
-        pathResolver.resolvePath(context, dataLoader, configFile)
-      }
-      catch (e: IOException) {
-        resolveError = e
-        null
-      }
-
-      if (raw == null) {
-        val message = "Plugin $this misses optional descriptor $configFile"
-        if (context.isMissingSubDescriptorIgnored) {
-          LOG.info(message)
-          if (resolveError != null) {
-            LOG.debug(resolveError)
-          }
-        }
-        else {
-          throw RuntimeException(message, resolveError)
-        }
-        continue
-      }
-
-      checkCycle(configFile, visitedFiles)
-      visitedFiles.add(configFile)
-      try {
-        val subDescriptor = createDependsSubDescriptor(raw, configFile)
-        subDescriptor.loadPluginDependencyDescriptors(context, pathResolver, dataLoader, visitedFiles)
-        dependency.setSubDescriptor(subDescriptor)
-      } finally {
-        visitedFiles.removeLast()
-      }
-    }
-  }
-
   fun initialize(context: PluginInitializationContext): PluginNonLoadReason? {
     assert(this is PluginMainDescriptor)
     content.modules.forEach { it.requireDescriptor() }
@@ -248,18 +191,6 @@ sealed class IdeaPluginDescriptorImpl(
   fun registerExtensions(nameToPoint: Map<String, ExtensionPointImpl<*>>, listenerCallbacks: MutableList<in Runnable>?) {
     for ((descriptors, point) in intersectMaps(extensions, nameToPoint)) {
       point.registerExtensions(descriptors, pluginDescriptor = this, listenerCallbacks)
-    }
-  }
-
-  private fun checkCycle(configFile: String, visitedFiles: List<String>) {
-    var i = 0
-    val n = visitedFiles.size
-    while (i < n) {
-      if (configFile == visitedFiles[i]) {
-        val cycle = visitedFiles.subList(i, visitedFiles.size)
-        throw RuntimeException("Plugin $this optional descriptors form a cycle: ${java.lang.String.join(", ", cycle)}")
-      }
-      i++
     }
   }
 
