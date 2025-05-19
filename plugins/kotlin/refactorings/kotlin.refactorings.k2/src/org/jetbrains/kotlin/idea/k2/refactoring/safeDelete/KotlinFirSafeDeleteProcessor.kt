@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.unwrapSmartCasts
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.KotlinFirRefactoringsSettings
@@ -137,7 +138,7 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
                 if (expression is KtCallExpression && (functionCall as? KaSimpleFunctionCall)?.isImplicitInvoke != true) return@forEachDescendantOfType
                 val resolvedSymbol = functionCall.partiallyAppliedSymbol
                 if (declarationSymbol.allOverriddenSymbols.firstOrNull { it == resolvedSymbol.symbol } != null) return@forEachDescendantOfType
-                if (resolvedSymbol.contextArguments.any { (((it as? KaSmartCastedReceiverValue)?.original ?: it) as? KaImplicitReceiverValue)?.symbol == element.symbol }) {
+                if (resolvedSymbol.contextArguments.any { (it.unwrapSmartCasts() as? KaImplicitReceiverValue)?.symbol == element.symbol }) {
                     result.add(SafeDeleteReferenceSimpleDeleteUsageInfo(expression, element, false))
                 }
             }

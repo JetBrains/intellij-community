@@ -265,7 +265,7 @@ class KotlinFirChangeSignatureTest :
     }
 
     fun testDeleteUsedContextParameter() = doTestConflict {
-        removeParameter(0)
+        removeContextParameter(0)
     }
 
     fun testChangingTypeOfContextParameter() = doTest {

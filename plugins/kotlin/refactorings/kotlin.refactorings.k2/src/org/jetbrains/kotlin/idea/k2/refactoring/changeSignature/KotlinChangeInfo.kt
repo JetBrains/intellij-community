@@ -45,10 +45,16 @@ class KotlinChangeInfo(
     }
 
     override fun removeParameter(index: Int) {
-        val parameterInfo = newParameters.removeAt(index)
+        val parameterInfo = newParameters.filter { !it.isContextParameter }.toTypedArray()[index]
+        newParameters.remove(parameterInfo)
         if (parameterInfo == receiverParameterInfo) {
             receiverParameterInfo = null
         }
+    }
+
+    fun removeContextParameter(index: Int) {
+        val parameterInfo = newParameters.filter { it.isContextParameter }.toTypedArray()[index]
+        newParameters.remove(parameterInfo)
     }
 
     override fun clearParameters() {

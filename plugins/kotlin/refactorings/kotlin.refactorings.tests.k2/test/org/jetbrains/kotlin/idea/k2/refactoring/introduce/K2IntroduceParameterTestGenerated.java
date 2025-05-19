@@ -537,6 +537,11 @@ public abstract class K2IntroduceParameterTestGenerated extends AbstractK2Introd
                 runTest("../../idea/tests/testData/refactoring/introduceParameter/throw.kt");
             }
 
+            @TestMetadata("unusedContextParameter.kt")
+            public void testUnusedContextParameter() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/introduceParameter/unusedContextParameter.kt");
+            }
+
             @TestMetadata("unusedDispatchReceiver.kt")
             public void testUnusedDispatchReceiver() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/introduceParameter/unusedDispatchReceiver.kt");
@@ -545,6 +550,11 @@ public abstract class K2IntroduceParameterTestGenerated extends AbstractK2Introd
             @TestMetadata("unusedExtensionReceiver.kt")
             public void testUnusedExtensionReceiver() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/introduceParameter/unusedExtensionReceiver.kt");
+            }
+
+            @TestMetadata("usedContextParameter.kt")
+            public void testUsedContextParameter() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/introduceParameter/usedContextParameter.kt");
             }
 
             @TestMetadata("valueAtCallSite.kt")

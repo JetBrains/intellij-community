@@ -4453,6 +4453,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceParameter/throw.kt");
             }
 
+            @TestMetadata("unusedContextParameter.kt")
+            public void testUnusedContextParameter() throws Exception {
+                runTest("testData/refactoring/introduceParameter/unusedContextParameter.kt");
+            }
+
             @TestMetadata("unusedDispatchReceiver.kt")
             public void testUnusedDispatchReceiver() throws Exception {
                 runTest("testData/refactoring/introduceParameter/unusedDispatchReceiver.kt");
@@ -4461,6 +4466,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @TestMetadata("unusedExtensionReceiver.kt")
             public void testUnusedExtensionReceiver() throws Exception {
                 runTest("testData/refactoring/introduceParameter/unusedExtensionReceiver.kt");
+            }
+
+            @TestMetadata("usedContextParameter.kt")
+            public void testUsedContextParameter() throws Exception {
+                runTest("testData/refactoring/introduceParameter/usedContextParameter.kt");
             }
 
             @TestMetadata("valueAtCallSite.kt")
