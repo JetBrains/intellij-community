@@ -21,7 +21,8 @@ import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityS
 import com.intellij.psi.codeStyle.NameUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
+import kotlin.concurrent.atomics.AtomicReference
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 
 @Internal
@@ -30,10 +31,11 @@ class SeTargetItem(val legacyItem: ItemWithPresentation<*>, private val matchers
   override suspend fun presentation(): SeItemPresentation = SeTargetItemPresentation.create(legacyItem.presentation, matchers, extendedDescription)
 }
 
+@OptIn(ExperimentalAtomicApi::class)
 @Internal
 class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncWeightedContributorWrapper<Any>) {
   @Volatile
-  private var scopeIdToScope: ConcurrentHashMap<String, ScopeDescriptor> = ConcurrentHashMap()
+  private var scopeIdToScope: AtomicReference<Map<String, ScopeDescriptor>> = AtomicReference(emptyMap())
 
   suspend fun <T> collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
     val inputQuery = params.inputQuery
@@ -83,7 +85,7 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncWeightedC
 
   private fun applyScope(scopeId: String?) {
     if (scopeId == null) return
-    val scope = scopeIdToScope[scopeId] ?: return
+    val scope = scopeIdToScope.load()[scopeId] ?: return
 
     contributorWrapper.contributor.getActions { }.filterIsInstance<ScopeChooserAction>().firstOrNull()?.onScopeSelected(scope)
   }
@@ -94,21 +96,21 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncWeightedC
                                                  ?: return null
 
     val all = mutableMapOf<String, ScopeDescriptor>()
-    val selectedScopeName = scopeChooserAction.selectedScope.displayName
+    val selectedScope = scopeChooserAction.selectedScope
     var selectedScopeId: String? = null
 
     val scopeDataList = readAction {
       scopeChooserAction.scopesWithSeparators
     }.mapNotNull { scope ->
       val key = UUID.randomUUID().toString()
-      if (selectedScopeName == scope.displayName) selectedScopeId = key
+      if (selectedScope.scopeEquals(scope.scope)) selectedScopeId = key
 
       val data = SeSearchScopeData.from(scope, key)
       if (data != null) all[key] = scope
       data
     }
 
-    scopeIdToScope = ConcurrentHashMap(all)
+    scopeIdToScope.store(all)
     val everywhereScopeId = scopeChooserAction.everywhereScopeName?.let { name ->
       scopeDataList.firstOrNull {
         @Suppress("HardCodedStringLiteral")
