@@ -305,7 +305,9 @@ class PluginSetLoadingTest {
     assertThat(descriptor.dependencies).hasSize(1)
     val subDesc = descriptor.dependencies[0].subDescriptor!!
     assertThat(subDesc.pluginId.idString).isEqualTo("bar")
-    assertThat(subDesc.name).isEqualTo("Bar")
+    runAndReturnWithLoggedError { // ignored
+      assertThat(subDesc.name).isEqualTo("Bar")
+    }
     runAndReturnWithLoggedError { // ignored
       assertThat(subDesc.version).isEqualTo("1.0.0")
     }
@@ -319,13 +321,15 @@ class PluginSetLoadingTest {
       .name("Bar")
       .version("1.0.0")
       .depends("foo", PluginBuilder()
-        .id("bar 2")
+        // .id("bar 2") TODO ids are disregarded for content modules
+        .additionalXmlContent("<id>bar 2</id>")
         .name("Bar Sub")
         .version("2.0.0"))
       .build(pluginsDirPath.resolve("bar"))
 
-    val (pluginSet, err) = runAndReturnWithLoggedError { buildPluginSet() }
-    assertThat(err).isNotNull.hasMessageContainingAll("element 'version'")
+    val (pluginSet, errs) = runAndReturnWithLoggedErrors { buildPluginSet() }
+    assertThat(errs.joinToString { it.message ?: "" }).isNotNull
+      .contains("element 'version'", "element 'name'", "element 'id'")
     assertThat(pluginSet).hasExactlyEnabledPlugins("bar", "foo")
     val descriptor = pluginSet.getEnabledPlugin("bar")
     assertThat(descriptor.pluginId.idString).isEqualTo("bar")
@@ -334,7 +338,9 @@ class PluginSetLoadingTest {
     assertThat(descriptor.dependencies).hasSize(1)
     val subDesc = descriptor.dependencies[0].subDescriptor!!
     assertThat(subDesc.pluginId.idString).isEqualTo("bar")
-    assertThat(subDesc.name).isEqualTo("Bar")
+    runAndReturnWithLoggedError { // ignored
+      assertThat(subDesc.name).isEqualTo("Bar")
+    }
     runAndReturnWithLoggedError { // ignored
       assertThat(subDesc.version).isEqualTo("1.0.0")
     }

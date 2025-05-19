@@ -15,6 +15,7 @@ import com.intellij.util.io.directoryContent
 import com.intellij.util.io.java.classFile
 import com.intellij.util.io.write
 import com.intellij.util.lang.UrlClassLoader
+import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Test
@@ -300,14 +301,16 @@ class PluginDescriptorTest {
       .module(
         moduleName = "bar.sub",
         moduleDescriptor = PluginBuilder()
-          .id("bar 2")
+          // .id("bar 2") TODO ids are disregarded for content modules
+          .additionalXmlContent("<id>bar 2</id>")
           .name("Bar Sub")
           .version("2.0.0")
       )
       .build(pluginDirPath)
 
-    val (descriptor, err) = runAndReturnWithLoggedError { loadAndInitDescriptorInTest(pluginDirPath) }
-    assertThat(err).isNotNull.hasMessageContainingAll("bar.sub", "element 'version'")
+    val (descriptor, errs) = runAndReturnWithLoggedErrors { loadAndInitDescriptorInTest(pluginDirPath) }
+    assertThat(errs.joinToString { it.message ?: "" }).isNotNull
+      .contains("bar.sub", "element 'name'", "element 'id'", "element 'version'")
     assertThat(descriptor).isNotNull
     assertThat(descriptor.pluginId.idString).isEqualTo("bar")
     assertThat(descriptor.name).isEqualTo("Bar")
@@ -328,14 +331,16 @@ class PluginDescriptorTest {
       .module(
         moduleName = "bar.sub",
         moduleDescriptor = PluginBuilder()
-          .id("bar 2")
+          // .id("bar 2") TODO ids are disregarded for content modules
+          .additionalXmlContent("<id>bar 2</id>")
           .name("Bar Sub")
           .version("2.0.0")
       )
       .build(pluginDirPath)
 
-    val (descriptor, err) = runAndReturnWithLoggedError { loadAndInitDescriptorInTest(pluginDirPath) }
-    assertThat(err).isNotNull.hasMessageContainingAll("bar.sub", "element 'version'")
+    val (descriptor, errs) = runAndReturnWithLoggedErrors { loadAndInitDescriptorInTest(pluginDirPath) }
+    Assertions.assertThat(errs.joinToString { it.message ?: "" }).isNotNull
+      .contains("element 'version'", "element 'name'", "element 'id'")
     assertThat(descriptor).isNotNull
     assertThat(descriptor.pluginId.idString).isEqualTo("bar")
     assertThat(descriptor.name).isEqualTo("Bar")

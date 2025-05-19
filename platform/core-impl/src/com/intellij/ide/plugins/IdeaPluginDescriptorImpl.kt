@@ -35,9 +35,6 @@ private val LOG: Logger
 sealed class IdeaPluginDescriptorImpl(
   raw: RawPluginDescriptor,
 ) : IdeaPluginDescriptorImplPublic {
-  private val id: PluginId = PluginId.getId(raw.id ?: raw.name ?: throw RuntimeException("Neither id nor name are specified"))
-  private val name: String = raw.name ?: id.idString
-
   internal val pluginDependencies: List<PluginDependencyImpl> = raw.depends
     .let(::convertDepends)
   val incompatiblePlugins: List<PluginId> = raw.incompatibleWith.map(PluginId::getId)
@@ -76,15 +73,6 @@ sealed class IdeaPluginDescriptorImpl(
   abstract val useCoreClassLoader: Boolean
   abstract val useIdeaClassLoader: Boolean
 
-  override fun getPluginId(): PluginId = id
-
-  override fun getName(): String {
-    PluginCardOverrides.getNameOverride(id)?.let {
-      return it
-    }
-    return name
-  }
-
   /**
    * aka `<depends>` elements from the plugin.xml
    *
@@ -108,10 +96,10 @@ sealed class IdeaPluginDescriptorImpl(
   }
 
   override fun equals(other: Any?): Boolean {
-    return this === other || other is IdeaPluginDescriptorImpl && id == other.id && descriptorPath == other.descriptorPath
+    return this === other || other is IdeaPluginDescriptorImpl && pluginId == other.pluginId && descriptorPath == other.descriptorPath
   }
 
-  override fun hashCode(): Int = 31 * id.hashCode() + (descriptorPath?.hashCode() ?: 0)
+  override fun hashCode(): Int = 31 * pluginId.hashCode() + (descriptorPath?.hashCode() ?: 0)
 
   internal fun createDependsSubDescriptor(
     subBuilder: PluginDescriptorBuilder,
@@ -129,8 +117,6 @@ sealed class IdeaPluginDescriptorImpl(
     descriptorPath: String,
     module: PluginContentDescriptor.ModuleItem?,
   ): IdeaPluginDescriptorImpl {
-    subBuilder.id = id.idString
-    subBuilder.name = name
     val raw = subBuilder.build()
     return if (module == null) {
       DependsSubDescriptor(
@@ -208,7 +194,7 @@ sealed class IdeaPluginDescriptorImpl(
   fun initialize(context: PluginInitializationContext): PluginNonLoadReason? {
     assert(this is PluginMainDescriptor)
     content.modules.forEach { it.requireDescriptor() }
-    if (context.isPluginDisabled(id)) {
+    if (context.isPluginDisabled(pluginId)) {
       return onInitError(PluginIsMarkedDisabled(this))
     }
     checkCompatibility(context::productBuildNumber, context::isPluginBroken)?.let {
@@ -247,7 +233,7 @@ sealed class IdeaPluginDescriptorImpl(
     }
 
     // "Show broken plugins in Settings | Plugins so that users can uninstall them and resolve 'Plugin Error' (IDEA-232675)"
-    if (isPluginBroken(id, version)) {
+    if (isPluginBroken(pluginId, version)) {
       return onInitError(PluginIsMarkedBroken(this))
     }
     return null
@@ -429,6 +415,9 @@ sealed class IdeaPluginDescriptorImpl(
     }
 
     internal fun IdeaPluginDescriptorImpl.logSubDescriptorUnexpectedElements(raw: RawPluginDescriptor) {
+      logUnexpectedElement(PluginXmlConst.ID_ELEM) { raw.id != null }
+      logUnexpectedElement(PluginXmlConst.NAME_ELEM) { raw.name != null }
+
       logUnexpectedElement(PluginXmlConst.PLUGIN_ALLOW_BUNDLED_UPDATE_ATTR) { raw.isBundledUpdateAllowed }
       logUnexpectedElement(PluginXmlConst.PLUGIN_REQUIRE_RESTART_ATTR) { raw.isRestartRequired }
       logUnexpectedElement(PluginXmlConst.PLUGIN_IMPLEMENTATION_DETAIL_ATTR) { raw.isImplementationDetail }
@@ -466,6 +455,9 @@ class PluginMainDescriptor(
   isBundled: Boolean,
   useCoreClassLoader: Boolean = false
 ): IdeaPluginDescriptorImpl(raw) {
+  private val id: PluginId = PluginId.getId(raw.id ?: raw.name ?: throw RuntimeException("Neither id nor name are specified"))
+  private val name: String = raw.name ?: id.idString
+
   private val version: String? = raw.version
   private val sinceBuild: String? = raw.sinceBuild
   @Suppress("DEPRECATION")
@@ -501,6 +493,15 @@ class PluginMainDescriptor(
   private val resourceBundleBaseName: String? = raw.resourceBundleBaseName
 
   override val pluginAliases: List<PluginId> = super.pluginAliases.let(::addCorePluginAliases)
+
+  override fun getPluginId(): PluginId = id
+
+  override fun getName(): String {
+    PluginCardOverrides.getNameOverride(id)?.let {
+      return it
+    }
+    return name
+  }
 
   override fun getVersion(): String? = version
   override fun getSinceBuild(): String? = sinceBuild
@@ -625,8 +626,10 @@ class DependsSubDescriptor(
     logUnexpectedElement("<dependencies><plugin>") { raw.dependencies.any { it is DependenciesElement.PluginDependency } }
   }
 
+  override fun getPluginId(): PluginId = parent.pluginId
   // <editor-fold desc="Deprecated">
   // These are meaningless for sub-descriptors
+  @Deprecated("use main descriptor") override fun getName(): @NlsSafe String? = parent.name.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getVersion(): String? = parent.version.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getSinceBuild(): String? = parent.sinceBuild.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getUntilBuild(): String? = parent.untilBuild.also { LOG.error("unexpected call") }
@@ -686,6 +689,9 @@ class ContentModuleDescriptor(
     logUnexpectedElement(PluginXmlConst.DEPENDS_ELEM) { raw.depends.isNotEmpty() }
   }
 
+  override fun getPluginId(): PluginId = parent.pluginId
+  @Deprecated("make sure you don't confuse it with moduleName; use main descriptor")
+  override fun getName(): @NlsSafe String = parent.name // .also { LOG.error("unexpected call") } TODO test failures
   // <editor-fold desc="Deprecated">
   // These are meaningless for sub-descriptors
   @Deprecated("use main descriptor") override fun getVersion(): String? = parent.version // .also { LOG.error("unexpected call") } TODO test failures
