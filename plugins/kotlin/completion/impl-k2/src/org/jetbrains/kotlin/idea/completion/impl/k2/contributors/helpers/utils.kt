@@ -150,10 +150,6 @@ internal fun collectNonExtensionsForType(
 }
 
 context(KaSession)
-private val KaSyntheticJavaPropertySymbol.getterAndUnitSetter: List<KaCallableSymbol>
-    get() = listOfNotNull(javaGetterSymbol, javaSetterSymbol?.takeIf { it.returnType.isUnitType })
-
-context(KaSession)
 @OptIn(KaExperimentalApi::class)
 private fun Sequence<KaCallableSignature<*>>.filterOutJavaGettersAndSetters(
     positionContext: KotlinNameReferencePositionContext,
@@ -163,13 +159,18 @@ private fun Sequence<KaCallableSignature<*>>.filterOutJavaGettersAndSetters(
     symbolFilter: (KaCallableSymbol) -> Boolean
 ): Sequence<KaCallableSignature<*>> {
     val syntheticJavaPropertiesTypeScope = type.syntheticJavaPropertiesScope ?: return this
-    val syntheticProperties = syntheticJavaPropertiesTypeScope.getCallableSignatures(scopeNameFilter.getAndSetAware())
+    // non-Unit setters are not filtered out because they are likely to be used in a call chain
+    val javaGetterAndUnitSetterSymbols = syntheticJavaPropertiesTypeScope.getCallableSignatures(scopeNameFilter.getAndSetAware())
         .filterNonExtensions(positionContext, visibilityChecker, symbolFilter)
         .filterIsInstance<KaCallableSignature<KaSyntheticJavaPropertySymbol>>()
-    // non-Unit setters are not filtered out because they are likely to be used in a call chain
-    val javaGetterAndUnitSetterSymbols = syntheticProperties.flatMapTo(mutableSetOf()) { it.symbol.getterAndUnitSetter }
+        .map { it.symbol }
+        .flatMapTo(mutableSetOf()) { symbol ->
+            listOfNotNull(
+                symbol.javaGetterSymbol,
+                symbol.javaSetterSymbol?.takeIf { it.returnType.isUnitType })
+        }
 
-    return filter { it.symbol !in javaGetterAndUnitSetterSymbols }
+    return filterNot { it.symbol in javaGetterAndUnitSetterSymbols }
 }
 
 /**
@@ -206,12 +207,14 @@ private fun Sequence<KaCallableSignature<*>>.filterNonExtensions(
  * Returns a filter aware of prefixes. For example, a variable with the name `prop` satisfies the filter for all the following prefixes:
  * "p", "getP", "setP"
  */
-private fun ((Name) -> Boolean).getAndSetAware(): (Name) -> Boolean = { name ->
-    listOfNotNull(name, name.toJavaGetterName(), name.toJavaSetterName()).any(this)
+private fun ((Name) -> Boolean).getAndSetAware(): (Name) -> Boolean = { propertyName ->
+    val identifier = propertyName.identifierOrNullIfSpecial
+    listOfNotNull(
+        propertyName,
+        identifier?.let { Name.identifier(JvmAbi.getterName(it)) },
+        identifier?.let { Name.identifier(JvmAbi.setterName(it)) },
+    ).any(this)
 }
-
-private fun Name.toJavaGetterName(): Name? = identifierOrNullIfSpecial?.let { Name.identifier(JvmAbi.getterName(it)) }
-private fun Name.toJavaSetterName(): Name? = identifierOrNullIfSpecial?.let { Name.identifier(JvmAbi.setterName(it)) }
 
 context(KaSession)
 private fun isEnumEntriesProperty(symbol: KaCallableSymbol): Boolean {
