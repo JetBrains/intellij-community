@@ -17,11 +17,7 @@ import com.intellij.platform.syntax.lexer.TokenList
 import com.intellij.platform.syntax.parser.*
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory.builder
-import com.intellij.platform.syntax.psi.ElementTypeConverter
-import com.intellij.platform.syntax.psi.LanguageSyntaxDefinition
-import com.intellij.platform.syntax.psi.PsiSyntaxBuilder
-import com.intellij.platform.syntax.psi.asSyntaxLogger
-import com.intellij.platform.syntax.psi.convertNotNull
+import com.intellij.platform.syntax.psi.*
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.BlockSupportImpl
 import com.intellij.psi.impl.DiffLog
@@ -30,7 +26,10 @@ import com.intellij.psi.impl.source.tree.FileElement
 import com.intellij.psi.impl.source.tree.LazyParseableElement
 import com.intellij.psi.text.BlockSupport
 import com.intellij.psi.text.BlockSupport.ReparsedSuccessfullyException
-import com.intellij.psi.tree.*
+import com.intellij.psi.tree.CustomLanguageASTComparator
+import com.intellij.psi.tree.IElementType
+import com.intellij.psi.tree.IFileElementType
+import com.intellij.psi.tree.ILazyParseableElementTypeBase
 import com.intellij.util.CharTable
 import com.intellij.util.ThreeState
 import com.intellij.util.TripleFunction
@@ -39,8 +38,6 @@ import com.intellij.util.text.CharArrayUtil
 import org.jetbrains.annotations.NonNls
 import java.util.*
 import kotlin.math.max
-import kotlin.jvm.JvmStatic
-import kotlin.jvm.JvmField
 
 internal class PsiSyntaxBuilderImpl(
   internal var file: PsiFile?,
@@ -342,12 +339,6 @@ internal class PsiSyntaxBuilderImpl(
   }
 
   companion object {
-    // todo let's try to get rid of this method
-    @JvmStatic
-    fun registerWhitespaceToken(type: IElementType) {
-      ourAnyLanguageWhitespaceTokens = TokenSet.orSet(ourAnyLanguageWhitespaceTokens, TokenSet.create(type))
-    }
-
     // todo introduce proper API?
     @JvmStatic
     fun getErrorMessage(node: LighterASTNode): @NlsContexts.DetailedDescription String? {
@@ -385,5 +376,3 @@ internal const val UNBALANCED_MESSAGE: @NonNls String = "Unbalanced tree. Most p
 private val LOG: Logger = Logger.getInstance(PsiSyntaxBuilderImpl::class.java)
 
 private val syntaxTreeBuilderLogger: com.intellij.platform.syntax.Logger = logger<SyntaxTreeBuilder>().asSyntaxLogger()
-
-internal var ourAnyLanguageWhitespaceTokens: TokenSet = TokenSet.EMPTY

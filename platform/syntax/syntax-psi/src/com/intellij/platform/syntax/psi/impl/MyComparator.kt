@@ -7,6 +7,7 @@ import com.intellij.lang.LighterASTNode
 import com.intellij.lang.TokenWrapper
 import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.util.Comparing
+import com.intellij.platform.syntax.psi.ExtraWhitespaces
 import com.intellij.platform.syntax.psi.impl.PsiSyntaxBuilderImpl.Companion.getErrorMessage
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.TokenType
@@ -98,7 +99,7 @@ internal class MyComparator(
 
   override fun typesEqual(n1: ASTNode, n2: LighterASTNode): Boolean {
     if (n1 is PsiWhiteSpaceImpl) {
-      return ourAnyLanguageWhitespaceTokens.contains(n2.getTokenType()) ||
+      return ExtraWhitespaces.whitespaces.contains(n2.getTokenType()) ||
              n2 is Token && n2.nodeData.whitespaceTokens.contains(n2.getTokenType())
     }
     val n1t: IElementType?
