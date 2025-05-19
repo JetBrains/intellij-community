@@ -563,7 +563,7 @@ class DependsSubDescriptor(
   override fun getPluginId(): PluginId = parent.pluginId
   // <editor-fold desc="Deprecated">
   // These are meaningless for sub-descriptors
-  @Deprecated("use main descriptor") override fun getName(): @NlsSafe String? = parent.name.also { LOG.error("unexpected call") }
+  @Deprecated("use main descriptor") override fun getName(): @NlsSafe String? = parent.name // .also { LOG.error("unexpected call") } TODO IdeaUltimatePackagingTest
   @Deprecated("use main descriptor") override fun getVersion(): String? = parent.version.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getSinceBuild(): String? = parent.sinceBuild.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getUntilBuild(): String? = parent.untilBuild.also { LOG.error("unexpected call") }
@@ -571,7 +571,7 @@ class DependsSubDescriptor(
   @Deprecated("use main descriptor") override fun getCategory(): @NlsSafe String? = parent.category.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getDisplayCategory(): @Nls String? = parent.displayCategory.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getDescription(): @Nls String? = parent.description.also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun isBundled(): Boolean = parent.isBundled.also { LOG.error("unexpected call") }
+  @Deprecated("use main descriptor") override fun isBundled(): Boolean = parent.isBundled // .also { LOG.error("unexpected call") } TODO IdeaUltimatePackagingTest
   @Deprecated("use main descriptor") override fun getPluginPath(): Path = parent.pluginPath.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override val useIdeaClassLoader: Boolean get() = parent.useIdeaClassLoader.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun allowBundledUpdate(): Boolean = parent.allowBundledUpdate().also { LOG.error("unexpected call") }
@@ -636,7 +636,7 @@ class ContentModuleDescriptor(
   @Deprecated("use main descriptor") override fun getDisplayCategory(): @Nls String? = parent.displayCategory.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getDescription(): @Nls String? = parent.description.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun isBundled(): Boolean = parent.isBundled // .also { LOG.error("unexpected call") } TODO test failures
-  @Deprecated("use main descriptor") override fun getPluginPath(): Path = parent.pluginPath.also { LOG.error("unexpected call") }
+  @Deprecated("use main descriptor") override fun getPluginPath(): Path = parent.pluginPath // .also { LOG.error("unexpected call") } TODO IdeaUltimatePackagingTest
   @Deprecated("use main descriptor") override fun allowBundledUpdate(): Boolean = parent.allowBundledUpdate().also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun isImplementationDetail(): Boolean = parent.isImplementationDetail // .also { LOG.error("unexpected call") } TODO test failures
   @Deprecated("use main descriptor") override fun isRequireRestart(): Boolean = parent.isRequireRestart.also { LOG.error("unexpected call") }
