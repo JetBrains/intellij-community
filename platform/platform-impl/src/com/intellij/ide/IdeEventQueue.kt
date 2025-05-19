@@ -30,6 +30,7 @@ import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher
 import com.intellij.openapi.keymap.impl.KeyState
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.SuvorovProgress
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
@@ -454,7 +455,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     if (isUserActivityEvent(e)) {
       ActivityTracker.getInstance().inc()
     }
-    if (popupManager.isPopupActive && threadingSupport.runPreventiveWriteIntentReadAction { popupManager.dispatch(e) }) {
+    if (popupManager.isPopupActive && !shouldSkipListeners(e) && threadingSupport.runPreventiveWriteIntentReadAction { popupManager.dispatch(e) }) {
       if (keyEventDispatcher.isWaitingForSecondKeyStroke) {
         keyEventDispatcher.state = KeyState.STATE_INIT
       }
@@ -467,7 +468,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
 
     // IJPL-177735 Remove Write-Intent lock from IdeEventQueue.EventDispatcher
-    if (threadingSupport.runPreventiveWriteIntentReadAction { dispatchByCustomDispatchers(e) }) {
+    if (!shouldSkipListeners(e) && threadingSupport.runPreventiveWriteIntentReadAction { dispatchByCustomDispatchers(e) }) {
       return
     }
     if (e is InputMethodEvent && SystemInfoRt.isMac && keyEventDispatcher.isWaitingForSecondKeyStroke) {
@@ -488,6 +489,10 @@ class IdeEventQueue private constructor() : EventQueue() {
       }
       else -> defaultDispatchEvent(e)
     }
+  }
+
+  private fun shouldSkipListeners(e: AWTEvent): Boolean {
+    return e is InvocationEvent && SuvorovProgress.ForcedWriteActionRunnable.isMarkedRunnable(e)
   }
 
   private fun isUserActivityEvent(e: AWTEvent): Boolean =
@@ -730,19 +735,20 @@ class IdeEventQueue private constructor() : EventQueue() {
         return false
       }
     }
+    eventsPosted.incrementAndGet()
+
+    if (event is KeyEvent) {
+      keyboardEventPosted.incrementAndGet()
+    }
+
     if (postDirectly) {
       super.postEvent(event)
       return true
     }
-    eventsPosted.incrementAndGet()
 
     attachClientIdIfNeeded(event)?.let {
       super.postEvent(it)
       return true
-    }
-
-    if (event is KeyEvent) {
-      keyboardEventPosted.incrementAndGet()
     }
 
     super.postEvent(event)

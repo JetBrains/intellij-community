@@ -25,7 +25,7 @@ class SuvorovProgressTest {
   @BeforeEach
   fun installSuvorovProgress() {
     application.invokeAndWait {
-      getGlobalThreadingSupport().setLockAcquisitionInterceptor(SuvorovProgress::dispatchEventsUntilConditionCompletes)
+      getGlobalThreadingSupport().setLockAcquisitionInterceptor(SuvorovProgress::dispatchEventsUntilComputationCompletes)
     }
   }
 
@@ -47,7 +47,7 @@ class SuvorovProgressTest {
   @Test
   @RegistryKey("ide.suvorov.progress.showing.delay.ms", "1")
   @RegistryKey("ide.suvorov.progress.kind", "[None|Bar*|Spinning|Overlay]")
-  fun `input event gets dispatched dropped if progress is long`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+  fun `input event gets dropped if progress is long`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     val clickPerformed = performClickDuringProgress()
     assertThat(clickPerformed).isFalse
   }

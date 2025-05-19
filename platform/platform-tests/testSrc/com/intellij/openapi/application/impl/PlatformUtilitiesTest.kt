@@ -6,26 +6,18 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.*
-import com.intellij.diagnostic.ThreadDumpService
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.UiDispatcherKind
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.TransactionGuard
-import com.intellij.openapi.application.backgroundWriteAction
-import com.intellij.openapi.application.ui
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.SuvorovProgress
 import com.intellij.openapi.project.DumbAware
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.application
+import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.Assumptions
@@ -202,5 +194,78 @@ class PlatformUtilitiesTest {
     waJob.complete()
     nbraJob.join()
     assertThat(counter.get()).isEqualTo(1)
+  }
+
+  @Suppress("ForbiddenInSuspectContextMethod")
+  @Test
+  fun `transferredWriteAction allows write access when lock action is pending`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    application.invokeAndWait {
+      getGlobalThreadingSupport().setLockAcquisitionInterceptor(SuvorovProgress::dispatchEventsUntilComputationCompletes)
+    }
+    try {
+      val bgWaStarted = Job(coroutineContext.job)
+      launch {
+        backgroundWriteAction {
+          bgWaStarted.complete()
+          Thread.sleep(100) // give chance EDT to start waiting for a coroutine
+          (application as ApplicationImpl).invokeAndWaitWithTransferredWriteAction {
+            assertThat(EDT.isCurrentThreadEdt()).isTrue
+            assertThat(application.isWriteAccessAllowed).isTrue
+            runWriteAction {}
+            assertThat(TransactionGuard.getInstance().isWritingAllowed).isTrue
+          }
+        }
+      }
+      bgWaStarted.join()
+      launch(Dispatchers.EDT) {
+      }
+    }
+    finally {
+      application.invokeAndWait {
+        getGlobalThreadingSupport().removeLockAcquisitionInterceptor()
+      }
+    }
+  }
+
+  @Test
+  fun `transferredWriteAction can run as invokeAndWait`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    backgroundWriteAction {
+      (application as ApplicationImpl).invokeAndWaitWithTransferredWriteAction {
+        assertThat(EDT.isCurrentThreadEdt()).isTrue
+        assertThat(application.isWriteAccessAllowed).isTrue
+        runWriteAction {}
+        assertThat(TransactionGuard.getInstance().isWritingAllowed).isTrue
+      }
+    }
+  }
+
+  @Test
+  fun `transferredWriteAction is not available without write lock`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    assertThrows<AssertionError> {
+      (application as ApplicationImpl).invokeAndWaitWithTransferredWriteAction {
+        fail<Nothing>()
+      }
+    }
+  }
+
+  @Test
+  fun `transferredWriteAction is not available on EDT`(): Unit = timeoutRunBlocking(context = Dispatchers.ui(UiDispatcherKind.RELAX)) {
+    assertThrows<AssertionError> {
+      (application as ApplicationImpl).invokeAndWaitWithTransferredWriteAction {
+        fail<Nothing>()
+      }
+    }
+  }
+
+  @Test
+  fun `transferredWriteAction rethrows exceptions`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    backgroundWriteAction {
+      val exception = assertThrows<IllegalStateException> {
+        (application as ApplicationImpl).invokeAndWaitWithTransferredWriteAction {
+          throw IllegalStateException("custom message")
+        }
+      }
+      assertThat(exception.message).isEqualTo("custom message")
+    }
   }
 }

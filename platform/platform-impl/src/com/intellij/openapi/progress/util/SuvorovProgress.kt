@@ -6,24 +6,25 @@ import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.application.impl.getGlobalThreadingSupport
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ui.AsyncProcessIcon
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
+import java.awt.EventQueue
 import java.awt.KeyboardFocusManager
-import java.awt.event.InputEvent
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
+import java.awt.event.InvocationEvent
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
 
 /**
- * [PotemkinProgress] done right.
+ * The IDE needs to run certain AWT events as soon as possible.
+ * This class handles the situation where the IDE is frozen on acquisition of a lock, and instead of waiting for lock permit,
+ * it dispatches certain safe events.
  *
- * Imagine the following scenario:
+ * It is relevant for the following scenario
  * ```kotlin
  * // bgt
  * writeAction { Thread.sleep(100000) } // some intensive work in background
@@ -32,16 +33,27 @@ import javax.swing.SwingUtilities
  * ReadAction.run {} // blocked until write lock is released
  * ```
  *
- * In this situation, we have a freeze, because EDT is blocked on a lock in a single event.
- * Instead of blocking, we can show a "modal" progress and provide an impression that IDE is not dead.
+ * If the freeze lasts too long, the IDE will show a "modal" progress indicator and drop accumulated input events.
  *
- * This progress starts when EDT is going to be blocked on the RWI lock, and finished when the required lock gets acquired.
+ * The name of this class is an allusion to [PotemkinProgress] (which in turn was named after [Potemkin villages](https://en.wikipedia.org/wiki/Potemkin_village)).
+ * However, the name of this class alludes to the occupation of both Grigory Potemkin and Alexander Suvorov.
  */
 @ApiStatus.Internal
 object SuvorovProgress {
 
   @JvmStatic
-  fun dispatchEventsUntilConditionCompletes(awaitedValue: Deferred<*>) {
+  fun dispatchEventsUntilComputationCompletes(awaitedValue: Deferred<*>) {
+    val showingDelay = Registry.get("ide.suvorov.progress.showing.delay.ms").asInteger()
+    val stealer = processInvocationEventsWithoutDialog(awaitedValue, showingDelay)
+
+    if (awaitedValue.isCompleted) {
+      stealer.dispatchAllExistingEvents()
+      stealer.drainUndispatchedInputEvents().forEach {
+        IdeEventQueue.getInstance().doPostEvent(it, true)
+      }
+      return
+    }
+
     val value = if (!LoadingState.COMPONENTS_LOADED.isOccurred) {
       "None"
     }
@@ -49,15 +61,15 @@ object SuvorovProgress {
       Registry.get("ide.suvorov.progress.kind").selectedOption
     }
     when (value) {
-      "None" -> awaitedValue.asCompletableFuture().join()
+      "None" -> processInvocationEventsWithoutDialog(awaitedValue, Int.MAX_VALUE)
       "Spinning" -> if (Registry.`is`("editor.allow.raw.access.on.edt")) {
         showSpinningProgress(awaitedValue)
       }
       else {
         thisLogger().warn("Spinning progress would not work without enabled registry value `editor.allow.raw.access.on.edt`")
-        showPotemkinProgress(awaitedValue, true)
+        processInvocationEventsWithoutDialog(awaitedValue, Int.MAX_VALUE)
       }
-      "Bar", "Overlay" -> showPotemkinProgress(awaitedValue, value == "Bar")
+      "Bar", "Overlay" -> showPotemkinProgress(awaitedValue, isBar = value == "Bar")
       else -> throw IllegalArgumentException("Unknown value for registry key `ide.freeze.fake.progress.kind`: $value")
     }
   }
@@ -66,20 +78,18 @@ object SuvorovProgress {
     // some focus machinery may require Write-Intent read action
     // we need to remove it from there
     getGlobalThreadingSupport().relaxPreventiveLockingActions {
-      val showingDelay = Registry.get("ide.suvorov.progress.showing.delay.ms").asInteger()
-      val progress = getPotemkinProgress(showingDelay, isBar)
+      val progress = if (isBar) {
+        PotemkinProgress(CommonBundle.message("title.long.non.interactive.progress"), null, null, null)
+      }
+      else {
+        val window = SwingUtilities.getRootPane(KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner)
+        PotemkinOverlayProgress(window, false)
+      }.apply { setDelayInMillis(0) }
       progress.start()
       try {
-        try {
-          awaitedValue.asCompletableFuture().get(showingDelay.toLong(), TimeUnit.MILLISECONDS)
-          return@relaxPreventiveLockingActions
-        }
-        catch (_: TimeoutException) {
-          // ignore, now we need to paint the progress
-        }
         do {
           progress.interact()
-          sleep(); // avoid touching the progress too much
+          sleep() // avoid touching the progress too much
         }
         while (!awaitedValue.isCompleted)
       }
@@ -92,39 +102,49 @@ object SuvorovProgress {
           Disposer.dispose(progress)
         }
         progress.stop()
-        val pendingEvents = getPendingInputEvents(progress)
-        pendingEvents.forEach {
-          IdeEventQueue.getInstance().doPostEvent(it, true)
-        }
       }
     }
   }
 
-  fun getPendingInputEvents(progress: ProgressIndicator): List<InputEvent> {
-    return when (progress) {
-      is PotemkinProgress -> progress.drainUndispatchedInputEvents()
-      is PotemkinOverlayProgress -> progress.drainUndispatchedInputEvents()
-      else -> error("Unexpected progress type: $progress")
+  @OptIn(InternalCoroutinesApi::class)
+  private fun processInvocationEventsWithoutDialog(awaitedValue: Deferred<*>, showingDelay: Int): EventStealer {
+    val disposable = Disposer.newDisposable()
+    val stealer = EventStealer(disposable) {}
+    try {
+      if (awaitedValue.isCompleted) {
+        return stealer
+      }
+      repostAllEvents()
+      awaitedValue.invokeOnCompletion {
+        // when the awaited value is ready, we need to signal the event dispatcher that it needs to stop waiting
+        EventQueue.invokeLater(EventStealer.DispatchTerminationEvent.INSTANCE)
+      }
+      if (awaitedValue.isCompleted) {
+        return stealer
+      }
+      stealer.dispatchInvocationEventsForDuration(showingDelay.toLong())
     }
+    finally {
+      Disposer.dispose(disposable)
+    }
+    return stealer
   }
 
-  fun ProgressIndicator.interact() {
-    if (this is PotemkinProgress) {
-      interact()
-    }
-    else if (this is PotemkinOverlayProgress) {
-      interact()
-    }
-  }
-
-  private fun getPotemkinProgress(showingDelay: Int, isBar: Boolean): ProgressIndicator {
-    return if (isBar) {
-      PotemkinProgress(CommonBundle.message("title.long.non.interactive.progress"), null, null, null).apply { setDelayInMillis(showingDelay) }
-    }
-    else {
-      val window = SwingUtilities.getRootPane(KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner)
-      PotemkinOverlayProgress(window, false)
-    }.apply { setDelayInMillis(showingDelay) }
+  /**
+   * Protection against race condition: imagine someone posted locking event, and then MarkedRunnable.
+   * locking event will not intercept MarkedRunnable because event stealer is not installed
+   */
+  private fun repostAllEvents() {
+    val queue = IdeEventQueue.getInstance()
+    val events = generateSequence {
+      if (queue.peekEvent() != null) {
+        IdeEventQueue.getInstance().nextEvent
+      }
+      else {
+        null
+      }
+    }.toList()
+    events.forEach { event -> queue.doPostEvent(event, true) }
   }
 
   private fun showSpinningProgress(awaitedValue: Deferred<*>) {
@@ -149,6 +169,7 @@ object SuvorovProgress {
                                                                   source.dispatchEvent(event)
                                                                 }
                                                               }, disposer)
+      repostAllEvents()
 
       val host = window.layeredPane
       host.add(icon)
@@ -186,5 +207,20 @@ object SuvorovProgress {
 
   private fun sleep() {
     Thread.sleep(5)
+  }
+
+  abstract class ForcedWriteActionRunnable : Runnable {
+
+    companion object {
+      private const val NAME = "ForcedWriteActionRunnable"
+
+      fun isMarkedRunnable(event: InvocationEvent): Boolean {
+        return event.toString().contains(NAME)
+      }
+    }
+
+    override fun toString(): String {
+      return NAME
+    }
   }
 }

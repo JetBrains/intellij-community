@@ -10,7 +10,7 @@ import javax.swing.SwingUtilities
 class SuvorovProgressInitializationActivity : AppLifecycleListener {
   override fun appStarted() {
     SwingUtilities.invokeLater {
-      getGlobalThreadingSupport().setLockAcquisitionInterceptor(SuvorovProgress::dispatchEventsUntilConditionCompletes)
+      getGlobalThreadingSupport().setLockAcquisitionInterceptor(SuvorovProgress::dispatchEventsUntilComputationCompletes)
     }
   }
 }

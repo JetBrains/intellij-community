@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import sun.awt.SunToolkit;
 
-import java.awt.AWTEvent;
+import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.InvocationEvent;
 import java.awt.event.KeyEvent;
@@ -58,7 +58,9 @@ class EventStealer {
     // and it then just sits in the queue blocking the whole UI until the progress is finished.
     String eventString = event.toString();
     return eventString.contains(",runnable=sun.lwawt.macosx.LWCToolkit") || // [tav] todo: remove in 2022.2
-           (event.getClass().getName().equals("sun.awt.AWTThreading$TrackedInvocationEvent") // see JBR-4208
+           (event.getClass().getName().equals("sun.awt.AWTThreading$TrackedInvocationEvent") || // see JBR-4208
+            eventString.contains(",runnable=ForcedWriteActionRunnable") ||
+            eventString.contains(",runnable=DispatchTerminationEvent")
             // see IDEA-291469 Menu on macOS is invoked inside checkCanceled (PotemkinProgress)
             && !(eventString.contains(",runnable=com.intellij.openapi.actionSystem.impl.ActionMenu$$Lambda") ||
                  eventString.contains(",runnable=com.intellij.platform.ide.menu.MacNativeActionMenuKt$$Lambda")));
@@ -94,6 +96,32 @@ class EventStealer {
       if (event == null) return;
 
       event.dispatch();
+    }
+  }
+
+  public void dispatchInvocationEventsForDuration(long durationMillis) throws InterruptedException {
+    long initialStamp = System.nanoTime();
+    while (true) {
+      long elapsedSinceStartNanos = System.nanoTime() - initialStamp;
+      long sleep = durationMillis - (elapsedSinceStartNanos / 1_000_000);
+      if (sleep <= 0) return;
+      InvocationEvent event = myInvocationEvents.poll(sleep, TimeUnit.MILLISECONDS);
+      if (event == null || event.toString().contains("DispatchTerminationEvent")) return;
+
+      event.dispatch();
+    }
+  }
+
+  static class DispatchTerminationEvent implements Runnable {
+    public static final DispatchTerminationEvent INSTANCE = new DispatchTerminationEvent();
+
+    @Override
+    public void run() {
+    }
+
+    @Override
+    public String toString() {
+      return "DispatchTerminationEvent";
     }
   }
 }
