@@ -54,19 +54,12 @@ internal sealed interface PathAnnotationInfo {
 
     fun forExpression(expression: UExpression): PathAnnotationInfo {
       if (expression is UQualifiedReferenceExpression) {
-        val uElement = expression.resolveToUElement()
-        if (uElement is UMethod) {
-          if (uElement.containingClass?.qualifiedName == "kotlin.io.path.PathsKt__PathUtilsKt") {
-            val identifierName = uElement.nameIdentifier?.text
-            if (identifierName != null) {
-              if (identifierName in setOf("name", "nameWithoutExtension", "extension")) {
-                return FilenameInfo
-              }
-              if (identifierName in setOf("pathString")) {
-                return MultiRouting
-              }
-            }
-          }
+        val propertyName = getKotlinStdlibPathsExtensionPropertyNameOrNull(expression)
+        if (propertyName in setOf("name", "nameWithoutExtension", "extension")) {
+          return FilenameInfo
+        }
+        if (propertyName in setOf("pathString")) {
+          return MultiRouting
         }
       }
 

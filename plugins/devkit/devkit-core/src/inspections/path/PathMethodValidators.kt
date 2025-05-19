@@ -3,6 +3,10 @@ package org.jetbrains.idea.devkit.inspections.path
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiModifierListOwner
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.resolveToUElement
+import org.jetbrains.uast.tryResolve
 
 internal fun isPathConstructorOrFactory(method: PsiElement): Boolean {
   val methods = mapOf(
@@ -41,4 +45,27 @@ internal fun isFileSystemGetPathMethod(method: PsiElement): Boolean {
     }
   }
   return false
+}
+
+internal fun getKotlinStdlibPathsExtensionPropertyNameOrNull(expression: UQualifiedReferenceExpression): String? {
+  // K2 mode
+  // `maybeProperty` is `org.jetbrains.kotlin.psi.KtProperty`
+  val maybeProperty = expression.selector.tryResolve()
+  // `maybeProperty.containingFile` is `org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile`
+  if (maybeProperty?.containingFile?.name == "PathsKt.class") {
+    return expression.resolvedName
+  }
+
+  // K1 mode
+  // If we use here `PsiElement` instead of `UElement` (via `expression.resolve()`),
+  // we are unable to get a property name from the result object,
+  // and we have only getter names (f.e. we could only get "getName", but not "name")
+  val uElement = expression.resolveToUElement()
+  if (uElement is UMethod) {
+    if (uElement.containingClass?.qualifiedName == "kotlin.io.path.PathsKt__PathUtilsKt") {
+      return uElement.nameIdentifier?.text
+    }
+  }
+
+  return null
 }
