@@ -18,6 +18,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.migrations.JpaBuddyMigration242;
 import com.intellij.openapi.application.migrations.NotebooksMigration242;
 import com.intellij.openapi.application.migrations.PythonProMigration242;
+import com.intellij.openapi.application.migrations.SpaceMigration252;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -1204,6 +1205,7 @@ public final class ConfigImportHelper {
     new PythonProMigration242().migratePlugins(options);
     new NotebooksMigration242().migratePlugins(options);
     new JpaBuddyMigration242().migratePlugins(options);
+    new SpaceMigration252().migratePlugins(options);
   }
 
   private static void migrateGlobalPlugins(Path newConfigDir,
