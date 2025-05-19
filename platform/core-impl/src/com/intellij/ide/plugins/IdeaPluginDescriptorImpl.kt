@@ -41,8 +41,7 @@ sealed class IdeaPluginDescriptorImpl(
   internal val pluginDependencies: List<PluginDependencyImpl> = raw.depends
     .let(::convertDepends)
   val incompatiblePlugins: List<PluginId> = raw.incompatibleWith.map(PluginId::getId)
-  val pluginAliases: List<PluginId> = raw.pluginAliases.map(PluginId::getId)
-    .let(::addCorePluginAliases)
+  open val pluginAliases: List<PluginId> = raw.pluginAliases.map(PluginId::getId)
 
   /**
    * this is an implementation detail required during descriptor loading, use [contentModules] instead
@@ -278,13 +277,6 @@ sealed class IdeaPluginDescriptorImpl(
     }
   }
 
-  private fun addCorePluginAliases(pluginAliases: List<PluginId>): List<PluginId> {
-    if (this !is PluginMainDescriptor || id != PluginManagerCore.CORE_ID) {
-      return pluginAliases
-    }
-    return pluginAliases + IdeaPluginOsRequirement.getHostOsModuleIds() + productModeAliasesForCorePlugin()
-  }
-
   @ApiStatus.Internal
   companion object {
     private fun convertDepends(depends: List<DependsElement>): MutableList<PluginDependencyImpl> =
@@ -508,6 +500,8 @@ class PluginMainDescriptor(
 
   private val resourceBundleBaseName: String? = raw.resourceBundleBaseName
 
+  override val pluginAliases: List<PluginId> = super.pluginAliases.let(::addCorePluginAliases)
+
   override fun getVersion(): String? = version
   override fun getSinceBuild(): String? = sinceBuild
   override fun getUntilBuild(): String? = untilBuild
@@ -588,6 +582,13 @@ class PluginMainDescriptor(
                "(e.g. ActionsBundle for actions) anyway; this tag must be replaced by a corresponding attribute in some inner tags " +
                "(e.g. by 'resource-bundle' attribute in 'actions' tag)")
     }
+  }
+
+  private fun addCorePluginAliases(pluginAliases: List<PluginId>): List<PluginId> {
+    if (pluginId != PluginManagerCore.CORE_ID) {
+      return pluginAliases
+    }
+    return pluginAliases + IdeaPluginOsRequirement.getHostOsModuleIds() + productModeAliasesForCorePlugin()
   }
 }
 
