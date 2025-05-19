@@ -92,7 +92,7 @@ internal class MarkdownComposePanel(
   @Composable
   private fun MarkdownPanel() {
     val scheme = PreviewStyleScheme.fromCurrentTheme()
-    val fontSize = scheme.fontSize.sp
+    val fontSize = scheme.fontSize.sp / scheme.scale
     val scrollState = rememberScrollState(0)
     val scrollingSynchronizer = remember(scrollState) { ScrollingSynchronizer.create(scrollState) }
     val markdownStyling = remember(scheme, fontSize) { JcefLikeMarkdownStyling(scheme, fontSize) }
@@ -120,7 +120,7 @@ internal class MarkdownComposePanel(
     val coilContext = LocalPlatformContext.current
     val imageRendererExtension = remember(coilContext) { Coil3ImageRendererExtension.withDefaultLoader(coilContext) }
     val allRenderingExtensions = listOf(tableRenderer, alertRenderer, GitHubStrikethroughRendererExtension, imageRendererExtension)
-    val blockRenderer = remember(markdownStyling) {
+    val blockRenderer = remember(markdownStyling, allRenderingExtensions) {
       ScrollSyncMarkdownBlockRenderer(
         markdownStyling,
         allRenderingExtensions,
