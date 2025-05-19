@@ -138,7 +138,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     if (!Files.isDirectory(customPluginDir)) {
       return CompletableDeferred(DiscoveredPluginsList(emptyList(), PluginsSourceContext.Custom))
     }
-    val deferredDescriptors = ArrayList<Deferred<IdeaPluginDescriptorImpl?>>()
+    val deferredDescriptors = ArrayList<Deferred<PluginMainDescriptor?>>()
     Files.newDirectoryStream(customPluginDir).use { dirStream ->
       val additionalRepositoryPaths = ArrayList<Path>()
       dirStream.forEach { file ->
@@ -164,7 +164,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
   private fun loadPluginDescriptorsFromAdditionalRepositories(scope: CoroutineScope,
                                                               repositoryPaths: List<Path>,
                                                               context: PluginDescriptorLoadingContext,
-                                                              zipFilePool: ZipEntryResolverPool): Collection<Deferred<IdeaPluginDescriptorImpl?>> {
+                                                              zipFilePool: ZipEntryResolverPool): Collection<Deferred<PluginMainDescriptor?>> {
     val repositoriesByPaths = scope.async {
       val repositoriesByPaths = repositoryPaths.associateWith {
         try {
@@ -222,7 +222,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     mainGroupResourceRootSet: Set<Path>,
     isBundled: Boolean,
     pluginDir: Path?,
-  ): IdeaPluginDescriptorImpl? {
+  ): PluginMainDescriptor? {
     val mainResourceRoot = pluginModuleGroup.mainModule.resourceRootPaths.singleOrNull()
     if (mainResourceRoot == null) {
       thisLogger().warn(

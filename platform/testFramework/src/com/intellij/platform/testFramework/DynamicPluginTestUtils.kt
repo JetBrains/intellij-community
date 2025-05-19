@@ -17,7 +17,7 @@ fun loadAndInitDescriptorInTest(
   dir: Path,
   isBundled: Boolean = false,
   disabledPlugins: Set<String> = emptySet(),
-): IdeaPluginDescriptorImpl {
+): PluginMainDescriptor {
   assertThat(dir).exists()
   PluginManagerCore.getAndClearPluginLoadingErrors()
 

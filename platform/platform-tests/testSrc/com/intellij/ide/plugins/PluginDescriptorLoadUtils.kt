@@ -65,7 +65,7 @@ fun readAndInitDescriptorFromBytesForTest(
   initContext: PluginInitializationContext,
   pathResolver: PathResolver,
   dataLoader: DataLoader,
-): IdeaPluginDescriptorImpl {
+): PluginMainDescriptor {
   val raw = PluginDescriptorFromXmlStreamConsumer(loadingContext, pathResolver.toXIncludeLoader(dataLoader)).let {
     it.consume(data, path.toString())
     loadingContext.patchPlugin(it.getBuilder())

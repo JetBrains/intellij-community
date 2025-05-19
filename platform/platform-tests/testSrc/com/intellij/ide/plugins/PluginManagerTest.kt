@@ -342,7 +342,7 @@ class PluginManagerTest {
         }
       }
 
-      val list = ArrayList<IdeaPluginDescriptorImpl>()
+      val list = ArrayList<PluginMainDescriptor>()
       for (element in root.children) {
         if (element.name != "idea-plugin") {
           continue

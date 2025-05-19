@@ -13,7 +13,7 @@ import java.nio.file.Path
 import java.util.Collections.emptySet
 
 class PluginSetTestBuilder private constructor(
-  private val pluginDescriptorLoader: (loadingContext: PluginDescriptorLoadingContext) -> List<IdeaPluginDescriptorImpl>,
+  private val pluginDescriptorLoader: (loadingContext: PluginDescriptorLoadingContext) -> List<PluginMainDescriptor>,
 ) {
   private var disabledPluginIds = mutableSetOf<PluginId>()
   private var expiredPluginIds = mutableSetOf<PluginId>()
@@ -31,7 +31,7 @@ class PluginSetTestBuilder private constructor(
     }
 
     @JvmStatic
-    fun fromDescriptors(pluginDescriptorLoader: (loadingContext: PluginDescriptorLoadingContext) -> List<IdeaPluginDescriptorImpl>): PluginSetTestBuilder {
+    fun fromDescriptors(pluginDescriptorLoader: (loadingContext: PluginDescriptorLoadingContext) -> List<PluginMainDescriptor>): PluginSetTestBuilder {
       return PluginSetTestBuilder(pluginDescriptorLoader)
     }
   }

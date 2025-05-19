@@ -5,7 +5,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class DiscoveredPluginsList(
-  val plugins: List<IdeaPluginDescriptorImpl>,
+  val plugins: List<PluginMainDescriptor>,
   val source: PluginsSourceContext
 )
 
