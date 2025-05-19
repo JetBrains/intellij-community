@@ -276,10 +276,7 @@ class PathAnnotationInspectionKotlinTest : PathAnnotationInspectionKotlinTestBas
       """)
   }
 
-  /**
-   * The following test is ignored because it fails due to a bug in UAST: "KTIJ-18821 UAST missing annotations on local variable types".
-   */
-  fun testFalseNegative() {
+  fun testMultiRoutingAnnotationOnParametersTypes() {
     doTest("""
       @file:Suppress("UNUSED_VARIABLE")
 
@@ -299,9 +296,10 @@ class PathAnnotationInspectionKotlinTest : PathAnnotationInspectionKotlinTestBas
   }
 
   /**
-   * The following test is ignored because it fails due to a bug in UAST: "KTIJ-18821 UAST missing annotations on local variable types".
+   * Several lines containing usages of `annotatedPropertyType` of the test data class are commented,
+   * otherwise the test fails due to a bug in UAST: "KTIJ-18821 UAST missing annotations on local variable types".
    */
-  fun testFalseNegative2() {
+  fun testMultiRoutingAnnotationOnDataClassProperties() {
     doTest("""
       @file:Suppress("UNUSED_VARIABLE")
 
@@ -315,7 +313,7 @@ class PathAnnotationInspectionKotlinTest : PathAnnotationInspectionKotlinTestBas
       
       class FalseNegativeTest {
           fun testMethod(data: DataClass) {
-              //val firstPath = Path.of(data.annotatedProperty)
+              val firstPath = Path.of(data.annotatedProperty)
               //val secondPath = Path.of(data.annotatedPropertyType)
 
               val firstPathString = data.annotatedProperty
