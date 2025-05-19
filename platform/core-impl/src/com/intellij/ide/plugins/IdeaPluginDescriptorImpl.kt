@@ -238,6 +238,7 @@ sealed class IdeaPluginDescriptorImpl(
     val raw = subBuilder.build()
     return if (module == null) {
       DependsSubDescriptor(
+        parent = this,
         raw = raw,
         pluginPath = pluginPath,
         isBundled = isBundled,
@@ -247,6 +248,7 @@ sealed class IdeaPluginDescriptorImpl(
       )
     } else {
       ContentModuleDescriptor(
+        parent = this as PluginMainDescriptor,
         raw = raw,
         pluginPath = pluginPath,
         isBundled = isBundled,
@@ -580,12 +582,9 @@ class PluginMainDescriptor(
   }
 }
 
-/**
- * Descriptor instantiated as a sub-descriptor of some [PluginMainDescriptor] _or_ another [DependsSubDescriptor] in [loadPluginDependencyDescriptors].
- * See [createDependsSubDescriptor].
- */
 @ApiStatus.Internal
 class DependsSubDescriptor(
+  private val parent: IdeaPluginDescriptorImpl,
   raw: RawPluginDescriptor,
   pluginPath: Path,
   isBundled: Boolean,
@@ -600,6 +599,7 @@ class DependsSubDescriptor(
   isIndependentFromCoreClassLoader,
 ) {
   init {
+    check(parent is PluginMainDescriptor || parent is DependsSubDescriptor)
     if (content.modules.isNotEmpty()) {
       LOG.error("Unexpected `content` elements in a `depends` sub-descriptor: ${content.modules.joinToString()}\n in $this")
     }
@@ -614,11 +614,10 @@ class DependsSubDescriptor(
   override fun getDescriptorPath(): String = descriptorPath
 }
 
-/**
- * Descriptor instantiated as a sub-descriptor of some [PluginMainDescriptor] using a content module info. See [createContentModule].
- */
+
 @ApiStatus.Internal
 class ContentModuleDescriptor(
+  private val parent: PluginMainDescriptor,
   raw: RawPluginDescriptor,
   pluginPath: Path,
   isBundled: Boolean,
