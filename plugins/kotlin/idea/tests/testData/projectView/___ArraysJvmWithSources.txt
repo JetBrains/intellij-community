@@ -126,6 +126,7 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/jvmMain/generated/_ArraysJvm
      DeprecatedSinceKotlin
      DeprecationLevel
      DslMarker
+     ExperimentalContextParameters
      ExperimentalMultiplatform
      ExperimentalStdlibApi
      ExperimentalSubclassOptIn

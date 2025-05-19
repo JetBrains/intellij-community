@@ -128,6 +128,7 @@ Navigation item file #1: kotlin-stdlib.jar!/kotlin/collections/ArraysKt.class
      DeprecatedSinceKotlin
      DeprecationLevel
      DslMarker
+     ExperimentalContextParameters
      ExperimentalMultiplatform
      ExperimentalStdlibApi
      ExperimentalSubclassOptIn
