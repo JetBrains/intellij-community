@@ -99,11 +99,11 @@ object GrazieReplaceTypoQuickFix {
     }
 
     override fun applyFix(project: Project, psiFile: PsiFile, editor: Editor?) {
+      GrazieFUSCounter.quickFixInvoked(rule, project, "accept.suggestion")
       performFix(project, psiFile)
     }
 
     protected fun performFix(project: Project, file: PsiFile) {
-      GrazieFUSCounter.quickFixInvoked(rule, project, "accept.suggestion")
       val document = file.viewProvider.document ?: return
       underlineRanges.forEach { underline ->
         underline.range?.let { removeHighlightersWithExactRange(document, project, it) }
