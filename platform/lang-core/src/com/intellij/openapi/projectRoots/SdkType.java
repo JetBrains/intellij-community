@@ -51,6 +51,7 @@ public abstract class SdkType implements SdkTypeId {
   /**
    * @deprecated Please use {@link SdkType#suggestHomePath(Path)}.
    * Sometimes a project is not located on the same file system where the IDE is running, and in this case
+   * the IDE needs to install SDK that is accessible to the project
    */
   @Deprecated
   public abstract @Nullable String suggestHomePath();
