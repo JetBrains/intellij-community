@@ -410,6 +410,9 @@ class RecentProjectFilteringTree(
         add(projectPathLabel)
         add(projectBranchNameLabel)
       }
+      private val projectProgressBar = JProgressBar().apply {
+        isOpaque = false
+      }
       private val updateScaleHelper = UpdateScaleHelper()
 
       init {
@@ -419,6 +422,7 @@ class RecentProjectFilteringTree(
                 gaps = if (ExperimentalUI.isNewUI()) UnscaledGaps(6, 6, 0, 8) else UnscaledGaps(top = 8, right = 8),
                 verticalAlign = VerticalAlign.TOP)
           .cell(projectNamePanel, resizableColumn = true, horizontalAlign = HorizontalAlign.FILL, gaps = UnscaledGaps(4, 4, 4, 4))
+          .cell(projectProgressBar, gaps = UnscaledGaps(left = 8, right = 8))
           .cell(projectActions, gaps = UnscaledGaps(right = ActionsButton.RIGHT_GAP))
       }
 
@@ -465,8 +469,16 @@ class RecentProjectFilteringTree(
                            isProjectValid = isProjectValid,
                            providerIcon = item.providerIcon)
 
-        buttonViewModel.prepareActionsButton(projectActions, rowHovered, AllIcons.Ide.Notification.Gear,
-                                             AllIcons.Ide.Notification.GearHover)
+        buttonViewModel.prepareActionsButton(projectActions, rowHovered,
+                                             AllIcons.Ide.Notification.Gear,
+                                             AllIcons.Ide.Notification.GearHover,
+                                             alwaysReserveSpace = true)
+
+        if (item.isProjectOpening) {
+          projectProgressBar.isVisible = true
+          projectProgressBar.isEnabled = true
+          projectProgressBar.isIndeterminate = true
+        }
 
         return this
       }
@@ -510,6 +522,7 @@ class RecentProjectFilteringTree(
           accessibleContext.accessibleName = IdeBundle.message("welcome.screen.recent.projects.branch.label.accessible.name", text)
         }
 
+        projectProgressBar.isVisible = false
         projectActions.isVisible = false
 
         if (tooltip != toolTipText) {
@@ -712,10 +725,17 @@ class RecentProjectFilteringTree(
     var isButtonHovered: Boolean = false,
   ) {
 
-    fun prepareActionsButton(button: ActionsButton, rowHovered: Boolean, icon: Icon, hoveredIcon: Icon) {
-      val hovered = isButtonHovered && rowHovered
-      button.isVisible = rowHovered
-      button.setState(if (hovered) hoveredIcon else icon, hovered)
+    fun prepareActionsButton(button: ActionsButton, rowHovered: Boolean, icon: Icon, hoveredIcon: Icon, alwaysReserveSpace: Boolean = false) {
+      val buttonHovered = isButtonHovered && rowHovered
+      val buttonIcon = if (buttonHovered) hoveredIcon else icon
+      if (alwaysReserveSpace) {
+        button.isVisible = true
+        button.setState(if (rowHovered) buttonIcon else EmptyIcon.create(buttonIcon), buttonHovered)
+      }
+      else {
+        button.isVisible = rowHovered
+        button.setState(buttonIcon, buttonHovered)
+      }
     }
   }
 
@@ -799,7 +819,8 @@ class RecentProjectFilteringTree(
           item.openProject(actionEvent)
         }
         is ProviderRecentProjectItem -> {
-          item.openProject()
+          val actionEvent = createActionEvent(tree, inputEvent)
+          item.openProject(actionEvent)
         }
         is ProjectsGroupItem -> {
           val treePath = tree.selectionPath ?: return

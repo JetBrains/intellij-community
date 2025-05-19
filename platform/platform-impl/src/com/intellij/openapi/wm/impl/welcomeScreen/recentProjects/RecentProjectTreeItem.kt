@@ -151,9 +151,10 @@ internal data class ProviderRecentProjectItem(
   val icon: Icon? get() = recentProject.icon
   val providerIcon: Icon? get() = recentProject.providerIcon
   val activationTimestamp: Long? get() = recentProject.activationTimestamp
+  val isProjectOpening: Boolean get() = recentProject.projectOpenState == OpenRecentProjectStatus.Progress
 
-  fun openProject() {
-    recentProject.openProject()
+  fun openProject(actionEvent: AnActionEvent) {
+    recentProject.openProject(actionEvent)
   }
 
   fun removeFromRecent() {

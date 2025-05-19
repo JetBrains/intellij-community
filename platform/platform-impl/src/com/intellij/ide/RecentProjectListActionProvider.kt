@@ -307,7 +307,7 @@ private class RemoteRecentProjectAction(val projectId: String, val project: Rece
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    project.openProject()
+    project.openProject(e)
   }
 
   override val projectNameToDisplay: @NlsSafe String = project.displayName
