@@ -221,6 +221,8 @@ class PathAnnotationInspectionKotlinTest : PathAnnotationInspectionKotlinTestBas
   }
 
   fun testPathToStringAdditionalCases() {
+    myFixture.allowTreeAccessForAllFiles()
+
     doTest("""
       @file:Suppress("UNUSED_VARIABLE")
 
