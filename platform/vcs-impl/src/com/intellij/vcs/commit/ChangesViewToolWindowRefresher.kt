@@ -15,11 +15,11 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
-internal class ChangesViewToolWindowRefresher(private val project: Project, cs: CoroutineScope) : ToolWindowManagerListener {
+private class ChangesViewToolWindowRefresher(private val project: Project, coroutineScope: CoroutineScope) : ToolWindowManagerListener {
   private val refreshFlow = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   init {
-    cs.launch {
+    coroutineScope.launch {
       @OptIn(FlowPreview::class)
       refreshFlow.debounce(300.milliseconds).collect {
         RefreshAction.doRefreshSuspending(project)

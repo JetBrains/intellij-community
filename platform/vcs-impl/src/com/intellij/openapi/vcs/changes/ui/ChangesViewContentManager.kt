@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.Project
@@ -120,7 +121,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
       contentManager.setSelectedContent(toSelect)
     }
     else {
-      // Ensure that first tab is selected after tabs reordering
+      // Ensure that the first tab is selected after tabs reordering
       contentManager.selectFirstContent()
     }
     selectedAddedContent = null
@@ -144,7 +145,9 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     }
   }
 
-  override fun removeContent(content: Content) = removeContent(content, true)
+  override fun removeContent(content: Content) {
+    removeContent(content, true)
+  }
 
   private fun removeContent(content: Content, dispose: Boolean) {
     val contentManager = content.manager
@@ -163,7 +166,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
   }
 
   override fun setSelectedContent(content: Content, requestFocus: Boolean) {
-    LOG.debug("select content: ${content.tabName}")
+    LOG.debug { "select content: ${content.tabName}" }
     val contentManager = content.manager
     if (contentManager != null) {
       contentManager.setSelectedContent(content, requestFocus)
@@ -257,7 +260,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
   }
 
   companion object {
-    const val TOOLWINDOW_ID = ToolWindowId.VCS
+    const val TOOLWINDOW_ID: String = ToolWindowId.VCS
     internal const val COMMIT_TOOLWINDOW_ID = ToolWindowId.COMMIT
 
     @JvmField
@@ -267,13 +270,13 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
      * Whether [Content] should be shown in [ToolWindowId.COMMIT] toolwindow.
      */
     @JvmField
-    val IS_IN_COMMIT_TOOLWINDOW_KEY = Key.create<Boolean>("ChangesViewContentManager.IS_IN_COMMIT_TOOLWINDOW_KEY")
+    val IS_IN_COMMIT_TOOLWINDOW_KEY: Key<Boolean> = Key.create<Boolean>("ChangesViewContentManager.IS_IN_COMMIT_TOOLWINDOW_KEY")
 
     @JvmField
-    val CONTENT_TAB_NAME_KEY = DataKey.create<@NonNls String>("ChangesViewContentManager.CONTENT_TAB_KEY")
+    val CONTENT_TAB_NAME_KEY: DataKey<@NonNls String> = DataKey.create<@NonNls String>("ChangesViewContentManager.CONTENT_TAB_KEY")
 
     @JvmStatic
-    fun getInstance(project: Project) = project.service<ChangesViewContentI>()
+    fun getInstance(project: Project): ChangesViewContentI = project.service<ChangesViewContentI>()
 
     fun getInstanceImpl(project: Project): ChangesViewContentManager? =
       getInstance(project) as? ChangesViewContentManager
@@ -322,12 +325,12 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     }
 
     /**
-     * Specified tab order in toolwindow.
+     * Specified tab order in the toolwindow.
      *
      * @see ChangesViewContentManager.TabOrderWeight
      */
     @JvmField
-    val ORDER_WEIGHT_KEY = Key.create<Int>("ChangesView.ContentOrderWeight")
+    val ORDER_WEIGHT_KEY: Key<Int> = Key.create<Int>("ChangesView.ContentOrderWeight")
 
     const val LOCAL_CHANGES: @NonNls String = "Local Changes"
     const val CONSOLE: @NonNls String = "Console"
@@ -344,7 +347,7 @@ private fun getContentWeight(content: Content): Int {
   if (userData != null) return userData
 
   val tabName: @NonNls String = content.tabName
-  for (value in ChangesViewContentManager.TabOrderWeight.values()) {
+  for (value in ChangesViewContentManager.TabOrderWeight.entries) {
     if (value.tabName != null && value.tabName == tabName) {
       return value.weight
     }

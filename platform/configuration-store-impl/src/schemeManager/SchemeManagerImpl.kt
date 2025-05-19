@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
@@ -701,17 +701,17 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
 
     return null
   }
+}
 
-  private class ErrorCollector {
-    private var error: Throwable? = null
+private class ErrorCollector {
+  private var error: Throwable? = null
 
-    fun addError(error: Throwable) {
-      if (error is CancellationException || error is ProcessCanceledException) {
-        throw error
-      }
-      this.error = addSuppressed(this.error, error)
+  fun addError(error: Throwable) {
+    if (error is CancellationException || error is ProcessCanceledException) {
+      throw error
     }
-
-    fun getError(): Throwable? = error
+    this.error = addSuppressed(this.error, error)
   }
+
+  fun getError(): Throwable? = error
 }

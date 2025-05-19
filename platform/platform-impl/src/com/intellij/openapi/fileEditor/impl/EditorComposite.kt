@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.openapi.fileEditor.impl
@@ -62,6 +62,7 @@ import javax.swing.*
 private val LOG = logger<EditorComposite>()
 
 @Internal
+@ConsistentCopyVisibility
 data class EditorCompositeModel internal constructor(
   @JvmField val fileEditorAndProviderList: List<FileEditorWithProvider>,
   @JvmField internal val state: FileEntry?,
@@ -851,7 +852,7 @@ open class EditorComposite internal constructor(
     }.getOrNull()
   }
 
-  override fun toString() = "EditorComposite(identityHashCode=${System.identityHashCode(this)}, file=$file)"
+  override fun toString(): String = "EditorComposite(identityHashCode=${System.identityHashCode(this)}, file=$file)"
 }
 
 internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : JPanel(BorderLayout()), UiDataProvider {
