@@ -1,54 +1,39 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util.containers;
-
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Iterator;
-import java.util.NoSuchElementException;
+package com.intellij.util.containers
 
 /**
- * Consider using {@link com.google.common.collect.Iterators#peekingIterator(Iterator)} instead.
+ * Consider using [com.google.common.collect.Iterators.peekingIterator] instead.
  */
-public class PeekableIteratorWrapper<T> implements PeekableIterator<T> {
-  private final @NotNull Iterator<? extends T> myIterator;
-  private T myValue = null;
-  private boolean myValidValue = false;
+open class PeekableIteratorWrapper<T>(private val myIterator: Iterator<T>) : PeekableIterator<T> {
+  private var myValue: T? = null
+  private var myValidValue = false
 
-  public PeekableIteratorWrapper(@NotNull Iterator<? extends T> iterator) {
-    myIterator = iterator;
-    advance();
+  init {
+    advance()
   }
 
-  @Override
-  public boolean hasNext() {
-    return myValidValue;
+  override fun hasNext(): Boolean {
+    return myValidValue
   }
 
-  @Override
-  public T next() {
+  override fun next(): T {
     if (myValidValue) {
-      T save = myValue;
-      advance();
-      return save;
+      val save = myValue!!
+      advance()
+      return save
     }
-    throw new NoSuchElementException();
+    throw NoSuchElementException()
   }
 
-  @Override
-  public T peek() {
+  override fun peek(): T {
     if (myValidValue) {
-      return myValue;
+      return myValue!!
     }
-    throw new NoSuchElementException();
+    throw NoSuchElementException()
   }
 
-  @Override
-  public void remove() {
-    throw new UnsupportedOperationException();
-  }
-
-  private void advance() {
-    myValidValue = myIterator.hasNext();
-    myValue = myValidValue ? myIterator.next() : null;
+  private fun advance() {
+    myValidValue = myIterator.hasNext()
+    myValue = if (myValidValue) myIterator.next() else null
   }
 }

@@ -76,22 +76,35 @@ f:com.intellij.openapi.util.text.Formats
 - s:formatFileSize(J):java.lang.String
 - s:formatFileSize(J,java.lang.String):java.lang.String
 f:com.intellij.openapi.util.text.LineTokenizer
+- sf:Companion:com.intellij.openapi.util.text.LineTokenizer$Companion
 - <init>(java.lang.CharSequence):V
 - <init>(C[],I,I):V
-- advance():V
-- atEnd():Z
-- s:calcLineCount(java.lang.CharSequence,Z):I
-- getLength():I
-- getLineSeparatorLength():I
-- getOffset():I
-- s:tokenize(java.lang.CharSequence,Z):java.lang.String[]
-- s:tokenize(java.lang.CharSequence,Z,Z):java.lang.String[]
-- s:tokenize(C[],I,I,Z):java.lang.String[]
-- s:tokenize(C[],I,I,Z,Z):java.lang.String[]
-- s:tokenize(C[],Z):java.lang.String[]
-- s:tokenize(C[],Z,Z):java.lang.String[]
-- s:tokenizeIntoList(java.lang.CharSequence,Z):java.util.List
-- s:tokenizeIntoList(java.lang.CharSequence,Z,Z):java.util.List
+- f:advance():V
+- f:atEnd():Z
+- sf:calcLineCount(java.lang.CharSequence,Z):I
+- f:getLength():I
+- f:getLineSeparatorLength():I
+- f:getOffset():I
+- sf:tokenize(java.lang.CharSequence,Z):java.lang.String[]
+- sf:tokenize(java.lang.CharSequence,Z,Z):java.lang.String[]
+- sf:tokenize(C[],Z):java.lang.String[]
+- sf:tokenize(C[],Z,Z):java.lang.String[]
+- sf:tokenizeIntoList(java.lang.CharSequence,Z):java.util.List
+- sf:tokenizeIntoList(java.lang.CharSequence,Z,Z):java.util.List
+f:com.intellij.openapi.util.text.LineTokenizer$Companion
+- f:calcLineCount(java.lang.CharSequence,Z):I
+- f:tokenize(java.lang.CharSequence,Z):java.lang.String[]
+- f:tokenize(java.lang.CharSequence,Z,Z):java.lang.String[]
+- f:tokenize(C[],I,I,Z):java.lang.String[]
+- f:tokenize(C[],I,I,Z,Z):java.lang.String[]
+- f:tokenize(C[],Z):java.lang.String[]
+- f:tokenize(C[],Z,Z):java.lang.String[]
+- bs:tokenize$default(com.intellij.openapi.util.text.LineTokenizer$Companion,java.lang.CharSequence,Z,Z,I,java.lang.Object):java.lang.String[]
+- bs:tokenize$default(com.intellij.openapi.util.text.LineTokenizer$Companion,C[],I,I,Z,Z,I,java.lang.Object):java.lang.String[]
+- bs:tokenize$default(com.intellij.openapi.util.text.LineTokenizer$Companion,C[],Z,Z,I,java.lang.Object):java.lang.String[]
+- f:tokenizeIntoList(java.lang.CharSequence,Z):java.util.List
+- f:tokenizeIntoList(java.lang.CharSequence,Z,Z):java.util.List
+- bs:tokenizeIntoList$default(com.intellij.openapi.util.text.LineTokenizer$Companion,java.lang.CharSequence,Z,Z,I,java.lang.Object):java.util.List
 f:com.intellij.openapi.util.text.NaturalComparator
 - java.util.Comparator
 - sf:INSTANCE:java.util.Comparator
@@ -531,8 +544,11 @@ Fa:com.intellij.util.containers.Interner
 - a:intern(java.lang.Object):java.lang.Object
 com.intellij.util.containers.PeekableIterator
 - java.util.Iterator
+- kotlin.jvm.internal.markers.KMappedMarker
+- sf:Companion:com.intellij.util.containers.PeekableIterator$Companion
 - sf:EMPTY:com.intellij.util.containers.PeekableIterator
 - a:peek():java.lang.Object
+f:com.intellij.util.containers.PeekableIterator$Companion
 c:com.intellij.util.containers.PeekableIteratorWrapper
 - com.intellij.util.containers.PeekableIterator
 - <init>(java.util.Iterator):V
@@ -613,8 +629,10 @@ com.intellij.util.text.Matcher
 f:com.intellij.util.text.MergingCharSequence
 - java.lang.CharSequence
 - <init>(java.lang.CharSequence,java.lang.CharSequence):V
-- charAt(I):C
-- length():I
+- f:charAt(I):C
+- get(I):C
+- getLength():I
+- f:length():I
 - subSequence(I,I):java.lang.CharSequence
 f:com.intellij.util.text.NameUtilCore
 - <init>():V
