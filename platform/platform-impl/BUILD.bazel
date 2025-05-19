@@ -165,6 +165,7 @@ jvm_library(
     "//platform/syntax/syntax-psi:psi",
     "//platform/syntax/syntax-i18n:i18n",
     "//platform/syntax/syntax-util:util",
+    "//platform/syntax/syntax-extensions:extensions",
   ]
 )
 

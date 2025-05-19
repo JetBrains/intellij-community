@@ -1,0 +1,42 @@
+### auto-generated section `build intellij.platform.syntax.extensions` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_test")
+
+jvm_provided_library(
+  name = "multiplatformSupport_provided",
+  lib = "//platform/syntax/syntax-multiplatformSupport:multiplatformSupport"
+)
+
+jvm_library(
+  name = "extensions",
+  module_name = "intellij.platform.syntax.extensions",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    ":multiplatformSupport_provided",
+  ]
+)
+
+jvm_library(
+  name = "extensions_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testJvm/**/*.kt", "testJvm/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  associates = [":extensions"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/syntax/syntax-multiplatformSupport:multiplatformSupport",
+    "@lib//:junit5",
+    "@lib//:kotlin-test",
+    "@lib//:kotlin-test-junit",
+  ]
+)
+
+jvm_test(
+  name = "extensions_test",
+  runtime_deps = [":extensions_test_lib"]
+)
+### auto-generated section `build intellij.platform.syntax.extensions` end
