@@ -33,10 +33,9 @@ import org.jetbrains.annotations.ApiStatus
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
 class FacetEntityChangeListener(private val project: Project) {
-  private val publisher: FacetEventsPublisher
-    get() = FacetEventsPublisher.getInstance(project)
+  private fun getPublisher(): FacetEventsPublisher = FacetEventsPublisher.getInstance(project)
 
-  fun initializeFacetBridge(changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) = initializeFacetBridgeTimeMs.addMeasuredTime {
+  fun initializeFacetBridge(changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage): Unit = initializeFacetBridgeTimeMs.addMeasuredTime {
     for (facetBridgeContributor in WorkspaceFacetContributor.EP_NAME.extensionList) {
       val facetType = facetBridgeContributor.rootEntityType
       changes[facetType]?.asSequence()?.filterIsInstance<EntityChange.Added<*>>()?.forEach perFacet@{ facetChange ->
@@ -64,7 +63,7 @@ class FacetEntityChangeListener(private val project: Project) {
     }
   }
 
-  class WorkspaceModelListener(project: Project) : WorkspaceModelChangeListener {
+  internal class WorkspaceModelListener(project: Project) : WorkspaceModelChangeListener {
     private val facetEntityChangeListener = project.service<FacetEntityChangeListener>()
 
     override fun beforeChanged(event: VersionedStorageChange) {
@@ -91,16 +90,16 @@ class FacetEntityChangeListener(private val project: Project) {
           is EntityChange.Added -> {
             val existingFacetBridge = event.storageAfter.facetMapping().getDataByEntity(change.newEntity)
                                       ?: error("Facet bridge should be already initialized")
-            publisher.fireBeforeFacetAdded(existingFacetBridge)
+            getPublisher().fireBeforeFacetAdded(existingFacetBridge)
           }
           is EntityChange.Removed -> {
             val facet = event.storageBefore.facetMapping().getDataByEntity(change.oldEntity) ?: return@forEach
-            publisher.fireBeforeFacetRemoved(facet)
+            getPublisher().fireBeforeFacetRemoved(facet)
           }
           is EntityChange.Replaced -> {
             if (change.oldEntity.name != change.newEntity.name) {
               val facetBridge = event.storageAfter.facetMapping().getDataByEntity(change.newEntity) ?: error("Facet should be available")
-              publisher.fireBeforeFacetRenamed(facetBridge)
+              getPublisher().fireBeforeFacetRenamed(facetBridge)
             }
           }
         }
@@ -123,47 +122,46 @@ class FacetEntityChangeListener(private val project: Project) {
       result
     }
 
-    event.getChanges(workspaceFacetContributor.rootEntityType)
-      .forEach { change ->
-        when (change) {
-          is EntityChange.Added -> {
-            val existingFacetBridge = event.storageAfter.facetMapping().getDataByEntity(change.newEntity)
-                                      ?: error("Facet bridge should be already initialized")
-            val moduleEntity = workspaceFacetContributor.getParentModuleEntity(change.newEntity)
-            getFacetManager(moduleEntity)?.model?.facetsChanged()
+    for (change in event.getChanges(workspaceFacetContributor.rootEntityType)) {
+      when (change) {
+        is EntityChange.Added -> {
+          val existingFacetBridge = event.storageAfter.facetMapping().getDataByEntity(change.newEntity)
+                                    ?: error("Facet bridge should be already initialized")
+          val moduleEntity = workspaceFacetContributor.getParentModuleEntity(change.newEntity)
+          getFacetManager(moduleEntity)?.model?.facetsChanged()
 
-            FacetManagerBase.setFacetName(existingFacetBridge, change.newEntity.name)
-            existingFacetBridge.initFacet()
+          FacetManagerBase.setFacetName(existingFacetBridge, change.newEntity.name)
+          existingFacetBridge.initFacet()
 
-            // We should not send an event if the associated module was added in the same transaction.
-            // Event will be sent with "moduleAdded" event.
-            if (moduleEntity.name !in addedModulesNames) {
-              publisher.fireFacetAdded(existingFacetBridge)
-            }
+          // We should not send an event if the associated module was added in the same transaction.
+          // Event will be sent with "moduleAdded" event.
+          if (moduleEntity.name !in addedModulesNames) {
+            getPublisher().fireFacetAdded(existingFacetBridge)
           }
-          is EntityChange.Removed -> {
-            val moduleEntity = workspaceFacetContributor.getParentModuleEntity(change.oldEntity)
-            val manager = getFacetManager(moduleEntity) ?: return@forEach
-            // Mapping to facet isn't saved in manager.model after 'applyChangesFrom'. But you can get an object from the older version of the store
-            manager.model.facetsChanged()
-            val facet = event.storageBefore.facetMapping().getDataByEntity(change.oldEntity) ?: return@forEach
-            Disposer.dispose(facet)
-            publisher.fireFacetRemoved(facet)
-          }
-          is EntityChange.Replaced -> {
-            val facet = event.storageAfter.facetMapping().getDataByEntity(change.newEntity) ?: error("Facet should be available")
-            val moduleEntity = workspaceFacetContributor.getParentModuleEntity(change.newEntity)
-            getFacetManager(moduleEntity)?.model?.facetsChanged()
-            val newFacetName = change.newEntity.name
-            val oldFacetName = change.oldEntity.name
-            FacetManagerBase.setFacetName(facet, newFacetName)
-            changedFacets[facet] = change.newEntity
-            if (oldFacetName != newFacetName) {
-              publisher.fireFacetRenamed(facet, oldFacetName)
-            }
+        }
+        is EntityChange.Removed -> {
+          val moduleEntity = workspaceFacetContributor.getParentModuleEntity(change.oldEntity)
+          val manager = getFacetManager(moduleEntity) ?: continue
+          // Mapping to facet isn't saved in manager.model after 'applyChangesFrom'. But you can get an object from the older version of the store
+          manager.model.facetsChanged()
+          val facet = event.storageBefore.facetMapping().getDataByEntity(change.oldEntity) ?: continue
+          Disposer.dispose(facet)
+          getPublisher().fireFacetRemoved(facet)
+        }
+        is EntityChange.Replaced -> {
+          val facet = event.storageAfter.facetMapping().getDataByEntity(change.newEntity) ?: error("Facet should be available")
+          val moduleEntity = workspaceFacetContributor.getParentModuleEntity(change.newEntity)
+          getFacetManager(moduleEntity)?.model?.facetsChanged()
+          val newFacetName = change.newEntity.name
+          val oldFacetName = change.oldEntity.name
+          FacetManagerBase.setFacetName(facet, newFacetName)
+          changedFacets[facet] = change.newEntity
+          if (oldFacetName != newFacetName) {
+            getPublisher().fireFacetRenamed(facet, oldFacetName)
           }
         }
       }
+    }
 
     val newlyAddedFacets by lazy {
       event.getChanges(workspaceFacetContributor.rootEntityType)
@@ -175,8 +173,8 @@ class FacetEntityChangeListener(private val project: Project) {
         .filterIsInstance<EntityChange.Removed<*>>().map { it.oldEntity }
     }
 
-    workspaceFacetContributor.childEntityTypes.forEach { entityType ->
-      event.getChanges(entityType).forEach { change ->
+    for (entityType in workspaceFacetContributor.childEntityTypes) {
+      for (change in event.getChanges(entityType)) {
         when (change) {
           is EntityChange.Added -> {
             // We shouldn't fire `facetConfigurationChanged` for newly added spring settings
@@ -213,7 +211,7 @@ class FacetEntityChangeListener(private val project: Project) {
       val moduleEntity = event.storageAfter.resolve(ModuleId(facet.module.name))!!
       val facetConfigurationElement = if (facet is FacetBridge<*, *>) {
         val builder = event.storageAfter.toBuilder()
-        val thief = Ref.create<ModuleEntity.Builder>()
+        val thief = Ref<ModuleEntity.Builder>()
         builder.modifyModuleEntity(moduleEntity) {
           thief.set(this)
         }
@@ -228,7 +226,7 @@ class FacetEntityChangeListener(private val project: Project) {
         @Suppress("UNCHECKED_CAST")
         (facet as? FacetBridge<ModuleSettingsFacetBridgeEntity, *>)?.updateFacetConfiguration(rootEntity)
         ?: FacetUtil.loadFacetConfiguration(facet.configuration, rootElement)
-        publisher.fireFacetConfigurationChanged(facet)
+        getPublisher().fireFacetConfigurationChanged(facet)
       }
     }
   }

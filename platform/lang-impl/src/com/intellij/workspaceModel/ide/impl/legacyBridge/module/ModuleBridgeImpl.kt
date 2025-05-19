@@ -4,7 +4,6 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 import com.intellij.configurationStore.DefaultModuleStoreFactory
 import com.intellij.configurationStore.ModuleStoreFactory
 import com.intellij.configurationStore.RenameableStateStorageManager
-import com.intellij.facet.Facet
 import com.intellij.facet.FacetManagerFactory
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.openapi.application.ApplicationManager
