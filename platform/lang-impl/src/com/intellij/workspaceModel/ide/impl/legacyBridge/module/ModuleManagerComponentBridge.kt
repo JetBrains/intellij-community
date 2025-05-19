@@ -71,7 +71,7 @@ open class ModuleManagerComponentBridge(private val project: Project, coroutineS
   private val virtualFileManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
 
   init {
-    // default project doesn't have facets
+    // a default project doesn't have facets
     if (!project.isDefault) {
       // Instantiate facet change listener as early as possible
       project.service<FacetEntityChangeListener>()
@@ -99,7 +99,7 @@ open class ModuleManagerComponentBridge(private val project: Project, coroutineS
     val moduleChanges = (event[ModuleEntity::class.java] as? List<EntityChange<ModuleEntity>>) ?: emptyList()
     LOG.debug { "Starting initialize bridges for ${moduleChanges.size} modules" }
 
-    // Theoretically, the module initialization can be parallelized using fork-join approach, see IJPL-149482
+    // Theoretically, the module initialization can be parallelized using a fork-join approach, see IJPL-149482
     //   This approach is used in ModuleManagerBridgeImpl.loadModules
     // However, simple use of Dispatchers.Default while being inside write action, may cause threading issues, see IDEA-355596
     val precomputedModel = if (moduleChanges.isNotEmpty()) {

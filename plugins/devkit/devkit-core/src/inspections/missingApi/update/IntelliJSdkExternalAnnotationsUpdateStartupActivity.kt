@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.missingApi.update
 
-import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -13,27 +13,32 @@ import org.jetbrains.idea.devkit.projectRoots.IdeaJdk
 /**
  * Startup activity that updates external annotations of IDEA JDKs configured in the project.
  */
-internal class IntelliJSdkExternalAnnotationsUpdateStartupActivity : ProjectActivity {
-  override suspend fun execute(project: Project): Unit = blockingContext {
+private class IntelliJSdkExternalAnnotationsUpdateStartupActivity : ProjectActivity {
+  init {
     val application = ApplicationManager.getApplication()
     if (application.isUnitTestMode) {
-      return@blockingContext
+      throw ExtensionNotApplicableException.create()
+    }
+  }
+
+  override suspend fun execute(project: Project) {
+    val ideaJdks = serviceAsync<ProjectJdkTable>().getSdksOfType(IdeaJdk.getInstance())
+    if (ideaJdks.isNotEmpty()) {
+      val sdkAnnotationsUpdater = serviceAsync<IntelliJSdkExternalAnnotationsUpdater>()
+      for (ideaJdk in ideaJdks) {
+        sdkAnnotationsUpdater.updateIdeaJdkAnnotationsIfNecessary(project, ideaJdk)
+      }
     }
 
-    val ideaJdks = ProjectJdkTable.getInstance().getSdksOfType(IdeaJdk.getInstance())
-    for (ideaJdk in ideaJdks) {
-      updateAnnotationsLaterIfNecessary(project, ideaJdk)
-    }
-
-    subscribeToJdkChanges(project, application)
+    subscribeToJdkChanges(project)
   }
 
   private fun updateAnnotationsLaterIfNecessary(project: Project, ideaJdk: Sdk) {
     IntelliJSdkExternalAnnotationsUpdater.getInstance().updateIdeaJdkAnnotationsIfNecessary(project, ideaJdk)
   }
 
-  private fun subscribeToJdkChanges(project: Project, application: Application) {
-    val connection = application.messageBus.connect(project)
+  private fun subscribeToJdkChanges(project: Project) {
+    val connection = ApplicationManager.getApplication().messageBus.connect(project)
     connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, object : ProjectJdkTable.Listener {
       override fun jdkAdded(jdk: Sdk) {
         if (jdk.sdkType == IdeaJdk.getInstance()) {

@@ -494,7 +494,7 @@ abstract class ModuleManagerBridgeImpl(
     }
   }
 
-  fun createModuleInstance(
+  internal fun createModuleInstance(
     moduleEntity: ModuleEntity,
     versionedStorage: VersionedEntityStorage,
     diff: MutableEntityStorage?,
@@ -502,12 +502,14 @@ abstract class ModuleManagerBridgeImpl(
     precomputedExtensionModel: PrecomputedExtensionModel,
     plugins: List<IdeaPluginDescriptorImpl>,
   ): ModuleBridge = createModuleInstanceTimeMs.addMeasuredTime {
-    val module = createModuleInstanceWithoutCreatingComponents(moduleEntity = moduleEntity,
-                                                               versionedStorage = versionedStorage,
-                                                               diff = diff,
-                                                               isNew = isNew,
-                                                               precomputedExtensionModel = precomputedExtensionModel,
-                                                               plugins = plugins)
+    val module = createModuleInstanceWithoutCreatingComponents(
+      moduleEntity = moduleEntity,
+      versionedStorage = versionedStorage,
+      diff = diff,
+      isNew = isNew,
+      precomputedExtensionModel = precomputedExtensionModel,
+      plugins = plugins,
+    )
     module.callCreateComponents()
     return@addMeasuredTime module
   }
@@ -526,7 +528,6 @@ abstract class ModuleManagerBridgeImpl(
   abstract fun initializeBridges(event: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage)
 
   companion object {
-    @JvmStatic
     fun getInstance(project: Project): ModuleManagerBridgeImpl {
       return ModuleManager.getInstance(project) as ModuleManagerBridgeImpl
     }

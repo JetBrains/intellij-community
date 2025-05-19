@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.components.ComponentConfig
@@ -9,9 +9,13 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class ContainerDescriptor(
+  @JvmField
   val services: List<ServiceDescriptor>,
+  @JvmField
   val components: List<ComponentConfig>,
+  @JvmField
   val listeners: List<ListenerDescriptor>,
+  @JvmField
   val extensionPoints: List<ExtensionPointDescriptor>,
 ) {
   override fun toString(): String {

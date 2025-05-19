@@ -3475,7 +3475,6 @@ c:com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 - getState():org.jdom.Element
 - getStateModificationCount():J
 - initializeComponent():V
-- f:isCurrentProfileInitialized():Z
 - loadState(org.jdom.Element):V
 - p:schemeRemoved(com.intellij.codeInspection.ex.InspectionProfileImpl):V
 - f:setCurrentProfile(com.intellij.codeInspection.ex.InspectionProfileImpl):V

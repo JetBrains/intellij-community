@@ -2,11 +2,11 @@
 package org.jetbrains.idea.devkit.inspections.missingApi.update
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.AnnotationOrderRootType
@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap
 @Service
 internal class IntelliJSdkExternalAnnotationsUpdater(private val cs: CoroutineScope) {
   companion object {
-    private val LOG = Logger.getInstance(IntelliJSdkExternalAnnotationsUpdater::class.java)
+    private val LOG = logger<IntelliJSdkExternalAnnotationsUpdater>()
 
     private val UPDATE_RETRY_TIMEOUT = Duration.of(1, ChronoUnit.HOURS)
     private val PENDING = Instant.MAX
