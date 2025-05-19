@@ -54,7 +54,7 @@
       <action id="Git.Log.Branches.Navigate.Log.To.Branch.On.Selection"
               class="git4idea.ui.branch.dashboard.BranchesDashboardActions$NavigateLogToBranchAction"/>
       <separator/>
-      <action id="git.branches.show.tags" class="git4idea.ui.branch.tree.GitBranchesTreeShowTagsAction"/>
+      <reference ref="git.branches.show.tags"/>
     </group>
     <group id="Git.Log.Branches.Grouping.Settings" icon="AllIcons.Actions.GroupBy"
            class="git4idea.ui.branch.dashboard.BranchesDashboardActions$GroupingSettingsGroup">
@@ -188,19 +188,7 @@
       <reference ref="Git.Rebase.Skip"/>
     </group>
 
-    <group id="Git.Branches.Popup.Settings" class="git4idea.ui.branch.popup.GitBranchesTreePopupSettings" icon="AllIcons.Actions.More">
-      <group id="git.branches.popup.filter.by.separator" class="git4idea.ui.branch.popup.GitBranchesTreePopupFilterSeparatorWithText"/>
-      <action id="git.branches.popup.filter.by.action" class="git4idea.ui.branch.popup.GitBranchesTreePopupFilterByAction"/>
-      <action id="git.branches.popup.filter.by.repository" class="git4idea.ui.branch.popup.GitBranchesTreePopupFilterByRepository"/>
-      <separator/>
-      <action id="git.branches.group.by.prefix" class="git4idea.ui.branch.popup.GitBranchesTreePopupGroupByPrefixAction"/>
-      <action class="git4idea.ui.branch.popup.GitBranchesTreePopupTrackReposSynchronouslyAction"/>
-      <action id="git.branches.show.recent" class="git4idea.ui.branch.popup.GitBranchesTreePopupShowRecentBranchesAction"/>
-      <reference ref="git.branches.show.tags"/>
-      <action id="git.branches.popup.resize" class="git4idea.ui.branch.popup.GitBranchesTreePopupResizeAction"/>
-    </group>
-
-    <group id="Git.Compare.With.Branch.Popup.Settings" class="git4idea.ui.branch.popup.GitBranchesTreePopupSettings" icon="AllIcons.Actions.More">
+    <group id="Git.Compare.With.Branch.Popup.Settings" class="com.intellij.vcs.git.shared.widget.actions.GitBranchesTreePopupSettings" icon="AllIcons.Actions.More">
       <reference ref="git.branches.group.by.prefix"/>
       <reference ref="git.branches.show.recent"/>
       <reference ref="git.branches.show.tags"/>

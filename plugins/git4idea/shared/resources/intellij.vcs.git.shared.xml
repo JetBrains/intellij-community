@@ -10,6 +10,21 @@
     <group id="MainToolbarVCSGroup">
       <add-to-group group-id="MainToolbarLeft" relative-to-action="MainToolbarGeneralActionsGroup" anchor="before"/>
     </group>
+
+    <action id="git.branches.show.tags" class="com.intellij.vcs.git.shared.actions.GitBranchesTreeShowTagsAction"/>
+
+    <group id="Git.Branches.Popup.Settings" class="com.intellij.vcs.git.shared.widget.actions.GitBranchesTreePopupSettings" icon="AllIcons.Actions.More">
+      <group id="git.branches.popup.filter.by.separator" class="com.intellij.vcs.git.shared.widget.actions.GitBranchesTreePopupFilterSeparatorWithText"/>
+      <action id="git.branches.popup.filter.by.action" class="com.intellij.vcs.git.shared.widget.actions.GitBranchesTreePopupFilterByAction"/>
+      <action id="git.branches.popup.filter.by.repository" class="com.intellij.vcs.git.shared.widget.actions.GitBranchesTreePopupFilterByRepository"/>
+      <separator/>
+      <action id="git.branches.group.by.prefix" class="com.intellij.vcs.git.shared.widget.actions.GitBranchesTreePopupGroupByPrefixAction"/>
+      <action class="com.intellij.vcs.git.shared.widget.actions.GitBranchesTreePopupTrackReposSynchronouslyAction"/>
+      <action id="git.branches.show.recent" class="com.intellij.vcs.git.shared.widget.actions.GitBranchesTreePopupShowRecentBranchesAction"/>
+      <reference ref="git.branches.show.tags"/>
+      <action id="git.branches.popup.resize" class="com.intellij.vcs.git.shared.widget.actions.GitBranchesTreePopupResizeAction"/>
+    </group>
+
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">

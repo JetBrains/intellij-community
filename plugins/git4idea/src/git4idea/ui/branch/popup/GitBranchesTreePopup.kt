@@ -14,6 +14,8 @@ import com.intellij.ui.popup.WizardPopup
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.git.shared.ref.GitReferenceName
 import com.intellij.vcs.git.shared.rpc.GitRepositoryApi
+import com.intellij.vcs.git.shared.widget.actions.GitBranchesTreePopupFilterByAction
+import com.intellij.vcs.git.shared.widget.actions.GitBranchesTreePopupFilterByRepository
 import git4idea.GitReference
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle

@@ -5,8 +5,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.SeparatorWithText
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.util.ui.tree.TreeUtil
-import git4idea.ui.branch.popup.GitBranchesTreePopupFilterByAction
-import git4idea.ui.branch.popup.GitBranchesTreePopupFilterByRepository
+import com.intellij.vcs.git.shared.widget.actions.GitBranchesTreePopupFilterByAction
+import com.intellij.vcs.git.shared.widget.actions.GitBranchesTreePopupFilterByRepository
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JTree

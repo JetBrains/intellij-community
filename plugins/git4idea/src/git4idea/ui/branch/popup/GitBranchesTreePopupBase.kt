@@ -3,15 +3,12 @@ package git4idea.ui.branch.popup
 
 import com.intellij.collaboration.async.cancelledWith
 import com.intellij.dvcs.branch.BranchType
-import com.intellij.dvcs.branch.DvcsBranchManager
 import com.intellij.dvcs.branch.DvcsBranchSyncPolicyUpdateNotifier
-import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.concurrency.waitForPromise
 import com.intellij.openapi.keymap.KeymapUtil
@@ -42,6 +39,8 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.git.shared.widget.GitWidgetUpdate
 import com.intellij.vcs.git.shared.widget.GitWidgetUpdatesNotifier
+import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetKeys
+import com.intellij.vcs.git.shared.widget.popup.GitBranchesWidgetPopup
 import git4idea.GitBranch
 import git4idea.GitDisposable
 import git4idea.GitReference
@@ -92,7 +91,7 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
   parent: JBPopup? = null,
   parentValue: Any? = null,
   dimensionServiceKey: String,
-) : WizardPopup(project, parent, step), TreePopup, NextStepHandler {
+) : WizardPopup(project, parent, step), TreePopup, NextStepHandler, GitBranchesWidgetPopup {
   protected lateinit var tree: Tree
     private set
 
@@ -104,7 +103,7 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
   protected val treeStep: T
     get() = step as T
 
-  internal var userResized: Boolean
+  final override var userResized: Boolean
     private set
 
   private val expandedPaths = HashSet<TreePath>()
@@ -128,9 +127,8 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
                                          GitVcsSettings.getInstance(project), GitRepositoryManager.getInstance(project))
         .initBranchSyncPolicyIfNotInitialized()
     }
-    installBranchSettingsListener()
     setUiDataProvider { sink ->
-      sink[POPUP_KEY] = this@GitBranchesTreePopupBase
+      sink[GitBranchesWidgetKeys.POPUP] = this@GitBranchesTreePopupBase
       sink[GitBranchActionsDataKeys.AFFECTED_REPOSITORIES] = treeStep.repositories
     }
 
@@ -298,7 +296,7 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
   private infix fun <F : Any, S : Any> KClass<F>.or(other: KClass<S>): Condition<Any> =
     Conditions.or(Conditions.instanceOf(this.java), Conditions.instanceOf(other.java))
 
-  internal fun restoreDefaultSize() {
+  override fun restoreDefaultSize() {
     userResized = false
     WindowStateService.getInstance(project).putSizeFor(project, dimensionServiceKey, null)
     pack(true, true)
@@ -306,18 +304,6 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
 
   private fun installResizeListener() {
     addResizeListener({ userResized = true }, this)
-  }
-
-  private fun installBranchSettingsListener() {
-    project.messageBus.connect(this)
-      .subscribe(DvcsBranchManager.DVCS_BRANCH_SETTINGS_CHANGED,
-                 object : DvcsBranchManager.DvcsBranchManagerListener {
-                   override fun branchGroupingSettingsChanged(key: GroupingKey, state: Boolean) {
-                     runInEdt {
-                       treeStep.setPrefixGrouping(state)
-                     }
-                   }
-                 })
   }
 
   final override fun storeDimensionSize() {
@@ -710,6 +696,12 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
     }
   }
 
+  override fun setGroupingByPrefix(groupByPrefix: Boolean) {
+    if (isDisposed) return
+
+    treeStep.setPrefixGrouping(groupByPrefix)
+  }
+
   private fun runPreservingTreeState(action: () -> Unit) {
     val state = TreeState.createOn(tree)
     action()
@@ -736,7 +728,6 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
   }
 
   companion object {
-    internal val POPUP_KEY = DataKey.create<GitBranchesTreePopupBase<*>>("GIT_BRANCHES_TREE_POPUP")
     internal val TOP_LEVEL_ACTION_PLACE = ActionPlaces.getPopupPlace("GitBranchesPopup.TopLevel.Branch.Actions")
 
     private const val SPEED_SEARCH_DEFAULT_ACTIONS_GROUP = "Git.Branches.Popup.SpeedSearch"

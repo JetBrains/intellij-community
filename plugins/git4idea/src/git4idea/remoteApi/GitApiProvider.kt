@@ -4,6 +4,7 @@ package git4idea.remoteApi
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.vcs.git.shared.rpc.GitIncomingOutgoingStateApi
 import com.intellij.vcs.git.shared.rpc.GitRepositoryApi
+import com.intellij.vcs.git.shared.rpc.GitUiSettingsApi
 import com.intellij.vcs.git.shared.rpc.GitWidgetApi
 import fleet.rpc.remoteApiDescriptor
 
@@ -17,6 +18,9 @@ internal class GitApiProvider : RemoteApiProvider {
     }
     remoteApi(remoteApiDescriptor<GitIncomingOutgoingStateApi>()) {
       GitIncomingOutgoingStateApiImpl()
+    }
+    remoteApi(remoteApiDescriptor<GitUiSettingsApi>()) {
+      GitUiSettingsApiImpl()
     }
   }
 }

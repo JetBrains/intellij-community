@@ -64,6 +64,10 @@ class GitWidgetUpdatesNotifier(project: Project, cs: CoroutineScope) {
     })
   }
 
+  internal fun refresh() {
+    _updates.tryEmit(GitWidgetUpdate.REFRESH)
+  }
+
   companion object {
     private val LOG = Logger.getInstance(GitWidgetUpdatesNotifier::class.java)
 

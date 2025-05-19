@@ -13,14 +13,14 @@ import com.intellij.util.containers.headTail
 import com.intellij.util.containers.init
 import com.intellij.vcs.git.shared.ref.GitRefUtil
 import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
+import com.intellij.vcs.git.shared.widget.actions.GitBranchesTreePopupFilterByAction
+import com.intellij.vcs.git.shared.widget.actions.GitBranchesTreePopupFilterByRepository
 import git4idea.*
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitRefType
 import git4idea.branch.GitTagType
 import git4idea.config.GitVcsSettings
 import git4idea.telemetry.GitBackendTelemetrySpan
-import git4idea.ui.branch.popup.GitBranchesTreePopupFilterByAction
-import git4idea.ui.branch.popup.GitBranchesTreePopupFilterByRepository
 import javax.swing.tree.TreePath
 
 private typealias PathAndRef = Pair<List<String>, GitReference>
