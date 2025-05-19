@@ -1213,7 +1213,8 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       if (finalInfoRange == -1) {
         continue;
       }
-      newInfo = newInfo.copy(); // workaround rogue plugins that cache HighlightInfos and then return identical HI for several calls
+      // workaround for rogue plugins that cache HighlightInfos and then return identical HI for different calls
+      newInfo = newInfo.copy(true).createUnconditionally();
       newInfosToStore.add(newInfo);
       int layer = isFileLevel ? DaemonCodeAnalyzerEx.FILE_LEVEL_FAKE_LAYER : UpdateHighlightersUtil.getLayer(newInfo, severityRegistrar);
       int infoStartOffset = TextRangeScalarUtil.startOffset(finalInfoRange);
@@ -1236,7 +1237,8 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
           LOG.debug("assignRangeHighlighters: pickedup " + recycled + " from " + from+currentProgressInfo());
         }
       }
-      changeRangeHighlighterAttributes(session, psiFile, markup, newInfo, range2markerCache, finalInfoRange, recycled, isFileLevel, infoStartOffset, infoEndOffset, layer);
+      changeRangeHighlighterAttributes(session, psiFile, markup, newInfo, range2markerCache, finalInfoRange, recycled, isFileLevel, infoStartOffset, infoEndOffset, layer,
+                                       severityRegistrar);
     }
     removeFromDataAtomically(data, recycledInvalidPsiHighlightersToBeRemovedFromData);
 
@@ -1266,7 +1268,8 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
                                                        boolean isFileLevel,
                                                        int infoStartOffset,
                                                        int infoEndOffset,
-                                                       int layer) {
+                                                       int newLayer,
+                                                       @NotNull SeverityRegistrar severityRegistrar) {
     TextAttributes infoAttributes = newInfo.getTextAttributes(psiFile, session.getColorsScheme());
     com.intellij.util.Consumer<RangeHighlighterEx> changeAttributes = finalHighlighter -> {
       BackgroundUpdateHighlightersUtil.changeAttributes(finalHighlighter, newInfo, session.getColorsScheme(), psiFile, infoAttributes);
@@ -1285,7 +1288,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       }
       else {
         //assertNoInfoInMarkup(newInfo, markup, recycler, invalidElementRecycler);
-        highlighter = markup.addRangeHighlighterAndChangeAttributes(null, infoStartOffset, infoEndOffset, layer,
+        highlighter = markup.addRangeHighlighterAndChangeAttributes(null, infoStartOffset, infoEndOffset, newLayer,
                                                       HighlighterTargetArea.EXACT_RANGE, false,
                                                       changeAttributes);
         newInfo.setHighlighter(highlighter);
@@ -1297,6 +1300,8 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     else {
       // recycle
       HighlightInfo oldInfo = recycled.info();
+      HighlightSeverity oldSeverity = oldInfo.getSeverity();
+      int oldLayer = isFileLevel ? DaemonCodeAnalyzerEx.FILE_LEVEL_FAKE_LAYER : UpdateHighlightersUtil.getLayer(oldInfo, severityRegistrar);
       highlighter = oldInfo.getHighlighter();
       newInfo.setHighlighter(highlighter);
       if (isFileLevel) {
@@ -1308,10 +1313,10 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
         CodeInsightContext context = session.getCodeInsightContext();
         CodeInsightContextHighlightingUtil.installCodeInsightContext(highlighter, session.getProject(), context);
         newInfo.updateQuickFixFields(session.getDocument(), range2markerCache, finalInfoRange);
-
       }
       oldInfo.copyComputedLazyFixesTo(newInfo, session.getDocument());
       assert oldInfo.getGroup() == MANAGED_HIGHLIGHT_INFO_GROUP: oldInfo;
+      assert newLayer == oldLayer : "Trying to to change the severity/layer of existing range highlighter: "+highlighter+"; oldInfo="+oldInfo+"; newInfo="+newInfo+"; oldSeverity="+oldSeverity+"(oldLayer="+oldLayer+"); newSeverity="+newInfo.getSeverity()+"(newLayer="+newLayer+")";
     }
     range2markerCache.put(finalInfoRange, highlighter);
   }

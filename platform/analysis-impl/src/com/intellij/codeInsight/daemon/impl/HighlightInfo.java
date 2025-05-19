@@ -74,7 +74,7 @@ public class HighlightInfo implements Segment {
    * it doesn't have "disable" or "suppress" quickfixes
    */
   @ApiStatus.Internal
-  public static final String ANNOTATOR_INSPECTION_SHORT_NAME = "Annotator";
+  static final String ANNOTATOR_INSPECTION_SHORT_NAME = "Annotator";
   // optimization: if tooltip contains this marker object, then it replaced with description field in getTooltip()
   private static final String DESCRIPTION_PLACEHOLDER = "\u0000";
 
@@ -191,7 +191,7 @@ public class HighlightInfo implements Segment {
                           boolean hasHint,
                           @NotNull @Unmodifiable List<? extends @NotNull Consumer<? super QuickFixActionRegistrar>> lazyFixes) {
     if (startOffset < 0 || startOffset > endOffset) {
-      LOG.error("Incorrect highlightInfo bounds. description="+escapedDescription+"; startOffset="+startOffset+"; endOffset="+endOffset+";type="+type+". Maybe you forgot to call .range()?");
+      throw new IllegalArgumentException("Incorrect highlightInfo bounds: startOffset="+startOffset+"; endOffset="+endOffset+";type="+type+"; description="+escapedDescription+". Maybe you forgot to call .range()?");
     }
     this.forcedTextAttributes = forcedTextAttributes;
     this.forcedTextAttributesKey = forcedTextAttributesKey;
@@ -515,7 +515,7 @@ public class HighlightInfo implements Segment {
     return isFlagSet(NEEDS_UPDATE_ON_TYPING_MASK);
   }
 
-  private static boolean calcNeedUpdateOnTyping(@Nullable Boolean needsUpdateOnTyping, HighlightInfoType type) {
+  private static boolean calcNeedUpdateOnTyping(@Nullable Boolean needsUpdateOnTyping, @NotNull HighlightInfoType type) {
     if (needsUpdateOnTyping != null) {
       return needsUpdateOnTyping;
     }
@@ -606,7 +606,7 @@ public class HighlightInfo implements Segment {
   }
 
   public static @NotNull Builder newHighlightInfo(@NotNull HighlightInfoType type) {
-    return new HighlightInfoB(type);
+    return new HighlightInfoB(type, false);
   }
 
   @ApiStatus.Internal
@@ -1139,7 +1139,7 @@ public class HighlightInfo implements Segment {
       if (descriptor.myAction instanceof HintAction) {
         setHint(true);
       }
-      if (descriptor.myFixRange instanceof RangeMarker marker) {
+      if (document == null && descriptor.myFixRange instanceof RangeMarker marker) {
         document = marker.getDocument();
       }
       if (fixRange != null) {
@@ -1293,11 +1293,16 @@ public class HighlightInfo implements Segment {
     // derive composite's offsets from an info with tooltip, if present
     HighlightInfo anchorInfo = ContainerUtil.find(infos, info -> info.getToolTip() != null);
     if (anchorInfo == null) anchorInfo = infos.get(0);
-    HighlightInfo info = new HighlightInfo(null, null, anchorInfo.type, anchorInfo.startOffset, anchorInfo.endOffset,
-                                           createCompositeDescription(infos), createCompositeTooltip(infos),
-                                           anchorInfo.type.getSeverity(null), false, null, false, 0,
-                                           anchorInfo.getProblemGroup(), null, anchorInfo.getGutterIconRenderer(), anchorInfo.getGroup(),
-                                           anchorInfo.hasHint(), anchorInfo.getLazyQuickFixes());
+    Builder builder = anchorInfo.copy(false);
+    String compositeDescription = createCompositeDescription(infos);
+    String compositeTooltip = createCompositeTooltip(infos);
+    if (compositeDescription != null) {
+      builder.description(compositeDescription);
+    }
+    if (compositeTooltip != null) {
+      builder.escapedToolTip(compositeTooltip);
+    }
+    HighlightInfo info = builder.createUnconditionally();
     synchronized (info) {
       info.highlighter = anchorInfo.getHighlighter();
       info.myIntentionActionDescriptors = ContainerUtil.concat(ContainerUtil.map(infos, i-> ((HighlightInfo)i).myIntentionActionDescriptors));
@@ -1466,25 +1471,56 @@ public class HighlightInfo implements Segment {
     return true;
   }
 
+  @ApiStatus.Internal
   @NotNull
-  @Unmodifiable
-  synchronized List<? extends @NotNull Consumer<? super QuickFixActionRegistrar>>
-  getLazyQuickFixes() {
-    return ContainerUtil.map(myLazyQuickFixes, p -> p.fixesComputer());
-  }
-
-  @NotNull
-  HighlightInfo copy() {
-    HighlightInfo info =
-      new HighlightInfo(forcedTextAttributes, forcedTextAttributesKey, type, startOffset, endOffset, description, toolTip, severity,
-                        isAfterEndOfLine(), needUpdateOnTyping(), isFileLevelAnnotation(), navigationShift, myProblemGroup, toolId,
-                        gutterIconRenderer, group, hasHint(), List.of());
-    synchronized (info) {
-      info.myIntentionActionDescriptors = myIntentionActionDescriptors;
-      info.myLazyQuickFixes = myLazyQuickFixes;
-      info.myFlags = myFlags;
-      info.fixMarker = fixMarker;
+  public synchronized Builder copy(boolean copyFlagsAndFixes) {
+    HighlightInfoB builder = new HighlightInfoB(type, true) {
+      @Override
+      public @NotNull HighlightInfo createUnconditionally() {
+        HighlightInfo newInfo = super.createUnconditionally();
+        if (copyFlagsAndFixes) {
+          newInfo.myIntentionActionDescriptors = myIntentionActionDescriptors;
+          newInfo.fixMarker = fixMarker;
+          newInfo.myFlags = myFlags;
+        }
+        newInfo.myLazyQuickFixes = myLazyQuickFixes;
+        newInfo.toolId = toolId;
+        return newInfo;
+      }
+    };
+    builder.range(startOffset, endOffset);
+    if (forcedTextAttributes != null) {
+      builder.textAttributes(forcedTextAttributes);
     }
-    return info;
+    if (forcedTextAttributesKey != null) {
+      builder.textAttributes(forcedTextAttributesKey);
+    }
+    if (description != null) {
+      builder.description(description);
+    }
+    if (toolTip != null) {
+      builder.escapedToolTip(toolTip);
+    }
+    builder.needsUpdateOnTyping(needUpdateOnTyping());
+    if (isFileLevelAnnotation()) {
+      builder.fileLevelAnnotation();
+    }
+    if (copyFlagsAndFixes && isAfterEndOfLine()) {
+      builder.endOfLine();
+    }
+    builder.severity(severity);
+    if (navigationShift != 0) {
+      builder.navigationShift(navigationShift);
+    }
+    if (getProblemGroup() != null) {
+      builder.problemGroup(getProblemGroup());
+    }
+    if (gutterIconRenderer instanceof GutterIconRenderer g) {
+      builder.gutterIconRenderer(g);
+    }
+    if (group != 0) {
+      builder.group(group);
+    }
+    return builder;
   }
 }

@@ -29,34 +29,36 @@ import java.util.List;
 import java.util.function.Consumer;
 
 @ApiStatus.Internal
-public final class HighlightInfoB implements HighlightInfo.Builder {
+class HighlightInfoB implements HighlightInfo.Builder {
   private static final Logger LOG = Logger.getInstance(HighlightInfoB.class);
   private Boolean myNeedsUpdateOnTyping;
   private TextAttributes forcedTextAttributes;
   private TextAttributesKey forcedTextAttributesKey;
 
   private final HighlightInfoType type;
-  private int startOffset = -1;
-  private int endOffset = -1;
+  private final boolean isCopy; // true if this Builder is a copy of existing HighlightInfo with (almost) all fields pre-filled, so no checks "this field already set" are performed
+  private int startOffset = UNSET_INT_VALUE;
+  private int endOffset = UNSET_INT_VALUE;
 
   private @NlsContexts.DetailedDescription String escapedDescription;
   private @NlsContexts.Tooltip String escapedToolTip;
   private HighlightSeverity severity;
 
-  private boolean isAfterEndOfLine;
-  private boolean isFileLevelAnnotation;
-  private int navigationShift;
+  private Boolean isAfterEndOfLine;
+  private Boolean isFileLevelAnnotation;
+  private int navigationShift = UNSET_INT_VALUE;
 
   private GutterIconRenderer gutterIconRenderer;
   private ProblemGroup problemGroup;
   private PsiElement psiElement;
-  private int group;
+  private int group = UNSET_INT_VALUE;
   private final List<HighlightInfo.IntentionActionDescriptor> fixes = new ArrayList<>();
   private boolean created;
   private final List<Consumer<? super QuickFixActionRegistrar>> myLazyFixes = new ArrayList<>();
-
-  HighlightInfoB(@NotNull HighlightInfoType type) {
+  private static final int UNSET_INT_VALUE = -2039480982;
+  HighlightInfoB(@NotNull HighlightInfoType type, boolean isCopy) {
     this.type = type;
+    this.isCopy = isCopy;
   }
 
   @Override
@@ -76,14 +78,20 @@ public final class HighlightInfoB implements HighlightInfo.Builder {
   }
 
   private void assertNotCreated() {
-    assert !created : "Must not call this method after Builder.create() was called";
-  }
-  private static void assertNotSet(Object field, @NotNull String fieldName) {
-    if (field != null) {
-      throw new IllegalArgumentException(fieldName +" already set");
+    if (created) {
+      throw new IllegalArgumentException("Must not call this method after .create() was called");
     }
   }
-
+  private void assertNotSet(Object field, @NotNull String fieldName) {
+    if (!isCopy && field != null) {
+      throw new IllegalArgumentException(fieldName +" already set (to "+field+")");
+    }
+  }
+  private void assertNotSet(int field, @NotNull String fieldName) {
+    if (!isCopy && field != UNSET_INT_VALUE) {
+      throw new IllegalArgumentException(fieldName +" already set (to "+field+")");
+    }
+  }
 
   @Override
   public @NotNull HighlightInfo.Builder inspectionToolId(@NotNull String inspectionToolId) {
@@ -122,10 +130,7 @@ public final class HighlightInfoB implements HighlightInfo.Builder {
 
   @Override
   public @NotNull HighlightInfo.Builder unescapedToolTip(@NotNull String unescapedToolTip) {
-    assertNotCreated();
-    assertNotSet(this.escapedToolTip, "tooltip");
-    escapedToolTip = htmlEscapeToolTip(unescapedToolTip);
-    return this;
+    return escapedToolTip(htmlEscapeToolTip(unescapedToolTip));
   }
 
   @Override
@@ -139,8 +144,8 @@ public final class HighlightInfoB implements HighlightInfo.Builder {
   @Override
   public @NotNull HighlightInfo.Builder range(int start, int end) {
     assertNotCreated();
-    assert startOffset == -1 && endOffset == -1 : "Offsets already set";
-
+    assertNotSet(startOffset, "Start offset already set");
+    assertNotSet(endOffset, "End offset already set");
     startOffset = start;
     endOffset = end;
     return this;
@@ -148,11 +153,7 @@ public final class HighlightInfoB implements HighlightInfo.Builder {
 
   @Override
   public @NotNull HighlightInfo.Builder range(@NotNull TextRange textRange) {
-    assertNotCreated();
-    assert startOffset == -1 && endOffset == -1 : "Offsets already set";
-    startOffset = textRange.getStartOffset();
-    endOffset = textRange.getEndOffset();
-    return this;
+    return range(textRange.getStartOffset(), textRange.getEndOffset());
   }
 
   @Override
@@ -161,17 +162,15 @@ public final class HighlightInfoB implements HighlightInfo.Builder {
   }
 
   @Override
-  public @NotNull HighlightInfo.Builder range(@NotNull PsiElement element) {
-    assertNotCreated();
-    assertNotSet(this.psiElement, "psiElement");
-    psiElement = element;
-    return range(element.getTextRange());
+  public @NotNull HighlightInfo.Builder range(@NotNull PsiElement psiElement) {
+    TextRange range = psiElement.getTextRange();
+    return range(psiElement, range.getStartOffset(), range.getEndOffset());
   }
 
   @Override
-  public @NotNull HighlightInfo.Builder range(@NotNull PsiElement element, @NotNull TextRange rangeInElement) {
-    TextRange absoluteRange = rangeInElement.shiftRight(element.getTextRange().getStartOffset());
-    return range(element, absoluteRange.getStartOffset(), absoluteRange.getEndOffset());
+  public @NotNull HighlightInfo.Builder range(@NotNull PsiElement psiElement, @NotNull TextRange rangeInElement) {
+    TextRange absoluteRange = rangeInElement.shiftRight(psiElement.getTextRange().getStartOffset());
+    return range(psiElement, absoluteRange.getStartOffset(), absoluteRange.getEndOffset());
   }
 
   @Override
@@ -185,6 +184,7 @@ public final class HighlightInfoB implements HighlightInfo.Builder {
   @Override
   public @NotNull HighlightInfo.Builder endOfLine() {
     assertNotCreated();
+    assertNotSet(this.isAfterEndOfLine, "isAfterEndOfLine");
     isAfterEndOfLine = true;
     return this;
   }
@@ -208,6 +208,7 @@ public final class HighlightInfoB implements HighlightInfo.Builder {
   @Override
   public @NotNull HighlightInfo.Builder fileLevelAnnotation() {
     assertNotCreated();
+    assertNotSet(this.isFileLevelAnnotation, "isFileLevelAnnotation");
     isFileLevelAnnotation = true;
     return this;
   }
@@ -215,6 +216,7 @@ public final class HighlightInfoB implements HighlightInfo.Builder {
   @Override
   public @NotNull HighlightInfo.Builder navigationShift(int navigationShift) {
     assertNotCreated();
+    assertNotSet(this.navigationShift, "navigationShift");
     this.navigationShift = navigationShift;
     return this;
   }
@@ -222,6 +224,7 @@ public final class HighlightInfoB implements HighlightInfo.Builder {
   @Override
   public @NotNull HighlightInfo.Builder group(int group) {
     assertNotCreated();
+    assertNotSet(this.group, "group");
     this.group = group;
     return this;
   }
@@ -268,13 +271,18 @@ public final class HighlightInfoB implements HighlightInfo.Builder {
     }
     //noinspection deprecation
     HighlightInfo info = new HighlightInfo(forcedTextAttributes, forcedTextAttributesKey, type, startOffset, endOffset, escapedDescription,
-                                           escapedToolTip, severity, isAfterEndOfLine, myNeedsUpdateOnTyping, isFileLevelAnnotation,
-                                           navigationShift,
-                                           problemGroup, null, gutterIconRenderer, group, false, myLazyFixes);
+                                           escapedToolTip, severity, isAfterEndOfLine != null && isAfterEndOfLine,
+                                           myNeedsUpdateOnTyping, isFileLevelAnnotation != null && isFileLevelAnnotation,
+                                           getValueOrDefault(navigationShift),
+                                           problemGroup, null, gutterIconRenderer, getValueOrDefault(group), false, myLazyFixes);
     // fill IntentionActionDescriptor.problemGroup and IntentionActionDescriptor.severity - they can be null because .registerFix() might have been called before .problemGroup() and .severity()
     List<HighlightInfo.IntentionActionDescriptor> iads = ContainerUtil.map(fixes, fixInfo -> fixInfo.withProblemGroupAndSeverity(problemGroup, severity));
     info.registerFixes(iads, null);
     return info;
+  }
+
+  private static int getValueOrDefault(int field) {
+    return field == UNSET_INT_VALUE ? 0 : field;
   }
 
   private static @Nullable @NlsContexts.Tooltip String htmlEscapeToolTip(@Nullable @NlsContexts.Tooltip String unescapedTooltip) {
