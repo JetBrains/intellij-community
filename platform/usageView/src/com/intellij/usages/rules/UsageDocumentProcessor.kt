@@ -3,12 +3,13 @@ package com.intellij.usages.rules
 
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.Segment
-import com.intellij.usages.Usage
 import com.intellij.usages.UsageInfoAdapter
 import com.intellij.util.Processor
 
 interface UsageDocumentProcessor: UsageInfoAdapter {
   fun getDocument(): Document?
+
+  // must iterate in start offset order
   fun processRangeMarkers(processor: Processor<in Segment>): Boolean {
     for (usageInfo in getMergedInfos()) {
       val segment: Segment? = usageInfo.getSegment()

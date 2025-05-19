@@ -30,7 +30,10 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.impl.UsageViewStatisticsCollector;
 import com.intellij.usages.impl.rules.UsageType;
 import com.intellij.usages.rules.*;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -251,18 +254,6 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
 
   private Segment getFirstSegment() {
     return getUsageInfo().getSegment();
-  }
-
-  // must iterate in start offset order
-  @Override
-  public boolean processRangeMarkers(@NotNull Processor<? super Segment> processor) {
-    for (UsageInfo usageInfo : getMergedInfos()) {
-      Segment segment = usageInfo.getSegment();
-      if (segment != null && !processor.process(segment)) {
-        return false;
-      }
-    }
-    return true;
   }
 
   @Override

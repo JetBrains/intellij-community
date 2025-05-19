@@ -36,7 +36,7 @@ interface FindAndReplaceExecutor {
 
   /**
    * Initiates a "Find all"/"Replace all" operation on the backend and displays results in the Find tool window.
-   * NOTE: Currently, the operation is performed on the backend only, with results not being returned to the frontend
+   * NOTE: Currently, the operation is performed on the backend only,
    * should be reworked when Find tool window is split for remote development.
    *
    * This function handles searching for text based on the provided search model
