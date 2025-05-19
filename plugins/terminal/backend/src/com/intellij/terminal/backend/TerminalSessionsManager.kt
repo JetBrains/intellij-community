@@ -27,7 +27,8 @@ internal class TerminalSessionsManager {
    * Also, it installs the port forwarding feature.
    *
    * The created session lifecycle is bound to the [scope]. If it cancels, then the process will be terminated.
-   * And if the process is terminated on its own, then the [scope] will be canceled as well.
+   * And if the process is terminated on its own, for example, if user executes `exit` or press Ctrl+D,
+   * then the [scope] will be canceled as well.
    */
   suspend fun startSession(
     options: ShellStartupOptions,
@@ -42,8 +43,13 @@ internal class TerminalSessionsManager {
 
     val (ttyConnector, configuredOptions) = startTerminalProcess(project, optionsWithSize)
     val observableTtyConnector = ObservableTtyConnector(ttyConnector)
-    val session = createTerminalSession(project, observableTtyConnector, configuredOptions, JBTerminalSystemSettingsProvider(), scope)
-    val stateAwareSession = StateAwareTerminalSession(session, scope.childScope("StateAwareSession"))
+
+    // Create the JediTerm session scope as the child of the main scope.
+    // If the original session terminates on its own, then StateAwareTerminalSession will handle the TerminalSessionTerminatedEvent
+    // and cancel the main scope.
+    val jediTermScope = scope.childScope("JediTerm session")
+    val jediTermSession = createTerminalSession(project, observableTtyConnector, configuredOptions, JBTerminalSystemSettingsProvider(), jediTermScope)
+    val stateAwareSession = StateAwareTerminalSession(jediTermSession, scope)
 
     val sessionId = storeSession(stateAwareSession, scope)
 
