@@ -3,6 +3,9 @@ package com.intellij.tools.build.bazel.jvmIncBuilder;
 
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.Runner;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
 public interface Message {
   enum Kind {
     ERROR, WARNING, INFO, STDOUT
@@ -56,7 +59,13 @@ public interface Message {
   }
   
   static Message create(Runner reporter, Kind kind, Throwable ex) {
-    String text = ex.getMessage();
+    StringBuilder buf = new StringBuilder(ex.getMessage());
+    if (kind == Kind.ERROR) {
+      StringWriter trace = new StringWriter();
+      ex.printStackTrace(new PrintWriter(trace));
+      buf.append("\n").append(trace);
+    }
+    String text = buf.toString();
     return new Message() {
       @Override
       public Kind getKind() {
