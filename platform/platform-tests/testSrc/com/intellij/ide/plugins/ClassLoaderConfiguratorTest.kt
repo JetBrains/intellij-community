@@ -30,14 +30,14 @@ internal class ClassLoaderConfiguratorTest {
     val kotlin = PluginMainDescriptor(PluginDescriptorBuilder.builder().apply { id = "org.jetbrains.kotlin" }.build(), emptyPath, isBundled = false)
     val gradle = PluginMainDescriptor(PluginDescriptorBuilder.builder().apply { id = "org.jetbrains.plugins.gradle" }.build(), emptyPath, isBundled = false)
     val emptyBuilder = PluginDescriptorBuilder.builder()
-    val kotlinGradleJava = kotlin.createSubInTest(
+    val kotlinGradleJava = kotlin.createContentModuleInTest(
       subBuilder = emptyBuilder,
       descriptorPath = "",
       module = PluginContentDescriptor.ModuleItem(name = "kotlin.gradle.gradle-java",
                                                   loadingRule = ModuleLoadingRule.OPTIONAL,
                                                   configFile = null,
                                                   descriptorContent = null))
-    val kotlinCompilerGradle = kotlin.createSubInTest(
+    val kotlinCompilerGradle = kotlin.createContentModuleInTest(
       subBuilder = emptyBuilder,
       descriptorPath = "",
       module = PluginContentDescriptor.ModuleItem(name = "kotlin.compiler-plugins.annotation-based-compiler-support.gradle",
@@ -59,7 +59,7 @@ internal class ClassLoaderConfiguratorTest {
       false,
     )
     fun createModuleDescriptor(name: String): ContentModuleDescriptor {
-      return plugin.createSubInTest(
+      return plugin.createContentModuleInTest(
         subBuilder = PluginDescriptorBuilder.builder().apply { `package` = name },
         descriptorPath = "",
         module = PluginContentDescriptor.ModuleItem(name = name, configFile = null, descriptorContent = null, loadingRule = ModuleLoadingRule.OPTIONAL),

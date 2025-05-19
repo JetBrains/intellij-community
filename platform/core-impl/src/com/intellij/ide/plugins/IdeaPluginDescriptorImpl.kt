@@ -642,7 +642,7 @@ tailrec fun IdeaPluginDescriptorImpl.getMainDescriptor(): PluginMainDescriptor =
 
 @ApiStatus.Internal
 @TestOnly
-fun PluginMainDescriptor.createSubInTest(
+fun PluginMainDescriptor.createContentModuleInTest(
   subBuilder: PluginDescriptorBuilder,
   descriptorPath: String,
   module: PluginContentDescriptor.ModuleItem,
