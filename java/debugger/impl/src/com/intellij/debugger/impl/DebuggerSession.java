@@ -168,6 +168,9 @@ public final class DebuggerSession implements AbstractDebuggerSession {
                          final @NlsContexts.Label String description) {
       ThreadingAssertions.assertEventDispatchThread();
       final DebuggerSession session = context.getDebuggerSession();
+      if (description != null) {
+        LOG.info(description);
+      }
       LOG.assertTrue(session == DebuggerSession.this || session == null);
       final Runnable setStateRunnable = () -> {
         LOG.assertTrue(myDebuggerContext.isInitialised());
