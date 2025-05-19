@@ -404,7 +404,7 @@ class PluginManagerTest {
       ): PluginDescriptorBuilder {
         for (child in root.children) {
           if (child.name == "config-file-idea-plugin") {
-            val url = child.getAttributeValue("url")!!
+            val url = child.getAttributeValue("descriptor-url")!!
             if (url.endsWith("/$relativePath")) {
               try {
                 val reader = PluginDescriptorFromXmlStreamConsumer(readContext, this.toXIncludeLoader(dataLoader))
