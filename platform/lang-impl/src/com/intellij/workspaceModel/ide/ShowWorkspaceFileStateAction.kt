@@ -14,10 +14,7 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 
 @Suppress("HardCodedStringLiteral")
 internal class ShowWorkspaceFileStateAction : DumbAwareAction() {
-
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
@@ -26,32 +23,22 @@ internal class ShowWorkspaceFileStateAction : DumbAwareAction() {
 
     val fileSets = WorkspaceFileIndex
       .getInstance(project)
-      .findFileSets(virtualFile,
-                    true,
-                    true,
-                    true,
-                    true,
-                    true,
-                    true
-      )
+      .findFileSets(virtualFile, true, true, true, true, true, true)
 
     val baseListPopupStep = object : BaseListPopupStep<WorkspaceFileSet>("Workspace File State", fileSets) {
-
       override fun isSpeedSearchEnabled() = true
 
-      override fun getTextFor(fileSet: WorkspaceFileSet?): String {
-        return if (fileSet == null) {
-          ""
-        }
+      override fun getTextFor(fileSet: WorkspaceFileSet?): String =
+        if (fileSet == null) ""
         else {
           fileSet as WorkspaceFileSetWithCustomData<*>
-
-          return "${StringUtil.shortenPathWithEllipsis(fileSet.root.path, 100)}: WorkspaceFileKind.${fileSet.kind}; ${if (fileSet.recursive) "recursive" else "non-recursive"}; (Data: ${fileSet.data})"
+          "${StringUtil.shortenPathWithEllipsis(fileSet.root.path, 100)}: WorkspaceFileKind.${fileSet.kind}; " +
+          "${if (fileSet.recursive) "recursive" else "non-recursive"}; (Data: ${fileSet.data})"
         }
-      }
     }
 
-    val popup = JBPopupFactory.getInstance().createListPopup(baseListPopupStep)
-    popup.showInBestPositionFor(e.dataContext)
+    JBPopupFactory.getInstance()
+      .createListPopup(baseListPopupStep)
+      .showInBestPositionFor(e.dataContext)
   }
 }

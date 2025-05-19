@@ -68,8 +68,8 @@ interface WorkspaceFileIndex {
   /**
    * Searches for the first parent of [file] (or [file] itself) which has an associated [WorkspaceFileSet] taking into account the passed
    * flags. 
-   * If there are several instances of [WorkspaceFileSet] associated with the found file, any of them is returned. If you need to get a
-   * specific file set in such case, use [findFileSetWithCustomData] instead.
+   * If there are several instances of [WorkspaceFileSet] associated with the found file, any of them is returned.
+   * If you need to get a specific file set in such a case, use [findFileSetWithCustomData] instead.
    * 
    * @param honorExclusion if `true` the function will return `null` if [file] is excluded from the found file set
    * @param includeContentSets if `true` file sets of [content][WorkspaceFileKind.isContent] kind will be processed
@@ -77,13 +77,14 @@ interface WorkspaceFileIndex {
    * @param includeExternalSourceSets if `true` file sets of [WorkspaceFileKind.EXTERNAL_SOURCE] kind will be processed
    * @param includeCustomKindSets if `true` file sets of [WorkspaceFileKind.CUSTOM] kind will be processed
    */
-  fun findFileSet(file: VirtualFile,
-                  honorExclusion: Boolean,
-                  includeContentSets: Boolean,
-                  includeContentNonIndexableSets: Boolean,
-                  includeExternalSets: Boolean,
-                  includeExternalSourceSets: Boolean,
-                  includeCustomKindSets: Boolean
+  fun findFileSet(
+    file: VirtualFile,
+    honorExclusion: Boolean,
+    includeContentSets: Boolean,
+    includeContentNonIndexableSets: Boolean,
+    includeExternalSets: Boolean,
+    includeExternalSourceSets: Boolean,
+    includeCustomKindSets: Boolean
   ): WorkspaceFileSet?
 
   /**
@@ -101,13 +102,14 @@ interface WorkspaceFileIndex {
    * todo IJPL-339 mark experimental
    */
   @ApiStatus.Internal
-  fun findFileSets(file: VirtualFile,
-                   honorExclusion: Boolean,
-                   includeContentSets: Boolean,
-                   includeContentNonIndexableSets: Boolean,
-                   includeExternalSets: Boolean,
-                   includeExternalSourceSets: Boolean,
-                   includeCustomKindSets: Boolean
+  fun findFileSets(
+    file: VirtualFile,
+    honorExclusion: Boolean,
+    includeContentSets: Boolean,
+    includeContentNonIndexableSets: Boolean,
+    includeExternalSets: Boolean,
+    includeExternalSourceSets: Boolean,
+    includeCustomKindSets: Boolean
   ): List<WorkspaceFileSet>
 
   /**
@@ -126,7 +128,7 @@ interface WorkspaceFileIndex {
   ): WorkspaceFileSetWithCustomData<D>?
 
   /**
-   * The same as [findFileSets], but returns file sets which has custom data of type [customDataClass] associated with the found file or
+   * The same as [findFileSets], but returns file sets which have custom data of type [customDataClass] associated with the found file or
    * `null` if no such file set is found.
    */
   @ApiStatus.Internal
