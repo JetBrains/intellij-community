@@ -21,6 +21,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneStatus
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneableProject
 import com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RecentProjectsWelcomeScreenActionBase
+import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.ui.*
 import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.components.panels.VerticalLayout
@@ -795,9 +796,13 @@ class RecentProjectFilteringTree(
 
     private fun createActionEvent(tree: Tree, inputEvent: InputEvent?): AnActionEvent {
       val dataContext = DataManager.getInstance().getDataContext(tree)
-      val actionPlace =
-        if (UIUtil.uiParents(tree, true).filter(FlatWelcomeFrame::class.java).isEmpty) ActionPlaces.POPUP
-        else ActionPlaces.WELCOME_SCREEN
+      val actionPlace = UIUtil.uiParents(tree, true).let { parents ->
+        for (parent in parents) {
+          if (parent is ToolWindowPane) return@let ActionPlaces.WELCOME_SCREEN_NON_MODAL
+          if (parent is FlatWelcomeFrame) return@let ActionPlaces.WELCOME_SCREEN
+        }
+        return@let ActionPlaces.POPUP
+      }
 
       return if (inputEvent == null) AnActionEvent.createFromDataContext(actionPlace, null, dataContext)
       else AnActionEvent.createFromInputEvent(inputEvent, actionPlace, null, dataContext)

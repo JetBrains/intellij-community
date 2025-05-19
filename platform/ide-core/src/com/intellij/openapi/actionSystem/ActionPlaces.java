@@ -140,6 +140,8 @@ public abstract class ActionPlaces {
 
   public static final String WELCOME_SCREEN = "WelcomeScreen";
   public static final String WELCOME_SCREEN_QUICK_PANEL = "WelcomeScreen.QuickPanel";
+  @ApiStatus.Internal
+  public static final String WELCOME_SCREEN_NON_MODAL = "WelcomeScreen.NonModal";
 
   public static final String CHANGES_VIEW_TOOLBAR = "ChangesViewToolbar";
   public static final String CHANGES_VIEW_POPUP = "ChangesViewPopup";
