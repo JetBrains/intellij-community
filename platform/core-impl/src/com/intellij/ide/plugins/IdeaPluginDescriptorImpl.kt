@@ -36,7 +36,6 @@ sealed class IdeaPluginDescriptorImpl(
   raw: RawPluginDescriptor,
   pluginPath: Path,
   isBundled: Boolean,
-  isIndependentFromCoreClassLoader: Boolean = false,
 ) : IdeaPluginDescriptorImplPublic {
   private val id: PluginId = PluginId.getId(raw.id ?: raw.name ?: throw RuntimeException("Neither id nor name are specified"))
   private val name: String = raw.name ?: id.idString
@@ -92,8 +91,6 @@ sealed class IdeaPluginDescriptorImpl(
   val isUseIdeaClassLoader: Boolean = raw.isUseIdeaClassLoader
 
   private val isBundled: Boolean = isBundled
-  val isIndependentFromCoreClassLoader: Boolean = isIndependentFromCoreClassLoader
-  abstract val useCoreClassLoader: Boolean
 
   private val pluginPath: Path = pluginPath
 
@@ -103,6 +100,8 @@ sealed class IdeaPluginDescriptorImpl(
 
   var isMarkedForLoading: Boolean = true
   private var _pluginClassLoader: ClassLoader? = null
+  abstract val isIndependentFromCoreClassLoader: Boolean
+  abstract val useCoreClassLoader: Boolean
 
   override fun getPluginId(): PluginId = id
 
@@ -211,7 +210,6 @@ sealed class IdeaPluginDescriptorImpl(
         raw = raw,
         pluginPath = pluginPath,
         isBundled = isBundled,
-        isIndependentFromCoreClassLoader = raw.isIndependentFromCoreClassLoader,
         descriptorPath = descriptorPath
       )
     } else {
@@ -222,7 +220,6 @@ sealed class IdeaPluginDescriptorImpl(
         isBundled = isBundled,
         moduleName = module.name,
         moduleLoadingRule = module.loadingRule,
-        isIndependentFromCoreClassLoader = raw.isIndependentFromCoreClassLoader,
         descriptorPath = descriptorPath
       )
     }
@@ -548,7 +545,6 @@ class PluginMainDescriptor(
   raw = raw,
   pluginPath = pluginPath,
   isBundled = isBundled,
-  isIndependentFromCoreClassLoader = false,
 ) {
   @Volatile
   private var loadedDescriptionText: @Nls String? = null
@@ -557,6 +553,7 @@ class PluginMainDescriptor(
   private val changeNotes: String? = raw.changeNotes
 
   override val useCoreClassLoader: Boolean = useCoreClassLoader
+  override val isIndependentFromCoreClassLoader: Boolean get() = false
 
   override fun getChangeNotes(): String? = changeNotes
   override fun getCategory(): @NlsSafe String? = category
@@ -610,13 +607,11 @@ class DependsSubDescriptor(
   raw: RawPluginDescriptor,
   pluginPath: Path,
   isBundled: Boolean,
-  isIndependentFromCoreClassLoader: Boolean = false,
   private val descriptorPath: String
 ): IdeaPluginDescriptorImpl(
   raw,
   pluginPath,
   isBundled,
-  isIndependentFromCoreClassLoader,
 ) {
   init {
     check(parent is PluginMainDescriptor || parent is DependsSubDescriptor)
@@ -624,6 +619,7 @@ class DependsSubDescriptor(
 
   override val useCoreClassLoader: Boolean
     get() = parent.useCoreClassLoader
+  override val isIndependentFromCoreClassLoader: Boolean = raw.isIndependentFromCoreClassLoader
 
   override fun getDescriptorPath(): String = descriptorPath
 
@@ -648,19 +644,18 @@ class ContentModuleDescriptor(
   isBundled: Boolean,
   moduleName: String,
   moduleLoadingRule: ModuleLoadingRule,
-  isIndependentFromCoreClassLoader: Boolean = false,
   private val descriptorPath: String
 ): IdeaPluginDescriptorImpl(
   raw,
   pluginPath,
   isBundled,
-  isIndependentFromCoreClassLoader,
 ) {
   val moduleName: String = moduleName
   val moduleLoadingRule: ModuleLoadingRule = moduleLoadingRule
 
   override val useCoreClassLoader: Boolean
     get() = parent.useCoreClassLoader
+  override val isIndependentFromCoreClassLoader: Boolean = raw.isIndependentFromCoreClassLoader
 
   override fun getDescriptorPath(): String = descriptorPath
 
