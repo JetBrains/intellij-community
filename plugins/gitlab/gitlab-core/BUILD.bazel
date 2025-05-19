@@ -8,6 +8,12 @@ jvm_resources(
 )
 
 jvm_resources(
+  name = "vcs-gitlab_resources_1",
+  files = glob(["gen-resources/**/*"]),
+  strip_prefix = "gen-resources"
+)
+
+jvm_resources(
   name = "vcs-gitlab_test_resources",
   files = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
@@ -56,7 +62,10 @@ jvm_library(
     "//platform/dvcs-impl/shared",
     "//platform/ide-core-impl",
   ],
-  runtime_deps = [":vcs-gitlab_resources"]
+  runtime_deps = [
+    ":vcs-gitlab_resources",
+    ":vcs-gitlab_resources_1",
+  ]
 )
 
 jvm_library(
@@ -122,6 +131,7 @@ jvm_library(
   ],
   runtime_deps = [
     ":vcs-gitlab_resources",
+    ":vcs-gitlab_resources_1",
     ":vcs-gitlab_test_resources",
   ]
 )
