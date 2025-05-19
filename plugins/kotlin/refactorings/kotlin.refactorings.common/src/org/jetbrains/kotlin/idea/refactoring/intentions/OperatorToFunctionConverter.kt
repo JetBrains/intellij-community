@@ -2,19 +2,23 @@
 package org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections
 
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
-import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -196,18 +200,35 @@ object OperatorToFunctionConverter {
     }
 
     //TODO: don't use creation by plain text
+    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class, KaExperimentalApi::class)
     private fun convertCall(element: KtCallExpression): KtExpression {
         val callee = element.calleeExpression!!
         val receiver = element.parent?.safeAs<KtQualifiedExpression>()?.receiverExpression
         val isAnonymousFunctionWithReceiver = receiver != null && (callee.safeDeparenthesize() as? KtNamedFunction)?.receiverTypeReference != null
+
+        val isReceiverToPassAsParameter = ((callee.mainReference?.resolve() as? KtCallableDeclaration)?.typeReference?.typeElement as? KtFunctionType)?.receiverTypeReference != null
+
         // to skip broken code like Main.({ println("hello")})() which is possible during inline anonymous function.
         // see KotlinInlineAnonymousFunctionProcessor.Companion.findFunction
         // and corresponding test InlineVariableOrProperty.testFunctionalPropertyWithReceiver
         val isLambdaWithReceiver = receiver != null && receiver != element && callee.safeDeparenthesize() is KtLambdaExpression
         val argumentsList = element.valueArgumentList
         val argumentString = argumentsList?.text?.removeSurrounding("(", ")") ?: ""
-        val argumentsWithReceiverIfNeeded = if (isAnonymousFunctionWithReceiver) {
-            val receiverText = receiver.text ?: ""
+        val argumentsWithReceiverIfNeeded = if (isAnonymousFunctionWithReceiver || isReceiverToPassAsParameter) {
+            val receiverText = if (receiver != null) {
+                receiver.text
+            } else {
+                val label = allowAnalysisOnEdt {
+                    allowAnalysisFromWriteAction {
+                        analyze(callee) {
+                            val partiallyAppliedSymbol = element.resolveToCall()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol
+                            val symbol = (partiallyAppliedSymbol?.extensionReceiver as? KaImplicitReceiverValue)?.symbol
+                            (symbol as? KaReceiverParameterSymbol)?.owningCallableSymbol?.name?.asString() ?: ""
+                        }
+                    }
+                }
+                "this" + (if (label.isNotEmpty()) "@$label" else "")
+            }
             val delimiter = if (receiverText.isNotEmpty() && argumentString.isNotEmpty()) ", " else ""
             receiverText + delimiter + argumentString
         } else {
@@ -228,7 +249,7 @@ object OperatorToFunctionConverter {
         }
 
         val parent = element.parent
-        if (!isAnonymousFunctionWithReceiver && !isLambdaWithReceiver && parent is KtDotQualifiedExpression && parent.selectorExpression == element) {
+        if (!isAnonymousFunctionWithReceiver && !isReceiverToPassAsParameter && !isLambdaWithReceiver && parent is KtDotQualifiedExpression && parent.selectorExpression == element) {
             // lift dot qualifier (calleeText) to the upper level, otherwise psi is created as
             // dotQualified
             // - receiver
@@ -245,7 +266,7 @@ object OperatorToFunctionConverter {
             return dotExpression.selectorExpression as KtExpression
         }
 
-        val elementToReplace = if (isAnonymousFunctionWithReceiver || isLambdaWithReceiver) element.parent else element
+        val elementToReplace = if (isAnonymousFunctionWithReceiver || isLambdaWithReceiver || receiver != null && isReceiverToPassAsParameter) element.parent else element
         return elementToReplace.replace(transformed) as KtExpression
     }
 

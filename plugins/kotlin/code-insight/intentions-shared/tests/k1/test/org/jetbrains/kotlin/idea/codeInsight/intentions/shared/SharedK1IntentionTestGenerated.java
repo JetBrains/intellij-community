@@ -1894,6 +1894,16 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
         public void testPrefixPlusPlus() throws Exception {
             runTest("../testData/intentions/operatorToFunction/prefixPlusPlus.kt");
         }
+
+        @TestMetadata("withReceiverContext.kt")
+        public void testWithReceiverContext() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/withReceiverContext.kt");
+        }
+
+        @TestMetadata("withReceiverContext1.kt")
+        public void testWithReceiverContext1() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/withReceiverContext1.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
