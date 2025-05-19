@@ -27,3 +27,6 @@ val IdeaPluginDescriptorImplPublic.isRequiredContentModule: Boolean
 @get:ApiStatus.Experimental
 val IdeaPluginDescriptorImplPublic.moduleDependencies: ModuleDependencies
   get() = (this as IdeaPluginDescriptorImpl).moduleDependencies
+
+@ApiStatus.Experimental
+fun IdeaPluginDescriptorImplPublic.getMainDescriptor(): IdeaPluginDescriptorImplPublic = (this as IdeaPluginDescriptorImpl).getMainDescriptor()

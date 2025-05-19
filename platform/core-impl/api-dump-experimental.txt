@@ -10,6 +10,7 @@ c:com.intellij.extapi.psi.StubBasedPsiElementBase
 - com.intellij.ide.plugins.IdeaPluginDescriptor
 *f:com.intellij.ide.plugins.IdeaPluginDescriptorImplPublicKt
 - *sf:getContentModuleName(com.intellij.ide.plugins.IdeaPluginDescriptorImplPublic):java.lang.String
+- *sf:getMainDescriptor(com.intellij.ide.plugins.IdeaPluginDescriptorImplPublic):com.intellij.ide.plugins.IdeaPluginDescriptorImplPublic
 - *sf:getModuleDependencies(com.intellij.ide.plugins.IdeaPluginDescriptorImplPublic):com.intellij.ide.plugins.ModuleDependencies
 - *sf:isRequiredContentModule(com.intellij.ide.plugins.IdeaPluginDescriptorImplPublic):Z
 *f:com.intellij.ide.plugins.ModuleDependencies

@@ -664,6 +664,13 @@ class ContentModuleDescriptor(
 }
 
 @ApiStatus.Internal
+tailrec fun IdeaPluginDescriptorImpl.getMainDescriptor(): PluginMainDescriptor = when (this) {
+  is PluginMainDescriptor -> this
+  is ContentModuleDescriptor -> parent
+  is DependsSubDescriptor -> parent.getMainDescriptor()
+}
+
+@ApiStatus.Internal
 @TestOnly
 fun IdeaPluginDescriptorImpl.createSubInTest(
   subBuilder: PluginDescriptorBuilder,
