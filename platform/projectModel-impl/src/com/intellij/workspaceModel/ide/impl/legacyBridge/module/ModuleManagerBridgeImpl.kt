@@ -170,10 +170,6 @@ abstract class ModuleManagerBridgeImpl(
     return modules(entityStore.current)
   }
 
-  final override fun areModulesLoaded(): Boolean {
-    return WorkspaceModelTopics.getInstance(project).modulesAreLoaded
-  }
-
   final override fun moduleDependencyComparator(): Comparator<Module> {
     return entityStore.cachedValue(dependencyComparatorValue)
   }
