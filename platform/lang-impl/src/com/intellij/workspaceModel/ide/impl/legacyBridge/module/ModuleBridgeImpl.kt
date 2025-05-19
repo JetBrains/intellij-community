@@ -174,11 +174,23 @@ class ModuleBridgeImpl(
       coroutineScope.launch {
         val facetManagerFactory = project.serviceAsync<FacetManagerFactory>()
         withContext(Dispatchers.EDT) {
-          for (module in modules) {
-            if (!module.isDisposed) {
-              facetsInitializationTimeMs.addMeasuredTime {
-                facetManagerFactory.getFacetManager(module).allFacets.forEach(Facet<*>::initFacet)
-              }
+          facetsInitializationTimeMs.addMeasuredTime {
+            doInitFacetsInEdt(modules, facetManagerFactory)
+          }
+        }
+      }
+    }
+
+    // separate method to see it in a profiler
+    private fun doInitFacetsInEdt(
+      modules: Set<ModuleBridge>,
+      facetManagerFactory: FacetManagerFactory,
+    ) {
+      for (module in modules) {
+        if (!module.isDisposed) {
+          facetsInitializationTimeMs.addMeasuredTime {
+            for (facet in facetManagerFactory.getFacetManager(module).allFacets) {
+              facet.initFacet()
             }
           }
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.facet
 
 import com.intellij.facet.Facet
@@ -148,7 +148,7 @@ class FacetEntityChangeListener(private val project: Project) {
             manager.model.facetsChanged()
             val facet = event.storageBefore.facetMapping().getDataByEntity(change.oldEntity) ?: return@forEach
             Disposer.dispose(facet)
-            publisher.fireFacetRemoved(manager.module, facet)
+            publisher.fireFacetRemoved(facet)
           }
           is EntityChange.Replaced -> {
             val facet = event.storageAfter.facetMapping().getDataByEntity(change.newEntity) ?: error("Facet should be available")

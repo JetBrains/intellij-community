@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl
 
 import com.intellij.facet.*
@@ -12,7 +12,7 @@ import com.intellij.util.containers.ContainerUtil
 import java.util.*
 
 internal class FacetEventsPublisher(private val project: Project) {
-  private val facetsByType: MutableMap<FacetTypeId<*>, MutableMap<Facet<*>, Boolean>> = HashMap()
+  private val facetsByType = HashMap<FacetTypeId<*>, MutableMap<Facet<*>, Boolean>>()
   private val manuallyRegisteredListeners = ContainerUtil.createConcurrentList<Pair<FacetTypeId<*>?, ProjectFacetListener<*>>>()
   private val publisher = project.messageBus.syncPublisher(FacetManager.FACETS_TOPIC)
 
@@ -20,8 +20,11 @@ internal class FacetEventsPublisher(private val project: Project) {
     val connection = project.messageBus.simpleConnect()
     connection.subscribe(ModuleListener.TOPIC, object : ModuleListener {
       override fun modulesAdded(project: Project, modules: List<Module>) {
+        val facetManagerFactory = project.service<FacetManagerFactory>()
         for (module in modules) {
-          onModuleAdded(module)
+          for (facet in facetManagerFactory.getFacetManager(module).allFacets) {
+            onFacetAdded(facet)
+          }
         }
       }
 
@@ -29,8 +32,12 @@ internal class FacetEventsPublisher(private val project: Project) {
         onModuleRemoved(module)
       }
     })
+
+    val facetManagerFactory = project.service<FacetManagerFactory>()
     for (module in ModuleManager.getInstance(project).modules) {
-      onModuleAdded(module)
+      for (facet in facetManagerFactory.getFacetManager(module).allFacets) {
+        onFacetAdded(facet)
+      }
     }
   }
 
@@ -70,7 +77,7 @@ internal class FacetEventsPublisher(private val project: Project) {
     onFacetAdded(facet)
   }
 
-  fun fireFacetRemoved(module: Module, facet: Facet<*>) {
+  fun fireFacetRemoved(facet: Facet<*>) {
     publisher.facetRemoved(facet)
     onFacetRemoved(facet, false)
   }
@@ -87,12 +94,6 @@ internal class FacetEventsPublisher(private val project: Project) {
   private fun onModuleRemoved(module: Module) {
     for (facet in FacetManager.getInstance(module).allFacets) {
       onFacetRemoved(facet, false)
-    }
-  }
-
-  private fun onModuleAdded(module: Module) {
-    for (facet in FacetManager.getInstance(module).allFacets) {
-      onFacetAdded(facet)
     }
   }
 
