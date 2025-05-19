@@ -30,8 +30,18 @@ public class MultiModuleNavigationTestGenerated extends AbstractMultiModuleNavig
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
-    @TestMetadata("fromCommon")
-    public void testFromCommon() throws Exception {
-        runTest("testData/multimodule/fromCommon/");
+    @TestMetadata("classFromCommon")
+    public void testClassFromCommon() throws Exception {
+        runTest("testData/multimodule/classFromCommon/");
+    }
+
+    @TestMetadata("extFunctionFromCommon")
+    public void testExtFunctionFromCommon() throws Exception {
+        runTest("testData/multimodule/extFunctionFromCommon/");
+    }
+
+    @TestMetadata("extFunctionFromJvm")
+    public void testExtFunctionFromJvm() throws Exception {
+        runTest("testData/multimodule/extFunctionFromJvm/");
     }
 }

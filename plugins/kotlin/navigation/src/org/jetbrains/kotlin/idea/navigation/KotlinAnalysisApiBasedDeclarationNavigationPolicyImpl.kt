@@ -149,11 +149,13 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
                         val packageFqName = declaration.containingKtFile.packageFqName.takeUnless { it.isRoot }?.asString()
                         val callableName = "${packageFqName?.let { "$it." }.orEmpty()}${declarationName}"
                         val project = module.project
-                        when (declaration) {
+                        val declarations = when (declaration) {
                             is KtNamedFunction -> KotlinTopLevelFunctionFqnNameIndex[callableName, project, scope]
                             is KtProperty -> KotlinTopLevelPropertyFqnNameIndex[callableName, project, scope]
                             else -> return null
                         }
+                        val targetPlatform = module.targetPlatform
+                        declarations.filter { it.matchesWithPlatform(targetPlatform) }
                     }
 
                     else -> {
