@@ -5,6 +5,7 @@ import org.jetbrains.plugins.textmate.regex.NotMatchingRegexFacade
 import org.jetbrains.plugins.textmate.regex.RegexFacade
 import org.jetbrains.plugins.textmate.regex.RegexFactory
 import org.jetbrains.plugins.textmate.regex.TextMateString
+import org.jetbrains.plugins.textmate.regex.TextMateStringImpl
 import org.joni.Option
 import org.joni.Regex
 import org.joni.WarnCallback
@@ -31,6 +32,6 @@ class JoniRegexFactory : RegexFactory {
   }
 
   override fun string(string: CharSequence): TextMateString {
-    return TextMateString.fromString(string.toString())
+    return TextMateStringImpl.fromString(string.toString())
   }
 }

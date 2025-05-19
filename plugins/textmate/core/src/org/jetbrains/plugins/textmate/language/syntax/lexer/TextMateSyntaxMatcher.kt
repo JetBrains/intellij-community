@@ -31,7 +31,7 @@ interface TextMateSyntaxMatcher {
     checkCancelledCallback: Runnable?,
   ): MatchData
 
-  fun createStringToMatch(s: CharSequence): TextMateString
+  fun <T> matchingString(s: CharSequence, body: (TextMateString) -> T): T
 }
 
 class TextMateSyntaxMatcherImpl(
@@ -60,7 +60,7 @@ class TextMateSyntaxMatcherImpl(
                                                        matchBeginString = matchBeginString,
                                                        priority = priority,
                                                        currentScope = currentScope))
-      if (resultState.matchData.matched && resultState.matchData.byteOffset().start == byteOffset) {
+      if (resultState.matchData.matched && resultState.matchData.byteRange().start == byteOffset) {
         // Optimization. There cannot be anything more `important` than the current state matched from the very beginning
         break
       }
@@ -100,8 +100,8 @@ class TextMateSyntaxMatcherImpl(
     }
   }
 
-  override fun createStringToMatch(s: CharSequence): TextMateString {
-    return regexFactory.string(s)
+  override fun <T> matchingString(s: CharSequence, body: (TextMateString) -> T): T {
+    return regexFactory.string(s).use(body)
   }
 
   private fun matchFirstChild(
@@ -156,10 +156,10 @@ class TextMateSyntaxMatcherImpl(
     else if (!oldState.matchData.matched) {
       return newState
     }
-    val newScore = newState.matchData.byteOffset().start
-    val oldScore = oldState.matchData.byteOffset().start
+    val newScore = newState.matchData.byteRange().start
+    val oldScore = oldState.matchData.byteRange().start
     if (newScore < oldScore || newScore == oldScore && newState.priorityMatch > oldState.priorityMatch) {
-      if (!newState.matchData.byteOffset().isEmpty || oldState.matchData.byteOffset().isEmpty || hasBeginKey(newState)) {
+      if (!newState.matchData.byteRange().isEmpty || oldState.matchData.byteRange().isEmpty || hasBeginKey(newState)) {
         return newState
       }
     }
@@ -183,10 +183,10 @@ class TextMateSyntaxMatcherImpl(
       if (selectorWeigh.weigh <= 0) {
         continue
       }
-      val injectionState: TextMateLexerState? =
+      val injectionState: TextMateLexerState =
         matchRule(injection.syntaxNodeDescriptor, string, byteOffset, matchBeginPosition, matchBeginString, selectorWeigh.priority,
                   currentScope, checkCancelledCallback)
-      resultState = moreImportantState(resultState, injectionState!!)
+      resultState = moreImportantState(resultState, injectionState)
     }
     return resultState
   }

@@ -51,7 +51,7 @@ private class TextMateRegexFacadeRememberLastMatch(private val delegate: RegexFa
         lastOffset <= byteOffset &&
         (!hasAMatch || (byteOffset == lastOffset && matchBeginString == lastMatchBeginString)) &&
         (!hasGMatch || (byteOffset == lastOffset && matchBeginPosition == lastMatchBeginPosition))) {
-      if (!lastMatch.matched || lastMatch.byteOffset().start >= byteOffset) {
+      if (!lastMatch.matched || lastMatch.byteRange().start >= byteOffset) {
         return lastMatch
       }
     }

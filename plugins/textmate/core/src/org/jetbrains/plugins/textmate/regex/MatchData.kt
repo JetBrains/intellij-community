@@ -5,13 +5,13 @@ data class MatchData(val matched: Boolean, private val offsets: IntArray) {
     return offsets.size / 2
   }
 
-  fun byteOffset(group: Int = 0): TextMateRange {
+  fun byteRange(group: Int = 0): TextMateRange {
     val endIndex = group * 2 + 1
     return TextMateRange(offsets[endIndex - 1], offsets[endIndex])
   }
 
   fun charRange(textMateString: TextMateString, group: Int = 0): TextMateRange {
-    return textMateString.charRangeByByteRange(byteOffset(group))
+    return textMateString.charRangeByByteRange(byteRange(group))
   }
 
   override fun equals(other: Any?): Boolean {

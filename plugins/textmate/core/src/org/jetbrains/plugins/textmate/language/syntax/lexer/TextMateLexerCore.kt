@@ -93,148 +93,148 @@ class TextMateLexerCore(
     val matchBeginString = lineStartOffset == 0 && linePosition == 0
     var anchorByteOffset = -1 // makes sense only for a line, cannot be used across lines
 
-    val string = mySyntaxMatcher.createStringToMatch(line)
-
-    var whileStates = states
-    while (!whileStates.isEmpty()) {
-      val whileState = whileStates.last()
-      whileStates = whileStates.removeAt(whileStates.size - 1)
-      if (whileState.syntaxRule.getStringAttribute(Constants.StringKey.WHILE) != null) {
-        val matchWhile = mySyntaxMatcher.matchStringRegex(keyName = Constants.StringKey.WHILE,
-                                                          string = string,
-                                                          byteOffset = lineByteOffset,
-                                                          matchBeginPosition = anchorByteOffset == lineByteOffset,
-                                                          matchBeginString = matchBeginString,
-                                                          lexerState = whileState,
-                                                          checkCancelledCallback = checkCancelledCallback)
-        if (matchWhile.matched) {
-          // todo: support whileCaptures
-          if (anchorByteOffset == -1) {
-            anchorByteOffset = matchWhile.byteOffset().end
+    return mySyntaxMatcher.matchingString(line) { string ->
+      var whileStates = states
+      while (!whileStates.isEmpty()) {
+        val whileState = whileStates.last()
+        whileStates = whileStates.removeAt(whileStates.size - 1)
+        if (whileState.syntaxRule.getStringAttribute(Constants.StringKey.WHILE) != null) {
+          val matchWhile = mySyntaxMatcher.matchStringRegex(keyName = Constants.StringKey.WHILE,
+                                                            string = string,
+                                                            byteOffset = lineByteOffset,
+                                                            matchBeginPosition = anchorByteOffset == lineByteOffset,
+                                                            matchBeginString = matchBeginString,
+                                                            lexerState = whileState,
+                                                            checkCancelledCallback = checkCancelledCallback)
+          if (matchWhile.matched) {
+            // todo: support whileCaptures
+            if (anchorByteOffset == -1) {
+              anchorByteOffset = matchWhile.byteRange().end
+            }
+          }
+          else {
+            closeScopeSelector(output, linePosition + lineStartOffset)
+            closeScopeSelector(output, linePosition + lineStartOffset)
+            states = whileStates
+            anchorByteOffset = -1
           }
         }
+      }
+
+      val localStates = mutableSetOf<TextMateLexerState>()
+      while (true) {
+        val lastState = states.last()
+        val lastRule = lastState.syntaxRule
+
+        val currentState = mySyntaxMatcher.matchRule(syntaxNodeDescriptor = lastRule,
+                                                     string = string,
+                                                     byteOffset = lineByteOffset,
+                                                     matchBeginPosition = anchorByteOffset == lineByteOffset,
+                                                     matchBeginString = matchBeginString,
+                                                     priority = TextMateWeigh.Priority.NORMAL,
+                                                     currentScope = myCurrentScope,
+                                                     checkCancelledCallback = checkCancelledCallback)
+        val currentRule = currentState.syntaxRule
+        val currentMatch = currentState.matchData
+
+        var endPosition: Int
+        val endMatch = mySyntaxMatcher.matchStringRegex(keyName = Constants.StringKey.END,
+                                                        string = string,
+                                                        byteOffset = lineByteOffset,
+                                                        matchBeginPosition = anchorByteOffset == lineByteOffset,
+                                                        matchBeginString = matchBeginString,
+                                                        lexerState = lastState,
+                                                        checkCancelledCallback = checkCancelledCallback)
+        if (endMatch.matched && (!currentMatch.matched || currentMatch.byteRange().start >= endMatch.byteRange().start || lastState == currentState)) {
+          // todo: applyEndPatternLast
+          val poppedState = states.last()
+          if (poppedState.matchData.matched && !poppedState.matchedEOL) {
+            // if begin hasn't matched EOL, it was performed on the same line; we need to use its anchor
+            anchorByteOffset = poppedState.matchData.byteRange().end
+          }
+          states = states.removeAt(states.size - 1)
+
+          val endRange = endMatch.charRange(string)
+          endPosition = endRange.start
+          val startPosition = endPosition
+          closeScopeSelector(output, startPosition + lineStartOffset) // closing content scope
+          if (lastRule.getCaptureRules(Constants.CaptureKey.END_CAPTURES) == null && lastRule.getCaptureRules(Constants.CaptureKey.CAPTURES) == null ||
+              parseCaptures(output, Constants.CaptureKey.END_CAPTURES, lastRule, endMatch, string, line, lineStartOffset, states, checkCancelledCallback) ||
+              parseCaptures(output, Constants.CaptureKey.CAPTURES, lastRule, endMatch, string, line, lineStartOffset, states, checkCancelledCallback)) {
+            // move line position only if anything was captured or if there is nothing to capture at all
+            endPosition = endRange.end
+          }
+          closeScopeSelector(output, endPosition + lineStartOffset) // closing basic scope
+
+          if (linePosition == endPosition && containsLexerState(localStates, poppedState) && poppedState.enterByteOffset == lineByteOffset) {
+            addToken(output, line.length + lineStartOffset)
+            break
+          }
+          localStates.remove(poppedState)
+        }
+        else if (currentMatch.matched) {
+          anchorByteOffset = currentMatch.byteRange().end
+
+          val currentRange = currentMatch.charRange(string)
+          val startPosition = currentRange.start
+          endPosition = currentRange.end
+
+          if (currentRule.getStringAttribute(Constants.StringKey.BEGIN) != null) {
+            states = states.add(currentState)
+
+            val name = getStringAttribute(Constants.StringKey.NAME, currentRule, string, currentMatch)
+            openScopeSelector(output, name, startPosition + lineStartOffset)
+
+            parseCaptures(output, Constants.CaptureKey.BEGIN_CAPTURES, currentRule, currentMatch, string, line, lineStartOffset, states,
+                          checkCancelledCallback)
+            parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, lineStartOffset, states,
+                          checkCancelledCallback)
+
+            val contentName = getStringAttribute(Constants.StringKey.CONTENT_NAME, currentRule, string, currentMatch)
+            openScopeSelector(output, contentName, endPosition + lineStartOffset)
+          }
+          else if (currentRule.getStringAttribute(Constants.StringKey.MATCH) != null) {
+            val name = getStringAttribute(Constants.StringKey.NAME, currentRule, string, currentMatch)
+            openScopeSelector(output, name, startPosition + lineStartOffset)
+            parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, lineStartOffset, states,
+                          checkCancelledCallback)
+            closeScopeSelector(output, endPosition + lineStartOffset)
+          }
+
+          if (linePosition == endPosition && containsLexerState(localStates, currentState)) {
+            addToken(output, line.length + lineStartOffset)
+            break
+          }
+          localStates.add(currentState)
+        }
         else {
-          closeScopeSelector(output, linePosition + lineStartOffset)
-          closeScopeSelector(output, linePosition + lineStartOffset)
-          states = whileStates
-          anchorByteOffset = -1
+          addToken(output, line.length + lineStartOffset)
+          break
         }
+
+        // global looping protection
+        if (lastMovedOffset < myCurrentOffset) {
+          lastSuccessState = states
+          lastSuccessStateOccursCount = 0
+          lastMovedOffset = myCurrentOffset
+        }
+        else if (lastSuccessState == states) {
+          if (lastSuccessStateOccursCount > MAX_LOOPS_COUNT) {
+            addToken(output, line.length + lineStartOffset)
+            break
+          }
+          lastSuccessStateOccursCount++
+        }
+
+        if (linePosition != endPosition) {
+          lineByteOffset += byteOffsetByCharOffset(line, linePosition, endPosition)
+          linePosition = endPosition
+        }
+
+        checkCancelledCallback?.run()
       }
+      states
     }
-
-    val localStates = mutableSetOf<TextMateLexerState>()
-    while (true) {
-      val lastState = states.last()
-      val lastRule = lastState.syntaxRule
-
-      val currentState = mySyntaxMatcher.matchRule(syntaxNodeDescriptor = lastRule,
-                                                   string = string,
-                                                   byteOffset = lineByteOffset,
-                                                   matchBeginPosition = anchorByteOffset == lineByteOffset,
-                                                   matchBeginString = matchBeginString,
-                                                   priority = TextMateWeigh.Priority.NORMAL,
-                                                   currentScope = myCurrentScope,
-                                                   checkCancelledCallback = checkCancelledCallback)
-      val currentRule = currentState.syntaxRule
-      val currentMatch = currentState.matchData
-
-      var endPosition: Int
-      val endMatch = mySyntaxMatcher.matchStringRegex(keyName = Constants.StringKey.END,
-                                                      string = string,
-                                                      byteOffset = lineByteOffset,
-                                                      matchBeginPosition = anchorByteOffset == lineByteOffset,
-                                                      matchBeginString = matchBeginString,
-                                                      lexerState = lastState,
-                                                      checkCancelledCallback = checkCancelledCallback)
-      if (endMatch.matched && (!currentMatch.matched || currentMatch.byteOffset().start >= endMatch.byteOffset().start || lastState == currentState)) {
-        // todo: applyEndPatternLast
-        val poppedState = states.last()
-        if (poppedState.matchData.matched && !poppedState.matchedEOL) {
-          // if begin hasn't matched EOL, it was performed on the same line; we need to use its anchor
-          anchorByteOffset = poppedState.matchData.byteOffset().end
-        }
-        states = states.removeAt(states.size - 1)
-
-        val endRange = endMatch.charRange(string)
-        endPosition = endRange.start
-        val startPosition = endPosition
-        closeScopeSelector(output, startPosition + lineStartOffset) // closing content scope
-        if (lastRule.getCaptureRules(Constants.CaptureKey.END_CAPTURES) == null && lastRule.getCaptureRules(Constants.CaptureKey.CAPTURES) == null ||
-            parseCaptures(output, Constants.CaptureKey.END_CAPTURES, lastRule, endMatch, string, line, lineStartOffset, states, checkCancelledCallback) ||
-            parseCaptures(output, Constants.CaptureKey.CAPTURES, lastRule, endMatch, string, line, lineStartOffset, states, checkCancelledCallback)) {
-          // move line position only if anything was captured or if there is nothing to capture at all
-          endPosition = endRange.end
-        }
-        closeScopeSelector(output, endPosition + lineStartOffset) // closing basic scope
-
-        if (linePosition == endPosition && containsLexerState(localStates, poppedState) && poppedState.enterByteOffset == lineByteOffset) {
-          addToken(output, line.length + lineStartOffset)
-          break
-        }
-        localStates.remove(poppedState)
-      }
-      else if (currentMatch.matched) {
-        anchorByteOffset = currentMatch.byteOffset().end
-
-        val currentRange = currentMatch.charRange(string)
-        val startPosition = currentRange.start
-        endPosition = currentRange.end
-
-        if (currentRule.getStringAttribute(Constants.StringKey.BEGIN) != null) {
-          states = states.add(currentState)
-
-          val name = getStringAttribute(Constants.StringKey.NAME, currentRule, string, currentMatch)
-          openScopeSelector(output, name, startPosition + lineStartOffset)
-
-          parseCaptures(output, Constants.CaptureKey.BEGIN_CAPTURES, currentRule, currentMatch, string, line, lineStartOffset, states,
-                        checkCancelledCallback)
-          parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, lineStartOffset, states,
-                        checkCancelledCallback)
-
-          val contentName = getStringAttribute(Constants.StringKey.CONTENT_NAME, currentRule, string, currentMatch)
-          openScopeSelector(output, contentName, endPosition + lineStartOffset)
-        }
-        else if (currentRule.getStringAttribute(Constants.StringKey.MATCH) != null) {
-          val name = getStringAttribute(Constants.StringKey.NAME, currentRule, string, currentMatch)
-          openScopeSelector(output, name, startPosition + lineStartOffset)
-          parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, lineStartOffset, states,
-                        checkCancelledCallback)
-          closeScopeSelector(output, endPosition + lineStartOffset)
-        }
-
-        if (linePosition == endPosition && containsLexerState(localStates, currentState)) {
-          addToken(output, line.length + lineStartOffset)
-          break
-        }
-        localStates.add(currentState)
-      }
-      else {
-        addToken(output, line.length + lineStartOffset)
-        break
-      }
-
-      // global looping protection
-      if (lastMovedOffset < myCurrentOffset) {
-        lastSuccessState = states
-        lastSuccessStateOccursCount = 0
-        lastMovedOffset = myCurrentOffset
-      }
-      else if (lastSuccessState == states) {
-        if (lastSuccessStateOccursCount > MAX_LOOPS_COUNT) {
-          addToken(output, line.length + lineStartOffset)
-          break
-        }
-        lastSuccessStateOccursCount++
-      }
-
-      if (linePosition != endPosition) {
-        lineByteOffset = lineByteOffset + byteOffsetByCharOffset(line, linePosition, endPosition)
-        linePosition = endPosition
-      }
-
-      checkCancelledCallback?.run()
-    }
-    return states
   }
 
   private fun parseCaptures(
@@ -260,7 +260,7 @@ class TextMateLexerCore(
         continue
       }
 
-      val byteRange = matchData.byteOffset(group)
+      val byteRange = matchData.byteRange(group)
       if (byteRange.isEmpty) {
         continue
       }
@@ -298,19 +298,20 @@ class TextMateLexerCore(
       }
       else if (capture is TextMateCapture.Rule) {
         val capturedString = line.subSequence(0, captureRange.end)
-        val capturedTextMateString = mySyntaxMatcher.createStringToMatch(capturedString)
-        val captureState = TextMateLexerState(syntaxRule = capture.node,
-                                              matchData = matchData,
-                                              priorityMatch = TextMateWeigh.Priority.NORMAL,
-                                              enterByteOffset = byteRange.start,
-                                              line = capturedTextMateString)
-        parseLine(line = capturedString,
-                  output = output,
-                  states = states.add(captureState),
-                  lineStartOffset = startLineOffset,
-                  linePosition = captureRange.start,
-                  lineByteOffset = byteRange.start,
-                  checkCancelledCallback = checkCancelledCallback)
+        mySyntaxMatcher.matchingString(capturedString) { capturedTextMateString ->
+          val captureState = TextMateLexerState(syntaxRule = capture.node,
+                                                matchData = matchData,
+                                                priorityMatch = TextMateWeigh.Priority.NORMAL,
+                                                enterByteOffset = byteRange.start,
+                                                line = capturedTextMateString)
+          parseLine(line = capturedString,
+                    output = output,
+                    states = states.add(captureState),
+                    lineStartOffset = startLineOffset,
+                    linePosition = captureRange.start,
+                    lineByteOffset = byteRange.start,
+                    checkCancelledCallback = checkCancelledCallback)
+        }
       }
       else {
         error("unknown capture type: $capture")
