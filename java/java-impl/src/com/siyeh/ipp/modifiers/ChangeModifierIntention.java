@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.modifiers;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -88,8 +88,8 @@ public final class ChangeModifierIntention extends BaseElementAtCaretIntentionAc
   public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element) {
     if (!JavaLanguage.INSTANCE.equals(element.getLanguage())) return false;
     PsiMember member = findMember(element);
-    if (!(member instanceof PsiNameIdentifierOwner)) return false;
-    PsiElement identifier = ((PsiNameIdentifierOwner)member).getNameIdentifier();
+    if (!(member instanceof PsiNameIdentifierOwner owner)) return false;
+    PsiElement identifier = owner.getNameIdentifier();
     if (identifier == null || identifier.getTextRange().getEndOffset() <= element.getTextRange().getStartOffset()) return false;
     List<AccessModifier> modifiers = new ArrayList<>(AccessModifier.getAvailableModifiers(member));
     if (modifiers.isEmpty()) return false;
@@ -122,7 +122,7 @@ public final class ChangeModifierIntention extends BaseElementAtCaretIntentionAc
   }
 
   @Override
-  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+  public @NotNull PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
     return currentFile;
   }
 
@@ -196,8 +196,8 @@ public final class ChangeModifierIntention extends BaseElementAtCaretIntentionAc
       })
       .setNamerForFiltering(AccessModifier::toString)
       .setItemChosenCallback(t -> {
-        if (editor instanceof EditorImpl) {
-          ((EditorImpl)editor).startDumb();
+        if (editor instanceof EditorImpl e) {
+          e.startDumb();
         }
         MultiMap<PsiElement, String> conflicts;
         PsiModifierList modifierList;
@@ -212,8 +212,8 @@ public final class ChangeModifierIntention extends BaseElementAtCaretIntentionAc
           conflicts = checkForConflicts(m, t);
         }
         finally {
-          if (editor instanceof EditorImpl) {
-            ((EditorImpl)editor).stopDumbLater();
+          if (editor instanceof EditorImpl e) {
+            e.stopDumbLater();
           }
         }
         if (conflicts == null) {
@@ -392,11 +392,11 @@ public final class ChangeModifierIntention extends BaseElementAtCaretIntentionAc
         return MultiMap.empty();
       }
       final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
-      conflicts.putValue(aClass, IntentionPowerPackBundle.message(
+      conflicts.putValue(aClass, StringUtil.capitalize(IntentionPowerPackBundle.message(
         "0.is.declared.in.1.but.when.public.should.be.declared.in.a.file.named.2",
         RefactoringUIUtil.getDescription(aClass, false),
         RefactoringUIUtil.getDescription(javaFile, false),
-        CommonRefactoringUtil.htmlEmphasize(className + ".java")));
+        CommonRefactoringUtil.htmlEmphasize(className + ".java"))));
       return conflicts;
     }
     final PsiModifierList modifierList = member.getModifierList();
@@ -410,9 +410,9 @@ public final class ChangeModifierIntention extends BaseElementAtCaretIntentionAc
       PsiModifierList copy = (PsiModifierList)modifierList.copy();
       copy.setModifierProperty(modifier.toPsiModifier(), true);
 
-      if (member instanceof PsiMethod) {
-        RefactoringConflictsUtil.getInstance().analyzeHierarchyConflictsAfterMethodModifierChange((PsiMethod)member,
-                                                                                                  modifier.toPsiModifier(), conflicts);
+      if (member instanceof PsiMethod method) {
+        RefactoringConflictsUtil.getInstance()
+          .analyzeHierarchyConflictsAfterMethodModifierChange(method, modifier.toPsiModifier(), conflicts);
       }
 
       final Query<PsiReference> search = ReferencesSearch.search(member, useScope);
