@@ -208,9 +208,9 @@ class PluginDescriptorTest {
 
   @Test
   fun `descriptor with a v2 content module with a slash in its name loads if module descriptor file has a dot instead of a slash`() {
-    PluginBuilder.empty().id("bar")
+    PluginBuilder().id("bar")
       .module(moduleName = "bar/module",
-              PluginBuilder.empty().packagePrefix("bar.module"),
+              PluginBuilder().packagePrefix("bar.module"),
               loadingRule = ModuleLoadingRule.REQUIRED,
               moduleFile = "bar.module.xml")
       .build(pluginDirPath)
@@ -222,9 +222,9 @@ class PluginDescriptorTest {
 
   @Test
   fun `descriptor with a v2 content module with a slash in its name does not load if module descriptor file is placed in a subdirectory`() {
-    PluginBuilder.empty().id("bar")
+    PluginBuilder().id("bar")
       .module(moduleName = "bar/module",
-              PluginBuilder.empty().packagePrefix("bar.module"),
+              PluginBuilder().packagePrefix("bar.module"),
               loadingRule = ModuleLoadingRule.REQUIRED,
               moduleFile = "bar/module.xml")
       .build(pluginDirPath)
@@ -238,9 +238,9 @@ class PluginDescriptorTest {
 
   @Test
   fun `descriptor with a v2 content module with multiple slashes in its name does not load`() {
-    PluginBuilder.empty().id("bar")
+    PluginBuilder().id("bar")
       .module(moduleName = "bar/module/sub",
-              PluginBuilder.empty().packagePrefix("bar.module.sub"),
+              PluginBuilder().packagePrefix("bar.module.sub"),
               loadingRule = ModuleLoadingRule.REQUIRED,
               moduleFile = "bar.module.sub.xml")
       .build(pluginDirPath)
@@ -254,9 +254,9 @@ class PluginDescriptorTest {
 
   @Test
   fun `descriptor with a v2 content module with multiple slashes in its name loads from a subdirectory`() { // FIXME
-    PluginBuilder.empty().id("bar")
+    PluginBuilder().id("bar")
       .module(moduleName = "bar/module/sub",
-              PluginBuilder.empty().packagePrefix("bar.module.sub"),
+              PluginBuilder().packagePrefix("bar.module.sub"),
               loadingRule = ModuleLoadingRule.REQUIRED,
               moduleFile = "bar/module.sub.xml")
       .build(pluginDirPath)
@@ -293,13 +293,13 @@ class PluginDescriptorTest {
 
   @Test
   fun `id, version, name are inherited in content modules`() {
-    PluginBuilder.empty()
+    PluginBuilder()
       .id("bar")
       .name("Bar")
       .version("1.0.0")
       .module(
         moduleName = "bar.sub",
-        moduleDescriptor = PluginBuilder.empty()
+        moduleDescriptor = PluginBuilder()
           .id("bar 2")
           .name("Bar Sub")
           .version("2.0.0")
@@ -321,13 +321,13 @@ class PluginDescriptorTest {
 
   @Test
   fun `id, version, name can't overridden in submodules`() {
-    PluginBuilder.empty()
+    PluginBuilder()
       .id("bar")
       .name("Bar")
       .version("1.0.0")
       .module(
         moduleName = "bar.sub",
-        moduleDescriptor = PluginBuilder.empty()
+        moduleDescriptor = PluginBuilder()
           .id("bar 2")
           .name("Bar Sub")
           .version("2.0.0")
@@ -349,11 +349,11 @@ class PluginDescriptorTest {
 
   @Test
   fun `resource bundle is not inherited in content modules`() {
-    PluginBuilder.empty().id("bar")
+    PluginBuilder().id("bar")
       .resourceBundle("resourceBundle")
-      .module(moduleName = "bar.opt", moduleDescriptor = PluginBuilder.empty(), loadingRule = ModuleLoadingRule.OPTIONAL)
-      .module(moduleName = "bar.req", moduleDescriptor = PluginBuilder.empty(), loadingRule = ModuleLoadingRule.REQUIRED)
-      .module(moduleName = "bar.emb", moduleDescriptor = PluginBuilder.empty(), loadingRule = ModuleLoadingRule.EMBEDDED)
+      .module(moduleName = "bar.opt", moduleDescriptor = PluginBuilder(), loadingRule = ModuleLoadingRule.OPTIONAL)
+      .module(moduleName = "bar.req", moduleDescriptor = PluginBuilder(), loadingRule = ModuleLoadingRule.REQUIRED)
+      .module(moduleName = "bar.emb", moduleDescriptor = PluginBuilder(), loadingRule = ModuleLoadingRule.EMBEDDED)
       .build(pluginDirPath)
 
     val descriptor = loadAndInitDescriptorInTest(pluginDirPath)
@@ -366,11 +366,11 @@ class PluginDescriptorTest {
 
   @Test
   fun `resource bundle can be set in content modules`() {
-    PluginBuilder.empty().id("bar")
+    PluginBuilder().id("bar")
       .resourceBundle("resourceBundle")
-      .module(moduleName = "opt", moduleDescriptor = PluginBuilder.empty().resourceBundle("opt"), loadingRule = ModuleLoadingRule.OPTIONAL)
-      .module(moduleName = "req", moduleDescriptor = PluginBuilder.empty().resourceBundle("req"), loadingRule = ModuleLoadingRule.REQUIRED)
-      .module(moduleName = "emb", moduleDescriptor = PluginBuilder.empty().resourceBundle("emb"), loadingRule = ModuleLoadingRule.EMBEDDED)
+      .module(moduleName = "opt", moduleDescriptor = PluginBuilder().resourceBundle("opt"), loadingRule = ModuleLoadingRule.OPTIONAL)
+      .module(moduleName = "req", moduleDescriptor = PluginBuilder().resourceBundle("req"), loadingRule = ModuleLoadingRule.REQUIRED)
+      .module(moduleName = "emb", moduleDescriptor = PluginBuilder().resourceBundle("emb"), loadingRule = ModuleLoadingRule.EMBEDDED)
       .build(pluginDirPath)
 
     val descriptor = loadAndInitDescriptorInTest(pluginDirPath)
@@ -383,7 +383,7 @@ class PluginDescriptorTest {
 
   @Test
   fun `core plugin has implicit host and product mode plugin aliases`() {
-    PluginBuilder.empty()
+    PluginBuilder()
       .id("com.intellij")
       .build(pluginDirPath)
     val descriptor = loadAndInitDescriptorInTest(pluginDirPath)
@@ -403,12 +403,12 @@ class PluginDescriptorTest {
 
   @Test
   fun `content module may have content modules but they are disregarded`() {
-    PluginBuilder.empty().id("bar")
+    PluginBuilder().id("bar")
       .module(moduleName = "bar.module",
-              PluginBuilder.empty()
+              PluginBuilder()
                 .packagePrefix("bar.module")
                 .module("bar.module.inner",
-                        PluginBuilder.empty().packagePrefix("bar.module.inner"),
+                        PluginBuilder().packagePrefix("bar.module.inner"),
                         loadingRule = ModuleLoadingRule.REQUIRED),
               loadingRule = ModuleLoadingRule.REQUIRED)
       .build(pluginDirPath)

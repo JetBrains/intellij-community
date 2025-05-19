@@ -324,8 +324,4 @@ class PluginBuilder() {
 
     return this
   }
-
-  companion object {
-    fun empty(): PluginBuilder = PluginBuilder()
-  }
 }

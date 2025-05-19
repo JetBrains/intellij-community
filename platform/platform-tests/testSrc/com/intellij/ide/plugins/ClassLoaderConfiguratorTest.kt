@@ -129,18 +129,18 @@ internal class ClassLoaderConfiguratorTest {
 
   private fun loadPlugins(modulePackage: String?): PluginLoadingResult {
     val dependencyId = "p_dependency"
-    PluginBuilder.empty()
+    PluginBuilder()
       .id(dependencyId)
       .packagePrefix("com.bar")
       .extensionPoints("""<extensionPoint qualifiedName="bar.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true"/>""")
       .build(rootDir.resolve(dependencyId))
 
     val dependentPluginId = "p_dependent"
-    PluginBuilder.empty()
+    PluginBuilder()
       .id(dependentPluginId)
       .packagePrefix("com.example")
       .module("com.example.sub",
-              PluginBuilder.empty().packagePrefix(modulePackage)
+              PluginBuilder().packagePrefix(modulePackage)
                 .extensionPoints("""<extensionPoint qualifiedName="bar.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true"/>"""))
       .build(rootDir.resolve(dependentPluginId))
 
