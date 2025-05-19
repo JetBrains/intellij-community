@@ -2,9 +2,9 @@
 package com.intellij.platform.searchEverywhere.frontend.ui
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
 import com.intellij.ide.actions.searcheverywhere.ExtendedInfo
 import com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoComponent
-import com.intellij.ide.DataManager
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -284,21 +284,13 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
   }
 
   private suspend fun elementsSelected(indexes: IntArray, modifiers: Int) {
-    //stopSearching();
-
     val itemDataList = indexes.map {
       resultListModel[it]
     }.mapNotNull {
       (it as? SeResultListItemRow)?.item
     }
 
-    var closePopup = false
-    for (itemData in itemDataList) {
-      val closeRequested = vm.itemSelected(itemData, modifiers)
-      closePopup = closePopup || closeRequested
-    }
-
-    if (closePopup) {
+    if (vm.itemsSelected(itemDataList, modifiers)) {
       closePopup()
     }
     else {

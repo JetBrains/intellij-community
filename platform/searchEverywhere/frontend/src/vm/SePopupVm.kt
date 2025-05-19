@@ -13,8 +13,7 @@ import com.intellij.platform.searchEverywhere.SeUsageEventsLogger
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.util.SystemProperties
 import fleet.kernel.DurableRef
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
@@ -54,12 +53,6 @@ class SePopupVm(
 
   val usageLogger: SeUsageEventsLogger = SeUsageEventsLogger()
 
-  var shouldLoadMore: Boolean
-    get() = currentTab.shouldLoadMore
-    set(value) {
-      currentTab.shouldLoadMore = value
-    }
-
   init {
     check(tabVms.isNotEmpty()) { "Search Everywhere tabs must not be empty" }
 
@@ -86,6 +79,19 @@ class SePopupVm(
   suspend fun itemSelected(item: SeItemData, modifiers: Int): Boolean {
     logItemSelected()
     return currentTab.itemSelected(item, modifiers, searchPattern.value)
+  }
+
+  suspend fun itemsSelected(items: List<SeItemData>, modifiers: Int): Boolean {
+    logItemSelected()
+    val currentTab = currentTab
+
+    return coroutineScope {
+      items.map { item ->
+        async {
+          currentTab.itemSelected(item, modifiers, searchPattern.value)
+        }
+      }.awaitAll().any { it }
+    }
   }
 
   fun selectNextTab() {
