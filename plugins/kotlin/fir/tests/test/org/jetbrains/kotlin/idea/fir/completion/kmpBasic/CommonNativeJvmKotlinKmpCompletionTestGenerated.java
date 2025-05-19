@@ -4156,6 +4156,11 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
             runTest("../../completion/testData/basic/common/TypeArgOfOwnerClass.kt");
         }
 
+        @TestMetadata("TypeArgumentPriority.kt")
+        public void testTypeArgumentPriority() throws Exception {
+            runTest("../../completion/testData/basic/common/TypeArgumentPriority.kt");
+        }
+
         @TestMetadata("TypeParamAsTypeArg.kt")
         public void testTypeParamAsTypeArg() throws Exception {
             runTest("../../completion/testData/basic/common/TypeParamAsTypeArg.kt");

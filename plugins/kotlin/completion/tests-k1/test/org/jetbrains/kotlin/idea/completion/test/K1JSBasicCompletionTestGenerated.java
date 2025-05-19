@@ -3962,6 +3962,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 runTest("../testData/basic/common/TypeArgOfOwnerClass.kt");
             }
 
+            @TestMetadata("TypeArgumentPriority.kt")
+            public void testTypeArgumentPriority() throws Exception {
+                runTest("../testData/basic/common/TypeArgumentPriority.kt");
+            }
+
             @TestMetadata("TypeParamAsTypeArg.kt")
             public void testTypeParamAsTypeArg() throws Exception {
                 runTest("../testData/basic/common/TypeParamAsTypeArg.kt");
