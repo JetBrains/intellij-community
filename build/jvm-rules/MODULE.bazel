@@ -67,6 +67,27 @@ http_file(
 
 # ------------------------patched kotlin compiler fork for jvm-inc-builder
 
+#http_file(
+#  name = "expects-compiler-plugin-2_1_20-0_2_http",
+#  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/expects-compiler-plugin/2.1.20-0.2/expects-compiler-plugin-2.1.20-0.2.jar",
+#  sha256 = "53f345b9ec17aa821e8e4acce59b6584f55a2193f5c48dcea9ffc41eaac4add4",
+#  downloaded_file_path = "expects-compiler-plugin-2.1.20-0.2.jar"
+#)
+
+http_file(
+  name = "expects-compiler-plugin-2_2_0-RC_0_1_http",
+  url = "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/expects-compiler-plugin/2.2.0-RC-0.1/expects-compiler-plugin-2.2.0-RC-0.1.jar",
+  sha256 = "0df587db8f155e132a7f6ac3e79e328fecbae62b15229a1c1b9baf176eb1455c",
+  downloaded_file_path = "expects-compiler-plugin-2.2.0-RC-0.1.jar"
+)
+
+http_file(
+  name = "rhizomedb-compiler-plugin-2_1_20-0_5_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/rhizomedb-compiler-plugin/2.1.20-0.5/rhizomedb-compiler-plugin-2.1.20-0.5.jar",
+  sha256 = "4a72bd4f988180e9933117bb98c0a13fb2dbe2f3d058e35562ce66bf79373e52",
+  downloaded_file_path = "rhizomedb-compiler-plugin-2.1.20-0.5.jar"
+)
+
 http_file(
   name = "kotlin-compiler-2_2_20-dev-2951_http",
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler/2.2.20-dev-2951/kotlin-compiler-2.2.20-dev-2951.jar",
