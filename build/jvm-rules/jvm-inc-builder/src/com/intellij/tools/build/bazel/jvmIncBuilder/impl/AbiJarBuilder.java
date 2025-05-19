@@ -91,7 +91,7 @@ public class AbiJarBuilder extends ZipOutputBuilderImpl {
 
   @Override
   public void putEntry(String entryName, byte[] content) {
-    byte[] filtered = filterAbiJarContent(content);
+    byte[] filtered = filterAbiJarContent(entryName, content);
     if (filtered != null) {
       super.putEntry(entryName, filtered);
       myPackageIndexChanged |= myPackageIndex.remove(getParentEntryName(entryName)) != null;
@@ -101,9 +101,13 @@ public class AbiJarBuilder extends ZipOutputBuilderImpl {
     }
   }
 
-  private byte @Nullable [] filterAbiJarContent(byte[] content) {
+  private byte @Nullable [] filterAbiJarContent(String entryName, byte[] content) {
     if (myClassFinder == null) {
       return content; // no instrumentation, if class finder is not specified
+    }
+
+    if (entryName.endsWith(".kotlin_module")) {
+      return content; // don't apply filtering on kotlin module, todo: check if we need this in abi jar
     }
     // todo: check content and instrument it before adding
     // todo: for java use JavaAbiClassVisitor, for kotlin-generated classes use KotlinAnnotationVisitor, abiMetadataProcessor
