@@ -328,14 +328,14 @@ sealed class Attributes<E : Entity>(
 
 /**
  * Any of these flags implies that values of this attribute is stored in avet index.
- * Storing values with inefficient hashing strategy in this index will have performance impact.
+ * Storing values with an inefficient hashing strategy in this index will have a performance impact.
  * Please avoid using them for anything bigger than simple small scalar values.
  * */
 enum class Indexing {
   NOT_INDEXED,
 
   /**
-   * Attributes with this flag are guaranteed to have no more than one entity refering with it, to any given value
+   * Attributes with this flag are guaranteed to have no more than one entity referring with it, to any given value
    * Implicitly enables [entity] query.
    * */
   UNIQUE,
@@ -348,18 +348,18 @@ enum class Indexing {
 
 enum class RefFlags {
   /**
-   * Attributes with this flag are guaranteed to have no more than one entity refering with it, to any given entity
+   * Attributes with this flag are guaranteed to have no more than one entity referring with it, to any given entity
    * Implicitly enables [entity] query.
    * */
   UNIQUE,
 
   /**
-   * When entity with this attribute is required, the referenced entity is also retracted.
+   * When an entity with this attribute is retracted, the referenced entity is also retracted.
    * */
   CASCADE_DELETE,
 
   /**
-   * When referenced entity is retracted, this entity also gets retracted.
+   * When a referenced entity is retracted, this entity also gets retracted.
    * */
   CASCADE_DELETE_BY
 }
