@@ -320,51 +320,12 @@ sealed class IdeaPluginDescriptorImpl(
     }
   }
 
-  internal fun checkUnexpectedElement(elementName: String, selector: () -> Boolean) {
-    if (!selector()) {
-      return
-    }
-    LOG.error(PluginException(buildString {
-      append("Plugin descriptor for ")
-      when (this@IdeaPluginDescriptorImpl) {
-        is ContentModuleDescriptor -> append("content module '${moduleName}' of plugin '${pluginId}'")
-        is DependsSubDescriptor -> append("'depends' sub-descriptor '${descriptorPath}' of plugin '${pluginId}'")
-        is PluginMainDescriptor -> error("not intended")
-      }
-      append(" has declared element '$elementName' which has no effect there")
-      append("\n in ${this@IdeaPluginDescriptorImpl}")
-    }, pluginId))
-  }
-
-  internal fun checkSubDescriptorUnexpectedElements(raw: RawPluginDescriptor) {
-    checkUnexpectedElement(PluginXmlConst.PLUGIN_ALLOW_BUNDLED_UPDATE_ATTR) { raw.isBundledUpdateAllowed }
-    checkUnexpectedElement(PluginXmlConst.PLUGIN_REQUIRE_RESTART_ATTR) { raw.isRestartRequired }
-    checkUnexpectedElement(PluginXmlConst.PLUGIN_IMPLEMENTATION_DETAIL_ATTR) { raw.isImplementationDetail }
-
-    checkUnexpectedElement(PluginXmlConst.VENDOR_ELEM) { raw.vendor != null }
-    checkUnexpectedElement(PluginXmlConst.VENDOR_URL_ATTR) { raw.vendorUrl != null }
-    checkUnexpectedElement(PluginXmlConst.VENDOR_EMAIL_ATTR) { raw.vendorEmail != null }
-    checkUnexpectedElement(PluginXmlConst.PLUGIN_URL_ATTR) { raw.url != null }
-
-    checkUnexpectedElement(PluginXmlConst.PRODUCT_DESCRIPTOR_CODE_ATTR) { raw.productCode != null }
-    checkUnexpectedElement(PluginXmlConst.PRODUCT_DESCRIPTOR_OPTIONAL_ATTR) { raw.isLicenseOptional }
-    checkUnexpectedElement(PluginXmlConst.PRODUCT_DESCRIPTOR_RELEASE_DATE_ATTR) { raw.releaseDate != null }
-    checkUnexpectedElement(PluginXmlConst.PRODUCT_DESCRIPTOR_RELEASE_VERSION_ATTR) { raw.releaseVersion != 0 }
-
-    checkUnexpectedElement(PluginXmlConst.CHANGE_NOTES_ELEM) { raw.changeNotes != null }
-    checkUnexpectedElement(PluginXmlConst.CATEGORY_ELEM) { raw.category != null }
-    checkUnexpectedElement(PluginXmlConst.DESCRIPTION_ELEM) { raw.description != null }
-
-    checkUnexpectedElement(PluginXmlConst.CONTENT_ELEM) { raw.contentModules.isNotEmpty() }
-  }
-
   @ApiStatus.Internal
   companion object {
     private fun convertDepends(depends: List<DependsElement>): MutableList<PluginDependencyImpl> =
       depends.mapTo(ArrayList(depends.size)) {
         PluginDependencyImpl(PluginId.getId(it.pluginId), it.configFile, it.isOptional)
       }
-
     // FIXME sorting is likely unnecessary.
     //  Instead, users of ExtensionPoint change listeners must not touch other services/extension points.
     //  Only clear up some caches and/or launch coroutines.
@@ -387,7 +348,6 @@ sealed class IdeaPluginDescriptorImpl(
       }
       return result
     }
-
     private const val REGISTRY_EP_NAME = "com.intellij.registryKey"
 
     private val extensionPointNameComparator = Comparator<String> { o1, o2 ->
@@ -493,6 +453,44 @@ sealed class IdeaPluginDescriptorImpl(
         // Modules, which depend on it, will not be loaded in split mode.
         add(PluginId.getId("com.intellij.platform.experimental.monolith"))
       }
+    }
+
+    internal fun IdeaPluginDescriptorImpl.checkUnexpectedElement(elementName: String, selector: () -> Boolean) {
+      if (!selector()) {
+        return
+      }
+      LOG.error(PluginException(buildString {
+        append("Plugin descriptor for ")
+        when (this@checkUnexpectedElement) {
+          is ContentModuleDescriptor -> append("content module '${moduleName}' of plugin '${pluginId}'")
+          is DependsSubDescriptor -> append("'depends' sub-descriptor '${descriptorPath}' of plugin '${pluginId}'")
+          is PluginMainDescriptor -> error("not intended")
+        }
+        append(" has declared element '$elementName' which has no effect there")
+        append("\n in ${this@checkUnexpectedElement}")
+      }, pluginId))
+    }
+
+    internal fun IdeaPluginDescriptorImpl.checkSubDescriptorUnexpectedElements(raw: RawPluginDescriptor) {
+      checkUnexpectedElement(PluginXmlConst.PLUGIN_ALLOW_BUNDLED_UPDATE_ATTR) { raw.isBundledUpdateAllowed }
+      checkUnexpectedElement(PluginXmlConst.PLUGIN_REQUIRE_RESTART_ATTR) { raw.isRestartRequired }
+      checkUnexpectedElement(PluginXmlConst.PLUGIN_IMPLEMENTATION_DETAIL_ATTR) { raw.isImplementationDetail }
+
+      checkUnexpectedElement(PluginXmlConst.VENDOR_ELEM) { raw.vendor != null }
+      checkUnexpectedElement(PluginXmlConst.VENDOR_URL_ATTR) { raw.vendorUrl != null }
+      checkUnexpectedElement(PluginXmlConst.VENDOR_EMAIL_ATTR) { raw.vendorEmail != null }
+      checkUnexpectedElement(PluginXmlConst.PLUGIN_URL_ATTR) { raw.url != null }
+
+      checkUnexpectedElement(PluginXmlConst.PRODUCT_DESCRIPTOR_CODE_ATTR) { raw.productCode != null }
+      checkUnexpectedElement(PluginXmlConst.PRODUCT_DESCRIPTOR_OPTIONAL_ATTR) { raw.isLicenseOptional }
+      checkUnexpectedElement(PluginXmlConst.PRODUCT_DESCRIPTOR_RELEASE_DATE_ATTR) { raw.releaseDate != null }
+      checkUnexpectedElement(PluginXmlConst.PRODUCT_DESCRIPTOR_RELEASE_VERSION_ATTR) { raw.releaseVersion != 0 }
+
+      checkUnexpectedElement(PluginXmlConst.CHANGE_NOTES_ELEM) { raw.changeNotes != null }
+      checkUnexpectedElement(PluginXmlConst.CATEGORY_ELEM) { raw.category != null }
+      checkUnexpectedElement(PluginXmlConst.DESCRIPTION_ELEM) { raw.description != null }
+
+      checkUnexpectedElement(PluginXmlConst.CONTENT_ELEM) { raw.contentModules.isNotEmpty() }
     }
   }
 }
