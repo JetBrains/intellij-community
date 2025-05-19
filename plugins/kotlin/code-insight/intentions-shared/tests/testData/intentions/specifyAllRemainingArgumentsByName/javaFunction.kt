@@ -3,8 +3,8 @@
 // ERROR: No value passed for parameter 'p1'
 // ERROR: No value passed for parameter 'p2'
 // ERROR: Not enough information to infer type variable K
-// K2_ERROR: Cannot infer type for this parameter. Specify it explicitly.
-// K2_ERROR: Cannot infer type for this parameter. Specify it explicitly.
+// K2_ERROR: Cannot infer type for type parameter 'K'. Specify it explicitly.
+// K2_ERROR: Cannot infer type for type parameter 'V'. Specify it explicitly.
 // K2_ERROR: No value passed for parameter 'p0'.
 // K2_ERROR: No value passed for parameter 'p1'.
 // K2_ERROR: No value passed for parameter 'p2'.
