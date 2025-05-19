@@ -58,9 +58,12 @@ public final class GlobalSearchScopeUtil {
    * Recursively unwraps nested {@link IntersectionScope}s and returns a list of all contained non-intersection scopes.
    */
   public static @NotNull List<GlobalSearchScope> flattenIntersectionScope(@NotNull GlobalSearchScope scope) {
-    ArrayList<GlobalSearchScope> result = new ArrayList<>();
-    flattenIntersectionScopeInto(scope, result);
-    return result;
+    if (scope instanceof IntersectionScope) {
+      ArrayList<GlobalSearchScope> result = new ArrayList<>();
+      flattenIntersectionScopeInto(scope, result);
+      return result;
+    }
+    return Collections.singletonList(scope);
   }
 
   private static void flattenIntersectionScopeInto(@NotNull GlobalSearchScope scope, @NotNull List<GlobalSearchScope> result) {
