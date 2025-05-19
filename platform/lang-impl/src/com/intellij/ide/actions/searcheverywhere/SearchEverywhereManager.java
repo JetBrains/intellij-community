@@ -1,10 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
-import com.intellij.ide.actions.SearchEverywhereAction;
 import com.intellij.ide.actions.SearchEverywhereManagerFactory;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -16,24 +14,19 @@ import org.jetbrains.annotations.Nullable;
 public interface SearchEverywhereManager {
 
   static SearchEverywhereManager getInstance(Project project) {
-    if (project != null && project.getProjectFilePath() == null) {
-      // Avoid initializing SearchEverywhereManager for a project mock.
-      project = null;
+    // Avoid initializing SearchEverywhereManager for a project mock.
+    final @Nullable Project filteredProject = (project != null && project.getProjectFilePath() == null) ? null : project;
+
+    SearchEverywhereManager manager =
+      SearchEverywhereManagerFactory.EP_NAME.computeSafeIfAny(factory ->
+                                                                factory.isAvailable() ? factory.getManager(filteredProject)
+                                                                                      : null);
+
+    if (manager == null) {
+      throw new IllegalStateException("SearchEverywhereManager is not available for project: " + project);
     }
 
-    for (SearchEverywhereManagerFactory entryPoint : SearchEverywhereManagerFactory.EP_NAME.getExtensionList()) {
-      try {
-        if (entryPoint.isAvailable()) {
-          return entryPoint.getManager(project);
-        }
-      }
-      catch (Throwable t) {
-        Logger.getInstance(SearchEverywhereAction.class).error(t);
-      }
-    }
-
-    Logger.getInstance(SearchEverywhereAction.class).error("SearchEverywhereManager is not available for project: " + project);
-    return null;
+    return manager;
   }
 
   boolean isShown();
@@ -60,5 +53,4 @@ public interface SearchEverywhereManager {
 
   // todo remove
   boolean isEverywhere();
-
 }
