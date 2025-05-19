@@ -107,7 +107,7 @@ public class ReflectionAccessMethodBuilder {
 
       String name = "p" + i; // To avoid confusion with local variables, the real parameter names are not used.
 
-      if (requiresObjectType(parameterType) || jvmType.arrayDimension > 0) {
+      if (requiresObjectType(parameterType)) {
         myParameters.add(new ParameterInfo(CommonClassNames.JAVA_LANG_OBJECT, name, jvmType));
       }
       else {
@@ -120,6 +120,12 @@ public class ReflectionAccessMethodBuilder {
   }
 
   private static boolean requiresObjectType(PsiType type) {
+    if (type instanceof PsiEllipsisType) {
+      return false;
+    }
+    if (type instanceof PsiArrayType) {
+      return true;
+    }
     PsiClass psiClass = PsiTypesUtil.getPsiClass(type);
     return psiClass != null && (psiClass.isRecord() || psiClass.isEnum());
   }
