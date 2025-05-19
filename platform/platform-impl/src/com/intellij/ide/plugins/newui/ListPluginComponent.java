@@ -262,30 +262,28 @@ public final class ListPluginComponent extends JPanel {
 
         ColorButton.setWidth72(myInstallButton);
 
-        if (PluginDetailsPageComponent.isMultiTabs()) {
-          myInstalledDescriptorForMarketplace = installedDescriptorForMarketplace != null ? new PluginUiModelAdapter(installedDescriptorForMarketplace) : null;
-          myInstallButton.setVisible(showInstall);
+        myInstalledDescriptorForMarketplace = installedDescriptorForMarketplace != null ? new PluginUiModelAdapter(installedDescriptorForMarketplace) : null;
+        myInstallButton.setVisible(showInstall);
 
-          if (myInstalledDescriptorForMarketplace != null && myInstalledDescriptorForMarketplace.isDeleted()) {
-            if (InstalledPluginsState.getInstance().wasUninstalledWithoutRestart(pluginId)) {
-              myInstallButton.setVisible(true);
-              myInstallButton.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"));
-              myInstallButton.setPreferredSize(null);
-              myAfterUpdate = true;
-            }
-            else {
-              myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel.getModel()));
-
-              myPluginModel.addUninstalled(myInstalledDescriptorForMarketplace);
-            }
+        if (myInstalledDescriptorForMarketplace != null && myInstalledDescriptorForMarketplace.isDeleted()) {
+          if (InstalledPluginsState.getInstance().wasUninstalledWithoutRestart(pluginId)) {
+            myInstallButton.setVisible(true);
+            myInstallButton.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"));
+            myInstallButton.setPreferredSize(null);
+            myAfterUpdate = true;
           }
           else {
-            createEnableDisableButton(this::getInstalledDescriptorForMarketplace);
-            myEnableDisableButton.setVisible(!showInstall);
+            myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel.getModel()));
 
-            if (!showInstall) {
-              updateEnabledStateUI();
-            }
+            myPluginModel.addUninstalled(myInstalledDescriptorForMarketplace);
+          }
+        }
+        else {
+          createEnableDisableButton(this::getInstalledDescriptorForMarketplace);
+          myEnableDisableButton.setVisible(!showInstall);
+
+          if (!showInstall) {
+            updateEnabledStateUI();
           }
         }
       }
@@ -406,11 +404,9 @@ public final class ListPluginComponent extends JPanel {
       if (rating != null) {
         myRating = createRatingLabel(myMetricsPanel, rating, AllIcons.Plugins.Rating);
       }
-      if (PluginDetailsPageComponent.isMultiTabs()) {
-        String version = myInstalledDescriptorForMarketplace == null ? "" : myInstalledDescriptorForMarketplace.getVersion();
-        myVersion = createRatingLabel(myMetricsPanel, version, null);
-        myVersion.setVisible(!StringUtil.isEmptyOrSpaces(version));
-      }
+      String version = myInstalledDescriptorForMarketplace == null ? "" : myInstalledDescriptorForMarketplace.getVersion();
+      myVersion = createRatingLabel(myMetricsPanel, version, null);
+      myVersion.setVisible(!StringUtil.isEmptyOrSpaces(version));
     }
     else {
       String version = myPlugin.isBundled() ? IdeBundle.message("plugin.status.bundled") : myPlugin.getVersion();
@@ -719,29 +715,21 @@ public final class ListPluginComponent extends JPanel {
   }
 
   private void showProgress(boolean repaint) {
-    if (PluginDetailsPageComponent.isMultiTabs()) {
-      myIndicator = new AbstractProgressIndicatorExBase();
-      myLayout.setProgressComponent(new AsyncProcessIcon("PluginListComponentIconProgress") {
-        @Override
-        public int getBaseline(int width, int height) {
-          return (int)(height * 0.85);
-        }
+    myIndicator = new AbstractProgressIndicatorExBase();
+    myLayout.setProgressComponent(new AsyncProcessIcon("PluginListComponentIconProgress") {
+      @Override
+      public int getBaseline(int width, int height) {
+        return (int)(height * 0.85);
+      }
 
-        @Override
-        public void removeNotify() {
-          super.removeNotify();
-          if (!isDisposed()) {
-            dispose();
-          }
+      @Override
+      public void removeNotify() {
+        super.removeNotify();
+        if (!isDisposed()) {
+          dispose();
         }
-      });
-    }
-    else {
-      OneLineProgressIndicator indicator = new OneLineProgressIndicator(false);
-      indicator.setCancelRunnable(() -> myPluginModel.finishInstall(getDescriptorForActions(), null, false, false, true));
-      myLayout.setProgressComponent(indicator.createBaselineWrapper());
-      myIndicator = indicator;
-    }
+      }
+    });
 
     PluginModelFacade.addProgress(getDescriptorForActions(), myIndicator);
 
@@ -761,7 +749,7 @@ public final class ListPluginComponent extends JPanel {
       else {
         if (myInstallButton != null) {
           myInstallButton.setEnabled(false, IdeBundle.message("plugin.status.installed"));
-          if (PluginDetailsPageComponent.isMultiTabs() && myInstallButton.isVisible()) {
+          if (myInstallButton.isVisible()) {
             IdeaPluginDescriptor foundPlugin = PluginManagerCore.findPlugin(myPlugin.getPluginId());
             myInstalledDescriptorForMarketplace = foundPlugin != null ? new PluginUiModelAdapter(foundPlugin) : null;
             if (myInstalledDescriptorForMarketplace != null) {
