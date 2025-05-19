@@ -3,11 +3,11 @@ package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.debugger.impl.rpc.XFullValueEvaluatorResult
 import com.intellij.platform.debugger.impl.rpc.XInlineDebuggerDataDto
 import com.intellij.platform.debugger.impl.rpc.XValueApi
 import com.intellij.platform.debugger.impl.rpc.XValueComputeChildrenEvent
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.Obsolescent
 import com.intellij.xdebugger.XDebuggerBundle
@@ -22,10 +22,8 @@ import fleet.rpc.core.toRpc
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.await
 import org.jetbrains.concurrency.asCompletableFuture
 import java.awt.Font
@@ -46,11 +44,24 @@ internal class BackendXValueApi : XValueApi {
     BackendXValueModel.findById(xValueId)?.delete()
   }
 
-  override suspend fun evaluateFullValue(xValueId: XValueId): Deferred<XFullValueEvaluatorResult> {
-    val xFullValueEvaluator = BackendXValueModel.findById(xValueId)?.fullValueEvaluator?.value
-                              ?: return CompletableDeferred(XFullValueEvaluatorResult.EvaluationError(XDebuggerBundle.message("xdebugger.evaluate.full.value.evaluator.not.available")))
+  /**
+   * Implementation note:
+   *
+   * The return value might be simplified to a single [XFullValueEvaluatorResult],
+   * but the [com.intellij.xdebugger.frame.XFullValueEvaluator.XFullValueEvaluationCallback.evaluated] method might be called multiple times.
+   */
+  override suspend fun evaluateFullValue(xValueId: XValueId): Flow<XFullValueEvaluatorResult> = channelFlow {
+    val xValueModel = BackendXValueModel.findById(xValueId)
+    if (xValueModel == null) {
+      send(XFullValueEvaluatorResult.EvaluationError(XDebuggerBundle.message("xdebugger.evaluate.full.value.evaluator.not.available")))
+      return@channelFlow
+    }
+    val xFullValueEvaluator = xValueModel.fullValueEvaluator.value
+    if (xFullValueEvaluator == null) {
+      send(XFullValueEvaluatorResult.EvaluationError(XDebuggerBundle.message("xdebugger.evaluate.full.value.evaluator.not.available")))
+      return@channelFlow
+    }
 
-    val result = CompletableDeferred<XFullValueEvaluatorResult>()
     var isObsolete = false
 
     val callback = object : XFullValueEvaluationCallback, Obsolescent {
@@ -59,27 +70,25 @@ internal class BackendXValueApi : XValueApi {
       }
 
       override fun evaluated(fullValue: String) {
-        result.complete(XFullValueEvaluatorResult.Evaluated(fullValue))
+        trySend(XFullValueEvaluatorResult.Evaluated(fullValue))
       }
 
       override fun evaluated(fullValue: String, font: Font?) {
         // TODO[IJPL-160146]: support Font?
-        result.complete(XFullValueEvaluatorResult.Evaluated(fullValue))
+        trySend(XFullValueEvaluatorResult.Evaluated(fullValue))
       }
 
       override fun errorOccurred(errorMessage: @NlsContexts.DialogMessage String) {
-        result.complete(XFullValueEvaluatorResult.EvaluationError(errorMessage))
+        trySend(XFullValueEvaluatorResult.EvaluationError(errorMessage))
       }
-    }
-
-    result.invokeOnCompletion {
-      isObsolete = true
     }
 
     xFullValueEvaluator.startEvaluation(callback)
 
-    return result
-  }
+    awaitClose {
+      isObsolete = true
+    }
+  }.buffer(Channel.UNLIMITED)
 
   override suspend fun computeExpression(xValueId: XValueId): XExpressionDto? {
     val xValueModel = BackendXValueModel.findById(xValueId) ?: return null
@@ -99,7 +108,7 @@ internal class BackendXValueApi : XValueApi {
     }
   }
 
-  private suspend fun computePosition(xValueId: XValueId, compute: (XValue, XNavigatable)-> Unit): XSourcePositionDto? {
+  private suspend fun computePosition(xValueId: XValueId, compute: (XValue, XNavigatable) -> Unit): XSourcePositionDto? {
     val xValueModel = BackendXValueModel.findById(xValueId) ?: return null
     val sourcePosition = computeSourcePositionWithTimeout { navigatable ->
       compute(xValueModel.xValue, navigatable)

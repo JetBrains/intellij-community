@@ -11,7 +11,6 @@ import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.core.RpcFlow
 import fleet.rpc.remoteApiDescriptor
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
@@ -25,7 +24,7 @@ interface XValueApi : RemoteApi<Unit> {
 
   suspend fun disposeXValue(xValueId: XValueId)
 
-  suspend fun evaluateFullValue(xValueId: XValueId): Deferred<XFullValueEvaluatorResult>
+  suspend fun evaluateFullValue(xValueId: XValueId): Flow<XFullValueEvaluatorResult>
 
   suspend fun computeExpression(xValueId: XValueId): XExpressionDto?
 

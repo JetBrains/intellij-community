@@ -55,13 +55,14 @@ internal class FrontendXFullValueEvaluator(
 
   override fun startEvaluation(callback: XFullValueEvaluationCallback) {
     callback.childCoroutineScope(parentScope = xValueCs, "XFullValueEvaluationCallback").launch(Dispatchers.EDT) {
-      val result = XValueApi.getInstance().evaluateFullValue(xValueId).await()
-      when (result) {
-        is XFullValueEvaluatorResult.Evaluated -> {
-          callback.evaluated(result.fullValue)
-        }
-        is XFullValueEvaluatorResult.EvaluationError -> {
-          callback.errorOccurred(result.errorMessage)
+      XValueApi.getInstance().evaluateFullValue(xValueId).collect { result ->
+        when (result) {
+          is XFullValueEvaluatorResult.Evaluated -> {
+            callback.evaluated(result.fullValue)
+          }
+          is XFullValueEvaluatorResult.EvaluationError -> {
+            callback.errorOccurred(result.errorMessage)
+          }
         }
       }
     }
