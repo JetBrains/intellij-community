@@ -137,15 +137,15 @@ private class DevKitApplicationPatcher : RunConfigurationExtension() {
       else -> productClassifier
     }
 
+    val workingDirectory = Path.of(configuration.workingDirectory!!)
     if (!vmParameters.hasProperty("idea.config.path")) {
-      val path = Path.of(configuration.workingDirectory!!)
-      val configDirPath = path.asEelPath().toString()
+      val configDirPath = workingDirectory.asEelPath().toString()
       val dir = FileUtilRt.toSystemIndependentName("$configDirPath/out/dev-data/${productClassifier.lowercase()}")
       vmParameters.addProperty("idea.config.path", "$dir/config")
       vmParameters.addProperty("idea.system.path", "$dir/system")
     }
 
-    val runDir = Path.of("${configuration.workingDirectory}/out/dev-run/${productClassifier}/${productClassifier}")
+    val runDir = workingDirectory.resolve("out/dev-run/$productClassifier")
     for ((name, value) in getIdeSystemProperties(runDir)) {
       vmParameters.addProperty(name, value)
     }
