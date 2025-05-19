@@ -34,7 +34,6 @@ private val LOG: Logger
 @ApiStatus.Internal
 sealed class IdeaPluginDescriptorImpl(
   raw: RawPluginDescriptor,
-  pluginPath: Path,
 ) : IdeaPluginDescriptorImplPublic {
   private val id: PluginId = PluginId.getId(raw.id ?: raw.name ?: throw RuntimeException("Neither id nor name are specified"))
   private val name: String = raw.name ?: id.idString
@@ -89,8 +88,6 @@ sealed class IdeaPluginDescriptorImpl(
   private val isBundledUpdateAllowed: Boolean = raw.isBundledUpdateAllowed
   val isUseIdeaClassLoader: Boolean = raw.isUseIdeaClassLoader
 
-  private val pluginPath: Path = pluginPath
-
   var isDeleted: Boolean = false
   @Transient
   var jarFiles: List<Path>? = null
@@ -135,8 +132,6 @@ sealed class IdeaPluginDescriptorImpl(
   override fun getDependencies(): List<PluginDependency> = pluginDependencies
 
   override fun getResourceBundleBaseName(): String? = resourceBundleBaseName
-
-  override fun getPluginPath(): Path = pluginPath
 
   override fun getPluginClassLoader(): ClassLoader? = _pluginClassLoader
 
@@ -196,14 +191,12 @@ sealed class IdeaPluginDescriptorImpl(
       DependsSubDescriptor(
         parent = this,
         raw = raw,
-        pluginPath = pluginPath,
         descriptorPath = descriptorPath
       )
     } else {
       ContentModuleDescriptor(
         parent = this as PluginMainDescriptor,
         raw = raw,
-        pluginPath = pluginPath,
         moduleName = module.name,
         moduleLoadingRule = module.loadingRule,
         descriptorPath = descriptorPath
@@ -527,10 +520,7 @@ class PluginMainDescriptor(
   pluginPath: Path,
   isBundled: Boolean,
   useCoreClassLoader: Boolean = false
-): IdeaPluginDescriptorImpl(
-  raw = raw,
-  pluginPath = pluginPath,
-) {
+): IdeaPluginDescriptorImpl(raw) {
   @Volatile
   private var loadedDescriptionText: @Nls String? = null
   private val rawDescription: @NlsSafe String? = raw.description
@@ -538,6 +528,8 @@ class PluginMainDescriptor(
   private val changeNotes: String? = raw.changeNotes
 
   private val isBundled: Boolean = isBundled
+
+  private val pluginPath: Path = pluginPath
 
   override val useCoreClassLoader: Boolean = useCoreClassLoader
   override val isIndependentFromCoreClassLoader: Boolean get() = false
@@ -567,6 +559,7 @@ class PluginMainDescriptor(
     return result
   }
 
+  override fun getPluginPath(): Path = pluginPath
   override fun getDescriptorPath(): Nothing? = null
   override fun isBundled(): Boolean = isBundled
 
@@ -600,12 +593,8 @@ class DependsSubDescriptor(
   /** either [PluginMainDescriptor] or [DependsSubDescriptor]*/
   val parent: IdeaPluginDescriptorImpl,
   raw: RawPluginDescriptor,
-  pluginPath: Path,
   private val descriptorPath: String
-): IdeaPluginDescriptorImpl(
-  raw,
-  pluginPath,
-) {
+): IdeaPluginDescriptorImpl(raw) {
   init {
     check(parent is PluginMainDescriptor || parent is DependsSubDescriptor)
   }
@@ -621,6 +610,7 @@ class DependsSubDescriptor(
   @Deprecated("use main descriptor") override fun getDisplayCategory(): @Nls String? = parent.displayCategory.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getDescription(): @Nls String? = parent.description.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun isBundled(): Boolean = parent.isBundled.also { LOG.error("unexpected call") }
+  @Deprecated("use main descriptor") override fun getPluginPath(): Path = parent.pluginPath.also { LOG.error("unexpected call") }
 
   override fun toString(): String =
     "DependsSubDescriptor(" +
@@ -640,14 +630,10 @@ class DependsSubDescriptor(
 class ContentModuleDescriptor(
   val parent: PluginMainDescriptor,
   raw: RawPluginDescriptor,
-  pluginPath: Path,
   moduleName: String,
   moduleLoadingRule: ModuleLoadingRule,
   private val descriptorPath: String
-): IdeaPluginDescriptorImpl(
-  raw,
-  pluginPath,
-) {
+): IdeaPluginDescriptorImpl(raw) {
   val moduleName: String = moduleName
   val moduleLoadingRule: ModuleLoadingRule = moduleLoadingRule
 
@@ -662,6 +648,7 @@ class ContentModuleDescriptor(
   @Deprecated("use main descriptor") override fun getDisplayCategory(): @Nls String? = parent.displayCategory.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getDescription(): @Nls String? = parent.description.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun isBundled(): Boolean = parent.isBundled // .also { LOG.error("unexpected call") } TODO test failures
+  @Deprecated("use main descriptor") override fun getPluginPath(): Path = parent.pluginPath.also { LOG.error("unexpected call") }
 
   override fun toString(): String =
     "ContentModuleDescriptor(moduleName=$moduleName" +
