@@ -1092,6 +1092,45 @@ public class MarkdownProcessorOptimizeEditsTest {
         )
     }
 
+    @Test
+    public fun `check sublist end of block indexes`() {
+        val processor = MarkdownProcessor(markdownMode = MarkdownMode.EditorPreview(null))
+        val initialDocument =
+            """
+
+            # Another block
+
+            * Some first sentence.
+            * Some second sentence.
+             * Some forth sentence.
+             * Some forth sentence.
+               * Some forth sentence.
+
+            another paragraph
+            * some bullet
+
+            """
+                .trimIndent()
+        val resultBlocks = processor.processWithQuickEdits(initialDocument)
+        val startIndexes = resultBlocks.map { block -> block.sourceSpans.first().inputIndex }
+        val endIndexes = resultBlocks.map { block -> block.sourceSpans.last().let { it.inputIndex + it.length } }
+        listOf(
+                "# Another block",
+                """
+                * Some first sentence.
+                * Some second sentence.
+                 * Some forth sentence.
+                 * Some forth sentence.
+                   * Some forth sentence.
+            """
+                    .trimIndent(),
+                "another paragraph",
+            )
+            .forEachIndexed { i, expected ->
+                assertEquals(expected, initialDocument.substring(startIndexes[i], endIndexes[i]))
+            }
+    }
+
     private fun assertHtmlEquals(@Language("html") text: String, actual: List<Block>) {
         assertEquals(text, actual.joinToString("") { htmlRenderer.render(it) })
     }
