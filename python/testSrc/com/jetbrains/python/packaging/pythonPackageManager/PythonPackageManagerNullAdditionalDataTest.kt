@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.pythonPackageManager
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkModificator
@@ -60,10 +60,10 @@ class PythonPackageManagerNullAdditionalDataTest : PyEnvTestCase() {
 
 class PythonPackageManagerNullAdditionalDataTask(private val pkg: PythonRepositoryPackageSpecification) : PyExecutionFixtureTestTask("") {
 
-  private fun createSdkWithNullAdditionalData(sdkTypeId: SdkTypeId, homePath: String, existingSdk: Sdk): Sdk {
+  private suspend fun createSdkWithNullAdditionalData(sdkTypeId: SdkTypeId, homePath: String, existingSdk: Sdk): Sdk {
     val sdkTable = ProjectJdkTable.getInstance()
 
-    return ApplicationManager.getApplication().runWriteAction<Sdk> {
+    return writeAction {
       val newSdk = sdkTable.createSdk(SDK_NAME, sdkTypeId)
       configureSdk(newSdk, homePath, existingSdk)
       newSdk
@@ -84,10 +84,11 @@ class PythonPackageManagerNullAdditionalDataTask(private val pkg: PythonReposito
     requireNotNull(existingSdk) { "Sdk should be not bull" }
 
     val pythonSdkType = PythonSdkType.getInstance()
-    val configuredSdk = createSdkWithNullAdditionalData(pythonSdkType, sdkHome, existingSdk)
-    val manager = PythonPackageManager.forSdk(myFixture.project, configuredSdk)
 
     runBlocking {
+      val configuredSdk = createSdkWithNullAdditionalData(pythonSdkType, sdkHome, existingSdk)
+      val manager = PythonPackageManager.forSdk(myFixture.project, configuredSdk)
+
       manager.installPackage(pkg.toInstallRequest(), emptyList(), withBackgroundProgress = false)
       assertTrue("Package should be installed", manager.installedPackages.map { it.name }.contains(pkg.name))
 
