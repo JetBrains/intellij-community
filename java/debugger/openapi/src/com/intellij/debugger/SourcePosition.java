@@ -119,10 +119,16 @@ public abstract class SourcePosition implements Navigatable {
     @Override
     public int getLine() {
       updateData();
-      if (myLine == null) {
-        myLine = calcLine();
+      Integer line = myLine;
+      int result;
+      if (line == null) {
+        result = calcLine();
+        myLine = result;
       }
-      return myLine.intValue();
+      else {
+        result = line;
+      }
+      return result;
     }
 
     @Override
