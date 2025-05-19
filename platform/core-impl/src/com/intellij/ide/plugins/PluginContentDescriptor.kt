@@ -13,11 +13,11 @@ class PluginContentDescriptor(@JvmField val modules: List<ModuleItem>) {
 
   @ApiStatus.Internal
   class ModuleItem(
-    override val name: String,
+    val name: String,
     val configFile: String?,
     internal val descriptorContent: CharArray?,
-    override val loadingRule: ModuleLoadingRule,
-  ): ContentModule {
+    val loadingRule: ModuleLoadingRule,
+  ) {
     /**
      * all content module descriptors are assigned during plugin descriptor loading
      */
@@ -32,7 +32,7 @@ class PluginContentDescriptor(@JvmField val modules: List<ModuleItem>) {
     /**
      * after the plugin is loaded, all descriptors are set
      */
-    override val descriptor: ContentModuleDescriptor
+    val descriptor: ContentModuleDescriptor
       get() = requireDescriptor()
 
     @TestOnly
