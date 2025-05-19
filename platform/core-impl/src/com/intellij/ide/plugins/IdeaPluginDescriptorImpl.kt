@@ -109,59 +109,6 @@ sealed class IdeaPluginDescriptorImpl(
     descriptorPath = descriptorPath
   )
 
-  fun initialize(context: PluginInitializationContext): PluginNonLoadReason? {
-    assert(this is PluginMainDescriptor)
-    content.modules.forEach { it.requireDescriptor() }
-    if (context.isPluginDisabled(pluginId)) {
-      return onInitError(PluginIsMarkedDisabled(this))
-    }
-    checkCompatibility(context::productBuildNumber, context::isPluginBroken)?.let {
-      return it
-    }
-    for (dependency in pluginDependencies) { // FIXME: likely we actually have to recursively traverse these after they are resolved
-      if (context.isPluginDisabled(dependency.pluginId) && !dependency.isOptional) {
-        return onInitError(PluginDependencyIsDisabled(this, dependency.pluginId, false))
-      }
-    }
-    for (pluginDependency in moduleDependencies.plugins) {
-      if (context.isPluginDisabled(pluginDependency.id)) {
-        return onInitError(PluginDependencyIsDisabled(this, pluginDependency.id, false))
-      }
-    }
-    return null
-  }
-
-  private fun checkCompatibility(getBuildNumber: () -> BuildNumber, isPluginBroken: (PluginId, version: String?) -> Boolean): PluginNonLoadReason? {
-    if (isPluginWhichDependsOnKotlinPluginAndItsIncompatibleWithIt(this)) {
-      // disable plugins which are incompatible with the Kotlin Plugin K1/K2 Modes KTIJ-24797, KTIJ-30474
-      val mode = if (isKotlinPluginK1Mode()) CoreBundle.message("plugin.loading.error.k1.mode") else CoreBundle.message("plugin.loading.error.k2.mode")
-      return onInitError(PluginIsIncompatibleWithKotlinMode(this, mode))
-    }
-
-    if (isBundled) {
-      return null
-    }
-
-    if (AppMode.isDisableNonBundledPlugins()) {
-      return onInitError(NonBundledPluginsAreExplicitlyDisabled(this))
-    }
-
-    PluginManagerCore.checkBuildNumberCompatibility(this, getBuildNumber())?.let {
-      return onInitError(it)
-    }
-
-    // "Show broken plugins in Settings | Plugins so that users can uninstall them and resolve 'Plugin Error' (IDEA-232675)"
-    if (isPluginBroken(pluginId, version)) {
-      return onInitError(PluginIsMarkedBroken(this))
-    }
-    return null
-  }
-
-  private fun onInitError(error: PluginNonLoadReason): PluginNonLoadReason {
-    isMarkedForLoading = false
-    return error
-  }
-
   @ApiStatus.Internal
   fun registerExtensions(nameToPoint: Map<String, ExtensionPointImpl<*>>, listenerCallbacks: MutableList<in Runnable>?) {
     for ((descriptors, point) in intersectMaps(extensions, nameToPoint)) {
@@ -472,6 +419,53 @@ class PluginMainDescriptor(
     descriptorPath = descriptorPath
   )
 
+  fun initialize(context: PluginInitializationContext): PluginNonLoadReason? {
+    content.modules.forEach { it.requireDescriptor() }
+    if (context.isPluginDisabled(pluginId)) {
+      return onInitError(PluginIsMarkedDisabled(this))
+    }
+    checkCompatibility(context::productBuildNumber, context::isPluginBroken)?.let {
+      return it
+    }
+    for (dependency in pluginDependencies) { // FIXME: likely we actually have to recursively traverse these after they are resolved
+      if (context.isPluginDisabled(dependency.pluginId) && !dependency.isOptional) {
+        return onInitError(PluginDependencyIsDisabled(this, dependency.pluginId, false))
+      }
+    }
+    for (pluginDependency in moduleDependencies.plugins) {
+      if (context.isPluginDisabled(pluginDependency.id)) {
+        return onInitError(PluginDependencyIsDisabled(this, pluginDependency.id, false))
+      }
+    }
+    return null
+  }
+
+  private fun checkCompatibility(getBuildNumber: () -> BuildNumber, isPluginBroken: (PluginId, version: String?) -> Boolean): PluginNonLoadReason? {
+    if (isPluginWhichDependsOnKotlinPluginAndItsIncompatibleWithIt(this)) {
+      // disable plugins which are incompatible with the Kotlin Plugin K1/K2 Modes KTIJ-24797, KTIJ-30474
+      val mode = if (isKotlinPluginK1Mode()) CoreBundle.message("plugin.loading.error.k1.mode") else CoreBundle.message("plugin.loading.error.k2.mode")
+      return onInitError(PluginIsIncompatibleWithKotlinMode(this, mode))
+    }
+    if (isBundled) {
+      return null
+    }
+    if (AppMode.isDisableNonBundledPlugins()) {
+      return onInitError(NonBundledPluginsAreExplicitlyDisabled(this))
+    }
+    PluginManagerCore.checkBuildNumberCompatibility(this, getBuildNumber())?.let {
+      return onInitError(it)
+    }
+    // "Show broken plugins in Settings | Plugins so that users can uninstall them and resolve 'Plugin Error' (IDEA-232675)"
+    if (isPluginBroken(pluginId, version)) {
+      return onInitError(PluginIsMarkedBroken(this))
+    }
+    return null
+  }
+
+  private fun onInitError(error: PluginNonLoadReason): PluginNonLoadReason {
+    isMarkedForLoading = false
+    return error
+  }
 
   init {
     if (pluginId == PluginManagerCore.CORE_ID && resourceBundleBaseName != null) {

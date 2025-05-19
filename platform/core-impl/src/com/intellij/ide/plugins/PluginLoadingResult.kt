@@ -70,7 +70,7 @@ class PluginLoadingResult {
     }
   }
 
-  private fun initAndAdd(descriptor: IdeaPluginDescriptorImpl, overrideUseIfCompatible: Boolean, initContext: PluginInitializationContext) {
+  private fun initAndAdd(descriptor: PluginMainDescriptor, overrideUseIfCompatible: Boolean, initContext: PluginInitializationContext) {
     initContext.pluginsPerProjectConfig?.let { conf ->
       if (conf.isMainProcess && descriptor.pluginId !in initContext.essentialPlugins) {
         return
