@@ -114,7 +114,14 @@ class ModuleComponentManager(parent: ComponentManagerImpl) : ComponentManagerImp
     precomputedExtensionModel: PrecomputedExtensionModel?,
     listenerCallbacks: MutableList<in Runnable>?,
   ) {
-    super.registerComponents(modules, app, precomputedExtensionModel, listenerCallbacks)
+    if (precomputedExtensionModel == null) {
+      LOG.error("precomputedExtensionModel must not be null")
+      super.registerComponents(modules, app, null, listenerCallbacks)
+    }
+    else {
+      super.registerModuleComponents(modules, app, precomputedExtensionModel, listenerCallbacks)
+    }
+
     if (modules.any { it.pluginId == PluginManagerCore.CORE_ID }) {
       unregisterComponent(DeprecatedModuleOptionManager::class.java)
     }

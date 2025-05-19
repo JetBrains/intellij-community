@@ -8,7 +8,7 @@ import com.intellij.facet.Facet
 import com.intellij.facet.FacetManager
 import com.intellij.facet.FacetManagerFactory
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.PathMacroManager
@@ -94,17 +94,12 @@ class ModuleBridgeImpl(
     }
   }
 
-  override fun registerComponents(
-    modules: List<IdeaPluginDescriptorImpl>,
-    app: Application?,
-    precomputedExtensionModel: PrecomputedExtensionModel?,
-    listenerCallbacks: MutableList<in Runnable>?,
-  ) {
+  override fun initServiceContainer(modules: List<IdeaPluginDescriptorImpl>, precomputedExtensionModel: PrecomputedExtensionModel) {
     getModuleComponentManager().registerComponents(
       modules = modules,
-      app = app,
+      app = ApplicationManager.getApplication(),
       precomputedExtensionModel = precomputedExtensionModel,
-      listenerCallbacks = listenerCallbacks,
+      listenerCallbacks = null,
     )
   }
 

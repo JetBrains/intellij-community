@@ -370,8 +370,7 @@ abstract class ComponentManagerImpl(
 
       for (rootModule in modules) {
         executeRegisterTask(rootModule) { module ->
-          module.registerExtensions(nameToPoint = extensionPoints,
-                                    listenerCallbacks = listenerCallbacks)
+          module.registerExtensions(nameToPoint = extensionPoints, listenerCallbacks = listenerCallbacks)
         }
       }
     }
@@ -393,6 +392,27 @@ abstract class ComponentManagerImpl(
         (messageBus as MessageBusEx).setLazyListeners(it)
       }
     }
+  }
+
+  protected fun registerModuleComponents(
+    modules: List<IdeaPluginDescriptorImpl>,
+    app: Application?,
+    precomputedExtensionModel: PrecomputedExtensionModel,
+    listenerCallbacks: MutableList<in Runnable>? = null,
+  ) {
+    val isHeadless = app == null || app.isHeadlessEnvironment
+
+    // register services before registering extensions because plugins can access services in their extensions,
+    // which can be invoked right away if the plugin is loaded dynamically
+    for (rootModule in modules) {
+      executeRegisterTask(rootModule) { module ->
+        val containerDescriptor = module.moduleContainerDescriptor
+        registerServices(containerDescriptor.services, module)
+        registerComponents(pluginDescriptor = module, containerDescriptor = containerDescriptor, headless = isHeadless)
+      }
+    }
+
+    registerExtensionPointsAndExtensionByPrecomputedModel(precomputedExtensionModel, listenerCallbacks)
   }
 
   private fun registerExtensionPointsAndExtensionByPrecomputedModel(precomputedExtensionModel: PrecomputedExtensionModel,

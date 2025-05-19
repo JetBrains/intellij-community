@@ -189,24 +189,23 @@ abstract class ModuleManagerBridgeImpl(
     targetBuilder: MutableEntityStorage?,
     initializeFacets: Boolean,
   ): Unit = loadAllModulesTimeMs.addMeasuredTime {
-    val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
-
     @Suppress("OPT_IN_USAGE")
     val result = coroutineScope {
       LOG.debug { "Loading modules for ${loadedEntities.size} entities: [${loadedEntities.joinToString { it.name }}]" }
 
+      val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
       val precomputedExtensionModel = precomputeModuleLevelExtensionModel()
       val result = loadedEntities.map { moduleEntity ->
         async {
           runCatching {
-            val module = blockingContext {
-              createModuleInstanceWithoutCreatingComponents(moduleEntity = moduleEntity,
-                                                            versionedStorage = entityStore,
-                                                            diff = targetBuilder,
-                                                            isNew = false,
-                                                            precomputedExtensionModel = precomputedExtensionModel,
-                                                            plugins = plugins)
-            }
+            val module = createModuleInstanceWithoutCreatingComponents(
+              moduleEntity = moduleEntity,
+              versionedStorage = entityStore,
+              diff = targetBuilder,
+              isNew = false,
+              precomputedExtensionModel = precomputedExtensionModel,
+              plugins = plugins,
+            )
             module.callCreateComponentsNonBlocking()
             moduleEntity to module
           }.getOrLogException(LOG)
@@ -480,12 +479,7 @@ abstract class ModuleManagerBridgeImpl(
       entityStorage = versionedStorage,
       diff = diff,
     ) { module ->
-      module.registerComponents(
-        modules = plugins,
-        precomputedExtensionModel = precomputedExtensionModel,
-        app = ApplicationManager.getApplication(),
-        listenerCallbacks = null,
-      )
+      module.initServiceContainer(modules = plugins, precomputedExtensionModel = precomputedExtensionModel)
 
       if (moduleFileUrl != null) {
         val moduleStore = module.stateStore as ModuleStore
