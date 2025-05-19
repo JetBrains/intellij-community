@@ -62,16 +62,6 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
     }
   }
 
-  suspend fun getItems(sessionRef: DurableRef<SeSessionEntity>,
-                       providerId: SeProviderId,
-                       params: SeParams,
-                       dataContextId: DataContextId?
-  ): Flow<SeItemData> {
-    val provider = getProviders(sessionRef, dataContextId)[providerId]
-
-    return provider?.getItems(params) ?: emptyFlow()
-  }
-
   private suspend fun getProviders(sessionRef: DurableRef<SeSessionEntity>,
                                    dataContextId: DataContextId?): Map<SeProviderId, SeItemDataProvider> {
 
@@ -88,13 +78,13 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
       } ?: throw IllegalStateException("Cannot create providers on the backend: couldn't deserialize data context")
 
       // We may create providers several times, but only one set of providers will be saved as a property to a session entity
-      val providers = SeItemsProviderFactory.EP_NAME.extensionList.asFlow().mapNotNull {
+      val providers = SeItemsProviderFactory.EP_NAME.extensionList.mapNotNull {
         val provider = it.getItemsProvider(project, dataContext) ?: return@mapNotNull null
         if (provider.id != it.id) {
           SeLog.log { "Backend provider ID mismatch: ${provider.id} != ${it.id}" }
         }
         provider
-      }.toList().associate { provider ->
+      }.associate { provider ->
         val id = SeProviderId(provider.id)
         id to SeBackendItemDataProvider(id, provider, sessionRef)
       }

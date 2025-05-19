@@ -3,13 +3,14 @@ package com.intellij.platform.searchEverywhere.backend.impl
 
 import com.intellij.ide.rpc.DataContextId
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.project.findProject
+import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
@@ -20,7 +21,8 @@ class SeRemoteApiImpl: SeRemoteApi {
                                     itemData: SeItemData,
                                     modifiers: Int,
                                     searchText: String): Boolean {
-    return SeBackendService.getInstance(projectId.findProject()).itemSelected(sessionRef, itemData, modifiers, searchText)
+    val project = projectId.findProjectOrNull() ?: return false
+    return SeBackendService.getInstance(project).itemSelected(sessionRef, itemData, modifiers, searchText)
   }
 
   override suspend fun canBeShownInFindResults(
@@ -29,7 +31,8 @@ class SeRemoteApiImpl: SeRemoteApi {
     dataContextId: DataContextId,
     providerId: SeProviderId,
   ): Boolean {
-    return SeBackendService.getInstance(projectId.findProject()).canBeShownInFindResults(sessionRef, dataContextId, providerId)
+    val project = projectId.findProjectOrNull() ?: return false
+    return SeBackendService.getInstance(project).canBeShownInFindResults(sessionRef, dataContextId, providerId)
   }
 
   override suspend fun getItems(
@@ -40,7 +43,8 @@ class SeRemoteApiImpl: SeRemoteApi {
     dataContextId: DataContextId?,
     requestedCountChannel: ReceiveChannel<Int>,
   ): Flow<SeItemData> {
-    return SeBackendService.getInstance(projectId.findProject())
+    val project = projectId.findProjectOrNull() ?: return emptyFlow()
+    return SeBackendService.getInstance(project)
       .getItems(sessionRef, providerId, params, dataContextId, requestedCountChannel)
   }
 
@@ -52,14 +56,16 @@ class SeRemoteApiImpl: SeRemoteApi {
                                                       sessionRef: DurableRef<SeSessionEntity>,
                                                       dataContextId: DataContextId,
                                                       providerId: SeProviderId): SeSearchScopesInfo? {
-    return SeBackendService.getInstance(projectId.findProject()).getSearchScopesInfoForProvider(sessionRef, dataContextId, providerId)
+    val project = projectId.findProjectOrNull() ?: return null
+    return SeBackendService.getInstance(project).getSearchScopesInfoForProvider(sessionRef, dataContextId, providerId)
   }
 
   override suspend fun getTypeVisibilityStatesForProvider(projectId: ProjectId,
                                                           sessionRef: DurableRef<SeSessionEntity>,
                                                           dataContextId: DataContextId,
                                                           providerId: SeProviderId): List<SeTypeVisibilityStatePresentation>? {
-    return SeBackendService.getInstance(projectId.findProject()).getTypeVisibilityStatesForProvider(sessionRef, dataContextId, providerId)
+    val project = projectId.findProjectOrNull() ?: return null
+    return SeBackendService.getInstance(project).getTypeVisibilityStatesForProvider(sessionRef, dataContextId, providerId)
   }
 
   override suspend fun getDisplayNameForProviders(
@@ -68,6 +74,7 @@ class SeRemoteApiImpl: SeRemoteApi {
     dataContextId: DataContextId,
     providerIds: List<SeProviderId>,
   ): Map<SeProviderId, @Nls String> {
-    return SeBackendService.getInstance(projectId.findProject()).getDisplayNameForProvider(sessionRef, dataContextId, providerIds)
+    val project = projectId.findProjectOrNull() ?: return emptyMap()
+    return SeBackendService.getInstance(project).getDisplayNameForProvider(sessionRef, dataContextId, providerIds)
   }
 }
