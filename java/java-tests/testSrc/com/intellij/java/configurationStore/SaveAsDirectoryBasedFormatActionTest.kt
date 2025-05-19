@@ -1,9 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.configurationStore
 
-import com.intellij.ide.actions.SaveAsDirectoryBasedFormatAction
+import com.intellij.ide.actions.convertToDirectoryBasedFormat
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
@@ -26,8 +26,8 @@ class SaveAsDirectoryBasedFormatActionTest : BareTestFixtureTestCase() {
     val projectFile = Path.of(PathManagerEx.getCommunityHomePath(), "jps/model-serialization/testData/sampleProject-ipr/sampleProject.ipr")
     val projectDir = Path.of(PathManagerEx.getCommunityHomePath(), "jps/model-serialization/testData/sampleProject")
     loadProjectAndCheckResults(listOf(projectFile), tempDirectory) { project ->
-      runWriteActionAndWait {
-        SaveAsDirectoryBasedFormatAction.convertToDirectoryBasedFormat(project)
+      WriteAction.computeAndWait<Unit, Throwable> {
+        convertToDirectoryBasedFormat(project)
       }
       project.stateStore.save()
 
