@@ -92,13 +92,11 @@ class WslEelProvider(private val coroutineScope: CoroutineScope) : EelProvider {
   private suspend fun EelNioBridgeService.registerNioWslFs(distro: WSLDistribution) {
     val descriptor = distro.getIjent().descriptor as WslEelDescriptor
     val ijentFsProvider = TracingFileSystemProvider(IjentNioFileSystemProvider.getInstance())
+    val ijentUri = URI("ijent", "wsl", "/${distro.id}", null, null)
 
     try {
       val ijentFs = IjentFailSafeFileSystemPosixApi(coroutineScope) { distro.getIjent() }
-      val fs = ijentFsProvider.newFileSystem(
-        URI("ijent", "wsl", "/${distro.id}", null, null),
-        IjentNioFileSystemProvider.newFileSystemMap(ijentFs),
-      )
+      val fs = ijentFsProvider.newFileSystem(ijentUri, IjentNioFileSystemProvider.newFileSystemMap(ijentFs))
 
       coroutineScope.coroutineContext.job.invokeOnCompletion {
         fs?.close()
@@ -129,7 +127,8 @@ class WslEelProvider(private val coroutineScope: CoroutineScope) : EelProvider {
               // This way, various UI file trees don't start all WSL containers during loading the file system root.
               useRootDirectoriesFromOriginalFs = true,
             )
-          } else {
+          }
+          else {
             IjentWslNioFileSystemProvider(
               wslDistribution = distro,
               ijentFsProvider = ijentFsProvider,
@@ -137,7 +136,12 @@ class WslEelProvider(private val coroutineScope: CoroutineScope) : EelProvider {
             )
           }
         }
-        val fileSystem = fileSystemProvider.getFileSystem(distro.getUNCRootPath().toUri())
+        val fileSystem = if (fileSystemProvider is IjentEphemeralRootAwareFileSystemProvider) {
+          fileSystemProvider.getFileSystem(ijentUri)
+        }
+        else {
+          fileSystemProvider.getFileSystem(distro.getUNCRootPath().toUri())
+        }
         LOG.info("Switching $distro to IJent WSL nio.FS: $fileSystem")
         fileSystem
       }
