@@ -218,7 +218,7 @@ open class EditorComposite internal constructor(
       beforeFileOpen(this, model)
       // cannot be before use as fileOpenedSync by contract should be called in the same EDT event
       val (goodPublisher, deprecatedPublisher) = deferredPublishers.await()
-      span("file opening in EDT and repaint", Dispatchers.EDT) {
+      span("file opening in EDT and repaint", Dispatchers.ui(UiDispatcherKind.RELAX)) {
         span("beforeFileOpened event executing") {
           blockingContext {
             computeOrLogException(
