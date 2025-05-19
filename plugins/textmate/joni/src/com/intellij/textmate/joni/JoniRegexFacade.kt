@@ -57,6 +57,9 @@ class JoniRegexFacade(private val myRegex: Regex) : RegexFacade {
     }
   }
 
+  override fun close() {
+  }
+
 
   companion object {
     private val MATCHING_TIMEOUT = 300.milliseconds.inWholeNanoseconds

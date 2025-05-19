@@ -61,6 +61,10 @@ private class TextMateRegexFacadeRememberLastMatch(private val delegate: RegexFa
     }
   }
 
+  override fun close() {
+    delegate.close()
+  }
+
   private class LastMatch(
     val stringId: Any?,
     val offset: Int,
