@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 abstract class AbstractShowDiffForSavedPatchesAction : AnActionExtensionProvider {
   override fun isActive(e: AnActionEvent): Boolean {
-    return e.getData(SavedPatchesUi.SAVED_PATCHES_UI) != null
+    return e.getData(SavedPatchesUi.SAVED_PATCHES_BROWSER) != null
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
@@ -22,7 +22,7 @@ abstract class AbstractShowDiffForSavedPatchesAction : AnActionExtensionProvider
 
   override fun update(e: AnActionEvent) {
     val project = e.project
-    val changesBrowser = e.getData(SavedPatchesUi.SAVED_PATCHES_UI)?.changesBrowser
+    val changesBrowser = e.getData(SavedPatchesUi.SAVED_PATCHES_BROWSER)
     if (project == null || changesBrowser == null) {
       e.presentation.isEnabledAndVisible = false
       return
@@ -48,7 +48,7 @@ abstract class AbstractShowDiffForSavedPatchesAction : AnActionExtensionProvider
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val browser = e.getData(SavedPatchesUi.SAVED_PATCHES_UI)?.changesBrowser ?: return
+    val browser = e.getData(SavedPatchesUi.SAVED_PATCHES_BROWSER) ?: return
 
     val selection = if (e.getData(ChangesBrowserBase.DATA_KEY) == null) {
       ListSelection.createAt(VcsTreeModelData.all(browser.viewer).userObjects(), 0)

@@ -180,6 +180,7 @@ open class SavedPatchesUi(
     sink[SAVED_PATCH_SELECTED_PATCH] = selectedPatchObjectOrNull()
     sink[SAVED_PATCHES_UI] = this
     sink[SAVED_PATCH_CHANGES] = changesBrowser.getSavedPatchChanges()
+    sink[SAVED_PATCHES_BROWSER] = changesBrowser
   }
 
   private fun selectedPatchObjectOrNull() = patchesTree.selectedPatchObjects().firstOrNull()
@@ -207,6 +208,7 @@ open class SavedPatchesUi(
   companion object {
     const val SAVED_PATCHES_UI_PLACE = "SavedPatchesUiPlace"
     val SAVED_PATCHES_UI = DataKey.create<SavedPatchesUi>("SavedPatchesUi")
+    val SAVED_PATCHES_BROWSER = DataKey.create<SavedPatchesChangesBrowser>("SavedPatchesChangesBrowser")
     val SAVED_PATCH_CHANGES = DataKey.create<Iterable<SavedPatchesProvider.ChangeObject>>("SavedPatchChanges")
     val SAVED_PATCH_SELECTED_CHANGES = DataKey.create<Iterable<SavedPatchesProvider.ChangeObject>>("SavedPatchSelectedChanges")
     val SAVED_PATCH_SELECTED_PATCH = DataKey.create<SavedPatchesProvider.PatchObject<*>>("SavedPatchSelectedPatches")
