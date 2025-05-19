@@ -455,42 +455,42 @@ sealed class IdeaPluginDescriptorImpl(
       }
     }
 
-    internal fun IdeaPluginDescriptorImpl.checkUnexpectedElement(elementName: String, selector: () -> Boolean) {
+    internal fun IdeaPluginDescriptorImpl.logUnexpectedElement(elementName: String, selector: () -> Boolean) {
       if (!selector()) {
         return
       }
       LOG.error(PluginException(buildString {
         append("Plugin descriptor for ")
-        when (this@checkUnexpectedElement) {
+        when (this@logUnexpectedElement) {
           is ContentModuleDescriptor -> append("content module '${moduleName}' of plugin '${pluginId}'")
           is DependsSubDescriptor -> append("'depends' sub-descriptor '${descriptorPath}' of plugin '${pluginId}'")
           is PluginMainDescriptor -> error("not intended")
         }
         append(" has declared element '$elementName' which has no effect there")
-        append("\n in ${this@checkUnexpectedElement}")
+        append("\n in ${this@logUnexpectedElement}")
       }, pluginId))
     }
 
-    internal fun IdeaPluginDescriptorImpl.checkSubDescriptorUnexpectedElements(raw: RawPluginDescriptor) {
-      checkUnexpectedElement(PluginXmlConst.PLUGIN_ALLOW_BUNDLED_UPDATE_ATTR) { raw.isBundledUpdateAllowed }
-      checkUnexpectedElement(PluginXmlConst.PLUGIN_REQUIRE_RESTART_ATTR) { raw.isRestartRequired }
-      checkUnexpectedElement(PluginXmlConst.PLUGIN_IMPLEMENTATION_DETAIL_ATTR) { raw.isImplementationDetail }
+    internal fun IdeaPluginDescriptorImpl.logSubDescriptorUnexpectedElements(raw: RawPluginDescriptor) {
+      logUnexpectedElement(PluginXmlConst.PLUGIN_ALLOW_BUNDLED_UPDATE_ATTR) { raw.isBundledUpdateAllowed }
+      logUnexpectedElement(PluginXmlConst.PLUGIN_REQUIRE_RESTART_ATTR) { raw.isRestartRequired }
+      logUnexpectedElement(PluginXmlConst.PLUGIN_IMPLEMENTATION_DETAIL_ATTR) { raw.isImplementationDetail }
 
-      checkUnexpectedElement(PluginXmlConst.VENDOR_ELEM) { raw.vendor != null }
-      checkUnexpectedElement(PluginXmlConst.VENDOR_URL_ATTR) { raw.vendorUrl != null }
-      checkUnexpectedElement(PluginXmlConst.VENDOR_EMAIL_ATTR) { raw.vendorEmail != null }
-      checkUnexpectedElement(PluginXmlConst.PLUGIN_URL_ATTR) { raw.url != null }
+      logUnexpectedElement(PluginXmlConst.VENDOR_ELEM) { raw.vendor != null }
+      logUnexpectedElement(PluginXmlConst.VENDOR_URL_ATTR) { raw.vendorUrl != null }
+      logUnexpectedElement(PluginXmlConst.VENDOR_EMAIL_ATTR) { raw.vendorEmail != null }
+      logUnexpectedElement(PluginXmlConst.PLUGIN_URL_ATTR) { raw.url != null }
 
-      checkUnexpectedElement(PluginXmlConst.PRODUCT_DESCRIPTOR_CODE_ATTR) { raw.productCode != null }
-      checkUnexpectedElement(PluginXmlConst.PRODUCT_DESCRIPTOR_OPTIONAL_ATTR) { raw.isLicenseOptional }
-      checkUnexpectedElement(PluginXmlConst.PRODUCT_DESCRIPTOR_RELEASE_DATE_ATTR) { raw.releaseDate != null }
-      checkUnexpectedElement(PluginXmlConst.PRODUCT_DESCRIPTOR_RELEASE_VERSION_ATTR) { raw.releaseVersion != 0 }
+      logUnexpectedElement(PluginXmlConst.PRODUCT_DESCRIPTOR_CODE_ATTR) { raw.productCode != null }
+      logUnexpectedElement(PluginXmlConst.PRODUCT_DESCRIPTOR_OPTIONAL_ATTR) { raw.isLicenseOptional }
+      logUnexpectedElement(PluginXmlConst.PRODUCT_DESCRIPTOR_RELEASE_DATE_ATTR) { raw.releaseDate != null }
+      logUnexpectedElement(PluginXmlConst.PRODUCT_DESCRIPTOR_RELEASE_VERSION_ATTR) { raw.releaseVersion != 0 }
 
-      checkUnexpectedElement(PluginXmlConst.CHANGE_NOTES_ELEM) { raw.changeNotes != null }
-      checkUnexpectedElement(PluginXmlConst.CATEGORY_ELEM) { raw.category != null }
-      checkUnexpectedElement(PluginXmlConst.DESCRIPTION_ELEM) { raw.description != null }
+      logUnexpectedElement(PluginXmlConst.CHANGE_NOTES_ELEM) { raw.changeNotes != null }
+      logUnexpectedElement(PluginXmlConst.CATEGORY_ELEM) { raw.category != null }
+      logUnexpectedElement(PluginXmlConst.DESCRIPTION_ELEM) { raw.description != null }
 
-      checkUnexpectedElement(PluginXmlConst.CONTENT_ELEM) { raw.contentModules.isNotEmpty() }
+      logUnexpectedElement(PluginXmlConst.CONTENT_ELEM) { raw.contentModules.isNotEmpty() }
     }
   }
 }
@@ -624,9 +624,9 @@ class DependsSubDescriptor(
     ") <- $parent"
 
   init {
-    checkSubDescriptorUnexpectedElements(raw)
-    checkUnexpectedElement("<dependencies><module>") { raw.dependencies.any { it is DependenciesElement.ModuleDependency } }
-    checkUnexpectedElement("<dependencies><plugin>") { raw.dependencies.any { it is DependenciesElement.PluginDependency } }
+    logSubDescriptorUnexpectedElements(raw)
+    logUnexpectedElement("<dependencies><module>") { raw.dependencies.any { it is DependenciesElement.ModuleDependency } }
+    logUnexpectedElement("<dependencies><plugin>") { raw.dependencies.any { it is DependenciesElement.PluginDependency } }
   }
 
   // <editor-fold desc="Deprecated">
@@ -679,8 +679,8 @@ class ContentModuleDescriptor(
     ") <- $parent"
 
   init {
-    checkSubDescriptorUnexpectedElements(raw)
-    checkUnexpectedElement(PluginXmlConst.DEPENDS_ELEM) { raw.depends.isNotEmpty() }
+    logSubDescriptorUnexpectedElements(raw)
+    logUnexpectedElement(PluginXmlConst.DEPENDS_ELEM) { raw.depends.isNotEmpty() }
   }
 
   // <editor-fold desc="Deprecated">
