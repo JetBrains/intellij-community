@@ -523,6 +523,11 @@ private class MyWorkspaceFileSetRegistrar<E : WorkspaceEntity>(contributor: Work
     @Suppress("UNCHECKED_CAST")
     rootData.registerFileSet(file, kind, entity as E, customData, false)
   }
+
+  override fun registerFileSetByCondition(root: VirtualFileUrl, kind: WorkspaceFileKind, entity: WorkspaceEntity, customData: WorkspaceFileSetData?, condition: (VirtualFile) -> Boolean) {
+    @Suppress("UNCHECKED_CAST")
+    rootData.registerFileSet(root, kind, entity as E, customData, true)
+  }
 }
 
 

@@ -6,11 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
-import com.intellij.openapi.roots.JavaSyntheticLibrary
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.SyntheticLibrary
+import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy
 import com.intellij.openapi.roots.impl.RootFileValidityChecker
 import com.intellij.openapi.vfs.VirtualFile
@@ -77,7 +73,7 @@ internal class NonIncrementalContributors(private val project: Project) {
           newFileSets.forEach { (root, sets) ->
             sets.forEach { set ->
               fileSets.putValue(root, set)
-              val fileSet = set as? WorkspaceFileSetImpl
+              val fileSet = set as? StoredWorkspaceFileSet
               if (fileSet != null && fileSet.data is JvmPackageRootDataInternal) {
                 fileSetsByPackagePrefix.addFileSet("", fileSet)
               }
@@ -191,7 +187,7 @@ internal class NonIncrementalContributors(private val project: Project) {
 
   companion object {
     internal fun isFromAdditionalLibraryRootsProvider(fileSet: WorkspaceFileSet): Boolean {
-      return fileSet.asSafely<WorkspaceFileSetImpl>()?.entityPointer is NonIncrementalMarker
+      return fileSet.asSafely<StoredWorkspaceFileSet>()?.entityPointer is NonIncrementalMarker
     }
 
     fun isPlaceholderReference(entityPointer: EntityPointer<WorkspaceEntity>): Boolean {

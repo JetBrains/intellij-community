@@ -91,20 +91,25 @@ internal sealed interface StoredFileSet : StoredFileSetCollection {
   abstract override fun toString(): String
 }
 
+internal sealed interface StoredWorkspaceFileSet : StoredFileSet, WorkspaceFileSetWithCustomData<WorkspaceFileSetData>, WorkspaceFileInternalInfo {
+  fun isUnloaded(project: Project): Boolean
+}
+
 /**
  * Represents an actual set of files registered in [WorkspaceFileIndexData].
  */
-internal class WorkspaceFileSetImpl(override val root: VirtualFile,
-                                    override val kind: WorkspaceFileKind,
-                                    override val entityPointer: EntityPointer<WorkspaceEntity>,
-                                    override val entityStorageKind: EntityStorageKind,
-                                    override val data: WorkspaceFileSetData,
-                                    override val recursive: Boolean = true)
-  : WorkspaceFileSetWithCustomData<WorkspaceFileSetData>, StoredFileSet, WorkspaceFileInternalInfo {
+internal class WorkspaceFileSetImpl(
+  override val root: VirtualFile,
+  override val kind: WorkspaceFileKind,
+  override val entityPointer: EntityPointer<WorkspaceEntity>,
+  override val entityStorageKind: EntityStorageKind,
+  override val data: WorkspaceFileSetData,
+  override val recursive: Boolean = true,
+) : StoredWorkspaceFileSet {
 
   override val fileSets: List<WorkspaceFileSetWithCustomData<*>> get() = listOf(this)
 
-  fun isUnloaded(project: Project): Boolean {
+  override fun isUnloaded(project: Project): Boolean {
     return (data as? UnloadableFileSetData)?.isUnloaded(project) == true
   }
 
@@ -199,6 +204,52 @@ private data class TwoWorkspaceFileSets(private val first: WorkspaceFileSetImpl,
   }
 }
 
+internal class WorkspaceFileSetByCondition(
+  override val root: VirtualFile,
+  override val kind: WorkspaceFileKind,
+  override val entityPointer: EntityPointer<WorkspaceEntity>,
+  override val entityStorageKind: EntityStorageKind,
+  override val data: WorkspaceFileSetData,
+  private val condition: (VirtualFile) -> Boolean,
+) : StoredWorkspaceFileSet {
+
+  override val recursive: Boolean
+    get() = true
+
+  override val fileSets: List<WorkspaceFileSetWithCustomData<*>> get() = listOf(this)
+
+  override fun isUnloaded(project: Project): Boolean {
+    return (data as? UnloadableFileSetData)?.isUnloaded(project) == true
+  }
+
+  override fun add(fileSet: StoredFileSet): StoredFileSetCollection {
+    return MultipleStoredWorkspaceFileSets(mutableListOf(fileSet, this))
+  }
+
+  override fun computeMasks(currentMasks: Int, project: Project, honorExclusion: Boolean, file: VirtualFile): Int {
+    val acceptedKindMask = (currentMasks shr ACCEPTED_KINDS_MASK_SHIFT) and WorkspaceFileKindMask.ALL
+    val update = if (acceptedKindMask and kind.toMask() != 0 && !isUnloaded(project) && condition(file)) {
+      StoredFileSetKindMask.ACCEPTED_FILE_SET
+    }
+    else {
+      StoredFileSetKindMask.IRRELEVANT_FILE_SET
+    }
+    return currentMasks or update
+  }
+
+  override fun findFileSet(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): WorkspaceFileSetWithCustomData<*>? {
+    return this.takeIf(condition)
+  }
+
+  override fun findFileSets(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): List<WorkspaceFileSetWithCustomData<*>> {
+    return listOfNotNull(findFileSet(condition))
+  }
+
+  override fun toString(): String {
+    return "WorkspaceFileSetByCondition{root=$root, kind=$kind}"
+  }
+}
+
 /**
  * Represents a generic case with multiple elements in [StoredFileSetCollection].
  */
@@ -245,8 +296,8 @@ internal class MultipleStoredWorkspaceFileSets(private val storedFileSets: Mutab
     get() = storedFileSets as List<WorkspaceFileSetImpl>
 
   override fun find(acceptedCustomDataClass: Class<out WorkspaceFileSetData>?): WorkspaceFileSetImpl? {
-    return storedFileSets.find { 
-      it is WorkspaceFileSetImpl && (acceptedCustomDataClass == null || acceptedCustomDataClass.isInstance(it.data)) 
+    return storedFileSets.find {
+      it is WorkspaceFileSetImpl && (acceptedCustomDataClass == null || acceptedCustomDataClass.isInstance(it.data))
     } as? WorkspaceFileSetImpl
   }
 
@@ -268,8 +319,8 @@ internal class MultipleStoredWorkspaceFileSets(private val storedFileSets: Mutab
   }
 }
 
-internal class MultipleWorkspaceFileSetsImpl(override val fileSets: List<WorkspaceFileSetImpl>): MultipleWorkspaceFileSets {
-  override fun find(acceptedCustomDataClass: Class<out WorkspaceFileSetData>?): WorkspaceFileSetImpl? {
+internal class MultipleWorkspaceFileSetsImpl(override val fileSets: List<StoredWorkspaceFileSet>) : MultipleWorkspaceFileSets {
+  override fun find(acceptedCustomDataClass: Class<out WorkspaceFileSetData>?): StoredWorkspaceFileSet? {
     return fileSets.find { acceptedCustomDataClass == null || acceptedCustomDataClass.isInstance(it.data) }
   }
 
@@ -394,9 +445,9 @@ internal fun <K> MutableMap<K, StoredFileSetCollection>.removeValueIf(key: K, va
   }
 }
 
-internal typealias PackagePrefixStorage = HashMap<String, MultiMap<EntityPointer<WorkspaceEntity>, WorkspaceFileSetImpl>>
+internal typealias PackagePrefixStorage = HashMap<String, MultiMap<EntityPointer<WorkspaceEntity>, StoredWorkspaceFileSet>>
 
-internal fun PackagePrefixStorage.addFileSet(packagePrefix: String, fileSet: WorkspaceFileSetImpl) {
+internal fun PackagePrefixStorage.addFileSet(packagePrefix: String, fileSet: StoredWorkspaceFileSet) {
   val entityRef2FileSet = getOrPut(packagePrefix) { MultiMap(LinkedHashMap()) }
   entityRef2FileSet.putValue(fileSet.entityPointer, fileSet)
 }
