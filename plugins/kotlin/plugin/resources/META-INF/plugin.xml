@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin" xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin package="org.jetbrains.kotlin" xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
   <id>org.jetbrains.kotlin</id>
   <name>Kotlin</name>
   <category>Languages</category>
