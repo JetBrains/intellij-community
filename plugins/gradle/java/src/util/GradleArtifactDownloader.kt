@@ -25,13 +25,10 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.await
-import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.GradleJavaCoroutineScope.gradleCoroutineScope
 import org.jetbrains.plugins.gradle.service.execution.loadDownloadArtifactInitScript
-import org.jetbrains.plugins.gradle.service.execution.loadLegacyDownloadArtifactInitScript
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
-import org.jetbrains.plugins.gradle.service.task.LazyVersionSpecificInitScript
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import java.nio.file.Path
 import java.util.*
@@ -39,9 +36,6 @@ import java.util.concurrent.CompletableFuture
 import kotlin.io.path.readText
 
 object GradleArtifactDownloader {
-
-  private val GRADLE_5_6 = GradleVersion.version("5.6")
-  private const val INIT_SCRIPT_FILE_PREFIX = "ijArtifactDownloader"
 
   /**
    * Download a Jar file with specified artifact coordinates by using the Gradle task executed on a specific Gradle module.
@@ -81,11 +75,11 @@ object GradleArtifactDownloader {
     val absoluteTaskOutputFileEelPath = createTaskOutputFile(eel)
     val taskOutputFile = absoluteTaskOutputFileEelPath.asNioPath()
     try {
-      val userData = prepareUserData(
+      val initScript = loadDownloadArtifactInitScript(
         artifactNotation,
         taskName,
         absoluteTaskOutputFileEelPath.asCanonicalResolvedPath(eel),
-        externalProjectPath
+        externalProjectPath.asSystemDependentGradleProjectPath()
       )
       val future = CompletableFuture<Nothing?>()
       ExternalSystemUtil.runTask(
@@ -94,7 +88,9 @@ object GradleArtifactDownloader {
           .withSystemId(GradleConstants.SYSTEM_ID)
           .withSettings(settings)
           .withProgressExecutionMode(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
-          .withUserData(userData)
+          .withUserData(UserDataHolderBase().apply {
+            putUserData(GradleTaskManager.VERSION_SPECIFIC_SCRIPTS_KEY, initScript)
+          })
           .withResultListener(future)
           .withActivateToolWindowBeforeRun(false)
           .withActivateToolWindowOnFailure(false)
@@ -116,24 +112,6 @@ object GradleArtifactDownloader {
     }
     finally {
       FileUtil.delete(taskOutputFile)
-    }
-  }
-
-  private fun prepareUserData(artifactNotation: String, taskName: String, taskOutputPath: Path, externalProjectPath: String)
-    : UserDataHolderBase {
-    val projectPath = externalProjectPath.asSystemDependentGradleProjectPath()
-    val legacyInitScript = LazyVersionSpecificInitScript(
-      scriptSupplier = { loadLegacyDownloadArtifactInitScript(artifactNotation, taskName, taskOutputPath, projectPath) },
-      filePrefix = INIT_SCRIPT_FILE_PREFIX,
-      isApplicable = { GRADLE_5_6 > it }
-    )
-    val initScript = LazyVersionSpecificInitScript(
-      scriptSupplier = { loadDownloadArtifactInitScript(artifactNotation, taskName, taskOutputPath, projectPath) },
-      filePrefix = INIT_SCRIPT_FILE_PREFIX,
-      isApplicable = { GRADLE_5_6 <= it }
-    )
-    return UserDataHolderBase().apply {
-      putUserData(GradleTaskManager.VERSION_SPECIFIC_SCRIPTS_KEY, listOf(legacyInitScript, initScript))
     }
   }
 
