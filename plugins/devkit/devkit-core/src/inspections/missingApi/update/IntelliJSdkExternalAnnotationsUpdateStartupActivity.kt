@@ -6,8 +6,10 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.ProjectJdkTable.Listener
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.startup.ProjectActivity
+import kotlinx.coroutines.launch
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk
 
 /**
@@ -23,32 +25,26 @@ private class IntelliJSdkExternalAnnotationsUpdateStartupActivity : ProjectActiv
 
   override suspend fun execute(project: Project) {
     val ideaJdks = serviceAsync<ProjectJdkTable>().getSdksOfType(IdeaJdk.getInstance())
-    if (ideaJdks.isNotEmpty()) {
-      val sdkAnnotationsUpdater = serviceAsync<IntelliJSdkExternalAnnotationsUpdater>()
-      for (ideaJdk in ideaJdks) {
-        sdkAnnotationsUpdater.updateIdeaJdkAnnotationsIfNecessary(project, ideaJdk)
-      }
+    val sdkAnnotationsUpdater = serviceAsync<IntelliJSdkExternalAnnotationsUpdater>()
+    for (ideaJdk in ideaJdks) {
+      sdkAnnotationsUpdater.updateIdeaJdkAnnotationsIfNecessary(project, ideaJdk)
     }
 
-    subscribeToJdkChanges(project)
-  }
-
-  private fun updateAnnotationsLaterIfNecessary(project: Project, ideaJdk: Sdk) {
-    IntelliJSdkExternalAnnotationsUpdater.getInstance().updateIdeaJdkAnnotationsIfNecessary(project, ideaJdk)
-  }
-
-  private fun subscribeToJdkChanges(project: Project) {
-    val connection = ApplicationManager.getApplication().messageBus.connect(project)
-    connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, object : ProjectJdkTable.Listener {
+    val connection = ApplicationManager.getApplication().messageBus.connect(sdkAnnotationsUpdater.coroutineScope)
+    connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, object : Listener {
       override fun jdkAdded(jdk: Sdk) {
         if (jdk.sdkType == IdeaJdk.getInstance()) {
-          updateAnnotationsLaterIfNecessary(project, jdk)
+          sdkAnnotationsUpdater.coroutineScope.launch {
+            sdkAnnotationsUpdater.updateIdeaJdkAnnotationsIfNecessary(project, jdk)
+          }
         }
       }
 
       override fun jdkNameChanged(jdk: Sdk, previousName: String) {
         if (jdk.sdkType == IdeaJdk.getInstance()) {
-          updateAnnotationsLaterIfNecessary(project, jdk)
+          sdkAnnotationsUpdater.coroutineScope.launch {
+            sdkAnnotationsUpdater.updateIdeaJdkAnnotationsIfNecessary(project, jdk)
+          }
         }
       }
     })
