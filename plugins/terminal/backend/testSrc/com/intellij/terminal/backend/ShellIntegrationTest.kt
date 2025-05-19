@@ -7,6 +7,7 @@ import com.intellij.terminal.backend.util.TerminalSessionTestUtil
 import com.intellij.terminal.backend.util.TerminalSessionTestUtil.ENTER_BYTES
 import com.intellij.terminal.backend.util.TerminalSessionTestUtil.awaitOutputEvent
 import com.intellij.terminal.session.*
+import com.intellij.terminal.session.dto.toState
 import com.intellij.terminal.session.dto.toStyleRange
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.ExtensionTestUtil
@@ -371,6 +372,12 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
   private fun calculateResultingOutput(events: List<TerminalOutputEvent>): String {
     val outputModel = TerminalTestUtil.createOutputModel(maxLength = Int.MAX_VALUE)
+
+    val initialState = events.find { it is TerminalInitialStateEvent }
+    if (initialState is TerminalInitialStateEvent) {
+      outputModel.restoreFromState(initialState.outputModelState.toState())
+    }
+
     events
       .filterIsInstance<TerminalContentUpdatedEvent>()
       .map { event ->

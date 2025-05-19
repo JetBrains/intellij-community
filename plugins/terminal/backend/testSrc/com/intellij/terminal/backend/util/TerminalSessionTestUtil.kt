@@ -3,9 +3,7 @@ package com.intellij.terminal.backend.util
 import com.google.common.base.Ascii
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.openapi.project.Project
-import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
-import com.intellij.terminal.backend.createTerminalSession
-import com.intellij.terminal.backend.startTerminalProcess
+import com.intellij.terminal.backend.TerminalSessionsManager
 import com.intellij.terminal.backend.util.TerminalSessionTestUtil.createShellCommand
 import com.intellij.terminal.session.TerminalOutputEvent
 import com.intellij.terminal.session.TerminalSession
@@ -24,7 +22,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 internal object TerminalSessionTestUtil {
-  fun startTestTerminalSession(
+  suspend fun startTestTerminalSession(
     project: Project,
     shellPath: String,
     coroutineScope: CoroutineScope,
@@ -38,7 +36,7 @@ internal object TerminalSessionTestUtil {
    * @param options should already contain configured [ShellStartupOptions.shellCommand].
    * Use [createShellCommand] to create the default command from the shell path.
    */
-  fun startTestTerminalSession(
+  suspend fun startTestTerminalSession(
     project: Project,
     options: ShellStartupOptions,
     coroutineScope: CoroutineScope,
@@ -52,9 +50,10 @@ internal object TerminalSessionTestUtil {
       .workingDirectory(options.workingDirectory ?: System.getProperty("user.home"))
       .initialTermSize(options.initialTermSize ?: TermSize(80, 24))
       .build()
-    val (ttyConnector, _) = startTerminalProcess(project, allOptions)
-    val session = createTerminalSession(project, ttyConnector, allOptions, JBTerminalSystemSettingsProviderBase(), coroutineScope)
-    return session
+
+    val manager = TerminalSessionsManager.getInstance()
+    val sessionStartResult = manager.startSession(allOptions, project, coroutineScope)
+    return manager.getSession(sessionStartResult.sessionId)!!
   }
 
   fun createShellCommand(shellPath: String): List<String> {
