@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -343,21 +343,38 @@ public final class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLoc
       if (!(element.getParent() instanceof PsiSwitchExpression switchExpression)) return;
       for (@NotNull PsiElement switchExpressionChild : switchExpression.getChildren()) {
         if (switchExpressionChild instanceof PsiCodeBlock codeBlock) {
+          boolean previousHasBodyStatement = true;
           for (@NotNull PsiElement codeBlockChildren : codeBlock.getChildren()) {
+            if (codeBlockChildren instanceof PsiWhiteSpace && builder.charAt(builder.length() - 1) == ',') {
+              continue;
+            }
             if (codeBlockChildren instanceof PsiSwitchLabelStatement switchLabelStatement) {
+              boolean nextIsBodyStatement = checkNextIsStatement(codeBlockChildren);
               for (@NotNull PsiElement labelStatementChild : switchLabelStatement.getChildren()) {
+                if (!previousHasBodyStatement &&
+                    labelStatementChild instanceof PsiJavaToken javaToken &&
+                    javaToken.textMatches("case")) {
+                  continue;
+                }
                 if (labelStatementChild instanceof PsiJavaToken javaToken && javaToken.textMatches(":")) {
-                  builder.append("->"); //replace ':' with '->'
+                  if (nextIsBodyStatement) {
+                    builder.append("->"); //replace ':' with '->'
+                  }
+                  else {
+                    //next label
+                    builder.append(",");
+                  }
                 }
                 else {
                   builder.append(labelStatementChild.getText());
                 }
               }
               PsiElement nextOfSwitchLabelStatement = PsiTreeUtil.skipWhitespacesAndCommentsForward(switchLabelStatement);
-              if (!(nextOfSwitchLabelStatement instanceof PsiBlockStatement) &&
+              if (nextIsBodyStatement && !(nextOfSwitchLabelStatement instanceof PsiBlockStatement) &&
                   findOneYieldOrThrowStatement(PsiTreeUtil.skipWhitespacesAndCommentsForward(codeBlockChildren)) == null) {
                 builder.append("{"); //wrap multiline rule into '{}'
               }
+              previousHasBodyStatement = nextIsBodyStatement;
             }
             else {
               PsiStatement yieldStatement = findOneYieldOrThrowStatement(codeBlockChildren);
@@ -390,6 +407,13 @@ public final class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLoc
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
       PsiExpression newSwitchExpression = factory.createExpressionFromText(builder.toString(), element);
       switchExpression.replace(newSwitchExpression);
+    }
+
+    private static boolean checkNextIsStatement(@Nullable PsiElement statement) {
+      PsiElement forward = PsiTreeUtil.skipWhitespacesAndCommentsForward(statement);
+      return statement instanceof PsiSwitchLabelStatement &&
+             !(forward instanceof PsiSwitchLabelStatement) &&
+             forward instanceof PsiStatement;
     }
 
     private static @Nullable PsiStatement findOneYieldOrThrowStatement(@Nullable PsiElement switchBlockChild) {
