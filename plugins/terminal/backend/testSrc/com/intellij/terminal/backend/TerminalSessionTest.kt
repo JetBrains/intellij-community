@@ -63,7 +63,7 @@ internal class TerminalSessionTest(private val shellPath: Path) {
   }
 
   private suspend fun startTerminalSession(scope: CoroutineScope): TerminalSession {
-    val session = TerminalSessionTestUtil.startTestTerminalSession(shellPath.toString(), projectRule.project, scope)
+    val session = TerminalSessionTestUtil.startTestStateAwareTerminalSession(shellPath.toString(), projectRule.project, scope)
     session.awaitOutputEvent(TerminalPromptFinishedEvent)
     return session
   }
