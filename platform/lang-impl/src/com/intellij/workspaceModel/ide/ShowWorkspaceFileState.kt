@@ -27,9 +27,9 @@ internal class ShowWorkspaceFileState : DumbAwareAction() {
     val fileSets = WorkspaceFileIndex
       .getInstance(project)
       .findFileSets(virtualFile,
-                    false,
                     true,
-                    false,
+                    true,
+                    true,
                     true,
                     true,
                     true
