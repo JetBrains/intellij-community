@@ -5,21 +5,20 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.searcheverywhere.CheckBoxSearchEverywhereToggleAction
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeActionItemPresentation
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeResultEvent
-import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfo
-import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfoProvider
-import com.intellij.platform.searchEverywhere.frontend.SeFilterActionsPresentation
-import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
-import com.intellij.platform.searchEverywhere.frontend.SeFilterPresentation
-import com.intellij.platform.searchEverywhere.frontend.SeTab
+import com.intellij.platform.searchEverywhere.frontend.*
 import com.intellij.platform.searchEverywhere.frontend.providers.actions.SeActionsFilter
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
 import com.intellij.platform.searchEverywhere.frontend.tabs.utils.SeFilterEditorBase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -32,13 +31,15 @@ class SeActionsTab(private val delegate: SeTabDelegate): SeTab {
   override fun getItems(params: SeParams): Flow<SeResultEvent> = delegate.getItems(params)
   override suspend fun getFilterEditor(): SeFilterEditor = filterEditor
 
-  override suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean {
-    val presentation = item.presentation
-    if (presentation is SeActionItemPresentation) {
-      presentation.commonData.toggleStateIfSwitcher()
-    }
+  override suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean = coroutineScope {
+    withContext(Dispatchers.EDT) {
+      val presentation = item.presentation
+      if (presentation is SeActionItemPresentation) {
+        presentation.commonData.toggleStateIfSwitcher()
+      }
 
-    return delegate.itemSelected(item, modifiers, searchText)
+      delegate.itemSelected(item, modifiers, searchText)
+    }
   }
 
   override suspend fun getEmptyResultInfo(context: DataContext): SeEmptyResultInfo? {
