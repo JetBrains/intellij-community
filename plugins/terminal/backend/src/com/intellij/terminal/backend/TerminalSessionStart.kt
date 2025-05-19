@@ -40,7 +40,10 @@ internal fun startTerminalProcess(
 }
 
 /**
- * Returns a pair of started terminal session and final options used for session start.
+ * The created session lifecycle is bound to the [coroutineScope].
+ * If it cancels, then the process will be terminated.
+ * And if the process is terminated on its own, for example, if user executes `exit` or press Ctrl+D,
+ * then the [coroutineScope] will be canceled as well.
  */
 @OptIn(AwaitCancellationAndInvoke::class)
 internal fun createTerminalSession(
@@ -73,8 +76,12 @@ internal fun createTerminalSession(
     }
     finally {
       coroutineScope.launch {
-        outputFlow.emit(listOf(TerminalSessionTerminatedEvent))
-        coroutineScope.cancel()
+        try {
+          outputFlow.emit(listOf(TerminalSessionTerminatedEvent))
+        }
+        finally {
+          coroutineScope.cancel()
+        }
       }
     }
   }
