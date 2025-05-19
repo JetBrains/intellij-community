@@ -199,7 +199,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
   @Test fun `migrate plugins to empty directory`() {
     val oldConfigDir = localTempDir.newDirectory("oldConfig").toPath()
     val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
-    PluginBuilder.withModulesLang().depends("com.intellij.modules.lang").buildJar(oldPluginsDir.resolve("my-plugin.jar"))
+    PluginBuilder().dependsIntellijModulesLang().depends("com.intellij.modules.lang").buildJar(oldPluginsDir.resolve("my-plugin.jar"))
 
     val newConfigDir = localTempDir.newDirectory("newConfig").toPath()
     val newPluginsDir = newConfigDir.resolve("plugins")
@@ -211,7 +211,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
   @Test fun `download incompatible plugin`() {
     val oldConfigDir = localTempDir.newDirectory("oldConfig").toPath()
     val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
-    val oldBuilder = PluginBuilder.withModulesLang()
+    val oldBuilder = PluginBuilder().dependsIntellijModulesLang()
       .depends("com.intellij.modules.lang")
       .untilBuild("193.1")
       .buildJar(oldPluginsDir.resolve("my-plugin.jar"))
@@ -223,7 +223,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     options.downloadService = object : MarketplacePluginDownloadService() {
       override fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator?): Path {
         val path = localTempDir.newDirectory("pluginTemp").toPath().resolve("my-plugin-new.jar")
-        PluginBuilder.withModulesLang().id(oldBuilder.id).buildJar(path)
+        PluginBuilder().dependsIntellijModulesLang().id(oldBuilder.id).buildJar(path)
         return path
       }
     }
@@ -235,7 +235,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
   @Test fun `keep incompatible plugin if can't download compatible`() {
     val oldConfigDir = localTempDir.newDirectory("oldConfig").toPath()
     val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
-    PluginBuilder.withModulesLang()
+    PluginBuilder().dependsIntellijModulesLang()
       .untilBuild("193.1")
       .buildJar(oldPluginsDir.resolve("my-plugin.jar"))
 
@@ -256,8 +256,8 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val oldConfigDir = localTempDir.newDirectory("oldConfig").toPath()
     val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
     val oldBundledPluginsDir = localTempDir.newDirectory("oldBundled").toPath()
-    val bundledBuilder = PluginBuilder.withModulesLang().version("1.1").buildJar(oldBundledPluginsDir.resolve("my-plugin-bundled.jar"))
-    PluginBuilder.withModulesLang()
+    val bundledBuilder = PluginBuilder().dependsIntellijModulesLang().version("1.1").buildJar(oldBundledPluginsDir.resolve("my-plugin-bundled.jar"))
+    PluginBuilder().dependsIntellijModulesLang()
       .id(bundledBuilder.id)
       .version("1.0")
       .buildJar(oldPluginsDir.resolve("my-plugin.jar"))
@@ -273,7 +273,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
   @Test fun `skip broken plugins`() {
     val oldConfigDir = localTempDir.newDirectory("oldConfig").toPath()
     val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
-    val builder = PluginBuilder.withModulesLang()
+    val builder = PluginBuilder().dependsIntellijModulesLang()
       .version("1.0")
       .buildJar(oldPluginsDir.resolve("my-plugin.jar"))
 
@@ -292,14 +292,14 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val oldPluginsTempDir = localTempDir.newDirectory("old/system/plugins").toPath()
 
     val tempPath = oldPluginsTempDir.resolve("my-plugin.jar")
-    val tempBuilder = PluginBuilder.withModulesLang()
+    val tempBuilder = PluginBuilder().dependsIntellijModulesLang()
       .version("1.1")
       .buildJar(tempPath)
 
     val commands = listOf(StartupActionScriptManager.CopyCommand(tempPath, oldPluginsDir.resolve("my-plugin-1.1.jar")))
     StartupActionScriptManager.saveActionScript(commands, oldPluginsTempDir.resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE))
 
-    PluginBuilder.withModulesLang()
+    PluginBuilder().dependsIntellijModulesLang()
       .id(tempBuilder.id)
       .version("1.0")
       .buildJar(oldPluginsDir.resolve("my-plugin-1.0.jar"))
@@ -319,14 +319,14 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val oldPluginsTempDir = localTempDir.newDirectory("old/system/plugins").toPath()
 
     val tempPath = oldPluginsTempDir.resolve("my-plugin.jar")
-    val tempBuilder = PluginBuilder.withModulesLang()
+    val tempBuilder = PluginBuilder().dependsIntellijModulesLang()
       .version("1.1")
       .buildJar(tempPath)
 
     val commands = listOf(StartupActionScriptManager.CopyCommand(tempPath, oldPluginsDir.resolve("my-plugin-1.1.jar")))
     StartupActionScriptManager.saveActionScript(commands, oldPluginsTempDir.resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE))
 
-    PluginBuilder.withModulesLang()
+    PluginBuilder().dependsIntellijModulesLang()
       .id(tempBuilder.id)
       .version("1.0")
       .untilBuild("193.1")
@@ -353,14 +353,14 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val oldPluginsTempDir = localTempDir.newDirectory("old/system/plugins").toPath()
 
     val tempPath = oldPluginsTempDir.resolve("my-plugin.zip")
-    val tempBuilder = PluginBuilder.withModulesLang()
+    val tempBuilder = PluginBuilder().dependsIntellijModulesLang()
       .version("1.1")
       .buildZip(tempPath)
 
     val commands = listOf(StartupActionScriptManager.UnzipCommand(tempPath, oldPluginsDir))
     StartupActionScriptManager.saveActionScript(commands, oldPluginsTempDir.resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE))
 
-    PluginBuilder.withModulesLang()
+    PluginBuilder().dependsIntellijModulesLang()
       .id(tempBuilder.id)
       .version("1.0")
       .buildJar(oldPluginsDir.resolve("my-plugin-1.0.jar"))
@@ -590,10 +590,10 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
   @Test fun `uses broken plugins from marketplace by default`() {
     val oldConfigDir = localTempDir.newDirectory("oldConfig").toPath()
     val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
-    val builder = PluginBuilder.withModulesLang()
+    val builder = PluginBuilder().dependsIntellijModulesLang()
       .version("1.0")
       .buildJar(oldPluginsDir.resolve("my-plugin.jar"))
-    val builder2 = PluginBuilder.withModulesLang()
+    val builder2 = PluginBuilder().dependsIntellijModulesLang()
       .version("1.0")
       .buildJar(oldPluginsDir.resolve("my-plugin-2.jar"))
 
@@ -646,10 +646,10 @@ class ConfigImportHelperPluginUpdateModeTest(val updateIncompatibleOnly: Boolean
 
     val oldConfigDir = localTempDir.newDirectory("oldConfig").toPath()
     val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
-    val broken = PluginBuilder.withModulesLang().id("broken").version("1.0").buildJar(oldPluginsDir.resolve("broken.jar"))
-    val update = PluginBuilder.withModulesLang().id("update").version("1.0").buildJar(oldPluginsDir.resolve("update.jar"))
-    val migrate = PluginBuilder.withModulesLang().id("migrate").version("1.0").buildJar(oldPluginsDir.resolve("migrate.jar"))
-    val disabled = PluginBuilder.withModulesLang().id("disabled").version("1.0").buildJar(oldPluginsDir.resolve("disabled.jar"))
+    val broken = PluginBuilder().dependsIntellijModulesLang().id("broken").version("1.0").buildJar(oldPluginsDir.resolve("broken.jar"))
+    val update = PluginBuilder().dependsIntellijModulesLang().id("update").version("1.0").buildJar(oldPluginsDir.resolve("update.jar"))
+    val migrate = PluginBuilder().dependsIntellijModulesLang().id("migrate").version("1.0").buildJar(oldPluginsDir.resolve("migrate.jar"))
+    val disabled = PluginBuilder().dependsIntellijModulesLang().id("disabled").version("1.0").buildJar(oldPluginsDir.resolve("disabled.jar"))
 
     val repoDir = localTempDir.newDirectory("repo").toPath()
     broken.version("1.1").buildJar(repoDir.resolve("broken.jar"))

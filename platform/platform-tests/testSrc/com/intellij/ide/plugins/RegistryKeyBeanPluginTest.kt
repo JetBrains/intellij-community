@@ -52,7 +52,7 @@ class RegistryKeyBeanPluginTest {
   @Test
   fun `a dynamic key load is allowed`() {
     val key = "test.plugin.registry.key.1"
-    val plugin1 = PluginBuilder.withModulesLang()
+    val plugin1 = PluginBuilder().dependsIntellijModulesLang()
       .id("plugin1")
       .extensions(registryKey(key, defaultValue = true))
 
@@ -63,7 +63,7 @@ class RegistryKeyBeanPluginTest {
 
   @Test
   fun `a static override of a non-existing key is allowed`() {
-    val plugin = PluginBuilder.withModulesLang()
+    val plugin = PluginBuilder().dependsIntellijModulesLang()
       .id("plugin1")
       .extensions(registryKey("my.key", defaultValue = true, overrides = true))
     assertDoesNotThrow {
@@ -73,10 +73,10 @@ class RegistryKeyBeanPluginTest {
 
   @Test
   fun `a static override of a key is allowed`() {
-    val plugin1 = PluginBuilder.withModulesLang()
+    val plugin1 = PluginBuilder().dependsIntellijModulesLang()
       .id("plugin1")
       .extensions(registryKey("my.key", defaultValue = false))
-    val plugin2 = PluginBuilder.withModulesLang()
+    val plugin2 = PluginBuilder().dependsIntellijModulesLang()
       .id("plugin2")
       .extensions(registryKey("my.key", defaultValue = true, overrides = true))
     val registry = emulateStaticRegistryLoad(plugin1, plugin2)
@@ -85,10 +85,10 @@ class RegistryKeyBeanPluginTest {
 
   @Test
   fun `a dynamic override of an existing key is forbidden`() {
-    val plugin1 = PluginBuilder.withModulesLang()
+    val plugin1 = PluginBuilder().dependsIntellijModulesLang()
       .id("plugin1")
       .extensions(registryKey("my.key", defaultValue = true))
-    val plugin2 = PluginBuilder.withModulesLang()
+    val plugin2 = PluginBuilder().dependsIntellijModulesLang()
       .id("plugin2")
       .extensions(registryKey("my.key", defaultValue = true, overrides = true))
     val message = executeAndReturnPluginLoadingWarning {
@@ -99,10 +99,10 @@ class RegistryKeyBeanPluginTest {
 
   @Test
   fun `loading of the key owner after overrider is a no-op`() {
-    val plugin1 = PluginBuilder.withModulesLang()
+    val plugin1 = PluginBuilder().dependsIntellijModulesLang()
       .id("plugin1")
       .extensions(registryKey("my.key", defaultValue = false))
-    val plugin2 = PluginBuilder.withModulesLang()
+    val plugin2 = PluginBuilder().dependsIntellijModulesLang()
       .id("plugin2")
       .extensions(registryKey("my.key", defaultValue = true, overrides = true))
     val registry = emulateStaticRegistryLoad(plugin2, plugin1)
@@ -111,10 +111,10 @@ class RegistryKeyBeanPluginTest {
 
   @Test
   fun `loading two owners of same key replaces the key value but reports a diagnostic`() {
-    val plugin1 = PluginBuilder.withModulesLang()
+    val plugin1 = PluginBuilder().dependsIntellijModulesLang()
       .id("plugin1")
       .extensions(registryKey("my.key", defaultValue = true))
-    val plugin2 = PluginBuilder.withModulesLang()
+    val plugin2 = PluginBuilder().dependsIntellijModulesLang()
       .id("plugin2")
       .extensions(registryKey("my.key", defaultValue = false))
 
@@ -129,10 +129,10 @@ class RegistryKeyBeanPluginTest {
 
   @Test
   fun `a dynamic load of a non-overriding key reports a diagnostic but works`() {
-    val plugin1 = PluginBuilder.withModulesLang()
+    val plugin1 = PluginBuilder().dependsIntellijModulesLang()
       .id("plugin1")
       .extensions(registryKey("my.key", defaultValue = true))
-    val plugin2 = PluginBuilder.withModulesLang()
+    val plugin2 = PluginBuilder().dependsIntellijModulesLang()
       .id("plugin2")
       .extensions(registryKey("my.key", defaultValue = false))
 
@@ -146,13 +146,13 @@ class RegistryKeyBeanPluginTest {
 
   @Test
   fun `a second override of an already overridden key is ignored but reports a diagnostic`() {
-    val pluginB = PluginBuilder.withModulesLang()
+    val pluginB = PluginBuilder().dependsIntellijModulesLang()
       .id("pluginB")
       .extensions(registryKey("my.key", defaultValue = "base"))
-    val plugin1 = PluginBuilder.withModulesLang()
+    val plugin1 = PluginBuilder().dependsIntellijModulesLang()
       .id("plugin1")
       .extensions(registryKey("my.key", defaultValue = "1", overrides = true))
-    val plugin2 = PluginBuilder.withModulesLang()
+    val plugin2 = PluginBuilder().dependsIntellijModulesLang()
       .id("plugin2")
       .extensions(registryKey("my.key", defaultValue = "2", overrides = true))
 
@@ -167,7 +167,7 @@ class RegistryKeyBeanPluginTest {
 
   @Test
   fun `a key should be deregistered after the owner plugin is unloaded`() {
-    val plugin1 = PluginBuilder.withModulesLang()
+    val plugin1 = PluginBuilder().dependsIntellijModulesLang()
       .id("plugin1")
       .extensions(registryKey("my.key", defaultValue = "1"))
 
@@ -185,10 +185,10 @@ class RegistryKeyBeanPluginTest {
 
   @Test
   fun `a key should not be deregistered after the owner plugin wasn't actually owning it`() {
-    val plugin1 = PluginBuilder.withModulesLang()
+    val plugin1 = PluginBuilder().dependsIntellijModulesLang()
       .id("plugin1")
       .extensions(registryKey("my.key", defaultValue = "1"))
-    val plugin2 = PluginBuilder.withModulesLang()
+    val plugin2 = PluginBuilder().dependsIntellijModulesLang()
       .id("plugin2")
       .extensions(registryKey("my.key", defaultValue = "2", overrides = true))
 

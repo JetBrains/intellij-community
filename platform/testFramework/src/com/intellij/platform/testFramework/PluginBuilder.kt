@@ -28,7 +28,7 @@ private object PluginBuilderConsts {
 
 private val pluginIdCounter = AtomicInteger()
 
-class PluginBuilder private constructor() {
+class PluginBuilder() {
   private data class ExtensionBlock(val ns: String, val text: String)
   private data class DependsTag(val pluginId: String, val configFile: String?)
 
@@ -326,7 +326,6 @@ class PluginBuilder private constructor() {
   }
 
   companion object {
-    fun withModulesLang(): PluginBuilder = PluginBuilder().dependsIntellijModulesLang()
     fun empty(): PluginBuilder = PluginBuilder()
   }
 }
