@@ -163,14 +163,6 @@ sealed class IdeaPluginDescriptorImpl(
 
   override fun hashCode(): Int = 31 * id.hashCode() + (descriptorPath?.hashCode() ?: 0)
 
-  override fun toString(): String =
-    "${this::class.simpleName}(name=$name, id=$id, version=$version, " +
-    (if (contentModuleName == null) "" else "moduleName=$contentModuleName, ") +
-    (if (packagePrefix == null) "" else "package=$packagePrefix, ") +
-    "isBundled=$isBundled, " +
-    "descriptorPath=${descriptorPath ?: "plugin.xml"}, " +
-    "path=${PluginUtils.pluginPathToUserString(pluginPath)})"
-
   internal fun createDependsSubDescriptor(
     subBuilder: PluginDescriptorBuilder,
     descriptorPath: String,
@@ -582,6 +574,13 @@ class PluginMainDescriptor(
 
   override fun getDescriptorPath(): Nothing? = null
 
+  override fun toString(): String =
+    "PluginMainDescriptor(name=$name, id=$pluginId, version=$version, " +
+    (if (packagePrefix == null) "" else "package=$packagePrefix, ") +
+    "isBundled=$isBundled, " +
+    "path=${PluginUtils.pluginPathToUserString(pluginPath)})"
+
+
   private fun fromPluginBundle(key: String, @Nls defaultValue: String?): @Nls String? {
     if (!isEnabled) { // if the plugin is disabled, its classloader is null and the resource bundle cannot be found
       return defaultValue
@@ -628,6 +627,12 @@ class DependsSubDescriptor(
   @Deprecated("use main descriptor") override fun getDisplayCategory(): @Nls String? = parent.displayCategory.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getDescription(): @Nls String? = parent.description.also { LOG.error("unexpected call") }
 
+  override fun toString(): String =
+    "DependsSubDescriptor(" +
+    "descriptorPath=$descriptorPath" +
+    (if (packagePrefix == null) "" else ", package=$packagePrefix") +
+    ") <- $parent"
+
   init {
     checkSubDescriptorUnexpectedElements(raw)
     checkUnexpectedElement("<dependencies><module>") { raw.dependencies.any { it is DependenciesElement.ModuleDependency } }
@@ -663,6 +668,13 @@ class ContentModuleDescriptor(
   @Deprecated("use main descriptor") override fun getCategory(): @NlsSafe String? = parent.category.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getDisplayCategory(): @Nls String? = parent.displayCategory.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getDescription(): @Nls String? = parent.description.also { LOG.error("unexpected call") }
+
+  override fun toString(): String =
+    "ContentModuleDescriptor(moduleName=$moduleName" +
+    (if (moduleLoadingRule == ModuleLoadingRule.OPTIONAL) "" else ", loadingRule=$moduleLoadingRule") +
+    (if (packagePrefix == null) "" else ", package=$packagePrefix") +
+    (if (descriptorPath == "$moduleName.xml") "" else ", descriptorPath=$descriptorPath") +
+    ") <- $parent"
 
   init {
     checkSubDescriptorUnexpectedElements(raw)
