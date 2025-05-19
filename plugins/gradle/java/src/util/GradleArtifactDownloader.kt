@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.GradleJavaCoroutineScope.gradleCoroutineScope
 import org.jetbrains.plugins.gradle.service.execution.loadDownloadArtifactInitScript
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
-import org.jetbrains.plugins.gradle.settings.GradleSettings
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -62,19 +61,12 @@ object GradleArtifactDownloader {
     artifactNotation: String,
     externalProjectPath: String,
   ): Path {
-    val taskName = "ijDownloadArtifact" + UUID.randomUUID().toString().substring(0, 12)
-    val settings = ExternalSystemTaskExecutionSettings().also {
-      it.executionName = executionName
-      it.externalProjectPath = externalProjectPath
-      it.taskNames = listOf(taskName)
-      it.vmOptions = GradleSettings.getInstance(project).gradleVmOptions
-      it.externalSystemIdString = GradleConstants.SYSTEM_ID.id
-    }
     val eelDescriptor = project.getEelDescriptor()
     val eel = eelDescriptor.upgrade()
     val absoluteTaskOutputFileEelPath = createTaskOutputFile(eel)
     val taskOutputFile = absoluteTaskOutputFileEelPath.asNioPath()
     try {
+      val taskName = "ijDownloadArtifact" + UUID.randomUUID().toString().substring(0, 12)
       val initScript = loadDownloadArtifactInitScript(
         artifactNotation,
         taskName,
@@ -86,7 +78,12 @@ object GradleArtifactDownloader {
         TaskExecutionSpec.create()
           .withProject(project)
           .withSystemId(GradleConstants.SYSTEM_ID)
-          .withSettings(settings)
+          .withSettings(ExternalSystemTaskExecutionSettings().also {
+            it.executionName = executionName
+            it.externalSystemIdString = GradleConstants.SYSTEM_ID.id
+            it.externalProjectPath = externalProjectPath
+            it.taskNames = listOf(taskName)
+          })
           .withProgressExecutionMode(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
           .withUserData(UserDataHolderBase().apply {
             putUserData(GradleTaskManager.VERSION_SPECIFIC_SCRIPTS_KEY, initScript)
