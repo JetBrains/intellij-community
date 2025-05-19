@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.backend.impl.SeBackendItemDataProvidersHolderEntity.Companion.Providers
 import com.intellij.platform.searchEverywhere.backend.impl.SeBackendItemDataProvidersHolderEntity.Companion.Session
+import com.intellij.platform.searchEverywhere.providers.SeLocalItemDataProvider
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import com.jetbrains.rhizomedb.entities
@@ -86,7 +87,7 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
         provider
       }.associate { provider ->
         val id = SeProviderId(provider.id)
-        id to SeBackendItemDataProvider(id, provider, sessionRef)
+        id to SeLocalItemDataProvider(provider, sessionRef, "Backend")
       }
 
       existingHolderEntities = change {
