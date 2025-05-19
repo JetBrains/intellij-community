@@ -69,8 +69,9 @@ class EditorCellDragAssistant(
 
   private fun handleKeyPressedDuringDrag(keyEvent: KeyEvent) {
     when (keyEvent.keyCode) {
-      KeyEvent.VK_ESCAPE -> cancelDrag()
-      KeyEvent.VK_UP, KeyEvent.VK_DOWN, KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT -> cancelDrag()
+      KeyEvent.VK_ESCAPE,
+      KeyEvent.VK_UP, KeyEvent.VK_DOWN, KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT,
+        -> cancelDrag()
     }
   }
 

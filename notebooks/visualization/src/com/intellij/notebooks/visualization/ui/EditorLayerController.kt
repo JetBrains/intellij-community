@@ -10,7 +10,7 @@ import java.awt.geom.Line2D
 /**
  * Controller can be used to add custom shapes (such as lines, rectangles, etc.) to the layered pane above the Editor.
  */
-class EditorLayerController(private val wrapper: DecoratedEditor.EditorComponentWrapper) {
+class EditorLayerController(private val wrapper: EditorComponentWrapper) {
 
   fun addOverlayLine(line: Line2D, color: Color) {
     ApplicationManager.getApplication().invokeLater {

@@ -7,24 +7,20 @@ import com.intellij.notebooks.visualization.NotebookCellLines
 import com.intellij.notebooks.visualization.cellSelectionModel
 import com.intellij.notebooks.visualization.getCells
 import com.intellij.notebooks.visualization.ui.EditorLayerController.Companion.EDITOR_LAYER_CONTROLLER_KEY
-import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeHandler
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.client.ClientSystemInfo
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.EditorMouseEventArea
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.removeUserData
 import com.intellij.ui.ComponentUtil
-import java.awt.*
 import java.awt.event.InputEvent
+import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.awt.event.MouseEvent.MOUSE_PRESSED
-import java.awt.event.MouseWheelEvent
-import java.awt.geom.Line2D
-import javax.swing.*
-import javax.swing.plaf.LayerUI
+import java.awt.event.MouseMotionAdapter
+import javax.swing.JComponent
+import javax.swing.JScrollPane
 import kotlin.math.max
 import kotlin.math.min
 
@@ -41,111 +37,49 @@ class DecoratedEditor private constructor(
 
   init {
     wrapEditorComponent(editorImpl)
-    notebookEditorKey.set(editorImpl, this)
+    editorImpl.putUserData(NOTEBOOK_EDITOR_KEY, this)
   }
 
   private fun wrapEditorComponent(editor: EditorImpl) {
     val nestedScrollingSupport = NestedScrollingSupportImpl()
 
-    NotebookAWTMouseDispatcher(editor.scrollPane).apply {
-      eventDispatcher.addListener { event ->
-        if (event is MouseWheelEvent) {
-          nestedScrollingSupport.processMouseWheelEvent(event)
-        }
-        else if (event is MouseEvent) {
-          if (event.id == MouseEvent.MOUSE_CLICKED || event.id == MouseEvent.MOUSE_RELEASED || event.id == MOUSE_PRESSED) {
-            ComponentUtil.getParentOfType(JScrollPane::class.java, (event.component as? JComponent)
-              ?.findComponentAt(event.point))
-              ?.let { scrollPane ->
-                nestedScrollingSupport.processMouseEvent(event, scrollPane)
-              }
-          }
-          else if (event.id == MouseEvent.MOUSE_MOVED) {
-            nestedScrollingSupport.processMouseMotionEvent(event)
-          }
-        }
+    val editorComponentWrapper = EditorComponentWrapper.install(editor)
+
+    editorComponentWrapper.addEditorMouseMotionEvent(object : MouseMotionAdapter() {
+      override fun mouseMoved(e: MouseEvent) {
+        nestedScrollingSupport.processMouseMotionEvent(e)
+      }
+    })
+
+    editorComponentWrapper.addEditorMouseEventListener(object : MouseAdapter() {
+      override fun mouseClicked(e: MouseEvent) = sendMouseEventToNestedScroll(e)
+      override fun mouseReleased(e: MouseEvent) = sendMouseEventToNestedScroll(e)
+      override fun mousePressed(e: MouseEvent) {
+        sendMouseEventToNestedScroll(e)
+        updateSelection(e)
       }
 
-      eventDispatcher.addListener { event ->
-        if (event.id == MOUSE_PRESSED && event is MouseEvent) {
-          val point = NotebookUiUtils.getEditorPoint(editorImpl, event)?.second ?: return@addListener
+      private fun updateSelection(event: MouseEvent) {
+        val point = NotebookUiUtils.getEditorPoint(editorImpl, event)?.second ?: return
 
-          val hoveredCell = manager.getCellByPoint(point) ?: return@addListener
+        val hoveredCell = manager.getCellByPoint(point) ?: return
 
-          if (editorImpl.getMouseEventArea(event) != EditorMouseEventArea.EDITING_AREA) {
-            editorImpl.setMode(NotebookEditorMode.COMMAND)
-          }
-          updateSelectionAfterClick(hoveredCell.interval, event.isCtrlPressed(),
-                                    event.isShiftPressed(), event.button)
+        if (editorImpl.getMouseEventArea(event) != EditorMouseEventArea.EDITING_AREA) {
+          editorImpl.setMode(NotebookEditorMode.COMMAND)
         }
+        updateSelectionAfterClick(hoveredCell.interval, event.isCtrlPressed(), event.isShiftPressed(), event.button)
       }
 
-      Disposer.register(editor.disposable, this)
-    }
-
-    editor.scrollPane.viewport.view = EditorComponentWrapper(editor, editor.scrollPane.viewport, editor.contentComponent)
-  }
-
-  /** The main thing while we need it - to perform updating of underlying components within keepScrollingPositionWhile. */
-  class EditorComponentWrapper(
-    private val editor: Editor,
-    private val editorViewport: JViewport,
-    component: Component,
-  ) : JPanel(BorderLayout()) {
-
-    // The only need to use JLayer here is our frame borders around notebook cells.
-    private val layeredPane: JLayer<JPanel>
-    private val overlayLines = mutableListOf<Pair<Line2D, Color>>()
-
-    init {
-      isOpaque = false
-
-      val editorPanel = JPanel(BorderLayout()).apply {
-        isOpaque = false
-        val viewportWrapper = object : JViewport() {
-          override fun getViewRect() = editorViewport.viewRect
-        }
-        viewportWrapper.view = component
-        add(viewportWrapper, BorderLayout.CENTER)
-      }
-
-      layeredPane = JLayer(editorPanel, object : LayerUI<JPanel>() {
-        override fun paint(graphics: Graphics, component: JComponent) {
-          super.paint(graphics, component)
-
-          val g2d = graphics.create() as Graphics2D
-          try {
-            for ((line, color) in overlayLines) {
-              g2d.color = color
-              g2d.draw(line)
-            }
+      private fun sendMouseEventToNestedScroll(event: MouseEvent) {
+        ComponentUtil.getParentOfType(JScrollPane::class.java, (event.component as? JComponent)
+          ?.findComponentAt(event.point))
+          ?.let { scrollPane ->
+            nestedScrollingSupport.processMouseEvent(event, scrollPane)
           }
-          finally {
-            g2d.dispose()
-          }
-        }
-      })
-
-      add(layeredPane, BorderLayout.CENTER)
-    }
-
-    override fun validateTree() {
-      editor.notebookEditor.editorPositionKeeper.keepScrollingPositionWhile {
-        JupyterBoundsChangeHandler.get(editor).postponeUpdates()
-        super.validateTree()
-        JupyterBoundsChangeHandler.get(editor).schedulePerformPostponed()
       }
-    }
+    })
 
-    fun addOverlayLine(line: Line2D, color: Color) {
-      overlayLines.add(line to color)
-      layeredPane.repaint()
-    }
-
-    fun removeOverlayLine(line: Line2D) {
-      overlayLines.removeIf { it.first == line }
-      layeredPane.repaint()
-    }
+    editorComponentWrapper.addEditorMouseWheelEvent { nestedScrollingSupport.processMouseWheelEvent(it) }
   }
 
   override fun inlayClicked(clickedCell: NotebookCellLines.Interval, ctrlPressed: Boolean, shiftPressed: Boolean, mouseButton: Int) {
