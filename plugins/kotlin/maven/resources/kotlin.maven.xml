@@ -107,8 +107,6 @@
     <codeInsight.unresolvedReferenceQuickFixProvider
             implementation="org.jetbrains.kotlin.idea.maven.inspections.KotlinMavenUnresolvedReferenceQuickFixProvider" />
 
-    <moduleService serviceImplementation="org.jetbrains.kotlin.idea.maven.KotlinImporterComponent"/>
-
     <notificationGroup
             id="Kotlin/JS compiler Maven"
             displayType="STICKY_BALLOON"

@@ -6,10 +6,6 @@ import com.intellij.notification.BrowseNotificationAction
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -44,7 +40,6 @@ import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addIfNotNull
 import java.io.File
 import java.lang.ref.WeakReference
-import java.util.*
 
 interface MavenProjectImportHandler {
     companion object : ProjectExtensionDescriptor<MavenProjectImportHandler>(
@@ -266,23 +261,4 @@ private fun isTestGoalName(goalName: String) = goalName.startsWith("test-")
 
 enum class SourceType {
     PROD, TEST
-}
-
-@State(
-    name = "AutoImportedSourceRoots",
-    storages = [(Storage(StoragePathMacros.MODULE_FILE))]
-)
-class KotlinImporterComponent : PersistentStateComponent<KotlinImporterComponent.State> {
-    class State(var directories: List<String> = ArrayList())
-
-    private val addedSources: MutableSet<String> = Collections.synchronizedSet(HashSet())
-
-    override fun loadState(state: State) {
-        addedSources.clear()
-        addedSources.addAll(state.directories)
-    }
-
-    override fun getState(): State {
-        return State(addedSources.sorted())
-    }
 }
