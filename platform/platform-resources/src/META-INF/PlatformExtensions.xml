@@ -1924,11 +1924,7 @@
                  defaultValue="5000"
                  description="A delay in milliseconds between the IDE becoming idle and the memory cleaning being performed"/>
 
-    <!--Find in Files-->
-    <registryKey key="find.in.files.split"
-                 defaultValue="false"
-                 description="Enables the 'Find in Files' implementation, optimized to support both remote development workflows and monolithic setups."/>
-    <usagePresentationProvider implementation="com.intellij.find.impl.UsageInfo2UsageAdapterPresentationProvider"/>
+   <usagePresentationProvider implementation="com.intellij.find.impl.UsageInfo2UsageAdapterPresentationProvider"/>
 
     <pluginRepositoryAuthProvider implementation="com.intellij.ide.plugins.auth.EnvironmentVariablePluginRepositoryAuthProvider" />
     <applicationService serviceInterface="com.intellij.auth.GenericAuthService"
