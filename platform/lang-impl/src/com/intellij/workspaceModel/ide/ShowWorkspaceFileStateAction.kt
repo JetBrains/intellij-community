@@ -13,7 +13,7 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 
 @Suppress("HardCodedStringLiteral")
-internal class ShowWorkspaceFileState : DumbAwareAction() {
+internal class ShowWorkspaceFileStateAction : DumbAwareAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
