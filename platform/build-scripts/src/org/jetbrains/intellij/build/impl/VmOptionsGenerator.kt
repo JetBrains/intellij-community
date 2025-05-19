@@ -17,6 +17,7 @@ object VmOptionsGenerator {
   @Suppress("SpellCheckingInspection")
   private val COMMON_VM_OPTIONS: List<String> = listOf(
     "-XX:JbrShrinkingGcMaxHeapFreeRatio=40", // IJPL-181469. Used in a couple with AppIdleMemoryCleaner.runGc()
+    "-XX:SoftRefLRUPolicyMSPerMB=50", // IJPL-186317. Note: the effect is not visible in short perf tests; only in prolonged IDE usage
     "-XX:ReservedCodeCacheSize=512m",
     "-XX:+HeapDumpOnOutOfMemoryError",
     "-XX:-OmitStackTraceInFastThrow",
@@ -97,7 +98,6 @@ object VmOptionsGenerator {
       if (bundledRuntime.build.startsWith("17.")) {
         listOf(
           "-XX:CompileCommand=exclude,com/intellij/openapi/vfs/impl/FilePartNodeRoot,trieDescend",  // temporary workaround for crashes in С2 (JBR-4509)
-          "-XX:SoftRefLRUPolicyMSPerMB=50",
         )
       }
       else listOf("-XX:+UnlockDiagnosticVMOptions", "-XX:TieredOldPercentage=100000")
