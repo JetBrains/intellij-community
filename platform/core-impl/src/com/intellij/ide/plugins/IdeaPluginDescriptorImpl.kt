@@ -619,6 +619,20 @@ class DependsSubDescriptor(
 
   override fun getDescriptorPath(): String = descriptorPath
 
+  override fun toString(): String =
+    "DependsSubDescriptor(" +
+    "descriptorPath=$descriptorPath" +
+    (if (packagePrefix == null) "" else ", package=$packagePrefix") +
+    ") <- $parent"
+
+  init {
+    checkSubDescriptorUnexpectedElements(raw)
+    checkUnexpectedElement("<dependencies><module>") { raw.dependencies.any { it is DependenciesElement.ModuleDependency } }
+    checkUnexpectedElement("<dependencies><plugin>") { raw.dependencies.any { it is DependenciesElement.PluginDependency } }
+  }
+
+  // <editor-fold desc="Deprecated">
+  // These are meaningless for sub-descriptors
   @Deprecated("use main descriptor") override fun getChangeNotes(): String? = parent.changeNotes.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getCategory(): @NlsSafe String? = parent.category.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getDisplayCategory(): @Nls String? = parent.displayCategory.also { LOG.error("unexpected call") }
@@ -637,18 +651,7 @@ class DependsSubDescriptor(
   @Deprecated("use main descriptor") override fun getReleaseDate(): Date? = parent.releaseDate.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getReleaseVersion(): Int = parent.releaseVersion.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun isLicenseOptional(): Boolean = parent.isLicenseOptional.also { LOG.error("unexpected call") }
-
-  override fun toString(): String =
-    "DependsSubDescriptor(" +
-    "descriptorPath=$descriptorPath" +
-    (if (packagePrefix == null) "" else ", package=$packagePrefix") +
-    ") <- $parent"
-
-  init {
-    checkSubDescriptorUnexpectedElements(raw)
-    checkUnexpectedElement("<dependencies><module>") { raw.dependencies.any { it is DependenciesElement.ModuleDependency } }
-    checkUnexpectedElement("<dependencies><plugin>") { raw.dependencies.any { it is DependenciesElement.PluginDependency } }
-  }
+  // </editor-fold>
 }
 
 
@@ -670,6 +673,20 @@ class ContentModuleDescriptor(
 
   override fun getDescriptorPath(): String = descriptorPath
 
+  override fun toString(): String =
+    "ContentModuleDescriptor(moduleName=$moduleName" +
+    (if (moduleLoadingRule == ModuleLoadingRule.OPTIONAL) "" else ", loadingRule=$moduleLoadingRule") +
+    (if (packagePrefix == null) "" else ", package=$packagePrefix") +
+    (if (descriptorPath == "$moduleName.xml") "" else ", descriptorPath=$descriptorPath") +
+    ") <- $parent"
+
+  init {
+    checkSubDescriptorUnexpectedElements(raw)
+    checkUnexpectedElement(PluginXmlConst.DEPENDS_ELEM) { raw.depends.isNotEmpty() }
+  }
+
+  // <editor-fold desc="Deprecated">
+  // These are meaningless for sub-descriptors
   @Deprecated("use main descriptor") override fun getChangeNotes(): String? = parent.changeNotes.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getCategory(): @NlsSafe String? = parent.category.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getDisplayCategory(): @Nls String? = parent.displayCategory.also { LOG.error("unexpected call") }
@@ -687,18 +704,7 @@ class ContentModuleDescriptor(
   @Deprecated("use main descriptor") override fun getReleaseDate(): Date? = parent.releaseDate.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getReleaseVersion(): Int = parent.releaseVersion.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun isLicenseOptional(): Boolean = parent.isLicenseOptional.also { LOG.error("unexpected call") }
-
-  override fun toString(): String =
-    "ContentModuleDescriptor(moduleName=$moduleName" +
-    (if (moduleLoadingRule == ModuleLoadingRule.OPTIONAL) "" else ", loadingRule=$moduleLoadingRule") +
-    (if (packagePrefix == null) "" else ", package=$packagePrefix") +
-    (if (descriptorPath == "$moduleName.xml") "" else ", descriptorPath=$descriptorPath") +
-    ") <- $parent"
-
-  init {
-    checkSubDescriptorUnexpectedElements(raw)
-    checkUnexpectedElement(PluginXmlConst.DEPENDS_ELEM) { raw.depends.isNotEmpty() }
-  }
+  // </editor-fold>
 }
 
 @ApiStatus.Internal
