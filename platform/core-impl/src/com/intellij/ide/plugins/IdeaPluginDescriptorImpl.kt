@@ -143,7 +143,6 @@ sealed class IdeaPluginDescriptorImpl(
   override fun getResourceBundleBaseName(): String? = resourceBundleBaseName
 
   override fun getPluginPath(): Path = pluginPath
-  override fun getDescriptorPath(): String? = null
 
   override fun getPluginClassLoader(): ClassLoader? = _pluginClassLoader
 
@@ -555,10 +554,6 @@ class PluginMainDescriptor(
   useCoreClassLoader = useCoreClassLoader,
   isIndependentFromCoreClassLoader = false,
 ) {
-  init {
-    assert(descriptorPath == null) { this }
-  }
-
   @Volatile
   private var loadedDescriptionText: @Nls String? = null
   private val rawDescription: @NlsSafe String? = raw.description
@@ -589,6 +584,8 @@ class PluginMainDescriptor(
     loadedDescriptionText = result
     return result
   }
+
+  override fun getDescriptorPath(): Nothing? = null
 
   private fun fromPluginBundle(key: String, @Nls defaultValue: String?): @Nls String? {
     if (!isEnabled) { // if the plugin is disabled, its classloader is null and the resource bundle cannot be found
