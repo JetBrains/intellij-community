@@ -72,8 +72,8 @@ sealed class IdeaPluginDescriptorImpl(
     raw.contentModules.takeIf { it.isNotEmpty() }?.let { PluginContentDescriptor(convertContentModules(it)) }
     ?: PluginContentDescriptor.EMPTY
 
-  val contentModules: List<ContentModule>
-    get() = content.modules
+  val contentModules: Sequence<ContentModuleDescriptor>
+    get() = content.modules.asSequence().map { it.descriptor }
   val moduleDependencies: ModuleDependencies = raw.dependencies.let(::convertDependencies)
   val packagePrefix: String? = raw.`package`
 

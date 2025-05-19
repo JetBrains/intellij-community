@@ -629,7 +629,7 @@ private fun checkModuleLevelServiceAndExtensionRegistration() {
   val plugins = PluginManagerCore.getPluginSet().enabledPlugins
   for (plugin in plugins) {
     for (content in plugin.contentModules) {
-      checkModuleLevel(plugin = plugin, child = content.descriptor, forbid = false)
+      checkModuleLevel(plugin = plugin, child = content, forbid = false)
     }
 
     executeRegisterTaskForOldContent(plugin) {

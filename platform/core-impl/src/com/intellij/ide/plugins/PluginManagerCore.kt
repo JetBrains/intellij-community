@@ -750,8 +750,8 @@ object PluginManagerCore {
       }
       for (contentModule in plugin.contentModules) {
         // plugin aliases in content modules are resolved as plugin id references
-        for (pluginAlias in contentModule.descriptor.pluginAliases) {
-          pluginIdResolutionMap.computeIfAbsent(pluginAlias) { ArrayList() }.add(contentModule.descriptor)
+        for (pluginAlias in contentModule.pluginAliases) {
+          pluginIdResolutionMap.computeIfAbsent(pluginAlias) { ArrayList() }.add(contentModule)
         }
       }
     }
