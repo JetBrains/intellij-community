@@ -24,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelCache
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
@@ -74,6 +75,7 @@ open class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(proje
     projectSessionManager: ProjectSaveSessionProducerManager
   ) {
     projectSessionManager as ProjectWithModulesSaveSessionProducerManager
+    val workspaceModel = project.serviceAsync<WorkspaceModel>()
 
     val moduleManager = project.serviceAsync<ModuleManager>()
     val writer = if (shouldWriteExternalFilesDirectly()) {
@@ -83,7 +85,7 @@ open class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(proje
       DelegatingJpsStorageContentWriter(session = projectSessionManager, store = this, project = project)
     }
 
-    project.serviceAsync<JpsProjectModelSynchronizer>().saveChangedProjectEntities(writer)
+    project.serviceAsync<JpsProjectModelSynchronizer>().saveChangedProjectEntities(writer, workspaceModel)
     (project.serviceAsync<WorkspaceModelCache>() as WorkspaceModelCacheImpl).doCacheSavingOnProjectClose()
 
     for (module in moduleManager.modules) {
