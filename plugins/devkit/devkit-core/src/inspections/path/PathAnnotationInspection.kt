@@ -1,19 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.path
 
-import com.intellij.codeInsight.intention.AddAnnotationPsiFix
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.project.Project
-import com.intellij.platform.eel.annotations.Filename
 import com.intellij.platform.eel.annotations.LocalPath
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import com.intellij.platform.eel.annotations.NativePath
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiModifierListOwner
-import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase
@@ -109,7 +103,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
                 holder.registerProblem(
                   arg.sourcePsi ?: sourcePsi,
                   DevKitBundle.message("inspections.message.nativepath.should.not.be.used.directly.constructing.path"),
-                  AddMultiRoutingAnnotationFix()
+                  *PathAnnotationInfo.MultiRouting.quickFixesFor(arg.sourcePsi).toTypedArray()
                 )
             }
             is PathAnnotationInfo.Unspecified -> {
@@ -119,7 +113,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
                   DevKitBundle.message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")
                 else
                   DevKitBundle.message("inspections.message.more.parameters.in.path.of.should.be.annotated.with.multiroutingfilesystempath.or.filename"),
-                AddMultiRoutingAnnotationFix()
+                *PathAnnotationInfo.MultiRouting.quickFixesFor(arg.sourcePsi).toTypedArray()
               )
             }
           }
@@ -173,14 +167,14 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
               holder.registerProblem(
                 arg.sourcePsi ?: sourcePsi,
                 DevKitBundle.message("inspections.message.string.without.path.annotation.used.in.path.resolve.method"),
-                AddMultiRoutingAnnotationFix()
+                *PathAnnotationInfo.MultiRouting.quickFixesFor(arg.sourcePsi).toTypedArray()
               )
             }
             is PathAnnotationInfo.LocalPathInfo -> {
               holder.registerProblem(
                 arg.sourcePsi ?: sourcePsi,
                 DevKitBundle.message("inspections.message.string.without.path.annotation.used.in.path.resolve.method"),
-                AddMultiRoutingAnnotationFix()
+                *PathAnnotationInfo.MultiRouting.quickFixesFor(arg.sourcePsi).toTypedArray()
               )
             }
             is PathAnnotationInfo.Unspecified -> {
@@ -188,7 +182,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
                 arg.sourcePsi ?: sourcePsi,
                 DevKitBundle.message("inspections.message.string.without.path.annotation.used.in.path.resolve.method"),
                 com.intellij.codeInspection.ProblemHighlightType.WEAK_WARNING,
-                AddMultiRoutingAnnotationFix()
+                *PathAnnotationInfo.MultiRouting.quickFixesFor(arg.sourcePsi).toTypedArray()
               )
             }
           }
@@ -208,28 +202,28 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
               holder.registerProblem(
                 firstArg.sourcePsi ?: sourcePsi,
                 DevKitBundle.message("inspections.message.first.argument.fs.getpath.should.be.annotated.with.nativepath"),
-                AddNativePathAnnotationFix()
+                *PathAnnotationInfo.Native.quickFixesFor(firstArg.sourcePsi).toTypedArray()
               )
             }
             is PathAnnotationInfo.LocalPathInfo -> {
               holder.registerProblem(
                 firstArg.sourcePsi ?: sourcePsi,
                 DevKitBundle.message("inspections.message.first.argument.fs.getpath.should.be.annotated.with.nativepath"),
-                AddNativePathAnnotationFix()
+                *PathAnnotationInfo.Native.quickFixesFor(firstArg.sourcePsi).toTypedArray()
               )
             }
             is PathAnnotationInfo.FilenameInfo -> {
               holder.registerProblem(
                 firstArg.sourcePsi ?: sourcePsi,
                 DevKitBundle.message("inspections.message.first.argument.fs.getpath.should.be.annotated.with.nativepath"),
-                AddNativePathAnnotationFix()
+                *PathAnnotationInfo.Native.quickFixesFor(firstArg.sourcePsi).toTypedArray()
               )
             }
             is PathAnnotationInfo.Unspecified -> {
               holder.registerProblem(
                 firstArg.sourcePsi ?: sourcePsi,
                 DevKitBundle.message("inspections.message.first.argument.fs.getpath.should.be.annotated.with.nativepath"),
-                AddNativePathAnnotationFix()
+                *PathAnnotationInfo.Native.quickFixesFor(firstArg.sourcePsi).toTypedArray()
               )
             }
           }
@@ -272,21 +266,21 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
                   holder.registerProblem(
                     arg.sourcePsi ?: sourcePsi,
                     DevKitBundle.message("inspections.message.more.parameters.in.fs.getpath.should.be.annotated.with.nativepath.or.filename"),
-                    AddNativePathAnnotationFix()
+                    *PathAnnotationInfo.Native.quickFixesFor(arg.sourcePsi).toTypedArray()
                   )
                 }
                 is PathAnnotationInfo.LocalPathInfo -> {
                   holder.registerProblem(
                     arg.sourcePsi ?: sourcePsi,
                     DevKitBundle.message("inspections.message.more.parameters.in.fs.getpath.should.be.annotated.with.nativepath.or.filename"),
-                    AddNativePathAnnotationFix()
+                    *PathAnnotationInfo.Native.quickFixesFor(arg.sourcePsi).toTypedArray()
                   )
                 }
                 is PathAnnotationInfo.Unspecified -> {
                   holder.registerProblem(
                     arg.sourcePsi ?: sourcePsi,
                     DevKitBundle.message("inspections.message.more.parameters.in.fs.getpath.should.be.annotated.with.nativepath.or.filename"),
-                    AddNativePathAnnotationFix()
+                    *PathAnnotationInfo.Native.quickFixesFor(arg.sourcePsi).toTypedArray()
                   )
                 }
               }
@@ -346,7 +340,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
             holder.registerProblem(
               arg.sourcePsi ?: sourcePsi,
               DevKitBundle.message("inspections.message.string.without.path.annotation.used.in.method.parameter.annotated.with", expectedInfo.shortAnnotationName),
-              expectedInfo.quickFix()
+              *expectedInfo.quickFixesFor(arg.sourcePsi).toTypedArray()
             )
           }
           is PathAnnotationInfo.Specified -> {
@@ -354,7 +348,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
               holder.registerProblem(
                 arg.sourcePsi ?: sourcePsi,
                 DevKitBundle.message("inspections.message.string.annotated.with.passed.to.method.parameter.annotated.with", actualInfo.shortAnnotationName, expectedInfo.shortAnnotationName),
-                expectedInfo.quickFix()
+                *expectedInfo.quickFixesFor(arg.sourcePsi).toTypedArray()
               )
             }
           }
@@ -418,7 +412,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
           holder.registerProblem(
             returnValue.sourcePsi ?: sourcePsi,
             DevKitBundle.message("inspection.message.return.value.without.path.annotation.where.expected", expectedInfo.shortAnnotationName),
-            expectedInfo.quickFix()
+            *expectedInfo.quickFixesFor(returnValue.sourcePsi).toTypedArray()
           )
         }
         is PathAnnotationInfo.Specified -> {
@@ -426,7 +420,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
             holder.registerProblem(
               returnValue.sourcePsi ?: sourcePsi,
               DevKitBundle.message("inspection.message.method.annotated.with.returns.value.annotated.with", expectedInfo.shortAnnotationName, actualInfo.shortAnnotationName),
-              expectedInfo.quickFix()
+              *expectedInfo.quickFixesFor(returnValue.sourcePsi).toTypedArray()
             )
           }
         }
@@ -475,7 +469,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
           holder.registerProblem(
             sourcePsi,
             DevKitBundle.message("inspections.message.multiroutingfilesystempath.expected"),
-            AddMultiRoutingAnnotationFix()
+            *expectedInfo.quickFixesFor(sourcePsi).toTypedArray()
           )
         }
       }
@@ -485,7 +479,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
           holder.registerProblem(
             sourcePsi,
             DevKitBundle.message("inspections.message.nativepath.expected"),
-            AddNativePathAnnotationFix()
+            *expectedInfo.quickFixesFor(sourcePsi).toTypedArray()
           )
         }
       }
@@ -566,196 +560,4 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
       return false
     }
   }
-
-  /**
-   * Quick fix to add @MultiRoutingFileSystemPath annotation.
-   */
-  internal class AddMultiRoutingAnnotationFix() : LocalQuickFix {
-    override fun getFamilyName(): String = DevKitBundle.message("inspections.intention.family.name.add.multiroutingfilesystempath.annotation")
-
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-      val element = descriptor.psiElement
-
-      // Try to find the variable reference inside the element
-      val targetElement = findVariableToAnnotate(element)
-
-      if (targetElement != null) {
-        val annotationOwner = targetElement.modifierList
-        if (annotationOwner != null) {
-          val annotation = AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(
-            MultiRoutingFileSystemPath::class.java.name,
-            emptyArray(),
-            annotationOwner
-          )
-
-          // Shorten class references to add imports
-          if (annotation != null) {
-            // Get the containing file and shorten all class references in it
-            val containingFile = annotation.containingFile
-            if (containingFile != null) {
-              JavaCodeStyleManager.getInstance(project).shortenClassReferences(containingFile)
-            }
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   * Quick fix to add @NativePath annotation.
-   */
-  internal class AddNativePathAnnotationFix() : LocalQuickFix {
-    override fun getFamilyName(): String = DevKitBundle.message("inspections.intention.family.name.add.nativepath.annotation")
-
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-      val element = descriptor.psiElement
-
-      // Try to find the variable reference inside the element
-      val targetElement = findVariableToAnnotate(element)
-
-      if (targetElement != null) {
-        val annotationOwner = targetElement.modifierList
-        if (annotationOwner != null) {
-          val annotation = AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(
-            NativePath::class.java.name,
-            emptyArray(),
-            annotationOwner
-          )
-
-          // Shorten class references to add imports
-          if (annotation != null) {
-            // Get the containing file and shorten all class references in it
-            val containingFile = annotation.containingFile
-            if (containingFile != null) {
-              JavaCodeStyleManager.getInstance(project).shortenClassReferences(containingFile)
-            }
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   * Quick fix to add @LocalPath annotation.
-   */
-  internal class AddLocalPathAnnotationFix() : LocalQuickFix {
-    override fun getFamilyName(): String = DevKitBundle.message("inspections.intention.family.name.add.localpath.annotation")
-
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-      val element = descriptor.psiElement
-
-      // Try to find the variable reference inside the element
-      val targetElement = findVariableToAnnotate(element)
-
-      if (targetElement != null) {
-        val annotationOwner = targetElement.modifierList
-        if (annotationOwner != null) {
-          val annotation = AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(
-            LocalPath::class.java.name,
-            emptyArray(),
-            annotationOwner
-          )
-
-          // Shorten class references to add imports
-          if (annotation != null) {
-            // Get the containing file and shorten all class references in it
-            val containingFile = annotation.containingFile
-            if (containingFile != null) {
-              JavaCodeStyleManager.getInstance(project).shortenClassReferences(containingFile)
-            }
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   * Quick fix to add @Filename annotation.
-   */
-  internal class AddFilenameAnnotationFix() : LocalQuickFix {
-    override fun getFamilyName(): String = DevKitBundle.message("inspections.intention.family.name.add.filename.annotation")
-
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-      val element = descriptor.psiElement
-
-      // Try to find the variable reference inside the element
-      val targetElement = findVariableToAnnotate(element)
-
-      if (targetElement != null) {
-        val annotationOwner = targetElement.modifierList
-        if (annotationOwner != null) {
-          val annotation = AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(
-            Filename::class.java.name,
-            emptyArray(),
-            annotationOwner
-          )
-
-          // Shorten class references to add imports
-          if (annotation != null) {
-            // Get the containing file and shorten all class references in it
-            val containingFile = annotation.containingFile
-            if (containingFile != null) {
-              JavaCodeStyleManager.getInstance(project).shortenClassReferences(containingFile)
-            }
-          }
-        }
-      }
-    }
-  }
-
-}
-
-private fun findVariableToAnnotate(element: PsiElement): PsiModifierListOwner? {
-  // If the element is already a variable, return it
-  if (element is PsiModifierListOwner) {
-    return element
-  }
-
-  // If the element is a method call, try to find the variable reference inside it
-  if (element is com.intellij.psi.PsiMethodCallExpression) {
-    val argumentList = element.argumentList
-    if (argumentList.expressionCount > 0) {
-      val firstArg = argumentList.expressions[0]
-      if (firstArg is com.intellij.psi.PsiReferenceExpression) {
-        val resolved = firstArg.resolve()
-        if (resolved is PsiModifierListOwner) {
-          return resolved
-        }
-      }
-    }
-  }
-
-  // If the element is a reference expression, resolve it to find the variable declaration
-  if (element is com.intellij.psi.PsiReferenceExpression) {
-    val resolved = element.resolve()
-    if (resolved is PsiModifierListOwner) {
-      return resolved
-    }
-  }
-
-  // Try to find a reference expression inside the element
-  val references = element.references
-  for (reference in references) {
-    val resolved = reference.resolve()
-    if (resolved is PsiModifierListOwner) {
-      return resolved
-    }
-  }
-
-  // Try to find a reference expression in the parent of the element
-  val parent = element.parent
-  if (parent is com.intellij.psi.PsiMethodCallExpression) {
-    val argumentList = parent.argumentList
-    if (argumentList.expressionCount > 0) {
-      val firstArg = argumentList.expressions[0]
-      if (firstArg is com.intellij.psi.PsiReferenceExpression) {
-        val resolved = firstArg.resolve()
-        if (resolved is PsiModifierListOwner) {
-          return resolved
-        }
-      }
-    }
-  }
-
-  return null
 }

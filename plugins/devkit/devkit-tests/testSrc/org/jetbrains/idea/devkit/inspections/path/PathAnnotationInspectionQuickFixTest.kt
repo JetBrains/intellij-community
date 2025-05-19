@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.path
 
+import com.intellij.java.analysis.JavaAnalysisBundle
 import org.jetbrains.idea.devkit.DevKitBundle.message
 import org.jetbrains.idea.devkit.inspections.PathAnnotationInspectionTestBase
 
@@ -97,7 +98,7 @@ class PathAnnotationInspectionQuickFixTest : PathAnnotationInspectionTestBase() 
       }      
       """
 
-    doTestQuickFix(before, after, message("inspections.intention.family.name.add.multiroutingfilesystempath.annotation"))
+    doTestQuickFix(before, after, JavaAnalysisBundle.message("intention.add.annotation.family"))
   }
 
   /**
@@ -137,6 +138,6 @@ class PathAnnotationInspectionQuickFixTest : PathAnnotationInspectionTestBase() 
       }      
       """
 
-    doTestQuickFix(before, after, message("inspections.intention.family.name.add.nativepath.annotation"))
+    doTestQuickFix(before, after, JavaAnalysisBundle.message("intention.add.annotation.family"))
   }
 }

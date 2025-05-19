@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.inspections.path
 
 import com.intellij.codeInsight.AnnotationUtil
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.isInheritorOf
 import com.intellij.platform.eel.annotations.Filename
@@ -19,27 +20,30 @@ internal sealed interface PathAnnotationInfo {
   sealed class Specified : PathAnnotationInfo {
     abstract fun getAnnotationClass(): Class<*>
     val shortAnnotationName: String = getAnnotationClass().simpleName.let { "@$it" }
-    abstract val quickFix: () -> LocalQuickFix
+    val quickFixesFor: (PsiElement?) -> List<LocalQuickFix> = { psiElement ->
+      val variableToAnnotate = psiElement?.let { findVariableToAnnotate(it) }
+      if (variableToAnnotate != null) {
+        val action = AddAnnotationModCommandAction(getAnnotationClass().canonicalName, variableToAnnotate)
+        listOfNotNull(LocalQuickFix.from(action))
+      }
+      else emptyList()
+    }
   }
 
   object MultiRouting : Specified() {
     override fun getAnnotationClass(): Class<*> = MultiRoutingFileSystemPath::class.java
-    override val quickFix: () -> LocalQuickFix = { PathAnnotationInspection.AddMultiRoutingAnnotationFix() }
   }
 
   object Native : Specified() {
     override fun getAnnotationClass(): Class<*> = NativePath::class.java
-    override val quickFix: () -> LocalQuickFix = { PathAnnotationInspection.AddNativePathAnnotationFix() }
   }
 
   object LocalPathInfo : Specified() {
     override fun getAnnotationClass(): Class<*> = LocalPath::class.java
-    override val quickFix: () -> LocalQuickFix = { PathAnnotationInspection.AddLocalPathAnnotationFix() }
   }
 
   object FilenameInfo : Specified() {
     override fun getAnnotationClass(): Class<*> = Filename::class.java
-    override val quickFix: () -> LocalQuickFix = { PathAnnotationInspection.AddFilenameAnnotationFix() }
   }
 
   object Unspecified : PathAnnotationInfo
@@ -322,3 +326,58 @@ private fun isMethodReturningLocalPathResult(expression: UExpression): Boolean {
 
 private fun isSystemPropertyAbsolutePathValue(propertyName: String): Boolean =
   setOf("java.home", "user.home", "user.dir", "java.io.tmpdir").contains(propertyName)
+
+private fun findVariableToAnnotate(element: PsiElement): PsiModifierListOwner? {
+  // If the element is already a variable, return it
+  if (element is PsiModifierListOwner) {
+    return element
+  }
+
+  // If the element is a method call, try to find the variable reference inside it
+  if (element is PsiMethodCallExpression) {
+    val argumentList = element.argumentList
+    if (argumentList.expressionCount > 0) {
+      val firstArg = argumentList.expressions[0]
+      if (firstArg is PsiReferenceExpression) {
+        val resolved = firstArg.resolve()
+        if (resolved is PsiModifierListOwner) {
+          return resolved
+        }
+      }
+    }
+  }
+
+  // If the element is a reference expression, resolve it to find the variable declaration
+  if (element is PsiReferenceExpression) {
+    val resolved = element.resolve()
+    if (resolved is PsiModifierListOwner) {
+      return resolved
+    }
+  }
+
+  // Try to find a reference expression inside the element
+  val references = element.references
+  for (reference in references) {
+    val resolved = reference.resolve()
+    if (resolved is PsiModifierListOwner) {
+      return resolved
+    }
+  }
+
+  // Try to find a reference expression in the parent of the element
+  val parent = element.parent
+  if (parent is PsiMethodCallExpression) {
+    val argumentList = parent.argumentList
+    if (argumentList.expressionCount > 0) {
+      val firstArg = argumentList.expressions[0]
+      if (firstArg is PsiReferenceExpression) {
+        val resolved = firstArg.resolve()
+        if (resolved is PsiModifierListOwner) {
+          return resolved
+        }
+      }
+    }
+  }
+
+  return null
+}
