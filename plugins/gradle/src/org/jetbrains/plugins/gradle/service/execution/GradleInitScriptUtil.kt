@@ -13,7 +13,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.externalSystem.rt.ExternalSystemRtClass
 import groovy.lang.MissingMethodException
@@ -103,8 +102,8 @@ fun createIdeaPluginConfiguratorInitScript(): Path {
 fun loadDownloadArtifactInitScript(
   dependencyNotation: String,
   taskName: String,
-  downloadTarget: Path,
-  projectPath: String,
+  downloadTarget: EelPath,
+  projectPath: EelPath,
 ): List<VersionSpecificInitScript> {
   return listOf(
     LazyVersionSpecificInitScript(
@@ -113,9 +112,9 @@ fun loadDownloadArtifactInitScript(
       scriptSupplier = {
         loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/downloadArtifact.gradle", mapOf(
           "DEPENDENCY_NOTATION" to dependencyNotation.toGroovyStringLiteral(),
-          "TARGET_PATH" to downloadTarget.toCanonicalPath().toGroovyStringLiteral(),
+          "TARGET_PATH" to downloadTarget.toString().toGroovyStringLiteral(),
           "GRADLE_TASK_NAME" to taskName.toGroovyStringLiteral(),
-          "GRADLE_PROJECT_PATH" to projectPath.toGroovyStringLiteral(),
+          "GRADLE_PROJECT_PATH" to projectPath.toString().toGroovyStringLiteral(),
         ))
       }
     ),
@@ -125,9 +124,9 @@ fun loadDownloadArtifactInitScript(
       scriptSupplier = {
         loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/legacyDownloadArtifact.gradle", mapOf(
           "DEPENDENCY_NOTATION" to dependencyNotation.toGroovyStringLiteral(),
-          "TARGET_PATH" to downloadTarget.toCanonicalPath().toGroovyStringLiteral(),
+          "TARGET_PATH" to downloadTarget.toString().toGroovyStringLiteral(),
           "GRADLE_TASK_NAME" to taskName.toGroovyStringLiteral(),
-          "GRADLE_PROJECT_PATH" to projectPath.toGroovyStringLiteral(),
+          "GRADLE_PROJECT_PATH" to projectPath.toString().toGroovyStringLiteral(),
         ))
       }
     )
