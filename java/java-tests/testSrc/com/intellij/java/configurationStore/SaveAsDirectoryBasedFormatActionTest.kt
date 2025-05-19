@@ -2,9 +2,9 @@
 package com.intellij.java.configurationStore
 
 import com.intellij.ide.actions.convertToDirectoryBasedFormat
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.openapi.components.impl.stores.stateStore
+import com.intellij.openapi.project.Project.DIRECTORY_STORE_FOLDER
+import com.intellij.project.stateStore
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.loadProjectAndCheckResults
@@ -22,13 +22,14 @@ class SaveAsDirectoryBasedFormatActionTest : BareTestFixtureTestCase() {
   val tempDirectory = TemporaryDirectory()
 
   @Test
-  fun `convert sample project to directory based format`() =  runBlocking {
+  fun `convert sample project to directory based format`() = runBlocking {
     val projectFile = Path.of(PathManagerEx.getCommunityHomePath(), "jps/model-serialization/testData/sampleProject-ipr/sampleProject.ipr")
     val projectDir = Path.of(PathManagerEx.getCommunityHomePath(), "jps/model-serialization/testData/sampleProject")
     loadProjectAndCheckResults(listOf(projectFile), tempDirectory) { project ->
-      WriteAction.computeAndWait<Unit, Throwable> {
-        convertToDirectoryBasedFormat(project)
-      }
+      val store = project.stateStore
+      val baseDir = store.getProjectFilePath().parent
+      val ideaDir = baseDir.resolve(DIRECTORY_STORE_FOLDER)
+      convertToDirectoryBasedFormat(project = project, store = store, baseDir = baseDir, ideaDir = ideaDir)
       project.stateStore.save()
 
       val expected = directoryContentOf(projectDir).mergeWith(directoryContent { file("sampleProject.ipr") })
