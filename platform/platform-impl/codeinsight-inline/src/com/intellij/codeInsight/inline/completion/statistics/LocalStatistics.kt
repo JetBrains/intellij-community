@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 @Service
 @State(
   name = "DailyLocalStatistics",
-  storages = [Storage("dailyLocalStatistics.xml")]
+  storages = [Storage("dailyLocalStatistics.xml", roamingType = RoamingType.DISABLED)]
 )
 @ApiStatus.Internal
 class LocalStatistics : SimplePersistentStateComponent<LocalStatistics.State>(State()) {
