@@ -11,6 +11,7 @@ import com.intellij.ide.util.gotoByName.QuickSearchComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
@@ -81,7 +82,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 private const val ACTION_PLACE = "Switcher"
 
-object Switcher : BaseSwitcherAction(null) {
+object Switcher : BaseSwitcherAction(null), ActionRemoteBehaviorSpecification.Frontend {
   @ApiStatus.Internal
   val SWITCHER_KEY: Key<SwitcherPanel> = Key.create("SWITCHER_KEY")
 
