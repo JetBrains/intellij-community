@@ -50,12 +50,9 @@ class PyOverloadsInspection : PyInspection() {
       if (overloads.isEmpty()) return
 
       if (overloads.size == 1) {
-        registerProblem(overloads[0].nameIdentifier, if (owner is PyClass) {
-          PyPsiBundle.message("INSP.overloads.at.least.two.overload.decorated.methods.must.be.present")
-        }
-        else {
-          PyPsiBundle.message("INSP.overloads.at.least.two.overload.decorated.functions.must.be.present")
-        })
+        registerProblem(overloads[0].nameIdentifier,
+                        PyPsiBundle.message("INSP.overloads.at.least.two.overloads.must.be.present",
+                                            if (owner is PyClass) 1 else 0))
       }
 
       val implementation = implementations.lastOrNull()
@@ -83,12 +80,9 @@ class PyOverloadsInspection : PyInspection() {
 
       if (requiresImplementation && implementation !== functions.last()) {
         val problemElement = if (implementation == null) functions.first() else functions.last()
-        registerProblem(problemElement.nameIdentifier, if (owner is PyClass) {
-          PyPsiBundle.message("INSP.overloads.series.overload.decorated.methods.should.always.be.followed.by.implementation")
-        }
-        else {
-          PyPsiBundle.message("INSP.overloads.series.overload.decorated.functions.should.always.be.followed.by.implementation")
-        })
+        registerProblem(problemElement.nameIdentifier,
+                        PyPsiBundle.message("INSP.overloads.series.overloads.should.always.be.followed.by.implementation",
+                                            if (owner is PyClass) 1 else 0))
       }
 
       if (implementation != null) {
@@ -96,12 +90,9 @@ class PyOverloadsInspection : PyInspection() {
           .asSequence()
           .filter { isIncompatibleOverload(implementation, it) }
           .forEach {
-            registerProblem(it.nameIdentifier, if (owner is PyClass) {
-              PyPsiBundle.message("INSP.overloads.this.method.overload.signature.not.compatible.with.implementation")
-            }
-            else {
-              PyPsiBundle.message("INSP.overloads.this.function.overload.signature.not.compatible.with.implementation")
-            })
+            registerProblem(it.nameIdentifier,
+                            PyPsiBundle.message("INSP.overloads.this.overload.signature.not.compatible.with.implementation",
+                                                if (owner is PyClass) 1 else 0))
           }
       }
     }
