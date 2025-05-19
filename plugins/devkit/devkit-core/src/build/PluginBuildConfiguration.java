@@ -100,10 +100,6 @@ public final class PluginBuildConfiguration implements PersistentStateComponent<
     }
   }
 
-  public @Nullable ConfigFile getPluginXML() {
-    return myPluginXmlContainer.getConfigFile(PluginDescriptorConstants.META_DATA);
-  }
-
   @TestOnly
   public void setPluginXmlFromVirtualFile(VirtualFile virtualFile) {
     pluginXmlContainer.getConfiguration().replaceConfigFile(PluginDescriptorConstants.META_DATA, virtualFile.getUrl());
