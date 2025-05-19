@@ -61,6 +61,8 @@ class PluginBuilder() {
 
   private val subDescriptors = ArrayList<SubDescriptor>()
 
+  private var additionalXmlContent: String? = null
+
   fun dependsIntellijModulesLang(): PluginBuilder {
     depends("com.intellij.modules.lang")
     return this
@@ -182,6 +184,11 @@ class PluginBuilder() {
     return this
   }
 
+  fun additionalXmlContent(@Language("XML") text: String?): PluginBuilder {
+    additionalXmlContent = text
+    return this
+  }
+
   fun text(requireId: Boolean = true): String {
     return buildString {
       append("<idea-plugin")
@@ -263,6 +270,12 @@ class PluginBuilder() {
       for (alias in pluginAliases) {
         append("\n")
         append("""<module value="$alias"/>""")
+      }
+
+      if (additionalXmlContent != null) {
+        append("\n")
+        append(additionalXmlContent)
+        append("\n")
       }
 
       append("</idea-plugin>")
