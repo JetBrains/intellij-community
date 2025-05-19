@@ -95,13 +95,17 @@ class SePopupVm(
   }
 
   fun selectNextTab() {
-    currentTabIndex.value = (currentTabIndex.value + 1).coerceIn(tabVms.indices)
-    usageLogger.tabSwitched()
+    val oldIndex = currentTabIndex.value
+    currentTabIndex.value = (currentTabIndex.value + 1) % tabVms.size
+
+    if (oldIndex != currentTabIndex.value) usageLogger.tabSwitched()
   }
 
   fun selectPreviousTab() {
-    currentTabIndex.value = (currentTabIndex.value - 1).coerceIn(tabVms.indices)
-    usageLogger.tabSwitched()
+    val oldIndex = currentTabIndex.value
+    currentTabIndex.value = (currentTabIndex.value - 1 + tabVms.size) % tabVms.size
+
+    if (oldIndex != currentTabIndex.value) usageLogger.tabSwitched()
   }
 
   fun showTab(tabId: String) {

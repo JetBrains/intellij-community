@@ -24,6 +24,8 @@ import com.intellij.platform.searchEverywhere.SeItemPresentation
 import com.intellij.platform.searchEverywhere.SeOptionActionItemPresentation
 import com.intellij.platform.searchEverywhere.SeRunnableActionItemPresentation
 import com.intellij.platform.searchEverywhere.SeRunnableActionItemPresentation.Promo
+import com.intellij.platform.searchEverywhere.providers.SeLog
+import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
 import com.intellij.util.text.nullize
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -104,6 +106,8 @@ object SeActionPresentationProvider {
       return presentation
     }
 
+    SeLog.log(ITEM_EMIT) { "Couldn't generate an action presentation. Unknown item: $matchedValue" }
+    @Suppress("HardCodedStringLiteral")
     return SeRunnableActionItemPresentation(SeActionItemPresentation.Common(text = "Unknown item"))
   }
 }
