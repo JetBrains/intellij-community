@@ -232,7 +232,6 @@ c:com.intellij.usages.UsageInfo2UsageAdapter
 - merge(com.intellij.usages.rules.MergeableUsage):Z
 - navigate(Z):V
 - openTextEditor(Z):com.intellij.openapi.editor.Editor
-- processRangeMarkers(com.intellij.util.Processor):Z
 - rename(java.lang.String):V
 - reset():V
 - pf:resetCachedPresentation():V
