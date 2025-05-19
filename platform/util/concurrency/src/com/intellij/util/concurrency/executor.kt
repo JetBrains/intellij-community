@@ -19,7 +19,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
-import kotlin.Throws
 
 /**
  * Only for Java clients and only if you cannot rewrite in Kotlin and use coroutines (as you should).
@@ -71,6 +70,8 @@ class CoroutineDispatcherBackedExecutor(coroutineScope: CoroutineScope, name: St
   private val childScope = coroutineScope.childScope(name, Dispatchers.IO.limitedParallelism(parallelism = parallelism))
 
   fun isEmpty(): Boolean = childScope.coroutineContext.job.children.none()
+
+  fun scope(): CoroutineScope = childScope
 
   override fun execute(command: Runnable) {
     childScope.coroutineContext.ensureActive()
