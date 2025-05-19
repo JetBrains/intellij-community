@@ -50,10 +50,6 @@ sealed class IdeaPluginDescriptorImpl(
   private val releaseVersion: Int = raw.releaseVersion
   private val isLicenseOptional: Boolean = raw.isLicenseOptional
 
-  private val rawDescription: @NlsSafe String? = raw.description
-  private val category: @NlsSafe String? = raw.category
-  private val changeNotes: String? = raw.changeNotes
-
   private val vendor: String? = raw.vendor
   private val vendorEmail: String? = raw.vendorEmail
   private val vendorUrl: String? = raw.vendorUrl
@@ -106,8 +102,6 @@ sealed class IdeaPluginDescriptorImpl(
 
   var isMarkedForLoading: Boolean = true
   private var _pluginClassLoader: ClassLoader? = null
-  @Volatile
-  private var loadedDescriptionText: @Nls String? = null
 
   override fun getPluginId(): PluginId = id
 
@@ -126,31 +120,6 @@ sealed class IdeaPluginDescriptorImpl(
   override fun getReleaseDate(): Date? = releaseDate
   override fun getReleaseVersion(): Int = releaseVersion
   override fun isLicenseOptional(): Boolean = isLicenseOptional
-
-  override fun getChangeNotes(): String? = changeNotes
-  override fun getCategory(): @NlsSafe String? = category
-
-  override fun getDisplayCategory(): @Nls String? {
-    if (category == null) {
-      return null
-    }
-    val key = "plugin.category.${category.replace(' ', '.')}"
-    return CoreBundle.messageOrNull(key) ?: fromPluginBundle(key, category)
-  }
-
-  override fun getDescription(): @Nls String? {
-    var result = loadedDescriptionText
-    if (result != null) {
-      return result
-    }
-    PluginCardOverrides.getDescriptionOverride(id)?.let {
-      loadedDescriptionText = it
-      return it
-    }
-    result = fromPluginBundle("plugin.$id.description", rawDescription)
-    loadedDescriptionText = result
-    return result
-  }
 
   override fun getVendor(): String? = vendor
   override fun getVendorEmail(): String? = vendorEmail
@@ -377,23 +346,6 @@ sealed class IdeaPluginDescriptorImpl(
     }
   }
 
-  private fun fromPluginBundle(key: String, @Nls defaultValue: String?): @Nls String? {
-    if (!isEnabled) { // if the plugin is disabled, its classloader is null and the resource bundle cannot be found
-      return defaultValue
-    }
-    val baseName = resourceBundleBaseName
-    if (baseName == null) {
-      return defaultValue
-    }
-    return (try {
-      AbstractBundle.messageOrDefault(DynamicBundle.getResourceBundle(classLoader, baseName), key, defaultValue ?: "")
-    }
-    catch (_: MissingResourceException) {
-      LOG.info("Cannot find plugin $id resource-bundle: $baseName")
-      null
-    }) ?: defaultValue
-  }
-
   private fun checkCycle(configFile: String, visitedFiles: List<String>) {
     var i = 0
     val n = visitedFiles.size
@@ -580,11 +532,60 @@ class PluginMainDescriptor(
   init {
     assert(descriptorPath == null) { this }
   }
+
+  @Volatile
+  private var loadedDescriptionText: @Nls String? = null
+  private val rawDescription: @NlsSafe String? = raw.description
+  private val category: @NlsSafe String? = raw.category
+  private val changeNotes: String? = raw.changeNotes
+
+  override fun getChangeNotes(): String? = changeNotes
+  override fun getCategory(): @NlsSafe String? = category
+
+  override fun getDisplayCategory(): @Nls String? {
+    if (category == null) {
+      return null
+    }
+    val key = "plugin.category.${category.replace(' ', '.')}"
+    return CoreBundle.messageOrNull(key) ?: fromPluginBundle(key, category)
+  }
+
+  override fun getDescription(): @Nls String? {
+    var result = loadedDescriptionText
+    if (result != null) {
+      return result
+    }
+    PluginCardOverrides.getDescriptionOverride(pluginId)?.let {
+      loadedDescriptionText = it
+      return it
+    }
+    result = fromPluginBundle("plugin.$pluginId.description", rawDescription)
+    loadedDescriptionText = result
+    return result
+  }
+
+  private fun fromPluginBundle(key: String, @Nls defaultValue: String?): @Nls String? {
+    if (!isEnabled) { // if the plugin is disabled, its classloader is null and the resource bundle cannot be found
+      return defaultValue
+    }
+    val baseName = resourceBundleBaseName
+    if (baseName == null) {
+      return defaultValue
+    }
+    return (try {
+      AbstractBundle.messageOrDefault(DynamicBundle.getResourceBundle(classLoader, baseName), key, defaultValue ?: "")
+    }
+    catch (_: MissingResourceException) {
+      LOG.info("Cannot find plugin $pluginId resource-bundle: $baseName")
+      null
+    }) ?: defaultValue
+  }
 }
 
 @ApiStatus.Internal
 class DependsSubDescriptor(
-  private val parent: IdeaPluginDescriptorImpl,
+  /** either [PluginMainDescriptor] or [DependsSubDescriptor]*/
+  val parent: IdeaPluginDescriptorImpl,
   raw: RawPluginDescriptor,
   pluginPath: Path,
   isBundled: Boolean,
@@ -612,12 +613,17 @@ class DependsSubDescriptor(
   }
 
   override fun getDescriptorPath(): String = descriptorPath
+
+  @Deprecated("use main descriptor") override fun getChangeNotes(): String? = parent.changeNotes.also { LOG.error("unexpected call") }
+  @Deprecated("use main descriptor") override fun getCategory(): @NlsSafe String? = parent.category.also { LOG.error("unexpected call") }
+  @Deprecated("use main descriptor") override fun getDisplayCategory(): @Nls String? = parent.displayCategory.also { LOG.error("unexpected call") }
+  @Deprecated("use main descriptor") override fun getDescription(): @Nls String? = parent.description.also { LOG.error("unexpected call") }
 }
 
 
 @ApiStatus.Internal
 class ContentModuleDescriptor(
-  private val parent: PluginMainDescriptor,
+  val parent: PluginMainDescriptor,
   raw: RawPluginDescriptor,
   pluginPath: Path,
   isBundled: Boolean,
@@ -646,6 +652,11 @@ class ContentModuleDescriptor(
   val moduleLoadingRule: ModuleLoadingRule = moduleLoadingRule
 
   override fun getDescriptorPath(): String = descriptorPath
+
+  @Deprecated("use main descriptor") override fun getChangeNotes(): String? = parent.changeNotes.also { LOG.error("unexpected call") }
+  @Deprecated("use main descriptor") override fun getCategory(): @NlsSafe String? = parent.category.also { LOG.error("unexpected call") }
+  @Deprecated("use main descriptor") override fun getDisplayCategory(): @Nls String? = parent.displayCategory.also { LOG.error("unexpected call") }
+  @Deprecated("use main descriptor") override fun getDescription(): @Nls String? = parent.description.also { LOG.error("unexpected call") }
 }
 
 @ApiStatus.Internal
