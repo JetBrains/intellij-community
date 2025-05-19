@@ -8,9 +8,7 @@ import com.intellij.codeInspection.export.InspectionTreeHtmlWriter
 import com.intellij.codeInspection.ui.InspectionTree
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
-import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.project.Project
-import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -24,8 +22,7 @@ class ExportToHTMLAction : InspectionResultsExportActionProvider(Supplier { "HTM
                                                                  AllIcons.FileTypes.Html) {
   override val progressTitle: String = InspectionsBundle.message("inspection.generating.html.progress.title")
 
-  val openProperty: GraphProperty<Boolean> = propertyGraph.property(false)
-  val open: Boolean by openProperty
+  var open: Boolean = false
   var outputPath: Path? = null
 
   override fun writeResults(tree: InspectionTree,
@@ -47,7 +44,9 @@ class ExportToHTMLAction : InspectionResultsExportActionProvider(Supplier { "HTM
   override fun additionalSettings(): JPanel {
     return panel {
       row {
-        checkBox(InspectionsBundle.message("inspection.export.open.option")).bindSelected(openProperty)
+        checkBox(InspectionsBundle.message("inspection.export.open.option")).applyToComponent {
+          addChangeListener { open = isSelected }
+        }
       }
     }
   }

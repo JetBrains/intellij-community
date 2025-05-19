@@ -6354,13 +6354,6 @@ a:com.intellij.codeInspection.ui.actions.InspectionResultsExportActionProvider
 - a:writeResults(com.intellij.codeInspection.ui.InspectionTree,com.intellij.codeInspection.ex.InspectionProfileImpl,com.intellij.codeInspection.ex.GlobalInspectionContextImpl,com.intellij.openapi.project.Project,java.nio.file.Path):V
 f:com.intellij.codeInspection.ui.actions.InspectionResultsExportActionProvider$Companion
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
-f:com.intellij.codeInspection.ui.actions.InspectionResultsExportActionProvider$ExportDialog
-- com.intellij.openapi.ui.DialogWrapper
-- <init>(com.intellij.codeInspection.ui.actions.InspectionResultsExportActionProvider,com.intellij.codeInspection.ui.InspectionResultsView):V
-- f:getLocation():java.lang.String
-- f:getPath():java.nio.file.Path
-- f:getView():com.intellij.codeInspection.ui.InspectionResultsView
-- f:setLocation(java.lang.String):V
 a:com.intellij.codeInspection.ui.actions.InspectionViewActionBase
 - com.intellij.openapi.actionSystem.AnAction
 - <init>(java.util.function.Supplier):V

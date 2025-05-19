@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui.actions
 
 import com.intellij.codeInspection.InspectionsBundle
@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ex.GlobalInspectionContextImpl
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ui.InspectionResultsView
 import com.intellij.codeInspection.ui.InspectionTree
+import com.intellij.codeInspection.ui.actions.InspectionResultsExportActionProvider.Companion.LOCATION_KEY
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.invokeLater
@@ -54,7 +55,7 @@ abstract class InspectionResultsExportActionProvider(text: Supplier<String?>,
   override fun actionPerformed(e: AnActionEvent) {
     val view: InspectionResultsView = getView(e) ?: return
 
-    val dialog = ExportDialog(view)
+    val dialog = ExportDialog(this, view)
     if (!dialog.showAndGet()) return
     val path = dialog.path
 
@@ -106,56 +107,56 @@ abstract class InspectionResultsExportActionProvider(text: Supplier<String?>,
    */
   open fun additionalSettings(): JPanel? = null
 
-  inner class ExportDialog(val view: InspectionResultsView) : DialogWrapper(view.project, true) {
-    private val locationProperty = propertyGraph.property("")
-    var location: String by locationProperty
+}
 
-    init {
-      setOKButtonText(InspectionsBundle.message("inspection.export.save.button"))
-      title = InspectionsBundle.message("inspection.export.results.title")
-      isResizable = false
+private class ExportDialog(private val actionProvider: InspectionResultsExportActionProvider, val view: InspectionResultsView) : DialogWrapper(view.project, true) {
+  var location: String = ""
 
-      location = PropertiesComponent
-        .getInstance(view.project)
-        .getValue(LOCATION_KEY, view.project.guessProjectDir()?.path ?: "")
+  init {
+    setOKButtonText(InspectionsBundle.message("inspection.export.save.button"))
+    title = InspectionsBundle.message("inspection.export.results.title")
+    isResizable = false
 
-      init()
-    }
+    location = PropertiesComponent
+      .getInstance(view.project)
+      .getValue(LOCATION_KEY, view.project.guessProjectDir()?.path ?: "")
 
-    val path: Path
-      get() = Path.of(location)
+    init()
+  }
 
-    override fun createCenterPanel(): JComponent {
-      return panel {
-        row {
-          @Suppress("DialogTitleCapitalization")
-          label(view.viewTitle)
-            .bold()
-        }
-          .bottomGap(BottomGap.SMALL)
-        row(EditorBundle.message("export.to.html.output.directory.label")) {
-          textFieldWithBrowseButton(
-            FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(EditorBundle.message("export.to.html.select.output.directory.title")),
-            view.project
-          )
-            .columns(COLUMNS_LARGE)
-            .bindText(locationProperty)
-            .validationOnApply {
-              if (location.isBlank()) error(InspectionsBundle.message("inspection.action.export.popup.error"))
-              else null
-            }
-        }
-        additionalSettings()?.let {
-          row { cell(it) }
-        }
+  val path: Path
+    get() = Path.of(location)
+
+  override fun createCenterPanel(): JComponent {
+    return panel {
+      row {
+        @Suppress("DialogTitleCapitalization")
+        label(view.viewTitle)
+          .bold()
+      }
+        .bottomGap(BottomGap.SMALL)
+      row(EditorBundle.message("export.to.html.output.directory.label")) {
+        textFieldWithBrowseButton(
+          FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(EditorBundle.message("export.to.html.select.output.directory.title")),
+          view.project
+        )
+          .columns(COLUMNS_LARGE)
+          .bind({ t -> t.text }, { t, v -> t.text = v }, ::location.toMutableProperty())
+          .validationOnApply {
+            if (location.isBlank()) error(InspectionsBundle.message("inspection.action.export.popup.error"))
+            else null
+          }
+      }
+      actionProvider.additionalSettings()?.let {
+        row { cell(it) }
       }
     }
+  }
 
-    override fun doOKAction() {
-      PropertiesComponent
-        .getInstance(view.project)
-        .setValue(LOCATION_KEY, location)
-      super.doOKAction()
-    }
+  override fun doOKAction() {
+    PropertiesComponent
+      .getInstance(view.project)
+      .setValue(LOCATION_KEY, location)
+    super.doOKAction()
   }
 }
