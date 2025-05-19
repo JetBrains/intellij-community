@@ -265,6 +265,52 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         )
     }
 
+    fun testCommandsOnlyGoToImplementation() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+        interface A{
+        
+            fun a..<caret>()
+        
+            class B : A{
+        
+                override fun a() {
+        
+                }
+            }
+        }
+      """.trimIndent())
+        val elements = myFixture.completeBasic()
+        selectItem(elements.first { element -> element.lookupString.contains("Go to impl", ignoreCase = true) })
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+        myFixture.checkResult("""
+        interface A{
+        
+            fun a()
+        
+            class B : A{
+        
+                override fun <caret>a() {
+        
+                }
+            }
+        }
+      """.trimIndent())
+    }
+
+    fun testCommandsOnlyGoToImplementationNotFound() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+        interface A{
+            fun a..<caret>()
+        }
+      """.trimIndent())
+        val elements = myFixture.completeBasic()
+        assertFalse(elements.any { element -> element.lookupString.contains("Go to impl", ignoreCase = true) })
+    }
+
     fun testIntroduceParameter() {
         Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
         myFixture.configureByText(

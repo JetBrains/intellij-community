@@ -3,10 +3,9 @@ package com.intellij.codeInsight.completion.commands.impl
 
 import com.intellij.codeInsight.completion.command.commands.AbstractGoToImplementationCompletionCommandProvider
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMember
-import com.intellij.psi.PsiMethod
+import com.intellij.psi.*
+import com.intellij.psi.search.searches.ClassInheritorsSearch
+import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 
 internal class JavaGoToImplementationCommandCompletionProvider : AbstractGoToImplementationCompletionCommandProvider() {
@@ -30,6 +29,16 @@ internal class JavaGoToImplementationCommandCompletionProvider : AbstractGoToImp
     else {
       return false
     }
+    val clazz = member as? PsiClass ?: member.containingClass ?: return false
+
+    if (clazz.hasModifierProperty(PsiModifier.FINAL)) return false
+
+    if (ClassInheritorsSearch.search(clazz, false).findFirst() == null &&
+        !(LambdaUtil.isFunctionalClass(clazz) &&
+          ReferencesSearch.search(clazz).findFirst() != null)) {
+      return false
+    }
+
     return true
   }
 }

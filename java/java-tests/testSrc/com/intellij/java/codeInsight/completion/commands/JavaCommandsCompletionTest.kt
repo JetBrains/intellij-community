@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion.commands
 
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
@@ -385,6 +385,17 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
           }
       }      
       """.trimIndent())
+  }
+
+  fun testCommandsOnlyGoToImplementationNotFound() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      interface A{
+          public void a.<caret>();
+      }      
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    assertFalse(elements.any { element -> element.lookupString.contains("Go to impl", ignoreCase = true) })
   }
 
   fun testCommandsGoToSuper() {
