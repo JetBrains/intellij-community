@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.ProjectModelElement
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.ui.Queryable
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
@@ -108,7 +109,11 @@ open class ModuleImpl(
   final override fun canStoreSettings(): Boolean = store !is NonPersistentModuleStore
 
   override fun getModuleNioFile(): Path {
-    return if (isPersistent) store.storageManager.expandMacro(StoragePathMacros.MODULE_FILE) else Path.of("")
+    // FIXME (IJPL-188482): we have a race: saving a project collect save sessions, which have reference to PathMacroManager.
+    //  PathMacroManager might be disposed (together with the module) by the moment when save sessions are actually committed to the disk.
+    //  Reproducer: com.intellij.workspaceModel.integrationTests.tests.aggregator.maven.changes.MavenMultiModulesProjectAddTwoModulesTest.mavenMultiModulesProjectAddTwoModules
+    val isDisposed = Disposer.isDisposed(this)
+    return if (!isDisposed && isPersistent) store.storageManager.expandMacro(StoragePathMacros.MODULE_FILE) else Path.of("")
   }
 
   @Synchronized
