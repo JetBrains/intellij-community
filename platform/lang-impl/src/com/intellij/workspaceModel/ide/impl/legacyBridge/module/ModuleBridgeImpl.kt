@@ -5,10 +5,10 @@ import com.intellij.configurationStore.DefaultModuleStoreFactory
 import com.intellij.configurationStore.ModuleStoreFactory
 import com.intellij.configurationStore.RenameableStateStorageManager
 import com.intellij.facet.Facet
-import com.intellij.facet.FacetManager
 import com.intellij.facet.FacetManagerFactory
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.PathMacroManager
@@ -34,6 +34,10 @@ import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.toPath
 import io.opentelemetry.api.metrics.Meter
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicReference
 
@@ -86,12 +90,6 @@ class ModuleBridgeImpl(
     getModuleComponentManager().createComponentsNonBlocking()
     // We want to initialize FacetManager early to avoid initializing it on EDT in ModuleManagerBridgeImpl.loadModules
     project.serviceAsync<FacetManagerFactory>().getFacetManager(this)
-  }
-
-  override fun initFacets() {
-    facetsInitializationTimeMs.addMeasuredTime {
-      FacetManager.getInstance(this).allFacets.forEach(Facet<*>::initFacet)
-    }
   }
 
   override fun initServiceContainer(modules: List<IdeaPluginDescriptorImpl>, precomputedExtensionModel: PrecomputedExtensionModel) {
@@ -171,6 +169,21 @@ class ModuleBridgeImpl(
     private val moduleBridgeBeforeChangedTimeMs = MillisecondsMeasurer()
     private val facetsInitializationTimeMs = MillisecondsMeasurer()
     private val updateOptionTimeMs = MillisecondsMeasurer()
+
+    fun initFacets(modules: Set<ModuleBridge>, project: Project, coroutineScope: CoroutineScope) {
+      coroutineScope.launch {
+        val facetManagerFactory = project.serviceAsync<FacetManagerFactory>()
+        withContext(Dispatchers.EDT) {
+          for (module in modules) {
+            if (!module.isDisposed) {
+              facetsInitializationTimeMs.addMeasuredTime {
+                facetManagerFactory.getFacetManager(module).allFacets.forEach(Facet<*>::initFacet)
+              }
+            }
+          }
+        }
+      }
+    }
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
       val moduleBridgeBeforeChangedTimeCounter = meter.counterBuilder("workspaceModel.moduleBridge.before.changed.ms").buildObserver()

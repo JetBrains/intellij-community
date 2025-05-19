@@ -84,7 +84,7 @@ internal class ModuleManagerComponentBridgeInitializer : BridgeInitializer {
 @ApiStatus.Internal
 abstract class ModuleManagerBridgeImpl(
   private val project: Project,
-  private val coroutineScope: CoroutineScope,
+  @JvmField protected val coroutineScope: CoroutineScope,
   moduleRootListenerBridge: ModuleRootListenerBridge,
 ) : ModuleManagerEx(), Disposable {
   private val moduleNameToUnloadedModuleDescription: MutableMap<String, UnloadedModuleDescription> = ConcurrentHashMap()
@@ -242,18 +242,15 @@ abstract class ModuleManagerBridgeImpl(
     // Facets that are loaded from the cache do not generate "EntityAdded" event and aren't initialized
     // We initialize the facets manually here (after modules loading).
     if (initializeFacets) {
-      coroutineScope.launch(Dispatchers.EDT) {
-        for (module in modules) {
-          if (!module.isDisposed) {
-            module.initFacets()
-          }
-        }
-      }
+      initFacets(modules)
     }
 
     coroutineScope.launch {
       checkOldServices(PluginManagerCore.getPluginSet().enabledPlugins)
     }
+  }
+
+  protected open fun initFacets(modules: Set<ModuleBridge>) {
   }
 
   final override fun calculateUnloadModules(builder: MutableEntityStorage, unloadedEntityBuilder: MutableEntityStorage): Pair<List<String>, List<String>> {

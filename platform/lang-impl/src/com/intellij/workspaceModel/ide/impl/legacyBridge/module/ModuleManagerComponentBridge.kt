@@ -49,7 +49,6 @@ import kotlin.coroutines.coroutineContext
 
 private val LOG = logger<ModuleManagerComponentBridge>()
 
-
 private class ModuleManagerInitProjectActivity : InitProjectActivity {
   override suspend fun run(project: Project) {
     val modules = (project.serviceAsync<ModuleManager>() as ModuleManagerComponentBridge).modules().toList()
@@ -175,6 +174,10 @@ open class ModuleManagerComponentBridge(private val project: Project, coroutineS
     val moduleFileUrl = getModuleVirtualFileUrl(moduleEntity)!!
     LocalFileSystem.getInstance().refreshAndFindFileByNioFile(moduleFileUrl.toPath())
     return moduleEntity
+  }
+
+  final override fun initFacets(modules: Set<ModuleBridge>) {
+    ModuleBridgeImpl.initFacets(modules, project, coroutineScope)
   }
 
   override fun createModule(

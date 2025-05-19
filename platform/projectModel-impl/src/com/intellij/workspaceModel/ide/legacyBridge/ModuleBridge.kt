@@ -40,6 +40,4 @@ interface ModuleBridge : ModuleEx {
   fun callCreateComponents()
 
   suspend fun callCreateComponentsNonBlocking()
-
-  fun initFacets()
 }
