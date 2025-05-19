@@ -6,6 +6,8 @@ import com.intellij.xdebugger.XDebugProcess;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.CompletableFuture;
+
 /**
  * Implement this class and return its instance from {@link XDebugProcess#getDropFrameHandler()} to support
  * Drop Frame action
@@ -30,6 +32,10 @@ public interface XDropFrameHandler {
    */
   default ThreeState canDropFrame(@NotNull XStackFrame frame) {
     return ThreeState.fromBoolean(canDrop(frame));
+  }
+
+  default CompletableFuture<Boolean> canDropFrameAsync(@NotNull XStackFrame frame) {
+    return CompletableFuture.completedFuture(canDropFrame(frame) == ThreeState.YES);
   }
 
   /**

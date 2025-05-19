@@ -149,7 +149,16 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
 
   public ThreeState canDrop() {
     if (myFrame.isBottom()) return ThreeState.NO;
-    return myMethodOccurrence.canDrop();
+    return CanDropFrameUtilsKt.canDropFrameSync(this);
+  }
+
+  public CompletableFuture<Boolean> canDropAsync() {
+    if (myFrame.isBottom()) return CompletableFuture.completedFuture(false);
+    return CanDropFrameUtilsKt.canDropFrameAsync(this);
+  }
+
+  MethodsTracker.MethodOccurrence getMethodOccurrence() {
+    return myMethodOccurrence;
   }
 
   public @Nullable ValueMarkup getValueMarkup() {

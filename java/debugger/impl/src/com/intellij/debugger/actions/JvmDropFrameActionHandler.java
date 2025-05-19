@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 public class JvmDropFrameActionHandler implements XDropFrameHandler {
 
@@ -50,10 +51,21 @@ public class JvmDropFrameActionHandler implements XDropFrameHandler {
   @Override
   public ThreeState canDropFrame(@NotNull XStackFrame frame) {
     if (frame instanceof JavaStackFrame javaStackFrame) {
-      if (!javaStackFrame.getStackFrameProxy().getVirtualMachine().canPopFrames()) return ThreeState.NO;
-      return javaStackFrame.getDescriptor().canDrop();
+      if (javaStackFrame.getStackFrameProxy().getVirtualMachine().canPopFrames()) {
+        return javaStackFrame.getDescriptor().canDrop();
+      }
     }
     return ThreeState.NO;
+  }
+
+  @Override
+  public CompletableFuture<Boolean> canDropFrameAsync(@NotNull XStackFrame frame) {
+    if (frame instanceof JavaStackFrame javaStackFrame) {
+      if (javaStackFrame.getStackFrameProxy().getVirtualMachine().canPopFrames()) {
+        return javaStackFrame.getDescriptor().canDropAsync();
+      }
+    }
+    return CompletableFuture.completedFuture(false);
   }
 
   @Override

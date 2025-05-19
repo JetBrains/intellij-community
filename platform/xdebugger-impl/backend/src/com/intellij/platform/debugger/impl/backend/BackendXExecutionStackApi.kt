@@ -6,7 +6,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.debugger.impl.rpc.XExecutionStackApi
 import com.intellij.platform.debugger.impl.rpc.XStackFramesEvent
 import com.intellij.platform.debugger.impl.rpc.XValueComputeChildrenEvent
-import com.intellij.util.ThreeState
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
@@ -19,6 +18,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.future.await
 
 internal class BackendXExecutionStackApi : XExecutionStackApi {
   override suspend fun computeStackFrames(executionStackId: XExecutionStackId, firstFrameIndex: Int): Flow<XStackFramesEvent> {
@@ -69,8 +69,7 @@ internal class BackendXExecutionStackApi : XExecutionStackApi {
     val stack = stackFrameId.findValue() ?: return false
     return withContext(Dispatchers.EDT) {
       val dropFrameHandler = session.debugProcess.dropFrameHandler ?: return@withContext false
-      // TODO suspend here until yes/no answer
-      dropFrameHandler.canDropFrame(stack.stackFrame) == ThreeState.YES
+      dropFrameHandler.canDropFrameAsync(stack.stackFrame).await()
     }
   }
 
