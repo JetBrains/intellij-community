@@ -3,20 +3,18 @@ package com.intellij.xdebugger.impl.rpc.models
 
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.xdebugger.frame.XFullValueEvaluator
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.frame.XValuePlace
+import com.intellij.xdebugger.frame.presentation.XValuePresentation
 import com.intellij.xdebugger.frame.presentation.XValuePresentation.XValueTextRenderer
 import com.intellij.xdebugger.impl.rpc.XValueAdvancedPresentationPart
 import com.intellij.xdebugger.impl.rpc.XValueSerializedPresentation
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
@@ -39,9 +37,14 @@ internal fun XValue.computePresentation(
         presentationHandler(XValueSerializedPresentation.SimplePresentation(icon?.rpcId(), type, value, hasChildren))
       }
 
-      override fun setPresentation(icon: Icon?, presentation: com.intellij.xdebugger.frame.presentation.XValuePresentation, hasChildren: Boolean) {
+      override fun setPresentation(icon: Icon?, presentation: XValuePresentation, hasChildren: Boolean) {
         val partsCollector = XValueTextRendererPartsCollector()
         presentation.renderValue(partsCollector)
+
+        if (fileLogger().isDebugEnabled) {
+          val valueText = partsCollector.parts.joinToString("") { it.text }
+          fileLogger().debug("[assertPresentation] valueText='$valueText', type='${presentation.type}', thread = ${Thread.currentThread().name}")
+        }
 
         presentationHandler(XValueSerializedPresentation.AdvancedPresentation(
           icon?.rpcId(), hasChildren,

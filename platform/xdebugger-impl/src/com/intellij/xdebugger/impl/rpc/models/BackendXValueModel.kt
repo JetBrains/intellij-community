@@ -20,12 +20,13 @@ import com.intellij.xdebugger.impl.rpc.XValueSerializedPresentation
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup
 import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 
 /**
  * Model which holds reference to the [XValue].
- * This model allows sending [com.intellij.platform.xdebugger.impl.rpc.XValueId] to a client and afterward retrieving [XValue] by this id.
+ * This model allows sending [XValueId] to a client and afterward retrieving [XValue] by this id.
  *
  * Since [XValue] implementation is provided by plugins we cannot easily extend this API to support
  * [XFullValueEvaluator], [ValueMarkup] etc. which are needed for the RPC backend implementation.
@@ -33,7 +34,7 @@ import org.jetbrains.annotations.ApiStatus
  *
  * [BackendXValueModel] can be created by [BackendXValueModelsManager.createXValueModel] function.
  *
- * @see [com.intellij.platform.xdebugger.impl.rpc.XValueId]
+ * @see [XValueId]
  */
 @ApiStatus.Internal
 class BackendXValueModel internal constructor(
@@ -50,7 +51,7 @@ class BackendXValueModel internal constructor(
   private val _fullValueEvaluator = MutableStateFlow<XFullValueEvaluator?>(null)
   val fullValueEvaluator: StateFlow<XFullValueEvaluator?> = _fullValueEvaluator.asStateFlow()
 
-  private val _presentation = MutableSharedFlow<XValueSerializedPresentation>(replay = 1)
+  private val _presentation = MutableSharedFlow<XValueSerializedPresentation>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   val presentation: Flow<XValueSerializedPresentation> = _presentation.asSharedFlow()
 
   init {
@@ -90,14 +91,6 @@ class BackendXValueModel internal constructor(
       return
     }
     _marker.update { XValueMarkerDto(marker.text, marker.color, marker.toolTipText) }
-  }
-
-  fun setFullValueEvaluator(fullValueEvaluator: XFullValueEvaluator?) {
-    _fullValueEvaluator.value = fullValueEvaluator
-  }
-
-  fun setPresentation(presentation: XValueSerializedPresentation) {
-    _presentation.tryEmit(presentation)
   }
 
   @ApiStatus.Internal
