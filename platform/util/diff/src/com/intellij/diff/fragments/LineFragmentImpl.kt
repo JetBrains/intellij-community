@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.fragments
 
-import com.intellij.openapi.diagnostic.LoggerRt
 import org.jetbrains.annotations.NonNls
 import java.util.*
 
@@ -26,16 +25,12 @@ open class LineFragmentImpl @JvmOverloads constructor(
                                                                              fragments)
 
   init {
-    if (this.startLine1 == this.endLine1 &&
-        this.startLine2 == this.endLine2
-    ) {
-      LOG.error("LineFragmentImpl should not be empty: " + toString())
-    }
-    if (this.startLine1 > this.endLine1 ||
-        this.startLine2 > this.endLine2 ||
-        this.startOffset1 > this.endOffset1 ||
-        this.startOffset2 > this.endOffset2) {
-      LOG.error("LineFragmentImpl is invalid: " + toString())
+    require(startLine1 != endLine1 || startLine2 != endLine2) { "LineFragmentImpl should not be empty: " + toString() }
+    require(startLine1 <= endLine1 &&
+            startLine2 <= endLine2 &&
+            startOffset1 <= endOffset1 &&
+            startOffset2 <= endOffset2) {
+      "LineFragmentImpl is invalid: " + toString()
     }
   }
 
@@ -68,25 +63,21 @@ open class LineFragmentImpl @JvmOverloads constructor(
   }
 
   override fun toString(): @NonNls String {
-    return "LineFragmentImpl: Lines [${this.startLine1}, ${this.endLine1}) - [${this.startLine2}, ${this.endLine2}); " +
-           "Offsets [${this.startOffset1}, ${this.endOffset1}) - [${this.startOffset2}, ${this.endOffset2}); " +
-           "Inner ${this.innerFragments?.size}"
+    return "LineFragmentImpl: Lines [${startLine1}, ${endLine1}) - [${startLine2}, ${endLine2}); " +
+           "Offsets [${startOffset1}, ${endOffset1}) - [${startOffset2}, ${endOffset2}); " +
+           "Inner ${innerFragments?.size}"
   }
+}
 
-  companion object {
-    private val LOG = LoggerRt.getInstance(LineFragmentImpl::class.java)
-
-    private fun dropWholeChangedFragments(fragments: List<DiffFragment>?, length1: Int, length2: Int): List<DiffFragment>? {
-      if (fragments != null && fragments.size == 1) {
-        val diffFragment = fragments[0]
-        if (diffFragment.startOffset1 == 0 &&
-            diffFragment.startOffset2 == 0 &&
-            diffFragment.endOffset1 == length1 &&
-            diffFragment.endOffset2 == length2) {
-          return null
-        }
-      }
-      return fragments
+private fun dropWholeChangedFragments(fragments: List<DiffFragment>?, length1: Int, length2: Int): List<DiffFragment>? {
+  if (fragments != null && fragments.size == 1) {
+    val diffFragment = fragments[0]
+    if (diffFragment.startOffset1 == 0 &&
+        diffFragment.startOffset2 == 0 &&
+        diffFragment.endOffset1 == length1 &&
+        diffFragment.endOffset2 == length2) {
+      return null
     }
   }
+  return fragments
 }

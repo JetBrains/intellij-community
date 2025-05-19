@@ -156,7 +156,6 @@ com.intellij.diff.fragments.DiffFragment
 - a:getStartOffset2():I
 c:com.intellij.diff.fragments.DiffFragmentImpl
 - com.intellij.diff.fragments.DiffFragment
-- sf:Companion:com.intellij.diff.fragments.DiffFragmentImpl$Companion
 - <init>(I,I,I,I):V
 - f:equals(java.lang.Object):Z
 - getEndOffset1():I
@@ -164,7 +163,6 @@ c:com.intellij.diff.fragments.DiffFragmentImpl
 - getStartOffset1():I
 - getStartOffset2():I
 - hashCode():I
-f:com.intellij.diff.fragments.DiffFragmentImpl$Companion
 com.intellij.diff.fragments.LineFragment
 - com.intellij.diff.fragments.DiffFragment
 - a:getEndLine1():I
@@ -174,7 +172,6 @@ com.intellij.diff.fragments.LineFragment
 - a:getStartLine2():I
 c:com.intellij.diff.fragments.LineFragmentImpl
 - com.intellij.diff.fragments.LineFragment
-- sf:Companion:com.intellij.diff.fragments.LineFragmentImpl$Companion
 - <init>(I,I,I,I,I,I,I,I):V
 - <init>(I,I,I,I,I,I,I,I,java.util.List):V
 - b:<init>(I,I,I,I,I,I,I,I,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
@@ -190,7 +187,6 @@ c:com.intellij.diff.fragments.LineFragmentImpl
 - getStartOffset1():I
 - getStartOffset2():I
 - hashCode():I
-f:com.intellij.diff.fragments.LineFragmentImpl$Companion
 com.intellij.diff.fragments.MergeLineFragment
 - a:getEndLine(com.intellij.diff.util.ThreeSide):I
 - a:getStartLine(com.intellij.diff.util.ThreeSide):I

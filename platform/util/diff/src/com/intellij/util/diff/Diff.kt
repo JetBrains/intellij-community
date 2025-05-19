@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.diff
 
-import com.intellij.openapi.diagnostic.LoggerRt
 import com.intellij.openapi.util.text.LineTokenizer
 import com.intellij.util.containers.Enumerator
 import com.intellij.util.containers.HashingStrategy
@@ -10,8 +9,6 @@ import java.util.*
 import kotlin.math.min
 
 object Diff {
-  private val LOG = LoggerRt.getInstance(Diff::class.java)
-
   @JvmStatic
   @Throws(FilesTooBigForDiffException::class)
   fun buildChanges(before: CharSequence, after: CharSequence): Change? {
@@ -106,7 +103,6 @@ object Diff {
         val patienceIntLCS = PatienceIntLCS(discarded[0], discarded[1])
         patienceIntLCS.execute(true)
         changes = patienceIntLCS.changes
-        LOG.info("Successful fallback to patience diff")
       }
     }
 
