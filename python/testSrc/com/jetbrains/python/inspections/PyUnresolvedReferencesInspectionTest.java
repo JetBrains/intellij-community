@@ -881,6 +881,21 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     });
   }
 
+  // PY-76895
+  public void testForwardReferenceInTypeParameterBound() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      doTestByText("""
+                   class ClassA[S: ForwardReference[int], T: "ForwardReference[str]"]:  # OK
+                       ...
+                   class ClassB[T: (ForwardReference[int], "ForwardReference[str]", bytes)]:  # OK
+                       ...
+                   class ClassC[T = ForwardReference[int], T1 = "ForwardReference[str]"]:  # OK
+                       ...
+                   class ForwardReference[T]: ...
+                   """);
+    });
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
