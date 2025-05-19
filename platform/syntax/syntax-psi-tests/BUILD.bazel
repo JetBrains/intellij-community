@@ -1,0 +1,41 @@
+### auto-generated section `build intellij.platform.syntax.psi.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "psi-tests",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "psi-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/syntax/syntax-extensions:extensions",
+    "//platform/syntax/syntax-extensions:extensions_test_lib",
+    "//platform/util",
+    "//platform/util-rt",
+    "//platform/util-rt:util-rt_test_lib",
+    "//platform/syntax/syntax-api:syntax",
+    "//platform/syntax/syntax-api:syntax_test_lib",
+    "//platform/core-api:core",
+    "@lib//:kotlin-stdlib",
+    "//platform/core-impl",
+    "@lib//:fastutil-min",
+    "//platform/syntax/syntax-util:util",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "@lib//:junit5",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+  ]
+)
+
+jvm_test(
+  name = "psi-tests_test",
+  runtime_deps = [":psi-tests_test_lib"]
+)
+### auto-generated section `build intellij.platform.syntax.psi.tests` end

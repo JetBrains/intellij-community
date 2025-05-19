@@ -924,6 +924,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/syntax/syntax-i18n/intellij.platform.syntax.i18n.iml" filepath="$PROJECT_DIR$/platform/syntax/syntax-i18n/intellij.platform.syntax.i18n.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/syntax/syntax-multiplatformSupport/intellij.platform.syntax.multiplatformSupport.iml" filepath="$PROJECT_DIR$/platform/syntax/syntax-multiplatformSupport/intellij.platform.syntax.multiplatformSupport.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/syntax/syntax-psi/intellij.platform.syntax.psi.iml" filepath="$PROJECT_DIR$/platform/syntax/syntax-psi/intellij.platform.syntax.psi.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/syntax/syntax-psi-tests/intellij.platform.syntax.psi.tests.iml" filepath="$PROJECT_DIR$/platform/syntax/syntax-psi-tests/intellij.platform.syntax.psi.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/syntax/syntax-scripts/intellij.platform.syntax.scripts.iml" filepath="$PROJECT_DIR$/platform/syntax/syntax-scripts/intellij.platform.syntax.scripts.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/syntax/syntax-util/intellij.platform.syntax.util.iml" filepath="$PROJECT_DIR$/platform/syntax/syntax-util/intellij.platform.syntax.util.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/tasks-platform-api/intellij.platform.tasks.iml" filepath="$PROJECT_DIR$/platform/tasks-platform-api/intellij.platform.tasks.iml" />

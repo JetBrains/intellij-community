@@ -22,6 +22,7 @@ jvm_library(
     "//platform/core-impl",
     "@lib//:fastutil-min",
     "//platform/syntax/syntax-util:util",
+    "//platform/syntax/syntax-extensions:extensions",
   ],
   exports = ["//platform/syntax/syntax-api:syntax"],
   runtime_deps = [":psi_resources"]

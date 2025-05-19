@@ -1,0 +1,24 @@
+*f:com.intellij.platform.syntax.extensions.ExtensionPointKey
+- equals(java.lang.Object):Z
+- f:getName():java.lang.String
+- hashCode():I
+*f:com.intellij.platform.syntax.extensions.ExtensionPointKeyKt
+- *sf:ExtensionPointKey(java.lang.String):com.intellij.platform.syntax.extensions.ExtensionPointKey
+*:com.intellij.platform.syntax.extensions.ExtensionRegistry
+- com.intellij.platform.syntax.extensions.ExtensionSupport
+- a:registerExtension(com.intellij.platform.syntax.extensions.ExtensionPointKey,java.lang.Object):V
+- a:registerLanguageExtension(com.intellij.platform.syntax.extensions.ExtensionPointKey,java.lang.Object,com.intellij.platform.syntax.extensions.SyntaxLanguage):V
+- a:unregisterExtension(com.intellij.platform.syntax.extensions.ExtensionPointKey,java.lang.Object):V
+- a:unregisterLanguageExtension(com.intellij.platform.syntax.extensions.ExtensionPointKey,com.intellij.platform.syntax.extensions.SyntaxLanguage):V
+*:com.intellij.platform.syntax.extensions.ExtensionSupport
+- a:getExtensions(com.intellij.platform.syntax.extensions.ExtensionPointKey):java.util.List
+- a:getLanguageExtensions(com.intellij.platform.syntax.extensions.ExtensionPointKey,com.intellij.platform.syntax.extensions.SyntaxLanguage):java.util.List
+*f:com.intellij.platform.syntax.extensions.ExtensionSupportKt
+- *sf:ExtensionRegistry():com.intellij.platform.syntax.extensions.ExtensionRegistry
+- *sf:ExtensionSupport():com.intellij.platform.syntax.extensions.ExtensionSupport
+*f:com.intellij.platform.syntax.extensions.SyntaxLanguage
+- equals(java.lang.Object):Z
+- f:getId():java.lang.String
+- hashCode():I
+*f:com.intellij.platform.syntax.extensions.SyntaxLanguageKt
+- sf:SyntaxLanguage(java.lang.String):com.intellij.platform.syntax.extensions.SyntaxLanguage
