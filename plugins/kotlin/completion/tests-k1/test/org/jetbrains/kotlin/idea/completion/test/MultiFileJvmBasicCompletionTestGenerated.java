@@ -590,6 +590,11 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/SyntheticPrimitiveJavaProperty/");
     }
 
+    @TestMetadata("SyntheticPropertyWithoutJavaOrigin")
+    public void testSyntheticPropertyWithoutJavaOrigin() throws Exception {
+        runTest("../testData/basic/multifile/SyntheticPropertyWithoutJavaOrigin/");
+    }
+
     @TestMetadata("TopLevelFunction")
     public void testTopLevelFunction() throws Exception {
         runTest("../testData/basic/multifile/TopLevelFunction/");
