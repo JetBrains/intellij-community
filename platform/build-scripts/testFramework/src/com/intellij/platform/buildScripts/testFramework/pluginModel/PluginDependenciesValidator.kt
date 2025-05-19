@@ -93,11 +93,21 @@ class PluginDependenciesValidator private constructor(
       }, { descriptor })
     }
     
-    for ((sourceModuleName, sourceDescriptors) in jpsModuleToRuntimeDescriptors) {
+    checkSourceModule@ for ((sourceModuleName, sourceDescriptors) in jpsModuleToRuntimeDescriptors) {
       val sourceModule = jpsModules.getValue(sourceModuleName)
       if (sourceModule.getSourceRoots(JavaSourceRootType.SOURCE).toList().isEmpty()) {
         //for now only dependencies used in source code are checked
         continue
+      }
+
+      for (descriptor in sourceDescriptors) {
+        for (pluginDependency in descriptor.dependencies) {
+          if (pluginDependency.isOptional && !pluginDependency.pluginId.idString.startsWith("com.intellij.modules.") 
+              && pluginDependency.subDescriptor != null && pluginDependency.subDescriptor?.pluginClassLoader == null) {
+            //println("Skip checking '$sourceModuleName' because an optional dependency from its plugin '${descriptor.pluginId.idString}' on '${pluginDependency.pluginId}' is not loaded")
+            continue@checkSourceModule
+          }
+        }
       }
       
       val moduleDependenciesAtRuntime =
@@ -117,7 +127,7 @@ class PluginDependenciesValidator private constructor(
         if (targetModuleName !in moduleDependenciesAtRuntime && !isIgnoredDependency(sourceModuleName, targetModuleName)) {
           val allExpectedTargets = jpsModuleToRuntimeDescriptors[targetModuleName]
           if (allExpectedTargets == null) {
-            //println("Skipping reporting '$jpsModuleName' -> '${dependency.name}' because no runtime descriptors found\n")
+            //println("Skipping reporting '$sourceModuleName' -> '$targetModuleName' because no runtime descriptors found\n")
             return@processModules
           }
           val expectedTargets = allExpectedTargets.filter { it.moduleName?.contains("/") != true }.takeIf { it.isNotEmpty() } ?: allExpectedTargets
