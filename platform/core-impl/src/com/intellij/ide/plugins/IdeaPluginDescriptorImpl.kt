@@ -5,6 +5,7 @@ package com.intellij.ide.plugins
 import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.core.CoreBundle
+import com.intellij.diagnostic.PluginException
 import com.intellij.idea.AppMode
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
@@ -14,6 +15,7 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
+import com.intellij.platform.plugins.parser.impl.PluginXmlConst
 import com.intellij.platform.plugins.parser.impl.RawPluginDescriptor
 import com.intellij.platform.plugins.parser.impl.elements.*
 import com.intellij.util.PlatformUtils
@@ -374,6 +376,30 @@ sealed class IdeaPluginDescriptorImpl(
     }
   }
 
+  internal fun checkUnexpectedElement(elementName: String, selector: () -> Boolean) {
+    if (!selector()) {
+      return
+    }
+    LOG.error(PluginException(buildString {
+      append("Plugin descriptor for ")
+      when (this@IdeaPluginDescriptorImpl) {
+        is ContentModuleDescriptor -> append("content module '${moduleName}' of plugin '${pluginId}'")
+        is DependsSubDescriptor -> append("'depends' sub-descriptor '${descriptorPath}' of plugin '${pluginId}'")
+        is PluginMainDescriptor -> error("not intended")
+      }
+      append(" has declared element '$elementName' which has no effect there")
+      append("\n in ${this@IdeaPluginDescriptorImpl}")
+    }, pluginId))
+  }
+
+  internal fun checkSubDescriptorUnexpectedElements(raw: RawPluginDescriptor) {
+    checkUnexpectedElement(PluginXmlConst.CHANGE_NOTES_ELEM) { raw.changeNotes != null }
+    checkUnexpectedElement(PluginXmlConst.CATEGORY_ELEM) { raw.category != null }
+    checkUnexpectedElement(PluginXmlConst.DESCRIPTION_ELEM) { raw.description != null }
+
+    checkUnexpectedElement(PluginXmlConst.CONTENT_ELEM) { raw.contentModules.isNotEmpty() }
+  }
+
   @ApiStatus.Internal
   companion object {
     private fun convertDepends(depends: List<DependsElement>): MutableList<PluginDependencyImpl> =
@@ -601,15 +627,6 @@ class DependsSubDescriptor(
 ) {
   init {
     check(parent is PluginMainDescriptor || parent is DependsSubDescriptor)
-    if (content.modules.isNotEmpty()) {
-      LOG.error("Unexpected `content` elements in a `depends` sub-descriptor: ${content.modules.joinToString()}\n in $this")
-    }
-    if (moduleDependencies.modules.isNotEmpty()) {
-      LOG.error("Unexpected `module` dependencies in a `depends` sub-descriptor: ${moduleDependencies.modules.joinToString()}\n in $this")
-    }
-    if (moduleDependencies.plugins.isNotEmpty()) {
-      LOG.error("Unexpected `plugin` dependencies in a `depends` sub-descriptor: ${moduleDependencies.plugins.joinToString()}\n in $this")
-    }
   }
 
   override fun getDescriptorPath(): String = descriptorPath
@@ -618,6 +635,12 @@ class DependsSubDescriptor(
   @Deprecated("use main descriptor") override fun getCategory(): @NlsSafe String? = parent.category.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getDisplayCategory(): @Nls String? = parent.displayCategory.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getDescription(): @Nls String? = parent.description.also { LOG.error("unexpected call") }
+
+  init {
+    checkSubDescriptorUnexpectedElements(raw)
+    checkUnexpectedElement("<dependencies><module>") { raw.dependencies.any { it is DependenciesElement.ModuleDependency } }
+    checkUnexpectedElement("<dependencies><plugin>") { raw.dependencies.any { it is DependenciesElement.PluginDependency } }
+  }
 }
 
 
@@ -639,15 +662,6 @@ class ContentModuleDescriptor(
   useCoreClassLoader,
   isIndependentFromCoreClassLoader,
 ) {
-  init {
-    if (pluginDependencies.isNotEmpty()) {
-      LOG.error("Unexpected `depends` dependencies in a content module: ${pluginDependencies.joinToString()}\n in $this")
-    }
-    if (content.modules.isNotEmpty()) {
-      LOG.error("Unexpected `content` elements in a content module: ${content.modules.joinToString()}\n in $this")
-    }
-  }
-
   val moduleName: String = moduleName
   val moduleLoadingRule: ModuleLoadingRule = moduleLoadingRule
 
@@ -657,6 +671,11 @@ class ContentModuleDescriptor(
   @Deprecated("use main descriptor") override fun getCategory(): @NlsSafe String? = parent.category.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getDisplayCategory(): @Nls String? = parent.displayCategory.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getDescription(): @Nls String? = parent.description.also { LOG.error("unexpected call") }
+
+  init {
+    checkSubDescriptorUnexpectedElements(raw)
+    checkUnexpectedElement(PluginXmlConst.DEPENDS_ELEM) { raw.depends.isNotEmpty() }
+  }
 }
 
 @ApiStatus.Internal

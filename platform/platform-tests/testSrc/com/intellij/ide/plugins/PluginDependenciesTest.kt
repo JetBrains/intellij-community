@@ -581,7 +581,7 @@ internal class PluginDependenciesTest {
         buildPluginSet()
       }.hasMessageContainingAll("content.module", "shouldn't have plugin dependencies", "foo")
     }
-    assertThat(msg).hasMessageContainingAll("Unexpected `depends` dependencies in a content module")
+    assertThat(msg).hasMessageContainingAll("content module", "content.module", "bar", "element 'depends'")
   }
 
   @Test
@@ -602,7 +602,7 @@ internal class PluginDependenciesTest {
       .hasDirectParentClassloaders(foo)
       .doesNotHaveTransitiveParentClassloaders(baz, bazModule)
     assertThat(barSub.moduleDependencies.modules).hasSize(1)
-    assertThat(err).hasMessageContainingAll("Unexpected `module` dependencies in a `depends` sub-descriptor")
+    assertThat(err).hasMessageContainingAll("'depends' sub-descriptor", "bar", "<dependencies><module>")
   }
 
   @Test

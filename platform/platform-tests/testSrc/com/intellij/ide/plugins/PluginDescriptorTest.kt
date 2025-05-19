@@ -411,7 +411,7 @@ class PluginDescriptorTest {
               loadingRule = ModuleLoadingRule.REQUIRED)
       .build(pluginDirPath)
     val (bar, err) = runAndReturnWithLoggedError { loadAndInitDescriptorInTest(pluginDirPath) }
-    assertThat(err).hasMessageContainingAll("Unexpected `content` elements in a content module")
+    assertThat(err).hasMessageContainingAll("bar.module", "plugin 'bar'", "element 'content'")
     assertThat(bar).isNotNull
       .isMarkedEnabled()
       .hasExactlyEnabledContentModules("bar.module")
