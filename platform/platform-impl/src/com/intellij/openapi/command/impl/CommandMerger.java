@@ -6,8 +6,9 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.Command;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
@@ -31,7 +32,7 @@ public final class CommandMerger {
   private Reference<Object> myLastGroupId; // weak reference to avoid memleaks when clients pass some exotic objects as commandId
   private boolean myForcedGlobal;
   private boolean myTransparent;
-  private @NlsContexts.Command String myCommandName;
+  private @Command String myCommandName;
   private boolean myValid = true;
   private @NotNull UndoRedoList<UndoableAction> myCurrentActions = new UndoRedoList<>();
   private @NotNull Set<DocumentReference> myAllAffectedDocuments = new HashSet<>();
@@ -84,7 +85,7 @@ public final class CommandMerger {
     }
   }
 
-  void commandFinished(@NlsContexts.Command String commandName, Object groupId, @NotNull CommandMerger nextCommandToMerge) {
+  void commandFinished(@Nullable Project project, @Command String commandName, Object groupId, @NotNull CommandMerger nextCommandToMerge) {
     // we do not want to spoil redo stack in situation, when some 'transparent' actions occurred right after undo.
     if (!nextCommandToMerge.isTransparent() && nextCommandToMerge.hasActions()) {
       clearRedoStacks(nextCommandToMerge);
@@ -92,7 +93,7 @@ public final class CommandMerger {
 
     if (!shouldMerge(groupId, nextCommandToMerge)) {
       flushCurrentCommand();
-      myState.compactIfNeeded();
+      myState.compactIfNeeded(project);
     }
     merge(nextCommandToMerge);
 

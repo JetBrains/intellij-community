@@ -4,7 +4,6 @@ package com.intellij.openapi.command.impl;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.IdeBundle;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.client.*;
@@ -16,11 +15,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsActions.ActionDescription;
 import com.intellij.openapi.util.NlsActions.ActionText;
+import com.intellij.openapi.util.NlsContexts.Command;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -73,7 +72,7 @@ public class UndoManagerImpl extends UndoManager {
   @ApiStatus.Internal
   @NonInjectable
   protected UndoManagerImpl(@Nullable ComponentManager componentManager) {
-    myProject = componentManager instanceof Project ? (Project)componentManager : null;
+    myProject = componentManager instanceof Project project ? project : null;
   }
 
   public @Nullable Project getProject() {
@@ -128,10 +127,7 @@ public class UndoManagerImpl extends UndoManager {
 
   public boolean isActive() {
     UndoClientState state = getClientState();
-    if (state == null) {
-      return false;
-    }
-    return Comparing.equal(myProject, state.getCurrentProject()) || myProject == null && state.getCurrentProject().isDefault();
+    return state != null && state.isActive(myProject);
   }
 
   @ApiStatus.Internal
@@ -144,25 +140,19 @@ public class UndoManagerImpl extends UndoManager {
     return myProject == null ? UndoProvider.EP_NAME.getExtensionList() : UndoProvider.PROJECT_EP_NAME.getExtensionList(myProject);
   }
 
-  void onCommandStarted(final Project project, UndoConfirmationPolicy undoConfirmationPolicy, boolean recordOriginalReference) {
+  void onCommandStarted(Project project, UndoConfirmationPolicy undoConfirmationPolicy, boolean recordOriginalReference) {
     UndoClientState state = getClientState();
     if (state == null || !state.isInsideCommand()) {
       for (UndoProvider undoProvider : getUndoProviders()) {
         undoProvider.commandStarted(project);
       }
-      if (state != null) {
-        state.setCurrentProject(project);
-      }
     }
-
     if (state != null) {
-      state.commandStarted(myProject, getEditorProvider(), undoConfirmationPolicy, myProject == project && recordOriginalReference);
+      state.commandStarted(myProject, project, getEditorProvider(), undoConfirmationPolicy, recordOriginalReference);
     }
-
-    LOG.assertTrue(state == null || !state.isInsideCommand() || !(state.getCurrentProject() instanceof DummyProject));
   }
 
-  void onCommandFinished(final Project project, final @NlsContexts.Command String commandName, final Object commandGroupId) {
+  void onCommandFinished(Project project, @Command String commandName, Object commandGroupId) {
     UndoClientState state = getClientState();
     if (state != null) {
       state.commandFinished(myProject, getEditorProvider(), commandName, commandGroupId);
@@ -171,11 +161,7 @@ public class UndoManagerImpl extends UndoManager {
       for (UndoProvider undoProvider : getUndoProviders()) {
         undoProvider.commandFinished(project);
       }
-      if (state != null) {
-        state.setCurrentProject(DummyProject.getInstance());
-      }
     }
-    LOG.assertTrue(state == null || !state.isInsideCommand() || !(state.getCurrentProject() instanceof DummyProject));
   }
 
   public void addDocumentAsAffected(@NotNull Document document) {
@@ -297,39 +283,11 @@ public class UndoManagerImpl extends UndoManager {
     return true;
   }
 
-  private void undoOrRedo(final FileEditor editor, final boolean isUndo) {
+  private void undoOrRedo(@Nullable FileEditor editor, boolean isUndo) {
     UndoClientState state = getClientState(editor);
-    if (state == null) {
-      return;
-    }
-    Disposable disposable = Disposer.newDisposable();
-    state.startUndoOrRedo(isUndo);
-    try {
-      RuntimeException[] exception = new RuntimeException[1];
-      String name = getUndoOrRedoActionNameAndDescription(editor, state.isUndoInProgress()).getSecond();
-      CommandProcessor.getInstance().executeCommand(
-        myProject,
-        () -> {
-          notifyUndoRedoStarted(editor, isUndo, disposable);
-          try {
-            CopyPasteManager.getInstance().stopKillRings();
-            state.getCommandMerger().undoOrRedo(editor, isUndo);
-          }
-          catch (RuntimeException ex) {
-            exception[0] = ex;
-          }
-        },
-        name,
-        null,
-        state.getCommandMerger().getUndoConfirmationPolicy()
-      );
-      if (exception[0] != null) {
-        throw exception[0];
-      }
-    }
-    finally {
-      state.finishUndoOrRedo();
-      Disposer.dispose(disposable);
+    if (state != null) {
+      String commandName = getUndoOrRedoActionNameAndDescription(editor, isUndo).getSecond();
+      state.undoOrRedo(myProject, editor, commandName, isUndo, notifyUndoRedoStarted());
     }
   }
 
@@ -572,20 +530,15 @@ public class UndoManagerImpl extends UndoManager {
   public void clearDocumentReferences(@NotNull Document document) {
     ThreadingAssertions.assertEventDispatchThread();
     for (UndoClientState state : getAllClientStates()) {
-      state.getUndoStacksHolder().clearDocumentReferences(document);
-      state.getRedoStacksHolder().clearDocumentReferences(document);
-      state.getCommandMerger().clearDocumentReferences(document);
+      state.clearDocumentReferences(document);
     }
     mySharedUndoStacksHolder.clearDocumentReferences(document);
     mySharedRedoStacksHolder.clearDocumentReferences(document);
   }
 
   @ApiStatus.Internal
-  protected void notifyUndoRedoStarted(FileEditor editor, boolean isUndo, Disposable disposable) {
-    ApplicationManager.getApplication()
-      .getMessageBus()
-      .syncPublisher(UndoRedoListener.Companion.getTOPIC())
-      .undoRedoStarted(myProject, this, editor, isUndo, disposable);
+  protected boolean notifyUndoRedoStarted() {
+    return true;
   }
 
   @ApiStatus.Experimental
