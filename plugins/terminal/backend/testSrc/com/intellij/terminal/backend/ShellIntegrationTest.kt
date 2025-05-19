@@ -13,11 +13,8 @@ import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jediterm.core.util.TermSize
-import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
 import org.jetbrains.plugins.terminal.reworked.util.ZshPS1Customizer
@@ -53,7 +50,7 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
   @Test
   fun `shell integration send correct events on command invocation`() = timeoutRunBlocking(30.seconds) {
     val cwd = System.getProperty("user.home")
-    val events = startSessionAndCollectOutputEvents(workingDirectory = cwd) { input ->
+    val events = startJediTermSessionAndCollectOutputEvents(workingDirectory = cwd) { input ->
       input.send(TerminalWriteBytesEvent("pwd".toByteArray() + ENTER_BYTES))
     }
 
@@ -72,7 +69,7 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
   @Test
   fun `shell integration should not send command finished event without command started event on Ctrl+C`() = timeoutRunBlocking(30.seconds) {
-    val events = startSessionAndCollectOutputEvents { input ->
+    val events = startJediTermSessionAndCollectOutputEvents { input ->
       input.send(TerminalWriteBytesEvent("abcdef".toByteArray()))
       delay(1000)
       input.send(TerminalWriteBytesEvent(CTRL_C_BYTES))
@@ -99,7 +96,7 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
   fun `prompt events received after prompt is redrawn because of long completion output`() = timeoutRunBlocking(30.seconds) {
     Assume.assumeTrue(shellPath.toString().contains("zsh"))
 
-    val events = startSessionAndCollectOutputEvents(TermSize(80, 4)) { input ->
+    val events = startJediTermSessionAndCollectOutputEvents(TermSize(80, 4)) { input ->
       input.send(TerminalWriteBytesEvent("g".toByteArray() + TAB_BYTES))
       // Shell can ask "do you wish to see all N possibilities? (y/n)"
       // Wait for this question and ask `y`
@@ -130,7 +127,7 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
     val bindCommand = "bind 'set show-all-if-ambiguous on'"
     val cwd = System.getProperty("user.home")
 
-    val events = startSessionAndCollectOutputEvents(TermSize(80, 100), workingDirectory = cwd) { input ->
+    val events = startJediTermSessionAndCollectOutputEvents(TermSize(80, 100), workingDirectory = cwd) { input ->
       // Configure the shell to show completion items on the first Tab key press.
       input.send(TerminalWriteBytesEvent(bindCommand.toByteArray() + ENTER_BYTES))
       delay(1000)
@@ -157,7 +154,7 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
   @Test
   fun `prompt events received after prompt is redrawn because of Ctrl+L`() = timeoutRunBlocking(30.seconds) {
-    val events = startSessionAndCollectOutputEvents { input ->
+    val events = startJediTermSessionAndCollectOutputEvents { input ->
       input.send(TerminalWriteBytesEvent("abcdef".toByteArray()))
       input.send(TerminalWriteBytesEvent(CTRL_L_BYTES))
     }
@@ -183,10 +180,8 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
       listOf(ZshPS1Customizer(ps1Suffix)),
       disposableRule.disposable
     )
-    val events = startSessionAndCollectOutputEvents {}
-    val contentUpdatedEvents = events.filterIsInstance<TerminalContentUpdatedEvent>()
-    val suffixFound = contentUpdatedEvents.any { it.text.contains(ps1Suffix) }
-    Assert.assertTrue(contentUpdatedEvents.joinToString("\n") { it.text }, suffixFound)
+    val events = startStateAwareSessionAndCollectOutputEvents {}
+    assertTextFound(events, ps1Suffix)
   }
 
   @Test
@@ -199,10 +194,8 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
       typeset -U my_path MY_PATH
       echo "MY_PATH=${'$'}MY_PATH"
     """.trimIndent())
-    val events = startSessionAndCollectOutputEvents(extraEnvVariables = mapOf("ZDOTDIR" to dir.toString())) {}
-    val contentUpdatedEvents = events.filterIsInstance<TerminalContentUpdatedEvent>()
-    val suffixFound = contentUpdatedEvents.any { it.text.contains("MY_PATH=path1:path2:path3") }
-    Assert.assertTrue(contentUpdatedEvents.joinToString("\n") { it.text }, suffixFound)
+    val events = startStateAwareSessionAndCollectOutputEvents(extraEnvVariables = mapOf("ZDOTDIR" to dir.toString())) {}
+    assertTextFound(events, "MY_PATH=path1:path2:path3")
   }
 
   @Test
@@ -215,27 +208,67 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
     val zshenvDir = Files.createTempDirectory(".zshenv-dir").also {
       it.resolve(".zshenv").writeText("ZDOTDIR='$zshrcDir'")
     }
-    val events = startSessionAndCollectOutputEvents(extraEnvVariables = mapOf("ZDOTDIR" to zshenvDir.toString())) {}
-    val contentUpdatedEvents = events.filterIsInstance<TerminalContentUpdatedEvent>()
-    val found = contentUpdatedEvents.any { it.text.contains(msg) }
-    Assert.assertTrue(contentUpdatedEvents.joinToString("\n") { it.text }, found)
+    val events = startStateAwareSessionAndCollectOutputEvents(extraEnvVariables = mapOf("ZDOTDIR" to zshenvDir.toString())) {}
+    assertTextFound(events, msg)
   }
 
-  private suspend fun startSessionAndCollectOutputEvents(
+  private suspend fun startJediTermSessionAndCollectOutputEvents(
     size: TermSize = TermSize(80, 24),
     extraEnvVariables: Map<String, String> = emptyMap(),
     workingDirectory: String = System.getProperty("user.home"),
     block: suspend (SendChannel<TerminalInputEvent>) -> Unit,
   ): List<TerminalOutputEvent> {
+    return startSessionAndCollectOutputEvents(
+      size,
+      extraEnvVariables,
+      workingDirectory,
+      createSession = { shellPath, size, env, workingDirectory, scope ->
+        TerminalSessionTestUtil.startTestJediTermTerminalSession(
+          shellPath,
+          projectRule.project,
+          scope,
+          size,
+          env,
+          workingDirectory,
+        )
+      },
+      block,
+    )
+  }
+
+  private suspend fun startStateAwareSessionAndCollectOutputEvents(
+    size: TermSize = TermSize(80, 24),
+    extraEnvVariables: Map<String, String> = emptyMap(),
+    workingDirectory: String = System.getProperty("user.home"),
+    block: suspend (SendChannel<TerminalInputEvent>) -> Unit,
+  ): List<TerminalOutputEvent> {
+    return startSessionAndCollectOutputEvents(
+      size,
+      extraEnvVariables,
+      workingDirectory,
+      createSession = { shellPath, size, env, workingDirectory, scope ->
+        TerminalSessionTestUtil.startTestStateAwareTerminalSession(
+          shellPath,
+          projectRule.project,
+          scope,
+          size,
+          env,
+          workingDirectory,
+        )
+      },
+      block,
+    )
+  }
+
+  private suspend fun startSessionAndCollectOutputEvents(
+    size: TermSize,
+    extraEnvVariables: Map<String, String>,
+    workingDirectory: String,
+    createSession: suspend (shellPath: String, size: TermSize, env: Map<String, String>, workingDirectory: String, scope: CoroutineScope) -> TerminalSession,
+    block: suspend (SendChannel<TerminalInputEvent>) -> Unit,
+  ): List<TerminalOutputEvent> {
     return coroutineScope {
-      val session = TerminalSessionTestUtil.startTestTerminalSession(
-        shellPath.toString(),
-        projectRule.project,
-        childScope("TerminalSession"),
-        size,
-        extraEnvVariables,
-        workingDirectory,
-      )
+      val session = createSession(shellPath.toString(), size, extraEnvVariables, workingDirectory, childScope("TerminalSession"))
       val inputChannel = session.getInputChannel()
 
       val outputEvents = mutableListOf<TerminalOutputEvent>()
@@ -291,6 +324,14 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
     assertThat(actual)
       .overridingErrorMessage(errorMessage)
       .isEqualTo(expected)
+  }
+
+  private fun assertTextFound(events: List<TerminalOutputEvent>, text: String) {
+    val initialStateEvent = events.find { it is TerminalInitialStateEvent } as? TerminalInitialStateEvent
+    val initialStateText = initialStateEvent?.outputModelState?.text ?: ""
+    val contentUpdatedEvents = events.filterIsInstance<TerminalContentUpdatedEvent>()
+    val suffixFound = initialStateText.contains(text) || contentUpdatedEvents.any { it.text.contains(text) }
+    Assert.assertTrue(initialStateText + "\n" + contentUpdatedEvents.joinToString("\n") { it.text }, suffixFound)
   }
 
   private val CTRL_C_BYTES: ByteArray = byteArrayOf(Ascii.ETX)
