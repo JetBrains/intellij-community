@@ -83,10 +83,6 @@ sealed class IdeaPluginDescriptorImpl(
     .also { warnIfResourceBundleIsDefinedForCorePlugin(it) }
   val actions: List<ActionElement> = raw.actions
 
-  private val isRestartRequired: Boolean = raw.isRestartRequired
-  private val isImplementationDetail: Boolean = raw.isImplementationDetail
-  private val isBundledUpdateAllowed: Boolean = raw.isBundledUpdateAllowed
-
   var isDeleted: Boolean = false
   @Transient
   var jarFiles: List<Path>? = null
@@ -120,10 +116,6 @@ sealed class IdeaPluginDescriptorImpl(
   override fun getVendorEmail(): String? = vendorEmail
   override fun getVendorUrl(): String? = vendorUrl
   override fun getUrl(): String? = url
-
-  override fun allowBundledUpdate(): Boolean = isBundledUpdateAllowed
-  override fun isImplementationDetail(): Boolean = isImplementationDetail
-  override fun isRequireRestart(): Boolean = isRestartRequired
 
   /**
    * aka `<depends>` elements from the plugin.xml
@@ -366,6 +358,10 @@ sealed class IdeaPluginDescriptorImpl(
   }
 
   internal fun checkSubDescriptorUnexpectedElements(raw: RawPluginDescriptor) {
+    checkUnexpectedElement(PluginXmlConst.PLUGIN_ALLOW_BUNDLED_UPDATE_ATTR) { raw.isBundledUpdateAllowed }
+    checkUnexpectedElement(PluginXmlConst.PLUGIN_REQUIRE_RESTART_ATTR) { raw.isRestartRequired }
+    checkUnexpectedElement(PluginXmlConst.PLUGIN_IMPLEMENTATION_DETAIL_ATTR) { raw.isImplementationDetail }
+
     checkUnexpectedElement(PluginXmlConst.CHANGE_NOTES_ELEM) { raw.changeNotes != null }
     checkUnexpectedElement(PluginXmlConst.CATEGORY_ELEM) { raw.category != null }
     checkUnexpectedElement(PluginXmlConst.DESCRIPTION_ELEM) { raw.description != null }
@@ -529,6 +525,9 @@ class PluginMainDescriptor(
   private val changeNotes: String? = raw.changeNotes
 
   private val isBundled: Boolean = isBundled
+  private val isBundledUpdateAllowed: Boolean = raw.isBundledUpdateAllowed
+  private val isRestartRequired: Boolean = raw.isRestartRequired
+  private val isImplementationDetail: Boolean = raw.isImplementationDetail
 
   private val pluginPath: Path = pluginPath
 
@@ -564,6 +563,10 @@ class PluginMainDescriptor(
   override fun getPluginPath(): Path = pluginPath
   override fun getDescriptorPath(): Nothing? = null
   override fun isBundled(): Boolean = isBundled
+
+  override fun allowBundledUpdate(): Boolean = isBundledUpdateAllowed
+  override fun isImplementationDetail(): Boolean = isImplementationDetail
+  override fun isRequireRestart(): Boolean = isRestartRequired
 
   override fun toString(): String =
     "PluginMainDescriptor(name=$name, id=$pluginId, version=$version, " +
@@ -614,6 +617,9 @@ class DependsSubDescriptor(
   @Deprecated("use main descriptor") override fun isBundled(): Boolean = parent.isBundled.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getPluginPath(): Path = parent.pluginPath.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override val useIdeaClassLoader: Boolean get() = parent.useIdeaClassLoader.also { LOG.error("unexpected call") }
+  @Deprecated("use main descriptor") override fun allowBundledUpdate(): Boolean = parent.allowBundledUpdate().also { LOG.error("unexpected call") }
+  @Deprecated("use main descriptor") override fun isImplementationDetail(): Boolean = parent.isImplementationDetail.also { LOG.error("unexpected call") }
+  @Deprecated("use main descriptor") override fun isRequireRestart(): Boolean = parent.isRequireRestart.also { LOG.error("unexpected call") }
 
   override fun toString(): String =
     "DependsSubDescriptor(" +
@@ -653,6 +659,9 @@ class ContentModuleDescriptor(
   @Deprecated("use main descriptor") override fun getDescription(): @Nls String? = parent.description.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun isBundled(): Boolean = parent.isBundled // .also { LOG.error("unexpected call") } TODO test failures
   @Deprecated("use main descriptor") override fun getPluginPath(): Path = parent.pluginPath.also { LOG.error("unexpected call") }
+  @Deprecated("use main descriptor") override fun allowBundledUpdate(): Boolean = parent.allowBundledUpdate().also { LOG.error("unexpected call") }
+  @Deprecated("use main descriptor") override fun isImplementationDetail(): Boolean = parent.isImplementationDetail // .also { LOG.error("unexpected call") } TODO test failures
+  @Deprecated("use main descriptor") override fun isRequireRestart(): Boolean = parent.isRequireRestart.also { LOG.error("unexpected call") }
 
   override fun toString(): String =
     "ContentModuleDescriptor(moduleName=$moduleName" +
