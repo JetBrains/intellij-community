@@ -31,7 +31,7 @@ class TextMateScope(
       generateSequence(parent, TextMateScope::parent)
         .mapNotNull(TextMateScope::scopeName)
         .forEach { parentScopeName ->
-          insert(0, " $parentScopeName")
+          insert(0, "$parentScopeName ")
         }
     }.trim()
   }
