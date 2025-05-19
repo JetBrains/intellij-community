@@ -48,7 +48,7 @@ class NormalizeImageAction : DumbAwareAction() {
         document.value = rotatedNotNormalizedImage
         imageFile.putUserData(NORMALIZATION_APPLIED_KEY, false)
       }
-      ScientificImageActionsCollector.logNormalizedImageInvoked(normalizationApplied)
+      ScientificImageActionsCollector.logNormalizedImageInvoked(!normalizationApplied)
     }
   }
 }
