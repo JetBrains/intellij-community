@@ -778,7 +778,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   @TestOnly
   public static void waitForAsyncTaskCompletion() {
     ThreadingAssertions.assertEventDispatchThread();
-    assert !ApplicationManager.getApplication().isWriteAccessAllowed();
+    assert ApplicationManager.getApplication()==null || !ApplicationManager.getApplication().isWriteAccessAllowed();
     for (Submission<?> task : ourTasks) {
       waitForTask(task);
     }
