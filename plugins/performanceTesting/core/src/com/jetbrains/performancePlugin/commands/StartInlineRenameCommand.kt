@@ -51,7 +51,8 @@ class StartInlineRenameCommand(text: String, line: Int) : AbstractCommand(text, 
         factory.createRenamers(dataContext)
       }
       if (renamers.isEmpty()) {
-        actionCallback.reject("Renamers are empty")
+        val element = CommonDataKeys.PSI_ELEMENT.getData(dataContext)
+        actionCallback.reject("Renamers are empty for element: $element")
       }
       else if (renamers.size == 1) {
         PerformanceTestSpan.TRACER.spanBuilder(SPAN_NAME).use {
