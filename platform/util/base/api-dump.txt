@@ -10,13 +10,6 @@ f:com.intellij.filename.UniqueNameBuilder
 - getSeparator():java.lang.String
 - getShortPath(java.lang.Object):java.lang.String
 - size():I
-com.intellij.openapi.diagnostic.ControlFlowException
-c:com.intellij.openapi.progress.ProcessCanceledException
-- java.util.concurrent.CancellationException
-- com.intellij.openapi.diagnostic.ControlFlowException
-- <init>():V
-- p:<init>(java.lang.String):V
-- <init>(java.lang.Throwable):V
 com.intellij.openapi.util.Segment
 - sf:BY_START_OFFSET_THEN_END_OFFSET:java.util.Comparator
 - sf:EMPTY_ARRAY:com.intellij.openapi.util.Segment[]
@@ -75,36 +68,6 @@ f:com.intellij.openapi.util.text.Formats
 - s:formatDuration(java.time.Duration):java.lang.String
 - s:formatFileSize(J):java.lang.String
 - s:formatFileSize(J,java.lang.String):java.lang.String
-f:com.intellij.openapi.util.text.LineTokenizer
-- sf:Companion:com.intellij.openapi.util.text.LineTokenizer$Companion
-- <init>(java.lang.CharSequence):V
-- <init>(C[],I,I):V
-- f:advance():V
-- f:atEnd():Z
-- sf:calcLineCount(java.lang.CharSequence,Z):I
-- f:getLength():I
-- f:getLineSeparatorLength():I
-- f:getOffset():I
-- sf:tokenize(java.lang.CharSequence,Z):java.lang.String[]
-- sf:tokenize(java.lang.CharSequence,Z,Z):java.lang.String[]
-- sf:tokenize(C[],Z):java.lang.String[]
-- sf:tokenize(C[],Z,Z):java.lang.String[]
-- sf:tokenizeIntoList(java.lang.CharSequence,Z):java.util.List
-- sf:tokenizeIntoList(java.lang.CharSequence,Z,Z):java.util.List
-f:com.intellij.openapi.util.text.LineTokenizer$Companion
-- f:calcLineCount(java.lang.CharSequence,Z):I
-- f:tokenize(java.lang.CharSequence,Z):java.lang.String[]
-- f:tokenize(java.lang.CharSequence,Z,Z):java.lang.String[]
-- f:tokenize(C[],I,I,Z):java.lang.String[]
-- f:tokenize(C[],I,I,Z,Z):java.lang.String[]
-- f:tokenize(C[],Z):java.lang.String[]
-- f:tokenize(C[],Z,Z):java.lang.String[]
-- bs:tokenize$default(com.intellij.openapi.util.text.LineTokenizer$Companion,java.lang.CharSequence,Z,Z,I,java.lang.Object):java.lang.String[]
-- bs:tokenize$default(com.intellij.openapi.util.text.LineTokenizer$Companion,C[],I,I,Z,Z,I,java.lang.Object):java.lang.String[]
-- bs:tokenize$default(com.intellij.openapi.util.text.LineTokenizer$Companion,C[],Z,Z,I,java.lang.Object):java.lang.String[]
-- f:tokenizeIntoList(java.lang.CharSequence,Z):java.util.List
-- f:tokenizeIntoList(java.lang.CharSequence,Z,Z):java.util.List
-- bs:tokenizeIntoList$default(com.intellij.openapi.util.text.LineTokenizer$Companion,java.lang.CharSequence,Z,Z,I,java.lang.Object):java.util.List
 f:com.intellij.openapi.util.text.NaturalComparator
 - java.util.Comparator
 - sf:INSTANCE:java.util.Comparator
@@ -349,12 +312,6 @@ c:com.intellij.util.IncorrectOperationException
 - <init>(java.lang.String,java.lang.Exception):V
 - <init>(java.lang.String,java.lang.Throwable):V
 - <init>(java.lang.Throwable):V
-f:com.intellij.util.IntPair
-- f:first:I
-- f:second:I
-- <init>(I,I):V
-- equals(java.lang.Object):Z
-- hashCode():I
 f:com.intellij.util.ObjectUtilsRt
 - <init>():V
 - s:reachabilityFence(java.lang.Object):V
@@ -542,20 +499,6 @@ Fa:com.intellij.util.containers.Interner
 - s:createWeakInterner():com.intellij.util.containers.Interner
 - a:getValues():java.util.Set
 - a:intern(java.lang.Object):java.lang.Object
-com.intellij.util.containers.PeekableIterator
-- java.util.Iterator
-- kotlin.jvm.internal.markers.KMappedMarker
-- sf:Companion:com.intellij.util.containers.PeekableIterator$Companion
-- sf:EMPTY:com.intellij.util.containers.PeekableIterator
-- a:peek():java.lang.Object
-f:com.intellij.util.containers.PeekableIterator$Companion
-c:com.intellij.util.containers.PeekableIteratorWrapper
-- com.intellij.util.containers.PeekableIterator
-- <init>(java.util.Iterator):V
-- hasNext():Z
-- next():java.lang.Object
-- peek():java.lang.Object
-- remove():V
 f:com.intellij.util.containers.SoftArrayHashMap
 - java.lang.Cloneable
 - <init>():V
@@ -626,14 +569,6 @@ a:com.intellij.util.text.ImmutableCharSequence
 - a:toString():java.lang.String
 com.intellij.util.text.Matcher
 - a:matches(java.lang.String):Z
-f:com.intellij.util.text.MergingCharSequence
-- java.lang.CharSequence
-- <init>(java.lang.CharSequence,java.lang.CharSequence):V
-- f:charAt(I):C
-- get(I):C
-- getLength():I
-- f:length():I
-- subSequence(I,I):java.lang.CharSequence
 f:com.intellij.util.text.NameUtilCore
 - <init>():V
 - s:isWordStart(java.lang.String,I):Z
