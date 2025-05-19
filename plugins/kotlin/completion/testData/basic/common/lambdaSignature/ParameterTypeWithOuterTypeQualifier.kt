@@ -1,5 +1,3 @@
-// IGNORE_K2
-
 class Foo {
     class Bar
 }
