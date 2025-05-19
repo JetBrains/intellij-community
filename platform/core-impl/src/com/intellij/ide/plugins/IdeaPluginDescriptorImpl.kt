@@ -407,7 +407,7 @@ sealed class IdeaPluginDescriptorImpl(
   }
 
   private fun addCorePluginAliases(pluginAliases: List<PluginId>): List<PluginId> {
-    if (id != PluginManagerCore.CORE_ID) {
+    if (this !is PluginMainDescriptor || id != PluginManagerCore.CORE_ID) {
       return pluginAliases
     }
     return pluginAliases + IdeaPluginOsRequirement.getHostOsModuleIds() + productModeAliasesForCorePlugin()

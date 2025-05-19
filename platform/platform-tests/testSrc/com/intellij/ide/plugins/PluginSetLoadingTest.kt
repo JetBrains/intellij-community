@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl.Companion.productModeAliasesForCorePlugin
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.plugins.testFramework.PluginSetTestBuilder
 import com.intellij.platform.testFramework.PluginBuilder
@@ -368,6 +369,21 @@ class PluginSetLoadingTest {
     assertThat(descriptor.dependencies).hasSize(1)
     val subDesc = descriptor.dependencies[0].subDescriptor!!
     assertThat(subDesc.resourceBundleBaseName).isEqualTo("sub")
+  }
+
+  @Test
+  fun `additional core plugin aliases`() {
+    PluginBuilder.empty()
+      .id("com.intellij")
+      .module("embedded.module", PluginBuilder.empty().packagePrefix("embedded"), loadingRule = ModuleLoadingRule.EMBEDDED)
+      .module("required.module", PluginBuilder.empty().packagePrefix("required"), loadingRule = ModuleLoadingRule.REQUIRED)
+      .module("optional.module", PluginBuilder.empty().packagePrefix("optional"), loadingRule = ModuleLoadingRule.OPTIONAL)
+      .build(pluginsDirPath.resolve("core"))
+    val pluginSet = buildPluginSet()
+    val core = pluginSet.getEnabledPlugin("com.intellij")
+    for (alias in IdeaPluginOsRequirement.getHostOsModuleIds() + productModeAliasesForCorePlugin()) {
+      assertThat(pluginSet.findEnabledPlugin(alias)).isSameAs(core)
+    }
   }
 
   private fun writeDescriptor(id: String, @Language("xml") data: String) {
