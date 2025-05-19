@@ -7,6 +7,7 @@ import com.intellij.find.impl.FindInProjectUtil
 import com.intellij.find.impl.FindKey
 import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.platform.project.projectId
@@ -34,8 +35,9 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
         val filesToScanInitially = previousUsages.mapNotNull { (it as? UsageInfoModel)?.model?.fileId?.virtualFile() }.toSet()
 
         FindRemoteApi.getInstance().findByModel(findModel, project.projectId(), filesToScanInitially.map { it.rpcId() }).collect { findResult ->
-          val usage = UsageInfoModel(project, findResult, coroutineScope)
-
+          val usage = readAction {
+            UsageInfoModel.createUsageInfoModel(project, findResult)
+          }
           onResult(usage)
 
         }
