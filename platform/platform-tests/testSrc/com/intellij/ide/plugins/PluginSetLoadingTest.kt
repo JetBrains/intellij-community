@@ -306,11 +306,13 @@ class PluginSetLoadingTest {
     val subDesc = descriptor.dependencies[0].subDescriptor!!
     assertThat(subDesc.pluginId.idString).isEqualTo("bar")
     assertThat(subDesc.name).isEqualTo("Bar")
-    assertThat(subDesc.version).isEqualTo("1.0.0")
+    runAndReturnWithLoggedError { // ignored
+      assertThat(subDesc.version).isEqualTo("1.0.0")
+    }
   }
 
   @Test
-  fun `id, version, name can't overridden in depends sub-descriptors`() {
+  fun `id, version, name can't be overridden in depends sub-descriptors`() {
     PluginBuilder.empty().id("foo").build(pluginsDirPath.resolve("foo"))
     PluginBuilder.empty()
       .id("bar")
@@ -322,7 +324,8 @@ class PluginSetLoadingTest {
         .version("2.0.0"))
       .build(pluginsDirPath.resolve("bar"))
 
-    val pluginSet = buildPluginSet()
+    val (pluginSet, err) = runAndReturnWithLoggedError { buildPluginSet() }
+    assertThat(err).isNotNull.hasMessageContainingAll("element 'version'")
     assertThat(pluginSet).hasExactlyEnabledPlugins("bar", "foo")
     val descriptor = pluginSet.getEnabledPlugin("bar")
     assertThat(descriptor.pluginId.idString).isEqualTo("bar")
@@ -332,7 +335,9 @@ class PluginSetLoadingTest {
     val subDesc = descriptor.dependencies[0].subDescriptor!!
     assertThat(subDesc.pluginId.idString).isEqualTo("bar")
     assertThat(subDesc.name).isEqualTo("Bar")
-    assertThat(subDesc.version).isEqualTo("1.0.0")
+    runAndReturnWithLoggedError { // ignored
+      assertThat(subDesc.version).isEqualTo("1.0.0")
+    }
   }
 
   @Test

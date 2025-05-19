@@ -38,11 +38,6 @@ sealed class IdeaPluginDescriptorImpl(
   private val id: PluginId = PluginId.getId(raw.id ?: raw.name ?: throw RuntimeException("Neither id nor name are specified"))
   private val name: String = raw.name ?: id.idString
 
-  private val version: String? = raw.version
-  private val sinceBuild: String? = raw.sinceBuild
-  @Suppress("DEPRECATION")
-  private val untilBuild: String? = UntilBuildDeprecation.nullizeIfTargets243OrLater(raw.untilBuild, raw.name ?: raw.id)
-
   internal val pluginDependencies: List<PluginDependencyImpl> = raw.depends
     .let(::convertDepends)
   val incompatiblePlugins: List<PluginId> = raw.incompatibleWith.map(PluginId::getId)
@@ -93,10 +88,6 @@ sealed class IdeaPluginDescriptorImpl(
     return name
   }
 
-  override fun getVersion(): String? = version
-  override fun getSinceBuild(): String? = sinceBuild
-  override fun getUntilBuild(): String? = untilBuild
-
   /**
    * aka `<depends>` elements from the plugin.xml
    *
@@ -145,10 +136,6 @@ sealed class IdeaPluginDescriptorImpl(
   ): IdeaPluginDescriptorImpl {
     subBuilder.id = id.idString
     subBuilder.name = name
-    if (subBuilder.version != null && subBuilder.version != version) {
-      LOG.warn("Sub descriptor version redefinition for plugin $id. Original value: ${subBuilder.version}, inherited value: ${version}")
-    }
-    subBuilder.version = version
     if (module == null) { // resource bundle is inherited for v1 sub-descriptors only
       if (subBuilder.resourceBundleBaseName == null) {
         subBuilder.resourceBundleBaseName = resourceBundleBaseName
@@ -476,6 +463,10 @@ sealed class IdeaPluginDescriptorImpl(
       logUnexpectedElement(PluginXmlConst.PLUGIN_REQUIRE_RESTART_ATTR) { raw.isRestartRequired }
       logUnexpectedElement(PluginXmlConst.PLUGIN_IMPLEMENTATION_DETAIL_ATTR) { raw.isImplementationDetail }
 
+      logUnexpectedElement(PluginXmlConst.VERSION_ELEM) { raw.version != null }
+      logUnexpectedElement(PluginXmlConst.IDEA_VERSION_SINCE_ATTR) { raw.sinceBuild != null }
+      logUnexpectedElement(PluginXmlConst.IDEA_VERSION_UNTIL_ATTR) { raw.untilBuild != null }
+
       logUnexpectedElement(PluginXmlConst.VENDOR_ELEM) { raw.vendor != null }
       logUnexpectedElement(PluginXmlConst.VENDOR_URL_ATTR) { raw.vendorUrl != null }
       logUnexpectedElement(PluginXmlConst.VENDOR_EMAIL_ATTR) { raw.vendorEmail != null }
@@ -505,6 +496,11 @@ class PluginMainDescriptor(
   isBundled: Boolean,
   useCoreClassLoader: Boolean = false
 ): IdeaPluginDescriptorImpl(raw) {
+  private val version: String? = raw.version
+  private val sinceBuild: String? = raw.sinceBuild
+  @Suppress("DEPRECATION")
+  private val untilBuild: String? = UntilBuildDeprecation.nullizeIfTargets243OrLater(raw.untilBuild, raw.name ?: raw.id)
+
   @Volatile
   private var loadedDescriptionText: @Nls String? = null
   private val rawDescription: @NlsSafe String? = raw.description
@@ -531,6 +527,10 @@ class PluginMainDescriptor(
   override val useCoreClassLoader: Boolean = useCoreClassLoader
   override val isIndependentFromCoreClassLoader: Boolean get() = false
   override val useIdeaClassLoader: Boolean = raw.isUseIdeaClassLoader
+
+  override fun getVersion(): String? = version
+  override fun getSinceBuild(): String? = sinceBuild
+  override fun getUntilBuild(): String? = untilBuild
 
   override fun getVendor(): String? = vendor
   override fun getVendorEmail(): String? = vendorEmail
@@ -631,6 +631,9 @@ class DependsSubDescriptor(
 
   // <editor-fold desc="Deprecated">
   // These are meaningless for sub-descriptors
+  @Deprecated("use main descriptor") override fun getVersion(): String? = parent.version.also { LOG.error("unexpected call") }
+  @Deprecated("use main descriptor") override fun getSinceBuild(): String? = parent.sinceBuild.also { LOG.error("unexpected call") }
+  @Deprecated("use main descriptor") override fun getUntilBuild(): String? = parent.untilBuild.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getChangeNotes(): String? = parent.changeNotes.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getCategory(): @NlsSafe String? = parent.category.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getDisplayCategory(): @Nls String? = parent.displayCategory.also { LOG.error("unexpected call") }
@@ -685,6 +688,9 @@ class ContentModuleDescriptor(
 
   // <editor-fold desc="Deprecated">
   // These are meaningless for sub-descriptors
+  @Deprecated("use main descriptor") override fun getVersion(): String? = parent.version // .also { LOG.error("unexpected call") } TODO test failures
+  @Deprecated("use main descriptor") override fun getSinceBuild(): String? = parent.sinceBuild.also { LOG.error("unexpected call") }
+  @Deprecated("use main descriptor") override fun getUntilBuild(): String? = parent.untilBuild.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getChangeNotes(): String? = parent.changeNotes.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getCategory(): @NlsSafe String? = parent.category.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getDisplayCategory(): @Nls String? = parent.displayCategory.also { LOG.error("unexpected call") }

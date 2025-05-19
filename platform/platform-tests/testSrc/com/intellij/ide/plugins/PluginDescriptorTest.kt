@@ -306,7 +306,8 @@ class PluginDescriptorTest {
       )
       .build(pluginDirPath)
 
-    val descriptor = loadAndInitDescriptorInTest(pluginDirPath)
+    val (descriptor, err) = runAndReturnWithLoggedError { loadAndInitDescriptorInTest(pluginDirPath) }
+    assertThat(err).isNotNull.hasMessageContainingAll("bar.sub", "element 'version'")
     assertThat(descriptor).isNotNull
     assertThat(descriptor.pluginId.idString).isEqualTo("bar")
     assertThat(descriptor.name).isEqualTo("Bar")
@@ -333,7 +334,8 @@ class PluginDescriptorTest {
       )
       .build(pluginDirPath)
 
-    val descriptor = loadAndInitDescriptorInTest(pluginDirPath)
+    val (descriptor, err) = runAndReturnWithLoggedError { loadAndInitDescriptorInTest(pluginDirPath) }
+    assertThat(err).isNotNull.hasMessageContainingAll("bar.sub", "element 'version'")
     assertThat(descriptor).isNotNull
     assertThat(descriptor.pluginId.idString).isEqualTo("bar")
     assertThat(descriptor.name).isEqualTo("Bar")
