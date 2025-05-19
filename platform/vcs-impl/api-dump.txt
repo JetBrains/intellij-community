@@ -2887,7 +2887,6 @@ f:com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 - sf:SHELF:java.lang.String
 - sf:TOOLWINDOW_ID:java.lang.String
 - sf:VCS_LOG:java.lang.String
-- <init>(com.intellij.openapi.project.Project):V
 - addContent(com.intellij.ui.content.Content):V
 - attachToolWindow(com.intellij.openapi.wm.ToolWindow):V
 - dispose():V

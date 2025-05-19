@@ -25,6 +25,7 @@ import com.intellij.util.ObjectUtils.tryCast
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.vcs.commit.CommitMode
 import com.intellij.vcs.commit.CommitModeManager
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.NonNls
 import java.util.function.Predicate
 
@@ -41,7 +42,7 @@ internal fun ContentManager.selectFirstContent() {
 
 private val LOG = logger<ChangesViewContentManager>()
 
-class ChangesViewContentManager(private val project: Project) : ChangesViewContentI, Disposable {
+class ChangesViewContentManager private constructor(private val project: Project, coroutineScope: CoroutineScope) : ChangesViewContentI, Disposable {
   private val addedContents = mutableListOf<Content>()
   private var selectedAddedContent: Content? = null
 
@@ -63,7 +64,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
   private var isCommitToolWindowShown: Boolean = shouldUseCommitToolWindow()
 
   init {
-    ApplicationManager.getApplication().messageBus.connect(project)
+    ApplicationManager.getApplication().messageBus.connect(coroutineScope)
       .subscribe(AdvancedSettingsChangeListener.TOPIC, object : AdvancedSettingsChangeListener {
         override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
           if (id == CommitMode.NonModalCommitMode.COMMIT_TOOL_WINDOW_SETTINGS_KEY) {
@@ -71,7 +72,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
           }
         }
       })
-    val projectBusConnection = project.messageBus.connect()
+    val projectBusConnection = project.messageBus.connect(coroutineScope)
     CommitModeManager.subscribeOnCommitModeChange(projectBusConnection, object : CommitModeManager.CommitModeListener {
       override fun commitModeChanged() {
         updateToolWindowMappings()
@@ -110,9 +111,9 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     project.messageBus.connect(this).subscribe(ToolWindowManagerListener.TOPIC, listener)
 
     val contents = addedContents.filter { it.resolveContentManager() === contentManager }
-    contents.forEach {
-      addIntoCorrectPlace(contentManager, it)
-      IJSwingUtilities.updateComponentTreeUI(it.component)
+    for (content in contents) {
+      addIntoCorrectPlace(contentManager, content)
+      IJSwingUtilities.updateComponentTreeUI(content.component)
     }
     addedContents.removeAll(contents)
 
@@ -121,7 +122,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
       contentManager.setSelectedContent(toSelect)
     }
     else {
-      // Ensure that the first tab is selected after tabs reordering
+      // ensure that the first tab is selected after tab reordering
       contentManager.selectFirstContent()
     }
     selectedAddedContent = null
