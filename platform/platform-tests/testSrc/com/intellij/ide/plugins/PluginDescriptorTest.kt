@@ -397,7 +397,7 @@ class PluginDescriptorTest {
     if (hostIds.isEmpty()) {
       logger<PluginDescriptorTest>().warn("No host OS plugin aliases")
     }
-    val productAliases = IdeaPluginDescriptorImpl.productModeAliasesForCorePlugin()
+    val productAliases = PluginMainDescriptor.productModeAliasesForCorePlugin()
     if (productAliases.isEmpty()) {
       logger<PluginDescriptorTest>().warn("No product mode plugin aliases")
     }
