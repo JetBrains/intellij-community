@@ -129,8 +129,7 @@ class ClassLoaderConfigurator(
     }
 
     val mainInfo = mainToClassPath.get(module.pluginId) ?: run {
-      val mainDescriptor = pluginSet.findEnabledPlugin(module.pluginId) ?: throw PluginException("Plugin ${module.pluginId} is not found in enabled plugins", module.pluginId)
-      configureMainPluginModule(mainDescriptor)
+      configureMainPluginModule(module.getMainDescriptor())
     }
 
     if (module.moduleLoadingRule == ModuleLoadingRule.EMBEDDED) {
@@ -192,8 +191,7 @@ class ClassLoaderConfigurator(
     return dependencies
   }
 
-  private fun configureMainPluginModule(mainDescriptor: IdeaPluginDescriptorImpl): MainPluginDescriptorClassPathInfo {
-    assert(mainDescriptor is PluginMainDescriptor)
+  private fun configureMainPluginModule(mainDescriptor: PluginMainDescriptor): MainPluginDescriptorClassPathInfo {
     val exisingMainInfo = mainToClassPath.get(mainDescriptor.pluginId)
     if (exisingMainInfo != null) {
       return exisingMainInfo
@@ -262,8 +260,7 @@ class ClassLoaderConfigurator(
     }
   }
 
-  private fun configureCorePluginContentModuleClassLoader(module: IdeaPluginDescriptorImpl, deps: Array<IdeaPluginDescriptorImpl>) {
-    assert(module is ContentModuleDescriptor)
+  private fun configureCorePluginContentModuleClassLoader(module: ContentModuleDescriptor, deps: Array<IdeaPluginDescriptorImpl>) {
     val jarFiles = module.jarFiles
     if (jarFiles != null) {
       module.pluginClassLoader = PluginClassLoader(
