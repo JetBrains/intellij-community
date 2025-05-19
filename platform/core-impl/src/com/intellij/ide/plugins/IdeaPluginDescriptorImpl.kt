@@ -43,11 +43,6 @@ sealed class IdeaPluginDescriptorImpl(
   @Suppress("DEPRECATION")
   private val untilBuild: String? = UntilBuildDeprecation.nullizeIfTargets243OrLater(raw.untilBuild, raw.name ?: raw.id)
 
-  private val productCode: String? = raw.productCode
-  private val releaseDate: Date? = raw.releaseDate?.let { Date.from(it.atStartOfDay(ZoneOffset.UTC).toInstant()) }
-  private val releaseVersion: Int = raw.releaseVersion
-  private val isLicenseOptional: Boolean = raw.isLicenseOptional
-
   private val vendor: String? = raw.vendor
   private val vendorEmail: String? = raw.vendorEmail
   private val vendorUrl: String? = raw.vendorUrl
@@ -106,11 +101,6 @@ sealed class IdeaPluginDescriptorImpl(
   override fun getVersion(): String? = version
   override fun getSinceBuild(): String? = sinceBuild
   override fun getUntilBuild(): String? = untilBuild
-
-  override fun getProductCode(): String? = productCode
-  override fun getReleaseDate(): Date? = releaseDate
-  override fun getReleaseVersion(): Int = releaseVersion
-  override fun isLicenseOptional(): Boolean = isLicenseOptional
 
   override fun getVendor(): String? = vendor
   override fun getVendorEmail(): String? = vendorEmail
@@ -362,6 +352,11 @@ sealed class IdeaPluginDescriptorImpl(
     checkUnexpectedElement(PluginXmlConst.PLUGIN_REQUIRE_RESTART_ATTR) { raw.isRestartRequired }
     checkUnexpectedElement(PluginXmlConst.PLUGIN_IMPLEMENTATION_DETAIL_ATTR) { raw.isImplementationDetail }
 
+    checkUnexpectedElement(PluginXmlConst.PRODUCT_DESCRIPTOR_CODE_ATTR) { raw.productCode != null }
+    checkUnexpectedElement(PluginXmlConst.PRODUCT_DESCRIPTOR_OPTIONAL_ATTR) { raw.isLicenseOptional }
+    checkUnexpectedElement(PluginXmlConst.PRODUCT_DESCRIPTOR_RELEASE_DATE_ATTR) { raw.releaseDate != null }
+    checkUnexpectedElement(PluginXmlConst.PRODUCT_DESCRIPTOR_RELEASE_VERSION_ATTR) { raw.releaseVersion != 0 }
+
     checkUnexpectedElement(PluginXmlConst.CHANGE_NOTES_ELEM) { raw.changeNotes != null }
     checkUnexpectedElement(PluginXmlConst.CATEGORY_ELEM) { raw.category != null }
     checkUnexpectedElement(PluginXmlConst.DESCRIPTION_ELEM) { raw.description != null }
@@ -524,6 +519,11 @@ class PluginMainDescriptor(
   private val category: @NlsSafe String? = raw.category
   private val changeNotes: String? = raw.changeNotes
 
+  private val productCode: String? = raw.productCode
+  private val releaseDate: Date? = raw.releaseDate?.let { Date.from(it.atStartOfDay(ZoneOffset.UTC).toInstant()) }
+  private val releaseVersion: Int = raw.releaseVersion
+  private val isLicenseOptional: Boolean = raw.isLicenseOptional
+
   private val isBundled: Boolean = isBundled
   private val isBundledUpdateAllowed: Boolean = raw.isBundledUpdateAllowed
   private val isRestartRequired: Boolean = raw.isRestartRequired
@@ -534,6 +534,11 @@ class PluginMainDescriptor(
   override val useCoreClassLoader: Boolean = useCoreClassLoader
   override val isIndependentFromCoreClassLoader: Boolean get() = false
   override val useIdeaClassLoader: Boolean = raw.isUseIdeaClassLoader
+
+  override fun getProductCode(): String? = productCode
+  override fun getReleaseDate(): Date? = releaseDate
+  override fun getReleaseVersion(): Int = releaseVersion
+  override fun isLicenseOptional(): Boolean = isLicenseOptional
 
   override fun getChangeNotes(): String? = changeNotes
   override fun getCategory(): @NlsSafe String? = category
@@ -620,6 +625,10 @@ class DependsSubDescriptor(
   @Deprecated("use main descriptor") override fun allowBundledUpdate(): Boolean = parent.allowBundledUpdate().also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun isImplementationDetail(): Boolean = parent.isImplementationDetail.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun isRequireRestart(): Boolean = parent.isRequireRestart.also { LOG.error("unexpected call") }
+  @Deprecated("use main descriptor") override fun getProductCode(): String? = parent.productCode.also { LOG.error("unexpected call") }
+  @Deprecated("use main descriptor") override fun getReleaseDate(): Date? = parent.releaseDate.also { LOG.error("unexpected call") }
+  @Deprecated("use main descriptor") override fun getReleaseVersion(): Int = parent.releaseVersion.also { LOG.error("unexpected call") }
+  @Deprecated("use main descriptor") override fun isLicenseOptional(): Boolean = parent.isLicenseOptional.also { LOG.error("unexpected call") }
 
   override fun toString(): String =
     "DependsSubDescriptor(" +
@@ -662,6 +671,10 @@ class ContentModuleDescriptor(
   @Deprecated("use main descriptor") override fun allowBundledUpdate(): Boolean = parent.allowBundledUpdate().also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun isImplementationDetail(): Boolean = parent.isImplementationDetail // .also { LOG.error("unexpected call") } TODO test failures
   @Deprecated("use main descriptor") override fun isRequireRestart(): Boolean = parent.isRequireRestart.also { LOG.error("unexpected call") }
+  @Deprecated("use main descriptor") override fun getProductCode(): String? = parent.productCode.also { LOG.error("unexpected call") }
+  @Deprecated("use main descriptor") override fun getReleaseDate(): Date? = parent.releaseDate.also { LOG.error("unexpected call") }
+  @Deprecated("use main descriptor") override fun getReleaseVersion(): Int = parent.releaseVersion.also { LOG.error("unexpected call") }
+  @Deprecated("use main descriptor") override fun isLicenseOptional(): Boolean = parent.isLicenseOptional.also { LOG.error("unexpected call") }
 
   override fun toString(): String =
     "ContentModuleDescriptor(moduleName=$moduleName" +
