@@ -199,7 +199,7 @@ class ClassLoaderConfigurator(
 
     var mainModuleFiles = mainDescriptor.jarFiles
     if (mainModuleFiles == null) {
-      if (!mainDescriptor.isUseIdeaClassLoader) {
+      if (!mainDescriptor.useIdeaClassLoader) {
         LOG.error("jarFiles is not set for $mainDescriptor")
       }
       mainModuleFiles = emptyList()
@@ -229,7 +229,7 @@ class ClassLoaderConfigurator(
                                     /* configuration = */ DEFAULT_CLASSLOADER_CONFIGURATION,
                                     /* resourceFileFactory = */ resourceFileFactory,
                                     /* mimicJarUrlConnection = */ mimicJarUrlConnection)
-    val mainClassLoader = if (mainDescriptor.isUseIdeaClassLoader) {
+    val mainClassLoader = if (mainDescriptor.useIdeaClassLoader) {
       configureUsingIdeaClassloader(files, mainDescriptor)
     }
     else {

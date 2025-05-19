@@ -103,7 +103,7 @@ object PluginUtils {
   private fun findClassInPluginThatUsesCoreClassloader(className: String, pluginSet: PluginSet): IdeaPluginDescriptorImpl? {
     var root: String? = null
     for (descriptor in pluginSet.enabledPlugins) {
-      if (!descriptor.isUseIdeaClassLoader) {
+      if (!descriptor.useIdeaClassLoader) {
         continue
       }
 

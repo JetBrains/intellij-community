@@ -95,8 +95,8 @@ sealed class IdeaPluginDescriptorImpl(
   private var _pluginClassLoader: ClassLoader? = null
 
   abstract val isIndependentFromCoreClassLoader: Boolean
-  abstract val isUseIdeaClassLoader: Boolean
   abstract val useCoreClassLoader: Boolean
+  abstract val useIdeaClassLoader: Boolean
 
   override fun getPluginId(): PluginId = id
 
@@ -534,7 +534,7 @@ class PluginMainDescriptor(
 
   override val useCoreClassLoader: Boolean = useCoreClassLoader
   override val isIndependentFromCoreClassLoader: Boolean get() = false
-  override val isUseIdeaClassLoader: Boolean = raw.isUseIdeaClassLoader
+  override val useIdeaClassLoader: Boolean = raw.isUseIdeaClassLoader
 
   override fun getChangeNotes(): String? = changeNotes
   override fun getCategory(): @NlsSafe String? = category
@@ -613,7 +613,7 @@ class DependsSubDescriptor(
   @Deprecated("use main descriptor") override fun getDescription(): @Nls String? = parent.description.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun isBundled(): Boolean = parent.isBundled.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getPluginPath(): Path = parent.pluginPath.also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override val isUseIdeaClassLoader: Boolean get() = parent.isUseIdeaClassLoader.also { LOG.error("unexpected call") }
+  @Deprecated("use main descriptor") override val useIdeaClassLoader: Boolean get() = parent.useIdeaClassLoader.also { LOG.error("unexpected call") }
 
   override fun toString(): String =
     "DependsSubDescriptor(" +
@@ -642,7 +642,7 @@ class ContentModuleDescriptor(
 
   override val useCoreClassLoader: Boolean
     get() = parent.useCoreClassLoader
-  override val isUseIdeaClassLoader: Boolean = raw.isUseIdeaClassLoader
+  override val useIdeaClassLoader: Boolean = raw.isUseIdeaClassLoader
   override val isIndependentFromCoreClassLoader: Boolean = raw.isIndependentFromCoreClassLoader
 
   override fun getDescriptorPath(): String = descriptorPath

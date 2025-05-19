@@ -112,7 +112,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
         continue
       }
 
-      if (module.isUseIdeaClassLoader && !canExtendIdeaClassLoader) {
+      if (module.useIdeaClassLoader && !canExtendIdeaClassLoader) {
         module.isMarkedForLoading = false
         logMessages.add("Module ${module.contentModuleName ?: module.pluginId} is not enabled because it uses deprecated `use-idea-classloader` attribute but PathClassLoader is disabled")
         continue@m

@@ -279,7 +279,7 @@ object DynamicPlugins {
     }
 
     if (!Registry.`is`("ide.plugins.allow.unload.from.sources")) {
-      if (pluginSet.findEnabledPlugin(module.pluginId) != null && module === parentModule && !module.isUseIdeaClassLoader) {
+      if (pluginSet.findEnabledPlugin(module.pluginId) != null && module === parentModule && !module.useIdeaClassLoader) {
         val pluginClassLoader = module.pluginClassLoader
         if (pluginClassLoader != null && pluginClassLoader !is PluginClassLoader && !app.isUnitTestMode) {
           return "Plugin ${module.pluginId} is not unload-safe because of use of ${pluginClassLoader.javaClass.name} as the default class loader. " +
