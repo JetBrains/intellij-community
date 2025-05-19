@@ -219,6 +219,7 @@ f:com.intellij.openapi.application.CoroutinesKt
 - *sf:getUI(kotlinx.coroutines.Dispatchers):kotlin.coroutines.CoroutineContext
 - *sf:getUiImmediate(kotlinx.coroutines.Dispatchers):kotlin.coroutines.CoroutineContext
 - *sf:isBackgroundWriteAction(kotlin.coroutines.CoroutineContext):Z
+- *sf:readAndBackgroundWriteAction(kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 - *sf:ui(kotlinx.coroutines.Dispatchers):kotlin.coroutines.CoroutineContext
 - *sf:ui(kotlinx.coroutines.Dispatchers,com.intellij.openapi.application.UiDispatcherKind):kotlin.coroutines.CoroutineContext
 - *sf:ui(kotlinx.coroutines.Dispatchers,com.intellij.openapi.application.UiDispatcherKind,Z):kotlin.coroutines.CoroutineContext

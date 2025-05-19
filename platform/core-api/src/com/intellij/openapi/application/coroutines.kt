@@ -158,6 +158,22 @@ sealed interface ReadAndWriteScope {
 }
 
 /**
+ * This method is renamed. Consider using [readAndEdtWriteAction].
+ */
+@Deprecated(message = "This method is renamed to clarify its semantics", replaceWith = ReplaceWith("com.intellij.openapi.application.CoroutinesKt.readAndEdtWriteAction"))
+suspend fun <T> readAndWriteAction(action: ReadAndWriteScope.() -> ReadResult<T>): T {
+  return constrainedReadAndWriteAction(action = action)
+}
+
+/**
+ * Same as [readAndEdtWriteAction], but invokes write actions on a background thread instead of EDT.
+ */
+@Experimental
+suspend fun <T> readAndBackgroundWriteAction(action: ReadAndWriteScope.() -> ReadResult<T>): T {
+  return readWriteActionSupport().executeReadAndWriteAction(emptyArray(), false, action)
+}
+
+/**
  * Runs given [action] under [read lock][com.intellij.openapi.application.Application.runReadAction]
  * **without** preventing write actions. If given [action] returns [write action][ReadAndWriteScope.writeAction]
  * as result, this write action will be run under [write lock][com.intellij.openapi.application.Application.runWriteAction]
@@ -165,12 +181,14 @@ sealed interface ReadAndWriteScope {
  * write action happens after the read completion but before the returned write action was able to run.
  * In other words, it's guaranteed that no other write occurs between the read action and returned write action.
  *
+ * Write actions are invoked on **EDT**.
+ *
  * See [constrainedReadAndWriteAction] for details.
  *
  * @see constrainedReadAction
  */
-suspend fun <T> readAndWriteAction(action: ReadAndWriteScope.() -> ReadResult<T>): T {
-  return constrainedReadAndWriteAction(action = action)
+suspend fun <T> readAndEdtWriteAction(action: ReadAndWriteScope.() -> ReadResult<T>): T {
+  return readWriteActionSupport().executeReadAndWriteAction(emptyArray(), true, action)
 }
 
 /**
@@ -221,7 +239,7 @@ suspend fun <T> readAndWriteAction(action: ReadAndWriteScope.() -> ReadResult<T>
  *
  */
 suspend fun <T> constrainedReadAndWriteAction(vararg constraints: ReadConstraint, action: ReadAndWriteScope.() -> ReadResult<T>): T {
-  return readWriteActionSupport().executeReadAndWriteAction(constraints, action = action)
+  return readWriteActionSupport().executeReadAndWriteAction(constraints, true, action = action)
 }
 
 /**

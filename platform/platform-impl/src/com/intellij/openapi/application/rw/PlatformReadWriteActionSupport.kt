@@ -3,6 +3,7 @@ package com.intellij.openapi.application.rw
 
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ReadResult
 import com.intellij.openapi.application.impl.AsyncExecutionServiceImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -46,6 +47,7 @@ internal class PlatformReadWriteActionSupport : ReadWriteActionSupport {
 
   override suspend fun <X> executeReadAndWriteAction(
     constraints: Array<out ReadConstraint>,
+    runWriteActionOnEdt: Boolean,
     action: ReadAndWriteScope.() -> ReadResult<X>,
   ): X {
     while (true) {
@@ -57,7 +59,7 @@ internal class PlatformReadWriteActionSupport : ReadWriteActionSupport {
           return readResult.value
         }
         is ReadResult.WriteAction -> {
-          val writeResult = edtWriteAction {
+          val action = {
             // Start of this Write Action increase count of write actions by one
             val writeStamp = AsyncExecutionServiceImpl.getWriteActionCounter() - 1
             if (stamp == writeStamp) {
@@ -66,6 +68,12 @@ internal class PlatformReadWriteActionSupport : ReadWriteActionSupport {
             else {
               retryMarker
             }
+          }
+          val writeResult = if (runWriteActionOnEdt) {
+            edtWriteAction(action)
+          }
+          else {
+            backgroundWriteAction(action)
           }
           if (writeResult !== retryMarker) {
             @Suppress("UNCHECKED_CAST")

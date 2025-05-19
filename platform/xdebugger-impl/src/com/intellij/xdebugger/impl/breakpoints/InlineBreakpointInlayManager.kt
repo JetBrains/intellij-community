@@ -247,7 +247,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
           // It's a fast path: no need to fire write action to remove inlays if there are already no inlays.
           // It's required to prevent performance degradations due to IDEA-339224,
           // otherwise fast insertion of twenty new lines could lead to 10 seconds of inlay recalculations.
-          return@readAndWriteAction value(Unit)
+          return@readAndEdtWriteAction value(Unit)
         }
 
         writeAction {
