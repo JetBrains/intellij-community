@@ -64,7 +64,6 @@ sealed class IdeaPluginDescriptorImpl(
     .let(::convertExtensions)
     .let(::sortExtensions)
 
-  private val resourceBundleBaseName: String? = raw.resourceBundleBaseName
   val actions: List<ActionElement> = raw.actions
 
   var isDeleted: Boolean = false
@@ -93,8 +92,6 @@ sealed class IdeaPluginDescriptorImpl(
    * Note that it's different from [moduleDependencies]
    */
   override fun getDependencies(): List<PluginDependency> = pluginDependencies
-
-  override fun getResourceBundleBaseName(): String? = resourceBundleBaseName
 
   override fun getPluginClassLoader(): ClassLoader? = _pluginClassLoader
 
@@ -135,15 +132,6 @@ sealed class IdeaPluginDescriptorImpl(
   ): IdeaPluginDescriptorImpl {
     subBuilder.id = id.idString
     subBuilder.name = name
-    if (module == null) { // resource bundle is inherited for v1 sub-descriptors only
-      if (subBuilder.resourceBundleBaseName == null) {
-        subBuilder.resourceBundleBaseName = resourceBundleBaseName
-      } else {
-        if (subBuilder.resourceBundleBaseName != resourceBundleBaseName && resourceBundleBaseName != null) {
-          LOG.warn("Resource bundle redefinition for plugin $id. Parent value: $resourceBundleBaseName, new value: ${subBuilder.resourceBundleBaseName}")
-        }
-      }
-    }
     val raw = subBuilder.build()
     return if (module == null) {
       DependsSubDescriptor(
@@ -518,6 +506,8 @@ class PluginMainDescriptor(
   override val isIndependentFromCoreClassLoader: Boolean get() = false
   override val useIdeaClassLoader: Boolean = raw.isUseIdeaClassLoader
 
+  private val resourceBundleBaseName: String? = raw.resourceBundleBaseName
+
   override fun getVersion(): String? = version
   override fun getSinceBuild(): String? = sinceBuild
   override fun getUntilBuild(): String? = untilBuild
@@ -564,6 +554,8 @@ class PluginMainDescriptor(
   override fun allowBundledUpdate(): Boolean = isBundledUpdateAllowed
   override fun isImplementationDetail(): Boolean = isImplementationDetail
   override fun isRequireRestart(): Boolean = isRestartRequired
+
+  override fun getResourceBundleBaseName(): String? = resourceBundleBaseName
 
   override fun toString(): String =
     "PluginMainDescriptor(name=$name, id=$pluginId, version=$version, " +
@@ -614,7 +606,11 @@ class DependsSubDescriptor(
     get() = parent.useCoreClassLoader
   override val isIndependentFromCoreClassLoader: Boolean = raw.isIndependentFromCoreClassLoader
 
+  private val rawResourceBundleBaseName: String? = raw.resourceBundleBaseName
+
   override fun getDescriptorPath(): String = descriptorPath
+
+  override fun getResourceBundleBaseName(): String? = rawResourceBundleBaseName ?: parent.resourceBundleBaseName
 
   override fun toString(): String =
     "DependsSubDescriptor(" +
@@ -671,7 +667,11 @@ class ContentModuleDescriptor(
   override val useIdeaClassLoader: Boolean = raw.isUseIdeaClassLoader
   override val isIndependentFromCoreClassLoader: Boolean = raw.isIndependentFromCoreClassLoader
 
+  private val resourceBundleBaseName: String? = raw.resourceBundleBaseName
+
   override fun getDescriptorPath(): String = descriptorPath
+
+  override fun getResourceBundleBaseName(): String? = resourceBundleBaseName
 
   override fun toString(): String =
     "ContentModuleDescriptor(moduleName=$moduleName" +
