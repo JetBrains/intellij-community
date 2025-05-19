@@ -24,9 +24,10 @@ import java.awt.FlowLayout
 import javax.swing.*
 import javax.swing.border.CompoundBorder
 
+@ApiStatus.Internal
 open class SavedPatchesUi(
   private val project: Project,
-  @ApiStatus.Internal val providers: List<SavedPatchesProvider<*>>,
+  val providers: List<SavedPatchesProvider<*>>,
   private val isVertical: () -> Boolean,
   private val isWithSplitDiffPreview: () -> Boolean,
   private val isShowDiffWithLocal: () -> Boolean,
