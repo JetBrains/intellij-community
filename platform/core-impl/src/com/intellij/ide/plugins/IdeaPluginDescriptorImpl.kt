@@ -103,36 +103,11 @@ sealed class IdeaPluginDescriptorImpl(
   internal fun createDependsSubDescriptor(
     subBuilder: PluginDescriptorBuilder,
     descriptorPath: String,
-  ): DependsSubDescriptor = createSubImpl(subBuilder, descriptorPath, null) as DependsSubDescriptor
-
-  internal fun createContentModule(
-    subBuilder: PluginDescriptorBuilder,
-    descriptorPath: String,
-    module: PluginContentDescriptor.ModuleItem,
-  ): ContentModuleDescriptor = createSubImpl(subBuilder, descriptorPath, module) as ContentModuleDescriptor
-
-  private fun createSubImpl(
-    subBuilder: PluginDescriptorBuilder,
-    descriptorPath: String,
-    module: PluginContentDescriptor.ModuleItem?,
-  ): IdeaPluginDescriptorImpl {
-    val raw = subBuilder.build()
-    return if (module == null) {
-      DependsSubDescriptor(
-        parent = this,
-        raw = raw,
-        descriptorPath = descriptorPath
-      )
-    } else {
-      ContentModuleDescriptor(
-        parent = this as PluginMainDescriptor,
-        raw = raw,
-        moduleName = module.name,
-        moduleLoadingRule = module.loadingRule,
-        descriptorPath = descriptorPath
-      )
-    }
-  }
+  ): DependsSubDescriptor = DependsSubDescriptor(
+    parent = this,
+    raw = subBuilder.build(),
+    descriptorPath = descriptorPath
+  )
 
   fun initialize(context: PluginInitializationContext): PluginNonLoadReason? {
     assert(this is PluginMainDescriptor)
@@ -478,6 +453,26 @@ class PluginMainDescriptor(
     }) ?: defaultValue
   }
 
+  private fun addCorePluginAliases(pluginAliases: List<PluginId>): List<PluginId> {
+    if (pluginId != PluginManagerCore.CORE_ID) {
+      return pluginAliases
+    }
+    return pluginAliases + IdeaPluginOsRequirement.getHostOsModuleIds() + productModeAliasesForCorePlugin()
+  }
+
+  internal fun createContentModule(
+    subBuilder: PluginDescriptorBuilder,
+    descriptorPath: String,
+    module: PluginContentDescriptor.ModuleItem,
+  ): ContentModuleDescriptor = ContentModuleDescriptor(
+    parent = this,
+    raw = subBuilder.build(),
+    moduleName = module.name,
+    moduleLoadingRule = module.loadingRule,
+    descriptorPath = descriptorPath
+  )
+
+
   init {
     if (pluginId == PluginManagerCore.CORE_ID && resourceBundleBaseName != null) {
       LOG.warn("<resource-bundle>$resourceBundleBaseName</resource-bundle> tag is found in an xml descriptor" +
@@ -485,13 +480,6 @@ class PluginMainDescriptor(
                "(e.g. ActionsBundle for actions) anyway; this tag must be replaced by a corresponding attribute in some inner tags " +
                "(e.g. by 'resource-bundle' attribute in 'actions' tag)")
     }
-  }
-
-  private fun addCorePluginAliases(pluginAliases: List<PluginId>): List<PluginId> {
-    if (pluginId != PluginManagerCore.CORE_ID) {
-      return pluginAliases
-    }
-    return pluginAliases + IdeaPluginOsRequirement.getHostOsModuleIds() + productModeAliasesForCorePlugin()
   }
 
   @ApiStatus.Internal
@@ -660,7 +648,7 @@ tailrec fun IdeaPluginDescriptorImpl.getMainDescriptor(): PluginMainDescriptor =
 
 @ApiStatus.Internal
 @TestOnly
-fun IdeaPluginDescriptorImpl.createSubInTest(
+fun PluginMainDescriptor.createSubInTest(
   subBuilder: PluginDescriptorBuilder,
   descriptorPath: String,
   module: PluginContentDescriptor.ModuleItem,
