@@ -102,15 +102,11 @@ public class AbiJarBuilder extends ZipOutputBuilderImpl {
   }
 
   private byte @Nullable [] filterAbiJarContent(String entryName, byte[] content) {
-    if (myClassFinder == null) {
-      return content; // no instrumentation, if class finder is not specified
+    if (myClassFinder == null || !entryName.endsWith(".class")) {
+      return content; // no instrumentation, if the entry is not a class file, or the class finder is not specified
     }
-
-    if (entryName.endsWith(".kotlin_module")) {
-      return content; // don't apply filtering on kotlin module, todo: check if we need this in abi jar
-    }
-    // todo: check content and instrument it before adding
-    // todo: for java use JavaAbiClassVisitor, for kotlin-generated classes use KotlinAnnotationVisitor, abiMetadataProcessor
+    // todo: check if we need ".kotlin_module" in abi jar
+    // todo: for kotlin-generated classes use KotlinAnnotationVisitor, abiMetadataProcessor
     return JavaAbiClassFilter.filter(content, myClassFinder);
   }
 
