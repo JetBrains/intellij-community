@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -6,33 +6,23 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author lesya
  */
 final class Undo extends UndoRedo {
-  Undo(UndoClientState state, FileEditor editor) {
-    super(state, editor);
-  }
-
-  @Override
-  protected UndoRedoStacksHolder getStacksHolder() {
-    return myState.getUndoStacksHolder();
-  }
-
-  @Override
-  protected UndoRedoStacksHolder getReverseStacksHolder() {
-    return myState.getRedoStacksHolder();
-  }
-
-  @Override
-  protected SharedUndoRedoStacksHolder getSharedStacksHolder() {
-    return myManager.getSharedUndoStacksHolder();
-  }
-
-  @Override
-  protected SharedUndoRedoStacksHolder getSharedReverseStacksHolder() {
-    return myManager.getSharedRedoStacksHolder();
+  Undo(@NotNull UndoClientState state, @Nullable FileEditor editor) {
+    super(
+      state.getProject(),
+      editor,
+      state.getUndoStacksHolder(),
+      state.getRedoStacksHolder(),
+      state.getUndoManager().getSharedUndoStacksHolder(),
+      state.getUndoManager().getSharedRedoStacksHolder(),
+      false
+    );
   }
 
   @Override
@@ -48,26 +38,21 @@ final class Undo extends UndoRedo {
 
   @Override
   protected void performAction() throws UnexpectedUndoException {
-    myUndoableGroup.undo();
+    undoableGroup.undo();
   }
 
   @Override
   protected EditorAndState getBeforeState() {
-    return myUndoableGroup.getStateAfter();
+    return undoableGroup.getStateAfter();
   }
 
   @Override
   protected EditorAndState getAfterState() {
-    return myUndoableGroup.getStateBefore();
+    return undoableGroup.getStateBefore();
   }
 
   @Override
   protected void setBeforeState(EditorAndState state) {
-    myUndoableGroup.setStateAfter(state);
-  }
-
-  @Override
-  protected boolean isRedo() {
-    return false;
+    undoableGroup.setStateAfter(state);
   }
 }

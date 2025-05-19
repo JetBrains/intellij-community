@@ -102,7 +102,7 @@ final class EditorChangeAction extends BasicUndoableAction implements Adjustable
   public @NonNls String toString() {
     String oldString = myOldString.toString().replace("\n", "\\n");
     String newString = myNewString.toString().replace("\n", "\\n");
-    return "DocumentChange{%s:'%s'->'%s'}".formatted(myChangeRange.getOffset(), oldString, newString);
+    return "DocumentChange{%s:'%s'->'%s', ref=%s}".formatted(myChangeRange.getOffset(), oldString, newString, getAffectedDocuments()[0]);
   }
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.diagnostic.Dumpable;
@@ -24,6 +24,29 @@ import java.util.*;
 final class UndoableGroup implements Dumpable {
   private static final Logger LOG = Logger.getInstance(UndoableGroup.class);
   private static final int BULK_MODE_ACTION_THRESHOLD = 50;
+
+  static @NotNull UndoableGroup copyWith(
+    @NotNull UndoableGroup undoableGroup,
+    @NlsContexts.Command String commandName,
+    boolean isGlobal,
+    @NotNull List<? extends UndoableAction> actions,
+    @NotNull UndoRedoStacksHolder stacksHolder,
+    @Nullable Project project
+  ) {
+    return new UndoableGroup(
+      commandName,
+      isGlobal,
+      undoableGroup.getCommandTimestamp(),
+      undoableGroup.getStateBefore(),
+      undoableGroup.getStateAfter(),
+      actions,
+      stacksHolder,
+      project,
+      undoableGroup.getConfirmationPolicy(),
+      undoableGroup.isTransparent(),
+      undoableGroup.isValid()
+    );
+  }
 
   private final @NlsContexts.Command String myCommandName;
   private final boolean myGlobal;

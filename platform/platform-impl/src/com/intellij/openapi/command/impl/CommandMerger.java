@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.command.CommandProcessor;
@@ -6,7 +6,6 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts.Command;
 import com.intellij.openapi.util.registry.Registry;
@@ -72,10 +71,7 @@ public final class CommandMerger {
       if (affected == null) {
         return;
       }
-
-      SharedAdjustableUndoableActionsHolder actionsHolder = myManager.getAdjustableUndoableActionsHolder();
-      actionsHolder.addAction(adjustable);
-
+      myManager.getAdjustableUndoableActionsHolder().addAction(adjustable);
       for (DocumentReference reference : affected) {
         for (MutableActionChangeRange changeRange : adjustable.getChangeRanges(reference)) {
           myManager.getSharedUndoStacksHolder().addToStack(reference, changeRange.toImmutable(false));
@@ -85,7 +81,7 @@ public final class CommandMerger {
     }
   }
 
-  void commandFinished(@Nullable Project project, @Command String commandName, Object groupId, @NotNull CommandMerger nextCommandToMerge) {
+  void commandFinished(@Command String commandName, Object groupId, @NotNull CommandMerger nextCommandToMerge) {
     // we do not want to spoil redo stack in situation, when some 'transparent' actions occurred right after undo.
     if (!nextCommandToMerge.isTransparent() && nextCommandToMerge.hasActions()) {
       clearRedoStacks(nextCommandToMerge);
@@ -93,7 +89,7 @@ public final class CommandMerger {
 
     if (!shouldMerge(groupId, nextCommandToMerge)) {
       flushCurrentCommand();
-      myState.compactIfNeeded(project);
+      myState.compactIfNeeded();
     }
     merge(nextCommandToMerge);
 
@@ -244,7 +240,7 @@ public final class CommandMerger {
                                                  myStateAfter,
                                                  myCurrentActions,
                                                  stacksHolder,
-                                                 myManager.getProject(),
+                                                 myState.getProject(),
                                                  myUndoConfirmationPolicy,
                                                  isTransparent(),
                                                  myValid));
@@ -328,7 +324,7 @@ public final class CommandMerger {
     return file == null || file instanceof LightVirtualFile;
   }
 
-  void undoOrRedo(FileEditor editor, boolean isUndo) {
+  void undoOrRedo(@Nullable FileEditor editor, boolean isUndo) {
     flushCurrentCommand();
 
     // here we _undo_ (regardless 'isUndo' flag) and drop all 'transparent' actions made right after undoRedo/redo.
@@ -351,14 +347,16 @@ public final class CommandMerger {
     while ((undoRedo = createUndoOrRedo(editor, isUndo)) != null) {
       if (editor != null && undoRedo.isBlockedByOtherChanges()) {
         UndoRedo blockingChange = createUndoOrRedo(null, isUndo);
-        if (blockingChange != null && blockingChange.myUndoableGroup != undoRedo.myUndoableGroup) {
-          if (undoRedo.confirmSwitchTo(blockingChange)) blockingChange.execute(false, true);
+        if (!undoRedo.isSameUndoableGroup(blockingChange)) {
+          if (undoRedo.confirmSwitchTo(blockingChange)) {
+            blockingChange.execute(false, true);
+          }
           break;
         }
 
         // if undo is block by other global command, trying to split global command and undo only local change in editor
-        if (isUndo && undoRedo.myUndoableGroup.isGlobal() && Registry.is("ide.undo.fallback")) {
-          if (myManager.splitGlobalCommand(undoRedo)) {
+        if (isUndo && undoRedo.isGlobal() && Registry.is("ide.undo.fallback")) {
+          if (undoRedo.splitGlobalCommand()) {
             var splittedUndo = createUndoOrRedo(editor, true);
             if (splittedUndo != null) undoRedo = splittedUndo;
           }
@@ -367,18 +365,20 @@ public final class CommandMerger {
       if (!undoRedo.execute(false, isInsideStartFinishGroup)) return;
 
       if(editor != null && !isUndo && Registry.is("ide.undo.fallback")){
-        myManager.gatherGlobalCommand(undoRedo);
+        undoRedo.gatherGlobalCommand();
       }
 
-      isInsideStartFinishGroup = undoRedo.myUndoableGroup.isInsideStartFinishGroup(isUndo, isInsideStartFinishGroup);
+      isInsideStartFinishGroup = undoRedo.isInsideStartFinishGroup(isInsideStartFinishGroup);
       if (isInsideStartFinishGroup) continue;
       boolean shouldRepeat = undoRedo.isTransparent() && undoRedo.hasMoreActions();
       if (!shouldRepeat) break;
     }
   }
 
-  private @Nullable UndoRedo createUndoOrRedo(FileEditor editor, boolean isUndo) {
-    if (!myManager.isUndoRedoAvailable(editor, isUndo)) return null;
+  private @Nullable UndoRedo createUndoOrRedo(@Nullable FileEditor editor, boolean isUndo) {
+    if (!myState.isUndoRedoAvailable(editor, isUndo)) {
+      return null;
+    }
     return isUndo ? new Undo(myState, editor) : new Redo(myState, editor);
   }
 
