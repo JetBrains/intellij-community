@@ -41,6 +41,7 @@ import com.intellij.platform.workspace.storage.query.entities
 import com.intellij.platform.workspace.storage.query.map
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
+import com.intellij.serviceContainer.executeRegisterTaskForOldContent
 import com.intellij.serviceContainer.precomputeModuleLevelExtensionModel
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.graph.*
@@ -193,7 +194,7 @@ abstract class ModuleManagerBridgeImpl(
     val result = coroutineScope {
       LOG.debug { "Loading modules for ${loadedEntities.size} entities: [${loadedEntities.joinToString { it.name }}]" }
 
-      val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
+      val plugins = PluginManagerCore.getPluginSet().enabledPlugins
       val precomputedExtensionModel = precomputeModuleLevelExtensionModel()
       val result = loadedEntities.map { moduleEntity ->
         async {
@@ -248,6 +249,10 @@ abstract class ModuleManagerBridgeImpl(
           }
         }
       }
+    }
+
+    coroutineScope.launch {
+      checkOldServices(PluginManagerCore.getPluginSet().enabledPlugins)
     }
   }
 
@@ -628,6 +633,37 @@ abstract class ModuleManagerBridgeImpl(
       setupOpenTelemetryReporting(jpsMetrics.meter)
     }
   }
+}
+
+private fun checkOldServices(plugins: List<IdeaPluginDescriptorImpl>) {
+  for (plugin in plugins) {
+    for (content in plugin.contentModules) {
+      checkModuleLevel(plugin, content.descriptor, forbid = false)
+    }
+
+    executeRegisterTaskForOldContent(plugin) {
+      checkModuleLevel(plugin, it, forbid = true)
+    }
+  }
+}
+
+private fun checkModuleLevel(plugin: IdeaPluginDescriptorImpl, child: IdeaPluginDescriptorImpl, forbid: Boolean) {
+  fun check(list: List<*>, asWarn: Boolean = false) {
+    if (list.isNotEmpty()) {
+      val message = "Plugin $plugin is trying to register $list in a content module ($child). This is not supported"
+      if (!asWarn || forbid) {
+        LOG.error(message)
+      }
+      else {
+        LOG.warn(message)
+      }
+    }
+  }
+
+  check(child.moduleContainerDescriptor.services, asWarn = true)
+  check(child.moduleContainerDescriptor.components)
+  check(child.moduleContainerDescriptor.extensionPoints)
+  check(child.moduleContainerDescriptor.listeners)
 }
 
 private fun buildModuleGraph(storage: EntityStorage, includeTests: Boolean): Graph<Module> = buildModuleGraphTimeMs.addMeasuredTime {

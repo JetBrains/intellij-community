@@ -394,30 +394,24 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  protected fun registerModuleComponents(
-    modules: List<IdeaPluginDescriptorImpl>,
-    app: Application?,
-    precomputedExtensionModel: PrecomputedExtensionModel,
-    listenerCallbacks: MutableList<in Runnable>? = null,
-  ) {
-    val isHeadless = app == null || app.isHeadlessEnvironment
-
+  protected fun initModuleContainer(plugins: List<IdeaPluginDescriptorImpl>, precomputedExtensionModel: PrecomputedExtensionModel) {
     // register services before registering extensions because plugins can access services in their extensions,
     // which can be invoked right away if the plugin is loaded dynamically
-    for (rootModule in modules) {
-      executeRegisterTask(rootModule) { module ->
-        val containerDescriptor = module.moduleContainerDescriptor
-        registerServices(containerDescriptor.services, module)
-        registerComponents(pluginDescriptor = module, containerDescriptor = containerDescriptor, headless = isHeadless)
+    for (plugin in plugins) {
+      registerServices(plugin.moduleContainerDescriptor.services, plugin)
+      for (content in plugin.contentModules) {
+        val services = content.descriptor.moduleContainerDescriptor.services
+        if (services.isNotEmpty()) {
+          registerServices(services, plugin)
+        }
       }
     }
 
-    registerExtensionPointsAndExtensionByPrecomputedModel(precomputedExtensionModel, listenerCallbacks)
+    registerExtensionPointsAndExtensionByPrecomputedModel(precomputedExtensionModel, null)
   }
 
   private fun registerExtensionPointsAndExtensionByPrecomputedModel(precomputedExtensionModel: PrecomputedExtensionModel,
                                                                     listenerCallbacks: MutableList<in Runnable>?) {
-    val extensionArea = extensionArea
     if (precomputedExtensionModel.extensionPoints.isEmpty()) {
       return
     }
@@ -427,6 +421,7 @@ abstract class ComponentManagerImpl(
       createExtensionPoints(points = points, componentManager = this, result = result, pluginDescriptor = pluginDescriptor)
     }
 
+    val extensionArea = extensionArea
     assert(extensionArea.nameToPointMap.isEmpty())
     extensionArea.reset(result)
 

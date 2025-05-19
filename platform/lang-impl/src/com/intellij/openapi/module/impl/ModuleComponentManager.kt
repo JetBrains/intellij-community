@@ -119,7 +119,8 @@ class ModuleComponentManager(parent: ComponentManagerImpl) : ComponentManagerImp
       super.registerComponents(modules, app, null, listenerCallbacks)
     }
     else {
-      super.registerModuleComponents(modules, app, precomputedExtensionModel, listenerCallbacks)
+      assert(listenerCallbacks.isNullOrEmpty())
+      super.initModuleContainer(modules, precomputedExtensionModel)
     }
 
     if (modules.any { it.pluginId == PluginManagerCore.CORE_ID }) {
