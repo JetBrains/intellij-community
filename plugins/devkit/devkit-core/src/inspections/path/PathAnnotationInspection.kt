@@ -20,8 +20,6 @@ import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase
 import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
-import java.nio.file.Path
-import kotlin.io.path.name
 
 /**
  * Inspection that checks for proper usage of path annotations ([MultiRoutingFileSystemPath], [NativePath], and [LocalPath]).
@@ -34,7 +32,6 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
   override fun getShortName(): String = "PathAnnotationInspection"
 
   override fun buildInternalVisitor(@NotNull holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-    Path.of("").name
     return com.intellij.uast.UastHintedVisitorAdapter.create(
       holder.file.language,
       PathAnnotationVisitor(holder),
