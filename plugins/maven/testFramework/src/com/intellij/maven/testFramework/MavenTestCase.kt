@@ -90,7 +90,6 @@ import kotlin.io.path.*
 abstract class MavenTestCase : UsefulTestCase() {
   protected var mavenProgressIndicator: MavenProgressIndicator? = null
     private set
-  private var myWSLDistribution: WSLDistribution? = null
   private var myPathTransformer: RemotePathTransformerFactory.Transformer? = null
 
   private lateinit var ourTempDir: Path
@@ -186,12 +185,6 @@ abstract class MavenTestCase : UsefulTestCase() {
 
   private fun setupCustomJdk() {
     var jdkPath: String? = null
-    if (myWSLDistribution != null) {
-      jdkPath = System.getProperty("wsl.jdk.path") ?: "/usr/lib/jvm/java-11-openjdk-amd64"
-      assertTrue(myWSLDistribution!!.getWindowsPath(myWSLDistribution!!.userHome!!).toNioPathOrNull()!!.isDirectory())
-      // SDK might be null; if so, jdkPath will be used to create a JDK instance
-      myJdk = findExisingJdkByPath(myWSLDistribution!!.getWindowsPath(jdkPath))
-    }
     if (isProjectInEelEnvironment()) {
       jdkPath = getEelFixtureEngineJavaHome()
     }
@@ -305,11 +298,6 @@ abstract class MavenTestCase : UsefulTestCase() {
       },
       ThrowableRunnable { doTearDownFixtures() },
       ThrowableRunnable { deleteDirOnTearDown(myDir) },
-      ThrowableRunnable {
-        if (myWSLDistribution != null && basePath != null) {
-          deleteDirOnTearDown(basePath.toNioPathOrNull())
-        }
-      },
       ThrowableRunnable { super.tearDown() }
     ).run()
   }
@@ -336,9 +324,8 @@ abstract class MavenTestCase : UsefulTestCase() {
         if (fileSystemMount.isBlank()) {
           throw IllegalArgumentException("The EEL_FIXTURE_MOUNT environment variable is not specified")
         }
-        Path("$fileSystemMount/mavenTests")
+        Path(fileSystemMount).resolve("mavenTests")
       }
-      myWSLDistribution != null -> myWSLDistribution!!.getWindowsPath("/tmp").toNioPathOrNull()!!.resolve("mavenTests")
       else -> FileUtil.getTempDirectory().toNioPathOrNull()!!.resolve("mavenTests")
     }
     FileUtil.delete(ourTempDir)
@@ -346,12 +333,9 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   protected open fun setUpFixtures() {
-    val wslDistributionName = System.getProperty("wsl.distribution.name")
-    myTestFixture = when {
-      wslDistributionName != null -> setupFixtureOnWsl(wslDistributionName)
-      else -> IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name, useDirectoryBasedProjectFormat()).fixture
-    }
-    myTestFixture!!.setUp()
+    val fixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name, useDirectoryBasedProjectFormat()).fixture
+    myTestFixture = fixture
+    fixture.setUp()
   }
 
   private fun setupFixtureOnWsl(wslDistributionName: String): IdeaProjectTestFixture {
