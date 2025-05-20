@@ -13,6 +13,7 @@ import com.intellij.openapi.components.impl.ProjectPathMacroManager
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.impl.stores.stateStore
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getExternalConfigurationDir
@@ -26,11 +27,14 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelCache
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentWriter
 import com.intellij.platform.workspace.jps.serialization.impl.WritableJpsFileContent
 import com.intellij.platform.workspace.jps.serialization.impl.isExternalModuleFile
+import com.intellij.platform.workspace.storage.CachedValue
 import com.intellij.project.stateStore
 import com.intellij.util.LineSeparator
 import com.intellij.util.PathUtil
@@ -43,6 +47,7 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentRead
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.jps.serialization.ProjectStoreWithJpsContentReader
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
 import io.opentelemetry.api.metrics.Meter
 import org.jdom.Attribute
 import org.jdom.Element
@@ -68,6 +73,14 @@ private fun shouldWriteExternalFilesDirectly(): Boolean {
 
 @ApiStatus.Internal
 open class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(project), ProjectStoreWithJpsContentReader {
+  private val persistentModules = CachedValue<List<Module>> { storage ->
+    val moduleMap = storage.moduleMap
+    storage.entities(ModuleEntity::class.java)
+      .mapNotNull { moduleMap.getDataByEntity(it) }
+      .filter { it.canStoreSettings() }
+      .toList()
+  }
+
   final override suspend fun saveModules(
     saveSessions: MutableList<SaveSession>,
     saveResult: SaveResult,
@@ -77,8 +90,8 @@ open class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(proje
     projectSessionManager as ProjectWithModulesSaveSessionProducerManager
     val workspaceModel = project.serviceAsync<WorkspaceModel>()
 
-    val moduleManager = project.serviceAsync<ModuleManager>()
     val writer = if (shouldWriteExternalFilesDirectly()) {
+      val moduleManager = project.serviceAsync<ModuleManager>()
       HalfDirectJpsStorageContentWriter(session = projectSessionManager, store = this, project = project, moduleManager)
     }
     else {
@@ -88,11 +101,8 @@ open class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(proje
     project.serviceAsync<JpsProjectModelSynchronizer>().saveChangedProjectEntities(writer, workspaceModel)
     (project.serviceAsync<WorkspaceModelCache>() as WorkspaceModelCacheImpl).doCacheSavingOnProjectClose()
 
-    for (module in moduleManager.modules) {
-      if (!module.canStoreSettings()) {
-        continue
-      }
-
+    val entityStorage = (project.serviceAsync<WorkspaceModel>() as WorkspaceModelInternal).entityStorage
+    for (module in entityStorage.cachedValue(persistentModules)) {
       val moduleStore = module.stateStore as? ComponentStoreImpl ?: continue
       val moduleSessionManager = moduleStore.createSaveSessionProducerManager()
       moduleStore.commitComponents(isForce = forceSavingAllSettings, sessionManager = moduleSessionManager, saveResult = saveResult)
