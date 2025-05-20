@@ -40,8 +40,6 @@ c:com.intellij.configurationStore.JbXmlOutputter
 - <init>(java.lang.String,com.intellij.openapi.util.JDOMUtil$ElementOutputFilter,com.intellij.application.options.ReplacePathToMacroMap,com.intellij.openapi.application.PathMacroFilter,Z,java.lang.String):V
 - b:<init>(java.lang.String,com.intellij.openapi.util.JDOMUtil$ElementOutputFilter,com.intellij.application.options.ReplacePathToMacroMap,com.intellij.openapi.application.PathMacroFilter,Z,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - sf:collapseMacrosAndWrite(org.jdom.Element,com.intellij.openapi.components.ComponentManager):java.lang.String
-- f:output(org.jdom.DocType,java.io.Writer):V
-- f:output(org.jdom.Document,java.io.Writer):V
 - f:output(org.jdom.Element,java.io.Writer):V
 - f:printElement(java.io.Writer,org.jdom.Element,I):V
 - p:writeContent(java.io.Writer,org.jdom.Element,I,Z):Z
