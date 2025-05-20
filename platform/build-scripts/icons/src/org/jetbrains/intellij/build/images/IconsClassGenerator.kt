@@ -430,7 +430,7 @@ internal open class IconsClassGenerator(
       if (group != null) {
         val oldLength = result.length
         val className = className(key)
-        if (isInlineClass(className)) {
+        if (isInlineClass(className) || group.firstOrNull()?.flat == true) {
           processIcons(group, mappings, result, depth + 1, iconClassSpecificsGenerator, topLevelClass)
         }
         else {
@@ -469,7 +469,7 @@ internal open class IconsClassGenerator(
     image: ImageInfo,
     mappings: Map<String, String>?,
     result: StringBuilder,
-    level: Int,
+    depth: Int,
     hasher: IconHasher,
     iconClassSpecificsGenerator: IconClassSpecificsGenerator,
     topLevelClass: String
@@ -484,6 +484,7 @@ internal open class IconsClassGenerator(
       processedPhantom.incrementAndGet()
     }
 
+    val level = if (image.flat) 1 else depth
     if (image.used || image.deprecated) {
       val deprecationComment = image.deprecation?.comment
       if (deprecationComment != null) {

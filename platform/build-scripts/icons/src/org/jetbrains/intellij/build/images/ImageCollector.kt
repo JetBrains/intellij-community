@@ -25,7 +25,7 @@ import kotlin.io.path.listDirectoryEntries
 
 internal const val ROBOTS_FILE_NAME = "icon-robots.txt"
 
-private val EMPTY_IMAGE_FLAGS = ImageFlags(used = false, deprecation = null)
+private val EMPTY_IMAGE_FLAGS = ImageFlags(used = false, flat = false, deprecation = null)
 
 internal class ImageInfo(
   @JvmField val id: String,
@@ -83,6 +83,8 @@ internal class ImageInfo(
 
   val used: Boolean
     get() = flags.used
+  val flat: Boolean
+    get() = flags.flat
   val deprecated: Boolean
     get() = flags.deprecation != null
   val deprecation: DeprecationData?
@@ -121,7 +123,7 @@ internal class ImageInfo(
   }
 }
 
-internal data class ImageFlags(@JvmField val used: Boolean, @JvmField val deprecation: DeprecationData?)
+internal data class ImageFlags(@JvmField val used: Boolean, @JvmField val flat: Boolean, @JvmField val deprecation: DeprecationData?)
 
 internal data class ImageSyncFlags(@JvmField val skipSync: Boolean, @JvmField val forceSync: Boolean)
 
@@ -458,6 +460,7 @@ internal class IconRobotsData(
 ) {
   private val skip = ArrayList<Pattern>()
   private val used = ArrayList<Pattern>()
+  private var flat = ArrayList<Pattern>()
   private val deprecated = ArrayList<DeprecatedEntry>()
   private val skipSync = ArrayList<Pattern>()
   private val forceSync = ArrayList<Pattern>()
@@ -468,9 +471,10 @@ internal class IconRobotsData(
   private val ownDeprecatedIcons = ArrayList<OwnDeprecatedIcon>()
 
   fun getImageFlags(file: Path): ImageFlags {
+    val isFlat = matches(file, flat)
     val isUsed = matches(file, used)
     val deprecationData = findDeprecatedData(file)
-    val flags = ImageFlags(isUsed, deprecationData)
+    val flags = ImageFlags(isUsed, isFlat, deprecationData)
     val parentFlags = parent?.getImageFlags(file) ?: return flags
     return mergeImageFlags(flags, parentFlags, file)
   }
@@ -479,7 +483,7 @@ internal class IconRobotsData(
     ImageSyncFlags(skipSync = matches(file, skipSync), forceSync = matches(file, forceSync))
 
   fun getOwnDeprecatedIcons(): List<Pair<String, ImageFlags>> =
-    ownDeprecatedIcons.map { Pair(it.relativeFile, ImageFlags(used = false, deprecation = it.data)) }
+    ownDeprecatedIcons.map { Pair(it.relativeFile, ImageFlags(used = false, flat = false, deprecation = it.data)) }
 
   fun isSkipped(file: Path): Boolean {
     if (!ignoreSkipTag && matches(file, skip)) {
@@ -523,7 +527,8 @@ internal class IconRobotsData(
           RobotFileHandler("name:") { }, // ignore directive for IconsClassGenerator
           RobotFileHandler("#") { }, // comment
           RobotFileHandler("forceSync:") { value -> answer.forceSync.add(compilePattern(dir, root, value)) },
-          RobotFileHandler("skipSync:") { value -> answer.skipSync.add(compilePattern(dir, root, value)) }
+          RobotFileHandler("skipSync:") { value -> answer.skipSync.add(compilePattern(dir, root, value)) },
+          RobotFileHandler("flatIconName:") { value -> answer.flat.add(compilePattern(dir, root, value)) }, // generates the icon field without static class wrappers
     )
     return answer
   }
@@ -601,7 +606,7 @@ internal class IconRobotsData(
 private data class RobotFileHandler(val start: String, val handler: (String) -> Unit)
 
 private fun mergeImageFlags(flags1: ImageFlags, flags2: ImageFlags, comment: Path): ImageFlags =
-  ImageFlags(used = flags1.used || flags2.used, deprecation = mergeDeprecations(flags1.deprecation, flags2.deprecation, comment))
+  ImageFlags(used = flags1.used || flags2.used, flat = flags1.flat || flags2.flat, deprecation = mergeDeprecations(flags1.deprecation, flags2.deprecation, comment))
 
 private fun mergeDeprecations(data1: DeprecationData?, data2: DeprecationData?, comment: Path): DeprecationData? {
   if (data1 == null) {
