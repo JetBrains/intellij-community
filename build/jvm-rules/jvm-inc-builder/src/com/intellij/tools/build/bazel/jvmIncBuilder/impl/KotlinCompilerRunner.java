@@ -59,6 +59,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
   private EnumWhenTrackerImpl enumWhenTracker;
   private ImportTrackerImpl importTracker;
   private final @NotNull Map<@NotNull String, @NotNull String> myPluginIdToPluginClasspath = new HashMap<>();
+  private final List<String> myJavaSources;
 
   public KotlinCompilerRunner(BuildContext context, StorageManager storageManager)  {
     myContext = context;
@@ -71,6 +72,10 @@ public class KotlinCompilerRunner implements CompilerRunner {
     for (String pluginId : CLFlags.PLUGIN_ID.getValue(flags)) {
       myPluginIdToPluginClasspath.put(pluginId, pluginCp.hasNext()? pluginCp.next() : "");
     }
+
+    myJavaSources = collect(
+      map(filter(context.getSources().getElements(), ns -> ns.toString().endsWith(".java")), ns -> myPathMapper.toPath(ns).toString()), new ArrayList<>()
+    );
   }
 
   @Override
@@ -280,7 +285,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
     };
   }
 
-  private static K2JVMCompilerArguments buildKotlinCompilerArguments(BuildContext context, Iterable<NodeSource> sources) {
+  private K2JVMCompilerArguments buildKotlinCompilerArguments(BuildContext context, Iterable<NodeSource> sources) {
     // todo: hash compiler configuration
     K2JVMCompilerArguments arguments = new K2JVMCompilerArguments();
     parseCommandLineArguments(context.getBuilderOptions().getKotlinOptions(), arguments, true);
@@ -302,7 +307,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
       arguments.setFriendPaths(ensureCollection(map(friends, p -> context.getBaseDir().resolve(p).normalize().toString())).toArray(String[]::new));
     }
     NodeSourcePathMapper pathMapper = context.getPathMapper();
-    arguments.setFreeArgs(collect(map(sources, ns -> pathMapper.toPath(ns).toString()), new ArrayList<>()));
+    arguments.setFreeArgs(collect(flat(map(sources, ns -> pathMapper.toPath(ns).toString()), myJavaSources), new ArrayList<>()));
     return arguments;
   }
 
