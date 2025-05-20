@@ -104,7 +104,8 @@ internal suspend fun suggestModuleNamePrefix(parentDir: VirtualFile, project: Pr
 
 internal suspend fun createIjModule(vRoot: VirtualFile, moduleName: String) {
   val project = instance<Project>()
-  val files = prepareFiles(vRoot.toNioPath(), moduleName)
+  val directoryName = computeDirectoryNameForModule(moduleName, vRoot, project)
+  val files = prepareFiles(vRoot.toNioPath(), moduleName, directoryName)
   val vFiles = files.toVFiles()
                ?: return // TODO remove when failed
   backgroundWriteAction {
@@ -122,8 +123,20 @@ internal suspend fun createIjModule(vRoot: VirtualFile, moduleName: String) {
   project.scheduleSave() // to write changes in modules.xml to the disk
 }
 
-private suspend fun prepareFiles(root: Path, moduleName: String): ModuleFiles = withContext(Dispatchers.IO) {
-  val moduleRoot = root.resolve(moduleName).createDirectories()
+private suspend fun computeDirectoryNameForModule(moduleName: String, parentDir: VirtualFile, project: Project): String {
+  return withContext(Dispatchers.IO) {
+    readAction {
+      val fileIndex = ProjectFileIndex.getInstance(project)
+      val parentDirectoryNames = generateSequence(parentDir) { it.parent }
+        .takeWhile { it.parent != null && fileIndex.isInProjectOrExcluded(it.parent) }
+        .mapTo(HashSet()) { it.name }
+      moduleName.split('.').dropWhile { it in parentDirectoryNames || it == "intellij" }.joinToString(".")
+    }
+  }
+}
+
+private suspend fun prepareFiles(root: Path, moduleName: String, directoryName: String): ModuleFiles = withContext(Dispatchers.IO) {
+  val moduleRoot = root.resolve(directoryName).createDirectories()
   val src = moduleRoot.resolve("src").createDirectories().also { src ->
     src.resolve(".keep").createFile() // empty file so that `src` exists in git
   }
