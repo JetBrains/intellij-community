@@ -10,8 +10,10 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.packaging.*
-import com.jetbrains.python.packaging.common.PythonOutdatedPackage
+import com.jetbrains.python.packaging.PyPackage
+import com.jetbrains.python.packaging.PyPackageManager
+import com.jetbrains.python.packaging.PyRequirement
+import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.associatedModuleDir
 
@@ -22,7 +24,6 @@ class PyPoetryPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
 
   private var requirements: List<PyRequirement>? = null
 
-  private var outdatedPackages: Map<String, PythonOutdatedPackage> = emptyMap()
 
   override fun installManagement() {}
 
@@ -96,12 +97,6 @@ class PyPoetryPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
 
       packages = allPackages.first
       requirements = allPackages.second
-
-      runBlockingCancellable {
-        outdatedPackages = poetryShowOutdated(sdk).getOrElse {
-          emptyMap()
-        }
-      }
 
       ApplicationManager.getApplication().messageBus.syncPublisher(PACKAGE_MANAGER_TOPIC).packagesRefreshed(sdk)
     }
