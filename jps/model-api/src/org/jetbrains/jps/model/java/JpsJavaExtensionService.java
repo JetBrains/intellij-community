@@ -94,6 +94,14 @@ public abstract class JpsJavaExtensionService {
    * @param relativePath relative path to the file with '/' as a separator 
    */
   public abstract @Nullable Path findSourceFile(@NotNull JpsModuleSourceRoot root, @NotNull String relativePath);
+  
+  /**
+   * Returns the path to an existing file under production source and resource roots of {@code module} for which the full relative path is 
+   * equal to {@code relativePath}, taking the package prefix into account.
+   * 
+   * @param relativePath relative path to the file with '/' as a separator 
+   */
+  public abstract @Nullable Path findSourceFileInProductionRoots(@NotNull JpsModule module, @NotNull String relativePath);
 
   @ApiStatus.Internal
   public abstract JpsTypedLibrary<JpsSdk<JpsDummyElement>> addJavaSdk(@NotNull JpsGlobal global, @NotNull String name, @NotNull String homePath);
