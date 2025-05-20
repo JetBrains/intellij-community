@@ -24,11 +24,10 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.LocalDate
-import java.util.*
+import java.util.Locale
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 import javax.xml.stream.XMLStreamException
-import kotlin.collections.any
 import kotlin.io.path.exists
 
 @JvmRecord
@@ -665,6 +664,9 @@ internal open class IconsClassGenerator(
         }
         else {
           sb.append('_')
+          if (index == 0 && Character.isDigit(c)) {
+            sb.append(c)
+          }
         }
       }
 
