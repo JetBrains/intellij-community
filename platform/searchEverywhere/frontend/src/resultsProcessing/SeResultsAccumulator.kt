@@ -17,7 +17,7 @@ class SeResultsAccumulator(providerIdsAndLimits: Map<SeProviderId, Int>) {
     this.putAll(providerIdsAndLimits.map { (providerId, limit) -> providerId to Semaphore(limit) })
   }
 
-  suspend fun add(newItem: SeItemData): SeResultEvent {
+  suspend fun add(newItem: SeItemData): SeResultEvent? {
     val providerSemaphore = providerToSemaphore[newItem.providerId]
     providerSemaphore?.acquire()
 
@@ -33,7 +33,7 @@ class SeResultsAccumulator(providerIdsAndLimits: Map<SeProviderId, Int>) {
           items.add(event.newItemData)
           providerToSemaphore[event.oldItemData.providerId]?.release()
         }
-        is SeResultSkippedEvent -> {
+        null -> {
           providerSemaphore?.release()
         }
       }
@@ -42,7 +42,7 @@ class SeResultsAccumulator(providerIdsAndLimits: Map<SeProviderId, Int>) {
     }
   }
 
-  private fun calculateEventType(newItem: SeItemData): SeResultEvent =
+  private fun calculateEventType(newItem: SeItemData): SeResultEvent? =
     if (newItem.providerId.isTopHit()) {
       // Handle TopHit items: frontend items have higher priority, and they are preferred over backend items.
       items.firstOrNull {
@@ -51,9 +51,7 @@ class SeResultsAccumulator(providerIdsAndLimits: Map<SeProviderId, Int>) {
         if (newItem.weight > oldItem.weight) {
           SeResultReplacedEvent(oldItem, newItem)
         }
-        else {
-          SeResultSkippedEvent(newItem)
-        }
+        else null
       } ?: SeResultAddedEvent(newItem)
     }
     else SeResultAddedEvent(newItem) // TODO: Calculate properly

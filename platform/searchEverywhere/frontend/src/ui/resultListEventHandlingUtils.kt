@@ -64,7 +64,6 @@ fun SeResultList.handleEvent(event: SeResultEvent) {
         addRow(index, SeResultListItemRow(event.newItemData))
       }
     }
-    is SeResultSkippedEvent -> null
   }
 }
 

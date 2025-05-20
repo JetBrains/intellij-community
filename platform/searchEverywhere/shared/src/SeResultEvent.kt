@@ -10,5 +10,3 @@ sealed interface SeResultEvent
 class SeResultAddedEvent(val itemData: SeItemData) : SeResultEvent
 @Internal
 class SeResultReplacedEvent(val oldItemData: SeItemData, val newItemData: SeItemData) : SeResultEvent
-@Internal
-class SeResultSkippedEvent(val itemData: SeItemData) : SeResultEvent
