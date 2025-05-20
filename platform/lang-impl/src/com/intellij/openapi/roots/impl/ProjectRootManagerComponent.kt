@@ -14,7 +14,6 @@ import com.intellij.openapi.fileTypes.FileTypeEvent
 import com.intellij.openapi.fileTypes.FileTypeListener
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.impl.ModuleEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -396,7 +395,7 @@ open class ProjectRootManagerComponent(
     super.clearScopesCachesForModules()
 
     for (module in ModuleManager.getInstance(project).modules) {
-      (module as ModuleEx).clearScopesCache()
+      module.clearScopesCache()
     }
   }
 

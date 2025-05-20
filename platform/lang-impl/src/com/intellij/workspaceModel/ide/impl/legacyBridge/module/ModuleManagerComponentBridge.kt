@@ -56,10 +56,8 @@ private class ModuleManagerInitProjectActivity : InitProjectActivity {
     span("firing modules_added event") {
       fireModulesAdded(project, modules)
     }
-    span("deprecated module component moduleAdded calling") {
-      for (module in modules) {
-        module.markAsLoaded()
-      }
+    for (module in modules) {
+      module.markAsLoaded()
     }
   }
 }

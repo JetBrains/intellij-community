@@ -206,4 +206,8 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
   @ApiStatus.Internal
   default void initNewlyAddedModule() {
   }
+
+  @ApiStatus.Internal
+  default void clearScopesCache() {
+  }
 }

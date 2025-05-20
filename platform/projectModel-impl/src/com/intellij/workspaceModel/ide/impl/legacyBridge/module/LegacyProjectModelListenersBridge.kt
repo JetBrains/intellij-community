@@ -29,6 +29,8 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBri
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 
+private val LOG = logger<LegacyProjectModelListenersBridge>()
+
 internal class LegacyProjectModelListenersBridge(
   private val project: Project,
   private val moduleModificationTracker: SimpleModificationTracker,                                              
@@ -207,9 +209,5 @@ internal class LegacyProjectModelListenersBridge(
 
   private fun fireBeforeModuleRemoved(module: ModuleBridge) {
     project.messageBus.syncPublisher(ModuleListener.TOPIC).beforeModuleRemoved(project, module)
-  }
-
-  companion object {
-    private val LOG = logger<LegacyProjectModelListenersBridge>()
   }
 }

@@ -4,7 +4,6 @@ package com.intellij.roots;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.module.impl.ModuleEx;
 import com.intellij.openapi.module.impl.scopes.LibraryScope;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -327,7 +326,7 @@ public class ModuleScopesTest extends JavaModuleTestCase {
     assertNotEquals(deps, depsTests);
     assertNotEquals(depsTests, deps);
 
-    ((ModuleEx)module).clearScopesCache();
+    module.clearScopesCache();
 
     GlobalSearchScope deps2 = module.getModuleWithDependentsScope();
     GlobalSearchScope depsTests2 = module.getModuleTestsWithDependentsScope();
