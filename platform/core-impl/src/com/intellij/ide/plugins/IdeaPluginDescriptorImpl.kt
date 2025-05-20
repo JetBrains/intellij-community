@@ -39,15 +39,6 @@ sealed class IdeaPluginDescriptorImpl(
   val incompatiblePlugins: List<PluginId> = raw.incompatibleWith.map(PluginId::getId)
   open val pluginAliases: List<PluginId> = raw.pluginAliases.map(PluginId::getId)
 
-  /**
-   * this is an implementation detail required during descriptor loading, use [contentModules] instead
-   */
-  val content: PluginContentDescriptor =
-    raw.contentModules.takeIf { it.isNotEmpty() }?.let { PluginContentDescriptor(convertContentModules(it)) }
-    ?: PluginContentDescriptor.EMPTY
-
-  val contentModules: Sequence<ContentModuleDescriptor>
-    get() = content.modules.asSequence().map { it.descriptor }
   val moduleDependencies: ModuleDependencies = raw.dependencies.let(::convertDependencies)
   val packagePrefix: String? = raw.`package`
 
@@ -190,24 +181,6 @@ sealed class IdeaPluginDescriptorImpl(
       return ModuleDependencies(moduleDeps, pluginDeps)
     }
 
-    private fun convertContentModules(contentElements: List<ContentElement>): List<PluginContentDescriptor.ModuleItem> {
-      return contentElements.mapNotNull { elem ->
-        when (elem) {
-          is ContentElement.Module -> {
-            val index = elem.name.lastIndexOf('/')
-            val configFile: String? = if (index != -1) {
-              "${elem.name.substring(0, index)}.${elem.name.substring(index + 1)}.xml"
-            } else null
-            PluginContentDescriptor.ModuleItem(elem.name, configFile, elem.embeddedDescriptorContent, elem.loadingRule.convert())
-          }
-          else -> {
-            LOG.error("Unknown content element: $elem")
-            null
-          }
-        }
-      }
-    }
-
     private fun <K, V1, V2> intersectMaps(first: Map<K, V1>, second: Map<K, V2>): Sequence<Pair<V1, V2>> {
       // Make sure we iterate the smaller map
       return if (first.size < second.size) {
@@ -317,6 +290,16 @@ class PluginMainDescriptor(
   private val resourceBundleBaseName: String? = raw.resourceBundleBaseName
 
   override val pluginAliases: List<PluginId> = super.pluginAliases.let(::addCorePluginAliases)
+
+  /**
+   * this is an implementation detail required during descriptor loading, use [contentModules] instead
+   */
+  val content: PluginContentDescriptor =
+    raw.contentModules.takeIf { it.isNotEmpty() }?.let { PluginContentDescriptor(convertContentModules(it)) }
+    ?: PluginContentDescriptor.EMPTY
+
+  val contentModules: Sequence<ContentModuleDescriptor>
+    get() = content.modules.asSequence().map { it.descriptor }
 
   override fun getPluginId(): PluginId = id
 
@@ -478,6 +461,24 @@ class PluginMainDescriptor(
 
   @ApiStatus.Internal
   companion object {
+    private fun convertContentModules(contentElements: List<ContentElement>): List<PluginContentDescriptor.ModuleItem> {
+      return contentElements.mapNotNull { elem ->
+        when (elem) {
+          is ContentElement.Module -> {
+            val index = elem.name.lastIndexOf('/')
+            val configFile: String? = if (index != -1) {
+              "${elem.name.substring(0, index)}.${elem.name.substring(index + 1)}.xml"
+            } else null
+            PluginContentDescriptor.ModuleItem(elem.name, configFile, elem.embeddedDescriptorContent, elem.loadingRule.convert())
+          }
+          else -> {
+            LOG.error("Unknown content element: $elem")
+            null
+          }
+        }
+      }
+    }
+    
     /**
      * This method returns plugin aliases, which are added to the core module.
      * This is done to support running without the module-based loader (from sources and in dev mode),
@@ -639,6 +640,11 @@ tailrec fun IdeaPluginDescriptorImpl.getMainDescriptor(): PluginMainDescriptor =
   is ContentModuleDescriptor -> parent
   is DependsSubDescriptor -> parent.getMainDescriptor()
 }
+
+@get:ApiStatus.Internal
+@Deprecated("only PluginMainDescriptor has content")
+val IdeaPluginDescriptorImpl.content: PluginContentDescriptor
+  get() = if (this is PluginMainDescriptor) content else PluginContentDescriptor.EMPTY
 
 @ApiStatus.Internal
 @TestOnly

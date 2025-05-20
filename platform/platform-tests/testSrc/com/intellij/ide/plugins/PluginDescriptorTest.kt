@@ -407,7 +407,7 @@ class PluginDescriptorTest {
   }
 
   @Test
-  fun `content module may have content modules but they are disregarded`() {
+  fun `content module's content modules are disregarded`() {
     PluginBuilder().id("bar")
       .module(moduleName = "bar.module",
               PluginBuilder()
@@ -426,8 +426,7 @@ class PluginDescriptorTest {
     assertThat(barModule).isNotNull
       .isMarkedEnabled()
       .doesNotHaveEnabledContentModules()
-    assertThat(barModule.content.modules).hasSize(1)
-    assertThat(barModule.content.modules[0].getDescriptorOrNull()).isNull()
+    assertThat(barModule.content.modules).hasSize(0)
   }
 
   // todo this is rather about plugin set loading, probably needs to be moved out

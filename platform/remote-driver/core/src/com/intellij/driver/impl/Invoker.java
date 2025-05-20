@@ -2,10 +2,7 @@ package com.intellij.driver.impl;
 
 import com.intellij.driver.model.*;
 import com.intellij.driver.model.transport.*;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginContentDescriptor;
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.*;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -436,7 +433,7 @@ public class Invoker implements InvokerMBean {
       IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(PluginId.getId(mainId));
       if (plugin == null) throw new DriverIllegalStateException("No such plugin " + mainId);
 
-      List<PluginContentDescriptor.ModuleItem> modules = ((IdeaPluginDescriptorImpl)plugin).getContent().modules;
+      List<PluginContentDescriptor.ModuleItem> modules = IdeaPluginDescriptorImplKt.getContent((IdeaPluginDescriptorImpl)plugin).modules;
       for (PluginContentDescriptor.ModuleItem module : modules) {
         if (Objects.equals(moduleId, module.getName())) {
           return requireNonNull(module.requireDescriptor().getPluginClassLoader());
