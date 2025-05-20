@@ -298,8 +298,8 @@ class PluginMainDescriptor(
     raw.contentModules.takeIf { it.isNotEmpty() }?.let { PluginContentDescriptor(convertContentModules(it)) }
     ?: PluginContentDescriptor.EMPTY
 
-  val contentModules: Sequence<ContentModuleDescriptor>
-    get() = content.modules.asSequence().map { it.descriptor }
+  val contentModules: List<ContentModuleDescriptor>
+    get() = content.modules.map { it.descriptor }
 
   override fun getPluginId(): PluginId = id
 
