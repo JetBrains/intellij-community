@@ -37,8 +37,10 @@ const val APP_CONFIG: String = "\$APP_CONFIG\$"
 @VisibleForTesting
 @Suppress("NonDefaultConstructor")
 open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWithExtraComponents(), ApplicationStoreJpsContentReader {
-  override val storageManager: StateStorageManagerImpl =
-    ApplicationStateStorageManager(pathMacroManager = PathMacroManager.getInstance(app), controller = app.getService(SettingsController::class.java))
+  override val storageManager: StateStorageManagerImpl = ApplicationStateStorageManager(
+    pathMacroManager = PathMacroManager.getInstance(app),
+    controller = app.getService(SettingsController::class.java),
+  )
 
   @Volatile
   final override var isStoreInitialized: Boolean = false
@@ -118,12 +120,17 @@ class ApplicationStateStorageManager(pathMacroManager: PathMacroManager? = null,
     }
   }
 
-  override fun normalizeFileSpec(fileSpec: String): String =
-    removeMacroIfStartsWith(path = super.normalizeFileSpec(fileSpec), macro = APP_CONFIG)
+  override fun normalizeFileSpec(fileSpec: String): String = removeMacroIfStartsWith(path = super.normalizeFileSpec(fileSpec), macro = APP_CONFIG)
 
-  override fun expandMacro(collapsedPath: String): Path =
-    if (collapsedPath[0] == '$') super.expandMacro(collapsedPath)
-    else macros[0].value.resolve(collapsedPath)  // APP_CONFIG is the first macro
+  override fun expandMacro(collapsedPath: String): Path {
+    if (collapsedPath[0] == '$') {
+      return super.expandMacro(collapsedPath)
+    }
+    else {
+      // APP_CONFIG is the first macro
+      return macros[0].value.resolve(collapsedPath)
+    }
+  }
 }
 
 private class ApplicationPathMacroManager : PathMacroManager(null)

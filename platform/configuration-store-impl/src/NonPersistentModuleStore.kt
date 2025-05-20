@@ -2,24 +2,18 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.*
-import com.intellij.openapi.components.impl.stores.ModuleStore
+import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 @ApiStatus.Internal
-class NonPersistentModuleStore internal constructor() : ModuleStore {
+class NonPersistentModuleStore internal constructor() : IComponentStore {
   override val storageManager: StateStorageManager
     get() = NonPersistentStateStorageManager
 
   override val isStoreInitialized: Boolean
     get() = true
-  override fun setPath(path: Path) {
-  }
-
-  override fun setPath(path: Path, virtualFile: VirtualFile?, isNew: Boolean) {
-  }
 
   override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
   }

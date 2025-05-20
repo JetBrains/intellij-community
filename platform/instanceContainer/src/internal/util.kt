@@ -56,7 +56,7 @@ suspend fun InstanceContainerInternal.preloadAllInstances() {
 }
 
 internal fun prepareHolders(parentScope: CoroutineScope, actions: Map<String, RegistrationAction>): PreparedHolders {
-  val holders = LinkedHashMap<String, InstanceHolder>()
+  val holders = LinkedHashMap<String, InstanceHolder>(actions.size)
   val keysToAdd = HashSet<String>()
   val keysToRemove = HashSet<String>()
   for ((keyClassName, action) in actions) {

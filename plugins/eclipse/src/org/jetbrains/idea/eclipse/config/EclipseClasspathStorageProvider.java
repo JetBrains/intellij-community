@@ -36,7 +36,7 @@ import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer;
 import java.io.IOException;
 import java.util.function.Function;
 
-public final class EclipseClasspathStorageProvider implements ClasspathStorageProvider {
+final class EclipseClasspathStorageProvider implements ClasspathStorageProvider {
   @Override
   public @NotNull @NonNls String getID() {
     return JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID;
@@ -87,7 +87,7 @@ public final class EclipseClasspathStorageProvider implements ClasspathStoragePr
     ModuleEntity moduleEntity = ModuleBridgeUtils.findModuleEntity(moduleBridge, moduleEntityStorage);
     if (moduleEntity != null) {
       EntitySource entitySource = moduleEntity.getEntitySource();
-      ModuleManagerBridgeImpl
+      ModuleManagerBridgeImpl.Companion
         .changeModuleEntitySource(moduleBridge, moduleEntityStorage, updateSource.apply(entitySource), moduleBridge.getDiff());
     }
   }

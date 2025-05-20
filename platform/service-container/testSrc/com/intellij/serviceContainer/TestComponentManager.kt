@@ -13,7 +13,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import org.jetbrains.annotations.TestOnly
-import java.nio.file.Path
 import kotlin.coroutines.EmptyCoroutineContext
 
 val testPluginDescriptor: DefaultPluginDescriptor = DefaultPluginDescriptor("test")
@@ -44,9 +43,6 @@ private class TestComponentStore : IComponentStore {
   override val storageManager: StateStorageManager
     get() = TODO("not implemented")
   override val isStoreInitialized: Boolean = true
-
-  override fun setPath(path: Path) {
-  }
 
   override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
   }

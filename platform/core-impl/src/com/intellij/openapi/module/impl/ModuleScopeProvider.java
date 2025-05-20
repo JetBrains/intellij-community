@@ -1,14 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl;
 
-
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Author: dmitrylomov
- */
 @ApiStatus.Internal
 public interface ModuleScopeProvider {
   /**

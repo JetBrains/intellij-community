@@ -5,7 +5,6 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
-import com.intellij.openapi.components.impl.stores.ModuleStore
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.debug
@@ -51,6 +50,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBri
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleStore
 import com.intellij.workspaceModel.ide.toPath
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.*
@@ -480,7 +480,8 @@ abstract class ModuleManagerBridgeImpl(
       virtualFileUrl = moduleFileUrl,
       entityStorage = versionedStorage,
       diff = diff,
-    ) { module -> module.initServiceContainer(precomputedExtensionModel = precomputedExtensionModel)
+    ) { module ->
+      module.initServiceContainer(precomputedExtensionModel)
       if (moduleFileUrl != null) {
         val moduleStore = module.componentStore as ModuleStore
         moduleStore.setPath(path = moduleFileUrl.toPath(), virtualFile = null, isNew = isNew)
@@ -573,7 +574,6 @@ abstract class ModuleManagerBridgeImpl(
       }
     }
 
-    @JvmStatic
     fun changeModuleEntitySource(
       module: ModuleBridge,
       moduleEntityStore: EntityStorage,

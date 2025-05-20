@@ -5,7 +5,6 @@ package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.openapi.components.*
-import com.intellij.openapi.components.impl.stores.ModuleStore
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ModuleEx
@@ -14,6 +13,7 @@ import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.project.isDirectoryBased
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleStore
 import org.jdom.Element
 import java.io.IOException
 import java.nio.file.Path
@@ -28,16 +28,16 @@ internal class ModuleStoreImpl(module: Module, private val pathMacroManager: Pat
   override val storageManager: StateStorageManagerImpl = ModuleStateStorageManager(TrackingPathMacroSubstitutorImpl(pathMacroManager), module)
 
   @Volatile
-  final override var isStoreInitialized: Boolean = false
+  override var isStoreInitialized: Boolean = false
     private set
 
   override fun createSaveSessionProducerManager(): SaveSessionProducerManager {
     return SaveSessionProducerManager(isUseVfsForWrite = storageManager.isUseVfsForWrite, collectVfsEvents = true)
   }
 
-  final override fun isReportStatisticAllowed(stateSpec: State, storageSpec: Storage): Boolean = false
+  override fun isReportStatisticAllowed(stateSpec: State, storageSpec: Storage): Boolean = false
 
-  final override fun getPathMacroManagerForDefaults(): PathMacroManager = pathMacroManager
+  override fun getPathMacroManagerForDefaults(): PathMacroManager = pathMacroManager
 
   override fun <T> getStorageSpecs(
     component: PersistentStateComponent<T>,
@@ -70,20 +70,15 @@ internal class ModuleStoreImpl(module: Module, private val pathMacroManager: Pat
     return result
   }
 
-  final override fun reloadStates(componentNames: Set<String>) {
+  override fun reloadStates(componentNames: Set<String>) {
     batchReloadStates(componentNames, project.messageBus)
   }
 
-  final override fun setPath(path: Path) {
+  override fun setPath(path: Path) {
     setPath(path = path, virtualFile = null, isNew = false)
   }
 
-  final override fun setPath(path: Path, virtualFile: VirtualFile?, isNew: Boolean) {
-    doSetPath(path, virtualFile, isNew)
-    isStoreInitialized = true
-  }
-
-  protected open fun doSetPath(path: Path, virtualFile: VirtualFile?, isNew: Boolean) {
+  override fun setPath(path: Path, virtualFile: VirtualFile?, isNew: Boolean) {
     val isMacroAdded = storageManager.setMacros(listOf(Macro(StoragePathMacros.MODULE_FILE, path))).isEmpty()
     // if file not null - update storage
     storageManager.getOrCreateStorage(
@@ -107,6 +102,7 @@ internal class ModuleStoreImpl(module: Module, private val pathMacroManager: Pat
           storageManager.updatePath(spec = StoragePathMacros.MODULE_FILE, newPath = path)
         }
       })
+    isStoreInitialized = true
   }
 }
 
@@ -114,8 +110,7 @@ private class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubst
   : StateStorageManagerImpl(rootTagName = "module", macroSubstitutor, componentManager = module, controller = null),
     RenameableStateStorageManager
 {
-  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String =
-    StoragePathMacros.MODULE_FILE
+  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String = StoragePathMacros.MODULE_FILE
 
   // the only macro is supported by ModuleStateStorageManager
   override fun expandMacro(collapsedPath: String): Path {

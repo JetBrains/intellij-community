@@ -5,12 +5,14 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.openapi.components.impl.stores.ComponentStoreOwner
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.module.impl.ModuleEx
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 
 @ApiStatus.Internal
 interface ModuleBridge : ModuleEx, ComponentStoreOwner {
@@ -40,4 +42,9 @@ interface ModuleBridge : ModuleEx, ComponentStoreOwner {
   fun initServiceContainer(precomputedExtensionModel: PrecomputedExtensionModel)
 
   fun markContainerAsCreated()
+}
+
+@ApiStatus.Internal
+interface ModuleStore : IComponentStore {
+  fun setPath(path: Path, virtualFile: VirtualFile?, isNew: Boolean)
 }

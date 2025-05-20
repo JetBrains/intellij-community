@@ -17,7 +17,8 @@ interface IComponentStore {
   val storageManager: StateStorageManager
   val isStoreInitialized: Boolean
 
-  fun setPath(path: Path)
+  fun setPath(path: Path) {
+  }
 
   fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId)
 
