@@ -19,18 +19,23 @@ interface PluginLayoutProvider {
 data class PluginLayoutDescription(
   val mainJpsModule: String,
   /**
+   * Path to the plugin descriptor file relative to the resource root.
+   */
+  val pluginDescriptorPath: String,
+  /**
    * Names of JPS modules which are included in the classpath of the main plugin module.
    */
   val jpsModulesInClasspath: Set<String>,
 )
 
-fun createLayoutProviderByContentYamlFiles(ideContentYamlPath: Path, mainModuleOfCorePlugin: String, nameOfTestWhichGeneratesFiles: String): PluginLayoutProvider {
-  return PluginLayoutProviderImpl(ideContentYamlPath, mainModuleOfCorePlugin, nameOfTestWhichGeneratesFiles = nameOfTestWhichGeneratesFiles) 
+fun createLayoutProviderByContentYamlFiles(ideContentYamlPath: Path, mainModuleOfCorePlugin: String, corePluginDescriptorPath: String, nameOfTestWhichGeneratesFiles: String): PluginLayoutProvider {
+  return PluginLayoutProviderImpl(ideContentYamlPath, mainModuleOfCorePlugin, corePluginDescriptorPath, nameOfTestWhichGeneratesFiles = nameOfTestWhichGeneratesFiles) 
 }
 
 private class PluginLayoutProviderImpl(
   private val ideContentYamlPath: Path, 
   private val mainModuleOfCorePlugin: String,
+  private val corePluginDescriptorPath: String,
   private val nameOfTestWhichGeneratesFiles: String,
 ) : PluginLayoutProvider {
   private val ideContentData by lazy {
@@ -39,8 +44,9 @@ private class PluginLayoutProviderImpl(
   
   override fun loadCorePluginLayout(): PluginLayoutDescription {
     return ideContentData.toPluginLayoutDescription(
-      mainModuleName = mainModuleOfCorePlugin, 
-      mainLibDir = "dist.all/lib", 
+      mainModuleName = mainModuleOfCorePlugin,
+      pluginDescriptorPath = corePluginDescriptorPath,
+      mainLibDir = "dist.all/lib",
       jarsToIgnore = setOf("dist.all/lib/testFramework.jar")
     )
   }
@@ -55,8 +61,9 @@ private class PluginLayoutProviderImpl(
     if (!contentDataPath.exists()) return null
     val contentData = deserializeContentData(contentDataPath.readText())
     return contentData.toPluginLayoutDescription(
-      mainModuleName = mainModule.name, 
-      mainLibDir = "lib", 
+      mainModuleName = mainModule.name,
+      pluginDescriptorPath = "META-INF/plugin.xml",
+      mainLibDir = "lib",
       jarsToIgnore = emptySet()
     )
   }
@@ -65,9 +72,10 @@ private class PluginLayoutProviderImpl(
     get() = "Note that the test uses the data from *content.yaml files, so if you changed the layouts, run '$nameOfTestWhichGeneratesFiles' to make sure that they are up-to-date."
 }
 
-private fun List<FileEntry>.toPluginLayoutDescription(mainModuleName: String, mainLibDir: String, jarsToIgnore: Set<String>): PluginLayoutDescription {
+private fun List<FileEntry>.toPluginLayoutDescription(mainModuleName: String, pluginDescriptorPath: String, mainLibDir: String, jarsToIgnore: Set<String>): PluginLayoutDescription {
   return PluginLayoutDescription(
     mainJpsModule = mainModuleName,
+    pluginDescriptorPath = pluginDescriptorPath,
     jpsModulesInClasspath = 
       filter { it.name.substringBeforeLast('/', "") == mainLibDir && it.name !in jarsToIgnore }
         .flatMapTo(LinkedHashSet()) { it.modules.map { it.name } }

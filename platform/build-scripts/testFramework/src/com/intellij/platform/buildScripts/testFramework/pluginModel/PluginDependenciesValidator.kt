@@ -258,7 +258,7 @@ class PluginDependenciesValidator private constructor(
   private fun createPluginDescriptor(pluginLayout: PluginLayoutDescription, loadingContext: PluginDescriptorLoadingContext): IdeaPluginDescriptorImpl {
     val mainModule = jpsModules[pluginLayout.mainJpsModule] ?: error("Cannot find module ${pluginLayout.mainJpsModule}")
     val pluginDir = tempDir.resolve("plugin").resolve(mainModule.name)
-    val pluginDescriptorPath = findResourceFile(mainModule, "META-INF/plugin.xml")
+    val pluginDescriptorPath = findResourceFile(mainModule, pluginLayout.pluginDescriptorPath)
     require(pluginDescriptorPath != null) { "Cannot find plugin descriptor file in '${mainModule.name}' module" }
     val xIncludeLoader = PluginMainModuleFromSourceXIncludeLoader(pluginLayout)
     val descriptor = IdeaPluginDescriptorImpl(
