@@ -1103,34 +1103,21 @@ private fun optionalDependenciesOnPlugin(
   classLoaderConfigurator: ClassLoaderConfigurator,
   pluginSet: PluginSet,
 ): Set<IdeaPluginDescriptorImpl> {
-  // 1. collect optional descriptors
-  val dependentPluginsAndItsModule = ArrayList<Pair<PluginMainDescriptor, IdeaPluginDescriptorImpl>>()
-
-  processOptionalDependenciesOnPlugin(dependencyPlugin, pluginSet, isLoaded = false) { main, module ->
-    if (main is PluginMainDescriptor) {
-      dependentPluginsAndItsModule.add(main to module)
-    }
-    else {
-      LOG.error("unexpected $main")
-    }
+  val dependentDescriptors = ArrayList<IdeaPluginDescriptorImpl>()
+  processOptionalDependenciesOnPlugin(dependencyPlugin, pluginSet, isLoaded = false) { _, module ->
+    dependentDescriptors.add(module)
     true
   }
-
-  if (dependentPluginsAndItsModule.isEmpty()) {
+  if (dependentDescriptors.isEmpty()) {
     return emptySet()
   }
-
-  // 2. sort topologically
-  val topologicalComparator = PluginSetBuilder(dependentPluginsAndItsModule.map { it.first }.toSet()).topologicalComparator
-  dependentPluginsAndItsModule.sortWith(Comparator { o1, o2 -> topologicalComparator.compare(o1.first, o2.first) })
-
-  return dependentPluginsAndItsModule
+  val topologicalComparator = PluginSetBuilder(dependentDescriptors.map { it.getMainDescriptor() }.toSet()).topologicalComparator
+  dependentDescriptors.sortWith(Comparator { o1, o2 -> topologicalComparator.compare(o1.getMainDescriptor(), o2.getMainDescriptor()) })
+  return dependentDescriptors
     .distinct()
-    .filter { (mainDescriptor, moduleDescriptor) ->
-      // 3. setup classloaders
-      classLoaderConfigurator.configureDependency(mainDescriptor, moduleDescriptor)
+    .filter {
+      classLoaderConfigurator.configureDescriptorDynamic(it)
     }
-    .map { it.second }
     .toSet()
 }
 

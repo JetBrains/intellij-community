@@ -50,30 +50,32 @@ class ClassLoaderConfigurator(
     }
   }
 
-  fun configureDependency(mainDescriptor: IdeaPluginDescriptorImpl, moduleDescriptor: IdeaPluginDescriptorImpl): Boolean {
-    assert(mainDescriptor != moduleDescriptor) { "$mainDescriptor != $moduleDescriptor" }
+  fun configureDescriptorDynamic(subDescriptor: IdeaPluginDescriptorImpl): Boolean {
+    assert(subDescriptor is ContentModuleDescriptor || subDescriptor is DependsSubDescriptor) { subDescriptor }
+    val mainDescriptor = subDescriptor.getMainDescriptor()
 
     val pluginId = mainDescriptor.pluginId
-    assert(pluginId == moduleDescriptor.pluginId) { "pluginId '$pluginId' != moduleDescriptor.pluginId '${moduleDescriptor.pluginId}'"}
+    assert(pluginId == subDescriptor.pluginId) { "pluginId '$pluginId' != moduleDescriptor.pluginId '${subDescriptor.pluginId}'"}
 
     // class cast fails in case IU is running from sources, IDEA-318252
     (mainDescriptor.pluginClassLoader as? PluginClassLoader)?.let {
       mainToClassPath.put(pluginId, MainPluginDescriptorClassPathInfo(classLoader = it))
     }
 
-    if (mainDescriptor.dependencies.find { it.subDescriptor === moduleDescriptor && it.isOptional } != null) {
+    if (subDescriptor is DependsSubDescriptor) {
       // dynamically enabled optional dependency module in old format
       // based on what's happening in [configureDependenciesInOldFormat]
-      assert(moduleDescriptor.pluginClassLoader == null) {
-        "sub descriptor $moduleDescriptor of $mainDescriptor seems to be already enabled"
+      assert(subDescriptor.pluginClassLoader == null) {
+        "sub descriptor $subDescriptor of $mainDescriptor seems to be already enabled"
       }
+      assert(pluginSet.findEnabledPlugin(subDescriptor.dependencyTarget) != null) { "target is not loaded: $subDescriptor" }
       val mainDependentClassLoader = mainDescriptor.pluginClassLoader
       assert(mainDependentClassLoader != null) { "plugin $mainDescriptor is not yet enabled"}
-      setClassLoaderForModuleAndDependsSubDescriptors(moduleDescriptor, mainDependentClassLoader!!)
+      setClassLoaderForModuleAndDependsSubDescriptors(subDescriptor, mainDependentClassLoader!!)
       return true
     }
 
-    return configureModule(moduleDescriptor)
+    return configureModule(subDescriptor)
   }
 
   fun configure() {
@@ -243,8 +245,8 @@ class ClassLoaderConfigurator(
     return mainInfo
   }
 
-  private fun setClassLoaderForModuleAndDependsSubDescriptors(module: IdeaPluginDescriptorImpl, mainDependentClassLoader: ClassLoader) {
-    module.pluginClassLoader = mainDependentClassLoader
+  private fun setClassLoaderForModuleAndDependsSubDescriptors(module: IdeaPluginDescriptorImpl, mainClassLoader: ClassLoader) {
+    module.pluginClassLoader = mainClassLoader
     for (dependency in module.dependencies) {
       val subDescriptor = dependency.subDescriptor ?: continue
       if (pluginSet.findEnabledPlugin(dependency.pluginId)?.takeIf { it !== module } == null) {
@@ -258,7 +260,7 @@ class ClassLoaderConfigurator(
         // disable dependencies which optionally deepened on Kotlin plugin which are incompatible with Kotlin Plugin K2 mode KTIJ-24797
         continue
       }
-      setClassLoaderForModuleAndDependsSubDescriptors(subDescriptor, mainDependentClassLoader)
+      setClassLoaderForModuleAndDependsSubDescriptors(subDescriptor, mainClassLoader)
     }
   }
 
