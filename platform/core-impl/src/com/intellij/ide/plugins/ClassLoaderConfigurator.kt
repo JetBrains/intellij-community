@@ -179,12 +179,12 @@ class ClassLoaderConfigurator(
     val dependenciesList = pluginSet.getSortedDependencies(module)
     var mutableDependenciesList: MutableList<IdeaPluginDescriptorImpl>? = null
     if (module is PluginMainDescriptor) {
-      for (moduleItem in module.content.modules) {
-        if (moduleItem.loadingRule == ModuleLoadingRule.EMBEDDED) {
+      for (module in module.contentModules) {
+        if (module.moduleLoadingRule == ModuleLoadingRule.EMBEDDED) {
           if (mutableDependenciesList == null) {
             mutableDependenciesList = dependenciesList.toMutableList()
           }
-          mutableDependenciesList.addAll(pluginSet.getSortedDependencies(moduleItem.requireDescriptor()))
+          mutableDependenciesList.addAll(pluginSet.getSortedDependencies(module))
         }
       }
     }
@@ -207,9 +207,9 @@ class ClassLoaderConfigurator(
       mainModuleFiles = emptyList()
     }
     var allFiles: MutableSet<Path>? = null
-    for (contentModule in mainDescriptor.content.modules) {
-      if (contentModule.loadingRule == ModuleLoadingRule.EMBEDDED) {
-        val customJarFiles = contentModule.requireDescriptor().jarFiles
+    for (contentModule in mainDescriptor.contentModules) {
+      if (contentModule.moduleLoadingRule == ModuleLoadingRule.EMBEDDED) {
+        val customJarFiles = contentModule.jarFiles
         if (customJarFiles != null) {
           if (allFiles == null) {
             allFiles = LinkedHashSet(mainModuleFiles)
@@ -412,14 +412,13 @@ fun createPluginDependencyAndContentBasedScope(descriptor: PluginMainDescriptor,
 }
 
 private fun getPackagePrefixesLoadedBySeparateClassLoaders(descriptor: PluginMainDescriptor): List<Pair<String, String?>> {
-  val modules = descriptor.content.modules
+  val modules = descriptor.contentModules
   if (modules.isEmpty()) {
     return emptyList()
   }
 
   val result = ArrayList<Pair<String, String?>>(modules.size)
-  for (item in modules) {
-    val module = item.requireDescriptor()
+  for (module in modules) {
     if (!module.jarFiles.isNullOrEmpty() || module.moduleLoadingRule == ModuleLoadingRule.EMBEDDED) {
       continue
     }

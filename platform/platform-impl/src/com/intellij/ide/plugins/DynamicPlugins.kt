@@ -1209,16 +1209,13 @@ private fun processDependenciesOnPlugin(
       return
     }
 
-    for (moduleItem in plugin.content.modules) {
-      val module = moduleItem.requireDescriptor()
-
+    for (module in plugin.contentModules) {
       if (loadStateFilter != LoadStateFilter.ANY) {
         val isModuleLoaded = module.pluginClassLoader != null
         if (isModuleLoaded != (loadStateFilter == LoadStateFilter.LOADED)) {
           continue
         }
       }
-
       for (item in module.moduleDependencies.modules) {
         if (wantedIds.contains(item.name) && !processor(plugin, module)) {
           return

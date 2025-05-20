@@ -287,7 +287,7 @@ class PluginDescriptorTest {
     assertThat(descriptor).isNotNull
       .isMarkedEnabled()
       .hasExactlyEnabledContentModules("foo.module")
-    assertThat(descriptor.content.modules[0].requireDescriptor())
+    assertThat(descriptor.contentModules[0])
       .isMarkedEnabled()
       .hasExactlyApplicationServices("foo.module.service")
   }
@@ -315,8 +315,8 @@ class PluginDescriptorTest {
     assertThat(descriptor.pluginId.idString).isEqualTo("bar")
     assertThat(descriptor.name).isEqualTo("Bar")
     assertThat(descriptor.version).isEqualTo("1.0.0")
-    assertThat(descriptor.content.modules).hasSize(1)
-    val subDesc = descriptor.content.modules[0].requireDescriptor()
+    assertThat(descriptor.contentModules).hasSize(1)
+    val subDesc = descriptor.contentModules[0]
     assertThat(subDesc.pluginId.idString).isEqualTo("bar")
     assertThat(subDesc.name).isEqualTo("Bar")
     assertThat(subDesc.version).isEqualTo("1.0.0")
@@ -345,8 +345,8 @@ class PluginDescriptorTest {
     assertThat(descriptor.pluginId.idString).isEqualTo("bar")
     assertThat(descriptor.name).isEqualTo("Bar")
     assertThat(descriptor.version).isEqualTo("1.0.0")
-    assertThat(descriptor.content.modules).hasSize(1)
-    val subDesc = descriptor.content.modules[0].requireDescriptor()
+    assertThat(descriptor.contentModules).hasSize(1)
+    val subDesc = descriptor.contentModules[0]
     assertThat(subDesc.pluginId.idString).isEqualTo("bar")
     assertThat(subDesc.name).isEqualTo("Bar")
     assertThat(subDesc.version).isEqualTo("1.0.0")
@@ -365,8 +365,8 @@ class PluginDescriptorTest {
     assertThat(descriptor).isNotNull
     assertThat(descriptor.pluginId.idString).isEqualTo("bar")
     assertThat(descriptor.resourceBundleBaseName).isEqualTo("resourceBundle")
-    assertThat(descriptor.content.modules).hasSize(3)
-    assertThat(descriptor.content.modules).allMatch { it.requireDescriptor().resourceBundleBaseName == null }
+    assertThat(descriptor.contentModules).hasSize(3)
+    assertThat(descriptor.contentModules).allMatch { it.resourceBundleBaseName == null }
   }
 
   @Test
@@ -382,8 +382,8 @@ class PluginDescriptorTest {
     assertThat(descriptor).isNotNull
     assertThat(descriptor.pluginId.idString).isEqualTo("bar")
     assertThat(descriptor.resourceBundleBaseName).isEqualTo("resourceBundle")
-    assertThat(descriptor.content.modules).hasSize(3)
-    assertThat(descriptor.content.modules).allMatch { it.requireDescriptor().resourceBundleBaseName == it.name }
+    assertThat(descriptor.contentModules).hasSize(3)
+    assertThat(descriptor.contentModules).allMatch { it.resourceBundleBaseName == it.moduleName }
   }
 
   @Test
@@ -422,7 +422,7 @@ class PluginDescriptorTest {
     assertThat(bar).isNotNull
       .isMarkedEnabled()
       .hasExactlyEnabledContentModules("bar.module")
-    val barModule = bar.content.modules[0].requireDescriptor()
+    val barModule = bar.contentModules[0]
     assertThat(barModule).isNotNull
       .isMarkedEnabled()
       .doesNotHaveEnabledContentModules()

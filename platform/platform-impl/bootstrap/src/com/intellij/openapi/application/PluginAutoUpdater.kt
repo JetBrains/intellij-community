@@ -134,7 +134,7 @@ object PluginAutoUpdater {
     // checks mostly duplicate what is written in com.intellij.ide.plugins.PluginInstaller.installFromDisk. FIXME, I guess
     val enabledPluginsAndModulesIds: Set<String> = currentDescriptors.getIdMap().flatMap { entry ->
       val desc = entry.value
-      listOf(desc.pluginId.idString) + desc.pluginAliases.map { it.idString } + desc.content.modules.map { it.name }
+      listOf(desc.pluginId.idString) + desc.pluginAliases.map { it.idString } + desc.contentModules.map { it.moduleName } // FIXME content module aliases are not accounted
     }.toSet()
     for ((id, updateDesc) in updates) {
       val existingDesc = currentDescriptors.getIdMap()[id] ?: currentDescriptors.getIncompleteIdMap()[id]

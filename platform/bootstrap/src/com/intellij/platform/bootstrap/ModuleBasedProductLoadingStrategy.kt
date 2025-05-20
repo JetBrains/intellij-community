@@ -249,11 +249,10 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
       val resolver = ModuleBasedPluginXmlPathResolver(includedModules, pluginModuleGroup.optionalModuleIds, fallbackResolver)
       loadDescriptorFromDir(mainResourceRoot, context, zipFilePool, resolver, isBundled = isBundled, pluginDir = pluginDir)
         .also { descriptor ->
-          descriptor?.content?.modules?.forEach { module ->
-            val contentModule = module.requireDescriptor()
-            if (contentModule.packagePrefix == null) {
-              val moduleName = contentModule.moduleName
-              contentModule.jarFiles = moduleRepository.getModule(RuntimeModuleId.module(moduleName)).resourceRootPaths
+          descriptor?.contentModules?.forEach { module ->
+            if (module.packagePrefix == null) {
+              val moduleName = module.moduleName
+              module.jarFiles = moduleRepository.getModule(RuntimeModuleId.module(moduleName)).resourceRootPaths
             }
           }
         }
@@ -266,9 +265,9 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
       val pluginDir = pluginDir ?: mainResourceRoot.parent.parent
       loadDescriptorFromJar(mainResourceRoot, context, zipFilePool, pathResolver, isBundled = isBundled, pluginDir = pluginDir)
     }
-    val modulesWithJarFiles = descriptor?.content?.modules?.flatMap { moduleItem ->
-      val jarFiles = moduleItem.requireDescriptor().jarFiles
-      if (moduleItem.loadingRule != ModuleLoadingRule.EMBEDDED && jarFiles != null) jarFiles else emptyList()
+    val modulesWithJarFiles = descriptor?.contentModules?.flatMap { moduleItem ->
+      val jarFiles = moduleItem.jarFiles
+      if (moduleItem.moduleLoadingRule != ModuleLoadingRule.EMBEDDED && jarFiles != null) jarFiles else emptyList()
     }
     descriptor?.jarFiles = allResourceRootsList.filter { modulesWithJarFiles == null || it !in modulesWithJarFiles }
     return descriptor

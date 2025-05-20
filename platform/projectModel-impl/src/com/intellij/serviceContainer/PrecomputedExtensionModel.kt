@@ -6,6 +6,7 @@ package com.intellij.serviceContainer
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.contentModules
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
@@ -74,8 +75,8 @@ private fun executeRegisterTask(modules: List<IdeaPluginDescriptorImpl>, task: (
 private fun executeRegisterTaskForPluginAndV2Content(plugins: List<IdeaPluginDescriptorImpl>, task: (IdeaPluginDescriptorImpl) -> Unit) {
   for (plugin in plugins) {
     task(plugin)
-    for (content in plugin.content.modules) {
-      task(content.descriptor)
+    for (content in plugin.contentModules) {
+      task(content)
     }
   }
 }
