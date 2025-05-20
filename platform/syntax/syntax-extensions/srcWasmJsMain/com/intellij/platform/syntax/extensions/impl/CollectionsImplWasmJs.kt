@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.syntax.extensions.impl
 
+import fleet.util.multiplatform.Actual
+
 /** WasmJs implementation of [newConcurrentMap] */
 @Suppress("unused")
 @Actual(linkedTo = "newConcurrentMap")
@@ -12,5 +14,5 @@ private class SyntaxConcurrentMapWasmJs<K : Any, V : Any>(
 ) : MutableMap<K, V> by map, ConcurrentMap<K, V> {
 
   override fun computeIfAbsent(key: K, f: (K) -> V): V =
-    map[key] ?: f().also { map[key] = it }
+    map[key] ?: f(key).also { map[key] = it }
 }
