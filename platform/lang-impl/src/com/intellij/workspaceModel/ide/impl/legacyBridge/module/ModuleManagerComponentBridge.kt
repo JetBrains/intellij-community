@@ -65,8 +65,6 @@ private class ModuleManagerInitProjectActivity : InitProjectActivity {
 @ApiStatus.Internal
 open class ModuleManagerComponentBridge(private val project: Project, coroutineScope: CoroutineScope)
   : ModuleManagerBridgeImpl(project = project, coroutineScope = coroutineScope, moduleRootListenerBridge = ModuleRootListenerBridgeImpl) {
-  private val virtualFileManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
-
   init {
     // a default project doesn't have facets
     if (!project.isDefault) {
@@ -141,7 +139,8 @@ open class ModuleManagerComponentBridge(private val project: Project, coroutineS
   override fun loadModuleToBuilder(moduleName: String, filePath: String, diff: MutableEntityStorage): ModuleEntity {
     val builder = MutableEntityStorage.create()
     var errorMessage: String? = null
-    val configLocation = getJpsProjectConfigLocation(project)!!
+    val virtualFileManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
+    val configLocation = getJpsProjectConfigLocation(project, virtualFileManager)!!
     val context = SingleImlSerializationContext(virtualFileManager, CachingJpsFileContentReader(configLocation))
     JpsProjectEntitiesLoader.loadModule(Path.of(filePath), configLocation, builder, object : ErrorReporter {
       override fun reportError(message: String, file: VirtualFileUrl) {
