@@ -85,7 +85,6 @@ public final class XFramesView extends XDebugView {
   private final Map<XExecutionStack, StackFramesListBuilder> myBuilders = new HashMap<>();
   private final Wrapper myThreadsPanel;
   private boolean myThreadsCalculated;
-  private boolean myRefresh;
 
   public XFramesView(@NotNull XDebugSession session) {
     this(XDebugSessionProxyKeeperKt.asProxy(session));
@@ -110,7 +109,7 @@ public final class XFramesView extends XDebugView {
       @Override
       protected void scrollToSource(@NotNull Component list) {
         if (myListenersEnabled) {
-          processFrameSelection(getSession(), true, myRefresh);
+          processFrameSelection(getSession(), true);
         }
       }
     };
@@ -192,7 +191,6 @@ public final class XFramesView extends XDebugView {
           if (item != mySelectedStack && item instanceof XExecutionStack) {
             XDebugSessionProxy session = getSession();
             if (session != null) {
-              myRefresh = false;
               updateFrames((XExecutionStack)item, session, null, false);
               XDebuggerActionsCollector.threadSelected.log(XDebuggerActionsCollector.PLACE_FRAMES_VIEW);
             }
@@ -408,8 +406,6 @@ public final class XFramesView extends XDebugView {
 
   @Override
   public void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSessionProxy session) {
-    myRefresh = event == SessionEvent.SETTINGS_CHANGED;
-
     if (event == SessionEvent.BEFORE_RESUME) {
       if (DebuggerUIUtil.freezePaintingToReduceFlickering(myScrollPane.getParent())) {
         ApplicationManager.getApplication().invokeAndWait(() -> {
@@ -567,22 +563,15 @@ public final class XFramesView extends XDebugView {
     return getMainPanel();
   }
 
-  private void processFrameSelection(XDebugSessionProxy sessionProxy, boolean force, boolean refresh) {
+  private void processFrameSelection(XDebugSessionProxy sessionProxy, boolean isUserSelection) {
     mySelectedFrame = myFramesList.getSelectedFrame();
     myExecutionStacksWithSelection.put(mySelectedStack, mySelectedFrame);
     withCurrentBuilder(b -> b.setToSelect(null));
 
-    Object selected = myFramesList.getSelectedValue();
-    if (selected instanceof XStackFrame) {
-      if (sessionProxy != null) {
-        if (force || (!refresh && sessionProxy.getCurrentStackFrame() != selected)) {
-          int mySelectedFrameIndex = myFramesList.getSelectedIndex();
-          sessionProxy.setCurrentStackFrame(mySelectedStack, (XStackFrame)selected, mySelectedFrameIndex == 0);
-          if (force) {
-            XDebuggerActionsCollector.frameSelected.log(XDebuggerActionsCollector.PLACE_FRAMES_VIEW);
-          }
-        }
-      }
+    if (isUserSelection && myFramesList.getSelectedValue() instanceof XStackFrame frame && sessionProxy != null) {
+      int selectedIndex = myFramesList.getSelectedIndex();
+      sessionProxy.setCurrentStackFrame(mySelectedStack, frame, selectedIndex == 0);
+      XDebuggerActionsCollector.frameSelected.log(XDebuggerActionsCollector.PLACE_FRAMES_VIEW);
     }
   }
 
@@ -724,21 +713,21 @@ public final class XFramesView extends XDebugView {
     private boolean selectCurrentFrame() {
       if (selectFrame(myToSelect)) {
         myListenersEnabled = true;
-        processFrameSelection(mySessionProxy, false, myRefresh);
+        processFrameSelection(mySessionProxy, false);
         return true;
       }
       return false;
     }
 
     private boolean selectFrame(Object toSelect) {
-      if (toSelect instanceof XStackFrame) {
-        if (myFramesList.selectFrame((XStackFrame)toSelect)) return true;
+      if (toSelect instanceof XStackFrame frame) {
+        if (myFramesList.selectFrame(frame)) return true;
         if (myAllFramesLoaded && myFramesList.getSelectedValue() == null) {
           LOG.warn("Frame was not found, it was either hidden without placeholder (" + HiddenStackFramesItem.class + ") or " + myToSelect.getClass() + " must correctly override equals");
         }
       }
-      else if (toSelect instanceof Integer) {
-        if (myFramesList.selectFrame((int)toSelect)) return true;
+      else if (toSelect instanceof Integer selectIndex) {
+        if (myFramesList.selectFrame(selectIndex)) return true;
       }
       else if (toSelect == null && myFramesList.getSelectedIndex() == -1) {
         if (myFramesList.selectFrame(0)) return true;
