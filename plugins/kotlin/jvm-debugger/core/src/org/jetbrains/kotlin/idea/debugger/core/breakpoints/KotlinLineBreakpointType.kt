@@ -101,7 +101,9 @@ class KotlinLineBreakpointType :
                 element is KtElement -> {
                     val visitor = LineBreakpointExpressionVisitor.of(file, line)
                     if (visitor != null) {
-                        element.accept(visitor, null)
+                        @Suppress("USELESS_ELVIS")
+                        // element.accept CAN return null
+                        element.accept(visitor, null) ?: ApplicabilityResult.UNKNOWN
                     } else {
                         ApplicabilityResult.UNKNOWN
                     }
