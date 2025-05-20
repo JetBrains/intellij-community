@@ -59,15 +59,19 @@ private class CodeReviewAsyncDiffViewModelDelegateImpl<C : Any>() : CodeReviewAs
     val current = changesToShow.value
     val newIdx = current.selectedChanges.list.indexOf(change)
     if (newIdx < 0) return
+
+    var state = current
     val newChanges = ListSelection.createAt(current.selectedChanges.list, newIdx)
-    val newState = current.copy(selectedChanges = newChanges)
-    if (!changesToShow.compareAndSet(current, newState)) {
-      return
+    if (newChanges != current.selectedChanges) {
+      state = current.copy(selectedChanges = newChanges)
+      if (!changesToShow.compareAndSet(current, state)) {
+        return
+      }
+      notifySelection(state.selectedChanges)
     }
-    notifySelection(newState.selectedChanges)
 
     if (scrollRequest != null) {
-      newState.scroll(scrollRequest)
+      state.scroll(scrollRequest)
     }
   }
 
