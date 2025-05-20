@@ -571,7 +571,8 @@ public class UsageViewImpl implements UsageViewEx {
               continue;
             }
             synchronized (childNode) {
-              List<Node> swingChildren = ((GroupNode)parentNode).getSwingChildren();
+              GroupNode parentGroupNode = (GroupNode)parentNode;
+              List<Node> swingChildren = parentGroupNode.getSwingChildren();
               boolean contains = swingChildren.contains(childNode);
               if (!contains) {
                 nodesToFire.add(childNode);
@@ -581,7 +582,7 @@ public class UsageViewImpl implements UsageViewEx {
                 indicesToFire.add(swingChildren.indexOf(change.childNode));
 
                 if (childNode instanceof UsageNode) {
-                  ((GroupNode)parentNode).incrementUsageCount(1);
+                  parentGroupNode.incrementUsageCount(1);
                 }
               }
             }
@@ -615,11 +616,6 @@ public class UsageViewImpl implements UsageViewEx {
     if (progress != null) {
       ProgressWrapper.unwrapAll(progress).cancel();
     }
-  }
-
-  private int getVisibleRowCount() {
-    ThreadingAssertions.assertEventDispatchThread();
-    return TreeUtil.getVisibleRowCount(myTree);
   }
 
   private void setupCentralPanel() {
@@ -974,14 +970,14 @@ public class UsageViewImpl implements UsageViewEx {
     }
     sortGroupingActions(list);
     moveActionTo(list, UsageViewBundle.message("action.group.by.module"),
-                 UsageViewBundle.message("action.flatten.modules"), true);
+                 UsageViewBundle.message("action.flatten.modules"));
     return list.toArray(AnAction.EMPTY_ARRAY);
   }
 
+  @ApiStatus.Internal
   protected static void moveActionTo(@NotNull List<AnAction> list,
                                      @NotNull String actionText,
-                                     @NotNull String targetActionText,
-                                     boolean before) {
+                                     @NotNull String targetActionText) {
     if (Objects.equals(actionText, targetActionText)) {
       return;
     }
@@ -995,7 +991,7 @@ public class UsageViewImpl implements UsageViewEx {
       if (actionIndex != -1 && targetIndex != -1) {
         if (actionIndex < targetIndex) targetIndex--;
         AnAction anAction = list.remove(actionIndex);
-        list.add(before ? targetIndex : targetIndex + 1, anAction);
+        list.add(targetIndex, anAction);
         return;
       }
     }

@@ -142,7 +142,6 @@ c:com.intellij.usages.impl.UsageViewImpl
 - p:isPreviewUsageActionEnabled():Z
 - isSearchInProgress():Z
 - isVisible(com.intellij.usages.Usage):Z
-- ps:moveActionTo(java.util.List,java.lang.String,java.lang.String,Z):V
 - refreshUsages():V
 - removeUsage(com.intellij.usages.Usage):V
 - removeUsagesBulk(java.util.Collection):V
