@@ -95,7 +95,9 @@ class PluginDependenciesValidator private constructor(
         getModuleName(it) ?: error("Cannot detect module name for $it in $descriptor")  
       }, { descriptor })
     }
-    
+
+    val unusedIgnoredDependenciesPatterns = missingDependenciesToIgnore.toMutableSet()
+
     checkSourceModule@ for ((sourceModuleName, sourceDescriptors) in jpsModuleToRuntimeDescriptors) {
       val sourceModule = jpsModules.getValue(sourceModuleName)
       if (sourceModule.getSourceRoots(JavaSourceRootType.SOURCE).toList().isEmpty()) {
@@ -127,7 +129,13 @@ class PluginDependenciesValidator private constructor(
       }
       enumerator.processModules { targetModule ->
         val targetModuleName = targetModule.name
-        if (targetModuleName !in moduleDependenciesAtRuntime && !isIgnoredDependency(sourceModuleName, targetModuleName)) {
+        if (targetModuleName !in moduleDependenciesAtRuntime) {
+          val ignoredDependencyPattern = findIgnoredDependencyPattern(sourceModuleName, targetModuleName)
+          if (ignoredDependencyPattern != null) {
+            unusedIgnoredDependenciesPatterns.remove(ignoredDependencyPattern)
+            return@processModules
+          }
+          
           val allExpectedTargets = jpsModuleToRuntimeDescriptors[targetModuleName]
           if (allExpectedTargets == null) {
             //println("Skipping reporting '$sourceModuleName' -> '$targetModuleName' because no runtime descriptors found\n")
@@ -164,6 +172,10 @@ class PluginDependenciesValidator private constructor(
           errors.add(PluginModuleConfigurationError(moduleName = sourceModuleName, errorMessage = errorMessage))
         }
       }
+    }
+
+    for ((fromModulePattern, toModulePattern) in unusedIgnoredDependenciesPatterns) {
+      println("Unused ignored dependency pattern: '$fromModulePattern' -> '$toModulePattern'")
     }
   }
 
@@ -222,7 +234,7 @@ class PluginDependenciesValidator private constructor(
     }
   }
 
-  private fun isIgnoredDependency(fromModule: String, toModule: String): Boolean {
+  private fun findIgnoredDependencyPattern(fromModule: String, toModule: String): Pair<String, String>? {
     fun String.matches(pattern: String): Boolean {
       if (pattern.endsWith("*")) {
         return startsWith(pattern.removeSuffix("*"))
@@ -231,7 +243,7 @@ class PluginDependenciesValidator private constructor(
         return this == pattern
       }
     }
-    return missingDependenciesToIgnore.any { (fromPattern, toPattern) -> fromModule.matches(fromPattern) && toModule.matches(toPattern) }
+    return missingDependenciesToIgnore.find { (fromPattern, toPattern) -> fromModule.matches(fromPattern) && toModule.matches(toPattern) }
   }
 
   private val IdeaPluginDescriptorImpl.shortPresentation: String
