@@ -1,55 +1,98 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.inspections
+package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.config.ApiVersion.Companion.KOTLIN_1_6
+import com.intellij.openapi.util.TextRange
+import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.core.ShortenReferences
-import org.jetbrains.kotlin.idea.inspections.collections.isCalling
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtPostfixExpression
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.callExpressionVisitor
+import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-
+private val kotlinIoPackage: FqName = FqName("kotlin.io")
 private val readLineFqName = FqName("kotlin.io.readLine")
+private val readLineName = Name.identifier("readLine")
 
-class ReplaceReadLineWithReadlnInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = callExpressionVisitor(fun(callExpression) {
-        if (callExpression.languageVersionSettings.apiVersion < KOTLIN_1_6) return
-        if (!callExpression.isCalling(readLineFqName)) return
+class ReplaceReadLineWithReadlnInspection : KotlinApplicableInspectionBase.Simple<KtExpression, ReplaceReadLineWithReadlnInspection.Context>(), CleanupLocalInspectionTool {
+    data class Context(
+        val targetExpression: SmartPsiElementPointer<KtExpression>,
+        val newFunctionName: String
+    )
 
-        val qualifiedOrCall = callExpression.getQualifiedExpressionForSelectorOrThis()
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitorVoid =
+        callExpressionVisitor { visitTargetElement(it, holder, isOnTheFly) }
+
+    override fun getProblemDescription(
+        element: KtExpression,
+        context: Context
+    ): @InspectionMessage String =
+        KotlinBundle.message("replace.0.with.1", readLineFqName.shortName().asString(), context.newFunctionName)
+
+    override fun registerProblem(
+        ranges: List<TextRange>,
+        holder: ProblemsHolder,
+        element: KtExpression,
+        context: Context,
+        isOnTheFly: Boolean
+    ) {
+        val ktExpression = context.targetExpression.element ?: return
+        super.registerProblem(ranges, holder, ktExpression, context, isOnTheFly)
+    }
+
+    override fun createQuickFix(
+        element: KtExpression,
+        context: Context
+    ): KotlinModCommandQuickFix<KtExpression> =
+        ReplaceFix(context.targetExpression, context.newFunctionName)
+
+    override fun KaSession.prepareContext(element: KtExpression): Context? {
+        val callableId = analyze(element) {
+            val resolvedCall = element.resolveToCall()?.singleFunctionCallOrNull()
+            resolvedCall?.symbol?.callableId
+        } ?: return null
+        if (callableId.packageName != kotlinIoPackage || callableId.callableName != readLineName) return null
+
+        val qualifiedOrCall = element.getQualifiedExpressionForSelectorOrThis()
         val parent = qualifiedOrCall.parent
         val (targetExpression, newFunctionName) = if (parent is KtPostfixExpression && parent.operationToken == KtTokens.EXCLEXCL) {
             parent to "readln"
         } else {
             qualifiedOrCall to "readlnOrNull"
         }
-        holder.registerProblem(
-            targetExpression,
-            KotlinBundle.message("replace.0.with.1", readLineFqName.shortName().asString(), newFunctionName),
-            ReplaceFix(newFunctionName)
-        )
-    })
+        return Context(targetExpression.createSmartPointer(), newFunctionName)
+    }
 
-    private class ReplaceFix(private val functionName: String) : LocalQuickFix {
+    private class ReplaceFix(
+        private val targetExpression: SmartPsiElementPointer<KtExpression>,
+        private val functionName: String
+    ) : KotlinModCommandQuickFix<KtExpression>() {
         override fun getName() = KotlinBundle.message("replace.with.0", functionName)
 
         override fun getFamilyName() = name
 
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val replaced = descriptor.psiElement.replace(KtPsiFactory(project).createExpression("kotlin.io.$functionName()"))
-            ShortenReferences.DEFAULT.process(replaced as KtElement)
+        override fun applyFix(
+            project: Project,
+            element: KtExpression,
+            updater: ModPsiUpdater
+        ) {
+            val expression = targetExpression.element?.let(updater::getWritable) ?: return
+            val replaced =
+                expression.replace(KtPsiFactory(project).createExpression("kotlin.io.$functionName()")) as KtElement
+            ShortenReferencesFacility.getInstance().shorten(replaced)
         }
     }
 }

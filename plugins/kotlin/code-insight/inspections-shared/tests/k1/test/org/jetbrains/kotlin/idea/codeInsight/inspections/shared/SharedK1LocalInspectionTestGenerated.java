@@ -3680,6 +3680,78 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/replaceReadLineWithReadln")
+    public abstract static class ReplaceReadLineWithReadln extends AbstractSharedK1LocalInspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/inspectionsLocal/replaceReadLineWithReadln/readln")
+        public static class Readln extends AbstractSharedK1LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("qualified.kt")
+            public void testQualified() throws Exception {
+                runTest("../testData/inspectionsLocal/replaceReadLineWithReadln/readln/qualified.kt");
+            }
+
+            @TestMetadata("sameName.kt")
+            public void testSameName() throws Exception {
+                runTest("../testData/inspectionsLocal/replaceReadLineWithReadln/readln/sameName.kt");
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("../testData/inspectionsLocal/replaceReadLineWithReadln/readln/simple.kt");
+            }
+
+            @TestMetadata("withSelector.kt")
+            public void testWithSelector() throws Exception {
+                runTest("../testData/inspectionsLocal/replaceReadLineWithReadln/readln/withSelector.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/inspectionsLocal/replaceReadLineWithReadln/readlnOrNull")
+        public static class ReadlnOrNull extends AbstractSharedK1LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("qualified.kt")
+            public void testQualified() throws Exception {
+                runTest("../testData/inspectionsLocal/replaceReadLineWithReadln/readlnOrNull/qualified.kt");
+            }
+
+            @TestMetadata("sameName.kt")
+            public void testSameName() throws Exception {
+                runTest("../testData/inspectionsLocal/replaceReadLineWithReadln/readlnOrNull/sameName.kt");
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("../testData/inspectionsLocal/replaceReadLineWithReadln/readlnOrNull/simple.kt");
+            }
+
+            @TestMetadata("withSelector.kt")
+            public void testWithSelector() throws Exception {
+                runTest("../testData/inspectionsLocal/replaceReadLineWithReadln/readlnOrNull/withSelector.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/simplifyBooleanWithConstants")
     public static class SimplifyBooleanWithConstants extends AbstractSharedK1LocalInspectionTest {
         @java.lang.Override
