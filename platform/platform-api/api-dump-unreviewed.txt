@@ -4859,12 +4859,6 @@ f:com.intellij.openapi.ui.popup.util.PopupUtil
 - s:showBalloonForActiveFrame(java.lang.String,com.intellij.openapi.ui.MessageType):V
 - s:showBalloonForComponent(java.awt.Component,java.lang.String,com.intellij.openapi.ui.MessageType,Z,com.intellij.openapi.Disposable):V
 - s:showForActionButtonEvent(com.intellij.openapi.ui.popup.JBPopup,com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.openapi.ui.popup.util.RoundedCellRenderer
-- javax.swing.ListCellRenderer
-- <init>(javax.swing.ListCellRenderer):V
-- <init>(javax.swing.ListCellRenderer,Z):V
-- b:<init>(javax.swing.ListCellRenderer,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- getListCellRendererComponent(javax.swing.JList,java.lang.Object,I,Z,Z):java.awt.Component
 com.intellij.openapi.ui.validation.DialogValidation
 - a:validate():com.intellij.openapi.ui.ValidationInfo
 com.intellij.openapi.ui.validation.DialogValidation$WithParameter
