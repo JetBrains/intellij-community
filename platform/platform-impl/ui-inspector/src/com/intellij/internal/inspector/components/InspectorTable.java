@@ -505,9 +505,19 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
           }
         }
       }
-      else if (value instanceof CachedImageIcon) {
+      else if (value instanceof CachedImageIcon cachedImage) {
         printToPreview("Icon path: ", NORMAL_OUTPUT);
-        printIconPath((CachedImageIcon)value);
+        printIconPath(cachedImage);
+        Double ojbScale = cachedImage.getObjScale();
+        if (ojbScale != null && ojbScale != 1.0) {
+          printToPreview("\nObj scale: ", NORMAL_OUTPUT);
+          printToPreview(ojbScale.toString(), NORMAL_OUTPUT);
+        }
+        printToPreview("\nIcon size: ", NORMAL_OUTPUT);
+        printToPreview("\nIcon size: ", NORMAL_OUTPUT);
+        printToPreview(cachedImage.getIconWidth() + "x" + cachedImage.getIconHeight(), NORMAL_OUTPUT);
+        printToPreview("\ntoString: ", NORMAL_OUTPUT);
+        printToPreview(cachedImage.toString(), NORMAL_OUTPUT);
       }
       else {
         printClassName(renderedValue);
