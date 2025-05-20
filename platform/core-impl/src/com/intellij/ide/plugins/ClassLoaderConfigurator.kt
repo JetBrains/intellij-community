@@ -178,12 +178,14 @@ class ClassLoaderConfigurator(
   private fun getSortedDependencies(module: IdeaPluginDescriptorImpl): Array<IdeaPluginDescriptorImpl> {
     val dependenciesList = pluginSet.getSortedDependencies(module)
     var mutableDependenciesList: MutableList<IdeaPluginDescriptorImpl>? = null
-    for (moduleItem in module.content.modules) {
-      if (moduleItem.loadingRule == ModuleLoadingRule.EMBEDDED) {
-        if (mutableDependenciesList == null) {
-          mutableDependenciesList = dependenciesList.toMutableList()
+    if (module is PluginMainDescriptor) {
+      for (moduleItem in module.content.modules) {
+        if (moduleItem.loadingRule == ModuleLoadingRule.EMBEDDED) {
+          if (mutableDependenciesList == null) {
+            mutableDependenciesList = dependenciesList.toMutableList()
+          }
+          mutableDependenciesList.addAll(pluginSet.getSortedDependencies(moduleItem.requireDescriptor()))
         }
-        mutableDependenciesList.addAll(pluginSet.getSortedDependencies(moduleItem.requireDescriptor()))
       }
     }
     val dependencies = (mutableDependenciesList ?: dependenciesList).toTypedArray()
@@ -325,10 +327,8 @@ class ClassLoaderConfigurator(
     classPath: ClassPath,
     libDirectories: List<Path>
   ): PluginClassLoader {
-    val resolveScopeManager: ResolveScopeManager?
-    // main plugin descriptor
-    if (module !is ContentModuleDescriptor) {
-      resolveScopeManager = if (module.pluginId.idString == "com.intellij.diagram") {
+    val resolveScopeManager: ResolveScopeManager? = if (module is PluginMainDescriptor) {
+       if (module.pluginId.idString == "com.intellij.diagram") {
         // multiple packages - intellij.diagram and intellij.diagram.impl modules
         createScopeWithExtraPackage("com.intellij.diagram.")
       }
@@ -337,13 +337,7 @@ class ClassLoaderConfigurator(
       }
     }
     else {
-      resolveScopeManager = if (module.content.modules.isEmpty()) {
-        createModuleResolveScopeManager()
-      }
-      else {
-        // see "The `content.module` element" section about content handling for a module
-        createModuleContentBasedScope(descriptor = module)
-      }
+      createModuleResolveScopeManager()
     }
     return PluginClassLoader(classPath = classPath,
                              parents = dependencies,
@@ -460,32 +454,6 @@ private fun getDependencyPackagePrefixes(descriptor: IdeaPluginDescriptorImpl, p
     }
   }
   return result
-}
-
-private fun createModuleContentBasedScope(descriptor: IdeaPluginDescriptorImpl): ResolveScopeManager {
-  val packagePrefixes = ArrayList<String>(descriptor.content.modules.size)
-  for (item in descriptor.content.modules) {
-    packagePrefixes.add("${item.requireDescriptor().packagePrefix!!}.")
-  }
-
-  // the force flag is ignored for module - e.g., RailsViewLineMarkerProvider is referenced as extension implementation in several modules
-  return object : ResolveScopeManager {
-    override fun isDefinitelyAlienClass(name: String, packagePrefix: String, force: Boolean): String? {
-      if (name.startsWith(packagePrefix) || name.startsWith("com.intellij.ultimate.PluginVerifier")) {
-        return null
-      }
-
-      // For a module, the referenced module doesn't have own classloader and is added directly to classpath,
-      // so if name doesn't pass standard package prefix filter.
-      // Check that it is not in content - if in content, then it means that class is not alien.
-      for (prefix in packagePrefixes) {
-        if (name.startsWith(prefix)) {
-          return null
-        }
-      }
-      return ""
-    }
-  }
 }
 
 internal val canExtendIdeaClassLoader: Boolean by lazy {
