@@ -324,8 +324,8 @@ public final class org/jetbrains/jewel/markdown/processing/MarkdownParserFactory
 public final class org/jetbrains/jewel/markdown/processing/MarkdownProcessor {
 	public static final field $stable I
 	public fun <init> ()V
-	public fun <init> (Ljava/util/List;Lorg/jetbrains/jewel/markdown/MarkdownMode;Lorg/commonmark/parser/Parser;)V
-	public synthetic fun <init> (Ljava/util/List;Lorg/jetbrains/jewel/markdown/MarkdownMode;Lorg/commonmark/parser/Parser;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/util/List;Lorg/jetbrains/jewel/markdown/MarkdownMode;Lorg/commonmark/parser/Parser;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Ljava/util/List;Lorg/jetbrains/jewel/markdown/MarkdownMode;Lorg/commonmark/parser/Parser;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getBlockExtensions ()Ljava/util/List;
 	public final fun getDelimitedInlineExtensions ()Ljava/util/List;
 	public final fun getExtensions ()Ljava/util/List;
