@@ -702,21 +702,10 @@ class NotPropertiesServiceImpl(private val project: Project) : NotPropertiesServ
         val profile = InspectionProjectProfileManager.getInstance(project).currentProfile
         val tool = profile.getUnwrappedTool(USE_PROPERTY_ACCESS_INSPECTION, element)
         val notProperties = (tool?.propertiesNotToReplace ?: NotPropertiesService.DEFAULT.map(::FqNameUnsafe)).toSet()
-        return notProperties + K2_EXTRA_NOT_PROPERTIES
+        return notProperties
     }
 
     companion object {
         val USE_PROPERTY_ACCESS_INSPECTION: Key<UsePropertyAccessSyntaxInspection> = Key.create("UsePropertyAccessSyntax")
-
-        /**
-         * Properties excluded due to different problems in K2 Mode.
-         *
-         * Intentionally not saved into [UsePropertyAccessSyntaxInspection.propertiesNotToReplace],
-         * because they are not supposed to be possible to disable or modify.
-         */
-        val K2_EXTRA_NOT_PROPERTIES: List<FqNameUnsafe> = listOf(
-            "java.util.AbstractCollection.isEmpty", // KTIJ-31157, KT-72305
-            "java.util.AbstractMap.isEmpty",        // KTIJ-31157, KT-72305
-        ).map(::FqNameUnsafe)
     }
 }
