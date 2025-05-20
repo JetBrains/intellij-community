@@ -19,7 +19,7 @@ import javax.swing.BoxLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-class CustomFoldingEditorCellViewComponent(private val cell: EditorCell, internal val component: JComponent)
+open class CustomFoldingEditorCellViewComponent(protected val cell: EditorCell, internal val component: JComponent)
   : EditorCellViewComponent() {
   private val editor: EditorEx = cell.editor
 
