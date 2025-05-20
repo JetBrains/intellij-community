@@ -10,7 +10,7 @@ object PluginCompatibilityUtils {
     return !descriptor.isBundled &&
            descriptor.packagePrefix == null &&
            !descriptor.isImplementationDetail &&
-           descriptor.content.modules.isEmpty() &&
+           descriptor.contentModules.isEmpty() &&
            descriptor.moduleDependencies.modules.isEmpty() &&
            descriptor.moduleDependencies.plugins.isEmpty() &&
            descriptor.pluginId != PluginManagerCore.CORE_ID &&

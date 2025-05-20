@@ -433,10 +433,10 @@ public class Invoker implements InvokerMBean {
       IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(PluginId.getId(mainId));
       if (plugin == null) throw new DriverIllegalStateException("No such plugin " + mainId);
 
-      List<PluginContentDescriptor.ModuleItem> modules = IdeaPluginDescriptorImplKt.getContent((IdeaPluginDescriptorImpl)plugin).modules;
-      for (PluginContentDescriptor.ModuleItem module : modules) {
-        if (Objects.equals(moduleId, module.getName())) {
-          return requireNonNull(module.requireDescriptor().getPluginClassLoader());
+      List<ContentModuleDescriptor> modules = IdeaPluginDescriptorImplKt.getContentModules((IdeaPluginDescriptorImpl)plugin);
+      for (var module : modules) {
+        if (Objects.equals(moduleId, module.getModuleName())) {
+          return requireNonNull(module.getPluginClassLoader());
         }
       }
 

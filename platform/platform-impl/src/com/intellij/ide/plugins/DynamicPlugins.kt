@@ -305,14 +305,13 @@ object DynamicPlugins {
     checkNoComponentsOrServiceOverrides(module)?.let { return it }
     checkUnloadActions(module)?.let { return it }
 
-    for (moduleRef in module.content.modules) {
-      if (pluginSet.isModuleEnabled(moduleRef.name)) {
-        val subModule = moduleRef.requireDescriptor()
-        checkCanUnloadWithoutRestart(module = subModule,
+    for (moduleRef in module.contentModules) {
+      if (pluginSet.isModuleEnabled(moduleRef.moduleName)) {
+        checkCanUnloadWithoutRestart(module = moduleRef,
                                      parentModule = module,
                                      optionalDependencyPluginId = null,
                                      context = context)?.let {
-          return "$it in optional dependency on ${subModule.pluginId}"
+          return "$it in optional dependency on ${moduleRef.pluginId}"
         }
       }
     }
@@ -743,17 +742,14 @@ object DynamicPlugins {
       subDescriptor.pluginClassLoader = null
     }
 
-    for (module in plugin.content.modules) {
-      val subDescriptor = module.requireDescriptor()
-
-      val classLoader = subDescriptor.pluginClassLoader ?: continue
-      if (classLoader is PluginClassLoader && classLoader.pluginDescriptor === subDescriptor) {
+    for (module in plugin.contentModules) {
+      val classLoader = module.pluginClassLoader ?: continue
+      if (classLoader is PluginClassLoader && classLoader.pluginDescriptor === module) {
         classLoaders.add(classLoader)
         classLoader.state = PluginAwareClassLoader.UNLOAD_IN_PROGRESS
       }
-
-      unloadModuleDescriptorNotRecursively(subDescriptor)
-      subDescriptor.pluginClassLoader = null
+      unloadModuleDescriptorNotRecursively(module)
+      module.pluginClassLoader = null
     }
   }
 
@@ -1189,10 +1185,10 @@ private fun processDependenciesOnPlugin(
   onlyOptional: Boolean,
   processor: (pluginDescriptor: IdeaPluginDescriptorImpl, moduleDescriptor: IdeaPluginDescriptorImpl) -> Boolean,
 ) {
-  val wantedIds = HashSet<String>(1 + dependencyTarget.content.modules.size)
+  val wantedIds = HashSet<String>(1 + dependencyTarget.contentModules.size)
   wantedIds.add(dependencyTarget.pluginId.idString)
-  for (module in dependencyTarget.content.modules) {
-    wantedIds.add(module.name)
+  for (module in dependencyTarget.contentModules) {
+    wantedIds.add(module.moduleName)
   }
   // FIXME plugin aliases probably missing?
 

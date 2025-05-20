@@ -1430,10 +1430,9 @@ internal fun doLoadClass(name: String, pluginDescriptor: PluginDescriptor, check
     }
     catch (e: ClassNotFoundException) {
       if (checkCoreSubModules && pluginDescriptor.pluginId == PluginManagerCore.CORE_ID && pluginDescriptor is IdeaPluginDescriptorImpl) {
-        for (module in pluginDescriptor.content.modules) {
-          val subDescriptor = module.requireDescriptor()
-          if (subDescriptor.packagePrefix == null && !module.name.startsWith("intellij.libraries.")) {
-            val pluginClassLoader = subDescriptor.classLoader as? PluginAwareClassLoader ?: continue
+        for (module in pluginDescriptor.contentModules) {
+          if (module.packagePrefix == null && !module.moduleName.startsWith("intellij.libraries.")) {
+            val pluginClassLoader = module.classLoader as? PluginAwareClassLoader ?: continue
             pluginClassLoader.loadClassInsideSelf(name)?.let {
               assert(it.isAnnotationPresent(InternalIgnoreDependencyViolation::class.java))
               return it

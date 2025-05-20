@@ -3,6 +3,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.testFramework.PluginBuilder
@@ -318,7 +319,7 @@ class PluginDescriptorTest {
     assertThat(descriptor.contentModules).hasSize(1)
     val subDesc = descriptor.contentModules[0]
     assertThat(subDesc.pluginId.idString).isEqualTo("bar")
-    assertThat(subDesc.name).isEqualTo("Bar")
+    assertThat((subDesc as PluginDescriptor).name).isEqualTo("Bar")
     assertThat(subDesc.version).isEqualTo("1.0.0")
   }
 
@@ -348,7 +349,7 @@ class PluginDescriptorTest {
     assertThat(descriptor.contentModules).hasSize(1)
     val subDesc = descriptor.contentModules[0]
     assertThat(subDesc.pluginId.idString).isEqualTo("bar")
-    assertThat(subDesc.name).isEqualTo("Bar")
+    assertThat((subDesc as PluginDescriptor).name).isEqualTo("Bar")
     assertThat(subDesc.version).isEqualTo("1.0.0")
   }
 
@@ -426,7 +427,7 @@ class PluginDescriptorTest {
     assertThat(barModule).isNotNull
       .isMarkedEnabled()
       .doesNotHaveEnabledContentModules()
-    assertThat(barModule.content.modules).hasSize(0)
+    assertThat(barModule.contentModules).hasSize(0)
   }
 
   // todo this is rather about plugin set loading, probably needs to be moved out

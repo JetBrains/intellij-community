@@ -294,6 +294,7 @@ class PluginMainDescriptor(
   /**
    * this is an implementation detail required during descriptor loading, use [contentModules] instead
    */
+  @VisibleForTesting
   val content: PluginContentDescriptor =
     raw.contentModules.takeIf { it.isNotEmpty() }?.let { PluginContentDescriptor(convertContentModules(it)) }
     ?: PluginContentDescriptor.EMPTY
@@ -607,7 +608,7 @@ class ContentModuleDescriptor(
   }
 
   override fun getPluginId(): PluginId = parent.pluginId
-  @Deprecated("make sure you don't confuse it with moduleName; use main descriptor")
+  @Deprecated("make sure you don't confuse it with moduleName; use main descriptor", level = DeprecationLevel.ERROR)
   override fun getName(): @NlsSafe String = parent.name // .also { LOG.error("unexpected call") } TODO test failures
   // <editor-fold desc="Deprecated">
   // These are meaningless for sub-descriptors
@@ -645,6 +646,11 @@ tailrec fun IdeaPluginDescriptorImpl.getMainDescriptor(): PluginMainDescriptor =
 @Deprecated("only PluginMainDescriptor has content")
 val IdeaPluginDescriptorImpl.content: PluginContentDescriptor
   get() = if (this is PluginMainDescriptor) content else PluginContentDescriptor.EMPTY
+
+@get:ApiStatus.Internal
+@Deprecated("only PluginMainDescriptor has contentModules")
+val IdeaPluginDescriptorImpl.contentModules: List<ContentModuleDescriptor>
+  get() = if (this is PluginMainDescriptor) contentModules else emptyList()
 
 @ApiStatus.Internal
 @TestOnly

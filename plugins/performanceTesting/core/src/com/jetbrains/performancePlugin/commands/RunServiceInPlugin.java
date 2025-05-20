@@ -3,9 +3,9 @@ package com.jetbrains.performancePlugin.commands;
 
 import com.intellij.ide.plugins.*;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClassLoaderUtil;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.jetbrains.performancePlugin.PerformanceTestSpan;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,11 +30,11 @@ public class RunServiceInPlugin extends RunClassInPlugin {
 
     ClassLoader loader = null;
     // requires to avoid "class must not be requested from main classloader of plugin" error
-    List<PluginContentDescriptor.ModuleItem> modules = IdeaPluginDescriptorImplKt.getContent((IdeaPluginDescriptorImpl)plugin).modules;
+    List<ContentModuleDescriptor> modules = IdeaPluginDescriptorImplKt.getContentModules((IdeaPluginDescriptorImpl)plugin);
     if (!modules.isEmpty()) {
-      for (PluginContentDescriptor.ModuleItem module : modules) {
-        if (myClazzName.contains(module.getName())) {
-          loader = module.requireDescriptor().getClassLoader();
+      for (var module : modules) {
+        if (myClazzName.contains(module.getModuleName())) {
+          loader = module.getClassLoader();
         }
       }
     }

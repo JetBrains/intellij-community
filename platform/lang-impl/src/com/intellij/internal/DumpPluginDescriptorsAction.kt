@@ -81,7 +81,7 @@ private class PluginDescriptionDumper(val coroutineScope: CoroutineScope) {
 
     val pluginClassLoaders = allPlugins.mapNotNullTo(HashSet()) { it.pluginClassLoader }
     allPlugins.flatMapTo(pluginClassLoaders) {
-      (it as? IdeaPluginDescriptorImpl)?.content?.modules?.mapNotNull { it.requireDescriptor().pluginClassLoader } ?: emptyList()
+      (it as? IdeaPluginDescriptorImpl)?.contentModules?.mapNotNull { it.pluginClassLoader } ?: emptyList()
     }
     @Suppress("TestOnlyProblems")
     val parentClassLoaders = pluginClassLoaders.filterIsInstance<PluginClassLoader>()
@@ -131,18 +131,17 @@ private class PluginDescriptionDumper(val coroutineScope: CoroutineScope) {
                                                    classLoaderIds: Map<ClassLoader, String>,
                                                    printedClassLoaders: MutableSet<ClassLoader>) {
     if (plugin !is IdeaPluginDescriptorImpl) return
-    val modules = plugin.content.modules
+    val modules = plugin.contentModules
     if (modules.isEmpty()) return
 
     writeArrayFieldStart("modules")
-    for (moduleItem in modules) {
+    for (module in modules) {
       writeStartObject()
-      writeStringField("name", moduleItem.name)
-      val descriptor = moduleItem.requireDescriptor()
-      val isEnabled = descriptor in PluginManagerCore.getPluginSet().getEnabledModules()
+      writeStringField("name", module.moduleName)
+      val isEnabled = module in PluginManagerCore.getPluginSet().getEnabledModules()
       writeBooleanField("enabled", isEnabled)
       if (isEnabled) {
-        writeClassLoaderData(descriptor.classLoader, classLoaderIds, printedClassLoaders)
+        writeClassLoaderData(module.classLoader, classLoaderIds, printedClassLoaders)
       }
       writeEndObject()
     }

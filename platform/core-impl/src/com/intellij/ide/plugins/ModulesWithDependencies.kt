@@ -38,10 +38,9 @@ internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection
     }
 
     modules.add(module)
-    for (item in module.content.modules) {
-      val subModule = item.requireDescriptor()
+    for (subModule in module.contentModules) {
       modules.add(subModule)
-      moduleMap.put(item.name, subModule)
+      moduleMap.put(subModule.moduleName, subModule)
       for (pluginAlias in subModule.pluginAliases) {
         moduleMap.put(pluginAlias.idString, subModule)
       }
@@ -187,14 +186,14 @@ private fun collectDirectDependenciesInOldFormat(rootDescriptor: IdeaPluginDescr
       }
       else {
         // e.g. `.env` plugin in an old format and doesn't explicitly specify dependency on a new extracted modules
-        dep.content.modules.mapTo(dependenciesCollector) { it.requireDescriptor() }
+        dependenciesCollector.addAll(dep.contentModules)
 
         dependenciesCollector.add(dep)
       }
     }
 
     if (knownNotFullyMigratedPluginIds.contains(rootDescriptor.pluginId.idString)) {
-      idMap.get(PluginManagerCore.CORE_ID.idString)!!.content.modules.mapTo(dependenciesCollector) { it.requireDescriptor() }
+      dependenciesCollector.addAll(idMap.get(PluginManagerCore.CORE_ID.idString)!!.contentModules)
     }
 
     dependency.subDescriptor?.let {
@@ -243,9 +242,9 @@ private fun collectDirectDependenciesInNewFormat(
     /* Add edges to all required content modules. 
        This is needed to ensure that the main plugin module is processed after them, and at that point we can determine whether the plugin 
        can be loaded or not. */
-    for (item in module.content.modules) {
-      if (item.loadingRule.required) {
-        val descriptor = idMap.get(item.name)
+    for (item in module.contentModules) {
+      if (item.moduleLoadingRule.required) {
+        val descriptor = idMap.get(item.moduleName)
         if (descriptor != null) {
           additionalEdges.add(descriptor)
         }

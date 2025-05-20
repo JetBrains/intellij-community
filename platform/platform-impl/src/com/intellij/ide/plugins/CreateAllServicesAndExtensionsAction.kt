@@ -315,10 +315,10 @@ private fun loadLightServiceClass(
   fun loadClass(descriptor: IdeaPluginDescriptorImpl) =
     (descriptor.pluginClassLoader as? PluginClassLoader)?.loadClass(className, true)
 
-  for (moduleItem in mainDescriptor.content.modules) {
+  for (moduleItem in mainDescriptor.contentModules) {
     try {
       // module is not loaded - dependency is not provided
-      return loadClass(moduleItem.requireDescriptor())
+      return loadClass(moduleItem)
     }
     catch (_: PluginException) {
     }
