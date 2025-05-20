@@ -123,6 +123,8 @@ object DynamicPlugins {
    */
   fun loadPlugins(descriptors: Collection<IdeaPluginDescriptorImpl>, project: Project?): Boolean {
     return runProcess {
+      descriptors.forEach { check(it is PluginMainDescriptor) { it } }
+      @Suppress("UNCHECKED_CAST") (descriptors as Collection<PluginMainDescriptor>)
       updateDescriptorsWithoutRestart(descriptors, load = true) {
         doLoadPlugin(it, project)
       }
@@ -139,6 +141,8 @@ object DynamicPlugins {
     options: UnloadPluginOptions = UnloadPluginOptions(disable = true),
   ): Boolean {
     return runProcess {
+      descriptors.forEach { check(it is PluginMainDescriptor) { it } }
+      @Suppress("UNCHECKED_CAST") (descriptors as Collection<PluginMainDescriptor>)
       updateDescriptorsWithoutRestart(descriptors, load = false) {
         doUnloadPluginWithProgress(project, parentComponent, it, options)
       }
@@ -176,9 +180,9 @@ object DynamicPlugins {
   }
 
   private fun updateDescriptorsWithoutRestart(
-    plugins: Collection<IdeaPluginDescriptorImpl>,
+    plugins: Collection<PluginMainDescriptor>,
     load: Boolean,
-    executor: (IdeaPluginDescriptorImpl) -> Boolean,
+    executor: (PluginMainDescriptor) -> Boolean,
   ): Boolean {
     if (plugins.isEmpty()) {
       return true
@@ -202,7 +206,6 @@ object DynamicPlugins {
     // todo plugin installation should be done not in this method
     var allPlugins = pluginSet.allPlugins
     for (descriptor in descriptors) {
-      descriptor as PluginMainDescriptor
       if (!allPlugins.contains(descriptor)) {
         allPlugins = allPlugins + descriptor
       }

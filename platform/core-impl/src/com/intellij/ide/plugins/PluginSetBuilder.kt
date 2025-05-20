@@ -17,8 +17,8 @@ import java.util.function.Supplier
 @ApiStatus.Internal
 class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>) {
   private val sortedModulesWithDependencies: ModulesWithDependencies
-  private val builder: DFSTBuilder<IdeaPluginDescriptorImpl>
-  val topologicalComparator: Comparator<IdeaPluginDescriptorImpl>
+  private val builder: DFSTBuilder<PluginModuleDescriptor>
+  val topologicalComparator: Comparator<PluginModuleDescriptor>
 
   init {
     val (unsortedModulesWithDependencies, additionalEdges) = createModulesWithDependenciesAndAdditionalEdges(unsortedPlugins)

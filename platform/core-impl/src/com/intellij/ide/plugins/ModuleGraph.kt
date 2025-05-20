@@ -10,11 +10,11 @@ import java.util.*
  */
 internal class ModuleGraph internal constructor(
   modulesWithDependencies: ModulesWithDependencies, 
-  additionalEdges: IdentityHashMap<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>
-) : Graph<IdeaPluginDescriptorImpl> {
+  additionalEdges: IdentityHashMap<PluginModuleDescriptor, List<PluginModuleDescriptor>>
+) : Graph<PluginModuleDescriptor> {
   private val nodes = modulesWithDependencies.modules
-  private val directDependencies = IdentityHashMap<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>(modulesWithDependencies.modules.size)
-  private val directDependents = IdentityHashMap<IdeaPluginDescriptorImpl, ArrayList<IdeaPluginDescriptorImpl>>(modulesWithDependencies.modules.size)
+  private val directDependencies = IdentityHashMap<PluginModuleDescriptor, List<PluginModuleDescriptor>>(modulesWithDependencies.modules.size)
+  private val directDependents = IdentityHashMap<PluginModuleDescriptor, ArrayList<PluginModuleDescriptor>>(modulesWithDependencies.modules.size)
 
   init {
     for (module in modulesWithDependencies.modules) {
@@ -41,11 +41,11 @@ internal class ModuleGraph internal constructor(
     }
   }
   
-  override fun getNodes(): Collection<IdeaPluginDescriptorImpl> = nodes
+  override fun getNodes(): Collection<PluginModuleDescriptor> = nodes
 
-  private fun getDependencies(descriptor: IdeaPluginDescriptorImpl): Collection<IdeaPluginDescriptorImpl> = directDependencies.getOrDefault(descriptor, Collections.emptyList())
+  private fun getDependencies(descriptor: PluginModuleDescriptor): Collection<PluginModuleDescriptor> = directDependencies.getOrDefault(descriptor, Collections.emptyList())
 
-  override fun getIn(descriptor: IdeaPluginDescriptorImpl): Iterator<IdeaPluginDescriptorImpl> = getDependencies(descriptor).iterator()
+  override fun getIn(descriptor: PluginModuleDescriptor): Iterator<PluginModuleDescriptor> = getDependencies(descriptor).iterator()
 
-  override fun getOut(descriptor: IdeaPluginDescriptorImpl): Iterator<IdeaPluginDescriptorImpl> = directDependents.getOrDefault(descriptor, Collections.emptyList()).iterator()
+  override fun getOut(descriptor: PluginModuleDescriptor): Iterator<PluginModuleDescriptor> = directDependents.getOrDefault(descriptor, Collections.emptyList()).iterator()
 }

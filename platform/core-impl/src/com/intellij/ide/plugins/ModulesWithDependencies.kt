@@ -13,9 +13,9 @@ private val COVERAGE_ALIAS_ID = PluginId.getId("com.intellij.modules.coverage")
 private val ML_INLINE_ALIAS_ID = PluginId.getId("com.intellij.ml.inline.completion")
 private val JSON_ALIAS_ID = PluginId.getId("com.intellij.modules.json")
 
-internal class ModulesWithDependencies(val modules: List<IdeaPluginDescriptorImpl>,
-                                       val directDependencies: Map<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>) {
-  internal fun sorted(topologicalComparator: Comparator<IdeaPluginDescriptorImpl>): ModulesWithDependencies {
+internal class ModulesWithDependencies(val modules: List<PluginModuleDescriptor>,
+                                       val directDependencies: Map<PluginModuleDescriptor, List<PluginModuleDescriptor>>) {
+  internal fun sorted(topologicalComparator: Comparator<PluginModuleDescriptor>): ModulesWithDependencies {
     return ModulesWithDependencies(
       modules = modules.sortedWith(topologicalComparator),
       directDependencies = copySorted(directDependencies, topologicalComparator),
@@ -27,10 +27,10 @@ internal class ModulesWithDependencies(val modules: List<IdeaPluginDescriptorImp
  * Computes dependencies between modules in plugins and also computes additional edges in the module graph which shouldn't be treated as
  *  dependencies but should be used to determine the order in which modules are processed. 
  */
-internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection<IdeaPluginDescriptorImpl>): Pair<ModulesWithDependencies, IdentityHashMap<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>> {
-  val moduleMap = HashMap<String, IdeaPluginDescriptorImpl>(plugins.size * 2)
-  val modules = ArrayList<IdeaPluginDescriptorImpl>(moduleMap.size)
-  val additionalEdges = IdentityHashMap<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>()
+internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection<PluginMainDescriptor>): Pair<ModulesWithDependencies, IdentityHashMap<PluginModuleDescriptor, List<PluginModuleDescriptor>>> {
+  val moduleMap = HashMap<String, PluginModuleDescriptor>(plugins.size * 2)
+  val modules = ArrayList<PluginModuleDescriptor>(moduleMap.size)
+  val additionalEdges = IdentityHashMap<PluginModuleDescriptor, List<PluginModuleDescriptor>>()
   for (module in plugins) {
     moduleMap.put(module.pluginId.idString, module)
     for (pluginAlias in module.pluginAliases) {
@@ -48,9 +48,9 @@ internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection
   }
 
   val hasAllModules = moduleMap.containsKey(PluginManagerCore.ALL_MODULES_MARKER.idString)
-  val dependenciesCollector: MutableSet<IdeaPluginDescriptorImpl> = Collections.newSetFromMap(IdentityHashMap())
-  val additionalEdgesForCurrentModule: MutableSet<IdeaPluginDescriptorImpl> = Collections.newSetFromMap(IdentityHashMap())
-  val directDependencies = IdentityHashMap<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>(modules.size)
+  val dependenciesCollector: MutableSet<PluginModuleDescriptor> = Collections.newSetFromMap(IdentityHashMap())
+  val additionalEdgesForCurrentModule: MutableSet<PluginModuleDescriptor> = Collections.newSetFromMap(IdentityHashMap())
+  val directDependencies = IdentityHashMap<PluginModuleDescriptor, List<PluginModuleDescriptor>>(modules.size)
   for (module in modules) {
     // If a plugin does not include any module dependency tags in its plugin.xml, it's assumed to be a legacy plugin
    // and is loaded only in IntelliJ IDEA, so it may use classes from Java plugin.
@@ -150,7 +150,7 @@ private fun doesDependOnPluginAlias(plugin: IdeaPluginDescriptorImpl, @Suppress(
   return plugin.dependencies.any { it.pluginId == aliasId } || plugin.moduleDependencies.plugins.any { it.id == aliasId }
 }
 
-internal fun toCoreAwareComparator(comparator: Comparator<IdeaPluginDescriptorImpl>): Comparator<IdeaPluginDescriptorImpl> {
+internal fun toCoreAwareComparator(comparator: Comparator<PluginModuleDescriptor>): Comparator<PluginModuleDescriptor> {
   // there is circular reference between core and implementation-detail plugin, as not all such plugins extracted from core,
   // so, ensure that core plugin is always first (otherwise not possible to register actions - a parent group not defined)
   // don't use sortWith here - avoid loading kotlin stdlib
@@ -171,8 +171,8 @@ private val knownNotFullyMigratedPluginIds: Set<String> = hashSetOf(
 )
 
 private fun collectDirectDependenciesInOldFormat(rootDescriptor: IdeaPluginDescriptorImpl,
-                                                 idMap: Map<String, IdeaPluginDescriptorImpl>,
-                                                 dependenciesCollector: MutableSet<IdeaPluginDescriptorImpl>) {
+                                                 idMap: Map<String, PluginModuleDescriptor>,
+                                                 dependenciesCollector: MutableSet<PluginModuleDescriptor>) {
   for (dependency in rootDescriptor.dependencies) {
     // check for missing optional dependency
     val dep = idMap.get(dependency.pluginId.idString) ?: continue
@@ -209,10 +209,10 @@ private fun collectDirectDependenciesInOldFormat(rootDescriptor: IdeaPluginDescr
 }
 
 private fun collectDirectDependenciesInNewFormat(
-  module: IdeaPluginDescriptorImpl,
-  idMap: Map<String, IdeaPluginDescriptorImpl>,
-  dependenciesCollector: MutableCollection<IdeaPluginDescriptorImpl>,
-  additionalEdges: MutableSet<IdeaPluginDescriptorImpl>
+  module: PluginModuleDescriptor,
+  idMap: Map<String, PluginModuleDescriptor>,
+  dependenciesCollector: MutableCollection<PluginModuleDescriptor>,
+  additionalEdges: MutableSet<PluginModuleDescriptor>
 ) {
   for (item in module.moduleDependencies.modules) {
     val dependency = idMap.get(item.name)
@@ -254,10 +254,10 @@ private fun collectDirectDependenciesInNewFormat(
 }
 
 private fun copySorted(
-  map: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
-  comparator: Comparator<IdeaPluginDescriptorImpl>,
-): Map<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>> {
-  val result = IdentityHashMap<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>(map.size)
+  map: Map<PluginModuleDescriptor, Collection<PluginModuleDescriptor>>,
+  comparator: Comparator<PluginModuleDescriptor>,
+): Map<PluginModuleDescriptor, List<PluginModuleDescriptor>> {
+  val result = IdentityHashMap<PluginModuleDescriptor, List<PluginModuleDescriptor>>(map.size)
   for (element in map.entries) {
     result.put(element.key, element.value.sortedWith(comparator))
   }
