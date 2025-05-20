@@ -274,8 +274,8 @@ abstract class UndoRedo {
     undoStack.add(context.getOriginalGroup());
   }
 
-  boolean isSameUndoableGroup(@Nullable UndoRedo otherUndoRedo) {
-    return otherUndoRedo != null && undoableGroup == otherUndoRedo.undoableGroup;
+  boolean isSameUndoableGroup(@NotNull UndoRedo otherUndoRedo) {
+    return undoableGroup == otherUndoRedo.undoableGroup;
   }
 
   boolean confirmSwitchTo(UndoRedo other) {

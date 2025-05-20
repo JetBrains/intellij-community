@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,14 +14,21 @@ import org.jetbrains.annotations.Nullable;
  * @author lesya
  */
 final class Redo extends UndoRedo {
-  Redo(@NotNull UndoClientState state, @Nullable FileEditor editor) {
+  Redo(
+    @Nullable Project project,
+    @Nullable FileEditor editor,
+    @NotNull UndoRedoStacksHolder undoStacksHolder,
+    @NotNull UndoRedoStacksHolder redoStacksHolder,
+    @NotNull SharedUndoRedoStacksHolder sharedUndoStacksHolder,
+    @NotNull SharedUndoRedoStacksHolder sharedRedoStacksHolder
+  ) {
     super(
-      state.getProject(),
+      project,
       editor,
-      state.getRedoStacksHolder(),
-      state.getUndoStacksHolder(),
-      state.getUndoManager().getSharedRedoStacksHolder(),
-      state.getUndoManager().getSharedUndoStacksHolder(),
+      redoStacksHolder,
+      undoStacksHolder,
+      sharedRedoStacksHolder,
+      sharedUndoStacksHolder,
       true
     );
   }

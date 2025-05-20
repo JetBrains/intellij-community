@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl
 
 import com.intellij.codeWithMe.ClientId
@@ -7,6 +7,7 @@ import com.intellij.openapi.command.undo.AdjustableUndoableAction
 import com.intellij.openapi.command.undo.DocumentReference
 import com.intellij.openapi.command.undo.ImmutableActionChangeRange
 import com.intellij.openapi.command.undo.UndoableAction
+import com.intellij.openapi.util.NlsContexts.Command
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentHashSetOf
@@ -100,7 +101,7 @@ internal class LocalCommandMergerSnapshot(
   val actions: UndoRedoListSnapshot<UndoableAction>,
   val lastGroupId: Reference<Any>?,
   val transparent: Boolean,
-  val commandName: String?,
+  @get:Command val commandName: String?,
   val stateBefore: EditorAndState?,
   val stateAfter: EditorAndState?,
   val undoConfirmationPolicy: UndoConfirmationPolicy
