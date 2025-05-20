@@ -112,7 +112,7 @@ public final class ListPluginComponent extends JPanel {
     mySearchListener = searchListener;
     myMarketplace = marketplace;
     PluginId pluginId = myPlugin.getPluginId();
-    boolean compatible = myPlugin.isIncompatibleWithCurrentOs();
+    boolean compatible = !myPlugin.isIncompatibleWithCurrentOs();
     myIsAvailable = (compatible || isInstalledAndEnabled()) && pluginUiModel.getCanBeEnabled();
     myIsEssential = ApplicationInfo.getInstance().isEssentialPlugin(pluginId);
     myIsNotFreeInFreeMode = pluginRequiresUltimatePluginButItsDisabled(pluginUiModel.getPluginId());
