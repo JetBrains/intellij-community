@@ -36,10 +36,10 @@ private class BazelJvmCliPipeline(
 
 class BazelJvmBackendPipelinePhase(
     private val consumer: (OutputFileCollection) -> Unit,
-) :PipelinePhase<JvmBackendPipelineArtifact, ExitCodeArtifact>(
+) :PipelinePhase<JvmBinaryPipelineArtifact, ExitCodeArtifact>(
   name = "BazelJvmBackendPipelinePhase",
 ) {
-  override fun executePhase(input: JvmBackendPipelineArtifact): ExitCodeArtifact {
+  override fun executePhase(input: JvmBinaryPipelineArtifact): ExitCodeArtifact {
     consumer(input.outputs.firstOrNull()!!.factory)
     return ExitCodeArtifact(ExitCode.OK)
   }
