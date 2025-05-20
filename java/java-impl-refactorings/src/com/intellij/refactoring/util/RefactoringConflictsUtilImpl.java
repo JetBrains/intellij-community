@@ -3,6 +3,7 @@ package com.intellij.refactoring.util;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -252,7 +253,7 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
     }
 
     final Module targetModule = ModuleUtilCore.findModuleForFile(vFile, project);
-    if (targetModule == null) return;
+    if (targetModule == null || ModuleType.isInternal(targetModule)) return;
     final GlobalSearchScope resolveScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(targetModule);
     final HashSet<PsiElement> reported = new HashSet<>();
     Consumer<PsiJavaCodeReferenceElement> processor = new Consumer<>() {
