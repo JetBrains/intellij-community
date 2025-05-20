@@ -810,8 +810,8 @@ class PyTypeHintsInspection : PyInspection() {
 
     private fun checkGenericCompleteness(cls: PyClass) {
       var seenGeneric = false
-      val genericTypeVars = linkedSetOf<PsiElement>()
-      val nonGenericTypeVars = linkedSetOf<PsiElement>()
+      val genericTypeVars = linkedSetOf<PyTargetExpression>()
+      val nonGenericTypeVars = linkedSetOf<PyTargetExpression>()
 
       cls.superClassExpressions.forEach { superClass ->
         val generics = collectGenerics(superClass)
@@ -827,13 +827,11 @@ class PyTypeHintsInspection : PyInspection() {
       if (seenGeneric && (nonGenericTypeVars - genericTypeVars).isNotEmpty()) {
         val nonGenericTypeVarsNames = nonGenericTypeVars
           .asSequence()
-          .filterIsInstance<PyTargetExpression>()
           .mapNotNull { it.name }
           .joinToString(", ")
 
         val genericTypeVarsNames = genericTypeVars
           .asSequence()
-          .filterIsInstance<PyTargetExpression>()
           .mapNotNull { it.name }
           .joinToString(", ")
 
@@ -844,14 +842,14 @@ class PyTypeHintsInspection : PyInspection() {
       }
     }
 
-    private fun collectGenerics(superClassExpression: PyExpression): Pair<Set<PsiElement>?, Set<PsiElement>> {
+    private fun collectGenerics(superClassExpression: PyExpression): Pair<Set<PyTargetExpression>?, Set<PyTargetExpression>> {
       val resolvedSuperClass =
         if (superClassExpression is PyReferenceExpression) multiFollowAssignmentsChain(superClassExpression)
         else listOf(superClassExpression)
 
       var seenGeneric = false
-      val genericTypeVars = linkedSetOf<PsiElement>()
-      val nonGenericTypeVars = linkedSetOf<PsiElement>()
+      val genericTypeVars = linkedSetOf<PyTargetExpression>()
+      val nonGenericTypeVars = linkedSetOf<PyTargetExpression>()
 
       resolvedSuperClass
         .asSequence()
