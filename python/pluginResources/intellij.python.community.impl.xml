@@ -778,6 +778,10 @@
     <extensionPoint qualifiedName="com.jetbrains.python.configuration.pyIntegratedToolsTestPanelCustomizer"
                     interface="com.jetbrains.python.configuration.PyIntegratedToolsTestPanelCustomizer"
                     dynamic="true"/>
+
+    <extensionPoint qualifiedName="Pythonid.PythonPackageRequiresExtractorProvider"
+                    interface="com.jetbrains.python.packaging.packageRequires.PythonPackageRequiresExtractorProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -879,6 +883,9 @@
 
     <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.pip.PipPackageManagerProvider" order="last"/>
     <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.conda.CondaPackageManagerProvider"/>
+
+    <PythonPackageRequiresExtractorProvider implementation="com.jetbrains.python.poetry.packaging.PoetryRequiresExtractorProvider"/>
+    <PythonPackageRequiresExtractorProvider implementation="com.jetbrains.python.uv.packaging.UvPackageRequiresExtractorProvider"/>
 
     <systemPythonProvider implementation="com.jetbrains.python.sdk.uv.UvSystemPythonProvider"/>
 

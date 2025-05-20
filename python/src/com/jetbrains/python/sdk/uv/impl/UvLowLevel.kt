@@ -12,6 +12,7 @@ import com.jetbrains.python.errorProcessing.PyExecResult
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.failure
 import com.jetbrains.python.onFailure
+import com.jetbrains.python.packaging.common.NormalizedPythonPackageName
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
@@ -127,6 +128,13 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
     }
   }
 
+  override suspend fun listPackageRequirements(name: PythonPackage): PyResult<List<NormalizedPythonPackageName>> {
+    val out = uvCli.runUv(cwd, "pip", "show", name.name)
+      .getOr { return it }
+
+    return PyExecResult.success(parsePackageRequirements(out))
+  }
+
   override suspend fun installPackage(name: PythonPackageInstallRequest, options: List<String>): PyExecResult<Unit> {
     uvCli.runUv(cwd, "pip", "install", name.formatPackageName(), *options.toTypedArray())
       .onFailure { return PyResult.failure(it) }
@@ -235,10 +243,25 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
 
   override suspend fun sync(): PyExecResult<String> {
     return uvCli.runUv(cwd, "sync")
-  }
+ }
 
   override suspend fun lock(): PyExecResult<String> {
     return uvCli.runUv(cwd, "lock")
+  }
+
+  private fun parsePackageRequirements(input: String): List<NormalizedPythonPackageName> {
+    val requiresLine = input.lines().find { it.startsWith(REQUIRES_LINE_PREFIX) } ?: return emptyList()
+
+    return requiresLine
+      .removePrefix(REQUIRES_LINE_PREFIX)
+      .split(",")
+      .map { it.trim() }
+      .filter { it.isNotEmpty() }
+      .map { NormalizedPythonPackageName.from(it) }
+  }
+
+  companion object {
+    private const val REQUIRES_LINE_PREFIX = "Requires:"
   }
 }
 

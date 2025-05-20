@@ -6,14 +6,24 @@ import com.jetbrains.python.packaging.pyRequirementVersionSpec
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+
+@ApiStatus.Internal
+@JvmInline
+value class NormalizedPythonPackageName private constructor(val name: String) {
+  companion object {
+    fun from(name: String): NormalizedPythonPackageName =
+      NormalizedPythonPackageName(normalizePackageName(name))
+  }
+}
 
 open class PythonPackage(name: String, val version: String, val isEditableMode: Boolean) {
   companion object {
     private const val HASH_MULTIPLIER = 31
   }
 
-  val name: String = normalizePackageName(name)
+  val name: String = NormalizedPythonPackageName.from(name).name
   val presentableName: String = name
 
   override fun toString(): String {
