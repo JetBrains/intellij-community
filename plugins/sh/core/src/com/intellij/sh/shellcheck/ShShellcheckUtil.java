@@ -50,7 +50,7 @@ import java.util.TreeMap;
 
 import static com.intellij.platform.eel.EelPlatformKt.*;
 import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
-import static com.intellij.platform.eel.provider.EelProviderUtil.upgradeBlocking;
+import static com.intellij.platform.eel.provider.EelProviderUtil.toEelApiBlocking;
 import static com.intellij.sh.ShBundle.message;
 import static com.intellij.sh.ShBundle.messagePointer;
 import static com.intellij.sh.ShNotification.NOTIFICATION_GROUP;
@@ -81,7 +81,7 @@ public final class ShShellcheckUtil {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final var eelDescriptor = getEelDescriptor(project);
-        final var eel = upgradeBlocking(eelDescriptor);
+        final var eel = toEelApiBlocking(eelDescriptor);
 
         final var downloadPath = ExternalServicesUtil.computeDownloadPath(eel);
 

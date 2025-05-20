@@ -10,7 +10,7 @@ import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.*
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asNioPath
-import com.intellij.platform.eel.provider.upgradeBlocking
+import com.intellij.platform.eel.provider.toEelApiBlocking
 import com.intellij.platform.eel.provider.utils.awaitProcessResult
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.util.suspendingLazy
@@ -77,7 +77,7 @@ private class EelSystemInfoProvider(private val eel: EelApi) : JavaHomeFinder.Sy
 }
 
 internal fun javaHomeFinderEel(descriptor: EelDescriptor): JavaHomeFinderBasic {
-  val eel = descriptor.upgradeBlocking()
+  val eel = descriptor.toEelApiBlocking()
   val systemInfoProvider = EelSystemInfoProvider(eel)
 
   val parentFinder = when (eel.platform) {

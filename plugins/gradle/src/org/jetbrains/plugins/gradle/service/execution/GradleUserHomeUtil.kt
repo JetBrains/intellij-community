@@ -34,7 +34,7 @@ fun gradleUserHomeDir(descriptor: EelDescriptor): Path {
     return gradleUserHomeDir().toPath()
   }
   return runBlockingMaybeCancellable {
-    val eel = descriptor.upgrade()
+    val eel = descriptor.toEelApi()
     val env = eel.exec.fetchLoginShellEnvVariables()
     val gradleUserHome = env[GRADLE_USER_HOME_PROPERTY_KEY] ?: env[GRADLE_USER_HOME_ENV_KEY]
     if (gradleUserHome != null) {

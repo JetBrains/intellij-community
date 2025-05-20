@@ -58,7 +58,7 @@ object GradleArtifactDownloader {
     artifactNotation: String,
     projectPath: String,
   ): Path {
-    val eel = project.getEelDescriptor().upgrade()
+    val eel = project.getEelDescriptor().toEelApi()
     val taskOutputEelPath = createTaskOutputFile(eel)
     val taskOutputPath = taskOutputEelPath.asNioPath()
     try {

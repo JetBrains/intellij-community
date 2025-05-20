@@ -20,7 +20,7 @@ import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.routingPrefixes
-import com.intellij.platform.eel.provider.upgradeBlocking
+import com.intellij.platform.eel.provider.toEelApiBlocking
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.eel.provider.utils.forwardLocalServer
 import kotlinx.coroutines.CoroutineScope
@@ -35,7 +35,7 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
     private val logger = logger<EelBuildCommandLineBuilder>()
   }
 
-  private val eel: EelApi = exePath.getEelDescriptor().upgradeBlocking()
+  private val eel: EelApi = exePath.getEelDescriptor().toEelApiBlocking()
   private val commandLine = GeneralCommandLine().withExePath(exePath.toString())
 
   private val workingDirectory: Path = getSystemSubfolder(BuildManager.SYSTEM_ROOT)

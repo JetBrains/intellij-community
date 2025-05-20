@@ -43,7 +43,7 @@ class EelGradleExecutionAware : GradleExecutionAware {
   ): TargetEnvironmentConfigurationProvider? {
     return if (project.isEelSyncAvailable()) {
       runBlockingCancellable {
-        EelTargetEnvironmentConfigurationProvider(project.getEelDescriptor().upgrade(), project)
+        EelTargetEnvironmentConfigurationProvider(project.getEelDescriptor().toEelApi(), project)
       }
     }
     else {
@@ -57,7 +57,7 @@ class EelGradleExecutionAware : GradleExecutionAware {
   ): TargetEnvironmentConfigurationProvider? {
     return if (project.isEelSyncAvailable()) {
       runBlockingCancellable {
-        EelTargetEnvironmentConfigurationProvider(project.getEelDescriptor().upgrade(), project)
+        EelTargetEnvironmentConfigurationProvider(project.getEelDescriptor().toEelApi(), project)
       }
     }
     else {

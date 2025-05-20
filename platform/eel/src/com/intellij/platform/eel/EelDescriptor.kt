@@ -45,7 +45,7 @@ interface EelDescriptorWithoutNativeFileChooserSupport : EelDescriptor
  *
  * You are free to compare and store [EelDescriptor].
  * TODO: In the future, [EelDescriptor] may also be serializable.
- * If you need to access the remote environment, you can use the method [upgrade], which can suspend for some time before returning a working instance of [EelApi]
+ * If you need to access the remote environment, you can use the method [toEelApi], which can suspend for some time before returning a working instance of [EelApi]
  */
 interface EelDescriptor {
   @Deprecated("Use platform instead", ReplaceWith("platform"))
@@ -60,9 +60,12 @@ interface EelDescriptor {
    */
   val platform: EelPlatform
 
+  suspend fun toEelApi(): EelApi
+
   /**
    * Retrieves an instance of [EelApi] corresponding to this [EelDescriptor].
    * This method may run a container, so it could suspend for a long time.
    */
-  suspend fun upgrade(): EelApi
+  @Deprecated("Use toEelApi() instead", replaceWith = ReplaceWith("toEelApi()"))
+  suspend fun upgrade(): EelApi = toEelApi()
 }

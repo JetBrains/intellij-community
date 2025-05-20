@@ -25,7 +25,7 @@ class EelMavenRemoteProcessSupportFactory : MavenRemoteProcessSupportFactory {
     debugPort: Int?,
   ): MavenRemoteProcessSupport {
     trigger(project, MavenActionsUsagesCollector.START_WSL_MAVEN_SERVER)
-    val eel = project.getEelDescriptor().upgradeBlocking()
+    val eel = project.getEelDescriptor().toEelApiBlocking()
     return EelMavenServerRemoteProcessSupport(eel, jdk, vmOptions, mavenDistribution, project, debugPort)
   }
 
@@ -42,7 +42,7 @@ class EelRemotePathTransformFactory : RemotePathTransformerFactory {
   }
 
   override fun createTransformer(project: Project): RemotePathTransformerFactory.Transformer {
-    val eel = project.getEelDescriptor().upgradeBlocking()
+    val eel = project.getEelDescriptor().toEelApiBlocking()
 
     return object : RemotePathTransformerFactory.Transformer {
       override fun toRemotePath(localPath: String): String {

@@ -66,7 +66,7 @@ class GradleDependencyNodeIndex(
   }
 
   private suspend fun collectDependencies(moduleData: GradleModuleData): DependencyNodes {
-    val eel = project.getEelDescriptor().upgrade()
+    val eel = project.getEelDescriptor().toEelApi()
     val taskOutputEelPath = eel.fs.createTemporaryFile()
       .prefix("$TASK_NAME-output")
       .getOrThrow()

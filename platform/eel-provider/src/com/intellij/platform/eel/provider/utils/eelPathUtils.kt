@@ -59,7 +59,7 @@ object EelPathUtils {
     }
     val projectFilePath = project.projectFilePath ?: return Files.createTempFile(prefix, suffix)
     return runBlockingMaybeCancellable {
-      val eel = Path.of(projectFilePath).getEelDescriptor().upgrade()
+      val eel = Path.of(projectFilePath).getEelDescriptor().toEelApi()
       val file = eel.fs.createTemporaryFile().suffix(suffix).prefix(prefix).deleteOnExit(deleteOnExit).getOrThrowFileSystemException()
       file.asNioPath()
     }
@@ -72,7 +72,7 @@ object EelPathUtils {
     }
     val projectFilePath = project.projectFilePath ?: return Files.createTempDirectory(prefix)
     return runBlockingMaybeCancellable {
-      val eel = Path.of(projectFilePath).getEelDescriptor().upgrade()
+      val eel = Path.of(projectFilePath).getEelDescriptor().toEelApi()
       createTemporaryDirectory(eel, prefix)
     }
   }
@@ -211,7 +211,7 @@ object EelPathUtils {
         }
 
         runBlockingMaybeCancellable {
-          service<TransferredContentHolder>().transferIfNeeded(target.descriptor.upgrade(), source, fileAttributesStrategy)
+          service<TransferredContentHolder>().transferIfNeeded(target.descriptor.toEelApi(), source, fileAttributesStrategy)
         }
       }
       is TransferTarget.Explicit -> {
@@ -404,7 +404,7 @@ object EelPathUtils {
     // usually eel is already initialized to this moment
     @Suppress("RAW_RUN_BLOCKING")
     val api = runBlocking {
-      descriptor.upgrade()
+      descriptor.toEelApi()
     }
     val someEelPath = api.fs.user.home
     return someEelPath.asNioPath()

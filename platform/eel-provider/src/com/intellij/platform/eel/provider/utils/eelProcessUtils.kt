@@ -79,7 +79,7 @@ suspend fun EelProcess.awaitProcessResult(): EelProcessExecutionResult {
 @ApiStatus.Internal
 @ApiStatus.Experimental
 suspend fun Path.exec(vararg args: String, timeout: Duration = Int.MAX_VALUE.days): EelProcessExecutionResult {
-  val process = getEelDescriptor().upgrade().exec.spawnProcess(pathString, *args).eelIt()
+  val process = getEelDescriptor().toEelApi().exec.spawnProcess(pathString, *args).eelIt()
   return withTimeoutOrNull(timeout) {
     process.awaitProcessResult()
   } ?: run {

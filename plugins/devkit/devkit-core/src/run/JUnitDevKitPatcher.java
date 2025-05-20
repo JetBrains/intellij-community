@@ -160,7 +160,7 @@ public final class JUnitDevKitPatcher extends JUnitPatcher {
         var file = files.iterator().next();
         String projectFilePath =
           Objects.requireNonNull(project.getProjectFilePath(), "Run configurations should not be invoked on the default project");
-        EelApi eelApi = EelProviderUtil.upgradeBlocking(EelProviderUtil.getEelDescriptor(Path.of(projectFilePath)));
+        EelApi eelApi = EelProviderUtil.toEelApiBlocking(EelProviderUtil.getEelDescriptor(Path.of(projectFilePath)));
         OS targetOs = EelProviderUtil.systemOs(eelApi);
         try (var stream = file.getInputStream()) {
           JavaModuleOptions.readOptions(stream, targetOs).forEach(vm::add);

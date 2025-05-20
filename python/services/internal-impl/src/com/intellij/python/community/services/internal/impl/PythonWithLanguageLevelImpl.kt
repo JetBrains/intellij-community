@@ -69,7 +69,7 @@ class PythonWithLanguageLevelImpl internal constructor(
   }
 
   override suspend fun getReadableName(): @Nls String {
-    val eelApi = pythonBinary.getEelDescriptor().upgrade()
+    val eelApi = pythonBinary.getEelDescriptor().toEelApi()
     val home = eelApi.userInfo.home.asNioPath()
     val separator = when (eelApi.platform) {
       is EelPlatform.Windows -> "\\"

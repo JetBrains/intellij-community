@@ -37,7 +37,7 @@ internal fun readWholeFileIfNotTooLargeWithEel(path: Path): ByteArray? {
   }
   val api = map.computeIfAbsent(root) {
     runBlocking {
-      root.getEelDescriptor().upgrade()
+      root.getEelDescriptor().toEelApi()
     }
   }
   if (api is LocalEelApi) {

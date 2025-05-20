@@ -94,7 +94,7 @@ internal class CliBasedHatchService private constructor(
 
 
   override suspend fun createNewProject(projectName: String): PyResult<ProjectStructure> {
-    val eelApi = workingDirectoryPath.getEelDescriptor().upgrade()
+    val eelApi = workingDirectoryPath.getEelDescriptor().toEelApi()
     val tempDir = eelApi.fs.createTemporaryDirectory(EelFileSystemApi.CreateTemporaryEntryOptions.Builder().build()).getOr { failure ->
       return Result.failure(FileSystemOperationHatchError(failure.error))
     }

@@ -79,9 +79,12 @@ val localEel: LocalEelApi by lazy {
   if (SystemInfo.isWindows) ApplicationManager.getApplication().service<LocalWindowsEelApi>() else ApplicationManager.getApplication().service<LocalPosixEelApi>()
 }
 
-fun EelDescriptor.upgradeBlocking(): EelApi {
+@Deprecated("Use toEelApiBlocking() instead", ReplaceWith("toEelApiBlocking()"))
+fun EelDescriptor.upgradeBlocking(): EelApi = toEelApiBlocking()
+
+fun EelDescriptor.toEelApiBlocking(): EelApi {
   if (this === LocalEelDescriptor) return localEel
-  return runBlockingMaybeCancellable { upgrade() }
+  return runBlockingMaybeCancellable { toEelApi() }
 }
 
 data object LocalEelDescriptor : EelDescriptor {
@@ -102,7 +105,7 @@ data object LocalEelDescriptor : EelDescriptor {
     }
   }
 
-  override suspend fun upgrade(): EelApi {
+  override suspend fun toEelApi(): EelApi {
     return localEel
   }
 }

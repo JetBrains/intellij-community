@@ -151,7 +151,7 @@ class WslEelProvider(private val coroutineScope: CoroutineScope) : EelProvider {
 
 data class WslEelDescriptor(val distribution: WSLDistribution, override val platform: EelPlatform) : EelDescriptor {
 
-  override suspend fun upgrade(): EelApi {
+  override suspend fun toEelApi(): EelApi {
     return distribution.getIjent()
   }
 

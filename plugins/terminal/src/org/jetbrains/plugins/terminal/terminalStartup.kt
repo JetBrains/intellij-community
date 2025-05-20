@@ -89,12 +89,12 @@ private suspend fun getEelApi(
     val wslDistribNameFromWorkingDirectory = WslPath.parseWindowsUncPath(workingDirectory.toString())?.distributionId
     if (wslDistribNameFromCommandline != wslDistribNameFromWorkingDirectory) {
       val wslRootPath = WSLDistribution(wslDistribNameFromCommandline).getUNCRootPath()
-      val eelApi = wslRootPath.getEelDescriptor().upgrade()
+      val eelApi = wslRootPath.getEelDescriptor().toEelApi()
       val userHome = runCatching { eelApi.exec.fetchLoginShellEnvVariables()["HOME"] }.getOrNull()
       return eelApi to wslRootPath.resolve(userHome ?: ".")
     }
   }
-  return workingDirectory.getEelDescriptor().upgrade() to workingDirectory
+  return workingDirectory.getEelDescriptor().toEelApi() to workingDirectory
 }
 
 private fun getWslDistributionNameFromCommand(command: List<String>): String? {

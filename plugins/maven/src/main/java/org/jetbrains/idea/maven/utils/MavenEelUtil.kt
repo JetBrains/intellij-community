@@ -93,7 +93,7 @@ object MavenEelUtil {
 
   @JvmStatic
   suspend fun Project?.resolveM2DirAsync(): Path {
-    return this?.filterAcceptable()?.getEelDescriptor()?.upgrade().resolveM2Dir()
+    return this?.filterAcceptable()?.getEelDescriptor()?.toEelApi().resolveM2Dir()
   }
 
   suspend fun <T> resolveUsingEel(project: Project?, ordinary: suspend () -> T, eel: suspend (EelApi) -> T?): T {
@@ -101,7 +101,7 @@ object MavenEelUtil {
       MavenLog.LOG.error("resolveEelAware: Project is null")
     }
 
-    return project?.filterAcceptable()?.getEelDescriptor()?.upgrade()?.let { eel(it) } ?: ordinary.invoke()
+    return project?.filterAcceptable()?.getEelDescriptor()?.toEelApi()?.let { eel(it) } ?: ordinary.invoke()
   }
 
   private fun Project.filterAcceptable(): Project? = takeIf { !it.isDefault && it !is DummyProject }
@@ -422,7 +422,7 @@ object MavenEelUtil {
   ) {
     project.service<CoroutineService>().coroutineScope.launch(Dispatchers.IO) {
       withBackgroundProgress(project, MavenProjectBundle.message("wsl.jdk.searching"), cancellable = false) {
-        val eel = project.getEelDescriptor().upgrade()
+        val eel = project.getEelDescriptor().toEelApi()
         val sdkPath = service<JdkFinder>().suggestHomePaths(project).firstOrNull()
         if (sdkPath != null) {
           edtWriteAction {

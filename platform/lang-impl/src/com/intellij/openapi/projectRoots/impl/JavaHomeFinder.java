@@ -33,7 +33,7 @@ import java.util.List;
 
 import static com.intellij.openapi.projectRoots.impl.JavaHomeFinderEel.javaHomeFinderEel;
 import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
-import static com.intellij.platform.eel.provider.EelProviderUtil.upgradeBlocking;
+import static com.intellij.platform.eel.provider.EelProviderUtil.toEelApiBlocking;
 
 @ApiStatus.Internal
 public abstract class JavaHomeFinder {
@@ -199,7 +199,7 @@ public abstract class JavaHomeFinder {
   }
 
   private static @Nullable Path defaultJavaLocationUsingEel(Path path) {
-    EelApi eel = upgradeBlocking(getEelDescriptor(path));
+    EelApi eel = toEelApiBlocking(getEelDescriptor(path));
     EelPlatform platform = eel.getPlatform();
     String eelPath = null;
     if (platform instanceof EelPlatform.Windows) {

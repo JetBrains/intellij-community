@@ -73,7 +73,7 @@ class EelTargetEnvironmentConfigurationProvider(val eel: EelApi, val project: Pr
   }
 
   private suspend fun forwardToolingProxyPortOntoLocalMachine(port: Int): Int {
-    val eel = project.getEelDescriptor().upgrade()
+    val eel = project.getEelDescriptor().toEelApi()
     // the address to which all the request will be forwarded to
     // in this case port -- port of the tooling proxy
     val address = HostAddress.Builder(port.toUShort())

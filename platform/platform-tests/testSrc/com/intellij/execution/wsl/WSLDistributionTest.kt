@@ -520,7 +520,7 @@ private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser
     get() = object : EelDescriptor {
       override val platform: EelPlatform = EelPlatform.Linux(EelPlatform.Arch.Unknown)
 
-      override suspend fun upgrade(): EelApi {
+      override suspend fun toEelApi(): EelApi {
         throw UnsupportedOperationException()
       }
     }

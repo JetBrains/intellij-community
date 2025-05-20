@@ -53,7 +53,7 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.platform.eel.provider.upgradeBlocking
+import com.intellij.platform.eel.provider.toEelApiBlocking
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
 import com.intellij.psi.PsiManager
 import com.intellij.serviceContainer.AlreadyDisposedException
@@ -751,7 +751,7 @@ object MavenUtil {
   fun getSystemMavenHomeVariants(project: Project): MutableList<MavenHomeType> {
     val result = ArrayList<MavenHomeType>()
 
-    val eel = project.getEelDescriptor().upgradeBlocking()
+    val eel = project.getEelDescriptor().toEelApiBlocking()
     val envs = eel.exec.fetchLoginShellEnvVariablesBlocking()
 
     val m2home = envs.get(ENV_M2_HOME)
@@ -1084,7 +1084,7 @@ object MavenUtil {
   }
 
   fun resolveM2Dir(project: Project?): Path {
-    val eel = if (project != null) project.getEelDescriptor().upgradeBlocking() else null
+    val eel = if (project != null) project.getEelDescriptor().toEelApiBlocking() else null
     return eel.resolveM2Dir()
   }
 

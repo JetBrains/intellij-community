@@ -178,6 +178,6 @@ public final class LocalOptionsConfigurer {
   }
 
   private static Map<String, String> fetchLoginShellEnvVariables(@NotNull EelDescriptor eelDescriptor) {
-    return EelUtilsKt.fetchLoginShellEnvVariablesBlocking(EelProviderUtil.upgradeBlocking(eelDescriptor).getExec());
+    return EelUtilsKt.fetchLoginShellEnvVariablesBlocking(EelProviderUtil.toEelApiBlocking(eelDescriptor).getExec());
   }
 }

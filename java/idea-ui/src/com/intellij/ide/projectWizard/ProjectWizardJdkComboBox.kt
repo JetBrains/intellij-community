@@ -474,7 +474,7 @@ class ProjectWizardJdkComboBox(
     sink[JDK_DOWNLOADER_EXT] = object : JdkDownloaderDialogHostExtension {
       override fun getEel(): EelApi {
         return runBlockingMaybeCancellable {
-          currentEelDescriptor?.upgrade() ?: localEel
+          currentEelDescriptor?.toEelApi() ?: localEel
         }
       }
     }
@@ -532,7 +532,7 @@ private fun computeHelperJdks(registered: List<ExistingJdk>): List<ProjectWizard
 // Suggests to download OpenJDK if nothing else is available in the IDE
 private fun CoroutineScope.getDownloadOpenJdkIntent(comboBox: ProjectWizardJdkComboBox): Job = launch {
   val eel = if (Registry.`is`("java.home.finder.use.eel")) {
-    comboBox.currentEelDescriptor?.upgrade() ?: localEel
+    comboBox.currentEelDescriptor?.toEelApi() ?: localEel
   }
   else {
     null

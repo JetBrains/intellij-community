@@ -123,7 +123,7 @@ class MavenCommandLineSetup(
 
   private suspend fun calculateJavaHome(): String? {
     val descriptor = project.getEelDescriptor()
-    val eel = descriptor.upgrade()
+    val eel = descriptor.toEelApi()
     val targetEnv = eel.exec.fetchLoginShellEnvVariables()
     val targetJavaHome = targetEnv[JAVA_HOME_ENV_KEY]
     if (targetJavaHome != null) {

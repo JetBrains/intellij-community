@@ -39,7 +39,7 @@ import java.util.function.Function;
 
 import static com.intellij.execution.util.ExecUtil.startProcessBlockingUsingEel;
 import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
-import static com.intellij.platform.eel.provider.EelProviderUtil.upgradeBlocking;
+import static com.intellij.platform.eel.provider.EelProviderUtil.toEelApiBlocking;
 
 /**
  * OS-independent way of executing external processes with complex parameters.
@@ -479,11 +479,11 @@ public class GeneralCommandLine implements UserDataHolder {
       eelApi = null;
     }
     else if (getEelDescriptor(exePath) != LocalEelDescriptor.INSTANCE) { // fast check
-      eelApi = upgradeBlocking(getEelDescriptor(exePath));
+      eelApi = toEelApiBlocking(getEelDescriptor(exePath));
     }
     else if (workingDirectory != null) {
       if (getEelDescriptor(workingDirectory) != LocalEelDescriptor.INSTANCE) { // also try to compute non-local EelApi from working dir
-        eelApi = upgradeBlocking(getEelDescriptor(workingDirectory));
+        eelApi = toEelApiBlocking(getEelDescriptor(workingDirectory));
       }
       else {
         eelApi = null;

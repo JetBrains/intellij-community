@@ -15,6 +15,6 @@ internal class SystemPythonInitialLoader : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (getCacheTimeout() == null) return // Cache is disabled, no need to preload it
     logger.debug("Preloading pythons for $project")
-    SystemPythonService().findSystemPythons(project.getEelDescriptor().upgrade())
+    SystemPythonService().findSystemPythons(project.getEelDescriptor().toEelApi())
   }
 }

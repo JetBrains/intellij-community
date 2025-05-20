@@ -202,7 +202,7 @@ open class MavenModuleBuilderHelper(
   private suspend fun generateFromArchetype(project: Project, pom: VirtualFile) {
     trigger(project, MavenActionsUsagesCollector.CREATE_MAVEN_PROJECT_FROM_ARCHETYPE)
 
-    val eel = project.getEelDescriptor().upgrade()
+    val eel = project.getEelDescriptor().toEelApi()
 
     val workingDir: Path = try {
       eel.fs.createTemporaryDirectory()

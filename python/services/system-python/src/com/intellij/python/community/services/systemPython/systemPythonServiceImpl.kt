@@ -53,7 +53,7 @@ internal class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonServ
     scope.launch {
       _cacheImpl.complete(getCacheTimeout()?.let { interval ->
         Cache<EelDescriptor, SystemPython>(scope, interval) { eelDescriptor ->
-          searchPythonsPhysicallyNoCache(eelDescriptor.upgrade())
+          searchPythonsPhysicallyNoCache(eelDescriptor.toEelApi())
         }
       })
     }

@@ -95,7 +95,7 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     var descriptor = EelProviderUtil.getEelDescriptor(vitrualFilePath);
 
     if (descriptor != LocalEelDescriptor.INSTANCE) {
-      var config = new EelTargetEnvironmentRequest.Configuration(EelProviderUtil.upgradeBlocking(descriptor));
+      var config = new EelTargetEnvironmentRequest.Configuration(EelProviderUtil.toEelApiBlocking(descriptor));
       addJavaLangConfig(config, Objects.requireNonNull(EelNioBridgeServiceKt.asEelPath(vitrualFilePath)).toString(), jdk);
       return config;
     }

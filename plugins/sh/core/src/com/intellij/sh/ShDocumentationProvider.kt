@@ -96,7 +96,7 @@ internal class ShDocumentationProvider(private val scope: CoroutineScope) : Docu
     if (commandName == null) return null
     val manExecutablePromise = myManExecutableCache.computeIfAbsent(eelDescriptor) {
       scope.suspendingLazy {
-        val eel = eelDescriptor.upgrade()
+        val eel = eelDescriptor.toEelApi()
         val path = eel.exec.fetchLoginShellEnvVariables()["PATH"]
 
         if (path != null) {

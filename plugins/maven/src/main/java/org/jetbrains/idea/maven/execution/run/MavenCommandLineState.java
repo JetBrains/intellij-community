@@ -74,7 +74,7 @@ public class MavenCommandLineState extends JavaCommandLineState implements Remot
     if (eelDescriptor instanceof LocalEelDescriptor) {
       return null;
     }
-    EelApi eel = EelProviderUtil.upgradeBlocking(eelDescriptor);
+    EelApi eel = EelProviderUtil.toEelApiBlocking(eelDescriptor);
     EelTargetEnvironmentRequest.Configuration configuration = new EelTargetEnvironmentRequest.Configuration(eel);
     MavenRuntimeTargetResolver targetResolver = new MavenRuntimeTargetResolver(project, eel);
     MavenRuntimeTargetConfiguration runtimeTarget = targetResolver.resolve(myConfiguration);

@@ -30,7 +30,7 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.eel.provider.upgradeBlocking
+import com.intellij.platform.eel.provider.toEelApiBlocking
 import com.intellij.platform.eel.provider.utils.awaitProcessResult
 import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
@@ -113,7 +113,7 @@ class JdkInstaller : JdkInstallerBase() {
   public override fun eelFromPath(targetDir: Path): OsAbstractionForJdkInstaller.Eel? =
     if (Registry.`is`("java.home.finder.use.eel"))
       EelForJdkInstallerImpl(runBlockingMaybeCancellable {
-        targetDir.getEelDescriptor().upgrade()
+        targetDir.getEelDescriptor().toEelApi()
       })
     else
       null
@@ -498,7 +498,7 @@ abstract class JdkInstallerBase {
       if (jdkPath == null) return null
       if (!jdkPath.isDirectory()) return null
       val predicate = when {
-        Registry.`is`("java.home.finder.use.eel") -> JdkPredicate.forEel(jdkPath.getEelDescriptor().upgradeBlocking())
+        Registry.`is`("java.home.finder.use.eel") -> JdkPredicate.forEel(jdkPath.getEelDescriptor().toEelApiBlocking())
         WslPath.isWslUncPath(jdkPath.toString()) -> JdkPredicate.forWSL()
         else -> JdkPredicate.default()
       }

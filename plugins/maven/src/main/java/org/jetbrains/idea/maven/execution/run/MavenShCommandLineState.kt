@@ -67,7 +67,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
 
   private fun startProcess(debug: Boolean): ProcessHandler {
     return runWithModalProgressBlocking(myConfiguration.project, RunnerBundle.message("maven.target.run.label")) {
-      val eelApi = myConfiguration.project.getEelDescriptor().upgrade()
+      val eelApi = myConfiguration.project.getEelDescriptor().toEelApi()
 
       val exe = if (isWindows()) "cmd.exe" else "/bin/sh"
       val env = getEnv(eelApi.exec.fetchLoginShellEnvVariables(), debug)

@@ -91,7 +91,7 @@ private suspend fun WhatToExec.buildExecutableProcess(args: List<String>, option
   val (exe, args) = when (this) {
     is WhatToExec.Binary -> Pair(binary, args)
     is WhatToExec.Helper -> {
-      val eel = python.getEelDescriptor().upgrade()
+      val eel = python.getEelDescriptor().toEelApi()
       val localHelper = PythonHelpersLocator.findPathInHelpers(helper)
                         ?: error("No ${helper} found: installation broken?")
       val remoteHelper = EelPathUtils.transferLocalContentToRemote(
@@ -114,7 +114,7 @@ private suspend fun WhatToExec.buildExecutableProcess(args: List<String>, option
 private suspend fun EelExecutableProcess.run(): PyExecResult<EelProcess> {
   val workingDirectory = if (workingDirectory != null && !workingDirectory.isAbsolute) workingDirectory.toRealPath() else workingDirectory
   try {
-    val executionResult = exe.descriptor.upgrade().exec.spawnProcess(exe.toString())
+    val executionResult = exe.descriptor.toEelApi().exec.spawnProcess(exe.toString())
       .args(args)
       .env(env)
       .workingDirectory(workingDirectory?.asEelPath()).eelIt()

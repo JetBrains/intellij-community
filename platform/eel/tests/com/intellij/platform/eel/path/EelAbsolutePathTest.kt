@@ -71,7 +71,7 @@ class EelAbsolutePathTest {
   }
 
   class DummyEelDescriptor(override val platform: EelPlatform) : EelDescriptor {
-    override suspend fun upgrade(): EelApi {
+    override suspend fun toEelApi(): EelApi {
       return Assertions.fail<Nothing>()
     }
   }
