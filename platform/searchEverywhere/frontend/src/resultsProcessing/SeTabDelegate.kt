@@ -99,17 +99,18 @@ class SeTabDelegate(val project: Project?,
         SeItemsProviderFactory.EP_NAME.extensionList.asFlow().filter {
           hasWildcard || allProviderIds.contains(SeProviderId(it.id))
         }.mapNotNull {
-          try {
-            val provider = it.getItemsProvider(project, dataContext)
-            if (provider == null) {
-              LOG.info("SearchEverywhere items provider factory returned null: ${it.id}")
-            }
-            provider
-          }
-          catch (e: Exception) {
+          val provider = try {
+            it.getItemsProvider(project, dataContext)
+          } catch (e: Exception) {
             LOG.warn("SearchEverywhere items provider wasn't created: ${it.id}. Exception:\n${e.message}")
             null
           }
+
+          if (provider == null) {
+            LOG.info("SearchEverywhere items provider factory returned null: ${it.id}")
+          }
+
+          provider
         }.toList().associate { provider ->
           SeProviderId(provider.id) to SeLocalItemDataProvider(provider, sessionRef)
         }

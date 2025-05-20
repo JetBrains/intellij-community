@@ -69,8 +69,8 @@ fun SeResultList.handleEvent(event: SeResultEvent) {
 
 private fun SeResultList.indexToAdd(newItem: SeItemData): Int {
   return firstIndexOrNull(false) { item ->
-    val newItemProviderPriority = SeResultList.Companion.prioritizedProvidersPriorities[newItem.providerId] ?: 0
-    val itemProviderPriority = SeResultList.Companion.prioritizedProvidersPriorities[item.providerId] ?: 0
+    val newItemProviderPriority = SeResultList.prioritizedProvidersPriorities[newItem.providerId] ?: 0
+    val itemProviderPriority = SeResultList.prioritizedProvidersPriorities[item.providerId] ?: 0
 
     if (newItemProviderPriority == itemProviderPriority) {
       newItem.weight > item.weight

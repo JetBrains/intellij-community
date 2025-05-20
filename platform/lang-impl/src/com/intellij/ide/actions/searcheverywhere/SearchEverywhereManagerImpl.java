@@ -30,10 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -173,7 +170,8 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     return myProject != null ? WindowStateService.getInstance(myProject) : WindowStateService.getInstance();
   }
 
-  private static List<SearchEverywhereContributor<?>> createContributors(@NotNull AnActionEvent initEvent, Project project) {
+  @ApiStatus.Internal
+  public static List<SearchEverywhereContributor<?>> createContributors(@NotNull AnActionEvent initEvent, Project project) {
     SearchEverywhereMlContributorReplacement.saveInitEvent(initEvent);
     if (project == null) {
       ActionSearchEverywhereContributor.Factory factory = new ActionSearchEverywhereContributor.Factory();
