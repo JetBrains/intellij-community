@@ -43,7 +43,8 @@ interface IComponentStore {
   @TestOnly
   fun clearCaches()
 
-  fun release()
+  fun release() {
+  }
 }
 
 @Internal

@@ -40,9 +40,6 @@ object NonPersistentModuleStore : IComponentStore {
 
   override fun clearCaches() {
   }
-
-  override fun release() {
-  }
 }
 
 private object NonPersistentStateStorageManager : StateStorageManager {

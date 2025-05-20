@@ -72,7 +72,4 @@ private class TestComponentStore : IComponentStore {
 
   override fun clearCaches() {
   }
-
-  override fun release() {
-  }
 }
