@@ -9,7 +9,7 @@ internal class JpsModuleReferenceBridge(private val moduleName: String)
   : JpsElementBase<JpsModuleReferenceBridge>(), JpsModuleReference {
   
   private val resolved by lazy(LazyThreadSafetyMode.PUBLICATION) {
-    model?.project?.modules?.find { it.name == moduleName }
+    model?.project?.findModuleByName(moduleName)
   } 
     
   override fun resolve(): JpsModule? = resolved

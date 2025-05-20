@@ -108,6 +108,7 @@ org.jetbrains.jps.model.JpsNamedElementCollection
 org.jetbrains.jps.model.JpsProject
 - org.jetbrains.jps.model.JpsCompositeElement
 - org.jetbrains.jps.model.JpsReferenceableElement
+- a:findModuleByName(java.lang.String):org.jetbrains.jps.model.module.JpsModule
 - a:getLibraryCollection():org.jetbrains.jps.model.library.JpsLibraryCollection
 - a:getModel():org.jetbrains.jps.model.JpsModel
 - a:getModules():java.util.List

@@ -2,6 +2,7 @@
 package org.jetbrains.jps.model.impl;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.ex.JpsElementCollectionRole;
@@ -68,6 +69,11 @@ final class JpsProjectImpl extends JpsProjectBase {
   @Override
   public @NotNull List<JpsModule> getModules() {
     return myContainer.getChild(JpsModuleRole.MODULE_COLLECTION_ROLE).getElements();
+  }
+
+  @Override
+  public @Nullable JpsModule findModuleByName(@NotNull String name) {
+    return myContainer.getChild(JpsModuleRole.MODULE_COLLECTION_ROLE).findChild(name);
   }
 
   @Override
