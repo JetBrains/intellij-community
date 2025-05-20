@@ -473,24 +473,9 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   @ApiStatus.Internal
-  protected boolean isSpeculativeUndoPossible(@Nullable FileEditor editor, boolean isUndo) {
+  protected boolean isSpeculativeUndoAllowed(@Nullable FileEditor editor, boolean isUndo) {
     UndoClientState clientState = getClientState(editor);
-    if (clientState != null && clientState.getCommandMerger().hasActions()) {
-      return clientState.getCommandMerger().isSpeculativeUndoPossible();
-    }
-    UndoableGroup action = getLastAction(editor, isUndo);
-    return action != null && action.isSpeculativeUndoPossible();
-  }
-
-  private @Nullable UndoableGroup getLastAction(@Nullable FileEditor editor, boolean isUndo) {
-    UndoClientState clientState = getClientState(editor);
-    Collection<DocumentReference> references = UndoDocumentUtil.getDocRefs(editor);
-    if (clientState == null || references == null) {
-      return null;
-    }
-    UndoRedoStacksHolder stacksHolder = isUndo ? clientState.getUndoStacksHolder() : clientState.getRedoStacksHolder();
-    UndoableGroup action = stacksHolder.getLastAction(references);
-    return action;
+    return clientState != null && clientState.isSpeculativeUndoAllowed(editor, isUndo);
   }
 
   private @NotNull Pair<@ActionText String, @ActionDescription String> getUndoOrRedoActionNameAndDescription(@Nullable FileEditor editor, boolean undo) {

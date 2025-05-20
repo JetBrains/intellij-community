@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public final class DocumentReferenceByVirtualFile implements DocumentReference {
-  private VirtualFile myFile;
+  private @NotNull VirtualFile myFile;
 
   DocumentReferenceByVirtualFile(@NotNull VirtualFile file) {
     myFile = file;

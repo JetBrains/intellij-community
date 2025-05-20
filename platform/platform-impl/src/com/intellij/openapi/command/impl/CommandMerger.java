@@ -290,16 +290,14 @@ public final class CommandMerger {
     return UndoUnit.fromMerger(this).toString();
   }
 
-  boolean isSpeculativeUndoPossible() {
-    if (!isGlobal() && isValid && !isTransparent() && undoConfirmationPolicy == UndoConfirmationPolicy.DEFAULT) {
-      if (UndoUtil.isSpeculativeUndoableCommand(getCommandName()) && !currentActions.isEmpty()) {
-        return ContainerUtil.and(
-          currentActions,
-          a -> a instanceof EditorChangeAction
-        );
-      }
-    }
-    return false;
+  boolean isSpeculativeUndoAllowed() {
+    return SpeculativeUndoableAction.isUndoable(
+      getCommandName(),
+      isGlobal(),
+      isTransparent(),
+      getUndoConfirmationPolicy(),
+      getCurrentActions()
+    );
   }
 
   private void merge(@NotNull CommandMerger nextCommandToMerge) {

@@ -135,12 +135,12 @@ final class UndoClientState implements Disposable {
   }
 
   long getNextNanoTime(@NotNull FileEditor editor, boolean isUndo) {
-    UndoableGroup lastAction = getLastAction(editor, isUndo);
+    UndoableGroup lastAction = getLastAction(editor, isUndo, true);
     return lastAction == null ? -1 : lastAction.getGroupStartPerformedTimestamp();
   }
 
   boolean isNextAskConfirmation(@NotNull FileEditor editor, boolean isUndo) {
-    UndoableGroup lastAction = getLastAction(editor, isUndo);
+    UndoableGroup lastAction = getLastAction(editor, isUndo, true);
     return lastAction != null && lastAction.shouldAskConfirmation( /*redo=*/ !isUndo);
   }
 
@@ -307,40 +307,15 @@ final class UndoClientState implements Disposable {
     return currentOperation == OperationInProgress.REDO;
   }
 
-  private void addActionToSharedStack(@NotNull UndoableAction action) {
-    if (action instanceof AdjustableUndoableAction adjustable) {
-      DocumentReference[] affected = action.getAffectedDocuments();
-      if (affected == null) {
-        return;
-      }
-      adjustableUndoableActionsHolder.addAction(adjustable);
-      for (DocumentReference reference : affected) {
-        for (MutableActionChangeRange changeRange : adjustable.getChangeRanges(reference)) {
-          sharedUndoStacksHolder.addToStack(reference, changeRange.toImmutable(false));
-          sharedRedoStacksHolder.addToStack(reference, changeRange.toImmutable(true));
-        }
-      }
+  boolean isSpeculativeUndoAllowed(@Nullable FileEditor editor, boolean isUndo) {
+    if (isUndo && commandMerger.hasActions()) {
+      return commandMerger.isSpeculativeUndoAllowed();
     }
-  }
-
-  private void compactIfNeeded() {
-    if (!isUndoOrRedoInProgress() && commandTimestamp % COMMAND_TO_RUN_COMPACT == 0) {
-      Set<DocumentReference> docsOnStacks = collectReferencesWithoutMergers();
-      docsOnStacks.removeIf(doc -> UndoDocumentUtil.isDocumentOpened(project, doc));
-      if (docsOnStacks.size() > FREE_QUEUES_LIMIT) {
-        DocumentReference[] docsBackSorted = docsOnStacks.toArray(DocumentReference.EMPTY_ARRAY);
-        Arrays.sort(docsBackSorted, Comparator.comparingInt(doc -> getLastCommandTimestamp(doc)));
-        for (int i = 0; i < docsBackSorted.length - FREE_QUEUES_LIMIT; i++) {
-          DocumentReference doc = docsBackSorted[i];
-          if (getLastCommandTimestamp(doc) + COMMANDS_TO_KEEP_LIVE_QUEUES > commandTimestamp) {
-            break;
-          }
-          clearUndoRedoQueue(doc);
-          sharedRedoStacksHolder.trimStacks(Collections.singleton(doc));
-          sharedUndoStacksHolder.trimStacks(Collections.singleton(doc));
-        }
-      }
+    if (editor != null) {
+      UndoableGroup action = getLastAction(editor, isUndo, false);
+      return action != null && action.isSpeculativeUndoAllowed();
     }
+    return false;
   }
 
   void clearUndoRedoQueue(@NotNull DocumentReference docRef) {
@@ -394,18 +369,6 @@ final class UndoClientState implements Disposable {
     return clientId;
   }
 
-  @NotNull UndoRedoStacksHolder getUndoStacksHolder() {
-    return undoStacksHolder;
-  }
-
-  @NotNull UndoRedoStacksHolder getRedoStacksHolder() {
-    return redoStacksHolder;
-  }
-
-  @NotNull CommandMerger getCommandMerger() {
-    return commandMerger;
-  }
-
   @NotNull String dump(@NotNull Collection<DocumentReference> docRefs) {
     StringBuilder sb = new StringBuilder();
     sb.append(clientId);
@@ -440,6 +403,42 @@ final class UndoClientState implements Disposable {
       commandLevelBeforeDrop == 0,
       "Level: " + commandLevelBeforeDrop + "\nCommand: " + commandMerger.getCommandName()
     );
+  }
+
+  private void addActionToSharedStack(@NotNull UndoableAction action) {
+    if (action instanceof AdjustableUndoableAction adjustable) {
+      DocumentReference[] affected = action.getAffectedDocuments();
+      if (affected == null) {
+        return;
+      }
+      adjustableUndoableActionsHolder.addAction(adjustable);
+      for (DocumentReference reference : affected) {
+        for (MutableActionChangeRange changeRange : adjustable.getChangeRanges(reference)) {
+          sharedUndoStacksHolder.addToStack(reference, changeRange.toImmutable(false));
+          sharedRedoStacksHolder.addToStack(reference, changeRange.toImmutable(true));
+        }
+      }
+    }
+  }
+
+  private void compactIfNeeded() {
+    if (!isUndoOrRedoInProgress() && commandTimestamp % COMMAND_TO_RUN_COMPACT == 0) {
+      Set<DocumentReference> docsOnStacks = collectReferencesWithoutMergers();
+      docsOnStacks.removeIf(doc -> UndoDocumentUtil.isDocumentOpened(project, doc));
+      if (docsOnStacks.size() > FREE_QUEUES_LIMIT) {
+        DocumentReference[] docsBackSorted = docsOnStacks.toArray(DocumentReference.EMPTY_ARRAY);
+        Arrays.sort(docsBackSorted, Comparator.comparingInt(doc -> getLastCommandTimestamp(doc)));
+        for (int i = 0; i < docsBackSorted.length - FREE_QUEUES_LIMIT; i++) {
+          DocumentReference doc = docsBackSorted[i];
+          if (getLastCommandTimestamp(doc) + COMMANDS_TO_KEEP_LIVE_QUEUES > commandTimestamp) {
+            break;
+          }
+          clearUndoRedoQueue(doc);
+          sharedRedoStacksHolder.trimStacks(Collections.singleton(doc));
+          sharedUndoStacksHolder.trimStacks(Collections.singleton(doc));
+        }
+      }
+    }
   }
 
   private void undoOrRedo(@Nullable FileEditor editor, boolean isUndo) {
@@ -536,12 +535,12 @@ final class UndoClientState implements Disposable {
     return String.join("\n", reversed);
   }
 
-  private @Nullable UndoableGroup getLastAction(@NotNull FileEditor editor, boolean isUndo) {
+  private @Nullable UndoableGroup getLastAction(@NotNull FileEditor editor, boolean isUndo, boolean isFlush) {
     Collection<DocumentReference> refs = UndoDocumentUtil.getDocRefs(editor);
     if (refs == null) {
       return null;
     }
-    if (isUndo) {
+    if (isUndo && isFlush) {
       flushCurrentCommand();
     }
     UndoRedoStacksHolder stack = isUndo ? undoStacksHolder : redoStacksHolder;

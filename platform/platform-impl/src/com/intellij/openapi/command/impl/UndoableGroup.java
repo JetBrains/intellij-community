@@ -421,16 +421,14 @@ final class UndoableGroup implements Dumpable {
     return UndoUnit.fromGroup(this).toString();
   }
 
-  boolean isSpeculativeUndoPossible() {
-    if (!isGlobal() && isValid() && !isTransparent() && !isTemporary() && getConfirmationPolicy() == UndoConfirmationPolicy.DEFAULT) {
-      if (UndoUtil.isSpeculativeUndoableCommand(getCommandName()) && !getActions().isEmpty()) {
-        return ContainerUtil.and(
-          getActions(),
-          a -> a instanceof EditorChangeAction
-        );
-      }
-    }
-    return false;
+  boolean isSpeculativeUndoAllowed() {
+    return SpeculativeUndoableAction.isUndoable(
+      getCommandName(),
+      isGlobal(),
+      isTransparent(),
+      getConfirmationPolicy(),
+      getActions()
+    );
   }
 
   static final class UndoableGroupOriginalContext {

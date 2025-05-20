@@ -27,6 +27,6 @@ final class DocumentReferenceByNonlocalVirtualFile implements DocumentReference 
 
   @Override
   public String toString() {
-    return myFile.toString();
+    return myFile.getName();
   }
 }
