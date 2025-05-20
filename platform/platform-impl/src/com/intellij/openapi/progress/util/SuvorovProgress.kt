@@ -24,13 +24,14 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.awt.AWTEvent
 import java.awt.KeyboardFocusManager
+import java.util.concurrent.atomic.AtomicReference
 import java.awt.event.InvocationEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
 
@@ -61,6 +62,18 @@ object SuvorovProgress {
 
   fun init(disposable: Disposable) {
     eternalStealer = EternalEventStealer(disposable)
+  }
+
+  private val title: AtomicReference<@Nls String> = AtomicReference()
+
+  fun <T> withProgressTitle(title: String, action: () -> T): T {
+    val oldTitle = this.title.getAndSet(title)
+    try {
+      return action()
+    }
+    finally {
+      this.title.set(oldTitle)
+    }
   }
 
   @JvmStatic
@@ -147,8 +160,9 @@ object SuvorovProgress {
     // some focus machinery may require Write-Intent read action
     // we need to remove it from there
     getGlobalThreadingSupport().relaxPreventiveLockingActions {
-      val progress = if (isBar) {
-        PotemkinProgress(CommonBundle.message("title.long.non.interactive.progress"), null, null, null)
+      val title = this.title.get()
+      val progress = if (title != null || isBar) {
+        PotemkinProgress(title ?: CommonBundle.message("title.long.non.interactive.progress"), null, null, null)
       }
       else {
         val window = SwingUtilities.getRootPane(KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner)

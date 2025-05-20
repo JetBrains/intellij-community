@@ -1725,6 +1725,9 @@
     <applicationService serviceInterface="com.intellij.openapi.application.ReadWriteActionSupport"
                         serviceImplementation="com.intellij.openapi.application.rw.PlatformReadWriteActionSupport"/>
 
+    <applicationService serviceInterface="com.intellij.openapi.progress.LockingProgressSupport"
+                        serviceImplementation="com.intellij.openapi.application.impl.LockingProgressSupportImpl"/>
+
     <persistentFsConnectionListener implementation="com.intellij.openapi.vfs.impl.jar.ArchiveCachesCleaner"/>
     <applicationService serviceInterface="com.intellij.platform.ide.progress.TaskSupport"
                         serviceImplementation="com.intellij.openapi.progress.impl.PlatformTaskSupport" preload="true"/>
