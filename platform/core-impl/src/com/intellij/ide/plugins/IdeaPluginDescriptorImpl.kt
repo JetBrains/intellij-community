@@ -243,6 +243,13 @@ sealed class IdeaPluginDescriptorImpl(
 }
 
 /**
+ * Either [PluginMainDescriptor] or [ContentModuleDescriptor].
+ * Both of them can be referenced either by plugin id or a module name (while [DependsSubDescriptor] can't be referenced).
+ */
+@ApiStatus.Internal
+sealed class PluginModuleDescriptor(raw: RawPluginDescriptor) : IdeaPluginDescriptorImpl(raw)
+
+/**
  * Main plugin descriptor, instantiated from "plugin.xml" (or from platform XMLs for Core).
  */
 @ApiStatus.Internal
@@ -251,7 +258,7 @@ class PluginMainDescriptor(
   pluginPath: Path,
   isBundled: Boolean,
   useCoreClassLoader: Boolean = false
-): IdeaPluginDescriptorImpl(raw) {
+): PluginModuleDescriptor(raw) {
   private val id: PluginId = PluginId.getId(raw.id ?: raw.name ?: throw RuntimeException("Neither id nor name are specified"))
   private val name: String = raw.name ?: id.idString
 
@@ -580,7 +587,7 @@ class ContentModuleDescriptor(
   moduleName: String,
   moduleLoadingRule: ModuleLoadingRule,
   private val descriptorPath: String
-): IdeaPluginDescriptorImpl(raw) {
+): PluginModuleDescriptor(raw) {
   val moduleName: String = moduleName
   val moduleLoadingRule: ModuleLoadingRule = moduleLoadingRule
 
