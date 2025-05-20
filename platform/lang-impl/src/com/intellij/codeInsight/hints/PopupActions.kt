@@ -6,6 +6,8 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 import com.intellij.codeInsight.hints.HintInfo.MethodInfo
 import com.intellij.codeInsight.hints.settings.Diff
+import com.intellij.codeInsight.hints.parameters.ParameterHintsExcludeListService
+import com.intellij.codeInsight.hints.parameters.collectExcludeListConfig
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.codeInsight.hints.settings.language.ParameterInlayProviderSettingsModel
 import com.intellij.codeInsight.hints.settings.showInlaySettings
@@ -13,6 +15,7 @@ import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.codeInspection.util.IntentionName
+import com.intellij.diagnostic.PluginException
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.Language
 import com.intellij.notification.Notification
@@ -23,6 +26,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.ImaginaryEditor
@@ -78,16 +82,32 @@ private fun showParameterHintsDialog(e: AnActionEvent, getPattern: (HintInfo?) -
   val editor = e.getData(CommonDataKeys.EDITOR) ?: return
 
   val fileLanguage = file.language
-  InlayParameterHintsExtension.forLanguage(fileLanguage) ?: return
+  val fileLanguageProvider = InlayParameterHintsExtension.forLanguage(fileLanguage) ?: return
 
   val offset = editor.caretModel.offset
   val info = getHintInfoFromProvider(offset, file, editor)
 
-  val selectedLanguage = (info as? MethodInfo)?.language ?: fileLanguage
-
   when (val pattern = getPattern(info)) {
     null -> showInlaySettings(file.project, fileLanguage, Predicate { it is ParameterInlayProviderSettingsModel })
-    else -> ExcludeListDialog(selectedLanguage, pattern).show()
+    else -> {
+      val selectedLanguage = (info as? MethodInfo)?.language
+      val excludeListConfig = if (selectedLanguage != null) {
+        // selectedLanguage could be implemented not via InlayParameterHintsProvider
+        ParameterHintsExcludeListService.getInstance().getConfig(selectedLanguage) ?: run {
+          PluginException.logPluginError(
+            logger<ShowParameterHintsSettings>(),
+            "Cannot put method ${info.fullyQualifiedName} to the exclude list for language ${selectedLanguage.id}, " +
+            "as it does not support parameter hints.",
+            null,
+            fileLanguageProvider.javaClass
+          )
+          return
+        }
+      } else {
+        collectExcludeListConfig(getLanguageForSettingKey(fileLanguage), fileLanguageProvider)
+      }
+      ExcludeListDialog(excludeListConfig, pattern).show()
+    }
   }
 }
 
@@ -142,7 +162,9 @@ class AddToExcludeListCurrentMethodIntention : IntentionAction, LowPriorityActio
   }
 
   private fun showSettings(language: Language) {
-    ExcludeListDialog(language).show()
+    val providerLanguage = getLanguageForSettingKey(language)
+    val provider = InlayParameterHintsExtension.forLanguage(providerLanguage)
+    ExcludeListDialog(collectExcludeListConfig(providerLanguage, provider)).show()
   }
 
   private fun undo(language: Language, info: MethodInfo, project: Project) {
@@ -314,7 +336,7 @@ private fun hasHints(element: PsiElement?,
 
 
 private fun refreshAllOpenEditors(project: Project) {
-  ParameterHintsPassFactory.forceHintsUpdateOnNextPass()
+  refreshParameterHintsOnNextPass()
   val psiManager = PsiManager.getInstance(project)
   val daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(project)
   val fileEditorManager = FileEditorManager.getInstance(project)

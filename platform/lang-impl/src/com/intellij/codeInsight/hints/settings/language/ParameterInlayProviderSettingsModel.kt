@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 import com.intellij.codeInsight.hints.*
+import com.intellij.codeInsight.hints.parameters.collectExcludeListConfig
 import com.intellij.codeInsight.hints.settings.CASE_KEY
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.codeInsight.hints.settings.ParameterHintsSettingsPanel
@@ -48,8 +49,7 @@ class ParameterInlayProviderSettingsModel(
 
   override val component: ParameterHintsSettingsPanel by lazy {
     ParameterHintsSettingsPanel(
-      language = language,
-      excludeListSupported = provider.isBlackListSupported
+      collectExcludeListConfig(language, provider),
     )
   }
 

@@ -415,6 +415,7 @@ f:com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 - f:effectsIn(com.intellij.openapi.editor.markup.TextAttributes):com.intellij.openapi.editor.markup.TextAttributes
 *f:com.intellij.codeInsight.hints.MethodInfoExcludeListFilter
 - com.intellij.codeInsight.hints.HintInfoFilter
+- <init>(java.util.List):V
 - <init>(java.util.Set):V
 - s:forLanguage(com.intellij.lang.Language):com.intellij.codeInsight.hints.MethodInfoExcludeListFilter
 - showHint(com.intellij.codeInsight.hints.HintInfo):Z

@@ -404,6 +404,11 @@
 - a:removeListener(com.intellij.codeInsight.hints.presentation.PresentationListener):V
 - a:toString():java.lang.String
 - updateState(com.intellij.codeInsight.hints.presentation.InlayPresentation):Z
+*:com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings$ExcludeListListener
+- *sf:Companion:com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings$ExcludeListListener$Companion
+- sf:TOPIC:com.intellij.util.messages.Topic
+- a:excludeListChanged(com.intellij.lang.Language):V
+*f:com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings$ExcludeListListener$Companion
 *a:com.intellij.codeInspection.ui.CustomComponentExtensionWithSwingRenderer
 - com.intellij.codeInspection.options.CustomComponentExtension
 - p:<init>(java.lang.String):V
