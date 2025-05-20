@@ -194,6 +194,10 @@ class UiPluginManager {
   fun findPluginNames(pluginIds: List<PluginId>): List<String> {
     return getController().findPluginNames(pluginIds)
   }
+  
+  fun findPlugin(pluginId: PluginId): PluginUiModel? {
+    return getController().findPlugin(pluginId)
+  }
 
   fun getController(): UiPluginManagerController {
     if (Registry.`is`("reworked.plugin.manager.enabled")) {

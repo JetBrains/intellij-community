@@ -47,6 +47,10 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
   override fun getPlugin(id: PluginId): PluginUiModel? {
     return awaitForResult { PluginManagerApi.getInstance().getPluginById(id) }
   }
+  
+  override fun findPlugin(pluginId: PluginId): PluginUiModel? {
+    return awaitForResult { PluginManagerApi.getInstance().findPlugin(pluginId) }
+  }
 
   override fun allowLoadUnloadSynchronously(id: PluginId): Boolean {
     return awaitForResult { PluginInstallerApi.getInstance().allowLoadUnloadSynchronously(id) }

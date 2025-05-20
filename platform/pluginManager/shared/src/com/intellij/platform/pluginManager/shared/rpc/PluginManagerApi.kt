@@ -23,6 +23,7 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun getPluginById(pluginId: PluginId): PluginDto?
   suspend fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginDto>
   suspend fun getInstalledPlugins(): List<PluginDto>
+  suspend fun findPlugin(pluginId: PluginId): PluginDto?
   suspend fun executeMarketplaceQuery(query: String, count: Int, includeIncompatible: Boolean): List<MarketplaceSearchPluginData>
   suspend fun isPluginDisabled(pluginId: PluginId): Boolean
   suspend fun loadMetadata(xmlId: String, ideCompatibleUpdate: IdeCompatibleUpdate): IntellijUpdateMetadata

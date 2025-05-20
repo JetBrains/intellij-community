@@ -60,6 +60,7 @@ interface UiPluginManagerController {
   fun setEnableStateForDependencies(sessionId: String, descriptorIds: Set<PluginId>, enable: Boolean): SetEnabledStateResult
   fun filterPluginsRequiringUltimateButItsDisabled(pluginIds: List<PluginId>): List<PluginId>
   fun findPluginNames(pluginIds: List<PluginId>): List<String>
+  fun findPlugin(pluginId: PluginId): PluginUiModel?
 
   suspend fun resetSession(sessionId: String, removeSession: Boolean, parentComponent: JComponent? = null): Map<PluginId, Boolean>
 

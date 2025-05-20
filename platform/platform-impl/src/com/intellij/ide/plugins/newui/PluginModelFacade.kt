@@ -107,10 +107,6 @@ class PluginModelFacade(private val pluginModel: MyPluginModel) {
     return PluginManagerCore.getPlugin(model.pluginId)?.let { PluginUiModelAdapter(it) }
   }
 
-  fun findPlugin(model: PluginUiModel): PluginUiModel? {
-    return PluginManagerCore.buildPluginIdMap()[model.pluginId]?.let { PluginUiModelAdapter(it) }
-  }
-
   fun getPluginManagerUrl(model: PluginUiModel): String {
     return MarketplaceUrls.getPluginManagerUrl()
   }

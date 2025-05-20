@@ -30,6 +30,10 @@ class BackendPluginManagerApi : PluginManagerApi {
   override suspend fun getPluginById(pluginId: PluginId): PluginDto? {
     return PluginManagerCore.getPlugin(pluginId)?.let { PluginDescriptorConverter.toPluginDto(it) }
   }
+  
+  override suspend fun findPlugin(pluginId: PluginId): PluginDto? {
+    return DefaultUiPluginManagerController.findPlugin(pluginId)?.let { PluginDescriptorConverter.toPluginDto(it.getDescriptor()) }
+  }
 
   override suspend fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginDto> {
     return PluginManager.getVisiblePlugins(showImplementationDetails).map { PluginDescriptorConverter.toPluginDto(it) }.toList()

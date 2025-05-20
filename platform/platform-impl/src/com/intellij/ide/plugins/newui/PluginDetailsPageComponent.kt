@@ -376,7 +376,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     val plugin = plugin
     if (plugin != null && !sentFeedbackPlugins.contains(plugin.pluginId)) {
-      val foundPlugin = pluginModel.findPlugin(plugin)
+      val foundPlugin = UiPluginManager.getInstance().findPlugin(plugin.pluginId)
       if (foundPlugin != null && pluginModel.isUninstalled(foundPlugin)) {
         rootPanel.add(uninstallFeedbackNotification!!, BorderLayout.NORTH)
       }
@@ -745,7 +745,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     isPluginCompatible = !pluginUiModel.isIncompatibleWithCurrentOs
     isPluginAvailable = isPluginCompatible && updateDescriptor?.canBeEnabled ?: true
     if (isMarketplace) {
-      installedDescriptorForMarketplace = pluginModel.findPlugin(plugin!!)
+      installedDescriptorForMarketplace = UiPluginManager.getInstance().findPlugin(plugin!!.pluginId)
       nameAndButtons!!.setProgressDisabledButton((if (this.updateDescriptor == null) installButton else updateButton)!!)
     }
     showPlugin()
@@ -1289,7 +1289,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
         if (installButton != null) {
           installButton.setEnabled(false, IdeBundle.message("plugin.status.installed"))
           if (installButton.isVisible) {
-            installedDescriptorForMarketplace = pluginModel.findPlugin(plugin!!)
+            installedDescriptorForMarketplace = UiPluginManager.getInstance().findPlugin(plugin!!.pluginId)
             installedDescriptorForMarketplace?.let {
               installButton.isVisible = false
               myVersion1!!.text = it.version

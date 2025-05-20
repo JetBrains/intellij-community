@@ -137,6 +137,10 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   override fun getPlugin(id: PluginId): PluginUiModel? {
     return PluginManagerCore.getPlugin(id)?.let { PluginUiModelAdapter(it) }
   }
+  
+  override fun findPlugin(pluginId: PluginId): PluginUiModel? {
+    return PluginManagerCore.buildPluginIdMap()[pluginId]?.let { PluginUiModelAdapter(it) }
+  }
 
   override fun performUninstall(sessionId: String, pluginId: PluginId): Boolean {
     val uninstalledPlugin = uninstallPlugin(pluginId)
