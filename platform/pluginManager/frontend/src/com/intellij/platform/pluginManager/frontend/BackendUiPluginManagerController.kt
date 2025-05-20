@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.marketplace.ApplyPluginsStateResult
 import com.intellij.ide.plugins.marketplace.CheckErrorsResult
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
 import com.intellij.ide.plugins.marketplace.InstallPluginResult
+import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
 import com.intellij.ide.plugins.marketplace.IntellijUpdateMetadata
 import com.intellij.ide.plugins.marketplace.MarketplaceSearchPluginData
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
@@ -177,6 +178,12 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
   override fun getPluginManagerUrl(): String {
     return awaitForResult { PluginManagerApi.getInstance().getPluginManagerUrl() }
   }
+  
+  override fun updateDescriptorsForInstalledPlugins() {
+    service<BackendRpcCoroutineContext>().coroutineScope.launch {
+      PluginManagerApi.getInstance().updateDescriptorsForInstalledPlugins()
+    }
+  }
 
   override fun unloadDynamicPlugin(parentComponent: JComponent?, pluginId: PluginId, isUpdate: Boolean): Boolean {
     return awaitForResult { PluginInstallerApi.getInstance().unloadDynamicPlugin(pluginId, isUpdate) }
@@ -194,6 +201,10 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     parentComponent: JComponent?, pluginId: PluginId, isUpdate: Boolean,
   ): Boolean {
     return awaitForResult { PluginInstallerApi.getInstance().allowLoadUnloadWithoutRestart(pluginId.idString) }
+  }
+  
+  override fun isNeedUpdate(pluginId: PluginId): Boolean {
+    return awaitForResult { PluginManagerApi.getInstance().isNeedUpdate(pluginId) }
   }
 
   override fun createSession(sessionId: String) {

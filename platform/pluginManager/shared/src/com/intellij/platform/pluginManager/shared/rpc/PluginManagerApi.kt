@@ -4,6 +4,7 @@ package com.intellij.platform.pluginManager.shared.rpc
 import com.intellij.ide.plugins.marketplace.MarketplaceSearchPluginData
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
+import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
 import com.intellij.ide.plugins.marketplace.IntellijUpdateMetadata
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
@@ -32,6 +33,7 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>?
   suspend fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata?
   suspend fun getPluginManagerUrl(): String
+  suspend fun updateDescriptorsForInstalledPlugins()
   suspend fun createSession(sessionId: String)
   suspend fun closeSession(sessionId: String)
   suspend fun setEnabledState(sessionId: String, pluginIds: List<PluginId>, enable: Boolean)
@@ -46,6 +48,7 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun hasPluginsAvailableForEnableDisable(pluginIds: List<PluginId>): Boolean
   suspend fun filterPluginsRequiresUltimateButItsDisabled(pluginIds: List<PluginId>): List<PluginId>
   suspend fun findPluginNames(pluginIds: List<PluginId>): List<String>
+  suspend fun isNeedUpdate(pluginId: PluginId): Boolean
 
   companion object {
     suspend fun getInstance(): PluginManagerApi {

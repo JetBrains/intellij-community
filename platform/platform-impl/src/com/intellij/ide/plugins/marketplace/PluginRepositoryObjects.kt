@@ -236,12 +236,15 @@ data class ReviewCommentPlugin(
   val link: @Nls String = ""
 )
 
+@Serializable
 @ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class SalesMetadata(
   val trialPeriod: Int? = null,
   val customTrialPeriods: List<CustomTrialPeriod>? = null
 )
+
+@Serializable
 @ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class CustomTrialPeriod(
@@ -249,6 +252,7 @@ data class CustomTrialPeriod(
   @JsonProperty("trialPeriod") val trialPeriod: Int
 )
 
+@Serializable
 @ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class IntellijPluginMetadata(
@@ -309,6 +313,7 @@ data class IntellijPluginMetadata(
   }
 }
 
+@Serializable
 @ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class PluginVendorMetadata(

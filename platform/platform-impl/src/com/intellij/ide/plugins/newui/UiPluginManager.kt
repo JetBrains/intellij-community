@@ -219,6 +219,14 @@ class UiPluginManager {
   fun getPluginManagerUrl(): String {
     return getController().getPluginManagerUrl()
   }
+  
+  fun updateDescriptorsForInstalledPlugins() {
+    getController().updateDescriptorsForInstalledPlugins()
+  }
+  
+  fun isNeedUpdate(pluginId: PluginId): Boolean {
+    return getController().isNeedUpdate(pluginId)
+  }
 
   fun getController(): UiPluginManagerController {
     if (Registry.`is`("reworked.plugin.manager.enabled")) {

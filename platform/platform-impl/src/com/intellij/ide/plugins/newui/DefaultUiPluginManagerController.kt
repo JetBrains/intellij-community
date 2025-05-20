@@ -17,8 +17,6 @@ import com.intellij.ide.plugins.PluginManagerCore.isUpdatedBundledPlugin
 import com.intellij.ide.plugins.PluginManagerCore.looksLikePlatformPluginAlias
 import com.intellij.ide.plugins.PluginUtils.toPluginDescriptors
 import com.intellij.ide.plugins.marketplace.*
-import com.intellij.ide.plugins.marketplace.MarketplaceRequests.Companion.loadLastCompatiblePluginsUpdate
-import com.intellij.ide.plugins.marketplace.MarketplaceRequests.Companion.loadPluginModel
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests.Companion.readOrUpdateFile
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls
 import com.intellij.ide.plugins.newui.UiPluginManager.Companion.getInstance
@@ -187,6 +185,15 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     buildNumber: String?,
   ): List<IdeCompatibleUpdate> {
     return getLastCompatiblePluginUpdate(allIds, throwExceptions, BuildNumber.fromString(buildNumber))
+  }
+  
+  override fun updateDescriptorsForInstalledPlugins() {
+    UpdateChecker.updateDescriptorsForInstalledPlugins(InstalledPluginsState.getInstance())
+  }
+  
+  override fun isNeedUpdate(pluginId: PluginId): Boolean {
+    val descriptor = PluginManagerCore.getPlugin(pluginId) ?: return false
+    return PluginUpdatesService.isNeedUpdate(descriptor)
   }
 
   @RequiresBackgroundThread

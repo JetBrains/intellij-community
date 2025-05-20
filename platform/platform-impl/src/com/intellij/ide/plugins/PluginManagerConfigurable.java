@@ -228,7 +228,7 @@ public final class PluginManagerConfigurable
     });
     myPluginModelFacade.getModel().setPluginUpdatesService(myPluginUpdatesService);
 
-    UpdateChecker.updateDescriptorsForInstalledPlugins(InstalledPluginsState.getInstance());
+    UiPluginManager.getInstance().updateDescriptorsForInstalledPlugins();
 
     createMarketplaceTab();
     createInstalledTab();
@@ -1281,7 +1281,7 @@ public final class PluginManagerConfigurable
                   I.remove();
                   continue;
                 }
-                if (parser.needUpdate && !PluginUpdatesService.isNeedUpdate(descriptor.getDescriptor())) {
+                if (parser.needUpdate && !UiPluginManager.getInstance().isNeedUpdate(descriptor.getPluginId())) {
                   I.remove();
                   continue;
                 }

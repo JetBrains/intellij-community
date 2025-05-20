@@ -125,6 +125,10 @@ class BackendPluginManagerApi : PluginManagerApi {
     return DefaultUiPluginManagerController.getPluginManagerUrl()
   }
   
+  override suspend fun updateDescriptorsForInstalledPlugins() {
+    DefaultUiPluginManagerController.updateDescriptorsForInstalledPlugins()
+  }
+  
   override suspend fun getLastCompatiblePluginUpdateModel(pluginId: PluginId, buildNumber: String?): PluginDto? {
     val model = DefaultUiPluginManagerController.getLastCompatiblePluginUpdateModel(pluginId, buildNumber, null) ?: return null
     return PluginDto.fromModel(model)
@@ -132,5 +136,10 @@ class BackendPluginManagerApi : PluginManagerApi {
   
   override suspend fun getLastCompatiblePluginUpdate(allIds: Set<PluginId>, throwExceptions: Boolean, buildNumber: String?): List<IdeCompatibleUpdate> {
     return DefaultUiPluginManagerController.getLastCompatiblePluginUpdate(allIds, throwExceptions, buildNumber)
+  }
+  
+  override suspend fun isNeedUpdate(pluginId: PluginId): Boolean {
+    val descriptor = PluginManagerCore.getPlugin(pluginId) ?: return false
+    return PluginUpdatesService.isNeedUpdate(descriptor)
   }
 }
