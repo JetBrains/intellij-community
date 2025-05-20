@@ -42,7 +42,10 @@ import javax.swing.UIManager
 
 internal class IslandsUICustomization : InternalUICustomization() {
   companion object {
-    val isIslandsAvailable: Boolean = Registry.`is`("idea.islands.enabled", false) && !Registry.`is`("llm.riderNext.enabled", false)
+    val isIslandsAvailable: Boolean
+      get() {
+        return Registry.`is`("idea.islands.enabled", false) && !Registry.`is`("llm.riderNext.enabled", false)
+      }
 
     val isIslandsEnabled: Boolean = isIslandsAvailable && getIslandsType() != "default"
 
