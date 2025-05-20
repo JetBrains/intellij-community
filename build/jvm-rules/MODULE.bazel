@@ -87,34 +87,34 @@ http_file(
   downloaded_file_path = "rhizomedb-compiler-plugin-2.1.20-0.5.jar"
 )
 http_file(
-  name = "kotlin-compiler-2_2_20-dev-3882_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler/2.2.20-dev-3882/kotlin-compiler-2.2.20-dev-3882.jar",
-  sha256 = "fc8041df04bab477e490e1349bb3deb197054c49b49c341da97a910253e8f511",
-  downloaded_file_path = "kotlin-compiler-2.2.20-dev-3882.jar"
+  name = "kotlin-compiler-2_2_20-dev-3919_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler/2.2.20-dev-3919/kotlin-compiler-2.2.20-dev-3919.jar",
+  sha256 = "d241e6e73fe06b91e83a830152b8ce315c841a58951e7267a89f74cf0dfb6778",
+  downloaded_file_path = "kotlin-compiler-2.2.20-dev-3919.jar"
 )
 http_file(
-  name = "kotlin-stdlib-jdk8-2_2_20-dev-3882_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-stdlib-jdk8/2.2.20-dev-3882/kotlin-stdlib-jdk8-2.2.20-dev-3882.jar",
-  sha256 = "ec46afa20e224a3edcd1edc2b5d9a5c8a54ebea0bdb08b975defbc85c950a358",
-  downloaded_file_path = "kotlin-stdlib-jdk8-2.2.20-dev-3882.jar"
+  name = "kotlin-stdlib-jdk8-2_2_20-dev-3919_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-stdlib-jdk8/2.2.20-dev-3919/kotlin-stdlib-jdk8-2.2.20-dev-3919.jar",
+  sha256 = "ae5e9505bf812411d381bbe2c80971f0f28f712017c9f682fe93ea9ee338193d",
+  downloaded_file_path = "kotlin-stdlib-jdk8-2.2.20-dev-3919.jar"
 )
 http_file(
-  name = "kotlin-stdlib-2_2_20-dev-3882_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-stdlib/2.2.20-dev-3882/kotlin-stdlib-2.2.20-dev-3882.jar",
-  sha256 = "bb8f1ab9518c1a1c7675aaca072022563f64fe3c134ffc31187990913d3d9690",
-  downloaded_file_path = "kotlin-stdlib-2.2.20-dev-3882.jar"
+  name = "kotlin-stdlib-2_2_20-dev-3919_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-stdlib/2.2.20-dev-3919/kotlin-stdlib-2.2.20-dev-3919.jar",
+  sha256 = "53a8145efba3e94585e95d1a6cb2373cdb8b28286035af49792d34d5cb773d47",
+  downloaded_file_path = "kotlin-stdlib-2.2.20-dev-3919.jar"
 )
 http_file(
-  name = "kotlin-stdlib-jdk7-2_2_20-dev-3882_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-stdlib-jdk7/2.2.20-dev-3882/kotlin-stdlib-jdk7-2.2.20-dev-3882.jar",
-  sha256 = "1a30fa08460330db92d630366bdefc9bf9baacc7936319ff2b5d8cde588bf400",
-  downloaded_file_path = "kotlin-stdlib-jdk7-2.2.20-dev-3882.jar"
+  name = "kotlin-stdlib-jdk7-2_2_20-dev-3919_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-stdlib-jdk7/2.2.20-dev-3919/kotlin-stdlib-jdk7-2.2.20-dev-3919.jar",
+  sha256 = "bf54f7f3c2445c04fa6b281d75fe3b7e065e0206675a4cd7a205573421276f1b",
+  downloaded_file_path = "kotlin-stdlib-jdk7-2.2.20-dev-3919.jar"
 )
 http_file(
-  name = "kotlin-script-runtime-2_2_20-dev-3882_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-script-runtime/2.2.20-dev-3882/kotlin-script-runtime-2.2.20-dev-3882.jar",
-  sha256 = "dc01c1fe298933c84f81a1ad2e1be35821698a441caa8ebdbb7d67c1c20ef814",
-  downloaded_file_path = "kotlin-script-runtime-2.2.20-dev-3882.jar"
+  name = "kotlin-script-runtime-2_2_20-dev-3919_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-script-runtime/2.2.20-dev-3919/kotlin-script-runtime-2.2.20-dev-3919.jar",
+  sha256 = "8a2ac5e8edee516c10c82f61a94a5697ef9624d7d8ebc4b1d7d8cbdec917b94e",
+  downloaded_file_path = "kotlin-script-runtime-2.2.20-dev-3919.jar"
 )
 http_file(
   name = "kotlin-reflect-1_6_10_http",
