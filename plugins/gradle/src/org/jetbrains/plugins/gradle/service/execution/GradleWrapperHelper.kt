@@ -16,7 +16,7 @@ import io.opentelemetry.api.trace.StatusCode
 import org.gradle.tooling.CancellationToken
 import org.gradle.tooling.ProjectConnection
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.GradleConnectorService.Companion.withGradleConnection
+import org.jetbrains.plugins.gradle.connection.GradleConnectorService
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -53,7 +53,8 @@ object GradleWrapperHelper {
     if (settings.distributionType == DistributionType.DEFAULT_WRAPPED && GradleUtil.findDefaultWrapperPropertiesFile(projectPath) != null) {
       return
     }
-    withGradleConnection(projectPath, id, settings, listener, cancellationToken) {
+    val connector = GradleConnectorService.getInstance(projectPath, id)
+    connector.withGradleConnection(projectPath, id, settings, listener, cancellationToken) {
       ensureInstalledWrapper(id, projectPath, settings, gradleVersion, listener, it, cancellationToken)
     }
   }

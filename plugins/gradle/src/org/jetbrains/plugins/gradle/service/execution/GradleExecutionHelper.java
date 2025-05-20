@@ -37,6 +37,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.plugins.gradle.connection.GradleConnectorService;
 import org.jetbrains.plugins.gradle.execution.target.TargetModelBuilder;
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
 import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile;
@@ -52,8 +53,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-
-import static org.jetbrains.plugins.gradle.GradleConnectorService.withGradleConnection;
 
 public final class GradleExecutionHelper {
 
@@ -157,7 +156,8 @@ public final class GradleExecutionHelper {
     else {
       projectDir = projectPath;
     }
-    return withGradleConnection(projectDir, taskId, settings, listener, cancellationToken, connection -> {
+    GradleConnectorService connectorService = GradleConnectorService.getInstance(projectDir, taskId);
+    return connectorService.withGradleConnection(projectDir, taskId, settings, listener, cancellationToken, connection -> {
       try {
         return SystemPropertiesAdjuster.executeAdjusted(projectDir, () -> f.fun(connection));
       }

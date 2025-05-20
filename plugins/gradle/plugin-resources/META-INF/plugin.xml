@@ -172,6 +172,9 @@
     <stepsBeforeRunProvider implementation="org.jetbrains.plugins.gradle.execution.GradleBeforeRunTaskProvider" />
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.service.execution.GradleRuntimeConfigurationProducer"/>
 
+    <projectService serviceInterface="org.jetbrains.plugins.gradle.connection.GradleConnectorService"
+                    serviceImplementation="org.jetbrains.plugins.gradle.connection.GradleConnectorServiceImpl"/>
+
     <!--Gradle tool window -->
     <toolWindow id="Gradle" anchor="right" icon="GradleIcons.ToolWindowGradle"
                 factoryClass="org.jetbrains.plugins.gradle.ui.GradleToolWindowFactory"/>
