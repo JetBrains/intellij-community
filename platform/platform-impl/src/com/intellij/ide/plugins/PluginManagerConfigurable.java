@@ -1399,7 +1399,9 @@ public final class PluginManagerConfigurable
       rightAction = new LinkLabelButton<>("",
                                           null,
                                           (__, ___) -> setEnabledState());
-      rightAction.setVisible(myPluginModelFacade.hasPluginForEnableDisable(descriptors));
+      boolean hasPluginsAvailableForEnableDisable =
+        UiPluginManager.getInstance().hasPluginsAvailableForEnableDisable(ContainerUtil.map(descriptors, PluginUiModel::getPluginId));
+      rightAction.setVisible(hasPluginsAvailableForEnableDisable);
       titleWithEnabled(myPluginModelFacade);
     }
 

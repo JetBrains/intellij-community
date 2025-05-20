@@ -490,6 +490,11 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   override fun isPluginInstalled(pluginId: PluginId): Boolean {
     return PluginManagerCore.isPluginInstalled(pluginId)
   }
+  
+  override fun hasPluginsAvailableForEnableDisable(pluginIds: List<PluginId>): Boolean {
+    val idMap = buildPluginIdMap()
+    return pluginIds.any { !pluginRequiresUltimatePluginButItsDisabled(it, idMap) }
+  }
 
   fun getDependents(pluginId: PluginId): List<IdeaPluginDescriptorImpl> {
     val applicationInfo = ApplicationInfoEx.getInstanceEx()

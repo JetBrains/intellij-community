@@ -66,6 +66,10 @@ class BackendPluginManagerApi : PluginManagerApi {
   override suspend fun isPluginInstalled(pluginId: PluginId): Boolean {
     return DefaultUiPluginManagerController.isPluginInstalled(pluginId)
   }
+  
+  override suspend fun hasPluginsAvailableForEnableDisable(pluginIds: Collection<PluginId>): Boolean {
+    return DefaultUiPluginManagerController.hasPluginsAvailableForEnableDisable(pluginIds)
+  }
 
   override suspend fun getCustomRepoPlugins(): List<PluginUiModel> {
     return DefaultUiPluginManagerController.getCustomRepoPlugins()

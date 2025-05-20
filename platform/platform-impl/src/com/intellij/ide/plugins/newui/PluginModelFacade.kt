@@ -1,12 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui
 
-import com.intellij.ide.plugins.IdeaPluginDependency
 import com.intellij.ide.plugins.PluginEnableDisableAction
 import com.intellij.ide.plugins.PluginEnabledState
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.marketplace.MarketplaceRequests
-import com.intellij.ide.plugins.pluginRequiresUltimatePluginButItsDisabled
 import javax.swing.JComponent
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.util.text.HtmlChunk
@@ -82,11 +78,6 @@ class PluginModelFacade(private val pluginModel: MyPluginModel) {
 
   fun removeComponent(component: ListPluginComponent) {
     pluginModel.removeComponent(component)
-  }
-
-  fun hasPluginForEnableDisable(models: Collection<PluginUiModel>): Boolean {
-    val idMap = PluginManagerCore.buildPluginIdMap()
-    return models.any { !pluginRequiresUltimatePluginButItsDisabled(it.pluginId, idMap) }
   }
 
   fun setEnabledState(models: Collection<PluginUiModel>, action: PluginEnableDisableAction) {

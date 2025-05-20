@@ -113,6 +113,10 @@ class UiPluginManager {
   fun isPluginInstalled(pluginId: PluginId): Boolean {
     return getController().isPluginInstalled(pluginId)
   }
+  
+  fun hasPluginsAvailableForEnableDisable(pluginIds: List<PluginId>): Boolean {
+    return getController().hasPluginsAvailableForEnableDisable(pluginIds)
+  }
 
   fun performInstallOperation(
     request: InstallPluginRequest,
