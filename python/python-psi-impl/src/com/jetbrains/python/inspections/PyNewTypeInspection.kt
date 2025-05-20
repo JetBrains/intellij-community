@@ -11,6 +11,7 @@ import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyTargetExpression
+import com.jetbrains.python.psi.impl.PyClassImpl
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.*
@@ -54,7 +55,7 @@ class PyNewTypeInspection : PyInspection() {
       }
 
       override fun visitPyClass(node: PyClass) {
-        for (superClassExpression in node.superClassExpressions) {
+        for (superClassExpression in PyClassImpl.getUnfoldedSuperClassExpressions(node)) {
           val superClassType = myTypeEvalContext.getType(superClassExpression)
           if (superClassType is PyTypingNewType) {
             registerProblem(superClassExpression,

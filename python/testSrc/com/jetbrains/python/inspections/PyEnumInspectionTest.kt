@@ -28,6 +28,26 @@ class PyEnumInspectionTest : PyInspectionTestCase() {
     )
   }
 
+  fun testEnumMemberAsInitSubclassArgument() {
+    doTestByText(
+      """
+        from enum import Enum
+        from typing import Any
+
+        class SomeEnum(Enum):
+            A = "A"
+            B = "B"
+
+        class Test:
+            def __init_subclass__(cls, /, some_param: SomeEnum, **kwargs: Any):
+                pass
+
+        class Test2(Test, some_param=SomeEnum.A):
+            pass
+      """.trimIndent()
+    )
+  }
+
   fun testDeclaredEnumMemberType() {
     doTestByText(
       """
