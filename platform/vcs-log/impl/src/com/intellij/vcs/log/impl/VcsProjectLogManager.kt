@@ -1,19 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.EdtImmediate
 import com.intellij.openapi.application.UiImmediate
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.IJSwingUtilities
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.*
@@ -21,23 +17,19 @@ import com.intellij.vcs.log.data.VcsLogStorageImpl
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.showCommit
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.showCommitSync
-import com.intellij.vcs.log.impl.VcsLogTabsManager.Companion.onDisplayNameChange
 import com.intellij.vcs.log.ui.MainVcsLogUi
-import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.getAndUpdate
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.function.BiConsumer
 
 internal class VcsProjectLogManager(
   project: Project,
   private val parentCs: CoroutineScope,
+  private val mainUiHolderState: StateFlow<IdeVcsProjectLog.MainUiHolder?>,
   uiProperties: VcsLogProjectTabsProperties,
   logProviders: Map<VirtualFile, VcsLogProvider>,
   recreateHandler: BiConsumer<in VcsLogErrorHandler.Source, in Throwable>,
@@ -56,17 +48,10 @@ internal class VcsProjectLogManager(
 
     // need EDT because of immediate toolbar update
     mainUiCs.launch(Dispatchers.EdtImmediate) {
-      project.serviceAsync<VcsLogContentProvider.ContentHolder>().contentState.collect { content ->
-        if (content != null) {
+      mainUiHolderState.collect { holder ->
+        if (holder != null) {
           val ui = createLogUi(getMainLogUiFactory(MAIN_LOG_ID, null))
-          content.displayName = VcsLogTabsUtil.generateDisplayName(ui)
-          ui.onDisplayNameChange {
-            content.displayName = VcsLogTabsUtil.generateDisplayName(ui)
-          }
-
-          val panel = VcsLogPanel(this@VcsProjectLogManager, ui)
-          content.component = panel
-          IJSwingUtilities.updateComponentTreeUI(content.component)
+          holder.installMainUi(this@VcsProjectLogManager, ui)
           mainUiState.value = ui
         }
         else {
@@ -80,7 +65,7 @@ internal class VcsProjectLogManager(
     tabsManager.createTabs()
   }
 
-  override fun runInMainUi(consumer: (MainVcsLogUi) -> Unit) {
+  fun runInMainUi(consumer: (MainVcsLogUi) -> Unit) {
     val toolWindow = VcsLogContentUtil.getToolWindow(project)
     if (toolWindow == null) {
       VcsLogContentUtil.showLogIsNotAvailableMessage(project)
@@ -142,34 +127,13 @@ internal class VcsProjectLogManager(
     return ui
   }
 
-  override suspend fun showCommit(hash: Hash, root: VirtualFile, requestFocus: Boolean): Boolean =
-    withContext(Dispatchers.EDT) {
-      if (isDisposed) return@withContext false
-      showCommitInLogTab(hash, root, requestFocus) { true } != null
-    }
-
-  override suspend fun showCommit(hash: Hash, root: VirtualFile, filePath: FilePath, requestFocus: Boolean): Boolean =
-    withContext(Dispatchers.EDT) {
-      if (isDisposed) return@withContext false
-      val logUi = showCommitInLogTab(hash, root, false) { logUi ->
-        // Structure filter might prevent us from navigating to FilePath
-        val hasFilteredChanges = logUi.properties.exists(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES) &&
-                                 logUi.properties[MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES] &&
-                                 !logUi.properties.getFilterValues(VcsLogFilterCollection.STRUCTURE_FILTER.name).isNullOrEmpty()
-        return@showCommitInLogTab !hasFilteredChanges
-      } ?: return@withContext false
-
-      logUi.selectFilePath(filePath, requestFocus)
-      true
-    }
-
   /**
    * Show given commit in the changes view tool window in the log tab matching a given predicate:
    * - Try using one of the currently selected tabs if possible.
    * - Otherwise try main log tab.
    * - Otherwise create a new tab without filters and show commit there.
    */
-  private suspend fun showCommitInLogTab(
+  suspend fun showCommitInLogTab(
     hash: Hash,
     root: VirtualFile,
     requestFocus: Boolean,

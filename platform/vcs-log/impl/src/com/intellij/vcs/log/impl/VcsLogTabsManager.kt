@@ -14,10 +14,8 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
-import com.intellij.util.asSafely
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.impl.VcsLogContentUtil.getToolWindow
 import com.intellij.vcs.log.impl.VcsLogContentUtil.openLogTab
@@ -169,16 +167,6 @@ internal class VcsLogTabsManager(
       properties.onPropertyChange(this) {
         if (it == MainVcsLogUiProperties.GRAPH_OPTIONS) block()
       }
-    }
-  }
-}
-
-internal class VcsLogToolwindowManagerListener(private val project: Project) : ToolWindowManagerListener {
-  override fun toolWindowShown(toolWindow: ToolWindow) {
-    if (toolWindow.id == ChangesViewContentManager.TOOLWINDOW_ID) {
-      val projectLog = VcsProjectLog.getInstance(project)
-      projectLog.createLogInBackground(true)
-      projectLog.logManager?.asSafely<VcsProjectLogManager>()?.toolWindowShown(toolWindow)
     }
   }
 }

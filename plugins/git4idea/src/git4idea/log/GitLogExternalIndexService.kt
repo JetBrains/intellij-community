@@ -13,7 +13,6 @@ import com.intellij.util.io.Compressor
 import com.intellij.util.io.ZipUtil
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.VcsProjectLog
-import com.intellij.vcs.log.impl.VcsProjectLog.Companion.runOnDisposedLog
 import com.intellij.vcs.log.util.PersistentUtil
 import git4idea.i18n.GitBundle
 import git4idea.index.GitIndexUtil
@@ -65,7 +64,7 @@ internal class GitLogExternalIndexService(private val project: Project, private 
       }
 
       withBackgroundProgress(project, GitBundle.message("vcs.log.status.bar.replacing.log.index.data")) {
-        vcsProjectLog.runOnDisposedLog {
+        vcsProjectLog.reinit {
           withContext(Dispatchers.IO) {
             val currentLogDataPath = logCache.resolve(logIndexDirName)
             val logDataBackupPath = logCache.resolve(logIndexDirName + "_backup")
@@ -81,7 +80,7 @@ internal class GitLogExternalIndexService(private val project: Project, private 
 
   fun createArchiveWithLogData(outputArchiveDir: Path) {
     cs.launch {
-      VcsProjectLog.getInstance(project).runOnDisposedLog {
+      VcsProjectLog.getInstance(project).reinit {
         withBackgroundProgress(project = project,
                                title = GitBundle.message("vcs.log.archiving.log.index.data"),
                                cancellation = TaskCancellation.nonCancellable()) {

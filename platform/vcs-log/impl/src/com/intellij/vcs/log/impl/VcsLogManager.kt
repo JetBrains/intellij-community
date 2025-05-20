@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.objectTree.ThrowableInterner
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vfs.VirtualFile
@@ -21,7 +20,10 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.MultiMap
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.VcsLogFilterCollection
+import com.intellij.vcs.log.VcsLogProvider
+import com.intellij.vcs.log.VcsLogRefresher
+import com.intellij.vcs.log.VcsLogUi
 import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
@@ -102,20 +104,6 @@ open class VcsLogManager @Internal constructor(
   fun scheduleUpdate() {
     scheduleInitialization()
     postponableRefresher.refreshPostponedRoots()
-  }
-
-  internal open fun runInMainUi(consumer: (MainVcsLogUi) -> Unit) {
-    error("${this::class.simpleName} has no main UI")
-  }
-
-  @Internal
-  open suspend fun showCommit(hash: Hash, root: VirtualFile, requestFocus: Boolean): Boolean {
-    return false
-  }
-
-  @Internal
-  open suspend fun showCommit(hash: Hash, root: VirtualFile, filePath: FilePath, requestFocus: Boolean): Boolean {
-    return false
   }
 
   @Internal

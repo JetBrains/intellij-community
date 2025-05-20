@@ -1,15 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
 import com.intellij.ui.content.Content
+import com.intellij.util.IJSwingUtilities
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.vcs.log.VcsLogBundle
-import kotlinx.coroutines.flow.MutableStateFlow
+import com.intellij.vcs.log.impl.VcsLogTabsManager.Companion.onDisplayNameChange
+import com.intellij.vcs.log.ui.MainVcsLogUi
+import com.intellij.vcs.log.ui.VcsLogPanel
 import java.util.function.Predicate
 import java.util.function.Supplier
 
@@ -20,7 +21,7 @@ import java.util.function.Supplier
  */
 internal class VcsLogContentProvider(private val project: Project) : ChangesViewContentProvider {
   override fun initTabContent(content: Content) {
-    val projectLog = VcsProjectLog.getInstance(project)
+    val projectLog = VcsProjectLog.getInstance(project) as? IdeVcsProjectLog ?: return
     if (projectLog.isDisposing) return
 
     thisLogger<VcsLogContentProvider>().debug("Adding main Log ui container to the content for ${project.name}")
@@ -30,19 +31,24 @@ internal class VcsLogContentProvider(private val project: Project) : ChangesView
     // See com.intellij.vcs.log.impl.VcsLogContentUtil.selectMainLog.
     content.tabName = VcsLogContentUtil.MAIN_LOG_TAB_NAME //NON-NLS
 
-    projectLog.createLogInBackground(true)
-
-    val contentHolder = project.service<ContentHolder>()
-    contentHolder.contentState.value = content
+    projectLog.initAsync(true)
+    projectLog.setMainUiHolder(ContentMainUiHolder(content))
     content.setDisposer {
-      contentHolder.contentState.value = null
+      projectLog.setMainUiHolder(null)
     }
   }
 
-  // can probably replace this with a listener on tw/content, but this way is just easier
-  @Service(Service.Level.PROJECT)
-  internal class ContentHolder {
-    val contentState = MutableStateFlow<Content?>(null)
+  private class ContentMainUiHolder(private val content: Content) : IdeVcsProjectLog.MainUiHolder {
+    override fun installMainUi(manager: VcsProjectLogManager, ui: MainVcsLogUi) {
+      content.displayName = VcsLogTabsUtil.generateDisplayName(ui)
+      ui.onDisplayNameChange {
+        content.displayName = VcsLogTabsUtil.generateDisplayName(ui)
+      }
+
+      val panel = VcsLogPanel(manager, ui)
+      content.component = panel
+      IJSwingUtilities.updateComponentTreeUI(panel)
+    }
   }
 
   internal class VcsLogVisibilityPredicate : Predicate<Project> {

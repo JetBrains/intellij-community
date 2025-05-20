@@ -598,19 +598,17 @@ f:com.intellij.vcs.log.impl.VcsLogUiPropertiesImpl$TextFilterSettings
 - f:isRegex():Z
 - f:setMatchCase(Z):V
 - f:setRegex(Z):V
-f:com.intellij.vcs.log.impl.VcsProjectLog
+Fa:com.intellij.vcs.log.impl.VcsProjectLog
 - sf:Companion:com.intellij.vcs.log.impl.VcsProjectLog$Companion
 - sf:VCS_PROJECT_LOG_CHANGED:com.intellij.util.messages.Topic
-- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
-- f:getDataManager():com.intellij.vcs.log.data.VcsLogData
+- getDataManager():com.intellij.vcs.log.data.VcsLogData
 - sf:getInstance(com.intellij.openapi.project.Project):com.intellij.vcs.log.impl.VcsProjectLog
-- f:getLogManager():com.intellij.vcs.log.impl.VcsLogManager
+- getLogManager():com.intellij.vcs.log.impl.VcsLogManager
 - sf:getLogProviders(com.intellij.openapi.project.Project):java.util.Map
-- f:getMainLogUi():com.intellij.vcs.log.ui.VcsLogUiImpl
+- getMainLogUi():com.intellij.vcs.log.ui.VcsLogUiImpl
 - sf:getSupportedVcs(com.intellij.openapi.project.Project):java.util.Set
 - sf:isAvailable(com.intellij.openapi.project.Project):Z
-- f:isDisposing():Z
-- f:openLogTab(com.intellij.vcs.log.VcsLogFilterCollection):com.intellij.vcs.log.ui.MainVcsLogUi
+- openLogTab(com.intellij.vcs.log.VcsLogFilterCollection):com.intellij.vcs.log.ui.MainVcsLogUi
 - sf:runInMainLog(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):V
 f:com.intellij.vcs.log.impl.VcsProjectLog$Companion
 - f:awaitLogIsReady(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
