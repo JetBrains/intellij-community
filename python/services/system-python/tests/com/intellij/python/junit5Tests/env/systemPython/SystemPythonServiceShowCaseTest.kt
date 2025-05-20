@@ -5,10 +5,9 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.platform.eel.spawnProcess
-import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.readWholeText
+import com.intellij.platform.eel.spawnProcess
 import com.intellij.python.community.impl.venv.createVenv
 import com.intellij.python.community.services.systemPython.SystemPythonProvider
 import com.intellij.python.community.services.systemPython.SystemPythonService

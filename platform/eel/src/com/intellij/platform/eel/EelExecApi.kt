@@ -4,7 +4,6 @@ package com.intellij.platform.eel
 import com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions
 import com.intellij.platform.eel.path.EelPath
 import org.jetbrains.annotations.CheckReturnValue
-import java.io.IOException
 
 /**
  * Methods related to process execution: start a process, collect stdin/stdout/stderr of the process, etc.

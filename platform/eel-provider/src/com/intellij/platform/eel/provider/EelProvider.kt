@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.*
-import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.utils.toEelArch
 import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.util.system.CpuArch

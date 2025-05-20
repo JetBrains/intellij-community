@@ -49,11 +49,7 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.fs.getPath
-import com.intellij.platform.eel.provider.LocalEelDescriptor
-import com.intellij.platform.eel.provider.asNioPath
-import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.eel.provider.localEel
-import com.intellij.platform.eel.provider.toEelApiBlocking
+import com.intellij.platform.eel.provider.*
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
 import com.intellij.psi.PsiManager
 import com.intellij.serviceContainer.AlreadyDisposedException

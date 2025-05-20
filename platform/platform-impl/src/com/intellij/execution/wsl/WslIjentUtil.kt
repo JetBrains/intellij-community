@@ -16,8 +16,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelProcess
-import com.intellij.platform.eel.spawnProcess
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.spawnProcess
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.suspendingLazy

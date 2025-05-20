@@ -10,7 +10,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelExecApi
-import com.intellij.platform.eel.EelExecApi.ExecuteProcessError
 import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor

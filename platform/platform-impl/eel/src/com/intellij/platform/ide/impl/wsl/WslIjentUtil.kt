@@ -19,8 +19,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelProcess
-import com.intellij.platform.eel.spawnProcess
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.spawnProcess
 import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.deploy
 import com.intellij.platform.ijent.spi.DeployedIjent

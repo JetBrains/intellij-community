@@ -4,8 +4,11 @@
 package com.intellij.platform.eel.provider.utils
 
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelExecApi
+import com.intellij.platform.eel.EelProcess
+import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.spawnProcess
 import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.coroutineScope

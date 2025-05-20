@@ -10,10 +10,7 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asNioPath
 import org.gradle.internal.FileUtils
-import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_CACHE_DIR_NAME
-import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_USER_HOME_ENV_KEY
-import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_USER_HOME_PROPERTY_KEY
-import org.jetbrains.plugins.gradle.util.GradleConstants.USER_HOME_PROPERTY_KEY
+import org.jetbrains.plugins.gradle.util.GradleConstants.*
 import java.io.File
 import java.nio.file.Path
 

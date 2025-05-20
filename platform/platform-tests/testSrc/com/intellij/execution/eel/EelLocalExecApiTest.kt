@@ -20,7 +20,6 @@ import org.hamcrest.CoreMatchers.anyOf
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.*
-import java.io.IOException
 import java.nio.ByteBuffer
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals

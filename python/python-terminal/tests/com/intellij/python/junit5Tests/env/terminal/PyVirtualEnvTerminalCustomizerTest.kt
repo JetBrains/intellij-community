@@ -9,7 +9,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.EelExecApi
-import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.utils.readWholeText
 import com.intellij.platform.eel.provider.utils.sendWholeText
@@ -43,11 +42,7 @@ import org.junit.jupiter.api.io.TempDir
 import org.junitpioneer.jupiter.cartesian.CartesianTest
 import java.io.IOException
 import java.nio.file.Path
-import kotlin.io.path.Path
-import kotlin.io.path.exists
-import kotlin.io.path.isExecutable
-import kotlin.io.path.name
-import kotlin.io.path.pathString
+import kotlin.io.path.*
 import kotlin.time.Duration.Companion.minutes
 
 
