@@ -45,7 +45,6 @@ private class PyStubPackagesAdvertiser : PyInspection() {
                                 "pika" to "pika",
                                 "gi" to "PyGObject",
                                 "PyQt5" to "PyQt5",
-                                "pyspark" to "pyspark",
                                 "traits" to "traits") // top-level package to package on PyPI, sorted by the latter
 
     private val BALLOON_SHOWING = Key.create<Boolean>("showingStubPackagesAdvertiserBalloon")
