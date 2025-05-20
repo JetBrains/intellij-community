@@ -10,9 +10,6 @@ import com.intellij.openapi.diagnostic.FrequentEventDetector
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.component1
-import com.intellij.openapi.util.component2
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
@@ -69,6 +66,7 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
   private val mySessions: MutableSet<RefreshSessionImpl> = Collections.synchronizedSet(HashSet())
   private val myEventCounter = FrequentEventDetector(100, 100, FrequentEventDetector.Level.WARN)
   private var myActivityCounter = 0
+  private val parallelizationCache = ConcurrentHashMap<ModalityState, Pair<Semaphore, Int>>()
 
   fun execute(session: RefreshSessionImpl) {
     val app: ApplicationEx?
@@ -162,6 +160,9 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
     }
   }
 
+  /**
+   * This session is queued asynchronously with suspending read action and background write action
+   */
   private fun queueAsyncSessionWithCoroutines(session: RefreshSessionImpl) {
     check(session.isAsynchronous) {
       "Only asynchronous sessions can be queued with coroutines"
@@ -170,8 +171,6 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
       "Only sessions in non-modal context can be queued with coroutines. " +
       "If you need to run your sessions with non-trivial modality, consider using `launchOnShow` for the component and `launch` for the session."
     }
-    // we reuse the scope of queue here instead of more straightforward `limitedDispatcher`
-    // because we want to coexist with old refresh logic and share the same executor
     val queuedAt = TimeSource.Monotonic.markNow()
     eventScanningScope.launchWithPermit(eventScanSemaphore) {
       val timeInQueue = queuedAt.elapsedNow()

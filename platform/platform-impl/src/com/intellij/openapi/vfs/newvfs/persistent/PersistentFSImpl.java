@@ -9,6 +9,10 @@ import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.AppImplKt;
+import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.application.impl.InternalThreading;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
@@ -46,6 +50,7 @@ import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.ReplicatorInputStream;
 import io.opentelemetry.api.metrics.BatchCallback;
+import com.intellij.util.ui.EDT;
 import io.opentelemetry.api.metrics.Meter;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.ints.*;
@@ -106,6 +111,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private final AtomicInteger structureModificationCount = new AtomicInteger();
   private BulkFileListener publisher;
+  private BulkFileListenerBackgroundable publisherBackgroundable;
   private volatile VfsData vfsData;
 
   private final Application app;
@@ -260,12 +266,22 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return connected.get();
   }
 
-  private @NotNull BulkFileListener getPublisher() {
+  private @NotNull BulkFileListener getPublisherEdt() {
     BulkFileListener publisher = this.publisher;
     if (publisher == null) {
       // the field cannot be initialized in constructor, to ensure that lazy listeners won't be created too early
       publisher = app.getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
       this.publisher = publisher;
+    }
+    return publisher;
+  }
+
+  private @NotNull BulkFileListenerBackgroundable getPublisherBackgroundable() {
+    BulkFileListenerBackgroundable publisher = this.publisherBackgroundable;
+    if (publisher == null) {
+      // the field cannot be initialized in constructor, to ensure that lazy listeners won't be created too early
+      publisher = app.getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES_BG);
+      this.publisherBackgroundable = publisher;
     }
     return publisher;
   }
@@ -1095,7 +1111,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           requestor, file, file.getModificationStamp(), modStamp, file.getTimeStamp(), -1, oldLength, count
         );
         List<VFileEvent> events = List.of(event);
-        fireBeforeEvents(getPublisher(), events);
+        fireBeforeEvents(getPublisherEdt(), getPublisherBackgroundable(), events);
 
         NewVirtualFileSystem fs = getFileSystem(file);
         try {
@@ -1127,7 +1143,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           long newTimestamp = attributes != null ? attributes.lastModified : DEFAULT_TIMESTAMP;
           long newLength = attributes != null ? attributes.length : DEFAULT_LENGTH;
           executeTouch(file, false, event.getModificationStamp(), newLength, newTimestamp);
-          fireAfterEvents(getPublisher(), events);
+          fireAfterEvents(getPublisherEdt(), getPublisherBackgroundable(), events);
         }
       }
     };
@@ -1168,13 +1184,15 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     outValidatedEvents.add(event);
     List<Runnable> outApplyActions = new ArrayList<>();
     List<VFileEvent> jarDeleteEvents = VfsImplUtil.getJarInvalidationEvents(event, outApplyActions);
-    BulkFileListener publisher = getPublisher();
+    BulkFileListener publisher = getPublisherEdt();
+    BulkFileListenerBackgroundable publisherBackgroundable = getPublisherBackgroundable();
     if (jarDeleteEvents.isEmpty() && outApplyActions.isEmpty()) {
       // optimisation: skip all groupings
       runSuppressing(
-        () -> fireBeforeEvents(publisher, outValidatedEvents),
+        () -> fireBeforeEvents(publisher, publisherBackgroundable, outValidatedEvents),
         () -> applyEvent(event),
-        () -> fireAfterEvents(publisher, outValidatedEvents)
+        () -> fireAfterEvents(publisher, publisherBackgroundable, outValidatedEvents),
+        EmptyRunnable.INSTANCE
       );
     }
     else {
@@ -1184,11 +1202,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         outApplyActions.add(() -> applyEvent(jarDeleteEvent));
         outValidatedEvents.add(jarDeleteEvent);
       }
-      applyMultipleEvents(publisher, outApplyActions, outValidatedEvents, false);
+      applyMultipleEvents(publisher, publisherBackgroundable, outApplyActions, outValidatedEvents, false);
     }
   }
 
-  private static void runSuppressing(Runnable r1, Runnable r2, Runnable r3) {
+  private static void runSuppressing(@NotNull Runnable r1, @NotNull Runnable r2, @NotNull Runnable r3, @NotNull Runnable r4) {
     Throwable t = null;
     try {
       r1.run();
@@ -1207,6 +1225,19 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
     catch (Throwable e) {
       t = Suppressions.addSuppressed(t, e);
+    }
+    if (r4 != EmptyRunnable.INSTANCE) {
+      try {
+        r4.run();
+      }
+      catch (Throwable e) {
+        if (t == null) {
+          t = e;
+        }
+        else {
+          t.addSuppressed(e);
+        }
+      }
     }
     if (t != null) {
       ExceptionUtilRt.rethrowUnchecked(t);
@@ -1488,7 +1519,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     Set<String> middleDirs = createFilePathSet(cappedInitialSize);
 
     List<VFileEvent> validated = new ArrayList<>(cappedInitialSize);
-    BulkFileListener publisher = getPublisher();
+    BulkFileListener publisherEdt = getPublisherEdt();
+    BulkFileListenerBackgroundable publisherBackgroundable = getPublisherBackgroundable();
     Map<VirtualDirectoryImpl, Object> toCreate = new LinkedHashMap<>();
     Set<VFileEvent> toIgnore = new ReferenceOpenHashSet<>(); // VFileEvent overrides equals(), hence identity-based
     Set<VirtualFile> toDelete = createSmallMemoryFootprintSet();
@@ -1506,12 +1538,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                     excludeAsyncListeners);
 
       if (!validated.isEmpty()) {
-        applyMultipleEvents(publisher, applyActions, validated, excludeAsyncListeners);
+        applyMultipleEvents(publisherEdt, publisherBackgroundable, applyActions, validated, excludeAsyncListeners);
       }
     }
   }
 
   private static void applyMultipleEvents(@NotNull BulkFileListener publisher,
+                                          @NotNull BulkFileListenerBackgroundable publisherBackgroundable,
                                           @NotNull List<? extends @NotNull Runnable> applyActions,
                                           @NotNull List<? extends @NotNull VFileEvent> applyEvents,
                                           boolean excludeAsyncListeners) {
@@ -1524,7 +1557,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       if (excludeAsyncListeners) AsyncEventSupport.markAsynchronouslyProcessedEvents(toSend);
 
       try {
-        fireBeforeEvents(publisher, toSend);
+        fireBeforeEvents(publisher, publisherBackgroundable, toSend);
       }
       catch (Throwable t) {
         x = t;
@@ -1543,7 +1576,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
       PingProgress.interactWithEdtProgress();
       try {
-        fireAfterEvents(publisher, toSend);
+        fireAfterEvents(publisher, publisherBackgroundable, toSend);
       }
       catch (Throwable t) {
         if (x != null) t.addSuppressed(x);
@@ -1556,20 +1589,44 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
   }
 
-  private static void fireBeforeEvents(BulkFileListener publisher, List<? extends VFileEvent> toSend) {
+  private static void fireBeforeEvents(@NotNull BulkFileListener publisherEdt,
+                                       @NotNull BulkFileListenerBackgroundable publisherBackgroundable,
+                                       @NotNull List<? extends VFileEvent> toSend) {
     runSuppressing(
-      () -> publisher.before(toSend),
+      () -> publisherBackgroundable.before(toSend),
+      () -> runActionOnEdtRegardlessOfCurrentThread(() -> publisherEdt.before(toSend)),
       () -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).before(toSend),
-      () -> {
-      }
+      EmptyRunnable.INSTANCE
     );
   }
 
-  private static void fireAfterEvents(BulkFileListener publisher, List<? extends VFileEvent> toSend) {
+  private static void runActionOnEdtRegardlessOfCurrentThread(Runnable action) {
+    if (EDT.isCurrentThreadEdt()) {
+      action.run();
+    }
+    else {
+      Application application = ApplicationManager.getApplication();
+      if (application instanceof ApplicationImpl) {
+        try {
+          InternalThreading.invokeAndWaitWithTransferredWriteAction(action);
+        }
+        catch (Throwable t) {
+          throw new RuntimeException(t);
+        }
+      } else {
+        LOG.warn("Cannot invoke EDT VFS listeners on background");
+      }
+    }
+  }
+
+  private static void fireAfterEvents(@NotNull BulkFileListener publisherEdt,
+                                      @NotNull BulkFileListenerBackgroundable publisherBackgroundable,
+                                      @NotNull List<? extends VFileEvent> toSend) {
     runSuppressing(
       () -> CachedFileType.clearCache(),
       () -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).after(toSend),
-      () -> publisher.after(toSend)
+      () -> runActionOnEdtRegardlessOfCurrentThread(() -> publisherEdt.after(toSend)),
+      () -> publisherBackgroundable.after(toSend)
     );
   }
 

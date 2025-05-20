@@ -354,6 +354,9 @@ a:com.intellij.openapi.vfs.VirtualFile
 *:com.intellij.openapi.vfs.VirtualFileCustomDataSynchronizer
 - a:getDataType():kotlin.reflect.KType
 - a:getId():java.lang.String
+a:com.intellij.openapi.vfs.VirtualFileManager
+- com.intellij.openapi.util.ModificationTracker
+- *sf:VFS_CHANGES_BG:com.intellij.util.messages.Topic
 *:com.intellij.openapi.vfs.VirtualFilePreCloseCheck
 - *sf:Companion:com.intellij.openapi.vfs.VirtualFilePreCloseCheck$Companion
 - a:canCloseFile(com.intellij.openapi.vfs.VirtualFile):Z
@@ -362,6 +365,9 @@ a:com.intellij.openapi.vfs.VirtualFile
 f:com.intellij.openapi.vfs.VirtualFileUtil
 - *sf:getCachedValue(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.util.Key,Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):java.lang.Object
 - *bs:getCachedValue$default(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.util.Key,Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):java.lang.Object
+*:com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
+- after(java.util.List):V
+- before(java.util.List):V
 f:com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 - com.intellij.openapi.vfs.newvfs.events.VFileEvent
 - *:isRename():Z

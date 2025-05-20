@@ -2,12 +2,19 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 /**
- * A listener for VFS events, invoked inside write-action.
+ * A listener for VFS events, invoked inside write-action <b>on EDT</b>.
+ * <p>
+ * <b> In the future versions of IntelliJ Platform, this listener may start running on background threads.
+ * Consider using {@link BulkFileListenerBackgroundable} to avoid changes in semantics depending on the version of the Platform.
+ * </b>
+ * <p>
  * Please use {@link com.intellij.openapi.vfs.AsyncFileListener} instead, unless you absolutely sure you need to receive events synchronously.
  * <p>
  * To register this listener, use e.g. {@code project.getMessageBus().connect(disposable).subscribe(VirtualFileManager.VFS_CHANGES, listener)}
@@ -25,7 +32,11 @@ import java.util.List;
  * {@link com.intellij.openapi.roots.FileIndex#isInContent}.</p>
  */
 public interface BulkFileListener {
+  @RequiresWriteLock
+  // currently executed on EDT
   default void before(@NotNull List<? extends @NotNull VFileEvent> events) { }
 
+  @RequiresWriteLock
+  // currently executed on EDT
   default void after(@NotNull List<? extends @NotNull VFileEvent> events) { }
 }

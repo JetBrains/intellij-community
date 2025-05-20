@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.Topic;
@@ -21,8 +22,17 @@ import java.util.function.Supplier;
  * @see VirtualFileSystem
  */
 public abstract class VirtualFileManager implements ModificationTracker {
+
+  /**
+   * Consider using {@link VirtualFileManager#VFS_CHANGES_BG} to run your listener on background.
+   */
   @Topic.AppLevel
   public static final Topic<BulkFileListener> VFS_CHANGES = new Topic<>(BulkFileListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true);
+
+  @Topic.AppLevel
+  @ApiStatus.Experimental
+  public static final Topic<BulkFileListenerBackgroundable> VFS_CHANGES_BG =
+    new Topic<>(BulkFileListenerBackgroundable.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true);
 
   public static final @NotNull ModificationTracker VFS_STRUCTURE_MODIFICATIONS = () -> getInstance().getStructureModificationCount();
 
