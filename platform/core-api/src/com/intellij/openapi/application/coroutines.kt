@@ -160,7 +160,7 @@ sealed interface ReadAndWriteScope {
 /**
  * This method is renamed. Consider using [readAndEdtWriteAction].
  */
-@Deprecated(message = "This method is renamed to clarify its semantics", replaceWith = ReplaceWith("com.intellij.openapi.application.CoroutinesKt.readAndEdtWriteAction"))
+@Deprecated(message = "This method is renamed to clarify its semantics", replaceWith = ReplaceWith("com.intellij.openapi.application.readAndEdtWriteAction(action)", "com.intellij.openapi.application.readAndEdtWriteAction"))
 suspend fun <T> readAndWriteAction(action: ReadAndWriteScope.() -> ReadResult<T>): T {
   return constrainedReadAndWriteAction(action = action)
 }
@@ -251,7 +251,7 @@ suspend fun <T> constrainedReadAndWriteAction(vararg constraints: ReadConstraint
  * i.e. [runWriteAction][com.intellij.openapi.application.Application.runWriteAction] call will block
  * until all currently running read actions are finished.
  *
- * @see readAndWriteAction
+ * @see readAndEdtWriteAction
  * @see com.intellij.openapi.command.writeCommandAction
  */
 suspend fun <T> edtWriteAction(action: () -> T): T {
@@ -304,7 +304,7 @@ fun CoroutineContext.isBackgroundWriteAction(): Boolean =
  * This function exists to make it possible to use it in suspending contexts
  * before the platform is ready to handle write actions differently.
  *
- * @see readAndWriteAction
+ * @see readAndBackgroundWriteAction
  * @see com.intellij.openapi.command.writeCommandAction
  */
 @Experimental
@@ -361,7 +361,7 @@ ${dump.rawDump}""")
  * This function exists to make it possible to use it in suspending contexts
  * before the platform is ready to handle write actions differently.
  *
- * @see readAndWriteAction
+ * @see readAndEdtWriteAction
  * @see com.intellij.openapi.command.writeCommandAction
  */
 @Experimental

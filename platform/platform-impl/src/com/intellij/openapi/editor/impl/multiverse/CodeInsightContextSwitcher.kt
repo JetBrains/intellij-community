@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.readAndWriteAction
+import com.intellij.openapi.application.readAndEdtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -312,7 +312,7 @@ private class CodeInsightContextSwitcher(
     private suspend fun setContext(presentation: CodeInsightContextPresentation) = withContext(Dispatchers.Default) {
       updateWidgetState(presentation)
 
-      readAndWriteAction {
+      readAndEdtWriteAction {
         val contextManager = CodeInsightContextManager.getInstance(project)
         val validContexts = contextManager.getCodeInsightContexts(editor.virtualFile)
         val context = presentation.context

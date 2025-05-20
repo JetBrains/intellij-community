@@ -5,7 +5,7 @@ import com.intellij.codeInsight.CodeInsightUtilCore
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix
 import com.intellij.ide.actions.OpenFileAction
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.readAndWriteAction
+import com.intellij.openapi.application.readAndEdtWriteAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.undo.BasicUndoableAction
 import com.intellij.openapi.command.undo.UndoManager
@@ -272,7 +272,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         isAutoConfig: Boolean = false
     ): ConfigurationResult = reportSequentialProgress { reporter ->
         reporter.nextStep(endFraction = 30, KotlinIdeaGradleBundle.message("step.configure.kotlin.preparing"))
-        readAndWriteAction {
+        readAndEdtWriteAction {
             val collector = NotificationMessageCollector.create(project)
 
             // First check all the files and abort if something would not work
