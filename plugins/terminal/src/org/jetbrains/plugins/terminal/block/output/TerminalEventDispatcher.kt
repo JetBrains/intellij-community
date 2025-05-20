@@ -283,7 +283,9 @@ internal fun setupInputMethodSupport(
   }
   TerminalOutputEditorInputMethodSupport(
     editor,
+    coroutineScope,
+    getCaretPosition = { caretModel.getCaretPosition() },
+    cursorOffsetFlow = null,
     sendInputString = { text -> session.terminalOutputStream.sendString(text, true) },
-    getCaretPosition = { caretModel.getCaretPosition() }
-  ).install(coroutineScope)
+  )
 }
