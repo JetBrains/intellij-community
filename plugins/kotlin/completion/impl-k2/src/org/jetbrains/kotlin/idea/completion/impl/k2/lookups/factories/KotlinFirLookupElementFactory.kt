@@ -91,17 +91,6 @@ object KotlinFirLookupElementFactory {
         return indexingLookupElement
     }
 
-    context(KaSession)
-    @ApiStatus.Experimental
-    fun createCallableLookupElementWithTrailingLambda(
-        name: Name,
-        signature: KaCallableSignature<*>,
-        options: CallableInsertionOptions,
-    ): LookupElementBuilder? = when (signature) {
-        is KaFunctionSignature<*> -> FunctionLookupElementFactory.createLookupWithTrailingLambda(name, signature, options)
-        else -> null
-    }
-
     fun createPackagePartLookupElement(packagePartFqName: FqName): LookupElement =
         PackagePartLookupElementFactory.createLookup(packagePartFqName)
 

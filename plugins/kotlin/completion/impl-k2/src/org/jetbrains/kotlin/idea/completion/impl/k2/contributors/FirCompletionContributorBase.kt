@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -33,6 +34,7 @@ import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.ClassifierLookupObject
 import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionCallLookupObject
+import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.weighers.CallableWeigher.callableWeight
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
@@ -120,9 +122,9 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
                 expectedType = context.expectedType,
             ).let { yield(it) }
 
-            if (withTrailingLambda) {
-                KotlinFirLookupElementFactory.createCallableLookupElementWithTrailingLambda(
-                    name = shortName,
+            if (withTrailingLambda && signature is KaFunctionSignature<*>) {
+                FunctionLookupElementFactory.createLookupWithTrailingLambda(
+                    shortName = shortName,
                     signature = signature,
                     options = options,
                 )?.let { yield(it) }
