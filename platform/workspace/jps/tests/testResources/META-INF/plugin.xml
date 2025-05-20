@@ -4,12 +4,6 @@
 
   <depends>com.intellij.modules.platform</depends>
 
-  <module-components>
-    <component>
-      <implementation-class>com.intellij.workspaceModel.ide.TestModuleComponent</implementation-class>
-    </component>
-  </module-components>
-
   <extensions defaultExtensionNs="com.intellij">
     <moduleExtension implementation="com.intellij.workspaceModel.ide.TestModuleExtension"/>
   </extensions>

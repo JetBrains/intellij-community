@@ -417,30 +417,6 @@ class ModuleBridgesTest {
     }
 
   @Test
-  fun `test module component serialized into module iml`() = runBlocking {
-    val moduleFile = File(project.basePath, "test.iml")
-
-    val moduleManager = ModuleManager.getInstance(project)
-    val module = runWriteActionAndWait { moduleManager.newModule(moduleFile.path, JAVA_MODULE_ENTITY_TYPE_ID_NAME) }
-
-    project.stateStore.save()
-
-    assertNull(JDomSerializationUtil.findComponent(JDOMUtil.load(moduleFile), "XXX"))
-
-    TestModuleComponent.getInstance(module).testString = "My String"
-
-    project.stateStore.save(forceSavingAllSettings = true)
-
-    assertEquals(
-      """  
-       <component name="XXX">
-         <option name="testString" value="My String" />
-       </component>
-""".trimIndent(), JDOMUtil.write(JDomSerializationUtil.findComponent(JDOMUtil.load(moduleFile), "XXX")!!)
-    )
-  }
-
-  @Test
   fun `test module extensions`() {
     TestModuleExtension.commitCalled.set(0)
 
