@@ -57,6 +57,8 @@ class PyTypeHintsInspection : PyInspection() {
   private class Visitor(holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
 
     private val genericQName = QualifiedName.fromDottedString(PyTypingTypeProvider.GENERIC)
+    private val protocolQName = QualifiedName.fromDottedString(PyTypingTypeProvider.PROTOCOL)
+    private val protocolExtQName = QualifiedName.fromDottedString(PyTypingTypeProvider.PROTOCOL_EXT)
 
     override fun visitPyCallExpression(node: PyCallExpression) {
       super.visitPyCallExpression(node)
@@ -830,14 +832,9 @@ class PyTypeHintsInspection : PyInspection() {
           .mapNotNull { it.name }
           .joinToString(", ")
 
-        val genericTypeVarsNames = genericTypeVars
-          .asSequence()
-          .mapNotNull { it.name }
-          .joinToString(", ")
-
         registerProblem(cls.superClassExpressionList,
-                        PyPsiBundle.message("INSP.type.hints.some.type.variables.are.not.listed.in.generic",
-                                            nonGenericTypeVarsNames, genericTypeVarsNames),
+                        PyPsiBundle.message("INSP.type.hints.generic.or.protocol.should.list.all.type.variables",
+                                            nonGenericTypeVarsNames),
                         ProblemHighlightType.GENERIC_ERROR)
       }
     }
@@ -859,7 +856,9 @@ class PyTypeHintsInspection : PyInspection() {
           val operand = superSubscription.operand
           val generic =
             operand is PyReferenceExpression &&
-            genericQName in PyResolveUtil.resolveImportedElementQNameLocally(operand)
+            PyResolveUtil.resolveImportedElementQNameLocally(operand).any {
+              it in listOf(genericQName, protocolQName, protocolExtQName)
+            }
 
           val index = superSubscription.indexExpression
           val parameters = (index as? PyTupleExpression)?.elements ?: arrayOf(index)
