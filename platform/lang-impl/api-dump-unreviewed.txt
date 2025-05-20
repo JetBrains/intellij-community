@@ -4538,6 +4538,7 @@ f:com.intellij.codeInsight.intention.impl.preview.IntentionPreviewDiffResult
 - f:getDiffs():java.util.List
 - f:getNewText():java.lang.String
 - hashCode():I
+- f:shorten(I):com.intellij.codeInsight.intention.impl.preview.IntentionPreviewDiffResult
 f:com.intellij.codeInsight.intention.impl.preview.IntentionPreviewDiffResult$Companion
 - f:create(com.intellij.openapi.fileTypes.FileType,java.lang.String,java.lang.String,com.intellij.diff.comparison.ComparisonPolicy,Z,java.lang.String):com.intellij.codeInsight.intention.impl.preview.IntentionPreviewDiffResult
 - bs:create$default(com.intellij.codeInsight.intention.impl.preview.IntentionPreviewDiffResult$Companion,com.intellij.openapi.fileTypes.FileType,java.lang.String,java.lang.String,com.intellij.diff.comparison.ComparisonPolicy,Z,java.lang.String,I,java.lang.Object):com.intellij.codeInsight.intention.impl.preview.IntentionPreviewDiffResult
@@ -4552,6 +4553,7 @@ f:com.intellij.codeInsight.intention.impl.preview.IntentionPreviewDiffResult$Dif
 - f:component5():java.util.List
 - f:copy(com.intellij.openapi.fileTypes.FileType,java.lang.String,I,I,java.util.List):com.intellij.codeInsight.intention.impl.preview.IntentionPreviewDiffResult$DiffInfo
 - bs:copy$default(com.intellij.codeInsight.intention.impl.preview.IntentionPreviewDiffResult$DiffInfo,com.intellij.openapi.fileTypes.FileType,java.lang.String,I,I,java.util.List,I,java.lang.Object):com.intellij.codeInsight.intention.impl.preview.IntentionPreviewDiffResult$DiffInfo
+- f:cutLines(I):com.intellij.codeInsight.intention.impl.preview.IntentionPreviewDiffResult$DiffInfo
 - equals(java.lang.Object):Z
 - f:getFileText():java.lang.String
 - f:getFileType():com.intellij.openapi.fileTypes.FileType

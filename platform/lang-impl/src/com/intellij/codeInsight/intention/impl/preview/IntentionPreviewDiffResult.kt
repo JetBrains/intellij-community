@@ -9,8 +9,10 @@ import com.intellij.diff.fragments.LineFragmentImpl
 import com.intellij.lang.LanguageCommenters
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.LanguageFileType
+import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.getLineBreakCount
 import one.util.streamex.StreamEx
 import org.jetbrains.annotations.TestOnly
 
@@ -24,7 +26,34 @@ data class IntentionPreviewDiffResult(val diffs: List<DiffInfo>, @TestOnly val n
     val fileText: String,
     val startLine: Int,
     val length: Int,
-    val fragments: List<Fragment>)
+    val fragments: List<Fragment>) {
+    fun cutLines(length: Int): DiffInfo {
+      if (this.length <= length) return this
+      val newText = fileText.lines().take(length).joinToString("\n")
+      val newFragments = fragments.filter { it.start < newText.length }
+        .map { if (it.end >= newText.length) it else it.copy(end = newText.length) }
+      return DiffInfo(fileType, newText, startLine, length, newFragments)
+    }
+  }
+  
+  fun shorten(maxLines: Int) : IntentionPreviewDiffResult {
+    var length = 0
+    for (idx in 0..<diffs.size) {
+      val info = diffs[idx]
+      val nextLength = length + info.length
+      if (nextLength < maxLines) {
+        length = nextLength
+        continue
+      }
+      val ellipsis = DiffInfo(PlainTextFileType.INSTANCE, "...", -1, 1, listOf())
+      if (nextLength == maxLines) {
+        return IntentionPreviewDiffResult(diffs.subList(0, idx + 1) + ellipsis, newText)
+      }
+      return IntentionPreviewDiffResult(diffs.subList(0, idx) +
+                                        info.cutLines(length = maxLines - length) + ellipsis, newText)
+    }
+    return this
+  }
 
   companion object {
     private fun getOffset(fileText: String, lineNumber: Int): Int {
@@ -55,7 +84,7 @@ data class IntentionPreviewDiffResult(val diffs: List<DiffInfo>, @TestOnly val n
         }
       }
       comment ?: return null
-      return DiffInfo(fileType, comment, -1, comment.length, listOf())
+      return DiffInfo(fileType, comment, -1, comment.getLineBreakCount() + 1, listOf())
     }
 
     @JvmStatic

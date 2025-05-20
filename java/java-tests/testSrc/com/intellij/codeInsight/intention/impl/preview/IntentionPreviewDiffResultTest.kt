@@ -162,6 +162,59 @@ class IntentionPreviewDiffResultTest : LightPlatformCodeInsightFixture4TestCase(
     assertEquals("0 : class Test#+ +#{}", diffs)
   }
   
+  @Test
+  fun testLotsOfLines() {
+    val oldText = (1..200).map { "line $it" }.joinToString("\n")
+    val newText = oldText.replace("1", "I")
+    val diffs = createDiffs(oldText, newText, "MyFile.txt")
+    assertEquals("""
+      // MyFile.txt
+      ---------------------
+      0 : line #!I!#
+      ---------------------
+      9 : line I0
+      10: line II
+      11: line I2
+      12: line I3
+      13: line I4
+      14: line I5
+      15: line I6
+      16: line I7
+      17: line I8
+      18: line I9
+      19: line 20
+      20: line 2I
+      ---------------------
+      30: line #!3I!#
+      ---------------------
+      40: line #!4I!#
+      ---------------------
+      50: line #!5I!#
+      ---------------------
+      60: line #!6I!#
+      ---------------------
+      70: line #!7I!#
+      ---------------------
+      80: line #!8I!#
+      ---------------------
+      90: line #!9I!#
+      ---------------------
+      99: line I00
+      100: line I0I
+      101: line I02
+      102: line I03
+      103: line I04
+      104: line I05
+      105: line I06
+      106: line I07
+      107: line I08
+      108: line I09
+      109: line II0
+      ---------------------
+      ...
+    """.trimIndent(), diffs)
+  }
+  
   /**
    * Returns a textual representation of diffs from created and modified text, how they will look
    * in the intention preview window. Each diff chunk is separated via a horizontal dashed line.
@@ -174,7 +227,7 @@ class IntentionPreviewDiffResultTest : LightPlatformCodeInsightFixture4TestCase(
    * @param fileName (optional) name of the file to be used; it creates a separate chunk with a comment
    */
   private fun createDiffs(origText: String, modifiedText: String, fileName: String? = null): String {
-    return fromCustomDiff(CustomDiff(JavaFileType.INSTANCE, fileName, origText, modifiedText, true)).diffs.joinToString(
+    return fromCustomDiff(CustomDiff(JavaFileType.INSTANCE, fileName, origText, modifiedText, true)).shorten(32).diffs.joinToString(
       separator = "\n---------------------\n") { diffInfo ->
       val addends = diffInfo.fragments.flatMap { fragment ->
         listOf(fragment.start to when (fragment.type) {

@@ -163,14 +163,17 @@ class IntentionPreviewPopupUpdateProcessor internal constructor(
   private fun renderPreview(result: IntentionPreviewInfo): JComponent {
     return when (result) {
       is IntentionPreviewDiffResult -> {
-        val editors = IntentionPreviewEditorsPanel.createEditors(project, result)
+        val location = popup.locationOnScreen
+        val screen = ScreenUtil.getScreenRectangle(location)
+        val factory = EditorFactory.getInstance()
+        val probeEditor = factory.createEditor(factory.createDocument("X"))
+        val lineHeight = probeEditor.lineHeight.coerceAtLeast(1)
+        val maxLines = ((screen.height - location.y) / lineHeight - 1).coerceAtLeast(5) 
+        val editors = IntentionPreviewEditorsPanel.createEditors(project, result.shorten(maxLines))
         if (editors.isEmpty()) {
           IntentionPreviewComponent.createNoPreviewPanel()
         }
         else {
-          val location = popup.locationOnScreen
-          val screen = ScreenUtil.getScreenRectangle(location)
-
           var delta = screen.width + screen.x - location.x
           val content = originalPopup?.jComponent()
           val origLocation = if (content?.isShowing == true) content.locationOnScreen else null
