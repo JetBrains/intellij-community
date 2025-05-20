@@ -249,7 +249,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
-        Object url = ((VirtualFilePointerImpl)pointer).getNode().getFileOrUrl();
+        Object url = ((VirtualFilePointerImpl)pointer).getNodeForTesting().getFileOrUrl();
         assertTrue(url.toString(), url instanceof String);
         assertFalse(pointer.isValid());
       }
@@ -802,7 +802,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
         try {
           ready.countDown();
           while (run.get()) {
-            bb.getNode().update(((VirtualFilePointerImpl)fileToCreatePointer).getNode(), fakeRoot, "test", null);
+            bb.getNodeForTesting().update(((VirtualFilePointerImpl)fileToCreatePointer).getNodeForTesting(), fakeRoot, "test", null);
           }
         }
         catch (Throwable e) {
@@ -1360,7 +1360,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertEquals(expectedPointerRelativeUrl, StringUtil.trimStart(pointer.getUrl(), "jar://" + tempRoot + "/" + abc));
     String expectedPointerFileNameToCheck = expectedPointerFileName == null ? abc : expectedPointerFileName;
     assertEquals(expectedPointerFileNameToCheck, pointer.getFileName());
-    assertEquals(JarFileSystem.getInstance(), ((VirtualFilePointerImpl)pointer).getNode().fs);
+    assertEquals(JarFileSystem.getInstance(), ((VirtualFilePointerImpl)pointer).getFileSystemForTesting());
     assertFalse(pointer.isValid());
 
     File jar = IoTestUtil.createTestJar(new File(tempRoot+"/"+abc), List.of(Pair.create(expectedPathInsideJar, new byte[]{' ', ' '})));
@@ -1376,7 +1376,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(sourceUrl, disposable, null);
     assertEquals(expectedPointerUrl, pointer.getUrl());
     assertEquals(expectedPointerFileName, pointer.getFileName());
-    assertEquals(JarFileSystem.getInstance(), ((VirtualFilePointerImpl)pointer).getNode().fs);
+    assertEquals(JarFileSystem.getInstance(), ((VirtualFilePointerImpl)pointer).getFileSystemForTesting());
     assertFalse(pointer.isValid());
   }
 }

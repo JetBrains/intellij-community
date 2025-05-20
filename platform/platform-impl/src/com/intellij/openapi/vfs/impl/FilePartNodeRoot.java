@@ -326,7 +326,7 @@ public final class FilePartNodeRoot extends FilePartNode {
   }
 
   void removePointer(@NotNull VirtualFilePointerImpl pointer) {
-    FilePartNode node = pointer.getNode();
+    FilePartNode node = pointer.myNode;
     int remainingLeaves = node.removeLeaf(pointer);
     if (remainingLeaves == 0) {
       VirtualFile file = fileOrNull(node.fileOrUrl);

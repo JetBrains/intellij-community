@@ -49,8 +49,8 @@ public class FilePartNode {
   volatile @NotNull Object fileOrUrl;
 
   /** The file system of this particular component. E.g. for path "/x.jar!/foo.txt" the node "x.jar" fs is LocalFileSystem, the node "foo.txt" fs is JarFileSystem */
-  @VisibleForTesting
-  public final NewVirtualFileSystem fs;
+  @NotNull
+  final NewVirtualFileSystem fs;
 
   FilePartNode(int nameId,
                @NotNull Object fileOrUrl,
@@ -494,7 +494,7 @@ public class FilePartNode {
   }
 
   void addAllPointersTo(@NotNull Collection<? super VirtualFilePointerImpl> outList) {
-    processPointers(p->{ if (p.getNode() != null) outList.add(p); });
+    processPointers(p->{ if (p.myNode != null) outList.add(p); });
   }
 
   void processPointers(@NotNull Consumer<? super VirtualFilePointerImpl> processor) {

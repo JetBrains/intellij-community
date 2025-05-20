@@ -758,7 +758,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     if (!shouldKill) {
       return false;
     }
-    getRoot(pointer.getNode().fs).removePointer(pointer);
+    getRoot(pointer.myNode.fs).removePointer(pointer);
     pointer.myNode = null;
     assertConsistency();
     myPointerSetModCount++;
@@ -811,7 +811,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
           Reference2IntMap.Entry<VirtualFilePointerImpl> entry = iterator.next();
           VirtualFilePointerImpl pointer = entry.getKey();
           int disposeCount = entry.getIntValue();
-          boolean isDisposed = !(pointer instanceof IdentityVirtualFilePointer) && pointer.getNode() == null;
+          boolean isDisposed = !(pointer instanceof IdentityVirtualFilePointer) && pointer.myNode == null;
           if (isDisposed) {
             pointer.throwDisposalError("Already disposed:\n" + pointer.getStackTrace());
           }

@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TraceableDisposable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -30,7 +31,9 @@ public class VirtualFilePointerImpl extends TraceableDisposable implements Virtu
   }
 
   @ApiStatus.Internal
-  public FilePartNode getNode() {
+  @TestOnly
+  public FilePartNode getNodeForTesting() {
+    assert ApplicationManager.getApplication().isUnitTestMode();
     return myNode;
   }
 
@@ -48,6 +51,13 @@ public class VirtualFilePointerImpl extends TraceableDisposable implements Virtu
     }
     int index = url.lastIndexOf('/');
     return index >= 0 ? url.substring(index + 1) : url;
+  }
+
+  @NotNull
+  @TestOnly
+  public NewVirtualFileSystem getFileSystemForTesting() {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    return myNode.fs;
   }
 
   @Override
