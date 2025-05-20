@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -44,6 +45,15 @@ public class Utils {
     }
     catch (IOException ignored) {
       return "";
+    }
+  }
+
+  public static boolean deleteIfExists(Path path) throws IOException {
+    try {
+      return Files.deleteIfExists(path);
+    }
+    catch (AccessDeniedException e) {
+      return path.toFile().delete(); // fallback in case of readonly attribute
     }
   }
 

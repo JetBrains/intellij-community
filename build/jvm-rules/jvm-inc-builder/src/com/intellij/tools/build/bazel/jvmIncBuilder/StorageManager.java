@@ -3,6 +3,7 @@ package com.intellij.tools.build.bazel.jvmIncBuilder;
 
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.AbiJarBuilder;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.Utils;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.ZipOutputBuilderImpl;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.PersistentMVStoreMapletFactory;
 import org.jetbrains.annotations.NotNull;
@@ -59,15 +60,15 @@ public class StorageManager implements CloseableExt {
       }
     }
 
-    Files.deleteIfExists(output);
+    Utils.deleteIfExists(output);
     if (abiOutput != null) {
-      Files.deleteIfExists(abiOutput);
+      Utils.deleteIfExists(abiOutput);
     }
-    Files.deleteIfExists(srcSnapshotStore);
-    Files.deleteIfExists(DataPaths.getDepGraphStoreFile(myContext));
+    Utils.deleteIfExists(srcSnapshotStore);
+    Utils.deleteIfExists(DataPaths.getDepGraphStoreFile(myContext));
 
     cleanDependenciesBackupDir(myContext);
-    Files.deleteIfExists(DataPaths.getDependenciesBackupStoreDir(myContext));
+    Utils.deleteIfExists(DataPaths.getDependenciesBackupStoreDir(myContext));
   }
 
   public static void cleanDependenciesBackupDir(BuildContext context) throws IOException {
@@ -75,7 +76,7 @@ public class StorageManager implements CloseableExt {
     if (Files.exists(oldLibrariesDir)) {
       try (var jars = Files.list(oldLibrariesDir)) {
         for (Path jar : jars.toList()) {
-          Files.deleteIfExists(jar);
+          Utils.deleteIfExists(jar);
         }
       }
     }
