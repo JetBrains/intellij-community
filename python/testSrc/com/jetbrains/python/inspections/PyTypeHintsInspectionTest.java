@@ -115,12 +115,15 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
   // PY-28227
   public void testGenericParametersTypes() {
     doTestByText("""
-                   from typing import Generic, TypeVar
+                   from typing import Generic, Protocol, TypeVar
 
                    class A1(Generic[<error descr="Parameters to 'Generic[...]' must all be type variables">0</error>]):
                        pass
 
                    class B1(Generic[<error descr="Parameters to 'Generic[...]' must all be type variables">int</error>]):
+                       pass
+                   
+                   class B11(Protocol[<error descr="Parameters to 'Protocol[...]' must all be type variables">int</error>]):
                        pass
 
                    class A2(Generic[<error descr="Parameters to 'Generic[...]' must all be type variables">0</error>, <error descr="Parameters to 'Generic[...]' must all be type variables">0</error>]):

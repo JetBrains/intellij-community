@@ -935,7 +935,8 @@ class PyTypeHintsInspection : PyInspection() {
 
       qNames.forEach {
         when (it) {
-          genericQName -> checkTypingGenericParameters(node)
+          genericQName -> checkTypingGenericParameters(node, false)
+          protocolQName, protocolExtQName -> checkTypingGenericParameters(node, true)
           literalQName, literalExtQName -> checkLiteralParameter(index)
           annotatedQName, annotatedExtQName -> checkAnnotatedParameter(index)
           typeAliasQName, typeAliasExtQName -> reportParameterizedTypeAlias(index)
@@ -1105,7 +1106,7 @@ class PyTypeHintsInspection : PyInspection() {
       return typeArgumentTypes
     }
 
-    private fun checkTypingGenericParameters(node: PySubscriptionExpression) {
+    private fun checkTypingGenericParameters(node: PySubscriptionExpression, isProtocol: Boolean) {
       val indexExpression = node.indexExpression ?: return
       val typeExpressions = (indexExpression as? PyTupleExpression)?.elements ?: arrayOf(indexExpression)
       val typeParams = mutableSetOf<PyTypeParameterType>()
@@ -1115,13 +1116,17 @@ class PyTypeHintsInspection : PyInspection() {
 
       for (typeExpr in typeExpressions) {
         if (typeExpr !is PyReferenceExpression && typeExpr !is PyStarExpression && typeExpr !is PySubscriptionExpression) {
-          registerProblem(typeExpr, PyPsiBundle.message("INSP.type.hints.parameters.to.generic.must.all.be.type.variables"),
+          registerProblem(typeExpr,
+                          PyPsiBundle.message("INSP.type.hints.parameters.to.generic.must.all.be.type.variables",
+                                              if (isProtocol) 1 else 0),
                           ProblemHighlightType.GENERIC_ERROR)
           continue
         }
         val typeParameterType = Ref.deref(PyTypingTypeProvider.getType(typeExpr, myTypeEvalContext))
         if (typeParameterType !is PyTypeParameterType) {
-          registerProblem(typeExpr, PyPsiBundle.message("INSP.type.hints.parameters.to.generic.must.all.be.type.variables"),
+          registerProblem(typeExpr,
+                          PyPsiBundle.message("INSP.type.hints.parameters.to.generic.must.all.be.type.variables",
+                                              if (isProtocol) 1 else 0),
                           ProblemHighlightType.GENERIC_ERROR)
           continue
         }

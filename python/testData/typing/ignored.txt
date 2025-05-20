@@ -27,7 +27,6 @@ directives_deprecated.py
 directives_type_checking.py
 directives_version_platform.py
 generics_base_class.py
-generics_basic.py
 generics_defaults.py
 generics_defaults_referential.py
 generics_paramspec_components.py
