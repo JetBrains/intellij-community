@@ -24,10 +24,13 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.lang.impl.icons.PlatformLangImplIcons;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
@@ -36,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -54,7 +58,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
 
   @Override
   public @Nullable IndentOptions getIndentOptions(@NotNull Project project, @NotNull CodeStyleSettings settings, @NotNull VirtualFile file) {
-    if (!isEnabled(settings, file)) {
+    if (!isApplicableForFile(file) || !settings.AUTODETECT_INDENTS) {
       return null;
     }
 
@@ -97,7 +101,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     myIsEnabledInTest = isEnabledInTest;
   }
 
-  private boolean isEnabled(@NotNull CodeStyleSettings settings, @NotNull VirtualFile file) {
+  private boolean isApplicableForFile(@NotNull VirtualFile file) {
     if (!file.isValid() ||
         !file.isWritable() ||
         ScratchUtil.isScratch(file)) {
@@ -109,10 +113,10 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     if (file instanceof LightVirtualFile || myDiscardedOptions.containsKey(file)) {
       return false;
     }
-    return hasFormattingModelBuilder(file) && settings.AUTODETECT_INDENTS;
+    return hasFormattingModelBuilder(file);
   }
 
-  private static boolean hasFormattingModelBuilder(@NotNull VirtualFile file) {
+  public static boolean hasFormattingModelBuilder(@NotNull VirtualFile file) {
     FileType fileType = file.getFileType();
     if (fileType instanceof LanguageFileType) {
       Language language = ((LanguageFileType)fileType).getLanguage();
@@ -287,7 +291,12 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     }
 
     @Override
-    public String getHint() {
+    public Icon getIcon() {
+      return getIndentDetectionIcon();
+    }
+
+    @Override
+    public @Nullable String getHint() {
       if (areDetected(getIndentOptions())) {
         return LangBundle.message("indent.option.detected");
       }
@@ -302,12 +311,41 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     }
   }
 
+  @Override
+  public @Nullable AnAction getActivatingAction(@Nullable CodeStyleStatusBarUIContributor activeUiContributor, @NotNull PsiFile file) {
+    if (isApplicableForFile(file.getVirtualFile()) && activeUiContributor == null) {
+      // show the indent detection activator ONLY for native formatter
+      return getActivatingIndentDetectionAction(activeUiContributor, file);
+    }
+    return null;
+  }
+
+  public static @Nullable Icon getIndentDetectionIcon() {
+    if (Registry.is("editor.indentProviderUX.new")) {
+      return PlatformLangImplIcons.IndentDetection;
+    }
+    return null;
+  }
+
+  @SuppressWarnings("unused")
+  public static @Nullable AnAction getActivatingIndentDetectionAction(@Nullable CodeStyleStatusBarUIContributor activeUiContributor,
+                                                                      @NotNull PsiFile file) {
+    Project project = file.getProject();
+    CodeStyleSettings settings = CodeStyle.getSettings(project);
+    if (settings.AUTODETECT_INDENTS || !Registry.is("editor.indentProviderUX.new")) {
+      return null;
+    }
+    return DumbAwareAction.create(
+      ApplicationBundle.message("code.style.indent.detector.enable"),
+      e -> setIndentDetectionEnabled(project, true));
+  }
+
   public static void setIndentDetectionEnabled(@NotNull Project project, boolean detectionEnabled) {
     CodeStyleSettings settings = CodeStyle.getSettings(project);
+    if (settings.AUTODETECT_INDENTS == detectionEnabled) return;
     settings.AUTODETECT_INDENTS = detectionEnabled;
-    settings.getModificationTracker().incModificationCount();
-    CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged();
-    if (!detectionEnabled)
+    CodeStyleSettingsManager.getInstance(project).notifyCodeStyleSettingsChanged();
+    if (!detectionEnabled && !Registry.is("editor.indentProviderUX.new"))
       showDisabledDetectionNotification(project);
   }
 }

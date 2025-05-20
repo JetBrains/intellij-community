@@ -1,12 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement
 
+import com.intellij.application.options.CodeStyle
+import com.intellij.editorconfig.common.EditorConfigBundle
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.FileIndentOptionsProvider
 import com.intellij.psi.codeStyle.IndentStatusBarUIContributor
+import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor
 import org.ec4j.core.ResourceProperties
 import org.editorconfig.Utils
 import org.editorconfig.Utils.configValueForKey
@@ -26,6 +33,18 @@ internal class EditorConfigIndentOptionsProvider : FileIndentOptionsProvider() {
     val properties = EditorConfigPropertiesService.getInstance(project).getProperties(file)
     // Apply editorconfig settings for the current editor
     return applyCodeStyleSettings(project, properties, file, settings)
+  }
+
+  override fun getActivatingAction(activeUiContributor: CodeStyleStatusBarUIContributor?, file: PsiFile): AnAction? {
+    if (Registry.`is`("editor.indentProviderUX.new")
+        && Utils.isFullIntellijSettingsSupport()
+        && activeUiContributor !is EditorConfigIndentStatusBarUIContributor
+        && !Utils.isEnabled(file.project)) {
+      return DumbAwareAction.create(EditorConfigBundle.message("action.enable")) {
+          EditorConfigActionUtil.setEditorConfigEnabled(file.project, true)
+      }
+    }
+    return null
   }
 
   override fun getIndentStatusBarUiContributor(indentOptions: CommonCodeStyleSettings.IndentOptions): IndentStatusBarUIContributor {

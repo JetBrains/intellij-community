@@ -62,6 +62,12 @@ class CodeStyleStatusBarWidget(project: Project) : EditorBasedStatusBarPopup(pro
           actions.add(activatingAction);
         }
       }
+      for (provider in FileIndentOptionsProvider.EP_NAME.extensionList) {
+        val activatingAction = provider.getActivatingAction(uiContributor, psiFile)
+        if (activatingAction != null) {
+          actions.add(activatingAction);
+        }
+      }
 
       val actionGroup: ActionGroup = object : ActionGroup() {
         override fun getChildren(e: AnActionEvent?): Array<AnAction> = actions.toTypedArray()

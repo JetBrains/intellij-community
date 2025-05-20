@@ -61,6 +61,7 @@ object Utils {
       ?.ENABLED
     ?: false
 
+  @JvmStatic
   fun isEnabled(project: Project): Boolean = isEnabled(CodeStyle.getSettings(project))
 
   fun isFullIntellijSettingsSupport(): Boolean =

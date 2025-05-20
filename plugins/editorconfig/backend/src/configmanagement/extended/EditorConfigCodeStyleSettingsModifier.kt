@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -28,7 +29,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleConstraints
 import com.intellij.psi.codeStyle.CodeStyleSettings
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor
@@ -37,6 +37,7 @@ import kotlinx.coroutines.TimeoutCancellationException
 import org.ec4j.core.ResourceProperties
 import org.editorconfig.EditorConfigNotifier
 import org.editorconfig.Utils
+import org.editorconfig.configmanagement.EditorConfigActionUtil
 import org.editorconfig.configmanagement.EditorConfigNavigationActionsFactory
 import org.editorconfig.configmanagement.EditorConfigUsagesCollector.logEditorConfigUsed
 import org.editorconfig.plugincomponents.EditorConfigPropertiesService
@@ -88,7 +89,12 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
     catch (e: TimeoutCancellationException) {
       LOG.warn(e)
       if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
-        error(project, "timeout", message("error.timeout"), DisableEditorConfigAction(project), true)
+        error(project, "timeout",
+              message("error.timeout"),
+              DumbAwareAction.create(message("action.disable")) {
+                EditorConfigActionUtil.setEditorConfigEnabled(project, false)
+              },
+              true)
       }
     }
     catch (e: CancellationException) {
@@ -123,15 +129,6 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
       )
     }
     Notifications.Bus.notify(notification, project)
-  }
-
-  private class DisableEditorConfigAction(private val myProject: Project) : AnAction(message("action.disable")) {
-    override fun actionPerformed(e: AnActionEvent) {
-      CodeStyle.getSettings(myProject).getCustomSettings(EditorConfigSettings::class.java).apply {
-        ENABLED = false
-      }
-      CodeStyleSettingsManager.getInstance(myProject).notifyCodeStyleSettingsChanged()
-    }
   }
 
   override fun getStatusBarUiContributor(transientSettings: TransientCodeStyleSettings): CodeStyleStatusBarUIContributor {

@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement.editor
 
-import com.intellij.application.options.CodeStyle
 import com.intellij.editorconfig.common.plugin.EditorConfigFileType
 import com.intellij.lang.Language
 import com.intellij.openapi.application.EDT
@@ -30,9 +29,9 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.editorconfig.Utils
 import org.editorconfig.configmanagement.editor.EditorConfigEditorProvider.Companion.MAX_PREVIEW_LENGTH
 import org.editorconfig.configmanagement.editor.EditorConfigEditorProvider.Companion.getLanguage
-import org.editorconfig.settings.EditorConfigSettings
 import java.io.IOException
 
 internal class EditorConfigEditorProvider : AsyncFileEditorProvider {
@@ -58,7 +57,7 @@ internal class EditorConfigEditorProvider : AsyncFileEditorProvider {
 
     val result: FileEditor
     val contextFile = precomputedState.contextFile
-    if (contextFile != null && CodeStyle.getSettings(project).getCustomSettings(EditorConfigSettings::class.java).ENABLED) {
+    if (contextFile != null && Utils.isEnabled(project)) {
       withContext(Dispatchers.EDT) {
         @Suppress("NAME_SHADOWING") val document = EditorFactory.getInstance().createDocument(getPreviewText(contextFile))
         val disposable = Disposer.newDisposable()
@@ -105,7 +104,7 @@ private class EditorBuilderState(
 private fun build(project: Project, file: VirtualFile, precomputedState: EditorBuilderState): FileEditor {
   val result: FileEditor
   val contextFile = precomputedState.contextFile
-  if (contextFile != null && CodeStyle.getSettings(project).getCustomSettings(EditorConfigSettings::class.java).ENABLED) {
+  if (contextFile != null && Utils.isEnabled(project)) {
     val document = EditorFactory.getInstance().createDocument(getPreviewText(contextFile))
     val disposable = Disposer.newDisposable()
     val previewFile = EditorConfigPreviewFile(project, contextFile, document, disposable)

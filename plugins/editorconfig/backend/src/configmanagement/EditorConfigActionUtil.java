@@ -15,11 +15,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.editorconfig.Utils;
 import org.editorconfig.settings.EditorConfigSettings;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,20 +43,17 @@ public final class EditorConfigActionUtil {
     return actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  public static AnAction createDisableAction(@NotNull Project project, @NotNull @Nls String message) {
+  @Contract("_, _ -> new")
+  public static @NotNull AnAction createDisableAction(@NotNull Project project, @NotNull @Nls String message) {
     return DumbAwareAction.create(
       message,
       e -> {
-        EditorConfigSettings settings = CodeStyle.getSettings(project).getCustomSettings(EditorConfigSettings.class);
-        settings.ENABLED = false;
-        CodeStyleSettingsManager.getInstance(project).notifyCodeStyleSettingsChanged();
-        showDisabledDetectionNotification(project);
+        setEditorConfigEnabled(project, false);
+        if (!Registry.is("editor.indentProviderUX.new")) {
+          EditorConfigDisabledNotification notification = new EditorConfigDisabledNotification(project);
+          notification.notify(project);
+        }
       });
-  }
-
-  private static void showDisabledDetectionNotification(@NotNull Project project) {
-    EditorConfigDisabledNotification notification = new EditorConfigDisabledNotification(project);
-    notification.notify(project);
   }
 
   private static final class EditorConfigDisabledNotification extends Notification {
@@ -67,7 +66,6 @@ public final class EditorConfigActionUtil {
         ApplicationBundle.message("code.style.indent.provider.notification.settings")));
     }
   }
-
 
   private static final class ShowEditorConfigOption extends DumbAwareAction {
     private ShowEditorConfigOption(@Nullable @Nls String text) {
@@ -92,10 +90,7 @@ public final class EditorConfigActionUtil {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      final CodeStyleSettings rootSettings = CodeStyle.getSettings(myProject);
-      EditorConfigSettings settings = rootSettings.getCustomSettings(EditorConfigSettings.class);
-      settings.ENABLED = true;
-      CodeStyleSettingsManager.getInstance(myProject).notifyCodeStyleSettingsChanged();
+      setEditorConfigEnabled(myProject, true);
       myNotification.expire();
     }
   }
@@ -123,4 +118,11 @@ public final class EditorConfigActionUtil {
     seManager.show(searchProviderID, Utils.EDITOR_CONFIG_FILE_NAME, event);
   }
 
+
+  public static void setEditorConfigEnabled(@NotNull Project project, boolean ecEnabled) {
+    final EditorConfigSettings settings = CodeStyle.getSettings(project).getCustomSettings(EditorConfigSettings.class);
+    if (settings.ENABLED == ecEnabled) return;
+    settings.ENABLED = ecEnabled;
+    CodeStyleSettingsManager.getInstance(project).notifyCodeStyleSettingsChanged();
+  }
 }

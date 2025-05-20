@@ -1,0 +1,2 @@
+flatIconName: icons/expui/*
+flatIconName: com/intellij/util/indexing/diagnostic/presentation/res/*

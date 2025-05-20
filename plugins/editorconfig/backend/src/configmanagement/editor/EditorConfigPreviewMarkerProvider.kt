@@ -24,7 +24,6 @@ import com.intellij.psi.PsiElement
 import org.ec4j.core.model.Ec4jPath
 import org.ec4j.core.model.Glob
 import org.editorconfig.Utils
-import org.editorconfig.Utils.isEnabled
 import org.jetbrains.annotations.Nls
 
 class EditorConfigPreviewMarkerProvider : LineMarkerProviderDescriptor(), DumbAware {
@@ -75,7 +74,7 @@ class EditorConfigPreviewMarkerProvider : LineMarkerProviderDescriptor(), DumbAw
   }
 
   private object Handler {
-    fun isEditorConfigEnabled(element: PsiElement): Boolean = element.isValid && isEnabled(element.project)
+    fun isEditorConfigEnabled(element: PsiElement): Boolean = element.isValid && Utils.isEnabled(element.project)
 
     fun createActions(header: EditorConfigHeader): ActionGroup = DefaultActionGroup(listOf(ChooseFileAction(header)))
 
