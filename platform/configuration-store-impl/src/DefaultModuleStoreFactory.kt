@@ -19,8 +19,6 @@ class DefaultModuleStoreFactory : ModuleStoreFactory {
       return ModuleStoreImpl(module, pathMacroManager)
     }
 
-    fun createNonPersistentStore(module: Module): IComponentStore {
-      return NonPersistentModuleStore()
-    }
+    fun createNonPersistentStore(): IComponentStore = NonPersistentModuleStore
   }
 }

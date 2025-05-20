@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 @ApiStatus.Internal
-class NonPersistentModuleStore internal constructor() : IComponentStore {
+object NonPersistentModuleStore : IComponentStore {
   override val storageManager: StateStorageManager
     get() = NonPersistentStateStorageManager
 

@@ -222,7 +222,7 @@ class ModuleBridgeImpl(
           application.service<ModuleStoreFactory>().createModuleStore(this)
         }
         else {
-          DefaultModuleStoreFactory.createNonPersistentStore(this)
+          DefaultModuleStoreFactory.createNonPersistentStore()
         }
         if (componentStoreRef.compareAndSet(null, newInstance)) {
           return newInstance

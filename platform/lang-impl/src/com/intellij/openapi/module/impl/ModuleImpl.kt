@@ -43,7 +43,6 @@ open class ModuleImpl(
   private var isModuleAdded = false
   private var name: String? = null
 
-
   private val moduleScopeProvider = lazy {
     project.service<ModuleScopeProviderFactory>().createProvider(this)
   }
