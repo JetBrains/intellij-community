@@ -33,6 +33,7 @@ import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
+import com.intellij.openapi.vcs.changes.ui.hideWindowedFloatingTwOnCommit
 import com.intellij.openapi.vcs.checkin.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -300,6 +301,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
   @ApiStatus.Internal
   override suspend fun doExecuteSession(sessionInfo: CommitSessionInfo, commitInfo: DynamicCommitInfo): Boolean {
+    hideWindowedFloatingTwOnCommit(project)
     if (!sessionInfo.isVcsCommit) {
       return workflow.executeSession(sessionInfo, commitInfo)
     }
