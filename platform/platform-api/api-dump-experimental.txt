@@ -109,10 +109,6 @@
 - s:getRegion():com.intellij.ide.Region
 a:com.intellij.ide.SaveAndSyncHandler
 - *f:getExternalChangesTracker():com.intellij.openapi.util.ModificationTracker
-*:com.intellij.ide.SaveAndSyncHandlerListener
-- sf:TOPIC:com.intellij.util.messages.Topic
-- beforeRefresh():V
-- beforeSave(com.intellij.ide.SaveAndSyncHandler$SaveTask,Z):V
 f:com.intellij.ide.dnd.SmoothAutoScroller
 - *sf:ENABLED:com.intellij.openapi.util.Key
 - *s:getSharedListener():java.awt.dnd.DropTargetListener

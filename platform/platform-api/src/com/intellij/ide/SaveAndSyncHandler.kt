@@ -63,3 +63,13 @@ abstract class SaveAndSyncHandler {
   @ApiStatus.Experimental
   fun getExternalChangesTracker(): ModificationTracker = externalChangesModificationTracker
 }
+
+@ApiStatus.Experimental
+@ApiStatus.Internal
+interface SaveAndSyncHandlerListener {
+  suspend fun beforeRefresh() {
+  }
+
+  suspend fun beforeSave(task: SaveAndSyncHandler.SaveTask, forceExecuteImmediately: Boolean) {
+  }
+}

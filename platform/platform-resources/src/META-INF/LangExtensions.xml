@@ -1676,6 +1676,8 @@
                  description="Enable open in client generator action"/>
     <registryKey key="editor.show.indexing.as.analyzing" defaultValue="true"
                  description="Replaces Indexing progress with Analyzing during dumb mode"/>
+
+    <saveAndSyncHandlerListener implementation="com.intellij.codeInsight.daemon.impl.EssentialHighlightingRestarter" />
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.platform.backend">
@@ -1700,8 +1702,6 @@
   <projectListeners>
     <listener class="com.intellij.openapi.fileEditor.impl.FileEditorVirtualFileAppearanceListener"
               topic="com.intellij.ide.ui.VirtualFileAppearanceListener"/>
-    <listener class="com.intellij.codeInsight.daemon.impl.EssentialHighlightingRestarter"
-              topic="com.intellij.ide.SaveAndSyncHandlerListener" />
     <listener class="com.intellij.codeInsight.daemon.impl.DaemonFusReporter"
               topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
     <listener class="com.intellij.codeInsight.inline.completion.InlineCompletionLookupManagerListener"

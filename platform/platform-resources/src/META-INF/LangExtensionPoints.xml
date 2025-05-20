@@ -775,5 +775,6 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.command.commands.IntentionCommandOffsetProvider"/>
     </extensionPoint>
 
+    <extensionPoint name="saveAndSyncHandlerListener" interface="com.intellij.ide.SaveAndSyncHandlerListener" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
