@@ -18,6 +18,13 @@ abstract class DefaultProjectTimed internal constructor(
   abstract fun init(project: Project)
 
   @Synchronized
+  fun markRequested() {
+    if (myT != null) {
+      super.get()
+    }
+  }
+
+  @Synchronized
   override fun get(): Project {
     super.get()?.let {
       return it

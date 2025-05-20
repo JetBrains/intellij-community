@@ -260,6 +260,10 @@ internal class DefaultProject : UserDataHolderBase(), Project, ComponentManagerE
 
   override fun getMessageBus(): MessageBus = delegate.getMessageBus()
 
+  fun markRequested() {
+    timedProject.markRequested()
+  }
+
   override fun isDisposed(): Boolean = ApplicationManager.getApplication().isDisposed()
 
   override fun getDisposed(): Condition<*> = ApplicationManager.getApplication().getDisposed()
