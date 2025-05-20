@@ -36,8 +36,11 @@ class PyStubPackagesCompatibilityInspection : PyInspection() {
 
       return installedPackages
         .asSequence()
-        .filter { it.name.endsWith(STUBS_SUFFIX) && stubPkgsFilter(it) }
-        .mapNotNull { stubPkg -> nameToPkg[stubPkg.name.removeSuffix(STUBS_SUFFIX)]?.let { it to stubPkg } }
+        .filter { (it.name.endsWith(STUBS_SUFFIX) || it.name.startsWith(TYPES_PREFIX)) && stubPkgsFilter(it) }
+        .mapNotNull { stubPkg ->
+          (nameToPkg[stubPkg.name.removeSuffix(STUBS_SUFFIX)] ?: nameToPkg[stubPkg.name.removePrefix(TYPES_PREFIX)])
+            ?.let { it to stubPkg }
+        }
         .filter {
           val runtimePkgName = it.first.name
           val requirement = it.second.requirements.firstOrNull { req -> req.equals(runtimePkgName) } ?: return@filter false
