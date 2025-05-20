@@ -37,9 +37,6 @@ object NonPersistentModuleStore : IComponentStore {
 
   override fun removeComponent(name: String) {
   }
-
-  override fun clearCaches() {
-  }
 }
 
 private object NonPersistentStateStorageManager : StateStorageManager {

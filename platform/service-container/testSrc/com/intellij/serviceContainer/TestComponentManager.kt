@@ -69,7 +69,4 @@ private class TestComponentStore : IComponentStore {
 
   override fun removeComponent(name: String) {
   }
-
-  override fun clearCaches() {
-  }
 }
