@@ -298,7 +298,7 @@ class ClassLoaderConfigurator(
   private fun getCoreUrlClassLoaderIfPossible(): UrlClassLoader? {
     val coreUrlClassLoader = coreLoader as? UrlClassLoader ?: return null
     if (coreUrlClassLoader.resolveScopeManager == null) {
-      val corePlugin = pluginSet.enabledPlugins.first()
+      val corePlugin = pluginSet.enabledPlugins.first() as PluginMainDescriptor
       assert(corePlugin.pluginId == PluginManagerCore.CORE_ID)
       val resolveScopeManager = createPluginDependencyAndContentBasedScope(descriptor = corePlugin, pluginSet = pluginSet)
       if (resolveScopeManager != null) {
@@ -379,7 +379,7 @@ private fun createScopeWithExtraPackage(@Suppress("SameParameterValue") customPa
 // instead, only classes from plugin's modules (content or dependencies) are excluded.
 @VisibleForTesting
 @ApiStatus.Internal
-fun createPluginDependencyAndContentBasedScope(descriptor: IdeaPluginDescriptorImpl, pluginSet: PluginSet): ResolveScopeManager? {
+fun createPluginDependencyAndContentBasedScope(descriptor: PluginMainDescriptor, pluginSet: PluginSet): ResolveScopeManager? {
   val contentPackagePrefixes = getPackagePrefixesLoadedBySeparateClassLoaders(descriptor)
   val dependencyPackagePrefixes = getDependencyPackagePrefixes(descriptor, pluginSet)
   if (contentPackagePrefixes.isEmpty() && dependencyPackagePrefixes.isEmpty()) {
@@ -411,7 +411,7 @@ fun createPluginDependencyAndContentBasedScope(descriptor: IdeaPluginDescriptorI
   }
 }
 
-private fun getPackagePrefixesLoadedBySeparateClassLoaders(descriptor: IdeaPluginDescriptorImpl): List<Pair<String, String?>> {
+private fun getPackagePrefixesLoadedBySeparateClassLoaders(descriptor: PluginMainDescriptor): List<Pair<String, String?>> {
   val modules = descriptor.content.modules
   if (modules.isEmpty()) {
     return emptyList()
