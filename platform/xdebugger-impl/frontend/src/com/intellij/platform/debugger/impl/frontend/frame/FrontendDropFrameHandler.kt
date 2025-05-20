@@ -30,13 +30,8 @@ internal class FrontendDropFrameHandler(
   private fun FrontendXStackFrame.canBeDropped(): ThreeState {
     if (canDropFlow.compareAndSet(FrontendXStackFrame.CanDropState.UNSURE, FrontendXStackFrame.CanDropState.COMPUTING)) {
       frontendSessionScope.launch {
-        val newState = if (XExecutionStackApi.getInstance().canDrop(sessionId, id)) {
-          FrontendXStackFrame.CanDropState.YES
-        }
-        else {
-          // TODO trust the false result, replace with NO
-          FrontendXStackFrame.CanDropState.UNSURE
-        }
+        val canDrop = XExecutionStackApi.getInstance().canDrop(sessionId, id)
+        val newState = FrontendXStackFrame.CanDropState.fromBoolean(canDrop)
         canDropFlow.compareAndSet(FrontendXStackFrame.CanDropState.COMPUTING, newState)
       }
     }
