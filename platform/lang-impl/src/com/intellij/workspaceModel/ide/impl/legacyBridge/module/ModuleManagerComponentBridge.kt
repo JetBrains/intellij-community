@@ -29,6 +29,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.serviceContainer.getComponentManagerImpl
 import com.intellij.serviceContainer.precomputeModuleLevelExtensionModel
 import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
+import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
 import com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext
 import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileContentReader
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener
@@ -184,7 +185,7 @@ open class ModuleManagerComponentBridge(private val project: Project, coroutineS
       moduleEntityId = symbolicId,
       name = name,
       project = project,
-      virtualFileUrl = virtualFileUrl,
+      virtualFileUrl = virtualFileUrl as? VirtualFileUrlBridge,
       entityStorage = entityStorage,
       diff = diff,
       componentManager = componentManager,

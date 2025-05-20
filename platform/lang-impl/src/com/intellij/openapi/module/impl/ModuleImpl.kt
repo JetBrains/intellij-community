@@ -16,11 +16,9 @@ import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.ProjectModelElement
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.ui.Queryable
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.serviceContainer.getComponentManagerImpl
 import com.intellij.serviceContainer.precomputeModuleLevelExtensionModel
@@ -37,7 +35,6 @@ open class ModuleImpl(
   private val componentManager: ComponentManager,
 ) : DelegatingComponentManagerEx, ModuleEx, Queryable {
   private val project: Project
-  protected var imlFilePointer: VirtualFilePointer? = null
 
   @Volatile
   private var isModuleAdded = false
@@ -48,19 +45,6 @@ open class ModuleImpl(
   }
 
   private fun getModuleScopeProvider() = moduleScopeProvider.value
-
-  constructor(
-    name: String,
-    project: Project,
-    virtualFilePointer: VirtualFilePointer?,
-    componentManager: ComponentManager,
-  ) : this(
-    name = name,
-    project = project,
-    componentManager = componentManager
-  ) {
-    imlFilePointer = virtualFilePointer
-  }
 
   init {
     @Suppress("LeakingThis")
@@ -78,9 +62,6 @@ open class ModuleImpl(
     moduleComponentManager.markContainerAsCreated()
   }
 
-  protected val isPersistent: Boolean
-    get() = imlFilePointer != null
-
   override val delegateComponentManager: ComponentManagerEx
     get() = componentManager as ComponentManagerEx
 
@@ -92,7 +73,7 @@ open class ModuleImpl(
 
   override fun getMessageBus(): MessageBus = delegateComponentManager.messageBus
 
-  final override fun getModuleFile(): VirtualFile? = imlFilePointer?.file
+  override fun getModuleFile(): VirtualFile? = null
 
   override fun rename(newName: String, notifyStorage: Boolean) {
     name = newName
@@ -107,11 +88,7 @@ open class ModuleImpl(
   final override fun canStoreSettings(): Boolean = store !is NonPersistentModuleStore
 
   override fun getModuleNioFile(): Path {
-    // FIXME (IJPL-188482): we have a race: saving a project collect save sessions, which have reference to PathMacroManager.
-    //  PathMacroManager might be disposed (together with the module) by the moment when save sessions are actually committed to the disk.
-    //  Reproducer: com.intellij.workspaceModel.integrationTests.tests.aggregator.maven.changes.MavenMultiModulesProjectAddTwoModulesTest.mavenMultiModulesProjectAddTwoModules
-    val isDisposed = Disposer.isDisposed(this)
-    return if (!isDisposed && isPersistent) store.storageManager.expandMacro(StoragePathMacros.MODULE_FILE) else Path.of("")
+    return Path.of("")
   }
 
   @Synchronized
