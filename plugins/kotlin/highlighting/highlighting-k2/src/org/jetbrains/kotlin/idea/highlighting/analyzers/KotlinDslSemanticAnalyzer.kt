@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.highlighting.dsl.DslStyleUtils
 import org.jetbrains.kotlin.idea.highlighter.HighlightingFactory
 import org.jetbrains.kotlin.name.ClassId
@@ -38,12 +39,14 @@ internal class KotlinDslSemanticAnalyzer(holder: HighlightInfoHolder, session: K
         val dslAnnotation = with(session) {
             val functionCall = calleeExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
             // function declaration argument has a dsl marker
-            val argumentMapping = functionCall.argumentMapping
+
             // to check function declaration arguments type, rather call site
             // to avoid cases with generics like `apply` those have no dsl markers
-            argumentMapping.values.forEach { signature ->
-                val receiverType = (signature.returnType as? KaFunctionType)?.receiverType
-                receiverType?.let(::getDslAnnotation)?.let { return@with it }
+            functionCall.symbol.valueParameters.forEach { parameterSymbol ->
+                val receiverType = (parameterSymbol.returnType as? KaFunctionType)?.receiverType
+                receiverType?.let { type ->
+                    getDslAnnotation(type)?.let { return@with it }
+                }
             }
 
             // function has a dsl marker
@@ -107,6 +110,7 @@ private fun KaSession.firstDslAnnotationOrNull(symbol: KaDeclarationSymbol): Cla
 private fun KaSession.getDslAnnotation(type: KaType): ClassId? {
     val allAnnotationsWithSuperTypes = sequence {
         yieldAll(type.annotations.classIds)
+        type.symbol?.let { yieldAll(it.annotations.classIds) }
         for (superType in type.allSupertypes) {
             superType.expandedSymbol?.let { yieldAll(it.annotations.classIds) }
         }

@@ -22,7 +22,7 @@ fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesK
 
 
 fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>test<!>() {
-    <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PACKAGE_FUNCTION_CALL'")!>foo<!> {
+    <!HIGHLIGHTING("severity='DSL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_DSL_STYLE1'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PACKAGE_FUNCTION_CALL'")!>foo<!> {
 
     }
     <!HIGHLIGHTING("severity='DSL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_DSL_STYLE1'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PACKAGE_FUNCTION_CALL'")!>merge<!> {}
