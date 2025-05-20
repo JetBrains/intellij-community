@@ -18,7 +18,9 @@ import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.GitTextFilePatchWithHistory
 import git4idea.changes.createVcsChange
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.api.data.pullrequest.isVisible
@@ -65,9 +67,9 @@ internal class GHPRReviewFileEditorViewModelImpl(
   private val diffData: GitTextFilePatchWithHistory,
   private val threadsVms: GHPRThreadsViewModels,
   private val discussionsViewOption: StateFlow<DiscussionsViewOption>,
-  private val showDiff: (change: RefComparisonChange, lineIdx: Int?) -> Unit
+  private val showDiff: (change: RefComparisonChange, lineIdx: Int?) -> Unit,
 ) : GHPRReviewFileEditorViewModel {
-  private val cs = parentCs.childScope(javaClass.name)
+  private val cs = parentCs.childScope(javaClass.name, Dispatchers.Default)
 
   override val iconProvider: GHAvatarIconsProvider = dataContext.avatarIconsProvider
   override val currentUser: GHUser = dataContext.securityService.currentUser
@@ -83,7 +85,8 @@ internal class GHPRReviewFileEditorViewModelImpl(
       }?.onFailure {
         LOG.warn("Couldn't load head content for $change", it)
       }
-    }.stateIn(cs, SharingStarted.Lazily, ComputedResult.loading())
+    }.flowOn(Dispatchers.IO)
+      .stateIn(cs, SharingStarted.Lazily, ComputedResult.loading())
 
   override val changedRanges: List<Range> = diffData.patch.hunks.withoutContext().toList()
 
