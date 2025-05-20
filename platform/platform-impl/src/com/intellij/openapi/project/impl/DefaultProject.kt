@@ -41,7 +41,7 @@ private val LOG = logger<DefaultProject>()
 
 internal class DefaultProject : UserDataHolderBase(), Project, ComponentManagerEx {
   private val timedProject = object : DefaultProjectTimed(this) {
-    public override fun compute(): Project {
+    override fun compute(): Project {
       val app = ApplicationManager.getApplication()
       LOG.assertTrue(!app.isDisposed(), "Application is being disposed!")
       val project = DefaultProjectImpl(actualContainerInstance = this@DefaultProject)
@@ -57,7 +57,7 @@ internal class DefaultProject : UserDataHolderBase(), Project, ComponentManagerE
       return project
     }
 
-    public override fun init(project: Project) {
+    override fun init(project: Project) {
       (project as DefaultProjectImpl).init()
       ApplicationManager.getApplication().messageBus.syncPublisher(DefaultProjectListener.TOPIC).defaultProjectImplCreated(project)
     }
@@ -328,7 +328,7 @@ private class DefaultProjectImpl(
     registerServiceInstance(Project::class.java, actualContainerInstance, fakeCorePluginDescriptor)
     registerComponents()
     @Suppress("DEPRECATION")
-    createComponents()
+    doCreateComponents()
     Disposer.register(actualContainerInstance, this)
   }
 

@@ -23,7 +23,6 @@ import com.intellij.openapi.project.impl.projectMethodType
 import com.intellij.platform.kernel.util.kernelCoroutineContext
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.executeRegisterTaskForOldContent
 import com.intellij.serviceContainer.findConstructorOrNull
 import com.intellij.util.SystemProperties
@@ -96,10 +95,11 @@ abstract class ClientSessionImpl(
   /**
    * only per-client services are supported (no components, extensions, listeners)
    */
-  final override fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
-                                        app: Application?,
-                                        precomputedExtensionModel: PrecomputedExtensionModel?,
-                                        listenerCallbacks: MutableList<in Runnable>?) {
+  final override fun registerComponents(
+    modules: List<IdeaPluginDescriptorImpl>,
+    app: Application?,
+    listenerCallbacks: MutableList<in Runnable>?
+  ) {
     for (rootModule in modules) {
       registerServices(getContainerDescriptor(rootModule).services, rootModule)
       executeRegisterTaskForOldContent(rootModule) { module ->

@@ -51,10 +51,8 @@ import com.intellij.platform.ide.bootstrap.*
 import com.intellij.platform.ide.bootstrap.kernel.startClientKernel
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.DocumentCommitProcessor
 import com.intellij.psi.impl.DocumentCommitThread
-import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexImpl
 import com.intellij.testFramework.LeakHunter

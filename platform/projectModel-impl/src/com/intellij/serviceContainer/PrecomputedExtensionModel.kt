@@ -6,6 +6,7 @@ package com.intellij.serviceContainer
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import org.jetbrains.annotations.ApiStatus
@@ -14,51 +15,68 @@ import org.jetbrains.annotations.ApiStatus
 class PrecomputedExtensionModel(
   @JvmField val extensionPoints: List<Pair<IdeaPluginDescriptor, List<ExtensionPointDescriptor>>>,
   @JvmField val nameToExtensions: Map<String, List<Pair<IdeaPluginDescriptor, List<ExtensionDescriptor>>>>,
+  @JvmField val services: List<Pair<IdeaPluginDescriptor, List<ServiceDescriptor>>>,
 )
 
-private val EMPTY = PrecomputedExtensionModel(extensionPoints = java.util.List.of(), nameToExtensions = java.util.Map.of())
+private val EMPTY = PrecomputedExtensionModel(
+  extensionPoints = java.util.List.of(),
+  nameToExtensions = java.util.Map.of(),
+  services = java.util.List.of(),
+)
 
+// checkModuleLevelServiceAndExtensionRegistration validates that no services or extensions for `executeRegisterTaskForOldContent`
 @ApiStatus.Internal
 fun precomputeModuleLevelExtensionModel(): PrecomputedExtensionModel {
-  val modules = PluginManagerCore.getPluginSet().enabledPlugins
+  val plugins = PluginManagerCore.getPluginSet().enabledPlugins
 
-  var extensionPointTotalCount = 0
-  val mutableNameToExtensions = HashMap<String, MutableList<Pair<IdeaPluginDescriptor, List<ExtensionDescriptor>>>>()
+  val nameToExtensions = HashMap<String, MutableList<Pair<IdeaPluginDescriptor, List<ExtensionDescriptor>>>>()
 
-  // step 1 - collect container level extension points
+  // step 1 - collect module level extension points
   val extensionPointDescriptors = ArrayList<Pair<IdeaPluginDescriptor, List<ExtensionPointDescriptor>>>()
-  executeRegisterTask(modules) { pluginDescriptor ->
-    val list = pluginDescriptor.moduleContainerDescriptor.extensionPoints
+  val allServices = ArrayList<Pair<IdeaPluginDescriptor, List<ServiceDescriptor>>>()
+  executeRegisterTaskForPluginAndV2Content(plugins) { module ->
+    val list = module.moduleContainerDescriptor.extensionPoints
     if (list.isNotEmpty()) {
-      extensionPointDescriptors.add(pluginDescriptor to list)
-      extensionPointTotalCount += list.size
+      extensionPointDescriptors.add(module to list)
       for (descriptor in list) {
-        mutableNameToExtensions.put(descriptor.getQualifiedName(pluginDescriptor), ArrayList())
+        nameToExtensions.put(descriptor.getQualifiedName(module), ArrayList())
       }
+    }
+
+    val services = module.moduleContainerDescriptor.services
+    if (services.isNotEmpty()) {
+      allServices.add(module to services)
     }
   }
 
-  if (extensionPointDescriptors.isEmpty() || mutableNameToExtensions.isEmpty()) {
+  if ((extensionPointDescriptors.isEmpty() || nameToExtensions.isEmpty()) && allServices.isEmpty()) {
     return EMPTY
   }
 
-  val nameToExtensions = java.util.Map.copyOf(mutableNameToExtensions)
-  // step 2 - collect container level extensions
-  executeRegisterTask(modules) { pluginDescriptor ->
-    val map = pluginDescriptor.extensions
+  // step 2 - collect module level extensions
+  executeRegisterTask(plugins) { plugin ->
+    val map = plugin.extensions
     for ((name, list) in map.entries) {
-      nameToExtensions.get(name)?.add(pluginDescriptor to list)
+      nameToExtensions.get(name)?.add(plugin to list)
     }
   }
 
-  extensionPointDescriptors.trimToSize()
-  return PrecomputedExtensionModel(extensionPoints = extensionPointDescriptors, nameToExtensions = nameToExtensions)
+  return PrecomputedExtensionModel(extensionPoints = extensionPointDescriptors, nameToExtensions = nameToExtensions, services = allServices)
 }
 
 private fun executeRegisterTask(modules: List<IdeaPluginDescriptorImpl>, task: (IdeaPluginDescriptorImpl) -> Unit) {
   for (module in modules) {
     task(module)
     executeRegisterTaskForOldContent(mainPluginDescriptor = module, task = task)
+  }
+}
+
+private fun executeRegisterTaskForPluginAndV2Content(plugins: List<IdeaPluginDescriptorImpl>, task: (IdeaPluginDescriptorImpl) -> Unit) {
+  for (plugin in plugins) {
+    task(plugin)
+    for (content in plugin.content.modules) {
+      task(content.descriptor)
+    }
   }
 }
 

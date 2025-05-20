@@ -3,7 +3,6 @@
 
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -121,7 +120,7 @@ internal class ModifiableModuleModelBridgeImpl(
     return try {
       FileUtil.resolveShortWindowsName(filePath)
     }
-    catch (ignored: IOException) {
+    catch (_: IOException) {
       filePath
     }
   }
@@ -133,7 +132,6 @@ internal class ModifiableModuleModelBridgeImpl(
       diff = diff,
       isNew = isNew,
       precomputedExtensionModel = precomputeModuleLevelExtensionModel(),
-      plugins = PluginManagerCore.getPluginSet().enabledPlugins,
     )
     diff.mutableModuleMap.addMapping(moduleEntity, moduleInstance)
     modulesToAdd.put(moduleEntity.name, moduleInstance)
@@ -307,26 +305,28 @@ internal class ModifiableModuleModelBridgeImpl(
     val groupPathList = groupPath?.toMutableList()
 
     // TODO How to deduplicate with ModuleCustomImlDataEntity ?
-    if (moduleGroupEntity?.path != groupPathList) {
-      when {
-        moduleGroupEntity == null && groupPathList != null -> {
-          diff.modifyModuleEntity(moduleEntity) {
-            this.groupPath = ModuleGroupPathEntity(path = groupPathList, entitySource = moduleEntity.entitySource)
-          }
-        }
-
-        moduleGroupEntity == null && groupPathList == null -> Unit
-
-        moduleGroupEntity != null && groupPathList == null -> diff.removeEntity(moduleGroupEntity)
-
-        moduleGroupEntity != null && groupPathList != null -> diff.modifyModuleGroupPathEntity(moduleGroupEntity) {
-          path = groupPathList
-        }
-
-        else -> error("Should not be reached")
-      }
-      moduleGroupsAreModified = true
+    if (moduleGroupEntity?.path == groupPathList) {
+      return
     }
+
+    when {
+      moduleGroupEntity == null && groupPathList != null -> {
+        diff.modifyModuleEntity(moduleEntity) {
+          this.groupPath = ModuleGroupPathEntity(path = groupPathList, entitySource = moduleEntity.entitySource)
+        }
+      }
+
+      moduleGroupEntity == null && groupPathList == null -> Unit
+
+      moduleGroupEntity != null && groupPathList == null -> diff.removeEntity(moduleGroupEntity)
+
+      moduleGroupEntity != null && groupPathList != null -> diff.modifyModuleGroupPathEntity(moduleGroupEntity) {
+        path = groupPathList
+      }
+
+      else -> error("Should not be reached")
+    }
+    moduleGroupsAreModified = true
   }
 
   companion object {

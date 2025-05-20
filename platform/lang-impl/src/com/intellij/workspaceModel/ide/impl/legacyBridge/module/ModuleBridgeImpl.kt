@@ -5,8 +5,6 @@ import com.intellij.configurationStore.DefaultModuleStoreFactory
 import com.intellij.configurationStore.ModuleStoreFactory
 import com.intellij.configurationStore.RenameableStateStorageManager
 import com.intellij.facet.FacetManagerFactory
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.ComponentManager
@@ -80,24 +78,13 @@ class ModuleBridgeImpl(
     (PathMacroManager.getInstance(this) as? ModulePathMacroManager)?.onImlFileMoved()
   }
 
-  override fun callCreateComponents() {
+  override fun markContainerAsCreated() {
     @Suppress("DEPRECATION")
-    getModuleComponentManager().createComponents()
+    getModuleComponentManager().markContainerAsCreated()
   }
 
-  override suspend fun callCreateComponentsNonBlocking() {
-    getModuleComponentManager().createComponentsNonBlocking()
-    // We want to initialize FacetManager early to avoid initializing it on EDT in ModuleManagerBridgeImpl.loadModules
-    project.serviceAsync<FacetManagerFactory>().getFacetManager(this)
-  }
-
-  override fun initServiceContainer(modules: List<IdeaPluginDescriptorImpl>, precomputedExtensionModel: PrecomputedExtensionModel) {
-    getModuleComponentManager().registerComponents(
-      modules = modules,
-      app = ApplicationManager.getApplication(),
-      precomputedExtensionModel = precomputedExtensionModel,
-      listenerCallbacks = null,
-    )
+  override fun initServiceContainer(precomputedExtensionModel: PrecomputedExtensionModel) {
+    getModuleComponentManager().initModuleContainer(precomputedExtensionModel)
   }
 
   override fun getOptionValue(key: String): String? {
@@ -169,7 +156,7 @@ class ModuleBridgeImpl(
     private val facetsInitializationTimeMs = MillisecondsMeasurer()
     private val updateOptionTimeMs = MillisecondsMeasurer()
 
-    fun initFacets(modules: Set<ModuleBridge>, project: Project, coroutineScope: CoroutineScope) {
+    fun initFacets(modules: List<Pair<ModuleEntity, ModuleBridge>>, project: Project, coroutineScope: CoroutineScope) {
       coroutineScope.launch {
         val facetManagerFactory = project.serviceAsync<FacetManagerFactory>()
         withContext(Dispatchers.EDT) {
@@ -182,10 +169,10 @@ class ModuleBridgeImpl(
 
     // separate method to see it in a profiler
     private fun doInitFacetsInEdt(
-      modules: Set<ModuleBridge>,
+      modules: List<Pair<ModuleEntity, ModuleBridge>>,
       facetManagerFactory: FacetManagerFactory,
     ) {
-      for (module in modules) {
+      for ((_, module) in modules) {
         if (!module.isDisposed) {
           facetsInitializationTimeMs.addMeasuredTime {
             for (facet in facetManagerFactory.getFacetManager(module).allFacets) {

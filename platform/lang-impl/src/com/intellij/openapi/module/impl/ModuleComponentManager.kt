@@ -5,7 +5,6 @@ package com.intellij.openapi.module.impl
 
 import com.intellij.ide.plugins.ContainerDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.client.ClientKind
@@ -21,7 +20,6 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.serviceContainer.*
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleBridgeImpl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -52,20 +50,14 @@ class ModuleComponentManager(parent: ComponentManagerImpl) : ComponentManagerImp
     emptyConstructorMethodType,
   )
 
-  internal fun initModuleContainer(plugins: List<IdeaPluginDescriptorImpl>, precomputedExtensionModel: PrecomputedExtensionModel) {
+  internal fun initModuleContainer(precomputedExtensionModel: PrecomputedExtensionModel) {
     // register services before registering extensions because plugins can access services in their extensions,
     // which can be invoked right away if the plugin is loaded dynamically
-    for (plugin in plugins) {
-      registerServices(plugin.moduleContainerDescriptor.services, plugin)
-      for (content in plugin.contentModules) {
-        val services = content.descriptor.moduleContainerDescriptor.services
-        if (services.isNotEmpty()) {
-          registerServices(services, plugin)
-        }
-      }
+    for ((plugin, services) in precomputedExtensionModel.services) {
+      registerServices(services, plugin)
     }
 
-    registerExtensionPointsAndExtensionByPrecomputedModel(precomputedExtensionModel, null)
+    registerExtensionPointsAndExtensionByPrecomputedModel(precomputedExtensionModel)
   }
 
   fun initForModule(module: Module) {
@@ -116,31 +108,14 @@ class ModuleComponentManager(parent: ComponentManagerImpl) : ComponentManagerImp
 
   override fun debugString(short: Boolean): String = if (short) javaClass.simpleName else super.debugString(short = false)
 
-  // expose to call it via ModuleImpl
-  @Suppress("OVERRIDE_DEPRECATION", "DEPRECATION")
-  @RequiresBlockingContext
-  public override fun createComponents() {
-    super.createComponents()
-  }
-
   override fun registerComponents(
     modules: List<IdeaPluginDescriptorImpl>,
     app: Application?,
-    precomputedExtensionModel: PrecomputedExtensionModel?,
     listenerCallbacks: MutableList<in Runnable>?,
   ) {
+    LOG.error("Please use registerServicesAndExtensions")
     assert(listenerCallbacks.isNullOrEmpty())
-    if (precomputedExtensionModel == null) {
-      LOG.error("precomputedExtensionModel must not be null")
-      initModuleContainer(modules, precomputeModuleLevelExtensionModel())
-    }
-    else {
-      initModuleContainer(modules, precomputedExtensionModel)
-    }
-
-    if (modules.any { it.pluginId == PluginManagerCore.CORE_ID }) {
-      unregisterComponent(DeprecatedModuleOptionManager::class.java)
-    }
+    initModuleContainer(precomputeModuleLevelExtensionModel())
   }
 
   override fun registerService(serviceInterface: Class<*>, implementation: Class<*>, pluginDescriptor: PluginDescriptor, override: Boolean, clientKind: ClientKind?) {

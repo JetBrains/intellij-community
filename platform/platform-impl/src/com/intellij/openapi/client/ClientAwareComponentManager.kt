@@ -8,7 +8,6 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.throwAlreadyDisposedError
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
@@ -17,8 +16,8 @@ private val logger = logger<ClientAwareComponentManager>()
 
 @ApiStatus.Internal
 abstract class ClientAwareComponentManager: ComponentManagerImpl {
-
   protected constructor(parent: ComponentManagerImpl) : super(parent)
+
   protected constructor(parentScope: CoroutineScope): super(parentScope)
 
   override fun <T : Any> getServices(serviceClass: Class<T>, clientKind: ClientKind): List<T> {
@@ -58,20 +57,19 @@ abstract class ClientAwareComponentManager: ComponentManagerImpl {
     return service
   }
 
-  final override fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
-                                        app: Application?,
-                                        precomputedExtensionModel: PrecomputedExtensionModel?,
-                                        listenerCallbacks: MutableList<in Runnable>?) {
+  final override fun registerComponents(
+    modules: List<IdeaPluginDescriptorImpl>,
+    app: Application?,
+    listenerCallbacks: MutableList<in Runnable>?
+  ) {
     super.registerComponents(modules = modules,
                              app = app,
-                             precomputedExtensionModel = precomputedExtensionModel,
                              listenerCallbacks = listenerCallbacks)
 
     val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
     for (session in sessionsManager.getSessions(ClientKind.ALL)) {
       (session as? ClientSessionImpl)?.registerComponents(modules = modules,
                                                           app = app,
-                                                          precomputedExtensionModel = precomputedExtensionModel,
                                                           listenerCallbacks = listenerCallbacks)
     }
   }

@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
@@ -98,16 +97,11 @@ open class ModuleManagerComponentBridge(private val project: Project, coroutineS
     val moduleChanges = (event[ModuleEntity::class.java] as? List<EntityChange<ModuleEntity>>) ?: emptyList()
     LOG.debug { "Starting initialize bridges for ${moduleChanges.size} modules" }
 
-    // Theoretically, the module initialization can be parallelized using a fork-join approach, see IJPL-149482
-    //   This approach is used in ModuleManagerBridgeImpl.loadModules
-    // However, simple use of Dispatchers.Default while being inside write action, may cause threading issues, see IDEA-355596
-    val precomputedModel = if (moduleChanges.isNotEmpty()) {
-      precomputeModuleLevelExtensionModel()
-    }
-    else {
-      null
+    if (moduleChanges.isEmpty()) {
+      return
     }
 
+    val precomputedModel = precomputeModuleLevelExtensionModel()
     for (change in moduleChanges) {
       if (change !is EntityChange.Added<ModuleEntity>) {
         continue
@@ -117,17 +111,14 @@ open class ModuleManagerComponentBridge(private val project: Project, coroutineS
       }
 
       LOG.debug { "Creating module instance for ${change.newEntity.name}" }
-      val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
       val bridge = createModuleInstanceWithoutCreatingComponents(
         moduleEntity = change.newEntity,
         versionedStorage = entityStore,
         diff = builder,
         isNew = true,
-        precomputedExtensionModel = precomputedModel!!,
-        plugins = plugins,
+        precomputedExtensionModel = precomputedModel,
       )
-      LOG.debug { "Creating components ${change.newEntity.name}" }
-      bridge.callCreateComponents()
+      bridge.markContainerAsCreated()
 
       LOG.debug { "${change.newEntity.name} module initialized" }
       builder.mutableModuleMap.addMapping(change.newEntity, bridge)
@@ -177,7 +168,7 @@ open class ModuleManagerComponentBridge(private val project: Project, coroutineS
     return moduleEntity
   }
 
-  final override fun initFacets(modules: Set<ModuleBridge>) {
+  final override fun initFacets(modules: List<Pair<ModuleEntity, ModuleBridge>>) {
     ModuleBridgeImpl.initFacets(modules, project, coroutineScope)
   }
 

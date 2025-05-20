@@ -2,6 +2,8 @@
 package com.intellij.workspaceModel.ide.legacyBridge
 
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.openapi.components.impl.stores.ComponentStoreOwner
+import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.module.impl.ModuleEx
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -11,7 +13,7 @@ import com.intellij.serviceContainer.PrecomputedExtensionModel
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-interface ModuleBridge : ModuleEx {
+interface ModuleBridge : ModuleEx, ComponentStoreOwner {
   val moduleEntityId: ModuleId
 
   /**
@@ -35,9 +37,7 @@ interface ModuleBridge : ModuleEx {
 
   fun onImlFileMoved(newModuleFileUrl: VirtualFileUrl)
 
-  fun initServiceContainer(modules: List<IdeaPluginDescriptorImpl>, precomputedExtensionModel: PrecomputedExtensionModel)
+  fun initServiceContainer(precomputedExtensionModel: PrecomputedExtensionModel)
 
-  fun callCreateComponents()
-
-  suspend fun callCreateComponentsNonBlocking()
+  fun markContainerAsCreated()
 }

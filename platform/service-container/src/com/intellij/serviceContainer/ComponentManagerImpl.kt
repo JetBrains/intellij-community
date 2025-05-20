@@ -318,10 +318,11 @@ abstract class ComponentManagerImpl(
     registerComponents(modules = PluginManagerCore.getPluginSet().getEnabledModules(), app = getApplication())
   }
 
-  open fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
-                              app: Application?,
-                              precomputedExtensionModel: PrecomputedExtensionModel? = null,
-                              listenerCallbacks: MutableList<in Runnable>? = null) {
+  open fun registerComponents(
+    modules: List<IdeaPluginDescriptorImpl>,
+    app: Application?,
+    listenerCallbacks: MutableList<in Runnable>? = null
+  ) {
     val activityNamePrefix = activityNamePrefix()
 
     var listenersByTopicName: ConcurrentMap<String, MutableList<PluginListenerDescriptor>>? = null
@@ -332,7 +333,7 @@ abstract class ComponentManagerImpl(
 
     // register services before registering extensions because plugins can access services in their extensions,
     // which can be invoked right away if the plugin is loaded dynamically
-    val extensionPoints = if (precomputedExtensionModel == null) HashMap(extensionArea.nameToPointMap) else null
+    val extensionPoints = HashMap(extensionArea.nameToPointMap)
     for (rootModule in modules) {
       executeRegisterTask(rootModule) { module ->
         val containerDescriptor = getContainerDescriptor(module)
@@ -353,7 +354,7 @@ abstract class ComponentManagerImpl(
             .add(PluginListenerDescriptor(listener, module))
         }
 
-        if (extensionPoints != null && containerDescriptor.extensionPoints.isNotEmpty()) {
+        if (containerDescriptor.extensionPoints.isNotEmpty()) {
           createExtensionPoints(points = containerDescriptor.extensionPoints,
                                 componentManager = this,
                                 result = extensionPoints,
@@ -366,17 +367,12 @@ abstract class ComponentManagerImpl(
       activity = activity.endAndStart("${activityNamePrefix}extension registration")
     }
 
-    if (precomputedExtensionModel == null) {
-      extensionArea.reset(extensionPoints!!)
+    extensionArea.reset(extensionPoints)
 
-      for (rootModule in modules) {
-        executeRegisterTask(rootModule) { module ->
-          module.registerExtensions(nameToPoint = extensionPoints, listenerCallbacks = listenerCallbacks)
-        }
+    for (rootModule in modules) {
+      executeRegisterTask(rootModule) { module ->
+        module.registerExtensions(nameToPoint = extensionPoints, listenerCallbacks = listenerCallbacks)
       }
-    }
-    else {
-      registerExtensionPointsAndExtensionByPrecomputedModel(precomputedExtensionModel, listenerCallbacks)
     }
 
     activity?.end()
@@ -395,10 +391,7 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  protected fun registerExtensionPointsAndExtensionByPrecomputedModel(
-    precomputedExtensionModel: PrecomputedExtensionModel,
-    listenerCallbacks: MutableList<in Runnable>?,
-  ) {
+  protected fun registerExtensionPointsAndExtensionByPrecomputedModel(precomputedExtensionModel: PrecomputedExtensionModel) {
     if (precomputedExtensionModel.extensionPoints.isEmpty()) {
       return
     }
@@ -415,7 +408,7 @@ abstract class ComponentManagerImpl(
     for ((name, item) in precomputedExtensionModel.nameToExtensions) {
       val point = result.get(name) ?: continue
       for ((pluginDescriptor, extensions) in item) {
-        point.registerExtensions(descriptors = extensions, pluginDescriptor = pluginDescriptor, listenerCallbacks = listenerCallbacks)
+        point.registerExtensions(descriptors = extensions, pluginDescriptor = pluginDescriptor, listenerCallbacks = null)
       }
     }
   }
@@ -488,23 +481,18 @@ abstract class ComponentManagerImpl(
     }
   }
 
+  fun markContainerAsCreated() {
+    check(containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.COMPONENT_CREATED))
+  }
+
   @Suppress("DuplicatedCode")
   @Deprecated(message = "Use createComponentsNonBlocking")
   @RequiresBlockingContext
-  protected open fun createComponents() {
+  protected fun doCreateComponents() {
     LOG.assertTrue(containerState.get() == ContainerState.PRE_INIT)
-
-    val activity = when (val activityNamePrefix = activityNamePrefix()) {
-      null -> null
-      else -> StartUpMeasurer.startActivity("$activityNamePrefix${StartUpMeasurer.Activities.CREATE_COMPONENTS_SUFFIX}")
-    }
-
     runBlockingInitialization {
       componentContainer.preloadAllInstances()
     }
-
-    activity?.end()
-
     LOG.assertTrue(containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.COMPONENT_CREATED))
   }
 
