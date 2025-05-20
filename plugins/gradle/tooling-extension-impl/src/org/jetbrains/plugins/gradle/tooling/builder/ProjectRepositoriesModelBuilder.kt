@@ -1,19 +1,22 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.builder
 
-import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages
-import org.gradle.api.Project
-import com.intellij.gradle.toolingExtension.model.repositoryModel.ProjectRepositoriesModel
-import com.intellij.gradle.toolingExtension.model.repositoryModel.RepositoryModel
-import com.intellij.gradle.toolingExtension.model.repositoryModel.UrlRepositoryModel
-import org.jetbrains.plugins.gradle.tooling.Message
-import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
-import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
 import com.intellij.gradle.toolingExtension.impl.model.repositoryModel.DefaultFileRepositoryModel
 import com.intellij.gradle.toolingExtension.impl.model.repositoryModel.DefaultProjectRepositoriesModel
 import com.intellij.gradle.toolingExtension.impl.model.repositoryModel.DefaultRepositoryModel
 import com.intellij.gradle.toolingExtension.impl.model.repositoryModel.DefaultUrlRepositoryModel
-import org.jetbrains.plugins.gradle.tooling.util.*
+import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages
+import com.intellij.gradle.toolingExtension.model.repositoryModel.ProjectRepositoriesModel
+import com.intellij.gradle.toolingExtension.model.repositoryModel.RepositoryModel
+import com.intellij.gradle.toolingExtension.model.repositoryModel.UrlRepositoryModel
+import org.gradle.api.Project
+import org.gradle.api.artifacts.repositories.FlatDirectoryArtifactRepository
+import org.gradle.api.artifacts.repositories.IvyArtifactRepository
+import org.gradle.api.artifacts.repositories.MavenArtifactRepository
+import org.gradle.api.artifacts.repositories.UrlArtifactRepository
+import org.jetbrains.plugins.gradle.tooling.Message
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
 
 class ProjectRepositoriesModelBuilder : ModelBuilderService {
 
@@ -22,7 +25,7 @@ class ProjectRepositoriesModelBuilder : ModelBuilderService {
   }
 
   override fun buildAll(modelName: String, project: Project): Any {
-    val repositories = getDeclaredRepositories(project)
+    val repositories = getRepositories(project)
       .map { it.toRepositoryModel() }
       .toList()
     return DefaultProjectRepositoriesModel(repositories)
@@ -43,7 +46,7 @@ class ProjectRepositoriesModelBuilder : ModelBuilderService {
       .reportMessage(project)
   }
 
-  private fun DeclaredRepository.toRepositoryModel(): RepositoryModel {
+  private fun Repository.toRepositoryModel(): RepositoryModel {
     return when (this) {
       is UrlRepository -> DefaultUrlRepositoryModel(name, url, type.toModelRepositoryType())
       is FileRepository -> DefaultFileRepositoryModel(name, files)
@@ -57,5 +60,38 @@ class ProjectRepositoriesModelBuilder : ModelBuilderService {
       UrlRepositoryType.IVY -> UrlRepositoryModel.Type.IVY
       UrlRepositoryType.OTHER -> UrlRepositoryModel.Type.OTHER
     }
+  }
+
+  private sealed interface Repository {
+    val name: String
+  }
+
+  private class DeclaredRepositoryImpl(override val name: String) : Repository
+
+  private class FileRepository(override val name: String, val files: List<String>) : Repository
+
+  private class UrlRepository(override val name: String, val url: String, val type: UrlRepositoryType) : Repository
+
+  private enum class UrlRepositoryType {
+    MAVEN, IVY, OTHER
+  }
+
+  private fun getRepositories(project: Project): List<Repository> {
+    return project.repositories
+      .map {
+        if (it is UrlArtifactRepository) {
+          val type = when (it) {
+            is MavenArtifactRepository -> UrlRepositoryType.MAVEN
+            is IvyArtifactRepository -> UrlRepositoryType.IVY
+            else -> UrlRepositoryType.OTHER
+          }
+          return@map UrlRepository(it.name, it.url.toString(), type)
+        }
+        if (it is FlatDirectoryArtifactRepository) {
+          return@map FileRepository(it.name, it.dirs.map { file -> file.path })
+        }
+        return@map DeclaredRepositoryImpl(it.name)
+      }
+      .toList()
   }
 }
