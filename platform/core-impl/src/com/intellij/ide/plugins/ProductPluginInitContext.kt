@@ -59,4 +59,7 @@ class ProductPluginInitContext(
     }
     else null
   }
+
+  override val currentProductModeId: String
+    get() = ProductLoadingStrategy.strategy.currentModeId
 }

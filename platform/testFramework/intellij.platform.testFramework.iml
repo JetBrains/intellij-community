@@ -102,5 +102,6 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="intellij.platform.runtime.product" />
   </component>
 </module>

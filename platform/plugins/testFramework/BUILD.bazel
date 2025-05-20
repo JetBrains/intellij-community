@@ -16,6 +16,7 @@ jvm_library(
     "//platform/util-ex",
     "//platform/platform-impl/bootstrap",
     "//platform/util/xmlDom",
+    "//platform/runtime/product",
   ]
 )
 ### auto-generated section `build intellij.platform.plugins.testFramework` end

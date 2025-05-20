@@ -40,6 +40,11 @@ interface PluginInitializationContext {
 
   val pluginsPerProjectConfig: PluginsPerProjectConfig?
 
+  /**
+   * Returns ID of the current [com.intellij.platform.runtime.product.ProductMode]
+   */
+  val currentProductModeId: String
+
   @ApiStatus.Internal
   companion object {
     @TestOnly
@@ -53,6 +58,7 @@ interface PluginInitializationContext {
       checkEssentialPlugins: Boolean,
       explicitPluginSubsetToLoad: Set<PluginId>?,
       disablePluginLoadingCompletely: Boolean,
+      currentProductModeId: String,
     ): PluginInitializationContext =
       object : PluginInitializationContext {
         override val productBuildNumber: BuildNumber get() = getProductBuildNumber()
@@ -65,6 +71,7 @@ interface PluginInitializationContext {
         override val explicitPluginSubsetToLoad: Set<PluginId>? = explicitPluginSubsetToLoad
         override val disablePluginLoadingCompletely: Boolean = disablePluginLoadingCompletely
         override val pluginsPerProjectConfig: PluginsPerProjectConfig? = null
+        override val currentProductModeId: String = currentProductModeId
       }
   }
 }

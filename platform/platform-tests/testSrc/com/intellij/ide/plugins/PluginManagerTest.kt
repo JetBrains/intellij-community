@@ -13,6 +13,7 @@ import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamCo
 import com.intellij.platform.plugins.parser.impl.ReadModuleContext
 import com.intellij.platform.plugins.parser.impl.XIncludeLoader.LoadedXIncludeReference
 import com.intellij.platform.plugins.parser.impl.consume
+import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.testFramework.loadAndInitDescriptorInTest
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataPath
@@ -243,6 +244,7 @@ class PluginManagerTest {
           checkEssentialPlugins = false,
           explicitPluginSubsetToLoad = null,
           disablePluginLoadingCompletely = false,
+          currentProductModeId = ProductMode.MONOLITH.id,
         )
       )
       Assert.assertTrue("Plugin should be pre installed", loadingResult.shadowedBundledIds.contains(expectedPluginId))
@@ -326,6 +328,7 @@ class PluginManagerTest {
         checkEssentialPlugins = false,
         explicitPluginSubsetToLoad = null,
         disablePluginLoadingCompletely = false,
+        currentProductModeId = ProductMode.MONOLITH.id,
       )
       val root = readXmlAsModel(Files.newInputStream(file))
       val autoGenerateModuleDescriptor = Ref<Boolean>(false)

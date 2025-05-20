@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.testFramework.PluginBuilder
 import com.intellij.platform.testFramework.loadAndInitDescriptorInTest
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -446,6 +447,7 @@ class PluginDescriptorTest {
       checkEssentialPlugins = false,
       explicitPluginSubsetToLoad = null,
       disablePluginLoadingCompletely = false,
+      currentProductModeId = ProductMode.MONOLITH.id,
     )
     val result = PluginLoadingResult()
     result.initAndAddAll(

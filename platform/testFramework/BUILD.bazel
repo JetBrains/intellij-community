@@ -80,6 +80,7 @@ jvm_library(
     "//platform/workspace/jps",
     "//platform/workspace/storage",
     "//platform/testFramework/bootstrap:tools-testsBootstrap",
+    "//platform/runtime/product",
     ":junit4_provided",
     ":junit5-launcher_provided",
   ],
@@ -170,6 +171,7 @@ jvm_library(
     "//platform/workspace/storage",
     "//platform/testFramework/bootstrap:tools-testsBootstrap",
     "@lib//:platform-test_framework-okhttp3-mockwebserver",
+    "//platform/runtime/product",
   ],
   runtime_deps = [
     ":testFramework_resources",

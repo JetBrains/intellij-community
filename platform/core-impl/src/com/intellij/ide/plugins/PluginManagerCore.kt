@@ -501,7 +501,7 @@ object PluginManagerCore {
       }
     }
 
-    val additionalErrors = pluginSetBuilder.computeEnabledModuleMap(disabler = { descriptor ->
+    val additionalErrors = pluginSetBuilder.computeEnabledModuleMap(currentProductModeEvaluator = initContext::currentProductModeId, disabler = { descriptor ->
       val loadingError = pluginSetBuilder.initEnableState(descriptor, idMap, fullIdMap, initContext::isPluginDisabled, pluginErrorsById)
       if (loadingError != null) {
         registerLoadingError(loadingError)

@@ -7,6 +7,7 @@ import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamCo
 import com.intellij.platform.plugins.parser.impl.ReadModuleContext
 import com.intellij.platform.plugins.parser.impl.consume
 import com.intellij.platform.plugins.parser.impl.elements.OS
+import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.util.xml.dom.NoOpXmlInterner
 import java.nio.file.Path
 
@@ -23,6 +24,7 @@ fun readAndInitDescriptorFromBytesForTest(path: Path, isBundled: Boolean, input:
     checkEssentialPlugins = false,
     explicitPluginSubsetToLoad = null,
     disablePluginLoadingCompletely = false,
+    currentProductModeId = ProductMode.MONOLITH.id,
   )
   val pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
   val dataLoader = object : DataLoader {

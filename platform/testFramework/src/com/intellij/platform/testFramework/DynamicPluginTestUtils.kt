@@ -11,6 +11,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.testFramework.IndexingTestUtil
 import org.assertj.core.api.Assertions.assertThat
 import java.nio.file.Files
@@ -39,6 +40,7 @@ fun loadAndInitDescriptorInTest(
     checkEssentialPlugins = false,
     explicitPluginSubsetToLoad = null,
     disablePluginLoadingCompletely = false,
+    currentProductModeId = ProductMode.MONOLITH.id,
   )
   val result = loadDescriptorFromFileOrDirInTests(
     file = dir,

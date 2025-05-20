@@ -85,12 +85,15 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
     return sorted
   }
 
-  internal fun computeEnabledModuleMap(disabler: ((IdeaPluginDescriptorImpl) -> Boolean)? = null): List<PluginNonLoadReason> {
+  internal fun computeEnabledModuleMap(
+    currentProductModeEvaluator: () -> String = { ProductLoadingStrategy.strategy.currentModeId },
+    disabler: ((IdeaPluginDescriptorImpl) -> Boolean)? = null,
+  ): List<PluginNonLoadReason> {
     val logMessages = ArrayList<String>()
     val loadingErrors = ArrayList<PluginNonLoadReason>()
     val enabledRequiredContentModules = HashMap<String, IdeaPluginDescriptorImpl>()
     val disabledModuleToProblematicPlugin = HashMap<String, PluginId>()
-    val moduleIncompatibleWithCurrentMode = getModuleIncompatibleWithCurrentProductMode()
+    val moduleIncompatibleWithCurrentMode = getModuleIncompatibleWithCurrentProductMode(currentProductModeEvaluator)
     val usedPackagePrefixes = HashMap<String, IdeaPluginDescriptorImpl>()
     val isDisabledDueToPackagePrefixConflict = HashMap<String, IdeaPluginDescriptorImpl>()
 
@@ -217,8 +220,8 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
    * Returns a module which should be disabled because it's not relevant to the current com.intellij.platform.runtime.product.ProductMode.
    * All modules that depend on the specified module will be automatically disabled as well.
    */
-  private fun getModuleIncompatibleWithCurrentProductMode(): String? {
-    return when (ProductLoadingStrategy.strategy.currentModeId) {
+  private fun getModuleIncompatibleWithCurrentProductMode(currentProductModeEvaluator: () -> String): String? {
+    return when (currentProductModeEvaluator()) {
       /** intellij.platform.backend.split is currently available in 'monolith' mode because it's used as a backend in CodeWithMe */
       "monolith" -> "intellij.platform.frontend.split"
       "backend" -> "intellij.platform.frontend"

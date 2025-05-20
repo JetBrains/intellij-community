@@ -14,6 +14,7 @@ import com.intellij.ide.plugins.loadDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
+import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.lang.UrlClassLoader
 import kotlinx.coroutines.runBlocking
@@ -28,6 +29,7 @@ class PluginSetTestBuilder private constructor(
   private var brokenPlugins = mutableMapOf<PluginId, MutableSet<String?>>()
   private var productBuildNumber = PluginManagerCore.buildNumber
   private var customCoreLoader: UrlClassLoader? = null
+  private var productMode: ProductMode = ProductMode.MONOLITH
 
   companion object {
     @JvmStatic
@@ -62,6 +64,10 @@ class PluginSetTestBuilder private constructor(
   fun withCustomCoreLoader(loader: UrlClassLoader): PluginSetTestBuilder = apply {
     customCoreLoader = loader
   }
+  
+  fun withProductMode(productMode: ProductMode): PluginSetTestBuilder = apply {
+    this.productMode = productMode
+  }
 
   var buildNumber: String
     get() = productBuildNumber.toString()
@@ -82,6 +88,7 @@ class PluginSetTestBuilder private constructor(
       checkEssentialPlugins = false,
       explicitPluginSubsetToLoad = null,
       disablePluginLoadingCompletely = false,
+      currentProductModeId = productMode.id,
     )
   }
 

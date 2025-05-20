@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
+import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.testFramework.PluginBuilder
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsExtension
@@ -166,6 +167,7 @@ internal fun loadDescriptors(dir: Path): PluginLoadingResult {
     checkEssentialPlugins = false,
     explicitPluginSubsetToLoad = null,
     disablePluginLoadingCompletely = false,
+    currentProductModeId = ProductMode.MONOLITH.id,
   )
   val loadingContext = PluginDescriptorLoadingContext(getBuildNumberForDefaultDescriptorVersion = { buildNumber })
   // constant order in tests

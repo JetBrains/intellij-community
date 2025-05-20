@@ -132,5 +132,6 @@
     <orderEntry type="module" module-name="intellij.platform.plugins.parser.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl.wsl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.syntax.psi.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.runtime.product" scope="TEST" />
   </component>
 </module>

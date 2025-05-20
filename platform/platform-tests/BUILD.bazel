@@ -150,6 +150,7 @@ jvm_library(
     "//platform/plugins/parser/impl",
     "//platform/platform-impl/eel:ide-impl-wsl",
     "//platform/syntax/syntax-psi-tests:psi-tests_test_lib",
+    "//platform/runtime/product",
   ],
   runtime_deps = [
     ":tests_test_resources",
