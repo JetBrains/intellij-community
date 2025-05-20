@@ -2,9 +2,7 @@
 package com.jetbrains.python.sdk.poetry
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.packaging.PythonDependenciesExtractor
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
@@ -12,47 +10,32 @@ import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
-import com.jetbrains.python.sdk.pythonSdk
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 @ApiStatus.Internal
 class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
-  @Volatile
-  override var installedPackages: List<PythonPackage> = emptyList()
-  override var dependencies: List<PythonPackage> = emptyList()
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager(project)
 
-
   override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): Result<Unit> {
-    val packageWithVersion = when (installRequest) {
-      is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecification -> installRequest.specification.getPackageWithVersionInPoetryFormat()
-      else -> {
-        return Result.failure(UnsupportedOperationException("Poetry supports installing only single packages from repositories"))
-      }
+    if (installRequest !is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications) {
+      return Result.failure(UnsupportedOperationException("Poetry supports installing only  packages from repositories"))
     }
 
-    poetryInstallPackage(sdk, packageWithVersion, options)
-      .onFailure { return Result.failure(it) }
-
-    return Result.success(Unit)
+    val packageSpecifications = installRequest.specifications
+    return addPackages(packageSpecifications, options)
   }
 
-  override suspend fun updatePackageCommand(specification: PythonRepositoryPackageSpecification): Result<Unit> {
-    poetryInstallPackage(sdk, specification.getPackageWithVersionInPoetryFormat(), emptyList())
-      .onFailure { return Result.failure(it) }
-
-    return Result.success(Unit)
+  override suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): Result<Unit> {
+    return addPackages(specifications.map { it.copy(versionSpec = null) }, emptyList())
   }
 
-  override suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<Unit> {
-    poetryUninstallPackage(sdk, pkg.name)
-      .onFailure { return Result.failure(it) }
-
-    return Result.success(Unit)
+  override suspend fun uninstallPackageCommand(vararg pythonPackages: String): Result<Unit> {
+    return poetryUninstallPackage(sdk, *pythonPackages).map { }
   }
 
-  override suspend fun reloadPackagesCommand(): Result<List<PythonPackage>> {
+
+  override suspend fun loadPackagesCommand(): Result<List<PythonPackage>> {
     val (installed, _) = poetryListPackages(sdk).getOrElse {
       return Result.failure(it)
     }
@@ -68,14 +51,17 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
     it.values.toList()
   }
 
-  override suspend fun reloadDependencies(): List<PythonPackage> {
-    val dependenciesExtractor = PythonDependenciesExtractor.forSdk(sdk) ?: return emptyList()
-    val targetModule = project.modules.find { it.pythonSdk == sdk } ?: return emptyList()
-    dependencies = dependenciesExtractor.extract(targetModule)
-    return dependencies
+  private suspend fun addPackages(
+    packageSpecifications: List<PythonRepositoryPackageSpecification>,
+    options: List<String>,
+  ): Result<Unit> {
+    val specifications = packageSpecifications.map {
+      it.getPackageWithVersionInPoetryFormat()
+    }
+
+    return poetryInstallPackage(sdk, specifications, options).map { }
   }
 
-  override fun listDependencies(): List<PythonPackage> = dependencies
 
   private fun PythonRepositoryPackageSpecification.getPackageWithVersionInPoetryFormat(): String {
     return versionSpec?.let { "$name@${it.presentableText}" } ?: name

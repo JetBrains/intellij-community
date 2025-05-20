@@ -26,7 +26,6 @@ import com.jetbrains.python.packaging.*
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
-import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
 import com.jetbrains.python.packaging.conda.CondaPackage
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -65,15 +64,20 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     subscribeToChanges()
   }
 
-  suspend fun detailsForPackage(selectedPackage: DisplayablePackage): PythonPackageDetails = withContext(Dispatchers.IO) {
+  suspend fun detailsForPackage(selectedPackage: DisplayablePackage): PythonPackageDetails? = withContext(Dispatchers.IO) {
     PythonPackagesToolwindowStatisticsCollector.requestDetailsEvent.log(project)
     val spec = when (selectedPackage) {
-      is InstalledPackage -> manager.createPackageSpecification(selectedPackage.name)
-      is InstallablePackage -> selectedPackage.repository.createPackageSpecification(selectedPackage.name)
-      is ExpandResultNode -> selectedPackage.repository.createPackageSpecification(selectedPackage.name)
+      is InstalledPackage -> manager.findPackageSpecification(selectedPackage.name)
+      is InstallablePackage -> selectedPackage.repository.findPackageSpecification(selectedPackage.name)
+      is ExpandResultNode -> selectedPackage.repository.findPackageSpecification(selectedPackage.name)
+      else -> error("Invalidate package spec ${selectedPackage::class.java.name}")
     }
 
-    spec?.let { manager.repositoryManager.getPackageDetails(it).getOrThrow() } ?: error("Invalid package specification")
+    if (spec == null) {
+      return@withContext null
+    }
+
+    spec.let { manager.repositoryManager.getPackageDetails(it).getOrThrow() } ?: error("Invalid package specification")
   }
 
 
@@ -116,32 +120,32 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
 
   suspend fun installPackage(installRequest: PythonPackageInstallRequest, options: List<String> = emptyList()) {
     PythonPackagesToolwindowStatisticsCollector.installPackageEvent.log(project)
-    val result = manager.installPackage(installRequest, options, withBackgroundProgress = true)
+    val result = manager.installPackage(installRequest, options)
 
     if (result.isSuccess) {
       handleActionCompleted(message("python.packaging.notification.installed", installRequest.title))
     }
   }
 
-  suspend fun deletePackage(selectedPackage: InstalledPackage) {
+  suspend fun deletePackage(vararg selectedPackages: InstalledPackage) {
     PythonPackagesToolwindowStatisticsCollector.uninstallPackageEvent.log(project)
-    val result = runPackagingOperationOrShowErrorDialog(manager.sdk, message("python.packaging.operation.failed.title")) {
-      manager.uninstallPackage(selectedPackage.instance)
-    }
-
+    val result = manager.uninstallPackage(*selectedPackages.map { it.instance.name }.toTypedArray())
     if (result.isSuccess) {
-      handleActionCompleted(message("python.packaging.notification.deleted", selectedPackage.name))
+      handleActionCompleted(message("python.packaging.notification.deleted", selectedPackages.joinToString(", ") { it.name }))
     }
   }
 
-  suspend fun updatePackage(specification: PythonRepositoryPackageSpecification) {
-    val result = runPackagingOperationOrShowErrorDialog(manager.sdk, message("python.packaging.notification.update.failed", specification.name), specification.name) {
-      manager.updatePackages(specification)
-    }
+  suspend fun updatePackage(vararg specifications: PythonRepositoryPackageSpecification) {
+    val result = manager.updatePackages(*specifications)
 
-    if (result.isSuccess) {
-      val version = specification.versionSpec?.version
-      handleActionCompleted(message("python.packaging.notification.updated", specification.name, version))
+    if (!result.isSuccess) return
+    val singlePackage = specifications.singleOrNull()
+    if (singlePackage != null) {
+      val version = singlePackage.versionSpec?.version
+      handleActionCompleted(message("python.packaging.notification.updated", singlePackage.name, version))
+    }
+    else {
+      handleActionCompleted(message("python.packaging.notification.all.updated"))
     }
   }
 
@@ -165,11 +169,6 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     }
 
     manager = PythonPackageManager.forSdk(project, sdk)
-    manager.repositoryManager.initCaches()
-    runPackagingOperationOrShowErrorDialog(sdk, message("python.packaging.operation.failed.title")) {
-      manager.reloadPackages()
-    }
-
     withContext(Dispatchers.EDT) {
       toolWindowPanel?.contentVisible = currentSdk != null
       if (currentSdk == null || currentSdk != previousSdk) {
@@ -219,7 +218,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
 
   suspend fun refreshInstalledPackages() {
     val packages = manager.installedPackages.map {
-      val spec = manager.createPackageSpecification(it.name, it.version)
+      val spec = manager.findPackageSpecification(it.name, it.version)
       val repository = spec?.repository
       val nextVersionRaw = manager.outdatedPackages[it.name]?.latestVersion
       val nextVersion = nextVersionRaw?.let { PyPackageVersionNormalizer.normalize(it) }
@@ -275,9 +274,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     serviceScope.launch(Dispatchers.IO) {
       withBackgroundProgress(project, message("python.packaging.loading.packages.progress.text"), cancellable = false) {
         reportRawProgress {
-          runPackagingOperationOrShowErrorDialog(manager.sdk, message("python.packaging.operation.failed.title")) {
-            manager.reloadPackages()
-          }
+          manager.reloadPackages()
           refreshInstalledPackages()
           manager.repositoryManager.refreshCaches()
         }

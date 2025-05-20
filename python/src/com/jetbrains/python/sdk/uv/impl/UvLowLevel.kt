@@ -142,29 +142,29 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
   }
 
   override suspend fun installPackage(name: PythonPackageInstallRequest, options: List<String>): PyExecResult<Unit> {
-    uvCli.runUv(cwd, "pip", "install", name.formatPackageName(), *options.toTypedArray())
+    uvCli.runUv(cwd, "pip", "install", *name.formatPackageName(), *options.toTypedArray())
       .onFailure { return PyResult.failure(it) }
 
     return PyExecResult.success(Unit)
   }
 
-  override suspend fun uninstallPackage(name: PythonPackage): PyExecResult<Unit> {
+  override suspend fun uninstallPackages(pyPackages: Array<out String>): PyExecResult<Unit> {
     // TODO: check if package is in dependencies and reject it
-    uvCli.runUv(cwd, "pip", "uninstall", name.name)
+    uvCli.runUv(cwd, "pip", "uninstall", *pyPackages)
       .onFailure { return PyResult.failure(it) }
 
     return PyExecResult.success(Unit)
   }
 
-  override suspend fun addDependency(name: PythonPackageInstallRequest, options: List<String>): PyExecResult<Unit> {
-    uvCli.runUv(cwd, "add", name.formatPackageName(), *options.toTypedArray())
+  override suspend fun addDependency(pyPackages: PythonPackageInstallRequest, options: List<String>): PyExecResult<Unit> {
+    uvCli.runUv(cwd, "add", *pyPackages.formatPackageName(), *options.toTypedArray())
       .onFailure { return PyResult.failure(it) }
 
     return PyExecResult.success(Unit)
   }
 
-  override suspend fun removeDependency(name: PythonPackage): PyExecResult<Unit> {
-    uvCli.runUv(cwd, "remove", name.name)
+  override suspend fun removeDependencies(pyPackages: Array<out String>): PyExecResult<Unit> {
+    uvCli.runUv(cwd, "remove", *pyPackages)
       .onFailure { return PyResult.failure(it) }
 
     return PyExecResult.success(Unit)
@@ -218,8 +218,8 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
     return args
   }
 
-  fun PythonPackageInstallRequest.formatPackageName(): String = when (this) {
-    is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecification -> specification.nameWithVersionSpec
+  fun PythonPackageInstallRequest.formatPackageName(): Array<String> = when (this) {
+    is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications -> specifications.map { it.nameWithVersionSpec }.toTypedArray()
     is PythonPackageInstallRequest.AllRequirements -> error("UV supports only single requirement installation")
     is PythonPackageInstallRequest.ByLocation -> error("UV does not support installing from location uri")
   }

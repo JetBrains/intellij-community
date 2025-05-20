@@ -11,17 +11,13 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.net.HttpConfigurable
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.packaging.PyExecutionException
-import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
-import com.jetbrains.python.packaging.normalizePackageName
+import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.buildTargetedCommandLine
@@ -33,14 +29,13 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import kotlin.math.min
 
+
 @ApiStatus.Internal
-@RequiresBackgroundThread
-fun PythonPackageManager.launchReload() {
-  runBlockingCancellable {
-    runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.packaging.operation.failed.title")) {
-      reloadPackages()
-    }
-  }
+fun PythonPackageManager.hasInstalledPackage(packageName: String, version: String? = null): Boolean =
+  getPackage(packageName, version) != null
+
+fun PythonPackageManager.getPackage(packageName: String, version: String? = null): PythonPackage? {
+  return installedPackages.firstOrNull { it.name == packageName && (version == null || version == it.version) }
 }
 
 @ApiStatus.Internal
@@ -103,7 +98,7 @@ suspend fun PythonPackageManager.runPackagingTool(
 
   thisLogger().debug("Running python packaging tool. Operation: $operation")
 
-  val result = PythonPackageManagerRunner.runProcess(this@runPackagingTool, process, commandLineString, text, withBackgroundProgress)
+  val result = PythonPackageManagerRunner.runProcess(project, process, commandLineString, text, withBackgroundProgress)
   if (result.isCancelled) throw RunCanceledByUserException()
   result.checkSuccess(thisLogger())
   val exitCode = result.exitCode
@@ -141,20 +136,4 @@ fun PythonRepositoryManager.packagesByRepository(): Sequence<Pair<PyPackageRepos
 @ApiStatus.Internal
 fun PythonPackageManager.isInstalled(name: String): Boolean {
   return installedPackages.any { it.name.equals(name, ignoreCase = true) }
-}
-
-/**
- * Finds the first repository that contains the package with the given name.
- * Fallbacks to the main (first) repository if nothing is found, just to keep existing behavior.
- * It looks like this fallback should be reviewed, possibly removed and tested.
- */
-@ApiStatus.Internal
-fun PythonRepositoryManager.findPackageRepository(packageName: String): PyPackageRepository? {
-  val normalizePackageName = normalizePackageName(packageName)
-  val repository = packagesByRepository().firstNotNullOfOrNull { (repository, packageNames) ->
-    val contains = packageNames.contains(normalizePackageName) ||
-                   packageNames.any { normalizePackageName(it) == normalizePackageName }
-    if (contains) repository else null
-  }
-  return repository ?: repositories.firstOrNull()
 }

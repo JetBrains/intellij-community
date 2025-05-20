@@ -49,9 +49,7 @@ internal suspend fun <T> runPackagingOperationOrShowErrorDialog(
   operation: suspend (() -> Result<T>),
 ): Result<T> {
   try {
-    val result = withContext(Dispatchers.IO) {
-      operation.invoke()
-    }
+    val result = operation()
     result.exceptionOrNull()?.let { throw it }
     return result
   }

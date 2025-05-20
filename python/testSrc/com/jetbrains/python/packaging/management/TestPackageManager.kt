@@ -11,7 +11,6 @@ import org.jetbrains.annotations.TestOnly
 
 @TestOnly
 class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
-
   override var installedPackages: List<PythonPackage> = DEFAULT_PACKAGES.toMutableList()
   override var dependencies: List<PythonPackage> = emptyList()
   private var packageNames: List<String> = emptyList()
@@ -25,40 +24,38 @@ class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManage
   }
 
   override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): Result<Unit> {
-    if (installRequest !is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecification) {
+    if (installRequest !is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications) {
       return Result.failure(Exception("Test Manager supports only simple repository package specification"))
     }
 
-    return if (repositoryManager.allPackages().contains(installRequest.specification.name)) {
-      val version = installRequest.specification.versionSpec?.version.orEmpty()
-      installedPackages += PythonPackage(installRequest.specification.name, version, false)
+    val specification = installRequest.specifications.single()
+    return if (repositoryManager.allPackages().contains(specification.name)) {
+      val version = specification.versionSpec?.version.orEmpty()
+      installedPackages += PythonPackage(specification.name, version, false)
       Result.success(Unit)
-    } else {
+    }
+    else {
       Result.failure(Exception(PACKAGE_INSTALL_FAILURE_MESSAGE))
     }
   }
 
-  override suspend fun updatePackageCommand(specification: PythonRepositoryPackageSpecification): Result<Unit> {
+  override suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): Result<Unit> {
     return Result.success(Unit)
   }
 
-  override suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<Unit> {
-    val packageToRemove = findPackageByName(pkg.name)
-    return if (packageToRemove != null) {
+  override suspend fun uninstallPackageCommand(vararg pythonPackages: String): Result<Unit> {
+    pythonPackages.forEach { pyPackage ->
+      val packageToRemove = findPackageByName(pyPackage)
+                            ?: return Result.failure(Exception(PACKAGE_UNINSTALL_FAILURE_MESSAGE))
       installedPackages -= packageToRemove
-      Result.success(Unit)
-    } else {
-      Result.failure(Exception(PACKAGE_UNINSTALL_FAILURE_MESSAGE))
     }
+
+    return Result.success(Unit)
   }
 
-  override suspend fun reloadPackagesCommand(): Result<List<PythonPackage>> {
+  override suspend fun loadPackagesCommand(): Result<List<PythonPackage>> {
     return Result.success(installedPackages)
   }
-
-  override suspend fun reloadDependencies(): List<PythonPackage> = dependencies
-
-  override fun listDependencies(): List<PythonPackage> = dependencies
 
   private fun findPackageByName(name: String): PythonPackage? {
     return installedPackages.find { it.name == name }
@@ -94,7 +91,7 @@ class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManage
 }
 
 @TestOnly
-class TestPythonPackageManagerService(val installedPackages: List<PythonPackage> = emptyList()): PythonPackageManagerService {
+class TestPythonPackageManagerService(val installedPackages: List<PythonPackage> = emptyList()) : PythonPackageManagerService {
 
   override fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
     installedPackages.ifEmpty {

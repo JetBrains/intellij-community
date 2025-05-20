@@ -17,14 +17,15 @@ import org.jetbrains.annotations.CheckReturnValue
 suspend fun installPackages(project: Project, sdk: Sdk, vararg packages: String): Result<Unit> {
   val packageManager = PythonPackageManager.forSdk(project, sdk)
   return supervisorScope { // Not install other packages if one failed
+    packageManager.waitForInit()
     val specifications = packages.map {
-      packageManager.createPackageSpecification(it)
+      packageManager.findPackageSpecification(it)
       ?: return@supervisorScope Result.failure(IllegalArgumentException(
         PyBundle.message("python.packaging.error.package.is.not.listed.in.repositories", it)
       ))
     }
-    val requests = specifications.map { PythonPackageInstallRequest.ByRepositoryPythonPackageSpecification(it) }
-    return@supervisorScope packageManager.installPackages(requests, emptyList(), withBackgroundProgress = true).map {
+    val installRequest = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(specifications)
+    return@supervisorScope packageManager.installPackage(installRequest, emptyList()).map {
       // We don't care about result, we just want to fail if any package failed to install
     }
   }

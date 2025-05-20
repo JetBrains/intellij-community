@@ -9,7 +9,6 @@ import com.intellij.openapi.projectRoots.SdkTypeId
 import com.jetbrains.env.EnvTestTagsRequired
 import com.jetbrains.env.PyEnvTestCase
 import com.jetbrains.env.PyExecutionFixtureTestTask
-import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.toInstallRequest
@@ -23,7 +22,7 @@ import org.junit.Test
 class PythonPackageManagerNullAdditionalDataTest : PyEnvTestCase() {
 
   companion object {
-    private val PKG = requireNotNull(PyPIPackageRepository.createPackageSpecification("requests"))
+    private val PKG = requireNotNull(PyPIPackageRepository.findPackageSpecification("requests"))
   }
 
   @EnvTestTagsRequired(tags = ["python3.8"])
@@ -89,10 +88,10 @@ class PythonPackageManagerNullAdditionalDataTask(private val pkg: PythonReposito
       val configuredSdk = createSdkWithNullAdditionalData(pythonSdkType, sdkHome, existingSdk)
       val manager = PythonPackageManager.forSdk(myFixture.project, configuredSdk)
 
-      manager.installPackage(pkg.toInstallRequest(), emptyList(), withBackgroundProgress = false)
+      manager.installPackage(pkg.toInstallRequest(), emptyList())
       assertTrue("Package should be installed", manager.installedPackages.map { it.name }.contains(pkg.name))
 
-      manager.uninstallPackage(PythonPackage(pkg.name, pkg.versionSpec?.version.orEmpty(), false))
+      manager.uninstallPackage(pkg.name)
       assertTrue("Package should be uninstalled", !manager.installedPackages.map { it.name }.contains(pkg.name))
     }
   }

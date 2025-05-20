@@ -42,9 +42,9 @@ object PyPackagesUiComponents {
       override fun onChosen(selectedValue: String?, finalChoice: Boolean): PopupStep<*>? {
         return doFinalStep {
           val repository = checkNotNull(selectedPackage.repository)
-          val specification = repository.createPackageSpecification(selectedPackage.name, selectedValue)
+          val specification = repository.findPackageSpecification(selectedPackage.name, selectedValue)
           PyPackageCoroutine.getIoScope(project).launch(Dispatchers.IO) {
-            project.service<PyPackagingToolWindowService>().installPackage(specification.toInstallRequest())
+            project.service<PyPackagingToolWindowService>().installPackage(specification!!.toInstallRequest())
           }
         }
       }

@@ -7,113 +7,38 @@ import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonHelpersLocator.Companion.findPathInHelpers
-import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.PyPackageUtil
-import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
-import com.jetbrains.python.packaging.management.runPackagingTool
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.statistics.version
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
-private fun PythonRepositoryPackageSpecification.buildPipInstallArguments(): List<String> = buildList {
-  add(nameWithVersionSpec)
-  val urlForInstallation = repository.urlForInstallation.toString()
-  urlForInstallation.takeIf { it.isNotBlank() && it != PyPIPackageUtil.PYPI_LIST_URL }?.let {
-    add("--index-url")
-    add(it)
-  }
-}
-
-private fun PythonPackageInstallRequest.buildPipInstallArguments(): List<String> = when (this) {
-  is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecification -> this.specification.buildPipInstallArguments()
-  is PythonPackageInstallRequest.ByLocation -> listOf(location.toString())
-  is PythonPackageInstallRequest.AllRequirements -> emptyList()
-}
-
 @ApiStatus.Experimental
 @ApiStatus.Internal
 open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
-  @Volatile
-  override var installedPackages: List<PythonPackage> = emptyList()
-  override var dependencies: List<PythonPackage> = emptyList()
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager(project)
+  private val engine = PipPackageManagerEngine(project, sdk)
 
-  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): Result<Unit> {
-    PipManagementInstaller(sdk, this).installManagementIfNeeded()
-    try {
-      runPackagingTool("install", installRequest.buildPipInstallArguments() + options, PyBundle.message("python.packaging.install.progress", installRequest.title), withBackgroundProgress = false)
-    }
-    catch (ex: ExecutionException) {
-      return Result.failure(ex)
-    }
+  override suspend fun loadOutdatedPackagesCommand() = engine.loadOutdatedPackagesCommand()
 
-    return Result.success(Unit)
-  }
+  override suspend fun installPackageCommand(
+    installRequest: PythonPackageInstallRequest,
+    options: List<String>,
+  ) = engine.installPackageCommand(installRequest, options)
 
-  override suspend fun loadOutdatedPackagesCommand(): Result<List<PythonOutdatedPackage>> = runCatching {
-    val output = runPackagingTool("list_outdated", listOf(), PyBundle.message("python.packaging.list.outdated.progress"))
-    output.lineSequence()
-      .drop(2) // skip header and separator line
-      .filter { it.isNotBlank() }
-      .map {
-        val line = it.split("\t", " ").filter { it.isNotBlank() }
-        PythonOutdatedPackage(line[0], line[1], latestVersion = line[2])
-      }
-      .toList()
-  }
+  override suspend fun updatePackageCommand(
+    vararg specifications: PythonRepositoryPackageSpecification,
+  ): Result<Unit> = engine.updatePackageCommand(*specifications)
 
-  override suspend fun updatePackageCommand(specification: PythonRepositoryPackageSpecification): Result<Unit> {
-    try {
-      runPackagingTool("install", listOf("--upgrade") + specification.buildPipInstallArguments(), PyBundle.message("python.packaging.update.progress", specification.name))
-    }
-    catch (ex: ExecutionException) {
-      return Result.failure(ex)
-    }
+  override suspend fun uninstallPackageCommand(vararg pythonPackages: String) = engine.uninstallPackageCommand(*pythonPackages)
 
-    return Result.success(Unit)
-  }
-
-  override suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<Unit> {
-    try {
-      runPackagingTool("uninstall", listOf(pkg.name), PyBundle.message("python.packaging.uninstall.progress", pkg.name))
-    }
-    catch (ex: ExecutionException) {
-      return Result.failure(ex)
-    }
-
-    return Result.success(Unit)
-  }
-
-  override suspend fun reloadPackagesCommand(): Result<List<PythonPackage>> {
-    try {
-      val output = runPackagingTool("list", emptyList(), PyBundle.message("python.packaging.list.progress"))
-      val packages = output.lineSequence()
-        .filter { it.isNotBlank() }
-        .map {
-          val line = it.split("\t")
-          PythonPackage(line[0], line[1], isEditableMode = false)
-        }
-        .sortedWith(compareBy(PythonPackage::name))
-        .toList()
-
-      return Result.success(packages)
-    }
-    catch (ex: ExecutionException) {
-      return Result.failure(ex)
-    }
-  }
-
-  override suspend fun reloadDependencies(): List<PythonPackage> = dependencies
-
-  override fun listDependencies(): List<PythonPackage> = dependencies
+  override suspend fun loadPackagesCommand(): Result<List<PythonPackage>> = engine.loadPackagesCommand()
 }
 
 @ApiStatus.Internal
@@ -128,7 +53,7 @@ class PipManagementInstaller(private val sdk: Sdk, private val manager: PythonPa
   private fun performManagementInstallation(): Boolean = installManagement()
 
   fun hasManagement(): Boolean =
-    languageLevel < LanguageLevel.PYTHON27 || (manager.packageExists(PIP_PACKAGE) && hasSetuptools())
+    languageLevel < LanguageLevel.PYTHON27 || (manager.isPackageInstalled(PIP_PACKAGE) && hasSetuptools())
 
   private fun installManagement(): Boolean =
     installWheelIfMissing(::hasPip, WheelFiles.PIP_WHEEL_NAME) &&
@@ -159,12 +84,12 @@ class PipManagementInstaller(private val sdk: Sdk, private val manager: PythonPa
       throw ExecutionException(ex.message, ex)
     }
 
-  private fun hasPip(): Boolean = manager.packageExists(PIP_PACKAGE)
+  private fun hasPip(): Boolean = manager.isPackageInstalled(PIP_PACKAGE)
 
   private fun hasSetuptools(): Boolean =
     languageLevel >= LanguageLevel.PYTHON312 ||
-    manager.packageExists(SETUPTOOLS_PACKAGE) ||
-    manager.packageExists(DISTRIBUTE_PACKAGE)
+    manager.isPackageInstalled(SETUPTOOLS_PACKAGE) ||
+    manager.isPackageInstalled(DISTRIBUTE_PACKAGE)
 
   private fun buildCommandArguments(wheelPath: Path, vararg additionalArgs: String): List<String> =
     listOfNotNull(sdk.homePath.toString(), wheelPath.toString(), "install") + additionalArgs

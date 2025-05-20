@@ -5,6 +5,7 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.jetbrains.python.packaging.conda.PyPackageProcessHandler
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 internal object PythonPackageManagerRunner {
   suspend fun runProcess(
-    packageManager: PythonPackageManager,
+    project: Project,
     process: Process,
     command: String,
     @NlsContexts.ProgressTitle backgroundProgressTitle: String,
@@ -26,7 +27,7 @@ internal object PythonPackageManagerRunner {
     }
 
     val processOutput = if (withBackgroundProgress)
-      withBackgroundProgress(packageManager.project, backgroundProgressTitle, true) {
+      withBackgroundProgress(project, backgroundProgressTitle, true) {
         runProcessInternal(handler)
       }
     else {

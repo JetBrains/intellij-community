@@ -131,7 +131,7 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
         installButton = button(PyBundle.message("black.install.button.label")) {
           runWithModalProgressBlocking(ModalTaskOwner.project(project), PyBundle.message("black.installing.modal.title")) {
             if (selectedSdk != null) {
-              PyPackageInstallUtils.installPackage(project, selectedSdk!!, BlackFormatterUtil.PACKAGE_NAME, false).onSuccess {
+              PyPackageInstallUtils.installPackage(project, selectedSdk!!, BlackFormatterUtil.PACKAGE_NAME).onSuccess {
                 withContext(Dispatchers.EDT) {
                   isBlackFormatterPackageInstalled = true
                   enableOnReformatCheckBox.isSelected = true

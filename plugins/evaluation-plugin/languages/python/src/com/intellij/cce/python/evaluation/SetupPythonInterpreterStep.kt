@@ -22,8 +22,8 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
+import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.management.toInstallRequest
 import com.jetbrains.python.packaging.pip.PipPythonPackageManager
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.sdk.PythonSdkType
@@ -146,7 +146,7 @@ private class SetupPythonInterpreterStep(
     val packageManager = PythonPackageManager.forSdk(project, sdk)
     packageManager.reloadPackages()
 
-    val packages = readRequiredPackages(packageManager).filterNot { packageManager.packageExists(PythonPackage(it.name, "", false)) }
+    val packages = readRequiredPackages(packageManager).filterNot { packageManager.isPackageInstalled(PythonPackage(it.name, "", false)) }
     if (packages.isEmpty()) {
       println("No packages to install. Skipping.")
       return
@@ -160,7 +160,9 @@ private class SetupPythonInterpreterStep(
 
     // resolves `'runBlockingCancellable' is forbidden in the Write Action` from PythonSdkUpdater.scheduleUpdate
     keepTasksAsynchronousInHeadlessMode {
-      packageManager.installPackages(packages.map { it.toInstallRequest() }, cacheOptions, false)
+      val installRequest = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(packages)
+
+      packageManager.installPackage(installRequest, cacheOptions)
       println("Installed packages: ${packages.joinToString(", ") { it.name }}")
     }
   }
@@ -175,7 +177,7 @@ private class SetupPythonInterpreterStep(
       reader.readLines().filter { it.isNotBlank() }.mapNotNull { line ->
         val relation = PyRequirementRelation.entries.find { line.contains(it.presentableText) }
         val parts = if (relation != null) line.split(relation.presentableText).map { it.trim() } else listOf(line.trim())
-        packageManager.createPackageSpecification(
+        packageManager.findPackageSpecification(
           packageName = parts[0],
           version = parts.getOrNull(1),
           relation = relation ?: PyRequirementRelation.EQ

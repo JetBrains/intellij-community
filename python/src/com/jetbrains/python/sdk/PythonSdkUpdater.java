@@ -48,7 +48,6 @@ import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.common.PythonPackage;
 import com.jetbrains.python.packaging.management.PythonPackageManager;
-import com.jetbrains.python.packaging.management.PythonPackageManagerExt;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.remote.UnsupportedPythonSdkTypeException;
 import com.jetbrains.python.sdk.headless.PythonActivityKey;
@@ -62,8 +61,8 @@ import org.jetbrains.annotations.TestOnly;
 import java.awt.*;
 import java.io.File;
 import java.time.Instant;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Function;
 
 /**
@@ -222,8 +221,8 @@ public final class PythonSdkUpdater {
         indicator.setText(PyBundle.message("python.sdk.scanning.installed.packages"));
         indicator.setText2("");
         PyPackageManager.getInstance(sdk).refreshAndGetPackages(true);
-        PythonPackageManager manager = PythonPackageManager.Companion.forSdk(myProject, mySdk);
-        PythonPackageManagerExt.launchReload(manager);
+        //It internally invoke lazy list packages update on first call
+        PythonPackageManager.Companion.forSdk(myProject, mySdk);
       }
       catch (ExecutionException e) {
         if (LOG.isDebugEnabled()) {

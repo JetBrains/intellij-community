@@ -9,7 +9,6 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.WhatToExec
@@ -42,6 +41,7 @@ import org.jetbrains.annotations.SystemIndependent
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
+import kotlin.time.Duration.Companion.minutes
 
 /**
  *  This source code is edited by @koxudaxi Koudai Aono <koxudaxi@gmail.com>
@@ -53,7 +53,7 @@ private val VERSION_2 = "2.0.0".toVersion()
 @Internal
 suspend fun runPoetry(projectPath: Path?, vararg args: String): Result<String> {
   val executable = getPoetryExecutable().getOrElse { return Result.failure(it) }
-  return runExecutableWithProgress(executable, projectPath, *args).asKotlinResult()
+  return runExecutableWithProgress(executable, projectPath, 10.minutes, *args).asKotlinResult()
 }
 
 
@@ -97,14 +97,8 @@ suspend fun validatePoetryExecutable(poetryExecutable: Path?): ValidationInfo? =
 @Internal
 suspend fun runPoetryWithSdk(sdk: Sdk, vararg args: String): Result<String> {
   val projectPath = sdk.associatedModulePath?.let { Path.of(it) } ?: return Result.failure(poetryNotFoundException) // Choose a correct sdk
-  return reportSequentialProgress(2) { reporter ->
-    reporter.itemStep {
-      runPoetry(projectPath, "env", "use", sdk.homePath!!)
-    }
-    reporter.itemStep {
-      runPoetry(projectPath, *args)
-    }
-  }
+  runPoetry(projectPath, "env", "use", sdk.homePath!!)
+  return runPoetry(projectPath, *args)
 }
 
 
@@ -154,25 +148,25 @@ suspend fun getPythonExecutable(homePath: String): String = withContext(Dispatch
 
 /**
  * Installs a Python package using Poetry.
- * Runs `poetry add [pkg] [extraArgs]`
+ * Runs `poetry add [packages] [extraArgs]`
  *
- * @param [pkg] The name of the package to be installed.
+ * @param [packages] The name of the package to be installed.
  * @param [extraArgs] Additional arguments to pass to the Poetry add command.
  */
 @Internal
-suspend fun poetryInstallPackage(sdk: Sdk, pkg: String, extraArgs: List<String>): Result<String> {
-  val args = listOf("add", pkg) + extraArgs
+suspend fun poetryInstallPackage(sdk: Sdk, packages: List<String>, extraArgs: List<String>): Result<String> {
+  val args = listOf("add") + packages + extraArgs
   return runPoetryWithSdk(sdk, *args.toTypedArray())
 }
 
 /**
  * Uninstalls a Python package using Poetry.
- * Runs `poetry remove [pkg]`
+ * Runs `poetry remove [packages]`
  *
- * @param [pkg] The name of the package to be uninstalled.
+ * @param [packages] The name of the package to be uninstalled.
  */
 @Internal
-suspend fun poetryUninstallPackage(sdk: Sdk, pkg: String): Result<String> = runPoetryWithSdk(sdk, "remove", pkg)
+suspend fun poetryUninstallPackage(sdk: Sdk, vararg packages: String): Result<String> = runPoetryWithSdk(sdk, "remove", *packages)
 
 @Internal
 fun parsePoetryShow(input: String): List<PythonPackage> {

@@ -19,6 +19,7 @@ import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
+import kotlin.time.Duration.Companion.minutes
 
 private const val UV_PATH_SETTING: String = "PyCharm.Uv.Path"
 
@@ -40,7 +41,7 @@ private fun validateUvExecutable(uvPath: Path?): ValidationInfo? {
 }
 
 private suspend fun runUv(uv: Path, workingDir: Path, vararg args: String): PyExecResult<String> {
-  return runExecutableWithProgress(uv, workingDir, *args)
+  return runExecutableWithProgress(uv, workingDir, 10.minutes, *args)
 }
 
 private class UvCliImpl(val dispatcher: CoroutineDispatcher, uvPath: Path?) : UvCli {

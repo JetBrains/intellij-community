@@ -2,26 +2,23 @@
 package com.jetbrains.python.sdk.uv
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.errorProcessing.PyExecResult
 import com.jetbrains.python.errorProcessing.asKotlinResult
-import com.jetbrains.python.packaging.PythonDependenciesExtractor
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
-import com.jetbrains.python.packaging.management.*
+import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
+import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
+import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
-import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.uv.impl.createUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
 import java.nio.file.Path
 
 internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLowLevel) : PythonPackageManager(project, sdk) {
-  override var installedPackages: List<PythonPackage> = emptyList()
-  override var dependencies: List<PythonPackage> = emptyList()
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager(project)
-
 
   override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): Result<Unit> {
     val result = if (sdk.uvUsePackageManagement) {
@@ -38,20 +35,22 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
     return Result.success(Unit)
   }
 
-  override suspend fun updatePackageCommand(specification: PythonRepositoryPackageSpecification): Result<Unit> {
-    installPackageCommand(specification.toInstallRequest(), emptyList()).getOrElse {
+  override suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): Result<Unit> {
+    val specsWithoutVersion = specifications.map { it.copy(versionSpec = null) }
+    val request = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(specsWithoutVersion)
+    installPackageCommand(request, emptyList()).getOrElse {
       return Result.failure(it)
     }
 
     return Result.success(Unit)
   }
 
-  override suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<Unit> {
+  override suspend fun uninstallPackageCommand(vararg pythonPackages: String): Result<Unit> {
     val result = if (sdk.uvUsePackageManagement) {
-      uv.uninstallPackage(pkg)
+      uv.uninstallPackages(pythonPackages)
     }
     else {
-      uv.removeDependency(pkg)
+      uv.removeDependencies(pythonPackages)
     }.asKotlinResult()
 
     result.getOrElse {
@@ -61,7 +60,7 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
     return Result.success(Unit)
   }
 
-  override suspend fun reloadPackagesCommand(): Result<List<PythonPackage>> {
+  override suspend fun loadPackagesCommand(): Result<List<PythonPackage>> {
     return uv.listPackages().asKotlinResult()
   }
 
@@ -76,15 +75,6 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
   suspend fun lock(): PyExecResult<String> {
     return uv.lock()
   }
-
-  override suspend fun reloadDependencies(): List<PythonPackage> {
-    val dependenciesExtractor = PythonDependenciesExtractor.forSdk(sdk) ?: return emptyList()
-    val targetModule = project.modules.find { it.pythonSdk == sdk } ?: return emptyList()
-    dependencies = dependenciesExtractor.extract(targetModule)
-    return dependencies
-  }
-
-  override fun listDependencies(): List<PythonPackage> = dependencies
 }
 
 class UvPackageManagerProvider : PythonPackageManagerProvider {

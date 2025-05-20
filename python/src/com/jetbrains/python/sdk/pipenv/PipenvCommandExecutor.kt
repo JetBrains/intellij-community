@@ -21,11 +21,12 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.SystemDependent
 import java.io.FileNotFoundException
 import java.nio.file.Path
+import kotlin.time.Duration.Companion.minutes
 
 @Internal
 suspend fun runPipEnv(dirPath: Path?, vararg args: String): Result<String> {
   val executable = getPipEnvExecutable().getOrElse { return Result.failure(it) }
-  return runExecutableWithProgress(executable, dirPath, *args).asKotlinResult()
+  return runExecutableWithProgress(executable, dirPath, 10.minutes, *args).asKotlinResult()
 }
 
 /**

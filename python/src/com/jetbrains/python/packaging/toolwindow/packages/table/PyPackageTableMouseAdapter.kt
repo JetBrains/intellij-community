@@ -3,6 +3,7 @@ package com.jetbrains.python.packaging.toolwindow.packages.table
 
 import com.intellij.codeInsight.hints.presentation.MouseButton
 import com.intellij.codeInsight.hints.presentation.mouseButton
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.ui.awt.RelativePoint
@@ -32,20 +33,25 @@ internal class PyPackageTableMouseAdapter(private val table: PyPackagesTable) : 
     }
 
     val hoveredRow = TableHoverListener.getHoveredRow(table)
-    val selectedPackage = table.items.getOrNull(hoveredRow) ?: table.selectedItem()  ?: return
+    val selectedPackage = table.items.getOrNull(hoveredRow) ?: table.selectedItem() ?: return
 
     if (selectedPackage is InstallablePackage) {
-      PyPackageCoroutine.launch(project, Dispatchers.IO) {
-        val details = service.detailsForPackage(selectedPackage)
-        withContext(Dispatchers.Main) {
+      PyPackageCoroutine.launch(project) {
+        val details = service.detailsForPackage(selectedPackage) ?: return@launch
+        withContext(Dispatchers.EDT) {
           PyPackagesUiComponents.createAvailableVersionsPopup(selectedPackage, details, project).show(RelativePoint(e))
         }
       }
+      return
     }
-    else if (selectedPackage is InstalledPackage && selectedPackage.canBeUpdated && selectedPackage.repository != null) {
-      PyPackageCoroutine.launch(project, Dispatchers.IO) {
-        val nextVersion = selectedPackage.nextVersion ?: return@launch
-        val specification = selectedPackage.repository.createPackageSpecification(selectedPackage.name, nextVersion.presentableText)
+
+    if (selectedPackage is InstalledPackage &&
+        selectedPackage.canBeUpdated &&
+        selectedPackage.repository != null &&
+        selectedPackage.nextVersion != null) {
+      val specification = selectedPackage.repository.findPackageSpecification(selectedPackage.name) ?: return
+
+      PyPackageCoroutine.launch(project) {
         project.service<PyPackagingToolWindowService>().updatePackage(specification)
       }
     }

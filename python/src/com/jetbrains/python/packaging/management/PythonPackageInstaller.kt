@@ -49,19 +49,21 @@ class PythonPackagesInstaller {
       indicator.isIndeterminate = true
 
       val installAllRequirementsSpecification = PythonPackageInstallRequest.AllRequirements
-      return manager.installPackage(installAllRequirementsSpecification, emptyList(), withBackgroundProgress = true).map { }
+      return manager.installPackage(installAllRequirementsSpecification, emptyList()).map { }
     }
 
-    private suspend fun installWithRequirements(
+    suspend fun installWithRequirements(
       manager: PythonPackageManager,
-      requirements: List<PyRequirement>,
+      requirements: Collection<PyRequirement>,
       extraArgs: List<String>,
     ): Result<Unit> {
-      val installRequests = requirements.map { requirement ->
-        manager.createPackageSpecificationWithSpec(requirement.name, versionSpec = requirement.versionSpecs.firstOrNull())
+      manager.waitForInit()
+      val packageSpecifications = requirements.map { requirement ->
+        manager.findPackageSpecificationWithVersionSpec(requirement.name, versionSpec = requirement.versionSpecs.firstOrNull())
         ?: return Result.failure(ExecutionException(PyBundle.message("python.packaging.error.package.is.not.listed.in.repositories", requirement.name)))
-      }.map { it.toInstallRequest() }
-      return manager.installPackages(installRequests, extraArgs, withBackgroundProgress = true).map { }
+      }
+      val request = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(packageSpecifications)
+      return manager.installPackage(request, extraArgs).map { }
     }
 
     @JvmStatic
@@ -82,13 +84,7 @@ class PythonPackagesInstaller {
 
 
     suspend fun uninstallPackagesProcess(manager: PythonPackageManager, packages: List<PythonPackage>): Result<Unit> {
-      for (pkg in packages) {
-        manager.uninstallPackage(pkg).onFailure {
-          return Result.failure(it)
-        }
-      }
-
-      return Result.success(Unit)
+      return manager.uninstallPackage(*packages.map { it.name }.toTypedArray()).map {}
     }
 
     private fun PyPackage.toPythonPackage(): PythonPackage = PythonPackage(this.name, this.version, false)

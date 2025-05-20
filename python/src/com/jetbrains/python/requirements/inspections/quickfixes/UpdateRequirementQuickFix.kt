@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.requirements.inspections.outdated.quickfixes
+package com.jetbrains.python.requirements.inspections.quickfixes
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
@@ -24,11 +23,10 @@ internal class UpdateRequirementQuickFix(private val packageName: String) : Loca
     val manager = PythonPackageManager.forSdk(project, sdk)
 
     val latestVersion = manager.outdatedPackages[this.packageName]?.latestVersion ?: return
-    val packageSpecification = manager.createPackageSpecification(this.packageName, latestVersion, PyRequirementRelation.EQ) ?: return
+    val packageSpecification = manager.findPackageSpecification(this.packageName, latestVersion, PyRequirementRelation.EQ) ?: return
 
     PyPackageCoroutine.getScope(project).launch {
       manager.updatePackages(packageSpecification)
-      DaemonCodeAnalyzer.getInstance(project).restart(file)
     }
   }
 }

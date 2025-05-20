@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.conda
 
 import com.intellij.execution.ExecutionException
@@ -15,43 +15,33 @@ import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
-import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.PythonPackageManagerEngine
 import com.jetbrains.python.packaging.management.PythonPackageManagerRunner
-import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.sdk.targetEnvConfiguration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
-private fun PythonPackageInstallRequest.buildInstallationArguments(): Result<List<String>> = when (this) {
-  is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecification -> {
-    when (this.specification.repository) {
-      is CondaPackageRepository -> Result.success(listOf(this.specification.nameWithVersionSpec))
-      else -> Result.failure(UnsupportedOperationException("CondaManager installer supports only conda repositories, got ${this.specification.repository} "))
-    }
-  }
-  is PythonPackageInstallRequest.AllRequirements -> Result.success(emptyList())
-  is PythonPackageInstallRequest.ByLocation -> Result.failure(UnsupportedOperationException("CondaManager does not support installing from location uri"))
-}
-
-@ApiStatus.Experimental
-class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
-  @Volatile
-  override var installedPackages: List<PythonPackage> = emptyList()
-  override var dependencies: List<PythonPackage> = emptyList()
-  override val repositoryManager: PythonRepositoryManager = CondaRepositoryManger(project, sdk)
-
+internal class CondaPackageManagerEngine(
+  private val project: Project,
+  private val sdk: Sdk,
+) : PythonPackageManagerEngine {
   override suspend fun loadOutdatedPackagesCommand(): Result<List<PythonOutdatedPackage>> {
-    return runCatching {
-      val jsonResult = runConda("update", listOf("--dry-run", "--all", "--json"),
-                                message("conda.packaging.list.outdated.progress"),
-                                withBackgroundProgress = false)
+    val jsonResult = try {
+      runConda("update", listOf("--dry-run", "--all", "--json"),
+               message("conda.packaging.list.outdated.progress"),
+               withBackgroundProgress = false)
+    }
+    catch (ex: ExecutionException) {
+      return Result.failure(ex)
+    }
 
+    val parsed = withContext(Dispatchers.Default) {
       CondaParseUtils.parseOutdatedOutputs(jsonResult)
     }
+    return Result.success(parsed)
   }
 
   override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): Result<Unit> {
@@ -66,25 +56,33 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pro
     }
   }
 
-  override suspend fun updatePackageCommand(specification: PythonRepositoryPackageSpecification): Result<Unit> =
+  override suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): Result<Unit> =
     try {
-      runConda("update", listOf(specification.name, "-y"), message("conda.packaging.update.progress", specification.name))
+      val packages = specifications.map { it.name }
+      runConda("install", packages + listOf("-y"),
+               message("conda.packaging.update.progress", packages.joinToString(", ")))
       Result.success(Unit)
     }
     catch (ex: ExecutionException) {
       Result.failure(ex)
     }
 
-  override suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<Unit> =
-    try {
-      runConda("uninstall", listOf(pkg.name, "-y"), message("conda.packaging.uninstall.progress", pkg.name))
+  override suspend fun uninstallPackageCommand(vararg pythonPackages: String): Result<Unit> {
+    if (pythonPackages.isEmpty())
+      return Result.success(Unit)
+
+    return try {
+      runConda("uninstall", pythonPackages.toList() + listOf("-y"),
+               message("conda.packaging.uninstall.progress", pythonPackages.joinToString(", ")),
+               withBackgroundProgress = false)
       Result.success(Unit)
     }
     catch (ex: ExecutionException) {
       Result.failure(ex)
     }
+  }
 
-  override suspend fun reloadPackagesCommand(): Result<List<PythonPackage>> =
+  override suspend fun loadPackagesCommand(): Result<List<PythonPackage>> =
     try {
       val output = runConda("list", emptyList(), message("conda.packaging.list.progress"))
       Result.success(parseCondaPackageList(output))
@@ -93,14 +91,10 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pro
       Result.failure(ex)
     }
 
-  override suspend fun reloadDependencies(): List<PythonPackage> = dependencies
-
-  override fun listDependencies(): List<PythonPackage> = dependencies
-
   private fun parseCondaPackageList(text: String): List<CondaPackage> {
     return text.lineSequence()
       .filterNot { it.startsWith("#") }
-      .map { line -> line.split("\\s+".toRegex()) }
+      .map { line -> line.split(listLineParser) }
       .filterNot { it.size < 2 }
       //TODO: fix
       .map { CondaPackage(it[0], it[1], editableMode = false, installedWithPip = (it.size >= 4 && it[3] == "pypi")) }
@@ -127,7 +121,7 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pro
       val commandLine = targetedCommandLine.collectCommandsSynchronously()
       val commandLineString = StringUtil.join(commandLine, " ")
 
-      val result = PythonPackageManagerRunner.runProcess(this@CondaPackageManager, process, commandLineString, text, withBackgroundProgress)
+      val result = PythonPackageManagerRunner.runProcess(project, process, commandLineString, text, withBackgroundProgress)
 
       result.checkSuccess(thisLogger())
       if (result.isTimeout) throw PyExecutionException(message("conda.packaging.exception.timeout"), operation, arguments, result)
@@ -136,5 +130,26 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pro
       }
       else result.stdout
     }
+  }
+
+  private fun PythonPackageInstallRequest.buildInstallationArguments(): Result<List<String>> = when (this) {
+    is PythonPackageInstallRequest.AllRequirements -> Result.success(emptyList())
+    is PythonPackageInstallRequest.ByLocation -> Result.failure(UnsupportedOperationException("CondaManager does not support installing from location uri"))
+    is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications -> {
+      val condaSpecs = specifications.filter { it.repository is CondaPackageRepository }
+      val specs = condaSpecs.map { it.nameWithVersionSpec }
+
+      //https://docs.conda.io/projects/conda/en/latest/user-guide/concepts/pkg-specs.html#package-match-specifications
+      //When using the command line, put double quotes around any package version specification that
+      // contains the space character or any of the following characters: <, >, *, or |.
+      //Ido not know why we need put single prefix quota but it does not work in EEL with suffix quota
+      val quoted = specs.map { "\"$it" }
+
+      Result.success(quoted)
+    }
+  }
+
+  companion object {
+    private val listLineParser = "\\s+".toRegex()
   }
 }

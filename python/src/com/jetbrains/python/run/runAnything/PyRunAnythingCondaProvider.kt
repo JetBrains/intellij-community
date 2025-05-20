@@ -3,11 +3,11 @@ package com.jetbrains.python.run.runAnything
 
 import com.intellij.openapi.actionSystem.DataContext
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.packaging.conda.CondaPackageManager
+import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.packaging.conda.CondaPackageRepository
+import com.jetbrains.python.packaging.conda.CondaWithPipFallbackPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.repository.PyPackageRepository
-import com.jetbrains.python.icons.PythonIcons
 import javax.swing.Icon
 
 class PyRunAnythingCondaProvider : PyRunAnythingPackageProvider() {
@@ -33,7 +33,7 @@ class PyRunAnythingCondaProvider : PyRunAnythingPackageProvider() {
 
   override fun getPackageManager(dataContext: DataContext): PythonPackageManager? {
     val pythonSdk = getSdk(dataContext) ?: return null
-    return (PythonPackageManager.forSdk(dataContext.project, pythonSdk) as? CondaPackageManager) ?: return null
+    return (PythonPackageManager.forSdk(dataContext.project, pythonSdk) as? CondaWithPipFallbackPackageManager)
   }
 
   override fun getPackageRepository(dataContext: DataContext): PyPackageRepository? {
@@ -43,5 +43,5 @@ class PyRunAnythingCondaProvider : PyRunAnythingPackageProvider() {
   override fun getLogCommandType(): CommandType = CommandType.CONDA
 }
 
-val CONDA_COMMANDS = listOf("clean", "compare", "config", "create", "help", "info", "init", "install", "list", "package", "remove",
-                            "uninstall", "run", "search", "update", "upgrade").asSequence()
+val CONDA_COMMANDS: Sequence<String> = listOf("clean", "compare", "config", "create", "help", "info", "init", "install", "list", "package", "remove",
+                                              "uninstall", "run", "search", "update", "upgrade").asSequence()

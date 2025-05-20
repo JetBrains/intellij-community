@@ -34,10 +34,6 @@ class InstalledPackage(val instance: PythonPackage, repository: PyPackageReposit
       currentVersion ?: return false
       return nextVersion != null && PyPackageVersionComparator.compare(nextVersion, currentVersion) > 0
     }
-
-  fun withNextVersion(newVersion: PyPackageVersion?): InstalledPackage {
-    return InstalledPackage(instance, repository, newVersion)
-  }
 }
 
 

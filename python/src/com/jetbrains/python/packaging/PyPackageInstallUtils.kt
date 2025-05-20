@@ -21,7 +21,6 @@ import com.jetbrains.python.PyPsiPackageUtil
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibUtil
 import com.jetbrains.python.inspections.quickfix.InstallPackageQuickFix
 import com.jetbrains.python.packaging.common.PythonPackage
-import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.toInstallRequest
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
@@ -40,6 +39,23 @@ import javax.swing.UIManager
  */
 @ApiStatus.Internal
 object PyPackageInstallUtils {
+  internal fun getConfirmedPackages(packageNames: List<PyRequirement>, project: Project): Set<PyRequirement> {
+    val confirmationEnabled = PropertiesComponent.getInstance()
+      .getBoolean(InstallPackageQuickFix.CONFIRM_PACKAGE_INSTALLATION_PROPERTY, true)
+
+    if (!confirmationEnabled || packageNames.isEmpty()) return packageNames.toSet()
+
+    val dialog = PyChooseRequirementsDialog(project, packageNames) { it.presentableTextWithoutVersion }
+
+    if (!dialog.showAndGet()) {
+      PyPackagesUsageCollector.installAllCanceledEvent.log()
+      return emptySet()
+    }
+
+    return dialog.markedElements.toSet()
+  }
+
+
   fun offeredPackageForNotFoundModule(project: Project, sdk: Sdk, moduleName: String): String? {
     val shouldToInstall = checkShouldToInstall(project, sdk, moduleName)
     if (!shouldToInstall)
@@ -73,7 +89,7 @@ object PyPackageInstallUtils {
     }
     if (!isConfirmed)
       return
-    val result = installPackage(project, sdk, packageName, true, versionSpec = versionSpec)
+    val result = installPackage(project, sdk, packageName, versionSpec = versionSpec)
     result.getOrThrow()
   }
 
@@ -97,7 +113,7 @@ object PyPackageInstallUtils {
 
   suspend fun upgradePackage(project: Project, sdk: Sdk, packageName: String, version: String? = null): Result<List<PythonPackage>> {
     val pythonPackageManager = getPackageManagerOrNull(project, sdk)
-    val packageSpecification = pythonPackageManager?.repositoryManager?.repositories?.firstOrNull()?.createPackageSpecification(packageName, version)
+    val packageSpecification = pythonPackageManager?.repositoryManager?.repositories?.firstOrNull()?.findPackageSpecification(packageName, version)
                                ?: return Result.failure(Exception("Could not find any repositories"))
 
     return pythonPackageManager.updatePackages(packageSpecification)
@@ -107,7 +123,6 @@ object PyPackageInstallUtils {
     project: Project,
     sdk: Sdk,
     packageName: String,
-    withBackgroundProgress: Boolean,
     versionSpec: PyRequirementVersionSpec? = null,
     options: List<String> = emptyList(),
   ): Result<List<PythonPackage>> {
@@ -118,11 +133,10 @@ object PyPackageInstallUtils {
         return Result.failure(it)
       }
 
-      val spec = withContext(Dispatchers.IO) {
-        pythonPackageManager.createPackageSpecificationWithSpec(packageName, versionSpec)
-      } ?: return Result.failure(Exception("Package $packageName not found in any repository"))
+      val spec = pythonPackageManager.findPackageSpecificationWithVersionSpec(packageName, versionSpec)
+                 ?: return Result.failure(Exception("Package $packageName not found in any repository"))
 
-      return pythonPackageManager.installPackage(spec.toInstallRequest(), options, withBackgroundProgress)
+      return pythonPackageManager.installPackage(spec.toInstallRequest(), options)
     }
     catch (t: Throwable) {
       Result.failure(t)
@@ -154,29 +168,26 @@ object PyPackageInstallUtils {
   suspend fun uninstall(project: Project, sdk: Sdk, libName: String) {
     val pythonPackageManager = getPackageManagerOrNull(project, sdk) ?: return
     val pythonPackage = getPackage(project, sdk, libName) ?: return
-    pythonPackageManager.uninstallPackage(pythonPackage)
+    pythonPackageManager.uninstallPackage(pythonPackage.name)
   }
 
 
   fun invokeInstallPackage(project: Project, pythonSdk: Sdk, packageName: String, point: RelativePoint, versionSpec: PyRequirementVersionSpec? = null) {
     PyPackageCoroutine.launch(project) {
-      runPackagingOperationOrShowErrorDialog(pythonSdk, PyBundle.message("python.new.project.install.failed.title", packageName),
-                                             packageName) {
-        val loadBalloon = showBalloon(point, PyBundle.message("python.packaging.installing.package", packageName), BalloonStyle.INFO)
-        try {
-          confirmAndInstall(project, pythonSdk, packageName, versionSpec = versionSpec)
-          loadBalloon.hide()
-          PyPackagesUsageCollector.installPackageFromConsole.log(project)
-          showBalloon(point, PyBundle.message("python.packaging.notification.description.installed.packages", packageName), BalloonStyle.SUCCESS)
-        }
-        catch (t: Throwable) {
-          loadBalloon.hide()
-          PyPackagesUsageCollector.failInstallPackageFromConsole.log(project)
-          showBalloon(point, PyBundle.message("python.new.project.install.failed.title", packageName), BalloonStyle.ERROR)
-          throw t
-        }
-        Result.success(Unit)
+      val loadBalloon = showBalloon(point, PyBundle.message("python.packaging.installing.package", packageName), BalloonStyle.INFO)
+      try {
+        confirmAndInstall(project, pythonSdk, packageName, versionSpec = versionSpec)
+        loadBalloon.hide()
+        PyPackagesUsageCollector.installPackageFromConsole.log(project)
+        showBalloon(point, PyBundle.message("python.packaging.notification.description.installed.packages", packageName), BalloonStyle.SUCCESS)
       }
+      catch (t: Throwable) {
+        loadBalloon.hide()
+        PyPackagesUsageCollector.failInstallPackageFromConsole.log(project)
+        showBalloon(point, PyBundle.message("python.new.project.install.failed.title", packageName), BalloonStyle.ERROR)
+        throw t
+      }
+      Result.success(Unit)
     }
   }
 
@@ -222,19 +233,4 @@ object PyPackageInstallUtils {
   enum class BalloonStyle { ERROR, INFO, SUCCESS }
 }
 
-internal fun getConfirmedPackages(packageNames: List<PyRequirement>, project: Project): Set<PyRequirement> {
-  val confirmationEnabled = PropertiesComponent.getInstance()
-    .getBoolean(InstallPackageQuickFix.CONFIRM_PACKAGE_INSTALLATION_PROPERTY, true)
-
-  if (!confirmationEnabled || packageNames.isEmpty()) return packageNames.toSet()
-
-  val dialog = PyChooseRequirementsDialog(project, packageNames) { it.presentableTextWithoutVersion }
-
-  if (!dialog.showAndGet()) {
-    PyPackagesUsageCollector.installAllCanceledEvent.log()
-    return emptySet()
-  }
-
-  return dialog.markedElements.toSet()
-}
 

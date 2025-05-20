@@ -47,6 +47,21 @@ open class PythonPackage(name: String, val version: String, val isEditableMode: 
 class PythonOutdatedPackage(name: String, version: String, val latestVersion: String)
   : PythonPackage(name, version, false) {
   override fun toString(): String = "PythonOutdatedPackage(name='$name', version='$version', latestVersion='$latestVersion')"
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+    if (!super.equals(other)) return false
+
+    other as PythonOutdatedPackage
+
+    return latestVersion == other.latestVersion
+  }
+
+  override fun hashCode(): Int {
+    var result = super.hashCode()
+    result = 31 * result + latestVersion.hashCode()
+    return result
+  }
 }
 
 interface PythonPackageDetails {
@@ -57,7 +72,7 @@ interface PythonPackageDetails {
   val description: String?
   val descriptionContentType: String?
   val documentationUrl: String?
-  fun toPackageSpecification(version: String? = null): PythonRepositoryPackageSpecification = repository.createPackageSpecification(name, version)
+  fun toPackageSpecification(version: String? = null): PythonRepositoryPackageSpecification? = repository.findPackageSpecification(name, version)
 }
 
 data class PythonSimplePackageDetails(
@@ -76,15 +91,15 @@ data class PythonSimplePackageDetails(
 /**
  * Please use one of the following factory methods:
  *
- * 1) [com.jetbrains.python.packaging.management.PythonPackageManager.createPackageSpecification]
+ * 1) [com.jetbrains.python.packaging.management.PythonPackageManager.findPackageSpecification]
  *    Use this method if you have a package manager instance or an SDK.
  *    It will locate the appropriate repository for the package from the available options.
  *
- * 2) [PyPackageRepository.createPackageSpecification]
+ * 2) [PyPackageRepository.findPackageSpecification]
  *    Use this method if you already have a specific repository instance and want to look up within it only.
  *    The following well-known public repositories are also available for direct access:
- *   - PyPI (https://pypi.org):  [com.jetbrains.python.packaging.repository.PyPIPackageRepository.createPackageSpecification]
- *   - Conda: [com.jetbrains.python.packaging.conda.CondaPackageRepository.createPackageSpecification]
+ *   - PyPI (https://pypi.org):  [com.jetbrains.python.packaging.repository.PyPIPackageRepository.findPackageSpecification]
+ *   - Conda: [com.jetbrains.python.packaging.conda.CondaPackageRepository.findPackageSpecification]
  */
 data class PythonRepositoryPackageSpecification(
   val repository: PyPackageRepository,

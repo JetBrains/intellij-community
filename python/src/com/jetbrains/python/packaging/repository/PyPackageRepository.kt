@@ -19,6 +19,8 @@ import com.jetbrains.python.packaging.cache.PythonSimpleRepositoryCache
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
+import com.jetbrains.python.packaging.normalizePackageName
+import com.jetbrains.python.packaging.pyRequirementVersionSpec
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 import org.apache.http.client.utils.URIBuilder
@@ -63,7 +65,6 @@ internal fun PyPackageRepository.buildPackageDetailsBySimpleDetailsProtocol(pack
 
 @ApiStatus.Internal
 open class PyPackageRepository() {
-
   var name: String = ""
     internal set
   var repositoryUrl: String? = null
@@ -82,12 +83,13 @@ open class PyPackageRepository() {
   private val serviceName: String
     get() = generateServiceName(SUBSYSTEM_NAME, name)
 
-  val urlForInstallation: URL
-    get() = repositoryUrl?.let { baseUrl ->
+  val urlForInstallation: URL?
+    get() {
+      val baseUrl = repositoryUrl ?: return null
       val userLogin = login.takeUnless { it.isNullOrBlank() } ?: return URL(baseUrl)
       val userPassword = getPassword() ?: return URL(baseUrl)
-      buildAuthenticatedUrl(baseUrl, userLogin, userPassword)
-    } ?: URL("")
+      return buildAuthenticatedUrl(baseUrl, userLogin, userPassword)
+    }
 
   private fun buildAuthenticatedUrl(baseUrl: String, login: String, password: String): URL =
     URIBuilder(baseUrl).setUserInfo(login, password).build().toURL()
@@ -108,19 +110,27 @@ open class PyPackageRepository() {
     PasswordSafe.instance.set(attributes, null)
   }
 
-  fun createPackageSpecificationWithSpec(
-    packageName: String,
-    versionSpecs: PyRequirementVersionSpec? = null,
-  ): PythonRepositoryPackageSpecification = PythonRepositoryPackageSpecification(this, packageName, versionSpecs)
+  fun findPackageSpecificationWithSpec(packageName: String, versionSpecs: PyRequirementVersionSpec? = null): PythonRepositoryPackageSpecification? =
+    if (hasPackage(packageName, versionSpecs))
+      PythonRepositoryPackageSpecification(this, packageName, versionSpecs)
+    else
+      null
 
-  fun createPackageSpecification(
+  fun findPackageSpecification(
     packageName: String,
     version: String? = null,
     relation: PyRequirementRelation = PyRequirementRelation.EQ,
-  ): PythonRepositoryPackageSpecification = PythonRepositoryPackageSpecification(this, packageName, version, relation)
+  ): PythonRepositoryPackageSpecification? {
+    val versionSpec = version?.let { pyRequirementVersionSpec(relation, version) }
+    return findPackageSpecificationWithSpec(packageName, versionSpec)
+  }
 
-  open fun getPackages(): Set<String> =
-    service<PythonSimpleRepositoryCache>()[this] ?: emptySet()
+
+  protected open fun hasPackage(packageName: String, versionSpecs: PyRequirementVersionSpec?): Boolean = getPackages().any {
+    normalizePackageName(it) == packageName
+  }
+
+  open fun getPackages(): Set<String> = service<PythonSimpleRepositoryCache>()[this] ?: emptySet()
 
   open fun buildPackageDetails(packageName: String): PyResult<PythonPackageDetails> {
     return buildPackageDetailsBySimpleDetailsProtocol(packageName)

@@ -28,7 +28,7 @@ open class RequirementsInspectionVisitor(val holder: ProblemsHolder,
     super.visitElement(element)
   }
 
-  open fun visitRequirementsFile(element: RequirementsFile) {
-    super.visitElement(element)
+  open fun visitRequirementsFile(requirementsFile: RequirementsFile) {
+    super.visitElement(requirementsFile)
   }
 }

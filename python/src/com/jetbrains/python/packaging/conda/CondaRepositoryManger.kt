@@ -15,7 +15,7 @@ internal class CondaRepositoryManger(
 ) : PipBasedRepositoryManager() {
 
   override val repositories: List<PyPackageRepository>
-    get() = listOf(CondaPackageRepository) + super.repositories
+    get() = listOf(CondaPackageRepository)
 
   override suspend fun refreshCaches() {
     super.refreshCaches()

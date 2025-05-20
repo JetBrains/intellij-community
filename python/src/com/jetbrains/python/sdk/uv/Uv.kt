@@ -24,14 +24,14 @@ interface UvLowLevel {
   /**
   * Manage project dependencies by adding/removing them to the project along side installation
   */
-  suspend fun addDependency(name: PythonPackageInstallRequest, options: List<String>): PyExecResult<Unit>
-  suspend fun removeDependency(name: PythonPackage): PyExecResult<Unit>
+  suspend fun addDependency(pyPackages: PythonPackageInstallRequest, options: List<String>): PyExecResult<Unit>
+  suspend fun removeDependencies(pyPackages: Array<out String>): PyExecResult<Unit>
 
   /**
    * Managing environment packages directly w/o depending or changing the project
    */
   suspend fun installPackage(name: PythonPackageInstallRequest, options: List<String>): PyExecResult<Unit>
-  suspend fun uninstallPackage(name: PythonPackage): PyExecResult<Unit>
+  suspend fun uninstallPackages(pyPackages: Array<out String>): PyExecResult<Unit>
 
   suspend fun listPackages(): PyExecResult<List<PythonPackage>>
   suspend fun listOutdatedPackages(): PyResult<List<PythonOutdatedPackage>>

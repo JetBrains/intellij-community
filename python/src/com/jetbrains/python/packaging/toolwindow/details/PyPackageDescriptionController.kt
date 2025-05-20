@@ -25,11 +25,7 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBComboBoxLabel
 import com.intellij.ui.components.JBOptionButton
-import com.intellij.ui.dsl.builder.BottomGap
-import com.intellij.ui.dsl.builder.RightGap
-import com.intellij.ui.dsl.builder.TopGap
-import com.intellij.ui.dsl.builder.bindText
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.jcef.JCEFHtmlPanel
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.packaging.PyPackageUtil
@@ -51,12 +47,7 @@ import java.awt.Font
 import java.awt.event.ActionEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.AbstractAction
-import javax.swing.Action
-import javax.swing.BorderFactory
-import javax.swing.JComponent
-import javax.swing.JPanel
-import javax.swing.SwingConstants
+import javax.swing.*
 
 class PyPackageDescriptionController(val project: Project) : Disposable {
   private val latestText: String
@@ -79,7 +70,7 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
   private val installAction = wrapAction(message("action.PyInstallPackage.text"), message("progress.text.installing")) {
     val details = selectedPackageDetails.get() ?: return@wrapAction
     val version = versionSelector.text.takeIf { it != latestText }
-    val specification = details.toPackageSpecification(version)
+    val specification = details.toPackageSpecification(version) ?: return@wrapAction
     project.service<PyPackagingToolWindowService>().installPackage(specification.toInstallRequest())
   }
 
@@ -196,7 +187,7 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
 
   private fun updatePackageVersion(newVersion: String) {
     val details = selectedPackageDetails.get() ?: return
-    val newVersionSpec = details.toPackageSpecification(newVersion)
+    val newVersionSpec = details.toPackageSpecification(newVersion) ?: return
     val pyPackagingToolWindowService = PyPackagingToolWindowService.getInstance(project)
     PyPackageCoroutine.launch(project, Dispatchers.IO) {
       pyPackagingToolWindowService.installPackage(newVersionSpec.toInstallRequest())

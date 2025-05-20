@@ -18,11 +18,10 @@ import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.packaging.PyPackagingSettings
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
-import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
-import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.packagesByRepository
 import com.jetbrains.python.packaging.management.toInstallRequest
+import com.jetbrains.python.packaging.normalizePackageName
 import com.jetbrains.python.packaging.repository.PyPIPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
@@ -95,7 +94,7 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
         val specification = specForPackage(repoPackage.name, version, repository)
         runningUnderOldUI = true
         listener.operationStarted(specification.name)
-        val result = manager.installPackage(specification.toInstallRequest(), emptyList(), withBackgroundProgress = true)
+        val result = manager.installPackage(specification.toInstallRequest(), emptyList())
         val exception = if (result.isFailure) mutableListOf(result.exceptionOrNull() as ExecutionException) else null
         listener.operationFinished(specification.name,
                                    toErrorDescription(exception, mySdk, specification.name))
@@ -111,15 +110,12 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
     scope.launch(Dispatchers.IO + ModalityState.current().asContextElement()) {
       try {
         runningUnderOldUI = true
-        val namesToDelete = installedPackages.map { it.name.lowercase() }
-        manager
+        val namesToDelete = installedPackages.map { normalizePackageName(it.name) }
+        val pythonPackages = manager
           .installedPackages
-          .filter { it.name.lowercase() in namesToDelete }
-          .forEach {
-            runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.packaging.operation.failed.title")) {
-              manager.uninstallPackage(it)
-            }
-          }
+          .filter { it.name in namesToDelete }
+          .map { it.name }.toTypedArray()
+        manager.uninstallPackage(*pythonPackages)
 
         listener.operationFinished(namesToDelete.first(), null)
       }
@@ -185,12 +181,13 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
     }
   }
 
-  private fun specForPackage(packageName: String, version: String? = null, repository: PyPackageRepository? = null): PythonRepositoryPackageSpecification {
-    return when (repository) {
-      null -> manager.createPackageSpecification(packageName, version)
-              ?: throw IllegalArgumentException(PyBundle.message("python.packaging.error.package.is.not.listed.in.repositories", packageName))
-      else -> repository.createPackageSpecification(packageName, version)
-    }
+  private fun specForPackage(packageName: String, version: String? = null, repository: PyPackageRepository? = null) = if (repository != null) {
+    repository.findPackageSpecification(packageName, version)
+    ?: throw IllegalArgumentException(PyBundle.message("python.packaging.error.package.is.not.listed.in.repository", packageName, repository.name))
+  }
+  else {
+    manager.findPackageSpecification(packageName, version)
+    ?: throw IllegalArgumentException(PyBundle.message("python.packaging.error.package.is.not.listed.in.repositories", packageName))
   }
 
   override fun shouldFetchLatestVersionsForOnlyInstalledPackages(): Boolean = !(isConda && useConda)

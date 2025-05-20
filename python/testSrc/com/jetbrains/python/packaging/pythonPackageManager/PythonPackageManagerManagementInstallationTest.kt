@@ -6,7 +6,6 @@ import com.jetbrains.env.EnvTestTagsRequired
 import com.jetbrains.env.PyEnvTestCase
 import com.jetbrains.env.PyExecutionFixtureTestTask
 import com.jetbrains.python.packaging.PyPackageUtil
-import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.toInstallRequest
@@ -22,7 +21,7 @@ import org.junit.Test
 class PythonPackageManagerManagementInstallationTest : PyEnvTestCase() {
 
   companion object {
-    private val PKG_TO_INSTALL = PyPIPackageRepository.createPackageSpecification("pytest")
+    private val PKG_TO_INSTALL = PyPIPackageRepository.findPackageSpecification("pytest")!!
   }
 
   @EnvTestTagsRequired(tags = ["python3.8"])
@@ -79,12 +78,12 @@ open class PythonPackageManagerManagementInstallationTask(private val pkgToInsta
   }
 
   private suspend fun uninstallManagement(manager: PythonPackageManager) {
-    manager.uninstallPackage(PythonPackage(PyPackageUtil.PIP, EMPTY_STRING, false))
-    manager.uninstallPackage(PythonPackage(PyPackageUtil.SETUPTOOLS, EMPTY_STRING, false))
+    manager.uninstallPackage(PyPackageUtil.PIP)
+    manager.uninstallPackage(PyPackageUtil.SETUPTOOLS)
   }
 
   private suspend fun installPackage(manager: PythonPackageManager, spec: PythonRepositoryPackageSpecification) {
-    manager.installPackage(spec.toInstallRequest(), emptyList(), withBackgroundProgress = false)
+    manager.installPackage(spec.toInstallRequest(), emptyList())
   }
 
   companion object {

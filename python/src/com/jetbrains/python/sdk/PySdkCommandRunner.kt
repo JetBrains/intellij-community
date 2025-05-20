@@ -12,6 +12,8 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyExecResult
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 
 
 /**
@@ -24,10 +26,10 @@ import java.nio.file.Path
  * @return A [Result] object containing the output of the command execution.
  */
 @Internal
-suspend fun runExecutableWithProgress(executable: Path, workDir: Path?, vararg args: String): PyExecResult<String> {
+suspend fun runExecutableWithProgress(executable: Path, workDir: Path?, timeout: Duration = 10.minutes, vararg args: String): PyExecResult<String> {
   val ansiDecoder = AnsiEscapeDecoder()
   reportRawProgress { reporter ->
-    return ExecService().execGetStdout(WhatToExec.Binary(executable), args.toList(), ExecOptions(workingDirectory = workDir), procListener = {
+    return ExecService().execGetStdout(WhatToExec.Binary(executable), args.toList(), ExecOptions(workingDirectory = workDir, timeout = timeout), procListener = {
       when (it) {
         is ProcessEvent.ProcessStarted, is ProcessEvent.ProcessEnded -> Unit
         is ProcessEvent.ProcessOutput -> {

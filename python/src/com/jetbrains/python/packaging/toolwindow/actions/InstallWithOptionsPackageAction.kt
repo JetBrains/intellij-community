@@ -27,7 +27,7 @@ internal class InstallWithOptionsPackageAction : DumbAwareAction() {
 
     PyPackageCoroutine.launch(project, Dispatchers.IO) {
       val service = PyPackagingToolWindowService.getInstance(project)
-      val details = service.detailsForPackage(pkg)
+      val details = service.detailsForPackage(pkg) ?: return@launch
 
       installWithOptions(project, details)
     }
@@ -51,7 +51,7 @@ internal class InstallWithOptionsPackageAction : DumbAwareAction() {
 
       val options = optionsString.split(' ').map { it.trim() }.filter { it.isNotBlank() }
 
-      val specification = details.toPackageSpecification(version ?: details.availableVersions.first())
+      val specification = details.toPackageSpecification(version ?: details.availableVersions.first()) ?: return
       project.service<PyPackagingToolWindowService>().installPackage(specification.toInstallRequest(), options)
     }
 
