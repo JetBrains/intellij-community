@@ -318,12 +318,14 @@ internal class ReworkedTerminalView(
 
     TerminalOutputEditorInputMethodSupport(
       editor,
-      sendInputString = { text -> terminalInput.sendString(text) },
+      coroutineScope = coroutineScope.childScope("TerminalInputMethodSupport"),
       getCaretPosition = {
         val offset = model.cursorOffsetState.value
         editor.offsetToLogicalPosition(offset)
-      }
-    ).install(coroutineScope)
+      },
+      cursorOffsetFlow = model.cursorOffsetState,
+      sendInputString = { text -> terminalInput.sendString(text) },
+    )
 
     CopyOnSelectionHandler.install(editor, settings)
 
