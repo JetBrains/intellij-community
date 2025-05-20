@@ -4,18 +4,18 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/platform/configuration-store-impl/src/ProjectStoreBridge.kt b/platform/configuration-store-impl/src/ProjectStoreBridge.kt
---- a/platform/configuration-store-impl/src/ProjectStoreBridge.kt	(revision f6a9881a92d5d27ffbfd5409c59c240a84e1d3cf)
-+++ b/platform/configuration-store-impl/src/ProjectStoreBridge.kt	(date 1737378000801)
-@@ -430,7 +430,7 @@
+--- a/platform/configuration-store-impl/src/ProjectStoreBridge.kt	(revision 37976ff1a51e226063f8165c4d1b3ac439282428)
++++ b/platform/configuration-store-impl/src/ProjectStoreBridge.kt	(date 1747817990889)
+@@ -493,7 +493,7 @@
    val fileName = PathUtil.getFileName(filePath)
    val parentPath = PathUtil.getParentPath(filePath)
    val parentFileName = PathUtil.getFileName(parentPath)
--  if (FileUtil.extensionEquals(filePath, "ipr") || fileName == "misc.xml" && parentFileName == Project.DIRECTORY_STORE_FOLDER) {
-+  if (FileUtil.extensionEquals(filePath, "ipr") || fileName == "misc.xml" && parentFileName == ".mps") {
+-  if (filePath.endsWith(".ipr") || fileName == "misc.xml" && parentFileName == Project.DIRECTORY_STORE_FOLDER) {
++  if (filePath.endsWith(".ipr") || fileName == "misc.xml" && parentFileName == ".mps") {
      collapsedPath = "\$PROJECT_FILE$"
      splitterClass = StateSplitterEx::class.java
    }
-@@ -459,7 +459,7 @@
+@@ -522,7 +522,7 @@
            }
          }
          if (StreamProviderFactory.EP_NAME.hasAnyExtensions(project)) {
@@ -56,5 +56,6 @@ diff --git a/platform/workspace/jps/src/com/intellij/platform/workspace/jps/seri
 -         && PathUtilRt.getFileName(PathUtilRt.getParentPath(parentPath)) != ".idea"
 +         && PathUtilRt.getFileName(PathUtilRt.getParentPath(parentPath)) != ".mps"
  }
-
+ 
  internal fun getInternalFileSource(source: EntitySource): JpsFileEntitySource? {
+ 

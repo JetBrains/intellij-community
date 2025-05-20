@@ -1,0 +1,18 @@
+Index: platform/vcs-impl/resources/META-INF/VcsActions.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/platform/vcs-impl/resources/META-INF/VcsActions.xml b/platform/vcs-impl/resources/META-INF/VcsActions.xml
+--- a/platform/vcs-impl/resources/META-INF/VcsActions.xml	(revision 6f3f478079f023ba9037ebbd246133fab14e3416)
++++ b/platform/vcs-impl/resources/META-INF/VcsActions.xml	(date 1748897494179)
+@@ -489,7 +489,7 @@
+     </action>
+ 
+     <reference ref="Vcs.VcsClone">
+-      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
++      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="last"/>
+     </reference>
+ 
+     <action id="Vcs.CopyRevisionNumberAction" class="com.intellij.openapi.vcs.history.actions.CopyRevisionNumberAction"
+ 

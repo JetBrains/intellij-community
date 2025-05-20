@@ -169,17 +169,19 @@
     <target name="patch" description="Apply MPS patches to IDEA Community sources">
         <echo message="Applying MPS patches to IDEA Community sources..."/>
 
-        <property name="MPS-37563"
-                  value="${basedir}/patches/MPS-37563.patch"/>
-        <echo message="Applying ${MPS-37563}"/>
+        <property name="MPS-38229"
+                  value="${basedir}/patches/MPS-38229.patch"/>
+        <echo message="Applying ${MPS-38229}"/>
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
             <arg value="&#45;-check"/>
-            <arg value="${MPS-37563}"/>
+            <arg value="&#45;-ignore-space-change"/>
+            <arg value="${MPS-38229}"/>
         </exec>
         <exec executable="git" dir="${community.folder}">
             <arg value="apply"/>
-            <arg value="${MPS-37563}"/>
+            <arg value="&#45;-ignore-space-change"/>
+            <arg value="${MPS-38229}"/>
         </exec>
 
         <property name="MPS-38534"
@@ -188,24 +190,13 @@
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
             <arg value="&#45;-check"/>
+            <arg value="&#45;-ignore-space-change"/>
             <arg value="${MPS-38534}"/>
         </exec>
         <exec executable="git" dir="${community.folder}">
             <arg value="apply"/>
+            <arg value="&#45;-ignore-space-change"/>
             <arg value="${MPS-38534}"/>
-        </exec>
-
-        <property name="MPS-38050"
-                  value="${basedir}/patches/MPS-38050.patch"/>
-        <echo message="Applying ${MPS-38050}"/>
-        <exec executable="git" dir="${community.folder}" failonerror="true">
-            <arg value="apply"/>
-            <arg value="&#45;-check"/>
-            <arg value="${MPS-38050}"/>
-        </exec>
-        <exec executable="git" dir="${community.folder}">
-            <arg value="apply"/>
-            <arg value="${MPS-38050}"/>
         </exec>
 
         <property name="DisableSlowOperationsInEAP"
@@ -214,10 +205,12 @@
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
             <arg value="&#45;-check"/>
+            <arg value="&#45;-ignore-space-change"/>
             <arg value="${DisableSlowOperationsInEAP}"/>
         </exec>
         <exec executable="git" dir="${community.folder}">
             <arg value="apply"/>
+            <arg value="&#45;-ignore-space-change"/>
             <arg value="${DisableSlowOperationsInEAP}"/>
         </exec>
 
@@ -227,10 +220,12 @@
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
             <arg value="&#45;-check"/>
+            <arg value="&#45;-ignore-space-change"/>
             <arg value="${LoadModulesFromJars}"/>
         </exec>
         <exec executable="git" dir="${community.folder}">
             <arg value="apply"/>
+            <arg value="&#45;-ignore-space-change"/>
             <arg value="${LoadModulesFromJars}"/>
         </exec>
 
@@ -240,10 +235,12 @@
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
             <arg value="&#45;-check"/>
+            <arg value="&#45;-ignore-space-change"/>
             <arg value="${patchIconLoader}"/>
         </exec>
         <exec executable="git" dir="${community.folder}">
             <arg value="apply"/>
+            <arg value="&#45;-ignore-space-change"/>
             <arg value="${patchIconLoader}"/>
         </exec>
 
@@ -253,10 +250,12 @@
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
             <arg value="&#45;-check"/>
+            <arg value="&#45;-ignore-space-change"/>
             <arg value="${patchInitComponentsBeforeEditorOpens}"/>
         </exec>
         <exec executable="git" dir="${community.folder}">
             <arg value="apply"/>
+            <arg value="&#45;-ignore-space-change"/>
             <arg value="${patchInitComponentsBeforeEditorOpens}"/>
         </exec>
 
@@ -266,10 +265,12 @@
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
             <arg value="&#45;-check"/>
+            <arg value="&#45;-ignore-space-change"/>
             <arg value="${patchDisableRunCurrentFile}"/>
         </exec>
         <exec executable="git" dir="${community.folder}">
             <arg value="apply"/>
+            <arg value="&#45;-ignore-space-change"/>
             <arg value="${patchDisableRunCurrentFile}"/>
         </exec>
 
@@ -279,10 +280,12 @@
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
             <arg value="&#45;-check"/>
+            <arg value="&#45;-ignore-space-change"/>
             <arg value="${patchDisableCoursesAndTextSearch}"/>
         </exec>
         <exec executable="git" dir="${community.folder}">
             <arg value="apply"/>
+            <arg value="&#45;-ignore-space-change"/>
             <arg value="${patchDisableCoursesAndTextSearch}"/>
         </exec>
 
@@ -292,10 +295,12 @@
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
             <arg value="&#45;-check"/>
+            <arg value="&#45;-ignore-space-change"/>
             <arg value="${patchFile}"/>
         </exec>
         <exec executable="git" dir="${community.folder}">
             <arg value="apply"/>
+            <arg value="&#45;-ignore-space-change"/>
             <arg value="${patchFile}"/>
         </exec>
 
@@ -305,10 +310,12 @@
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
             <arg value="&#45;-check"/>
+            <arg value="&#45;-ignore-space-change"/>
             <arg value="${patchFile2}"/>
         </exec>
         <exec executable="git" dir="${community.folder}">
             <arg value="apply"/>
+            <arg value="&#45;-ignore-space-change"/>
             <arg value="${patchFile2}"/>
         </exec>
 
@@ -318,10 +325,12 @@
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
             <arg value="&#45;-check"/>
+            <arg value="&#45;-ignore-space-change"/>
             <arg value="${patchFile3}"/>
         </exec>
         <exec executable="git" dir="${community.folder}">
             <arg value="apply"/>
+            <arg value="&#45;-ignore-space-change"/>
             <arg value="${patchFile3}"/>
         </exec>
 
@@ -331,10 +340,12 @@
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
             <arg value="&#45;-check"/>
+            <arg value="&#45;-ignore-space-change"/>
             <arg value="${patchJps}"/>
         </exec>
         <exec executable="git" dir="${community.folder}">
             <arg value="apply"/>
+            <arg value="&#45;-ignore-space-change"/>
             <arg value="${patchJps}"/>
         </exec>
 

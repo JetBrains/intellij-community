@@ -9,16 +9,16 @@ diff --git a/platform/platform-impl/src/com/intellij/openapi/project/impl/Projec
 @@ -1305,6 +1305,8 @@
      coroutineScope {
        val preInitJob = projectInitHelper?.launchPreInit(project)
-
+ 
 +      project.createComponentsNonBlocking()
 +
        ProjectServiceInitializer.initEssential(project)
        projectInitHelper?.notifyInit(project)
-
+ 
 @@ -1314,10 +1316,7 @@
-
+ 
        ProjectServiceInitializer.initNonEssential(project)
-
+ 
 -      launch {
 -        preInitJob?.join()
 -        project.createComponentsNonBlocking()
@@ -27,3 +27,4 @@ diff --git a/platform/platform-impl/src/com/intellij/openapi/project/impl/Projec
      }
    }
    catch (initThrowable: Throwable) {
+ 

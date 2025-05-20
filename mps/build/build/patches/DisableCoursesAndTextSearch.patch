@@ -1,34 +1,35 @@
-Index: platform/platform-resources/src/META-INF/LangExtensions.xml
+Index: platform/platform-resources/src/META-INF/SearchEverywhereCodeInsightContributors.xml
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
-diff --git a/platform/platform-resources/src/META-INF/LangExtensions.xml b/platform/platform-resources/src/META-INF/LangExtensions.xml
---- a/platform/platform-resources/src/META-INF/LangExtensions.xml	(revision 4c05f0d21177c9549ced3c89b08fe670b15a8c6d)
-+++ b/platform/platform-resources/src/META-INF/LangExtensions.xml	(date 1745477411166)
-@@ -1489,7 +1489,7 @@
-     <projectService serviceInterface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager"
-                     serviceImplementation="com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl"/>
-
+diff --git a/platform/platform-resources/src/META-INF/SearchEverywhereCodeInsightContributors.xml b/platform/platform-resources/src/META-INF/SearchEverywhereCodeInsightContributors.xml
+--- a/platform/platform-resources/src/META-INF/SearchEverywhereCodeInsightContributors.xml	(revision 37976ff1a51e226063f8165c4d1b3ac439282428)
++++ b/platform/platform-resources/src/META-INF/SearchEverywhereCodeInsightContributors.xml	(date 1747817991598)
+@@ -1,7 +1,7 @@
+ <!--Indexes-dependent SE contributors-->
+ <idea-plugin>
+   <extensions defaultExtensionNs="com.intellij">
 -    <advancedSetting id="se.text.search" default="true" groupKey="group.advanced.settings.se"/>
 +    <advancedSetting id="se.text.search" default="false" groupKey="group.advanced.settings.se"/>
      <searchEverywhereContributor implementation="com.intellij.find.impl.TextSearchContributor$Companion$Factory"/>
      <searchEverywhereContributor implementation="com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor$Factory"/>
-     <searchEverywhereContributor implementation="com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributorFactory"/>
+     <searchEverywhereContributor implementation="com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor$Factory"/>
 Index: platform/platform-resources/src/META-INF/PlatformExtensions.xml
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/platform/platform-resources/src/META-INF/PlatformExtensions.xml b/platform/platform-resources/src/META-INF/PlatformExtensions.xml
---- a/platform/platform-resources/src/META-INF/PlatformExtensions.xml	(revision 4c05f0d21177c9549ced3c89b08fe670b15a8c6d)
-+++ b/platform/platform-resources/src/META-INF/PlatformExtensions.xml	(date 1744789044258)
-@@ -1743,8 +1743,6 @@
+--- a/platform/platform-resources/src/META-INF/PlatformExtensions.xml	(revision d4453647be19492ef13e0961e8c3918b3d746317)
++++ b/platform/platform-resources/src/META-INF/PlatformExtensions.xml	(date 1747768111432)
+@@ -1755,8 +1755,6 @@
      <registryKey key="popup.advertiser.speed.search" defaultValue="false" description="Shows speed search advertiser in popups"/>
      <actionPromoter implementation="com.intellij.ide.actions.speedSearch.SpeedSearchActionPromoter"/>
-
+ 
 -    <interactiveCourseFactory implementation="com.intellij.openapi.wm.impl.welcomeScreen.learnIde.jbAcademy.JBAcademyInteractiveCourse"/>
 -
      <cachesInvalidator implementation="com.intellij.ide.ui.IconCacheInvalidator"/>
-
+ 
      <cachesInvalidator implementation="com.intellij.openapi.editor.impl.zombie.NecropolisDestroyer$InvalidationRequest"/>
+ 

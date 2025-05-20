@@ -1,29 +1,29 @@
-Index: community/platform/core-api/src/com/intellij/openapi/project/Project.java
+Index: platform/core-api/src/com/intellij/openapi/project/Project.java
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
---- community/platform/core-api/src/com/intellij/openapi/project/Project.java	(revision 83444e03e40e6673d2650a7840140cca65d5b5f6)
-+++ community/platform/core-api/src/com/intellij/openapi/project/Project.java	(revision )
-@@ -32,7 +32,7 @@
-  * <p>To get the list of all open projects, use {@code ProjectManager.getInstance().getOpenProjects()}.
+diff --git a/platform/core-api/src/com/intellij/openapi/project/Project.java b/platform/core-api/src/com/intellij/openapi/project/Project.java
+--- a/platform/core-api/src/com/intellij/openapi/project/Project.java	(revision d4453647be19492ef13e0961e8c3918b3d746317)
++++ b/platform/core-api/src/com/intellij/openapi/project/Project.java	(date 1747768102774)
+@@ -19,7 +19,7 @@
   */
+ @ApiStatus.NonExtendable
  public interface Project extends ComponentManager, AreaInstance {
 -  String DIRECTORY_STORE_FOLDER = ".idea";
 +  String DIRECTORY_STORE_FOLDER = ".mps";
  
    /**
     * Returns a name ot the project. For a directory-based project it's an arbitrary string specified by user at project creation
-
 Index: platform/configuration-store-impl/src/ProjectStoreImpl.kt
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/platform/configuration-store-impl/src/ProjectStoreImpl.kt b/platform/configuration-store-impl/src/ProjectStoreImpl.kt
---- a/platform/configuration-store-impl/src/ProjectStoreImpl.kt	(revision 5fae0bafa59db4d0adedcbfaeeb394647dce2959)
-+++ b/platform/configuration-store-impl/src/ProjectStoreImpl.kt	(date 1708600813429)
-@@ -93,11 +93,11 @@
+--- a/platform/configuration-store-impl/src/ProjectStoreImpl.kt	(revision d4453647be19492ef13e0961e8c3918b3d746317)
++++ b/platform/configuration-store-impl/src/ProjectStoreImpl.kt	(date 1747772863343)
+@@ -106,11 +106,11 @@
      val storageManager = storageManager
      val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode
      val macros = ArrayList<Macro>(5)
@@ -37,16 +37,15 @@ diff --git a/platform/configuration-store-impl/src/ProjectStoreImpl.kt b/platfor
        macros.add(Macro(StoragePathMacros.WORKSPACE_FILE, workspacePath))
  
        if (isUnitTestMode) {
-
 Index: platform/ide-core/src/com/intellij/openapi/project/ProjectUtil.kt
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/platform/ide-core/src/com/intellij/openapi/project/ProjectUtil.kt b/platform/ide-core/src/com/intellij/openapi/project/ProjectUtil.kt
---- a/platform/ide-core/src/com/intellij/openapi/project/ProjectUtil.kt	(revision 858b2cd664da5ab63421443a2b30f3a73da40ca7)
-+++ b/platform/ide-core/src/com/intellij/openapi/project/ProjectUtil.kt	(date 1704800610080)
-@@ -202,7 +202,7 @@
+--- a/platform/ide-core/src/com/intellij/openapi/project/ProjectUtil.kt	(revision d4453647be19492ef13e0961e8c3918b3d746317)
++++ b/platform/ide-core/src/com/intellij/openapi/project/ProjectUtil.kt	(date 1747772778393)
+@@ -192,7 +192,7 @@
      else -> {
        // the lower case here is used for cosmetic reasons (develar - discussed with jeka - leave it as it was,
        // user projects will not have long names as in our tests
@@ -55,7 +54,6 @@ diff --git a/platform/ide-core/src/com/intellij/openapi/project/ProjectUtil.kt b
      }
    }
    name = sanitizeFileName(name, truncateIfNeeded = false)
-
 Index: jps/model-serialization/src/org/jetbrains/jps/model/serialization/PathMacroUtil.java
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
@@ -67,9 +65,10 @@ diff --git a/jps/model-serialization/src/org/jetbrains/jps/model/serialization/P
 @@ -27,7 +27,7 @@
    @ApiStatus.Internal
    public static final String MODULE_WORKING_DIR = "$" + MODULE_WORKING_DIR_NAME + "$";
-
+ 
 -  @ApiStatus.Internal public static final @NonNls String DIRECTORY_STORE_NAME = ".idea";
 +  @ApiStatus.Internal public static final @NonNls String DIRECTORY_STORE_NAME = ".mps";
    @ApiStatus.Internal public static final @NonNls String APPLICATION_HOME_DIR = "APPLICATION_HOME_DIR";
    @ApiStatus.Internal public static final @NonNls String APPLICATION_CONFIG_DIR = "APPLICATION_CONFIG_DIR";
    @ApiStatus.Internal public static final @NonNls String APPLICATION_PLUGINS_DIR = "APPLICATION_PLUGINS_DIR";
+ 
