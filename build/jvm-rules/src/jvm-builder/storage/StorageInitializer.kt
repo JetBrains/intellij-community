@@ -87,7 +87,7 @@ internal class StorageInitializer(private val dataDir: Path, private val dbFile:
           withContext(Dispatchers.IO) {
             getTrashDirectory(dataDir).takeIf(Files::exists)?.let { trashDir ->
               for (file in Files.newDirectoryStream(trashDir).use { it.toList() }) {
-                Files.deleteIfExists(file)
+                tryDeleteFile(file)
               }
             }
           }
@@ -163,7 +163,7 @@ private fun deleteOrMoveRecursively(dataDir: Path, trashDir: Path) {
 
   Files.walkFileTree(dataDir, object : SimpleFileVisitor<Path>() {
     override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
-      if (!Files.deleteIfExists(file) && Files.exists(file, LinkOption.NOFOLLOW_LINKS) && !file.startsWith(trashDir)) {
+      if (!tryDeleteFile(file) && !file.startsWith(trashDir)) {
         Files.createDirectories(trashDir)
         val tempFile = Files.createTempFile(trashDir, null, null)
         Files.move(file, tempFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
@@ -213,6 +213,10 @@ private fun checkConfiguration(
     }
   }
   return null
+}
+
+private fun tryDeleteFile(file: Path): Boolean {
+  return file.toFile().delete() || !Files.exists(file, LinkOption.NOFOLLOW_LINKS)
 }
 
 private class BazelBuildDataPaths(private val dir: Path) : BuildDataPaths {
