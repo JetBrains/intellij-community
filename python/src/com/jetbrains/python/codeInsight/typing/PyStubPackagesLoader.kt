@@ -49,19 +49,17 @@ private fun sourceToStubPackagesAvailableToInstall(sourceToInstalledRuntimeAndSt
                                                    availablePackages: List<RepoPackage>): Map<String, Set<RepoPackage>> {
   if (sourceToInstalledRuntimeAndStubPkgs.isEmpty()) return emptyMap()
 
-  val stubPkgsAvailableToInstall = mutableMapOf<String, RepoPackage>()
-  availablePackages.forEach { if (it.name.endsWith(STUBS_SUFFIX)) stubPkgsAvailableToInstall[it.name] = it }
+  val stubPkgsAvailableToInstall = availablePackages.asSequence()
+    .filter { it.name.endsWith(STUBS_SUFFIX) || it.name.startsWith(TYPES_PREFIX) }
+    .associateBy { it.name }
 
-  val result = mutableMapOf<String, Set<RepoPackage>>()
-  sourceToInstalledRuntimeAndStubPkgs.forEach { (source, runtimeAndStubPkgs) ->
-    result[source] = runtimeAndStubPkgs
+  return sourceToInstalledRuntimeAndStubPkgs.mapValues { (_, runtimeAndStubPkgs) ->
+    runtimeAndStubPkgs
       .asSequence()
       .filter { it.second == null }
-      .mapNotNull { stubPkgsAvailableToInstall["${it.first.name}$STUBS_SUFFIX"] }
+      .mapNotNull { stubPkgsAvailableToInstall["${it.first.name}$STUBS_SUFFIX"] ?: stubPkgsAvailableToInstall["$TYPES_PREFIX${it.first.name}"] }
       .toSet()
   }
-
-  return result
 }
 
 private fun loadRequirementsAndExtraArgs(sourceToStubPackagesAvailableToInstall: Map<String, Set<RepoPackage>>,
@@ -83,12 +81,14 @@ private fun installedRuntimeAndStubPackages(pkgName: String, installedPackages: 
   var runtime: PyPackage? = null
   var stub: PyPackage? = null
   val stubPkgName = "$pkgName$STUBS_SUFFIX"
+  val typesPkgName = "$TYPES_PREFIX$pkgName"
 
   for (pkg in installedPackages) {
     val name = pkg.name
 
     if (name == pkgName) runtime = pkg
     if (name == stubPkgName) stub = pkg
+    if (name == typesPkgName) stub = pkg
   }
 
   return if (runtime == null) null else runtime to stub
