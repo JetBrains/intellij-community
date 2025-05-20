@@ -164,6 +164,10 @@ object ActionUtil {
   @JvmField
   val UNSATISFIED_PERMISSIONS: Key<List<Permission>> = Key.create("UNSATISFIED_PERMISSIONS")
 
+  @ApiStatus.Internal
+  @JvmField
+  val SKIP_ACTION_EXECUTION: Key<Boolean> = Key.create("SKIP_ACTION_EXECUTION")
+
   @JvmStatic
   private val WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE: Key<Boolean> = Key.create("WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE")
 

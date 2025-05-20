@@ -1130,6 +1130,11 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     val component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
     val actionId = getId(action)
                    ?: if (action is EmptyAction) runnable.javaClass.name else action.javaClass.name
+    if (event.presentation.getClientProperty(ActionUtil.SKIP_ACTION_EXECUTION) == true) {
+      LOG.debug("Action execution was skipped: action=$actionId")
+      fireAfterActionPerformed(action, event, AnActionResult.IGNORED)
+      return AnActionResult.IGNORED
+    }
     if (component != null && !UIUtil.isShowing(component) &&
         event.place != ActionPlaces.TOUCHBAR_GENERAL &&
         ClientProperty.get(component, ActionUtil.ALLOW_ACTION_PERFORM_WHEN_HIDDEN) != true) {
