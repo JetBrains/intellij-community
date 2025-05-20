@@ -131,6 +131,7 @@ object PluginManagerCore {
     get() = getPluginSet().allPlugins.toTypedArray<IdeaPluginDescriptor>()
 
   @ApiStatus.Internal
+  @JvmStatic
   fun getPluginSet(): PluginSet = nullablePluginSet!!
 
   @ApiStatus.Internal

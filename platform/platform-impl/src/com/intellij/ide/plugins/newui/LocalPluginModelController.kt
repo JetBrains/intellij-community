@@ -79,18 +79,8 @@ class LocalPluginModelController(private val localPluginModel: MyPluginModel) : 
     localPluginModel.setEnabledState(models.map { it.getDescriptor() }, action)
   }
 
-  override fun getDependents(models: List<PluginUiModel>): Map<PluginUiModel, List<PluginUiModel>> {
-    val applicationInfo = ApplicationInfoEx.getInstanceEx()
-    val idMap = PluginManagerCore.buildPluginIdMap()
-    return models.associateWith { MyPluginModel.getDependents(it.getDescriptor(), applicationInfo, idMap).map(::PluginUiModelAdapter) }
-  }
-
-  override fun isBundledUpdate(model: PluginUiModel): Boolean {
-    return MyPluginModel.isBundledUpdate(model.getDescriptor())
-  }
-
   override fun uninstallAndUpdateUi(model: PluginUiModel) {
-    return localPluginModel.uninstallAndUpdateUi(model.getDescriptor())
+    return localPluginModel.uninstallAndUpdateUi(model)
   }
 
   override fun findInstalledPlugin(model: PluginUiModel): PluginUiModel? {

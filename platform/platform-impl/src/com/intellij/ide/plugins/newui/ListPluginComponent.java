@@ -250,7 +250,7 @@ public final class ListPluginComponent extends JPanel {
         myLayout.addButtonComponent(myRestartButton = new RestartButton(myModelFacade));
       }
       else {
-        IdeaPluginDescriptor installedDescriptorForMarketplace = PluginManagerCore.findPlugin(pluginId);
+        PluginUiModel installedDescriptorForMarketplace = UiPluginManager.getInstance().getPlugin(pluginId);
 
         boolean showInstall = installedDescriptorForMarketplace == null;
 
@@ -262,7 +262,7 @@ public final class ListPluginComponent extends JPanel {
 
         ColorButton.setWidth72(myInstallButton);
 
-        myInstalledDescriptorForMarketplace = installedDescriptorForMarketplace != null ? new PluginUiModelAdapter(installedDescriptorForMarketplace) : null;
+        myInstalledDescriptorForMarketplace = installedDescriptorForMarketplace;
         myInstallButton.setVisible(showInstall);
 
         if (myInstalledDescriptorForMarketplace != null && myInstalledDescriptorForMarketplace.isDeleted()) {
@@ -1166,10 +1166,6 @@ public final class ListPluginComponent extends JPanel {
 
   public PluginUiModel getDescriptorForActions() {
     return !myMarketplace || myInstalledDescriptorForMarketplace == null ? myPlugin : myInstalledDescriptorForMarketplace;
-  }
-
-  public void setPluginDescriptor(@NotNull IdeaPluginDescriptor plugin) {
-    myPlugin = new PluginUiModelAdapter(plugin);
   }
 
   public void setPluginModel(@NotNull PluginUiModel pluginModel) {

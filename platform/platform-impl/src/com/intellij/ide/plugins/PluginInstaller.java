@@ -85,7 +85,7 @@ public final class PluginInstaller {
   }
 
   @ApiStatus.Internal
-  public static void uninstallAfterRestart(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) throws IOException {
+  public static void uninstallAfterRestart(@NotNull IdeaPluginDescriptor pluginDescriptor) throws IOException {
     if (pluginDescriptor.isBundled()) {
       throw new IllegalArgumentException("Plugin is bundled: " + pluginDescriptor.getPluginId());
     }

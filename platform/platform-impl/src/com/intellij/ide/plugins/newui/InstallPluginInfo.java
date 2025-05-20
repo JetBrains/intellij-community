@@ -93,7 +93,7 @@ final class InstallPluginInfo {
     myClosed = true;
   }
 
-  public @NotNull PluginUiModel getDescriptor() {
+  public PluginUiModel getDescriptor() {
     return myDescriptor;
   }
 

@@ -22,6 +22,7 @@ import java.util.Date
 @ApiStatus.Internal
 interface PluginUiModel {
   val pluginId: PluginId
+
   @get:NlsSafe
   val version: String?
   val isBundled: Boolean
@@ -36,55 +37,67 @@ interface PluginUiModel {
   val detailsLoaded: Boolean
   val allowBundledUpdate: Boolean
   val isPaid: Boolean
-  val source: PluginSource
+  val isEnabled: Boolean
 
+  val source: PluginSource
   val dependencies: List<PluginDependencyModel>
+
   val dependencyNames: Collection<String>?
+
   @get:NlsSafe
   val vendor: String?
+
   @get:NlsSafe
   val organization: String?
 
   @get:NlsSafe
   val changeNotes: String?
+
   @get:NlsSafe
   val productCode: String?
   @get:NlsSafe
   val size: String?
+
   val releaseVersion: Int
+
   @get:NlsSafe
   val displayCategory: String?
+
   @get:NlsSafe
   var forumUrl: String?
+
   @get:NlsSafe
   var licenseUrl: String?
 
   @get:NlsSafe
   var bugtrackerUrl: String?
+
   @get:NlsSafe
   var documentationUrl: String?
+
   @get:NlsSafe
   var sourceCodeUrl: String?
+
   @get:NlsSafe
   var reportPluginUrl: String?
   @get:NlsSafe
   var verifiedName: String?
-  var isVerified: Boolean
 
+  var isVerified: Boolean
   var isTrader: Boolean
   var reviewComments: ReviewsPageContainer?
   var screenShots: List<String>?
+
   var externalPluginIdForScreenShots: String?
+
   @get:NlsSafe
   var downloadUrl: String?
-
   var externalPluginId: String?
   var externalUpdateId: String?
   var defaultTrialPeriod: Int?
   var customTrialPeriods: Map<String, Int>?
   var date: Long
   var suggestedFeatures: Collection<String>
-  var isEnabled: Boolean
 
 
   @get:NlsSafe
@@ -94,21 +107,27 @@ interface PluginUiModel {
 
   @get:NlsSafe
   var downloads: String?
+
   @get:NlsSafe
   var rating: String?
+
   @get:NlsSafe
   var repositoryName: String?
+
   @get:NlsSafe
   var channel: String?
   var installSource: FUSEventSource?
+
   @get:NlsSafe
   var description: String?
+
   @get:NlsSafe
   var category: String?
   var isDeleted: Boolean
 
 
   fun addDependency(id: PluginId, optional: Boolean)
+
   /**
    * Java compatibility method. Going to be removed after refactoring is done.
    */
@@ -116,7 +135,7 @@ interface PluginUiModel {
 
   companion object {
     @JvmStatic
-    fun getDescriptorOrNull(model: PluginUiModel?): IdeaPluginDescriptor? = model?.getPluginDescriptor()
+    fun getDescriptorOrNull(model: PluginUiModel?): IdeaPluginDescriptor? = model?.getDescriptor()
   }
 }
 
@@ -154,7 +173,8 @@ fun PluginUiModel.presentableRating(): String? {
     val value = rating.toDouble()
     if (value > 0) return rating.removeSuffix(".0")
   }
-  catch (_: NumberFormatException) { }
+  catch (_: NumberFormatException) {
+  }
   return null
 }
 
@@ -172,7 +192,8 @@ fun PluginUiModel.presentableDownloads(): String? {
       else -> M_FORMAT.format(value / 1000000.0)
     }
   }
-  catch (_: NumberFormatException) { }
+  catch (_: NumberFormatException) {
+  }
   return null
 }
 
@@ -186,7 +207,8 @@ fun PluginUiModel.presentableSize(): String? {
     val value = size.toLong()
     return if (value >= 0) StringUtil.formatFileSize(value).uppercase(Locale.ENGLISH) else null
   }
-  catch (_: NumberFormatException) { }
+  catch (_: NumberFormatException) {
+  }
   return null
 }
 
@@ -210,4 +232,3 @@ fun PluginUiModel.presentableDate(): String? {
 fun PluginUiModel.getTrialPeriodByProductCode(code: String): Int? {
   return customTrialPeriods?.getOrDefault(code, defaultTrialPeriod!!)
 }
-

@@ -300,7 +300,7 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
   }
 
   public void removeFromGroup(@NotNull PluginsGroup group, @NotNull PluginUiModel descriptor) {
-    int index = ContainerUtil.indexOf(group.ui.plugins, component -> component.getPluginDescriptor() == descriptor);
+    int index = ContainerUtil.indexOf(group.ui.plugins, component -> component.getPluginModel() == descriptor);
     assert index != -1;
     ListPluginComponent component = group.ui.plugins.remove(index);
     component.close();

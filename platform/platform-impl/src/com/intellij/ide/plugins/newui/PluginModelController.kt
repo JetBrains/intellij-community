@@ -27,8 +27,6 @@ interface PluginModelController {
   fun hasPluginRequiresUltimateButItsDisabled(models: List<PluginUiModel>): Boolean
   fun hasPluginForEnableDisable(models: List<PluginUiModel>): Boolean
   fun setEnabledState(models: List<PluginUiModel>, action: PluginEnableDisableAction)
-  fun getDependents(models: List<PluginUiModel>): Map<PluginUiModel, List<PluginUiModel>>
-  fun isBundledUpdate(model: PluginUiModel): Boolean
   fun uninstallAndUpdateUi(model: PluginUiModel)
   fun findInstalledPlugin(model: PluginUiModel): PluginUiModel?
   fun getPluginManagerUrl(model: PluginUiModel): String

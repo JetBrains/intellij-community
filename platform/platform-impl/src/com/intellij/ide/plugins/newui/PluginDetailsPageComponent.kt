@@ -224,7 +224,9 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   fun setPlugin(model: PluginUiModel?) {
-    this.plugin = model
+    if(model != null) {
+      this.plugin = model
+    }
   }
 
   fun isShowingPlugin(pluginId: PluginId): Boolean = plugin?.pluginId == pluginId

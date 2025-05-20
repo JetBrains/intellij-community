@@ -26,7 +26,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.Configurable;
@@ -82,9 +81,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static com.intellij.ide.plugins.PluginManagerCoreKt.pluginRequiresUltimatePluginButItsDisabled;
 import static com.intellij.ide.plugins.newui.PluginsViewCustomizerKt.getPluginsViewCustomizer;
-import static com.intellij.util.containers.ContainerUtil.exists;
 
 @ApiStatus.Internal
 public final class PluginManagerConfigurable
@@ -382,7 +379,8 @@ public final class PluginManagerConfigurable
 
     JBPopup popup = new PopupFactoryImpl.ActionGroupPopup(
       null, null, actions, context, ActionPlaces.POPUP, new PresentationFactory(),
-      ActionPopupOptions.honorMnemonics(), null) {};
+      ActionPopupOptions.honorMnemonics(), null) {
+    };
     popup.addListener(new JBPopupListener() {
       @Override
       public void beforeShown(@NotNull LightweightWindowEvent event) {
@@ -474,7 +472,8 @@ public final class PluginManagerConfigurable
               PluginsViewCustomizer.PluginsGroupDescriptor internalPluginsGroupDescriptor =
                 getPluginsViewCustomizer().getInternalPluginsGroupDescriptor();
               if (internalPluginsGroupDescriptor != null) {
-                List<PluginUiModel> customPlugins = ContainerUtil.map(internalPluginsGroupDescriptor.getPlugins(), it -> new PluginUiModelAdapter(it));
+                List<PluginUiModel> customPlugins =
+                  ContainerUtil.map(internalPluginsGroupDescriptor.getPlugins(), it -> new PluginUiModelAdapter(it));
                 addGroup(
                   groups,
                   internalPluginsGroupDescriptor.getName(),
@@ -615,7 +614,7 @@ public final class PluginManagerConfigurable
               case TAG -> {
                 if (myTagsSorted == null || myTagsSorted.isEmpty()) {
                   Set<String> allTags = new HashSet<>();
-                  for (PluginUiModel descriptor : CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins()) {
+                  for (PluginUiModel descriptor : UiPluginManager.getInstance().getCustomRepoPlugins()) {
                     List<String> tags = descriptor.getTags();
                     if (tags != null && !tags.isEmpty()) {
                       allTags.addAll(tags);
@@ -887,14 +886,14 @@ public final class PluginManagerConfigurable
                   // compare plugin versions between marketplace & custom repositories
                   List<PluginUiModel> customPlugins = ContainerUtil.flatten(customRepositoriesMap.values());
                   Collection<PluginUiModel> plugins = RepositoryHelper.mergePluginModelsFromRepositories(pluginsFromMarketplace,
-                                                                                                 customPlugins,
-                                                                                                 false);
+                                                                                                         customPlugins,
+                                                                                                         false);
                   result.addModels(0, new ArrayList<>(plugins));
 
                   if (parser.searchQuery != null) {
                     List<PluginUiModel> descriptors = ContainerUtil.filter(customPlugins,
-                                                                        descriptor -> StringUtil.containsIgnoreCase(descriptor.getName(),
-                                                                                                                    parser.searchQuery));
+                                                                           descriptor -> StringUtil.containsIgnoreCase(descriptor.getName(),
+                                                                                                                       parser.searchQuery));
                     result.addModels(0, descriptors);
                   }
 
@@ -1260,11 +1259,13 @@ public final class PluginManagerConfigurable
             for (Iterator<PluginUiModel> I = descriptors.iterator(); I.hasNext(); ) {
               PluginUiModel descriptor = I.next();
               if (parser.attributes) {
-                if (parser.enabled && (!myPluginModelFacade.isEnabled(descriptor) || !myPluginModelFacade.getErrors(descriptor).isEmpty())) {
+                if (parser.enabled &&
+                    (!myPluginModelFacade.isEnabled(descriptor) || !myPluginModelFacade.getErrors(descriptor).isEmpty())) {
                   I.remove();
                   continue;
                 }
-                if (parser.disabled && (myPluginModelFacade.isEnabled(descriptor) || !myPluginModelFacade.getErrors(descriptor).isEmpty())) {
+                if (parser.disabled &&
+                    (myPluginModelFacade.isEnabled(descriptor) || !myPluginModelFacade.getErrors(descriptor).isEmpty())) {
                   I.remove();
                   continue;
                 }
@@ -1423,9 +1424,10 @@ public final class PluginManagerConfigurable
   private static void setState(PluginModelFacade pluginModelFacade, Collection<PluginUiModel> models, boolean isEnable) {
     if (models.isEmpty()) return;
 
-    var idMap = PluginManagerCore.INSTANCE.buildPluginIdMap();
+    List<PluginId> pluginsRequiringUltimate = UiPluginManager.getInstance()
+      .filterPluginsRequiringUltimateButItsDisabled(ContainerUtil.map(models, PluginUiModel::getPluginId));
     var suitableDescriptors = models.stream().
-      filter(descriptor -> !pluginRequiresUltimatePluginButItsDisabled(descriptor.getPluginId(), idMap)).toList();
+      filter(descriptor -> !pluginsRequiringUltimate.contains(descriptor.getPluginId())).toList();
 
     if (suitableDescriptors.isEmpty()) return;
 
@@ -1438,7 +1440,7 @@ public final class PluginManagerConfigurable
   }
 
   private static boolean containsQuery(PluginUiModel descriptor, String searchQuery) {
-    if(descriptor.getName() == null ) return false;
+    if (descriptor.getName() == null) return false;
     if (StringUtil.containsIgnoreCase(descriptor.getName(), searchQuery)) return true;
 
     String description = descriptor.getDescription();
@@ -1954,7 +1956,7 @@ public final class PluginManagerConfigurable
 
   @Override
   public void cancel() {
-    myPluginModelFacade.getModel().cancel(myCardPanel);
+    myPluginModelFacade.getModel().cancel(myCardPanel, true);
   }
 
   @Override

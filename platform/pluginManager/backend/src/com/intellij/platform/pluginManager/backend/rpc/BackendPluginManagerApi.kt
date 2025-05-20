@@ -11,15 +11,24 @@ import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
 import com.intellij.ide.plugins.marketplace.IntellijUpdateMetadata
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
+import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.ide.plugins.newui.PluginUiModel
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.platform.project.ProjectId
+import com.intellij.platform.project.findProjectOrNull
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.util.UUID
 
 @ApiStatus.Internal
 class BackendPluginManagerApi : PluginManagerApi {
   override suspend fun getPlugins(): List<PluginDto> {
     return PluginManagerCore.plugins.map(PluginDescriptorConverter::toPluginDto)
+  }
+
+  override suspend fun getPluginById(pluginId: PluginId): PluginDto? {
+    return PluginManagerCore.getPlugin(pluginId)?.let { PluginDescriptorConverter.toPluginDto(it) }
   }
 
   override suspend fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginDto> {
@@ -28,6 +37,48 @@ class BackendPluginManagerApi : PluginManagerApi {
 
   override suspend fun getInstalledPlugins(): List<PluginDto> {
     return InstalledPluginsState.getInstance().installedPlugins.map(PluginDescriptorConverter::toPluginDto)
+  }
+
+  override suspend fun setEnabledState(sessionId: String, pluginIds: List<PluginId>, enable: Boolean) {
+    DefaultUiPluginManagerController.setPluginStatus(sessionId, pluginIds, enable)
+  }
+
+  override suspend fun isPluginRequiresUltimateButItIsDisabled(pluginId: PluginId): Boolean {
+    return DefaultUiPluginManagerController.isPluginRequiresUltimateButItIsDisabled(pluginId)
+  }
+
+  override suspend fun isDisabledInDiff(sessionId: String, pluginId: PluginId): Boolean {
+    return DefaultUiPluginManagerController.isDisabledInDiff(sessionId, pluginId)
+  }
+
+  override suspend fun filterPluginsRequiresUltimateButItsDisabled(pluginIds: List<PluginId>): List<PluginId> {
+    return DefaultUiPluginManagerController.filterPluginsRequiringUltimateButItsDisabled(pluginIds)
+  }
+
+  override suspend fun isPluginInstalled(pluginId: PluginId): Boolean {
+    return DefaultUiPluginManagerController.isPluginInstalled(pluginId)
+  }
+
+  override suspend fun getCustomRepoPlugins(): List<PluginUiModel> {
+    return DefaultUiPluginManagerController.getCustomRepoPlugins()
+  }
+
+  override suspend fun enableRequiredPlugins(sessionId: String, pluginId: PluginId): Set<PluginId> {
+    return DefaultUiPluginManagerController.enableRequiredPlugins(sessionId, pluginId)
+  }
+
+  override suspend fun hasPluginRequiresUltimateButItsDisabled(ids: List<PluginId>): Boolean {
+    return DefaultUiPluginManagerController.hasPluginRequiresUltimateButItsDisabled(ids)
+  }
+
+  override suspend fun isBundledUpdate(pluginIds: List<PluginId>): Boolean {
+    return DefaultUiPluginManagerController.isBundledUpdate(pluginIds)
+  }
+
+  override suspend fun enablePlugins(sessionId: String, ids: List<PluginId>, bool: Boolean, id: ProjectId?): SetEnabledStateResult {
+    return withContext(Dispatchers.EDT) {
+      DefaultUiPluginManagerController.enablePlugins(sessionId, ids, bool, id?.findProjectOrNull())
+    }
   }
 
   override suspend fun closeSession(sessionId: String) {

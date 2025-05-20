@@ -105,15 +105,6 @@ class PluginModelFacade(private val pluginModel: MyPluginModel) {
     models.groupBy { it.source }.forEach {  getController(it.key).setEnabledState(it.value, action)}
   }
 
-  fun getDependents(models: Collection<PluginUiModel>): Map<PluginUiModel, List<PluginUiModel>> {
-    return models.groupBy { it.source}.map { getController(it.key).getDependents(it.value) }.reduce { acc, map -> acc + map }
-  }
-
-  fun isBundledUpdate(model: PluginUiModel?): Boolean {
-    if(model == null) return false
-    return getController(model).isBundledUpdate(model)
-  }
-
   fun uninstallAndUpdateUi(descriptor: PluginUiModel) {
     return getController(descriptor).uninstallAndUpdateUi(descriptor)
   }

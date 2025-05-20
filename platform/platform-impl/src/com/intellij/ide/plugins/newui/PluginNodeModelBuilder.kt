@@ -73,7 +73,12 @@ class PluginNodeModelBuilder(private val pluginId: PluginId) : PluginUiModelBuil
     pluginNode.date = date
     return this
   }
-  
+
+  override fun setRepositoryName(repositoryName: String): PluginUiModelBuilder {
+    pluginNode.repositoryName = repositoryName
+    return this
+  }
+
   override fun setSize(size: String?): PluginUiModelBuilder {
     if (size != null) pluginNode.size = size
     return this
@@ -103,7 +108,13 @@ class PluginNodeModelBuilder(private val pluginId: PluginId) : PluginUiModelBuil
     pluginNode.setDate(date)
     return this
   }
-  
+
+  override fun setDependencies(dependencies: List<PluginDependencyModel>): PluginUiModelBuilder {
+    pluginNode.dependencies.clear()
+    dependencies.forEach { addDependency(it.pluginId.idString, it.isOptional) }
+    return this
+  }
+
   override fun addDependency(id: String, optional: Boolean): PluginUiModelBuilder {
     pluginNode.addDepends(id, optional)
     return this

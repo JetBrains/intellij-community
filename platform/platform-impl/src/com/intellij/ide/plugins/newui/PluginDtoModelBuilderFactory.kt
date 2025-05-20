@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui
 
+import com.intellij.ide.plugins.PluginDependency
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus
@@ -108,6 +109,12 @@ class PluginDtoModelBuilder(pluginId: PluginId): PluginUiModelBuilder {
     return this
   }
 
+  override fun setDependencies(dependencies: List<PluginDependencyModel>): PluginUiModelBuilder {
+    resultDto.dependencies.clear()
+    resultDto.dependencies.addAll(dependencies)
+    return this
+  }
+
   override fun addDependency(id: String, optional: Boolean): PluginUiModelBuilder {
     resultDto.addDependency(PluginId.getId(id), optional)
     return this
@@ -162,6 +169,11 @@ class PluginDtoModelBuilder(pluginId: PluginId): PluginUiModelBuilder {
 
   override fun setDate(date: Long): PluginUiModelBuilder {
     resultDto.date = date
+    return this
+  }
+
+  override fun setRepositoryName(repositoryName: String): PluginUiModelBuilder {
+    resultDto.repositoryName = repositoryName
     return this
   }
 

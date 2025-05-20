@@ -51,7 +51,7 @@ class PluginManagerSessionService {
 class PluginManagerSession {
   val dynamicPluginsToInstall: MutableMap<PluginId, PendingDynamicPluginInstall> = ConcurrentHashMap()
   val pluginsToRemoveOnCancel: MutableSet<IdeaPluginDescriptorImpl> = ConcurrentHashSet()
-  val dynamicPluginsToUninstall: MutableSet<IdeaPluginDescriptorImpl> = ConcurrentHashSet()
+  val dynamicPluginsToUninstall: MutableSet<IdeaPluginDescriptor> = ConcurrentHashSet()
   val dependentToRequiredListMap: MutableMap<PluginId, MutableSet<PluginId>> = ConcurrentHashMap()
   var isUiDisposedWithApply: Boolean = false
 

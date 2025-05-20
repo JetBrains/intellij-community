@@ -3,13 +3,15 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Alexander Lobas
  */
-final class BgProgressIndicator extends AbstractProgressIndicatorExBase {
+@ApiStatus.Internal
+public final class BgProgressIndicator extends AbstractProgressIndicatorExBase {
 
-  BgProgressIndicator() {
+  public BgProgressIndicator() {
     super.setText(IdeBundle.message("progress.text.downloading"));
     setIndeterminate(false);
   }

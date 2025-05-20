@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui
 
+import com.intellij.ide.plugins.PluginDependency
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
@@ -29,6 +30,7 @@ interface PluginUiModelBuilder {
   fun setUrl(url: String?): PluginUiModelBuilder
   fun setDownloadUrl(downloadUrl: String?): PluginUiModelBuilder
   fun setDate(date: String): PluginUiModelBuilder
+  fun setDependencies(dependencies: List<PluginDependencyModel>): PluginUiModelBuilder
   fun addDependency(id: String, optional: Boolean): PluginUiModelBuilder
   fun addTag(tag: String): PluginUiModelBuilder
   fun setIncomplete(incomplete: Boolean): PluginUiModelBuilder
@@ -40,6 +42,7 @@ interface PluginUiModelBuilder {
   fun setExternalUpdateId(externalUpdateId: String?): PluginUiModelBuilder
   fun setTags(tags: List<String>?): PluginUiModelBuilder
   fun setDate(date: Long): PluginUiModelBuilder
+  fun setRepositoryName(repositoryName: String): PluginUiModelBuilder
 
   fun build(): PluginUiModel
 }
@@ -50,6 +53,7 @@ interface PluginUiModelBuilderFactory {
   fun createBuilder(id: PluginId): PluginUiModelBuilder
 
   companion object {
+    @JvmStatic
     fun getInstance(): PluginUiModelBuilderFactory {
       if (Registry.`is`("reworked.plugin.manager.enabled")) {
         return PluginDtoModelBuilderFactory

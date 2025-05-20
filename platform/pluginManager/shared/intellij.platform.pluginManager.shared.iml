@@ -44,5 +44,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.project" />
   </component>
 </module>
