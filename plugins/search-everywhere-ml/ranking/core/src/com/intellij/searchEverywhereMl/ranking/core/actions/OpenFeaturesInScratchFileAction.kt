@@ -62,8 +62,8 @@ class OpenFeaturesInScratchFileAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val searchEverywhereUI = SearchEverywhereManager.getInstance(e.project).currentlyShownPopupInstance as? SearchEverywhereUI
-                             ?: error("SearchEverywhereUI.getCurrentlyShownUI() is deprecated. " +
-                                      "The functionality is not yet supported for SearchEverywherePopupInstance")
+                             ?: throw UnsupportedOperationException("SearchEverywhereUI.getCurrentlyShownUI() is deprecated. " +
+                                                                    "The functionality is not yet supported for SearchEverywherePopupInstance")
 
     val report = getFeaturesReport(searchEverywhereUI)
     val json = jacksonObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(report)

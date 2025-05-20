@@ -7,6 +7,12 @@ import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
+/**
+ * Represents a filter editor for a Search Everywhere tab.
+ *
+ * @param resultFlow a flow of filter state changes.
+ * @function getPresentation returns a presentation of the filter editor.
+ */
 @ApiStatus.Internal
 interface SeFilterEditor {
   val resultFlow: StateFlow<SeFilterState>
