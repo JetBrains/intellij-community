@@ -1,7 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.completion.command.configuration.ApplicationCommandCompletionService;
+import com.intellij.codeInsight.completion.command.configuration.CommandCompletionSettingsService;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.generation.*;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -177,7 +177,7 @@ public final class JavaGenerateMemberCompletionContributor {
       if (!baseMethod.isConstructor() && baseClass != null && addedSignatures.add(baseMethod.getSignature(substitutor))) {
         result.addElement(
           createOverridingLookupElement(implemented, baseMethod, baseClass, substitutor, generateDefaultMethods, parent, null));
-        if (GenerateEqualsHandler.hasNonStaticFields(parent) && !ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) {
+        if (GenerateEqualsHandler.hasNonStaticFields(parent) && !CommandCompletionSettingsService.getInstance().commandCompletionEnabled()) {
           if (MethodUtils.isEquals(baseMethod) || MethodUtils.isHashCode(baseMethod)) {
             result.addElement(
               createOverridingLookupElement(implemented, baseMethod, baseClass, substitutor, generateDefaultMethods, parent, context -> {

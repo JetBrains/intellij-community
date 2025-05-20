@@ -17,8 +17,7 @@ import org.jetbrains.annotations.ApiStatus
 internal class ApplicationCommandCompletionService : PersistentStateComponent<AppCommandCompletionSettings> {
 
   companion object {
-    @JvmStatic
-    fun getInstance(): ApplicationCommandCompletionService = ApplicationManager.getApplication().getService(ApplicationCommandCompletionService::class.java)
+     internal fun getInstance(): ApplicationCommandCompletionService = ApplicationManager.getApplication().getService(ApplicationCommandCompletionService::class.java)
   }
 
   private var myState = AppCommandCompletionSettings()
@@ -31,6 +30,19 @@ internal class ApplicationCommandCompletionService : PersistentStateComponent<Ap
 
   fun commandCompletionEnabled(): Boolean {
     return myState.isEnabled()
+  }
+}
+
+@ApiStatus.Internal
+@Service(Service.Level.APP)
+class CommandCompletionSettingsService {
+  companion object {
+    @JvmStatic
+    fun getInstance(): CommandCompletionSettingsService = ApplicationManager.getApplication().getService(CommandCompletionSettingsService::class.java)
+  }
+
+  fun commandCompletionEnabled(): Boolean {
+    return ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()
   }
 }
 
