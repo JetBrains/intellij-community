@@ -6,6 +6,9 @@ import git4idea.branch.GitBranchUtil
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * @see [com.intellij.vcs.git.shared.actions.GitDataKeys]
+ */
 @ApiStatus.Internal
 object GitBranchActionsDataKeys {
   /**

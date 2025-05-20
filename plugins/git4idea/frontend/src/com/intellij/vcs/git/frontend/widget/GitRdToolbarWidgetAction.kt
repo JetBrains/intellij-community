@@ -4,13 +4,13 @@ package com.intellij.vcs.git.frontend.widget
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.icons.icon
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
@@ -18,9 +18,12 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.ui.RowIcon
 import com.intellij.vcs.git.frontend.GitFrontendBundle
+import com.intellij.vcs.git.shared.actions.GitDataKeys
 import com.intellij.vcs.git.shared.isRdBranchWidgetEnabled
 import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
 import com.intellij.vcs.git.shared.rpc.GitWidgetState
+import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetKeys
+import git4idea.GitStandardLocalBranch
 import icons.DvcsImplIcons
 
 internal class GitRdToolbarWidgetAction : ExpandableComboAction(), DumbAware {
@@ -28,16 +31,38 @@ internal class GitRdToolbarWidgetAction : ExpandableComboAction(), DumbAware {
 
   override fun createPopup(event: AnActionEvent): JBPopup? {
     val project = event.project ?: return null
-    val refs = GitRepositoriesFrontendHolder.getInstance(project).getAll().flatMap {
+    val repositories = GitRepositoriesFrontendHolder.getInstance(project).getAll()
+
+    val refs = repositories.flatMap {
       buildList {
-        add(it.repositoryId.toString())
-        addAll(it.state.refs.localBranches.map { it.fullName })
-        addAll(it.state.refs.remoteBranches.map { it.fullName })
+        add(it.repositoryId)
+        addAll(it.state.refs.localBranches)
+        addAll(it.state.refs.remoteBranches)
       }
     }
 
-    val baseListPopupStep = object : BaseListPopupStep<String>(null, refs) {
+    val baseListPopupStep = object : BaseListPopupStep<Any>(null, refs) {
       override fun isSpeedSearchEnabled() = true
+
+      override fun getTextFor(value: Any?): String {
+        return value?.toString().orEmpty()
+      }
+
+      override fun onChosen(selectedValue: Any?, finalChoice: Boolean): PopupStep<*>? {
+        if (selectedValue is GitStandardLocalBranch) {
+          val action = ActionManager.getInstance().getAction("Git.Rename.Local.Branch")
+          val place = ActionPlaces.getPopupPlace("GitBranchesPopup.TopLevel.Branch.Actions")
+          val dataContext = CustomizedDataContext.withSnapshot(DataContext.EMPTY_CONTEXT) { sink ->
+            sink[CommonDataKeys.PROJECT] = project
+            sink[GitDataKeys.SELECTED_REF] = selectedValue
+            sink[GitBranchesWidgetKeys.SELECTED_REPOSITORY] = repositories.firstOrNull()
+            sink[GitBranchesWidgetKeys.AFFECTED_REPOSITORIES] = repositories
+          }
+          ActionUtil.invokeAction(action, dataContext, place, null, null)
+        }
+
+        return FINAL_CHOICE
+      }
     }
 
     return JBPopupFactory.getInstance().createListPopup(baseListPopupStep)
