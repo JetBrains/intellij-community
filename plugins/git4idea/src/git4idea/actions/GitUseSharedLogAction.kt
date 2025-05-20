@@ -4,12 +4,13 @@ package git4idea.actions
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.vcs.log.impl.VcsProjectLog
 import git4idea.i18n.GitBundle
-import git4idea.log.GitLogIndexDataUtils
+import git4idea.log.GitLogExternalIndexService
 
 private class GitUseSharedLogAction : DumbAwareAction(GitBundle.messagePointer("vcs.log.use.log.index.data")) {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -20,7 +21,7 @@ private class GitUseSharedLogAction : DumbAwareAction(GitBundle.messagePointer("
     val data = vcsProjectLog.dataManager
     val isDataPackFull = data?.dataPack?.isFull ?: false
 
-    val indexingFinished = GitLogIndexDataUtils.indexingFinished(data)
+    val indexingFinished = GitLogExternalIndexService.indexingFinished(data)
     if (isDataPackFull && indexingFinished) {
        disable<Unit>(e)
       return
@@ -36,7 +37,7 @@ private class GitUseSharedLogAction : DumbAwareAction(GitBundle.messagePointer("
     val virtualFile = FileChooser.chooseFile(fileChooserDescriptor, project, null)
     if (virtualFile == null) return
 
-    GitLogIndexDataUtils.extractLogDataFromArchive(project, virtualFile)
+    project.service<GitLogExternalIndexService>().extractLogDataFromArchive(virtualFile)
   }
 }
 
@@ -52,7 +53,7 @@ internal class GitDumpLogIndexDataAction : DumbAwareAction(GitBundle.messagePoin
     val data = vcsProjectLog.dataManager
     val isDataPackFull = data?.dataPack?.isFull ?: false
 
-    val indexingFinished = GitLogIndexDataUtils.indexingFinished(data)
+    val indexingFinished = GitLogExternalIndexService.indexingFinished(data)
     if (isDataPackFull && indexingFinished) {
       e.presentation.isEnabledAndVisible = true
       return
@@ -68,7 +69,7 @@ internal class GitDumpLogIndexDataAction : DumbAwareAction(GitBundle.messagePoin
     if (virtualFile == null) return
 
     val outputArchiveDir = virtualFile.toNioPath()
-    GitLogIndexDataUtils.createArchiveWithLogData(project, outputArchiveDir)
+    project.service<GitLogExternalIndexService>().createArchiveWithLogData(outputArchiveDir)
   }
 }
 

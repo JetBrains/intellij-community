@@ -2,6 +2,7 @@
 package git4idea.log
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -16,22 +17,25 @@ import com.intellij.vcs.log.impl.VcsProjectLog.Companion.runOnDisposedLog
 import com.intellij.vcs.log.util.PersistentUtil
 import git4idea.i18n.GitBundle
 import git4idea.index.GitIndexUtil
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.nio.file.Path
 
-internal object GitLogIndexDataUtils {
-  private val LOG = logger<GitIndexUtil>()
+private val LOG = logger<GitIndexUtil>()
 
-  internal fun extractLogDataFromArchive(project: Project, zipFile: VirtualFile) {
+@Service(Service.Level.PROJECT)
+internal class GitLogExternalIndexService(private val project: Project, private val cs: CoroutineScope) {
+
+  fun extractLogDataFromArchive(zipFile: VirtualFile) {
     val logId = PersistentUtil.calcLogId(project, VcsProjectLog.getLogProviders(project))
     val logCache = PersistentUtil.LOG_CACHE
 
     val logIndexDirName = PersistentUtil.getProjectLogDataDirectoryName(project.name, logId)
 
-    VcsProjectLog.getInstance(project).coroutineScope.launch {
+    cs.launch {
       val tempLogDataPath = withBackgroundProgress(project, GitBundle.message("vcs.log.status.bar.extracting.log.index.data")) {
         withContext(Dispatchers.IO) {
           try {
@@ -75,8 +79,8 @@ internal object GitLogIndexDataUtils {
     }
   }
 
-  internal fun createArchiveWithLogData(project: Project, outputArchiveDir: Path) {
-    VcsProjectLog.getInstance(project).coroutineScope.launch {
+  fun createArchiveWithLogData(outputArchiveDir: Path) {
+    cs.launch {
       VcsProjectLog.getInstance(project).runOnDisposedLog {
         withBackgroundProgress(project = project,
                                title = GitBundle.message("vcs.log.archiving.log.index.data"),
@@ -94,11 +98,13 @@ internal object GitLogIndexDataUtils {
     }
   }
 
-  internal fun indexingFinished(logData: VcsLogData?): Boolean {
-    logData ?: return false
-    val index = logData.index
-    val rootsForIndexing = index.indexingRoots
+  companion object {
+    fun indexingFinished(logData: VcsLogData?): Boolean {
+      logData ?: return false
+      val index = logData.index
+      val rootsForIndexing = index.indexingRoots
 
-    return rootsForIndexing.any { root -> index.isIndexed(root) }
+      return rootsForIndexing.any { root -> index.isIndexed(root) }
+    }
   }
 }
