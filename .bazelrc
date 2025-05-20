@@ -10,3 +10,6 @@ build --experimental_disk_cache_gc_max_size=32G --experimental_disk_cache_gc_max
 common:macos --disk_cache=~/Library/Caches/JetBrains/community-bazel-disk-cache
 common:linux --disk_cache=~/.cache/JetBrains/community-bazel-disk-cache
 common:windows --disk_cache=~/AppData/Local/Temp/JetBrains/community-bazel-disk-cache
+
+# TeamCity-specific options
+common:teamcity --show_progress_rate_limit=30
