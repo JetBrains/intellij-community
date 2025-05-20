@@ -17,12 +17,15 @@ object GradleDaemonJvmCriteriaViewFactory {
     val daemonJvmProperties = GradleDaemonJvmPropertiesFile.getProperties(externalProjectPath)
     return GradleDaemonJvmCriteriaView(
       criteria = daemonJvmProperties.criteria,
-      versionsDropdownList = GradleJvmSupportMatrix.getAllSupportedJavaVersionsByIdea().map(JavaVersion::feature),
+      versionsDropdownList = getSuggestedVersions(),
       vendorDropdownList = getSuggestedVendors(),
       displayAdvancedSettings = GradleDaemonJvmHelper.isDamonJvmVendorCriteriaSupported(gradleVersion),
       disposable = disposable
     )
   }
+
+  private fun getSuggestedVersions() =
+    GradleJvmSupportMatrix.getAllSupportedJavaVersionsByIdea().map(JavaVersion::feature)
 
   private fun getSuggestedVendors() =
     JvmVendor.KnownJvmVendor.entries.filter { it != JvmVendor.KnownJvmVendor.UNKNOWN }
