@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.api
 
 import com.intellij.ide.plugins.ContainerDescriptor
+import com.intellij.ide.plugins.ContentModule
 import com.intellij.ide.plugins.IdeaPluginDescriptorEx
 import com.intellij.ide.plugins.ModuleDependencies
 import com.intellij.ide.plugins.ModuleLoadingRule
@@ -118,6 +119,9 @@ class PluginDtoDescriptorWrapper(private val pluginDto: PluginDto) : IdeaPluginD
 
   override val packagePrefix: String?
     get() = throw UnsupportedOperationException("No direct mapping for packagePrefix in PluginDto")
+
+  override val contentModules: List<ContentModule>
+    get() = throw UnsupportedOperationException("No direct mapping for contentModules in PluginDto")
 
   override val appContainerDescriptor: ContainerDescriptor
     get() = throw UnsupportedOperationException("No direct mapping for appContainerDescriptor in PluginDto")
