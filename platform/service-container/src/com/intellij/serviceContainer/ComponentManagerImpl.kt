@@ -41,6 +41,7 @@ import com.intellij.openapi.util.*
 import com.intellij.platform.instanceContainer.internal.*
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.containers.UList
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.messages.MessageBusFactory
@@ -394,24 +395,10 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  protected fun initModuleContainer(plugins: List<IdeaPluginDescriptorImpl>, precomputedExtensionModel: PrecomputedExtensionModel) {
-    // register services before registering extensions because plugins can access services in their extensions,
-    // which can be invoked right away if the plugin is loaded dynamically
-    for (plugin in plugins) {
-      registerServices(plugin.moduleContainerDescriptor.services, plugin)
-      for (content in plugin.contentModules) {
-        val services = content.descriptor.moduleContainerDescriptor.services
-        if (services.isNotEmpty()) {
-          registerServices(services, plugin)
-        }
-      }
-    }
-
-    registerExtensionPointsAndExtensionByPrecomputedModel(precomputedExtensionModel, null)
-  }
-
-  private fun registerExtensionPointsAndExtensionByPrecomputedModel(precomputedExtensionModel: PrecomputedExtensionModel,
-                                                                    listenerCallbacks: MutableList<in Runnable>?) {
+  protected fun registerExtensionPointsAndExtensionByPrecomputedModel(
+    precomputedExtensionModel: PrecomputedExtensionModel,
+    listenerCallbacks: MutableList<in Runnable>?,
+  ) {
     if (precomputedExtensionModel.extensionPoints.isEmpty()) {
       return
     }
@@ -503,6 +490,7 @@ abstract class ComponentManagerImpl(
 
   @Suppress("DuplicatedCode")
   @Deprecated(message = "Use createComponentsNonBlocking")
+  @RequiresBlockingContext
   protected open fun createComponents() {
     LOG.assertTrue(containerState.get() == ContainerState.PRE_INIT)
 

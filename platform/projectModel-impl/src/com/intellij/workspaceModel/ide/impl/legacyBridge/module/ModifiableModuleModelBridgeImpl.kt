@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
@@ -60,17 +61,25 @@ internal class ModifiableModuleModelBridgeImpl(
   override fun getModules(): Array<Module> = currentModuleSet.toTypedArray()
 
   override fun newNonPersistentModule(moduleName: String, moduleTypeId: String): Module {
-    val moduleEntity = diff addEntity ModuleEntity(name = moduleName,
-                                                   dependencies = listOf(ModuleSourceDependency),
-                                                   entitySource = NonPersistentEntitySource
-    )
+    val moduleEntity = diff.addEntity(ModuleEntity(
+      name = moduleName,
+      dependencies = listOf(ModuleSourceDependency),
+      entitySource = NonPersistentEntitySource,
+    ))
 
-    val module = moduleManager.createModule(moduleEntity.symbolicId, moduleName, null, entityStorageOnDiff, diff) {}
+    val module = moduleManager.createModule(
+      symbolicId = moduleEntity.symbolicId,
+      name = moduleName,
+      virtualFileUrl = null,
+      entityStorage = entityStorageOnDiff,
+      diff = diff,
+      init = {},
+    )
     diff.mutableModuleMap.addMapping(moduleEntity, module)
     modulesToAdd.put(moduleName, module)
     currentModuleSet.add(module)
 
-    module.init()
+    module.initNewlyAddedModule()
     module.setModuleType(moduleTypeId)
     return module
   }
@@ -79,7 +88,7 @@ internal class ModifiableModuleModelBridgeImpl(
     // TODO Handle filePath, add correct iml source with a path
 
     // TODO Must be in sync with module loading. It is not now
-    val canonicalPath = FileUtil.toSystemIndependentName(resolveShortWindowsName(filePath))
+    val canonicalPath = FileUtilRt.toSystemIndependentName(resolveShortWindowsName(filePath))
 
     val existingModule = getModuleByFilePath(canonicalPath)
     if (existingModule != null) {
@@ -118,16 +127,16 @@ internal class ModifiableModuleModelBridgeImpl(
   }
 
   private fun createModuleInstance(moduleEntity: ModuleEntity, isNew: Boolean): ModuleBridge {
-    val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
-    val moduleInstance = moduleManager.createModuleInstance(moduleEntity = moduleEntity,
-                                                            versionedStorage = entityStorageOnDiff,
-                                                            diff = diff,
-                                                            isNew = isNew,
-                                                            precomputedExtensionModel = precomputeModuleLevelExtensionModel(),
-                                                            plugins = plugins
+    val moduleInstance = moduleManager.createModuleInstance(
+      moduleEntity = moduleEntity,
+      versionedStorage = entityStorageOnDiff,
+      diff = diff,
+      isNew = isNew,
+      precomputedExtensionModel = precomputeModuleLevelExtensionModel(),
+      plugins = PluginManagerCore.getPluginSet().enabledPlugins,
     )
     diff.mutableModuleMap.addMapping(moduleEntity, moduleInstance)
-    modulesToAdd[moduleEntity.name] = moduleInstance
+    modulesToAdd.put(moduleEntity.name, moduleInstance)
     currentModuleSet.add(moduleInstance)
     return moduleInstance
   }

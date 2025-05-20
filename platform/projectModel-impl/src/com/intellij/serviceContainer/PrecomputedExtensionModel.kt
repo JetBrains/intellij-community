@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.intellij.serviceContainer
 
@@ -16,9 +16,11 @@ class PrecomputedExtensionModel(
   @JvmField val nameToExtensions: Map<String, List<Pair<IdeaPluginDescriptor, List<ExtensionDescriptor>>>>,
 )
 
+private val EMPTY = PrecomputedExtensionModel(extensionPoints = java.util.List.of(), nameToExtensions = java.util.Map.of())
+
 @ApiStatus.Internal
 fun precomputeModuleLevelExtensionModel(): PrecomputedExtensionModel {
-  val modules = PluginManagerCore.getPluginSet().getEnabledModules()
+  val modules = PluginManagerCore.getPluginSet().enabledPlugins
 
   var extensionPointTotalCount = 0
   val mutableNameToExtensions = HashMap<String, MutableList<Pair<IdeaPluginDescriptor, List<ExtensionDescriptor>>>>()
@@ -34,6 +36,10 @@ fun precomputeModuleLevelExtensionModel(): PrecomputedExtensionModel {
         mutableNameToExtensions.put(descriptor.getQualifiedName(pluginDescriptor), ArrayList())
       }
     }
+  }
+
+  if (extensionPointDescriptors.isEmpty() || mutableNameToExtensions.isEmpty()) {
+    return EMPTY
   }
 
   val nameToExtensions = java.util.Map.copyOf(mutableNameToExtensions)

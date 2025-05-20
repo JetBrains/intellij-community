@@ -20,10 +20,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.serviceContainer.PrecomputedExtensionModel
-import com.intellij.serviceContainer.emptyConstructorMethodType
-import com.intellij.serviceContainer.findConstructorOrNull
+import com.intellij.serviceContainer.*
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleBridgeImpl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -53,6 +51,22 @@ class ModuleComponentManager(parent: ComponentManagerImpl) : ComponentManagerImp
     moduleMethodType,
     emptyConstructorMethodType,
   )
+
+  internal fun initModuleContainer(plugins: List<IdeaPluginDescriptorImpl>, precomputedExtensionModel: PrecomputedExtensionModel) {
+    // register services before registering extensions because plugins can access services in their extensions,
+    // which can be invoked right away if the plugin is loaded dynamically
+    for (plugin in plugins) {
+      registerServices(plugin.moduleContainerDescriptor.services, plugin)
+      for (content in plugin.contentModules) {
+        val services = content.descriptor.moduleContainerDescriptor.services
+        if (services.isNotEmpty()) {
+          registerServices(services, plugin)
+        }
+      }
+    }
+
+    registerExtensionPointsAndExtensionByPrecomputedModel(precomputedExtensionModel, null)
+  }
 
   fun initForModule(module: Module) {
     this.module = module
@@ -104,6 +118,7 @@ class ModuleComponentManager(parent: ComponentManagerImpl) : ComponentManagerImp
 
   // expose to call it via ModuleImpl
   @Suppress("OVERRIDE_DEPRECATION", "DEPRECATION")
+  @RequiresBlockingContext
   public override fun createComponents() {
     super.createComponents()
   }
@@ -114,13 +129,13 @@ class ModuleComponentManager(parent: ComponentManagerImpl) : ComponentManagerImp
     precomputedExtensionModel: PrecomputedExtensionModel?,
     listenerCallbacks: MutableList<in Runnable>?,
   ) {
+    assert(listenerCallbacks.isNullOrEmpty())
     if (precomputedExtensionModel == null) {
       LOG.error("precomputedExtensionModel must not be null")
-      super.registerComponents(modules, app, null, listenerCallbacks)
+      initModuleContainer(modules, precomputeModuleLevelExtensionModel())
     }
     else {
-      assert(listenerCallbacks.isNullOrEmpty())
-      super.initModuleContainer(modules, precomputedExtensionModel)
+      initModuleContainer(modules, precomputedExtensionModel)
     }
 
     if (modules.any { it.pluginId == PluginManagerCore.CORE_ID }) {

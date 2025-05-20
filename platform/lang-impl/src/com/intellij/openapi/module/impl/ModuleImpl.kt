@@ -6,6 +6,7 @@ package com.intellij.openapi.module.impl
 import com.intellij.configurationStore.NonPersistentModuleStore
 import com.intellij.configurationStore.RenameableStateStorageManager
 import com.intellij.ide.highlighter.ModuleFileType
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.ComponentStoreOwner
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -22,8 +23,8 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.serviceContainer.ComponentManagerImpl.Companion.fakeCorePluginDescriptor
 import com.intellij.serviceContainer.getComponentManagerImpl
+import com.intellij.serviceContainer.precomputeModuleLevelExtensionModel
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.annotations.MapAnnotation
 import com.intellij.util.xmlb.annotations.Property
@@ -71,11 +72,11 @@ open class ModuleImpl(
 
   internal fun getModuleComponentManager(): ModuleComponentManager = componentManager.getComponentManagerImpl() as ModuleComponentManager
 
-  override fun init() {
+  override fun initNewlyAddedModule() {
     // do not measure (activityNamePrefix method not overridden by this class)
     // because there are a lot of modules and no need to measure each one
     val moduleComponentManager = getModuleComponentManager()
-    moduleComponentManager.registerComponents()
+    moduleComponentManager.initModuleContainer(PluginManagerCore.getPluginSet().enabledPlugins, precomputeModuleLevelExtensionModel())
     @Suppress("DEPRECATION")
     moduleComponentManager.createComponents()
   }

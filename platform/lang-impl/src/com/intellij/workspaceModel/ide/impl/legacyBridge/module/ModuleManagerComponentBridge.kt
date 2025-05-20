@@ -107,6 +107,7 @@ open class ModuleManagerComponentBridge(private val project: Project, coroutineS
     else {
       null
     }
+
     for (change in moduleChanges) {
       if (change !is EntityChange.Added<ModuleEntity>) {
         continue
@@ -189,7 +190,7 @@ open class ModuleManagerComponentBridge(private val project: Project, coroutineS
     init: (ModuleBridge) -> Unit,
   ): ModuleBridge {
     val componentManager = ModuleComponentManager(project.getComponentManagerImpl())
-    return ModuleBridgeImpl(
+    val moduleBridge = ModuleBridgeImpl(
       moduleEntityId = symbolicId,
       name = name,
       project = project,
@@ -197,10 +198,10 @@ open class ModuleManagerComponentBridge(private val project: Project, coroutineS
       entityStorage = entityStorage,
       diff = diff,
       componentManager = componentManager,
-    ).also {
-      componentManager.initForModule(it)
-      init(it)
-    }
+    )
+    componentManager.initForModule(moduleBridge)
+    init(moduleBridge)
+    return moduleBridge
   }
 }
 
