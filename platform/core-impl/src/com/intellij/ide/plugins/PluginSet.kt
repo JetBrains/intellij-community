@@ -14,9 +14,9 @@ class PluginSet internal constructor(
   private val sortedModulesWithDependencies: ModulesWithDependencies,
   @JvmField val allPlugins: Set<PluginMainDescriptor>,
   @JvmField val enabledPlugins: List<PluginMainDescriptor>,
-  private val enabledModuleMap: Map<String, IdeaPluginDescriptorImpl>,
-  private val enabledPluginAndV1ModuleMap: Map<PluginId, IdeaPluginDescriptorImpl>,
-  private val enabledModules: List<IdeaPluginDescriptorImpl>,
+  private val enabledModuleMap: Map<String, PluginModuleDescriptor>,
+  private val enabledPluginAndV1ModuleMap: Map<PluginId, PluginModuleDescriptor>,
+  private val enabledModules: List<PluginModuleDescriptor>,
 ) {
   /**
    * You must not use this method before [ClassLoaderConfigurator.configure].
