@@ -316,11 +316,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/unusedEquals/inspectionData/inspections.test");
         }
 
-        @TestMetadata("unusedImport/inspectionData/inspections.test")
-        public void testUnusedImport_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/unusedImport/inspectionData/inspections.test");
-        }
-
         @TestMetadata("unusedLambdaExpressionBody/inspectionData/inspections.test")
         public void testUnusedLambdaExpressionBody_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/unusedLambdaExpressionBody/inspectionData/inspections.test");
