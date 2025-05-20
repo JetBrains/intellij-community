@@ -1,0 +1,29 @@
+### auto-generated section `build intellij.platform.find` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "find_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "find",
+  module_name = "intellij.platform.find",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/kernel/shared:kernel",
+    "//platform/platform-impl/rpc",
+    "//platform/project/shared:project",
+    "@lib//:kotlinx-serialization-core",
+    "//platform/lang-impl",
+    "//platform/usageView",
+    "//platform/core-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/editor-ui-api:editor-ui",
+  ],
+  runtime_deps = [":find_resources"]
+)
+### auto-generated section `build intellij.platform.find` end

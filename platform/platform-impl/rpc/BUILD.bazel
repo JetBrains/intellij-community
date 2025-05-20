@@ -16,6 +16,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/editor-ui-api:editor-ui",
     "//platform/core-ui",
+    "//platform/usageView",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.rpc` end

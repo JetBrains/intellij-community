@@ -1,0 +1,29 @@
+### auto-generated section `build intellij.platform.find.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "backend_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.platform.find.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/usageView",
+    "//platform/kernel/backend",
+    "//platform/find",
+    "//platform/project/shared:project",
+    "//platform/platform-impl/rpc",
+    "//platform/lang-impl",
+    "//platform/core-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/editor-ui-api:editor-ui",
+  ],
+  runtime_deps = [":backend_resources"]
+)
+### auto-generated section `build intellij.platform.find.backend` end

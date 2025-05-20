@@ -15,6 +15,7 @@ java_library(
     "//platform/inline-completion/shared:inline-completion",
     "//platform/bookmarks",
     "//platform/todo",
+    "//platform/find",
     "//platform/xdebugger-impl/shared",
     "//platform/xdebugger-impl/rpc",
   ]

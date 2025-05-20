@@ -27,6 +27,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl/rpc",
     "//platform/util/text-matching",
+    "//platform/usageView",
   ],
   exports = ["//platform/lang-impl"],
   runtime_deps = [":searchEverywhere_resources"]
