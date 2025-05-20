@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.NodeSource;
 import org.jetbrains.jps.dependency.NodeSourcePathMapper;
 import org.jetbrains.jps.dependency.java.LookupNameUsage;
+import org.jetbrains.kotlin.backend.common.output.OutputFile;
 import org.jetbrains.kotlin.backend.common.output.OutputFileCollection;
 import org.jetbrains.kotlin.build.GeneratedFile;
 import org.jetbrains.kotlin.build.GeneratedJvmClass;
@@ -254,36 +255,26 @@ public class KotlinCompilerRunner implements CompilerRunner {
 
   private @NotNull Function1<? super @NotNull OutputFileCollection, @NotNull Unit> createOutputConsumer(OutputSink outputSink, Consumer<GeneratedFile> clsCollector) {
     return outputCollection -> {
-      outputCollection.asList().iterator().forEachRemaining(
-        generatedOutput -> {
-          String relativePath = generatedOutput.getRelativePath().replace(File.separatorChar, '/');
-          GeneratedFile file;
-          byte[] outputByteArray = generatedOutput.asByteArray();
+      for (OutputFile generatedOutput : outputCollection.asList()) {
+        String relativePath = generatedOutput.getRelativePath().replace(File.separatorChar, '/');
+        byte[] outputByteArray = generatedOutput.asByteArray();
 
-          if (relativePath.endsWith(".class")) {
-            file = new KotlinJvmGeneratedFile(
-              generatedOutput.getSourceFiles(),
-              new File(relativePath),
-              outputByteArray,
-              MetadataVersion.INSTANCE
-            );
-          }
-          else {
-            file = new GeneratedFile(
-              generatedOutput.getSourceFiles(),
-              new File(relativePath)
-            );
-          }
-          clsCollector.accept(file);
-
-          OutputSink.OutputFile.Kind kind =
-            relativePath.endsWith(".class")? OutputSink.OutputFile.Kind.bytecode : OutputSink.OutputFile.Kind.other;
-
-          outputSink.addFile(
-            new OutputFileImpl(relativePath, kind, outputByteArray, false), map(generatedOutput.getSourceFiles(), myPathMapper::toNodeSource)
-          );
+        OutputSink.OutputFile.Kind kind;
+        GeneratedFile file;
+        if (relativePath.endsWith(".class")) {
+          kind = OutputSink.OutputFile.Kind.bytecode;
+          file = new KotlinJvmGeneratedFile(generatedOutput.getSourceFiles(), new File(relativePath), outputByteArray, MetadataVersion.INSTANCE);
         }
-      );
+        else {
+          kind = OutputSink.OutputFile.Kind.other;
+          file = new GeneratedFile(generatedOutput.getSourceFiles(), new File(relativePath));
+        }
+        clsCollector.accept(file);
+
+        outputSink.addFile(
+          new OutputFileImpl(relativePath, kind, outputByteArray, false), map(generatedOutput.getSourceFiles(), myPathMapper::toNodeSource)
+        );
+      }
 
       return Unit.INSTANCE;
     };
