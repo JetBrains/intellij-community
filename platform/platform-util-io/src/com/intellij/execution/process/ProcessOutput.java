@@ -38,11 +38,11 @@ public class ProcessOutput {
   }
 
   public void appendStdout(@Nullable String text) {
-    myStdoutBuilder.append(text);
+    appendWithBackspaceHandling(myStdoutBuilder, text);
   }
 
   public void appendStderr(@Nullable String text) {
-    myStderrBuilder.append(text);
+    appendWithBackspaceHandling(myStderrBuilder, text);
   }
 
   public @NotNull @NlsSafe String getStdout() {
@@ -136,5 +136,29 @@ public class ProcessOutput {
            ", stdout=" + myStdoutBuilder +
            ", stderr=" + myStderrBuilder +
            '}';
+  }
+
+  private static void appendWithBackspaceHandling(@NotNull StringBuilder builder, @Nullable String text) {
+    if (text == null) {
+      return;
+    }
+
+    if (text.contains("\b")) {
+      for (int i = 0; i < text.length(); i++) {
+        char c = text.charAt(i);
+        if (c == '\b') {
+          int length = builder.length();
+          if (length > 0) {
+            builder.deleteCharAt(length - 1);
+          }
+        }
+        else {
+          builder.append(c);
+        }
+      }
+    }
+    else {
+      builder.append(text);
+    }
   }
 }
