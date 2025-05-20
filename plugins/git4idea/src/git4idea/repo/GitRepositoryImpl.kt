@@ -41,8 +41,6 @@ class GitRepositoryImpl private constructor(
   private val gitDir: VirtualFile,
   parentDisposable: Disposable,
 ) : RepositoryImpl(project, rootDir, parentDisposable), GitRepository {
-  private val rpcId = RepositoryId(projectId = project.projectId(), rootPath = root.rpcId())
-
   private val vcs = GitVcs.getInstance(project)
 
   private val repositoryFiles = GitRepositoryFiles.createInstance(rootDir, gitDir)
@@ -219,7 +217,7 @@ class GitRepositoryImpl private constructor(
   }
 
   override fun getRpcId(): RepositoryId {
-    return rpcId
+    return RepositoryId(projectId = project.projectId(), rootPath = root.rpcId())
   }
 
   companion object {
