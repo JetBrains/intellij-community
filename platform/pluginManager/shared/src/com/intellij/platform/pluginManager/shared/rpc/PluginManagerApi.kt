@@ -24,10 +24,14 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginDto>
   suspend fun getInstalledPlugins(): List<PluginDto>
   suspend fun findPlugin(pluginId: PluginId): PluginDto?
+  suspend fun getLastCompatiblePluginUpdateModel(pluginId: PluginId, buildNumber: String?): PluginDto?
+  suspend fun getLastCompatiblePluginUpdate(allIds: Set<PluginId>, throwExceptions: Boolean, buildNumber: String?): List<IdeCompatibleUpdate>
   suspend fun executeMarketplaceQuery(query: String, count: Int, includeIncompatible: Boolean): List<MarketplaceSearchPluginData>
   suspend fun isPluginDisabled(pluginId: PluginId): Boolean
   suspend fun loadMetadata(xmlId: String, ideCompatibleUpdate: IdeCompatibleUpdate): IntellijUpdateMetadata
   suspend fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>?
+  suspend fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata?
+  suspend fun getPluginManagerUrl(): String
   suspend fun createSession(sessionId: String)
   suspend fun closeSession(sessionId: String)
   suspend fun setEnabledState(sessionId: String, pluginIds: List<PluginId>, enable: Boolean)

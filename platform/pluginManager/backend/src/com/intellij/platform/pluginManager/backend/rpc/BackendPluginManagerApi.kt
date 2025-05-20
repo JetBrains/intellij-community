@@ -112,4 +112,21 @@ class BackendPluginManagerApi : PluginManagerApi {
   override suspend fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>? {
     return DefaultUiPluginManagerController.loadPluginReviews(pluginId, page)
   }
+  
+  override suspend fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata? {
+    return DefaultUiPluginManagerController.loadPluginMetadata(externalPluginId)
+  }
+  
+  override suspend fun getPluginManagerUrl(): String {
+    return DefaultUiPluginManagerController.getPluginManagerUrl()
+  }
+  
+  override suspend fun getLastCompatiblePluginUpdateModel(pluginId: PluginId, buildNumber: String?): PluginDto? {
+    val model = DefaultUiPluginManagerController.getLastCompatiblePluginUpdateModel(pluginId, buildNumber, null) ?: return null
+    return PluginDto.fromModel(model)
+  }
+  
+  override suspend fun getLastCompatiblePluginUpdate(allIds: Set<PluginId>, throwExceptions: Boolean, buildNumber: String?): List<IdeCompatibleUpdate> {
+    return DefaultUiPluginManagerController.getLastCompatiblePluginUpdate(allIds, throwExceptions, buildNumber)
+  }
 }

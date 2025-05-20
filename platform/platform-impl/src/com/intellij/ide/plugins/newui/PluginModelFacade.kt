@@ -5,12 +5,7 @@ import com.intellij.ide.plugins.IdeaPluginDependency
 import com.intellij.ide.plugins.PluginEnableDisableAction
 import com.intellij.ide.plugins.PluginEnabledState
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.PluginNode
-import com.intellij.ide.plugins.api.ReviewsPageContainer
-import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
-import com.intellij.ide.plugins.marketplace.PluginReviewComment
-import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls
 import com.intellij.ide.plugins.pluginRequiresUltimatePluginButItsDisabled
 import javax.swing.JComponent
 import com.intellij.openapi.application.ModalityState
@@ -20,7 +15,6 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class PluginModelFacade(private val pluginModel: MyPluginModel) {
-  private val marketplaceRequests = MarketplaceRequests.getInstance()
 
   fun isPluginInstallingOrUpdating(model: PluginUiModel): Boolean {
     return MyPluginModel.isInstallingOrUpdate(model.pluginId)
@@ -103,24 +97,8 @@ class PluginModelFacade(private val pluginModel: MyPluginModel) {
     pluginModel.uninstallAndUpdateUi(descriptor)
   }
 
-  fun findInstalledPlugin(model: PluginUiModel): PluginUiModel? {
-    return PluginManagerCore.getPlugin(model.pluginId)?.let { PluginUiModelAdapter(it) }
-  }
-
-  fun getPluginManagerUrl(model: PluginUiModel): String {
-    return MarketplaceUrls.getPluginManagerUrl()
-  }
-
   fun isDisabledInDiff(model: PluginUiModel): Boolean {
     return pluginModel.isDisabledInDiff(model.pluginId)
-  }
-
-  fun getLastCompatiblePluginUpdate(model: PluginUiModel): PluginUiModel? {
-    return marketplaceRequests.getLastCompatiblePluginUpdateModel(model.pluginId)
-  }
-
-  fun loadPluginMetadata(source: PluginSource, pluginId: String): IntellijPluginMetadata? {
-    return marketplaceRequests.loadPluginMetadata(pluginId)
   }
 
   fun isLoaded(model: PluginUiModel): Boolean {

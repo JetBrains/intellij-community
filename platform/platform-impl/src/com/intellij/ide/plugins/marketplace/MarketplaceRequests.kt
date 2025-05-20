@@ -159,80 +159,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       buildNumber: BuildNumber? = null,
       throwExceptions: Boolean = false,
     ): List<IdeCompatibleUpdate> {
-      val chunks = mutableListOf<MutableList<PluginId>>()
-      chunks.add(mutableListOf())
-
-      val maxLength = 3500 // 4k minus safety gap
-      var currentLength = 0
-      val pluginXmlIdsLength = "&pluginXmlId=".length
-
-      for (id in allIds) {
-        val adder = id.idString.length + pluginXmlIdsLength
-        val newLength = currentLength + adder
-        if (newLength > maxLength) {
-          chunks.add(mutableListOf(id))
-          currentLength = adder
-        }
-        else {
-          currentLength = newLength
-          chunks.last().add(id)
-        }
-      }
-
-      return chunks.flatMap {
-        loadLastCompatiblePluginsUpdate(it, buildNumber, throwExceptions)
-      }
-    }
-
-    private fun loadLastCompatiblePluginsUpdate(
-      ids: Collection<PluginId>,
-      buildNumber: BuildNumber? = null,
-      throwExceptions: Boolean = false,
-    ): List<IdeCompatibleUpdate> {
-      try {
-        if (ids.isEmpty()) {
-          return emptyList()
-        }
-
-        val url = URI(MarketplaceUrls.getSearchPluginsUpdatesUrl())
-        val os = URLEncoder.encode(OS.CURRENT.name + " " + OS.CURRENT.version, CharsetToolkit.UTF8)
-        val machineId = if (LoadingState.COMPONENTS_LOADED.isOccurred) {
-          MachineIdManager.getAnonymizedMachineId("JetBrainsUpdates") // same as regular updates
-            .takeIf { !PropertiesComponent.getInstance().getBoolean(UpdateChecker.MACHINE_ID_DISABLED_PROPERTY, false) }
-        } else null
-
-        val query = buildString {
-          append("build=${ApplicationInfoImpl.orFromPluginCompatibleBuild(buildNumber)}")
-          append("&os=$os")
-          if (machineId != null) {
-            append("&mid=$machineId")
-          }
-          for (id in ids) {
-            append("&pluginXmlId=${URLEncoder.encode(id.idString, CharsetToolkit.UTF8)}")
-          }
-        }
-
-        val urlString = url.withQuery(query).toString()
-
-        return HttpRequests.request(urlString)
-          .accept(HttpRequests.JSON_CONTENT_TYPE)
-          .setHeadersViaTuner()
-          .productNameAsUserAgent()
-          .throwStatusCodeException(throwExceptions)
-          .connect {
-            objectMapper.readValue(it.inputStream, object : TypeReference<List<IdeCompatibleUpdate>>() {})
-          }
-      }
-      catch (pce: ProcessCanceledException) {
-        throw pce
-      }
-      catch (e: Exception) {
-        LOG.infoOrDebug("Can not get compatible updates from Marketplace", e)
-        if (throwExceptions) {
-          throw e
-        }
-        return emptyList()
-      }
+       return UiPluginManager.getInstance().getLastCompatiblePluginUpdate(allIds,  throwExceptions, buildNumber?.asString())
     }
 
     @RequiresBackgroundThread
@@ -672,18 +599,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
   internal fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata? {
-    try {
-      return readOrUpdateFile(
-        Paths.get(PathManager.getPluginTempPath(), "${externalPluginId}-meta.json"),
-        MarketplaceUrls.getPluginMetaUrl(externalPluginId),
-        null,
-        ""
-      ) { objectMapper.readValue(it, object : TypeReference<IntellijPluginMetadata>() {}) }
-    }
-    catch (e: Exception) {
-      LOG.warn(e)
-      return null
-    }
+    return UiPluginManager.getInstance().loadPluginMetadata(externalPluginId)
   }
 
   @Deprecated("use #getLastCompatiblePluginUpdateModel(PluginId, BuildNumber, ProgressIndicator)")
@@ -706,8 +622,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
     buildNumber: BuildNumber? = null,
     indicator: ProgressIndicator? = null,
   ): PluginUiModel? {
-    return getLastCompatiblePluginUpdate(setOf(pluginId), buildNumber).firstOrNull()
-      ?.let { loadPluginModel(pluginId.idString, it, indicator) }
+    return UiPluginManager.getInstance().getLastCompatiblePluginUpdateModel(pluginId, buildNumber?.asString(), indicator)
   }
 
   fun getCompatibleUpdateByModule(module: String): PluginId? {
@@ -941,7 +856,8 @@ private data class CompatibleUpdateForModuleRequest(
   )
 }
 
-private fun Logger.infoOrDebug(
+@ApiStatus.Internal
+fun Logger.infoOrDebug(
   message: String,
   throwable: Throwable,
 ) {

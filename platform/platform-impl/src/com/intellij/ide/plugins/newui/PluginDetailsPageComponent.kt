@@ -530,10 +530,11 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     topPanel.border = JBUI.Borders.empty(16, 16, 12, 16)
 
     val newReviewLink = LinkPanel(topPanel, true, false, null, BorderLayout.WEST)
+    val pluginManager = UiPluginManager.getInstance()
     newReviewLink.showWithBrowseUrl(IdeBundle.message("plugins.new.review.action"), false) {
       val pluginUiModel = plugin!!
-      val installedPlugin = pluginModel.findInstalledPlugin(pluginUiModel)
-      val pluginManagerUrl = pluginModel.getPluginManagerUrl(pluginUiModel)
+      val installedPlugin = pluginManager.getPlugin(pluginUiModel.pluginId)
+      val pluginManagerUrl = pluginManager.getPluginManagerUrl()
       getPluginWriteReviewUrl(pluginManagerUrl, pluginUiModel.pluginId, installedPlugin?.version)
     }
 
@@ -671,7 +672,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
           syncLoading = false
           doLoad(component) {
             if (pluginUiModel.screenShots == null && pluginUiModel.externalPluginIdForScreenShots != null) {
-              val metadata = pluginModel.loadPluginMetadata(pluginUiModel.source, pluginUiModel.externalPluginIdForScreenShots!!)
+              val metadata = UiPluginManager.getInstance().loadPluginMetadata(pluginUiModel.externalPluginIdForScreenShots!!)
               if (metadata != null) {
                 if (metadata.screenshots != null) {
                   pluginUiModel.screenShots = metadata.screenshots
@@ -697,7 +698,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       else if (!pluginUiModel.isBundled && component.installedPluginMarketplaceModel == null) {
         syncLoading = false
         doLoad(component) {
-          val lastUpdateModel = pluginModel.getLastCompatiblePluginUpdate(component.pluginModel) ?: return@doLoad
+          val lastUpdateModel = UiPluginManager.getInstance().getLastCompatiblePluginUpdateModel(component.pluginModel.pluginId)
+                                ?: return@doLoad
 
           coroutineContext.ensureActive()
           val update = getLastCompatiblePluginUpdate(setOf(component.pluginModel.pluginId))

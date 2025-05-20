@@ -17,6 +17,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.BuildNumber
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
@@ -32,6 +33,8 @@ interface UiPluginManagerController {
   fun executeMarketplaceQuery(query: String, count: Int, includeIncompatible: Boolean): List<MarketplaceSearchPluginData>
   fun loadUpdateMetadata(xmlId: String, ideCompatibleUpdate: IdeCompatibleUpdate, indicator: ProgressIndicator? = null): IntellijUpdateMetadata
   fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>?
+  fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata?
+  fun getPluginManagerUrl(): String
   fun createSession(sessionId: String)
   fun closeSession(sessionId: String)
   fun unloadDynamicPlugin(parentComponent: JComponent?, pluginId: PluginId, isUpdate: Boolean): Boolean
@@ -61,6 +64,9 @@ interface UiPluginManagerController {
   fun filterPluginsRequiringUltimateButItsDisabled(pluginIds: List<PluginId>): List<PluginId>
   fun findPluginNames(pluginIds: List<PluginId>): List<String>
   fun findPlugin(pluginId: PluginId): PluginUiModel?
+  fun getLastCompatiblePluginUpdateModel(pluginId: PluginId, buildNumber: String? = null, indicator: ProgressIndicator? = null): PluginUiModel?
+  
+  fun getLastCompatiblePluginUpdate(allIds: Set<PluginId>, throwExceptions: Boolean, buildNumber: String? = null): List<IdeCompatibleUpdate>
 
   suspend fun resetSession(sessionId: String, removeSession: Boolean, parentComponent: JComponent? = null): Map<PluginId, Boolean>
 

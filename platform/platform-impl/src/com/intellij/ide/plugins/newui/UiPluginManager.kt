@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.marketplace.ApplyPluginsStateResult
 import com.intellij.ide.plugins.marketplace.CheckErrorsResult
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
 import com.intellij.ide.plugins.marketplace.InstallPluginResult
+import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
 import com.intellij.ide.plugins.marketplace.IntellijUpdateMetadata
 import com.intellij.ide.plugins.marketplace.MarketplaceSearchPluginData
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
@@ -197,6 +198,22 @@ class UiPluginManager {
   
   fun findPlugin(pluginId: PluginId): PluginUiModel? {
     return getController().findPlugin(pluginId)
+  }
+  
+  fun getLastCompatiblePluginUpdateModel(pluginId: PluginId, buildNumber: String? = null, indicator: ProgressIndicator? = null): PluginUiModel? {
+    return getController().getLastCompatiblePluginUpdateModel(pluginId, buildNumber, indicator)
+  }
+  
+  fun getLastCompatiblePluginUpdate(allIds: Set<PluginId>, throwExceptions: Boolean, buildNumber: String? = null): List<IdeCompatibleUpdate> {
+    return getController().getLastCompatiblePluginUpdate(allIds, throwExceptions, buildNumber)
+  }
+  
+  fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata? {
+    return getController().loadPluginMetadata(externalPluginId)
+  }
+  
+  fun getPluginManagerUrl(): String {
+    return getController().getPluginManagerUrl()
   }
 
   fun getController(): UiPluginManagerController {

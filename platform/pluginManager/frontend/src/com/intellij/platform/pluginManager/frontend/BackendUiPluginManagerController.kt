@@ -51,6 +51,14 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
   override fun findPlugin(pluginId: PluginId): PluginUiModel? {
     return awaitForResult { PluginManagerApi.getInstance().findPlugin(pluginId) }
   }
+  
+  override fun getLastCompatiblePluginUpdateModel(pluginId: PluginId, buildNumber: String?, indicator: ProgressIndicator?): PluginUiModel? {
+    return awaitForResult { PluginManagerApi.getInstance().getLastCompatiblePluginUpdateModel(pluginId, buildNumber) }
+  }
+  
+  override fun getLastCompatiblePluginUpdate(allIds: Set<PluginId>, throwExceptions: Boolean, buildNumber: String?): List<IdeCompatibleUpdate> {
+    return awaitForResult { PluginManagerApi.getInstance().getLastCompatiblePluginUpdate(allIds, throwExceptions, buildNumber) }
+  }
 
   override fun allowLoadUnloadSynchronously(id: PluginId): Boolean {
     return awaitForResult { PluginInstallerApi.getInstance().allowLoadUnloadSynchronously(id) }
@@ -156,6 +164,14 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
 
   override fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>? {
     return awaitForResult { PluginManagerApi.getInstance().loadPluginReviews(pluginId, page) }
+  }
+  
+  override fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata? {
+    return awaitForResult { PluginManagerApi.getInstance().loadPluginMetadata(externalPluginId) }
+  }
+  
+  override fun getPluginManagerUrl(): String {
+    return awaitForResult { PluginManagerApi.getInstance().getPluginManagerUrl() }
   }
 
   override fun unloadDynamicPlugin(parentComponent: JComponent?, pluginId: PluginId, isUpdate: Boolean): Boolean {
