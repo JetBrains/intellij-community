@@ -54,9 +54,13 @@ class ThreadDumpAction {
 
     @ApiStatus.Internal
     suspend fun buildThreadDump(context: DebuggerContextImpl, onlyPlatformThreads: Boolean, dumpItemsChannel: SendChannel<List<MergeableDumpItem>>) {
-      val platformThreads = buildJavaPlatformThreadDump(context).toDumpItems()
-      dumpItemsChannel.send(platformThreads)
+      suspend fun sendJavaPlatformThreads() {
+        val platformThreads = buildJavaPlatformThreadDump(context).toDumpItems()
+        dumpItemsChannel.send(platformThreads)
+      }
+
       if (onlyPlatformThreads || !Registry.`is`("debugger.thread.dump.extended")) {
+        sendJavaPlatformThreads()
         return
       }
 
@@ -66,6 +70,9 @@ class ThreadDumpAction {
         suspend fun getAllItems(suspendContext: SuspendContextImpl?) {
           coroutineScope {
             // Compute parts of the dump asynchronously
+            launch {
+              sendJavaPlatformThreads()
+            }
             providers.map { p ->
               launch {
                 withBackgroundProgress(context.project, p.progressText) {
@@ -92,6 +99,7 @@ class ThreadDumpAction {
           }
           catch (_: TimeoutCancellationException) {
             thisLogger().warn("timeout while waiting for evaluatable context ($timeout)")
+            sendJavaPlatformThreads()
           }
         }
         else {
@@ -108,7 +116,10 @@ class ThreadDumpAction {
       catch (e: Throwable) {
         when (e) {
           is CancellationException, is ControlFlowException -> throw e
-          else -> thisLogger().error(e)
+          else -> {
+            thisLogger().error(e)
+            sendJavaPlatformThreads()
+          }
         }
       }
     }
