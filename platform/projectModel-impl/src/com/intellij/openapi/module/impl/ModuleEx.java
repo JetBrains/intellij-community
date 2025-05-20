@@ -7,10 +7,6 @@ import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
 public interface ModuleEx extends Module {
-  // not called for module on loading, only if module created after project opening
-  default void initNewlyAddedModule() {
-  }
-
   default void markAsLoaded() {
   }
 

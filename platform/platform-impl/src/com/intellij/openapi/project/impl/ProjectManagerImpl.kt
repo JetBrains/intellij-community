@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.openapi.project.impl
 
 import com.intellij.configurationStore.StoreReloadManager
@@ -227,7 +229,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   override fun getDefaultProject(): Project {
     LOG.assertTrue(!ApplicationManager.getApplication().isDisposed, "Application has already been disposed!")
-    // call instance method to reset timeout
+    // call an instance method to reset timeout
     // re-instantiate if needed
     val bus = defaultProject.messageBus
     LOG.assertTrue(!bus.isDisposed)

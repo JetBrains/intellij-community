@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.registerNewProjectId
 import com.intellij.platform.project.unregisterProjectId
 import com.intellij.serviceContainer.*
-import com.intellij.util.application
 import com.intellij.util.messages.MessageBus
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.NonNls
@@ -47,9 +46,11 @@ internal class DefaultProject : UserDataHolderBase(), Project, ComponentManagerE
       LOG.assertTrue(!app.isDisposed(), "Application is being disposed!")
       val project = DefaultProjectImpl(actualContainerInstance = this@DefaultProject)
       val componentStoreFactory = app.service<ProjectStoreFactory>()
-      project.registerServiceInstance(serviceInterface = IComponentStore::class.java,
-                                      instance = componentStoreFactory.createDefaultProjectStore(project),
-                                      pluginDescriptor = ComponentManagerImpl.fakeCorePluginDescriptor)
+      project.registerServiceInstance(
+        serviceInterface = IComponentStore::class.java,
+        instance = componentStoreFactory.createDefaultProjectStore(project),
+        pluginDescriptor = ComponentManagerImpl.fakeCorePluginDescriptor,
+      )
 
       // mark myDelegate as not disposed if someone cluelessly did Disposer.dispose(getDefaultProject())
       Disposer.register(this@DefaultProject, this)
@@ -58,7 +59,7 @@ internal class DefaultProject : UserDataHolderBase(), Project, ComponentManagerE
 
     public override fun init(project: Project) {
       (project as DefaultProjectImpl).init()
-      application.messageBus.syncPublisher(DefaultProjectListener.TOPIC).defaultProjectImplCreated(project)
+      ApplicationManager.getApplication().messageBus.syncPublisher(DefaultProjectListener.TOPIC).defaultProjectImplCreated(project)
     }
   }
 
@@ -114,12 +115,11 @@ internal class DefaultProject : UserDataHolderBase(), Project, ComponentManagerE
     unregisterProjectId(this)
   }
   
-  override fun getMutableComponentContainer(): ComponentManager = 
-    delegate.getComponentManagerImpl()
+  override fun getMutableComponentContainer(): ComponentManager = delegate.getComponentManagerImpl()
 
   @TestOnly
   fun disposeDefaultProjectAndCleanupComponentsForDynamicPluginTests() {
-    ApplicationManager.getApplication().runWriteAction(Runnable { Disposer.dispose(timedProject) })
+    ApplicationManager.getApplication().runWriteAction { Disposer.dispose(timedProject) }
   }
 
   private val delegate: Project
@@ -157,53 +157,65 @@ internal class DefaultProject : UserDataHolderBase(), Project, ComponentManagerE
 
   override fun getCoroutineScope(): CoroutineScope = (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope()
   
-  override fun instanceCoroutineScope(pluginClass: Class<*>): CoroutineScope = 
-    (delegate as ComponentManagerEx).getCoroutineScope()
+  override fun instanceCoroutineScope(pluginClass: Class<*>): CoroutineScope {
+    return (delegate as ComponentManagerEx).getCoroutineScope()
+  }
 
-  override fun unregisterComponent(componentKey: Class<*>): ComponentAdapter? =
-    (delegate as ComponentManagerEx).unregisterComponent(componentKey)
+  override fun unregisterComponent(componentKey: Class<*>): ComponentAdapter? {
+    return (delegate as ComponentManagerEx).unregisterComponent(componentKey)
+  }
 
-  override fun <T : Any> replaceServiceInstance(serviceInterface: Class<T>, instance: T, parentDisposable: Disposable) =
+  override fun <T : Any> replaceServiceInstance(serviceInterface: Class<T>, instance: T, parentDisposable: Disposable) {
     (delegate as ComponentManagerEx).replaceServiceInstance(serviceInterface, instance, parentDisposable)
+  }
 
-  override fun instances(createIfNeeded: Boolean, filter: ((Class<*>) -> Boolean)?): Sequence<Any> =
-    (delegate as ComponentManagerEx).instances(createIfNeeded, filter)
+  override fun instances(createIfNeeded: Boolean, filter: ((Class<*>) -> Boolean)?): Sequence<Any> {
+    return (delegate as ComponentManagerEx).instances(createIfNeeded, filter)
+  }
 
-  override fun processAllImplementationClasses(processor: (Class<*>, PluginDescriptor?) -> Unit) =
+  override fun processAllImplementationClasses(processor: (Class<*>, PluginDescriptor?) -> Unit) {
     (delegate as ComponentManagerEx).processAllImplementationClasses(processor)
+  }
 
-  override fun registerService(serviceInterface: Class<*>, implementation: Class<*>, pluginDescriptor: PluginDescriptor, override: Boolean, clientKind: ClientKind?) =
+  override fun registerService(serviceInterface: Class<*>, implementation: Class<*>, pluginDescriptor: PluginDescriptor, override: Boolean, clientKind: ClientKind?) {
     (delegate as ComponentManagerEx).registerService(serviceInterface, implementation, pluginDescriptor, override, clientKind)
+  }
 
-  override fun <T : Any> getServiceByClassName(serviceClassName: String): T? =
-    (delegate as ComponentManagerEx).getServiceByClassName(serviceClassName)
+  override fun <T : Any> getServiceByClassName(serviceClassName: String): T? {
+    return (delegate as ComponentManagerEx).getServiceByClassName(serviceClassName)
+  }
 
-  override fun unloadServices(module: IdeaPluginDescriptor, services: List<ServiceDescriptor>) =
+  override fun unloadServices(module: IdeaPluginDescriptor, services: List<ServiceDescriptor>) {
     (delegate as ComponentManagerEx).unloadServices(module, services)
+  }
 
-  override fun processAllHolders(processor: (String, Class<*>, PluginDescriptor?) -> Unit) =
+  override fun processAllHolders(processor: (String, Class<*>, PluginDescriptor?) -> Unit) {
     (delegate as ComponentManagerEx).processAllHolders(processor)
+  }
 
-  override fun pluginCoroutineScope(pluginClassloader: ClassLoader): CoroutineScope =
-    (delegate as ComponentManagerEx).pluginCoroutineScope(pluginClassloader)
+  override fun pluginCoroutineScope(pluginClassloader: ClassLoader): CoroutineScope {
+    return (delegate as ComponentManagerEx).pluginCoroutineScope(pluginClassloader)
+  }
 
-  override fun stopServicePreloading() =
-    (delegate as ComponentManagerEx).stopServicePreloading()
+  override fun stopServicePreloading() = (delegate as ComponentManagerEx).stopServicePreloading()
 
-  override fun <T : Any> collectInitializedComponents(aClass: Class<T>): List<T> =
-    (delegate as ComponentManagerEx).collectInitializedComponents(aClass)
+  override fun <T : Any> collectInitializedComponents(aClass: Class<T>): List<T> {
+    return (delegate as ComponentManagerEx).collectInitializedComponents(aClass)
+  }
 
-  override fun debugString(): String =
-    (delegate as ComponentManagerEx).debugString()
+  override fun debugString(): String = (delegate as ComponentManagerEx).debugString()
 
-  override fun isServiceSuitable(descriptor: ServiceDescriptor): Boolean =
-    (delegate as ComponentManagerEx).isServiceSuitable(descriptor)
+  override fun isServiceSuitable(descriptor: ServiceDescriptor): Boolean {
+    return (delegate as ComponentManagerEx).isServiceSuitable(descriptor)
+  }
 
-  override fun <T : Any> registerServiceInstance(serviceInterface: Class<T>, instance: T, pluginDescriptor: PluginDescriptor) =
+  override fun <T : Any> registerServiceInstance(serviceInterface: Class<T>, instance: T, pluginDescriptor: PluginDescriptor) {
     (delegate as ComponentManagerEx).registerServiceInstance(serviceInterface, instance, pluginDescriptor)
+  }
 
-  override fun getServiceImplementation(key: Class<*>): Class<*>? =
-    (delegate as ComponentManagerEx).getServiceImplementation(key)
+  override fun getServiceImplementation(key: Class<*>): Class<*>? {
+    return (delegate as ComponentManagerEx).getServiceImplementation(key)
+  }
 
   override fun <T : Any> replaceComponentInstance(componentKey: Class<T>, componentImplementation: T, parentDisposable: Disposable?) {
     (delegate as ComponentManagerEx).replaceComponentInstance(componentKey, componentImplementation, parentDisposable)
@@ -223,7 +235,7 @@ internal class DefaultProject : UserDataHolderBase(), Project, ComponentManagerE
 
   @Suppress("DEPRECATION")
   @Deprecated("")
-  override fun getComponent(name: String): com.intellij.openapi.components.BaseComponent? = delegate.getComponent(name)
+  override fun getComponent(name: String): BaseComponent? = delegate.getComponent(name)
 
   override fun getActivityCategory(isExtension: Boolean): ActivityCategory {
     return if (isExtension) ActivityCategory.PROJECT_EXTENSION else ActivityCategory.PROJECT_SERVICE
@@ -285,7 +297,7 @@ private class DefaultProjectImpl(
   override fun dispose() {
     super.dispose()
     // possibly re-enable "the only project" optimization since we have closed the extra project.
-    (ProjectManager.getInstance() as ProjectManagerImpl).updateTheOnlyProjectField();
+    (ProjectManager.getInstance() as ProjectManagerImpl).updateTheOnlyProjectField()
     unregisterProjectId(this)
   }
 

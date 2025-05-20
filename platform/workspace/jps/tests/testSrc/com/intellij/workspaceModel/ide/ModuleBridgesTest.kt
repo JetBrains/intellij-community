@@ -5,8 +5,10 @@ import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.openapi.application.*
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.module.*
-import com.intellij.openapi.module.impl.ModuleEx
+import com.intellij.openapi.module.EmptyModuleType
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.*
@@ -22,6 +24,7 @@ import com.intellij.platform.workspace.jps.JpsEntitySourceFactory
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.entities.DependencyScope
+import com.intellij.platform.workspace.jps.serialization.impl.toConfigLocation
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
@@ -38,7 +41,6 @@ import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.util.io.write
 import com.intellij.util.ui.UIUtil
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
-import com.intellij.platform.workspace.jps.serialization.impl.toConfigLocation
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.WEB_MODULE_ENTITY_TYPE_ID
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
@@ -830,7 +832,7 @@ class ModuleBridgesTest {
     val virtualFileUrlManager = workspaceModel.getVirtualFileUrlManager()
 
     val newNonPersistentModule = moduleManager.newNonPersistentModule(moduleName, JAVA_MODULE_ENTITY_TYPE_ID_NAME)
-    assertFalse((newNonPersistentModule as ModuleEx).canStoreSettings())
+    assertFalse(newNonPersistentModule.canStoreSettings())
     val moduleEntity = workspaceModel.currentSnapshot.entities(ModuleEntity::class.java).single()
     assertEquals(NonPersistentEntitySource, moduleEntity.entitySource)
 
@@ -849,7 +851,7 @@ class ModuleBridgesTest {
     }
 
     val persistentModule = moduleManager.modules.single()
-    assertTrue((persistentModule as ModuleEx).canStoreSettings())
+    assertTrue(persistentModule.canStoreSettings())
     assertSame(newNonPersistentModule, persistentModule)
   }
 

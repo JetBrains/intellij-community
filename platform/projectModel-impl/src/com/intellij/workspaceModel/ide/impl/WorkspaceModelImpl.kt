@@ -43,10 +43,12 @@ import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.measureTimeMillis
 
+private val EP_NAME: ExtensionPointName<BridgeInitializer> = ExtensionPointName("com.intellij.workspace.bridgeInitializer")
+
 @ApiStatus.Internal
 open class WorkspaceModelImpl : WorkspaceModelInternal {
-  val project: Project
-  val cs: CoroutineScope
+  private val project: Project
+  private val coroutineScope: CoroutineScope
 
   @Volatile
   var loadedFromCache: Boolean = false
@@ -85,7 +87,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
   
   constructor(project: Project, cs: CoroutineScope, storage: ImmutableEntityStorage, virtualFileUrlManager: VirtualFileUrlManager) {
     this.project = project
-    this.cs = cs
+    this.coroutineScope = cs
     this.virtualFileManager = virtualFileUrlManager
     entityStorage = VersionedEntityStorageImpl(storage)
     unloadedEntitiesStorage = VersionedEntityStorageImpl(ImmutableEntityStorage.empty())
@@ -94,7 +96,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
 
   constructor(project: Project, cs: CoroutineScope) {
     this.project = project
-    this.cs = cs
+    this.coroutineScope = cs
     this.virtualFileManager = IdeVirtualFileUrlManagerImpl(project.isCaseSensitive)
     log.debug { "Loading workspace model" }
     val start = Milliseconds.now()
@@ -412,7 +414,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
     }
 
     initializeBridgesTimeMs.addMeasuredTime {
-      for (bridgeInitializer in BridgeInitializer.EP_NAME.extensionList) {
+      for (bridgeInitializer in EP_NAME.extensionList) {
         logErrorOnEventHandling {
           if (bridgeInitializer.isEnabled()) {
             bridgeInitializer.initializeBridges(project, change, builder)
@@ -446,7 +448,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
     }
 
     // We emit async changes before running other listeners under write action
-    cs.launch { updatesFlow.emit(change) }
+    coroutineScope.launch { updatesFlow.emit(change) }
 
     onChangedTimeMs.addMeasuredTime { // Measure only the time of WorkspaceModelChangeListener
       logErrorOnEventHandling {

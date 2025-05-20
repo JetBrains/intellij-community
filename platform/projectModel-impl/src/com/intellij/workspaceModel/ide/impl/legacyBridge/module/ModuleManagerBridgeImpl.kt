@@ -401,13 +401,14 @@ abstract class ModuleManagerBridgeImpl(
       }
     }
 
+    val workspaceModel = project.serviceAsync<WorkspaceModel>()
     withContext(Dispatchers.EDT) {
       edtWriteAction {
         ProjectRootManagerEx.getInstanceEx(project).withRootsChange(RootsChangeRescanningInfo.NO_RESCAN_NEEDED).use {
-          WorkspaceModel.getInstance(project).updateProjectModel("Update unloaded modules") { builder ->
+          workspaceModel.updateProjectModel("Update unloaded modules") { builder ->
             addAndRemoveModules(builder, moduleEntitiesToLoad, moduleEntitiesToUnload, unloadedEntityStorage)
           }
-          (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).updateUnloadedEntities("Update unloaded modules") { builder ->
+          (workspaceModel as WorkspaceModelInternal).updateUnloadedEntities("Update unloaded modules") { builder ->
             addAndRemoveModules(builder, moduleEntitiesToUnload, moduleEntitiesToLoad, mainStorage)
           }
         }
@@ -528,11 +529,9 @@ abstract class ModuleManagerBridgeImpl(
       return ModuleManager.getInstance(project) as ModuleManagerBridgeImpl
     }
 
-    @JvmStatic
     val EntityStorage.moduleMap: ExternalEntityMapping<ModuleBridge>
       get() = getExternalMapping(MODULE_BRIDGE_MAPPING_ID)
 
-    @JvmStatic
     val MutableEntityStorage.mutableModuleMap: MutableExternalEntityMapping<ModuleBridge>
       get() = getMutableExternalMapping(MODULE_BRIDGE_MAPPING_ID)
 
@@ -635,11 +634,11 @@ abstract class ModuleManagerBridgeImpl(
 private fun checkOldServices(plugins: List<IdeaPluginDescriptorImpl>) {
   for (plugin in plugins) {
     for (content in plugin.contentModules) {
-      checkModuleLevel(plugin, content.descriptor, forbid = false)
+      checkModuleLevel(plugin = plugin, child = content.descriptor, forbid = false)
     }
 
     executeRegisterTaskForOldContent(plugin) {
-      checkModuleLevel(plugin, it, forbid = true)
+      checkModuleLevel(plugin = plugin, child = it, forbid = true)
     }
   }
 }

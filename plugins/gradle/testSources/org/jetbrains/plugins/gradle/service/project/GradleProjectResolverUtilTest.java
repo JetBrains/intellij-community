@@ -71,7 +71,7 @@ public class GradleProjectResolverUtilTest {
         }));
         return Unit.INSTANCE;
       }));
-    ModuleManagerBridgeImpl.getMutableModuleMap(builder).addMapping(moduleEntity, module);
+    ModuleManagerBridgeImpl.Companion.getMutableModuleMap(builder).addMapping(moduleEntity, module);
     when(module.getEntityStorage()).thenReturn(new VersionedEntityStorageOnSnapshot(builder.toSnapshot()));
     
     ExternalSystemModulePropertyManager modulePropertyManager = new ExternalSystemModulePropertyManagerBridge(module);

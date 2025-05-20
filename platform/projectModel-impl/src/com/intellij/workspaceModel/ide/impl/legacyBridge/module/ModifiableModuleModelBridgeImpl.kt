@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
+@file:Suppress("ReplacePutWithAssignment", "OVERRIDE_DEPRECATION")
 
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
@@ -294,8 +294,9 @@ internal class ModifiableModuleModelBridgeImpl(
   override fun getNewName(module: Module): String? = newNameToModule.getKeysByValue(module as ModuleBridge)?.single()
   override fun getActualName(module: Module): String = getNewName(module) ?: module.name
 
-  override fun getModuleGroupPath(module: Module): Array<String>? =
-    ModuleManagerBridgeImpl.getModuleGroupPath(module, entityStorageOnDiff)
+  override fun getModuleGroupPath(module: Module): Array<String>? {
+    return ModuleManagerBridgeImpl.getModuleGroupPath(module as ModuleBridge, entityStorageOnDiff)
+  }
 
   override fun hasModuleGroups(): Boolean = ModuleManagerBridgeImpl.hasModuleGroups(entityStorageOnDiff)
 
