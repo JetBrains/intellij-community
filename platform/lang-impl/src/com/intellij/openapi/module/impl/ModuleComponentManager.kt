@@ -5,7 +5,6 @@ package com.intellij.openapi.module.impl
 
 import com.intellij.ide.plugins.ContainerDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.components.ComponentConfig
@@ -19,7 +18,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.serviceContainer.*
+import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.serviceContainer.PrecomputedExtensionModel
+import com.intellij.serviceContainer.emptyConstructorMethodType
+import com.intellij.serviceContainer.findConstructorOrNull
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleBridgeImpl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -107,16 +109,6 @@ class ModuleComponentManager(parent: ComponentManagerImpl) : ComponentManagerImp
   }
 
   override fun debugString(short: Boolean): String = if (short) javaClass.simpleName else super.debugString(short = false)
-
-  override fun registerComponents(
-    modules: List<IdeaPluginDescriptorImpl>,
-    app: Application?,
-    listenerCallbacks: MutableList<in Runnable>?,
-  ) {
-    LOG.error("Please use registerServicesAndExtensions")
-    assert(listenerCallbacks.isNullOrEmpty())
-    initModuleContainer(precomputeModuleLevelExtensionModel())
-  }
 
   override fun registerService(serviceInterface: Class<*>, implementation: Class<*>, pluginDescriptor: PluginDescriptor, override: Boolean, clientKind: ClientKind?) {
     if (serviceInterface == IComponentStore::class.java) {
