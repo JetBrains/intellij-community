@@ -18,10 +18,9 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.popup.ActionPopupOptions
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
+import com.intellij.vcs.git.shared.actions.GitDataKeys
 import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
-import git4idea.GitBranch
 import git4idea.GitReference
-import git4idea.GitTag
 import git4idea.GitVcs
 import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.config.GitVcsSettings
@@ -197,12 +196,7 @@ internal class GitBranchesTreePopupStep(
         sink[CommonDataKeys.PROJECT] = project
         sink[GitBranchActionsDataKeys.AFFECTED_REPOSITORIES] = repositories
         sink[GitBranchActionsDataKeys.SELECTED_REPOSITORY] = selectedRepository
-        if (reference is GitBranch) {
-          sink[GitBranchActionsDataKeys.BRANCHES] = listOf(reference)
-        }
-        else if (reference is GitTag) {
-          sink[GitBranchActionsDataKeys.TAGS] = listOf(reference)
-        }
+        sink[GitDataKeys.SELECTED_REF] = reference
       }
   }
 }
