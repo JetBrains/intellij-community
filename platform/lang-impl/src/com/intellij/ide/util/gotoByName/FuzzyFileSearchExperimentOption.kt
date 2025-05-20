@@ -26,7 +26,7 @@ internal class FuzzyFileSearchExperimentOption : ABExperimentOption {
   companion object {
     @JvmStatic
     val isFuzzyFileSearchEnabled: Boolean
-      get() = (PlatformUtils.isRider() && `is`("search.everywhere.fuzzy.file.search.enabled", false)) ||
+      get() = //(PlatformUtils.isRider() && `is`("search.everywhere.fuzzy.file.search.enabled", false)) ||
               `is`("search.everywhere.fuzzy.file.search.enabled", false) ||
               ABExperiment.getABExperimentInstance().isExperimentOptionEnabled(FuzzyFileSearchExperimentOption::class.java)
   }
