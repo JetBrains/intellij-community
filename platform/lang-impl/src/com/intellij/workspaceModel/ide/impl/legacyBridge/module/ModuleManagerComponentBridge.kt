@@ -118,7 +118,6 @@ open class ModuleManagerComponentBridge(private val project: Project, coroutineS
         isNew = true,
         precomputedExtensionModel = precomputedModel,
       )
-      bridge.markContainerAsCreated()
 
       LOG.debug { "${change.newEntity.name} module initialized" }
       builder.mutableModuleMap.addMapping(change.newEntity, bridge)

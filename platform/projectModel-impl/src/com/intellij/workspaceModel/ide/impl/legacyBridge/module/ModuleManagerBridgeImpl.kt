@@ -243,7 +243,6 @@ abstract class ModuleManagerBridgeImpl(
           isNew = false,
           precomputedExtensionModel = precomputedExtensionModel,
         )
-        module.markContainerAsCreated()
         moduleEntity to module
       }.getOrLogException(LOG)
     }
@@ -486,6 +485,7 @@ abstract class ModuleManagerBridgeImpl(
         val moduleStore = module.componentStore as ModuleStore
         moduleStore.setPath(path = moduleFileUrl.toPath(), virtualFile = null, isNew = isNew)
       }
+      module.markContainerAsCreated()
     }
   }
 
@@ -503,7 +503,6 @@ abstract class ModuleManagerBridgeImpl(
       isNew = isNew,
       precomputedExtensionModel = precomputedExtensionModel,
     )
-    module.markContainerAsCreated()
     return@addMeasuredTime module
   }
 
