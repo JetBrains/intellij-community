@@ -12,5 +12,5 @@ interface FlexLexer {
   fun getTokenEnd(): Int
 
   fun advance(): SyntaxElementType?
-  fun reset(buf: CharSequence, start: Int, end: Int, initialState: Int)
+  fun reset(buffer: CharSequence, start: Int, end: Int, initialState: Int)
 }
