@@ -29,10 +29,10 @@ data class PluginLayoutDescription(
 )
 
 fun createLayoutProviderByContentYamlFiles(ideContentYamlPath: Path, mainModuleOfCorePlugin: String, corePluginDescriptorPath: String, nameOfTestWhichGeneratesFiles: String): PluginLayoutProvider {
-  return PluginLayoutProviderImpl(ideContentYamlPath, mainModuleOfCorePlugin, corePluginDescriptorPath, nameOfTestWhichGeneratesFiles = nameOfTestWhichGeneratesFiles) 
+  return YamlFileBasedPluginLayoutProvider(ideContentYamlPath, mainModuleOfCorePlugin, corePluginDescriptorPath, nameOfTestWhichGeneratesFiles = nameOfTestWhichGeneratesFiles) 
 }
 
-private class PluginLayoutProviderImpl(
+private class YamlFileBasedPluginLayoutProvider(
   private val ideContentYamlPath: Path, 
   private val mainModuleOfCorePlugin: String,
   private val corePluginDescriptorPath: String,
