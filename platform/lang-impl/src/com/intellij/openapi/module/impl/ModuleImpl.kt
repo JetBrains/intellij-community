@@ -3,12 +3,10 @@
 
 package com.intellij.openapi.module.impl
 
-import com.intellij.configurationStore.NonPersistentModuleStore
 import com.intellij.configurationStore.RenameableStateStorageManager
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.ComponentStoreOwner
-import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
@@ -78,14 +76,10 @@ open class ModuleImpl(
   override fun rename(newName: String, notifyStorage: Boolean) {
     name = newName
     if (notifyStorage) {
-      (store.storageManager as RenameableStateStorageManager).rename(newName + ModuleFileType.DOT_DEFAULT_EXTENSION)
+      ((this as ComponentStoreOwner).componentStore.storageManager as RenameableStateStorageManager)
+        .rename(newName + ModuleFileType.DOT_DEFAULT_EXTENSION)
     }
   }
-
-  protected val store: IComponentStore
-    get() = (this as ComponentStoreOwner).componentStore
-
-  final override fun canStoreSettings(): Boolean = store !is NonPersistentModuleStore
 
   override fun getModuleNioFile(): Path {
     return Path.of("")

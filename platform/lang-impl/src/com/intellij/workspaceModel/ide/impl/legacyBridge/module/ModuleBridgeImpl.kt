@@ -55,6 +55,8 @@ open class ModuleBridgeImpl(
 
   override fun getModuleFile(): VirtualFile? = imlFilePointer?.file
 
+  override fun canStoreSettings(): Boolean = imlFilePointer != null && componentStore !is NonPersistentModuleStore
+
   override fun rename(newName: String, newModuleFileUrl: VirtualFileUrl?, notifyStorage: Boolean) {
     imlFilePointer = newModuleFileUrl as VirtualFileUrlBridge
     rename(newName, notifyStorage)
@@ -65,9 +67,10 @@ open class ModuleBridgeImpl(
     //  PathMacroManager might be disposed (together with the module) by the moment when save sessions are actually committed to the disk.
     //  Reproducer: com.intellij.workspaceModel.integrationTests.tests.aggregator.maven.changes.MavenMultiModulesProjectAddTwoModulesTest.mavenMultiModulesProjectAddTwoModules
     if (imlFilePointer != null) {
+      @Suppress("DEPRECATION")
       val isDisposed = Disposer.isDisposed(this)
       if (!isDisposed) {
-        val store = store
+        val store = componentStore
         if (store !is NonPersistentModuleStore) {
           return store.storageManager.expandMacro(StoragePathMacros.MODULE_FILE)
         }
@@ -90,8 +93,9 @@ open class ModuleBridgeImpl(
       resetModuleStore()
     }
     val imlPath = newModuleFileUrl.toPath()
-    (store.storageManager as? RenameableStateStorageManager)?.pathRenamed(imlPath, null)
-    store.setPath(imlPath)
+    val componentStore = componentStore
+    (componentStore.storageManager as? RenameableStateStorageManager)?.pathRenamed(imlPath, null)
+    componentStore.setPath(imlPath)
     (PathMacroManager.getInstance(this) as? ModulePathMacroManager)?.onImlFileMoved()
   }
 

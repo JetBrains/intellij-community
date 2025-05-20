@@ -199,7 +199,7 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
    */
   @ApiStatus.Internal
   default boolean canStoreSettings() {
-    return true;
+    return false;
   }
 
   // not called for module on loading, only if module created after project opening
