@@ -41,7 +41,7 @@ class RegisterFileSetByConditionTest {
   }
 
   @Test
-  fun `non-recursive file set`(@TestDisposable testDisposable: Disposable) {
+  fun `register file set by condition`(@TestDisposable testDisposable: Disposable) {
     val file = projectModel.baseProjectDir.newVirtualFile("root/a.txt")
     val fileTxt = projectModel.baseProjectDir.newVirtualFile("root/exc/root/b.txt")
     val fileJava = projectModel.baseProjectDir.newVirtualFile("root/exc/root/b.java")
