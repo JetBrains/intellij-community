@@ -16147,9 +16147,6 @@ c:com.intellij.ui.popup.tree.TreePopupImpl
 c:com.intellij.ui.render.IconCompOptionalCompPanel
 - com.intellij.ui.popup.list.SelectablePanel
 - <init>(javax.swing.JComponent):V
-- f:getCenter():javax.swing.JComponent
-- f:getRight():javax.swing.JComponent
-- f:setRight(javax.swing.JComponent):V
 c:com.intellij.ui.render.LabelBasedRenderer
 - javax.swing.JLabel
 - <init>():V
