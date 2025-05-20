@@ -547,6 +547,10 @@ abstract class ComponentManagerImpl(
   }
 
   protected fun registerServices(services: List<ServiceDescriptor>, pluginDescriptor: IdeaPluginDescriptor) {
+    if (services.isEmpty()) {
+      return
+    }
+
     LOG.trace { "${pluginDescriptor.pluginId} - registering services" }
     try {
       registerServices2Inner(services, pluginDescriptor)
@@ -564,9 +568,6 @@ abstract class ComponentManagerImpl(
   }
 
   private fun registerServices2Inner(services: List<ServiceDescriptor>, pluginDescriptor: IdeaPluginDescriptor) {
-    if (services.isEmpty()) {
-      return
-    }
     val pluginClassLoader = pluginDescriptor.pluginClassLoader
     val registrationScope = if (pluginClassLoader is PluginAwareClassLoader) {
       pluginClassLoader.pluginCoroutineScope
@@ -574,7 +575,6 @@ abstract class ComponentManagerImpl(
     else {
       null
     }
-    val keyClassNames = ArrayList<String>()
     val registrar = serviceContainer.startRegistration(registrationScope)
     val app = getApplication()!!
     for (descriptor in services) {
@@ -590,8 +590,7 @@ abstract class ComponentManagerImpl(
         else -> descriptor.serviceImplementation
       }
 
-      val key = descriptor.serviceInterface
-                ?: implementation
+      val key = descriptor.serviceInterface ?: implementation
       if (descriptor.overrides) {
         registrar.overrideInitializer(
           keyClassName = key,
@@ -599,32 +598,30 @@ abstract class ComponentManagerImpl(
             null
           }
           else {
-            keyClassNames.add(key)
             ServiceDescriptorInstanceInitializer(
               keyClassName = key,
               instanceClassName = implementation,
               componentManager = this,
-              pluginDescriptor,
+              pluginDescriptor = pluginDescriptor,
               serviceDescriptor = descriptor,
             )
           }
         )
       }
       else {
-        keyClassNames.add(key)
         registrar.registerInitializer(
           keyClassName = key,
           initializer = ServiceDescriptorInstanceInitializer(
             keyClassName = key,
             instanceClassName = checkNotNull(implementation),
             componentManager = this,
-            pluginDescriptor,
+            pluginDescriptor = pluginDescriptor,
             serviceDescriptor = descriptor,
           ),
         )
       }
     }
-    val handle: UnregisterHandle? = registrar.complete()
+    val handle = registrar.complete()
     if (handle != null) {
       pluginServicesStore.putServicesUnregisterHandle(pluginDescriptor, handle)
     }
