@@ -1,0 +1,12 @@
+f:org.jetbrains.jewel.markdown.processing.MarkdownProcessor
+- sf:$stable:I
+- <init>():V
+- <init>(java.util.List,org.jetbrains.jewel.markdown.MarkdownMode,org.commonmark.parser.Parser,kotlin.jvm.functions.Function1):V
+- b:<init>(java.util.List,org.jetbrains.jewel.markdown.MarkdownMode,org.commonmark.parser.Parser,kotlin.jvm.functions.Function1,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getBlockExtensions():java.util.List
+- f:getDelimitedInlineExtensions():java.util.List
+- f:getExtensions():java.util.List
+- f:plus(org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension):org.jetbrains.jewel.markdown.processing.MarkdownProcessor
+- f:processChildren(org.commonmark.node.Node):java.util.List
+- f:processMarkdownDocument(java.lang.String):java.util.List
+- f:withExtension(org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension):org.jetbrains.jewel.markdown.processing.MarkdownProcessor

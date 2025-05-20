@@ -200,6 +200,7 @@ public final class org/jetbrains/jewel/foundation/code/MimeType$Known {
 	public final fun getC-9EQw4cI ()Ljava/lang/String;
 	public final fun getCPP-9EQw4cI ()Ljava/lang/String;
 	public final fun getDART-9EQw4cI ()Ljava/lang/String;
+	public final fun getDIFF-9EQw4cI ()Ljava/lang/String;
 	public final fun getGO-9EQw4cI ()Ljava/lang/String;
 	public final fun getGRADLE-9EQw4cI ()Ljava/lang/String;
 	public final fun getGRADLE_KTS-9EQw4cI ()Ljava/lang/String;
@@ -209,6 +210,7 @@ public final class org/jetbrains/jewel/foundation/code/MimeType$Known {
 	public final fun getJSON-9EQw4cI ()Ljava/lang/String;
 	public final fun getKOTLIN-9EQw4cI ()Ljava/lang/String;
 	public final fun getMANIFEST-9EQw4cI ()Ljava/lang/String;
+	public final fun getPATCH-9EQw4cI ()Ljava/lang/String;
 	public final fun getPROGUARD-9EQw4cI ()Ljava/lang/String;
 	public final fun getPROPERTIES-9EQw4cI ()Ljava/lang/String;
 	public final fun getPROTO-9EQw4cI ()Ljava/lang/String;
