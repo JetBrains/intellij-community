@@ -237,7 +237,7 @@ public class BazelIncBuilder {
 
         for (Path path : flat(map(deletedLibraries, context.getPathMapper()::toPath), toBackup)) {
           Path backup = DataPaths.getJarBackupStoreFile(context, path);
-          Files.deleteIfExists(backup);
+          Utils.deleteIfExists(backup);
         }
 
         for (Path path : toBackup) {
