@@ -112,12 +112,17 @@ open class ProgressComponent(val isCompact: Boolean, val info: TaskInfo, progres
     val textAndProgress: JPanel = NonOpaquePanel(BorderLayout())
     textAndProgress.add(textPanel, BorderLayout.CENTER)
 
-    val progressWrapper = NonOpaquePanel(BorderLayout())
+    val progressWrapper = wrapProgress()
     progressWrapper.setBorder(JBUI.Borders.empty(0, 4))
-    progressWrapper.add(progress, BorderLayout.CENTER)
 
     textAndProgress.add(progressWrapper, BorderLayout.EAST)
     component.add(textAndProgress, BorderLayout.CENTER)
+  }
+
+  protected open fun wrapProgress(): JComponent {
+    val progressWrapper = NonOpaquePanel(BorderLayout())
+    progressWrapper.add(progress, BorderLayout.CENTER)
+    return progressWrapper
   }
 
   protected open fun createEastButtons(): List<ProgressButton> {
@@ -129,7 +134,7 @@ open class ProgressComponent(val isCompact: Boolean, val info: TaskInfo, progres
       IconButton(indicatorModel.getCancelTooltipText(),
                  if (isCompact) AllIcons.Process.StopSmall else AllIcons.Process.Stop,
                  if (isCompact) AllIcons.Process.StopSmallHovered else AllIcons.Process.StopHovered),
-      ActionListener { event: ActionEvent? -> cancelRequest() }).setFillBg(false)
+      ActionListener { _: ActionEvent? -> cancelRequest() }).setFillBg(false)
 
     cancelButton.isVisible = indicatorModel.isCancellable()
 

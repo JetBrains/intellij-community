@@ -41,8 +41,10 @@ import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.reference.SoftReference
 import com.intellij.ui.*
 import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.ActionLink
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -78,6 +80,9 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
     @JvmField
     @ApiStatus.Internal
     val FAKE_BALLOON: Any = Any()
+
+    private val showCounterInsteadOfMultiProcessLink: Boolean
+      get() = Registry.`is`("progresses.show.counter.icon.instead.of.show.link", false)
   }
 
   @ApiStatus.Internal
@@ -696,6 +701,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
   internal open inner class MyProgressComponent(compact: Boolean, task: TaskInfo, progressModel: ProgressModel)
     : ProgressComponent(compact, task, progressModel), TitledIndicator {
     private var original: ProgressModel?
+    internal var addedProgressBarWidth: Int = 0
 
     override fun getText(): @NlsContexts.ProgressText String? {
       val text = (indicatorModel.getText() ?: "")
@@ -725,6 +731,18 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
       UIUtil.setCursor(progress, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
       super.createCompactTextAndProgress(component)
       (progress.parent as JComponent).setBorder(JBUI.Borders.empty(0, 8, 0, 4))
+    }
+
+    override fun wrapProgress(): JComponent {
+      val progressWrapper = object : NonOpaquePanel(BorderLayout()) {
+        override fun getPreferredSize(): Dimension? {
+          val original = super.getPreferredSize()
+          original.width += addedProgressBarWidth
+          return original
+        }
+      }
+      progressWrapper.add(progress, BorderLayout.CENTER)
+      return progressWrapper
     }
 
     override fun onFinish() {
@@ -925,6 +943,8 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
         }
       }
     }
+    private val counterIcon: CounterIcon
+    private val counterLabel: JLabel
 
     init {
       progressIcon.setOpaque(false)
@@ -941,11 +961,21 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
       progressIcon.setBorder(JBUI.CurrentTheme.StatusBar.Widget.border())
       progressIcon.setToolTipText(ActionsBundle.message("action.ShowProcessWindow.double.click"))
 
+      counterIcon = CounterIcon.createRoundIcon(1, JBColor.WHITE, JBUI.CurrentTheme.ProgressBar.PROGRESS)
+      val label = JBLabel("", counterIcon, SwingConstants.RIGHT)
+      label.addMouseListener(object : MouseAdapter() {
+        override fun mouseClicked(e: MouseEvent) {
+          host.triggerPopupShowing()
+        }
+      })
+      UIUtil.setCursor(label, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
+      counterLabel = label
+
       setLayout(object : AbstractLayoutManager() {
         override fun preferredLayoutSize(parent: Container): Dimension {
           val result = Dimension()
-          fun addVisibleToPreferred(component: JComponent, withGap: Boolean) {
-            if (component.isVisible) {
+          fun addVisibleToPreferred(component: JComponent, withGap: Boolean, enforceOnInvisible: Boolean = false) {
+            if (enforceOnInvisible || component.isVisible) {
               if (withGap && result.width > 0) {
                 result.width += gap
               }
@@ -956,11 +986,14 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
           }
 
           if (indicator != null) {
-            addVisibleToPreferred(indicator!!.component, false)
+            addVisibleToPreferred(indicator!!.component, withGap = false)
           }
-          addVisibleToPreferred(multiProcessLink, true)
+          addVisibleToPreferred(multiProcessLink, withGap = true)
           if (progressIcon.isVisible) {
             result.height = max(result.height, progressIcon.getPreferredSize().height)
+          }
+          if (showCounterInsteadOfMultiProcessLink) {
+            addVisibleToPreferred(counterLabel, withGap = true, enforceOnInvisible = true)
           }
           JBInsets.addTo(result, parent.insets)
           return result
@@ -969,37 +1002,39 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
         override fun layoutContainer(parent: Container) {
           if (indicator == null) {
             progressIcon.isVisible = false
+            counterLabel.isVisible = false
             return
           }
+          indicator?.addedProgressBarWidth = 0
           val insets = parent.insets
           val x = insets.left
           val centerY = (parent.height + insets.top - insets.bottom) / 2
           val width = parent.width - insets.left - insets.right
           var rightX = parent.width - insets.right
           val gap = gap
-          val indicator = indicator!!.component
-          if (indicator.isVisible) {
+          val indicatorComponent = indicator!!.component
+          if (indicatorComponent.isVisible) {
             var preferredWidth = preferredLayoutSize(parent).width - insets.left - insets.right
             var indicatorSize: Dimension? = null
             if (preferredWidth > width) {
               val progressWidth2x = this@InlineProgressPanel.indicator!!.progress.getPreferredSize().width * 2
               if (width > progressWidth2x && this@InlineProgressPanel.indicator!!.textPanel.getPreferredSize().width > progressWidth2x) {
                 preferredWidth = width
-                indicatorSize = Dimension(width, indicator.getPreferredSize().height)
+                indicatorSize = Dimension(width, indicatorComponent.getPreferredSize().height)
                 if (multiProcessLink.isVisible) {
                   indicatorSize.width -= multiProcessLink.getPreferredSize().width + gap
                 }
               }
             }
             if (preferredWidth > width) {
-              layoutWithUnfittingIndicator(indicator,
+              layoutWithUnfittingIndicator(indicatorComponent,
                                            initialPreferredWidth = preferredWidth,
                                            initialRightX = rightX,
                                            centerY = centerY)
             }
             else {
-              layoutWithFittingIndicator(indicator,
-                                         indicatorSize = indicatorSize,
+              layoutWithFittingIndicator(indicatorComponent,
+                                         initialIndicatorSize = indicatorSize,
                                          initialRightX = rightX,
                                          centerY = centerY)
             }
@@ -1013,6 +1048,15 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
           var preferredWidth = initialPreferredWidth
           var rightX = initialRightX
           indicatorComponent.setBounds(0, 0, 0, 0)
+
+          if (showCounterInsteadOfMultiProcessLink && counterLabel.isVisible) {
+            progressIcon.isVisible = false
+            setBounds(counterLabel, rightX, centerY, null, true)
+            return
+          }
+          // With showCounterInsteadOfMultiProcessLink and !counterLabel.isVisible (single progress)
+          // behavior is just the same as with !showCounterInsteadOfMultiProcessLink
+
           progressIcon.isVisible = true
           val iconSize = progressIcon.getPreferredSize()
           preferredWidth = iconSize.width
@@ -1039,23 +1083,42 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
           progressIcon.isVisible = true
         }
 
-        private fun layoutWithFittingIndicator(indicatorComponent: JPanel, indicatorSize: Dimension?, initialRightX: Int, centerY: Int) {
+        private fun layoutWithFittingIndicator(indicatorComponent: JPanel, initialIndicatorSize: Dimension?, initialRightX: Int, centerY: Int) {
           var rightX = initialRightX
+          var indicatorSize = initialIndicatorSize
           progressIcon.isVisible = false
-          if (multiProcessLink.isVisible) {
+          if (showCounterInsteadOfMultiProcessLink) {
+            if (counterLabel.isVisible) {
+              rightX = setBounds(counterLabel, rightX, centerY, null, true) - gap
+            }
+            else {
+              indicatorSize = indicatorSize ?: indicatorComponent.getPreferredSize()
+
+              val additionalWidth = counterLabel.preferredSize.width + gap
+              indicatorSize.width += additionalWidth
+              indicator?.addedProgressBarWidth = additionalWidth
+            }
+          }
+          else if (multiProcessLink.isVisible) {
             rightX = setBounds(multiProcessLink, rightX, centerY, null, true) - gap
           }
           setBounds(indicatorComponent, rightX, centerY, indicatorSize, true)
         }
 
         private fun layoutWithoutIndicator(rightX: Int, centerY: Int, initialX: Int) {
+          if (showCounterInsteadOfMultiProcessLink) {
+            progressIcon.isVisible = false
+            if (counterLabel.isVisible) {
+              setBounds(counterLabel, rightX, centerY, null, true)
+            }
+            return
+          }
           val linkSize = multiProcessLink.getPreferredSize()
           val preferredWidth = linkSize.width
           if (preferredWidth > width) {
             multiProcessLink.setBounds(0, 0, 0, 0)
             progressIcon.isVisible = true
             setBounds(progressIcon, initialX, centerY, null, false)
-            progressIcon.isVisible = true
           }
           else {
             progressIcon.isVisible = false
@@ -1068,6 +1131,8 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
       progressIcon.isVisible = false
       add(multiProcessLink)
       multiProcessLink.isVisible = false
+      add(counterLabel)
+      counterLabel.isVisible = false
     }
 
     fun updateProgress(compact: MyProgressComponent?) {
@@ -1110,12 +1175,20 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
       }
       val size = host.originals.size
       indicator!!.component.isVisible = !showPopup
-      multiProcessLink.isVisible = showPopup || size > 1
-      if (showPopup) {
-        multiProcessLink.setText(IdeBundle.message("link.hide.processes", size))
+      if (showCounterInsteadOfMultiProcessLink) {
+        counterIcon.number = size
+        counterLabel.isVisible = size > 1
+        multiProcessLink.isVisible = false
       }
-      else if (size > 1) {
-        multiProcessLink.setText(IdeBundle.message("link.show.all.processes", size))
+      else {
+        counterLabel.isVisible = false
+        multiProcessLink.isVisible = showPopup || size > 1
+        if (showPopup) {
+          multiProcessLink.setText(IdeBundle.message("link.hide.processes", size))
+        }
+        else if (size > 1) {
+          multiProcessLink.setText(IdeBundle.message("link.show.all.processes", size))
+        }
       }
       doLayout()
       revalidate()

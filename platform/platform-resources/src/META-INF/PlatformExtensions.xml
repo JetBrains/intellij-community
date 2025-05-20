@@ -1923,6 +1923,9 @@
     <registryKey key="ide.idle.memory.cleaner.delay"
                  defaultValue="5000"
                  description="A delay in milliseconds between the IDE becoming idle and the memory cleaning being performed"/>
+    <registryKey key="progresses.show.counter.icon.instead.of.show.link"
+                 defaultValue="false"
+                 description="Progresses would be shown with an icon with their number in status bar instead of Show All link"/>
 
    <usagePresentationProvider implementation="com.intellij.find.impl.UsageInfo2UsageAdapterPresentationProvider"/>
 
