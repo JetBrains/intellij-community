@@ -5,7 +5,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jetbrains.annotations.ApiStatus
-import com.intellij.openapi.util.Pair
 import org.jetbrains.annotations.TestOnly
 
 @ApiStatus.Internal
@@ -22,7 +21,7 @@ interface AutomaticModuleUnloader {
   fun getLoadedModules(): Collection<String>
 
   companion object {
-    fun getInstance(project: Project) = project.service<AutomaticModuleUnloader>()
+    fun getInstance(project: Project): AutomaticModuleUnloader = project.service<AutomaticModuleUnloader>()
   }
 }
 

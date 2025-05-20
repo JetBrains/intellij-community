@@ -156,7 +156,7 @@ class ModuleBridgeImpl(
     private val facetsInitializationTimeMs = MillisecondsMeasurer()
     private val updateOptionTimeMs = MillisecondsMeasurer()
 
-    fun initFacets(modules: List<Pair<ModuleEntity, ModuleBridge>>, project: Project, coroutineScope: CoroutineScope) {
+    fun initFacets(modules: Collection<Pair<ModuleEntity, ModuleBridge>>, project: Project, coroutineScope: CoroutineScope) {
       coroutineScope.launch {
         val facetManagerFactory = project.serviceAsync<FacetManagerFactory>()
         withContext(Dispatchers.EDT) {
@@ -169,7 +169,7 @@ class ModuleBridgeImpl(
 
     // separate method to see it in a profiler
     private fun doInitFacetsInEdt(
-      modules: List<Pair<ModuleEntity, ModuleBridge>>,
+      modules: Collection<Pair<ModuleEntity, ModuleBridge>>,
       facetManagerFactory: FacetManagerFactory,
     ) {
       for ((_, module) in modules) {

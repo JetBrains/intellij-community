@@ -167,7 +167,7 @@ open class ModuleManagerComponentBridge(private val project: Project, coroutineS
     return moduleEntity
   }
 
-  final override fun initFacets(modules: List<Pair<ModuleEntity, ModuleBridge>>) {
+  final override fun initFacets(modules: Collection<Pair<ModuleEntity, ModuleBridge>>) {
     ModuleBridgeImpl.initFacets(modules, project, coroutineScope)
   }
 

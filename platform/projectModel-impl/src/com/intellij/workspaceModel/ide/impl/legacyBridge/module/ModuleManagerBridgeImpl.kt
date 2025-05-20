@@ -25,10 +25,10 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Pair
 import com.intellij.platform.backend.workspace.*
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
+import com.intellij.platform.util.coroutines.mapNotNullConcurrent
 import com.intellij.platform.workspace.jps.CustomModuleEntitySource
 import com.intellij.platform.workspace.jps.JpsFileDependentEntitySource
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
@@ -58,7 +58,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-
 
 private val loadAllModulesTimeMs = MillisecondsMeasurer()
 private val newModuleTimeMs = MillisecondsMeasurer()
@@ -228,13 +227,14 @@ abstract class ModuleManagerBridgeImpl(
     }
   }
 
-  private fun createModuleBridges(
+  private suspend fun createModuleBridges(
     loadedEntities: List<ModuleEntity>,
     targetBuilder: MutableEntityStorage?,
-  ): List<kotlin.Pair<ModuleEntity, ModuleBridge>> {
+  ): Collection<Pair<ModuleEntity, ModuleBridge>> {
     val precomputedExtensionModel = precomputeModuleLevelExtensionModel()
-    val result = ArrayList<kotlin.Pair<ModuleEntity, ModuleBridge>>(loadedEntities.size)
-    return loadedEntities.mapNotNullTo(result) { moduleEntity ->
+    // Persistent modules perform disk loading eagerly to catch file-not-found errors during initialization
+    // rather than at a random later time (see setPath). Therefore, we perform the loading concurrently.
+    return loadedEntities.mapNotNullConcurrent { moduleEntity ->
       runCatching {
         val module = createModuleInstanceWithoutCreatingComponents(
           moduleEntity = moduleEntity,
@@ -248,7 +248,7 @@ abstract class ModuleManagerBridgeImpl(
     }
   }
 
-  protected open fun initFacets(modules: List<kotlin.Pair<ModuleEntity, ModuleBridge>>) {
+  protected open fun initFacets(modules: Collection<Pair<ModuleEntity, ModuleBridge>>) {
   }
 
   final override fun calculateUnloadModules(builder: MutableEntityStorage, unloadedEntityBuilder: MutableEntityStorage): Pair<List<String>, List<String>> {
