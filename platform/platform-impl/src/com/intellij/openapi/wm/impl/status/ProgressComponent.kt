@@ -213,7 +213,7 @@ open class ProgressComponent(val isCompact: Boolean, val info: TaskInfo, progres
     }
   }
 
-  protected open var textValue: String?
+  protected open var textValue: @NlsContexts.DetailedDescription String?
     get() = textPanel.text
     set(text) {
       this.textPanel.text = text
@@ -223,7 +223,7 @@ open class ProgressComponent(val isCompact: Boolean, val info: TaskInfo, progres
     textPanel.setEnabled(value)
   }
 
-  protected open var text2Value: String?
+  protected open var text2Value: @NlsContexts.DetailedDescription String?
     get() = detailsPanel.text
     set(text) {
       detailsPanel.text = text

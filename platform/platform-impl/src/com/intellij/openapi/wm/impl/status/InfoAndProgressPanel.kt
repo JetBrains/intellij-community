@@ -41,7 +41,6 @@ import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.reference.SoftReference
 import com.intellij.ui.*
 import com.intellij.ui.AnimatedIcon
-import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
@@ -398,8 +397,10 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
                       htmlBody: @NlsContexts.PopupContent String,
                       icon: Icon?,
                       listener: HyperlinkListener?): BalloonHandler {
+    @Suppress("HardCodedStringLiteral")
+    val htmlContent = htmlBody.replace("\n", "<br>")
     val balloon = JBPopupFactory.getInstance()
-      .createHtmlTextBalloonBuilder(htmlBody.replace("\n", "<br>"),
+      .createHtmlTextBalloonBuilder(htmlContent,
                                     icon ?: type.defaultIcon,
                                     type.titleForeground,
                                     type.popupBackground,
@@ -637,13 +638,13 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
       get() = progressPanel.labelText
       set(value) {progressPanel.setLabelText(value)}
 
-    override var textValue: String?
+    override var textValue: @NlsContexts.DetailedDescription String?
       get() = progressPanel.getCommentText()
       set(value) {
         progressPanel.setCommentText(value)
       }
 
-    override var text2Value: String?
+    override var text2Value: @NlsContexts.DetailedDescription String?
       get() = super.text2Value
       set(value) {
         progressPanel.setText2(value)
