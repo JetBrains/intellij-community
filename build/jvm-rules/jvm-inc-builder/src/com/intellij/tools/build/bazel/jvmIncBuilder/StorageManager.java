@@ -3,6 +3,7 @@ package com.intellij.tools.build.bazel.jvmIncBuilder;
 
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.AbiJarBuilder;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.CompositeZipOutputBuilder;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.Utils;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.ZipOutputBuilderImpl;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.PersistentMVStoreMapletFactory;
@@ -35,6 +36,7 @@ public class StorageManager implements CloseableExt {
   private GraphConfiguration myGraphConfig;
   private ZipOutputBuilderImpl myOutputBuilder;
   private AbiJarBuilder myAbiOutputBuilder;
+  private CompositeZipOutputBuilder myComposite;
   private InstrumentationClassFinder myInstrumentationClassFinder;
 
   public StorageManager(BuildContext context) {
@@ -117,6 +119,14 @@ public class StorageManager implements CloseableExt {
     return builder;
   }
 
+  public ZipOutputBuilder getCompositeOutputBuilder() throws IOException {
+    CompositeZipOutputBuilder composite = myComposite;
+    if (composite == null) {
+      myComposite = composite = new CompositeZipOutputBuilder(getOutputBuilder(), getAbiOutputBuilder());
+    }
+    return composite;
+  }
+
   public @NotNull InstrumentationClassFinder getInstrumentationClassFinder() throws MalformedURLException {
     InstrumentationClassFinder finder = myInstrumentationClassFinder;
     if (finder == null) {
@@ -148,6 +158,8 @@ public class StorageManager implements CloseableExt {
       myGraphConfig = null;
       safeClose(config.getGraph(), saveChanges);
     }
+
+    myComposite = null;
 
     safeClose(myOutputBuilder, saveChanges);
     myOutputBuilder = null;

@@ -2,7 +2,6 @@
 package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
 
 import com.intellij.tools.build.bazel.jvmIncBuilder.StorageManager;
-import com.intellij.tools.build.bazel.jvmIncBuilder.ZipOutputBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.DependencyGraph;
@@ -21,19 +20,15 @@ import java.util.Set;
 import static org.jetbrains.jps.util.Iterators.*;
 
 public final class KotlinIncrementalCacheImpl implements IncrementalCache {
-  private static final String KOTLIN_MODULE_EXTENSION = ".kotlin_module";
-  private final @Nullable String myModuleEntryPath;
 
-  private byte @Nullable [] myLastGoodModuleEntryContent;
   private final Collection<String> myObsoletePackageParts;
+  private final String myModuleEntryPath;
+  private final byte[] myModuleEntryBytes;
 
-  public KotlinIncrementalCacheImpl(StorageManager storageManager, Iterable<NodeSource> outdatedSources) throws IOException {
+  public KotlinIncrementalCacheImpl(StorageManager storageManager, Iterable<NodeSource> outdatedSources, @Nullable String moduleEntryPath, @Nullable byte[] moduleEntryBytes) throws IOException {
+    myModuleEntryPath = moduleEntryPath;
+    myModuleEntryBytes = moduleEntryBytes;
     myObsoletePackageParts = computeObsoletePackageParts(storageManager.getGraph(), outdatedSources);
-    ZipOutputBuilder outBuilder = storageManager.getOutputBuilder();
-    myModuleEntryPath = find(outBuilder.listEntries("META-INF/"), n -> n.endsWith(KOTLIN_MODULE_EXTENSION));
-    if (myModuleEntryPath != null) {
-      myLastGoodModuleEntryContent = outBuilder.getContent(myModuleEntryPath);
-    }
   }
 
   /**
@@ -74,7 +69,7 @@ public final class KotlinIncrementalCacheImpl implements IncrementalCache {
    */
   @Override
   public @Nullable byte[] getModuleMappingData() {
-    return myLastGoodModuleEntryContent;
+    return myModuleEntryBytes;
   }
 
   // No need to implement functions below because they are not used and will be removed in the future

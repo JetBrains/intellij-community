@@ -102,7 +102,7 @@ public class AbiJarBuilder extends ZipOutputBuilderImpl {
   }
 
   private byte @Nullable [] filterAbiJarContent(String entryName, byte[] content) {
-    if (myClassFinder == null || !entryName.endsWith(".class")) {
+    if (myClassFinder == null || content == null || !entryName.endsWith(".class")) {
       return content; // no instrumentation, if the entry is not a class file, or the class finder is not specified
     }
     // todo: check if we need ".kotlin_module" in abi jar

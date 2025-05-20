@@ -10,6 +10,7 @@ import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.NodeSource;
 import org.jetbrains.jps.dependency.NodeSourcePathMapper;
 import org.jetbrains.jps.dependency.java.LookupNameUsage;
@@ -38,6 +39,7 @@ import org.jetbrains.kotlin.progress.CompilationCanceledException;
 import org.jetbrains.kotlin.progress.CompilationCanceledStatus;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -50,6 +52,7 @@ import static org.jetbrains.kotlin.cli.plugins.PluginsOptionsParserKt.processCom
 
 /** @noinspection IO_FILE_USAGE*/
 public class KotlinCompilerRunner implements CompilerRunner {
+  private static final String KOTLIN_MODULE_EXTENSION = ".kotlin_module";
   private final BuildContext myContext;
   private final StorageManager myStorageManager;
   @NotNull NodeSourcePathMapper myPathMapper;
@@ -60,6 +63,9 @@ public class KotlinCompilerRunner implements CompilerRunner {
   private ImportTrackerImpl importTracker;
   private final @NotNull Map<@NotNull String, @NotNull String> myPluginIdToPluginClasspath = new HashMap<>();
   private final List<String> myJavaSources;
+
+  private final @Nullable String myModuleEntryPath;
+  private byte @Nullable [] myLastGoodModuleEntryContent;
 
   public KotlinCompilerRunner(BuildContext context, StorageManager storageManager)  {
     myContext = context;
@@ -76,6 +82,19 @@ public class KotlinCompilerRunner implements CompilerRunner {
     myJavaSources = collect(
       map(filter(context.getSources().getElements(), ns -> ns.toString().endsWith(".java")), ns -> myPathMapper.toPath(ns).toString()), new ArrayList<>()
     );
+    
+    String moduleEntryPath = null;
+    try {
+      ZipOutputBuilderImpl outBuilder = storageManager.getOutputBuilder();
+      moduleEntryPath = find(outBuilder.listEntries("META-INF/"), n -> n.endsWith(KOTLIN_MODULE_EXTENSION));
+      if (moduleEntryPath != null) {
+        myLastGoodModuleEntryContent = outBuilder.getContent(moduleEntryPath);
+      }
+    }
+    catch (IOException e) {
+      context.report(Message.create(this, e));
+    }
+    myModuleEntryPath = moduleEntryPath;
   }
 
   @Override
@@ -89,10 +108,15 @@ public class KotlinCompilerRunner implements CompilerRunner {
   }
 
   @Override
+  public Iterable<String> getPathsToDelete() {
+    return myModuleEntryPath != null? List.of(myModuleEntryPath) : List.of();
+  }
+
+  @Override
   public ExitCode compile(Iterable<NodeSource> sources, Iterable<NodeSource> deletedSources, DiagnosticSink diagnostic, OutputSink out) {
     try {
       K2JVMCompilerArguments kotlinArgs = buildKotlinCompilerArguments(myContext, sources);
-      KotlinIncrementalCacheImpl incCache = new KotlinIncrementalCacheImpl(myStorageManager, flat(deletedSources, sources));
+      KotlinIncrementalCacheImpl incCache = new KotlinIncrementalCacheImpl(myStorageManager, flat(deletedSources, sources), myModuleEntryPath, myLastGoodModuleEntryContent);
       Services services = buildServices(kotlinArgs.getModuleName(), incCache);
       MessageCollector messageCollector = new KotlinMessageCollector(diagnostic, this);
       // todo: make sure if we really need to process generated outputs after the compilation and not "in place"
@@ -108,18 +132,25 @@ public class KotlinCompilerRunner implements CompilerRunner {
 
       boolean completedOk = false;
       try {
+        logCompiledFiles(myContext, sources);
+
         org.jetbrains.kotlin.cli.common.ExitCode exitCode = pipeline.execute(kotlinArgs, services, messageCollector);
         completedOk = exitCode == OK;
         return completedOk? ExitCode.OK : ExitCode.ERROR;
       }
       finally {
         processTrackers(out, generatedClasses);
-        if (!completedOk || diagnostic.hasErrors()) {
-          String moduleEntryPath = incCache.getModuleEntryPath();
-          if (moduleEntryPath != null) {
-            // ensure the output contains last known good value
-            byte[] lastGoodModuleData = incCache.getModuleMappingData();
-            myStorageManager.getOutputBuilder().putEntry(moduleEntryPath, lastGoodModuleData);
+        if (myModuleEntryPath != null) {
+          if (!completedOk || diagnostic.hasErrors()) {
+            byte[] content = myLastGoodModuleEntryContent;
+            // ensure the output contains the last known good value
+            myStorageManager.getCompositeOutputBuilder().putEntry(myModuleEntryPath, content);
+          }
+          else {
+            byte[] updated = myStorageManager.getOutputBuilder().getContent(myModuleEntryPath);
+            if (updated != null) {
+              myLastGoodModuleEntryContent = updated;
+            }
           }
         }
       }

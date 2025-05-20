@@ -6,6 +6,7 @@ import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.compiler.instrumentation.InstrumenterClassWriter;
 import com.intellij.tools.build.bazel.jvmIncBuilder.DiagnosticSink;
 import com.intellij.tools.build.bazel.jvmIncBuilder.Message;
+import com.intellij.tools.build.bazel.jvmIncBuilder.StorageManager;
 import com.intellij.tools.build.bazel.jvmIncBuilder.ZipOutputBuilder;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.BytecodeInstrumenter;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputSink;
@@ -19,14 +20,14 @@ import org.jetbrains.jps.util.Iterators;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 
+import java.io.IOException;
 import java.util.*;
 
 public class OutputSinkImpl implements OutputSink {
   private static final String IMPORT_WILDCARD_SUFFIX = ".*";
   private final DiagnosticSink myDiagnostic;
   private final ZipOutputBuilder myOutBuilder;
-  @Nullable
-  private final AbiJarBuilder myAbiOutputBuilder;
+  private final ZipOutputBuilder myComposite;
   private final List<BytecodeInstrumenter> myInstrumenters;
 
   // -----------------------------------------------------------
@@ -49,10 +50,10 @@ public class OutputSinkImpl implements OutputSink {
     }
   }
   
-  public OutputSinkImpl(DiagnosticSink diagnostic, ZipOutputBuilder outBuilder, @Nullable AbiJarBuilder abiOutputBuilder, List<BytecodeInstrumenter> instrumenters) {
+  public OutputSinkImpl(DiagnosticSink diagnostic, StorageManager sm, List<BytecodeInstrumenter> instrumenters) throws IOException {
     myDiagnostic = diagnostic;
-    myOutBuilder = outBuilder;
-    myAbiOutputBuilder = abiOutputBuilder;
+    myOutBuilder = sm.getOutputBuilder();
+    myComposite = sm.getCompositeOutputBuilder();
     myInstrumenters = instrumenters;
   }
 
@@ -64,10 +65,7 @@ public class OutputSinkImpl implements OutputSink {
 
   @Override
   public boolean deletePath(String path) {
-    if (myAbiOutputBuilder != null) {
-      myAbiOutputBuilder.deleteEntry(path);
-    }
-    return myOutBuilder.deleteEntry(path);
+    return myComposite.deleteEntry(path);
   }
 
   @Override
@@ -91,10 +89,7 @@ public class OutputSinkImpl implements OutputSink {
 
   private void processAndSave(OutputFile outFile, Iterable<NodeSource> originSources) {
     byte[] content = outFile.getContent();
-    myOutBuilder.putEntry(outFile.getPath(), content); // make file content immediately available
-    if (myAbiOutputBuilder != null) {
-      myAbiOutputBuilder.putEntry(outFile.getPath(), content);
-    }
+    myComposite.putEntry(outFile.getPath(), content); // make file content immediately available
 
     if (outFile.getKind() == OutputFile.Kind.bytecode) {
       // todo: parse/instrument files and create nodes asynchronously?
@@ -125,10 +120,7 @@ public class OutputSinkImpl implements OutputSink {
           }
         }
         if (changes) {
-          myOutBuilder.putEntry(outFile.getPath(), content);
-          if (myAbiOutputBuilder != null) {
-            myAbiOutputBuilder.putEntry(outFile.getPath(), content);
-          }
+          myComposite.putEntry(outFile.getPath(), content);
         }
       }
     }

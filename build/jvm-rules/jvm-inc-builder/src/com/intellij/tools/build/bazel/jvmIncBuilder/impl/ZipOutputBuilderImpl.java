@@ -114,9 +114,14 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
     if (isDirectoryName(entryName)) {
       throw new RuntimeException("Unexpected name with trailing slash for ZIP entry with content: \"" + entryName + "\"");
     }
-    myEntries.put(entryName, EntryData.create(mySwap, entryName, content));
-    addToPackageIndex(entryName);
-    myHasChanges = true;
+    if (content != null) {
+      myEntries.put(entryName, EntryData.create(mySwap, entryName, content));
+      addToPackageIndex(entryName);
+      myHasChanges = true;
+    }
+    else {
+      myHasChanges |= deleteEntry(entryName);
+    }
   }
 
   @Override

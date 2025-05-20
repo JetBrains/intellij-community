@@ -125,7 +125,7 @@ public class BazelIncBuilder {
         }
 
         diagnostic = isInitialRound? new PostponedDiagnosticSink() : context; // for initial round postpone error reporting
-        OutputSinkImpl outSink = new OutputSinkImpl(diagnostic, storageManager.getOutputBuilder(), storageManager.getAbiOutputBuilder(), instrumenters);
+        OutputSinkImpl outSink = new OutputSinkImpl(diagnostic, storageManager, instrumenters);
 
         if (isInitialRound) {
           if (!srcSnapshotDelta.isRecompileAll()) {
@@ -157,7 +157,7 @@ public class BazelIncBuilder {
         if (!diagnostic.hasErrors()) {
           if (!srcSnapshotDelta.isRecompileAll()) {
             // delete outputs corresponding to deleted or recompiled sources
-            cleanCompiledFiles(context, srcSnapshotDelta, storageManager.getGraph(), outSink);
+            cleanOutputsForCompiledFiles(context, srcSnapshotDelta, storageManager.getGraph(), roundCompilers, outSink);
           }
 
           for (CompilerRunner runner : roundCompilers) {
@@ -260,21 +260,38 @@ public class BazelIncBuilder {
     }
   }
 
-  private static void cleanCompiledFiles(BuildContext context, NodeSourceSnapshotDelta snapshotDelta, DependencyGraph depGraph, OutputSink outSink) {
-    for (Iterable<@NotNull NodeSource> sourceGroup : List.of(snapshotDelta.getDeleted(), snapshotDelta.getModified())) {
-      if (isEmpty(sourceGroup)) {
-        continue;
-      }
-      // separately logging deleted outputs for 'deleted' and 'modified' sources to adjust for existing test data
-      List<String> deletedPaths = new ArrayList<>();
-      for (Node<?, ?> node : filter(flat(map(sourceGroup, depGraph::getNodes)), n -> n instanceof JVMClassNode)) {
-        String outputPath = ((JVMClassNode<?, ?>) node).getOutFilePath();
-        if (outSink.deletePath(outputPath)) {
-          deletedPaths.add(outputPath);
+  private static void cleanOutputsForCompiledFiles(BuildContext context, NodeSourceSnapshotDelta snapshotDelta, DependencyGraph depGraph, List<CompilerRunner> roundCompilers, OutputSink outSink) {
+    // separately logging deleted outputs for 'deleted' and 'modified' sources to adjust for existing test data
+    Iterable<@NotNull NodeSource> deleted = snapshotDelta.getDeleted();
+    if (!isEmpty(deleted)) {
+      logDeletedPaths(
+        context,
+        deleteCompilerOutputs(depGraph, deleted, outSink, new ArrayList<>())
+      );
+    }
+
+    Iterable<@NotNull NodeSource> modified = snapshotDelta.getModified();
+    if (!isEmpty(modified)) {
+      Collection<String> cleaned = deleteCompilerOutputs(depGraph, modified, outSink, new ArrayList<>());
+      for (String toDelete : flat(map(roundCompilers, CompilerRunner::getPathsToDelete))) {
+        if (outSink.deletePath(toDelete)) {
+          cleaned.add(toDelete);
         }
       }
-      logDeletedPaths(context, deletedPaths);
+      logDeletedPaths(context, cleaned);
     }
+  }
+
+  private static Collection<String> deleteCompilerOutputs(
+    DependencyGraph depGraph, Iterable<@NotNull NodeSource> sourceGroup, OutputSink outSink, Collection<String> deletedPaths
+  ) {
+    for (Node<?, ?> node : filter(flat(map(sourceGroup, depGraph::getNodes)), n -> n instanceof JVMClassNode)) {
+      String outputPath = ((JVMClassNode<?, ?>) node).getOutFilePath();
+      if (outSink.deletePath(outputPath)) {
+        deletedPaths.add(outputPath);
+      }
+    }
+    return deletedPaths;
   }
 
   private static void logDeletedPaths(BuildContext context, Iterable<String> deletedPaths) {
