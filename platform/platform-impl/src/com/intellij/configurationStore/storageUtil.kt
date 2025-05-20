@@ -12,7 +12,6 @@ import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.stateStore
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.impl.ProjectMacrosUtil
@@ -53,16 +52,11 @@ fun doNotify(macros: MutableSet<@NlsSafe String>, project: Project, substitutorT
   }.notify(project)
 }
 
-@ApiStatus.Internal
-fun checkUnknownMacros(project: Project, notify: Boolean) {
+internal fun checkUnknownMacros(project: Project, notify: Boolean) {
   // use linked set/map to get stable results
   val unknownMacros = LinkedHashSet<String>()
   val substitutorToStore = LinkedHashMap<TrackingPathMacroSubstitutor, IComponentStore>()
   collect(componentManager = project, unknownMacros = unknownMacros, substitutorToStore = substitutorToStore)
-  for (module in ModuleManager.getInstance(project).modules) {
-    collect(componentManager = module, unknownMacros = unknownMacros, substitutorToStore = substitutorToStore)
-  }
-
   if (unknownMacros.isEmpty()) {
     return
   }
