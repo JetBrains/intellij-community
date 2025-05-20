@@ -40,7 +40,7 @@ final class UpdateFoldRegionsOperation implements Runnable {
   static final Key<Boolean> COLLAPSED_BY_DEFAULT = Key.create("collapsedByDefault");
   static final Key<String> SIGNATURE = FoldingKeys.SIGNATURE;
   static final Key<Boolean> UPDATE_REGION = Key.create("update");
-  static final String NO_SIGNATURE = "no signature";
+  static final String NO_SIGNATURE = FoldingKeys.NO_SIGNATURE;
 
   private static final Comparator<PsiElement> COMPARE_BY_OFFSET_REVERSED = (element, element1) -> {
     int startOffsetDiff = element1.getTextRange().getStartOffset() - element.getTextRange().getStartOffset();

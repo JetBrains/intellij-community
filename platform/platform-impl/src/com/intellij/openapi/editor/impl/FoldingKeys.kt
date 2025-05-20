@@ -22,6 +22,8 @@ object FoldingKeys {
   @ApiStatus.Internal
   @JvmField
   val SIGNATURE: Key<String> = Key.create("folding.signature")
+  @ApiStatus.Internal
+  const val NO_SIGNATURE: String = "folding.no.signature"
 
 
   /**
