@@ -397,7 +397,7 @@ public final class PluginInstaller {
     var targetPluginId = targetDescriptor.getPluginId();
 
     if (DROP_DISABLED_FLAG_OF_REINSTALLED_PLUGINS && PluginEnabler.HEADLESS.isDisabled(targetPluginId)) {
-      var pluginSet = PluginManagerCore.INSTANCE.getPluginSet();
+      var pluginSet = PluginManagerCore.getPluginSet();
       var wasInstalledBefore = pluginSet.isPluginInstalled(targetPluginId);
       if (!wasInstalledBefore) {
         // FIXME can't drop the disabled flag first because it's implementation filters ids against the current plugin set;

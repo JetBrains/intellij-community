@@ -9,10 +9,12 @@ import com.intellij.ide.plugins.newui.DefaultUiPluginManagerController
 import com.intellij.platform.pluginManager.shared.rpc.PluginManagerApi
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
+import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
 import com.intellij.ide.plugins.marketplace.IntellijUpdateMetadata
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.ide.plugins.newui.PluginUiModel
+import com.intellij.ide.plugins.newui.PluginUpdatesService
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.project.ProjectId
@@ -67,7 +69,7 @@ class BackendPluginManagerApi : PluginManagerApi {
     return DefaultUiPluginManagerController.isPluginInstalled(pluginId)
   }
   
-  override suspend fun hasPluginsAvailableForEnableDisable(pluginIds: Collection<PluginId>): Boolean {
+  override suspend fun hasPluginsAvailableForEnableDisable(pluginIds: List<PluginId>): Boolean {
     return DefaultUiPluginManagerController.hasPluginsAvailableForEnableDisable(pluginIds)
   }
 
@@ -139,7 +141,6 @@ class BackendPluginManagerApi : PluginManagerApi {
   }
   
   override suspend fun isNeedUpdate(pluginId: PluginId): Boolean {
-    val descriptor = PluginManagerCore.getPlugin(pluginId) ?: return false
-    return PluginUpdatesService.isNeedUpdate(descriptor)
+    return DefaultUiPluginManagerController.isNeedUpdate(pluginId)
   }
 }
