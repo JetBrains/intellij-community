@@ -643,11 +643,6 @@ tailrec fun IdeaPluginDescriptorImpl.getMainDescriptor(): PluginMainDescriptor =
 }
 
 @get:ApiStatus.Internal
-@Deprecated("only PluginMainDescriptor has content")
-val IdeaPluginDescriptorImpl.content: PluginContentDescriptor
-  get() = if (this is PluginMainDescriptor) content else PluginContentDescriptor.EMPTY
-
-@get:ApiStatus.Internal
 @Deprecated("only PluginMainDescriptor has contentModules")
 val IdeaPluginDescriptorImpl.contentModules: List<ContentModuleDescriptor>
   get() = if (this is PluginMainDescriptor) contentModules else emptyList()
