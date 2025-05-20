@@ -6,10 +6,13 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.project.DumbAware
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 internal class NewIjModuleAction : AnAction(), DumbAware {
 
@@ -33,6 +36,11 @@ internal class NewIjModuleAction : AnAction(), DumbAware {
 private suspend fun actionPerformed(dc: DataContext) {
   val project = dc.getData(CommonDataKeys.PROJECT) ?: return
   val root = dc.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
-  val name = askForModuleName(project)
+  val suggestedNamePrefix = withContext(Dispatchers.IO) { 
+    suggestModuleNamePrefix(root, project) 
+  }
+  val name = withContext(Dispatchers.EDT) {
+    askForModuleName(project, suggestedNamePrefix)
+  }
   createIjModule(root, name)
 }
