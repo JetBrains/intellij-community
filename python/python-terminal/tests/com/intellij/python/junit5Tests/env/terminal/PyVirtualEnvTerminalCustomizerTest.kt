@@ -141,7 +141,7 @@ class PyVirtualEnvTerminalCustomizerTest {
       .args(args)
       .env(shellOptions.envVariables + mapOf(Pair("TERM", "dumb")))
       // Unix shells do not activate with out tty
-      .ptyOrStdErrSettings(if (SystemInfo.isWindows) null else EelExecApi.Pty(100, 100, true))
+      .interactionOptions(if (SystemInfo.isWindows) null else EelExecApi.Pty(100, 100, true))
     val process = execOptions.eelIt()
     try {
       val stderr = async {

@@ -56,7 +56,10 @@ sealed interface EelExecApi {
      *
      * See `termcap(2)`, `terminfo(2)`, `ncurses(3X)` and ISBN `0937175226`.
      */
-    val ptyOrStdErrSettings: PtyOrStdErrSettings? get() = null
+    val interactionOptions: InteractionOptions? get() = null
+
+    @Deprecated("Switch to interactionOptions", replaceWith = ReplaceWith("interactionOptions"))
+    val ptyOrStdErrSettings: PtyOrStdErrSettings? get() = interactionOptions
 
     /**
      * All argument, all paths, should be valid for the remote machine. F.i., if the IDE runs on Windows, but IJent runs on Linux,
@@ -112,7 +115,10 @@ sealed interface EelExecApi {
     val message: String
   }
 
+  @Deprecated("Switch to InteractionOptions", replaceWith = ReplaceWith("InteractionOptions"))
   sealed interface PtyOrStdErrSettings
+
+  sealed interface InteractionOptions : PtyOrStdErrSettings
 
   /**
    * Runs a process with terminal (using `pty(7)`).
@@ -120,12 +126,12 @@ sealed interface EelExecApi {
    *
    * Both `stderr` and `stdout` will be connected to this terminal, so `stderr` will be closed and merged with `stdout`
    * */
-  data class Pty(val columns: Int, val rows: Int, val echo: Boolean) : PtyOrStdErrSettings
+  data class Pty(val columns: Int, val rows: Int, val echo: Boolean) : InteractionOptions
 
   /**
    * Do not use pty, but redirect `stderr` to `stdout` much like `redirectErrorStream` in JVM
    */
-  data object RedirectStdErr : PtyOrStdErrSettings
+  data object RedirectStdErr : InteractionOptions
 }
 
 interface EelExecPosixApi : EelExecApi {

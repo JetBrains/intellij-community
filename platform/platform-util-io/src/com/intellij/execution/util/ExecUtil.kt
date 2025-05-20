@@ -221,7 +221,7 @@ object ExecUtil {
       .args(rest)
       .workingDirectory(workingDir)
       .env(env)
-      .ptyOrStdErrSettings(pty?.run { EelExecApi.Pty(initialColumns, initialRows, !consoleMode) })
+      .interactionOptions(pty?.run { EelExecApi.Pty(initialColumns, initialRows, !consoleMode) })
 
     return runBlockingMaybeCancellable {
       options.eelIt().convertToJavaProcess()

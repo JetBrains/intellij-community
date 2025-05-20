@@ -119,7 +119,7 @@ private suspend fun doStartProcess(
     .args(command.takeLast(command.size - 1))
     .env(envs)
     .workingDirectory(workingDirectory.asEelPath())
-    .ptyOrStdErrSettings(EelExecApi.Pty(initialTermSize.columns, initialTermSize.rows, true))
+    .interactionOptions(EelExecApi.Pty(initialTermSize.columns, initialTermSize.rows, true))
   return try {
     execOptions.eelIt().convertToJavaProcess() as PtyProcess
   } catch (e : ExecuteProcessException) {

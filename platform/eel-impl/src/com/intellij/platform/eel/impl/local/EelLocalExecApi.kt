@@ -75,7 +75,10 @@ class EelLocalExecWindowsApi : EelExecWindowsApi {
 private val errorPattern = Regex(".*error=(-?[0-9]{1,9}),.*")
 
 private fun executeImpl(builder: EelExecApi.ExecuteProcessOptions): Process {
-  val pty = builder.ptyOrStdErrSettings
+  val pty = builder.run {
+    require(interactionOptions == null || ptyOrStdErrSettings == null)
+    interactionOptions ?: (ptyOrStdErrSettings as EelExecApi.InteractionOptions?)
+  }
 
   try {
     // Inherit env vars because lack of `PATH` might break things

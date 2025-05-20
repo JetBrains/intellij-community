@@ -95,7 +95,7 @@ class EelLocalExecApiTest {
 
   private suspend fun testOutputImpl(ptyManagement: PTYManagement, exitType: ExitType) {
     val builder = executor.createBuilderToExecuteMain(localEel.exec)
-    builder.ptyOrStdErrSettings(when (ptyManagement) {
+    builder.interactionOptions(when (ptyManagement) {
                                   PTYManagement.NO_PTY -> null
                                   PTYManagement.PTY_SIZE_FROM_START -> Pty(PTY_COLS, PTY_ROWS, true)
                                   PTYManagement.PTY_RESIZE_LATER -> Pty(PTY_COLS - 1, PTY_ROWS - 1, true) // wrong tty size: will resize in the test

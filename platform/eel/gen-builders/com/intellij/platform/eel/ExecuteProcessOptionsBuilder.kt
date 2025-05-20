@@ -5,6 +5,7 @@
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions
+import com.intellij.platform.eel.EelExecApi.InteractionOptions
 import com.intellij.platform.eel.EelExecApi.PtyOrStdErrSettings
 import com.intellij.platform.eel.path.EelPath
 
@@ -24,7 +25,9 @@ class ExecuteProcessOptionsBuilder(
 
   private var env: Map<String, String> = mapOf()
 
-  private var ptyOrStdErrSettings: PtyOrStdErrSettings? = null
+  private var interactionOptions: InteractionOptions? = null
+
+  private var ptyOrStdErrSettings: PtyOrStdErrSettings? = interactionOptions
 
   private var workingDirectory: EelPath? = null
 
@@ -63,6 +66,10 @@ class ExecuteProcessOptionsBuilder(
    *
    * See `termcap(2)`, `terminfo(2)`, `ncurses(3X)` and ISBN `0937175226`.
    */
+  fun interactionOptions(arg: InteractionOptions?): ExecuteProcessOptionsBuilder = apply {
+    this.interactionOptions = arg
+  }
+
   fun ptyOrStdErrSettings(arg: PtyOrStdErrSettings?): ExecuteProcessOptionsBuilder = apply {
     this.ptyOrStdErrSettings = arg
   }
@@ -80,6 +87,7 @@ class ExecuteProcessOptionsBuilder(
       args = args,
       env = env,
       exe = exe,
+      interactionOptions = interactionOptions,
       ptyOrStdErrSettings = ptyOrStdErrSettings,
       workingDirectory = workingDirectory,
     )
@@ -90,6 +98,7 @@ internal class ExecuteProcessOptionsImpl(
   override val args: List<String>,
   override val env: Map<String, String>,
   override val exe: String,
+  override val interactionOptions: InteractionOptions?,
   override val ptyOrStdErrSettings: PtyOrStdErrSettings?,
   override val workingDirectory: EelPath?,
 ) : ExecuteProcessOptions

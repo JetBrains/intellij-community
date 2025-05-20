@@ -154,7 +154,7 @@ fun runProcessBlocking(
 
   val exePath = FileUtil.toSystemIndependentName(args.removeFirst())
 
-  val ptyOrStdErrSettings = when {
+  val interactionOptions = when {
     ptyOptions != null -> with(ptyOptions) { EelExecApi.Pty(initialColumns, initialRows, !consoleMode) }
     processBuilder.redirectErrorStream() -> EelExecApi.RedirectStdErr
     else -> null
@@ -172,12 +172,12 @@ fun runProcessBlocking(
   ijentApi.exec.spawnProcess(exePath)
     .args(args)
     .env(explicitEnvironmentVariables)
-    .ptyOrStdErrSettings(ptyOrStdErrSettings)
+    .interactionOptions(interactionOptions)
     .workingDirectory(workingDirectory?.let { EelPath.parse(it, ijentApi.descriptor) })
     .eelIt()
     .toProcess(
       coroutineScope = scope,
-      isPty = ptyOrStdErrSettings != null,
+      isPty = interactionOptions != null,
     )
 }
 

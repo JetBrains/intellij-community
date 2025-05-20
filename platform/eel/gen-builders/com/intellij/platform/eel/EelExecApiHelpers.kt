@@ -6,6 +6,7 @@ package com.intellij.platform.eel
 
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions
+import com.intellij.platform.eel.EelExecApi.InteractionOptions
 import com.intellij.platform.eel.EelExecApi.PtyOrStdErrSettings
 import com.intellij.platform.eel.path.EelPath
 import org.jetbrains.annotations.CheckReturnValue
@@ -65,7 +66,9 @@ object EelExecApiHelpers {
 
     private var env: Map<String, String> = mapOf()
 
-    private var ptyOrStdErrSettings: PtyOrStdErrSettings? = null
+    private var interactionOptions: InteractionOptions? = null
+
+    private var ptyOrStdErrSettings: PtyOrStdErrSettings? = interactionOptions
 
     private var workingDirectory: EelPath? = null
 
@@ -104,6 +107,10 @@ object EelExecApiHelpers {
      *
      * See `termcap(2)`, `terminfo(2)`, `ncurses(3X)` and ISBN `0937175226`.
      */
+    fun interactionOptions(arg: InteractionOptions?): Execute = apply {
+      this.interactionOptions = arg
+    }
+
     fun ptyOrStdErrSettings(arg: PtyOrStdErrSettings?): Execute = apply {
       this.ptyOrStdErrSettings = arg
     }
@@ -127,6 +134,7 @@ object EelExecApiHelpers {
           args = args,
           env = env,
           exe = exe,
+          interactionOptions = interactionOptions,
           ptyOrStdErrSettings = ptyOrStdErrSettings,
           workingDirectory = workingDirectory,
         )
@@ -145,7 +153,9 @@ object EelExecApiHelpers {
 
     private var env: Map<String, String> = mapOf()
 
-    private var ptyOrStdErrSettings: PtyOrStdErrSettings? = null
+    private var interactionOptions: InteractionOptions? = null
+
+    private var ptyOrStdErrSettings: PtyOrStdErrSettings? = interactionOptions
 
     private var workingDirectory: EelPath? = null
 
@@ -184,6 +194,10 @@ object EelExecApiHelpers {
      *
      * See `termcap(2)`, `terminfo(2)`, `ncurses(3X)` and ISBN `0937175226`.
      */
+    fun interactionOptions(arg: InteractionOptions?): SpawnProcess = apply {
+      this.interactionOptions = arg
+    }
+
     fun ptyOrStdErrSettings(arg: PtyOrStdErrSettings?): SpawnProcess = apply {
       this.ptyOrStdErrSettings = arg
     }
@@ -207,6 +221,7 @@ object EelExecApiHelpers {
           args = args,
           env = env,
           exe = exe,
+          interactionOptions = interactionOptions,
           ptyOrStdErrSettings = ptyOrStdErrSettings,
           workingDirectory = workingDirectory,
         )
