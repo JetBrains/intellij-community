@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -32,12 +33,12 @@ public final class ExternalResourcesUnpackExtensionBean implements PluginAware {
     return EP.getExtensionList();
   }
 
-  public static List<ExternalResourcesUnpackExtensionBean> getPluginsBeUnpackedTo(@NotNull PluginId pluginId) {
+  public static @Unmodifiable List<ExternalResourcesUnpackExtensionBean> getPluginsBeUnpackedTo(@NotNull PluginId pluginId) {
     String id = pluginId.getIdString();
     return ContainerUtil.filter(allPluginsWithExtension(), unpackExtensionBean -> unpackExtensionBean.unpackTo.equals(id));
   }
 
-  public static List<ExternalResourcesUnpackExtensionBean> getPluginBeans(@NotNull PluginId pluginId) {
+  public static @Unmodifiable List<ExternalResourcesUnpackExtensionBean> getPluginBeans(@NotNull PluginId pluginId) {
     return ContainerUtil.filter(allPluginsWithExtension(), bean -> bean.pluginDescriptor.getPluginId().equals(pluginId));
   }
 }

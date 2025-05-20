@@ -115,7 +115,7 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
     return candidates.get(0);
   }
 
-  protected @NotNull List<? extends VirtualFileSystem> getFileSystemsForProtocol(@NotNull String protocol) {
+  protected @NotNull @Unmodifiable List<? extends VirtualFileSystem> getFileSystemsForProtocol(@NotNull String protocol) {
     return myCollector.forKey(protocol);
   }
 

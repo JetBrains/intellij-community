@@ -7,6 +7,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Comparator;
 import java.util.List;
@@ -92,7 +93,7 @@ public class ReflectionAccessorToEverything {
     }
 
     @Override
-    public List<ItemToReplaceDescriptor> getReplaceDescriptors() {
+    public @Unmodifiable List<ItemToReplaceDescriptor> getReplaceDescriptors() {
       // first access descriptors, then update descriptors
       return ContainerUtil.sorted(super.getReplaceDescriptors(),
                                   Comparator.comparing(d -> d instanceof FieldDescriptor fieldDescriptor && fieldDescriptor.isUpdate()));
@@ -116,7 +117,7 @@ public class ReflectionAccessorToEverything {
       }
     }
 
-    public List<ItemToReplaceDescriptor> getReplaceDescriptors() {
+    public @Unmodifiable List<ItemToReplaceDescriptor> getReplaceDescriptors() {
       return myReplaceDescriptors;
     }
   }

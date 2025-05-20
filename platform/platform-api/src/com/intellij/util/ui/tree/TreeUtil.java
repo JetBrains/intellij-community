@@ -226,7 +226,7 @@ public final class TreeUtil {
    * @param type a {@code Class} object to filter selected user objects
    * @return a list of user objects of the specified type retrieved from all selected paths
    */
-  public static @NotNull <T> List<T> collectSelectedObjectsOfType(@NotNull JTree tree, @NotNull Class<? extends T> type) {
+  public static @NotNull @Unmodifiable <T> List<T> collectSelectedObjectsOfType(@NotNull JTree tree, @NotNull Class<? extends T> type) {
     return collectSelectedObjects(tree, path -> getLastUserObject(type, path));
   }
 
@@ -1138,7 +1138,7 @@ public final class TreeUtil {
    * @param tree a tree, which selection is processed
    * @return a list of all selected paths
    */
-  public static @NotNull List<TreePath> collectSelectedPaths(@NotNull JTree tree) {
+  public static @NotNull @Unmodifiable List<TreePath> collectSelectedPaths(@NotNull JTree tree) {
     return collectSelectedObjects(tree, Function.identity());
   }
 
@@ -1146,7 +1146,7 @@ public final class TreeUtil {
    * @param tree a tree, which selection is processed
    * @return a list of user objects which correspond to all selected paths
    */
-  public static @NotNull List<Object> collectSelectedUserObjects(@NotNull JTree tree) {
+  public static @NotNull @Unmodifiable List<Object> collectSelectedUserObjects(@NotNull JTree tree) {
     return collectSelectedObjects(tree, TreeUtil::getLastUserObject);
   }
 

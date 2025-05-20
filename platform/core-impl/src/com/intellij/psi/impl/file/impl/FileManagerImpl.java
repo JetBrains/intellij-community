@@ -34,10 +34,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -297,7 +294,7 @@ public final class FileManagerImpl implements FileManagerEx {
                                                             : viewProvider.getPsi(viewProvider.getBaseLanguage());
   }
 
-  private @NotNull List<FileViewProvider> getRawCachedViewProviders(@NotNull VirtualFile vFile) {
+  private @NotNull @Unmodifiable List<FileViewProvider> getRawCachedViewProviders(@NotNull VirtualFile vFile) {
     List<FileViewProvider> providers = myVFileToViewProviderMap.getAllProviders(vFile);
     if (!providers.isEmpty()) {
       if (providers.size() == 1) {
@@ -880,7 +877,7 @@ public final class FileManagerImpl implements FileManagerEx {
   }
 
   @SuppressWarnings("UsagesOfObsoleteApi")
-  private static <T, R> List<R> mapNotNull(@NotNull List<T> list, @NotNull Function<? super T, ? extends R> mapper) {
+  private static <T, R> @Unmodifiable List<R> mapNotNull(@NotNull List<T> list, @NotNull Function<? super T, ? extends R> mapper) {
     if (list.size() == 1) {
       return ContainerUtil.createMaybeSingletonList(mapper.apply(list.get(0)));
     }

@@ -13,6 +13,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.tree.TreePath;
 import java.io.IOException;
@@ -385,7 +386,7 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
           treeNode = new ProjectViewNode<>(myProject, (PsiFileSystemItem)o, settings) {
             @Override
             @NotNull
-            public Collection<AbstractTreeNode<?>> getChildren() {
+            public @Unmodifiable Collection<AbstractTreeNode<?>> getChildren() {
               return child.getChildren();
             }
 

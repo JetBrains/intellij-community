@@ -389,10 +389,10 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @return available intentions.
    */
   @NotNull
-  List<IntentionAction> getAvailableIntentions(@TestDataFile String @NotNull ... filePaths);
+  @Unmodifiable List<IntentionAction> getAvailableIntentions(@TestDataFile String @NotNull ... filePaths);
 
   @NotNull
-  List<IntentionAction> getAllQuickFixes(@TestDataFile String @NotNull ... filePaths);
+  @Unmodifiable List<IntentionAction> getAllQuickFixes(@TestDataFile String @NotNull ... filePaths);
 
   @NotNull
   @Unmodifiable
@@ -574,7 +574,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * launches the Find Usages action, and returns the items displayed in the usage view.
    */
   @NotNull
-  Collection<Usage> testFindUsagesUsingAction(@TestDataFile String @NotNull ... fileNames);
+  @Unmodifiable Collection<Usage> testFindUsagesUsingAction(@TestDataFile String @NotNull ... fileNames);
 
   @NotNull
   Collection<UsageInfo> findUsages(@NotNull PsiElement to);

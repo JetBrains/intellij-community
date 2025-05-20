@@ -39,10 +39,7 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.lang.CompoundRuntimeException;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -227,7 +224,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     }
   }
 
-  private static @NotNull List<PsiFile> getAllFiles(@NotNull PsiFile changedFile) {
+  private static @NotNull @Unmodifiable List<PsiFile> getAllFiles(@NotNull PsiFile changedFile) {
     VirtualFile file = changedFile.getVirtualFile();
     if (file == null) {
       return changedFile.getViewProvider().getAllFiles();

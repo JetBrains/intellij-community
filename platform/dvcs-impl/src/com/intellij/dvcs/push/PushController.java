@@ -98,7 +98,7 @@ public final class PushController implements Disposable {
     return myAllRepos.size() == 1;
   }
 
-  private @NotNull <R extends Repository, S extends PushSource, T extends PushTarget> List<PushSupport<R, S, T>> getAffectedSupports() {
+  private @NotNull <R extends Repository, S extends PushSource, T extends PushTarget> @Unmodifiable List<PushSupport<R, S, T>> getAffectedSupports() {
     Collection<AbstractVcs> vcss = ContainerUtil.map2Set(myAllRepos, repository -> repository.getVcs());
     return ContainerUtil.map(vcss, vcs -> {
       //noinspection unchecked

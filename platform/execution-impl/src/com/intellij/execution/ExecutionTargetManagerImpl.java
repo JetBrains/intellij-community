@@ -15,10 +15,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
@@ -221,7 +218,7 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
   }
 
   @Override
-  public @NotNull List<ExecutionTarget> getTargetsFor(@Nullable RunConfiguration configuration) {
+  public @NotNull @Unmodifiable List<ExecutionTarget> getTargetsFor(@Nullable RunConfiguration configuration) {
     if (configuration == null) {
       return Collections.emptyList();
     }

@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Set;
@@ -79,7 +80,7 @@ public abstract class FacetBasedDetectedFrameworkDescription<F extends Facet, C 
     return false;
   }
 
-  protected abstract @NotNull Collection<? extends Facet> getExistentFacets(FacetTypeId<?> underlyingFacetType);
+  protected abstract @NotNull @Unmodifiable Collection<? extends Facet> getExistentFacets(FacetTypeId<?> underlyingFacetType);
 
   protected void doSetup(ModifiableModelsProvider modifiableModelsProvider, final Module module) {
     final ModifiableFacetModel model = modifiableModelsProvider.getFacetModifiableModel(module);

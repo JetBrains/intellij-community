@@ -98,11 +98,11 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
   public abstract @NotNull @Unmodifiable Collection<VirtualFile> getCachedChildren();
 
   @SuppressWarnings("SpellCheckingInspection")
-  public abstract @NotNull Iterable<VirtualFile> iterInDbChildren();
+  public abstract @NotNull @Unmodifiable Iterable<VirtualFile> iterInDbChildren();
 
   @ApiStatus.Internal
   @SuppressWarnings("SpellCheckingInspection")
-  public @NotNull Iterable<VirtualFile> iterInDbChildrenWithoutLoadingVfsFromOtherProjects() {
+  public @NotNull @Unmodifiable Iterable<VirtualFile> iterInDbChildrenWithoutLoadingVfsFromOtherProjects() {
     return iterInDbChildren();
   }
 }

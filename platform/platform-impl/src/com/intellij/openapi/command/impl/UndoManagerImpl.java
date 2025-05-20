@@ -109,7 +109,7 @@ public class UndoManagerImpl extends UndoManager {
     return state;
   }
 
-  private List<UndoClientState> getAllClientStates() {
+  private @Unmodifiable List<UndoClientState> getAllClientStates() {
     return getComponentManager().getServices(UndoClientState.class, ClientKind.ALL);
   }
 

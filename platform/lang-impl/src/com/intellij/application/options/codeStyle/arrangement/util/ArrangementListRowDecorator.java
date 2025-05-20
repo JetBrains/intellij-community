@@ -21,6 +21,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -228,7 +229,7 @@ public final class ArrangementListRowDecorator extends JPanel implements Arrange
   }
 
   @Override
-  public @NotNull Set<ArrangementSettingsToken> getAvailableTokens() {
+  public @NotNull @Unmodifiable Set<ArrangementSettingsToken> getAvailableTokens() {
     return myDelegate.getAvailableTokens();
   }
 

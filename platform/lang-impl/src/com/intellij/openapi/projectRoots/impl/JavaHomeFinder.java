@@ -19,6 +19,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 
 import java.io.File;
@@ -96,7 +97,7 @@ public abstract class JavaHomeFinder {
   }
 
   @ApiStatus.Internal
-  public static @NotNull List<String> suggestHomePaths(@NotNull EelDescriptor eelDescriptor, boolean forceEmbeddedJava) {
+  public static @NotNull @Unmodifiable List<String> suggestHomePaths(@NotNull EelDescriptor eelDescriptor, boolean forceEmbeddedJava) {
     return ContainerUtil.map(findJdks(eelDescriptor, forceEmbeddedJava), JdkEntry::path);
   }
 

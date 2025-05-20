@@ -403,7 +403,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     }
   }
 
-  private @NotNull Iterable<AbstractFileViewProvider> getKnownCopies() {
+  private @NotNull @Unmodifiable Iterable<AbstractFileViewProvider> getKnownCopies() {
     Set<AbstractFileViewProvider> copies = getUserData(KNOWN_COPIES);
     if (copies != null) {
       return ContainerUtil.filter(copies, copy -> ContainerUtil.exists(copy.getCachedPsiFiles(), f -> f.getOriginalFile().getViewProvider() == this));

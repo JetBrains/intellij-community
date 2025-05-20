@@ -397,7 +397,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Override
-  public @NotNull Iterable<VirtualFile> iterInDbChildren() {
+  public @NotNull @Unmodifiable Iterable<VirtualFile> iterInDbChildren() {
     if (!owningPersistentFS().wereChildrenAccessed(this)) {
       return Collections.emptyList();
     }
@@ -412,7 +412,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Override
-  public @NotNull Iterable<VirtualFile> iterInDbChildrenWithoutLoadingVfsFromOtherProjects() {
+  public @NotNull @Unmodifiable Iterable<VirtualFile> iterInDbChildrenWithoutLoadingVfsFromOtherProjects() {
     if (!owningPersistentFS().wereChildrenAccessed(this)) {
       return Collections.emptyList();
     }

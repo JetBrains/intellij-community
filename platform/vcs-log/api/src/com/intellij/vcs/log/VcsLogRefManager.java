@@ -71,7 +71,7 @@ public interface VcsLogRefManager {
    * All references given to this method are from the same commit.
    */
   @NotNull
-  List<RefGroup> groupForTable(@NotNull Collection<? extends VcsRef> refs, boolean compact, boolean showTagNames);
+  @Unmodifiable List<RefGroup> groupForTable(@NotNull Collection<? extends VcsRef> refs, boolean compact, boolean showTagNames);
 
   /**
    * Writes given reference type to the output.

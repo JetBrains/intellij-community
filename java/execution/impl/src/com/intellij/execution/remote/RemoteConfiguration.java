@@ -24,6 +24,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -78,7 +79,7 @@ public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   }
 
   @Override
-  public Collection<Module> getValidModules() {
+  public @Unmodifiable Collection<Module> getValidModules() {
     return getAllModules();
   }
 }

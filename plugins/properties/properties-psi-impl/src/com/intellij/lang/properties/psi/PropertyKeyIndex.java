@@ -11,6 +11,7 @@ import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -33,11 +34,11 @@ public class PropertyKeyIndex extends StringStubIndexExtension<Property> {
    */
   @Deprecated
   @Override
-  public Collection<Property> get(@NotNull String key, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+  public @Unmodifiable Collection<Property> get(@NotNull String key, @NotNull Project project, @NotNull GlobalSearchScope scope) {
     return getProperties(key, project, scope);
   }
 
-  public Collection<Property> getProperties(@NotNull String key, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+  public @Unmodifiable Collection<Property> getProperties(@NotNull String key, @NotNull Project project, @NotNull GlobalSearchScope scope) {
     return StubIndex.getElements(getKey(), key, project, scope, Property.class);
   }
 }

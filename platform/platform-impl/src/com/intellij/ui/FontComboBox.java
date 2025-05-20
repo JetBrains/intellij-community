@@ -14,13 +14,13 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.AbstractListModel;
-import javax.swing.ComboBoxModel;
+import javax.swing.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.plaf.basic.ComboPopup;
-import java.awt.Dimension;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -243,7 +243,7 @@ public final class FontComboBox extends AbstractFontCombo {
       return 0 <= index && index < items.size() ? items.get(index) : null;
     }
 
-    private @NotNull List<Object> getAllElements() {
+    private @NotNull @Unmodifiable List<Object> getAllElements() {
       List<List<?>> groups = new ArrayList<>();
       if (myNoFontItem != null) {
         groups.add(Collections.singletonList(myNoFontItem));

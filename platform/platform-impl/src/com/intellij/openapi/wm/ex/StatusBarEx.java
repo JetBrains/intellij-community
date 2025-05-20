@@ -13,6 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
@@ -42,7 +43,7 @@ public interface StatusBarEx extends StatusBar {
    * </p>
    */
   @Deprecated(since = "2025.2", forRemoval = true)
-  default List<Pair<TaskInfo, ProgressIndicator>> getBackgroundProcesses() {
+  default @Unmodifiable List<Pair<TaskInfo, ProgressIndicator>> getBackgroundProcesses() {
     return ContainerUtil.map(getBackgroundProcessModels(), pair -> new Pair<>(pair.getFirst(), pair.getSecond().getProgressIndicator()));
   }
 

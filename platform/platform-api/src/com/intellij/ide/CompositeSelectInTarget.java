@@ -17,6 +17,7 @@
 package com.intellij.ide;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -25,5 +26,5 @@ import java.util.Collection;
  */
 public interface CompositeSelectInTarget extends SelectInTarget{
   @NotNull
-  Collection<SelectInTarget> getSubTargets(@NotNull SelectInContext context);
+  @Unmodifiable Collection<SelectInTarget> getSubTargets(@NotNull SelectInContext context);
 }

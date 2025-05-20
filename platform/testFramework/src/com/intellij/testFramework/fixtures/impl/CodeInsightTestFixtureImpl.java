@@ -707,7 +707,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public @NotNull List<IntentionAction> getAvailableIntentions(String @NotNull ... filePaths) {
+  public @NotNull @Unmodifiable List<IntentionAction> getAvailableIntentions(String @NotNull ... filePaths) {
     if (filePaths.length > 0) {
       configureByFilesInner(filePaths);
     }
@@ -1031,7 +1031,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public @NotNull Collection<Usage> testFindUsagesUsingAction(String @NotNull ... fileNames) {
+  public @NotNull @Unmodifiable Collection<Usage> testFindUsagesUsingAction(String @NotNull ... fileNames) {
     assertInitialized();
     if (fileNames.length > 0) { // don't change configured files if already configured
       configureByFiles(fileNames);

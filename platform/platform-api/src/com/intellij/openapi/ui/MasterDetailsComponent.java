@@ -29,6 +29,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.tree.*;
@@ -244,7 +245,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     return myHistory == null || !myHistory.isNavigatingNow();
   }
 
-  protected @Nullable List<AnAction> createToolbarActions() {
+  protected @Nullable @Unmodifiable List<AnAction> createToolbarActions() {
     List<AnAction> actions = createActions(false);
     if (actions == null) return null;
     return ContainerUtil.map(actions, o ->
