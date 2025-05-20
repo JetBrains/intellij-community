@@ -483,7 +483,7 @@ abstract class ModuleManagerBridgeImpl(
       module.initServiceContainer(precomputedExtensionModel)
       if (moduleFileUrl != null) {
         val moduleStore = module.componentStore as ModuleStore
-        moduleStore.setPath(path = moduleFileUrl.toPath(), virtualFile = null, isNew = isNew)
+        moduleStore.setPath(path = moduleFileUrl.toPath(), isNew = isNew)
       }
       module.markContainerAsCreated()
     }

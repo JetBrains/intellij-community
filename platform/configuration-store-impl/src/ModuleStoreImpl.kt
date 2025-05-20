@@ -10,7 +10,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ModuleEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isExternalStorageEnabled
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.project.isDirectoryBased
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleStore
@@ -75,11 +74,11 @@ internal class ModuleStoreImpl(module: Module, private val pathMacroManager: Pat
   }
 
   override fun setPath(path: Path) {
-    setPath(path = path, virtualFile = null, isNew = false)
+    setPath(path = path, isNew = false)
   }
 
-  override fun setPath(path: Path, virtualFile: VirtualFile?, isNew: Boolean) {
-    val isMacroAdded = storageManager.setMacros(listOf(Macro(StoragePathMacros.MODULE_FILE, path))).isEmpty()
+  override fun setPath(path: Path, isNew: Boolean) {
+    val isMacroAdded = storageManager.setMacros(java.util.List.of(Macro(StoragePathMacros.MODULE_FILE, path))).isEmpty()
     // if file not null - update storage
     storageManager.getOrCreateStorage(
       collapsedPath = StoragePathMacros.MODULE_FILE,
@@ -89,10 +88,9 @@ internal class ModuleStoreImpl(module: Module, private val pathMacroManager: Pat
           return@getOrCreateStorage
         }
 
-        setFile(virtualFile = virtualFile, ioFileIfChanged = if (isMacroAdded) null else path)
+        setFile(virtualFile = null, ioFileIfChanged = if (isMacroAdded) null else path)
         // ModifiableModuleModel#newModule should always create a new module from scratch
         // https://youtrack.jetbrains.com/issue/IDEA-147530
-
         if (isMacroAdded) {
           // preload to ensure that we will get a FileNotFound error (no module file) during initialization
           // and not later in some unexpected place (because otherwise will be loaded by demand)
