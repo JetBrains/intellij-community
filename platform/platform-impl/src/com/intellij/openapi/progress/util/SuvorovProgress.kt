@@ -206,7 +206,7 @@ object SuvorovProgress {
   }
 
   private fun sleep() {
-    Thread.sleep(5)
+    Thread.sleep(0, 100_000)
   }
 
   abstract class ForcedWriteActionRunnable : Runnable {
