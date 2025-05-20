@@ -114,7 +114,8 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
       return createDependencyTag(createArtifactDependencyByLibrary(descriptor, DependencyScope.COMPILE))
     }
 
-    private val FLEET_MODULES_IN_COMMUNITY = setOf(
+    private val FLEET_MODULES_ALLOWED_FOR_PUBLICATION = setOf(
+      // region Fleet modules in Community
       "fleet.andel",
       "fleet.kernel",
       "fleet.multiplatform.shims",
@@ -128,6 +129,11 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
       "fleet.util.logging.slf4j",
       "fleet.util.multiplatform",
       "fleet.fastutil",
+      // endregion
+
+      // region Fleet Language Server Protocol modules allowed for publication - https://youtrack.jetbrains.com/issue/IJI-2644
+      "fleet.lsp.protocol",
+      // endregion
     )
   }
 
@@ -307,7 +313,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
   }
 
   protected open fun shouldSkipModule(moduleName: String, moduleIsDependency: Boolean): Boolean {
-    val moduleShouldBePublished = moduleIsDependency || moduleName in FLEET_MODULES_IN_COMMUNITY || moduleName.startsWith("intellij.")
+    val moduleShouldBePublished = moduleIsDependency || moduleName in FLEET_MODULES_ALLOWED_FOR_PUBLICATION || moduleName.startsWith("intellij.")
     return !moduleShouldBePublished
   }
 
