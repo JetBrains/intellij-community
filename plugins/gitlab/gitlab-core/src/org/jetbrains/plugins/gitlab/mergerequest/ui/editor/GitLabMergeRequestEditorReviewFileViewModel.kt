@@ -23,6 +23,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
@@ -76,7 +77,8 @@ internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
     }.let {
       emit(it)
     }
-  }.stateIn(cs, SharingStarted.Lazily, ComputedResult.loading())
+  }.flowOn(Dispatchers.IO)
+    .stateIn(cs, SharingStarted.Lazily, ComputedResult.loading())
 
   override val changedRanges: List<Range> = diffData.patch.hunks.withoutContext().toList()
 
