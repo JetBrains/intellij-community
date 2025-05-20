@@ -168,7 +168,7 @@ public final class PluginManager {
   }
 
   @ApiStatus.Internal
-  public static @NotNull Stream<IdeaPluginDescriptorImpl> getVisiblePlugins(boolean showImplementationDetails) {
+  public static @NotNull Stream<PluginMainDescriptor> getVisiblePlugins(boolean showImplementationDetails) {
     return filterVisiblePlugins(PluginManagerCore.INSTANCE.getPluginSet().allPlugins, showImplementationDetails);
   }
 

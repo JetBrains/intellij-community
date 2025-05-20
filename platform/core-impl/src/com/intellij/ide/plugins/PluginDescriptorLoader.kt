@@ -45,7 +45,7 @@ private val LOG: Logger
   get() = PluginManagerCore.logger
 
 @JvmOverloads
-fun loadAndInitForCoreEnv(pluginRoot: Path, fileName: String, relativeDir: String = PluginManagerCore.META_INF, id: PluginId? = null): IdeaPluginDescriptorImpl? {
+fun loadAndInitForCoreEnv(pluginRoot: Path, fileName: String, relativeDir: String = PluginManagerCore.META_INF, id: PluginId? = null): PluginMainDescriptor? {
   val pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
   val initContext = ProductPluginInitContext()
   val loadingContext = PluginDescriptorLoadingContext()

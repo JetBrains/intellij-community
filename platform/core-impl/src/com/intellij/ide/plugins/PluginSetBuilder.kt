@@ -15,7 +15,7 @@ import java.util.*
 import java.util.function.Supplier
 
 @ApiStatus.Internal
-class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorImpl>) {
+class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>) {
   private val sortedModulesWithDependencies: ModulesWithDependencies
   private val builder: DFSTBuilder<IdeaPluginDescriptorImpl>
   val topologicalComparator: Comparator<IdeaPluginDescriptorImpl>
@@ -68,7 +68,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
   }
 
   // Only plugins returned. Not modules. See PluginManagerTest.moduleSort test to understand the issue.
-  private fun getSortedPlugins(): Array<IdeaPluginDescriptorImpl> {
+  private fun getSortedPlugins(): Array<PluginMainDescriptor> {
     val pluginToNumber = Object2IntOpenHashMap<PluginId>(unsortedPlugins.size)
     pluginToNumber.put(PluginManagerCore.CORE_ID, 0)
     var number = 0
@@ -242,10 +242,10 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
     return createPluginSet(incompletePlugins = emptyList())
   }
 
-  internal fun createPluginSet(incompletePlugins: Collection<IdeaPluginDescriptorImpl>): PluginSet {
+  internal fun createPluginSet(incompletePlugins: Collection<PluginMainDescriptor>): PluginSet {
     val sortedPlugins = getSortedPlugins()
     // must be ordered
-    val allPlugins = LinkedHashSet<IdeaPluginDescriptorImpl>().also { result ->
+    val allPlugins = LinkedHashSet<PluginMainDescriptor>().also { result ->
       result.addAll(sortedPlugins)
       result.addAll(incompletePlugins)
     }
@@ -259,7 +259,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
     return PluginSet(
       sortedModulesWithDependencies = sortedModulesWithDependencies, 
       allPlugins = allPlugins,
-      enabledPlugins = sortedPlugins.filterTo(ArrayList<IdeaPluginDescriptorImpl>()) { it.isMarkedForLoading },
+      enabledPlugins = sortedPlugins.filterTo(ArrayList<PluginMainDescriptor>()) { it.isMarkedForLoading },
       enabledModuleMap = java11Shim.copyOf(enabledModuleV2Ids),
       enabledPluginAndV1ModuleMap = java11Shim.copyOf(enabledPluginIds),
       enabledModules = ArrayList<IdeaPluginDescriptorImpl>().also { result ->

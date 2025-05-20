@@ -78,7 +78,7 @@ internal class ClassLoaderConfiguratorTest {
     val loadingResult = loadPlugins(modulePackage = "com.example.extraSupportedFeature")
     val plugin = loadingResult
       .enabledPlugins
-      .get(1) as PluginMainDescriptor
+      .get(1)
     assertThat(plugin.content.modules.get(0).requireDescriptor().pluginClassLoader).isInstanceOf(PluginAwareClassLoader::class.java)
 
     val scope = createPluginDependencyAndContentBasedScope(

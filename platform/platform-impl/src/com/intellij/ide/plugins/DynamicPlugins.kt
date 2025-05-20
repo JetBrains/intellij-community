@@ -202,6 +202,7 @@ object DynamicPlugins {
     // todo plugin installation should be done not in this method
     var allPlugins = pluginSet.allPlugins
     for (descriptor in descriptors) {
+      descriptor as PluginMainDescriptor
       if (!allPlugins.contains(descriptor)) {
         allPlugins = allPlugins + descriptor
       }
@@ -513,6 +514,7 @@ object DynamicPlugins {
 
   private fun unloadPluginWithoutProgress(pluginDescriptor: IdeaPluginDescriptorImpl,
                                           options: UnloadPluginOptions = UnloadPluginOptions(disable = true)): Boolean {
+    pluginDescriptor as PluginMainDescriptor
     val app = ApplicationManager.getApplication() as ApplicationImpl
     val pluginId = pluginDescriptor.pluginId
     val pluginSet = PluginManagerCore.getPluginSet()
@@ -591,8 +593,8 @@ object DynamicPlugins {
           // clear parents as much late as possible because allParents are a lazy list and calculated on demand
           // it may happen that too early invalidation may lead to unloaded loaders appear in allParents again (IJPL-171566)
           clearPluginClassLoaderParentListCache(pluginSet)
-          val newPluginSet = pluginSet.withoutModule(
-            module = pluginDescriptor,
+          val newPluginSet = pluginSet.withoutPlugin(
+            plugin = pluginDescriptor,
             disable = options.disable,
           ).createPluginSetWithEnabledModulesMap()
 
@@ -899,6 +901,7 @@ object DynamicPlugins {
   }
 
   private fun loadPluginWithoutProgress(pluginDescriptor: IdeaPluginDescriptorImpl, checkImplementationDetailDependencies: Boolean = true): Boolean {
+    pluginDescriptor as PluginMainDescriptor
     if (classloadersFromUnloadedPlugins[pluginDescriptor.pluginId]?.isEmpty() == false) {
       LOG.info("Requiring restart for loading plugin ${pluginDescriptor.pluginId}" +
                " because previous version of the plugin wasn't fully unloaded")
@@ -908,7 +911,7 @@ object DynamicPlugins {
     val loadStartTime = System.currentTimeMillis()
 
     val pluginSet = PluginManagerCore.getPluginSet()
-      .withModule(pluginDescriptor)
+      .withPlugin(pluginDescriptor)
       .createPluginSetWithEnabledModulesMap()
 
     val classLoaderConfigurator = ClassLoaderConfigurator(pluginSet)
@@ -1102,10 +1105,15 @@ private fun optionalDependenciesOnPlugin(
   pluginSet: PluginSet,
 ): Set<IdeaPluginDescriptorImpl> {
   // 1. collect optional descriptors
-  val dependentPluginsAndItsModule = ArrayList<Pair<IdeaPluginDescriptorImpl, IdeaPluginDescriptorImpl>>()
+  val dependentPluginsAndItsModule = ArrayList<Pair<PluginMainDescriptor, IdeaPluginDescriptorImpl>>()
 
   processOptionalDependenciesOnPlugin(dependencyPlugin, pluginSet, isLoaded = false) { main, module ->
-    dependentPluginsAndItsModule.add(main to module)
+    if (main is PluginMainDescriptor) {
+      dependentPluginsAndItsModule.add(main to module)
+    }
+    else {
+      LOG.error("unexpected $main")
+    }
     true
   }
 
