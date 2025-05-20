@@ -10,14 +10,14 @@ import org.jetbrains.annotations.VisibleForTesting
 
 @ApiStatus.Internal
 class PluginLoadingResult {
-  private val incompletePlugins = HashMap<PluginId, IdeaPluginDescriptorImpl>()
+  private val incompletePlugins = HashMap<PluginId, PluginMainDescriptor>()
 
   @JvmField
   @ApiStatus.Internal
-  val enabledPluginsById: HashMap<PluginId, IdeaPluginDescriptorImpl> = HashMap()
+  val enabledPluginsById: HashMap<PluginId, PluginMainDescriptor> = HashMap()
 
-  private val idMap = HashMap<PluginId, IdeaPluginDescriptorImpl>()
-  @JvmField var duplicateModuleMap: MutableMap<PluginId, MutableList<IdeaPluginDescriptorImpl>>? = null
+  private val idMap = HashMap<PluginId, PluginMainDescriptor>() // FIXME this does not account plugin aliases in content modules
+  @JvmField var duplicateModuleMap: MutableMap<PluginId, MutableList<PluginMainDescriptor>>? = null
   // the order of errors matters
   private val pluginErrors = LinkedHashMap<PluginId, PluginNonLoadReason>()
 
@@ -29,16 +29,16 @@ class PluginLoadingResult {
     get() = !pluginErrors.isEmpty()
 
   @get:TestOnly
-  val enabledPlugins: List<IdeaPluginDescriptorImpl>
+  val enabledPlugins: List<PluginMainDescriptor>
     get() = enabledPluginsById.entries.sortedBy { it.key }.map { it.value }
 
   internal fun copyPluginErrors(): MutableMap<PluginId, PluginNonLoadReason> = LinkedHashMap(pluginErrors)
 
-  fun getIncompleteIdMap(): Map<PluginId, IdeaPluginDescriptorImpl> = incompletePlugins
+  fun getIncompleteIdMap(): Map<PluginId, PluginMainDescriptor> = incompletePlugins
 
-  fun getIdMap(): Map<PluginId, IdeaPluginDescriptorImpl> = idMap
+  fun getIdMap(): Map<PluginId, PluginMainDescriptor> = idMap
 
-  private fun addIncompletePlugin(plugin: IdeaPluginDescriptorImpl, error: PluginNonLoadReason?) {
+  private fun addIncompletePlugin(plugin: PluginMainDescriptor, error: PluginNonLoadReason?) {
     // do not report if some compatible plugin were already added
     // no race condition here: plugins from classpath are loaded before and not in parallel to loading from plugin dir
     if (idMap.containsKey(plugin.pluginId)) {
@@ -115,7 +115,7 @@ class PluginLoadingResult {
     }
   }
 
-  private fun checkAndAdd(descriptor: IdeaPluginDescriptorImpl, id: PluginId) {
+  private fun checkAndAdd(descriptor: PluginMainDescriptor, id: PluginId) {
     duplicateModuleMap?.get(id)?.let { duplicates ->
       duplicates.add(descriptor)
       return
@@ -128,7 +128,7 @@ class PluginLoadingResult {
     if (duplicateModuleMap == null) {
       duplicateModuleMap = LinkedHashMap()
     }
-    val list = ArrayList<IdeaPluginDescriptorImpl>(2)
+    val list = ArrayList<PluginMainDescriptor>(2)
     list.add(existingDescriptor)
     list.add(descriptor)
     duplicateModuleMap!!.put(id, list)
