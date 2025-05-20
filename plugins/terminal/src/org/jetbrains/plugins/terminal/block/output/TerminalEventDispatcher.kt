@@ -16,13 +16,17 @@ import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.observable.util.addKeyListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.jediterm.terminal.emulator.mouse.MouseMode
+import kotlinx.coroutines.cancel
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.session.TerminalModel
+import org.jetbrains.plugins.terminal.util.terminalApplicationScope
 import java.awt.AWTEvent
 import java.awt.event.*
 import javax.swing.KeyStroke
@@ -264,4 +268,21 @@ internal fun setupMouseListener(editor: EditorEx,
   Disposer.register(disposable, Disposable {
     editor.scrollPane.removeMouseWheelListener(mouseWheelListener)
   })
+}
+
+internal fun setupInputMethodSupport(
+  editor: EditorEx,
+  session: BlockTerminalSession,
+  caretModel: TerminalCaretModel,
+  parentDisposable: Disposable
+) {
+  val coroutineScope = terminalApplicationScope().childScope(TerminalOutputEditorInputMethodSupport::class.java.simpleName)
+  Disposer.register(parentDisposable) {
+    coroutineScope.cancel("Terminal is disposed (Experimental 2024)")
+  }
+  TerminalOutputEditorInputMethodSupport(
+    editor,
+    sendInputString = { text -> session.terminalOutputStream.sendString(text, true) },
+    getCaretPosition = { caretModel.getCaretPosition() }
+  ).install(coroutineScope)
 }

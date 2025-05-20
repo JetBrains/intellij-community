@@ -332,7 +332,7 @@ internal class ReworkedTerminalView(
         val offset = model.cursorOffsetState.value
         editor.offsetToLogicalPosition(offset)
       }
-    ).install(parentDisposable)
+    ).install(coroutineScope)
 
     CopyOnSelectionHandler.install(editor, settings)
 
