@@ -119,63 +119,12 @@ class PluginModelFacade(private val pluginModel: MyPluginModel) {
     return pluginModel.isDisabledInDiff(model.pluginId)
   }
 
-  fun loadPluginDetails(model: PluginUiModel): PluginUiModel? {
-    return marketplaceRequests.loadPluginDetails(model)
-  }
-
-  fun loadAllPluginDetails(existingModel: PluginUiModel, targetModel: PluginUiModel): PluginUiModel? {
-    if (!existingModel.suggestedFeatures.isEmpty()) {
-      targetModel.suggestedFeatures = existingModel.suggestedFeatures
-    }
-
-    val externalPluginId = existingModel.externalPluginId ?: return null
-    val metadata = marketplaceRequests.loadPluginMetadata(externalPluginId)
-    if (metadata != null) {
-      if (metadata.screenshots != null) {
-        targetModel.screenShots = metadata.screenshots
-        targetModel.externalPluginIdForScreenShots = externalPluginId
-      }
-      metadata.toPluginUiModel(targetModel)
-    }
-    loadReviews(targetModel)
-    loadDependencyNames(targetModel)
-    return targetModel
-  }
-
   fun getLastCompatiblePluginUpdate(model: PluginUiModel): PluginUiModel? {
     return marketplaceRequests.getLastCompatiblePluginUpdateModel(model.pluginId)
   }
 
   fun loadPluginMetadata(source: PluginSource, pluginId: String): IntellijPluginMetadata? {
     return marketplaceRequests.loadPluginMetadata(pluginId)
-  }
-
-  fun loadReviews(existingModel: PluginUiModel): PluginUiModel? {
-    val reviewComments = ReviewsPageContainer(20, 0)
-    reviewComments.addItems(loadPluginReviews(existingModel, reviewComments.getNextPage()))
-    existingModel.reviewComments = reviewComments
-    return existingModel
-  }
-
-  fun loadDependencyNames(targetModel: PluginUiModel): PluginUiModel? {
-    val resultNode = targetModel.getDescriptor() as? PluginNode ?: return null
-    resultNode.dependencyNames = resultNode.dependencies.asSequence()
-      .filter { !it.isOptional }
-      .map(IdeaPluginDependency::pluginId)
-      .filter { isNotPlatformAlias(it) }
-      .map { pluginId ->
-        PluginManagerCore.findPlugin(pluginId)?.let {
-          return@map it.name
-        }
-        marketplaceRequests.getLastCompatiblePluginUpdate(pluginId)?.name ?: pluginId.idString
-      }
-      .toList()
-
-    return targetModel
-  }
-
-  fun loadPluginReviews(targetModel: PluginUiModel, page: Int): List<PluginReviewComment> {
-    return marketplaceRequests.loadPluginReviews(targetModel, page) ?: emptyList()
   }
 
   fun isLoaded(model: PluginUiModel): Boolean {
@@ -189,7 +138,7 @@ class PluginModelFacade(private val pluginModel: MyPluginModel) {
     fun addProgress(model: PluginUiModel, indicator: ProgressIndicatorEx) {
       MyPluginModel.addProgress(model.getDescriptor(), indicator)
     }
-    
+
     @JvmStatic
     fun removeProgress(model: PluginUiModel, indicator: ProgressIndicatorEx) {
       MyPluginModel.removeProgress(model.getDescriptor(), indicator)

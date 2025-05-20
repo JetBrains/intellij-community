@@ -7,7 +7,6 @@ import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
 import com.intellij.ide.plugins.marketplace.IntellijUpdateMetadata
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
-import com.intellij.ide.plugins.newui.PluginManagerSession
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.project.ProjectId
@@ -16,7 +15,6 @@ import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
 import org.jetbrains.annotations.ApiStatus
-import java.util.UUID
 
 @Rpc
 @ApiStatus.Internal
@@ -41,6 +39,7 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun isDisabledInDiff(sessionId: String, pluginId: PluginId): Boolean
   suspend fun isPluginInstalled(pluginId: PluginId): Boolean
   suspend fun filterPluginsRequiresUltimateButItsDisabled(pluginIds: List<PluginId>): List<PluginId>
+  suspend fun findPluginNames(pluginIds: List<PluginId>): List<String>
 
   companion object {
     suspend fun getInstance(): PluginManagerApi {

@@ -42,7 +42,7 @@ interface PluginUiModel {
   val source: PluginSource
   val dependencies: List<PluginDependencyModel>
 
-  val dependencyNames: Collection<String>?
+  var dependencyNames: Collection<String>?
 
   @get:NlsSafe
   val vendor: String?

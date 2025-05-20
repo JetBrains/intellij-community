@@ -58,13 +58,11 @@ class PluginUiModelAdapter(
   override val source: PluginSource = PluginSource.LOCAL
   override val dependencies: List<PluginDependencyModel>
     get() = pluginDescriptor.dependencies.map { PluginDependencyModel(it.pluginId, it.isOptional) }
-  override val dependencyNames: Collection<String>?
-    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.dependencyNames else null
   override val vendor: String?
     get() = pluginDescriptor.vendor
-
   override val organization: String?
     get() = pluginDescriptor.organization
+
   override val changeNotes: String?
     get() = pluginDescriptor.changeNotes
   override val productCode: String?
@@ -89,7 +87,6 @@ class PluginUiModelAdapter(
         pluginDescriptor.licenseUrl = value
       }
     }
-
   override var bugtrackerUrl: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.bugtrackerUrl else null
     set(value) {
@@ -97,6 +94,7 @@ class PluginUiModelAdapter(
         pluginDescriptor.bugtrackerUrl = value
       }
     }
+
   override var documentationUrl: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.documentationUrl else null
     set(value) {
@@ -132,7 +130,6 @@ class PluginUiModelAdapter(
         pluginDescriptor.verifiedName = value
       }
     }
-
   override var isVerified: Boolean
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.isVerified else false
     set(value) {
@@ -140,6 +137,7 @@ class PluginUiModelAdapter(
         pluginDescriptor.isVerified = value
       }
     }
+
   override var isTrader: Boolean
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.isTrader else false
     set(value) {
@@ -170,6 +168,13 @@ class PluginUiModelAdapter(
         }
         val container = PageContainer(value.myPageSize, value.myCurrentPage, value.items)
         pluginDescriptor.setReviewComments(container)
+      }
+    }
+  override var dependencyNames: Collection<String>?
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.dependencyNames else null
+    set(value) {
+      if (pluginDescriptor is PluginNode) {
+        pluginDescriptor.dependencyNames = value
       }
     }
 
@@ -298,7 +303,7 @@ class PluginUiModelAdapter(
   override var isDeleted: Boolean
     get() = NewUiUtil.isDeleted(pluginDescriptor)
     set(value) {
-      if(pluginDescriptor is IdeaPluginDescriptorImpl) {
+      if (pluginDescriptor is IdeaPluginDescriptorImpl) {
         pluginDescriptor.isDeleted = value
       }
     }

@@ -443,6 +443,13 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return pluginsToEnable
   }
 
+  override fun findPluginNames(pluginIds: List<PluginId>): List<String> {
+    val requests = MarketplaceRequests.getInstance()
+    return pluginIds.map {
+      PluginManagerCore.findPlugin(it)?.name ?: requests.getLastCompatiblePluginUpdate(it)?.name ?: it.idString
+    }
+  }
+
   private fun getDependentsToDisable(
     pluginIds: List<PluginId>,
     enabledMap: MutableMap<PluginId, PluginEnabledState>,

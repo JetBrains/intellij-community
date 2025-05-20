@@ -72,8 +72,7 @@ public final class InstallAndEnableTask extends Task.Modal {
               PluginUiModelAdapter marketplaceModel = new PluginUiModelAdapter(node);
               PluginUiModel pluginNode = marketplace.loadPluginDetails(marketplaceModel);
               if (pluginNode != null) {
-                PluginModelFacade facade = new PluginModelFacade(new MyPluginModel(myProject));
-                facade.loadAllPluginDetails(marketplaceModel, pluginNode);
+                PluginDetailsPageComponentKt.loadAllPluginDetails(marketplaceModel, pluginNode);
                 descriptors.set(index, pluginNode.getDescriptor());
               }
             }

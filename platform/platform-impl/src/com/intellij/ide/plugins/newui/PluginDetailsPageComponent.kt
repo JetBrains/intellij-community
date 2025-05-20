@@ -12,6 +12,8 @@ import com.intellij.ide.impl.ProjectUtil.getProjectForComponent
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.PluginManagerCore.getPlugin
 import com.intellij.ide.plugins.PluginManagerCore.looksLikePlatformPluginAlias
+import com.intellij.ide.plugins.api.ReviewsPageContainer
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests.Companion.getLastCompatiblePluginUpdate
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector.pluginCardOpened
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls.getPluginHomepage
@@ -224,7 +226,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   fun setPlugin(model: PluginUiModel?) {
-    if(model != null) {
+    if (model != null) {
       this.plugin = model
     }
   }
@@ -562,7 +564,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       val reviewComments = node.reviewComments!!
       val page = reviewComments.getNextPage()
       ProcessIOExecutorService.INSTANCE.execute {
-        val items = pluginModel.loadPluginReviews(node, page)
+        val items = MarketplaceRequests.getInstance().loadPluginReviews(node, page)
+        if (items == null) return@execute
         ApplicationManager.getApplication().invokeLater({
                                                           if (showComponent != component) {
                                                             return@invokeLater
@@ -630,7 +633,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   private fun showPlugin(component: ListPluginComponent?, multiSelection: Boolean) {
-    if (showComponent == component && (component == null || updateDescriptor === component.getUpdatePluginDescriptor())) {
+    if (showComponent == component && (component == null || updateDescriptor === component.updatePluginDescriptor)) {
       return
     }
     showComponent = component
@@ -654,11 +657,11 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
         if (!pluginUiModel.detailsLoaded) {
           syncLoading = false
           doLoad(component) {
-            pluginModel.loadPluginDetails(pluginUiModel)
-            val loadedModel = pluginModel.loadPluginDetails(pluginUiModel)
+            loadPluginDetails(pluginUiModel)
+            val loadedModel = loadPluginDetails(pluginUiModel)
             if (loadedModel != null) {
               coroutineContext.ensureActive()
-              pluginModel.loadAllPluginDetails(pluginUiModel, loadedModel)
+              loadAllPluginDetails(pluginUiModel, loadedModel)
               component.pluginModel = loadedModel
             }
           }
@@ -679,11 +682,11 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
             if (pluginUiModel.reviewComments == null) {
               coroutineContext.ensureActive()
-              pluginModel.loadReviews( pluginUiModel)
+              loadReviews(pluginUiModel)
             }
             if (pluginUiModel.dependencyNames == null) {
               coroutineContext.ensureActive()
-              pluginModel.loadDependencyNames(pluginUiModel)
+              loadDependencyNames(pluginUiModel)
             }
           }
         }
@@ -706,9 +709,9 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
           coroutineContext.ensureActive()
 
-          val fullNode = pluginModel.loadPluginDetails(lastUpdateModel)
+          val fullNode = loadPluginDetails(lastUpdateModel)
           if (fullNode != null) {
-            pluginModel.loadAllPluginDetails(lastUpdateModel, fullNode)
+            loadAllPluginDetails(lastUpdateModel, fullNode)
             component.setInstalledPluginMarketplaceModel(fullNode)
           }
         }
@@ -1011,7 +1014,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   private fun createUninstallAction(): SelectionBasedPluginModelAction.UninstallAction<PluginDetailsPageComponent> {
     return SelectionBasedPluginModelAction.UninstallAction(
       pluginModel, false, this, java.util.List.of(this),
-      { obj: PluginDetailsPageComponent -> obj.descriptorForActions},
+      { obj: PluginDetailsPageComponent -> obj.descriptorForActions },
       {
         updateNotifications()
       })
@@ -1424,6 +1427,51 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     override fun getAccessibleRole(): AccessibleRole = AccessibilityUtils.GROUPED_ELEMENTS
   }
 }
+
+fun loadPluginDetails(model: PluginUiModel): PluginUiModel? {
+  return MarketplaceRequests.getInstance().loadPluginDetails(model)
+}
+
+fun loadAllPluginDetails(existingModel: PluginUiModel, targetModel: PluginUiModel): PluginUiModel? {
+  val marketplaceRequests = MarketplaceRequests.getInstance()
+  if (!existingModel.suggestedFeatures.isEmpty()) {
+    targetModel.suggestedFeatures = existingModel.suggestedFeatures
+  }
+
+  val externalPluginId = existingModel.externalPluginId ?: return null
+  val metadata = marketplaceRequests.loadPluginMetadata(externalPluginId)
+  if (metadata != null) {
+    if (metadata.screenshots != null) {
+      targetModel.screenShots = metadata.screenshots
+      targetModel.externalPluginIdForScreenShots = externalPluginId
+    }
+    metadata.toPluginUiModel(targetModel)
+  }
+  loadReviews(targetModel)
+  loadDependencyNames(targetModel)
+  return targetModel
+}
+
+fun loadReviews(existingModel: PluginUiModel): PluginUiModel? {
+  val reviewComments = ReviewsPageContainer(20, 0)
+  val reviews = MarketplaceRequests.getInstance().loadPluginReviews(existingModel, reviewComments.getNextPage()) ?: emptyList()
+  reviewComments.addItems(reviews)
+  existingModel.reviewComments = reviewComments
+  return existingModel
+}
+
+fun loadDependencyNames(targetModel: PluginUiModel): PluginUiModel? {
+  val resultNode = targetModel
+  val pluginIds = resultNode.dependencies
+    .filter { !it.isOptional }
+    .map(PluginDependencyModel::pluginId)
+    .filter { isNotPlatformAlias(it) }
+
+  resultNode.dependencyNames = UiPluginManager.getInstance().findPluginNames(pluginIds)
+
+  return targetModel
+}
+
 
 internal fun isNotPlatformAlias(pluginId: PluginId): Boolean {
   return if ("com.intellij" == pluginId.idString) false else !looksLikePlatformPluginAlias(pluginId)

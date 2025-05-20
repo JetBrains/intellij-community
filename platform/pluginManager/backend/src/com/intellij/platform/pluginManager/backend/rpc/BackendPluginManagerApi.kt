@@ -55,6 +55,10 @@ class BackendPluginManagerApi : PluginManagerApi {
     return DefaultUiPluginManagerController.filterPluginsRequiringUltimateButItsDisabled(pluginIds)
   }
 
+  override suspend fun findPluginNames(pluginIds: List<PluginId>): List<String> {
+    return DefaultUiPluginManagerController.findPluginNames(pluginIds)
+  }
+
   override suspend fun isPluginInstalled(pluginId: PluginId): Boolean {
     return DefaultUiPluginManagerController.isPluginInstalled(pluginId)
   }

@@ -191,6 +191,10 @@ class UiPluginManager {
     return getController().setEnableStateForDependencies(sessionId, descriptorIds, enable)
   }
 
+  fun findPluginNames(pluginIds: List<PluginId>): List<String> {
+    return getController().findPluginNames(pluginIds)
+  }
+
   fun getController(): UiPluginManagerController {
     if (Registry.`is`("reworked.plugin.manager.enabled")) {
       return UiPluginManagerController.EP_NAME.extensionList.firstOrNull() ?: DefaultUiPluginManagerController
