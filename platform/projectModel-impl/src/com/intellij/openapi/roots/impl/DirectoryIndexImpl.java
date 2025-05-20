@@ -103,11 +103,6 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   }
 
   @Override
-  public @NotNull Query<VirtualFile> getFilesByPackageName(@NotNull String packageName) {
-    return myWorkspaceFileIndex.getFilesByPackageName(packageName);
-  }
-
-  @Override
   public Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName,
                                                         @NotNull GlobalSearchScope scope) {
     return myWorkspaceFileIndex.getDirectoriesByPackageName(packageName, scope);

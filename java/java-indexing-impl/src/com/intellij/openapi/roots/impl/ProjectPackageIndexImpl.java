@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Query;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,32 +17,32 @@ import org.jetbrains.annotations.Nullable;
 public final class ProjectPackageIndexImpl extends PackageIndex {
   private static final Logger LOG = Logger.getInstance(ProjectPackageIndexImpl.class);
   
-  private final DirectoryIndex myDirectoryIndex;
+  private final WorkspaceFileIndexEx myWorkspaceFileIndex;
 
   @ApiStatus.Internal
   public ProjectPackageIndexImpl(@NotNull Project project) {
-    myDirectoryIndex = DirectoryIndex.getInstance(project);
+    myWorkspaceFileIndex = WorkspaceFileIndexEx.getInstance(project);
   }
 
   @Override
   public Query<VirtualFile> getDirsByPackageName(@NotNull @NlsSafe String packageName,
                                                  @NotNull GlobalSearchScope scope) {
-    return myDirectoryIndex.getDirectoriesByPackageName(packageName, scope);
+    return myWorkspaceFileIndex.getDirectoriesByPackageName(packageName, scope);
   }
 
   @Override
   public Query<VirtualFile> getFilesByPackageName(@NotNull String packageName) {
-    return myDirectoryIndex.getFilesByPackageName(packageName);
+    return myWorkspaceFileIndex.getFilesByPackageName(packageName);
   }
 
   @Override
   public @NotNull Query<VirtualFile> getDirsByPackageName(@NotNull @NlsSafe String packageName, boolean includeLibrarySources) {
-    return myDirectoryIndex.getDirectoriesByPackageName(packageName, includeLibrarySources);
+    return myWorkspaceFileIndex.getDirectoriesByPackageName(packageName, includeLibrarySources);
   }
 
   @Override
   public @Nullable String getPackageName(@NotNull VirtualFile fileOrDir) {
-    return myDirectoryIndex.getPackageName(fileOrDir);
+    return myWorkspaceFileIndex.getPackageName(fileOrDir);
   }
 
   @Override
@@ -49,6 +50,6 @@ public final class ProjectPackageIndexImpl extends PackageIndex {
     if (!dir.isDirectory()) {
       LOG.error(dir.getPresentableUrl() + " is not a directory");
     }
-    return myDirectoryIndex.getPackageName(dir);
+    return myWorkspaceFileIndex.getPackageName(dir);
   }
 }

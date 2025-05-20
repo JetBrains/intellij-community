@@ -185,7 +185,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Override
   public String getPackageNameByDirectory(@NotNull VirtualFile dir) {
     if (!dir.isDirectory()) LOG.error(dir.getPresentableUrl());
-    return myDirectoryIndex.getPackageName(dir);
+    return myWorkspaceFileIndex.getPackageName(dir);
   }
 
   @Override

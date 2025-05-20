@@ -25,7 +25,7 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData
-import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
@@ -58,7 +58,7 @@ class IndexingIteratorsProviderImpl(
 
   private fun doGetIndexingIterators(): List<IndexableFilesIterator> {
     val model = WorkspaceModel.getInstance(project)
-    val index = WorkspaceFileIndex.getInstance(project) as WorkspaceFileIndexImpl
+    val index = WorkspaceFileIndexEx.getInstance(project)
     val storage = model.currentSnapshot
     val virtualFileUrlManager = model.getVirtualFileUrlManager()
     val moduleDependencyIndex by lazy { ModuleDependencyIndex.getInstance(project) }
@@ -175,12 +175,12 @@ class IndexingIteratorsProviderImpl(
     return iterators
   }
 
-  private fun isNestedRootOfModuleContent(root: VirtualFile, module: Module, workspaceFileIndexImpl: WorkspaceFileIndexImpl): Boolean {
+  private fun isNestedRootOfModuleContent(root: VirtualFile, module: Module, workspaceFileIndex: WorkspaceFileIndexEx): Boolean {
     val parent = root.getParent()
     if (parent == null) {
       return false
     }
-    val fileInfo = workspaceFileIndexImpl.getFileInfo(
+    val fileInfo = workspaceFileIndex.getFileInfo(
       parent,
       honorExclusion = false,
       includeContentSets = true,

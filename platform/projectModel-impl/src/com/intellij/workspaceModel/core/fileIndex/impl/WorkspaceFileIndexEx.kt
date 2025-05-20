@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ContentIteratorEx
 import com.intellij.openapi.vfs.AsyncFileListener
@@ -20,6 +21,10 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import org.jetbrains.annotations.ApiStatus
 
 interface WorkspaceFileIndexEx : WorkspaceFileIndex {
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project): WorkspaceFileIndexEx = WorkspaceFileIndex.getInstance(project) as WorkspaceFileIndexEx
+  }
   /**
    * An internal variant of [findFileSetWithCustomData] method which provides more information if [file] isn't included in the workspace
    * or if multiple file sets are associated with [file]. 

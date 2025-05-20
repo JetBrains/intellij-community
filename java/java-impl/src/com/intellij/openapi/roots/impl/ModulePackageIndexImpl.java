@@ -11,17 +11,18 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.FilteredQuery;
 import com.intellij.util.Query;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class ModulePackageIndexImpl extends ModulePackageIndex {
   private static final Logger LOG = Logger.getInstance(ModulePackageIndexImpl.class);
   private final ModuleFileIndex myModuleFileIndex;
-  private final DirectoryIndex myDirectoryIndex;
+  private final WorkspaceFileIndexEx myWorkspaceFileIndex;
 
   public ModulePackageIndexImpl(@NotNull Module module) {
     myModuleFileIndex = ModuleRootManager.getInstance(module).getFileIndex();
-    myDirectoryIndex = DirectoryIndex.getInstance(module.getProject());
+    myWorkspaceFileIndex = WorkspaceFileIndexEx.getInstance(module.getProject());
   }
 
   private final Condition<VirtualFile> myDirCondition = new Condition<>() {
@@ -33,17 +34,17 @@ public final class ModulePackageIndexImpl extends ModulePackageIndex {
 
   @Override
   public @NotNull Query<VirtualFile> getDirsByPackageName(@NotNull @NlsSafe String packageName, boolean includeLibrarySources) {
-    return new FilteredQuery<>(myDirectoryIndex.getDirectoriesByPackageName(packageName, includeLibrarySources), myDirCondition);
+    return new FilteredQuery<>(myWorkspaceFileIndex.getDirectoriesByPackageName(packageName, includeLibrarySources), myDirCondition);
   }
 
   @Override
   public Query<VirtualFile> getFilesByPackageName(@NotNull String packageName) {
-    return new FilteredQuery<>(myDirectoryIndex.getFilesByPackageName(packageName), myDirCondition);
+    return new FilteredQuery<>(myWorkspaceFileIndex.getFilesByPackageName(packageName), myDirCondition);
   }
 
   @Override
   public @Nullable String getPackageName(@NotNull VirtualFile fileOrDir) {
-    return myDirectoryIndex.getPackageName(fileOrDir);
+    return myWorkspaceFileIndex.getPackageName(fileOrDir);
   }
 
   @Override
@@ -51,6 +52,6 @@ public final class ModulePackageIndexImpl extends ModulePackageIndex {
     if (!dir.isDirectory()) {
       LOG.error(dir.getPresentableUrl() + " is not a directory");
     }
-    return myDirectoryIndex.getPackageName(dir);
+    return myWorkspaceFileIndex.getPackageName(dir);
   }
 }
