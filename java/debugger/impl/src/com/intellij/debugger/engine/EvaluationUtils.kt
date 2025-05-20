@@ -35,19 +35,20 @@ internal suspend fun <R> suspendAllAndEvaluate(
   }
   else if (process.isEvaluationPossible(suspendContext)) {
     if (suspendContext.suspendPolicy == EventRequest.SUSPEND_EVENT_THREAD) {
-      error("Capturing extended thread dump is not yet supported on suspend-thread breakpoint")
+      // We are on Suspend Thread breakpoint, suspend all threads first, then evaluate.
+      tryToBreakOnAnyMethodAndEvaluate(context,  process, null, timeToSuspend, action)
+    } else {
+      // We are on a Suspend All breakpoint, we can evaluate right here.
+      val result = Channel<R>(capacity = 1)
+
+      // We have to evaluate inside SuspendContextCommandImpl, so we just start a new command.
+      // TODO: are there any better ways to do this? Should we create proper command above?
+      executeOnDMT(suspendContext) {
+        result.send(action(suspendContext))
+      }
+
+      result.receive()
     }
-
-    // We are on a breakpoint, we can evaluate right here.
-    val result = Channel<R>(capacity = 1)
-
-    // We have to evaluate inside SuspendContextCommandImpl, so we just start a new command.
-    // TODO: are there any better ways to do this? Should we create proper command above?
-    executeOnDMT(suspendContext) {
-      result.send(action(suspendContext))
-    }
-
-    result.receive()
   }
   else {
     // We are on a pause, cannot evaluate.
