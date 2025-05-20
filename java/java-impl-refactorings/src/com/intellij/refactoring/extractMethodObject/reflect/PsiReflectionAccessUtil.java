@@ -172,6 +172,7 @@ final class PsiReflectionAccessUtil {
   }
 
   public static @NotNull PsiType nearestAccessibleType(@NotNull PsiType type, @NotNull PsiElement context) {
+    boolean ellipsis = type instanceof PsiEllipsisType;
     while (!isAccessibleType(type)) {
       PsiClass psiClass = PsiTypesUtil.getPsiClass(type);
       boolean isAccessible = isAccessible(psiClass);
@@ -184,6 +185,9 @@ final class PsiReflectionAccessUtil {
         return PsiType.getJavaLangObject(context.getManager(), context.getResolveScope());
       }
       type = types[0];
+      if (ellipsis && type instanceof PsiArrayType arrayType) {
+        type = new PsiEllipsisType(arrayType.getComponentType());
+      }
     }
 
     return type;
