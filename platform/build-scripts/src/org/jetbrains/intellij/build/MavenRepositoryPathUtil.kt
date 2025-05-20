@@ -8,6 +8,7 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import org.jdom.Element
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.serialization.JpsMavenSettings
 import java.io.File
 import java.nio.file.Path
@@ -67,3 +68,6 @@ private fun File.getRepositoryFromSettings(): String? {
   val element = runCatching { JDOMUtil.load(this) }.getOrNull()
   return element?.content?.firstOrNull { (it as? Element)?.name == "localRepository" }?.value
 }
+
+@TestOnly
+fun getMavenRepositoryPathTest(span: Span? = null): Path = getMavenRepositoryPath(span)

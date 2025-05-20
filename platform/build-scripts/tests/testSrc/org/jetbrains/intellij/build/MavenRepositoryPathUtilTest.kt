@@ -1,0 +1,189 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.intellij.build
+
+import com.intellij.util.EnvironmentUtil
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
+import org.jetbrains.jps.model.serialization.JpsMavenSettings
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import org.mockito.MockedStatic
+import org.mockito.Mockito
+import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.Path
+
+class MavenRepositoryPathUtilTest {
+
+  companion object {
+    private val mockEnv: MockedStatic<EnvironmentUtil> = Mockito.mockStatic(EnvironmentUtil::class.java)
+    private val mockFile = Mockito.mock(File::class.java)
+    private val mockSpan = Mockito.mock(Span::class.java)
+  }
+
+  private val defaultRepositoryPath = Path(System.getProperty("user.home"), ".m2/repository")
+
+  @AfterEach
+  fun afterEach() {
+    mockEnv.reset()
+    Mockito.reset(mockFile, mockSpan)
+  }
+
+  @Test
+  fun `test getMavenRepositoryPath returns default path when no settings exist`() {
+    mockEnv.`when`<String> { EnvironmentUtil.getValue("MAVEN_OPTS") }
+      .thenReturn(null)
+
+    Mockito.`when`(mockFile.exists())
+      .thenReturn(false)
+
+    val path = getMavenRepositoryPathTest(mockSpan)
+    Assertions.assertEquals(defaultRepositoryPath, path)
+
+    Mockito.verify(mockSpan, Mockito.never()).addEvent(
+      Mockito.anyString(),
+      Mockito.any(Attributes::class.java),
+    )
+  }
+
+  @Test
+  fun `test getMavenRepositoryPath with MAVEN_OPTS env`(@TempDir tempDir: Path) {
+    val testPathMvn = "/custom/maven/re.po"
+    val testPathXml = "/fail/test/path"
+    val mavenOpts = "-Dmaven.repo.local=$testPathMvn"
+
+    mockEnv.`when`<String> { EnvironmentUtil.getValue("MAVEN_OPTS") }
+      .thenReturn(mavenOpts)
+
+    val settingsContent = """
+        <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
+            <localRepository>${testPathXml}</localRepository>
+        </settings>
+    """.trimIndent()
+    val settingsFile = tempDir.resolve(".m2/settings.xml").toFile()
+    settingsFile.parentFile.mkdirs()
+    settingsFile.writeText(settingsContent)
+
+    val mockSettingsXml = Mockito.mockStatic(JpsMavenSettings::class.java)
+    mockSettingsXml.`when`<File> { JpsMavenSettings.getUserMavenSettingsXml() }
+      .thenReturn(settingsFile)
+
+    val path = getMavenRepositoryPathTest(mockSpan)
+    Assertions.assertEquals(testPathMvn, path.toString())
+
+    Mockito.verify(mockSpan).addEvent(
+      "Found MAVEN_OPTS system env",
+      Attributes.of(AttributeKey.stringKey("local maven repository path"), testPathMvn),
+    )
+    mockSettingsXml.close()
+  }
+
+  @Test
+  fun `test getMavenRepositoryPath with no maven_repo_local in MAVEN_OPTS env`() {
+    mockEnv.`when`<String> { EnvironmentUtil.getValue("MAVEN_OPTS") }
+      .thenReturn("-Xmx2g -Dother.property=value")
+
+    Mockito.`when`(mockFile.exists())
+      .thenReturn(false)
+
+    val result = getMavenRepositoryPathTest(null)
+    Assertions.assertEquals(defaultRepositoryPath, result)
+  }
+
+  @Test
+  fun `test getMavenRepositoryPath from settings xml`(@TempDir tempDir: Path) {
+    val settingsFile = tempDir.resolve(".m2/settings.xml").toFile()
+    val customRepoPath = tempDir.resolve("custom-repo")
+
+    getMavenRepositoryPathFromSettings(settingsFile, customRepoPath)
+  }
+
+  @Test
+  fun `test getMavenRepositoryPath from settings xml unix path`(@TempDir tempDir: Path) {
+    val settingsFile = tempDir.resolve(".m2/settings.xml").toFile()
+    val customRepoPath = Path("/usr/local/maven/repository")
+
+    getMavenRepositoryPathFromSettings(settingsFile, customRepoPath)
+  }
+
+  @Test
+  fun `test getMavenRepositoryPath from settings xml windows path`(@TempDir tempDir: Path) {
+    val settingsFile = tempDir.resolve(".m2/settings.xml").toFile()
+    val customRepoPath = Path("C:\\Users\\user name\\maven\\repository")
+
+    getMavenRepositoryPathFromSettings(settingsFile, customRepoPath)
+  }
+
+  @Test
+  fun `test getMavenRepositoryPath from settings xml empty file`(@TempDir tempDir: Path) {
+    mockEnv.`when`<String> { EnvironmentUtil.getValue("MAVEN_OPTS") }
+      .thenReturn(null)
+
+    val settingsFile = tempDir.resolve(".m2/settings.xml").toFile()
+
+    settingsFile.parentFile.mkdirs()
+    settingsFile.writeText("")
+
+    val mockSettingsXml = Mockito.mockStatic(JpsMavenSettings::class.java)
+    mockSettingsXml.`when`<File> { JpsMavenSettings.getUserMavenSettingsXml() }
+      .thenReturn(settingsFile)
+
+    val path = getMavenRepositoryPathTest(mockSpan)
+    Assertions.assertEquals(defaultRepositoryPath, path)
+
+    mockSettingsXml.close()
+  }
+
+  @Test
+  fun `test findMavenRepositoryProperty extracts repository path unix`() {
+    val testPath = "/test/repo/path"
+    val mavenOpts = "-Xmx2g -Dtest=1 -Dmaven.repo.local=$testPath -Dproperty=value -Dprop"
+    mockEnv.`when`<String> { EnvironmentUtil.getValue("MAVEN_OPTS") }
+      .thenReturn(mavenOpts)
+
+    val result = getMavenRepositoryPathTest().toString()
+    Assertions.assertEquals(testPath, result)
+  }
+
+  @Test
+  fun `test findMavenRepositoryProperty extracts repository path windows`() {
+    val testPath = "C:\\user test\\repo\\path"
+    val mavenOpts = "-Xmx2g -Dprop -Dtest=1 -Dmaven.repo.local=\"$testPath\" -Dproperty=value"
+    mockEnv.`when`<String> { EnvironmentUtil.getValue("MAVEN_OPTS") }
+      .thenReturn(mavenOpts)
+
+    val result = getMavenRepositoryPathTest().toString()
+    Assertions.assertEquals(testPath, result)
+  }
+
+  private fun getMavenRepositoryPathFromSettings(settingsFile: File, repositoryPath: Path) {
+    mockEnv.`when`<String> { EnvironmentUtil.getValue("MAVEN_OPTS") }
+      .thenReturn(null)
+
+    val settingsContent = """
+        <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
+            <localRepository>${repositoryPath}</localRepository>
+        </settings>
+    """.trimIndent()
+
+    val settingsFile = settingsFile
+    settingsFile.parentFile.mkdirs()
+    settingsFile.writeText(settingsContent)
+
+    val mockSettingsXml = Mockito.mockStatic(JpsMavenSettings::class.java)
+    mockSettingsXml.`when`<File> { JpsMavenSettings.getUserMavenSettingsXml() }
+      .thenReturn(settingsFile)
+
+    val path = getMavenRepositoryPathTest(mockSpan)
+    Assertions.assertEquals(repositoryPath, path)
+
+    Mockito.verify(mockSpan).addEvent(
+      "Found localRepository param in .m2/settings.xml file",
+      Attributes.of(AttributeKey.stringKey("local maven repository path"), repositoryPath.toString()),
+    )
+    mockSettingsXml.close()
+  }
+}
