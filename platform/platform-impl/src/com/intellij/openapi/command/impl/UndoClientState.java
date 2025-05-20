@@ -18,7 +18,6 @@ import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts.Command;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,7 +38,6 @@ final class UndoClientState implements Disposable {
   private static final int FREE_QUEUES_LIMIT = 30;
 
   private final @Nullable Project project;
-  private final @NotNull UndoManagerImpl undoManager;
   private final @NotNull ClientId clientId;
   private final @NotNull CommandMerger commandMerger;
   private final @NotNull UndoRedoStacksHolder undoStacksHolder;
@@ -68,7 +66,6 @@ final class UndoClientState implements Disposable {
 
   private UndoClientState(@NotNull UndoManagerImpl undoManager, @NotNull ClientId clientId) {
     this.project = undoManager.getProject();
-    this.undoManager = undoManager;
     this.clientId = clientId;
     this.adjustableUndoableActionsHolder = undoManager.getAdjustableUndoableActionsHolder();
     this.sharedUndoStacksHolder = undoManager.getSharedUndoStacksHolder();
@@ -106,20 +103,17 @@ final class UndoClientState implements Disposable {
   void undoOrRedo(
     @Nullable FileEditor editor,
     @Nullable @Command String commandName,
-    boolean undo,
-    boolean notifyListeners
+    @NotNull Runnable beforeUndoRedoStarted,
+    boolean undo
   ) {
-    Disposable disposable = Disposer.newDisposable();
     currentOperation = undo ? OperationInProgress.UNDO : OperationInProgress.REDO;
     try {
       RuntimeException[] exception = new RuntimeException[1];
       CommandProcessor.getInstance().executeCommand(
         project,
         () -> {
-          if (notifyListeners) {
-            notifyUndoRedoStarted(editor, undo, disposable);
-          }
           try {
+            beforeUndoRedoStarted.run();
             CopyPasteManager.getInstance().stopKillRings();
             undoOrRedo(editor, undo);
           }
@@ -137,7 +131,6 @@ final class UndoClientState implements Disposable {
     }
     finally {
       currentOperation = OperationInProgress.NONE;
-      Disposer.dispose(disposable);
     }
   }
 
@@ -180,7 +173,7 @@ final class UndoClientState implements Disposable {
         originatorReference = UndoDocumentUtil.getDocReference(project, editorProvider);
       }
     }
-    currentCommandMerger.setBeforeState(EditorAndState.getStateFor(project, editorProvider));
+    currentCommandMerger.setEditorStateBefore(EditorAndState.getStateFor(project, editorProvider));
     currentCommandMerger.mergeUndoConfirmationPolicy(undoConfirmationPolicy);
     commandLevel++;
     LOG.assertTrue(commandProject == null || !(currentProject instanceof DummyProject));
@@ -199,6 +192,7 @@ final class UndoClientState implements Disposable {
     if (isInsideCommand()) {
       return;
     }
+    CommandMerger currentCommandMerger = this.currentCommandMerger; // compactIfNeeded can null the reference
     if (project != null &&
         currentCommandMerger.hasActions() &&
         !currentCommandMerger.isTransparent() &&
@@ -207,7 +201,7 @@ final class UndoClientState implements Disposable {
       addDocumentAsAffected(originatorReference);
     }
     originatorReference = null;
-    currentCommandMerger.setAfterState(EditorAndState.getStateFor(project, editorProvider));
+    currentCommandMerger.setEditorStateAfter(EditorAndState.getStateFor(project, editorProvider));
     // we do not want to spoil redo stack in situation, when some 'transparent' actions occurred right after undo.
     if (!currentCommandMerger.isTransparent() && currentCommandMerger.hasActions()) {
       clearRedoStacks(currentCommandMerger);
@@ -218,11 +212,11 @@ final class UndoClientState implements Disposable {
     }
     commandMerger.commandFinished(commandName, groupId, currentCommandMerger);
     currentProject = DummyProject.getInstance();
-    currentCommandMerger = null;
+    this.currentCommandMerger = null;
   }
 
   void flushCurrentCommand() {
-    commandMerger.flushCurrentCommand(nextCommandTimestamp(), undoStacksHolder);
+    commandMerger.flushCurrentCommand(undoStacksHolder, nextCommandTimestamp());
   }
 
   boolean isInsideCommand() {
@@ -554,13 +548,6 @@ final class UndoClientState implements Disposable {
     return stack.getLastAction(refs);
   }
 
-  private void notifyUndoRedoStarted(@Nullable FileEditor editor, boolean undo, Disposable disposable) {
-    ApplicationManager.getApplication()
-      .getMessageBus()
-      .syncPublisher(UndoRedoListener.Companion.getTOPIC())
-      .undoRedoStarted(project, undoManager, editor, undo, disposable);
-  }
-
   private @NotNull Set<DocumentReference> collectReferencesWithoutMergers() {
     Set<DocumentReference> result = new HashSet<>();
     undoStacksHolder.collectAllAffectedDocuments(result);
@@ -570,7 +557,7 @@ final class UndoClientState implements Disposable {
 
   private @NotNull Set<DocumentReference> clearStacks() {
     var affected = new HashSet<DocumentReference>();
-    commandMerger.flushCurrentCommand(nextCommandTimestamp(), undoStacksHolder);
+    commandMerger.flushCurrentCommand(undoStacksHolder, nextCommandTimestamp());
     redoStacksHolder.collectAllAffectedDocuments(affected);
     redoStacksHolder.clearStacks(true, affected);
     undoStacksHolder.collectAllAffectedDocuments(affected);

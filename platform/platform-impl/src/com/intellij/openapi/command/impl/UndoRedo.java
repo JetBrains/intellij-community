@@ -110,7 +110,7 @@ abstract class UndoRedo {
       }
     }
     else {
-      if (!shouldMove && restore(getBeforeState(), true)) {
+      if (!shouldMove && editor != null && restore(getBeforeState(), true)) {
         setBeforeState(new EditorAndState(editor, editor.getState(FileEditorStateLevel.UNDO)));
         if (!Registry.is("ide.undo.transparent.caret.movement")) {
           return true;

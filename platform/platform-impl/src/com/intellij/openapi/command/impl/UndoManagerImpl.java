@@ -3,6 +3,7 @@ package com.intellij.openapi.command.impl;
 
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.client.*;
@@ -281,7 +282,13 @@ public class UndoManagerImpl extends UndoManager {
     UndoClientState state = getClientState(editor);
     if (state != null) {
       String commandName = getUndoOrRedoActionNameAndDescription(editor, isUndo).getSecond();
-      state.undoOrRedo(editor, commandName, isUndo, notifyUndoRedoStarted());
+      Disposable disposable = Disposer.newDisposable();
+      Runnable beforeUndoRedoStarted = () -> notifyUndoRedoStarted(editor, disposable, isUndo);
+      try {
+        state.undoOrRedo(editor, commandName, beforeUndoRedoStarted, isUndo);
+      } finally {
+        Disposer.dispose(disposable);
+      }
     }
   }
 
@@ -433,8 +440,11 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   @ApiStatus.Internal
-  protected boolean notifyUndoRedoStarted() {
-    return true;
+  protected void notifyUndoRedoStarted(@Nullable FileEditor editor, @NotNull Disposable disposable, boolean isUndo) {
+    ApplicationManager.getApplication()
+      .getMessageBus()
+      .syncPublisher(UndoRedoListener.Companion.getTOPIC())
+      .undoRedoStarted(myProject, this, editor, isUndo, disposable);
   }
 
   @ApiStatus.Experimental
