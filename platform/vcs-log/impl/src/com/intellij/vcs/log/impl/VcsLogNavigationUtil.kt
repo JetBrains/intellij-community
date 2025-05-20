@@ -39,7 +39,7 @@ object VcsLogNavigationUtil {
 
   @JvmStatic
   fun jumpToRevisionAsync(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath? = null): CompletableFuture<Boolean> =
-    VcsProjectLog.getInstance(project).jumpToRevisionAsync(root, hash, filePath).asCompletableFuture()
+    VcsProjectLog.getInstance(project).showRevisionAsync(root, hash, filePath).asCompletableFuture()
 
   internal fun MainVcsLogUi.showCommitSync(hash: Hash, root: VirtualFile, requestFocus: Boolean): Boolean {
     return when (jumpToCommitSyncInternal(hash, root, true, requestFocus)) {

@@ -610,6 +610,10 @@ Fa:com.intellij.vcs.log.impl.VcsProjectLog
 - sf:isAvailable(com.intellij.openapi.project.Project):Z
 - openLogTab(com.intellij.vcs.log.VcsLogFilterCollection):com.intellij.vcs.log.ui.MainVcsLogUi
 - sf:runInMainLog(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):V
+- sf:showRevisionInMainLog(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.Hash):V
+- sf:showRevisionInMainLog(com.intellij.openapi.project.Project,com.intellij.vcs.log.Hash):V
+- a:showRevisionInMainLog(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.Hash):V
+- a:showRevisionInMainLog(com.intellij.vcs.log.Hash):V
 f:com.intellij.vcs.log.impl.VcsProjectLog$Companion
 - f:awaitLogIsReady(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.vcs.log.impl.VcsProjectLog
@@ -618,6 +622,8 @@ f:com.intellij.vcs.log.impl.VcsProjectLog$Companion
 - f:isAvailable(com.intellij.openapi.project.Project):Z
 - f:runInMainLog(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):V
 - f:runWhenLogIsReady(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):V
+- f:showRevisionInMainLog(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.Hash):V
+- f:showRevisionInMainLog(com.intellij.openapi.project.Project,com.intellij.vcs.log.Hash):V
 - f:waitWhenLogIsReady(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.vcs.log.impl.VcsProjectLog$ProjectLogListener
 - a:logCreated(com.intellij.vcs.log.impl.VcsLogManager):V

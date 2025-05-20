@@ -132,10 +132,7 @@ class FileHistoryPanel extends JPanel implements UiDataProvider, Disposable {
 
     myDetailsPanel = new CommitDetailsListPanel(myProject, this, () -> {
       return new CommitDetailsPanel(commit -> {
-        VcsProjectLog.runInMainLog(myProject, ui -> {
-          VcsLogNavigationUtil.jumpToCommit(ui, commit.getHash(), commit.getRoot(), false, true);
-          return Unit.INSTANCE;
-        });
+        VcsProjectLog.showRevisionInMainLog(myProject, commit.getRoot(), commit.getHash());
         return Unit.INSTANCE;
       });
     });

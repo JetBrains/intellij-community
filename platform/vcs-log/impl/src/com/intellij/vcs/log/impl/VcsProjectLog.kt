@@ -39,7 +39,11 @@ abstract class VcsProjectLog internal constructor() { // not an interface due to
   open fun openLogTab(filters: VcsLogFilterCollection): MainVcsLogUi? = null
 
   @Internal
-  abstract fun jumpToRevisionAsync(root: VirtualFile, hash: Hash, filePath: FilePath?): Deferred<Boolean>
+  abstract fun showRevisionAsync(root: VirtualFile, hash: Hash, filePath: FilePath?): Deferred<Boolean>
+
+  abstract fun showRevisionInMainLog(root: VirtualFile, hash: Hash)
+
+  abstract fun showRevisionInMainLog(hash: Hash)
 
   @Internal
   protected abstract fun runWhenLogIsReady(action: (VcsLogManager) -> Unit)
@@ -105,6 +109,23 @@ abstract class VcsProjectLog internal constructor() { // not an interface due to
       }
 
       getInstance(project).runInMainUi(consumer)
+    }
+
+    @JvmStatic
+    @RequiresEdt
+    fun showRevisionInMainLog(project: Project, root: VirtualFile, hash: Hash) {
+      if (!isAvailable(project)) return
+      getInstance(project).showRevisionInMainLog(root, hash)
+    }
+
+    /**
+     * Consider using [showRevisionInMainLog] when the root is known
+     */
+    @RequiresEdt
+    @JvmStatic
+    fun showRevisionInMainLog(project: Project, hash: Hash) {
+      if (!isAvailable(project)) return
+      getInstance(project).showRevisionInMainLog(hash)
     }
 
     suspend fun awaitLogIsReady(project: Project): VcsLogManager? = project.serviceAsync<VcsProjectLog>().init(true)

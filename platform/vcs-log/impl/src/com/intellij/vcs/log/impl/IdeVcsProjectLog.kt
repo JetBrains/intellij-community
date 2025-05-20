@@ -20,10 +20,16 @@ import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogProvider
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToCommit
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToHash
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogUiImpl
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.guava.await
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.concurrent.CancellationException
 
 private val LOG: Logger = logger<IdeVcsProjectLog>()
 
@@ -54,7 +60,7 @@ internal class IdeVcsProjectLog(
     return logManager?.openNewLogTab(VcsLogTabLocation.TOOL_WINDOW, filters)
   }
 
-  override fun jumpToRevisionAsync(root: VirtualFile, hash: Hash, filePath: FilePath?): Deferred<Boolean> =
+  override fun showRevisionAsync(root: VirtualFile, hash: Hash, filePath: FilePath?): Deferred<Boolean> =
     coroutineScope.async {
       val progressTitle = VcsLogBundle.message("vcs.log.show.commit.in.log.process", hash.toShortString())
       withBackgroundProgress(project, progressTitle) {
@@ -88,6 +94,32 @@ internal class IdeVcsProjectLog(
       logUi.selectFilePath(filePath, requestFocus)
       true
     }
+
+  override fun showRevisionInMainLog(root: VirtualFile, hash: Hash) {
+    runInMainUi { it.jumpToCommit(hash, root, false, true) }
+  }
+
+  override fun showRevisionInMainLog(hash: Hash) {
+    runInMainUi {
+      val future = it.jumpToHash(hash.asString(), false, true)
+      if (!future.isDone) {
+        coroutineScope.launch {
+          val title = VcsLogBundle.message("vcs.log.show.commit.in.log.process", hash.toShortString())
+          withBackgroundProgress(project, title, false) {
+            try {
+              future.await()
+            }
+            catch (ce: CancellationException) {
+              throw ce
+            }
+            catch (e: Exception) {
+              LOG.error(e)
+            }
+          }
+        }
+      }
+    }
+  }
 
   override fun runInMainUi(consumer: (MainVcsLogUi) -> Unit) {
     doRunWhenLogIsReady {
