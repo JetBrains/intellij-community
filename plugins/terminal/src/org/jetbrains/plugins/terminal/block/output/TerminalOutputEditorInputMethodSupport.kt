@@ -1,7 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.output
 
-import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.LogicalPosition
@@ -10,6 +11,8 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.EditorInputMethodSupport
 import com.intellij.openapi.editor.impl.InputMethodInlayRenderer
 import com.intellij.openapi.util.Disposer
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Dimension
@@ -37,7 +40,7 @@ class TerminalOutputEditorInputMethodSupport(
 
   private var inlay: Inlay<*>? = null
 
-  fun install(parentDisposable: Disposable) {
+  fun install(coroutineScope: CoroutineScope) {
     check(editor.isViewer)
 
     val mouseListener = object : MouseAdapter() {
@@ -64,9 +67,11 @@ class TerminalOutputEditorInputMethodSupport(
 
     (editor as EditorImpl).setInputMethodSupport(EditorInputMethodSupport(inputMethodRequests, inputMethodListener))
 
-    Disposer.register(parentDisposable) {
-      editor.contentComponent.removeMouseListener(mouseListener)
-      editor.setInputMethodSupport(null)
+    coroutineScope.coroutineContext.job.invokeOnCompletion {
+      runInEdt(ModalityState.any()) {
+        editor.contentComponent.removeMouseListener(mouseListener)
+        editor.setInputMethodSupport(null)
+      }
     }
   }
 
