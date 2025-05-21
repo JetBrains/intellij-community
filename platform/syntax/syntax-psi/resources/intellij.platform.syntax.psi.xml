@@ -6,9 +6,17 @@
     <extensionPoint name="syntax.syntaxDefinition" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.platform.syntax.psi.LanguageSyntaxDefinition"/>
     </extensionPoint>
+    <extensionPoint name="syntax.cancellationProviderExtension"
+                    interface="com.intellij.platform.syntax.util.cancellation.CancellationProviderExtension"
+                    dynamic="true"/>
+    <extensionPoint name="syntax.logProvider"
+                    interface="com.intellij.platform.syntax.util.log.LogProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
     <syntax.elementTypeConverter language="any" implementationClass="com.intellij.platform.syntax.psi.CommonElementTypeConverterFactory"/>
+    <syntax.cancellationProviderExtension implementation="com.intellij.platform.syntax.psi.IntelliJCancellationProvider"/>
+    <syntax.logProvider implementation="com.intellij.platform.syntax.psi.IntelliJLogProvider"/>
   </extensions>
 </idea-plugin>

@@ -1,3 +1,7 @@
+*:com.intellij.platform.syntax.util.cancellation.CancellationProviderExtension
+- a:getCancellationProvider():com.intellij.platform.syntax.CancellationProvider
+*f:com.intellij.platform.syntax.util.cancellation.CancellationProviderExtensionKt
+- *sf:cancellationProvider():com.intellij.platform.syntax.CancellationProvider
 *c:com.intellij.platform.syntax.util.lexer.DelegateLexer
 - com.intellij.platform.syntax.util.lexer.LexerBase
 - <init>(com.intellij.platform.syntax.lexer.Lexer):V
@@ -99,6 +103,10 @@
 *f:com.intellij.platform.syntax.util.lexer.StringLiteralLexerKt
 - *sf:isHexDigit(C):Z
 - *sf:isOctalDigit(C):Z
+*:com.intellij.platform.syntax.util.log.LogProvider
+- a:getLogger(java.lang.String):com.intellij.platform.syntax.Logger
+*f:com.intellij.platform.syntax.util.log.LogProviderExtensionKt
+- *sf:logger(java.lang.String):com.intellij.platform.syntax.Logger
 *f:com.intellij.platform.syntax.util.parser.SyntaxBuilderUtil
 - sf:INSTANCE:com.intellij.platform.syntax.util.parser.SyntaxBuilderUtil
 - f:advance(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,I):V

@@ -20,6 +20,7 @@ jvm_library(
     "//platform/util/base/multiplatform",
     "//platform/util/multiplatform",
     "//platform/syntax/syntax-i18n:i18n",
+    "//platform/syntax/syntax-extensions:extensions",
   ],
   runtime_deps = [":util_resources"]
 )
