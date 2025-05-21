@@ -2,7 +2,6 @@
 package com.intellij.platform.searchEverywhere.backend.providers.runConfigurations
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
@@ -15,10 +14,8 @@ class SeRunConfigurationsProviderFactory : SeWrappedLegacyContributorItemsProvid
   override val id: String
     get() = SeProviderIdUtils.RUN_CONFIGURATIONS_ID
 
-  override suspend fun getItemsProvider(project: Project?, dataContext: DataContext): SeItemsProvider =
-    throw UnsupportedOperationException("Shouldn't be called")
-
-  override suspend fun getItemsProvider(legacyContributor: SearchEverywhereContributor<Any>): SeItemsProvider {
+  override suspend fun getItemsProvider(project: Project?, legacyContributor: SearchEverywhereContributor<Any>): SeItemsProvider? {
+    if (project == null) return null
     return SeRunConfigurationsProvider(SeAsyncContributorWrapper(legacyContributor))
   }
 }

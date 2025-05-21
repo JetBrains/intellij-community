@@ -40,7 +40,13 @@ class SeProvidersHolder(
   }
 
   companion object {
-    suspend fun initialize(initEvent: AnActionEvent, project: Project?, sessionRef: DurableRef<SeSessionEntity>, logLabel: String): SeProvidersHolder {
+    suspend fun initialize(
+      initEvent: AnActionEvent,
+      project: Project?,
+      sessionRef: DurableRef<SeSessionEntity>,
+      logLabel: String,
+      providerIds: List<SeProviderId>? = null,
+    ): SeProvidersHolder {
       val allContributors = mutableMapOf<String, SearchEverywhereContributor<Any>>()
       val separateTabContributors = mutableMapOf<String, SearchEverywhereContributor<Any>>()
 
@@ -51,16 +57,18 @@ class SeProvidersHolder(
       val providers = mutableMapOf<SeProviderId, SeItemDataProvider>()
       val separateTabProviders = mutableMapOf<SeProviderId, SeItemDataProvider>()
 
-      SeItemsProviderFactory.EP_NAME.extensionList.forEach { providerFactory ->
+      SeItemsProviderFactory.EP_NAME.extensionList.filter {
+        providerIds == null || SeProviderId(it.id) in providerIds
+      }.forEach { providerFactory ->
         val provider: SeItemsProvider?
         val separateTabProvider: SeItemsProvider?
 
         if (providerFactory is SeWrappedLegacyContributorItemsProviderFactory) {
           provider = allContributors[providerFactory.id]?.let {
-            providerFactory.getItemsProviderCatchingOrNull(it)
+            providerFactory.getItemsProviderCatchingOrNull(project, it)
           }
           separateTabProvider = separateTabContributors[providerFactory.id]?.let {
-            providerFactory.getItemsProviderCatchingOrNull(it)
+            providerFactory.getItemsProviderCatchingOrNull(project,it)
           }
         }
         else {
@@ -115,8 +123,8 @@ suspend fun SeItemsProviderFactory.getItemsProviderCatchingOrNull(project: Proje
   computeCatchingOrNull { getItemsProvider(project, dataContext) }
 
 @ApiStatus.Internal
-suspend fun SeWrappedLegacyContributorItemsProviderFactory.getItemsProviderCatchingOrNull(legacyContributor: SearchEverywhereContributor<Any>): SeItemsProvider? =
-  computeCatchingOrNull { getItemsProvider(legacyContributor) }
+suspend fun SeWrappedLegacyContributorItemsProviderFactory.getItemsProviderCatchingOrNull(project: Project?, legacyContributor: SearchEverywhereContributor<Any>): SeItemsProvider? =
+  computeCatchingOrNull { getItemsProvider(project, legacyContributor) }
 
 @ApiStatus.Internal
 suspend fun SeItemsProviderFactory.computeCatchingOrNull(block: suspend () -> SeItemsProvider?): SeItemsProvider? =

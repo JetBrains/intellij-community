@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.tabs.mocks
 
-import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeSessionEntity
@@ -13,9 +13,10 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 class SeTabFactoryMockBetaLocal : SeTabFactory {
-  override fun getTab(project: Project?, sessionRef: DurableRef<SeSessionEntity>, dataContext: DataContext): SeTab? =
+  override fun getTab(project: Project?, sessionRef: DurableRef<SeSessionEntity>, initEvent: AnActionEvent): SeTab =
     SeTabMock.create(project,
                      sessionRef,
                      "BetaLocal",
-                     listOf(SeProviderId(SeItemsProviderFactoryMockBetaLocal.ID)))
+                     listOf(SeProviderId(SeItemsProviderFactoryMockBetaLocal.ID)),
+                     initEvent)
 }

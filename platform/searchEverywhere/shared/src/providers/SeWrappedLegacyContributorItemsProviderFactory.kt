@@ -2,11 +2,16 @@
 package com.intellij.platform.searchEverywhere.providers
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeItemsProviderFactory
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface SeWrappedLegacyContributorItemsProviderFactory: SeItemsProviderFactory {
-  suspend fun getItemsProvider(legacyContributor: SearchEverywhereContributor<Any>): SeItemsProvider?
+  override suspend fun getItemsProvider(project: Project?, dataContext: DataContext): SeItemsProvider? =
+    throw UnsupportedOperationException("Shouldn't be called")
+
+  suspend fun getItemsProvider(project: Project?, legacyContributor: SearchEverywhereContributor<Any>): SeItemsProvider?
 }

@@ -2,7 +2,7 @@
 package com.intellij.platform.searchEverywhere.frontend.tabs.text
 
 import com.intellij.find.impl.TextSearchContributor
-import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
@@ -15,14 +15,14 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class SeTextTabFactory : SeTabFactory {
-  override fun getTab(project: Project?, sessionRef: DurableRef<SeSessionEntity>, dataContext: DataContext): SeTab? {
+  override fun getTab(project: Project?, sessionRef: DurableRef<SeSessionEntity>, initEvent: AnActionEvent): SeTab? {
     if (project == null || !TextSearchContributor.enabled()) return null
 
     val delegate = SeTabDelegate(project,
                                  sessionRef,
                                  "Text",
                                  listOf(SeProviderId(SeProviderIdUtils.TEXT_ID)),
-                                 dataContext)
+                                 initEvent)
     return SeTextTab(delegate)
   }
 }

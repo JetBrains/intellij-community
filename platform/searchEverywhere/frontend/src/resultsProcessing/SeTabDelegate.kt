@@ -3,7 +3,7 @@ package com.intellij.platform.searchEverywhere.frontend.resultsProcessing
 
 import com.intellij.ide.rpc.rpcId
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
@@ -13,10 +13,9 @@ import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendItemDataProvider
 import com.intellij.platform.searchEverywhere.frontend.utils.suspendLazy
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
-import com.intellij.platform.searchEverywhere.providers.SeLocalItemDataProvider
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
-import com.intellij.platform.searchEverywhere.providers.getItemsProviderCatchingOrNull
+import com.intellij.platform.searchEverywhere.providers.SeProvidersHolder
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.Dispatchers
@@ -29,12 +28,14 @@ import org.jetbrains.annotations.Nls
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Internal
-class SeTabDelegate(val project: Project?,
-                    private val sessionRef: DurableRef<SeSessionEntity>,
-                    private val logLabel: String,
-                    private val providerIds: List<SeProviderId>,
-                    private val dataContext: DataContext): Disposable {
-  private val providers = suspendLazy { initializeProviders(project, providerIds, dataContext, sessionRef, this) }
+class SeTabDelegate(
+  val project: Project?,
+  private val sessionRef: DurableRef<SeSessionEntity>,
+  private val logLabel: String,
+  private val providerIds: List<SeProviderId>,
+  private val initEvent: AnActionEvent,
+) : Disposable {
+  private val providers = suspendLazy { initializeProviders(project, providerIds, initEvent, sessionRef, logLabel, this) }
   private val providersAndLimits = providerIds.associateWith { Int.MAX_VALUE }
 
   suspend fun getProvidersIdToName(): Map<SeProviderId, @Nls String> = providers.getValue().mapValues { it.value.displayName }
@@ -79,7 +80,7 @@ class SeTabDelegate(val project: Project?,
     return provider.itemSelected(itemData, modifiers, searchText)
   }
 
-  fun getProvidersIds() : List<SeProviderId> = providerIds
+  fun getProvidersIds(): List<SeProviderId> = providerIds
 
   /**
    * Defines if results can be shown in <i>Find</i> toolwindow.
@@ -94,12 +95,13 @@ class SeTabDelegate(val project: Project?,
     private suspend fun initializeProviders(
       project: Project?,
       providerIds: List<SeProviderId>,
-      dataContext: DataContext,
+      initEvent: AnActionEvent,
       sessionRef: DurableRef<SeSessionEntity>,
+      logLabel: String,
       parentDisposable: Disposable,
     ): Map<SeProviderId, SeItemDataProvider> {
       val dataContextId = readAction {
-        dataContext.rpcId()
+        initEvent.dataContext.rpcId()
       }
 
       val hasWildcard = providerIds.any { it.isWildcard }
@@ -113,20 +115,12 @@ class SeTabDelegate(val project: Project?,
       val localProviderIds =
         (if (hasWildcard) localFactories.keys else providerIds) - remoteProviderIds
 
-      val localProviders =
-        localFactories.filter {
-          localProviderIds.contains(it.key)
-        }.values.mapNotNull {
-          val provider = it.getItemsProviderCatchingOrNull(project, dataContext)
-
-          if (provider == null) {
-            SeLog.log(SeLog.DEFAULT, "SearchEverywhere items provider factory returned null: ${it.id}")
-          }
-
-          provider
-        }.associate { provider ->
-          SeProviderId(provider.id) to SeLocalItemDataProvider(provider, sessionRef)
+      val localProvidersHolder = SeProvidersHolder.initialize(initEvent, project, sessionRef, logLabel, localProviderIds)
+      val localProviders = localProviderIds.mapNotNull { providerId ->
+        localProvidersHolder.get(providerId, !hasWildcard)?.let {
+          providerId to it
         }
+      }.toMap()
 
       val frontendProviders = if (project != null) {
         val remoteProviderIdToName =

@@ -4,7 +4,6 @@ package com.intellij.platform.searchEverywhere.backend.providers.text
 import com.intellij.find.impl.TextSearchContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.WeightedSearchEverywhereContributor
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
@@ -16,11 +15,8 @@ import org.jetbrains.annotations.ApiStatus
 class SeTextItemsProviderFactory : SeWrappedLegacyContributorItemsProviderFactory {
   override val id: String get() = SeProviderIdUtils.TEXT_ID
 
-  override suspend fun getItemsProvider(project: Project?, dataContext: DataContext): SeItemsProvider =
-    throw UnsupportedOperationException("Shouldn't be called")
-
-  override suspend fun getItemsProvider(legacyContributor: SearchEverywhereContributor<Any>): SeItemsProvider? {
-    if (!TextSearchContributor.enabled() || legacyContributor !is WeightedSearchEverywhereContributor<Any>) return null
+  override suspend fun getItemsProvider(project: Project?, legacyContributor: SearchEverywhereContributor<Any>): SeItemsProvider? {
+    if (project == null || !TextSearchContributor.enabled() || legacyContributor !is WeightedSearchEverywhereContributor<Any>) return null
     return SeTextItemsProvider(SeAsyncWeightedContributorWrapper(legacyContributor))
   }
 }
