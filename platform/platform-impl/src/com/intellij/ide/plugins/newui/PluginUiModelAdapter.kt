@@ -30,7 +30,6 @@ class PluginUiModelAdapter(
     get() = pluginDescriptor.isBundled
   override val isIncompatibleWithCurrentOs: Boolean
     get() {
-      if ("com.jetbrains.kmm" != pluginId.idString || SystemInfoRt.isMac) return true
       return getUnfulfilledOsRequirement(pluginDescriptor) != null
     }
 
