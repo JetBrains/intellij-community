@@ -5,7 +5,6 @@ import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
-import com.intellij.internal.statistic.utils.StatisticsUtil.roundToPowerOfTwo
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
@@ -36,53 +35,53 @@ private class GHPRProjectMetricsCollector : ProjectUsagesCollector() {
 
     private val PR_STATISTICS_ALL = GROUP.registerEvent(
       "pr.statistics.all",
-      EventFields.Int("value", description = "Total number of PRs in project (rounded up to the first power of 2)."),
+      EventFields.RoundedInt("value", description = "Total number of PRs in project (rounded up to the first power of 2)."),
       description = "#PR statistics: open."
     )
     private val PR_STATISTICS_OPEN = GROUP.registerEvent(
       "pr.statistics.open",
-      EventFields.Int("value", description = "Total number of open PRs in project (rounded up to the first power of 2)."),
+      EventFields.RoundedInt("value", description = "Total number of open PRs in project (rounded up to the first power of 2)."),
       description = "#PR statistics: open."
     )
     private val PR_STATISTICS_OPEN_AUTHOR = GROUP.registerEvent(
       "pr.statistics.open.author",
-      EventFields.Int("value",
+      EventFields.RoundedInt("value",
                       description = "Total number of open PRs in project authored by the current user (rounded up to the first power of 2)."),
       description = "#PR statistics: open > author."
     )
     private val PR_STATISTICS_OPEN_ASSIGNEE = GROUP.registerEvent(
       "pr.statistics.open.assignee",
-      EventFields.Int("value",
+      EventFields.RoundedInt("value",
                       description = "Total number of open PRs in project assigned to the current user (rounded up to the first power of 2)."),
       description = "#PR statistics: open > assignee."
     )
     private val PR_STATISTICS_OPEN_REVIEW_ASSIGNED = GROUP.registerEvent(
       "pr.statistics.open.reviewer",
-      EventFields.Int("value",
+      EventFields.RoundedInt("value",
                       description = "Total number of open PRs in project assigned to the current user as reviewer (rounded up to the first power of 2)."),
       description = "#PR statistics: open > reviewer."
     )
     private val PR_STATISTICS_OPEN_REVIEWED = GROUP.registerEvent(
       "pr.statistics.open.reviewed",
-      EventFields.Int("value",
+      EventFields.RoundedInt("value",
                       description = "Total number of open PRs in project reviewed by the current user (rounded up to the first power of 2)."),
       description = "#PR statistics: open > reviewed."
     )
   }
 
-  override fun getGroup(): EventLogGroup? = GROUP
+  override fun getGroup(): EventLogGroup = GROUP
 
   override suspend fun collect(project: Project): Set<MetricEvent> {
     val metricsLoader = project.serviceAsync<GHPRMetricsLoader>()
     val metrics = metricsLoader.getMetrics() ?: return emptySet()
 
     return setOfNotNull(
-      PR_STATISTICS_ALL.metric(roundToPowerOfTwo(metrics.allPRCount.issueCount)),
-      PR_STATISTICS_OPEN.metric(roundToPowerOfTwo(metrics.openPRCount.issueCount)),
-      PR_STATISTICS_OPEN_AUTHOR.metric(roundToPowerOfTwo(metrics.openAuthoredPRCount.issueCount)),
-      PR_STATISTICS_OPEN_ASSIGNEE.metric(roundToPowerOfTwo(metrics.openAssigneePRCount.issueCount)),
-      PR_STATISTICS_OPEN_REVIEW_ASSIGNED.metric(roundToPowerOfTwo(metrics.openReviewAssignedPRCount.issueCount)),
-      PR_STATISTICS_OPEN_REVIEWED.metric(roundToPowerOfTwo(metrics.openReviewedPRCount.issueCount)),
+      PR_STATISTICS_ALL.metric(metrics.allPRCount.issueCount),
+      PR_STATISTICS_OPEN.metric(metrics.openPRCount.issueCount),
+      PR_STATISTICS_OPEN_AUTHOR.metric(metrics.openAuthoredPRCount.issueCount),
+      PR_STATISTICS_OPEN_ASSIGNEE.metric(metrics.openAssigneePRCount.issueCount),
+      PR_STATISTICS_OPEN_REVIEW_ASSIGNED.metric(metrics.openReviewAssignedPRCount.issueCount),
+      PR_STATISTICS_OPEN_REVIEWED.metric(metrics.openReviewedPRCount.issueCount),
     )
   }
 }
