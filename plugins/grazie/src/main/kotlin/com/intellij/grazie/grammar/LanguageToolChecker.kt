@@ -1,8 +1,10 @@
 package com.intellij.grazie.grammar
 
 import com.intellij.grazie.GrazieBundle
+import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GraziePlugin
 import com.intellij.grazie.detection.LangDetector
+import com.intellij.grazie.grammar.LanguageToolChecker.Problem
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.text.*
@@ -11,13 +13,13 @@ import com.intellij.grazie.utils.messageSanitized
 import com.intellij.grazie.utils.trimToNull
 import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.*
 import com.intellij.openapi.vcs.ui.CommitMessage
-import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.containers.Interner
 import kotlinx.html.p
@@ -35,7 +37,7 @@ import java.util.function.Predicate
 
 open class LanguageToolChecker : TextChecker() {
   @ApiStatus.Internal
-  class TestChecker: LanguageToolChecker()
+  class TestChecker : LanguageToolChecker()
 
   override fun getRules(locale: Locale): Collection<Rule> {
     val language = Languages.getLanguageForLocale(locale)
@@ -44,7 +46,14 @@ open class LanguageToolChecker : TextChecker() {
   }
 
   override fun check(extracted: TextContent): List<Problem> {
-    return ConcurrencyUtil.computeIfAbsent(extracted, cacheKey) { doCheck(extracted) }
+    val cache = extracted.getUserData(cacheKey)
+    val configStamp = service<GrazieConfig>().modificationCount
+    if (cache == null || cache.configStamp != configStamp) {
+      val problems = doCheck(extracted)
+      extracted.putUserData(cacheKey, CachedResults(configStamp, problems))
+      return problems
+    }
+    return cache.problems
   }
 
   private fun doCheck(extracted: TextContent): List<Problem> {
@@ -178,8 +187,10 @@ open class LanguageToolChecker : TextChecker() {
   }
 }
 
+private data class CachedResults(val configStamp: Long, val problems: List<Problem>)
+
 private val logger = LoggerFactory.getLogger(LanguageToolChecker::class.java)
-private val cacheKey = Key.create<List<LanguageToolChecker.Problem>>("grazie.LT.problem.cache")
+private val cacheKey = Key.create<CachedResults>("grazie.LT.problem.cache")
 private val interner = Interner.createWeakInterner<String>()
 private val sentenceSeparationRules = setOf("LC_AFTER_PERIOD", "PUNT_GEEN_HL", "KLEIN_NACH_PUNKT")
 private val openClosedRangeStart = Regex("[\\[(].+?(\\.\\.|:|,|;).+[])]")
@@ -234,7 +245,7 @@ private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
   }
 
   if (match.rule.id == "A_RB_NN" &&
-      text.substring(match.fromPos, match.toPos).equals("finally block", ignoreCase = true)  &&
+      text.substring(match.fromPos, match.toPos).equals("finally block", ignoreCase = true) &&
       (text.domain == TextContent.TextDomain.DOCUMENTATION || text.domain == TextContent.TextDomain.COMMENTS)) {
     return true // https://github.com/languagetool-org/languagetool/issues/9511
   }
