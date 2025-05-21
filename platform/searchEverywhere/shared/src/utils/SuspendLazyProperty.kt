@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.searchEverywhere.frontend.utils
+package com.intellij.platform.searchEverywhere.utils
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch

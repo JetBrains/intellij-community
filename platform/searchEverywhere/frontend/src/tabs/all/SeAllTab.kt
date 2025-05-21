@@ -17,8 +17,8 @@ import com.intellij.platform.searchEverywhere.SeResultEvent
 import com.intellij.platform.searchEverywhere.frontend.*
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
 import com.intellij.platform.searchEverywhere.frontend.tabs.utils.SeFilterEditorBase
-import com.intellij.platform.searchEverywhere.frontend.utils.SuspendLazyProperty
-import com.intellij.platform.searchEverywhere.frontend.utils.initAsync
+import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
+import com.intellij.platform.searchEverywhere.utils.initAsync
 import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter
 import com.intellij.ui.IdeUICustomization
 import kotlinx.coroutines.flow.Flow

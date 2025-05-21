@@ -12,8 +12,8 @@ import com.intellij.platform.searchEverywhere.SeResultEvent
 import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfo
 import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.SeTab
-import com.intellij.platform.searchEverywhere.frontend.utils.SuspendLazyProperty
-import com.intellij.platform.searchEverywhere.frontend.utils.initAsync
+import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
+import com.intellij.platform.searchEverywhere.utils.initAsync
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
