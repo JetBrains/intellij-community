@@ -43,6 +43,7 @@ final class UndoClientState implements Disposable {
   private final @NotNull UndoRedoStacksHolder undoStacksHolder;
   private final @NotNull UndoRedoStacksHolder redoStacksHolder;
 
+  // yet it is not a client state but shared one defined by undo manager
   private final @NotNull SharedAdjustableUndoableActionsHolder adjustableUndoableActionsHolder;
   private final @NotNull SharedUndoRedoStacksHolder sharedUndoStacksHolder;
   private final @NotNull SharedUndoRedoStacksHolder sharedRedoStacksHolder;
