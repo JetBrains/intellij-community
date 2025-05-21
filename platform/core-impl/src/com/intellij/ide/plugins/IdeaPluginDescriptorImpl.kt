@@ -195,11 +195,12 @@ sealed class IdeaPluginDescriptorImpl(
       }
     }
 
+    // TODO move to PluginModelValidator
     internal fun IdeaPluginDescriptorImpl.logUnexpectedElement(elementName: String, selector: () -> Boolean) {
       if (!selector()) {
         return
       }
-      LOG.error(PluginException(buildString {
+      LOG.warnInProduction(PluginException(buildString {
         append("Plugin descriptor for ")
         when (this@logUnexpectedElement) {
           is ContentModuleDescriptor -> append("content module '${moduleName}' of plugin '${pluginId}'")
