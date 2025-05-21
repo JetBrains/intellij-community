@@ -143,7 +143,7 @@ private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
 }
 
 internal object UILatencyLogger : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("performance", 78)
+  private val GROUP = EventLogGroup("performance", 79)
 
   internal val SYSTEM_CPU_LOAD: IntEventField = Int("system_cpu_load")
   internal val SWAP_LOAD: IntEventField = Int("swap_load")
@@ -235,51 +235,52 @@ internal object UILatencyLogger : CounterUsagesCollector() {
 
   val UI_EVENTS_COUNT: IntEventField = Int("ui_execution_events_count", description = "Total number of UI events executed by the AWT EventQueue.")
 
-  val WINDOW_LENGTH_MS: IntEventField = Int("window_length_ms", description = "The duration of measurement window.")
+  val WINDOW_LENGTH_MS: IntEventField = Int("window_length_ms", description = "The duration of measurement window in milliseconds.")
 
-  val UI_EXECUTION_TIME_TOTAL_MS: IntEventField = Int("ui_execution_total_ms", description = "Total time spent on executing UI events.")
-  val UI_EXECUTION_TIME_50_US: IntEventField = Int("ui_execution_p50_us", description = "Median duration of execution of a UI event")
+  val UI_EXECUTION_TIME_TOTAL_MS: IntEventField = Int("ui_execution_total_ms", description = "Total time spent on executing UI events in milliseconds.")
+  val UI_EXECUTION_TIME_50_US: IntEventField = Int("ui_execution_p50_us", description = "Median duration of execution of a UI event in microseconds.")
   val UI_EXECUTION_TIME_95_TO_50: FloatEventField = FloatEventField("ui_execution_p95_to_p50", description = "Relation of 95-th percentile of a UI event execution to the median")
   val UI_EXECUTION_TIME_99_TO_50: FloatEventField = FloatEventField("ui_execution_p99_to_p50", description = "Relation of 99-th percentile of a UI event execution to the median")
 
   val INVOCATION_EVENTS_COUNT: IntEventField = Int("invocation_events_count", description = "Number of executed invocation events. Events skipped because of modality mismatch are not counted.")
 
-  val INVOCATION_WAITING_TIME_TOTAL_MS: IntEventField = Int("invocation_waiting_total_ms", description = "Sum over times of each invocation event spending in the event queue")
-  val INVOCATION_WAITING_TIME_50_US: IntEventField = Int("invocation_waiting_p50_us", description = "Median waiting time of an invocation event")
+  val INVOCATION_WAITING_TIME_TOTAL_MS: IntEventField = Int("invocation_waiting_total_ms", description = "Sum over times of each invocation event spending in the event queue in milliseconds.")
+  val INVOCATION_WAITING_TIME_50_US: IntEventField = Int("invocation_waiting_p50_us", description = "Median waiting time of an invocation event in microseconds.")
   val INVOCATION_WAITING_TIME_95_TO_50: FloatEventField = FloatEventField("invocation_waiting_p95_to_p50", description = "Relation of 95-th percentile of an invocation event waiting to the median")
   val INVOCATION_WAITING_TIME_99_TO_50: FloatEventField = FloatEventField("invocation_waiting_p99_to_p50", description = "Relation of 99-th percentile of an invocation event waiting to the median")
 
-  val INVOCATION_EXECUTION_TIME_TOTAL_MS: IntEventField = Int("invocation_execution_total_ms", description = "Total time spent on executing invocation events")
-  val INVOCATION_EXECUTION_TIME_50_US: IntEventField = Int("invocation_execution_p50_us", description = "Median execution time of an invocation events")
+  val INVOCATION_EXECUTION_TIME_TOTAL_MS: IntEventField = Int("invocation_execution_total_ms", description = "Total time spent on executing invocation events in milliseconds.")
+  val INVOCATION_EXECUTION_TIME_50_US: IntEventField = Int("invocation_execution_p50_us", description = "Median execution time of an invocation events in microseconds.")
   val INVOCATION_EXECUTION_TIME_95_TO_50: FloatEventField = FloatEventField("invocation_execution_p95_to_p50", description = "Relation of 95-th percentile of an invocation event execution to the median")
   val INVOCATION_EXECUTION_TIME_99_TO_50: FloatEventField = FloatEventField("invocation_execution_p99_to_p50", description = "Relation of 99-th percentile of an invocation event execution to the median")
 
   val WRITE_LOCK_EVENTS: IntEventField = Int("write_lock_events_count", description = "Number of requests for write lock")
 
-  val WRITE_LOCK_WAITING_TIME_TOTAL_MS: IntEventField = Int("write_lock_waiting_ms", description = "Total time spent on waiting for acquisition of the write lock")
-  val WRITE_LOCK_WAITING_TIME_50_US: IntEventField = Int("write_lock_waiting_p50_us", description = "Median waiting time for the write lock")
+  val WRITE_LOCK_WAITING_TIME_TOTAL_MS: IntEventField = Int("write_lock_waiting_ms", description = "Total time spent on waiting for acquisition of the write lock in milliseconds.")
+  val WRITE_LOCK_WAITING_TIME_50_US: IntEventField = Int("write_lock_waiting_p50_us", description = "Median waiting time for the write lock in microseconds.")
   val WRITE_LOCK_WAITING_TIME_95_TO_50: FloatEventField = FloatEventField("write_lock_waiting_p95_to_p50", description = "Relation of 95-th percentile of a write lock acquisition to the median")
   val WRITE_LOCK_WAITING_TIME_99_TO_50: FloatEventField = FloatEventField("write_lock_waiting_p99_to_p50", description = "Relation of 99-th percentile of a write lock acquisition to the median")
 
-  val WRITE_LOCK_EXECUTION_TIME_TOTAL_MS: IntEventField = Int("write_lock_execution_ms", description = "Total time spent on execution of write actions")
-  val WRITE_LOCK_EXECUTION_TIME_50_US: IntEventField = Int("write_lock_execution_p50_us", description = "Median execution time of write actions")
+  val WRITE_LOCK_EXECUTION_TIME_TOTAL_MS: IntEventField = Int("write_lock_execution_ms", description = "Total time spent on execution of write actions in milliseconds.")
+  val WRITE_LOCK_EXECUTION_TIME_50_US: IntEventField = Int("write_lock_execution_p50_us", description = "Median execution time of write actions in microseconds.")
   val WRITE_LOCK_EXECUTION_TIME_95_TO_50: FloatEventField = FloatEventField("write_lock_execution_p95_to_p50", description = "Relation of 95-th percentile of a write action execution time to the median")
   val WRITE_LOCK_EXECUTION_TIME_99_TO_50: FloatEventField = FloatEventField("write_lock_execution_p99_to_p50", description = "Relation of 99-th percentile of a write action execution time to the median")
 
   val READING_LOCK_EVENTS: IntEventField = Int("reading_lock_events_count", description = "Number of events for read and write-intent locks")
 
-  val READING_LOCK_WAITING_TIME_TOTAL_MS: IntEventField = Int("reading_lock_waiting_ms", description = "Total time spent on waiting for read and write-intent locks")
-  val READING_LOCK_WAITING_TIME_50_US: IntEventField = Int("reading_lock_waiting_p50_us", description = "Median waiting time for the read and write-intent locks")
+  val READING_LOCK_WAITING_TIME_TOTAL_MS: IntEventField = Int("reading_lock_waiting_ms", description = "Total time spent on waiting for read and write-intent locks in milliseconds.")
+  val READING_LOCK_WAITING_TIME_50_US: IntEventField = Int("reading_lock_waiting_p50_us", description = "Median waiting time for the read and write-intent locks in microseconds.")
   val READING_LOCK_WAITING_TIME_95_TO_50: FloatEventField = FloatEventField("reading_lock_waiting_p95_to_p50", description = "Relation of 95-th percentile of read and write-intent locks waiting to the median")
   val READING_LOCK_WAITING_TIME_99_TO_50: FloatEventField = FloatEventField("reading_lock_waiting_p99_to_p50", description = "Relation of 99-th percentile of read and write-intent locks waiting to the median")
 
-  val READING_LOCK_EXECUTION_TIME_TOTAL_MS: IntEventField = Int("reading_lock_execution_ms", description = "Total time spent on execution of read and write-intent actions")
-  val READING_LOCK_EXECUTION_TIME_50_US: IntEventField = Int("reading_lock_execution_p50_us", description = "Median execution time of read and write-intent actions")
+  val READING_LOCK_EXECUTION_TIME_TOTAL_MS: IntEventField = Int("reading_lock_execution_ms", description = "Total time spent on execution of read and write-intent actions in milliseconds.")
+  val READING_LOCK_EXECUTION_TIME_50_US: IntEventField = Int("reading_lock_execution_p50_us", description = "Median execution time of read and write-intent actions in microseconds.")
   val READING_LOCK_EXECUTION_TIME_95_TO_50: FloatEventField = FloatEventField("reading_lock_execution_p95_to_p50", description = "Relation of 95-th percentile of read and write-intent actions execution time to the median")
   val READING_LOCK_EXECUTION_TIME_99_TO_50: FloatEventField = FloatEventField("reading_lock_execution_p99_to_p50", description = "Relation of 99-th percentile of read and write-intent actions execution time to the median")
 
   private val UI_RESPONSIVENESS: VarargEventId = GROUP.registerVarargEvent(
-    "ui.responsiveness",
+    eventId = "ui.responsiveness",
+    description = "Aggregated distribution of latencies for execution and queueing of UI events. We also gather information about the Read/Write lock acquisitions on UI thread in this event.",
     UI_EVENTS_COUNT,
     WINDOW_LENGTH_MS,
     UI_EXECUTION_TIME_TOTAL_MS,
