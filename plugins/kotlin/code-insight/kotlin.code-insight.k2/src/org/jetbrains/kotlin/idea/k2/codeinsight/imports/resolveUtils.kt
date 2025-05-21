@@ -81,7 +81,11 @@ private fun KaSession.resolveReferencedType(reference: KtReference): KaType? {
     val psiFactory = KtPsiFactory.contextual(reference.element)
     val psiType = psiFactory.createTypeCodeFragment(originalReferenceName.asString(), context = reference.element).getContentElement()
 
-    return psiType?.type
+    // FIXME: KTIJ-34288
+    @OptIn(KaImplementationDetail::class)
+    return KaBaseIllegalPsiException.allowIllegalPsiAccess {
+         psiType?.type
+    }
 }
 
 /**
