@@ -506,7 +506,7 @@ public final class EnvironmentUtil {
 
   private static boolean checkIfLocaleAvailable(String candidateLanguageTerritory) {
     return ContainerUtil.exists(Locale.getAvailableLocales(), l -> Objects.equals(l.toString(), candidateLanguageTerritory)) &&
-           new File(MAC_OS_LOCALE_PATH, candidateLanguageTerritory).exists();
+           (!SystemInfoRt.isMac || Files.exists(Paths.get(MAC_OS_LOCALE_PATH, candidateLanguageTerritory)));
   }
 
   public static @NotNull String setLocaleEnv(@NotNull Map<String, String> env, @NotNull Charset charset) {
