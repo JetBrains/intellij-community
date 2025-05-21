@@ -9,7 +9,6 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
-import com.intellij.internal.statistic.utils.StatisticsUtil.roundToPowerOfTwo
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -57,29 +56,29 @@ object GitLabStatistics {
 
   private val PROJECT_METRICS_MR_STATISTICS_ALL = PROJECT_METRICS_GROUP.registerEvent(
     "mr.statistics.all",
-    EventFields.Int("value", description = "Total number of MRs in project (rounded up to the first power of 2)."),
+    EventFields.RoundedInt("value", description = "Total number of MRs in project (rounded up to the first power of 2)."),
     description = "#MR statistics: open."
   )
   private val PROJECT_METRICS_MR_STATISTICS_OPEN = PROJECT_METRICS_GROUP.registerEvent(
     "mr.statistics.open",
-    EventFields.Int("value", description = "Total number of open MRs in project (rounded up to the first power of 2)."),
+    EventFields.RoundedInt("value", description = "Total number of open MRs in project (rounded up to the first power of 2)."),
     description = "#MR statistics: open."
   )
   private val PROJECT_METRICS_MR_STATISTICS_OPEN_AUTHOR = PROJECT_METRICS_GROUP.registerEvent(
     "mr.statistics.open.author",
-    EventFields.Int("value",
+    EventFields.RoundedInt("value",
                     description = "Total number of open MRs in project authored by the current user (rounded up to the first power of 2)."),
     description = "#MR statistics: open > author."
   )
   private val PROJECT_METRICS_MR_STATISTICS_OPEN_ASSIGNEE = PROJECT_METRICS_GROUP.registerEvent(
     "mr.statistics.open.assignee",
-    EventFields.Int("value",
+    EventFields.RoundedInt("value",
                     description = "Total number of open MRs in project assigned to the current user (rounded up to the first power of 2)."),
     description = "#MR statistics: open > assignee."
   )
   private val PROJECT_METRICS_MR_STATISTICS_OPEN_REVIEW_ASSIGNED = PROJECT_METRICS_GROUP.registerEvent(
     "mr.statistics.open.reviewer",
-    EventFields.Int("value",
+    EventFields.RoundedInt("value",
                     description = "Total number of open MRs in project assigned to the current user as reviewer (rounded up to the first power of 2)."),
     description = "#MR statistics: open > reviewer."
   )
@@ -92,11 +91,11 @@ object GitLabStatistics {
       val metrics = metricsLoader.getMetrics() ?: return emptySet()
 
       return setOfNotNull(
-        PROJECT_METRICS_MR_STATISTICS_ALL.metric(roundToPowerOfTwo(metrics.allMRCount.count)),
-        PROJECT_METRICS_MR_STATISTICS_OPEN.metric(roundToPowerOfTwo(metrics.openMRCount.count)),
-        PROJECT_METRICS_MR_STATISTICS_OPEN_AUTHOR.metric(roundToPowerOfTwo(metrics.openAuthoredMRCount.count)),
-        PROJECT_METRICS_MR_STATISTICS_OPEN_ASSIGNEE.metric(roundToPowerOfTwo(metrics.openAssignedMRCount.count)),
-        PROJECT_METRICS_MR_STATISTICS_OPEN_REVIEW_ASSIGNED.metric(roundToPowerOfTwo(metrics.openReviewAssignedMRCount.count)),
+        PROJECT_METRICS_MR_STATISTICS_ALL.metric(metrics.allMRCount.count),
+        PROJECT_METRICS_MR_STATISTICS_OPEN.metric(metrics.openMRCount.count),
+        PROJECT_METRICS_MR_STATISTICS_OPEN_AUTHOR.metric(metrics.openAuthoredMRCount.count),
+        PROJECT_METRICS_MR_STATISTICS_OPEN_ASSIGNEE.metric(metrics.openAssignedMRCount.count),
+        PROJECT_METRICS_MR_STATISTICS_OPEN_REVIEW_ASSIGNED.metric(metrics.openReviewAssignedMRCount.count),
       )
     }
   }
