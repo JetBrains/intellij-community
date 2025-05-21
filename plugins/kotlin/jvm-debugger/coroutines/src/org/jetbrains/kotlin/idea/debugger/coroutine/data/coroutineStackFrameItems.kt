@@ -10,10 +10,12 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.memory.utils.StackFrameItem
 import com.intellij.xdebugger.frame.XStackFrame
 import com.sun.jdi.Location
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.debugger.base.util.safeKotlinPreferredLineNumber
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.base.util.safeSourceName
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.findOrCreateLocation
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.toXSourcePosition
 
@@ -85,6 +87,18 @@ sealed class CoroutineStackFrameItem(val location: Location, val spilledVariable
     fun uniqueId() =
         location.safeSourceName() + ":" + location.safeMethod().toString() + ":" +
                 location.safeLineNumber() + ":" + location.safeKotlinPreferredLineNumber()
+
+    companion object {
+        fun create(
+            stackTraceElement: StackTraceElement?,
+            fieldVariables: List<JavaValue>,
+            context: DefaultExecutionContext
+        ): CoroutineStackFrameItem? {
+            if (stackTraceElement == null) return null
+            val generatedLocation = findOrCreateLocation(context, stackTraceElement)
+            return DefaultCoroutineStackFrameItem(generatedLocation, fieldVariables)
+        }
+    }
 }
 
 fun DebugProcessImpl.findFirstFrame(): StackFrameProxyImpl? = suspendManager.pausedContext.thread?.frame(0)

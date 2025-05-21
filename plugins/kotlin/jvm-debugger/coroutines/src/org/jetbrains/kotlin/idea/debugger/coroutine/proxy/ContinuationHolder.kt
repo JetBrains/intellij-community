@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.debugger.base.util.dropInlineSuffix
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.callMethodFromHelper
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.ContinuationVariableValueDescriptorImpl
+import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineStackFrameItem
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineStacksInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CreationCoroutineStackFrameItem
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.*
@@ -60,8 +61,7 @@ private fun fetchContinuationStack(
     context: DefaultExecutionContext
 ): CoroutineStacksInfoData? {
     if (continuation == null) return null
-    val (coroutineStack, creationStack) = collectCoroutineAndCreationStack(continuation, context) ?: return null
-    val continuationStackFrames = coroutineStack.mapNotNull { it.toCoroutineStackFrameItem(context) }
+    val (continuationStackFrames, creationStack) = collectCoroutineAndCreationStack(continuation, context) ?: return null
     val creationStackFrames = creationStack?.mapIndexed { index, ste ->
         CreationCoroutineStackFrameItem(findOrCreateLocation(context, ste), index == 0)
     } ?: emptyList()
@@ -71,7 +71,7 @@ private fun fetchContinuationStack(
 private fun collectCoroutineAndCreationStack(
     continuation: ObjectReference,
     context: DefaultExecutionContext
-): Pair<List<MirrorOfStackFrame>, List<StackTraceElement>?>? {
+): Pair<List<CoroutineStackFrameItem>, List<StackTraceElement>?>? {
     val array = callMethodFromHelper(
         CoroutinesDebugHelper::class.java,
         context,
@@ -79,10 +79,10 @@ private fun collectCoroutineAndCreationStack(
         listOf(continuation),
         JsonUtils::class.java.name
     ) ?: return fallbackToOldFetchContinuationStack(continuation, context)
-    return parseResultFromHelper(array)
+    return parseResultFromHelper(array, context)
 }
 
-private fun parseResultFromHelper(array: Value): Pair<MutableList<MirrorOfStackFrame>, List<StackTraceElement>?>? {
+private fun parseResultFromHelper(array: Value, context: DefaultExecutionContext): Pair<List<CoroutineStackFrameItem>, List<StackTraceElement>?>? {
     val values = (array as? ArrayReference)?.values ?: return null
     val json = (values[0] as StringReference).value()
     val continuations = (values[1] as ArrayReference).values.mapNotNull { it as? ObjectReference }
@@ -91,15 +91,14 @@ private fun parseResultFromHelper(array: Value): Pair<MutableList<MirrorOfStackF
         continuations.size == coroutineStackTraceData.continuationFrames.size,
         "Size of continuations and coroutineStackTraceData must be equal."
     )
-    val coroutineStack = mutableListOf<MirrorOfStackFrame>()
-    for ((i, continuationMirror) in continuations.withIndex()) {
+    val coroutineStack = continuations.mapIndexedNotNull { i, continuation ->
         val data = coroutineStackTraceData.continuationFrames[i]
-        coroutineStack += MirrorOfStackFrame(
-            MirrorOfBaseContinuationImpl(
-                continuationMirror,
-                data.stackTraceElement?.stackTraceElement(),
-                data.spilledVariables.map { FieldVariable(it.fieldName, it.variableName) },
-            )
+        CoroutineStackFrameItem.create(
+            stackTraceElement = data.stackTraceElement?.stackTraceElement(),
+            fieldVariables = data.spilledVariables
+                .map { FieldVariable(it.fieldName, it.variableName) }
+                .map { it.toJavaValue(continuation, context) },
+            context = context
         )
     }
     return coroutineStack to coroutineStackTraceData.creationStack?.map { it.stackTraceElement() }
@@ -108,12 +107,13 @@ private fun parseResultFromHelper(array: Value): Pair<MutableList<MirrorOfStackF
 private fun fallbackToOldFetchContinuationStack(
     continuation: ObjectReference,
     context: DefaultExecutionContext
-): Pair<List<MirrorOfStackFrame>, List<StackTraceElement>?>? {
+): Pair<List<CoroutineStackFrameItem>, List<StackTraceElement>?>? {
     val continuationStack = DebugMetadata.instance(context)?.fetchContinuationStack(continuation, context) ?: return null
     val lastRestoredFrame = continuationStack.lastOrNull()
     val coroutineOwner = lastRestoredFrame?.baseContinuationImpl?.coroutineOwner
     val coroutineInfo = DebugProbesImpl.instance(context)?.getCoroutineInfo(coroutineOwner, context)
-    return continuationStack to coroutineInfo?.creationStackTraceProvider?.getStackTrace()?.map { it.stackTraceElement() }
+    return continuationStack.mapNotNull { it.toCoroutineStackFrameItem(context) } to
+            coroutineInfo?.creationStackTraceProvider?.getStackTrace()?.map { it.stackTraceElement() }
 }
 
 internal fun findOrCreateLocation(context: DefaultExecutionContext, stackTraceElement: StackTraceElement) =

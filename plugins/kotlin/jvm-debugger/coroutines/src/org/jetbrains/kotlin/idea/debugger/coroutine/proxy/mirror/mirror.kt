@@ -51,10 +51,11 @@ data class MirrorOfStackTraceElement(
 
 data class MirrorOfStackFrame(val baseContinuationImpl: MirrorOfBaseContinuationImpl) {
     fun toCoroutineStackFrameItem(context: DefaultExecutionContext): CoroutineStackFrameItem? {
-        val stackTraceElement = baseContinuationImpl.stackTraceElement ?: return null
-        val generatedLocation = findOrCreateLocation(context, stackTraceElement)
-        val spilledVariables = baseContinuationImpl.spilledValues(context)
-        return DefaultCoroutineStackFrameItem(generatedLocation, spilledVariables)
+        return CoroutineStackFrameItem.create(
+            stackTraceElement = baseContinuationImpl.stackTraceElement,
+            fieldVariables = baseContinuationImpl.spilledValues(context),
+            context = context
+        )
     }
 }
 
