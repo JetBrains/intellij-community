@@ -310,6 +310,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           }
           IdentifierHighlighterPassFactory.waitForIdentifierHighlighting(editor);
           waitForLazyQuickFixesUnderCaret(psiFile, editor);
+          NonBlockingReadActionImpl.waitForAsyncTaskCompletion();//auto-imports use non-blocking read actions to compute imports
+          NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+
           UIUtil.dispatchAllInvocationEvents();
           Segment focusModeRange = (editor instanceof EditorImpl) ? ((EditorImpl)editor).getFocusModeRange() : null;
           int startOffset = focusModeRange != null ? focusModeRange.getStartOffset() : 0;

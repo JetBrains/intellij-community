@@ -4,7 +4,6 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.highlighting.BackgroundHighlighter;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -19,6 +18,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -66,13 +66,13 @@ public final class IdentifierHighlighterPassFactory {
   @TestOnly
   @RequiresEdt
   public static void waitForIdentifierHighlighting(@NotNull Editor editor) {
-    // wait for async "highlight identifier" computation to apply in com.intellij.codeInsight.highlighting.BackgroundHighlighter.updateHighlighted
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     Project project = editor.getProject();
+    UIUtil.dispatchAllInvocationEvents();
     if (project != null) {
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
     }
+    UIUtil.dispatchAllInvocationEvents();
+    // wait for async "highlight identifier" computation to apply in com.intellij.codeInsight.highlighting.BackgroundHighlighter.updateHighlighted
     BackgroundHighlighter.Companion.waitForIdentifierHighlighting(editor);
   }
 }

@@ -352,6 +352,7 @@ class BraceHighlightingHandler internal constructor(
 
   @RequiresEdt
   private fun highlightBrace(braceRange: TextRange, matched: Boolean) {
+    ThreadingAssertions.assertEventDispatchThread()
     val attributesKey = if (matched) CodeInsightColors.MATCHED_BRACE_ATTRIBUTES else CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES
     removeExistingBraceHighlightsAround(braceRange)
     val braceHighlighter = editor.markupModel
@@ -361,7 +362,7 @@ class BraceHighlightingHandler internal constructor(
     getHighlightersList(editor).add(braceHighlighter)
   }
 
-  private fun removeExistingBraceHighlightsAround(range: TextRange) {
+  private fun removeExistingBraceHighlightsAround(range: TextRange): List<RangeHighlighter> {
     ThreadingAssertions.assertEventDispatchThread()
     val toRemove: MutableList<RangeHighlighter> = mutableListOf()
     (editor.markupModel as MarkupModelEx).processRangeHighlightersOverlappingWith(range.startOffset, range.endOffset) { highlighter ->
@@ -376,6 +377,7 @@ class BraceHighlightingHandler internal constructor(
     for (highlighter in toRemove) {
       highlighter.dispose()
     }
+    return toRemove
   }
 
   @RequiresEdt

@@ -579,6 +579,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
                            int @NotNull [] passesToIgnore,
                            boolean canChangeDocument,
                            @Nullable Runnable callbackWhileWaiting) throws Exception {
+    ThreadingAssertions.assertEventDispatchThread();
     ((CoreProgressManager)ProgressManager.getInstance()).suppressAllDeprioritizationsDuringLongTestsExecutionIn(() -> {
       VirtualFile virtualFile = textEditor.getFile();
       Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
@@ -601,6 +602,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       try {
         long start = System.currentTimeMillis();
         waitInOtherThread(600_000, canChangeDocument, () -> {
+          NonBlockingReadActionImpl.waitForAsyncTaskCompletion();//auto-imports use non-blocking read actions
+          NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
           progress.checkCanceled();
           if (callbackWhileWaiting != null) {
             callbackWhileWaiting.run();
@@ -626,6 +629,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         ((HighlightingSessionImpl)session).applyFileLevelHighlightsRequests();
         EDT.dispatchAllInvocationEvents();
         EDT.dispatchAllInvocationEvents();
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion();//auto-imports use non-blocking read actions
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
         assert progress.isCanceled();
       }
       catch (Throwable e) {
