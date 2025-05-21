@@ -48,7 +48,7 @@ private class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope)
   private val saveRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val blockSaveOnFrameDeactivationCount = AtomicInteger()
-  private val blockSyncOnFrameActivationCount = AtomicInteger()
+  private val blockSyncCount = AtomicInteger()
 
   private val saveAppAndProjectsSettingsTask = SaveTask()
   private val saveQueue = ArrayDeque<SaveTask>()
@@ -155,7 +155,7 @@ private class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope)
   }
 
   private fun isSyncBlockedTemporarily(): Boolean {
-    val blockSyncOnFrameActivationCount = blockSyncOnFrameActivationCount.get()
+    val blockSyncOnFrameActivationCount = blockSyncCount.get()
     if (blockSyncOnFrameActivationCount == 0) {
       return false
     }
@@ -404,9 +404,11 @@ private class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope)
 
   override fun disableAutoSave(): AccessToken {
     blockSaveOnFrameDeactivation()
+    blockSyncOnFrameActivation()
     return object : AccessToken() {
       override fun finish() {
         unblockSaveOnFrameDeactivation()
+        unblockSyncOnFrameActivation()
       }
     }
   }
@@ -424,11 +426,11 @@ private class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope)
 
   override fun blockSyncOnFrameActivation() {
     LOG.debug("sync blocked")
-    blockSyncOnFrameActivationCount.incrementAndGet()
+    blockSyncCount.incrementAndGet()
   }
 
   override fun unblockSyncOnFrameActivation() {
-    blockSyncOnFrameActivationCount.decrementAndGet()
+    blockSyncCount.decrementAndGet()
     LOG.debug("sync unblocked")
   }
 }
