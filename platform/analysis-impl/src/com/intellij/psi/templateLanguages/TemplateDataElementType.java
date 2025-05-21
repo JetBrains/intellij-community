@@ -38,6 +38,8 @@ import java.util.function.Function;
 public class TemplateDataElementType extends IFileElementType implements ITemplateDataElementType {
   private static final Logger LOG = Logger.getInstance(TemplateDataElementType.class);
   private static final int CHECK_PROGRESS_AFTER_TOKENS = 1000;
+
+  @ApiStatus.Internal
   public static final LanguageExtension<TreePatcher> TREE_PATCHER =
     new LanguageExtension<>("com.intellij.lang.treePatcher", new SimpleTreePatcher());
 

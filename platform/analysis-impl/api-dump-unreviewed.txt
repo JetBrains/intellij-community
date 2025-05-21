@@ -3805,7 +3805,6 @@ c:com.intellij.psi.templateLanguages.SimpleTreePatcher
 c:com.intellij.psi.templateLanguages.TemplateDataElementType
 - com.intellij.psi.tree.IFileElementType
 - com.intellij.psi.templateLanguages.ITemplateDataElementType
-- sf:TREE_PATCHER:com.intellij.lang.LanguageExtension
 - <init>(java.lang.String,com.intellij.lang.Language,com.intellij.psi.tree.IElementType,com.intellij.psi.tree.IElementType):V
 - p:appendCurrentTemplateToken(I,java.lang.CharSequence):com.intellij.psi.templateLanguages.TemplateDataModifications
 - p:appendCurrentTemplateToken(java.lang.StringBuilder,java.lang.CharSequence,com.intellij.lexer.Lexer,com.intellij.psi.templateLanguages.TemplateDataElementType$RangeCollector):V
