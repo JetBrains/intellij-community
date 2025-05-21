@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith
 
@@ -140,7 +140,9 @@ abstract class DeprecatedSymbolUsageFixBase(
         assert(!isDispatchThread()) {
             "${javaClass.name} should not be created on EDT"
         }
-        isUnitTypeReplacement = createReplacementExpression(element.project, replaceWith, element)?.let { analyze(element) { it.expressionType?.isUnitType } }
+        isUnitTypeReplacement = createReplacementExpression(element.project, replaceWith, element)?.let {
+            analyze(it) { it.expressionType?.isUnitType }
+        }
         isAvailable = buildUsageReplacementStrategy(
             element, replaceWith, isUnitTypeReplacement
         )?.let { it.createReplacer(element) != null } == true
