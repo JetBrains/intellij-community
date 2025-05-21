@@ -9,6 +9,7 @@ import com.intellij.modcommand.Presentation
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -91,11 +92,10 @@ internal sealed class ConvertFunctionWithDemorgansLawIntention(
         return ConvertFunctionWithDemorgansLawContext(operands, parentNotCall)
     }
 
-    context(KaSession)
     private fun negate(baseExpression: KtExpression): List<KtExpression>? {
         fun negateOperand(operand: KtExpression): KtExpression {
             return (operand as? KtQualifiedExpression)?.invertSelectorFunction()
-                ?: operand.negate(reformat = false) { it.expressionType?.isBooleanType == true }
+                ?: operand.negate(reformat = false) { analyze(it) { it.expressionType?.isBooleanType == true }}
         }
 
         return when (baseExpression) {
