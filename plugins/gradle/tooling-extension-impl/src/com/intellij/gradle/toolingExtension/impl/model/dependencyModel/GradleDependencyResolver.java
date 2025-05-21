@@ -14,6 +14,8 @@ import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.*;
 import org.gradle.api.artifacts.component.*;
+import org.gradle.api.artifacts.repositories.ArtifactRepository;
+import org.gradle.api.artifacts.repositories.IvyArtifactRepository;
 import org.gradle.api.artifacts.result.DependencyResult;
 import org.gradle.api.artifacts.result.ResolvedArtifactResult;
 import org.gradle.api.artifacts.result.ResolvedComponentResult;
@@ -27,7 +29,6 @@ import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.ExternalDependency;
 import org.jetbrains.plugins.gradle.model.FileCollectionDependency;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
-import org.jetbrains.plugins.gradle.tooling.util.GradleRepositoryUtils;
 
 import java.io.File;
 import java.util.*;
@@ -349,7 +350,7 @@ public final class GradleDependencyResolver {
     if (useLegacyResolver || GradleVersionUtil.isCurrentGradleOlderThan("7.5")) {
       return new LegacyAuxiliaryArtifactResolver(myProject, myDownloadPolicy, resolvedArtifacts);
     }
-    if (GradleRepositoryUtils.isIvyRepositoryUsed(myProject)) {
+    if (isIvyRepositoryUsed(myProject)) {
       return new LegacyAuxiliaryArtifactResolver(myProject, myDownloadPolicy, resolvedArtifacts);
     }
     return new AuxiliaryArtifactResolverImpl(myProject, myDownloadPolicy, allowedDependencyGroups);
@@ -442,5 +443,14 @@ public final class GradleDependencyResolver {
       this.group = group;
       this.version = version;
     }
+  }
+
+  private static boolean isIvyRepositoryUsed(@NotNull Project project) {
+    for (ArtifactRepository repository : project.getRepositories()) {
+      if (repository instanceof IvyArtifactRepository) {
+        return true;
+      }
+    }
+    return false;
   }
 }
