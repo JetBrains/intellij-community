@@ -20,7 +20,6 @@
     <searchEverywhere.manager implementation="com.intellij.platform.searchEverywhere.frontend.RemDevFriendlySearchEverywhereManager"/>
 
     <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.frontend.providers.actions.SeActionsProviderFactory"/>
-    <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.frontend.providers.topHit.SeFrontendTopHitItemsProviderFactory"/>
 
     <searchEverywhere.tabFactory implementation="com.intellij.platform.searchEverywhere.frontend.tabs.all.SeAllTabFactory"/>
     <searchEverywhere.tabFactory implementation="com.intellij.platform.searchEverywhere.frontend.tabs.classes.SeClassesTabFactory"/>
