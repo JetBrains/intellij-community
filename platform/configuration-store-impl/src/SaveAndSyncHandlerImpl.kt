@@ -7,10 +7,7 @@ import com.intellij.conversion.ConversionService
 import com.intellij.ide.*
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
-import com.intellij.openapi.components.ComponentManager
-import com.intellij.openapi.components.StorageScheme
-import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -343,7 +340,7 @@ private class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope)
             val stateStore = project.stateStore
             val path = if (stateStore.storageScheme == StorageScheme.DIRECTORY_BASED) stateStore.projectBasePath else stateStore.projectFilePath
             // update last modified for all project files modified between project open and close
-            ConversionService.getInstance()?.saveConversionResult(path)
+            (componentManager as ComponentManagerEx).getServiceAsyncIfDefined(ConversionService::class.java)?.saveConversionResult(path)
           }
         }
       }
