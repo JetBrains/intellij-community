@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.newUiOnboarding
 
 import com.intellij.dvcs.DvcsUtil
@@ -17,9 +17,10 @@ import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingUtil
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.GotItComponentBuilder
 import com.intellij.util.ui.JBUI
+import com.intellij.vcs.git.shared.rpc.GitWidgetState
 import git4idea.i18n.GitBundle
+import git4idea.remoteApi.GitWidgetApiImpl
 import git4idea.ui.toolbar.GitToolbarWidgetAction
-import git4idea.ui.toolbar.GitToolbarWidgetAction.GitWidgetState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.awt.Point
@@ -40,11 +41,11 @@ open class GitWidgetStep : NewUiOnboardingStep {
     val dataContext = DataManager.getInstance().getDataContext(button)
     val state = withContext(Dispatchers.Default) {
       readAction {
-        GitToolbarWidgetAction.getWidgetState(project, DvcsUtil.getSelectedFile(dataContext))
+        GitWidgetApiImpl.getWidgetState(project, DvcsUtil.getSelectedFile(dataContext))
       }
     }
 
-    val text = if (state is GitWidgetState.Repo) {
+    val text = if (state is GitWidgetState.OnRepository) {
       GitBundle.message("newUiOnboarding.git.widget.step.text.with.repo")
     }
     else GitBundle.message("newUiOnboarding.git.widget.step.text.no.repo")
@@ -52,7 +53,7 @@ open class GitWidgetStep : NewUiOnboardingStep {
     val builder = GotItComponentBuilder(text)
       .withHeader(GitBundle.message("newUiOnboarding.git.widget.step.header"))
 
-    val helpTopic = if (state is GitWidgetState.Repo) generalVcsHelpTopic else enableVcsHelpTopic
+    val helpTopic = if (state is GitWidgetState.OnRepository) generalVcsHelpTopic else enableVcsHelpTopic
     if (helpTopic != null) {
       val ideHelpLink = NewUiOnboardingUtil.getHelpLink(helpTopic)
       builder.withBrowserLink(NewUiOnboardingBundle.message("gotIt.learn.more"), URL(ideHelpLink))

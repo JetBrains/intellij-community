@@ -30,8 +30,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <registryKey defaultValue="false"
                  key="git.branches.widget.rd"
-                 restartRequired="true"
-                 description="WIP: Enables RD-friendly version of the Git branches widget"/>
+                 description="Experimental rem dev view for git branches widget"/>
 
     <projectService serviceImplementation="git4idea.config.GitVcsSettings" configurationSchemaKey="versionControl.git"/>
     <projectSettings service="git4idea.config.GitVcsSettings"/>

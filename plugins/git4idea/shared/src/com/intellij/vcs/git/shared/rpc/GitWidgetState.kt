@@ -14,7 +14,7 @@ sealed interface GitWidgetState {
   data object DoNotShow : GitWidgetState
 
   @Serializable
-  data object NoVcs : GitWidgetState
+  data class NoVcs(val trustedProject: Boolean) : GitWidgetState
 
   @Serializable
   data object UnknownGitRepository : GitWidgetState
