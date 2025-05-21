@@ -1696,6 +1696,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             public void testClassMember() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/fromKotlinToJava/classMember.before.Main.kt");
             }
+
+            @TestMetadata("noExtFunctionForJavaClass.before.Main.kt")
+            public void testNoExtFunctionForJavaClass() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/fromKotlinToJava/noExtFunctionForJavaClass.before.Main.kt");
+            }
         }
     }
 

@@ -2143,6 +2143,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 public void testClassMember() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createFunction/fromKotlinToJava/classMember.before.Main.kt");
                 }
+
+                @TestMetadata("noExtFunctionForJavaClass.before.Main.kt")
+                public void testNoExtFunctionForJavaClass() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createFunction/fromKotlinToJava/noExtFunctionForJavaClass.before.Main.kt");
+                }
             }
         }
 

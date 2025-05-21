@@ -149,6 +149,9 @@ class K2ElementActionsFactory : JvmElementActionsFactory() {
 
         val ktRequest = request as? CreateMethodFromKotlinUsageRequest
         if (ktRequest?.isExtension == true) {
+            // Regular java classes have no companions
+            if (ktRequest.isForCompanion && ktRequest.targetClass is PsiClass) return emptyList()
+
             container = container.containingKtFile
         }
         val actionText = if (ktRequest == null)
