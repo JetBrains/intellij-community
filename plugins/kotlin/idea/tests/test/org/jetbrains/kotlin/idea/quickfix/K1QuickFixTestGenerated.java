@@ -5560,6 +5560,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     public void testNullableReceiver() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/extension/nullableReceiver.kt");
                     }
+
+                    @TestMetadata("withGenerics.kt")
+                    public void testWithGenerics() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/extension/withGenerics.kt");
+                    }
                 }
 
                 @RunWith(JUnit3RunnerWithInners.class)

@@ -10239,6 +10239,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             public void testNullableReceiver() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/extension/nullableReceiver.kt");
             }
+
+            @TestMetadata("withGenerics.kt")
+            public void testWithGenerics() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/extension/withGenerics.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
