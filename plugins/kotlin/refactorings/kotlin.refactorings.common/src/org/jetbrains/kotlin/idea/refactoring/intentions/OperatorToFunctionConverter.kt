@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
@@ -23,6 +22,7 @@ import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.findLabelAndCall
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 import org.jetbrains.kotlin.util.OperatorNameConventions
@@ -218,16 +218,21 @@ object OperatorToFunctionConverter {
             val receiverText = if (receiver != null) {
                 receiver.text
             } else {
-                val label = allowAnalysisOnEdt {
+                val owner = allowAnalysisOnEdt {
                     allowAnalysisFromWriteAction {
                         analyze(callee) {
                             val partiallyAppliedSymbol = element.resolveToCall()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol
                             val symbol = (partiallyAppliedSymbol?.extensionReceiver as? KaImplicitReceiverValue)?.symbol
-                            (symbol as? KaReceiverParameterSymbol)?.owningCallableSymbol?.name?.asString() ?: ""
+                            (symbol as? KaReceiverParameterSymbol)?.owningCallableSymbol?.psi
                         }
                     }
                 }
-                "this" + (if (label.isNotEmpty()) "@$label" else "")
+                val label = when(owner) {
+                    is KtFunctionLiteral -> owner.findLabelAndCall().first?.asString()
+                    is KtNamedDeclaration -> owner.name
+                    else -> null
+                }
+                "this" + (if (label != null) "@$label" else "")
             }
             val delimiter = if (receiverText.isNotEmpty() && argumentString.isNotEmpty()) ", " else ""
             receiverText + delimiter + argumentString

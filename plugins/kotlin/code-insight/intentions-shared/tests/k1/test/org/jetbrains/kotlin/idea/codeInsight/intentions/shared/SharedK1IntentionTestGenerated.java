@@ -1904,6 +1904,16 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
         public void testWithReceiverContext1() throws Exception {
             runTest("../testData/intentions/operatorToFunction/withReceiverContext1.kt");
         }
+
+        @TestMetadata("withReceiverContext2.kt")
+        public void testWithReceiverContext2() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/withReceiverContext2.kt");
+        }
+
+        @TestMetadata("withReceiverContext3.kt")
+        public void testWithReceiverContext3() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/withReceiverContext3.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
