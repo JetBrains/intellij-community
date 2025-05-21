@@ -343,17 +343,21 @@ class CodeInliner(
 
             markNonLocalJumps(expression, parameter)
 
-            analyze(call) {
+            val flag = analyze(call) {
                 val functionType = expression.expressionType as? KaFunctionType
-                if ((functionType)?.hasReceiver == true && !functionType.isSuspend) {
-                    //expand to function only for types with an extension
-                    LambdaToAnonymousFunctionUtil.prepareFunctionText(expression)
-                } else {
-                    null
-                }
-            }?.let { functionText ->
+                (functionType)?.hasReceiver == true && !functionType.isSuspend
+            }
+
+            val functionText = if (flag) {
+                //expand to function only for types with an extension
+                LambdaToAnonymousFunctionUtil.prepareFunctionText(expression)
+            } else {
+                null
+            }
+
+            functionText?.let {
                 val function = LambdaToAnonymousFunctionUtil.convertLambdaToFunction(expression, functionText)
-                function?.putCopyableUserData(WAS_CONVERTED_TO_FUNCTION_KEY, Unit)
+                function.putCopyableUserData(WAS_CONVERTED_TO_FUNCTION_KEY, Unit)
                 function
             }
         } ?: expression
