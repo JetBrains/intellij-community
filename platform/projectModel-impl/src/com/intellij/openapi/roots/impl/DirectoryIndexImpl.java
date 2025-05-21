@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Query;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.messages.MessageBusConnection;
@@ -101,25 +100,13 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   public @NotNull Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
     return myWorkspaceFileIndex.getDirectoriesByPackageName(packageName, includeLibrarySources);
   }
-
-  @Override
-  public Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName,
-                                                        @NotNull GlobalSearchScope scope) {
-    return myWorkspaceFileIndex.getDirectoriesByPackageName(packageName, scope);
-  }
-
+  
   private RootIndex getRootIndex() {
     RootIndex rootIndex = myRootIndex;
     if (rootIndex == null) {
       myRootIndex = rootIndex = new RootIndex(myProject);
     }
     return rootIndex;
-  }
-
-  @Override
-  public String getPackageName(@NotNull VirtualFile fileOrDir) {
-    checkAvailability();
-    return myWorkspaceFileIndex.getPackageName(fileOrDir);
   }
 
   @Override
