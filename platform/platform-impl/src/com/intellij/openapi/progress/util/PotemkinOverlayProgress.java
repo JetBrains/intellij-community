@@ -24,16 +24,12 @@ import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JRootPane;
-import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
-import java.awt.Component;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Rectangle;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.List;
 
 @ApiStatus.Internal
 public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
@@ -101,6 +97,10 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
     myLastInteraction = now;
     long millisSinceLastUpdate = TimeoutUtil.getDurationMillis(myLastUiUpdate);
     if (!myShowing && millisSinceLastUpdate > myDelayInMillis) {
+      // since we are starting to show the dialog, we need to emulate modality and drop unrelated input events
+      // the only events that are allowed here are the ones that related to the dialog;
+      // but we know that there are no such events because the dialog is not showing yet
+      drainUndispatchedInputEvents();
       myShowing = true;
     }
     if (myShowing) {
@@ -135,6 +135,10 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
       return ks == null ? null : new KeyboardShortcut(ks, null);
     }
     return null;
+  }
+
+  public List<InputEvent> drainUndispatchedInputEvents() {
+    return myEventStealer.drainUndispatchedInputEvents();
   }
 
   private void paintProgress() {

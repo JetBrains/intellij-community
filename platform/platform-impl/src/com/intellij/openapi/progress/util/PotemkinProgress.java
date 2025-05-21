@@ -27,6 +27,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.InvocationEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -121,12 +123,22 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
   }
 
   private void updateUI(long now) {
-    if (myApp.isUnitTestMode()) return;
+    if (myApp.isUnitTestMode()) {
+      if (now - myLastUiUpdate > delayInMillis) {
+        drainUndispatchedInputEvents();
+      }
+      return;
+    }
 
     JRootPane rootPane = getDialog().getPanel().getRootPane();
     if (rootPane == null && now - myLastUiUpdate > delayInMillis && myApp.isActive()) {
       getDialog().getRepaintRunnable().run();
       showDialog();
+      // since we are starting to show the dialog, we need to emulate modality and drop unrelated input events
+      // the only events that are allowed here are the ones that related to the dialog;
+      // but we know that there are no such events because the dialog is not showing yet
+      drainUndispatchedInputEvents();
+
       rootPane = getDialog().getPanel().getRootPane();
     }
 
@@ -198,6 +210,11 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
     started.waitFor();
   }
 
+  @ApiStatus.Internal
+  public List<InputEvent> drainUndispatchedInputEvents() {
+    return myEventStealer.drainUndispatchedInputEvents();
+  }
+
   static final class EventStealer {
     private final LinkedBlockingQueue<InputEvent> myInputEvents = new LinkedBlockingQueue<>();
     private final LinkedBlockingQueue<InvocationEvent> myInvocationEvents = new LinkedBlockingQueue<>();
@@ -220,6 +237,12 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
         }
         return false;
       }, parent);
+    }
+
+    public List<InputEvent> drainUndispatchedInputEvents() {
+      List<InputEvent> result = new ArrayList<>();
+      myInputEvents.drainTo(result);
+      return result;
     }
 
     void dispatchEvents(int timeoutMs) {
