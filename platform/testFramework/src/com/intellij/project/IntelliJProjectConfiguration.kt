@@ -8,18 +8,17 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.PathUtil
-import com.intellij.util.SystemProperties
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryDescription
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryService
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibraryCollection
 import org.jetbrains.jps.model.library.JpsOrderRootType
+import org.jetbrains.jps.model.serialization.JpsMavenSettings.getMavenRepositoryPath
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
 import java.nio.file.Path
-import java.nio.file.Paths
 import kotlin.io.path.invariantSeparatorsPathString
 
 /**
@@ -111,7 +110,7 @@ class IntelliJProjectConfiguration {
     }
 
     @JvmStatic
-    fun getLocalMavenRepo(): Path = Paths.get(SystemProperties.getUserHome(), ".m2/repository")
+    fun getLocalMavenRepo(): Path = Path.of(getMavenRepositoryPath())
   }
 
   class LibraryRoots(val classes: List<File>, val sources: List<File>) {

@@ -44,6 +44,8 @@ jvm_library(
     "@lib//:hash4j",
     "@lib//:fastutil-min",
     "@lib//:maven-resolver-provider",
+    "@lib//:mockito",
+    "//jps/model-serialization",
   ],
   runtime_deps = [":tests_test_resources"]
 )

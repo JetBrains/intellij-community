@@ -25,7 +25,6 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.JpsCompilationData
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.dependencies.JdkDownloader
-import org.jetbrains.intellij.build.getMavenRepositoryPath
 import org.jetbrains.intellij.build.impl.JdkUtils.defineJdk
 import org.jetbrains.intellij.build.impl.JdkUtils.readModulesFromReleaseFile
 import org.jetbrains.intellij.build.impl.compilation.checkCompilationOptions
@@ -58,6 +57,7 @@ import org.jetbrains.jps.model.java.JpsJavaSdkType
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.serialization.JpsMavenSettings.getMavenRepositoryPath
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsPathMapper
 import org.jetbrains.jps.model.serialization.JpsProjectLoader.loadProject
@@ -68,7 +68,6 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import kotlin.io.path.invariantSeparatorsPathString
-import kotlin.io.path.pathString
 import kotlin.io.path.relativeToOrNull
 
 @Obsolete
@@ -421,10 +420,10 @@ private suspend fun loadProject(projectHome: Path, kotlinBinaries: KotlinBinarie
     val mavenRepositoryPath = getMavenRepositoryPath()
     span.addEvent(
       "Resolved local maven repository path",
-      Attributes.of(AttributeKey.stringKey("m2 repository path"), mavenRepositoryPath.toString()),
+      Attributes.of(AttributeKey.stringKey("m2 repository path"), mavenRepositoryPath),
     )
 
-    pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", mavenRepositoryPath.pathString)
+    pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", mavenRepositoryPath)
     val pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
     loadProject(model.project, pathVariables, JpsPathMapper.IDENTITY, projectHome, null, { it: Runnable -> launch(CoroutineName("loading project")) { it.run() } }, false)
     span.setAllAttributes(

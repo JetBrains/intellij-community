@@ -2,7 +2,8 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.util.EnvironmentUtil
-import org.jetbrains.jps.model.serialization.JpsMavenSettings
+import com.intellij.util.SystemProperties
+import org.jetbrains.jps.model.serialization.JpsMavenSettings.getMavenRepositoryPath
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -17,19 +18,19 @@ class MavenRepositoryPathUtilTest {
 
   companion object {
     private val mockEnv: MockedStatic<EnvironmentUtil> = Mockito.mockStatic(EnvironmentUtil::class.java)
-    private val mockFile = Mockito.mock(File::class.java)
   }
 
-  private val defaultRepositoryPath = Path(System.getProperty("user.home"), ".m2/repository")
+  private val defaultRepositoryPath
+    get() = Path(SystemProperties.getUserHome(), ".m2/repository").toString()
 
   @AfterEach
   fun afterEach() {
     mockEnv.reset()
-    Mockito.reset(mockFile)
   }
 
   @Test
   fun `test getMavenRepositoryPath returns default path when no settings exist`() {
+    val mockFile = Mockito.mock(File::class.java)
     mockEnv.`when`<String> { EnvironmentUtil.getValue("MAVEN_OPTS") }
       .thenReturn(null)
 
@@ -58,18 +59,18 @@ class MavenRepositoryPathUtilTest {
     settingsFile.parentFile.mkdirs()
     settingsFile.writeText(settingsContent)
 
-    val mockSettingsXml = Mockito.mockStatic(JpsMavenSettings::class.java)
-    mockSettingsXml.`when`<File> { JpsMavenSettings.getUserMavenSettingsXml() }
-      .thenReturn(settingsFile)
+    Mockito.mockStatic(SystemProperties::class.java).use { mockSettings ->
+      mockSettings.`when`<String> { SystemProperties.getUserHome() }
+        .thenReturn(settingsFile.parentFile.path)
 
-    val path = getMavenRepositoryPath()
-    Assertions.assertEquals(testPathMvn, path.toString())
-
-    mockSettingsXml.close()
+      val path = getMavenRepositoryPath()
+      Assertions.assertEquals(testPathMvn, path)
+    }
   }
 
   @Test
   fun `test getMavenRepositoryPath with no maven_repo_local in MAVEN_OPTS env`() {
+    val mockFile = Mockito.mock(File::class.java)
     mockEnv.`when`<String> { EnvironmentUtil.getValue("MAVEN_OPTS") }
       .thenReturn("-Xmx2g -Dother.property=value")
 
@@ -82,6 +83,7 @@ class MavenRepositoryPathUtilTest {
 
   @Test
   fun `test getMavenRepositoryPath with incorrect maven_repo_local in MAVEN_OPTS env`() {
+    val mockFile = Mockito.mock(File::class.java)
     val mavenOpts = "-Dmaven.repo.local= /test/path -Dproperty=value"
     mockEnv.`when`<String> { EnvironmentUtil.getValue("MAVEN_OPTS") }
       .thenReturn(mavenOpts)
@@ -127,14 +129,13 @@ class MavenRepositoryPathUtilTest {
     settingsFile.parentFile.mkdirs()
     settingsFile.writeText("")
 
-    val mockSettingsXml = Mockito.mockStatic(JpsMavenSettings::class.java)
-    mockSettingsXml.`when`<File> { JpsMavenSettings.getUserMavenSettingsXml() }
-      .thenReturn(settingsFile)
+    Mockito.mockStatic(SystemProperties::class.java).use { mockSettings ->
+      mockSettings.`when`<String> { SystemProperties.getUserHome() }
+        .thenReturn(settingsFile.parentFile.path)
 
-    val path = getMavenRepositoryPath()
-    Assertions.assertEquals(defaultRepositoryPath, path)
-
-    mockSettingsXml.close()
+      val path = getMavenRepositoryPath()
+      Assertions.assertEquals(defaultRepositoryPath, path)
+    }
   }
 
   @Test
@@ -144,7 +145,7 @@ class MavenRepositoryPathUtilTest {
     mockEnv.`when`<String> { EnvironmentUtil.getValue("MAVEN_OPTS") }
       .thenReturn(mavenOpts)
 
-    val result = getMavenRepositoryPath().toString()
+    val result = getMavenRepositoryPath()
     Assertions.assertEquals(testPath, result)
   }
 
@@ -155,7 +156,7 @@ class MavenRepositoryPathUtilTest {
     mockEnv.`when`<String> { EnvironmentUtil.getValue("MAVEN_OPTS") }
       .thenReturn(mavenOpts)
 
-    val result = getMavenRepositoryPath().toString()
+    val result = getMavenRepositoryPath()
     Assertions.assertEquals(testPath, result)
   }
 
@@ -173,13 +174,12 @@ class MavenRepositoryPathUtilTest {
     settingsFile.parentFile.mkdirs()
     settingsFile.writeText(settingsContent)
 
-    val mockSettingsXml = Mockito.mockStatic(JpsMavenSettings::class.java)
-    mockSettingsXml.`when`<File> { JpsMavenSettings.getUserMavenSettingsXml() }
-      .thenReturn(settingsFile)
+    Mockito.mockStatic(SystemProperties::class.java).use { mockSettings ->
+      mockSettings.`when`<String> { SystemProperties.getUserHome() }
+        .thenReturn(settingsFile.parentFile.parentFile.path)
 
-    val path = getMavenRepositoryPath()
-    Assertions.assertEquals(repositoryPath, path)
-
-    mockSettingsXml.close()
+      val path = getMavenRepositoryPath()
+      Assertions.assertEquals(repositoryPath.toString(), path)
+    }
   }
 }

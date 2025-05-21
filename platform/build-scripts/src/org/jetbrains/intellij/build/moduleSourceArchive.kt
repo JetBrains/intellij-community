@@ -24,6 +24,7 @@ import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.*
+import org.jetbrains.jps.model.serialization.JpsMavenSettings.getMavenRepositoryPath
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
@@ -189,7 +190,7 @@ private fun getLocalArtifactRepositoryRoot(global: JpsGlobal, span: Span): Path 
     return Path.of(it)
   }
 
-  return getMavenRepositoryPath().also {
+  return Path.of(getMavenRepositoryPath()).also {
     span.addEvent(
       "Resolved local maven repository path",
       Attributes.of(AttributeKey.stringKey("m2 repository path"), it.toString()),
