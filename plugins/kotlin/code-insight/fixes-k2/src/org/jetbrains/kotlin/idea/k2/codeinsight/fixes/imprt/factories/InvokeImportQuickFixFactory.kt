@@ -2,9 +2,11 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories
 
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.*
@@ -52,7 +54,8 @@ internal object InvokeImportQuickFixFactory : AbstractImportQuickFixFactory() {
                 */
 
                 val invokeCallReceiverCopy = qualifiedInvokeCall.copyQualifiedCalleeExpression() ?: return null
-                invokeCallReceiverCopy.expressionType
+                @OptIn(KaImplementationDetail::class)
+                KaBaseIllegalPsiException.allowIllegalPsiAccess { invokeCallReceiverCopy.expressionType }
             }
 
             is KaFirDiagnostic.UnresolvedReferenceWrongReceiver -> {
