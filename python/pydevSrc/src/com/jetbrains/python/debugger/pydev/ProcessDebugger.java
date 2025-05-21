@@ -42,6 +42,10 @@ public interface ProcessDebugger {
   String execTableCommand(String threadId, String frameId, String command, TableCommandType commandType,
                           TableCommandParameters tableCommandParameters) throws PyDebuggerException;
 
+  @Nullable
+  String execTableImageCommand(String threadId, String frameId, String command, TableCommandType commandType,
+                          TableCommandParameters tableCommandParameters) throws PyDebuggerException;
+
   enum GROUP_TYPE {
     DEFAULT,
     SPECIAL,

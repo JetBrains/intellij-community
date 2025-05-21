@@ -17,7 +17,7 @@ import org.intellij.images.scientific.utils.ScientificUtils.saveImageToFile
 import org.intellij.images.scientific.utils.launchBackground
 import java.awt.image.BufferedImage
 
-class InvertChannelsAction : DumbAwareAction() {
+class ReverseChannelsOrderAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -27,31 +27,30 @@ class InvertChannelsAction : DumbAwareAction() {
     val currentAngle = imageFile.getUserData(ROTATION_ANGLE_KEY) ?: 0
     imageFile.putUserData(NORMALIZATION_APPLIED_KEY, false)
 
+
     launchBackground {
       val rotatedOriginal = if (currentAngle != 0) ScientificUtils.rotateImage(originalImage, currentAngle) else originalImage
-      val invertedImage = applyInvertChannels(rotatedOriginal)
-      saveImageToFile(imageFile, invertedImage)
-      document.value = invertedImage
-      ScientificImageActionsCollector.logInvertChannelsInvoked()
+      val reversedImage = applyReverseChannelsOrder(rotatedOriginal)
+      saveImageToFile(imageFile, reversedImage)
+      document.value = reversedImage
+      ScientificImageActionsCollector.logReverseChannelsOrderInvoked()
     }
   }
 
-  private suspend fun applyInvertChannels(image: BufferedImage): BufferedImage = withContext(Dispatchers.IO) {
-    val invertedImage = BufferedImage(image.width, image.height, image.type)
+  private suspend fun applyReverseChannelsOrder(image: BufferedImage): BufferedImage = withContext(Dispatchers.IO) {
+    val reversedImage = BufferedImage(image.width, image.height, image.type)
     for (x in 0 until image.width) {
       for (y in 0 until image.height) {
         val rgba = image.getRGB(x, y)
-        val alpha = (rgba shr 24) and 0xFF
-        val red = (rgba shr 16) and 0xFF
-        val green = (rgba shr 8) and 0xFF
+        val alpha = (rgba ushr 24) and 0xFF
+        val red = (rgba ushr 16) and 0xFF
+        val green = (rgba ushr 8) and 0xFF
         val blue = rgba and 0xFF
-        val invertedRed = 255 - red
-        val invertedGreen = 255 - green
-        val invertedBlue = 255 - blue
-        val invertedRgba = (alpha shl 24) or (invertedRed shl 16) or (invertedGreen shl 8) or invertedBlue
-        invertedImage.setRGB(x, y, invertedRgba)
+        val reversedRgba = (alpha shl 24) or (blue shl 16) or (green shl 8) or red
+        reversedImage.setRGB(x, y, reversedRgba)
       }
     }
-    invertedImage
+
+    reversedImage
   }
 }

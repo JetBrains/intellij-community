@@ -8,27 +8,31 @@ import com.intellij.openapi.project.DumbAwareAction
 import org.intellij.images.editor.ImageDocument.IMAGE_DOCUMENT_DATA_KEY
 import org.intellij.images.scientific.statistics.ScientificImageActionsCollector
 import org.intellij.images.scientific.utils.ScientificUtils
-import org.intellij.images.scientific.utils.ScientificUtils.NORMALIZATION_APPLIED_KEY
-import org.intellij.images.scientific.utils.ScientificUtils.ORIGINAL_IMAGE_KEY
 import org.intellij.images.scientific.utils.ScientificUtils.ROTATION_ANGLE_KEY
 import org.intellij.images.scientific.utils.ScientificUtils.saveImageToFile
 import org.intellij.images.scientific.utils.launchBackground
 
-class RestoreOriginalImageAction : DumbAwareAction() {
+class RotateImageAction : DumbAwareAction() {
+
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  override fun update(e: AnActionEvent) {
+    val imageFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
+    e.presentation.isEnabledAndVisible = imageFile?.getUserData(ScientificUtils.SCIENTIFIC_MODE_KEY) != null
+  }
 
   override fun actionPerformed(e: AnActionEvent) {
     val imageFile = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
-    val originalImage = imageFile.getUserData(ORIGINAL_IMAGE_KEY) ?: return
+    var currentAngle = imageFile.getUserData(ROTATION_ANGLE_KEY) ?: 0
     val document = e.getData(IMAGE_DOCUMENT_DATA_KEY) ?: return
-    val currentAngle = imageFile.getUserData(ROTATION_ANGLE_KEY) ?: 0
-    imageFile.putUserData(NORMALIZATION_APPLIED_KEY, false)
-
+    currentAngle = (currentAngle + 90) % 360
+    imageFile.putUserData(ROTATION_ANGLE_KEY, currentAngle)
+    val currentImage = document.value
     launchBackground {
-      val rotatedOriginal = if (currentAngle != 0) ScientificUtils.rotateImage(originalImage, currentAngle) else originalImage
-      saveImageToFile(imageFile, rotatedOriginal)
-      document.value = rotatedOriginal
-      ScientificImageActionsCollector.logRestoreOriginalImageInvoked()
+      val rotatedImage = ScientificUtils.rotateImage(currentImage, 90)
+      saveImageToFile(imageFile, rotatedImage)
+      document.value = rotatedImage
+      ScientificImageActionsCollector.logRotateImageInvoked(currentAngle)
     }
   }
 }
