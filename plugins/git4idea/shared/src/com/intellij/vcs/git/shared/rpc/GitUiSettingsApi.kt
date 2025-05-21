@@ -21,6 +21,8 @@ interface GitUiSettingsApi: RemoteApi<Unit> {
 
   suspend fun setSyncOperationsOnAllRepos(projectId: ProjectId, shouldSync: Boolean)
 
+  suspend fun initBranchSyncPolicyIfNotInitialized(projectId: ProjectId)
+
   suspend fun setShowTags(projectId: ProjectId, showTags: Boolean)
 
   companion object {
