@@ -4,6 +4,7 @@ package com.intellij.platform.searchEverywhere.frontend.resultsProcessing
 import com.intellij.ide.rpc.rpcId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -18,9 +19,11 @@ import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
 import com.intellij.platform.searchEverywhere.providers.getItemsProviderCatchingOrNull
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import fleet.kernel.DurableRef
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 
@@ -64,6 +67,15 @@ class SeTabDelegate(val project: Project?,
 
   suspend fun itemSelected(itemData: SeItemData, modifiers: Int, searchText: String): Boolean {
     val provider = providers.getValue()[itemData.providerId] ?: return false
+
+    val presentation = itemData.presentation
+    if (presentation is SeActionItemPresentation) {
+      withContext(Dispatchers.EDT) {
+        // TODO: We have to find a way to keep the presentation immutable and still toggle the switch in UI
+        presentation.commonData.toggleStateIfSwitcher()
+      }
+    }
+
     return provider.itemSelected(itemData, modifiers, searchText)
   }
 

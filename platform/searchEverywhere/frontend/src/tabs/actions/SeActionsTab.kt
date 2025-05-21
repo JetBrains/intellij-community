@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.searchEverywhere.SeActionItemPresentation
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeResultEvent
@@ -33,11 +32,6 @@ class SeActionsTab(private val delegate: SeTabDelegate): SeTab {
 
   override suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean = coroutineScope {
     withContext(Dispatchers.EDT) {
-      val presentation = item.presentation
-      if (presentation is SeActionItemPresentation) {
-        presentation.commonData.toggleStateIfSwitcher()
-      }
-
       delegate.itemSelected(item, modifiers, searchText)
     }
   }
