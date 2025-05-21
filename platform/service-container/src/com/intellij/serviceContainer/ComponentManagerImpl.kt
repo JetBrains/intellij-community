@@ -84,6 +84,14 @@ private val applicationMethodType = MethodType.methodType(Void.TYPE, Application
 private val applicationAndScopeMethodType = MethodType.methodType(Void.TYPE, Application::class.java, CoroutineScope::class.java)
 private val componentManagerMethodType = MethodType.methodType(Void.TYPE, ComponentManager::class.java)
 
+private val defaultSupportedSignaturesOfLightServiceConstructors = java.util.List.of(
+  emptyConstructorMethodType,
+  coroutineScopeMethodType,
+  applicationMethodType,
+  applicationAndScopeMethodType,
+  componentManagerMethodType,
+)
+
 @Internal
 fun MethodHandles.Lookup.findConstructorOrNull(clazz: Class<*>, type: MethodType): MethodHandle? {
   return try {
@@ -99,7 +107,7 @@ fun MethodHandles.Lookup.findConstructorOrNull(clazz: Class<*>, type: MethodType
 
 @Internal
 abstract class ComponentManagerImpl(
-  internal val parent: ComponentManagerImpl?,
+  @JvmField internal val parent: ComponentManagerImpl?,
   parentScope: CoroutineScope,
   additionalContext: CoroutineContext,
 ) : ComponentManager, Disposable.Parent, MessageBusOwner, UserDataHolderBase(), ComponentManagerEx, ComponentStoreOwner {
@@ -109,12 +117,12 @@ abstract class ComponentManagerImpl(
 
   protected constructor(parentScope: CoroutineScope) : this(
     parent = null,
-    parentScope,
+    parentScope = parentScope,
     additionalContext = EmptyCoroutineContext,
   )
 
   protected constructor(parent: ComponentManagerImpl) : this(
-    parent,
+    parent = parent,
     parentScope = parent.getCoroutineScope(),
     additionalContext = EmptyCoroutineContext,
   )
@@ -177,13 +185,8 @@ abstract class ComponentManagerImpl(
     containerName = debugString(short = true),
   )
 
-  open val supportedSignaturesOfLightServiceConstructors: List<MethodType> = java.util.List.of(
-    emptyConstructorMethodType,
-    coroutineScopeMethodType,
-    applicationMethodType,
-    applicationAndScopeMethodType,
-    componentManagerMethodType,
-  )
+  open val supportedSignaturesOfLightServiceConstructors: List<MethodType>
+    get() = defaultSupportedSignaturesOfLightServiceConstructors
 
   @Suppress("LeakingThis")
   private val serviceContainer = InstanceContainerImpl(
@@ -242,8 +245,8 @@ abstract class ComponentManagerImpl(
   protected open val isLightServiceSupported: Boolean
     get() = parent?.parent == null
 
-  protected open val isMessageBusSupported: Boolean = parent?.parent == null
-  protected open val isComponentSupported: Boolean = true
+  protected open val isMessageBusSupported: Boolean
+    get() = parent?.parent == null
 
   // FIXME this is effectively no-op right now
   @Volatile
@@ -266,7 +269,6 @@ abstract class ComponentManagerImpl(
     }
 
   internal fun getComponentInstance(componentKey: Any): Any? {
-    assertComponentsSupported()
     val holder = ignoreDisposal {
       when (componentKey) {
         is String -> serviceContainer.getInstanceHolder(keyClassName = componentKey)
@@ -453,16 +455,15 @@ abstract class ComponentManagerImpl(
       else {
         descriptor.implementationClass
       }
-      val keyClassName = descriptor.interfaceClass
-                         ?: descriptor.implementationClass!!
+      val keyClassName = descriptor.interfaceClass ?: descriptor.implementationClass!!
       val keyClass = pluginDescriptor.classLoader.loadClass(keyClassName)
       registrar.registerInitializer(
         keyClassName = keyClassName,
         ComponentDescriptorInstanceInitializer(
-          this,
-          pluginDescriptor,
-          keyClass,
-          implementationClassName
+          componentManager = this,
+          pd = pluginDescriptor,
+          interfaceClass = keyClass,
+          instanceClassName = implementationClassName,
         ),
         override = descriptor.overrides,
       )
@@ -514,7 +515,7 @@ abstract class ComponentManagerImpl(
   }
 
   @TestOnly
-  override fun <T : Any> replaceComponentInstance(componentKey: Class<T>, componentImplementation: T, parentDisposable: Disposable?) {
+  final override fun <T : Any> replaceComponentInstance(componentKey: Class<T>, componentImplementation: T, parentDisposable: Disposable?) {
     val unregisterHandle = componentContainer.replaceInstance(
       keyClass = componentKey,
       instance = componentImplementation,
@@ -641,7 +642,6 @@ abstract class ComponentManagerImpl(
 
   @Deprecated("Deprecated in interface")
   final override fun <T : Any> getComponent(key: Class<T>): T? {
-    assertComponentsSupported()
     checkState()
 
     val adapter = getComponentAdapter(key)
@@ -674,7 +674,7 @@ abstract class ComponentManagerImpl(
     return serviceContainer.instance(keyClass)
   }
 
-  override suspend fun <T : Any> getServiceAsyncIfDefined(keyClass: Class<T>): T? {
+  final override suspend fun <T : Any> getServiceAsyncIfDefined(keyClass: Class<T>): T? {
     val holder = serviceContainer.getInstanceHolder(keyClass) ?: return null
     @Suppress("UNCHECKED_CAST")
     return holder.getInstance(keyClass) as T
@@ -703,8 +703,8 @@ abstract class ComponentManagerImpl(
     @Suppress("UNCHECKED_CAST")
     if (holder != null) {
       if (!createIfNeeded) {
-        return try {
-          holder.tryGetInstance() as T?
+        try {
+          return holder.tryGetInstance() as T?
         }
         catch (_: CancellationException) {
           // container scope might be canceled => holder might hold CE
@@ -754,16 +754,6 @@ abstract class ComponentManagerImpl(
       null, serviceClass
     ))
     return result
-  }
-
-  private class StartUpMessageDeliveryListener(private val messageBus: MessageBusImpl, private val logMessageBusDeliveryFunction: (Topic<*>, String, Any, Long) -> Unit): MessageDeliveryListener {
-    override fun messageDelivered(topic: Topic<*>, messageName: String, handler: Any, durationNanos: Long) {
-      if (!StartUpMeasurer.isMeasuringPluginStartupCosts()) {
-        messageBus.removeMessageDeliveryListener(this)
-        return
-      }
-      logMessageBusDeliveryFunction(topic, messageName, handler, durationNanos)
-    }
   }
 
   @Synchronized
@@ -817,15 +807,17 @@ abstract class ComponentManagerImpl(
   /**
    * Use only if approved by core team.
    */
-  override fun <T : Any> registerServiceInstance(serviceInterface: Class<T>,
-                                        instance: T,
-                                        @Suppress("UNUSED_PARAMETER") pluginDescriptor: PluginDescriptor) {
+  final override fun <T : Any> registerServiceInstance(
+    serviceInterface: Class<T>,
+    instance: T,
+    @Suppress("UNUSED_PARAMETER") pluginDescriptor: PluginDescriptor,
+  ) {
     serviceContainer.replaceInstance(serviceInterface, instance)
   }
 
   @Suppress("DuplicatedCode")
   @TestOnly
-  override fun <T : Any> replaceServiceInstance(serviceInterface: Class<T>, instance: T, parentDisposable: Disposable) {
+  final override fun <T : Any> replaceServiceInstance(serviceInterface: Class<T>, instance: T, parentDisposable: Disposable) {
     // TODO this loses info that the instance is a dynamic service
     val unregisterHandle = serviceContainer.replaceInstance(keyClass = serviceInterface, instance = instance)
     Disposer.register(parentDisposable) {
@@ -856,7 +848,7 @@ abstract class ComponentManagerImpl(
   }
 
   @TestOnly
-  override fun unregisterService(serviceInterface: Class<*>) {
+  final override fun unregisterService(serviceInterface: Class<*>) {
     val key = serviceInterface.name
     if (serviceContainer.unregister(keyClassName = key) == null) {
       error("Trying to unregister $key service which is not registered")
@@ -864,7 +856,7 @@ abstract class ComponentManagerImpl(
   }
 
   @Suppress("DuplicatedCode")
-  override fun <T : Any> replaceRegularServiceInstance(serviceInterface: Class<T>, instance: T) {
+  final override fun <T : Any> replaceRegularServiceInstance(serviceInterface: Class<T>, instance: T) {
     val previousInstance = serviceContainer
       .replaceInstanceForever(serviceInterface, instance)
       ?.tryGetInstance()
@@ -1185,14 +1177,14 @@ abstract class ComponentManagerImpl(
     return null
   }
 
-  override fun <T : Any> getServiceByClassName(serviceClassName: String): T? {
+  final override fun <T : Any> getServiceByClassName(serviceClassName: String): T? {
     @Suppress("UNCHECKED_CAST")
     return checkState { serviceContainer.getInstanceHolder(keyClassName = serviceClassName) }
       ?.takeIf(InstanceHolder::isStatic)
       ?.getOrCreateInstanceBlocking(serviceClassName, keyClass = null) as T?
   }
 
-  override fun getServiceImplementation(key: Class<*>): Class<*>? {
+  final override fun getServiceImplementation(key: Class<*>): Class<*>? {
     return checkState { serviceContainer.getInstanceHolder(keyClass = key) }
       ?.takeIf(InstanceHolder::isStatic)
       ?.instanceClass()
@@ -1207,7 +1199,7 @@ abstract class ComponentManagerImpl(
 
   final override fun getDisposed(): Condition<*> = Condition<Any?> { isDisposed }
 
-  override fun instances(createIfNeeded: Boolean, filter: ((implClass: Class<*>) -> Boolean)?): Sequence<Any> {
+  final override fun instances(createIfNeeded: Boolean, filter: ((implClass: Class<*>) -> Boolean)?): Sequence<Any> {
     return (componentContainer.instanceHolders().asSequence() + serviceContainer.instanceHolders()).mapNotNull { holder ->
       try {
         if (filter == null) {
@@ -1233,13 +1225,13 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  override fun processAllImplementationClasses(processor: (componentClass: Class<*>, plugin: PluginDescriptor?) -> Unit) {
+  final override fun processAllImplementationClasses(processor: (componentClass: Class<*>, plugin: PluginDescriptor?) -> Unit) {
     processAllHolders { _, componentClass, plugin ->
       processor(componentClass, plugin)
     }
   }
 
-  override fun processAllHolders(processor: (keyClass: String, componentClass: Class<*>, plugin: PluginDescriptor?) -> Unit) {
+  final override fun processAllHolders(processor: (keyClass: String, componentClass: Class<*>, plugin: PluginDescriptor?) -> Unit) {
     fun process(key: String, holder: InstanceHolder) {
       val clazz = try {
         holder.instanceClass()
@@ -1275,32 +1267,23 @@ abstract class ComponentManagerImpl(
   }
 
   internal fun getComponentAdapter(keyClass: Class<*>): ComponentAdapter? {
-    assertComponentsSupported()
     return ignoreDisposal {
       componentContainer.getInstanceHolder(keyClass)?.let { HolderAdapter(keyClass, it) }
       ?: serviceContainer.getInstanceHolder(keyClass)?.let { HolderAdapter(keyClass.name, it) }
     } ?: parent?.getComponentAdapter(keyClass)
   }
 
-  override fun unregisterComponent(componentKey: Class<*>): ComponentAdapter? {
-    assertComponentsSupported()
+  final override fun unregisterComponent(componentKey: Class<*>): ComponentAdapter? {
     return componentContainer.unregister(componentKey.name)?.let { holder ->
       HolderAdapter(key = componentKey, holder)
     }
   }
 
   @TestOnly
-  override fun registerComponentInstance(key: Class<*>, instance: Any) {
+  final override fun registerComponentInstance(key: Class<*>, instance: Any) {
     check(getApplication()!!.isUnitTestMode)
-    assertComponentsSupported()
     @Suppress("UNCHECKED_CAST")
     componentContainer.registerInstance(key as Class<Any>, instance)
-  }
-
-  private fun assertComponentsSupported() {
-    if (!isComponentSupported) {
-      error("components aren't support")
-    }
   }
 
   // project level extension requires Project as a constructor argument, so, for now, constructor injection is disabled only for app level
@@ -1331,7 +1314,7 @@ abstract class ComponentManagerImpl(
     return null
   }
 
-  override fun <T : Any> collectInitializedComponents(aClass: Class<T>): List<T> {
+  final override fun <T : Any> collectInitializedComponents(aClass: Class<T>): List<T> {
     val result = ArrayList<T>()
     for (instance in componentContainer.initializedInstances()) {
       if (aClass.isAssignableFrom(instance.javaClass)) {
@@ -1683,4 +1666,17 @@ private class NestedBlockingEventLoop(override val thread: Thread) : EventLoopIm
 @Internal
 fun ComponentManager.getComponentManagerImpl(): ComponentManagerImpl {
   return (this as ComponentManagerEx).getMutableComponentContainer() as ComponentManagerImpl
+}
+
+private class StartUpMessageDeliveryListener(
+  private val messageBus: MessageBusImpl,
+  private val logMessageBusDeliveryFunction: (Topic<*>, String, Any, Long) -> Unit,
+): MessageDeliveryListener {
+  override fun messageDelivered(topic: Topic<*>, messageName: String, handler: Any, durationNanos: Long) {
+    if (!StartUpMeasurer.isMeasuringPluginStartupCosts()) {
+      messageBus.removeMessageDeliveryListener(this)
+      return
+    }
+    logMessageBusDeliveryFunction(topic, messageName, handler, durationNanos)
+  }
 }

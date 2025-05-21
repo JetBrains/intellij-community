@@ -51,8 +51,10 @@ abstract class ClientSessionImpl(
   ),
   additionalContext = clientId.asContextElement(),
 ), ClientSession {
-  final override val isLightServiceSupported: Boolean = false
-  final override val isMessageBusSupported: Boolean = false
+  final override val isLightServiceSupported: Boolean
+    get() = false
+  final override val isMessageBusSupported: Boolean
+    get() = false
 
   init {
     @Suppress("LeakingThis")

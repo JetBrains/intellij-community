@@ -30,6 +30,11 @@ import java.lang.invoke.MethodType
 
 private val moduleMethodType = MethodType.methodType(Void.TYPE, Module::class.java)
 
+private val moduleSupportedSignaturesOfLightServiceConstructors = java.util.List.of(
+  moduleMethodType,
+  emptyConstructorMethodType,
+)
+
 private val LOG: Logger
   get() = logger<ModuleComponentManager>()
 
@@ -47,10 +52,8 @@ class ModuleComponentManager(parent: ComponentManagerImpl) : ComponentManagerImp
             ?: RuntimeException("Cannot find suitable constructor, expected (Module) or ()")) as T
   }
 
-  override val supportedSignaturesOfLightServiceConstructors: List<MethodType> = java.util.List.of(
-    moduleMethodType,
-    emptyConstructorMethodType,
-  )
+  override val supportedSignaturesOfLightServiceConstructors: List<MethodType>
+    get() = moduleSupportedSignaturesOfLightServiceConstructors
 
   internal fun initModuleContainer(precomputedExtensionModel: PrecomputedExtensionModel) {
     // register services before registering extensions because plugins can access services in their extensions,

@@ -274,6 +274,13 @@ private const val TEMPLATE_PROJECT_NAME = "Default (Template) Project"
 // chosen by fair dice roll. guaranteed to be random. see https://xkcd.com/221/ for details.
 private const val DEFAULT_HASH_CODE = 4
 
+private val defaultProjectSupportedSignaturesOfLightServiceConstructors = java.util.List.of(
+  projectMethodType,
+  emptyConstructorMethodType,
+  projectAndScopeMethodType,
+  coroutineScopeMethodType,
+)
+
 private class DefaultProjectImpl(
   private val actualContainerInstance: Project
 ) : ClientAwareComponentManager(ApplicationManager.getApplication().getComponentManagerImpl()), Project {
@@ -291,12 +298,8 @@ private class DefaultProjectImpl(
             ?: throw RuntimeException("Cannot find suitable constructor, expected (Project) or ()")) as T
   }
 
-  override val supportedSignaturesOfLightServiceConstructors: List<MethodType> = java.util.List.of(
-    projectMethodType,
-    emptyConstructorMethodType,
-    projectAndScopeMethodType,
-    coroutineScopeMethodType,
-  )
+  override val supportedSignaturesOfLightServiceConstructors: List<MethodType>
+    get() = defaultProjectSupportedSignaturesOfLightServiceConstructors
 
   override fun dispose() {
     super.dispose()
