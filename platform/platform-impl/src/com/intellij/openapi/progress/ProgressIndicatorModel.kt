@@ -10,17 +10,22 @@ import com.intellij.platform.ide.progress.TaskCancellation
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class ProgressIndicatorModel(private val progressIndicator: ProgressIndicatorEx, override val title: String, override val cancellation: TaskCancellation) : ProgressModel {
-  constructor(progressIndicator: ProgressIndicatorEx, title: String, isCancellable: Boolean) : this(progressIndicator, title, if (isCancellable) TaskCancellation.cancellable() else TaskCancellation.nonCancellable())
+class ProgressIndicatorModel(
+  private val progressIndicator: ProgressIndicatorEx,
+  override val title: String,
+  override val cancellation: TaskCancellation,
+  override val visibleInStatusBar: Boolean,
+) : ProgressModel {
+  constructor(progressIndicator: ProgressIndicatorEx, title: String, isCancellable: Boolean) : this(progressIndicator, title, if (isCancellable) TaskCancellation.cancellable() else TaskCancellation.nonCancellable(), true)
 
-  constructor(title: String, taskCancellation: TaskCancellation, onCancel: () -> Unit) : this(ProgressIndicatorBase().apply {
+  constructor(title: String, taskCancellation: TaskCancellation, visibleInStatusBar: Boolean = true, onCancel: () -> Unit) : this(ProgressIndicatorBase().apply {
     addStateDelegate(object : AbstractProgressIndicatorExBase() {
       override fun cancel() {
         onCancel.invoke()
         super.cancel()
       }
     })
-  }, title, taskCancellation)
+  }, title, taskCancellation, visibleInStatusBar)
 
   fun setFraction(fraction: Double) {
     progressIndicator.fraction = fraction

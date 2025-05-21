@@ -97,10 +97,12 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     title: @ProgressTitle String,
     cancellation: TaskCancellation,
     suspender: TaskSuspender?,
+    visibleInStatusBar: Boolean,
     action: suspend CoroutineScope.() -> T,
   ): T = coroutineScope {
     if (!isRhizomeProgressEnabled) {
-      return@coroutineScope withBackgroundProgressInternalOld(project, title, cancellation, suspender, action)
+      return@coroutineScope withBackgroundProgressInternalOld(project, title, cancellation, suspender,
+                                                              visibleInStatusBar = visibleInStatusBar, action)
     }
 
     LOG.trace { "Task received: title=$title, project=$project" }
@@ -109,7 +111,7 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     val pipe = cs.createProgressPipe()
 
     val taskContext = currentCoroutineContext()
-    val taskInfoEntityJob = cs.createTaskInfoEntity(project, title, cancellation, taskSuspender, taskContext, pipe)
+    val taskInfoEntityJob = cs.createTaskInfoEntity(project, title, cancellation, taskSuspender, visibleInStatusBar, taskContext, pipe)
 
     try {
       taskSuspender?.attachTask()
@@ -137,12 +139,13 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     title: String,
     cancellation: TaskCancellation,
     suspender: TaskSuspender?,
+    visibleInStatusBar: Boolean,
     taskContext: CoroutineContext,
     pipe: ProgressPipe,
   ): Job = launch {
     val taskStorage = TaskStorage.getInstance()
 
-    val taskInfoEntity = taskStorage.addTask(project, title, cancellation, suspender.getSuspendableInfo()) ?: return@launch
+    val taskInfoEntity = taskStorage.addTask(project, title, cancellation, suspender.getSuspendableInfo(), visibleInStatusBar) ?: return@launch
     val entityId = taskInfoEntity.eid
     LOG.trace { "Task added to storage: entityId=$entityId, title=$title" }
 
@@ -276,11 +279,14 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     title: @ProgressTitle String,
     cancellation: TaskCancellation,
     providedSuspender: TaskSuspender?,
+    visibleInStatusBar: Boolean,
     action: suspend CoroutineScope.() -> T,
   ): T = coroutineScope {
     val taskJob = coroutineContext.job
     val pipe = cs.createProgressPipe()
-    val progressModel = ProgressIndicatorModel(title, cancellation, onCancel =  {taskJob.cancel()})
+    val progressModel = ProgressIndicatorModel(title, cancellation,
+                                               visibleInStatusBar = visibleInStatusBar,
+                                               onCancel =  {taskJob.cancel()})
 
     val taskSuspender = retrieveSuspender(providedSuspender)
     taskSuspender?.attachTask()

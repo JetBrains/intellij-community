@@ -8910,6 +8910,7 @@ com.intellij.openapi.progress.ProgressModel
 - a:getProgressIndicator():com.intellij.openapi.wm.ex.ProgressIndicatorEx
 - a:getText():java.lang.String
 - a:getTitle():java.lang.String
+- a:getVisibleInStatusBar():Z
 - a:isCancellable():Z
 - a:isFinished(com.intellij.openapi.progress.TaskInfo):Z
 - a:isIndeterminate():Z

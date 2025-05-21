@@ -34,6 +34,9 @@ class ProgressTaskInfoEntityModel(val taskInfoEntity: TaskInfoEntity, val cs: Co
     return progressText
   }
 
+  override val visibleInStatusBar: Boolean
+    get() = taskInfoEntity.visibleInStatusBar
+
   init {
     cs.launch {
       tryWithEntities(taskInfoEntity) {

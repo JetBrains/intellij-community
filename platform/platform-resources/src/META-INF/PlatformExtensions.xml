@@ -1927,6 +1927,9 @@
     <registryKey key="progresses.show.counter.icon.instead.of.show.link"
                  defaultValue="false"
                  description="Progresses would be shown with an icon with their number in status bar instead of Show All link"/>
+    <registryKey key="progresses.support.secondary.progresses"
+                 defaultValue="false"
+                 description="Support option to avoid showing some progresses in status bar fully, only in popup and progress count. Needs `progresses.show.counter.icon.instead.of.show.link` enabled."/>
 
    <usagePresentationProvider implementation="com.intellij.find.impl.UsageInfo2UsageAdapterPresentationProvider"/>
 

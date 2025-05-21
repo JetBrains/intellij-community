@@ -82,6 +82,9 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
 
     private val showCounterInsteadOfMultiProcessLink: Boolean
       get() = Registry.`is`("progresses.show.counter.icon.instead.of.show.link", false)
+
+    private val supportSecondaryProgresses: Boolean
+      get() = showCounterInsteadOfMultiProcessLink && Registry.`is`("progresses.support.secondary.progresses", false)
   }
 
   @ApiStatus.Internal
@@ -324,11 +327,18 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
   }
 
   internal fun setInlineProgressByWeight() {
-    synchronized(infos) {
+    synchronized(originals) {
       val size = infos.size
       val indexes = IntArray(size) { it }
       IntArrays.stableSort(indexes, 0, size, IntComparator { index1, index2 ->
-        infos.get(index1).statusBarIndicatorWeight - infos.get(index2).statusBarIndicatorWeight
+        val shown1 = originals.get(index1).visibleInStatusBar
+        val shown2 = originals.get(index2).visibleInStatusBar
+        if (shown1 != shown2) {
+          shown2.compareTo(shown1)
+        }
+        else {
+          infos.get(index1).statusBarIndicatorWeight - infos.get(index2).statusBarIndicatorWeight
+        }
       })
       var index = -1
       for (i in 0 until size) {
@@ -706,6 +716,8 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
     : ProgressComponent(compact, task, progressModel), TitledIndicator {
     private var original: ProgressModel?
     internal var addedProgressBarWidth: Int = 0
+    internal val visibleInStatusBar: Boolean
+      get() = indicatorModel.visibleInStatusBar
 
     override fun getText(): @NlsContexts.ProgressText String? {
       val text = (indicatorModel.getText() ?: "")
@@ -1183,10 +1195,10 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
         return
       }
       val size = host.originals.size
-      indicator!!.component.isVisible = !showPopup
+      indicator!!.component.isVisible = !showPopup && (!supportSecondaryProgresses || indicator!!.visibleInStatusBar)
       if (showCounterInsteadOfMultiProcessLink) {
         counterIcon.number = size
-        counterLabel.isVisible = size > 1
+        counterLabel.isVisible = size > 1 || (size == 1 && supportSecondaryProgresses && !host.originals[0].visibleInStatusBar)
         multiProcessLink.isVisible = false
       }
       else {

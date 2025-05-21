@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl
 
 import com.intellij.openapi.components.Service
@@ -67,7 +67,7 @@ private fun showTaskIndicator(cs: CoroutineScope, project: Project, task: TaskIn
       else {
         val entityId = task.eid
         val title = task.title
-        ProgressIndicatorModel(task.title, task.cancellation) {
+        ProgressIndicatorModel(task.title, task.cancellation, visibleInStatusBar = task.visibleInStatusBar) {
           LOG.trace { "Cancelling task: entityId=$entityId, title=$title" }
           cs.launch {
             TaskManager.cancelTask(task, TaskStatus.Source.USER)

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.progress
 
 import com.intellij.openapi.components.service
@@ -27,6 +27,8 @@ abstract class TaskStorage {
    * @param project in which frame the progress should be shown
    * @param title The title of the task.
    * @param cancellation Specifies if the task can be canceled.
+   * @param visibleInStatusBar Specifies if the task should be fully visible in the status bar, or just in the number of running tasks
+   *        and popup with the full list of tasks.
    * @return The created [TaskInfoEntity].
    */
   suspend fun addTask(
@@ -34,6 +36,7 @@ abstract class TaskStorage {
     title: String,
     cancellation: TaskCancellation,
     suspendable: TaskSuspension,
+    visibleInStatusBar: Boolean,
   ): TaskInfoEntity? {
     var taskInfoEntity: TaskInfoEntity? = null
     try {
@@ -52,6 +55,7 @@ abstract class TaskStorage {
             it[TaskInfoEntity.TaskSuspensionType] = suspendable
             it[TaskInfoEntity.ProgressStateType] = null
             it[TaskInfoEntity.TaskStatusType] = TaskStatus.Running(source = TaskStatus.Source.SYSTEM)
+            it[TaskInfoEntity.ProgressBarVisibilityType] = visibleInStatusBar
           }
         }
         return@withKernel taskInfoEntity
