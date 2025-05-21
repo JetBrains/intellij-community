@@ -11,6 +11,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
 import com.intellij.util.messages.Topic
 import com.intellij.vcs.git.shared.ref.GitFavoriteRefs
+import com.intellij.vcs.git.shared.ref.GitReferencesSet
 import com.intellij.vcs.git.shared.rpc.GitRepositoryApi
 import com.intellij.vcs.git.shared.rpc.GitRepositoryDto
 import com.intellij.vcs.git.shared.rpc.GitRepositoryEvent
@@ -43,7 +44,11 @@ class GitRepositoriesFrontendHolder(
 
   fun get(repositoryId: RepositoryId): GitRepositoryFrontendModel {
     logErrorIfNotInitialized()
-    return repositories[repositoryId] ?: error("State of repository $repositoryId is not synchronized")
+    val repo = repositories[repositoryId]
+    if (repo != null) return repo
+
+    LOG.error("State of repository $repositoryId is not synchronized. Known repositories are: ${repositories.keys.joinToString { it.toString()}}")
+    return GitRepositoryFrontendModelStub(repositoryId)
   }
 
   /**
@@ -105,7 +110,7 @@ class GitRepositoriesFrontendHolder(
       initialized = true
     }
   }
-  
+
   companion object {
     fun getInstance(project: Project): GitRepositoriesFrontendHolder = project.getService(GitRepositoriesFrontendHolder::class.java)
 
@@ -140,14 +145,21 @@ class GitRepositoriesFrontendHolder(
   }
 }
 
-private class GitRepositoryFrontendModelImpl(
+private open class GitRepositoryFrontendModelImpl(
   override val repositoryId: RepositoryId,
   override val shortName: String,
   override var state: GitRepositoryState,
   override var favoriteRefs: GitFavoriteRefs,
-): GitRepositoryFrontendModel {
+) : GitRepositoryFrontendModel {
   override val root: VirtualFile by lazy {
     repositoryId.rootPath.virtualFile()
     ?: error("Cannot deserialize virtual file for repository root $repositoryId")
   }
 }
+
+private class GitRepositoryFrontendModelStub(repositoryId: RepositoryId) : GitRepositoryFrontendModelImpl(
+  repositoryId,
+  "",
+  GitRepositoryState(null, null, GitReferencesSet.EMPTY, emptyList(), GitOperationState.DETACHED_HEAD, emptyMap()),
+  GitFavoriteRefs(emptySet(), emptySet(), emptySet())
+)

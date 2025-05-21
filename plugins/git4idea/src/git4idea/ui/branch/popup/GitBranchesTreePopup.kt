@@ -13,7 +13,6 @@ import com.intellij.platform.project.projectId
 import com.intellij.ui.popup.WizardPopup
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.git.shared.ref.GitReferenceName
-import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
 import com.intellij.vcs.git.shared.rpc.GitRepositoryApi
 import git4idea.GitReference
 import git4idea.config.GitVcsSettings
@@ -78,10 +77,7 @@ internal class GitBranchesTreePopup(
   private fun toggleFavorite(userObject: Any?) {
     val refUnderRepository = userObject as? RefUnderRepository
     val reference = userObject as? GitReference ?: refUnderRepository?.ref ?: return
-    val repositories = refUnderRepository?.repository?.let(::listOf) ?: run {
-      val holder = GitRepositoriesFrontendHolder.getInstance(project)
-      treeStep.affectedRepositories.map { holder.get(it.rpcId) }
-    }
+    val repositories = refUnderRepository?.repository?.let(::listOf) ?: treeStep.affectedRepositoriesFrontendModel
 
     val makeFavorite = repositories.any { !it.favoriteRefs.contains(reference) }
 
