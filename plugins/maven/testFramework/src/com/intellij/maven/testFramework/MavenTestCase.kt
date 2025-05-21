@@ -319,6 +319,13 @@ abstract class MavenTestCase : UsefulTestCase() {
 
   private fun ensureTempDirCreated() {
     ourTempDir = when {
+      isProjectInWslEelEnvironment() -> {
+        val fileSystemMount = getFileSystemMount()
+        if (fileSystemMount.isBlank()) {
+          throw IllegalArgumentException("The EEL_FIXTURE_MOUNT environment variable is not specified")
+        }
+        Path(fileSystemMount).resolve("/tmp/mavenTests")
+      }
       isProjectInEelEnvironment() -> {
         val fileSystemMount = getFileSystemMount()
         if (fileSystemMount.isBlank()) {
@@ -338,10 +345,6 @@ abstract class MavenTestCase : UsefulTestCase() {
     fixture.setUp()
   }
 
-  private fun setupFixtureOnWsl(wslDistributionName: String): IdeaProjectTestFixture {
-    val path = generateTemporaryPath(FileUtil.sanitizeFileName(name, false), Paths.get("\\\\wsl.localhost\\${wslDistributionName}\\tmp"))
-    return IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name, path, useDirectoryBasedProjectFormat()).fixture
-  }
 
   protected open fun useDirectoryBasedProjectFormat(): Boolean {
     return false

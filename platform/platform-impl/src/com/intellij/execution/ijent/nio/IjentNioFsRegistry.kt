@@ -53,7 +53,11 @@ fun CoroutineScope.registerIjentNioFs(
 
   service.register(root, ijent.descriptor, internalName, true, false) { underlyingProvider, previousFs ->
     // Compute a path before custom fs registration. Usually should represent a non-existent local path
-    val localPath = Path(root).also { check(!it.exists()) }
+    val localPath = Path(root).also {
+      check(!it.exists())  {
+        "Cannot register a file system for a path that already exists: $it"
+      }
+    }
 
     IjentEphemeralRootAwareFileSystemProvider(
       root = localPath,
