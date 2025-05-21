@@ -4,19 +4,12 @@ package com.intellij.ide.plugins
 
 import org.jetbrains.annotations.ApiStatus
 
-/**
- * This interface will eventually be removed, it is only needed for incremental migration.
- * A migration guide will be provided when alternatives will become available
- */
-@ApiStatus.Experimental
-interface IdeaPluginDescriptorImplPublic : IdeaPluginDescriptor
-
 @get:ApiStatus.Experimental
-val IdeaPluginDescriptorImplPublic.contentModuleName: String?
+val IdeaPluginDescriptor.contentModuleName: String?
   get() = (this as? ContentModuleDescriptor)?.moduleName
 
 @get:ApiStatus.Experimental
-val IdeaPluginDescriptorImplPublic.isRequiredContentModule: Boolean
+val IdeaPluginDescriptor.isRequiredContentModule: Boolean
   get() = (this as? ContentModuleDescriptor)?.moduleLoadingRule?.required == true
 
 /**
@@ -25,8 +18,8 @@ val IdeaPluginDescriptorImplPublic.isRequiredContentModule: Boolean
  * Note that it's different from [IdeaPluginDescriptor.getDependencies] (which is for `<depends>`)
  */
 @get:ApiStatus.Experimental
-val IdeaPluginDescriptorImplPublic.moduleDependencies: ModuleDependencies
+val IdeaPluginDescriptor.moduleDependencies: ModuleDependencies
   get() = (this as IdeaPluginDescriptorImpl).moduleDependencies
 
 @ApiStatus.Experimental
-fun IdeaPluginDescriptorImplPublic.getMainDescriptor(): IdeaPluginDescriptorImplPublic = (this as IdeaPluginDescriptorImpl).getMainDescriptor()
+fun IdeaPluginDescriptor.getMainDescriptor(): IdeaPluginDescriptor = (this as IdeaPluginDescriptorImpl).getMainDescriptor()

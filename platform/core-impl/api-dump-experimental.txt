@@ -6,13 +6,11 @@ c:com.intellij.extapi.psi.StubBasedPsiElementBase
 - *f:getRequiredStubOrPsiChild(com.intellij.psi.tree.IElementType,java.lang.Class):com.intellij.psi.PsiElement
 - *f:getStubOrPsiChild(com.intellij.psi.tree.IElementType):com.intellij.psi.PsiElement
 - *f:getStubOrPsiChild(com.intellij.psi.tree.IElementType,java.lang.Class):com.intellij.psi.PsiElement
-*:com.intellij.ide.plugins.IdeaPluginDescriptorImplPublic
-- com.intellij.ide.plugins.IdeaPluginDescriptor
-*f:com.intellij.ide.plugins.IdeaPluginDescriptorImplPublicKt
-- *sf:getContentModuleName(com.intellij.ide.plugins.IdeaPluginDescriptorImplPublic):java.lang.String
-- *sf:getMainDescriptor(com.intellij.ide.plugins.IdeaPluginDescriptorImplPublic):com.intellij.ide.plugins.IdeaPluginDescriptorImplPublic
-- *sf:getModuleDependencies(com.intellij.ide.plugins.IdeaPluginDescriptorImplPublic):com.intellij.ide.plugins.ModuleDependencies
-- *sf:isRequiredContentModule(com.intellij.ide.plugins.IdeaPluginDescriptorImplPublic):Z
+*f:com.intellij.ide.plugins.IdeaPluginDescriptorKt
+- *sf:getContentModuleName(com.intellij.ide.plugins.IdeaPluginDescriptor):java.lang.String
+- *sf:getMainDescriptor(com.intellij.ide.plugins.IdeaPluginDescriptor):com.intellij.ide.plugins.IdeaPluginDescriptor
+- *sf:getModuleDependencies(com.intellij.ide.plugins.IdeaPluginDescriptor):com.intellij.ide.plugins.ModuleDependencies
+- *sf:isRequiredContentModule(com.intellij.ide.plugins.IdeaPluginDescriptor):Z
 *f:com.intellij.ide.plugins.ModuleDependencies
 - <init>(java.util.List,java.util.List):V
 - f:getModules():java.util.List

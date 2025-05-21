@@ -33,7 +33,7 @@ private val LOG: Logger
 @ApiStatus.Internal
 sealed class IdeaPluginDescriptorImpl(
   raw: RawPluginDescriptor,
-) : IdeaPluginDescriptorImplPublic {
+) : IdeaPluginDescriptor {
   internal val pluginDependencies: List<PluginDependencyImpl> = raw.depends
     .let(::convertDepends)
   val incompatiblePlugins: List<PluginId> = raw.incompatibleWith.map(PluginId::getId)
