@@ -2,6 +2,7 @@
 package com.intellij.codeHighlighting;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
+import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInsight.multiverse.CodeInsightContexts;
@@ -122,10 +123,10 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
   }
 
   @ApiStatus.Internal
-  public void markUpToDateIfStillValid() {
+  public void markUpToDateIfStillValid(@NotNull DaemonProgressIndicator updateProgress) {
     ThreadingAssertions.assertEventDispatchThread();
     if (isValid()) {
-      DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(getDocument(), getContext(), getId());
+      DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(getDocument(), getContext(), getId(), updateProgress);
     }
   }
 

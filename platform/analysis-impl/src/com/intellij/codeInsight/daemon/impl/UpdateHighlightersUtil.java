@@ -454,6 +454,9 @@ public final class UpdateHighlightersUtil {
   }
   // disposes highlighter, and schedules removal from the file-level component if this highlighter happened to be file-level
   static void disposeWithFileLevelIgnoreErrors(@NotNull HighlightInfo info, @NotNull HighlightingSession highlightingSession) {
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("disposeWithFileLevelIgnoreErrors: " + info);
+    }
     if (info.isFileLevelAnnotation()) {
       ((HighlightingSessionImpl)highlightingSession).removeFileLevelHighlight(info);
     }

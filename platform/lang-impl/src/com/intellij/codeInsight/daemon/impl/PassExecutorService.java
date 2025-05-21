@@ -182,7 +182,7 @@ public final class PassExecutorService implements Disposable {
     }
 
     if (LOG.isDebugEnabled()) {
-      log(updateProgress, null, "submitPasses: "+virtualFile.getName() + " ----- starting " + threadsToStartCountdown.get() + " passes. Free:"+freePasses+"; editorBound:"+editorBoundPasses+"; documentBound:"+documentBoundPasses);
+      log(updateProgress, null, "submitPasses: "+fileEditor + " ----- starting " + threadsToStartCountdown.get() + " passes. Free:"+freePasses+"; editorBound:"+editorBoundPasses+"; documentBound:"+documentBoundPasses);
     }
 
     for (ScheduledPass dependentPass : dependentPasses) {
@@ -524,7 +524,7 @@ public final class PassExecutorService implements Disposable {
             pass.applyInformationToEditor();
             repaintErrorStripeAndIcon(fileEditor);
             if (pass instanceof TextEditorHighlightingPass text) {
-              text.markUpToDateIfStillValid();
+              text.markUpToDateIfStillValid(updateProgress);
             }
             log(updateProgress, pass, " Applied");
           }

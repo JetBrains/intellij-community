@@ -175,7 +175,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
                                                                               @NotNull Editor editor,
                                                                               int @NotNull [] passesToIgnore) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    GlobalInspectionContextBase.assertUnderDaemonProgress();
+    DaemonProgressIndicator indicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
     Document document = editor.getDocument();
     CodeInsightContext context = EditorContextManager.getEditorContext(editor, myProject);
@@ -238,7 +238,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     FileStatusMap statusMap = daemonCodeAnalyzer.getFileStatusMap();
     for (int i = 0; i < passesRefusedToCreate.size(); i++) {
       int id = passesRefusedToCreate.getInt(i);
-      statusMap.markFileUpToDate(document, context, id);
+      statusMap.markFileUpToDate(document, context, id, indicator);
     }
     if (!shouldHighlightFile) {
       // in case when some extension prohibited highlighting, return empty pass to distinguish from error during pass creation and endless restart

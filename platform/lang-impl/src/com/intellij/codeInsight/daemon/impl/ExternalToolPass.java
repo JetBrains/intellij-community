@@ -279,7 +279,7 @@ final class ExternalToolPass extends ProgressableTextEditorHighlightingPass impl
     HighlightingSessionImpl.runInsideHighlightingSession(myFile, getContext(), getColorsScheme(), ProperTextRange.create(myFile.getTextRange()), false, session -> {
       // use the method which doesn't retrieve a HighlightingSession from the indicator, because we likely destroyed the one already
       BackgroundUpdateHighlightersUtil.setHighlightersInRange(myRestrictRange, highlights, markupModel, getId(), session);
-      DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(myDocument, getContext(), getId());
+      DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(myDocument, getContext(), getId(), session.getProgressIndicator());
       myHighlightInfos = highlights;
     });
   }

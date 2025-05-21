@@ -81,7 +81,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
       LineMarkersUtil.setLineMarkersToEditor(myProject, getDocument(), myRestrictRange, markers, getId(), myHighlightingSession);
       DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
       FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
-      fileStatusMap.markFileUpToDate(myDocument, getContext(), getId());
+      fileStatusMap.markFileUpToDate(myDocument, getContext(), getId(), progress);
     }
     catch (IndexNotReadyException ignored) {
     }

@@ -32,13 +32,13 @@ public abstract class HighlightInfoUpdater {
    */
   @ApiStatus.Internal
   public abstract void psiElementVisited(@NotNull Object toolId,
-                                  @NotNull PsiElement visitedPsiElement,
-                                  @NotNull List<? extends HighlightInfo> newInfos,
-                                  @NotNull Document hostDocument,
-                                  @NotNull PsiFile psiFile,
-                                  @NotNull Project project,
-                                  @NotNull HighlightingSession session,
-                                  @NotNull ManagedHighlighterRecycler invalidElementRecycler);
+                                         @NotNull PsiElement visitedPsiElement,
+                                         @NotNull List<? extends HighlightInfo> newInfos,
+                                         @NotNull Document hostDocument,
+                                         @NotNull PsiFile psiFile,
+                                         @NotNull Project project,
+                                         @NotNull HighlightingSession session,
+                                         @NotNull ManagedHighlighterRecycler invalidElementRecycler);
 
   @ApiStatus.Internal
   public void removeInfosForInjectedFilesOtherThan(@NotNull PsiFile hostPsiFile,
@@ -48,18 +48,18 @@ public abstract class HighlightInfoUpdater {
 
   /**
    * {@link HighlightInfoUpdater} which doesn't update markup model. Useful for obtaining highlighting without showing anything
-    */
+   */
   @ApiStatus.Internal
   public static final @NotNull HighlightInfoUpdater EMPTY = new HighlightInfoUpdater(){
     @Override
     public void psiElementVisited(@NotNull Object toolId,
-                           @NotNull PsiElement visitedPsiElement,
-                           @NotNull List<? extends HighlightInfo> newInfos,
-                           @NotNull Document hostDocument,
-                           @NotNull PsiFile psiFile,
-                           @NotNull Project project,
-                           @NotNull HighlightingSession session,
-                           @NotNull ManagedHighlighterRecycler invalidElementRecycler) {
+                                  @NotNull PsiElement visitedPsiElement,
+                                  @NotNull List<? extends HighlightInfo> newInfos,
+                                  @NotNull Document hostDocument,
+                                  @NotNull PsiFile psiFile,
+                                  @NotNull Project project,
+                                  @NotNull HighlightingSession session,
+                                  @NotNull ManagedHighlighterRecycler invalidElementRecycler) {
     }
   };
 }

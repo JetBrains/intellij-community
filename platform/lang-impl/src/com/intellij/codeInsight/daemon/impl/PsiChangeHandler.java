@@ -254,8 +254,8 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
     PsiElement element = whitespaceOptimizationAllowed && UpdateHighlightersUtil.isWhitespaceOptimizationAllowed(document) ? child : child.getParent();
     while (true) {
       if (element == null || element instanceof PsiFile || element instanceof PsiDirectory) {
-        myFileStatusMap.markAllFilesDirty("Top element: " + element);
-        return;
+        myFileStatusMap.markAllFilesDirty("Top element: " + element+"; changed child: "+child);
+        break;
       }
 
       PsiElement scope = getChangeHighlightingScope(element);
@@ -267,7 +267,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
         // see DaemonRespondToChangesTest.testPutArgumentsOnSeparateLinesIntentionMustNotRemoveErrorHighlighting
         if (existingDirtyScope == null || scopeRange.contains(existingDirtyScope)) {
           myFileStatusMap.markScopeDirty(document, scopeRange, "Scope: " + scope);
-          return;
+          break;
         }
         existingDirtyScope = existingDirtyScope.union(scopeRange);
       }

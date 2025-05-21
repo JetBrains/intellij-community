@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
@@ -226,6 +227,11 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
         ManagedHighlighterRecycler.runWithRecycler(getHighlightingSession(), recyclerConsumer);
       }
     });
+    if (LOG.isTraceEnabled()) {
+      List<HighlightInfo> errors = ContainerUtil.filter(myHighlights, h -> h.getSeverity() == HighlightSeverity.ERROR);
+      LOG.trace("GHP finished: myHasErrorElement=" + myHasErrorElement + "; highlights:" + myHighlights.size() + "; errors:" + errors.size() + ": " +
+                StringUtil.join(errors, "\n"));
+    }
   }
 
   private boolean isWholeFileHighlighting() {

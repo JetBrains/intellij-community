@@ -583,7 +583,6 @@ f:com.intellij.codeInsight.daemon.impl.FileStatusMap
 - s:getDirtyTextRange(com.intellij.openapi.editor.Document,com.intellij.psi.PsiFile,I):com.intellij.openapi.util.TextRange
 - s:getDirtyTextRange(com.intellij.openapi.editor.Editor,I):com.intellij.openapi.util.TextRange
 - getFileDirtyScope(com.intellij.openapi.editor.Document,com.intellij.psi.PsiFile,I):com.intellij.openapi.util.TextRange
-- s:log(java.lang.Object[]):V
 - markFileUpToDate(com.intellij.openapi.editor.Document,I):V
 - setErrorFoundFlag(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,Z):V
 - toString(com.intellij.openapi.editor.Document):java.lang.String
