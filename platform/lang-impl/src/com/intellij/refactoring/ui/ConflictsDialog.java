@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.ui;
 
 import com.intellij.icons.AllIcons;
@@ -320,6 +320,11 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
           @Override
           public @NlsSafe String getTooltipText() {
             return myUpdatedDialog ? "<html><body style='width: 300px'>" + usagePresentation.getPlainText() + "</body></html>" : null;
+          }
+
+          @Override
+          public boolean equals(Object o) {
+            return this == o;
           }
         };
         Usage usage = new UsageInfo2UsageAdapter(usageInfo) {
