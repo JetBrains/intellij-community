@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.hints.presentation
 
 import com.intellij.codeInsight.hints.InlayHintsUtils
+import com.intellij.codeInsight.hints.InlayPresentationFactory
 import com.intellij.codeInsight.hints.presentation.InlayButtonPresentationFactory.InlayButtonPresentationBuilder.InlayButtonPresentation
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
@@ -11,6 +12,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Cursor
+import java.util.EnumSet
 import javax.swing.Icon
 
 @ApiStatus.Internal
@@ -44,9 +46,6 @@ open class InlayButtonPresentationFactory(
   }
 
   private val textMetricsStorage = InlayHintsUtils.getTextMetricStorage(editor)
-
-  constructor(editor: Editor) : this(editor, PresentationFactory(editor))
-  constructor(editor: Editor, delegate: PresentationFactory) : this(editor, delegate, DefaultLanguageHighlighterColors.INLAY_BUTTON_DEFAULT)
 
   fun icon(icon: Icon): InlayButtonPresentationBuilder =
     createBuilder(ScaleAwareIconPresentation(icon = icon, editor = editor, fontShift = 0))
@@ -100,6 +99,7 @@ open class InlayButtonPresentationFactory(
     private val factory: InlayButtonPresentationFactory,
     private var presentation: InlayPresentation,
     private var rightCornerRadius: Int = DEFAULT_CORNER_RADIUS,
+    private var clickListener: InlayPresentationFactory.ClickListener? = null,
   ) {
     internal fun get(): InlayPresentation = presentation
 
@@ -137,6 +137,11 @@ open class InlayButtonPresentationFactory(
       return this
     }
 
+    fun onClick(clickListener: InlayPresentationFactory.ClickListener): InlayButtonPresentationBuilder {
+      this.clickListener = clickListener
+      return this
+    }
+
     fun build(): InlayPresentation = factory.createPaddedPresentation(
       factory.delegate.withCursorOnHover(
         withInlayAttributes(border(), factory.defaultAttributesKey), Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
@@ -158,6 +163,16 @@ open class InlayButtonPresentationFactory(
     }
 
     private fun border(borderWidth: Int = DEFAULT_BORDER_WIDTH): InlayPresentation {
+      clickListener?.run {
+        val hovered = factory.delegate.onClick(
+          base = factory.delegate.withReferenceAttributes(presentation),
+          buttons = EnumSet.of(MouseButton.Left, MouseButton.Middle),
+          onClick = { e, p ->
+            onClick(e, p)
+          }
+        )
+        presentation = ChangeOnHoverPresentation(presentation, { hovered })
+      }
       val rounding = RoundWithBackgroundBorderedPresentation(
         PillWithBackgroundPresentation(
           DynamicInsetPresentation(
