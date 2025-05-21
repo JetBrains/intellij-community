@@ -74,16 +74,20 @@ abstract class CoverageIntegrationBaseTest : JavaModuleTestCase() {
   private fun createCoverageFileProvider(coverageDataPath: String) =
     DefaultCoverageFileProvider(File(coverageDataPath))
 
-  private fun loadCoverageSuite(coverageEngineClass: Class<out CoverageEngine>, coverageRunnerClass: Class<out CoverageRunner>,
-                                coverageDataPath: String,
-                                includeFilters: Array<String>?): CoverageSuitesBundle {
+  private fun loadCoverageSuite(
+    coverageEngineClass: Class<out CoverageEngine>, coverageRunnerClass: Class<out CoverageRunner>,
+    coverageDataPath: String, includeFilters: Array<String>?,
+  ): CoverageSuitesBundle {
     val runner = CoverageRunner.getInstance(coverageRunnerClass)
     val fileProvider: CoverageFileProvider = createCoverageFileProvider(coverageDataPath)
     Assert.assertTrue(File(fileProvider.coverageDataFilePath).exists())
     val engine = CoverageEngine.EP_NAME.findExtensionOrFail(coverageEngineClass)
-    val suite: CoverageSuite = engine.createCoverageSuite(
-      runner, coverageDataPath, fileProvider, includeFilters,
-      -1, null, true, true, false, myProject)!!
+    val suite = if (engine is JavaCoverageEngine) {
+      engine.createSuite(runner, coverageDataPath, fileProvider, includeFilters, null, -1, true, true, false, project)
+    }
+    else {
+      engine.createCoverageSuite(coverageDataPath, project, runner, fileProvider, -1)
+    }
     return CoverageSuitesBundle(suite)
   }
 

@@ -10,6 +10,7 @@ import com.intellij.execution.configurations.coverage.CoverageEnabledConfigurati
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
@@ -444,10 +445,16 @@ public abstract class CoverageEngine {
     @Nullable String suiteToMerge,
     boolean coverageByTestEnabled,
     boolean branchCoverage,
-    boolean trackTestFolders, Project project
+    boolean trackTestFolders,
+    @Nullable Project project
   ) {
-    throw new AbstractMethodError(
+    AbstractMethodError error = new AbstractMethodError(
       "Please override CoverageEngine#createCoverageSuite(String, Project, CoverageRunner, CoverageFileProvider, long) method");
+    if (project == null || isCalledByDelegationFromThis(error)) {
+      throw error;
+    }
+    Logger.getInstance(CoverageEngine.class).error(error);
+    return createCoverageSuite(name, project, runner, fileProvider, lastCoverageTimeStamp);
   }
 
   /**
@@ -459,7 +466,20 @@ public abstract class CoverageEngine {
                                                      @NotNull String name,
                                                      @NotNull CoverageFileProvider fileProvider,
                                                      @NotNull CoverageEnabledConfiguration config) {
-    throw new AbstractMethodError(
+    AbstractMethodError error = new AbstractMethodError(
       "Please override CoverageEngine#createCoverageSuite(String, Project, CoverageRunner, CoverageFileProvider, long, CoverageEnabledConfiguration) method");
+    if (isCalledByDelegationFromThis(error)) {
+      throw error;
+    }
+    Logger.getInstance(CoverageEngine.class).error(error);
+    return createCoverageSuite(name, config.getConfiguration().getProject(), runner, fileProvider, config.createTimestamp(), config);
+  }
+
+
+  private static boolean isCalledByDelegationFromThis(Throwable e) {
+    StackTraceElement[] stackTrace = e.getStackTrace();
+    if (stackTrace.length < 2) return false;
+    StackTraceElement element = stackTrace[1];
+    return element.getClassName().equals(CoverageEngine.class.getName()) && element.getMethodName().equals("createCoverageSuite");
   }
 }

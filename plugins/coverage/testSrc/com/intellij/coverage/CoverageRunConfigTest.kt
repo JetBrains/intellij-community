@@ -10,6 +10,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
+
 @RunWith(JUnit4::class)
 class CoverageRunConfigTest : CoverageIntegrationBaseTest() {
   @Test
@@ -27,10 +28,7 @@ class CoverageRunConfigTest : CoverageIntegrationBaseTest() {
     Assert.assertTrue(coverageConfig.excludePatterns.isNullOrEmpty())
     Assert.assertNull(coverageConfig.currentCoverageSuite)
 
-    val suite = JavaCoverageEngine.getInstance().createCoverageSuite(coverageConfig.coverageRunner!!,
-                                                                     coverageConfig.name,
-                                                                     DefaultCoverageFileProvider(coverageConfig.coverageFilePath),
-                                                                     coverageConfig)
+    val suite = JavaCoverageEngine.getInstance().createCoverageSuite(coverageConfig)
     suite as JavaCoverageSuite
 
     Assert.assertTrue(suite.isBranchCoverage)
