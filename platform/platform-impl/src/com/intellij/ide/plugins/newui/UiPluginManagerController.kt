@@ -29,6 +29,7 @@ interface UiPluginManagerController {
   fun getPlugins(): List<PluginUiModel>
   fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginUiModel>
   fun getInstalledPlugins(): List<PluginUiModel>
+  fun getUpdates(): List<PluginUiModel>
   fun isPluginDisabled(pluginId: PluginId): Boolean
   fun executeMarketplaceQuery(query: String, count: Int, includeIncompatible: Boolean): List<MarketplaceSearchPluginData>
   fun loadUpdateMetadata(xmlId: String, ideCompatibleUpdate: IdeCompatibleUpdate, indicator: ProgressIndicator? = null): IntellijUpdateMetadata

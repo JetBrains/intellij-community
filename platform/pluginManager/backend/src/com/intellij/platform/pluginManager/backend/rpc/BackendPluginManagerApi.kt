@@ -47,6 +47,10 @@ class BackendPluginManagerApi : PluginManagerApi {
   override suspend fun getInstalledPlugins(): List<PluginDto> {
     return InstalledPluginsState.getInstance().installedPlugins.map(PluginDescriptorConverter::toPluginDto)
   }
+  
+  override suspend fun getUpdates(): List<PluginDto> {
+    return DefaultUiPluginManagerController.getUpdates().map { PluginDto.fromModel(it) }
+  }
 
   override suspend fun setEnabledState(sessionId: String, pluginIds: List<PluginId>, enable: Boolean) {
     DefaultUiPluginManagerController.setPluginStatus(sessionId, pluginIds, enable)

@@ -244,13 +244,6 @@ public class PluginUpdatesService {
     return InstalledPluginsState.getInstance().hasNewerVersion(pluginId);
   }
 
-  public static @NotNull Collection<PluginUiModel> getUpdateModels() {
-    Collection<IdeaPluginDescriptor> updates = getUpdates();
-    if (updates == null) {
-      return Collections.emptyList();
-    }
-    return ContainerUtil.map(updates, PluginUiModelAdapter::new);
-  }
 
   public static @Nullable Collection<IdeaPluginDescriptor> getUpdates() {
     synchronized (ourLock) {

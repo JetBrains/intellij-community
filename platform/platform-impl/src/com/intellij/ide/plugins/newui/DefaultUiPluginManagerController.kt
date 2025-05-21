@@ -72,6 +72,10 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return InstalledPluginsState.getInstance().installedPlugins.map { PluginUiModelAdapter(it) }
   }
 
+  override fun getUpdates(): List<PluginUiModel> {
+    return PluginUpdatesService.getUpdates()?.map { PluginUiModelAdapter(it) } ?: emptyList()
+  }
+
   override fun isPluginDisabled(pluginId: PluginId): Boolean {
     return PluginManagerCore.isDisabled(pluginId)
   }

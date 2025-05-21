@@ -25,6 +25,7 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun getPluginById(pluginId: PluginId): PluginDto?
   suspend fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginDto>
   suspend fun getInstalledPlugins(): List<PluginDto>
+  suspend fun getUpdates(): List<PluginUiModel>
   suspend fun findPlugin(pluginId: PluginId): PluginDto?
   suspend fun getLastCompatiblePluginUpdateModel(pluginId: PluginId, buildNumber: String?): PluginDto?
   suspend fun getLastCompatiblePluginUpdate(allIds: Set<PluginId>, throwExceptions: Boolean, buildNumber: String?): List<IdeCompatibleUpdate>

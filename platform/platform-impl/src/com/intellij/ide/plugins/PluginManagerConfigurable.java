@@ -921,7 +921,7 @@ public final class PluginManagerConfigurable
                     result.addRightAction(myMarketplaceSortByAction);
 
 
-                    Collection<PluginUiModel> updates = PluginUpdatesService.getUpdateModels();
+                    Collection<PluginUiModel> updates = UiPluginManager.getInstance().getUpdateModels();
                     if (!ContainerUtil.isEmpty(updates)) {
                       myPostFillGroupCallback = () -> {
                         applyUpdates(myPanel, updates);
@@ -1332,7 +1332,7 @@ public final class PluginManagerConfigurable
                 });
               }
 
-              Collection<PluginUiModel> updates = PluginUpdatesService.getUpdateModels(); //TODO
+              Collection<PluginUiModel> updates = UiPluginManager.getInstance().getUpdateModels();
               if (!ContainerUtil.isEmpty(updates)) {
                 myPostFillGroupCallback = () -> {
                   applyUpdates(myPanel, updates);

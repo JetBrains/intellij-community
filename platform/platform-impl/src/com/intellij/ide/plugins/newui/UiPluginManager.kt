@@ -57,6 +57,10 @@ class UiPluginManager {
     return getController().getInstalledPlugins()
   }
 
+  fun getUpdateModels(): List<PluginUiModel> {
+    return getController().getUpdates()
+  }
+
   fun isPluginDisabled(pluginId: PluginId): Boolean {
     return getController().isPluginDisabled(pluginId)
   }
