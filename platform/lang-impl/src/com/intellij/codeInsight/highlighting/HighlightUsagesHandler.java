@@ -43,19 +43,19 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.*;
 
 public final class HighlightUsagesHandler extends HighlightHandlerBase {
-  public static void invoke(final @NotNull Project project, final @NotNull Editor editor, @Nullable PsiFile file) {
+  public static void invoke(final @NotNull Project project, final @NotNull Editor editor, @Nullable PsiFile psiFile) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     final SelectionModel selectionModel = editor.getSelectionModel();
-    if (file == null && !selectionModel.hasSelection()) {
+    if (psiFile == null && !selectionModel.hasSelection()) {
       selectionModel.selectWordAtCaret(false);
     }
-    if (file == null || selectionModel.hasSelection()) {
+    if (psiFile == null || selectionModel.hasSelection()) {
       doRangeHighlighting(editor, project);
       return;
     }
 
-    final HighlightUsagesHandlerBase<?> handler = createCustomHandler(editor, file);
+    final HighlightUsagesHandlerBase<?> handler = createCustomHandler(editor, psiFile);
     if (handler != null) {
       final String featureId = handler.getFeatureId();
 
@@ -68,17 +68,17 @@ public final class HighlightUsagesHandler extends HighlightHandlerBase {
     }
 
     DumbService.getInstance(project).withAlternativeResolveEnabled(() -> {
-      if (!HighlightUsagesKt.highlightUsages(project, editor, file)) {
-        handleNoUsageTargets(file, editor, selectionModel, project);
+      if (!HighlightUsagesKt.highlightUsages(project, editor, psiFile)) {
+        handleNoUsageTargets(psiFile, editor, selectionModel, project);
       }
     });
   }
 
-  private static void handleNoUsageTargets(@NotNull PsiFile file,
+  private static void handleNoUsageTargets(@NotNull PsiFile psiFile,
                                            @NotNull Editor editor,
                                            @NotNull SelectionModel selectionModel,
                                            @NotNull Project project) {
-    if (file.findElementAt(editor.getCaretModel().getOffset()) instanceof PsiWhiteSpace) return;
+    if (psiFile.findElementAt(editor.getCaretModel().getOffset()) instanceof PsiWhiteSpace) return;
     selectionModel.selectWordAtCaret(false);
     String selection = selectionModel.getSelectedText();
     if (selection != null) {
@@ -93,23 +93,23 @@ public final class HighlightUsagesHandler extends HighlightHandlerBase {
     selectionModel.removeSelection();
   }
 
-  public static @Nullable <T extends PsiElement> HighlightUsagesHandlerBase<T> createCustomHandler(@NotNull Editor editor, @NotNull PsiFile file) {
+  public static @Nullable <T extends PsiElement> HighlightUsagesHandlerBase<T> createCustomHandler(@NotNull Editor editor, @NotNull PsiFile psiFile) {
     ThreadingAssertions.assertEventDispatchThread();
     ProperTextRange visibleRange = editor.calculateVisibleRange();
-    return createCustomHandler(editor, file, visibleRange);
+    return createCustomHandler(editor, psiFile, visibleRange);
   }
 
   /**
    * @see HighlightUsagesHandlerFactory#createHighlightUsagesHandler(Editor, PsiFile, ProperTextRange)
    */
   public static @Nullable <T extends PsiElement> HighlightUsagesHandlerBase<T> createCustomHandler(@NotNull Editor editor,
-                                                                                         @NotNull PsiFile file,
-                                                                                         @NotNull ProperTextRange visibleRange) {
-    DumbService dumbService = DumbService.getInstance(file.getProject());
+                                                                                                   @NotNull PsiFile psiFile,
+                                                                                                   @NotNull ProperTextRange visibleRange) {
+    DumbService dumbService = DumbService.getInstance(psiFile.getProject());
     for (HighlightUsagesHandlerFactory factory : HighlightUsagesHandlerFactory.EP_NAME.getExtensionList()) {
       if (!dumbService.isUsableInCurrentContext(factory)) continue;
       try {
-        HighlightUsagesHandlerBase<T> handler = factory.createHighlightUsagesHandler(editor, file, visibleRange);
+        HighlightUsagesHandlerBase<T> handler = factory.createHighlightUsagesHandler(editor, psiFile, visibleRange);
         if (handler != null && dumbService.isUsableInCurrentContext(handler)) {
           return handler;
         }
@@ -152,26 +152,26 @@ public final class HighlightUsagesHandler extends HighlightHandlerBase {
     private final @NotNull Project myProject;
     private final PsiElement myTarget;
     private final Editor myEditor;
-    private final PsiFile myFile;
+    private final PsiFile myPsiFile;
     private final boolean myClearHighlights;
 
     public DoHighlightRunnable(@NotNull List<? extends PsiReference> refs,
                                @NotNull Project project,
                                @NotNull PsiElement target,
                                @NotNull Editor editor,
-                               @NotNull PsiFile file,
+                               @NotNull PsiFile psiFile,
                                boolean clearHighlights) {
       myRefs = refs;
       myProject = project;
       myTarget = target;
       myEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
-      myFile = file;
+      myPsiFile = psiFile;
       myClearHighlights = clearHighlights;
     }
 
     @Override
     public void run() {
-      highlightReferences(myProject, myTarget, myRefs, myEditor, myFile, myClearHighlights);
+      highlightReferences(myProject, myTarget, myRefs, myEditor, myPsiFile, myClearHighlights);
       setStatusText(myProject, getElementName(myTarget), myRefs.size(), myClearHighlights);
     }
   }
@@ -180,7 +180,7 @@ public final class HighlightUsagesHandler extends HighlightHandlerBase {
                                          @NotNull PsiElement element,
                                          @NotNull List<? extends PsiReference> refs,
                                          @NotNull Editor editor,
-                                         @NotNull PsiFile file,
+                                         @NotNull PsiFile psiFile,
                                          boolean clearHighlights) {
     HighlightManager highlightManager = HighlightManager.getInstance(project);
     setupFindModel(project);
@@ -206,7 +206,7 @@ public final class HighlightUsagesHandler extends HighlightHandlerBase {
       doHighlightRefs(highlightManager, editor, refs, EditorColors.SEARCH_RESULT_ATTRIBUTES, clearHighlights);
     }
 
-    TextRange range = getNameIdentifierRange(file, element);
+    TextRange range = getNameIdentifierRange(psiFile, element);
     if (range != null) {
       TextAttributesKey nameAttributes = detector != null && detector.isDeclarationWriteAccess(element)
                                          ? EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES
@@ -230,9 +230,9 @@ public final class HighlightUsagesHandler extends HighlightHandlerBase {
   /**
    * @return range (in the host file) to be highlighted by {@link com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass} for this element
    */
-  public static @Nullable TextRange getNameIdentifierRange(@NotNull PsiFile file, @NotNull PsiElement element) {
-    InjectedLanguageManager injectedManager = InjectedLanguageManager.getInstance(file.getProject());
-    Pair<PsiElement, TextRange> pair = getNameIdentifierRangeInCurrentRoot(file, element);
+  public static @Nullable TextRange getNameIdentifierRange(@NotNull PsiFile psiFile, @NotNull PsiElement element) {
+    InjectedLanguageManager injectedManager = InjectedLanguageManager.getInstance(psiFile.getProject());
+    Pair<PsiElement, TextRange> pair = getNameIdentifierRangeInCurrentRoot(psiFile, element);
     if (pair == null) return null;
     return injectedManager.injectedToHost(pair.getFirst(), pair.getSecond());
   }
@@ -241,7 +241,7 @@ public final class HighlightUsagesHandler extends HighlightHandlerBase {
    * @return range (in the current containing file) to be highlighted by {@link com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass} for this element,
    * and the context element for this range
    */
-  public static @Nullable Pair<PsiElement, TextRange> getNameIdentifierRangeInCurrentRoot(@NotNull PsiFile file, @NotNull PsiElement element) {
+  public static @Nullable Pair<PsiElement, TextRange> getNameIdentifierRangeInCurrentRoot(@NotNull PsiFile psiFile, @NotNull PsiElement element) {
     if (element instanceof PomTargetPsiElement) {
       final PomTarget target = ((PomTargetPsiElement)element).getTarget();
       if (target instanceof PsiDeclaredTarget declaredTarget) {
@@ -251,19 +251,19 @@ public final class HighlightUsagesHandler extends HighlightHandlerBase {
             return null;
           }
           final PsiElement navElement = declaredTarget.getNavigationElement();
-          if (PsiUtilBase.isUnderPsiRoot(file, navElement)) {
+          if (PsiUtilBase.isUnderPsiRoot(psiFile, navElement)) {
             return Pair.create(navElement, range.shiftRight(navElement.getTextRange().getStartOffset()));
           }
         }
       }
     }
 
-    if (!PsiUtilBase.isUnderPsiRoot(file, element)) {
+    if (!PsiUtilBase.isUnderPsiRoot(psiFile, element)) {
       return null;
     }
 
     PsiElement identifier = IdentifierUtil.getNameIdentifier(element);
-    if (identifier != null && PsiUtilBase.isUnderPsiRoot(file, identifier)) {
+    if (identifier != null && PsiUtilBase.isUnderPsiRoot(psiFile, identifier)) {
       TextRange range = identifier instanceof ExternallyAnnotated
                         ? ((ExternallyAnnotated)identifier).getAnnotationRegion() // the way to skip the id highlighting
                         : identifier.getTextRange();

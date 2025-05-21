@@ -283,9 +283,9 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
         @Override
         public void onClosed(@NotNull LightweightWindowEvent event) {
           // rerun code-insight after popup close
-          PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-          if (file != null) {
-            DaemonCodeAnalyzer.getInstance(project).restart(file);
+          PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+          if (psiFile != null) {
+            DaemonCodeAnalyzer.getInstance(project).restart(psiFile);
           }
         }
       })

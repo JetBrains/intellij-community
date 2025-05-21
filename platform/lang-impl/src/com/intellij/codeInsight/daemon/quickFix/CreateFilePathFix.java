@@ -188,7 +188,7 @@ public class CreateFilePathFix extends AbstractCreateFileFix {
   }
 
   @Override
-  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
     return null;
   }
 
