@@ -10,8 +10,8 @@ import com.intellij.openapi.externalSystem.model.project.dependencies.Dependency
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemModuleDataIndex.getDataStorageCachedValue
 import com.intellij.openapi.externalSystem.service.ui.completion.cache.AsyncLocalCache
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec
+import com.intellij.openapi.externalSystem.util.task.TaskExecutionUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
@@ -23,7 +23,6 @@ import com.intellij.psi.util.CachedValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
-import kotlinx.coroutines.future.await
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
@@ -32,6 +31,7 @@ import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleModuleData
+import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.deleteIfExists
@@ -72,10 +72,10 @@ class GradleDependencyNodeIndex(
       .getOrThrow()
     val taskOutputPath = taskOutputEelPath.asNioPath()
     try {
-      val future = CompletableFuture<Boolean>()
       val taskPath = moduleData.gradleIdentityPath.removeSuffix(":") + ":" + TASK_NAME
       val initScript = loadCollectDependencyInitScript(TASK_NAME, taskOutputEelPath)
-      ExternalSystemUtil.runTask(
+
+      TaskExecutionUtil.runTask(
         TaskExecutionSpec.create()
           .withProject(project)
           .withSystemId(GradleConstants.SYSTEM_ID)
@@ -89,17 +89,16 @@ class GradleDependencyNodeIndex(
             it.putUserData(GradleTaskManager.INIT_SCRIPT_KEY, initScript)
             it.putUserData(ExternalSystemRunConfiguration.PROGRESS_LISTENER_KEY, SyncViewManager::class.java)
           })
-          .withCallback(future)
-          .build()
       )
-
-      if (!future.await()) {
-        // The standard Build tool window will be shown with the problem on the Gradle side
-        return emptyList()
-      }
 
       val json = taskOutputPath.readBytes()
       return GradleDependencyNodeDeserializer.fromJson(json)
+    }
+    catch (ce: CancellationException) {
+      throw ce
+    }
+    catch (_: Exception) {
+      return emptyList()
     }
     finally {
       taskOutputPath.deleteIfExists()

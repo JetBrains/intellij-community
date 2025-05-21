@@ -2,12 +2,9 @@
 package org.jetbrains.plugins.gradle.util
 
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec
-import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
+import com.intellij.openapi.externalSystem.util.task.TaskExecutionUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.platform.eel.EelApi
@@ -20,7 +17,6 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
-import kotlinx.coroutines.future.await
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.GradleJavaCoroutineScope.gradleCoroutineScope
 import org.jetbrains.plugins.gradle.service.execution.loadDownloadArtifactInitScript
@@ -65,8 +61,8 @@ object GradleArtifactDownloader {
       val projectEelPath = projectPath.toEelPath(eel)
       val taskName = "ijDownloadArtifact" + UUID.randomUUID().toString().substring(0, 12)
       val initScript = loadDownloadArtifactInitScript(artifactNotation, taskName, taskOutputEelPath, projectEelPath)
-      val future = CompletableFuture<Nothing?>()
-      ExternalSystemUtil.runTask(
+
+      TaskExecutionUtil.runTask(
         TaskExecutionSpec.create()
           .withProject(project)
           .withSystemId(GradleConstants.SYSTEM_ID)
@@ -80,12 +76,10 @@ object GradleArtifactDownloader {
           .withUserData(UserDataHolderBase().apply {
             putUserData(GradleTaskManager.VERSION_SPECIFIC_SCRIPTS_KEY, initScript)
           })
-          .withResultListener(future)
           .withActivateToolWindowBeforeRun(false)
           .withActivateToolWindowOnFailure(false)
-          .build()
       )
-      future.await()
+
       val downloadedArtifactPath = taskOutputPath.readText().toEelPath(eel).asNioPath()
       if (!isValidJar(downloadedArtifactPath)) {
         throw IllegalStateException("Incorrect file header: $downloadedArtifactPath. Unable to process downloaded file as a JAR file")
@@ -112,20 +106,4 @@ object GradleArtifactDownloader {
   private fun String.toEelPath(eel: EelApi): EelPath {
     return eel.fs.getPath(this)
   }
-
-  private fun TaskExecutionSpecBuilder.withResultListener(future: CompletableFuture<Nothing?>) = withListener(
-    object : ExternalSystemTaskNotificationListener {
-      override fun onSuccess(projectPath: String, id: ExternalSystemTaskId) {
-        future.complete(null)
-      }
-
-      override fun onCancel(projectPath: String, id: ExternalSystemTaskId) {
-        future.cancel(true)
-      }
-
-      override fun onFailure(projectPath: String, id: ExternalSystemTaskId, exception: Exception) {
-        future.completeExceptionally(exception)
-      }
-    }
-  )
 }

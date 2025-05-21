@@ -16,8 +16,8 @@ import com.intellij.openapi.externalSystem.service.notification.NotificationCate
 import com.intellij.openapi.externalSystem.service.notification.NotificationData
 import com.intellij.openapi.externalSystem.service.notification.NotificationSource.PROJECT_SYNC
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.runTask
 import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec
+import com.intellij.openapi.externalSystem.util.task.TaskExecutionUtil
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
@@ -155,21 +155,15 @@ class GradleVersionQuickFix(
     settings.vmOptions = gradleVmOptions
     settings.externalSystemIdString = GradleConstants.SYSTEM_ID.id
 
-    val future = CompletableFuture<Boolean>()
-    val task = TaskExecutionSpec.create()
-      .withProject(project)
-      .withSystemId(GradleConstants.SYSTEM_ID)
-      .withSettings(settings)
-      .withActivateToolWindowBeforeRun(false)
-      .withProgressExecutionMode(NO_PROGRESS_ASYNC)
-      .withUserData(userData)
-      .withCallback(future)
-      .build()
-    runTask(task)
-
-    if (!future.await()) {
-      throw RuntimeException("Wrapper task failed")
-    }
+    TaskExecutionUtil.runTask(
+      TaskExecutionSpec.create()
+        .withProject(project)
+        .withSystemId(GradleConstants.SYSTEM_ID)
+        .withSettings(settings)
+        .withActivateToolWindowBeforeRun(false)
+        .withProgressExecutionMode(NO_PROGRESS_ASYNC)
+        .withUserData(userData)
+    )
   }
 
   private fun getWrapperConfiguration(wrapperPropertiesPath: Path?, gradleVersion: GradleVersion): WrapperConfiguration {

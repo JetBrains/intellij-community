@@ -71,3 +71,7 @@ com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificat
 f:com.intellij.openapi.externalSystem.service.ui.ExternalSystemJdkComboBox
 - com.intellij.openapi.ui.ComboBoxWithWidePopup
 - *:select(java.lang.String):V
+*f:com.intellij.openapi.externalSystem.util.task.TaskExecutionUtil
+- sf:INSTANCE:com.intellij.openapi.externalSystem.util.task.TaskExecutionUtil
+- f:runTask(com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec,kotlin.coroutines.Continuation):java.lang.Object
+- f:runTask(com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder,kotlin.coroutines.Continuation):java.lang.Object
