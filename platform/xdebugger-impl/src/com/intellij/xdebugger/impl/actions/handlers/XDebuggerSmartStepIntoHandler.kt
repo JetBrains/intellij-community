@@ -13,19 +13,12 @@ import com.intellij.ide.ui.icons.icon
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.intellij.openapi.editor.ex.MarkupModelEx
-import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint
-import com.intellij.openapi.editor.ex.util.addActionAvailabilityHint
-import com.intellij.openapi.editor.markup.HighlighterLayer
-import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
@@ -172,7 +165,6 @@ class SmartStepData(
 
   internal var myCurrentVariant: VariantInfo? = null
   internal val myHighlighters = mutableListOf<RangeHighlighter>()
-  internal var myActionHintSyntheticHighlighter: RangeHighlighter? = null
 
   internal val DISTANCE_TO_CURRENT_COMPARATOR = Comparator.comparingInt<VariantInfo> {
     abs(it.myStartPoint.x - myCurrentVariant!!.myStartPoint.x)
@@ -247,11 +239,6 @@ class SmartStepData(
     editor.putUserData(SMART_STEP_HINT_DATA, null)
     val highlightManager = HighlightManager.getInstance(session.project) as HighlightManagerImpl
     highlightManager.hideHighlights(editor, HighlightManager.HIDE_BY_ESCAPE or HighlightManager.HIDE_BY_TEXT_CHANGE)
-    // since we don't use HighlightManagerImpl to mark the highlighting with the hide flags it can't be used to remove it as well
-    // just remove it manually
-    if (myActionHintSyntheticHighlighter != null) {
-      editor.getMarkupModel().removeHighlighter(myActionHintSyntheticHighlighter!!)
-    }
   }
 
   internal inner class VariantInfo(val target: XSmartStepIntoTarget) {
@@ -431,29 +418,6 @@ private fun inplaceChoose(
   }
   LOG.assertTrue(data.myCurrentVariant != null)
   editor.putUserData(SMART_STEP_INPLACE_DATA, data)
-  // for the remote development scenario we have to add a fake invisible highlighter on the whole document with extra payload
-  // that will be restored on the client and used to alternate actions availability
-  // see com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHintKt.addActionAvailabilityHint
-  val highlighter = (editor.getMarkupModel() as MarkupModelEx)
-    .addRangeHighlighterAndChangeAttributes(HighlighterColors.NO_HIGHLIGHTING, 0,
-                                            editor.getDocument().textLength,
-                                            HighlighterLayer.LAST,
-                                            HighlighterTargetArea.EXACT_RANGE, false) { h ->
-      // this hints should be added in this lambda in order to be serialized by RD markup machinery
-      h.addActionAvailabilityHint(
-        EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_ENTER, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
-        EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_TAB, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
-        EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_ESCAPE, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
-        EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_UP,
-                                     EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
-        EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN,
-                                     EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
-        EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT,
-                                     EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
-        EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT,
-                                     EditorActionAvailabilityHint.AvailabilityCondition.CaretInside))
-    }
-  data.myActionHintSyntheticHighlighter = highlighter
 
   session.updateExecutionPosition()
   if (AppMode.isRemoteDevHost()) {
