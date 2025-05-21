@@ -287,7 +287,7 @@ class PluginBuilder() {
     if (allDescriptors.any { it.builder.separateJar }) {
       val modulesDir = path.resolve("lib/modules")
       modulesDir.createDirectories()
-      buildJar(path.resolve("lib/$id.jar"))
+      buildMainJar(path.resolve("lib/$id.jar"))
       for ((fileName, subDescriptor) in allDescriptors) {
         if (subDescriptor.separateJar) {
           val jarPath = modulesDir.resolve("${fileName.removeSuffix(".xml")}.jar")
@@ -308,7 +308,7 @@ class PluginBuilder() {
     return descriptors.asSequence().flatMap { sequenceOf(it) + collectAllSubDescriptors(it.builder.subDescriptors) }
   }
 
-  fun buildJar(path: Path): PluginBuilder {
+  fun buildMainJar(path: Path): PluginBuilder {
     buildJarToStream(Files.newOutputStream(path), PluginManagerCore.PLUGIN_XML_PATH)
     return this
   }
