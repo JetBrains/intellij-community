@@ -80,7 +80,7 @@ public final class PsiTreeChangeEventImpl extends PsiTreeChangeEvent{
   }
 
   public void setFile(@NotNull PsiFile psiFile) {
-    myFile = psiFile;
+    myPsiFile = psiFile;
   }
 
   public void setOffset(int offset) {
@@ -114,7 +114,7 @@ public final class PsiTreeChangeEventImpl extends PsiTreeChangeEvent{
     return "PsiTreeChangeEventImpl{" + myCode
            + (isGenericChange ? " (generic)" : "")
            + (myPropertyName == null ? "" : " ("+myPropertyName+")")
-           + (myFile == null ? "" : " in file "+myFile.getName())
+           + (myPsiFile == null ? "" : " in file " + myPsiFile.getName())
            +'}';
   }
 }

@@ -17,18 +17,18 @@ public class InsertionContext {
   private final OffsetMap myOffsetMap;
   private final char myCompletionChar;
   private final LookupElement[] myElements;
-  private final PsiFile myFile;
+  private final PsiFile myPsiFile;
   private final Editor myEditor;
   private Runnable myLaterRunnable;
   private boolean myAddCompletionChar;
 
   public InsertionContext(final OffsetMap offsetMap, final char completionChar, final LookupElement[] elements,
-                          final @NotNull PsiFile file,
+                          final @NotNull PsiFile psiFile,
                           final @NotNull Editor editor, final boolean addCompletionChar) {
     myOffsetMap = offsetMap;
     myCompletionChar = completionChar;
     myElements = elements;
-    myFile = file;
+    myPsiFile = psiFile;
     myEditor = editor;
     setTailOffset(editor.getCaretModel().getOffset());
     myAddCompletionChar = addCompletionChar;
@@ -43,7 +43,7 @@ public class InsertionContext {
   }
 
   public @NotNull PsiFile getFile() {
-    return myFile;
+    return myPsiFile;
   }
 
   public @NotNull Editor getEditor() {
@@ -85,7 +85,7 @@ public class InsertionContext {
   }
 
   public @NotNull Project getProject() {
-    return myFile.getProject();
+    return myPsiFile.getProject();
   }
 
   public int getSelectionEndOffset() {
@@ -119,6 +119,6 @@ public class InsertionContext {
   }
 
   public InsertionContext forkByOffsetMap() {
-    return new InsertionContext(myOffsetMap.copyOffsets(myEditor.getDocument()), myCompletionChar, myElements, myFile, myEditor, myAddCompletionChar);
+    return new InsertionContext(myOffsetMap.copyOffsets(myEditor.getDocument()), myCompletionChar, myElements, myPsiFile, myEditor, myAddCompletionChar);
   }
 }

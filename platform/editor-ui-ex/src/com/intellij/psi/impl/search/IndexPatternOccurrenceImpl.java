@@ -12,15 +12,15 @@ import java.util.List;
 
 
 final class IndexPatternOccurrenceImpl implements IndexPatternOccurrence {
-  private final PsiFile myFile;
+  private final PsiFile myPsiFile;
   private final int myStartOffset;
   private final int myEndOffset;
   private final IndexPattern myPattern;
   private final List<TextRange> myAdditionalRanges;
 
-  IndexPatternOccurrenceImpl(@NotNull PsiFile file, int startOffset, int endOffset,
-                                    @NotNull IndexPattern pattern, @NotNull List<TextRange> additionalRanges) {
-    myFile = file;
+  IndexPatternOccurrenceImpl(@NotNull PsiFile psiFile, int startOffset, int endOffset,
+                             @NotNull IndexPattern pattern, @NotNull List<TextRange> additionalRanges) {
+    myPsiFile = psiFile;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     myPattern = pattern;
@@ -29,7 +29,7 @@ final class IndexPatternOccurrenceImpl implements IndexPatternOccurrence {
 
   @Override
   public @NotNull PsiFile getFile() {
-    return myFile;
+    return myPsiFile;
   }
 
   @Override
@@ -49,7 +49,7 @@ final class IndexPatternOccurrenceImpl implements IndexPatternOccurrence {
 
   @Override
   public int hashCode(){
-    return myFile.hashCode()+myStartOffset+myEndOffset+myPattern.hashCode();
+    return myPsiFile.hashCode() + myStartOffset + myEndOffset + myPattern.hashCode();
   }
 
   @Override
@@ -57,7 +57,7 @@ final class IndexPatternOccurrenceImpl implements IndexPatternOccurrence {
     if(!(obj instanceof IndexPatternOccurrenceImpl todoItem)){
       return false;
     }
-    return myFile.equals(todoItem.myFile) &&
+    return myPsiFile.equals(todoItem.myPsiFile) &&
            myStartOffset == todoItem.myStartOffset &&
            myEndOffset == todoItem.myEndOffset &&
            myPattern.equals(todoItem.myPattern);

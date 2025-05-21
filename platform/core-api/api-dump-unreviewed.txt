@@ -4254,7 +4254,6 @@ a:com.intellij.psi.PsiTreeChangeEvent
 - sf:PROP_WRITABLE:java.lang.String
 - p:myChild:com.intellij.psi.PsiElement
 - p:myElement:com.intellij.psi.PsiElement
-- p:myFile:com.intellij.psi.PsiFile
 - p:myNewChild:com.intellij.psi.PsiElement
 - p:myNewParent:com.intellij.psi.PsiElement
 - p:myNewValue:java.lang.Object

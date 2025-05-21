@@ -15,22 +15,22 @@ import org.jetbrains.annotations.Nullable;
  * @see LocalInspectionTool#buildVisitor(ProblemsHolder, boolean, LocalInspectionToolSession)
  */
 public final class LocalInspectionToolSession extends UserDataHolderBase {
-  private final PsiFile myFile;
+  private final PsiFile myPsiFile;
   private final TextRange myPriorityRange;
   private final TextRange myRestrictRange;
   private final HighlightSeverity myMinimumSeverity;
 
   @ApiStatus.Internal
-  public LocalInspectionToolSession(@NotNull PsiFile file, @NotNull TextRange priorityRange, @NotNull TextRange restrictRange,
-                             @Nullable HighlightSeverity minimumSeverity) {
-    myFile = file;
+  public LocalInspectionToolSession(@NotNull PsiFile psiFile, @NotNull TextRange priorityRange, @NotNull TextRange restrictRange,
+                                    @Nullable HighlightSeverity minimumSeverity) {
+    myPsiFile = psiFile;
     myPriorityRange = priorityRange;
     myRestrictRange = restrictRange;
     myMinimumSeverity = minimumSeverity;
   }
 
   public @NotNull PsiFile getFile() {
-    return myFile;
+    return myPsiFile;
   }
 
   /**

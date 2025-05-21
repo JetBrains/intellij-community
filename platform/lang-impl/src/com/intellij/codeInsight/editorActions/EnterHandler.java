@@ -76,9 +76,9 @@ public class EnterHandler extends BaseEnterHandler {
       return;
     }
     final Document document = editor.getDocument();
-    final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
+    final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
 
-    if (file == null) {
+    if (psiFile == null) {
       myOriginalHandler.execute(editor, caret, dataContext);
       return;
     }
@@ -117,7 +117,7 @@ public class EnterHandler extends BaseEnterHandler {
     Ref<Integer> caretAdvanceRef = new Ref<>(0);
 
     for(EnterHandlerDelegate delegate: EnterHandlerDelegate.EP_NAME.getExtensionList()) {
-      EnterHandlerDelegate.Result result = delegate.preprocessEnter(file, editor, caretOffsetRef, caretAdvanceRef, dataContext, myOriginalHandler);
+      EnterHandlerDelegate.Result result = delegate.preprocessEnter(psiFile, editor, caretOffsetRef, caretAdvanceRef, dataContext, myOriginalHandler);
       if (caretOffsetRef.get() > document.getTextLength()) {
         throw new AssertionError("Wrong caret offset change by " + delegate);
       }
@@ -157,12 +157,12 @@ public class EnterHandler extends BaseEnterHandler {
     }
 
     final DoEnterAction action = new DoEnterAction(
-      file, editor, document, dataContext, caretOffset, !insertSpace, caretAdvanceRef.get(), project
+      psiFile, editor, document, dataContext, caretOffset, !insertSpace, caretAdvanceRef.get(), project
     );
     action.setForceIndent(forceIndent);
     action.run();
     for (EnterHandlerDelegate delegate : EnterHandlerDelegate.EP_NAME.getExtensionList()) {
-      if (delegate.postProcessEnter(file, editor, dataContext) == EnterHandlerDelegate.Result.Stop) {
+      if (delegate.postProcessEnter(psiFile, editor, dataContext) == EnterHandlerDelegate.Result.Stop) {
         break;
       }
     }
@@ -322,7 +322,7 @@ public class EnterHandler extends BaseEnterHandler {
   private static final class DoEnterAction implements Runnable {
 
     private final DataContext myDataContext;
-    private final PsiFile myFile;
+    private final PsiFile myPsiFile;
     private int myOffset;
     private final Document myDocument;
     private final boolean myInsertSpace;
@@ -335,11 +335,11 @@ public class EnterHandler extends BaseEnterHandler {
 
     private boolean myIsIndentAdjustmentNeeded = true;
 
-    DoEnterAction(PsiFile file, Editor view, Document document, DataContext dataContext, int offset, boolean insertSpace,
-                         int caretAdvance, Project project)
+    DoEnterAction(PsiFile psiFile, Editor view, Document document, DataContext dataContext, int offset, boolean insertSpace,
+                  int caretAdvance, Project project)
     {
       myEditor = view;
-      myFile = file;
+      myPsiFile = psiFile;
       myDataContext = dataContext;
       myOffset = offset;
       myDocument = document;
@@ -371,7 +371,7 @@ public class EnterHandler extends BaseEnterHandler {
         CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
         if (commentContext.docStart) {
           psiDocumentManager.commitDocument(myDocument);
-          PsiElement element = myFile.findElementAt(commentContext.lineStart);
+          PsiElement element = myPsiFile.findElementAt(commentContext.lineStart);
           final String text = element.getText();
           final PsiElement parent = element.getParent();
 
@@ -391,7 +391,7 @@ public class EnterHandler extends BaseEnterHandler {
                 }
                 else {
                   commentContext.docAsterisk =
-                    CodeStyleManager.getInstance(getProject()).getDocCommentSettings(myFile).isLeadingAsteriskEnabled();
+                    CodeStyleManager.getInstance(getProject()).getDocCommentSettings(myPsiFile).isLeadingAsteriskEnabled();
                 }
                 commentContext.docStart = false;
               }
@@ -410,7 +410,7 @@ public class EnterHandler extends BaseEnterHandler {
         }
         else if (commentContext.docAsterisk) {
           psiDocumentManager.commitDocument(myDocument);
-          PsiElement element = myFile.findElementAt(commentContext.lineStart);
+          PsiElement element = myPsiFile.findElementAt(commentContext.lineStart);
           PsiComment comment = PsiTreeUtil.getParentOfType(element, PsiComment.class, false);
           if (comment == null || !isDocComment(comment, commentContext.commenter)) {
             commentContext.docAsterisk = false; // don't process block comments
@@ -445,7 +445,7 @@ public class EnterHandler extends BaseEnterHandler {
           }
 
           if (myForceIndent && indentInsideJavadoc != null) {
-            int indentSize = CodeStyle.getSettings(myFile).getIndentSize(myFile.getFileType());
+            int indentSize = CodeStyle.getSettings(myPsiFile).getIndentSize(myPsiFile.getFileType());
             myDocument.insertString(myOffset + 1, StringUtil.repeatSymbol(' ', indentSize));
             myCaretAdvance += indentSize;
           }
@@ -537,7 +537,7 @@ public class EnterHandler extends BaseEnterHandler {
       myOffset = CharArrayUtil.shiftForwardUntil(text, myOffset, docCommentLinePrefix) + 1;
       removeTrailingSpaces(myDocument, myOffset);
 
-      if (!CodeStyleManager.getInstance(getProject()).getDocCommentSettings(myFile).isLeadingAsteriskEnabled()) {
+      if (!CodeStyleManager.getInstance(getProject()).getDocCommentSettings(myPsiFile).isLeadingAsteriskEnabled()) {
         LOG.assertTrue(CharArrayUtil.regionMatches(myDocument.getCharsSequence(),myOffset - docCommentLinePrefix.length(), docCommentLinePrefix));
         myDocument.deleteString(myOffset - docCommentLinePrefix.length(), myOffset);
         myOffset--;
@@ -554,9 +554,9 @@ public class EnterHandler extends BaseEnterHandler {
       myDocument.insertString(myOffset, buffer);
 
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      CodeStyleManager.getInstance(getProject()).adjustLineIndent(myFile, myOffset + buffer.length() - 2);
+      CodeStyleManager.getInstance(getProject()).adjustLineIndent(myPsiFile, myOffset + buffer.length() - 2);
 
-      PsiComment comment = PsiTreeUtil.getNonStrictParentOfType(myFile.findElementAt(myOffset), PsiComment.class);
+      PsiComment comment = PsiTreeUtil.getNonStrictParentOfType(myPsiFile.findElementAt(myOffset), PsiComment.class);
 
       comment = createJavaDocStub(settings, comment, getProject());
       if (comment == null) {
@@ -565,7 +565,7 @@ public class EnterHandler extends BaseEnterHandler {
 
       CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(getProject());
       final Ref<PsiComment> commentRef = Ref.create(comment);
-      codeStyleManager.runWithDocCommentFormattingDisabled(myFile, () -> formatComment(commentRef, codeStyleManager));
+      codeStyleManager.runWithDocCommentFormattingDisabled(myPsiFile, () -> formatComment(commentRef, codeStyleManager));
       comment = commentRef.get();
 
       PsiElement next = comment.getNextSibling();
@@ -573,14 +573,14 @@ public class EnterHandler extends BaseEnterHandler {
         next = comment.getParent().getNextSibling(); // expanding chameleon comment produces comment under comment
       }
       if (next != null) {
-        next = myFile.findElementAt(next.getTextRange().getStartOffset()); // maybe switch to another tree
+        next = myPsiFile.findElementAt(next.getTextRange().getStartOffset()); // maybe switch to another tree
       }
       if (next != null && (!FormatterUtil.containsWhiteSpacesOnly(next.getNode()) || !next.getText().contains(LINE_SEPARATOR))) {
         int lineBreakOffset = comment.getTextRange().getEndOffset();
         myDocument.insertString(lineBreakOffset, LINE_SEPARATOR);
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-        codeStyleManager.adjustLineIndent(myFile, lineBreakOffset + 1);
-        comment = PsiTreeUtil.getNonStrictParentOfType(myFile.findElementAt(myOffset), PsiComment.class);
+        codeStyleManager.adjustLineIndent(myPsiFile, lineBreakOffset + 1);
+        comment = PsiTreeUtil.getNonStrictParentOfType(myPsiFile.findElementAt(myOffset), PsiComment.class);
       }
       return comment;
     }
@@ -590,7 +590,7 @@ public class EnterHandler extends BaseEnterHandler {
       RangeMarker commentMarker = myDocument.createRangeMarker(comment.getTextRange().getStartOffset(),
                                                                comment.getTextRange().getEndOffset());
       codeStyleManager.reformatNewlyAddedElement(comment.getNode().getTreeParent(), comment.getNode());
-      commentRef.set(PsiTreeUtil.getNonStrictParentOfType(myFile.findElementAt(commentMarker.getStartOffset()), PsiComment.class));
+      commentRef.set(PsiTreeUtil.getNonStrictParentOfType(myPsiFile.findElementAt(commentMarker.getStartOffset()), PsiComment.class));
       commentMarker.dispose();
     }
 
@@ -621,13 +621,13 @@ public class EnterHandler extends BaseEnterHandler {
         }
 
         PsiDocumentManager.getInstance(project).commitAllDocuments();
-        return PsiTreeUtil.getNonStrictParentOfType(myFile.findElementAt(myOffset), PsiComment.class);
+        return PsiTreeUtil.getNonStrictParentOfType(myPsiFile.findElementAt(myOffset), PsiComment.class);
       }
       return comment;
     }
 
     private Project getProject() {
-      return myFile.getProject();
+      return myPsiFile.getProject();
     }
 
     private static void removeTrailingSpaces(final Document document, final int startOffset) {
@@ -653,7 +653,7 @@ public class EnterHandler extends BaseEnterHandler {
                                       CodeDocumentationAwareCommenter commenter)
     {
       PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-      PsiElement atLineStart = myFile.findElementAt(lineStart);
+      PsiElement atLineStart = myPsiFile.findElementAt(lineStart);
       if (atLineStart == null) return false;
 
       final String linePrefix = commenter.getDocumentationCommentLinePrefix();
@@ -666,7 +666,7 @@ public class EnterHandler extends BaseEnterHandler {
           text.equals(docPrefix) ||
           docPrefix != null && text.regionMatches(lineStart - textRange.getStartOffset(), docPrefix, 0, docPrefix.length()) ||
           linePrefix != null && text.regionMatches(lineStart - textRange.getStartOffset(), linePrefix, 0 , linePrefix.length()) ) {
-        PsiElement element = myFile.findElementAt(myOffset);
+        PsiElement element = myPsiFile.findElementAt(myOffset);
         if (element == null) return false;
 
         PsiComment comment = element instanceof PsiComment ? (PsiComment)element : PsiTreeUtil.getParentOfType(element, PsiComment.class, false);
@@ -677,7 +677,7 @@ public class EnterHandler extends BaseEnterHandler {
           }
           else {
             removeTrailingSpaces(myDocument, myOffset);
-            String toInsert = previousLineIndentUsed ? "*" : CodeDocumentationUtil.createDocCommentLine("", myFile, commenter);
+            String toInsert = previousLineIndentUsed ? "*" : CodeDocumentationUtil.createDocCommentLine("", myPsiFile, commenter);
             myDocument.insertString(myOffset, toInsert);
             PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
           }

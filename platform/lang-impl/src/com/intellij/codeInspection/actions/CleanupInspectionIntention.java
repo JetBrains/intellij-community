@@ -38,16 +38,16 @@ import java.util.concurrent.ExecutionException;
 public final class CleanupInspectionIntention implements IntentionAction, HighPriorityAction {
   private final @NotNull InspectionToolWrapper<?,?> myToolWrapper;
   private final FileModifier myQuickfix;
-  private final @Nullable PsiFile myFile;
+  private final @Nullable PsiFile myPsiFile;
   private final String myText;
 
   public CleanupInspectionIntention(@NotNull InspectionToolWrapper<?,?> toolWrapper,
                                     @NotNull FileModifier quickFix,
-                                    @Nullable PsiFile file,
+                                    @Nullable PsiFile psiFile,
                                     String text) {
     myToolWrapper = toolWrapper;
     myQuickfix = quickFix;
-    myFile = file;
+    myPsiFile = psiFile;
     myText = text;
   }
 
@@ -70,9 +70,9 @@ public final class CleanupInspectionIntention implements IntentionAction, HighPr
     }
   }
 
-  public @NlsContexts.HintText @Nullable String findAndFix(@NotNull Project project, PsiFile file) {
+  public @NlsContexts.HintText @Nullable String findAndFix(@NotNull Project project, PsiFile psiFile) {
     assert !ApplicationManager.getApplication().isWriteAccessAllowed() : "do not run under write action";
-    PsiFile targetFile = myFile == null ? file : myFile;
+    PsiFile targetFile = myPsiFile == null ? psiFile : myPsiFile;
     if (targetFile == null) return null;
     InjectedLanguageManager manager = InjectedLanguageManager.getInstance(targetFile.getProject());
     boolean injected = manager.isInjectedFragment(targetFile);

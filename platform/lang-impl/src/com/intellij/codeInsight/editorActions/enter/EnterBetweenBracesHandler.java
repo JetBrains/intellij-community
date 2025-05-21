@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 @Deprecated
 public class EnterBetweenBracesHandler extends EnterBetweenBracesFinalHandler {
   @Override
-  protected boolean isApplicable(@NotNull PsiFile file,
+  protected boolean isApplicable(@NotNull PsiFile psiFile,
                                  @NotNull Editor editor,
                                  CharSequence documentText,
                                  int caretOffset,
@@ -23,7 +23,7 @@ public class EnterBetweenBracesHandler extends EnterBetweenBracesFinalHandler {
     return isValidOffset(prevCharOffset, documentText) &&
            isValidOffset(nextCharOffset, documentText) &&
            isBracePair(documentText.charAt(prevCharOffset), documentText.charAt(nextCharOffset)) &&
-           !ourDefaultBetweenDelegate.bracesAreInTheSameElement(file, editor, prevCharOffset, nextCharOffset);
+           !ourDefaultBetweenDelegate.bracesAreInTheSameElement(psiFile, editor, prevCharOffset, nextCharOffset);
   }
 
   protected boolean isBracePair(char lBrace, char rBrace) {

@@ -222,16 +222,16 @@ public final class ListTemplatesHandler implements CodeInsightActionHandler {
 
   private static final class MyLookupAdapter implements LookupListener {
     private final Map<TemplateImpl, String> myTemplate2Argument;
-    private final PsiFile myFile;
+    private final PsiFile myPsiFile;
 
     MyLookupAdapter(@Nullable Map<TemplateImpl, String> template2Argument) {
       myTemplate2Argument = template2Argument;
-      myFile = null;
+      myPsiFile = null;
     }
 
-    MyLookupAdapter(@Nullable PsiFile file) {
+    MyLookupAdapter(@Nullable PsiFile psiFile) {
       myTemplate2Argument = null;
-      myFile = file;
+      myPsiFile = psiFile;
     }
 
     @Override
@@ -254,12 +254,12 @@ public final class ListTemplatesHandler implements CodeInsightActionHandler {
         });
       }
       else if (item instanceof CustomLiveTemplateLookupElement) {
-        if (myFile != null) {
+        if (myPsiFile != null) {
           WriteCommandAction.writeCommandAction(project).run(() -> {
             Editor editor = lookup.getEditor();
             if (!editor.isDisposed()) {
               editor.getCaretModel().runForEachCaret(caret -> {
-                ((CustomLiveTemplateLookupElement)item).expandTemplate(lookup.getEditor(), myFile);
+                ((CustomLiveTemplateLookupElement)item).expandTemplate(lookup.getEditor(), myPsiFile);
               });
             }
           });

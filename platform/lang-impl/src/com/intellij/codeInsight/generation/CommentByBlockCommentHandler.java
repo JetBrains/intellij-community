@@ -46,7 +46,7 @@ import java.util.List;
 public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHandler {
   private Editor myEditor;
   private Caret myCaret;
-  private PsiFile myFile;
+  private PsiFile myPsiFile;
   private Language myLanguage;
   private Document myDocument;
   private Commenter myCommenter;
@@ -58,14 +58,14 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull Caret caret, @NotNull PsiFile file) {
     myEditor = editor;
     myCaret = caret;
-    myFile = file;
+    myPsiFile = file;
     myWarning = null;
     myWarningLocation = null;
 
     myDocument = editor.getDocument();
     myLanguage = getLanguage(caret, file);
 
-    final Commenter commenter = findCommenter(myFile, myEditor, caret);
+    final Commenter commenter = findCommenter(myPsiFile, myEditor, caret);
     if (commenter == null) return;
     myCommenter = commenter;
 
@@ -77,7 +77,7 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
         caret.getSelectionStart(),
         caret.getSelectionEnd(),
         myDocument,
-        myFile
+        myPsiFile
       );
       if (mySelfManagedCommenterData == null) {
         mySelfManagedCommenterData = SelfManagingCommenter.EMPTY_STATE;
@@ -156,7 +156,7 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
   }
 
   private @NotNull CommonCodeStyleSettings getLanguageSettings() {
-    return CodeStyle.getLanguageSettings(myFile, myLanguage);
+    return CodeStyle.getLanguageSettings(myPsiFile, myLanguage);
   }
 
   private void showMessageIfNeeded() {
@@ -188,9 +188,9 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
     if (selection.isEmpty()) {
       return true;
     }
-    PsiDocumentManager.getInstance(myFile.getProject()).commitDocument(myDocument);
+    PsiDocumentManager.getInstance(myPsiFile.getProject()).commitDocument(myDocument);
     TextRange range = selection.grown(-1);
-    for (PsiElement element = myFile.findElementAt(range.getStartOffset()); element != null && range.intersects(element.getTextRange());
+    for (PsiElement element = myPsiFile.findElementAt(range.getStartOffset()); element != null && range.intersects(element.getTextRange());
          element = element.getNextSibling()) {
       if (element instanceof OuterLanguageElement) {
         if (!isInjectedWhiteSpace(range, (OuterLanguageElement)element)) {
@@ -239,7 +239,7 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
 
   private @Nullable TextRange findCommentedRange(final Commenter commenter) {
     final CharSequence text = myDocument.getCharsSequence();
-    final FileType fileType = myFile.getFileType();
+    final FileType fileType = myPsiFile.getFileType();
     if (fileType instanceof CustomSyntaxTableFileType) {
       Lexer lexer = new CustomFileTypeLexer(((CustomSyntaxTableFileType)fileType).getSyntaxTable());
       final int caretOffset = myCaret.getOffset();
@@ -386,7 +386,7 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
   }
 
   private @Nullable PsiComment getCommentAtOffset(int offset) {
-    PsiElement elt = myFile.getViewProvider().findElementAt(offset);
+    PsiElement elt = myPsiFile.getViewProvider().findElementAt(offset);
     if (elt == null) return null;
     return PsiTreeUtil.getParentOfType(elt, PsiComment.class, false);
   }
@@ -407,11 +407,11 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
         if ((forced == null && !settings.BLOCK_COMMENT_AT_FIRST_COLUMN) || forced == Boolean.TRUE) {
           int line1 = myEditor.offsetToLogicalPosition(startOffset).line;
           int line2 = myEditor.offsetToLogicalPosition(endOffset - 1).line;
-          IndentData minIndent = CommentUtil.getMinLineIndent(myDocument, line1, line2, myFile);
+          IndentData minIndent = CommentUtil.getMinLineIndent(myDocument, line1, line2, myPsiFile);
           if (minIndent == null) {
             minIndent = new IndentData(0);
           }
-          space = minIndent.createIndentInfo().generateNewWhiteSpace(CodeStyle.getIndentOptions(myFile));
+          space = minIndent.createIndentInfo().generateNewWhiteSpace(CodeStyle.getIndentOptions(myPsiFile));
         }
         else {
           space = "";

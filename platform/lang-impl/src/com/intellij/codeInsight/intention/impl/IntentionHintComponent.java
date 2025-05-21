@@ -111,7 +111,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
   @RequiresEdt
   private IntentionHintComponent(@NotNull Project project,
-                                 @NotNull PsiFile file,
+                                 @NotNull PsiFile psiFile,
                                  @NotNull Editor editor,
                                  @NotNull Icon icon,
                                  @NotNull AbstractIntentionPopup popup) {
@@ -119,7 +119,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     myPopup = popup;
     Disposer.register(this, myPopup);
 
-    myLightBulbPanel = new LightBulbPanel(project, file, editor, icon);
+    myLightBulbPanel = new LightBulbPanel(project, psiFile, editor, icon);
     myComponentHint = new MyComponentHint(myLightBulbPanel);
 
     EditorUtil.disposeWithEditor(myEditor, this);
@@ -128,36 +128,36 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
   @RequiresEdt
   public static @NotNull IntentionHintComponent showIntentionHint(@NotNull Project project,
-                                                                  @NotNull PsiFile file,
+                                                                  @NotNull PsiFile psiFile,
                                                                   @NotNull Editor editor,
                                                                   boolean showExpanded,
                                                                   @NotNull CachedIntentions cachedIntentions) {
-    return showIntentionHint(project, file, editor, showExpanded, (IntentionContainer)cachedIntentions);
+    return showIntentionHint(project, psiFile, editor, showExpanded, (IntentionContainer)cachedIntentions);
   }
 
   @RequiresEdt
   public static @NotNull IntentionHintComponent showIntentionHint(@NotNull Project project,
-                                                                  @NotNull PsiFile file,
+                                                                  @NotNull PsiFile psiFile,
                                                                   @NotNull Editor editor,
                                                                   boolean showExpanded,
                                                                   @NotNull IntentionContainer cachedIntentions) {
-    AbstractIntentionPopup popup = IntentionPopupProvider.Companion.createPopup(editor, file, project);
+    AbstractIntentionPopup popup = IntentionPopupProvider.Companion.createPopup(editor, psiFile, project);
     if(popup == null) {
-      popup = new IntentionPopup(project, file, editor, cachedIntentions);
+      popup = new IntentionPopup(project, psiFile, editor, cachedIntentions);
     }
     Icon inlinePromptIcon = InlinePrompt.getInlinePromptBulbIcon(project, editor);
     Icon icon = inlinePromptIcon != null ? inlinePromptIcon : LightBulbUtil.getIcon(cachedIntentions);
-    return showIntentionHint(project, file, editor, showExpanded, icon, popup);
+    return showIntentionHint(project, psiFile, editor, showExpanded, icon, popup);
   }
 
   @RequiresEdt
   public static @NotNull IntentionHintComponent showIntentionHint(@NotNull Project project,
-                                                                  @NotNull PsiFile file,
+                                                                  @NotNull PsiFile psiFile,
                                                                   @NotNull Editor editor,
                                                                   boolean showExpanded,
                                                                   @NotNull Icon icon,
                                                                   @NotNull AbstractIntentionPopup popup) {
-    IntentionHintComponent component = new IntentionHintComponent(project, file, editor, icon, popup);
+    IntentionHintComponent component = new IntentionHintComponent(project, psiFile, editor, icon, popup);
 
     if (editor.getSettings().isShowIntentionBulb()) {
       component.showIntentionHintImpl(!showExpanded);
@@ -561,7 +561,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     private final RowIcon myInactiveIcon;
     private final JLabel myIconLabel;
 
-    LightBulbPanel(@NotNull Project project, @NotNull PsiFile file, @NotNull Editor editor, @NotNull Icon smartTagIcon) {
+    LightBulbPanel(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull Editor editor, @NotNull Icon smartTagIcon) {
       setLayout(new BorderLayout());
       setOpaque(false);
 
@@ -571,7 +571,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
       myIconLabel = new JLabel(myInactiveIcon);
       myIconLabel.setOpaque(false);
-      myIconLabel.addMouseListener(new LightBulbMouseListener(project, file));
+      myIconLabel.addMouseListener(new LightBulbMouseListener(project, psiFile));
       AccessibleContextUtil.setName(myIconLabel, UIBundle.message("light.bulb.panel.accessible.name"));
 
       add(myIconLabel, BorderLayout.CENTER);
@@ -629,11 +629,11 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   // IDEA-313550: Intention light bulb border is calculated wrong
   private final class LightBulbMouseListener extends MouseAdapter {
     private final @NotNull Project myProject;
-    private final @NotNull PsiFile myFile;
+    private final @NotNull PsiFile myPsiFile;
 
-    LightBulbMouseListener(@NotNull Project project, @NotNull PsiFile file) {
+    LightBulbMouseListener(@NotNull Project project, @NotNull PsiFile psiFile) {
       this.myProject = project;
-      this.myFile = file;
+      this.myPsiFile = psiFile;
     }
 
     @Override
@@ -659,7 +659,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
       DataContext projectContext = SimpleDataContext.getProjectContext(myProject);
       AnActionEvent event = AnActionEvent.createFromInputEvent(e, ActionPlaces.MOUSE_SHORTCUT, null, projectContext);
-      ActionsCollector.getInstance().record(myProject, action, event, myFile.getLanguage());
+      ActionsCollector.getInstance().record(myProject, action, event, myPsiFile.getLanguage());
     }
   }
 
@@ -667,7 +667,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   public static final class IntentionPopup implements AbstractIntentionPopup, Disposable.Parent {
     private final @NotNull Project myProject;
     private final @NotNull Editor myEditor;
-    private final @NotNull PsiFile myFile;
+    private final @NotNull PsiFile myPsiFile;
     private final @NotNull IntentionContainer myCachedIntentions;
     private PreviewHandler<IntentionActionWithTextCaching> myPreviewHandler;
     private PopupMenuListener myOuterComboboxPopupListener;
@@ -677,12 +677,12 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     private boolean myPopupShown;
 
     private IntentionPopup(@NotNull Project project,
-                           @NotNull PsiFile file,
+                           @NotNull PsiFile psiFile,
                            @NotNull Editor editor,
                            @NotNull IntentionContainer cachedIntentions) {
       myProject = project;
       myEditor = editor;
-      myFile = file;
+      myPsiFile = psiFile;
       myCachedIntentions = cachedIntentions;
     }
 
@@ -701,7 +701,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       if (myListPopup == null) {
         assert myHint == null;
         myHint = component;
-        recreateMyPopup(this, new IntentionListStep(this, myEditor, myFile, myProject, myCachedIntentions, source));
+        recreateMyPopup(this, new IntentionListStep(this, myEditor, myPsiFile, myProject, myCachedIntentions, source));
         if(listPopupCustomization != null) {
           listPopupCustomization.accept(myListPopup);
         }
@@ -719,7 +719,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
       myPreviewHandler.showInitially();
 
-      IntentionFUSCollector.reportShownIntentions(myFile.getProject(), myListPopup, myFile.getLanguage(), myEditor, source);
+      IntentionFUSCollector.reportShownIntentions(myPsiFile.getProject(), myListPopup, myPsiFile.getLanguage(), myEditor, source);
       myPopupShown = true;
     }
 
@@ -856,7 +856,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         myProject, myListPopup,
         IntentionActionWithTextCaching.class,
         action -> new IntentionPreviewComputable(
-          myProject, action.getAction(), myFile, myEditor, action.getFixOffset()).call());
+          myProject, action.getAction(), myPsiFile, myEditor, action.getFixOffset()).call());
     }
 
     /**
@@ -880,11 +880,11 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         if (injectionHighlighter != null) return;
         synchronized (this) {
           if (injectionHighlighter != null) return;
-          PsiFile file = myPopup.myFile;
+          PsiFile psiFile = myPopup.myPsiFile;
           Editor editor = myPopup.myEditor;
-          boolean committed = PsiDocumentManager.getInstance(file.getProject()).isCommitted(editor.getDocument());
+          boolean committed = PsiDocumentManager.getInstance(psiFile.getProject()).isCommitted(editor.getDocument());
           injectedFile = committed
-                         ? InjectedLanguageUtil.findInjectedPsiNoCommit(file, editor.getCaretModel().getOffset())
+                         ? InjectedLanguageUtil.findInjectedPsiNoCommit(psiFile, editor.getCaretModel().getOffset())
                          : null;
           injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);
 
@@ -919,7 +919,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
             }
           }
           else {
-            PsiElement at = myPopup.myFile.findElementAt(myPopup.myEditor.getCaretModel().getOffset());
+            PsiElement at = myPopup.myPsiFile.findElementAt(myPopup.myEditor.getCaretModel().getOffset());
             PsiElement container = suppressAction.getContainer(at);
             if (container != null) {
               return () -> highlighter.highlight(container, Collections.singletonList(container));
@@ -928,15 +928,15 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         }
         else if (action instanceof CustomizableIntentionAction customizableAction) {
           init();
-          List<CustomizableIntentionAction.RangeToHighlight> ranges = customizableAction.getRangesToHighlight(myPopup.myEditor, myPopup.myFile);
+          List<CustomizableIntentionAction.RangeToHighlight> ranges = customizableAction.getRangesToHighlight(myPopup.myEditor, myPopup.myPsiFile);
           List<Runnable> actions = new ArrayList<>();
           for (CustomizableIntentionAction.RangeToHighlight range : ranges) {
             TextRange rangeInFile = range.getRangeInFile();
-            PsiFile file = range.getContainingFile();
-            if (injectedFile != null && file.getViewProvider() == injectedFile.getViewProvider()) {
+            PsiFile psiFile = range.getContainingFile();
+            if (injectedFile != null && psiFile.getViewProvider() == injectedFile.getViewProvider()) {
               actions.add(() -> injectionHighlighter.addHighlights(List.of(rangeInFile), range.getHighlightKey()));
             }
-            else if (!InjectedLanguageManager.getInstance(myPopup.myProject).isInjectedFragment(file)) {
+            else if (!InjectedLanguageManager.getInstance(myPopup.myProject).isInjectedFragment(psiFile)) {
               actions.add(() -> highlighter.addHighlights(List.of(rangeInFile), range.getHighlightKey()));
             }
           }
@@ -967,7 +967,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
           ((WizardPopup)myListPopup).registerAction(
             IntentionShortcutUtils.getWrappedActionId(intention), keyboardShortcut.getFirstKeyStroke(), createAction(e -> {
               close();
-              IntentionShortcutUtils.invokeAsAction(intention, myEditor, myFile, IntentionSource.CUSTOM_SHORTCUT);
+              IntentionShortcutUtils.invokeAsAction(intention, myEditor, myPsiFile, IntentionSource.CUSTOM_SHORTCUT);
             })
           );
         }

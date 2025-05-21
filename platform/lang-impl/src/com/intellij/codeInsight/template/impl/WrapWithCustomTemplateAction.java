@@ -25,23 +25,23 @@ public final class WrapWithCustomTemplateAction extends AnAction {
   private final CustomLiveTemplate myTemplate;
   private final Editor myEditor;
   private final @Nullable Runnable myAfterExecutionCallback;
-  private final PsiFile myFile;
+  private final PsiFile myPsiFile;
 
   public WrapWithCustomTemplateAction(CustomLiveTemplate template,
                                       final Editor editor,
-                                      final PsiFile file,
+                                      final PsiFile psiFile,
                                       final Set<? super Character> usedMnemonicsSet) {
-    this(template, editor, file, usedMnemonicsSet, null);
+    this(template, editor, psiFile, usedMnemonicsSet, null);
   }
 
   public WrapWithCustomTemplateAction(CustomLiveTemplate template,
                                       final Editor editor,
-                                      final PsiFile file,
+                                      final PsiFile psiFile,
                                       final Set<? super Character> usedMnemonicsSet,
                                       @Nullable Runnable afterExecutionCallback) {
     super(InvokeTemplateAction.extractMnemonic(template.getTitle(), usedMnemonicsSet));
     myTemplate = template;
-    myFile = file;
+    myPsiFile = psiFile;
     myEditor = editor;
     myAfterExecutionCallback = afterExecutionCallback;
   }
@@ -56,15 +56,15 @@ public final class WrapWithCustomTemplateAction extends AnAction {
     final Document document = myEditor.getDocument();
     final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file != null) {
-      ReadonlyStatusHandler.getInstance(myFile.getProject()).ensureFilesWritable(Collections.singletonList(file));
+      ReadonlyStatusHandler.getInstance(myPsiFile.getProject()).ensureFilesWritable(Collections.singletonList(file));
     }
 
     String selection = myEditor.getSelectionModel().getSelectedText(true);
 
     if (selection != null) {
       selection = selection.trim();
-      PsiDocumentManager.getInstance(myFile.getProject()).commitAllDocuments();
-      myTemplate.wrap(selection, new CustomTemplateCallback(myEditor, myFile) {
+      PsiDocumentManager.getInstance(myPsiFile.getProject()).commitAllDocuments();
+      myTemplate.wrap(selection, new CustomTemplateCallback(myEditor, myPsiFile) {
         @Override
         public void startTemplate(@NotNull Template template, Map<String, String> predefinedValues, TemplateEditingListener listener) {
           super.startTemplate(template, predefinedValues, listener);

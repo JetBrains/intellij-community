@@ -49,16 +49,16 @@ final class FormatterBasedIndentAdjuster  {
     private final Project myProject;
     private final int myLine;
     private final Document myDocument;
-    private final PsiFile myFile;
+    private final PsiFile myPsiFile;
 
     IndentAdjusterRunnable(@NotNull Project project,
                            @NotNull Document document,
-                           @NotNull PsiFile file,
+                           @NotNull PsiFile psiFile,
                            int offset) {
       myProject = project;
       myDocument = document;
       myLine = myDocument.getLineNumber(offset);
-      myFile = file;
+      myPsiFile = psiFile;
     }
 
     @Override
@@ -67,13 +67,13 @@ final class FormatterBasedIndentAdjuster  {
       int indentEnd = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), lineStart, " \t");
       RangeMarker indentMarker = myDocument.createRangeMarker(lineStart, indentEnd);
       CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myProject);
-      if (isSynchronousAdjustment(myDocument, myFile)) {
+      if (isSynchronousAdjustment(myDocument, myPsiFile)) {
         updateIndent(indentMarker,
-                     codeStyleManager.getLineIndent(myFile, lineStart, FormattingMode.ADJUST_INDENT_ON_ENTER));
+                     codeStyleManager.getLineIndent(myPsiFile, lineStart, FormattingMode.ADJUST_INDENT_ON_ENTER));
       }
       else {
         ReadAction
-          .nonBlocking(() -> codeStyleManager.getLineIndent(myFile, lineStart, FormattingMode.ADJUST_INDENT_ON_ENTER))
+          .nonBlocking(() -> codeStyleManager.getLineIndent(myPsiFile, lineStart, FormattingMode.ADJUST_INDENT_ON_ENTER))
           .withDocumentsCommitted(myProject)
           .finishOnUiThread(ModalityState.nonModal(), indentString -> updateIndent(indentMarker, indentString))
           .submit(AppExecutorUtil.getAppExecutorService());
