@@ -50,7 +50,7 @@ internal fun openEditorForFile(
       val manager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
       var splitWindow: EditorWindow? = null
       for (value in values) {
-        val file = value.virtualFile ?: continue
+        val file = value.virtualFile?.takeIf { it.isValid } ?: continue
         val mode = RecentFilesNavigator.EP_NAME.computeSafeIfAny { it.getEditorOpenOptions(project, file) } ?: defaultMode
         if (mode === FileEditorManagerImpl.OpenMode.RIGHT_SPLIT) {
           if (splitWindow == null) {
