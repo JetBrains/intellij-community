@@ -54,29 +54,17 @@ class ClassLoaderConfigurator(
 
   fun configureDescriptorDynamic(subDescriptor: IdeaPluginDescriptorImpl): Boolean {
     assert(subDescriptor is ContentModuleDescriptor || subDescriptor is DependsSubDescriptor) { subDescriptor }
+    if (subDescriptor is DependsSubDescriptor) {
+      subDescriptor.isMarkedForLoading = false
+      return false
+    }
     val mainDescriptor = subDescriptor.getMainDescriptor()
-
     val pluginId = mainDescriptor.pluginId
     assert(pluginId == subDescriptor.pluginId) { "pluginId '$pluginId' != moduleDescriptor.pluginId '${subDescriptor.pluginId}'"}
-
     // class cast fails in case IU is running from sources, IDEA-318252
     (mainDescriptor.pluginClassLoader as? PluginClassLoader)?.let {
       mainToClassPath.put(pluginId, MainPluginDescriptorClassPathInfo(classLoader = it))
     }
-
-    if (subDescriptor is DependsSubDescriptor) {
-      // dynamically enabled optional dependency module in old format
-      // based on what's happening in [configureDependenciesInOldFormat]
-      assert(subDescriptor.pluginClassLoader == null) {
-        "sub descriptor $subDescriptor of $mainDescriptor seems to be already enabled"
-      }
-      assert(pluginSet.findEnabledPlugin(subDescriptor.dependencyTarget) != null) { "target is not loaded: $subDescriptor" }
-      val mainDependentClassLoader = mainDescriptor.pluginClassLoader
-      assert(mainDependentClassLoader != null) { "plugin $mainDescriptor is not yet enabled"}
-      setClassLoaderForModuleAndDependsSubDescriptors(subDescriptor, mainDependentClassLoader!!)
-      return true
-    }
-
     return configureModule(subDescriptor as ContentModuleDescriptor)
   }
 

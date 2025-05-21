@@ -62,7 +62,6 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import org.junit.Rule
 import org.junit.Test
-import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.random.Random
 
@@ -449,14 +448,14 @@ class DynamicPluginsTest {
       assertThat(DynamicPlugins.loadPluginInTest(fooDescriptor, filteredCore)).isTrue()
       val barDescriptor = loadAndInitDescriptorInTest(barJar, isBundled = true) // FIXME isBundled is needed so that implicit dependencies on vcs modules are not added
       try {
+        // FIXME perhaps it should return false to indicate that restart is needed to load more stuff
         assertThat(DynamicPlugins.loadPluginInTest(barDescriptor, filteredCore)).isTrue()
         val barService = application.getService(barDescriptor.pluginClassLoader!!.loadClass(BarService::class.qualifiedName)) as IDynamicPluginTest
         barService.test()
-        val fooBarService = application.getService(fooDescriptor.pluginClassLoader!!.loadClass(FooBarService::class.qualifiedName)) as IDynamicPluginTest
-        val err = assertThrows<NoClassDefFoundError> { // FIXME bad, service should not be loaded ^
-          fooBarService.test()
-        }
-        assertThat(err).hasMessageContaining("BarService")
+        val fooBarClass = fooDescriptor.pluginClassLoader!!.loadClass(FooBarService::class.qualifiedName) // loaded because packed into the same jar with the main descriptor
+        assertThat(application.getService(fooBarClass)).isNull()
+        assertThat(fooDescriptor.dependencies.first().subDescriptor!!.isMarkedForLoading).isFalse
+        assertThat(fooDescriptor.dependencies.first().subDescriptor!!.pluginClassLoader).isNull()
       }
       finally {
         unloadAndUninstallPlugin(barDescriptor)
