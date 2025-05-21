@@ -6,6 +6,7 @@ import com.intellij.platform.runtime.product.ProductMode
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.problems.InvalidPluginIDProblem
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
@@ -443,8 +444,24 @@ abstract class ProductProperties {
         if (result.plugin.pluginVersion == null) {
           add(PropertyNotSpecified("version"))
         }
+        // workarounds for MP-7501
+        val id = result.plugin.pluginId
+        if (id == null) {
+          add(PropertyNotSpecified("id"))
+        }
+        else if (!PLUGIN_ID_REGEX.matches(id)) {
+          add(InvalidPluginIDProblem(id))
+        }
       }
       is PluginCreationFail -> result.errorsAndWarnings
     }
+  }
+
+  private companion object {
+    /**
+     * From https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html#idea-plugin__id:
+     * > Please use characters, numbers, and '.'/'-'/'_' symbols only and keep it reasonably short.
+     */
+    val PLUGIN_ID_REGEX: Regex = "^[\\w.-]+$".toRegex()
   }
 }
