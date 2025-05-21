@@ -7,6 +7,7 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.TabsCustomizationStrategy
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -17,6 +18,7 @@ import fleet.kernel.DurableRef
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * We could have just one Map<SeProviderId, SeItemDataProvider>, but we can't, because in the previous Search Everywhere implementation
@@ -54,11 +56,15 @@ class SeProvidersHolder(
         val separateTabProvider: SeItemsProvider?
 
         if (providerFactory is SeWrappedLegacyContributorItemsProviderFactory) {
-          provider = allContributors[providerFactory.id]?.let { providerFactory.getItemsProvider(it) }
-          separateTabProvider = separateTabContributors[providerFactory.id]?.let { providerFactory.getItemsProvider(it) }
+          provider = allContributors[providerFactory.id]?.let {
+            providerFactory.getItemsProviderCatchingOrNull(it)
+          }
+          separateTabProvider = separateTabContributors[providerFactory.id]?.let {
+            providerFactory.getItemsProviderCatchingOrNull(it)
+          }
         }
         else {
-          provider = providerFactory.getItemsProvider(project, dataContext)
+          provider = providerFactory.getItemsProviderCatchingOrNull(project, dataContext)
           separateTabProvider = null
 
           if (provider?.id != providerFactory.id) {
@@ -103,3 +109,24 @@ class SeProvidersHolder(
     }
   }
 }
+
+@ApiStatus.Internal
+suspend fun SeItemsProviderFactory.getItemsProviderCatchingOrNull(project: Project?, dataContext: DataContext): SeItemsProvider? =
+  computeCatchingOrNull { getItemsProvider(project, dataContext) }
+
+@ApiStatus.Internal
+suspend fun SeWrappedLegacyContributorItemsProviderFactory.getItemsProviderCatchingOrNull(legacyContributor: SearchEverywhereContributor<Any>): SeItemsProvider? =
+  computeCatchingOrNull { getItemsProvider(legacyContributor) }
+
+@ApiStatus.Internal
+suspend fun SeItemsProviderFactory.computeCatchingOrNull(block: suspend () -> SeItemsProvider?): SeItemsProvider? =
+  try {
+    block()
+  }
+  catch (c: CancellationException) {
+    throw c
+  }
+  catch (e: Exception) {
+    SeLog.warn("SearchEverywhere items provider wasn't created: ${id}. Exception:\n${e.message}")
+    null
+  }

@@ -11,7 +11,8 @@ enum class SeLog {
   USER_ACTION,
   LIFE_CYCLE,
   FROZEN_COUNT,
-  THROTTLING;
+  THROTTLING,
+  WARNING;
 
   companion object {
     private val allowedCategories = setOf(
@@ -21,6 +22,7 @@ enum class SeLog {
       LIFE_CYCLE,
       FROZEN_COUNT,
       THROTTLING,
+      WARNING,
     )
 
     // #com.intellij.platform.searchEverywhere.providers.SeLog
@@ -42,6 +44,10 @@ enum class SeLog {
       if (!logger.isDebugEnabled || category !in allowedCategories) return
 
       logger.debug(messageProvider().withSePrefix(category))
+    }
+
+    fun warn(message: String) {
+      logger.warn(message.withSePrefix(WARNING))
     }
 
     private fun String.withSePrefix(category: SeLog): String = "SearchEverywhere2 ($category): $this"

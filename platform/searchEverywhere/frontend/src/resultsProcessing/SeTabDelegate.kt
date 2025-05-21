@@ -5,7 +5,6 @@ import com.intellij.ide.rpc.rpcId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.project.projectId
@@ -16,6 +15,7 @@ import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
 import com.intellij.platform.searchEverywhere.providers.SeLocalItemDataProvider
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
+import com.intellij.platform.searchEverywhere.providers.getItemsProviderCatchingOrNull
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -79,8 +79,6 @@ class SeTabDelegate(val project: Project?,
   override fun dispose() {}
 
   companion object {
-    private val LOG = Logger.getInstance(SeTabDelegate::class.java)
-
     private suspend fun initializeProviders(
       project: Project?,
       providerIds: List<SeProviderId>,
@@ -92,32 +90,31 @@ class SeTabDelegate(val project: Project?,
         dataContext.rpcId()
       }
 
-      val allProviderIds = providerIds.toSet()
-      val hasWildcard = allProviderIds.any { it.isWildcard }
+      val hasWildcard = providerIds.any { it.isWildcard }
+      val remoteProviderIds = SeRemoteApi.getInstance().getAvailableProviderIds().filter { hasWildcard || providerIds.contains(it) }.toSet()
+      val localFactories = SeItemsProviderFactory.EP_NAME.extensionList.associateBy { SeProviderId(it.id) }
+
+      // If we have it on BE, we use the BE provider.
+      // This is needed because extensions are available on both sides in the monolith (BE and FE)
+      // even if the extension was registered on BE only.
+      // It's better to treat FE provider as BE in monolith than treat BE provider as FE in split mode.
+      val localProviderIds =
+        (if (hasWildcard) localFactories.keys else providerIds) - remoteProviderIds
 
       val localProviders =
-        SeItemsProviderFactory.EP_NAME.extensionList.asFlow().filter {
-          hasWildcard || allProviderIds.contains(SeProviderId(it.id))
-        }.mapNotNull {
-          val provider = try {
-            it.getItemsProvider(project, dataContext)
-          } catch (e: Exception) {
-            LOG.warn("SearchEverywhere items provider wasn't created: ${it.id}. Exception:\n${e.message}")
-            null
-          }
+        localFactories.filter {
+          localProviderIds.contains(it.key)
+        }.values.mapNotNull {
+          val provider = it.getItemsProviderCatchingOrNull(project, dataContext)
 
           if (provider == null) {
-            LOG.info("SearchEverywhere items provider factory returned null: ${it.id}")
+            SeLog.log(SeLog.DEFAULT, "SearchEverywhere items provider factory returned null: ${it.id}")
           }
 
           provider
-        }.toList().associate { provider ->
+        }.associate { provider ->
           SeProviderId(provider.id) to SeLocalItemDataProvider(provider, sessionRef)
         }
-
-      val remoteProviderIds =
-        if (hasWildcard) SeRemoteApi.getInstance().getAvailableProviderIds()
-        else allProviderIds - localProviders.keys.toSet()
 
       val frontendProviders = if (project != null) {
         val remoteProviderIdToName =
