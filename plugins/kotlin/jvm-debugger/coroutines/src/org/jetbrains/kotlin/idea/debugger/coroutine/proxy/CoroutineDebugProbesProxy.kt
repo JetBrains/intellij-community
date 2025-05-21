@@ -25,7 +25,7 @@ class CoroutineDebugProbesProxy(val suspendContext: SuspendContextImpl) {
         DebuggerManagerThreadImpl.assertIsManagerThread()
         val coroutineInfoCache = CoroutineInfoCache()
         try {
-            val executionContext = suspendContext.executionContext() ?: return coroutineInfoCache.fail()
+            val executionContext = suspendContext.executionContext()
             val coroutineInfos =
                 CoroutinesInfoFromJsonAndReferencesProvider(executionContext).dumpCoroutinesInfo()
                     ?: CoroutineLibraryAgent2Proxy.instance(executionContext)?.dumpCoroutinesInfo()
