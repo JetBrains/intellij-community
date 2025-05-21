@@ -23,6 +23,8 @@ import org.jetbrains.annotations.ApiStatus
 interface GitRepositoryApi : RemoteApi<Unit> {
   suspend fun getRepositories(projectId: ProjectId): List<GitRepositoryDto>
 
+  suspend fun getRepository(repositoryId: RepositoryId): GitRepositoryDto?
+
   suspend fun getRepositoriesEvents(projectId: ProjectId): Flow<GitRepositoryEvent>
 
   suspend fun toggleFavorite(projectId: ProjectId, repositories: List<RepositoryId>, reference: GitReferenceName, favorite: Boolean)
@@ -41,6 +43,10 @@ interface GitRepositoryApi : RemoteApi<Unit> {
 @Serializable
 @ApiStatus.Internal
 sealed interface GitRepositoryEvent {
+  sealed interface SingleRepositoryUpdate: GitRepositoryEvent {
+    val repositoryId: RepositoryId
+  }
+
   @Serializable
   @ApiStatus.Internal
   class RepositoryCreated(val repository: GitRepositoryDto) : GitRepositoryEvent {
@@ -49,13 +55,16 @@ sealed interface GitRepositoryEvent {
 
   @Serializable
   @ApiStatus.Internal
-  class RepositoryStateUpdated(val repositoryId: RepositoryId, val newState: GitRepositoryState) : GitRepositoryEvent {
+  class RepositoryStateUpdated(
+    override val repositoryId: RepositoryId,
+    val newState: GitRepositoryState,
+  ) : SingleRepositoryUpdate {
     override fun toString(): String = "Repository updated ${repositoryId}"
   }
 
   @Serializable
   @ApiStatus.Internal
-  class TagsLoaded(val repositoryId: RepositoryId, val tags: Set<GitTag>) : GitRepositoryEvent {
+  class TagsLoaded(override val repositoryId: RepositoryId, val tags: Set<GitTag>) : SingleRepositoryUpdate {
     override fun toString(): String = "Tags loaded in ${repositoryId}"
   }
 
@@ -67,7 +76,10 @@ sealed interface GitRepositoryEvent {
 
   @Serializable
   @ApiStatus.Internal
-  class FavoriteRefsUpdated(val repositoryId: RepositoryId, val favoriteRefs: GitFavoriteRefs) : GitRepositoryEvent {
+  class FavoriteRefsUpdated(
+    override val repositoryId: RepositoryId,
+    val favoriteRefs: GitFavoriteRefs,
+  ) : SingleRepositoryUpdate {
     override fun toString(): String = "Favorite refs updated ${repositoryId}"
   }
 

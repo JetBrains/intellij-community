@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.remoteApi
 
+import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -31,6 +32,14 @@ class GitRepositoryApiImpl : GitRepositoryApi {
       LOG.debug("Known repositories: $repositories")
     }
     return repositories.map { GitRepositoryToDtoConverter.convertToDto(it) }
+  }
+
+  override suspend fun getRepository(repositoryId: RepositoryId): GitRepositoryDto? {
+    val project = repositoryId.projectId.findProject()
+    val repoRoot = repositoryId.rootPath.virtualFile() ?: return null
+    return GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(repoRoot)?.let {
+      GitRepositoryToDtoConverter.convertToDto(it)
+    }
   }
 
   override suspend fun getRepositoriesEvents(projectId: ProjectId): Flow<GitRepositoryEvent> {

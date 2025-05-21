@@ -47,7 +47,7 @@ class GitRepositoriesFrontendHolder(
     val repo = repositories[repositoryId]
     if (repo != null) return repo
 
-    LOG.error("State of repository $repositoryId is not synchronized. Known repositories are: ${repositories.keys.joinToString { it.toString()}}")
+    logStateDesynchronized(repositoryId)
     return GitRepositoryFrontendModelStub(repositoryId)
   }
 
@@ -73,28 +73,8 @@ class GitRepositoriesFrontendHolder(
             is GitRepositoryEvent.RepositoryCreated -> {
               repositories[event.repository.repositoryId] = convertToRepositoryInfo(event.repository)
             }
-            is GitRepositoryEvent.RepositoryDeleted -> {
-              repositories.remove(event.repositoryId)
-            }
-            is GitRepositoryEvent.FavoriteRefsUpdated -> {
-              repositories.computeIfPresent(event.repositoryId) { k, info ->
-                info.favoriteRefs = event.favoriteRefs
-                info
-              }
-            }
-            is GitRepositoryEvent.RepositoryStateUpdated -> {
-              repositories.computeIfPresent(event.repositoryId) { k, info ->
-                info.state = event.newState
-                info
-              }
-            }
-            is GitRepositoryEvent.TagsLoaded -> {
-              repositories.computeIfPresent(event.repositoryId) { k, info ->
-                val refsSet = info.state.refs.copy(tags = event.tags)
-                info.state = info.state.copy(refs = refsSet)
-                info
-              }
-            }
+            is GitRepositoryEvent.RepositoryDeleted -> repositories.remove(event.repositoryId)
+            is GitRepositoryEvent.SingleRepositoryUpdate -> handleSingleRepoUpdate(event)
             GitRepositoryEvent.TagsHidden -> {}
           }
 
@@ -109,6 +89,42 @@ class GitRepositoriesFrontendHolder(
 
       initialized = true
     }
+  }
+
+  private suspend fun handleSingleRepoUpdate(event: GitRepositoryEvent.SingleRepositoryUpdate) {
+    val repoId = event.repositoryId
+
+    val repoInfo = repositories.computeIfPresent(repoId) { k, info ->
+      when (event) {
+        is GitRepositoryEvent.FavoriteRefsUpdated -> {
+          info.favoriteRefs = event.favoriteRefs
+        }
+        is GitRepositoryEvent.RepositoryStateUpdated -> {
+          info.state = event.newState
+        }
+        is GitRepositoryEvent.TagsLoaded -> {
+          val refsSet = info.state.refs.copy(tags = event.tags)
+          info.state = info.state.copy(refs = refsSet)
+        }
+      }
+
+      info
+    }
+
+    if (repoInfo == null) {
+      logStateDesynchronized(repoId)
+      val repositoryDto = GitRepositoryApi.getInstance().getRepository(repoId)
+      if (repositoryDto != null) {
+        repositories[repoId] = convertToRepositoryInfo(repositoryDto)
+      } else {
+        LOG.warn("Failed to fetch repository status $repoId")
+      }
+    }
+  }
+
+  private fun logStateDesynchronized(repositoryId: RepositoryId) {
+    LOG.error("State of repository $repositoryId is not synchronized. " +
+              "Known repositories are: ${repositories.keys.joinToString { it.toString() }}")
   }
 
   companion object {
