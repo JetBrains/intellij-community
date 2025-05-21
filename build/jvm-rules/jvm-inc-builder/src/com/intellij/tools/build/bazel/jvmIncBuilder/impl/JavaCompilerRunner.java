@@ -18,11 +18,8 @@ import org.jetbrains.jps.javac.ast.api.JavacFileData;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
 
 import javax.lang.model.element.Modifier;
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileManager;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 import static org.jetbrains.jps.util.Iterators.*;
@@ -249,16 +246,16 @@ public class JavaCompilerRunner implements CompilerRunner {
         if (diagnostic.getPosition() != Diagnostic.NOPOS) {
           msgBuilder.append(" (").append(diagnostic.getLineNumber()).append(":").append(diagnostic.getColumnNumber()).append(")");
           try {
-            int start = (int) diagnostic.getStartPosition();
-            int end = (int) diagnostic.getEndPosition();
-            if (end > start) {
+            int start = (int)(diagnostic.getStartPosition());
+            int end = (int)(diagnostic.getEndPosition());
+            if (start >= 0 && end > start) {
               CharSequence charContent = source.getCharContent(true);
               if (end < charContent.length()) {
                 msgBuilder.append("\ncode: \"").append(charContent.subSequence(start, end)).append("\"");
               }
             }
           }
-          catch (IOException ignored) {
+          catch (Throwable ignored) {
           }
         }
       }

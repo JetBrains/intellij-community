@@ -142,6 +142,9 @@ public class BuildContextImpl implements BuildContext {
   private static @NotNull List<String> buildJavaOptions(Map<CLFlags, List<String>> flags) {
     // for now, only options available in the flags map can be specified in the build configuration
     List<String> options = new ArrayList<>();
+    options.add("-encoding"); // todo: for now hardcoded
+    options.add("UTF-8");
+
     String jvmTarget = CLFlags.JVM_TARGET.getOptionalScalarValue(flags);
     if (jvmTarget != null) {
       options.add("-source");

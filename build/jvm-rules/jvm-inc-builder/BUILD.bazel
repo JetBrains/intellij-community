@@ -20,8 +20,6 @@ kt_jvm_library(
     "//dependency-graph",
     "//jps-builders-6:build-javac-rt",
     "//:jps-javac-extension",
-    "//src/worker-framework",
-    "//src/worker-util",
     "//:annotations",
     "//:h2-mvstore",
     "//:hash4j",
@@ -30,10 +28,12 @@ kt_jvm_library(
     "//:caffeine",
     "//:intellij-deps-fastutil",
     "//:qdox",
+    "//:jps", # temporary dep for instrumentation-util and instrumenters, must be the last dep in classpath
+    "//src/worker-framework",
+    "//src/worker-util",
     "patched-kotlin-compiler-for-bazel",
     "//:kotlin-compose-compiler-plugin",
     "//:kotlin-serialization-compiler-plugin",
-    "//:jps", # temporary dep for instrumentation-util and instrumenters, must be the last dep in classpath
   ]
 )
 

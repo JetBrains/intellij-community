@@ -107,7 +107,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
   }
 
   @Override
-  public Iterable<String> getPathsToDelete() {
+  public Iterable<String> getOutputPathsToDelete() {
     return myModuleEntryPath != null? List.of(myModuleEntryPath) : List.of();
   }
 
@@ -121,9 +121,15 @@ public class KotlinCompilerRunner implements CompilerRunner {
       // todo: make sure if we really need to process generated outputs after the compilation and not "in place"
       List<GeneratedClass> generatedClasses = new ArrayList<>();
       AbstractCliPipeline<K2JVMCompilerArguments> pipeline = createPipeline(out, generatedFile -> {
-        if (generatedFile instanceof GeneratedJvmClass jvmClass) {
-          String jvmClassName = jvmClass.getOutputClass().getClassName().getInternalName();
-          for (File sourceFile : jvmClass.getSourceFiles()) {
+        String jvmClassName = null;
+        if (generatedFile instanceof KotlinJvmGeneratedFile jvmClass) {
+          jvmClassName = jvmClass.getOutputClass().getClassName().getInternalName();
+        }
+        else if (generatedFile instanceof GeneratedJvmClass jvmClass) {
+          jvmClassName = jvmClass.getOutputClass().getClassName().getInternalName();
+        }
+        if (jvmClassName != null) {
+          for (File sourceFile : generatedFile.getSourceFiles()) {
             generatedClasses.add(new GeneratedClass(jvmClassName, sourceFile));
           }
         }

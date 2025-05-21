@@ -19,7 +19,7 @@ public interface CompilerRunner extends Runner{
 
   ExitCode compile(Iterable<NodeSource> sources, Iterable<NodeSource> deletedSources, DiagnosticSink diagnostic, OutputSink out);
 
-  default Iterable<String> getPathsToDelete() {
+  default Iterable<String> getOutputPathsToDelete() {
     return List.of();
   }
 
