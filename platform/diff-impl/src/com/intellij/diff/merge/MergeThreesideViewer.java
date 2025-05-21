@@ -408,8 +408,11 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       List<DocumentContent> contents = myMergeRequest.getContents();
       MergeRange importRange = ReadAction.compute(() -> {
         sequences.addAll(ContainerUtil.map(contents, content -> content.getDocument().getImmutableCharSequence()));
-        initPsiFiles();
-        if (getTextSettings().isAutoResolveImportConflicts()) {
+        boolean isAutoResolveImportConflicts = getTextSettings().isAutoResolveImportConflicts();
+        if (myConflictResolver.isAvailable() || isAutoResolveImportConflicts) {
+          initPsiFiles();
+        }
+        if (isAutoResolveImportConflicts) {
           boolean canImportsBeProcessedAutomatically = canImportsBeProcessedAutomatically();
           myResolveImportsPossible = canImportsBeProcessedAutomatically;
           if (canImportsBeProcessedAutomatically) {

@@ -3,7 +3,7 @@ package com.intellij.diff.merge
 
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.fragments.MergeLineFragment
-import com.intellij.diff.merge.LangSpecificMergeConflictResolverWrapper.CoroutineScopeService.Companion.coroutineScope
+import com.intellij.diff.merge.LangSpecificMergeConflictResolverWrapper.CoroutineScopeService.Companion.scope
 import com.intellij.diff.tools.util.text.LineOffsets
 import com.intellij.diff.tools.util.text.LineOffsetsUtil
 import com.intellij.diff.util.MergeConflictResolutionStrategy
@@ -21,6 +21,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -31,19 +33,20 @@ class LangSpecificMergeConflictResolverWrapper(private val project: Project?, co
   else {
     null
   }
+  private val mutex = Mutex()
   private val resolvedChanges: MutableList<CharSequence?> = mutableListOf()
   private var hasChunksInitiallyResolved: Boolean = false
 
   @RequiresBlockingContext
   fun init(lineOffsetsList: List<LineOffsets>, fragmentList: List<MergeLineFragment>, fileList: List<PsiFile>) {
-    if (project == null || resolver == null) return
+    if (!isAvailable()) return
     val action: suspend CoroutineScope.() -> Unit = {
       calculateConflicts(lineOffsetsList, fragmentList, fileList)
       if (resolvedChanges.any { it != null }) hasChunksInitiallyResolved = true
     }
     val application = ApplicationManager.getApplication()
     if (application.isDispatchThread) {
-      check(application.isUnitTestMode) { "From EDT this method can only be called in unit tests."}
+      check(application.isUnitTestMode && project != null) { "From EDT this method can only be called in unit tests."}
       runWithModalProgressBlocking(project, "", action)
     } else {
       runBlockingCancellable(action)
@@ -55,21 +58,23 @@ class LangSpecificMergeConflictResolverWrapper(private val project: Project?, co
     fragmentList: List<MergeLineFragment>,
     fileList: List<PsiFile>,
   ) {
-    if (resolver == null || project == null) return
+    if (!isAvailable()) return
     val context = LangSpecificMergeContext(project, fragmentList, fileList, lineOffsetsList)
     val newContentList = withContext(Dispatchers.Default) {
-      resolver.tryResolveMergeConflicts(context)
+      resolver?.tryResolveMergeConflicts(context)
     } ?: List(fragmentList.size) { null }
-    resolvedChanges.clear()
-    resolvedChanges.addAll(newContentList)
+    mutex.withLock {
+      resolvedChanges.clear()
+      resolvedChanges.addAll(newContentList)
+    }
   }
 
   @RequiresEdt
   fun updateHighlighting(fileList: List<PsiFile>, mergeChangeList: List<TextMergeChange>, scheduleRediff: Runnable) {
     val localMergeChangeList = mergeChangeList.toList()
-    if (project == null || resolver == null || !hasChunksInitiallyResolved || localMergeChangeList.size != resolvedChanges.size) return
-    project.coroutineScope.coroutineContext.cancelChildren()
-    project.coroutineScope.launch(ModalityState.defaultModalityState().asContextElement()) {
+    if (!isAvailable() || project == null || !hasChunksInitiallyResolved || localMergeChangeList.size != resolvedChanges.size) return
+    project.scope.coroutineContext.cancelChildren()
+    project.scope.launch(ModalityState.defaultModalityState().asContextElement()) {
       val lineOffsetsList = fileList.map { LineOffsetsUtil.create(it.fileDocument) }
       val lineFragmentList = localMergeChangeList.map { it.fragment }
 
@@ -103,6 +108,8 @@ class LangSpecificMergeConflictResolverWrapper(private val project: Project?, co
     return resolvedChanges.getOrNull(index)
   }
 
+  fun isAvailable(): Boolean = resolver != null && project != null
+
   private fun checkIndexInRange(index: Int) {
     if (resolver == null) return
     check(index in resolvedChanges.indices) { "Index out of bounds: $index, size: ${resolvedChanges.size}. Possibly conflicting chunks wasn't resolve correctly."}
@@ -111,7 +118,7 @@ class LangSpecificMergeConflictResolverWrapper(private val project: Project?, co
   @Service(Service.Level.PROJECT)
   private class CoroutineScopeService(private val coroutineScope: CoroutineScope) {
     companion object {
-      val Project.coroutineScope: CoroutineScope
+      val Project.scope: CoroutineScope
         get() = service<CoroutineScopeService>().coroutineScope
     }
   }
