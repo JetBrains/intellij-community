@@ -509,6 +509,9 @@
     <extensionPoint qualifiedName="Pythonid.customDecoratorStubType"
                     interface="com.jetbrains.python.psi.impl.stubs.PyCustomDecoratorStubType"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.implicitAsyncContext"
+                    interface="com.jetbrains.python.validation.PyImplicitAsyncContextProvider"
+                    dynamic="true"/>
 
     <extensionPoint qualifiedName="Pythonid.visitorFilter"
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
@@ -609,6 +612,8 @@
     <pyClassMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibClassMembersProvider"/>
     <pyModuleMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibOverridingModuleMembersProvider"/>
     <typeCheckerExtension implementation="com.jetbrains.python.codeInsight.stdlib.PyDataclassInstanceProtocolTypeCheckerExtension"/>
+
+    <implicitAsyncContext implementation="com.jetbrains.python.validation.PyDevConsoleAsyncContextProvider"/>
 
     <!-- TensorFlow -->
     <importResolver implementation="com.jetbrains.python.tensorFlow.PyTensorFlowImportResolver"/>

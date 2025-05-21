@@ -199,6 +199,10 @@ public class Py3HighlightingTest extends PyTestCase {
     doTest(false, false);
   }
 
+  // PY-62670
+  public void testAwaitInsideJupyterNotebook() {
+    doTest(false, false, ".ipynb");
+  }
 
   private void doTestWithLanguageLevel(LanguageLevel languageLevel, boolean checkWarnings, boolean checkInfos) {
     runWithLanguageLevel(languageLevel, () -> doTest(checkWarnings, checkInfos));
@@ -214,6 +218,10 @@ public class Py3HighlightingTest extends PyTestCase {
   }
 
   private void doTest(boolean checkWarnings, boolean checkInfos) {
-    myFixture.testHighlighting(checkWarnings, checkInfos, false, TEST_PATH + getTestName(true) + PyNames.DOT_PY);
+    doTest(checkWarnings, checkInfos, PyNames.DOT_PY);
+  }
+
+  private void doTest(boolean checkWarnings, boolean checkInfos, String extension) {
+    myFixture.testHighlighting(checkWarnings, checkInfos, false, TEST_PATH + getTestName(true) + extension);
   }
 }

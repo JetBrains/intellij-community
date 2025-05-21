@@ -20,8 +20,9 @@ public final class PyAsyncAwaitAnnotator extends PyAnnotator {
     // Async functions are allowed to contain "await", "async with" and "async for"
     if (scopeOwner instanceof PyFunction pyFunction && pyFunction.isAsync()) return true;
 
-    // Top-level expressions in the Python console are allowed to contain "await", "async with" and "async for"
-    if (scopeOwner instanceof PyExpressionCodeFragment && PythonRuntimeService.getInstance().isInPydevConsole(scopeOwner)) return true;
+    for (PyImplicitAsyncContextProvider provider : PyImplicitAsyncContextProvider.EP_NAME.getExtensionList()) {
+      if (provider.isImplicitAsyncContext(scopeOwner)) return true;
+    }
 
     return false;
   }
