@@ -246,6 +246,9 @@ class SmartStepData(
   }
 }
 
+/**
+ * @see com.intellij.platform.execution.frontend.split.debugger.FrontendXDebuggerEditorActionCustomizer
+ */
 @ApiStatus.Internal
 abstract class SmartStepEditorActionHandler(protected val myOriginalHandler: EditorActionHandler) : EditorActionHandler() {
   protected override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
@@ -262,9 +265,12 @@ abstract class SmartStepEditorActionHandler(protected val myOriginalHandler: Edi
     return hasSmartStepDebugData(editor) || myOriginalHandler.isEnabled(editor, caret, dataContext)
   }
 
-  protected fun hasSmartStepDebugData(editor: Editor): Boolean = editor.getUserData(SMART_STEP_INPLACE_DATA) != null
-
   protected abstract fun myPerform(editor: Editor, caret: Caret?, dataContext: DataContext, stepData: SmartStepData)
+
+  companion object {
+    @ApiStatus.Internal
+    fun hasSmartStepDebugData(editor: Editor): Boolean = editor.getUserData(SMART_STEP_INPLACE_DATA) != null
+  }
 }
 
 private class UpHandler(original: EditorActionHandler) : SmartStepEditorActionHandler(original) {
