@@ -418,7 +418,11 @@ private suspend fun loadProject(projectHome: Path, kotlinBinaries: KotlinBinarie
   }
 
   spanBuilder("load project").use(Dispatchers.IO) { span ->
-    val mavenRepositoryPath = getMavenRepositoryPath(span)
+    val mavenRepositoryPath = getMavenRepositoryPath()
+    span.addEvent(
+      "Resolved local maven repository path",
+      Attributes.of(AttributeKey.stringKey("m2 repository path"), mavenRepositoryPath.toString()),
+    )
 
     pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", mavenRepositoryPath.pathString)
     val pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)

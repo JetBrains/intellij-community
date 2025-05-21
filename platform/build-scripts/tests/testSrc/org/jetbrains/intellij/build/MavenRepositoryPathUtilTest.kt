@@ -2,9 +2,6 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.util.EnvironmentUtil
-import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.trace.Span
 import org.jetbrains.jps.model.serialization.JpsMavenSettings
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
@@ -21,7 +18,6 @@ class MavenRepositoryPathUtilTest {
   companion object {
     private val mockEnv: MockedStatic<EnvironmentUtil> = Mockito.mockStatic(EnvironmentUtil::class.java)
     private val mockFile = Mockito.mock(File::class.java)
-    private val mockSpan = Mockito.mock(Span::class.java)
   }
 
   private val defaultRepositoryPath = Path(System.getProperty("user.home"), ".m2/repository")
@@ -29,7 +25,7 @@ class MavenRepositoryPathUtilTest {
   @AfterEach
   fun afterEach() {
     mockEnv.reset()
-    Mockito.reset(mockFile, mockSpan)
+    Mockito.reset(mockFile)
   }
 
   @Test
@@ -40,13 +36,8 @@ class MavenRepositoryPathUtilTest {
     Mockito.`when`(mockFile.exists())
       .thenReturn(false)
 
-    val path = getMavenRepositoryPathTest(mockSpan)
+    val path = getMavenRepositoryPath()
     Assertions.assertEquals(defaultRepositoryPath, path)
-
-    Mockito.verify(mockSpan, Mockito.never()).addEvent(
-      Mockito.anyString(),
-      Mockito.any(Attributes::class.java),
-    )
   }
 
   @Test
@@ -71,13 +62,9 @@ class MavenRepositoryPathUtilTest {
     mockSettingsXml.`when`<File> { JpsMavenSettings.getUserMavenSettingsXml() }
       .thenReturn(settingsFile)
 
-    val path = getMavenRepositoryPathTest(mockSpan)
+    val path = getMavenRepositoryPath()
     Assertions.assertEquals(testPathMvn, path.toString())
 
-    Mockito.verify(mockSpan).addEvent(
-      "Found MAVEN_OPTS system env",
-      Attributes.of(AttributeKey.stringKey("local maven repository path"), testPathMvn),
-    )
     mockSettingsXml.close()
   }
 
@@ -89,7 +76,20 @@ class MavenRepositoryPathUtilTest {
     Mockito.`when`(mockFile.exists())
       .thenReturn(false)
 
-    val result = getMavenRepositoryPathTest(null)
+    val result = getMavenRepositoryPath()
+    Assertions.assertEquals(defaultRepositoryPath, result)
+  }
+
+  @Test
+  fun `test getMavenRepositoryPath with incorrect maven_repo_local in MAVEN_OPTS env`() {
+    val mavenOpts = "-Dmaven.repo.local= /test/path -Dproperty=value"
+    mockEnv.`when`<String> { EnvironmentUtil.getValue("MAVEN_OPTS") }
+      .thenReturn(mavenOpts)
+
+    Mockito.`when`(mockFile.exists())
+      .thenReturn(false)
+
+    val result = getMavenRepositoryPath()
     Assertions.assertEquals(defaultRepositoryPath, result)
   }
 
@@ -131,7 +131,7 @@ class MavenRepositoryPathUtilTest {
     mockSettingsXml.`when`<File> { JpsMavenSettings.getUserMavenSettingsXml() }
       .thenReturn(settingsFile)
 
-    val path = getMavenRepositoryPathTest(mockSpan)
+    val path = getMavenRepositoryPath()
     Assertions.assertEquals(defaultRepositoryPath, path)
 
     mockSettingsXml.close()
@@ -144,7 +144,7 @@ class MavenRepositoryPathUtilTest {
     mockEnv.`when`<String> { EnvironmentUtil.getValue("MAVEN_OPTS") }
       .thenReturn(mavenOpts)
 
-    val result = getMavenRepositoryPathTest().toString()
+    val result = getMavenRepositoryPath().toString()
     Assertions.assertEquals(testPath, result)
   }
 
@@ -155,7 +155,7 @@ class MavenRepositoryPathUtilTest {
     mockEnv.`when`<String> { EnvironmentUtil.getValue("MAVEN_OPTS") }
       .thenReturn(mavenOpts)
 
-    val result = getMavenRepositoryPathTest().toString()
+    val result = getMavenRepositoryPath().toString()
     Assertions.assertEquals(testPath, result)
   }
 
@@ -177,13 +177,9 @@ class MavenRepositoryPathUtilTest {
     mockSettingsXml.`when`<File> { JpsMavenSettings.getUserMavenSettingsXml() }
       .thenReturn(settingsFile)
 
-    val path = getMavenRepositoryPathTest(mockSpan)
+    val path = getMavenRepositoryPath()
     Assertions.assertEquals(repositoryPath, path)
 
-    Mockito.verify(mockSpan).addEvent(
-      "Found localRepository param in .m2/settings.xml file",
-      Attributes.of(AttributeKey.stringKey("local maven repository path"), repositoryPath.toString()),
-    )
     mockSettingsXml.close()
   }
 }

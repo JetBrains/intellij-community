@@ -189,5 +189,10 @@ private fun getLocalArtifactRepositoryRoot(global: JpsGlobal, span: Span): Path 
     return Path.of(it)
   }
 
-  return getMavenRepositoryPath(span)
+  return getMavenRepositoryPath().also {
+    span.addEvent(
+      "Resolved local maven repository path",
+      Attributes.of(AttributeKey.stringKey("m2 repository path"), it.toString()),
+    )
+  }
 }

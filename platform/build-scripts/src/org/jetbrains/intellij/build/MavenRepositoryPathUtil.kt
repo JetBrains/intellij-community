@@ -30,25 +30,17 @@ private const val MAVEN_REPO_LOCAL: String = "maven.repo.local"
  * 2. localRepository settings in ~/.m2/settings.xml
  * 3. Default location at ~/.m2/repository
  *
- * @param span Optional span for tracing/logging repository location details
  * @return Path to the Maven repository
  */
-internal fun getMavenRepositoryPath(span: Span? = null): Path {
+fun getMavenRepositoryPath(): Path {
   val settingsFile = JpsMavenSettings.getUserMavenSettingsXml().takeIf { it.exists() }
                      ?: JpsMavenSettings.getGlobalMavenSettingsXml().takeIf { it?.exists() == true }
-  val attributeKey = AttributeKey.stringKey("local maven repository path")
 
-  return findMavenRepositoryProperty(EnvironmentUtil.getValue(MAVEN_OPTS))?.trim()
-           ?.let {
-             span?.addEvent("Found MAVEN_OPTS system env", Attributes.of(attributeKey, it))
-             Path.of(it)
-           }
+  return findMavenRepositoryProperty(EnvironmentUtil.getValue(MAVEN_OPTS))?.takeIf { it.isNotBlank() }
+           ?.let { Path.of(it) }
 
          ?: settingsFile?.getRepositoryFromSettings()
-           ?.let {
-             span?.addEvent("Found localRepository param in .m2/settings.xml file", Attributes.of(attributeKey, it))
-             Path.of(it)
-           }
+           ?.let { Path.of(it) }
 
          ?: Path.of(SystemProperties.getUserHome(), ".m2/repository")
 }
@@ -68,6 +60,3 @@ private fun File.getRepositoryFromSettings(): String? {
   val element = runCatching { JDOMUtil.load(this) }.getOrNull()
   return element?.content?.firstOrNull { (it as? Element)?.name == "localRepository" }?.value
 }
-
-@TestOnly
-fun getMavenRepositoryPathTest(span: Span? = null): Path = getMavenRepositoryPath(span)
