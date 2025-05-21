@@ -249,18 +249,14 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   @Override
-  public @Nullable CoverageSuite createCoverageSuite(final @NotNull CoverageRunner covRunner,
-                                                     final @NotNull String name,
-                                                     final @NotNull CoverageFileProvider coverageDataFileProvider,
-                                                     String[] filters,
-                                                     long lastCoverageTimeStamp,
-                                                     String suiteToMerge,
-                                                     boolean coverageByTestEnabled,
-                                                     boolean branchCoverage,
-                                                     boolean trackTestFolders, Project project) {
-
-    return createSuite(covRunner, name, coverageDataFileProvider, filters, null, lastCoverageTimeStamp, coverageByTestEnabled,
-                       branchCoverage, trackTestFolders, project);
+  public @Nullable CoverageSuite createCoverageSuite(@NotNull String name,
+                                                     @NotNull Project project,
+                                                     @NotNull CoverageRunner runner,
+                                                     @NotNull CoverageFileProvider fileProvider,
+                                                     long timestamp) {
+    JavaCoverageOptionsProvider optionsProvider = JavaCoverageOptionsProvider.getInstance(project);
+    return createSuite(runner, name, fileProvider, null, null, timestamp, false,
+                       optionsProvider.getBranchCoverage(), optionsProvider.getTestModulesCoverage(), project);
   }
 
   @Override

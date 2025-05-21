@@ -84,9 +84,9 @@ a:com.intellij.coverage.CoverageEngine
 - a:createCoverageEnabledConfiguration(com.intellij.execution.configurations.RunConfigurationBase):com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration
 - a:createCoverageSuite(com.intellij.coverage.CoverageRunner,java.lang.String,com.intellij.coverage.CoverageFileProvider,com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration):com.intellij.coverage.CoverageSuite
 - createCoverageSuite(com.intellij.coverage.CoverageRunner,java.lang.String,com.intellij.coverage.CoverageFileProvider,java.lang.String[],J,java.lang.String,Z,Z,Z):com.intellij.coverage.CoverageSuite
-- a:createCoverageSuite(com.intellij.coverage.CoverageRunner,java.lang.String,com.intellij.coverage.CoverageFileProvider,java.lang.String[],J,java.lang.String,Z,Z,Z,com.intellij.openapi.project.Project):com.intellij.coverage.CoverageSuite
+- createCoverageSuite(com.intellij.coverage.CoverageRunner,java.lang.String,com.intellij.coverage.CoverageFileProvider,java.lang.String[],J,java.lang.String,Z,Z,Z,com.intellij.openapi.project.Project):com.intellij.coverage.CoverageSuite
 - createCoverageSuite(com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration):com.intellij.coverage.CoverageSuite
-- f:createCoverageSuite(java.lang.String,com.intellij.openapi.project.Project,com.intellij.coverage.CoverageRunner,com.intellij.coverage.CoverageFileProvider,J):com.intellij.coverage.CoverageSuite
+- createCoverageSuite(java.lang.String,com.intellij.openapi.project.Project,com.intellij.coverage.CoverageRunner,com.intellij.coverage.CoverageFileProvider,J):com.intellij.coverage.CoverageSuite
 - createCoverageViewExtension(com.intellij.openapi.project.Project,com.intellij.coverage.CoverageSuitesBundle):com.intellij.coverage.view.CoverageViewExtension
 - createCoverageViewExtension(com.intellij.openapi.project.Project,com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.view.CoverageViewManager$StateBean):com.intellij.coverage.view.CoverageViewExtension
 - a:createEmptyCoverageSuite(com.intellij.coverage.CoverageRunner):com.intellij.coverage.CoverageSuite

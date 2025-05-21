@@ -69,12 +69,16 @@ public abstract class CoverageEngine {
 
   /**
    * Create a suite from an external report.
+   * <p>
+   * This method must be overridden for the coverage providers.
    */
-  public final @Nullable CoverageSuite createCoverageSuite(@NotNull String name,
-                                                           @NotNull Project project,
-                                                           @NotNull CoverageRunner runner,
-                                                           @NotNull CoverageFileProvider fileProvider,
-                                                           long timestamp) {
+  public @Nullable CoverageSuite createCoverageSuite(
+    @NotNull String name,
+    @NotNull Project project,
+    @NotNull CoverageRunner runner,
+    @NotNull CoverageFileProvider fileProvider,
+    long timestamp
+  ) {
     return createCoverageSuite(runner, name, fileProvider, null, timestamp, null, false, false, false, project);
   }
 
@@ -89,39 +93,13 @@ public abstract class CoverageEngine {
   }
 
   /**
-   * Coverage suite is coverage settings & coverage data gather by coverage runner. This method is used for external suites.
-   *
-   * @param runner                Coverage Runner
-   * @param name                  Suite name
-   * @param fileProvider          Coverage raw data file provider
-   * @param filters               Coverage data filters
-   * @param lastCoverageTimeStamp timestamp
-   * @param suiteToMerge          Suite to merge this coverage data with
-   * @param coverageByTestEnabled Collect coverage per test
-   * @param branchCoverage        Whether the suite includes branch coverage, or only line coverage otherwise
-   * @param trackTestFolders      Track test folders option
-   * @return Suite
-   * @deprecated Use {@link CoverageEngine#createCoverageSuite(String, Project, CoverageRunner, CoverageFileProvider, long)}
-   */
-  @Deprecated
-  public abstract @Nullable CoverageSuite createCoverageSuite(@NotNull CoverageRunner runner,
-                                                    @NotNull String name,
-                                                    @NotNull CoverageFileProvider fileProvider,
-                                                    String @Nullable [] filters,
-                                                    long lastCoverageTimeStamp,
-                                                    @Nullable String suiteToMerge,
-                                                    boolean coverageByTestEnabled,
-                                                    boolean branchCoverage,
-                                                    boolean trackTestFolders, Project project);
-
-  /**
    * @deprecated Use {@link CoverageEngine#createCoverageSuite(CoverageEnabledConfiguration)}
    */
   @Deprecated
   public abstract @Nullable CoverageSuite createCoverageSuite(@NotNull CoverageRunner covRunner,
-                                                    @NotNull String name,
-                                                    @NotNull CoverageFileProvider coverageDataFileProvider,
-                                                    @NotNull CoverageEnabledConfiguration config);
+                                                              @NotNull String name,
+                                                              @NotNull CoverageFileProvider coverageDataFileProvider,
+                                                              @NotNull CoverageEnabledConfiguration config);
 
   /**
    * Create a new suite with no parameters set.
@@ -167,8 +145,8 @@ public abstract class CoverageEngine {
    */
   @ApiStatus.Internal
   public @NotNull Set<File> getCorrespondingOutputFiles(final @NotNull PsiFile srcFile,
-                                               final @Nullable Module module,
-                                               final @NotNull CoverageSuitesBundle suite) {
+                                                        final @Nullable Module module,
+                                                        final @NotNull CoverageSuitesBundle suite) {
     final VirtualFile virtualFile = srcFile.getVirtualFile();
     return virtualFile == null ? Collections.emptySet() : Collections.singleton(VfsUtilCore.virtualToIoFile(virtualFile));
   }
@@ -190,7 +168,7 @@ public abstract class CoverageEngine {
    */
   @ApiStatus.Internal
   protected @Nullable String getQualifiedName(final @NotNull File outputFile,
-                                    final @NotNull PsiFile sourceFile) {
+                                              final @NotNull PsiFile sourceFile) {
     return null;
   }
 
@@ -222,7 +200,7 @@ public abstract class CoverageEngine {
    */
   @ApiStatus.Internal
   public @Nullable List<Integer> collectSrcLinesForUntouchedFile(final @NotNull File classFile,
-                                                       final @NotNull CoverageSuitesBundle suite) {
+                                                                 final @NotNull CoverageSuitesBundle suite) {
     return null;
   }
 
@@ -417,15 +395,48 @@ public abstract class CoverageEngine {
    */
   @Deprecated(forRemoval = true)
   public @Nullable CoverageSuite createCoverageSuite(@NotNull CoverageRunner covRunner,
-                                           @NotNull String name,
-                                           @NotNull CoverageFileProvider coverageDataFileProvider,
-                                           String @Nullable [] filters,
-                                           long lastCoverageTimeStamp,
-                                           @Nullable String suiteToMerge,
-                                           boolean coverageByTestEnabled,
-                                           boolean branchCoverage,
-                                           boolean trackTestFolders) {
+                                                     @NotNull String name,
+                                                     @NotNull CoverageFileProvider coverageDataFileProvider,
+                                                     String @Nullable [] filters,
+                                                     long lastCoverageTimeStamp,
+                                                     @Nullable String suiteToMerge,
+                                                     boolean coverageByTestEnabled,
+                                                     boolean branchCoverage,
+                                                     boolean trackTestFolders) {
     return createCoverageSuite(covRunner, name, coverageDataFileProvider, filters, lastCoverageTimeStamp, suiteToMerge,
                                coverageByTestEnabled, branchCoverage, trackTestFolders, null);
+  }
+
+  /**
+   * Coverage suite is coverage settings & coverage data gather by coverage runner. This method is used for external suites.
+   *
+   * @param runner                Coverage Runner
+   * @param name                  Suite name
+   * @param fileProvider          Coverage raw data file provider
+   * @param filters               Coverage data filters
+   * @param lastCoverageTimeStamp timestamp
+   * @param suiteToMerge          Suite to merge this coverage data with
+   * @param coverageByTestEnabled Collect coverage per test
+   * @param branchCoverage        Whether the suite includes branch coverage, or only line coverage otherwise
+   * @param trackTestFolders      Track test folders option
+   * @return Suite
+   * @deprecated Use {@link CoverageEngine#createCoverageSuite(String, Project, CoverageRunner, CoverageFileProvider, long)}
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public @Nullable CoverageSuite createCoverageSuite(
+    @NotNull CoverageRunner runner,
+    @NotNull String name,
+    @NotNull CoverageFileProvider fileProvider,
+    String @Nullable [] filters,
+    long lastCoverageTimeStamp,
+    @Nullable String suiteToMerge,
+    boolean coverageByTestEnabled,
+    boolean branchCoverage,
+    boolean trackTestFolders, Project project
+  ) {
+    String message =
+      "Please override CoverageEngine#createCoverageSuite(String, Project, CoverageRunner, CoverageFileProvider, long) method";
+    throw new AbstractMethodError(message);
   }
 }
