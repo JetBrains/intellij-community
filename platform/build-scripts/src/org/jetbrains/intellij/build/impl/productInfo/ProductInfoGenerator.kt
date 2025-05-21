@@ -2,7 +2,7 @@
 package org.jetbrains.intellij.build.impl.productInfo
 
 import com.intellij.platform.buildData.productInfo.*
-import com.jetbrains.plugin.structure.base.utils.isDirectory
+import com.jetbrains.plugin.structure.base.utils.exists
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -93,7 +93,8 @@ private fun generateGitRevisionProperty(context: BuildContext): CustomProperty? 
 
 private fun findGitRoot(context: BuildContext): Path? {
   var projectHome: Path? = context.paths.projectHome
-  while (projectHome != null && !projectHome.resolve(".git").isDirectory) {
+  // we check only for the existence of .git, because in the case of an additional worktree (git worktree add) it's actually a reference, not a folder.
+  while (projectHome != null && !projectHome.resolve(".git").exists()) {
     projectHome = projectHome.parent
   }
   return projectHome
