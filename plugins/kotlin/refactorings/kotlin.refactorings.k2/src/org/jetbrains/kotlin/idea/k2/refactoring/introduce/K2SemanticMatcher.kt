@@ -142,7 +142,11 @@ object K2SemanticMatcher {
     }
 
     context(KaSession)
-    fun KtElement.isSemanticMatch(patternElement: KtElement): Boolean = isSemanticMatch(patternElement, MatchingContext())
+    @OptIn(KaImplementationDetail::class)
+    // FIXME: KTIJ-34284
+    fun KtElement.isSemanticMatch(patternElement: KtElement): Boolean = KaBaseIllegalPsiException.allowIllegalPsiAccess {
+        isSemanticMatch(patternElement, MatchingContext())
+    }
 
     context(KaSession)
     private fun KtElement.isSemanticMatch(
