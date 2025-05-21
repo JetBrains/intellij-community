@@ -127,6 +127,7 @@ public final class RegionUrlMapper {
         }
         else if (FORCE_REGION_MAPPINGS_LOAD) {
           LOG.error("Failed to load URL mappings for " + region + ", URL=" + getConfigUrl(region), t);
+          return RegionMapping.FAILED;
         }
         else if (t instanceof IOException) {
           // legitimate failure when using the IDE offline; just log it without the stack trace
@@ -171,6 +172,11 @@ public final class RegionUrlMapper {
   @ApiStatus.Internal
   public static final class RegionMapping {
     private static final RegionMapping EMPTY = new RegionMapping(List.of());
+    private static final RegionMapping FAILED = new RegionMapping(List.of(
+      new RegionMapping.PatternReplacement("https:", "mapping-failed:"),
+      new RegionMapping.PatternReplacement("http:", "mapping-failed:"),
+      new RegionMapping.PatternReplacement("ftp:", "mapping-failed:")
+    ));
 
     private final List<PatternReplacement> myPatternReplacements;
 
