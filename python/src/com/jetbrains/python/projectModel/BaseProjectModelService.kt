@@ -99,22 +99,26 @@ abstract class BaseProjectModelService<E : EntitySource, P : ExternalProject> {
   ): EntityStorage {
     val fileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
     val storage = MutableEntityStorage.create()
-    for (module in graph) {
+    for (extProject in graph) {
       val existingModuleEntity = project.workspaceModel.currentSnapshot
         .entitiesBySource { it == source }
         .filterIsInstance<ModuleEntity>()
-        .find { it.name == module.name }
+        .find { it.name == extProject.name }
       val existingSdkEntity = existingModuleEntity
         ?.dependencies
         ?.find { it is SdkDependency } as? SdkDependency
       val sdkDependency = existingSdkEntity ?: InheritedSdkDependency
-      storage addEntity ModuleEntity(module.name, emptyList(), source) {
+      storage addEntity ModuleEntity(extProject.name, emptyList(), source) {
         dependencies += sdkDependency
         dependencies += ModuleSourceDependency
-        for (moduleName in module.dependencies) {
+        for (moduleName in extProject.dependencies) {
           dependencies += ModuleDependency(ModuleId(moduleName.name), true, DependencyScope.COMPILE, false)
         }
-        contentRoots = listOf(ContentRootEntity(module.root.toVirtualFileUrl(fileUrlManager), emptyList(), source))
+        contentRoots = listOf(ContentRootEntity(extProject.root.toVirtualFileUrl(fileUrlManager), emptyList(), source))
+        exModuleOptions = ExternalSystemModuleOptionsEntity(source) {
+          externalSystem = systemName          
+          linkedProjectId = extProject.fullName
+        }
       }
     }
     return storage

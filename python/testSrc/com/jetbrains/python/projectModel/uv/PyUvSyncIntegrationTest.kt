@@ -4,9 +4,13 @@ package com.jetbrains.python.projectModel.uv
 import com.intellij.openapi.externalSystem.testFramework.fixtures.multiProjectFixture
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ContentRootAssertions
 import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.exModuleOptions
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
@@ -90,6 +94,12 @@ class PyUvSyncIntegrationTest {
 
     val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
     ModuleAssertions.assertModules(project, "main", "lib1", "lib2", "pkg")
+    val workspaceMembers = listOf(
+      project.findModule("main"),
+      project.findModule("lib1"),
+      project.findModule("lib2"),
+    )
+    
     ModuleAssertions.assertModuleEntity(project, "main") { module ->
       ContentRootAssertions.assertContentRoots(virtualFileUrlManager, module, testRoot)
       DependencyAssertions.assertDependencies(module, DependencyAssertions.INHERITED_SDK, DependencyAssertions.MODULE_SOURCE, "lib1", "lib2")
@@ -99,6 +109,11 @@ class PyUvSyncIntegrationTest {
       DependencyAssertions.assertModuleDependency(module, "lib2") { dependency ->
         Assertions.assertTrue(dependency.exported)
       }
+      Assertions.assertEquals("main", module.exModuleOptions?.linkedProjectId)
+      CollectionAssertions.assertEqualsUnordered(
+        workspaceMembers,
+        UvProjectModelService.findSameWorkspaceMembers(project, module)
+      )
     }
 
     ModuleAssertions.assertModuleEntity(project, "lib1") { module ->
@@ -107,20 +122,39 @@ class PyUvSyncIntegrationTest {
       DependencyAssertions.assertModuleDependency(module, "pkg") { dependency ->
         Assertions.assertTrue(dependency.exported)
       }
+      Assertions.assertEquals("main:lib1", module.exModuleOptions?.linkedProjectId)
+      CollectionAssertions.assertEqualsUnordered(
+        workspaceMembers,
+        UvProjectModelService.findSameWorkspaceMembers(project, module)
+      )
     }
 
     ModuleAssertions.assertModuleEntity(project, "lib2") { module ->
       ContentRootAssertions.assertContentRoots(virtualFileUrlManager, module, testRoot.resolve("lib/lib2"))
       DependencyAssertions.assertDependencies(module, DependencyAssertions.INHERITED_SDK, DependencyAssertions.MODULE_SOURCE)
+      Assertions.assertEquals("main:lib2", module.exModuleOptions?.linkedProjectId)
+      CollectionAssertions.assertEqualsUnordered(
+        workspaceMembers,
+        UvProjectModelService.findSameWorkspaceMembers(project, module)
+      )
     }
 
     ModuleAssertions.assertModuleEntity(project, "pkg") { module ->
       ContentRootAssertions.assertContentRoots(virtualFileUrlManager, module, testRoot.resolve("packages/pkg"))
       DependencyAssertions.assertDependencies(module, DependencyAssertions.INHERITED_SDK, DependencyAssertions.MODULE_SOURCE)
+      Assertions.assertEquals("pkg", module.exModuleOptions?.linkedProjectId)
+      CollectionAssertions.assertEqualsUnordered(
+        listOf(module),
+        UvProjectModelService.findSameWorkspaceMembers(project, module)
+      )
     }
   }
   
-  suspend fun syncAllProjects(project: Project) {
+  private fun Project.findModule(name: String): ModuleEntity? {
+    return workspaceModel.currentSnapshot.resolve(ModuleId(name))
+  }
+  
+  private suspend fun syncAllProjects(project: Project) {
     multiprojectFixture.awaitProjectConfiguration(project) {
       UvProjectModelService.syncAllProjectModelRoots(project)
     }

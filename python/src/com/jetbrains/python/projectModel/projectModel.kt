@@ -22,6 +22,12 @@ interface ExternalProject {
   val name: String
   val root: Path
   val dependencies: List<ExternalProjectDependency>
+
+  /**
+   * The colon separated fully qualified name of the project in the form `root:subproject:subsubproject` 
+   * if there is the given project system supports hierarchical organization of projects (e.g., uv workspaces).
+   */
+  val fullName: String?
 }
 
 data class ExternalProjectDependency(val name: String, val path: Path)

@@ -13,8 +13,12 @@ import kotlin.io.path.*
 data class PoetryProject(
   override val name: String,
   override val root: Path,
-  override val dependencies: List<ExternalProjectDependency>
-) : ExternalProject
+  override val dependencies: List<ExternalProjectDependency>,
+) : ExternalProject {
+  // Poetry projects don't have any declarative hierarchical structure
+  override val fullName: String? 
+    get() = name
+}
 
 @OptIn(ExperimentalPathApi::class)
 object PoetryProjectModelResolver : PythonProjectModelResolver<PoetryProject> {

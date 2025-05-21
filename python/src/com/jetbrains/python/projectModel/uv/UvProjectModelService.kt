@@ -2,11 +2,16 @@
 package com.jetbrains.python.projectModel.uv
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.exModuleOptions
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
+import com.intellij.workspaceModel.ide.legacyBridge.findModule
 import com.jetbrains.python.projectModel.BaseProjectModelService
 import com.jetbrains.python.projectModel.ProjectModelSettings
 import com.jetbrains.python.projectModel.ProjectModelSyncListener
@@ -34,4 +39,23 @@ object UvProjectModelService : BaseProjectModelService<UvEntitySource, UvProject
   }
 
   override fun getEntitySourceClass(): KClass<out EntitySource> = UvEntitySource::class
+
+  fun findSameWorkspaceMembers(module: Module): List<Module> {
+    val wsmSnapshot = module.project.workspaceModel.currentSnapshot
+    val moduleEntity = wsmSnapshot.resolve(ModuleId(module.name))!!
+    return findSameWorkspaceMembers(module.project, moduleEntity)
+      .mapNotNull { it.findModule(wsmSnapshot) }
+  }
+  
+  fun findSameWorkspaceMembers(project: Project, module: ModuleEntity): List<ModuleEntity> {
+    val workspaceName = (module.exModuleOptions?.linkedProjectId ?: module.name).split(":")[0]
+    val currentSnapshot = project.workspaceModel.currentSnapshot
+    return currentSnapshot.entitiesBySource { it is UvEntitySource }
+      .filterIsInstance<ModuleEntity>()
+      .filter { 
+        val externalId = it.exModuleOptions?.linkedProjectId
+        externalId != null && (externalId == workspaceName || externalId.startsWith("$workspaceName:"))
+      }
+      .toList()
+  }
 }

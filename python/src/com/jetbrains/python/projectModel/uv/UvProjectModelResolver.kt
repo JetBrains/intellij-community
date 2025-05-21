@@ -19,6 +19,7 @@ data class UvProject(
   override val name: String,
   override val root: Path,
   override val dependencies: List<ExternalProjectDependency>,
+  override val fullName: String?,
   val isWorkspace: Boolean,
   val parentWorkspace: UvProject?,
 ) : ExternalProject
@@ -86,6 +87,7 @@ object UvProjectModelResolver : PythonProjectModelResolver<UvProject> {
         dependencies = it.pathDependencies.map { dep -> ExternalProjectDependency(name = dep.key, path = dep.value) },
         isWorkspace = false,
         parentWorkspace = null,
+        fullName = it.projectName,
       )
     }
 
@@ -100,6 +102,7 @@ object UvProjectModelResolver : PythonProjectModelResolver<UvProject> {
           .map { ExternalProjectDependency(name = it.key, path = it.value) },
         isWorkspace = true,
         parentWorkspace = null,
+        fullName = wsRootToml.projectName,
       )
       allUvProjects.add(wsRootProject)
       for ((_, wsMemberToml) in wsMembersByNames) {
@@ -110,6 +113,7 @@ object UvProjectModelResolver : PythonProjectModelResolver<UvProject> {
             .map { ExternalProjectDependency(name = it.key, path = it.value) },
           isWorkspace = false,
           parentWorkspace = wsRootProject,
+          fullName = "${wsRootProject.name}:${wsMemberToml.projectName}"
         ))
       }
     }
