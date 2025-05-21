@@ -159,6 +159,7 @@
       <reference ref="Github.Open.In.Browser"/>
 
       <add-to-group group-id="Git.MainMenu" relative-to-action="Git.Configure.Remotes" anchor="before"/>
+      <add-to-group group-id="GitRepositoryActions" relative-to-action="Git.Configure.Remotes" anchor="before"/>
     </group>
 
     <action id="Github.PullRequest.Open.Link"
