@@ -10,6 +10,10 @@ import com.intellij.codeInspection.InspectionEP
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.ide.actions.ContextHelpAction
 import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.ide.plugins.testPluginSrc.ExclusionClassLoader
+import com.intellij.ide.plugins.testPluginSrc.IDynamicPluginTest
+import com.intellij.ide.plugins.testPluginSrc.optionalPluginDepLoading.bar.BarService
+import com.intellij.ide.plugins.testPluginSrc.optionalPluginDepLoading.foo.FooBarService
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
@@ -40,19 +44,17 @@ import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
-import com.intellij.platform.testFramework.PluginBuilder
-import com.intellij.platform.testFramework.loadAndInitDescriptorInTest
-import com.intellij.platform.testFramework.loadExtensionWithText
-import com.intellij.platform.testFramework.setPluginClassLoaderForMainAndSubPlugins
-import com.intellij.platform.testFramework.unloadAndUninstallPlugin
+import com.intellij.platform.testFramework.*
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.ui.switcher.ShowQuickActionPopupAction
 import com.intellij.util.KeyedLazyInstanceEP
+import com.intellij.util.application
 import com.intellij.util.io.Ksuid
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.java.classFile
@@ -60,6 +62,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import org.junit.Rule
 import org.junit.Test
+import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.random.Random
 
@@ -79,6 +82,10 @@ class DynamicPluginsTest {
   @Rule
   @JvmField
   val inMemoryFs = InMemoryFsRule()
+
+  @Rule
+  @JvmField
+  val tempDir: TempDirectory = TempDirectory()
 
   private val rootPath get() = inMemoryFs.fs.getPath("/")
   private val pluginsPath get() = rootPath.resolve("plugin")
@@ -413,6 +420,50 @@ class DynamicPluginsTest {
     }
     finally {
       unloadAndUninstallPlugin(barDescriptor)
+    }
+  }
+
+  // FIXME in-memory fs does not work, ZipFile wants .toFile()
+  @Test
+  fun `optional plugin dependency loading`() {
+    val fooJar = tempDir.root.toPath().resolve("foo.jar")
+    val barJar = tempDir.root.toPath().resolve("bar.jar")
+    PluginBuilder().id("foo")
+      .depends("bar", PluginBuilder().extensions("""
+        <applicationService serviceImplementation="${FooBarService::class.qualifiedName}" />"
+      """.trimIndent()))
+      .includePackageClassFiles<FooBarService>()
+      .buildMainJar(fooJar)
+    PluginBuilder().id("bar")
+      .extensions("""
+        <applicationService serviceImplementation="${BarService::class.qualifiedName}" />"
+      """.trimIndent())
+      .includePackageClassFiles<BarService>()
+      .buildMainJar(barJar)
+
+    val filteredCore = ExclusionClassLoader(this::class.java.classLoader) {
+      !it.startsWith(BarService::class.java.`package`.name) && !it.startsWith(FooBarService::class.java.`package`.name)
+    }
+    val fooDescriptor = loadAndInitDescriptorInTest(fooJar, isBundled = true) // FIXME isBundled is needed so that implicit dependencies on vcs modules are not added
+    try {
+      assertThat(DynamicPlugins.loadPluginInTest(fooDescriptor, filteredCore)).isTrue()
+      val barDescriptor = loadAndInitDescriptorInTest(barJar, isBundled = true) // FIXME isBundled is needed so that implicit dependencies on vcs modules are not added
+      try {
+        assertThat(DynamicPlugins.loadPluginInTest(barDescriptor, filteredCore)).isTrue()
+        val barService = application.getService(barDescriptor.pluginClassLoader!!.loadClass(BarService::class.qualifiedName)) as IDynamicPluginTest
+        barService.test()
+        val fooBarService = application.getService(fooDescriptor.pluginClassLoader!!.loadClass(FooBarService::class.qualifiedName)) as IDynamicPluginTest
+        val err = assertThrows<NoClassDefFoundError> { // FIXME bad, service should not be loaded ^
+          fooBarService.test()
+        }
+        assertThat(err).hasMessageContaining("BarService")
+      }
+      finally {
+        unloadAndUninstallPlugin(barDescriptor)
+      }
+    }
+    finally {
+      unloadAndUninstallPlugin(fooDescriptor)
     }
   }
 

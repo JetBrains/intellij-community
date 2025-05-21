@@ -63,6 +63,11 @@ class PluginBuilder() {
 
   private var additionalXmlContent: String? = null
 
+  // value = class fqn
+  private var classes = mutableListOf<String>()
+  // value = package fqn
+  private var packages = mutableListOf<String>()
+
   fun dependsIntellijModulesLang(): PluginBuilder {
     depends("com.intellij.modules.lang")
     return this
@@ -282,6 +287,20 @@ class PluginBuilder() {
     }
   }
 
+  inline fun <reified T> includeClassFile(): PluginBuilder = includeClassFile(T::class.java.name)
+
+  fun includeClassFile(classFqn: String): PluginBuilder {
+    classes.add(classFqn)
+    return this
+  }
+
+  inline fun <reified T> includePackageClassFiles(): PluginBuilder = includePackageClassFiles(T::class.java.packageName)
+
+  fun includePackageClassFiles(packageFqn: String): PluginBuilder {
+    packages.add(packageFqn)
+    return this
+  }
+
   fun build(path: Path): PluginBuilder {
     val allDescriptors = collectAllSubDescriptors(subDescriptors).toList()
     if (allDescriptors.any { it.builder.separateJar }) {
@@ -304,11 +323,8 @@ class PluginBuilder() {
     return this
   }
 
-  private fun collectAllSubDescriptors(descriptors: List<SubDescriptor>): Sequence<SubDescriptor> {
-    return descriptors.asSequence().flatMap { sequenceOf(it) + collectAllSubDescriptors(it.builder.subDescriptors) }
-  }
-
   fun buildMainJar(path: Path): PluginBuilder {
+    path.createParentDirectories()
     buildJarToStream(Files.newOutputStream(path), PluginManagerCore.PLUGIN_XML_PATH)
     return this
   }
@@ -321,20 +337,39 @@ class PluginBuilder() {
           it.addFile(fileName, subDescriptor.text(requireId = false).toByteArray())
         }
       }
+      for (classFqn in classes) {
+        val url = this::class.java.classLoader.getResource(classFqn.replace('.', '/') + ".class")
+                  ?: error("$classes not found")
+        it.addFile(classFqn.replace('.', '/') + ".class", url.readBytes())
+      }
+      for (pkg in packages) {
+        for (url in this::class.java.classLoader.getResources(pkg.replace('.', '/'))) {
+          require(url.toString().endsWith('/'))
+          val entries = url.readText().splitToSequence("\n").filter { !it.isBlank() }
+          for (entry in entries) {
+            if (entry.endsWith(".class")) {
+              val bytes = this::class.java.classLoader.getResourceAsStream("${pkg.replace('.', '/')}/$entry")!!.readBytes()
+              it.addFile(pkg.replace('.', '/') + "/$entry", bytes)
+            }
+          }
+        }
+      }
     }
   }
 
   fun buildZip(path: Path): PluginBuilder {
     val jarStream = ByteArrayOutputStream()
     buildJarToStream(jarStream, PluginManagerCore.PLUGIN_XML_PATH)
-
     val pluginName = name ?: id
     Compressor.Zip(Files.newOutputStream(path)).use {
       it.addDirectory(pluginName)
       it.addDirectory("$pluginName/lib")
       it.addFile("$pluginName/lib/$pluginName.jar", jarStream.toByteArray())
     }
-
     return this
+  }
+
+  private fun collectAllSubDescriptors(descriptors: List<SubDescriptor>): Sequence<SubDescriptor> {
+    return descriptors.asSequence().flatMap { sequenceOf(it) + collectAllSubDescriptors(it.builder.subDescriptors) }
   }
 }

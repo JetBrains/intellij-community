@@ -84,7 +84,9 @@ import com.intellij.util.messages.impl.DynamicPluginUnloaderCompatibilityLayer
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.ref.GCWatcher
 import com.intellij.util.xmlb.clearPropertyCollectorCache
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.TestOnly
 import java.awt.KeyboardFocusManager
 import java.awt.Window
 import java.nio.channels.FileChannel
@@ -878,7 +880,15 @@ object DynamicPlugins {
     }
   }
 
-  private fun doLoadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, project: Project? = null): Boolean {
+  @TestOnly
+  @ApiStatus.Internal
+  fun loadPluginInTest(pluginDescriptor: PluginMainDescriptor, coreLoader: ClassLoader): Boolean {
+    return runProcess {
+      doLoadPlugin(pluginDescriptor = pluginDescriptor, project = null, coreLoader = coreLoader)
+    }
+  }
+
+  private fun doLoadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, project: Project? = null, coreLoader: ClassLoader? = null): Boolean {
     var result = false
 
     val isVetoed = VETOER_EP_NAME.findFirstSafe {
@@ -894,12 +904,12 @@ object DynamicPlugins {
                                      null,
                                      null)
     indicator.runInSwingThread {
-      result = loadPluginWithoutProgress(pluginDescriptor, checkImplementationDetailDependencies = true)
+      result = loadPluginWithoutProgress(pluginDescriptor, checkImplementationDetailDependencies = true, coreLoader = coreLoader)
     }
     return result
   }
 
-  private fun loadPluginWithoutProgress(pluginDescriptor: IdeaPluginDescriptorImpl, checkImplementationDetailDependencies: Boolean = true): Boolean {
+  private fun loadPluginWithoutProgress(pluginDescriptor: IdeaPluginDescriptorImpl, checkImplementationDetailDependencies: Boolean = true, coreLoader: ClassLoader? = null): Boolean {
     pluginDescriptor as PluginMainDescriptor
     if (classloadersFromUnloadedPlugins[pluginDescriptor.pluginId]?.isEmpty() == false) {
       LOG.info("Requiring restart for loading plugin ${pluginDescriptor.pluginId}" +
@@ -913,7 +923,7 @@ object DynamicPlugins {
       .withPlugin(pluginDescriptor)
       .createPluginSetWithEnabledModulesMap()
 
-    val classLoaderConfigurator = ClassLoaderConfigurator(pluginSet)
+    val classLoaderConfigurator = ClassLoaderConfigurator(pluginSet, coreLoader)
 
     // todo loadPluginWithoutProgress should be called per each module, temporary solution
     val pluginWithContentModules = pluginSet.getEnabledModules()

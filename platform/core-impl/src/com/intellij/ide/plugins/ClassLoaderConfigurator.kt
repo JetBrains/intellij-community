@@ -26,8 +26,10 @@ private val DEFAULT_CLASSLOADER_CONFIGURATION = UrlClassLoader.build().useCache(
 @ApiStatus.Internal
 class ClassLoaderConfigurator(
   val pluginSet: PluginSet,
-  private val coreLoader: ClassLoader = ClassLoaderConfigurator::class.java.classLoader,
+  coreLoaderOverride: ClassLoader? = null,
 ) {
+  private val coreLoader: ClassLoader = coreLoaderOverride ?: ClassLoaderConfigurator::class.java.classLoader
+
   // todo for dynamic reload this guard doesn't contain all used plugin prefixes
   private val pluginPackagePrefixUniqueGuard = HashMap<String, IdeaPluginDescriptorImpl>()
   @Suppress("JoinDeclarationAndAssignment")

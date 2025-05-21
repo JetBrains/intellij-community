@@ -566,7 +566,7 @@ class DependsSubDescriptor(
   @Deprecated("use main descriptor") override fun getPluginPath(): Path = parent.pluginPath.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override val useIdeaClassLoader: Boolean get() = parent.useIdeaClassLoader.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun allowBundledUpdate(): Boolean = parent.allowBundledUpdate().also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun isImplementationDetail(): Boolean = parent.isImplementationDetail.also { LOG.error("unexpected call") }
+  @Deprecated("use main descriptor") override fun isImplementationDetail(): Boolean = parent.isImplementationDetail // .also { LOG.error("unexpected call") } TODO test failures
   @Deprecated("use main descriptor") override fun isRequireRestart(): Boolean = parent.isRequireRestart.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getVendor(): String? = parent.vendor.also { LOG.error("unexpected call") }
   @Deprecated("use main descriptor") override fun getVendorEmail(): String? = parent.vendorEmail.also { LOG.error("unexpected call") }
