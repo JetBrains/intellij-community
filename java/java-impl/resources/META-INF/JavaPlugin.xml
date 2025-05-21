@@ -324,9 +324,6 @@
     <registryKey key="java.test.enable.tree.live.time" defaultValue="true"
                  description="Enable live time for tests" restartRequired="true"/>
 
-    <registryKey key="java.highest.language.level" defaultValue="24"
-                 description="Highest released language level" restartRequired="false"/>
-
     <registryKey key="ide.index.id.skip.java.sources.in.libs" defaultValue="false"
                  description="IdIndex skips .java-files in libraries (index .class-files instead)" restartRequired="true"/>
 
