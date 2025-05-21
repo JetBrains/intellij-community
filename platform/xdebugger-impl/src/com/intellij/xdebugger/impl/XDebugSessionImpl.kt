@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl
 
-import com.intellij.codeInspection.options.OptPane.tab
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.filters.HyperlinkInfo
@@ -127,7 +126,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   private var myRunContentDescriptor: RunContentDescriptor? = null
   val sessionData: XDebugSessionData
   private val myActiveNonLineBreakpointAndPositionFlow = MutableStateFlow<Pair<XBreakpoint<*>, XSourcePosition?>?>(null)
-  private val myPausedEvents = MutableSharedFlow<XDebugSessionPausedInfo>(extraBufferCapacity = 1)
+  private val myPausedEvents = MutableSharedFlow<XDebugSessionPausedInfo>(replay = 1, extraBufferCapacity = 1)
   private val myDispatcher = EventDispatcher.create<XDebugSessionListener>(XDebugSessionListener::class.java)
   private val myProject: Project = debuggerManager.project
 
