@@ -77,7 +77,7 @@ class ClassLoaderConfigurator(
       return true
     }
 
-    return configureModule(subDescriptor)
+    return configureModule(subDescriptor as ContentModuleDescriptor)
   }
 
   fun configure() {
@@ -86,21 +86,22 @@ class ClassLoaderConfigurator(
     }
   }
 
-  fun configureModule(module: IdeaPluginDescriptorImpl): Boolean {
+  fun configureModule(module: PluginModuleDescriptor): Boolean {
     checkPackagePrefixUniqueness(module)
 
-    if (module is PluginMainDescriptor) {
-      if (module.useCoreClassLoader || module.pluginId == PluginManagerCore.CORE_ID) {
-        setClassLoaderForModuleAndDependsSubDescriptors(module, coreLoader)
+    when (module) {
+      is PluginMainDescriptor -> {
+        if (module.useCoreClassLoader || module.pluginId == PluginManagerCore.CORE_ID) {
+          setClassLoaderForModuleAndDependsSubDescriptors(module, coreLoader)
+        }
+        else {
+          configureMainPluginModule(module)
+        }
+        return true
       }
-      else {
-        configureMainPluginModule(module)
+      is ContentModuleDescriptor -> {
+        return configureContentModule(module)
       }
-      return true
-    }
-    else {
-      assert(module is ContentModuleDescriptor)
-      return configureContentModule(module as ContentModuleDescriptor)
     }
   }
 
@@ -179,9 +180,9 @@ class ClassLoaderConfigurator(
     return true
   }
 
-  private fun getSortedDependencies(module: IdeaPluginDescriptorImpl): Array<IdeaPluginDescriptorImpl> {
+  private fun getSortedDependencies(module: PluginModuleDescriptor): Array<PluginModuleDescriptor> {
     val dependenciesList = pluginSet.getSortedDependencies(module)
-    var mutableDependenciesList: MutableList<IdeaPluginDescriptorImpl>? = null
+    var mutableDependenciesList: MutableList<PluginModuleDescriptor>? = null
     if (module is PluginMainDescriptor) {
       for (module in module.contentModules) {
         if (module.moduleLoadingRule == ModuleLoadingRule.EMBEDDED) {
@@ -266,7 +267,7 @@ class ClassLoaderConfigurator(
     }
   }
 
-  private fun configureCorePluginContentModuleClassLoader(module: ContentModuleDescriptor, deps: Array<IdeaPluginDescriptorImpl>) {
+  private fun configureCorePluginContentModuleClassLoader(module: ContentModuleDescriptor, deps: Array<PluginModuleDescriptor>) {
     val jarFiles = module.jarFiles
     if (jarFiles != null) {
       module.pluginClassLoader = PluginClassLoader(
@@ -302,7 +303,7 @@ class ClassLoaderConfigurator(
   private fun getCoreUrlClassLoaderIfPossible(): UrlClassLoader? {
     val coreUrlClassLoader = coreLoader as? UrlClassLoader ?: return null
     if (coreUrlClassLoader.resolveScopeManager == null) {
-      val corePlugin = pluginSet.enabledPlugins.first() as PluginMainDescriptor
+      val corePlugin = pluginSet.enabledPlugins.first()
       assert(corePlugin.pluginId == PluginManagerCore.CORE_ID)
       val resolveScopeManager = createPluginDependencyAndContentBasedScope(descriptor = corePlugin, pluginSet = pluginSet)
       if (resolveScopeManager != null) {
@@ -315,7 +316,7 @@ class ClassLoaderConfigurator(
     return coreUrlClassLoader
   }
 
-  private fun checkPackagePrefixUniqueness(module: IdeaPluginDescriptorImpl) {
+  private fun checkPackagePrefixUniqueness(module: PluginModuleDescriptor) {
     val packagePrefix = module.packagePrefix
     if (packagePrefix != null) {
       val old = pluginPackagePrefixUniqueGuard.putIfAbsent(packagePrefix, module)
@@ -327,7 +328,7 @@ class ClassLoaderConfigurator(
 
   private fun createPluginClassLoader(
     module: IdeaPluginDescriptorImpl,
-    dependencies: Array<IdeaPluginDescriptorImpl>,
+    dependencies: Array<PluginModuleDescriptor>,
     classPath: ClassPath,
     libDirectories: List<Path>
   ): PluginClassLoader {
@@ -442,7 +443,7 @@ private fun getPackagePrefixesLoadedBySeparateClassLoaders(descriptor: PluginMai
   return result
 }
 
-private fun getDependencyPackagePrefixes(descriptor: IdeaPluginDescriptorImpl, pluginSet: PluginSet): List<String> {
+private fun getDependencyPackagePrefixes(descriptor: PluginMainDescriptor, pluginSet: PluginSet): List<String> {
   val dependencies = descriptor.moduleDependencies.modules
   if (dependencies.isEmpty()) {
     return Collections.emptyList()

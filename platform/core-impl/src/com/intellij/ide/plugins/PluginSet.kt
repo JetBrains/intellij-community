@@ -21,24 +21,24 @@ class PluginSet internal constructor(
   /**
    * You must not use this method before [ClassLoaderConfigurator.configure].
    */
-  fun getEnabledModules(): List<IdeaPluginDescriptorImpl> = enabledModules
+  fun getEnabledModules(): List<PluginModuleDescriptor> = enabledModules
 
-  internal fun getSortedDependencies(moduleDescriptor: IdeaPluginDescriptorImpl): List<IdeaPluginDescriptorImpl> {
+  internal fun getSortedDependencies(moduleDescriptor: PluginModuleDescriptor): List<PluginModuleDescriptor> {
     return sortedModulesWithDependencies.directDependencies.getOrDefault(moduleDescriptor, Collections.emptyList())
   }
 
   @TestOnly
-  fun getUnsortedEnabledModules(): Collection<IdeaPluginDescriptorImpl> = Java11Shim.INSTANCE.copyOf(enabledModuleMap.values)
+  fun getUnsortedEnabledModules(): Collection<PluginModuleDescriptor> = Java11Shim.INSTANCE.copyOf(enabledModuleMap.values)
 
   fun isPluginInstalled(id: PluginId): Boolean = findInstalledPlugin(id) != null
 
-  fun findInstalledPlugin(id: PluginId): IdeaPluginDescriptorImpl? = allPlugins.find { it.pluginId == id }
+  fun findInstalledPlugin(id: PluginId): PluginMainDescriptor? = allPlugins.find { it.pluginId == id }
 
   fun isPluginEnabled(id: PluginId): Boolean = enabledPluginAndV1ModuleMap.containsKey(id)
 
-  fun findEnabledPlugin(id: PluginId): IdeaPluginDescriptorImpl? = enabledPluginAndV1ModuleMap.get(id)
+  fun findEnabledPlugin(id: PluginId): PluginModuleDescriptor? = enabledPluginAndV1ModuleMap.get(id)
 
-  fun findEnabledModule(id: String): IdeaPluginDescriptorImpl? = enabledModuleMap.get(id)
+  fun findEnabledModule(id: String): PluginModuleDescriptor? = enabledModuleMap.get(id)
 
   fun isModuleEnabled(id: String): Boolean = enabledModuleMap.containsKey(id)
 

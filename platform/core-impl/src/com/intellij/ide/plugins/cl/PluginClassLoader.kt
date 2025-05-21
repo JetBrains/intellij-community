@@ -7,6 +7,7 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.PluginModuleDescriptor
 import com.intellij.ide.plugins.contentModuleName
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -64,7 +65,7 @@ private val parentListCacheIdCounter = AtomicInteger()
 @ApiStatus.Internal
 class PluginClassLoader(
   classPath: ClassPath,
-  private val parents: Array<IdeaPluginDescriptorImpl>,
+  private val parents: Array<PluginModuleDescriptor>,
   private val pluginDescriptor: PluginDescriptor,
   private val coreLoader: ClassLoader,
   resolveScopeManager: ResolveScopeManager?,
