@@ -919,7 +919,7 @@ open class FileEditorManagerImpl(
     }
     else if (mode == OpenMode.RIGHT_SPLIT) {
       withContext(Dispatchers.EDT) {
-        openInRightSplit(file, options.requestFocus)
+        openInRightSplit(file, options.requestFocus, explicitlySetComposite = options.explicitlyOpenComposite)
       }?.let { composite ->
         if (composite is EditorComposite) {
           composite.waitForAvailable()
@@ -1041,7 +1041,7 @@ open class FileEditorManagerImpl(
   }
 
   @RequiresEdt
-  private fun openInRightSplit(file: VirtualFile, requestFocus: Boolean): FileEditorComposite? {
+  private fun openInRightSplit(file: VirtualFile, requestFocus: Boolean, explicitlySetComposite: EditorComposite? = null): FileEditorComposite? {
     val window = splitters.currentWindow ?: return null
     if (window.inSplitter()) {
       val composite = window.siblings().lastOrNull()?.composites()?.firstOrNull { it.file == file }
@@ -1054,7 +1054,7 @@ open class FileEditorManagerImpl(
         return composite
       }
     }
-    return window.owner.openInRightSplit(file)?.composites()?.firstOrNull { it.file == file }
+    return window.owner.openInRightSplit(file, explicitlySetComposite = explicitlySetComposite)?.composites()?.firstOrNull { it.file == file }
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
@@ -1243,7 +1243,9 @@ open class FileEditorManagerImpl(
       var composite = if (forceCompositeCreation) null else window.getComposite(file)
       val isNewEditor = composite == null
       if (composite == null) {
-        composite = createCompositeAndModel(file = file, window = window, fileEntry = fileEntry) ?: return@Computable null
+        composite = options.explicitlyOpenComposite // IJPL-183875: Explicitly set a composite to open a backend supplied composite
+                    ?: createCompositeAndModel(file = file, window = window, fileEntry = fileEntry)
+                    ?: return@Computable null
         openedCompositeEntries.add(EditorCompositeEntry(composite = composite, delayedState = null))
       }
 
