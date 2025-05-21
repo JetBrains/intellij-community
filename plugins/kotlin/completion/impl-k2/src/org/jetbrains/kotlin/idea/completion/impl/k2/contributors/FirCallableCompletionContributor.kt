@@ -9,8 +9,10 @@ import com.intellij.psi.util.parents
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.containers.sequenceOfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.*
+import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
@@ -127,11 +129,15 @@ internal open class FirCallableCompletionContributor(
         val scopeContext = weighingContext.scopeContext
 
         val extensionChecker = (positionContext as? KotlinSimpleNameReferencePositionContext)?.let {
-            KtCompletionExtensionCandidateChecker.create(
-                originalFile = originalKtFile,
-                nameExpression = it.nameExpression,
-                explicitReceiver = it.explicitReceiver
-            )
+            // FIXME: KTIJ-34285
+            @OptIn(KaImplementationDetail::class)
+            KaBaseIllegalPsiException.allowIllegalPsiAccess {
+                KtCompletionExtensionCandidateChecker.create(
+                    originalFile = originalKtFile,
+                    nameExpression = it.nameExpression,
+                    explicitReceiver = it.explicitReceiver
+                )
+            }
         }
 
         val receiver = positionContext.explicitReceiver
