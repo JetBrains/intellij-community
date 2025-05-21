@@ -58,14 +58,11 @@ import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
 import org.jetbrains.jps.model.library.sdk.JpsSdk
 import org.jetbrains.jps.model.module.JpsModule
-import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
-import org.jetbrains.jps.model.serialization.PathMacroUtil
 import org.jetbrains.jps.service.JpsServiceManager
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import java.util.function.BiConsumer
 import java.util.function.Function
 import javax.tools.Diagnostic
 import javax.tools.JavaFileObject
@@ -83,6 +80,7 @@ private const val PROC_FULL_OPTION = "-proc:full"
 private const val PROC_NONE_OPTION = "-proc:none"
 private const val RELEASE_OPTION = "--release"
 private const val TARGET_OPTION = "-target"
+private const val ENCODING_OPTION = "-encoding"
 
 @Suppress("SpellCheckingInspection")
 private const val PROCESSORPATH_OPTION = "-processorpath"
@@ -92,14 +90,12 @@ private const val SOURCE_OPTION = "-source"
 private const val SYSTEM_OPTION = "--system"
 
 @Suppress("RemoveRedundantQualifierName")
-private val FILTERED_OPTIONS = java.util.Set.of(TARGET_OPTION, RELEASE_OPTION, "-d")
+private val FILTERED_OPTIONS = java.util.Set.of(TARGET_OPTION, RELEASE_OPTION, "-d", ENCODING_OPTION)
 
 @Suppress("RemoveRedundantQualifierName", "SpellCheckingInspection")
-private val FILTERED_SINGLE_OPTIONS: MutableSet<String?> = java.util.Set.of(
+private val FILTERED_SINGLE_OPTIONS = java.util.Set.of(
   "-g", "-deprecation", "-nowarn", "-verbose", PROC_NONE_OPTION, PROC_ONLY_OPTION, PROC_FULL_OPTION, "-proceedOnError"
 )
-
-private val USER_DEFINED_BYTECODE_TARGET = Key.create<String>("_user_defined_bytecode_target_")
 
 private val moduleInfoFileSuffix = File.separatorChar + "module-info.java"
 
@@ -387,15 +383,15 @@ private fun logJavacCall(options: Iterable<String>, mode: String, span: Span) {
   }
 }
 
-private fun collectAdditionalRequires(options: Iterable<String>): Collection<String> {
+private fun collectAdditionalRequires(options: List<String>): Collection<String> {
   // --add-reads module=other-module(,other-module)*
   // The option specifies additional modules to be considered as required by a given module.
   val result = ObjectLinkedOpenCustomHashSet<String>(slowEqualsAwareHashStrategy())
-  val it = options.iterator()
-  while (it.hasNext()) {
-    val option = it.next()
-    if ("--add-reads".equals(option, ignoreCase = true) && it.hasNext()) {
-      val moduleNames = it.next().substringAfter('=')
+  val iterator = options.iterator()
+  while (iterator.hasNext()) {
+    val option = iterator.next()
+    if ("--add-reads".equals(option, ignoreCase = true) && iterator.hasNext()) {
+      val moduleNames = iterator.next().substringAfter('=')
       if (moduleNames.isNotEmpty()) {
         result.addAll(moduleNames.splitToSequence(','))
       }
@@ -404,7 +400,7 @@ private fun collectAdditionalRequires(options: Iterable<String>): Collection<Str
   return result
 }
 
-internal fun getAssociatedSdk(module: JpsModule): Pair<JpsSdk<JpsDummyElement?>, Int>? {
+internal fun getAssociatedSdk(module: JpsModule): Pair<JpsSdk<JpsDummyElement>, Int>? {
   // assuming all modules in the chunk have the same associated JDK,
   // this constraint should be validated on build start
   val sdk = module.getSdk(JpsJavaSdkType.INSTANCE) ?: return null
@@ -483,9 +479,8 @@ private fun getCompilationOptions(
   module: JpsModule,
   profile: ProcessorConfigProfile?,
   compilingTool: JavaCompilingTool,
-): Pair<Iterable<String>, Iterable<String>> {
-  val compilationOptions = ArrayList<String>()
-  val vmOptions = ArrayList<String>()
+): Pair<List<String>, List<String>> {
+  val vmOptions = ArrayList<String>(30)
   if (!JavacMain.TRACK_AP_GENERATED_DEPENDENCIES) {
     vmOptions.add("-D" + JavacMain.TRACK_AP_GENERATED_DEPENDENCIES_PROPERTY + "=false")
   }
@@ -493,56 +488,26 @@ private fun getCompilationOptions(
     // enable javac-related reflection tricks in JPS
     ClasspathBootstrap.configureReflectionOpenPackages { vmOptions.add(it) }
   }
-  val project = context.projectDescriptor.project
-  val compilerOptions = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project).currentCompilerOptions
-  if (compilerOptions.DEBUGGING_INFO) {
-    compilationOptions.add("-g")
-  }
-  if (compilerOptions.DEPRECATION) {
-    compilationOptions.add("-deprecation")
-  }
-  if (compilerOptions.GENERATE_NO_WARNINGS) {
-    @Suppress("SpellCheckingInspection")
-    compilationOptions.add("-nowarn")
-  }
 
-  val customArgs = compilerOptions.ADDITIONAL_OPTIONS_STRING
-  require(compilerOptions.ADDITIONAL_OPTIONS_OVERRIDE.isEmpty())
+  val compilationOptions = ArrayList<String>(10)
+  compilationOptions.add("-g")
+  @Suppress("SpellCheckingInspection")
+  compilationOptions.add("-nowarn")
+  compilationOptions.add(ENCODING_OPTION)
+  compilationOptions.add("utf-8")
 
-  if (customArgs != null && !customArgs.isEmpty()) {
-    var appender = BiConsumer { obj: MutableList<String>, e: String -> obj.add(e) }
-    val baseDirectory = JpsModelSerializationDataService.getBaseDirectory(module)
-    if (baseDirectory != null) {
-      //this is a temporary workaround to allow passing per-module compiler options for Eclipse compiler in form
-      // `-properties $MODULE_DIR$/.settings/org.eclipse.jdt.core.prefs`
-      val moduleDirPath = baseDirectory.toPath().toAbsolutePath().normalize().toString()
-      appender = BiConsumer { strings, option -> strings.add(option.replace(PathMacroUtil.DEPRECATED_MODULE_DIR, moduleDirPath)) }
-    }
-
-    var skip = false
-    var targetOptionFound = false
-    for (userOption in ParametersListUtil.parse(customArgs)) {
-      if (FILTERED_OPTIONS.contains(userOption)) {
-        skip = true
-        targetOptionFound = TARGET_OPTION == userOption
+  val additionalOptions = JpsJavaExtensionService.getInstance().getCompilerConfiguration(context.projectDescriptor.project)
+    .currentCompilerOptions.ADDITIONAL_OPTIONS_STRING?.takeIf { it.isNotEmpty() }
+  if (additionalOptions != null) {
+    for (userOption in ParametersListUtil.parse(additionalOptions)) {
+      if (FILTERED_OPTIONS.contains(userOption) || FILTERED_SINGLE_OPTIONS.contains(userOption)) {
         continue
       }
-      if (skip) {
-        skip = false
-        if (targetOptionFound) {
-          targetOptionFound = false
-          USER_DEFINED_BYTECODE_TARGET.set(context, userOption)
-        }
+      if (userOption.startsWith("-J-")) {
+        vmOptions.add(userOption.substring("-J".length))
       }
       else {
-        if (!FILTERED_SINGLE_OPTIONS.contains(userOption)) {
-          if (userOption.startsWith("-J-")) {
-            vmOptions.add(userOption.substring("-J".length))
-          }
-          else {
-            appender.accept(compilationOptions, userOption)
-          }
-        }
+        compilationOptions.add(userOption)
       }
     }
   }
@@ -552,7 +517,7 @@ private fun getCompilationOptions(
   }
 
   addCompilationOptions(
-    compilerOptions = compilerOptions,
+    additionalOptions = additionalOptions,
     compilerSdkVersion = compilerSdkVersion,
     options = compilationOptions,
     module = module,
@@ -567,9 +532,9 @@ private fun addCompilationOptions(
   options: MutableList<String>,
   module: JpsModule,
   profile: ProcessorConfigProfile?,
-  compilerOptions: JpsJavaCompilerOptions,
+  additionalOptions: String?,
 ) {
-  addCrossCompilationOptions(compilerSdkVersion, options, module, compilerOptions)
+  addCrossCompilationOptions(compilerSdkVersion, options, module, additionalOptions)
 
   if (!options.contains(ENABLE_PREVIEW_OPTION)) {
     val level = JpsJavaExtensionService.getInstance().getLanguageLevel(module)
@@ -626,7 +591,12 @@ private fun addAnnotationProcessingOptions(options: MutableList<String>, profile
   return true
 }
 
-private fun addCrossCompilationOptions(compilerSdkVersion: Int, options: MutableList<String>, module: JpsModule, compilerOptions: JpsJavaCompilerOptions) {
+private fun addCrossCompilationOptions(
+  compilerSdkVersion: Int,
+  options: MutableList<String>,
+  module: JpsModule,
+  additionalOptions: String?,
+) {
   val level = requireNotNull(JpsJavaExtensionService.getInstance().getLanguageLevel(module)) {
     "Language level must be set for module ${module.name}"
   }
@@ -640,7 +610,7 @@ private fun addCrossCompilationOptions(compilerSdkVersion: Int, options: Mutable
   require(bytecodeTarget > 0)
 
   // release cannot be used if add-exports specified
-  if (compilerOptions.ADDITIONAL_OPTIONS_STRING == null && shouldUseReleaseOption(compilerSdkVersion, bytecodeTarget, bytecodeTarget)) {
+  if (additionalOptions == null && shouldUseReleaseOption(compilerSdkVersion, bytecodeTarget, bytecodeTarget)) {
     options.add(RELEASE_OPTION)
     options.add(complianceOption(bytecodeTarget))
     return

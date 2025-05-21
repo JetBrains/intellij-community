@@ -127,14 +127,17 @@ internal fun loadJpsModel(
     classPathFiles = classPathFiles,
     sources = sources,
   )
-  configHash.putUnorderedIterable(args.optionalList(JvmBuilderFlags.ADD_EXPORT), HashFunnel.forString(), Hashing.xxh3_64())
+  val exports = args.optionalList(JvmBuilderFlags.ADD_EXPORT)
+  configHash.putUnorderedIterable(exports, HashFunnel.forString(), Hashing.xxh3_64())
   digests.set(TargetConfigurationDigestProperty.COMPILER, configHash.asLong)
 
   val project = model.project
   project.addModule(module)
   project.container.setChild(JpsProjectSerializationDataExtensionImpl.ROLE, JpsProjectSerializationDataExtensionImpl(classPathRootDir.parent))
 
-  configureJavac(project, args)
+  if (exports.isNotEmpty()) {
+    configureJavac(project, exports)
+  }
 
   module.container.setChild(BazelConfigurationHolder.KIND, BazelConfigurationHolder(
     classPath = classPathFiles,
@@ -148,19 +151,14 @@ internal fun loadJpsModel(
   return model to digests
 }
 
-private fun configureJavac(project: JpsProject, args: ArgMap<JvmBuilderFlags>) {
-  val configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project)
+private fun configureJavac(project: JpsProject, exports: List<String>) {
   val compilerOptions = JpsJavaCompilerOptions()
-  compilerOptions.PREFER_TARGET_JDK_COMPILER = false
-  compilerOptions.DEPRECATION = false
-  compilerOptions.GENERATE_NO_WARNINGS = true
-  compilerOptions.MAXIMUM_HEAP_SIZE = 512
-  compilerOptions.ADDITIONAL_OPTIONS_STRING = args.optionalList(JvmBuilderFlags.ADD_EXPORT).asSequence()
+  compilerOptions.ADDITIONAL_OPTIONS_STRING = exports.asSequence()
     .filter { !it.isBlank() }
     .joinToString(separator = " ") {
       "--add-exports $it"
-    } + " -encoding utf-8"
-  configuration.setCompilerOptions("Javac", compilerOptions)
+    }
+  JpsJavaExtensionService.getInstance().getCompilerConfiguration(project).setCompilerOptions("Javac", compilerOptions)
 }
 
 private fun configureKotlinCompiler(

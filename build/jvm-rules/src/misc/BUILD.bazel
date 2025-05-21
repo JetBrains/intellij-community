@@ -4,43 +4,28 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
     name = "worker-lib",
-    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
     srcs = glob(["*.kt"]),
+    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+    visibility = ["//visibility:public"],
     deps = [
+        "//:opentelemetry-api",
         "//src/worker-framework",
         "//zip",
-        "//:opentelemetry-api",
     ],
-    visibility = ["//visibility:public"],
 )
 
 java_binary(
     name = "worker-jvm",
-    runtime_deps = [":worker-lib"],
-    main_class = "org.jetbrains.bazel.jvm.JvmWorker",
     jvm_flags = [
         "-Djava.awt.headless=true",
         "-Dapple.awt.UIElement=true",
         "-Dio.netty.allocator.useCachedMagazinesForNonEventLoopThreads=true",
         # https://github.com/netty/netty/issues/11532
         "-Dio.netty.tryReflectionSetAccessible=true",
+        # we still use Java 17
+        "-Dfile.encoding=UTF-8",
     ],
+    main_class = "org.jetbrains.bazel.jvm.JvmWorker",
     visibility = ["//visibility:public"],
+    runtime_deps = [":worker-lib"],
 )
-
-# native_image(
-#     name = "worker-native",
-#     deps = [":worker-lib"],
-#     extra_args = [
-#         "-H:+UnlockExperimentalVMOptions",
-#         "-H:+CompactingOldGen",
-#         "-Djava.awt.headless=true",
-#         "-Dapple.awt.UIElement=true",
-#         "-march=native",
-#         "-O3",
-#     ],
-#     reflection_configuration = ":reflection-config.json",
-#     main_class = "org.jetbrains.bazel.jvm.JvmWorker",
-#     native_image_tool = "@graalvm//:native-image",
-#     visibility = ["//visibility:public"],
-# )

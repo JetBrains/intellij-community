@@ -295,6 +295,7 @@ def _run_jvm_builder(
     ctx.actions.run(
         mnemonic = "JvmCompile",
         env = {
+            "LC_CTYPE": "en_US.UTF-8",
             "MALLOC_ARENA_MAX": "2",
         },
         inputs = depset(srcs.all_srcs, transitive = transitiveInputs),

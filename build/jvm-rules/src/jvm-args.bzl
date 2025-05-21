@@ -3,7 +3,7 @@ def get_jvm_flags(flags):
         # Memory
         # "-XX:+UseZGC",
         # "-XX:+ZGenerational",
-        "-Xms4g",
+        "-Xms2g",
         "-Xmx16g",
         # IJ PSI cache
         "-XX:SoftRefLRUPolicyMSPerMB=50",
@@ -28,4 +28,6 @@ def get_jvm_flags(flags):
         "-Dio.netty.tryReflectionSetAccessible=true",
         # see TargetConfigurationDigestProperty.KOTLIN_VERSION - we invalidate cache if kotlinc version changed
         "-Dkotlin.jps.skip.cache.version.check=true",
+        # we still use Java 17
+        "-Dfile.encoding=UTF-8",
     ] + flags
