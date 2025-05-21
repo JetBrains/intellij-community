@@ -4,6 +4,7 @@ package com.intellij.platform.debugger.impl.frontend
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -24,10 +25,14 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.atomic.AtomicInteger
+
+private val LOG = logger<FrontendXBreakpointManager>()
 
 @ApiStatus.Internal
 @VisibleForTesting
 class FrontendXBreakpointManager(private val project: Project, private val cs: CoroutineScope) : XBreakpointManagerProxy {
+  private val requestCounter = AtomicInteger()
   private val breakpointsChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
   private val breakpoints: ConcurrentMap<XBreakpointId, XBreakpointProxy> = ConcurrentCollectionFactory.createConcurrentMap()
@@ -121,16 +126,34 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
   }
 
   override fun toggleLightBreakpoint(editor: Editor, installationInfo: XLineBreakpointInstallationInfo): Deferred<XLineBreakpointProxy?> {
+    val requestId = requestCounter.getAndIncrement()
     return cs.async {
       val lightBreakpointPosition = LightBreakpointPosition(installationInfo.position.file, installationInfo.position.line)
       val type = installationInfo.types.firstOrNull() ?: return@async null
+
+      if (LOG.isDebugEnabled) {
+        LOG.debug("[$requestId] Toggling light breakpoint at ${lightBreakpointPosition.file.path}:${lightBreakpointPosition.line}, type: ${type.id}")
+      }
+
       val lightBreakpoint = FrontendXLightLineBreakpoint(project, this@async, type, installationInfo, this@FrontendXBreakpointManager)
       try {
         val oldBreakpoint = lightBreakpoints.putIfAbsent(lightBreakpointPosition, lightBreakpoint)
         if (oldBreakpoint != null) {
+          if (LOG.isDebugEnabled) {
+            LOG.debug("[$requestId] Found existing light breakpoint at ${lightBreakpointPosition.file.path}:${lightBreakpointPosition.line}, disposing new one")
+          }
           lightBreakpoint.dispose()
         }
+
+        if (LOG.isDebugEnabled) {
+          LOG.debug("[$requestId] Sending toggle request for breakpoint at ${lightBreakpointPosition.file.path}:${lightBreakpointPosition.line}, hasExisting: ${oldBreakpoint != null}")
+        }
+
         val response = XBreakpointTypeApi.getInstance().toggleLineBreakpoint(project.projectId(), installationInfo.toRequest(oldBreakpoint != null))
+
+        if (LOG.isDebugEnabled) {
+          LOG.debug("[$requestId] Received response for toggle request: ${response?.javaClass?.simpleName}")
+        }
 
         withContext(Dispatchers.EDT + NonCancellable) {
           lightBreakpoints.remove(lightBreakpointPosition, lightBreakpoint)
@@ -138,21 +161,43 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
           when (response) {
             is XLineBreakpointInstalledResponse -> {
               val breakpointDto = response.breakpoint
+              if (LOG.isDebugEnabled) {
+                LOG.debug("[$requestId] Processing XLineBreakpointInstalledResponse, breakpointDto: ${breakpointDto?.id}")
+              }
               if (breakpointDto != null) {
-                addBreakpoint(breakpointDto) as? XLineBreakpointProxy
+                val result = addBreakpoint(breakpointDto) as? XLineBreakpointProxy
+                if (LOG.isDebugEnabled) {
+                  LOG.debug("[$requestId] Added breakpoint: ${result?.id}, at line: ${result?.getLine()}")
+                }
+                result
               }
               else {
+                if (LOG.isDebugEnabled) {
+                  LOG.debug("[$requestId] No breakpoint DTO in response, returning null")
+                }
                 null
               }
             }
             XRemoveBreakpointResponse -> {
+              if (LOG.isDebugEnabled) {
+                LOG.debug("[$requestId] Processing XRemoveBreakpointResponse")
+              }
               val breakpoint = XDebuggerUtilImpl.findBreakpointsAtLine(project, installationInfo).singleOrNull()
+              if (LOG.isDebugEnabled) {
+                LOG.debug("[$requestId] Found breakpoint to remove: ${breakpoint?.id}")
+              }
               if (breakpoint != null) {
                 XDebuggerUtilImpl.removeBreakpointIfPossible(project, installationInfo, breakpoint)
+                if (LOG.isDebugEnabled) {
+                  LOG.debug("[$requestId] Removed breakpoint: ${breakpoint.id}")
+                }
               }
               null
             }
             else -> {
+              if (LOG.isDebugEnabled) {
+                LOG.debug("[$requestId] Unknown response type: ${response?.javaClass?.name}")
+              }
               null
             }
           }
