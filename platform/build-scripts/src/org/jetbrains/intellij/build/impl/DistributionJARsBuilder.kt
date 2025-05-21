@@ -557,12 +557,18 @@ private fun validatePlugin(file: Path, context: BuildContext, span: Span) {
     is PluginCreationSuccess -> result.plugin.pluginId
     is PluginCreationFail -> (pluginManager.createPlugin(pluginFile = file, validateDescriptor = false) as? PluginCreationSuccess)?.plugin?.pluginId
   }
-  val problems = context.productProperties.validatePlugin(id, result, context)
-  if (problems.isNotEmpty()) {
-    span.addEvent("failed", Attributes.of(AttributeKey.stringKey("path"), "$file"))
+  for (problem in context.productProperties.validatePlugin(id, result, context)) {
+    val problemType = problem::class.java.simpleName
+    span.addEvent(
+      "plugin validation failed", Attributes.of(
+      AttributeKey.stringKey("id"), "$id",
+      AttributeKey.stringKey("path"), "$file",
+      AttributeKey.stringKey("problemType"), problemType,
+    )
+    )
     context.messages.reportBuildProblem(
-      description = problems.joinToString(". ", prefix = "${id ?: file}: "),
-      identity = "${id ?: file}"
+      description = "${id ?: file}, $problemType: $problem",
+      identity = "${id ?: file}$problemType"
     )
   }
 }
