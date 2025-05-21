@@ -65,12 +65,6 @@ internal class GitCompareBranchesUi(internal val project: Project,
     }
   }
 
-  fun open() {
-    VcsProjectLog.runWhenLogIsReady(project) {
-      GitCompareBranchesFilesManager.getInstance(project).openFile(this, true)
-    }
-  }
-
   internal fun create(logManager: VcsLogManager, onDispose: () -> Unit): JComponent {
     val topLogUiFactory = MyLogUiFactory("git-compare-branches-top-" + UUID.randomUUID(),
                                          MyPropertiesForHardcodedFilters(project.service<GitCompareBranchesTopLogProperties>()),
