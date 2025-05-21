@@ -117,7 +117,12 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
     }
 
     if (list.size() > 1) {
-      ContainerUtil.quickSort(list, PsiClassUtil.createScopeComparator(scope));
+      if (shortName != null) {
+        ContainerUtil.quickSort(list, PsiClassUtil.createScopeComparator(scope));
+      } else {
+        ContainerUtil.quickSort(list, Comparator.comparing(PsiClass::getName, Comparator.nullsLast(Comparator.naturalOrder()))
+          .thenComparing(PsiClassUtil.createScopeComparator(scope)));
+      }
     }
 
     return list.toArray(PsiClass.EMPTY_ARRAY);
