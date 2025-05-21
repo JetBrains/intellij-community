@@ -558,7 +558,7 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
       platformPrefix = platformPrefix,
       isUnitTestMode = true,
       isInDevServerMode = false,
-      isRunningFromSources = true,
+      isRunningFromSources = isRunningFromSources,
       classLoader = mainClassLoader,
       pool = zipPool,
     )
