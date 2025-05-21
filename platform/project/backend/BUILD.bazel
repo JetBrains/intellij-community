@@ -17,7 +17,9 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/project/shared:project",
     "//platform/core-api:core",
-    "//platform/kernel/shared:kernel",
+    "//platform/kernel/rpc.backend",
+    "//platform/projectModel-api:projectModel",
+    "//platform/kernel/backend",
   ],
   runtime_deps = [
     ":backend_resources",

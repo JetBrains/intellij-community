@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.project.module.ModulesStateService;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.dsl.gridLayout.builders.RowBuilder;
 import com.intellij.ui.scale.JBUIScale;
@@ -66,11 +67,8 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
   }
 
   public void initComponents() {
-    Module[] modules = ModuleManager.getInstance(myProject).getModules();
-    String[] names = new String[modules.length];
-    for (int i = 0; i < modules.length; i++) {
-      names[i] = modules[i].getName();
-    }
+    String[] names = FindKey.isEnabled() ? ModulesStateService.getInstance(myProject).getModuleNames().toArray(String[]::new) :
+                     Arrays.stream(ModuleManager.getInstance(myProject).getModules()).map(Module::getName).toArray(String[]::new);
 
     Arrays.sort(names, String.CASE_INSENSITIVE_ORDER);
     myModuleComboBox = new ComboBox<>(names);

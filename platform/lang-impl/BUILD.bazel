@@ -115,6 +115,7 @@ jvm_library(
     "//platform/syntax/syntax-psi:psi",
     "//platform/workspace/storage",
     "//platform/experiment",
+    "//platform/project/shared:project",
   ],
   exports = [
     "//platform/lang-api:lang",

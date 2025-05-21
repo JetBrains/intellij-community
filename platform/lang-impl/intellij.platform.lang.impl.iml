@@ -121,5 +121,6 @@
     <orderEntry type="module" module-name="intellij.platform.syntax.psi" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
     <orderEntry type="module" module-name="intellij.platform.experiment" />
+    <orderEntry type="module" module-name="intellij.platform.project" />
   </component>
 </module>

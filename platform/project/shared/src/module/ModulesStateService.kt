@@ -1,0 +1,84 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.project.module
+
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.platform.project.projectId
+import com.intellij.platform.util.coroutines.childScope
+import fleet.util.logging.logger
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+
+private val LOG = logger<ModulesStateService>()
+
+@Service(Service.Level.PROJECT)
+class ModulesStateService private constructor(val project: Project, val coroutineScope: CoroutineScope) {
+  private val state: ModulesState = ModulesState()
+  private var initializationCompleted: Boolean = false
+
+  init {
+    val initialJob = loadInitialModuleNames()
+    subscribeToModuleChanges(initialJob)
+  }
+
+  fun getModuleNames(): Set<String> {
+    if (!initializationCompleted) {
+      LOG.warn("Access to module names before initialization. Trying to get module names from ModuleManager")
+      return ModuleManager.getInstance(project).modules.map { it.name }.toSet()
+    }
+    return state.moduleNames
+  }
+
+  private fun loadInitialModuleNames(): Job {
+    return coroutineScope.childScope("ModulesStateService.loadInitialModuleNames").launch {
+      LOG.debug("Starting initial module names loading for project: ${project.name}\n")
+      val moduleNames = ModuleStateApi.getInstance().getCurrentModuleNames(project.projectId())
+      state.moduleNames.addAll(moduleNames.toMutableSet())
+      LOG.debug("Completed loading initial module names. Found ${moduleNames.size} modules")
+      initializationCompleted = true
+    }
+  }
+
+  private fun subscribeToModuleChanges(initialJob: Job) {
+    coroutineScope.childScope("ModulesStateService.subscribeToModuleChanges").launch {
+      initialJob.join()
+      LOG.debug("Starting subscription for module updates in project: ${project.name}")
+      ModuleStateApi.getInstance().getModulesUpdateEvents(project.projectId()).collect { update ->
+        LOG.debug("Received module update: $update")
+        state.applyModuleChange(update)
+      }
+    }
+  }
+
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project): ModulesStateService {
+      return project.service<ModulesStateService>()
+    }
+  }
+}
+
+private class ModulesState() {
+  val moduleNames: MutableSet<String> = mutableSetOf()
+
+  fun applyModuleChange(moduleUpdatedEvent: ModuleUpdatedEvent) {
+    when (moduleUpdatedEvent.moduleUpdateType) {
+      ModuleUpdateType.RENAME -> {
+        moduleNames.remove(moduleUpdatedEvent.moduleName)
+        moduleNames.add(moduleUpdatedEvent.newModuleName)
+      }
+      ModuleUpdateType.ADD -> moduleNames.add(moduleUpdatedEvent.moduleName)
+      ModuleUpdateType.REMOVE -> moduleNames.remove(moduleUpdatedEvent.moduleName)
+    }
+  }
+}
+
+private class ModuleStateInitializer : ProjectActivity {
+  override suspend fun execute(project: Project) {
+    ModulesStateService.getInstance(project)
+  }
+}

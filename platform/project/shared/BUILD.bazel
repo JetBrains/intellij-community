@@ -19,6 +19,7 @@ jvm_library(
     "//platform/kernel/shared:kernel",
     "//platform/util",
     "//platform/projectModel-api:projectModel",
+    "//platform/util/coroutines",
   ],
   runtime_deps = [":project_resources"]
 )
