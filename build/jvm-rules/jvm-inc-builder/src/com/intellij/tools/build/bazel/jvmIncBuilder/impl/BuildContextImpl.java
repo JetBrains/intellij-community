@@ -53,7 +53,7 @@ public class BuildContextImpl implements BuildContext {
     String abiPath = CLFlags.ABI_OUT.getOptionalScalarValue(flags);
     myAbiJar = abiPath != null? baseDir.resolve(abiPath).normalize() : null;
 
-    myDataDir = myOutJar.resolveSibling(truncateExtension(myOutJar.getFileName().toString()) + "-ic");
+    myDataDir = myOutJar.resolveSibling(truncateExtension(myOutJar.getFileName().toString()) + DataPaths.DATA_DIR_NAME_SUFFIX);
     
     myIsRebuild = CLFlags.NON_INCREMENTAL.isFlagSet(flags);
 

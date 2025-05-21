@@ -52,7 +52,6 @@ import static org.jetbrains.kotlin.cli.plugins.PluginsOptionsParserKt.processCom
 
 /** @noinspection IO_FILE_USAGE*/
 public class KotlinCompilerRunner implements CompilerRunner {
-  private static final String KOTLIN_MODULE_EXTENSION = ".kotlin_module";
   private final BuildContext myContext;
   private final StorageManager myStorageManager;
   @NotNull NodeSourcePathMapper myPathMapper;
@@ -86,7 +85,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
     String moduleEntryPath = null;
     try {
       ZipOutputBuilderImpl outBuilder = storageManager.getOutputBuilder();
-      moduleEntryPath = find(outBuilder.listEntries("META-INF/"), n -> n.endsWith(KOTLIN_MODULE_EXTENSION));
+      moduleEntryPath = find(outBuilder.listEntries("META-INF/"), n -> n.endsWith(DataPaths.KOTLIN_MODULE_EXTENSION));
       if (moduleEntryPath != null) {
         myLastGoodModuleEntryContent = outBuilder.getContent(moduleEntryPath);
       }
@@ -135,6 +134,11 @@ public class KotlinCompilerRunner implements CompilerRunner {
         logCompiledFiles(myContext, sources);
 
         org.jetbrains.kotlin.cli.common.ExitCode exitCode = pipeline.execute(kotlinArgs, services, messageCollector);
+
+        //if (diagnostic.hasErrors()) {
+        //  diagnostic.report(Message.create(this, Message.Kind.INFO, "Kotlin build options: " + myContext.getBuilderOptions().getKotlinOptions()));
+        //}
+
         completedOk = exitCode == OK;
         return completedOk? ExitCode.OK : ExitCode.ERROR;
       }

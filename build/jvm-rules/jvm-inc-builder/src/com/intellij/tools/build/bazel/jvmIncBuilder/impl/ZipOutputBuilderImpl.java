@@ -146,20 +146,7 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
         myReadZipFile.close();
         if (saveChanges && !myReadZipPath.equals(myWriteZipPath)) {
           // ensure content at the destination path is the same as the source content
-          boolean useCopy = false;
-          if (!Files.exists(myWriteZipPath)) {
-            try {
-              Files.createLink(myWriteZipPath, myReadZipPath);
-            }
-            catch (Throwable ignored) {
-              useCopy = true; // fallback
-              // todo: logging
-            }
-          }
-          else if (!Files.isSameFile(myReadZipPath, myWriteZipPath)) {
-            useCopy = true;
-          }
-          if (useCopy) {
+          if (!Files.exists(myWriteZipPath) || !Files.isSameFile(myReadZipPath, myWriteZipPath)) {
             Files.copy(myReadZipPath, myWriteZipPath, StandardCopyOption.REPLACE_EXISTING);
           }
         }

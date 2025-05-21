@@ -51,7 +51,9 @@ public class CompositeZipOutputBuilder implements ZipOutputBuilder {
   public boolean deleteEntry(String entryName) {
     boolean changes = false;
     for (ZipOutputBuilder delegate : myDelegates) {
-      changes |= delegate.deleteEntry(entryName);
+      if (delegate.deleteEntry(entryName)) {
+        changes = true;
+      }
     }
     return changes;
   }

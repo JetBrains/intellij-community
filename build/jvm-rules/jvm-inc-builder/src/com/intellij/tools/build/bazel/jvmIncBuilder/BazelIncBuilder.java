@@ -13,7 +13,6 @@ import org.jetbrains.jps.dependency.java.JvmClassNodeBuilder;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Predicate;
@@ -123,6 +122,11 @@ public class BazelIncBuilder {
           modifiedLibraries = ElementSnapshot.derive(context.getBinaryDependencies(), ns -> DataPaths.isLibraryTracked(ns.toString())).getElements();
           deletedLibraries = Set.of();
         }
+        else {
+          if (isInitialRound) {
+            storageManager.cleanTrashDir();
+          }
+        }
 
         diagnostic = isInitialRound? new PostponedDiagnosticSink() : context; // for initial round postpone error reporting
         OutputSinkImpl outSink = new OutputSinkImpl(diagnostic, storageManager, instrumenters);
@@ -226,33 +230,25 @@ public class BazelIncBuilder {
       }
 
       try { // backup current deps content
-        Files.createDirectories(DataPaths.getDependenciesBackupStoreDir(context));
-
-        List<Path> toBackup = collect(map(modifiedLibraries, context.getPathMapper()::toPath), new ArrayList<>());
-        toBackup.add(context.getOutputZip());
+        Set<Path> presentPaths = collect(filter(map(modifiedLibraries, context.getPathMapper()::toPath), Files::exists), new HashSet<>());
+        Set<Path> deletedPaths = collect(map(deletedLibraries, context.getPathMapper()::toPath), new HashSet<>());
+        Path outputZip = context.getOutputZip();
+        if (Files.exists(outputZip)) {
+          presentPaths.add(outputZip);
+        }
+        else {
+          deletedPaths.add(outputZip);
+        }
         Path abiOut = context.getAbiOutputZip();
         if (abiOut != null) {
-          toBackup.add(abiOut);
-        }
-
-        for (Path path : flat(map(deletedLibraries, context.getPathMapper()::toPath), toBackup)) {
-          Path backup = DataPaths.getJarBackupStoreFile(context, path);
-          Utils.deleteIfExists(backup);
-        }
-
-        for (Path path : toBackup) {
-          Path backup = DataPaths.getJarBackupStoreFile(context, path);
-          try {
-            Files.createLink(backup, path);
+          if (Files.exists(abiOut)) {
+            presentPaths.add(abiOut);
           }
-          catch (NoSuchFileException ignored) {
-          }
-          catch (Throwable e) {
-            context.report(Message.create(null, Message.Kind.WARNING, e));
-            // fallback to copy
-            //Files.copy(path, backup, StandardCopyOption.REPLACE_EXISTING);
+          else {
+            deletedPaths.add(abiOut);
           }
         }
+        StorageManager.backupDependencies(context, deletedPaths, presentPaths);
       }
       catch (IOException e) {
         context.report(Message.create(null, e));

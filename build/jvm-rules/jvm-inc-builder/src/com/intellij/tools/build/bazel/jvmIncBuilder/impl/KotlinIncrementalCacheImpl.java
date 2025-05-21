@@ -25,7 +25,7 @@ public final class KotlinIncrementalCacheImpl implements IncrementalCache {
   private final String myModuleEntryPath;
   private final byte[] myModuleEntryBytes;
 
-  public KotlinIncrementalCacheImpl(StorageManager storageManager, Iterable<NodeSource> outdatedSources, @Nullable String moduleEntryPath, @Nullable byte[] moduleEntryBytes) throws IOException {
+  public KotlinIncrementalCacheImpl(StorageManager storageManager, Iterable<NodeSource> outdatedSources, @Nullable String moduleEntryPath, byte @Nullable [] moduleEntryBytes) throws IOException {
     myModuleEntryPath = moduleEntryPath;
     myModuleEntryBytes = moduleEntryBytes;
     myObsoletePackageParts = computeObsoletePackageParts(storageManager.getGraph(), outdatedSources);
