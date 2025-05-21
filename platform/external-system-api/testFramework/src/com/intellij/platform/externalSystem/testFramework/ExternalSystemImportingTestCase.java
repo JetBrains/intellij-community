@@ -50,6 +50,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,8 +59,10 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -100,27 +103,56 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     var notificationManager = ExternalSystemProgressNotificationManager.getInstance();
     var notificationListener = new ExternalSystemTaskNotificationListener() {
 
+      private final @NotNull TaskOutput stdOutput = new TaskOutput();
+      private final @NotNull TaskOutput errOutput = new TaskOutput();
+
       @Override
       public void onStart(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
-        System.out.print(id + "\\n");
+        stdOutput.append(id, id + "\\n");
       }
 
       @Override
       public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
         if (stdOut) {
-          System.out.print(text.replace("\n", "\\n").replace("\r", "\\r"));
+          stdOutput.append(id, text.replace("\n", "\\n").replace("\r", "\\r"));
         }
         else {
-          System.err.print(text);
+          errOutput.append(id, text);
         }
       }
 
       @Override
+      public void onFailure(@NotNull String projectPath, @NotNull ExternalSystemTaskId id, @NotNull Exception exception) {
+        errOutput.append(id, ExceptionUtil.getThrowableText(exception));
+      }
+
+      @Override
+      @SuppressWarnings("UseOfSystemOutOrSystemErr")
       public void onEnd(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
-        System.out.println();
+        stdOutput.append(id, "\n");
+        stdOutput.flush(id, System.out);
+        errOutput.flush(id, System.err);
       }
     };
     notificationManager.addNotificationListener(notificationListener, parentDisposable);
+  }
+
+  private static class TaskOutput {
+
+    private final @NotNull ConcurrentHashMap<ExternalSystemTaskId, StringBuilder> buffer = new ConcurrentHashMap<>();
+
+    private void append(@NotNull ExternalSystemTaskId id, @NotNull String output) {
+      buffer.computeIfAbsent(id, __ -> new StringBuilder())
+        .append(output);
+    }
+
+    private void flush(@NotNull ExternalSystemTaskId id, @NotNull PrintStream stream) {
+      var output = buffer.remove(id);
+      if (output != null){
+        stream.print(output);
+        stream.flush();
+      }
+    }
   }
 
   protected void assertModulesContains(String... expectedNames) {
