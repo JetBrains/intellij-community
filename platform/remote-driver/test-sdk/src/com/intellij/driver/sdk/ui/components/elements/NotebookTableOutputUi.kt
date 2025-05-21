@@ -57,7 +57,7 @@ class NotebookTableOutputUi(data: ComponentData) : UiComponent(data) {
     }
 
     waitFor("expect the pager text to change", 30.seconds) {
-      pager.getAllTexts().first().text != currentPagerText
+      tableView.rowCount() == n
     }
   }
 
