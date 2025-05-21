@@ -306,9 +306,7 @@ class PluginSetLoadingTest {
     val subDesc = descriptor.dependencies[0].subDescriptor!!
     assertThat(subDesc.pluginId.idString).isEqualTo("bar")
     assertThat(subDesc.name).isEqualTo("Bar")
-    runAndReturnWithLoggedError { // ignored
-      assertThat(subDesc.version).isEqualTo("1.0.0")
-    }
+    assertThat(subDesc.version).isEqualTo("1.0.0")
   }
 
   @Test
@@ -337,9 +335,7 @@ class PluginSetLoadingTest {
     val subDesc = descriptor.dependencies[0].subDescriptor!!
     assertThat(subDesc.pluginId.idString).isEqualTo("bar")
     assertThat(subDesc.name).isEqualTo("Bar")
-    runAndReturnWithLoggedError { // ignored
-      assertThat(subDesc.version).isEqualTo("1.0.0")
-    }
+    assertThat(subDesc.version).isEqualTo("1.0.0")
   }
 
   @Test

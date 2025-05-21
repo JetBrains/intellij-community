@@ -554,28 +554,28 @@ class DependsSubDescriptor(
   override fun getPluginId(): PluginId = parent.pluginId
   // <editor-fold desc="Deprecated">
   // These are meaningless for sub-descriptors
-  @Deprecated("use main descriptor") override fun getName(): @NlsSafe String? = parent.name // .also { LOG.error("unexpected call") } TODO IdeaUltimatePackagingTest
-  @Deprecated("use main descriptor") override fun getVersion(): String? = parent.version.also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun getSinceBuild(): String? = parent.sinceBuild.also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun getUntilBuild(): String? = parent.untilBuild.also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun getChangeNotes(): String? = parent.changeNotes.also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun getCategory(): @NlsSafe String? = parent.category.also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun getDisplayCategory(): @Nls String? = parent.displayCategory.also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun getDescription(): @Nls String? = parent.description.also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun isBundled(): Boolean = parent.isBundled // .also { LOG.error("unexpected call") } TODO IdeaUltimatePackagingTest
-  @Deprecated("use main descriptor") override fun getPluginPath(): Path = parent.pluginPath.also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override val useIdeaClassLoader: Boolean get() = parent.useIdeaClassLoader.also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun allowBundledUpdate(): Boolean = parent.allowBundledUpdate().also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun isImplementationDetail(): Boolean = parent.isImplementationDetail // .also { LOG.error("unexpected call") } TODO test failures
-  @Deprecated("use main descriptor") override fun isRequireRestart(): Boolean = parent.isRequireRestart.also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun getVendor(): String? = parent.vendor.also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun getVendorEmail(): String? = parent.vendorEmail.also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun getVendorUrl(): String? = parent.vendorUrl.also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun getUrl(): String? = parent.url.also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun getProductCode(): String? = parent.productCode.also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun getReleaseDate(): Date? = parent.releaseDate.also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun getReleaseVersion(): Int = parent.releaseVersion.also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun isLicenseOptional(): Boolean = parent.isLicenseOptional.also { LOG.error("unexpected call") }
+  @Deprecated("use main descriptor") override fun getName(): @NlsSafe String? = parent.name
+  @Deprecated("use main descriptor") override fun getVersion(): String? = parent.version
+  @Deprecated("use main descriptor") override fun getSinceBuild(): String? = parent.sinceBuild
+  @Deprecated("use main descriptor") override fun getUntilBuild(): String? = parent.untilBuild
+  @Deprecated("use main descriptor") override fun getChangeNotes(): String? = parent.changeNotes
+  @Deprecated("use main descriptor") override fun getCategory(): @NlsSafe String? = parent.category
+  @Deprecated("use main descriptor") override fun getDisplayCategory(): @Nls String? = parent.displayCategory
+  @Deprecated("use main descriptor") override fun getDescription(): @Nls String? = parent.description
+  @Deprecated("use main descriptor") override fun isBundled(): Boolean = parent.isBundled
+  @Deprecated("use main descriptor") override fun getPluginPath(): Path = parent.pluginPath
+  @Deprecated("use main descriptor") override val useIdeaClassLoader: Boolean get() = parent.useIdeaClassLoader
+  @Deprecated("use main descriptor") override fun allowBundledUpdate(): Boolean = parent.allowBundledUpdate()
+  @Deprecated("use main descriptor") override fun isImplementationDetail(): Boolean = parent.isImplementationDetail
+  @Deprecated("use main descriptor") override fun isRequireRestart(): Boolean = parent.isRequireRestart
+  @Deprecated("use main descriptor") override fun getVendor(): String? = parent.vendor
+  @Deprecated("use main descriptor") override fun getVendorEmail(): String? = parent.vendorEmail
+  @Deprecated("use main descriptor") override fun getVendorUrl(): String? = parent.vendorUrl
+  @Deprecated("use main descriptor") override fun getUrl(): String? = parent.url
+  @Deprecated("use main descriptor") override fun getProductCode(): String? = parent.productCode
+  @Deprecated("use main descriptor") override fun getReleaseDate(): Date? = parent.releaseDate
+  @Deprecated("use main descriptor") override fun getReleaseVersion(): Int = parent.releaseVersion
+  @Deprecated("use main descriptor") override fun isLicenseOptional(): Boolean = parent.isLicenseOptional
   // </editor-fold>
 }
 
@@ -619,26 +619,26 @@ class ContentModuleDescriptor(
   override fun getName(): @NlsSafe String = parent.name // .also { LOG.error("unexpected call") } TODO test failures
   // <editor-fold desc="Deprecated">
   // These are meaningless for sub-descriptors
-  @Deprecated("use main descriptor") override fun getVersion(): String? = parent.version // .also { LOG.error("unexpected call") } TODO test failures
-  @Deprecated("use main descriptor") override fun getSinceBuild(): String? = parent.sinceBuild.also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun getUntilBuild(): String? = parent.untilBuild.also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun getChangeNotes(): String? = parent.changeNotes.also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun getCategory(): @NlsSafe String? = parent.category.also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun getDisplayCategory(): @Nls String? = parent.displayCategory.also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun getDescription(): @Nls String? = parent.description.also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun isBundled(): Boolean = parent.isBundled // .also { LOG.error("unexpected call") } TODO test failures
-  @Deprecated("use main descriptor") override fun getPluginPath(): Path = parent.pluginPath // .also { LOG.error("unexpected call") } TODO IdeaUltimatePackagingTest
-  @Deprecated("use main descriptor") override fun allowBundledUpdate(): Boolean = parent.allowBundledUpdate().also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun isImplementationDetail(): Boolean = parent.isImplementationDetail // .also { LOG.error("unexpected call") } TODO test failures
-  @Deprecated("use main descriptor") override fun isRequireRestart(): Boolean = parent.isRequireRestart.also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun getVendor(): String? = parent.vendor // .also { LOG.error("unexpected call") } TODO test failures
-  @Deprecated("use main descriptor") override fun getVendorEmail(): String? = parent.vendorEmail.also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun getVendorUrl(): String? = parent.vendorUrl.also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun getUrl(): String? = parent.url.also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun getProductCode(): String? = parent.productCode.also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun getReleaseDate(): Date? = parent.releaseDate.also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun getReleaseVersion(): Int = parent.releaseVersion.also { LOG.error("unexpected call") }
-  @Deprecated("use main descriptor") override fun isLicenseOptional(): Boolean = parent.isLicenseOptional.also { LOG.error("unexpected call") }
+  @Deprecated("use main descriptor") override fun getVersion(): String? = parent.version
+  @Deprecated("use main descriptor") override fun getSinceBuild(): String? = parent.sinceBuild
+  @Deprecated("use main descriptor") override fun getUntilBuild(): String? = parent.untilBuild
+  @Deprecated("use main descriptor") override fun getChangeNotes(): String? = parent.changeNotes
+  @Deprecated("use main descriptor") override fun getCategory(): @NlsSafe String? = parent.category
+  @Deprecated("use main descriptor") override fun getDisplayCategory(): @Nls String? = parent.displayCategory
+  @Deprecated("use main descriptor") override fun getDescription(): @Nls String? = parent.description
+  @Deprecated("use main descriptor") override fun isBundled(): Boolean = parent.isBundled
+  @Deprecated("use main descriptor") override fun getPluginPath(): Path = parent.pluginPath
+  @Deprecated("use main descriptor") override fun allowBundledUpdate(): Boolean = parent.allowBundledUpdate()
+  @Deprecated("use main descriptor") override fun isImplementationDetail(): Boolean = parent.isImplementationDetail
+  @Deprecated("use main descriptor") override fun isRequireRestart(): Boolean = parent.isRequireRestart
+  @Deprecated("use main descriptor") override fun getVendor(): String? = parent.vendor
+  @Deprecated("use main descriptor") override fun getVendorEmail(): String? = parent.vendorEmail
+  @Deprecated("use main descriptor") override fun getVendorUrl(): String? = parent.vendorUrl
+  @Deprecated("use main descriptor") override fun getUrl(): String? = parent.url
+  @Deprecated("use main descriptor") override fun getProductCode(): String? = parent.productCode
+  @Deprecated("use main descriptor") override fun getReleaseDate(): Date? = parent.releaseDate
+  @Deprecated("use main descriptor") override fun getReleaseVersion(): Int = parent.releaseVersion
+  @Deprecated("use main descriptor") override fun isLicenseOptional(): Boolean = parent.isLicenseOptional
   // </editor-fold>
 }
 
