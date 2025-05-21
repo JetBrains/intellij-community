@@ -52,7 +52,6 @@ class MPSProperties : JetBrainsProductProperties() {
             "intellij.properties",
             "intellij.properties.resource.bundle.editor",
             "intellij.terminal",
-            "intellij.emojipicker",
             "intellij.settingsSync",
             "intellij.tasks.core",
             "intellij.vcs.git",
