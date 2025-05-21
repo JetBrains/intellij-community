@@ -175,7 +175,13 @@ internal open class TerminalEventsHandlerImpl(
     if (lookup == null) {
       return
     }
-    lookup.performGuardedChange(Runnable { caret.moveToOffset(offset) })
+
+    val newOffset = when (keycode) {
+      KeyEvent.VK_LEFT -> offset - 1
+      KeyEvent.VK_BACK_SPACE -> offset - 1
+      else -> offset
+    }
+    lookup.performGuardedChange(Runnable { editor.caretModel.moveToOffset(newOffset) })
 
     val handler = when (keycode) {
       KeyEvent.VK_LEFT -> {
