@@ -1,13 +1,17 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie.ide.notification
 
+import ai.grazie.nlp.langs.Language
+import ai.grazie.nlp.langs.utils.englishName
 import com.intellij.grazie.GrazieConfig
+import com.intellij.grazie.detection.toLanguage
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.remote.GrazieRemote
 import com.intellij.notification.*
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.annotations.Nls
 import java.lang.ref.WeakReference
 
 object GrazieToastNotifications {
@@ -24,18 +28,18 @@ object GrazieToastNotifications {
     get() = obtainGroup("Grazie notifications")
 
   fun showMissedLanguages(project: Project) {
-    val langs = GrazieConfig.get().missedLanguages
+    val langs = GrazieConfig.get().missedLanguages.map { it.toLanguage() }.toSet()
     MISSING_LANGUAGES_GROUP
       .createNotification(msg("grazie.notification.missing-languages.title"),
-                          msg("grazie.notification.missing-languages.body", langs.joinToString()),
+                          msg("grazie.notification.missing-languages.body", langs.joinToString { it.englishName }),
                           NotificationType.WARNING)
-      .addAction(object : NotificationAction(msg("grazie.notification.missing-languages.action.download")) {
+      .addAction(object : NotificationAction(msg("grazie.notification.missing-languages.action.download", langs)) {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
           GrazieRemote.downloadMissing(project)
           notification.expire()
         }
       })
-      .addAction(object : NotificationAction(msg("grazie.notification.missing-languages.action.disable")) {
+      .addAction(object : NotificationAction(msg("grazie.notification.missing-languages.action.disable", langs)) {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
           GrazieConfig.update { state ->
             state.copy(enabledLanguages = state.enabledLanguages - state.missedLanguages)
@@ -59,5 +63,13 @@ object GrazieToastNotifications {
 
   private fun obtainGroup(id: String): NotificationGroup {
     return NotificationGroupManager.getInstance().getNotificationGroup(id)
+  }
+
+  @Nls
+  private fun msg(nlsPropertyPrefix: String, langs: Set<Language>): String {
+    return when {
+      langs.size == 1 -> msg("$nlsPropertyPrefix.singular", langs.first().englishName)
+      else -> msg("$nlsPropertyPrefix.plural")
+    }
   }
 }
