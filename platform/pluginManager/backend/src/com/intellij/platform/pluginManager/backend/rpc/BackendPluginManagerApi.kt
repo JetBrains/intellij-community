@@ -13,13 +13,16 @@ import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
 import com.intellij.ide.plugins.marketplace.IntellijUpdateMetadata
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
+import com.intellij.ide.plugins.newui.PluginManagerSessionService
 import com.intellij.ide.plugins.newui.PluginUiModel
-import com.intellij.ide.plugins.newui.PluginUpdatesService
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
@@ -32,7 +35,7 @@ class BackendPluginManagerApi : PluginManagerApi {
   override suspend fun getPluginById(pluginId: PluginId): PluginDto? {
     return PluginManagerCore.getPlugin(pluginId)?.let { PluginDescriptorConverter.toPluginDto(it) }
   }
-  
+
   override suspend fun findPlugin(pluginId: PluginId): PluginDto? {
     return DefaultUiPluginManagerController.findPlugin(pluginId)?.let { PluginDescriptorConverter.toPluginDto(it.getDescriptor()) }
   }
@@ -68,7 +71,7 @@ class BackendPluginManagerApi : PluginManagerApi {
   override suspend fun isPluginInstalled(pluginId: PluginId): Boolean {
     return DefaultUiPluginManagerController.isPluginInstalled(pluginId)
   }
-  
+
   override suspend fun hasPluginsAvailableForEnableDisable(pluginIds: List<PluginId>): Boolean {
     return DefaultUiPluginManagerController.hasPluginsAvailableForEnableDisable(pluginIds)
   }
@@ -118,29 +121,62 @@ class BackendPluginManagerApi : PluginManagerApi {
   override suspend fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>? {
     return DefaultUiPluginManagerController.loadPluginReviews(pluginId, page)
   }
-  
+
   override suspend fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata? {
     return DefaultUiPluginManagerController.loadPluginMetadata(externalPluginId)
   }
-  
+
   override suspend fun getPluginManagerUrl(): String {
     return DefaultUiPluginManagerController.getPluginManagerUrl()
   }
-  
+
   override suspend fun updateDescriptorsForInstalledPlugins() {
     DefaultUiPluginManagerController.updateDescriptorsForInstalledPlugins()
   }
-  
+
   override suspend fun getLastCompatiblePluginUpdateModel(pluginId: PluginId, buildNumber: String?): PluginDto? {
     val model = DefaultUiPluginManagerController.getLastCompatiblePluginUpdateModel(pluginId, buildNumber, null) ?: return null
     return PluginDto.fromModel(model)
   }
-  
+
   override suspend fun getLastCompatiblePluginUpdate(allIds: Set<PluginId>, throwExceptions: Boolean, buildNumber: String?): List<IdeCompatibleUpdate> {
     return DefaultUiPluginManagerController.getLastCompatiblePluginUpdate(allIds, throwExceptions, buildNumber)
   }
-  
+
   override suspend fun isNeedUpdate(pluginId: PluginId): Boolean {
     return DefaultUiPluginManagerController.isNeedUpdate(pluginId)
   }
+
+  override suspend fun subscribeToUpdatesCount(sessionId: String): Flow<Int?> {
+    return channelFlow {
+      DefaultUiPluginManagerController.connectToUpdateServiceWithCounter(sessionId) {
+        trySend(it)
+      }
+      awaitClose()
+    }
+  }
+
+  override suspend fun subscribeToPluginUpdates(sessionId: String): Flow<List<PluginDto>> {
+    return channelFlow {
+      val session = PluginManagerSessionService.getInstance().getSession(sessionId)
+      session?.updateService?.calculateUpdates { result ->
+        trySend(result.map { PluginDto.fromModel(it) })
+      }
+      awaitClose()
+    }
+  }
+
+  override suspend fun recalculatePluginUpdates(sessionId: String) {
+    PluginManagerSessionService.getInstance().getSession(sessionId)?.updateService?.recalculateUpdates()
+  }
+
+  override suspend fun disposeUpdaterService(sessionId: String) {
+    PluginManagerSessionService.getInstance().getSession(sessionId)?.updateService?.dispose()
+  }
+
+
+  override suspend fun notifyUpdateFinished(sessionId: String) {
+    PluginManagerSessionService.getInstance().getSession(sessionId)?.updateService?.finishUpdate()
+  }
+
 }

@@ -18,7 +18,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.BuildNumber
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
@@ -71,6 +70,7 @@ interface UiPluginManagerController {
   fun getLastCompatiblePluginUpdate(allIds: Set<PluginId>, throwExceptions: Boolean, buildNumber: String? = null): List<IdeCompatibleUpdate>
   fun updateDescriptorsForInstalledPlugins()
   fun isNeedUpdate(pluginId: PluginId): Boolean
+  fun connectToUpdateServiceWithCounter(sessionId: String, callback: (Int?) -> Unit): PluginUpdatesService
 
   suspend fun resetSession(sessionId: String, removeSession: Boolean, parentComponent: JComponent? = null): Map<PluginId, Boolean>
 

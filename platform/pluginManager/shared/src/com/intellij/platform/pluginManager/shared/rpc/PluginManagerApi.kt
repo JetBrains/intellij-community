@@ -15,6 +15,7 @@ import com.intellij.platform.rpc.RemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
 @Rpc
@@ -49,6 +50,11 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun filterPluginsRequiresUltimateButItsDisabled(pluginIds: List<PluginId>): List<PluginId>
   suspend fun findPluginNames(pluginIds: List<PluginId>): List<String>
   suspend fun isNeedUpdate(pluginId: PluginId): Boolean
+  suspend fun subscribeToPluginUpdates(sessionId: String): Flow<List<PluginDto>>
+  suspend fun subscribeToUpdatesCount(sessionId: String): Flow<Int?>
+  suspend fun recalculatePluginUpdates(sessionId: String)
+  suspend fun disposeUpdaterService(sessionId: String)
+  suspend fun notifyUpdateFinished(sessionId: String)
 
   companion object {
     suspend fun getInstance(): PluginManagerApi {

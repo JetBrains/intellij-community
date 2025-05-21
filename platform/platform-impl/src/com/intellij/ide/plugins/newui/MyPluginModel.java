@@ -228,6 +228,10 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     return myInstallingWithUpdatesPlugins.contains(pluginId);
   }
 
+  public String getSessionId() {
+    return sessionId.toString();
+  }
+
   void installOrUpdatePlugin(@Nullable JComponent parentComponent,
                              @NotNull PluginUiModel descriptor,
                              @Nullable PluginUiModel updateDescriptor,

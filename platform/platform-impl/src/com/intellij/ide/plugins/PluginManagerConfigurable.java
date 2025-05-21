@@ -203,7 +203,7 @@ public final class PluginManagerConfigurable
     myTabHeaderComponent.addTab(IdeBundle.message("plugin.manager.tab.installed"), myCountIcon);
 
     CustomPluginRepositoryService.getInstance().clearCache();
-    myPluginUpdatesService = PluginUpdatesService.connectWithCounter(countValue -> {
+    myPluginUpdatesService = UiPluginManager.getInstance().subscribeToUpdatesCount(myPluginModelFacade.getModel().getSessionId(), countValue -> {
       int count = countValue == null ? 0 : countValue;
       String text = Integer.toString(count);
       boolean visible = count > 0;
@@ -225,6 +225,7 @@ public final class PluginManagerConfigurable
 
       myCountIcon.setText(text);
       myTabHeaderComponent.update();
+      return null;
     });
     myPluginModelFacade.getModel().setPluginUpdatesService(myPluginUpdatesService);
 
@@ -1331,7 +1332,7 @@ public final class PluginManagerConfigurable
                 });
               }
 
-              Collection<PluginUiModel> updates = PluginUpdatesService.getUpdateModels();
+              Collection<PluginUiModel> updates = PluginUpdatesService.getUpdateModels(); //TODO
               if (!ContainerUtil.isEmpty(updates)) {
                 myPostFillGroupCallback = () -> {
                   applyUpdates(myPanel, updates);

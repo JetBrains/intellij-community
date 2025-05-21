@@ -101,7 +101,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       objectMapper.readValue(it.inputStream, object : TypeReference<List<PluginReviewComment>>() {})
     }
   }
-  
+
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
   override fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata? {
@@ -118,7 +118,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       return null
     }
   }
-  
+
   override fun getPluginManagerUrl(): String {
     return MarketplaceUrls.getPluginManagerUrl()
   }
@@ -186,14 +186,22 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   ): List<IdeCompatibleUpdate> {
     return getLastCompatiblePluginUpdate(allIds, throwExceptions, BuildNumber.fromString(buildNumber))
   }
-  
+
   override fun updateDescriptorsForInstalledPlugins() {
     UpdateChecker.updateDescriptorsForInstalledPlugins(InstalledPluginsState.getInstance())
   }
-  
+
   override fun isNeedUpdate(pluginId: PluginId): Boolean {
     val descriptor = PluginManagerCore.getPlugin(pluginId) ?: return false
     return PluginUpdatesService.isNeedUpdate(descriptor)
+  }
+
+  override fun connectToUpdateServiceWithCounter(sessionId: String, callback: (Int?) -> Unit): PluginUpdatesService {
+    val session = PluginManagerSessionService.getInstance().getSession(sessionId)
+    val service = PluginUpdatesService.connectWithCounter(callback)
+    service.setFilter { session?.pluginStates[it.pluginId]?.isEnabled ?: true }
+    session?.updateService = service
+    return service
   }
 
   @RequiresBackgroundThread
@@ -243,7 +251,8 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       val machineId = if (LoadingState.COMPONENTS_LOADED.isOccurred) {
         MachineIdManager.getAnonymizedMachineId("JetBrainsUpdates") // same as regular updates
           .takeIf { !PropertiesComponent.getInstance().getBoolean(UpdateChecker.MACHINE_ID_DISABLED_PROPERTY, false) }
-      } else null
+      }
+      else null
 
       val query = buildString {
         append("build=${ApplicationInfoImpl.orFromPluginCompatibleBuild(buildNumber)}")
@@ -278,7 +287,6 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       return emptyList()
     }
   }
-
 
 
   override fun performUninstall(sessionId: String, pluginId: PluginId): Boolean {
@@ -497,7 +505,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   override fun isPluginInstalled(pluginId: PluginId): Boolean {
     return PluginManagerCore.isPluginInstalled(pluginId)
   }
-  
+
   override fun hasPluginsAvailableForEnableDisable(pluginIds: List<PluginId>): Boolean {
     val idMap = buildPluginIdMap()
     return pluginIds.any { !pluginRequiresUltimatePluginButItsDisabled(it, idMap) }

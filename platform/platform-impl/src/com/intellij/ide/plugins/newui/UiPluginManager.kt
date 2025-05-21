@@ -113,7 +113,7 @@ class UiPluginManager {
   fun isPluginInstalled(pluginId: PluginId): Boolean {
     return getController().isPluginInstalled(pluginId)
   }
-  
+
   fun hasPluginsAvailableForEnableDisable(pluginIds: List<PluginId>): Boolean {
     return getController().hasPluginsAvailableForEnableDisable(pluginIds)
   }
@@ -199,31 +199,31 @@ class UiPluginManager {
   fun findPluginNames(pluginIds: List<PluginId>): List<String> {
     return getController().findPluginNames(pluginIds)
   }
-  
+
   fun findPlugin(pluginId: PluginId): PluginUiModel? {
     return getController().findPlugin(pluginId)
   }
-  
+
   fun getLastCompatiblePluginUpdateModel(pluginId: PluginId, buildNumber: String? = null, indicator: ProgressIndicator? = null): PluginUiModel? {
     return getController().getLastCompatiblePluginUpdateModel(pluginId, buildNumber, indicator)
   }
-  
+
   fun getLastCompatiblePluginUpdate(allIds: Set<PluginId>, throwExceptions: Boolean, buildNumber: String? = null): List<IdeCompatibleUpdate> {
     return getController().getLastCompatiblePluginUpdate(allIds, throwExceptions, buildNumber)
   }
-  
+
   fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata? {
     return getController().loadPluginMetadata(externalPluginId)
   }
-  
+
   fun getPluginManagerUrl(): String {
     return getController().getPluginManagerUrl()
   }
-  
+
   fun updateDescriptorsForInstalledPlugins() {
     getController().updateDescriptorsForInstalledPlugins()
   }
-  
+
   fun isNeedUpdate(pluginId: PluginId): Boolean {
     return getController().isNeedUpdate(pluginId)
   }
@@ -233,6 +233,10 @@ class UiPluginManager {
       return UiPluginManagerController.EP_NAME.extensionList.firstOrNull() ?: DefaultUiPluginManagerController
     }
     return DefaultUiPluginManagerController
+  }
+
+  fun subscribeToUpdatesCount(sessionId: String, callback: (Int?) -> Unit): PluginUpdatesService {
+    return getController().connectToUpdateServiceWithCounter(sessionId, callback)
   }
 
   companion object {

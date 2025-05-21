@@ -14,6 +14,7 @@ import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.ide.plugins.marketplace.PrepareToUninstallResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.ide.plugins.newui.PluginUiModel
+import com.intellij.ide.plugins.newui.PluginUpdatesService
 import com.intellij.ide.plugins.newui.UiPluginManagerController
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.Service
@@ -26,6 +27,7 @@ import com.intellij.platform.pluginManager.shared.rpc.PluginManagerApi
 import com.intellij.platform.project.projectId
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
@@ -48,15 +50,15 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
   override fun getPlugin(id: PluginId): PluginUiModel? {
     return awaitForResult { PluginManagerApi.getInstance().getPluginById(id) }
   }
-  
+
   override fun findPlugin(pluginId: PluginId): PluginUiModel? {
     return awaitForResult { PluginManagerApi.getInstance().findPlugin(pluginId) }
   }
-  
+
   override fun getLastCompatiblePluginUpdateModel(pluginId: PluginId, buildNumber: String?, indicator: ProgressIndicator?): PluginUiModel? {
     return awaitForResult { PluginManagerApi.getInstance().getLastCompatiblePluginUpdateModel(pluginId, buildNumber) }
   }
-  
+
   override fun getLastCompatiblePluginUpdate(allIds: Set<PluginId>, throwExceptions: Boolean, buildNumber: String?): List<IdeCompatibleUpdate> {
     return awaitForResult { PluginManagerApi.getInstance().getLastCompatiblePluginUpdate(allIds, throwExceptions, buildNumber) }
   }
@@ -94,9 +96,18 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
   override fun isPluginInstalled(pluginId: PluginId): Boolean {
     return awaitForResult { PluginManagerApi.getInstance().isPluginInstalled(pluginId) }
   }
-  
+
   override fun hasPluginsAvailableForEnableDisable(pluginIds: List<PluginId>): Boolean {
     return awaitForResult { PluginManagerApi.getInstance().hasPluginsAvailableForEnableDisable(pluginIds) }
+  }
+
+  override fun connectToUpdateServiceWithCounter(sessionId: String, callback: (Int?) -> Unit): PluginUpdatesService {
+    service<BackendRpcCoroutineContext>().coroutineScope.launch {
+      PluginManagerApi.getInstance().subscribeToUpdatesCount(sessionId).collectLatest {
+        callback(it)
+      }
+    }
+    return RemotePluginUpdatesService(sessionId)
   }
 
   override fun filterPluginsRequiringUltimateButItsDisabled(pluginIds: List<PluginId>): List<PluginId> {
@@ -170,15 +181,15 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
   override fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>? {
     return awaitForResult { PluginManagerApi.getInstance().loadPluginReviews(pluginId, page) }
   }
-  
+
   override fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata? {
     return awaitForResult { PluginManagerApi.getInstance().loadPluginMetadata(externalPluginId) }
   }
-  
+
   override fun getPluginManagerUrl(): String {
     return awaitForResult { PluginManagerApi.getInstance().getPluginManagerUrl() }
   }
-  
+
   override fun updateDescriptorsForInstalledPlugins() {
     service<BackendRpcCoroutineContext>().coroutineScope.launch {
       PluginManagerApi.getInstance().updateDescriptorsForInstalledPlugins()
@@ -202,7 +213,7 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
   ): Boolean {
     return awaitForResult { PluginInstallerApi.getInstance().allowLoadUnloadWithoutRestart(pluginId.idString) }
   }
-  
+
   override fun isNeedUpdate(pluginId: PluginId): Boolean {
     return awaitForResult { PluginManagerApi.getInstance().isNeedUpdate(pluginId) }
   }
