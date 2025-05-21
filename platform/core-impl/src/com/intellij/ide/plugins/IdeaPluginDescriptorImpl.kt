@@ -548,6 +548,7 @@ class DependsSubDescriptor(
 
   init {
     logSubDescriptorUnexpectedElements(raw)
+    logUnexpectedElement(PluginXmlConst.PLUGIN_USE_IDEA_CLASSLOADER_ATTR) { raw.isUseIdeaClassLoader }
     logUnexpectedElement("<dependencies><module>") { raw.dependencies.any { it is DependenciesElement.ModuleDependency } }
     logUnexpectedElement("<dependencies><plugin>") { raw.dependencies.any { it is DependenciesElement.PluginDependency } }
   }
