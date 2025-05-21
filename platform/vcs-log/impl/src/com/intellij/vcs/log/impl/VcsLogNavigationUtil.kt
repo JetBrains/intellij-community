@@ -23,7 +23,6 @@ import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.graph.VcsLogVisibleGraphIndex
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
-import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogNotificationIdsHolder
 import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.ui.VcsLogUiEx.JumpResult
@@ -32,6 +31,7 @@ import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcs.log.visible.VisiblePack.ErrorVisiblePack
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.guava.await
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.CompletableFuture
 
 object VcsLogNavigationUtil {
@@ -41,7 +41,8 @@ object VcsLogNavigationUtil {
   fun jumpToRevisionAsync(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath? = null): CompletableFuture<Boolean> =
     VcsProjectLog.getInstance(project).showRevisionAsync(root, hash, filePath).asCompletableFuture()
 
-  internal fun MainVcsLogUi.showCommitSync(hash: Hash, root: VirtualFile, requestFocus: Boolean): Boolean {
+  @Internal
+  fun VcsLogUiEx.showCommitSync(hash: Hash, root: VirtualFile, requestFocus: Boolean): Boolean {
     return when (jumpToCommitSyncInternal(hash, root, true, requestFocus)) {
       JumpResult.SUCCESS -> true
       JumpResult.COMMIT_NOT_FOUND -> {
@@ -52,7 +53,8 @@ object VcsLogNavigationUtil {
     }
   }
 
-  internal suspend fun MainVcsLogUi.showCommit(hash: Hash, root: VirtualFile, requestFocus: Boolean): Boolean {
+  @Internal
+  suspend fun VcsLogUiEx.showCommit(hash: Hash, root: VirtualFile, requestFocus: Boolean): Boolean {
     return when (jumpToCommitInternal(hash, root, true, requestFocus).await()) {
       JumpResult.SUCCESS -> true
       JumpResult.COMMIT_NOT_FOUND -> {

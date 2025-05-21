@@ -12,8 +12,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 
-internal class VcsProjectLogErrorHandler(private val projectLog: VcsProjectLogBase<*>, private val coroutineScope: CoroutineScope) {
+@ApiStatus.Internal
+class VcsProjectLogErrorHandler(private val projectLog: VcsProjectLogBase<*>, private val coroutineScope: CoroutineScope) {
   private val countBySource = EnumMultiset.create(VcsLogErrorHandler.Source::class.java)
 
   @RequiresEdt

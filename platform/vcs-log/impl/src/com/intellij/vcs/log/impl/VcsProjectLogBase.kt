@@ -38,6 +38,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.seconds
 
@@ -46,11 +47,12 @@ private val LOG: Logger
 
 private val CLOSE_LOG_TIMEOUT = 10.seconds
 
-internal abstract class VcsProjectLogBase<M : VcsLogManager>(
+@Internal
+abstract class VcsProjectLogBase<M : VcsLogManager>(
   protected val project: Project,
   protected val coroutineScope: CoroutineScope,
 ) : VcsProjectLog() {
-  protected val errorHandler by lazy { VcsProjectLogErrorHandler(this, coroutineScope) }
+  protected val errorHandler: VcsProjectLogErrorHandler by lazy { VcsProjectLogErrorHandler(this, coroutineScope) }
 
   private val logManagerState = MutableStateFlow<M?>(null)
 
@@ -128,7 +130,7 @@ internal abstract class VcsProjectLogBase<M : VcsLogManager>(
     }
   }
 
-  final override fun runWhenLogIsReady(action: (VcsLogManager) -> Unit) = doRunWhenLogIsReady(action)
+  final override fun runWhenLogIsReady(action: (VcsLogManager) -> Unit): Unit = doRunWhenLogIsReady(action)
 
   protected fun doRunWhenLogIsReady(action: (M) -> Unit) {
     val manager = logManager

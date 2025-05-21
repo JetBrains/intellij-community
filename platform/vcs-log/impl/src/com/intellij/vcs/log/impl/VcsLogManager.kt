@@ -20,15 +20,13 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.MultiMap
-import com.intellij.vcs.log.VcsLogFilterCollection
-import com.intellij.vcs.log.VcsLogProvider
-import com.intellij.vcs.log.VcsLogRefresher
-import com.intellij.vcs.log.VcsLogUi
+import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.VcsLogStatusBarProgress
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
+import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.*
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl
@@ -53,7 +51,7 @@ open class VcsLogManager @Internal constructor(
   @Internal protected val project: Project,
   val uiProperties: VcsLogTabsProperties,
   logProviders: Map<VirtualFile, VcsLogProvider>,
-  internal val name: String,
+  @Internal val name: String,
   scheduleRefreshImmediately: Boolean,
   isIndexEnabled: Boolean,
   private val recreateMainLogHandler: BiConsumer<in VcsLogErrorHandler.Source, in Throwable>?,
@@ -378,6 +376,27 @@ open class VcsLogManager @Internal constructor(
       return logProviders
     }
   }
+}
+
+@Internal
+suspend fun VcsLogManager.awaitContainsCommit(hash: Hash, root: VirtualFile): Boolean {
+  if (!containsCommit(hash, root)) {
+    if (isLogUpToDate) return false
+    waitForRefresh()
+    if (!containsCommit(hash, root)) return false
+  }
+  return true
+}
+
+private fun VcsLogManager.containsCommit(hash: Hash, root: VirtualFile): Boolean {
+  if (!dataManager.storage.containsCommit(CommitId(hash, root))) return false
+
+  @Suppress("UNCHECKED_CAST")
+  val permanentGraphInfo = dataManager.dataPack.permanentGraph as? PermanentGraphInfo<VcsLogCommitStorageIndex> ?: return true
+
+  val commitIndex = dataManager.storage.getCommitIndex(hash, root)
+  val nodeId = permanentGraphInfo.permanentCommitsInfo.getNodeId(commitIndex)
+  return nodeId != VcsLogUiEx.COMMIT_NOT_FOUND
 }
 
 private fun VcsLogUiEx.isVisible(): Boolean = ComponentUtil.isShowing(mainComponent, false)

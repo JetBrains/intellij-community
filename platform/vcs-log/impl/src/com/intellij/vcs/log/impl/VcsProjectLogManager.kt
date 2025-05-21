@@ -12,13 +12,14 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsLogFilterCollection
+import com.intellij.vcs.log.VcsLogProvider
+import com.intellij.vcs.log.VcsLogUi
 import com.intellij.vcs.log.data.VcsLogStorageImpl
-import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.showCommit
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.showCommitSync
 import com.intellij.vcs.log.ui.MainVcsLogUi
-import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import kotlinx.coroutines.*
@@ -139,12 +140,9 @@ internal class VcsProjectLogManager(
     requestFocus: Boolean,
     predicate: (MainVcsLogUi) -> Boolean,
   ): MainVcsLogUi? {
-    if (!containsCommit(hash, root)) {
-      if (isLogUpToDate) return null
-      waitForRefresh()
-      if (!containsCommit(hash, root)) return null
+    if (!awaitContainsCommit(hash, root)) {
+      return null
     }
-
     // At this point we know that commit exists in permanent graph.
     // Try finding it in the opened tabs or open a new tab if none has a matching filter.
     // We will skip tabs that are not refreshed yet, as it may be slow.
@@ -189,17 +187,6 @@ internal class VcsProjectLogManager(
     return null
   }
 
-  private fun containsCommit(hash: Hash, root: VirtualFile): Boolean {
-    if (!dataManager.storage.containsCommit(CommitId(hash, root))) return false
-
-    @Suppress("UNCHECKED_CAST")
-    val permanentGraphInfo = dataManager.dataPack.permanentGraph as? PermanentGraphInfo<VcsLogCommitStorageIndex> ?: return true
-
-    val commitIndex = dataManager.storage.getCommitIndex(hash, root)
-    val nodeId = permanentGraphInfo.permanentCommitsInfo.getNodeId(commitIndex)
-    return nodeId != VcsLogUiEx.COMMIT_NOT_FOUND
-  }
-
   @RequiresEdt
   override fun disposeUi() {
     Disposer.dispose(tabsManager)
@@ -226,6 +213,7 @@ internal class VcsProjectLogManager(
   }
 }
 
-internal fun getProjectLogName(logProviders: Map<VirtualFile, VcsLogProvider>): String {
+@Internal
+fun getProjectLogName(logProviders: Map<VirtualFile, VcsLogProvider>): String {
   return "Vcs Project Log for " + VcsLogUtil.getProvidersMapText(logProviders)
 }
