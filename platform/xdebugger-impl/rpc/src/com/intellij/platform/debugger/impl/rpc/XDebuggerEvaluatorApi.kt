@@ -88,6 +88,9 @@ sealed interface XEvaluationResult {
 
   @Serializable
   data class EvaluationError(val errorMessage: @NlsContexts.DialogMessage String) : XEvaluationResult
+
+  @Serializable
+  data class InvalidExpression(val error: @NlsContexts.DialogMessage String) : XEvaluationResult
 }
 
 @ApiStatus.Internal
