@@ -2,6 +2,7 @@
 package com.intellij.openapi.application
 
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.TestOnly
@@ -195,8 +196,10 @@ interface ThreadingSupport {
   fun setLockAcquisitionListener(listener: LockAcquisitionListener)
 
   @ApiStatus.Internal
-  // long because this is called from Java
-  fun setLockAcquisitionInterceptor(delayMillis: Long, consumer: (shouldStop: () -> Boolean) -> Unit)
+  fun setLockAcquisitionInterceptor(consumer: (Deferred<*>) -> Unit)
+
+  @ApiStatus.Internal
+  fun removeLockAcquisitionInterceptor()
 
   @ApiStatus.Internal
   fun setWriteLockReacquisitionListener(listener: WriteLockReacquisitionListener)

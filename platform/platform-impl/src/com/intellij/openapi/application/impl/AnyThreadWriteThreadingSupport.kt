@@ -10,6 +10,7 @@ import com.intellij.openapi.util.coroutines.runSuspend
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.containers.Stack
+import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.SwingUtilities
@@ -564,7 +565,11 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     myLockAcquisitionListener = listener
   }
 
-  override fun setLockAcquisitionInterceptor(delayMillis: Long, consumer: (() -> Boolean) -> Unit) {
+  override fun setLockAcquisitionInterceptor(consumer: (Deferred<*>) -> Unit) {
+    return
+  }
+
+  override fun removeLockAcquisitionInterceptor() {
     return
   }
 

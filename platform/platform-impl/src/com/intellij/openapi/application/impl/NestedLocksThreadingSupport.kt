@@ -14,9 +14,7 @@ import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ReflectionUtil
 import com.jetbrains.rd.util.forEachReversed
-import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
@@ -28,9 +26,7 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.startCoroutine
 import kotlin.getOrThrow
-import kotlin.time.Duration
 import kotlin.time.DurationUnit
-import kotlin.time.ExperimentalTime
 import kotlin.time.toDuration
 
 /**
@@ -848,8 +844,13 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
   }
 
   @ApiStatus.Internal
-  override fun setLockAcquisitionInterceptor(delayMillis: Long, consumer: (shouldStop: () -> Boolean) -> Unit) {
-    myLockInterceptor.set(PermitWaitingInterceptor(delayMillis.toDuration(DurationUnit.MILLISECONDS), consumer))
+  override fun setLockAcquisitionInterceptor(consumer: (Deferred<*>) -> Unit) {
+    myLockInterceptor.set(PermitWaitingInterceptor(consumer))
+  }
+
+  @ApiStatus.Internal
+  override fun removeLockAcquisitionInterceptor() {
+    myLockInterceptor.remove()
   }
 
   @ApiStatus.Internal
@@ -1453,61 +1454,58 @@ private class RunSuspend<T>(val job: Job?, val interceptor: PermitWaitingInterce
   override val context: CoroutineContext
     get() = job ?: EmptyCoroutineContext
 
-  var result: Result<T>? = null
+  val resultDeferred: CompletableDeferred<T> = CompletableDeferred()
 
   override fun resumeWith(result: Result<T>) = synchronized(this) {
-    this.result = result
+    if (result.isSuccess) {
+      resultDeferred.complete(result.getOrThrow())
+    }
+    else {
+      resultDeferred.completeExceptionally(result.exceptionOrNull()!!)
+    }
     @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN") (this as Object).notifyAll()
   }
 
-  @OptIn(ExperimentalTime::class)
   fun await(): T {
-    synchronized(this) {
-      var interrupted = false
-      while (true) {
-        when (val result = this.result) {
-          null ->
+    if (interceptor == null) {
+      synchronized(this) {
+        var interrupted = false
+        while (true) {
+          if (resultDeferred.isCompleted) {
+            if (interrupted) {
+              // Restore "interrupted" flag
+              Thread.currentThread().interrupt()
+            }
+            return resultDeferred.getOrThrow()
+          }
+          else {
             try {
               @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-              if (interceptor == null) {
-                (this as Object).wait()
-              } else {
-                (this as Object).wait(interceptor.initialDelay.inWholeMilliseconds)
-                // todo: protection against spurious wakeups?
-                break
-              }
+              ((this as Object).wait())
             }
             catch (_: InterruptedException) {
               // Suppress exception or token could be lost.
               interrupted = true
             }
-          else -> {
-            if (interrupted) {
-              // Restore "interrupted" flag
-              Thread.currentThread().interrupt()
-            }
-            return result.getOrThrow() // throw up failure
           }
         }
       }
-    }
-    val currentResult = result
-    if (currentResult == null) {
-      // if consumer is null, then wait() will block until the value is not null
-      check(interceptor != null)
-      interceptor.consumer {
-        synchronized(this) {
-          this.result != null
-        }
-      }
-      return result!!.getOrThrow() // consumer returns when `result` gets non-nullable value
     } else {
-      return currentResult.getOrThrow()
+      if (!resultDeferred.isCompleted) {
+        interceptor.consumer(resultDeferred)
+      }
+      return resultDeferred.getOrThrow() // consumer returns when `result` gets non-nullable value
     }
   }
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
+private fun <T> Deferred<T>.getOrThrow(): T {
+  getCompletionExceptionOrNull()?.let { throw it }
+  return getCompleted() // throw up failure
+}
+
 private data class PermitWaitingInterceptor(
-  val initialDelay: Duration,
-  val consumer: ((shouldTerminate: () -> Boolean) -> Unit))
+  val consumer: (Deferred<*>) -> Unit,
+)
 

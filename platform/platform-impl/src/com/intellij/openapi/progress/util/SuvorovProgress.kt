@@ -3,13 +3,20 @@ package com.intellij.openapi.progress.util
 
 import com.intellij.CommonBundle
 import com.intellij.diagnostic.LoadingState
+import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.application.impl.getGlobalThreadingSupport
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ui.AsyncProcessIcon
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
 import java.awt.KeyboardFocusManager
+import java.awt.event.InputEvent
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
 
@@ -34,67 +41,100 @@ import javax.swing.SwingUtilities
 object SuvorovProgress {
 
   @JvmStatic
-  fun dispatchEventsUntilConditionCompletes(shouldTerminate: () -> Boolean) {
+  fun dispatchEventsUntilConditionCompletes(awaitedValue: Deferred<*>) {
     val value = if (!LoadingState.COMPONENTS_LOADED.isOccurred) {
       "None"
     }
     else {
-      Registry.get("ide.freeze.fake.progress.kind").selectedOption
+      Registry.get("ide.suvorov.progress.kind").selectedOption
     }
     when (value) {
-      "None" -> {
-        while (!shouldTerminate()) {
-          sleep()
-        }
-      }
+      "None" -> awaitedValue.asCompletableFuture().join()
       "Spinning" -> if (Registry.`is`("editor.allow.raw.access.on.edt")) {
-        showSpinningProgress(shouldTerminate)
+        showSpinningProgress(awaitedValue)
       }
       else {
         thisLogger().warn("Spinning progress would not work without enabled registry value `editor.allow.raw.access.on.edt`")
-        showBarProgress(shouldTerminate)
+        showPotemkinProgress(awaitedValue, true)
       }
-      "Bar" -> showBarProgress(shouldTerminate)
+      "Bar", "Overlay" -> showPotemkinProgress(awaitedValue, value == "Bar")
       else -> throw IllegalArgumentException("Unknown value for registry key `ide.freeze.fake.progress.kind`: $value")
     }
   }
 
-  private fun showBarProgress(shouldTerminate: () -> Boolean) {
+  private fun showPotemkinProgress(awaitedValue: Deferred<*>, isBar: Boolean) {
     // some focus machinery may require Write-Intent read action
     // we need to remove it from there
     getGlobalThreadingSupport().relaxPreventiveLockingActions {
-      // Unfortunately, we still have to use PotemkinProgress.
-      // At this point, we have too many events that acquire the Write-Intent read lock,
-      // so we need to have a strict control over events that are executing on EDT to avoid stack overflow of SuvorovProgresses
-      val potemkinProgress = PotemkinProgress(CommonBundle.message("title.long.non.interactive.progress"), null, null, null)
-      potemkinProgress.start()
+      val showingDelay = Registry.get("ide.suvorov.progress.showing.delay.ms").asInteger()
+      val progress = getPotemkinProgress(showingDelay, isBar)
+      progress.start()
       try {
+        try {
+          awaitedValue.asCompletableFuture().get(showingDelay.toLong(), TimeUnit.MILLISECONDS)
+          return@relaxPreventiveLockingActions
+        }
+        catch (_: TimeoutException) {
+          // ignore, now we need to paint the progress
+        }
         do {
-          potemkinProgress.interact()
+          progress.interact()
           sleep(); // avoid touching the progress too much
         }
-        while (!shouldTerminate())
+        while (!awaitedValue.isCompleted)
       }
       finally {
         // we cannot acquire WI on closing
-        potemkinProgress.dialog.getPopup()?.setShouldDisposeInWriteIntentReadAction(false)
-        potemkinProgress.progressFinished()
-        potemkinProgress.processFinish()
-        Disposer.dispose(potemkinProgress)
+        if (progress is PotemkinProgress) {
+          progress.dialog.getPopup()?.setShouldDisposeInWriteIntentReadAction(false)
+          progress.progressFinished()
+          progress.processFinish()
+          Disposer.dispose(progress)
+        }
+        progress.stop()
+        val pendingEvents = getPendingInputEvents(progress)
+        pendingEvents.forEach {
+          IdeEventQueue.getInstance().doPostEvent(it, true)
+        }
       }
     }
   }
 
-  private fun showSpinningProgress(shouldTerminate: () -> Boolean) {
+  fun getPendingInputEvents(progress: ProgressIndicator): List<InputEvent> {
+    return when (progress) {
+      is PotemkinProgress -> progress.drainUndispatchedInputEvents()
+      is PotemkinOverlayProgress -> progress.drainUndispatchedInputEvents()
+      else -> error("Unexpected progress type: $progress")
+    }
+  }
+
+  fun ProgressIndicator.interact() {
+    if (this is PotemkinProgress) {
+      interact()
+    }
+    else if (this is PotemkinOverlayProgress) {
+      interact()
+    }
+  }
+
+  private fun getPotemkinProgress(showingDelay: Int, isBar: Boolean): ProgressIndicator {
+    return if (isBar) {
+      PotemkinProgress(CommonBundle.message("title.long.non.interactive.progress"), null, null, null).apply { setDelayInMillis(showingDelay) }
+    }
+    else {
+      val window = SwingUtilities.getRootPane(KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner)
+      PotemkinOverlayProgress(window)
+    }.apply { setDelayInMillis(showingDelay) }
+  }
+
+  private fun showSpinningProgress(awaitedValue: Deferred<*>) {
     getGlobalThreadingSupport().relaxPreventiveLockingActions {
 
       val icon = AsyncProcessIcon.createBig("Suvorov progress")
       val window = SwingUtilities.getRootPane(KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner)
 
       if (window == null) {
-        while (!shouldTerminate()) {
-          sleep()
-        }
+        awaitedValue.asCompletableFuture().join()
         return@relaxPreventiveLockingActions
       }
 
@@ -131,7 +171,7 @@ object SuvorovProgress {
           stealer.dispatchEvents(0)
           sleep() // avoid touching the progress too much
         }
-        while (!shouldTerminate())
+        while (!awaitedValue.isCompleted)
       }
       finally {
         icon.suspend()
