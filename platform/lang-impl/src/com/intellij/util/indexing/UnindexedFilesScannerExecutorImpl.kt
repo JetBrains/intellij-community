@@ -5,6 +5,7 @@ import com.google.common.util.concurrent.SettableFuture
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.blockingContext
@@ -381,10 +382,21 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
    * This method does not have "happens before" semantics. It requests GUI suspender to suspend and executes runnable without waiting for
    * all the running tasks to pause.
    */
+  @Suppress("OVERRIDE_DEPRECATION")
   override fun suspendScanningAndIndexingThenRun(activityName: @ProgressText String, runnable: Runnable) {
     pauseReason.update { it.add(activityName) }
     try {
       DumbService.getInstance(project).suspendIndexingAndRun(activityName, runnable)
+    }
+    finally {
+      pauseReason.update { it.remove(activityName) }
+    }
+  }
+
+  override suspend fun suspendScanningAndIndexingThenExecute(activityName: @ProgressText String, runnable: suspend () -> Unit) {
+    pauseReason.update { it.add(activityName) }
+    try {
+      project.serviceAsync<DumbService>().suspendIndexingAndRun(activityName, runnable)
     }
     finally {
       pauseReason.update { it.remove(activityName) }

@@ -17,7 +17,11 @@ interface UnindexedFilesScannerExecutor {
   val startedOrStoppedEvent: Flow<*>
   val modificationTracker: ModificationTracker
 
+  @Deprecated("Use suspendScanningAndIndexingThenRun(String, suspend () -> Unit)")
   fun suspendScanningAndIndexingThenRun(activityName: @ProgressText String, runnable: Runnable)
+
+  suspend fun suspendScanningAndIndexingThenExecute(activityName: @ProgressText String, runnable: suspend () -> Unit)
+
   fun suspendQueue()
   fun resumeQueue()
   fun cancelAllTasksAndWait()
