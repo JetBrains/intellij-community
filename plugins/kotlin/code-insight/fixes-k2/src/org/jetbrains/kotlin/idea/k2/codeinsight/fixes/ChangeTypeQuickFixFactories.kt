@@ -7,6 +7,7 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -131,7 +132,12 @@ internal object ChangeTypeQuickFixFactories {
         val initializer = initializer
         return if (typeReference != null && initializer != null) {
             //copy property initializer to calculate initializer's type without property's declared type
-            KtPsiFactory(project).createExpressionCodeFragment(initializer.text, this).getContentElement()?.expressionType
+            val newExpression = KtPsiFactory(project).createExpressionCodeFragment(initializer.text, this).getContentElement() ?: return null
+
+            // A new expression has to be analyzed in the context of the newly created file. To go back to the outer session, a workaround with
+            // converting a type to a pointer and back can be used
+            @OptIn(KaExperimentalApi::class)
+            analyze(newExpression) { newExpression.expressionType?.createPointer() }?.restore()
         } else null
     }
 
