@@ -39,8 +39,8 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   @Override
   public @Unmodifiable @NotNull List<PsiReference> getReferences() {
     return ContainerUtil.concat(myReferences,
-                                it -> it instanceof PsiReferencesWrapper ?
-                                      ((PsiReferencesWrapper)it).getReferences() :
+                                it -> it instanceof PsiReferencesWrapper wrapper ?
+                                      wrapper.getReferences() :
                                       Collections.singleton(it)
     );
   }
@@ -105,8 +105,8 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   protected ResolveResult[] innerResolve(final boolean incompleteCode) {
     LinkedHashSet<ResolveResult> result = new LinkedHashSet<>();
     for (PsiReference reference : myReferences) {
-      if (reference instanceof PsiPolyVariantReference) {
-        for (ResolveResult rr : ((PsiPolyVariantReference)reference).multiResolve(incompleteCode)) {
+      if (reference instanceof PsiPolyVariantReference poly) {
+        for (ResolveResult rr : poly.multiResolve(incompleteCode)) {
           if (rr.isValidResult()) {
             result.add(rr);
           }
@@ -140,7 +140,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   }
 
   private static double getPriority(@NotNull PsiReference o1) {
-    if (o1 instanceof PriorityReference) return ((PriorityReference)o1).getPriority();
+    if (o1 instanceof PriorityReference priority) return priority.getPriority();
     return PsiReferenceRegistrar.DEFAULT_PRIORITY;
   }
 
@@ -149,8 +149,8 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   public @NotNull String getUnresolvedMessagePattern() {
     final PsiReference reference = chooseReference();
 
-    return reference instanceof EmptyResolveMessageProvider ?
-           ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern() :
+    return reference instanceof EmptyResolveMessageProvider empty ?
+           empty.getUnresolvedMessagePattern() :
            AnalysisBundle.message("cannot.resolve.symbol");
   }
 
@@ -158,8 +158,8 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
     final ArrayList<LocalQuickFix> list = new ArrayList<>();
     for (Object ref : myReferences) {
-      if (ref instanceof LocalQuickFixProvider) {
-        ContainerUtil.addAll(list, ((LocalQuickFixProvider)ref).getQuickFixes());
+      if (ref instanceof LocalQuickFixProvider provider) {
+        ContainerUtil.addAll(list, provider.getQuickFixes());
       }
     }
     return list.toArray(LocalQuickFix.EMPTY_ARRAY);
@@ -174,8 +174,8 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   @Override
   public PsiFileReference getLastFileReference() {
     for (PsiReference reference : myReferences) {
-      if (reference instanceof FileReferenceOwner) {
-        return ((FileReferenceOwner)reference).getLastFileReference();
+      if (reference instanceof FileReferenceOwner owner) {
+        return owner.getLastFileReference();
       }
     }
     return null;
@@ -184,8 +184,8 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   public static PsiReference[] filterByOffset(PsiReference[] references, int offset) {
     return StreamEx.of(references)
       .flatMap(ref ->
-                 ref instanceof PsiDynaReference<?>
-                 ? StreamEx.of(((PsiDynaReference<?>)ref).myReferences).filter(it -> it.getRangeInElement().contains(offset))
+                 ref instanceof PsiDynaReference<?> dyna
+                 ? StreamEx.of(dyna.myReferences).filter(it -> it.getRangeInElement().contains(offset))
                  : StreamEx.of(ref)
       ).toArray(PsiReference.EMPTY_ARRAY);
   }

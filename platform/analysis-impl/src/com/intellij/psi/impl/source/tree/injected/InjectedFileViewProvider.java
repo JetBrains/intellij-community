@@ -60,7 +60,7 @@ public interface InjectedFileViewProvider extends FileViewProvider, FreeThreaded
     Ref<FileViewProvider> provider = new Ref<>();
     PsiLanguageInjectionHost.InjectedPsiVisitor visitor = (injectedPsi, places) -> {
       Document document = documentManager.getCachedDocument(injectedPsi);
-      if (document instanceof DocumentWindowImpl && oldDocumentWindow.areRangesEqual((DocumentWindowImpl)document)) {
+      if (document instanceof DocumentWindowImpl window && oldDocumentWindow.areRangesEqual(window)) {
         provider.set(injectedPsi.getViewProvider());
       }
     };

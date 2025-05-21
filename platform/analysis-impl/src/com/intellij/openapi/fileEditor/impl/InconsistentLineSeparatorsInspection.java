@@ -65,13 +65,13 @@ public final class InconsistentLineSeparatorsInspection extends LocalInspectionT
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement psiElement = descriptor.getPsiElement();
-      if (!(psiElement instanceof PsiFile)) {
+      if (!(psiElement instanceof PsiFile psiFile)) {
         return;
       }
 
       final String lineSeparator = FileDocumentManager.getInstance().getLineSeparator(null, project);
 
-      final VirtualFile virtualFile = ((PsiFile)psiElement).getVirtualFile();
+      final VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile != null) {
         AbstractConvertLineSeparatorsAction.changeLineSeparators(project, virtualFile, lineSeparator);
       }

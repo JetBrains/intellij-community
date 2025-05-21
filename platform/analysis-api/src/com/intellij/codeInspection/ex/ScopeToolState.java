@@ -204,8 +204,8 @@ public final class ScopeToolState {
           if (current.isEnabled()) {
             myEnableRequiredComponent.add(current);
           }
-          if (current instanceof Container) {
-            for (Component child : ((Container)current).getComponents()) {
+          if (current instanceof Container container) {
+            for (Component child : container.getComponents()) {
               q.addLast(child);
             }
           }

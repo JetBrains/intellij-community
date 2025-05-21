@@ -84,14 +84,14 @@ public final class ModuleWithDependentsScope extends GlobalSearchScope implement
       ModuleIndex index = new ModuleIndex();
       for (Module module : ModuleManager.getInstance(project).getModules()) {
         for (OrderEntry orderEntry : ModuleRootManager.getInstance(module).getOrderEntries()) {
-          if (orderEntry instanceof ModuleOrderEntry) {
-            Module referenced = ((ModuleOrderEntry)orderEntry).getModule();
+          if (orderEntry instanceof ModuleOrderEntry moduleOrderEntry) {
+            Module referenced = moduleOrderEntry.getModule();
             if (referenced != null) {
               index.allUsages.putValue(referenced, module);
-              if (((ModuleOrderEntry)orderEntry).isExported()) {
+              if (moduleOrderEntry.isExported()) {
                 index.exportingUsages.putValue(referenced, module);
               }
-              if (((ModuleOrderEntry)orderEntry).isProductionOnTestDependency()) {
+              if (moduleOrderEntry.isProductionOnTestDependency()) {
                 index.productionOnTestUsages.putValue(referenced, module);
               }
             }
@@ -167,10 +167,10 @@ public final class ModuleWithDependentsScope extends GlobalSearchScope implement
         }
       }
       else {
-        if (!(context instanceof ModuleContext)) {
+        if (!(context instanceof ModuleContext moduleContext)) {
           return false;
         }
-        Module module = ((ModuleContext)context).getModule();
+        Module module = moduleContext.getModule();
         if (module == null) {
           return false;
         }
@@ -224,7 +224,7 @@ public final class ModuleWithDependentsScope extends GlobalSearchScope implement
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    return o instanceof ModuleWithDependentsScope && myModules.equals(((ModuleWithDependentsScope)o).myModules);
+    return o instanceof ModuleWithDependentsScope moduleWithDependentsScope && myModules.equals(moduleWithDependentsScope.myModules);
   }
 
   @Override

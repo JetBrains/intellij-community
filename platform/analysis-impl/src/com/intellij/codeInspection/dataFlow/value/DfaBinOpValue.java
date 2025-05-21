@@ -81,8 +81,8 @@ public final class DfaBinOpValue extends DfaValue {
   @Override
   public String toString() {
     String delimiter = myOp.toString();
-    if (myOp == LongRangeBinOp.PLUS && myRight instanceof DfaTypeValue) {
-      long value = extractLong((DfaTypeValue)myRight);
+    if (myOp == LongRangeBinOp.PLUS && myRight instanceof DfaTypeValue typeValue) {
+      long value = extractLong(typeValue);
       if (value < 0) {
         delimiter = "";
       }
@@ -154,15 +154,15 @@ public final class DfaBinOpValue extends DfaValue {
         return myFactory.fromDfType(resultType.meetRange(LongRangeSet.point(0)));
       }
       if (op == LongRangeBinOp.MOD) {
-        if (leftDfType instanceof DfIntegralType && rightDfType instanceof DfIntegralType) {
-          if (withinDivisorRange(state, left, right, ((DfIntegralType)leftDfType).getRange(), ((DfIntegralType)rightDfType).getRange())) {
+        if (leftDfType instanceof DfIntegralType leftIntegralType && rightDfType instanceof DfIntegralType rightIntegralType) {
+          if (withinDivisorRange(state, left, right, leftIntegralType.getRange(), rightIntegralType.getRange())) {
             return left;
           }
         }
-        if (left instanceof DfaVariableValue && rightConst != null) {
+        if (left instanceof DfaVariableValue dfaVariableValue && rightConst != null) {
           long divisor = rightConst.longValue();
           if (divisor > 1 && divisor <= Long.SIZE) {
-            return doCreate((DfaVariableValue)left, right, resultType, op);
+            return doCreate(dfaVariableValue, right, resultType, op);
           }
         }
         return null;
@@ -170,12 +170,12 @@ public final class DfaBinOpValue extends DfaValue {
       if (leftConst != null && (right instanceof DfaVariableValue || right instanceof DfaBinOpValue) && op == LongRangeBinOp.PLUS) {
         return doCreate(right, left, state, resultType, op);
       }
-      if (left instanceof DfaVariableValue) {
-        if (right instanceof DfaVariableValue) {
+      if (left instanceof DfaVariableValue leftValue) {
+        if (right instanceof DfaVariableValue rightValue) {
           if (op == LongRangeBinOp.PLUS && right.getID() > left.getID()) {
-            return doCreate((DfaVariableValue)right, left, resultType, op);
+            return doCreate(rightValue, left, resultType, op);
           }
-          return doCreate((DfaVariableValue)left, right, resultType, op);
+          return doCreate(leftValue, right, resultType, op);
         }
         if (rightConst != null) {
           long value = rightConst.longValue();
@@ -183,7 +183,7 @@ public final class DfaBinOpValue extends DfaValue {
           if (op == LongRangeBinOp.MINUS) {
             right = myFactory.fromDfType(resultType.meetRange(LongRangeSet.point(value).negate(resultType.getLongRangeType())));
           }
-          return doCreate((DfaVariableValue)left, right, resultType, LongRangeBinOp.PLUS);
+          return doCreate(leftValue, right, resultType, LongRangeBinOp.PLUS);
         }
       }
       if (left instanceof DfaBinOpValue sumValue) {
@@ -231,14 +231,14 @@ public final class DfaBinOpValue extends DfaValue {
             (dividendRange.max() < divisorRange.min() || state.getRelation(dividend, divisor) == RelationType.LT)) {
           return true;
         }
-        if (dividend instanceof DfaBinOpValue) {
-          LongRangeBinOp prevOp = ((DfaBinOpValue)dividend).getOperation();
+        if (dividend instanceof DfaBinOpValue binOpValue) {
+          LongRangeBinOp prevOp = binOpValue.getOperation();
           if (prevOp == LongRangeBinOp.MINUS) {
             boolean negative = dividendRange.max() <= 0;
             boolean positive = dividendRange.min() >= 0;
             if (positive || negative) {
-              DfaVariableValue left = ((DfaBinOpValue)dividend).getLeft();
-              DfaValue right = ((DfaBinOpValue)dividend).getRight();
+              DfaVariableValue left = binOpValue.getLeft();
+              DfaValue right = binOpValue.getRight();
               DfIntegralType leftType = ObjectUtils.tryCast(state.getDfType(left), DfIntegralType.class);
               DfIntegralType rightType = ObjectUtils.tryCast(state.getDfType(right), DfIntegralType.class);
               if (leftType != null && rightType != null) {

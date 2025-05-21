@@ -188,13 +188,13 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
     if (virtualFile == null) {
       return null;
     }
-    if (virtualFile instanceof VirtualFileWindow) {
-      virtualFile = ((VirtualFileWindow)virtualFile).getDelegate();
+    if (virtualFile instanceof VirtualFileWindow window) {
+      virtualFile = window.getDelegate();
     }
     Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile, -1), false);
     if (editor == null || editor instanceof EditorWindow || editor.isDisposed()) return editor;
-    if (document instanceof DocumentWindowImpl) {
-      return InjectedEditorWindowTracker.getInstance().createEditor((DocumentWindowImpl)document, editor, file);
+    if (document instanceof DocumentWindowImpl window) {
+      return InjectedEditorWindowTracker.getInstance().createEditor(window, editor, file);
     }
     return editor;
   }
@@ -247,7 +247,7 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
     PsiFile file = element.getContainingFile();
     if (file == null) return null;
     VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile instanceof VirtualFileWindow) return ((VirtualFileWindow)virtualFile).getDocumentWindow();
+    if (virtualFile instanceof VirtualFileWindow window) return window.getDocumentWindow();
     return null;
   }
 

@@ -70,8 +70,8 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
       }
 
       private boolean isInScope(@NotNull RefEntity refEntity) {
-        if (refEntity instanceof RefElement) {
-          SmartPsiElementPointer pointer = ((RefElement)refEntity).getPointer();
+        if (refEntity instanceof RefElement refElement) {
+          SmartPsiElementPointer pointer = refElement.getPointer();
           if (pointer != null) {
             VirtualFile virtualFile = pointer.getVirtualFile();
             if (virtualFile != null && !scope.contains(virtualFile)) return false;
@@ -81,8 +81,8 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
             return owner == null || isInScope(owner);
           }
         }
-        if (refEntity instanceof RefModule) {
-          return scope.containsModule(((RefModule)refEntity).getModule());
+        if (refEntity instanceof RefModule refModule) {
+          return scope.containsModule(refModule.getModule());
         }
         return true;
       }

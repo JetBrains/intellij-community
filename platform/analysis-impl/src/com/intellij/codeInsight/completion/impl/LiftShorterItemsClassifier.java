@@ -86,7 +86,7 @@ public final class LiftShorterItemsClassifier extends Classifier<LookupElement> 
   private @NotNull Iterable<LookupElement> liftShorterElements(@NotNull Iterable<? extends LookupElement> source,
                                                                @Nullable Set<? super LookupElement> lifted,
                                                                @NotNull ProcessingContext context) {
-    Set<LookupElement> srcSet = new ReferenceOpenHashSet<>(source instanceof Collection ? ((Collection<?>)source).size() : myCount);
+    Set<LookupElement> srcSet = new ReferenceOpenHashSet<>(source instanceof Collection<?> collection ? collection.size() : myCount);
     ContainerUtil.addAll(srcSet, source);
     if (srcSet.size() < 2) {
       return myNext.classify(source, context);

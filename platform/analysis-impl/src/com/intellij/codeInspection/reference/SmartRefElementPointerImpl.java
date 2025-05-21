@@ -29,12 +29,12 @@ public final class SmartRefElementPointerImpl implements SmartRefElementPointer 
     myFQName = ref.getExternalName();
     myType = ref.getRefManager().getType(ref);
     if (myFQName == null) {
-      boolean psiExists = ref instanceof RefElement && ((RefElement)ref).getPsiElement() != null;
+      boolean psiExists = ref instanceof RefElement refElement && refElement.getPsiElement() != null;
       LOG.error("Name: " + ref.getName() +
                 ", qName: " + ref.getQualifiedName() +
                 "; type: " + myType +
                 "; psi exists: " + psiExists +
-                (ref instanceof RefElement ? ("; containing file: " + getContainingFileName((RefElement)ref)) : ""));
+                (ref instanceof RefElement refElement ? ("; containing file: " + getContainingFileName(refElement)) : ""));
     }
   }
 

@@ -70,10 +70,10 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
                                                                           @Nullable PsiElement element,
                                                                           @NotNull InspectionProfile inspectionProfile,
                                                                           @Nullable InspectionToolWrapper<?, ?> toolWrapper) {
-    if (toolWrapper instanceof LocalInspectionToolWrapper && ((LocalInspectionToolWrapper)toolWrapper).isUnfair()) {
-      LocalInspectionTool inspectionTool = ((LocalInspectionToolWrapper)toolWrapper).getTool();
-      if (inspectionTool instanceof PairedUnfairLocalInspectionTool) {
-        String oppositeShortName = ((PairedUnfairLocalInspectionTool)inspectionTool).getInspectionForBatchShortName();
+    if (toolWrapper instanceof LocalInspectionToolWrapper local && local.isUnfair()) {
+      LocalInspectionTool inspectionTool = local.getTool();
+      if (inspectionTool instanceof PairedUnfairLocalInspectionTool unfair) {
+        String oppositeShortName = unfair.getInspectionForBatchShortName();
         return element == null ? inspectionProfile.getInspectionTool(oppositeShortName, project)
                                : inspectionProfile.getInspectionTool(oppositeShortName, element);
       }

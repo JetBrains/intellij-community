@@ -193,11 +193,11 @@ public abstract class TemplateBase extends Template {
   }
 
   private static boolean containsSelection(Expression expression) {
-    if (expression instanceof VariableNode) {
-      return SELECTION.equals(((VariableNode)expression).getName());
+    if (expression instanceof VariableNode variableNode) {
+      return SELECTION.equals(variableNode.getName());
     }
-    if (expression instanceof MacroCallNode) {
-      return ContainerUtil.exists(((MacroCallNode)expression).getParameters(), TemplateBase::containsSelection);
+    if (expression instanceof MacroCallNode macroCallNode) {
+      return ContainerUtil.exists(macroCallNode.getParameters(), TemplateBase::containsSelection);
     }
     return false;
   }

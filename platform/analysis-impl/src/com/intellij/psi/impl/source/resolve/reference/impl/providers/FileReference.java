@@ -68,15 +68,15 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
   public static @Nullable FileReference findFileReference(final @NotNull PsiReference original) {
     if (original instanceof PsiMultiReference multiReference) {
       for (PsiReference reference : multiReference.getReferences()) {
-        if (reference instanceof FileReference) {
-          return (FileReference)reference;
+        if (reference instanceof FileReference fileReference) {
+          return fileReference;
         }
       }
     }
-    else if (original instanceof FileReferenceOwner) {
-      final PsiFileReference fileReference = ((FileReferenceOwner)original).getLastFileReference();
-      if (fileReference instanceof FileReference) {
-        return (FileReference)fileReference;
+    else if (original instanceof FileReferenceOwner referenceOwner) {
+      final PsiFileReference fileReference = referenceOwner.getLastFileReference();
+      if (fileReference instanceof FileReference fileRef) {
+        return fileRef;
       }
     }
 
@@ -144,8 +144,8 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
                                        final @NotNull Collection<? super ResolveResult> result,
                                        final boolean caseSensitive) {
     if (isAllowedEmptyPath(text) || ".".equals(text) || "/".equals(text)) {
-      if (context instanceof FileReferenceResolver) {
-        ResolveResult element = resolveFileReferenceResolver((FileReferenceResolver)context, text);
+      if (context instanceof FileReferenceResolver resolver) {
+        ResolveResult element = resolveFileReferenceResolver(resolver, text);
         if (element != null) {
           result.add(element);
           return;
@@ -154,8 +154,8 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
       result.add(new PsiElementResolveResult(context));
     }
     else if ("..".equals(text)) {
-      if (context instanceof FileReferenceResolver) {
-        ResolveResult element = resolveFileReferenceResolver((FileReferenceResolver)context, text);
+      if (context instanceof FileReferenceResolver resolver) {
+        ResolveResult element = resolveFileReferenceResolver(resolver, text);
         if (element != null) {
           result.add(element);
           return;
@@ -188,11 +188,11 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
       else {
         final String decoded = decode(text);
 
-        if (context instanceof PackagePrefixFileSystemItem) {
-          context = ((PackagePrefixFileSystemItem)context).getDirectory();
+        if (context instanceof PackagePrefixFileSystemItem prefixFileSystemItem) {
+          context = prefixFileSystemItem.getDirectory();
         }
-        else if (context instanceof FileReferenceResolver) {
-          ResolveResult child = resolveFileReferenceResolver((FileReferenceResolver)context, decoded);
+        else if (context instanceof FileReferenceResolver resolver) {
+          ResolveResult child = resolveFileReferenceResolver(resolver, decoded);
           if (child != null) {
             result.add(child);
             return;
@@ -354,21 +354,21 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
 
   @Override
   public boolean isReferenceTo(@NotNull PsiElement element) {
-    if (element instanceof PsiDirectoryContainer) {
-      PsiDirectory[] directories = ((PsiDirectoryContainer)element).getDirectories();
+    if (element instanceof PsiDirectoryContainer container) {
+      PsiDirectory[] directories = container.getDirectories();
       for (ResolveResult result : multiResolve(false)) {
         PsiElement resultElement = result.getElement();
-        if (resultElement instanceof PsiFileSystemItem &&
-            ContainerUtil.exists(directories, dir -> FileReferenceHelperRegistrar.areElementsEquivalent((PsiFileSystemItem)resultElement, dir))) {
+        if (resultElement instanceof PsiFileSystemItem fileSystemItem &&
+            ContainerUtil.exists(directories, dir -> FileReferenceHelperRegistrar.areElementsEquivalent(fileSystemItem, dir))) {
           return true;
         }
       }
       return false;
     }
-    if (!(element instanceof PsiFileSystemItem)) return false;
+    if (!(element instanceof PsiFileSystemItem fileSystemItem)) return false;
 
     final PsiFileSystemItem item = resolve();
-    return item != null && FileReferenceHelperRegistrar.areElementsEquivalent(item, (PsiFileSystemItem)element);
+    return item != null && FileReferenceHelperRegistrar.areElementsEquivalent(item, fileSystemItem);
   }
 
   @Override
@@ -475,8 +475,8 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
       for (PsiFileSystemItem context : contexts) {
         final VirtualFile contextFile = context.getVirtualFile();
         assert contextFile != null;
-        if (context instanceof FileReferenceResolver) {
-          String path = ((FileReferenceResolver)context).getRelativePath(this, dstVFile, element);
+        if (context instanceof FileReferenceResolver resolver) {
+          String path = resolver.getRelativePath(this, dstVFile, element);
           if (path != null) return rename(path);
         }
         if (VfsUtilCore.isAncestor(contextFile, dstVFile, true)) {

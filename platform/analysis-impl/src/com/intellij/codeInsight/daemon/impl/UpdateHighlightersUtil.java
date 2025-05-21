@@ -163,8 +163,8 @@ public final class UpdateHighlightersUtil {
     PsiFile psiFile;
     try (AccessToken ignore = SlowOperations.knownIssue("IDEA-341181, IDEA-301732, EA-823296")) {
       psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-      if (psiFile instanceof PsiCompiledFile) {
-        psiFile = ((PsiCompiledFile)psiFile).getDecompiledPsiFile();
+      if (psiFile instanceof PsiCompiledFile compiled) {
+        psiFile = compiled.getDecompiledPsiFile();
       }
     }
     if (psiFile != null) {

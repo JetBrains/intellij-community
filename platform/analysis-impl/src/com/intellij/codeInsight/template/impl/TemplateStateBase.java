@@ -104,7 +104,7 @@ public class TemplateStateBase {
   protected void restoreEmptyVariables(@NotNull List<Integer> indices) {
     List<TextRange> rangesToRemove = new ArrayList<>();
     for (int i = 0; i < indices.size(); i++) {
-      int index = indices instanceof IntList ? ((IntList)indices).getInt(i) : indices.get(i);
+      int index = indices instanceof IntList intList ? intList.getInt(i) : indices.get(i);
       rangesToRemove.add(TextRange.create(mySegments.getSegmentStart(index), mySegments.getSegmentEnd(index)));
     }
     rangesToRemove.sort((o1, o2) -> {

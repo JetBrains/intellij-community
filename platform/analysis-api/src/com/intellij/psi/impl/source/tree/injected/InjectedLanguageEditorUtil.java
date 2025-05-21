@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 public final class InjectedLanguageEditorUtil {
   public static @NotNull Editor getTopLevelEditor(@NotNull Editor editor) {
-    return editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+    return editor instanceof EditorWindow window ? window.getDelegate() : editor;
   }
 
   /**

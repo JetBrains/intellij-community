@@ -95,11 +95,11 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
   @Override
   public PsiLanguageInjectionHost getInjectionHost(@NotNull FileViewProvider injectedProvider) {
     //noinspection removal
-    if (!(injectedProvider instanceof InjectedFileViewProvider)) {
+    if (!(injectedProvider instanceof InjectedFileViewProvider injected)) {
       return null;
     }
     //noinspection removal
-    return ((InjectedFileViewProvider)injectedProvider).getShreds().getHostPointer().getElement();
+    return injected.getShreds().getHostPointer().getElement();
   }
 
   @Override
@@ -109,8 +109,8 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
     if (virtualFile instanceof VirtualFileWindow) {
       // use a utility method in case the file's overridden getContext()
       PsiElement host = FileContextUtil.getFileContext(file);
-      if (host instanceof PsiLanguageInjectionHost) {
-        return (PsiLanguageInjectionHost)host;
+      if (host instanceof PsiLanguageInjectionHost injectionHost) {
+        return injectionHost;
       }
     }
     return InjectedLanguageUtilBase.findInjectionHost(file);
@@ -140,7 +140,7 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
       return null;
     }
     Document document = PsiDocumentManager.getInstance(file.getProject()).getCachedDocument(file);
-    return document instanceof DocumentWindow ? (DocumentWindow)document : null;
+    return document instanceof DocumentWindow w ? w : null;
   }
 
   // used only from tests => no need for complex synchronization
@@ -494,8 +494,7 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
       return null;
     }
 
-    if (element instanceof PsiLanguageInjectionHost
-        && !((PsiLanguageInjectionHost)element).isValidHost()) {
+    if (element instanceof PsiLanguageInjectionHost host && !host.isValidHost()) {
       return null;
     }
 
@@ -517,7 +516,7 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
 
   @Override
   public @Nullable List<Pair<PsiElement, TextRange>> getInjectedPsiFiles(@NotNull PsiElement host) {
-    if (!(host instanceof PsiLanguageInjectionHost) || !((PsiLanguageInjectionHost) host).isValidHost()) {
+    if (!(host instanceof PsiLanguageInjectionHost injectionHost) || !injectionHost.isValidHost()) {
       return null;
     }
     PsiElement inTree = InjectedLanguageUtilBase.loadTree(host, host.getContainingFile());

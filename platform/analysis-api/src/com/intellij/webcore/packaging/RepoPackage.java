@@ -44,8 +44,8 @@ public class RepoPackage implements Comparable {
 
   @Override
   public int compareTo(Object o) {
-    if (o instanceof RepoPackage)
-      return myName.compareTo(((RepoPackage)o).getName());
+    if (o instanceof RepoPackage repo)
+      return myName.compareTo(repo.getName());
     return 0;
   }
 }

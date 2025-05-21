@@ -284,17 +284,17 @@ public class HighlightInfo implements Segment {
     if (fileLevelComponentsStorage == null) {
       fileLevelComponentsStorage = new Pair<>(fileEditor, component);
     }
-    else if (fileLevelComponentsStorage instanceof Pair) {
+    else if (fileLevelComponentsStorage instanceof Pair<?,?> p) {
       //noinspection unchecked
-      Pair<FileEditor, JComponent> pair = (Pair<FileEditor, JComponent>)fileLevelComponentsStorage;
+      Pair<FileEditor, JComponent> pair = (Pair<FileEditor, JComponent>)p;
       Map<FileEditor, JComponent> map = new HashMap<>();
       map.put(pair.first, pair.second);
       map.put(fileEditor, component);
       fileLevelComponentsStorage = map;
     }
-    else if (fileLevelComponentsStorage instanceof Map) {
+    else if (fileLevelComponentsStorage instanceof Map<?,?> map) {
       //noinspection unchecked
-      ((Map<FileEditor, JComponent>)fileLevelComponentsStorage).put(fileEditor, component);
+      ((Map<FileEditor, JComponent>)map).put(fileEditor, component);
     }
     else {
       LOG.error(new IllegalStateException("fileLevelComponents=" + fileLevelComponentsStorage));
@@ -303,16 +303,16 @@ public class HighlightInfo implements Segment {
 
   @ApiStatus.Internal
   public void removeFileLeverComponent(@NotNull FileEditor fileEditor) {
-    if (fileLevelComponentsStorage instanceof Pair) {
+    if (fileLevelComponentsStorage instanceof Pair<?,?> p) {
       //noinspection unchecked
-      Pair<FileEditor, JComponent> pair = (Pair<FileEditor, JComponent>)fileLevelComponentsStorage;
+      Pair<FileEditor, JComponent> pair = (Pair<FileEditor, JComponent>)p;
       if (pair.first == fileEditor) {
         fileLevelComponentsStorage = null;
       }
     }
-    else if (fileLevelComponentsStorage instanceof Map) {
+    else if (fileLevelComponentsStorage instanceof Map<?,?> map) {
       //noinspection unchecked
-      ((Map<FileEditor, JComponent>)fileLevelComponentsStorage).remove(fileEditor);
+      ((Map<FileEditor, JComponent>)map).remove(fileEditor);
     }
   }
 
@@ -321,14 +321,14 @@ public class HighlightInfo implements Segment {
     if (fileLevelComponentsStorage == null) {
       return null;
     }
-    else if (fileLevelComponentsStorage instanceof Pair) {
+    else if (fileLevelComponentsStorage instanceof Pair<?,?> p) {
       //noinspection unchecked
-      Pair<FileEditor, JComponent> pair = (Pair<FileEditor, JComponent>)fileLevelComponentsStorage;
+      Pair<FileEditor, JComponent> pair = (Pair<FileEditor, JComponent>)p;
       return pair.first == fileEditor ? pair.second : null;
     }
-    else if (fileLevelComponentsStorage instanceof Map) {
+    else if (fileLevelComponentsStorage instanceof Map<?,?> map) {
       //noinspection unchecked
-      return ((Map<FileEditor, JComponent>)fileLevelComponentsStorage).get(fileEditor);
+      return ((Map<FileEditor, JComponent>)map).get(fileEditor);
     }
     else {
       LOG.error(new IllegalStateException("fileLevelComponents=" + fileLevelComponentsStorage));
@@ -385,8 +385,8 @@ public class HighlightInfo implements Segment {
 
   @ApiStatus.Internal
   public @Nullable @NonNls String getExternalSourceId() {
-    return myProblemGroup instanceof ExternalSourceProblemGroup ?
-           ((ExternalSourceProblemGroup)myProblemGroup).getExternalCheckName() : null;
+    return myProblemGroup instanceof ExternalSourceProblemGroup externalSourceId ?
+           externalSourceId.getExternalCheckName() : null;
   }
 
   private boolean isFlagSet(@FlagConstant byte mask) {
@@ -519,8 +519,8 @@ public class HighlightInfo implements Segment {
     if (needsUpdateOnTyping != null) {
       return needsUpdateOnTyping;
     }
-    if (type instanceof HighlightInfoType.UpdateOnTypingSuppressible) {
-      return ((HighlightInfoType.UpdateOnTypingSuppressible)type).needsUpdateOnTyping();
+    if (type instanceof HighlightInfoType.UpdateOnTypingSuppressible suppressible) {
+      return suppressible.needsUpdateOnTyping();
     }
     return true;
   }
@@ -586,7 +586,7 @@ public class HighlightInfo implements Segment {
     }
     if (toolId != null) {
       s += showFullQualifiedClassNames ? "; toolId: " + toolId + " (" + toolId.getClass() + ")" :
-           "; toolId: " + (toolId instanceof Class ? ((Class<?>)toolId).getSimpleName() : "not specified");
+           "; toolId: " + (toolId instanceof Class<?> c ? c.getSimpleName() : "not specified");
     }
     if (group != HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP) {
       s += "; group: " + group;
@@ -970,12 +970,12 @@ public class HighlightInfo implements Segment {
 
         IntentionAction fixAllIntention = intentionManager.createFixAllIntention(toolWrapper, myAction);
         InspectionProfileEntry wrappedTool =
-          toolWrapper instanceof LocalInspectionToolWrapper ? ((LocalInspectionToolWrapper)toolWrapper).getTool()
+          toolWrapper instanceof LocalInspectionToolWrapper local ? local.getTool()
                                                             : ((GlobalInspectionToolWrapper)toolWrapper).getTool();
         if (ANNOTATOR_INSPECTION_SHORT_NAME.equals(wrappedTool.getShortName())) {
           List<IntentionAction> actions = Collections.emptyList();
-          if (myProblemGroup instanceof SuppressableProblemGroup) {
-            actions = Arrays.asList(((SuppressableProblemGroup)myProblemGroup).getSuppressActions(element));
+          if (myProblemGroup instanceof SuppressableProblemGroup suppressible) {
+            actions = Arrays.asList(suppressible.getSuppressActions(element));
           }
           if (fixAllIntention != null) {
             if (actions.isEmpty()) {
@@ -993,8 +993,8 @@ public class HighlightInfo implements Segment {
           newOptions.add(new DisableHighlightingIntentionAction(toolWrapper.getShortName()));
         }
         ContainerUtil.addIfNotNull(newOptions, fixAllIntention);
-        if (wrappedTool instanceof CustomSuppressableInspectionTool) {
-          IntentionAction[] suppressActions = ((CustomSuppressableInspectionTool)wrappedTool).getSuppressActions(element);
+        if (wrappedTool instanceof CustomSuppressableInspectionTool custom) {
+          IntentionAction[] suppressActions = custom.getSuppressActions(element);
           if (suppressActions != null) {
             ContainerUtil.addAll(newOptions, suppressActions);
           }
@@ -1006,8 +1006,8 @@ public class HighlightInfo implements Segment {
           }
         }
       }
-      if (myProblemGroup instanceof SuppressableProblemGroup) {
-        IntentionAction[] suppressActions = ((SuppressableProblemGroup)myProblemGroup).getSuppressActions(element);
+      if (myProblemGroup instanceof SuppressableProblemGroup suppressible) {
+        IntentionAction[] suppressActions = suppressible.getSuppressActions(element);
         ContainerUtil.addAll(newOptions, suppressActions);
       }
 
@@ -1039,7 +1039,7 @@ public class HighlightInfo implements Segment {
 
     @Override
     public boolean equals(Object obj) {
-      return obj instanceof IntentionActionDescriptor && myAction.equals(((IntentionActionDescriptor)obj).myAction);
+      return obj instanceof IntentionActionDescriptor descriptor && myAction.equals(descriptor.myAction);
     }
 
     public @Nullable String getToolId() {
@@ -1188,8 +1188,7 @@ public class HighlightInfo implements Segment {
   public synchronized IntentionAction getSameFamilyFix(@NotNull IntentionActionWithFixAllOption action) {
     for (IntentionActionDescriptor descriptor : getIntentionActionDescriptors()) {
       IntentionAction other = IntentionActionDelegate.unwrap(descriptor.getAction());
-      if (other instanceof IntentionActionWithFixAllOption &&
-          action.belongsToMyFamily((IntentionActionWithFixAllOption)other)) {
+      if (other instanceof IntentionActionWithFixAllOption option && action.belongsToMyFamily(option)) {
         return other;
       }
     }

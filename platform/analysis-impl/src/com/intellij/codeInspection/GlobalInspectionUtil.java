@@ -43,8 +43,8 @@ public final class GlobalInspectionUtil {
                                                           @NotNull InspectionManager manager) {
     List<LocalQuickFix> fixes = new ArrayList<>();
     info.findRegisteredQuickFix((descriptor, fixRange) -> {
-      if (descriptor.getAction() instanceof LocalQuickFix) {
-        fixes.add((LocalQuickFix)descriptor.getAction());
+      if (descriptor.getAction() instanceof LocalQuickFix localQuickFix) {
+        fixes.add(localQuickFix);
       }
       return null;
     });

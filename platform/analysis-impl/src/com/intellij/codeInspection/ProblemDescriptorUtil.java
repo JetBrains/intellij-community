@@ -46,7 +46,7 @@ public final class ProblemDescriptorUtil {
   public static final Couple<String> XML_CODE_MARKER = Couple.of("<xml-code>", "</xml-code>");
 
   public static @NotNull String extractHighlightedText(@NotNull CommonProblemDescriptor descriptor, @Nullable PsiElement psiElement) {
-    TextRange range = descriptor instanceof ProblemDescriptorBase ? ((ProblemDescriptorBase)descriptor).getTextRange() : null;
+    TextRange range = descriptor instanceof ProblemDescriptorBase base ? base.getTextRange() : null;
     return extractHighlightedText(range, psiElement);
   }
 
@@ -98,8 +98,8 @@ public final class ProblemDescriptorUtil {
     NotNullLazyValue<@InspectionMessage String> descTemplate = NotNullLazyValue.volatileLazy(
       () -> StringUtil.notNullize(descriptor.getDescriptionTemplate()));
     NotNullLazyValue<@InspectionMessage String> tooltipTemplate = NotNullLazyValue.volatileLazy(
-      () -> descriptor instanceof ProblemDescriptor
-            ? StringUtil.notNullize(((ProblemDescriptor)descriptor).getTooltipTemplate())
+      () -> descriptor instanceof ProblemDescriptor problemDescriptor
+            ? StringUtil.notNullize(problemDescriptor.getTooltipTemplate())
             : descTemplate.getValue()
     );
     NotNullLazyValue<@InspectionMessage String> description = NotNullLazyValue.volatileLazy(
@@ -133,10 +133,10 @@ public final class ProblemDescriptorUtil {
                                                                                                   @InspectionMessage String template) {
     String message = template;
     if ((flags & APPEND_LINE_NUMBER) != 0 &&
-        descriptor instanceof ProblemDescriptor &&
+        descriptor instanceof ProblemDescriptor problemDescriptor &&
         !message.contains(REF_REFERENCE) &&
         message.contains(LOC_REFERENCE)) {
-      final int lineNumber = ((ProblemDescriptor)descriptor).getLineNumber();
+      final int lineNumber = problemDescriptor.getLineNumber();
       if (lineNumber >= 0) {
         message = StringUtil.replace(message, LOC_REFERENCE, "(" + AnalysisBundle.message("inspection.export.results.at.line") + " " + (lineNumber + 1) + ")");
       }

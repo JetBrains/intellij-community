@@ -73,9 +73,9 @@ public abstract class LibraryScopeBase extends GlobalSearchScope {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof LibraryScopeBase)) return false;
+    if (!(o instanceof LibraryScopeBase libraryScopeBase)) return false;
 
-    return myEntries.keySet().equals(((LibraryScopeBase)o).myEntries.keySet());
+    return myEntries.keySet().equals(libraryScopeBase.myEntries.keySet());
   }
 
   @Override

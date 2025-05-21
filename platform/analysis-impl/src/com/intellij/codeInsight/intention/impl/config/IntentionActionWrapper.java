@@ -145,14 +145,14 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
   @Override
   public @Nullable ShortcutSet getShortcut() {
     IntentionAction delegate = getDelegate();
-    return delegate instanceof ShortcutProvider ? ((ShortcutProvider)delegate).getShortcut() : null;
+    return delegate instanceof ShortcutProvider shortcut ? shortcut.getShortcut() : null;
   }
 
   @Override
   public int compareTo(@NotNull IntentionAction other) {
-    if (other instanceof IntentionActionWrapper) {
+    if (other instanceof IntentionActionWrapper wrapper) {
       IntentionAction action1 = getDelegate();
-      IntentionAction action2 = ((IntentionActionWrapper)other).getDelegate();
+      IntentionAction action2 = wrapper.getDelegate();
       if (action1 instanceof Comparable && action2 instanceof Comparable) {
         //noinspection rawtypes,unchecked
         return ((Comparable)action1).compareTo(action2);

@@ -87,7 +87,7 @@ public class FileReferenceSet implements FileReferenceSetParameters {
     myPathString = str.trim();
     myEndingSlashNotAllowed = endingSlashNotAllowed;
     myEmptyPathAllowed = !endingSlashNotAllowed;
-    myOptions = provider instanceof CustomizableReferenceProvider ? ((CustomizableReferenceProvider)provider).getOptions() : null;
+    myOptions = provider instanceof CustomizableReferenceProvider custom ? custom.getOptions() : null;
     mySuitableFileTypes = suitableFileTypes;
 
     if (init) {
@@ -215,8 +215,8 @@ public class FileReferenceSet implements FileReferenceSetParameters {
     TextRange valueRange;
     CharSequence decoded;
     // todo replace @param str with honest @param rangeInElement; and drop the following startsWith(..)
-    if (myElement instanceof PsiLanguageInjectionHost && !StringUtil.startsWith(myElement.getText(), startInElement, str)) {
-      escaper = ((PsiLanguageInjectionHost)myElement).createLiteralTextEscaper();
+    if (myElement instanceof PsiLanguageInjectionHost host && !StringUtil.startsWith(myElement.getText(), startInElement, str)) {
+      escaper = host.createLiteralTextEscaper();
       valueRange = ElementManipulators.getValueTextRange(myElement);
       StringBuilder sb = new StringBuilder();
       escaper.decode(valueRange, sb);
@@ -447,8 +447,8 @@ public class FileReferenceSet implements FileReferenceSetParameters {
       Function<PsiFile, Collection<PsiFileSystemItem>> value = DEFAULT_PATH_EVALUATOR_OPTION.getValue(myOptions);
       if (value != null) {
         Collection<FileTargetContext> roots;
-        if (value instanceof TargetContextEvaluator) {
-          roots = ((TargetContextEvaluator)value).getTargetContexts(this, file);
+        if (value instanceof TargetContextEvaluator evaluator) {
+          roots = evaluator.getTargetContexts(this, file);
         }
         else {
           Collection<PsiFileSystemItem> items = value.fun(file);

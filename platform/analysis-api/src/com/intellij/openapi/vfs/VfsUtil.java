@@ -199,8 +199,8 @@ public final class VfsUtil extends VfsUtilCore {
   }
 
   public static @Nullable VirtualFile refreshAndFindChild(@NotNull VirtualFile directory, @NotNull String name) {
-    if (directory instanceof NewVirtualFile) {
-      return ((NewVirtualFile)directory).refreshAndFindChild(name);
+    if (directory instanceof NewVirtualFile newVirtualFile) {
+      return newVirtualFile.refreshAndFindChild(name);
     }
     return findFileByIoFile(new File(virtualToIoFile(directory), name), true);
   }

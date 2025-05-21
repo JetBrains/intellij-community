@@ -430,8 +430,8 @@ public final class ToolsImpl implements Tools {
             }
             else {
               VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
-              if (packageSet instanceof PackageSetBase && virtualFile != null &&
-                  ((PackageSetBase)packageSet).contains(virtualFile, project, validationManager)) {
+              if (packageSet instanceof PackageSetBase base && virtualFile != null &&
+                  base.contains(virtualFile, project, validationManager)) {
                 state.setEnabled(false);
                 return;
               }

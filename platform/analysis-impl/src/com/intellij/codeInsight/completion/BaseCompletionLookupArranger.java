@@ -521,7 +521,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
       }
 
       LookupElement selectedValue = lookup.getCurrentItemOrEmpty();
-      if (selectedValue instanceof EmptyLookupItem && ((EmptyLookupItem)selectedValue).isLoading()) {
+      if (selectedValue instanceof EmptyLookupItem emptyLookupItem && emptyLookupItem.isLoading()) {
         int index = lookup.getSelectedIndex();
         if (index >= 0 && index < items.size()) {
           return index;

@@ -26,11 +26,11 @@ public final class JavaImportOptimizer implements ImportOptimizer {
 
   @Override
   public @NotNull Runnable processFile(@NotNull PsiFile file) {
-    if (!(file instanceof PsiJavaFile)) {
+    if (!(file instanceof PsiJavaFile javaFile)) {
       return EmptyRunnable.getInstance();
     }
     Project project = file.getProject();
-    final PsiImportList newImportList = JavaCodeStyleManager.getInstance(project).prepareOptimizeImportsResult((PsiJavaFile)file);
+    final PsiImportList newImportList = JavaCodeStyleManager.getInstance(project).prepareOptimizeImportsResult(javaFile);
     if (newImportList == null) return EmptyRunnable.getInstance();
 
     return new CollectingInfoRunnable() {
@@ -43,7 +43,7 @@ public final class JavaImportOptimizer implements ImportOptimizer {
           final PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
           final Document document = file.getFileDocument();
           manager.commitDocument(document);
-          final PsiImportList oldImportList = ((PsiJavaFile)file).getImportList();
+          final PsiImportList oldImportList = javaFile.getImportList();
           assert oldImportList != null;
           final List<String> oldImports = new ArrayList<>();
           for (PsiImportStatementBase statement : oldImportList.getAllImportStatements()) {

@@ -35,8 +35,8 @@ public final class NamedPackageSetReference extends PackageSetBase {
 
     final PackageSet packageSet = scope.getValue();
     if (packageSet != null) {
-      return packageSet instanceof PackageSetBase
-             ? ((PackageSetBase)packageSet).contains(file, project, holder)
+      return packageSet instanceof PackageSetBase base
+             ? base.contains(file, project, holder)
              : packageSet.contains(getPsiFile(file, project), holder);
     }
 

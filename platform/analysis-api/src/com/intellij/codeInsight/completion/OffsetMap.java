@@ -38,8 +38,8 @@ public final class OffsetMap implements Disposable {
       if (!marker.isValid()) {
         removeOffset(key);
         throw new IllegalStateException("Offset " + key + " is invalid: " + marker +
-           ", document.valid=" + (!(myDocument instanceof DocumentWindow) || ((DocumentWindow)myDocument).isValid()) +
-           (myDocument instanceof DocumentWindow ? " (injected: " + Arrays.toString(((DocumentWindow)myDocument).getHostRanges()) + ")" : "")
+                                        ", document.valid=" + (!(myDocument instanceof DocumentWindow window) || window.isValid()) +
+                                        (myDocument instanceof DocumentWindow window ? " (injected: " + Arrays.toString(window.getHostRanges()) + ")" : "")
         );
       }
 

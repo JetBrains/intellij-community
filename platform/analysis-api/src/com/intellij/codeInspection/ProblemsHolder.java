@@ -103,8 +103,8 @@ public class ProblemsHolder {
                               @InspectionMessage String descriptionTemplate,
                               ProblemHighlightType highlightType) {
     LocalQuickFix[] fixes = null;
-    if (reference instanceof LocalQuickFixProvider) {
-      fixes = ((LocalQuickFixProvider)reference).getQuickFixes();
+    if (reference instanceof LocalQuickFixProvider local) {
+      fixes = local.getQuickFixes();
     }
     registerProblemForReference(reference, highlightType, descriptionTemplate, fixes);
   }
@@ -148,8 +148,8 @@ public class ProblemsHolder {
    */
   public static @NotNull @InspectionMessage String unresolvedReferenceMessage(@NotNull PsiReference reference) {
     String message;
-    if (reference instanceof EmptyResolveMessageProvider) {
-      String pattern = ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern();
+    if (reference instanceof EmptyResolveMessageProvider empty) {
+      String pattern = empty.getUnresolvedMessagePattern();
       try {
         message = BundleBase.format(pattern, reference.getCanonicalText()); // avoid double formatting
       }

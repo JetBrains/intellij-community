@@ -133,8 +133,8 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
         if (object == null) {
           return 0;
         }
-        int result = object instanceof InjectionAwareSuppressQuickFix
-                     ? ((InjectionAwareSuppressQuickFix)object).isShouldBeAppliedToInjectionHost().hashCode()
+        int result = object instanceof InjectionAwareSuppressQuickFix injection
+                     ? injection.isShouldBeAppliedToInjectionHost().hashCode()
                      : 0;
         return 31 * result + object.getName().hashCode();
       }
@@ -148,9 +148,8 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
           return false;
         }
 
-        if (o1 instanceof InjectionAwareSuppressQuickFix && o2 instanceof InjectionAwareSuppressQuickFix) {
-          if (((InjectionAwareSuppressQuickFix)o1).isShouldBeAppliedToInjectionHost() !=
-              ((InjectionAwareSuppressQuickFix)o2).isShouldBeAppliedToInjectionHost()) {
+        if (o1 instanceof InjectionAwareSuppressQuickFix injection1 && o2 instanceof InjectionAwareSuppressQuickFix injection2) {
+          if (injection1.isShouldBeAppliedToInjectionHost() != injection2.isShouldBeAppliedToInjectionHost()) {
             return false;
           }
         }
@@ -180,8 +179,8 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
                                             @NotNull String toolId) {
     SuppressQuickFix[] actions = suppressor.getSuppressActions(element, toolId);
     for (SuppressQuickFix action : actions) {
-      if (action instanceof InjectionAwareSuppressQuickFix) {
-        ((InjectionAwareSuppressQuickFix)action).setShouldBeAppliedToInjectionHost(appliedToInjectionHost);
+      if (action instanceof InjectionAwareSuppressQuickFix injection) {
+        injection.setShouldBeAppliedToInjectionHost(appliedToInjectionHost);
       }
       fixes.add(action);
     }

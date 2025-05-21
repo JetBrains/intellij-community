@@ -139,8 +139,8 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     assert registered == null: "Pass id "+passId +" has already been registered in: "+ registered.passFactory;
     myRegisteredPassFactories.put(passId, info);
     myFrozenPassConfigs = null; // clear cache
-    if (factory instanceof DirtyScopeTrackingHighlightingPassFactory) {
-      myDirtyScopeTrackingFactories.add((DirtyScopeTrackingHighlightingPassFactory) factory);
+    if (factory instanceof DirtyScopeTrackingHighlightingPassFactory dirty) {
+      myDirtyScopeTrackingFactories.add(dirty);
     }
     return passId;
   }
@@ -259,8 +259,8 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
       PassConfig passConfig = frozenPassConfigs[passId];
       if (passConfig == null) continue;
       TextEditorHighlightingPassFactory factory = passConfig.passFactory;
-      if (factory instanceof MainHighlightingPassFactory) {
-        TextEditorHighlightingPass pass = ((MainHighlightingPassFactory)factory).createMainHighlightingPass(psiFile, document, highlightInfoProcessor);
+      if (factory instanceof MainHighlightingPassFactory main) {
+        TextEditorHighlightingPass pass = main.createMainHighlightingPass(psiFile, document, highlightInfoProcessor);
         if (pass != null) {
           pass.setContext(context);
           ids.add(pass);

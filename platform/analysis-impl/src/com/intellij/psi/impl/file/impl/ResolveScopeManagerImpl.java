@@ -121,13 +121,13 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
   public @NotNull GlobalSearchScope getResolveScope(@NotNull PsiElement element) {
     ProgressIndicatorProvider.checkCanceled();
 
-    if (element instanceof PsiDirectory) {
-      return getResolveScopeFromProviders(((PsiDirectory)element).getVirtualFile(), CodeInsightContexts.anyContext());
+    if (element instanceof PsiDirectory directory) {
+      return getResolveScopeFromProviders(directory.getVirtualFile(), CodeInsightContexts.anyContext());
     }
 
     PsiFile containingFile = element.getContainingFile();
-    if (containingFile instanceof PsiCodeFragment) {
-      GlobalSearchScope forcedScope = ((PsiCodeFragment)containingFile).getForcedResolveScope();
+    if (containingFile instanceof PsiCodeFragment fragment) {
+      GlobalSearchScope forcedScope = fragment.getForcedResolveScope();
       if (forcedScope != null) {
         return forcedScope;
       }
@@ -147,8 +147,8 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
   }
 
   private @NotNull GlobalSearchScope getPsiFileResolveScope(@NotNull PsiFile psiFile) {
-    if (psiFile instanceof FileResolveScopeProvider) {
-      return ((FileResolveScopeProvider)psiFile).getFileResolveScope();
+    if (psiFile instanceof FileResolveScopeProvider provider) {
+      return provider.getFileResolveScope();
     }
     if (!psiFile.getOriginalFile().isPhysical() && !psiFile.getViewProvider().isPhysical()) {
       return withFile(psiFile, GlobalSearchScope.allScope(myProject));
@@ -178,8 +178,8 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
     FileViewProvider fileViewProvider;
     PsiFile containingFile;
     GlobalSearchScope allScope = GlobalSearchScope.allScope(myManager.getProject());
-    if (element instanceof PsiDirectory) {
-      vDirectory = ((PsiDirectory)element).getVirtualFile();
+    if (element instanceof PsiDirectory directory) {
+      vDirectory = directory.getVirtualFile();
       virtualFile = null;
       containingFile = null;
       fileViewProvider = null;
@@ -190,8 +190,8 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
       fileViewProvider = containingFile.getViewProvider();
       virtualFile = containingFile.getVirtualFile();
       if (virtualFile == null) return allScope;
-      if (virtualFile instanceof VirtualFileWindow) {
-        return GlobalSearchScope.fileScope(myProject, ((VirtualFileWindow)virtualFile).getDelegate());
+      if (virtualFile instanceof VirtualFileWindow window) {
+        return GlobalSearchScope.fileScope(myProject, window.getDelegate());
       }
       if (ScratchUtil.isScratch(virtualFile)) {
         return GlobalSearchScope.fileScope(myProject, virtualFile);
@@ -226,8 +226,8 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
   private @Nullable Module findModule(@Nullable FileViewProvider fileViewProvider, @NotNull VirtualFile notNullVFile) {
     if (fileViewProvider != null && CodeInsightContexts.isSharedSourceSupportEnabled(myProject)) {
       CodeInsightContext context = FileViewProviderUtil.getCodeInsightContext(fileViewProvider);
-      if (context instanceof ModuleContext) {
-        return ((ModuleContext)context).getModule();
+      if (context instanceof ModuleContext moduleContext) {
+        return moduleContext.getModule();
       }
     }
 

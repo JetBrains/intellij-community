@@ -11,7 +11,7 @@ public interface IntentionActionDelegate extends ReportingClassSubstitutor, Poss
   IntentionAction getDelegate();
 
   static @NotNull IntentionAction unwrap(@NotNull IntentionAction action) {
-    return action instanceof IntentionActionDelegate ? unwrap(((IntentionActionDelegate)action).getDelegate()) : action;
+    return action instanceof IntentionActionDelegate delegate ? unwrap(delegate.getDelegate()) : action;
   }
 
   @Override

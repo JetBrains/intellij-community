@@ -120,8 +120,8 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
     Set<Module> modules = new HashSet<>();
     OrderEnumerator en = getOrderEnumeratorForOptions();
     en.forEach(each -> {
-      if (each instanceof ModuleOrderEntry) {
-        ContainerUtil.addIfNotNull(modules, ((ModuleOrderEntry)each).getModule());
+      if (each instanceof ModuleOrderEntry moduleOrderEntry) {
+        ContainerUtil.addIfNotNull(modules, moduleOrderEntry.getModule());
       }
       else if (each instanceof ModuleSourceOrderEntry) {
         ContainerUtil.addIfNotNull(modules, each.getOwnerModule());
@@ -225,7 +225,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
     // in case of single file source
     if (mySingleFileSourcesTracker.isSourceDirectoryInModule(file, myModule)) {
       // todo IJPL-339 is it correct???
-      if (context instanceof ModuleContext && ((ModuleContext)context).getModule() == myModule) {
+      if (context instanceof ModuleContext moduleContext && moduleContext.getModule() == myModule) {
         return true;
       }
     }
@@ -246,20 +246,20 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
     @NotNull VirtualFile root,
     @NotNull CodeInsightContext context
   ) {
-    if (context instanceof ModuleContext) {
-      Module module = ((ModuleContext)context).getModule();
+    if (context instanceof ModuleContext moduleContext) {
+      Module module = moduleContext.getModule();
       if (module == null) return null;
       return new ModuleRootDescriptor(root, module);
     }
 
-    if (context instanceof LibraryContext) {
-      Library library = ((LibraryContext)context).getLibrary();
+    if (context instanceof LibraryContext libraryContext) {
+      Library library = libraryContext.getLibrary();
       if (library == null) return null;
       return new LibraryRootDescriptor(root, library);
     }
 
-    if (context instanceof SdkContext) {
-      Sdk sdk = ((SdkContext)context).getSdk();
+    if (context instanceof SdkContext sdkContext) {
+      Sdk sdk = sdkContext.getSdk();
       if (sdk == null) return null;
       return new SdkRootDescriptor(root, sdk);
     }
@@ -269,21 +269,21 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
 
   private @Nullable CodeInsightContext convertToContext(@NotNull ScopeRootDescriptor descriptor) {
     OrderEntry entry = descriptor.getOrderEntry();
-    if (entry instanceof ModuleSourceOrderEntry) {
-      Module module = ((ModuleSourceOrderEntry)entry).getRootModel().getModule();
+    if (entry instanceof ModuleSourceOrderEntry moduleSourceOrderEntry) {
+      Module module = moduleSourceOrderEntry.getRootModel().getModule();
       ProjectModelContextBridge bridge = ProjectModelContextBridge.getInstance(myModule.getProject());
       return bridge.getContext(module);
     }
 
-    if (entry instanceof LibraryOrderEntry) {
-      Library library = ((LibraryOrderEntry)entry).getLibrary();
+    if (entry instanceof LibraryOrderEntry libraryOrderEntry) {
+      Library library = libraryOrderEntry.getLibrary();
       if (library == null) return null;
       ProjectModelContextBridge bridge = ProjectModelContextBridge.getInstance(myModule.getProject());
       return bridge.getContext(library);
     }
 
-    if (entry instanceof JdkOrderEntry) {
-      Sdk sdk = ((JdkOrderEntry)entry).getJdk();
+    if (entry instanceof JdkOrderEntry jdkOrderEntry) {
+      Sdk sdk = jdkOrderEntry.getJdk();
       if (sdk == null) return null;
       ProjectModelContextBridge bridge = ProjectModelContextBridge.getInstance(myModule.getProject());
       return bridge.getContext(sdk);
@@ -341,8 +341,8 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
   public static @NotNull VirtualFileEnumeration getFileEnumerationUnderRoots(@NotNull Collection<? extends VirtualFile> roots) {
     IntSet result = new IntOpenHashSet();
     for (VirtualFile file : roots) {
-      if (file instanceof VirtualFileWithId) {
-        int[] children = VirtualFileManager.getInstance().listAllChildIds(((VirtualFileWithId)file).getId());
+      if (file instanceof VirtualFileWithId id) {
+        int[] children = VirtualFileManager.getInstance().listAllChildIds(id.getId());
         result.addAll(IntList.of(children));
       }
     }

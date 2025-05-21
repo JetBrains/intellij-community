@@ -67,8 +67,8 @@ public class ModulesScope extends GlobalSearchScope implements CodeInsightContex
       return contains(file);
     }
 
-    if (!(context instanceof ModuleContext)) return false;
-    Module contextModule = ((ModuleContext)context).getModule();
+    if (!(context instanceof ModuleContext moduleContext)) return false;
+    Module contextModule = moduleContext.getModule();
     Set<Module> modulesOfFile = myProjectFileIndex.getModulesForFile(file, true);
     return contextModule != null && myModules.contains(contextModule) && modulesOfFile.contains(contextModule);
   }

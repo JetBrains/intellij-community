@@ -59,14 +59,14 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
   }
 
   public void startBatch() {
-    if (consumer instanceof BatchConsumer) {
-      ((BatchConsumer<?>)consumer).startBatch();
+    if (consumer instanceof BatchConsumer<?> batch) {
+      batch.startBatch();
     }
   }
 
   public void endBatch() {
-    if (consumer instanceof BatchConsumer) {
-      ((BatchConsumer<?>)consumer).endBatch();
+    if (consumer instanceof BatchConsumer<?> batch) {
+      batch.endBatch();
     }
   }
 

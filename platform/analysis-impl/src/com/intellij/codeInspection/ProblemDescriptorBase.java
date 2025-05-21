@@ -106,8 +106,8 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
   }
 
   private static @Nullable TextRange getAnnotationRange(@NotNull PsiElement startElement) {
-    return startElement instanceof ExternallyAnnotated
-           ? ((ExternallyAnnotated)startElement).getAnnotationRegion()
+    return startElement instanceof ExternallyAnnotated externally
+           ? externally.getAnnotationRegion()
            : startElement.getTextRange();
   }
 

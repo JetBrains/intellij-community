@@ -174,14 +174,14 @@ public final class CompletionInitializationUtil {
     if (translatedOffsets != hostCopyOffsets) {
       PsiFile injected = translatedOffsets.getFile();
       if (originalFile != injected &&
-          injected instanceof PsiFileImpl &&
+          injected instanceof PsiFileImpl psiFile &&
           InjectedLanguageManager.getInstance(originalFile.getProject()).isInjectedFragment(originalFile)) {
-        setOriginalFile((PsiFileImpl)injected, originalFile);
+        setOriginalFile(psiFile, originalFile);
       }
       VirtualFile virtualFile = injected.getVirtualFile();
       DocumentWindow documentWindow = null;
-      if (virtualFile instanceof VirtualFileWindow) {
-        documentWindow = ((VirtualFileWindow)virtualFile).getDocumentWindow();
+      if (virtualFile instanceof VirtualFileWindow window) {
+        documentWindow = window.getDocumentWindow();
       }
       CompletionAssertions.assertInjectedOffsets(hostStartOffset, injected, documentWindow);
 
@@ -219,11 +219,11 @@ public final class CompletionInitializationUtil {
 
   private static void checkInjectionConsistency(PsiFile injectedFile) {
     PsiElement host = injectedFile.getContext();
-    if (host instanceof PsiLanguageInjectionHost) {
+    if (host instanceof PsiLanguageInjectionHost injectionHost) {
       DocumentWindow document = (DocumentWindow)injectedFile.getViewProvider().getDocument();
       assert document != null;
       TextRange hostRange = host.getTextRange();
-      LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper = ((PsiLanguageInjectionHost)host).createLiteralTextEscaper();
+      LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper = injectionHost.createLiteralTextEscaper();
       TextRange relevantRange = escaper.getRelevantTextRange().shiftRight(hostRange.getStartOffset());
       for (Segment range : document.getHostRanges()) {
         if (hostRange.contains(range) && !relevantRange.contains(range)) {
@@ -306,10 +306,10 @@ public final class CompletionInitializationUtil {
   }
 
   private static void syncAcceptSlashR(Document originalDocument, Document documentCopy) {
-    if (!(originalDocument instanceof DocumentImpl) || !(documentCopy instanceof DocumentImpl)) {
+    if (!(originalDocument instanceof DocumentImpl origDocument) || !(documentCopy instanceof DocumentImpl copyDocument)) {
       return;
     }
 
-    ((DocumentImpl)documentCopy).setAcceptSlashR(((DocumentImpl)originalDocument).acceptsSlashR());
+    copyDocument.setAcceptSlashR(origDocument.acceptsSlashR());
   }
 }

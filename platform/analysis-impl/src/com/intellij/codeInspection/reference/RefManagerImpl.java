@@ -347,9 +347,9 @@ public class RefManagerImpl extends RefManager {
     Element element = export(entity, -1);
     if (element == null) return null;
 
-    if (!(entity instanceof RefElement)) return element;
+    if (!(entity instanceof RefElement refElement)) return element;
 
-    SmartPsiElementPointer<?> pointer = ((RefElement)entity).getPointer();
+    SmartPsiElementPointer<?> pointer = refElement.getPointer();
 
     PsiElement psiElement = pointer.getElement();
 
