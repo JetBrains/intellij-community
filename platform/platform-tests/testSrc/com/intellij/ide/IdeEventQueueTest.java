@@ -110,7 +110,7 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
   private static void postCarefully(AWTEvent event) {
     LOG.debug("posting " + event);
     IdeEventQueue ideEventQueue = IdeEventQueue.getInstance();
-    boolean posted = ideEventQueue.doPostEvent(event);
+    boolean posted = ideEventQueue.doPostEvent(event, false);
     assertTrue("Was not posted: "+event, posted);
     boolean mustBeConsumed = event.getID() == ActionEvent.ACTION_PERFORMED;
     assertEquals(mustBeConsumed, ReflectionUtil.getField(AWTEvent.class, event, boolean.class, "consumed").booleanValue());

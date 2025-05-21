@@ -1554,7 +1554,6 @@ f:com.intellij.ide.IdeEventQueue
 - f:containsDispatcher(com.intellij.ide.IdeEventQueue$EventDispatcher):Z
 - f:disableInputMethods(com.intellij.openapi.Disposable):V
 - dispatchEvent(java.awt.AWTEvent):V
-- f:doPostEvent(java.awt.AWTEvent):Z
 - f:doWhenReady(java.lang.Runnable):V
 - f:executeInProductionModeEvenThoughWeAreInTests(java.lang.Runnable):V
 - f:flushDelayedKeyEvents():V

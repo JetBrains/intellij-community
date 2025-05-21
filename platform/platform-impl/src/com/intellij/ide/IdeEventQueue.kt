@@ -54,6 +54,7 @@ import com.jetbrains.JBR
 import com.jetbrains.TextInput
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -718,15 +719,20 @@ class IdeEventQueue private constructor() : EventQueue() {
   }
 
   override fun postEvent(event: AWTEvent) {
-    doPostEvent(event)
+    doPostEvent(event, false)
   }
 
   // return true if posted, false if consumed immediately
-  fun doPostEvent(event: AWTEvent): Boolean {
+  @ApiStatus.Internal
+  fun doPostEvent(event: AWTEvent, postDirectly: Boolean): Boolean {
     for (listener in postEventListeners) {
       if (listener(event)) {
         return false
       }
+    }
+    if (postDirectly) {
+      super.postEvent(event)
+      return true
     }
     eventsPosted.incrementAndGet()
 
