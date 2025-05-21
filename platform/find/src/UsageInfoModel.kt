@@ -102,7 +102,14 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
     return range ?: defaultRange
   }
 
-  override fun isValid(): Boolean = psiFile?.isValid ?: false
+  override fun isValid(): Boolean {
+    if (psiFile == null || psiFile.getFileType().isBinary()) {
+      return false
+    }
+    val ranges = getMergedRanges()
+    val fileEndOffset = psiFile.textRange.endOffset
+    return ranges.isNotEmpty() && ranges.all { TextRange.isProperRange(it.startOffset, it.endOffset) && it.endOffset <= fileEndOffset}
+  }
 
   override fun getMergedInfos(): Array<UsageInfo> {
     return usageInfos
@@ -115,7 +122,7 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
   }
 
   override fun isReadOnly(): Boolean {
-    return psiFile == null || psiFile.isValid() && !psiFile.isWritable()
+    return virtualFile == null || !virtualFile.isWritable()
   }
 
   override fun canNavigate(): Boolean = virtualFile != null && virtualFile.isValid
