@@ -390,7 +390,9 @@ public final class LambdaUtil {
       return castType;
     }
     else if (parent instanceof PsiVariable) {
-      return ((PsiVariable)parent).getType();
+      PsiVariable variable = (PsiVariable)parent;
+      PsiTypeElement typeElement = variable.getTypeElement();
+      return typeElement != null && typeElement.isInferredType() ? null : variable.getType();
     }
     else if (parent instanceof PsiAssignmentExpression && expression instanceof PsiExpression && !PsiUtil.isOnAssignmentLeftHand((PsiExpression)expression)) {
       final PsiExpression lExpression = ((PsiAssignmentExpression)parent).getLExpression();
