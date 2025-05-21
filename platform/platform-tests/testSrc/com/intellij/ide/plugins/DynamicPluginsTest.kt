@@ -11,7 +11,7 @@ import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.ide.actions.ContextHelpAction
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.plugins.testPluginSrc.ExclusionClassLoader
-import com.intellij.ide.plugins.testPluginSrc.IDynamicPluginTest
+import com.intellij.ide.plugins.testPluginSrc.DynamicPluginTestHandle
 import com.intellij.ide.plugins.testPluginSrc.optionalPluginDepLoading.bar.BarService
 import com.intellij.ide.plugins.testPluginSrc.optionalPluginDepLoading.foo.FooBarService
 import com.intellij.ide.startup.impl.StartupManagerImpl
@@ -450,7 +450,7 @@ class DynamicPluginsTest {
       try {
         // FIXME perhaps it should return false to indicate that restart is needed to load more stuff
         assertThat(DynamicPlugins.loadPluginInTest(barDescriptor, filteredCore)).isTrue()
-        val barService = application.getService(barDescriptor.pluginClassLoader!!.loadClass(BarService::class.qualifiedName)) as IDynamicPluginTest
+        val barService = application.getService(barDescriptor.pluginClassLoader!!.loadClass(BarService::class.qualifiedName)) as DynamicPluginTestHandle
         barService.test()
         val fooBarClass = fooDescriptor.pluginClassLoader!!.loadClass(FooBarService::class.qualifiedName) // loaded because packed into the same jar with the main descriptor
         assertThat(application.getService(fooBarClass)).isNull()
