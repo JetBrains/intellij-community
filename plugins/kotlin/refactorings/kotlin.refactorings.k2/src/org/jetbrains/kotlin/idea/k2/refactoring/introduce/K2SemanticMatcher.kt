@@ -6,9 +6,11 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
@@ -43,36 +45,40 @@ object K2SemanticMatcher {
 
         val substringInfo = (patternElement as? KtExpression)?.extractableSubstringInfo as? K2ExtractableSubstringInfo
 
-        scopeElement.accept(
-            object : KtTreeVisitorVoid() {
-                override fun visitKtElement(element: KtElement) {
-                    when {
-                        element == substringInfo?.template -> matches.add(patternElement)
-                        element is KtStringTemplateExpression && substringInfo != null -> {
-                            val extractableSubstringInfo = getMatchedStringFragmentsOrNull(element, substringInfo, MatchingContext())
-                            when {
-                                extractableSubstringInfo != null -> {
-                                    matches.add(extractableSubstringInfo.createExpression())
-                                }
+        // FIXME: KTIJ-34282
+        @OptIn(KaImplementationDetail::class)
+        KaBaseIllegalPsiException.allowIllegalPsiAccess {
+            scopeElement.accept(
+                object : KtTreeVisitorVoid() {
+                    override fun visitKtElement(element: KtElement) {
+                        when {
+                            element == substringInfo?.template -> matches.add(patternElement)
+                            element is KtStringTemplateExpression && substringInfo != null -> {
+                                val extractableSubstringInfo = getMatchedStringFragmentsOrNull(element, substringInfo, MatchingContext())
+                                when {
+                                    extractableSubstringInfo != null -> {
+                                        matches.add(extractableSubstringInfo.createExpression())
+                                    }
 
-                                else -> {
+                                    else -> {
 
-                                    super.visitKtElement(element)
+                                        super.visitKtElement(element)
+                                    }
                                 }
                             }
-                        }
 
-                        element.isSemanticMatch(patternElement) -> {
-                            matches.add(element)
-                        }
+                            element.isSemanticMatch(patternElement) -> {
+                                matches.add(element)
+                            }
 
-                        else -> {
-                            super.visitKtElement(element)
+                            else -> {
+                                super.visitKtElement(element)
+                            }
                         }
                     }
                 }
-            }
-        )
+            )
+        }
 
         return matches
     }
