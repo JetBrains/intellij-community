@@ -8,6 +8,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -72,11 +73,13 @@ internal class ReplacePutWithAssignmentInspection : KotlinApplicableInspectionBa
             }
         """, element)
 
-        val arrayAccessExpression = codeFragment.findDescendantOfType<KtArrayAccessExpression>()
-        val resolvedArrayAccessExpression = arrayAccessExpression?.resolveToCall()?.singleFunctionCallOrNull() ?: return null
-        if (resolvedArrayAccessExpression.symbol.callableId?.asSingleFqName() != collectionsSetFqName) return null
+        val arrayAccessExpression = codeFragment.findDescendantOfType<KtArrayAccessExpression>() ?: return null
+        analyze(arrayAccessExpression) {
+            val resolvedArrayAccessExpression = arrayAccessExpression.resolveToCall()?.singleFunctionCallOrNull() ?: return null
+            if (resolvedArrayAccessExpression.symbol.callableId?.asSingleFqName() != collectionsSetFqName) return null
 
-        return Context(assignment)
+            return Context(assignment)
+        }
     }
 
     override fun getProblemDescription(
