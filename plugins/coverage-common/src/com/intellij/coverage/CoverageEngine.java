@@ -86,20 +86,31 @@ public abstract class CoverageEngine {
   /**
    * Create a suite from a run configuration.
    */
+  @ApiStatus.NonExtendable
   public @Nullable CoverageSuite createCoverageSuite(@NotNull CoverageEnabledConfiguration config) {
     CoverageRunner runner = config.getCoverageRunner();
     if (runner == null) return null;
-    return createCoverageSuite(runner, config.createSuiteName(), config.createFileProvider(), config);
+    return createCoverageSuite(config.createSuiteName(), config.getConfiguration().getProject(), runner,
+                               config.createFileProvider(), config.createTimestamp(), config);
   }
 
   /**
-   * @deprecated Use {@link CoverageEngine#createCoverageSuite(CoverageEnabledConfiguration)}
+   * Create a suite from a run configuration.
+   * This is a short-cut for {@link #createCoverageSuite(CoverageEnabledConfiguration)}
+   * <p>
+   * This method must be overridden for the coverage providers.
    */
-  @Deprecated
-  public abstract @Nullable CoverageSuite createCoverageSuite(@NotNull CoverageRunner covRunner,
-                                                              @NotNull String name,
-                                                              @NotNull CoverageFileProvider coverageDataFileProvider,
-                                                              @NotNull CoverageEnabledConfiguration config);
+  @ApiStatus.OverrideOnly
+  public @Nullable CoverageSuite createCoverageSuite(
+    @NotNull String name,
+    @NotNull Project project,
+    @NotNull CoverageRunner runner,
+    @NotNull CoverageFileProvider fileProvider,
+    long timestamp,
+    @NotNull CoverageEnabledConfiguration config
+  ) {
+    return createCoverageSuite(runner, name, fileProvider, config);
+  }
 
   /**
    * Create a new suite with no parameters set.
@@ -435,8 +446,20 @@ public abstract class CoverageEngine {
     boolean branchCoverage,
     boolean trackTestFolders, Project project
   ) {
-    String message =
-      "Please override CoverageEngine#createCoverageSuite(String, Project, CoverageRunner, CoverageFileProvider, long) method";
-    throw new AbstractMethodError(message);
+    throw new AbstractMethodError(
+      "Please override CoverageEngine#createCoverageSuite(String, Project, CoverageRunner, CoverageFileProvider, long) method");
+  }
+
+  /**
+   * @deprecated Override {@link CoverageEngine#createCoverageSuite(String, Project, CoverageRunner, CoverageFileProvider, long, CoverageEnabledConfiguration)}
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public @Nullable CoverageSuite createCoverageSuite(@NotNull CoverageRunner runner,
+                                                     @NotNull String name,
+                                                     @NotNull CoverageFileProvider fileProvider,
+                                                     @NotNull CoverageEnabledConfiguration config) {
+    throw new AbstractMethodError(
+      "Please override CoverageEngine#createCoverageSuite(String, Project, CoverageRunner, CoverageFileProvider, long, CoverageEnabledConfiguration) method");
   }
 }

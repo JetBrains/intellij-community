@@ -266,22 +266,23 @@ public class JavaCoverageEngine extends CoverageEngine {
     if (runner == null) return null;
     // set here for correct createFileProvider call
     config.setCoverageRunner(runner);
-    return createCoverageSuite(runner, config.createSuiteName(), config.createFileProvider(), config);
+    return super.createCoverageSuite(config);
   }
 
   @Override
-  public CoverageSuite createCoverageSuite(@NotNull CoverageRunner covRunner,
-                                           @NotNull String name,
-                                           @NotNull CoverageFileProvider coverageDataFileProvider,
-                                           @NotNull CoverageEnabledConfiguration config) {
+  public @Nullable CoverageSuite createCoverageSuite(@NotNull String name,
+                                                     @NotNull Project project,
+                                                     @NotNull CoverageRunner runner,
+                                                     @NotNull CoverageFileProvider fileProvider,
+                                                     long timestamp,
+                                                     @NotNull CoverageEnabledConfiguration config) {
     if (config instanceof JavaCoverageEnabledConfiguration javaConfig) {
-      Project project = config.getConfiguration().getProject();
       JavaCoverageOptionsProvider optionsProvider = JavaCoverageOptionsProvider.getInstance(project);
-      return createSuite(covRunner,
-                         name, coverageDataFileProvider,
+      return createSuite(runner,
+                         name, fileProvider,
                          javaConfig.getPatterns(),
                          javaConfig.getExcludePatterns(),
-                         javaConfig.createTimestamp(),
+                         timestamp,
                          optionsProvider.getTestTracking() && canHavePerTestCoverage(config.getConfiguration()),
                          optionsProvider.getBranchCoverage(),
                          optionsProvider.getTestModulesCoverage(),

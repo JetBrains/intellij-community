@@ -18,11 +18,9 @@ class XMLReportEngine : CoverageEngine() {
     return XMLReportSuite(name, project, runner, fileProvider, timestamp, this)
   }
 
-  @Deprecated("Deprecated in Java")
-  override fun createCoverageSuite(covRunner: CoverageRunner,
-                                   name: String,
-                                   coverageDataFileProvider: CoverageFileProvider,
-                                   config: CoverageEnabledConfiguration) = error("Should not be called")
+  override fun createCoverageSuite(name: String, project: Project, runner: CoverageRunner, fileProvider: CoverageFileProvider, timestamp: Long, config: CoverageEnabledConfiguration): CoverageSuite? {
+    error("Should not be called")
+  }
 
   override fun createEmptyCoverageSuite(coverageRunner: CoverageRunner): XMLReportSuite? {
     if (coverageRunner !is XMLReportRunner) return null
