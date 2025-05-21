@@ -7,6 +7,7 @@ import com.intellij.driver.sdk.ui.pasteText
 import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.ui.xQuery
 import com.intellij.driver.sdk.waitFor
+import com.intellij.driver.sdk.withThreadDumps
 import com.intellij.openapi.util.SystemInfo
 import java.awt.event.KeyEvent
 import kotlin.time.Duration.Companion.seconds
@@ -56,8 +57,14 @@ class NotebookTableOutputUi(data: ComponentData) : UiComponent(data) {
       }
     }
 
-    waitFor("expect the pager text to change", 30.seconds) {
-      tableView.rowCount() == n
+    driver.withThreadDumps(
+      folderName = "threadDumps-changePageSize",
+      fileNamePrefix = "threadDump",
+      interval = 5.seconds
+    ) {
+      waitFor("expect the pager text to change", 30.seconds) {
+        tableView.rowCount() == n
+      }
     }
   }
 
