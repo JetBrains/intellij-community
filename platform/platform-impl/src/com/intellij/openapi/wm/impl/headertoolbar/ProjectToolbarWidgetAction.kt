@@ -317,11 +317,14 @@ private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionIt
                 panel {
                   row {
                     icon(AnimatedIcon.Default.INSTANCE)
+                      .customize(customGaps = UnscaledGaps(right = 5))
+                      .align(AlignY.CENTER)
                     label(UIBundle.message("project.widget.opening.project.progress.text"))
+                      .align(AlignY.CENTER)
+                      .customize(textGaps.copy(top = 0))
                   }
                 }
                   .align(AlignX.RIGHT)
-                  .align(AlignY.CENTER)
               }
             }
             val providerPath = action.providerPathToDisplay
