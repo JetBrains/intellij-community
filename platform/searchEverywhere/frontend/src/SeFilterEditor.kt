@@ -32,3 +32,16 @@ interface SeFilterActionsPresentation : SeFilterPresentation {
 interface SeFilterComponentPresentation : SeFilterPresentation {
   fun getComponent(): JComponent
 }
+
+@ApiStatus.Internal
+interface AutoToggleAction {
+  /**
+   * Automatically toggles the search scope between the everywhere scope
+   * and the project scope based on the argument `everywhere`.
+   *
+   * @param everywhere If `true`, switches to the everywhere scope.
+   *                          If `false`, switches to the project scope.
+   * @return true if the scope was changed, false otherwise
+   */
+  fun autoToggle(everywhere: Boolean): Boolean
+}

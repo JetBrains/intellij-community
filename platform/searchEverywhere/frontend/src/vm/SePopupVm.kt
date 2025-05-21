@@ -4,12 +4,14 @@ package com.intellij.platform.searchEverywhere.frontend.vm
 import com.intellij.ide.SearchTopHitProvider
 import com.intellij.ide.actions.searcheverywhere.HistoryIterator
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereToggleAction
 import com.intellij.ide.actions.searcheverywhere.SearchHistoryList
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeSessionEntity
 import com.intellij.platform.searchEverywhere.SeUsageEventsLogger
+import com.intellij.platform.searchEverywhere.frontend.SeFilterActionsPresentation
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.util.SystemProperties
@@ -17,6 +19,7 @@ import fleet.kernel.DurableRef
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
+import kotlin.collections.firstOrNull
 
 @ApiStatus.Internal
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -156,6 +159,12 @@ class SePopupVm(
 
   fun getHistoryItems(): List<String> {
     return historyIterator.getList()
+  }
+
+  suspend fun getSearchEverywhereToggleAction() : SearchEverywhereToggleAction? {
+    return (currentTab.filterEditor.getValue()?.getPresentation() as? SeFilterActionsPresentation)?.getActions()?.firstOrNull {
+      it is SearchEverywhereToggleAction
+    } as? SearchEverywhereToggleAction
   }
 }
 

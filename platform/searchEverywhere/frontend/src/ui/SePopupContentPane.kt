@@ -20,6 +20,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.searchEverywhere.SeActionItemPresentation
 import com.intellij.platform.searchEverywhere.SeTargetItemPresentation
 import com.intellij.platform.searchEverywhere.SeTextSearchItemPresentation
+import com.intellij.platform.searchEverywhere.frontend.AutoToggleAction
 import com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.tabs.files.SeTargetItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.tabs.text.SeTextSearchItemPresentationRenderer
@@ -111,7 +112,15 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
         textField.text = vm.searchPattern.value
         textField.selectAll()
       }
-      textField.bindTextIn(vm.searchPattern, this)
+      textField.bindTextIn(vm.searchPattern, this) { newText ->
+        val currentVmPattern = vm.searchPattern.value
+        if (currentVmPattern.startsWith(newText) && newText != currentVmPattern) {
+          val action = vm.getSearchEverywhereToggleAction()
+          if (action is AutoToggleAction) {
+            action.autoToggle(false)
+          }
+        }
+      }
     }
 
     addHistoryExtensionToTextField()
@@ -143,7 +152,21 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
             withContext(Dispatchers.EDT) {
               SeLog.log(SeLog.THROTTLING) { "Throttled flow completed" }
               resultListModel.removeLoadingItem()
-              if (!resultListModel.isValid) resultListModel.reset()
+
+              if (!resultListModel.isValid || resultListModel.isEmpty) {
+                val action = vm.getSearchEverywhereToggleAction()
+                if (action is AutoToggleAction) {
+                  if (!textField.text.isEmpty()) {
+                    if (action.autoToggle(true)) {
+                      headerPane.updateToolbarActions()
+                      return@withContext
+                    }
+                  }
+                }
+
+                resultListModel.reset()
+              }
+
               if (resultListModel.isEmpty) {
                 textField.setSearchInProgress(false)
                 updateEmptyStatus()

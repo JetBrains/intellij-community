@@ -14,6 +14,7 @@ import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeResultEvent
+import com.intellij.platform.searchEverywhere.frontend.AutoToggleAction
 import com.intellij.platform.searchEverywhere.frontend.*
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
 import com.intellij.platform.searchEverywhere.frontend.tabs.utils.SeFilterEditorBase
@@ -67,19 +68,31 @@ class SeAllTab(private val delegate: SeTabDelegate) : SeTab {
 }
 
 private class SeAllFilterEditor(private val providersIdToName: Map<SeProviderId, @Nls String>) : SeFilterEditorBase<SeEverywhereFilter>(SeEverywhereFilter(false, disabledProviders)) {
-  override fun getPresentation(): SeFilterPresentation {
-    return object : SeFilterActionsPresentation {
-      override fun getActions(): List<AnAction> = listOf(getEverywhereToggleAction(), getFilterTypesAction(providersIdToName))
-    }
+  private val presentation = object : SeFilterActionsPresentation {
+    private val actions = listOf(getEverywhereToggleAction(), getFilterTypesAction(providersIdToName))
+    override fun getActions(): List<AnAction> = actions
   }
 
-  private fun getEverywhereToggleAction() = object : CheckBoxSearchEverywhereToggleAction(IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.items")) {
+  override fun getPresentation(): SeFilterPresentation = presentation
+
+  private fun getEverywhereToggleAction() = object : CheckBoxSearchEverywhereToggleAction(IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.items")), AutoToggleAction {
+    private var isAutoToggleEnabled: Boolean = true
+
     override fun isEverywhere(): Boolean {
       return filterValue.isEverywhere
     }
 
     override fun setEverywhere(state: Boolean) {
       filterValue = filterValue.cloneWith(state)
+      isAutoToggleEnabled = false
+    }
+
+    override fun autoToggle(everywhere: Boolean): Boolean {
+      if (isAutoToggleEnabled && isEverywhere != everywhere) {
+        filterValue = filterValue.cloneWith(everywhere)
+        return true
+      }
+      return false
     }
   }
 

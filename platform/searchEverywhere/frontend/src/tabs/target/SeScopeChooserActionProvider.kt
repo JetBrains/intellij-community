@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.searchEverywhere.SeSearchScopesInfo
+import com.intellij.platform.searchEverywhere.frontend.AutoToggleAction
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus
@@ -41,39 +42,54 @@ class SeScopeChooserActionProvider(val scopesInfo: SeSearchScopesInfo, private v
       onSelectedScopeChanged(value)
     }
 
-  fun getAction(): AnAction {
-    return object : ScopeChooserAction() {
-      val canToggleEverywhere = scopesInfo.canToggleEverywhere
+  private val action = object : ScopeChooserAction(), AutoToggleAction {
+    val canToggleEverywhere = scopesInfo.canToggleEverywhere
+    private var isAutoToggleEnabled: Boolean = true
 
-      override fun onScopeSelected(o: ScopeDescriptor) {
-        scopesInfo.scopes.firstOrNull { it.name == o.displayName }?.let {
-          selectedScopeId = it.scopeId
-        }
-      }
-
-      override fun getSelectedScope(): ScopeDescriptor = selectedScopeId?.let { descriptors[it] }
-                                                         ?: ScopeDescriptor(GlobalSearchScope.EMPTY_SCOPE)
-
-      override fun onProjectScopeToggled() {
-        isEverywhere = selectedScopeId != scopesInfo.everywhereScopeId
-      }
-
-      override fun processScopes(processor: Processor<in ScopeDescriptor>): Boolean {
-        return descriptors.values.all { processor.process(it) }
-      }
-
-      override fun isEverywhere(): Boolean = selectedScopeId == scopesInfo.everywhereScopeId
-
-      override fun setEverywhere(everywhere: Boolean) {
-        val targetScope = if (everywhere) scopesInfo.everywhereScopeId else scopesInfo.projectScopeId ?: return
-        selectedScopeId = targetScope
-      }
-
-      override fun canToggleEverywhere(): Boolean {
-        if (!canToggleEverywhere) return false
-        return selectedScopeId != scopesInfo.everywhereScopeId ||
-               selectedScopeId != scopesInfo.projectScopeId
+    override fun onScopeSelected(o: ScopeDescriptor) {
+      scopesInfo.scopes.firstOrNull { it.name == o.displayName }?.let {
+        selectedScopeId = it.scopeId
+        isAutoToggleEnabled = false
       }
     }
+
+    override fun getSelectedScope(): ScopeDescriptor = selectedScopeId?.let { descriptors[it] }
+                                                       ?: ScopeDescriptor(GlobalSearchScope.EMPTY_SCOPE)
+
+    override fun onProjectScopeToggled() {
+      isEverywhere = selectedScopeId != scopesInfo.everywhereScopeId
+    }
+
+    override fun processScopes(processor: Processor<in ScopeDescriptor>): Boolean {
+      return descriptors.values.all { processor.process(it) }
+    }
+
+    override fun isEverywhere(): Boolean = selectedScopeId == scopesInfo.everywhereScopeId
+
+    private fun updateScope(everywhere: Boolean) {
+      val targetScope = if (everywhere) scopesInfo.everywhereScopeId else scopesInfo.projectScopeId
+      selectedScopeId = targetScope
+    }
+
+    override fun setEverywhere(everywhere: Boolean) {
+      updateScope(everywhere)
+      isAutoToggleEnabled = false
+    }
+
+    override fun canToggleEverywhere(): Boolean {
+      if (!canToggleEverywhere) return false
+      return selectedScopeId != scopesInfo.everywhereScopeId ||
+             selectedScopeId != scopesInfo.projectScopeId
+    }
+
+    override fun autoToggle(everywhere: Boolean): Boolean {
+      if (isAutoToggleEnabled && isEverywhere != everywhere) {
+        updateScope(everywhere)
+        return true
+      }
+      return false
+    }
   }
+
+  fun getAction(): AnAction = action
 }

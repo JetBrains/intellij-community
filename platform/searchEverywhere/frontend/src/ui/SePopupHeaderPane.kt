@@ -2,6 +2,7 @@
 package com.intellij.platform.searchEverywhere.frontend.ui
 
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
@@ -36,6 +37,7 @@ class SePopupHeaderPane(tabNames: @Nls List<String>,
                         toolbar: JComponent? = null): NonOpaquePanel() {
   private lateinit var tabbedPane: JBTabbedPane
   private val panel: DialogPanel
+  private var toolbar: ActionToolbar = ActionManager.getInstance().createActionToolbar("search.everywhere.toolbar", DefaultActionGroup(), true)
   private val tabFilterContainer: JPanel = object : JPanel() {
     override fun getPreferredSize(): Dimension {
       val dimension = components.firstOrNull()?.preferredSize ?: Dimension(0, 0)
@@ -119,7 +121,7 @@ class SePopupHeaderPane(tabNames: @Nls List<String>,
 
   private fun setFilterActions(actions: List<AnAction>) {
     val actionGroup = DefaultActionGroup(actions)
-    val toolbar = ActionManager.getInstance().createActionToolbar("search.everywhere.toolbar", actionGroup, true)
+    toolbar = ActionManager.getInstance().createActionToolbar("search.everywhere.toolbar", actionGroup, true)
     toolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY)
     toolbar.targetComponent = this
     val toolbarComponent = toolbar.getComponent()
@@ -127,6 +129,10 @@ class SePopupHeaderPane(tabNames: @Nls List<String>,
     toolbarComponent.setBorder(JBUI.Borders.empty(2, 18, 2, 9))
 
     setFilterComponent(toolbarComponent)
+  }
+
+  fun updateToolbarActions() {
+    toolbar.updateActionsAsync()
   }
 
   companion object {

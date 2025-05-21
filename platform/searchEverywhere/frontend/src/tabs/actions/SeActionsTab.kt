@@ -21,7 +21,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class SeActionsTab(private val delegate: SeTabDelegate): SeTab {
+class SeActionsTab(private val delegate: SeTabDelegate) : SeTab {
   override val name: String get() = IdeBundle.message("search.everywhere.group.name.actions")
   override val shortName: String get() = name
   override val id: String get() = ID
@@ -53,19 +53,30 @@ class SeActionsTab(private val delegate: SeTabDelegate): SeTab {
 }
 
 private class SeActionsFilterEditor : SeFilterEditorBase<SeActionsFilter>(SeActionsFilter(false)) {
-  override fun getPresentation(): SeFilterPresentation {
-    return object : SeFilterActionsPresentation {
-      override fun getActions(): List<AnAction> {
-        return listOf<AnAction>(object : CheckBoxSearchEverywhereToggleAction(IdeBundle.message("checkbox.disabled.included")) {
-          override fun isEverywhere(): Boolean {
-            return filterValue.includeDisabled
-          }
+  private val presentation = object : SeFilterActionsPresentation {
+    private val actions = listOf<AnAction>(object : CheckBoxSearchEverywhereToggleAction(IdeBundle.message("checkbox.disabled.included")), AutoToggleAction {
+      private var isAutoToggleEnabled: Boolean = true
 
-          override fun setEverywhere(state: Boolean) {
-            filterValue = SeActionsFilter(state)
-          }
-        })
+      override fun isEverywhere(): Boolean {
+        return filterValue.includeDisabled
       }
-    }
+
+      override fun setEverywhere(state: Boolean) {
+        filterValue = SeActionsFilter(state)
+        isAutoToggleEnabled = false
+      }
+
+      override fun autoToggle(everywhere: Boolean): Boolean {
+        if (isAutoToggleEnabled && isEverywhere != everywhere) {
+          filterValue = SeActionsFilter(everywhere)
+          return true
+        }
+        return false
+      }
+    })
+
+    override fun getActions(): List<AnAction> = actions
   }
+
+  override fun getPresentation(): SeFilterPresentation = presentation
 }
