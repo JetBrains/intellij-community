@@ -3,7 +3,7 @@
   <name>Smart Update</name>
   <vendor>JetBrains</vendor>
   <description><![CDATA[
-    Enables <b>Auto Update…</b> action that schedules automatic IDE and plugin updates.
+    Enables <b>Auto Update</b> action that schedules automatic IDE and plugin updates.
   ]]></description>
 
   <dependencies>

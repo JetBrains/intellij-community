@@ -7,6 +7,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
@@ -437,7 +438,12 @@ abstract class ProductProperties {
    */
   open fun validatePlugin(pluginId: String?, result: PluginCreationResult<IdePlugin>, context: BuildContext): List<PluginProblem> {
     return when (result) {
-      is PluginCreationSuccess -> result.unacceptableWarnings
+      is PluginCreationSuccess -> buildList {
+        addAll(result.unacceptableWarnings)
+        if (result.plugin.pluginVersion == null) {
+          add(PropertyNotSpecified("version"))
+        }
+      }
       is PluginCreationFail -> result.errorsAndWarnings
     }
   }

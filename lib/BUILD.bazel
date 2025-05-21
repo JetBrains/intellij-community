@@ -2136,8 +2136,8 @@ jvm_import(
 java_library(
   name = "intellij-plugin-structure",
   exports = [
-    ":structure-intellij-3_276_http_import",
-    ":structure-base-3_276_http_import",
+    ":structure-intellij-3_306_http_import",
+    ":structure-base-3_306_http_import",
     ":evo-inflector-1_3_http_import",
     ":jdom2-2_0_6_1_http_import",
   ],
@@ -2145,15 +2145,15 @@ java_library(
 )
 
 jvm_import(
-  name = "structure-intellij-3_276_http_import",
-  jar = "@structure-intellij-3_276_http//file",
-  source_jar = "@structure-intellij-3_276-sources_http//file"
+  name = "structure-intellij-3_306_http_import",
+  jar = "@structure-intellij-3_306_http//file",
+  source_jar = "@structure-intellij-3_306-sources_http//file"
 )
 
 jvm_import(
-  name = "structure-base-3_276_http_import",
-  jar = "@structure-base-3_276_http//file",
-  source_jar = "@structure-base-3_276-sources_http//file"
+  name = "structure-base-3_306_http_import",
+  jar = "@structure-base-3_306_http//file",
+  source_jar = "@structure-base-3_306-sources_http//file"
 )
 
 jvm_import(
