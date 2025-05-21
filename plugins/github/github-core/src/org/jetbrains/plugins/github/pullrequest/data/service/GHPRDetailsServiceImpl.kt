@@ -36,15 +36,15 @@ internal class GHPRDetailsServiceImpl(
     runCatching {
       requestExecutor.executeSuspend(GHGQLRequests.PullRequest.findOne(repository, pullRequestId.number))
       ?: throw GHNotFoundException("Pull request ${pullRequestId.number} does not exist")
-    }.processErrorAndGet {
-      LOG.info("Error occurred while loading PR details", it)
+    }.processErrorAndGet { e ->
+      LOG.info("Error occurred while loading PR details", e)
     }
 
   override suspend fun updateDetails(pullRequestId: GHPRIdentifier, title: String?, description: String?): GHPullRequest =
     runCatching {
       requestExecutor.executeSuspend(GHGQLRequests.PullRequest.update(repository, pullRequestId.id, title, description))
-    }.processErrorAndGet {
-      LOG.info("Error occurred while updating PR details", it)
+    }.processErrorAndGet { e ->
+      LOG.info("Error occurred while updating PR details", e)
     }
 
   override suspend fun adjustReviewers(pullRequestId: GHPRIdentifier, delta: CollectionDelta<GHPullRequestRequestedReviewer>) =
@@ -71,8 +71,8 @@ internal class GHPRDetailsServiceImpl(
           }
         }
       }
-    }.processErrorAndGet {
-      LOG.info("Error occurred while adjusting the list of reviewers", it)
+    }.processErrorAndGet { e ->
+      LOG.info("Error occurred while adjusting the list of reviewers", e)
     }
 
   override suspend fun adjustAssignees(pullRequestId: GHPRIdentifier, delta: CollectionDelta<GHUser>) {
@@ -85,8 +85,8 @@ internal class GHPRDetailsServiceImpl(
                                                             delta.newCollection.map { it.login }))
         }
       }
-    }.processErrorAndGet {
-      LOG.error("Error occurred while adjusting the list of assignees")
+    }.processErrorAndGet { e ->
+      LOG.error("Error occurred while adjusting the list of assignees", e)
     }
   }
 
@@ -99,8 +99,8 @@ internal class GHPRDetailsServiceImpl(
                                                     delta.newCollection.map { it.name }))
         }
       }
-    }.processErrorAndGet {
-      LOG.error("Error occurred while adjusting the list of labels")
+    }.processErrorAndGet { e ->
+      LOG.error("Error occurred while adjusting the list of labels", e)
     }
   }
 
@@ -110,8 +110,8 @@ internal class GHPRDetailsServiceImpl(
                              ?: error("Could not find pull request ${pullRequestId.number}")
       val currentUserIsAdmin = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.ADMIN)
       GHPRMergeabilityStateBuilder(mergeabilityData, currentUserIsAdmin).build()
-    }.processErrorAndGet {
-      LOG.info("Error occurred while loading mergeability state data for PR ${pullRequestId.number}")
+    }.processErrorAndGet { e ->
+      LOG.info("Error occurred while loading mergeability state data for PR ${pullRequestId.number}", e)
     }
 
 
@@ -121,8 +121,8 @@ internal class GHPRDetailsServiceImpl(
         GithubApiRequests.Repos.PullRequests.update(serverPath, repoPath.owner, repoPath.repository,
                                                     pullRequestId.number,
                                                     state = GithubIssueState.closed))
-    }.processErrorAndGet {
-      LOG.info("Error occurred while closing PR ${pullRequestId.number}")
+    }.processErrorAndGet { e ->
+      LOG.info("Error occurred while closing PR ${pullRequestId.number}", e)
     }
   }
 
@@ -132,16 +132,16 @@ internal class GHPRDetailsServiceImpl(
         GithubApiRequests.Repos.PullRequests.update(serverPath, repoPath.owner, repoPath.repository,
                                                     pullRequestId.number,
                                                     state = GithubIssueState.open))
-    }.processErrorAndGet {
-      LOG.info("Error occurred while reopening PR ${pullRequestId.number}")
+    }.processErrorAndGet { e ->
+      LOG.info("Error occurred while reopening PR ${pullRequestId.number}", e)
     }
   }
 
   override suspend fun markReadyForReview(pullRequestId: GHPRIdentifier) {
     runCatching {
       requestExecutor.executeSuspend(GHGQLRequests.PullRequest.markReadyForReview(repository, pullRequestId.id))
-    }.processErrorAndGet {
-      LOG.info("Error occurred while marking PR ${pullRequestId.number} ready fro review")
+    }.processErrorAndGet { e ->
+      LOG.info("Error occurred while marking PR ${pullRequestId.number} ready for review", e)
     }
   }
 
@@ -152,8 +152,8 @@ internal class GHPRDetailsServiceImpl(
                                                    commitMessage.first, commitMessage.second,
                                                    currentHeadRef))
       GHPRStatisticsCollector.logMergedEvent(project, GithubPullRequestMergeMethod.merge)
-    }.processErrorAndGet {
-      LOG.info("Error occurred while merging PR ${pullRequestId.number}")
+    }.processErrorAndGet { e ->
+      LOG.info("Error occurred while merging PR ${pullRequestId.number}", e)
     }
 
 
@@ -163,8 +163,8 @@ internal class GHPRDetailsServiceImpl(
         GithubApiRequests.Repos.PullRequests.rebaseMerge(serverPath, repoPath, pullRequestId.number,
                                                          currentHeadRef))
       GHPRStatisticsCollector.logMergedEvent(project, GithubPullRequestMergeMethod.rebase)
-    }.processErrorAndGet {
-      LOG.info("Error occurred while rebasing PR ${pullRequestId.number}")
+    }.processErrorAndGet { e ->
+      LOG.info("Error occurred while rebasing PR ${pullRequestId.number}", e)
     }
   }
 
@@ -175,8 +175,8 @@ internal class GHPRDetailsServiceImpl(
                                                          commitMessage.first, commitMessage.second,
                                                          currentHeadRef))
       GHPRStatisticsCollector.logMergedEvent(project, GithubPullRequestMergeMethod.squash)
-    }.processErrorAndGet {
-      LOG.info("Error occurred while squash-merging PR ${pullRequestId.number}")
+    }.processErrorAndGet { e ->
+      LOG.info("Error occurred while squash-merging PR ${pullRequestId.number}", e)
     }
   }
 
