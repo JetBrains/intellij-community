@@ -14,14 +14,13 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.Collection;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 final class IvyAttachSourceProvider extends AbstractAttachSourceProvider {
 
@@ -52,8 +51,12 @@ final class IvyAttachSourceProvider extends AbstractAttachSourceProvider {
     VirtualFile propertiesFile = artifactDir.findChild("ivydata-" + version + ".properties");
     if (propertiesFile == null) return List.of();
 
-    Library library = getLibraryFromOrderEntriesList(orderEntries);
-    if (library == null) return List.of();
+    final Set<Library> libraries = new HashSet<>();
+    for (LibraryOrderEntry orderEntry : orderEntries) {
+      ContainerUtil.addIfNotNull(libraries, orderEntry.getLibrary());
+    }
+
+    if (libraries.isEmpty()) return List.of();
 
     String sourceFileName = artifactName + '-' + version + "-sources.jar";
 
@@ -63,11 +66,17 @@ final class IvyAttachSourceProvider extends AbstractAttachSourceProvider {
       if (srcFile != null) {
         // File already downloaded.
         VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(srcFile);
-        if (jarRoot == null || ArrayUtil.contains(jarRoot, (Object[])library.getFiles(OrderRootType.SOURCES))) {
+        if (jarRoot == null) {
           return List.of(); // Sources already attached.
         }
 
-        return List.of(new AttachExistingSourceAction(jarRoot, library,
+        for (Library library : libraries) {
+          if (ArrayUtil.contains(jarRoot, (Object[])library.getFiles(OrderRootType.SOURCES))) {
+            return List.of(); // Sources already attached.
+          }
+        }
+
+        return List.of(new AttachExistingSourceAction(jarRoot, libraries,
                                                       JavaUiBundle.message("ivi.attach.source.provider.action.name")));
       }
     }
@@ -87,7 +96,9 @@ final class IvyAttachSourceProvider extends AbstractAttachSourceProvider {
           VirtualFile srcFile = existingSourcesFolder.createChildData(this, sourceFileName);
           srcFile.setBinaryContent(content);
 
-          addSourceFile(JarFileSystem.getInstance().getJarRootForLocalFile(srcFile), library);
+          for (Library library : libraries) {
+            addSourceFile(JarFileSystem.getInstance().getJarRootForLocalFile(srcFile), library);
+          }
         }
         catch (IOException e) {
           String message = JavaUiBundle.message("error.message.failed.to.save.0", artifactDir.getPath() + "/sources/" + sourceFileName);
