@@ -2,6 +2,7 @@
 @file:Suppress("UsePropertyAccessSyntax", "ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.BuildNumber
@@ -36,6 +37,10 @@ import kotlin.test.assertNotEquals
 class PluginDescriptorTest {
   @TestDataPath("\$CONTENT_ROOT/testData/plugins/pluginDescriptor") @Suppress("unused")
   private class TestDataRef // for easy navigation
+
+  init {
+    Logger.setUnitTestMode() // due to warnInProduction use in IdeaPluginDescriptorImpl
+  }
 
   @RegisterExtension
   @JvmField

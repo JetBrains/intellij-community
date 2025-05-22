@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.plugins.testFramework.PluginSetTestBuilder
 import com.intellij.platform.testFramework.PluginBuilder
 import com.intellij.testFramework.LoggedErrorProcessor
@@ -12,6 +13,10 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
 internal class PluginDependenciesTest {
+  init {
+    Logger.setUnitTestMode() // due to warnInProduction use in IdeaPluginDescriptorImpl
+  }
+
   @RegisterExtension
   @JvmField
   val inMemoryFs = InMemoryFsExtension()

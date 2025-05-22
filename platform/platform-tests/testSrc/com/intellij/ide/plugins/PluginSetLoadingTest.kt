@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.PluginMainDescriptor.Companion.productModeAliasesForCorePlugin
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.plugins.testFramework.PluginSetTestBuilder
 import com.intellij.platform.testFramework.PluginBuilder
@@ -15,6 +16,10 @@ import org.junit.Test
 import java.util.function.Function
 
 class PluginSetLoadingTest {
+  init {
+    Logger.setUnitTestMode() // due to warnInProduction use in IdeaPluginDescriptorImpl
+  }
+
   @Rule
   @JvmField
   val inMemoryFs = InMemoryFsRule()
