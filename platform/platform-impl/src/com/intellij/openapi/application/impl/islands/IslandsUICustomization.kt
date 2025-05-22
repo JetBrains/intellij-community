@@ -2,15 +2,19 @@
 package com.intellij.openapi.application.impl.islands
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.laf.UiThemeProviderListManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.impl.ToolWindowUIDecorator
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.Messages
@@ -19,6 +23,7 @@ import com.intellij.openapi.ui.Splittable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.IdeGlassPane
+import com.intellij.openapi.wm.IdeGlassPaneUtil
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
 import com.intellij.openapi.wm.impl.SquareStripeButtonLook
@@ -26,10 +31,12 @@ import com.intellij.toolWindow.FrameLayeredPane
 import com.intellij.toolWindow.xNext.island.XNextIslandHolder
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.JBColor
+import com.intellij.ui.tabs.impl.JBEditorTabs
 import com.intellij.ui.tabs.impl.TabPainterAdapter
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Graphics
@@ -133,7 +140,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
         @Suppress("GraphicsSetClipInspection")
         override fun paintChildren(g: Graphics) {
-          val cornerRadius = JBUI.getInt("Island.arc", 0)
+          val cornerRadius = JBUI.getInt("Island.arc", 10)
 
           if (isIslandsGradientEnabled) {
             putClientProperty(IdeBackgroundUtil.NO_BACKGROUND, null)
@@ -160,6 +167,11 @@ internal class IslandsUICustomization : InternalUICustomization() {
             g.color = color
             g.drawRoundRect(0, 0, width - 1, height - 1, cornerRadius, cornerRadius)
             config.restore()
+          }
+
+          if (FileEditorManager.getInstance(ProjectUtil.getProjectForWindow(frame) ?: return).openFiles.isEmpty()) {
+            val editorEmptyTextPainter = ApplicationManager.getApplication().getService(EditorEmptyTextPainter::class.java)
+            editorEmptyTextPainter.paintEmptyText(IdeGlassPaneUtil.find(this) as JComponent, g)
           }
         }
 
@@ -188,6 +200,14 @@ internal class IslandsUICustomization : InternalUICustomization() {
   override fun configureEditorsSplitters(component: EditorsSplitters) {
     if (isManyIslandEnabled) {
       IslandsRoundedBorder.createEditorBorder(component)
+    }
+  }
+
+  override fun paintBeforeEditorEmptyText(component: JComponent, graphics: Graphics) {
+    if (isManyIslandEnabled) {
+      val g = IdeBackgroundUtil.getOriginalGraphics(graphics)
+      g.color = UIUtil.findComponentOfType(component.rootPane, JBEditorTabs::class.java)?.background ?: return
+      g.fillRect(0, 0, component.width, component.height)
     }
   }
 
