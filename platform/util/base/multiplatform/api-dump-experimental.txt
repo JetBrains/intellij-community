@@ -1,9 +1,12 @@
 *f:com.intellij.openapi.util.text.StringsKmp
+- sf:equalsIgnoreWhitespaces(java.lang.CharSequence,java.lang.CharSequence):Z
+- sf:equalsTrimWhitespaces(java.lang.CharSequence,java.lang.CharSequence):Z
 - sf:stringHashCode(java.lang.CharSequence):I
 - sf:stringHashCode(java.lang.CharSequence,I,I):I
 - sf:stringHashCode(java.lang.CharSequence,I,I,I):I
 - sf:stringHashCode(C[],I,I):I
 - bs:stringHashCode$default(java.lang.CharSequence,I,I,I,I,java.lang.Object):I
+- sf:stringHashCodeIgnoreWhitespaces(java.lang.CharSequence):I
 *f:com.intellij.util.text.CharArrayUtilKmp
 - sf:INSTANCE:com.intellij.util.text.CharArrayUtilKmp
 - sf:containLineBreaks(java.lang.CharSequence):Z

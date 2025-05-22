@@ -1,7 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.comparison
 
-import com.intellij.openapi.util.text.Strings
+import com.intellij.openapi.util.text.equalsIgnoreWhitespaces
+import com.intellij.openapi.util.text.equalsTrimWhitespaces
+import com.intellij.openapi.util.text.stringHashCode
+import com.intellij.openapi.util.text.stringHashCodeIgnoreWhitespaces
 import com.intellij.util.diff.DiffConfig
 import org.jetbrains.annotations.Contract
 
@@ -13,21 +16,22 @@ object ComparisonUtil {
 
     when (policy) {
       ComparisonPolicy.DEFAULT -> return text1.equalsByContents(text2)
-      ComparisonPolicy.TRIM_WHITESPACES -> return Strings.equalsTrimWhitespaces(text1, text2)
-      ComparisonPolicy.IGNORE_WHITESPACES -> return Strings.equalsIgnoreWhitespaces(text1, text2)
+      ComparisonPolicy.TRIM_WHITESPACES -> return text1.equalsTrimWhitespaces(text2)
+      ComparisonPolicy.IGNORE_WHITESPACES -> return text1.equalsIgnoreWhitespaces(text2)
     }
   }
 
   @JvmStatic
   fun hashCode(text: CharSequence, policy: ComparisonPolicy): Int {
     when (policy) {
-      ComparisonPolicy.DEFAULT -> return Strings.stringHashCode(text)
+      ComparisonPolicy.DEFAULT -> return text.stringHashCode()
       ComparisonPolicy.TRIM_WHITESPACES -> {
         val offset1 = trimStart(text, 0, text.length)
         val offset2 = trimEnd(text, offset1, text.length)
-        return Strings.stringHashCode(text, offset1, offset2)
+
+        return text.stringHashCode(offset1, offset2)
       }
-      ComparisonPolicy.IGNORE_WHITESPACES -> return Strings.stringHashCodeIgnoreWhitespaces(text)
+      ComparisonPolicy.IGNORE_WHITESPACES -> return text.stringHashCodeIgnoreWhitespaces()
     }
   }
 
@@ -37,7 +41,7 @@ object ComparisonUtil {
     when (policy) {
       ComparisonPolicy.DEFAULT -> return text1.equalsByContents(text2)
       ComparisonPolicy.TRIM_WHITESPACES -> return equalsTrimWhitespaces(text1, text2)
-      ComparisonPolicy.IGNORE_WHITESPACES -> return Strings.equalsIgnoreWhitespaces(text1, text2)
+      ComparisonPolicy.IGNORE_WHITESPACES -> return text1.equalsIgnoreWhitespaces(text2)
     }
   }
 
@@ -58,8 +62,8 @@ object ComparisonUtil {
       var lastLine1 = false
       var lastLine2 = false
 
-      var end1 = Strings.indexOf(s1, '\n', index1) + 1
-      var end2 = Strings.indexOf(s2, '\n', index2) + 1
+      var end1 = s1.indexOf('\n', index1) + 1
+      var end2 = s2.indexOf('\n', index2) + 1
       if (end1 == 0) {
         end1 = s1.length
         lastLine1 = true
@@ -72,7 +76,7 @@ object ComparisonUtil {
 
       val line1 = s1.subSequence(index1, end1)
       val line2 = s2.subSequence(index2, end2)
-      if (!Strings.equalsTrimWhitespaces(line1, line2)) return false
+      if (!line1.equalsTrimWhitespaces(line2)) return false
 
       index1 = end1
       index2 = end2
