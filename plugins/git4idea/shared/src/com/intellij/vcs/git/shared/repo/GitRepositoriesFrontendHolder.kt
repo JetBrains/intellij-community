@@ -48,7 +48,12 @@ class GitRepositoriesFrontendHolder(
     val repo = repositories[repositoryId]
     if (repo != null) return repo
 
-    logStateDesynchronized(repositoryId)
+    cs.launch {
+      if (fixDesynchronizedRepo(repositoryId)) {
+        project.messageBus.syncPublisher(UPDATES).afterUpdate(UpdateType.REPOSITORY_STATE_UPDATED)
+      }
+    }
+
     return GitRepositoryFrontendModelStub(repositoryId)
   }
 
@@ -113,19 +118,21 @@ class GitRepositoriesFrontendHolder(
     }
 
     if (repoInfo == null) {
-      logStateDesynchronized(repoId)
-      val repositoryDto = GitRepositoryApi.getInstance().getRepository(repoId)
-      if (repositoryDto != null) {
-        repositories[repoId] = convertToRepositoryInfo(repositoryDto)
-      } else {
-        LOG.warn("Failed to fetch repository status $repoId")
-      }
+      fixDesynchronizedRepo(repoId)
     }
   }
 
-  private fun logStateDesynchronized(repositoryId: RepositoryId) {
-    LOG.error("State of repository $repositoryId is not synchronized. " +
-              "Known repositories are: ${repositories.keys.joinToString { it.toString() }}")
+  private suspend fun fixDesynchronizedRepo(repoId: RepositoryId): Boolean {
+    LOG.warn("State of repository $repoId is not synchronized. " +
+             "Known repositories are: ${repositories.keys.joinToString { it.toString() }}")
+    val repositoryDto = GitRepositoryApi.getInstance().getRepository(repoId)
+    if (repositoryDto != null) {
+      repositories[repoId] = convertToRepositoryInfo(repositoryDto)
+    }
+    else {
+      LOG.warn("Failed to fetch repository status $repoId")
+    }
+    return repositoryDto != null
   }
 
   companion object {
