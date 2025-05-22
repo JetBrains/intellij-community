@@ -30,12 +30,10 @@ class CoroutinesDumpAsyncProvider : ThreadDumpItemsProviderFactory() {
     override fun getProvider(context: DebuggerContextImpl): ThreadDumpItemsProvider = object : ThreadDumpItemsProvider {
         override val progressText: String get() = JavaDebuggerBundle.message("thread.dump.coroutines.progress")
 
-        private val vm = context.debugProcess!!.virtualMachineProxy
-
-        private val enabled =
+        private val enabled: Boolean =
             Registry.`is`("debugger.kotlin.show.coroutines.in.threadDumpPanel") &&
                     // check that coroutines are in the project's classpath
-                    vm.classesByName("kotlinx.coroutines.debug.internal.DebugProbesImpl").isNotEmpty()
+                    context.debugProcess!!.virtualMachineProxy.classesByName("kotlinx.coroutines.debug.internal.DebugProbesImpl").isNotEmpty()
 
         override val requiresEvaluation get() = enabled
 
