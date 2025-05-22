@@ -553,12 +553,16 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
   val platformPrefix = PlatformUtils.getPlatformPrefix()
 
   if (isUnitTestMode) {
+    // Do not hardcode `isRunningFromSources = true`.
+    // This falsely assumes that if `isUnitTestMode = true`, then tests are running inside the monorepo.
+    // For external plugins (and internal plugins developed outside the monorepo, like the Scala plugin), `isRunningFromSources` has the value `false`.
+    // An incorrect value for `isRunningFromSources` leads to plugin loading issues in tests for external plugins.
     val core = loadCoreModules(
       loadingContext = loadingContext,
       platformPrefix = platformPrefix,
       isUnitTestMode = true,
       isInDevServerMode = false,
-      isRunningFromSources = isRunningFromSources,
+      isRunningFromSources = isRunningFromSources, // do not hardcode to `true`
       classLoader = mainClassLoader,
       pool = zipPool,
     )
