@@ -5,7 +5,9 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.containers.SLRUCache
 import com.intellij.util.containers.hash.EqualityPolicy
+import com.intellij.util.containers.intcaches.SLRUIntObjectCache
 import com.intellij.util.io.IOCancellationCallbackHolder
+import com.intellij.util.io.InlineKeyDescriptor
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 import java.util.concurrent.TimeUnit.MILLISECONDS
@@ -16,7 +18,6 @@ import java.util.function.BiConsumer
 import java.util.function.Function
 import kotlin.concurrent.withLock
 import kotlin.math.abs
-import kotlin.math.ceil
 
 @Internal
 interface MapIndexStorageCache<Key : Any, Value> {
@@ -120,7 +121,15 @@ object SlruIndexStorageCacheProvider : MapIndexStorageCacheProvider {
     hashingStrategy: EqualityPolicy<Key>,
     cacheSizeHint: Int,
   ): MapIndexStorageCache<Key, Value> {
-    val underlyingCache = SlruCache(valueReader, evictedValuesPersister, hashingStrategy, cacheSizeHint)
+
+    val underlyingCache = if (hashingStrategy is InlineKeyDescriptor<Key>) {
+      //use specialized cache for Int keys, if actual Key type is convertable to Int:
+      SlruCacheForIntKeys(valueReader, evictedValuesPersister, cacheSizeHint, hashingStrategy)
+    }
+    else {
+      SlruCache(valueReader, evictedValuesPersister, hashingStrategy, cacheSizeHint)
+    }
+
     return if (THREAD_SAFE_IMPL) {
       LockedCacheWrapper(underlyingCache)
     }
@@ -135,11 +144,7 @@ object SlruIndexStorageCacheProvider : MapIndexStorageCacheProvider {
     hashingStrategy: EqualityPolicy<Key>,
     cacheSize: Int,
   ) : MapIndexStorageCache<Key, Value> {
-    private val cache = object : SLRUCache<Key, ChangeTrackingValueContainer<Value>>(
-      cacheSize,
-      ceil(cacheSize * 0.25).toInt(),
-      hashingStrategy
-    ) {
+    private val cache = object : SLRUCache<Key, ChangeTrackingValueContainer<Value>>(cacheSize, cacheSize / 4, hashingStrategy) {
       override fun createValue(key: Key): ChangeTrackingValueContainer<Value> {
         totalUncachedReads.incrementAndGet()
         return valueReader.apply(key)
@@ -147,7 +152,6 @@ object SlruIndexStorageCacheProvider : MapIndexStorageCacheProvider {
 
       override fun onDropFromCache(key: Key, valueContainer: ChangeTrackingValueContainer<Value>) {
         totalEvicted.incrementAndGet()
-
         evictedValuesPersister.accept(key, valueContainer)
       }
     }
@@ -160,6 +164,43 @@ object SlruIndexStorageCacheProvider : MapIndexStorageCacheProvider {
     override fun readIfCached(key: Key): ChangeTrackingValueContainer<Value>? {
       totalReads.incrementAndGet()
       return cache.getIfCached(key)
+    }
+
+    override fun getCachedValues(): Collection<ChangeTrackingValueContainer<Value>> {
+      return cache.values()
+    }
+
+    override fun invalidateAll() {
+      cache.clear()
+    }
+  }
+
+  private class SlruCacheForIntKeys<Key : Any, Value>(
+    val valueReader: Function<Key, ChangeTrackingValueContainer<Value>>,
+    val evictedValuesPersister: BiConsumer<Key, ChangeTrackingValueContainer<Value>>,
+    cacheSize: Int,
+    val converter: InlineKeyDescriptor<Key>,
+  ) : MapIndexStorageCache<Key, Value> {
+    private val cache = object : SLRUIntObjectCache<ChangeTrackingValueContainer<Value>>(cacheSize, cacheSize / 4) {
+      override fun createValue(key: Int): ChangeTrackingValueContainer<Value> {
+        totalUncachedReads.incrementAndGet()
+        return valueReader.apply(converter.fromInt(key))
+      }
+
+      override fun onEvict(key: Int, valueContainer: ChangeTrackingValueContainer<Value>) {
+        totalEvicted.incrementAndGet()
+        evictedValuesPersister.accept(converter.fromInt(key), valueContainer)
+      }
+    }
+
+    override fun read(key: Key): ChangeTrackingValueContainer<Value> {
+      totalReads.incrementAndGet()
+      return cache.get(converter.toInt(key))
+    }
+
+    override fun readIfCached(key: Key): ChangeTrackingValueContainer<Value>? {
+      totalReads.incrementAndGet()
+      return cache.getIfCached(converter.toInt(key))
     }
 
     override fun getCachedValues(): Collection<ChangeTrackingValueContainer<Value>> {
@@ -201,7 +242,11 @@ internal class LockedCacheWrapper<Key : Any, Value>(private val underlyingCache:
   }
 }
 
-/** Implementation uses a very simple MRU-cache under the hood */
+/**
+ * Implementation uses a very simple MRU-cache under the hood.
+ * Cache itself is much faster, but cache efficacy worse than [SlruIndexStorageCacheProvider] and the total results
+ * are worse than [SlruIndexStorageCacheProvider].
+ */
 @Suppress("unused")
 @Internal
 class MRUIndexStorageCacheProvider : MapIndexStorageCacheProvider {
@@ -229,7 +274,7 @@ class MRUIndexStorageCacheProvider : MapIndexStorageCacheProvider {
     hashingStrategy: EqualityPolicy<Key>,
     cacheSizeHint: Int,
   ): MapIndexStorageCache<Key, Value> {
-    val cache = MRUCache<Key, ChangeTrackingValueContainer<Value>>(
+    val cache = MRUCache(
       { key -> totalUncachedReads.incrementAndGet(); valueReader.apply(key) },
       { key, value -> totalEvicted.incrementAndGet(); evictedValuesPersister.accept(key, value) },
       hashingStrategy,
@@ -262,7 +307,7 @@ class MRUIndexStorageCacheProvider : MapIndexStorageCacheProvider {
     cacheSize: Int,
   ) {
 
-    data class CacheEntry<K : Any, V>(val key: K, val value: V)
+    private data class CacheEntry<K : Any, V>(val key: K, val value: V)
 
     private val table: AtomicReferenceArray<CacheEntry<Key, Value>?> = AtomicReferenceArray(cacheSize)
 
