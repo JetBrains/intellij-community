@@ -41,6 +41,7 @@ import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.and
 import com.intellij.ui.layout.not
@@ -125,22 +126,28 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       updateUserAccountsList()
       rowsRange {
         row {
-          label(message("settings.sync.info.message"))
+          text(message("settings.sync.info.message"))
           SettingsSyncCommunicatorProvider.PROVIDER_EP.extensionList.firstOrNull { it.isAvailable() && it.learnMoreLinkPair != null }?.also {
             val linkPair = it.learnMoreLinkPair!!
             browserLink(linkPair.first, linkPair.second)
           }
         }
 
+        row {
+          text(message("settings.sync.select.provider.message"))
+        }
 
         row {
           val availableProviders = RemoteCommunicatorHolder.getAvailableProviders()
-          availableProviders.forEach { provider ->
+          availableProviders.forEachIndexed { idx, provider ->
+            if (idx > 0) {
+              label(message("settings.sync.select.provider.or")).gap(RightGap.SMALL)
+            }
             button(provider.authService.providerName) {
               login(provider, syncConfigPanel)
             }.applyToComponent {
               icon = provider.authService.icon
-            }
+            }.gap(RightGap.SMALL)
           }
         }.visibleIf(hasMultipleProviders)
 
