@@ -119,7 +119,7 @@ private fun appendDebug(debugString: java.lang.StringBuilder, input: String, dig
     .append('\n')
 }
 
-internal const val INCREMENTAL_CACHE_DIRECTORY_SUFFIX = "-ic"
+internal const val INCREMENTAL_CACHE_DIRECTORY_SUFFIX = "-ic-v0"
 
 @VisibleForTesting
 suspend fun buildUsingJps(
