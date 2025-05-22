@@ -141,7 +141,7 @@ class BitSet(size: Int = ELEMENT_SIZE) {
 
   /** Sets the bits from the range specified to the specified value. */
   fun set(range: IntRange, value: Boolean = true) {
-    if (range.start < 0 || range.endInclusive < 0) {
+    if (range.start < 0 || range.endInclusive < -1) {
       throw IndexOutOfBoundsException()
     }
     if (range.start > range.endInclusive) { // Empty range.
