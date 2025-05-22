@@ -12,7 +12,7 @@ import kotlinx.coroutines.future.future
 import java.util.concurrent.CompletableFuture
 
 internal fun StackFrameDescriptorImpl.canDropFrameSync(): ThreeState {
-  return isSafeToDropFrame(uiIndex, unsureIfPreviousFrameAbsent = true) { i ->
+  return isSafeToDropFrame(uiIndex, unsureIfCallerFrameAbsent = true) { i ->
     methodOccurrence.getMethodOccurrence(i)?.method
   }
 }
@@ -28,7 +28,7 @@ internal fun StackFrameDescriptorImpl.canDropFrameAsync(): CompletableFuture<Boo
         return@withDebugContext false
       }
 
-      isSafeToDropFrame(uiIndex, unsureIfPreviousFrameAbsent = false) { i ->
+      isSafeToDropFrame(uiIndex, unsureIfCallerFrameAbsent = false) { i ->
         val frame = frames.getOrNull(i) ?: return@withDebugContext false
 
         val location = frame.locationAsync().await()
@@ -38,11 +38,11 @@ internal fun StackFrameDescriptorImpl.canDropFrameAsync(): CompletableFuture<Boo
   }
 }
 
-private inline fun isSafeToDropFrame(frameIndex: Int, unsureIfPreviousFrameAbsent: Boolean, methodProvider: (Int) -> Method?): ThreeState {
+private inline fun isSafeToDropFrame(frameIndex: Int, unsureIfCallerFrameAbsent: Boolean, methodProvider: (Int) -> Method?): ThreeState {
   for (i in 0..frameIndex + 1) {
     val method = methodProvider(i)
     if (method == null) {
-      if (unsureIfPreviousFrameAbsent && i == frameIndex + 1) {
+      if (unsureIfCallerFrameAbsent && i == frameIndex + 1) {
         return ThreeState.UNSURE
       }
       return ThreeState.NO
