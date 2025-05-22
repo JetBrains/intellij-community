@@ -31,7 +31,9 @@ UClass (name = Regex)
             UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))
                 UIdentifier (Identifier ())
     UMethod (name = getPattern)
+        UBlockExpression
     UMethod (name = getOptions)
+        UBlockExpression
     UMethod (name = matches)
         UParameter (name = input)
             UAnnotation (fqName = org.jetbrains.annotations.NotNull)
