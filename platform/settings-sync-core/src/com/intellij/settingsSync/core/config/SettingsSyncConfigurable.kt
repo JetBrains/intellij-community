@@ -299,6 +299,9 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
 
   private fun handleDisableSync() {
     SettingsSyncSettings.getInstance().syncEnabled = false
+    if (SettingsSyncStatusTracker.getInstance().currentStatus is SettingsSyncStatusTracker.SyncStatus.ActionRequired) {
+      SettingsSyncStatusTracker.getInstance().clearActionRequired()
+    }
     when (disableSyncOption.get()) {
       DisableSyncType.DISABLE_AND_REMOVE_DATA -> {
         disableAndRemoveData()
@@ -318,15 +321,18 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
   }
 
   private fun enableButtonAction(){
-    if (SettingsSyncStatusTracker.getInstance().currentStatus is SettingsSyncStatusTracker.SyncStatus.ActionRequired) {
-      val actionRequired = SettingsSyncStatusTracker.getInstance().currentStatus as SettingsSyncStatusTracker.SyncStatus.ActionRequired
-      runWithModalProgressBlocking(ModalTaskOwner.component(configPanel), actionRequired.actionTitle) {
-        actionRequired.execute(syncConfigPanel)
-      }
-      return
-    }
     // enableCheckbox state here has already changed, so we react to it
     if (enableCheckbox.isSelected) {
+      if (SettingsSyncStatusTracker.getInstance().currentStatus is SettingsSyncStatusTracker.SyncStatus.ActionRequired) {
+        val actionRequired = SettingsSyncStatusTracker.getInstance().currentStatus as SettingsSyncStatusTracker.SyncStatus.ActionRequired
+        MessagesService.getInstance().showMessageDialog(
+          null, null, actionRequired.message , message("status.action.settings.sync.pending.action"),
+          arrayOf(Messages.getOkButton()),
+          1, -1, Messages.getInformationIcon(), null, false, null
+        )
+        enableCheckbox.isSelected = false
+        return
+      }
       runWithModalProgressBlocking(ModalTaskOwner.component(configPanel), message("enable.sync.check.server.data.progress")) {
         val (userId, userData, providerCode, providerName) = userDropDownLink.selectedItem ?: run {
           LOG.warn("No selected user")
@@ -361,10 +367,10 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       if (syncDisableOption != DisableSyncType.DONT_DISABLE) {
         disableSyncOption.set(syncDisableOption)
         cellDropDownLink.comment?.text = message("sync.status.will.disable")
+        handleDisableSync()
       } else {
         enableCheckbox.isSelected = true
       }
-      handleDisableSync()
     }
   }
 
