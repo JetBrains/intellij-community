@@ -46,8 +46,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 
 //@ApiStatus.Internal
@@ -1635,7 +1635,11 @@ public final class EditorPainter implements TextDrawingCallback {
         TextAttributes zombieAttr = foldAttributes.clone();
         zombieAttr.copyFrom(foldAttributes);
         zombieAttr.setEffectType(EffectType.STRIKEOUT);
-        zombieAttr.setEffectColor(JBColor.DARK_GRAY);
+        if (region.getUserData(FoldingKeys.AUTO_CREATED_ZOMBIE) != null) {
+          zombieAttr.setEffectColor(JBColor.MAGENTA);
+        } else {
+          zombieAttr.setEffectColor(JBColor.DARK_GRAY);
+        }
         return zombieAttr;
       }
       return foldAttributes;

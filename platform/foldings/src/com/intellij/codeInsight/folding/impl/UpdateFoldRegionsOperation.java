@@ -29,8 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-import static com.intellij.openapi.editor.impl.FoldingKeys.ZOMBIE_BITTEN_KEY;
-import static com.intellij.openapi.editor.impl.FoldingKeys.ZOMBIE_REGION_KEY;
+import static com.intellij.openapi.editor.impl.FoldingKeys.*;
 
 final class UpdateFoldRegionsOperation implements Runnable {
   enum ApplyDefaultStateMode { YES, EXCEPT_CARET_REGION, NO }
@@ -356,7 +355,7 @@ final class UpdateFoldRegionsOperation implements Runnable {
     if (!(foldingModel instanceof FoldingModelImpl foldingModelImpl) ||
         (foldingModelImpl.getIsZombieRaised().compareAndSet(true, false))) {
       for (FoldRegion region : foldingModel.getAllFoldRegions()) {
-        if (region.getUserData(ZOMBIE_REGION_KEY) != null) {
+        if (region.getUserData(ZOMBIE_REGION_KEY) != null && region.getUserData(AUTO_CREATED_ZOMBIE) == null) {
           if (zombieMap == null) {
             zombieMap = new HashMap<>();
             zombies = new ArrayList<>();

@@ -47,6 +47,7 @@ internal object CodeFoldingNecromancy : Necromancy<CodeFoldingZombie> {
     writeGroupId(output, region.groupId)
     output.writeBoolean(region.neverExpands)
     output.writeBoolean(region.isExpanded)
+    output.writeBoolean(region.isAutoCreated)
   }
 
   private fun writeGroupId(output: DataOutput, groupId: Long?) {
@@ -76,7 +77,8 @@ internal object CodeFoldingNecromancy : Necromancy<CodeFoldingZombie> {
     val groupId = readGroupId(input)
     val neverExpands = input.readBoolean()
     val isExpanded = input.readBoolean()
-    return CodeFoldingRegion(start, end, placeholder, groupId, neverExpands, isExpanded)
+    val isAutoCreated = input.readBoolean()
+    return CodeFoldingRegion(start, end, placeholder, groupId, neverExpands, isExpanded, isAutoCreated)
   }
 
   private fun readGroupId(input: DataInput): Long? {
