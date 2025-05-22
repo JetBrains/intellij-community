@@ -2,6 +2,7 @@
 package com.intellij.pycharm.community.ide.impl.configuration
 
 import com.intellij.codeInspection.util.IntentionName
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -19,6 +20,8 @@ import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.uv.impl.getUvExecutable
 import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnvUnderProgress
 import com.jetbrains.python.venvReader.tryResolvePath
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class PyUvSdkConfiguration : PyProjectSdkConfigurationExtension {
   companion object {
@@ -62,9 +65,11 @@ class PyUvSdkConfiguration : PyProjectSdkConfigurationExtension {
 
     val sdk = setupNewUvSdkAndEnvUnderProgress(module.project, workingDir, ProjectJdkTable.getInstance().allJdks.toList(), null)
     sdk.onSuccess {
-      SdkConfigurationUtil.addSdk(it)
+      withContext(Dispatchers.EDT) {
+        SdkConfigurationUtil.addSdk(it)
+        it.setAssociationToModule(module)
+      }
     }
-
     return sdk
   }
 }
