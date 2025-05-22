@@ -1,8 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.diff
 
-import it.unimi.dsi.fastutil.ints.Int2IntMap
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
+import com.intellij.util.fastutil.ints.Int2ObjectOpenHashMap
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -24,12 +23,12 @@ class UniqueLCS internal constructor(
   fun execute(): Array<IntArray>? {
     // map: key -> (offset1 + 1)
     // match: offset1 -> (offset2 + 1)
-    val map: Int2IntMap = Int2IntOpenHashMap(count1 + count2)
+    val map = Int2ObjectOpenHashMap<Int>(count1 + count2)
     val match = IntArray(count1)
 
     for (i in 0..<count1) {
       val index = start1 + i
-      val value = map.get(first[index])
+      val value = map[first[index]] ?: 0
 
       if (value == -1) continue
       if (value == 0) {
@@ -43,7 +42,7 @@ class UniqueLCS internal constructor(
     var count = 0
     for (i in 0..<count2) {
       val index = start2 + i
-      val value = map.get(second[index])
+      val value = map[second[index]] ?: 0
 
       if (value == 0 || value == -1) continue
       if (match[value - 1] == 0) {

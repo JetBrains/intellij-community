@@ -42,7 +42,8 @@ internal fun IntList.length(): Int {
   return size
 }
 
-internal fun IntList.toArray(): IntArray {
+@ApiStatus.Internal
+fun IntList.toArray(): IntArray {
   val size = size
   if (size == 0) return IntArrays.EMPTY_ARRAY
   val ret = IntArray(size)

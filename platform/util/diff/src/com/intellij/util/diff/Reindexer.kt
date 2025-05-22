@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.diff
 
-import it.unimi.dsi.fastutil.ints.IntArrayList
-import it.unimi.dsi.fastutil.ints.IntList
+import com.intellij.util.fastutil.ints.IntArrayList
+import com.intellij.util.fastutil.ints.toArray
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
@@ -37,8 +37,8 @@ class Reindexer {
   private fun discard(needed: IntArray, toDiscard: IntArray, arrayIndex: Int): IntArray {
     myOriginalLengths[arrayIndex] = toDiscard.size
     val sorted1: IntArray = createSorted(needed)
-    val discarded: IntList = IntArrayList(toDiscard.size)
-    val oldIndices: IntList = IntArrayList(toDiscard.size)
+    val discarded = IntArrayList(toDiscard.size)
+    val oldIndices = IntArrayList(toDiscard.size)
     for (i in toDiscard.indices) {
       val index = toDiscard[i]
       if (sorted1.binarySearch(index) >= 0) {
@@ -46,9 +46,9 @@ class Reindexer {
         oldIndices.add(i)
       }
     }
-    myOldIndices[arrayIndex] = oldIndices.toIntArray()
+    myOldIndices[arrayIndex] = oldIndices.toArray()
     myDiscardedLengths[arrayIndex] = discarded.size
-    return discarded.toIntArray()
+    return discarded.toArray()
   }
 
   fun reindex(discardedChanges: Array<BitSet>, builder: LCSBuilder) {

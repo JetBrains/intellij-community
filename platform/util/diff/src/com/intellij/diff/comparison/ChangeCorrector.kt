@@ -5,7 +5,7 @@ import com.intellij.diff.comparison.ByCharRt.compare
 import com.intellij.diff.comparison.iterables.DiffIterableUtil
 import com.intellij.diff.comparison.iterables.FairDiffIterable
 import com.intellij.util.IntPair
-import it.unimi.dsi.fastutil.ints.IntList
+import com.intellij.util.fastutil.ints.IntList
 
 /*
  * Base class for two-step diff algorithms.
@@ -115,12 +115,12 @@ internal abstract class ChangeCorrector(
     }
 
     override fun getOriginalRange1(index: Int): IntPair {
-      val offset = myIndexes1.getInt(index)
+      val offset = myIndexes1[index]
       return IntPair(offset, offset + 1)
     }
 
     override fun getOriginalRange2(index: Int): IntPair {
-      val offset = myIndexes2.getInt(index)
+      val offset = myIndexes2[index]
       return IntPair(offset, offset + 1)
     }
   }

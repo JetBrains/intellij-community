@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util.text
 
-import it.unimi.dsi.fastutil.ints.IntArrayList
-import it.unimi.dsi.fastutil.ints.IntList
+import com.intellij.util.fastutil.ints.IntArrayList
+import com.intellij.util.fastutil.ints.toArray
 import kotlin.jvm.JvmStatic
 
 class LineOffsetsImpl private constructor(private val myLineEnds: IntArray, override val textLength: Int) : LineOffsets {
@@ -45,7 +45,7 @@ class LineOffsetsImpl private constructor(private val myLineEnds: IntArray, over
   companion object {
     @JvmStatic
     fun create(text: CharSequence): LineOffsets {
-      val ends: IntList = IntArrayList()
+      val ends = IntArrayList()
 
       var index = 0
       while (true) {
@@ -60,7 +60,7 @@ class LineOffsetsImpl private constructor(private val myLineEnds: IntArray, over
         }
       }
 
-      return LineOffsetsImpl(ends.toIntArray(), text.length)
+      return LineOffsetsImpl(ends.toArray(), text.length)
     }
   }
 }

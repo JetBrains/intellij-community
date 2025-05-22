@@ -7,8 +7,8 @@ import com.intellij.diff.comparison.iterables.DiffIterable
 import com.intellij.diff.comparison.iterables.DiffIterableUtil
 import com.intellij.diff.comparison.iterables.FairDiffIterable
 import com.intellij.diff.util.Range
-import it.unimi.dsi.fastutil.ints.IntArrayList
-import it.unimi.dsi.fastutil.ints.IntList
+import com.intellij.util.fastutil.ints.IntArrayList
+import com.intellij.util.fastutil.ints.toArray
 import kotlin.jvm.JvmStatic
 
 object ByCharRt {
@@ -217,7 +217,7 @@ object ByCharRt {
   // Misc
   //
   private fun getAllCodePoints(text: CharSequence): IntArray {
-    val list: IntList = IntArrayList(text.length)
+    val list = IntArrayList(text.length)
 
     val len = text.length
     var offset = 0
@@ -231,12 +231,12 @@ object ByCharRt {
       offset += charCount
     }
 
-    return list.toIntArray()
+    return list.toArray()
   }
 
   private fun getNonSpaceCodePoints(text: CharSequence): CodePointsOffsets {
-    val codePoints: IntList = IntArrayList(text.length)
-    val offsets: IntList = IntArrayList(text.length)
+    val codePoints = IntArrayList(text.length)
+    val offsets = IntArrayList(text.length)
 
     val len = text.length
     var offset = 0
@@ -253,12 +253,12 @@ object ByCharRt {
       offset += charCount
     }
 
-    return CodePointsOffsets(codePoints.toIntArray(), offsets.toIntArray())
+    return CodePointsOffsets(codePoints.toArray(), offsets.toArray())
   }
 
   private fun getPunctuationChars(text: CharSequence): CodePointsOffsets {
-    val codePoints: IntList = IntArrayList(text.length)
-    val offsets: IntList = IntArrayList(text.length)
+    val codePoints = IntArrayList(text.length)
+    val offsets = IntArrayList(text.length)
 
     for (i in text.indices) {
       val c = text[i]
@@ -268,7 +268,7 @@ object ByCharRt {
       }
     }
 
-    return CodePointsOffsets(codePoints.toIntArray(), offsets.toIntArray())
+    return CodePointsOffsets(codePoints.toArray(), offsets.toArray())
   }
 
   private fun countChars(codePoints: IntArray, start: Int, end: Int): Int {
