@@ -14,6 +14,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.util.IncorrectOperationException
 import java.util.*
 
@@ -107,10 +108,11 @@ class PropertiesMergeConflictResolver : LangSpecificMergeConflictResolver {
           // If a user explicitly wanted to have key without delimiter let's not format it.
           if (value.isEmpty()) return@map comment + key
 
-          val formattedProperty = PropertiesElementFactory.createProperty(project, key, value, null, PropertyKeyValueFormat.FILE) as? Property
-                                  ?: return@writeAction null
+          val property = PropertiesElementFactory.createProperty(project, key, value, null, PropertyKeyValueFormat.FILE) as? Property
+                         ?: return@writeAction null
 
-          val propertyText = formattedProperty.text
+          CodeStyleManager.getInstance(project).reformat(property)
+          val propertyText = property.text
           comment + propertyText
         }?.joinToString("\n")
       }

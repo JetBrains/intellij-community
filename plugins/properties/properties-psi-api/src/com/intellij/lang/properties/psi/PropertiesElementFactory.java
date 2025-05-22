@@ -42,11 +42,7 @@ public final class PropertiesElementFactory {
                                                   @NotNull PropertyKeyValueFormat format) {
     String text = getPropertyText(name, value, delimiter, project, format);
     final PropertiesFile dummyFile = createPropertiesFile(project, text);
-    IProperty iProperty = dummyFile.getProperties().get(0);
-    if (iProperty instanceof Property property) {
-      CodeStyleManager.getInstance(project).reformat(property);
-    }
-    return iProperty;
+    return dummyFile.getProperties().get(0);
   }
 
   public static @NotNull String getPropertyText(@NonNls @NotNull String name,
