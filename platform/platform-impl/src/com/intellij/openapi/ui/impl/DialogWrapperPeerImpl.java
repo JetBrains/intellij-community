@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.AppImplKt;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.CommandProcessorEx;
@@ -427,9 +428,19 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     @SuppressWarnings("deprecation") boolean changeModalityState = appStarted && myDialog.isModal() && !isProgressDialog();
     Project project = myProject;
 
+    AccessToken lockContextCleanup;
+    AccessToken lockCleanup;
+
     if (changeModalityState) {
       commandProcessor.enterModal();
       LaterInvocator.enterModal(myDialog);
+      var pair = AppImplKt.getGlobalThreadingSupport().getPermitAsContextElement(ThreadContext.currentThreadContext(), true);
+      lockContextCleanup = ThreadContext.installThreadContext(pair.getFirst(), true);
+      lockCleanup = pair.getSecond();
+    }
+    else {
+      lockContextCleanup = ThreadContext.resetThreadContext();
+      lockCleanup = AccessToken.EMPTY_ACCESS_TOKEN;
     }
 
     if (appStarted) {
@@ -453,7 +464,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     CompletableFuture<Void> result = new CompletableFuture<>();
     SplashManagerKt.hideSplash();
     try (
-      AccessToken ignore = SlowOperations.startSection(SlowOperations.RESET)
+      AccessToken ignore = SlowOperations.startSection(SlowOperations.RESET);
+      AccessToken ignore2 = lockCleanup;
+      AccessToken ignore3 = lockContextCleanup
     ) {
       myDialog.show();
     }
@@ -867,9 +880,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         LOG.warn("The dialog wrapper for " + dialogWrapper.getTitle() + " is already disposed");
         return;
       }
-      try (AccessToken ignore = ThreadContext.resetThreadContext()) {
-        super.show();
-      }
+      super.show();
     }
 
     private void logMonitorConfiguration() {
