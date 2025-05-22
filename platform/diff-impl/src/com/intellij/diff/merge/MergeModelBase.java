@@ -222,19 +222,7 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
     }
   }
 
-  @TestOnly
-  public boolean executeMergeCommand(
-    @Nullable @NlsContexts.Command String commandName,
-    @Nullable String commandGroupId,
-    @NotNull UndoConfirmationPolicy confirmationPolicy,
-    boolean underBulkUpdate,
-    int affectedChange,
-    @NotNull Runnable task
-  ) {
-    IntList list = new IntArrayList();
-    list.add(affectedChange);
-    return executeMergeCommand(commandName, commandGroupId, confirmationPolicy, underBulkUpdate, list, task);
-  }
+
 
   public boolean executeMergeCommand(@Nullable @NlsContexts.Command String commandName,
                                      @Nullable String commandGroupId,

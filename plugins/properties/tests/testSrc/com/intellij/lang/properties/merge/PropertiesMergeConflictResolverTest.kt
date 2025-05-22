@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.LineTokenizer
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import it.unimi.dsi.fastutil.ints.IntList
 
 
 class PropertiesMergeConflictResolverTest : BasePlatformTestCase() {
@@ -310,7 +311,7 @@ class PropertiesMergeConflictResolverTest : BasePlatformTestCase() {
     assertNotNull(newContent)
 
     val newContentLines: Array<String> = LineTokenizer.tokenize(newContent, false)
-    model.executeMergeCommand(null, null, UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION, false, index) {
+    model.executeMergeCommand(null, null, UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION, false, IntList.of(index)) {
       model.replaceChange(index, newContentLines.toList())
     }
   }
