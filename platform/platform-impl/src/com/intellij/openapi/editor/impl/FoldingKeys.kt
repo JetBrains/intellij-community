@@ -19,12 +19,6 @@ object FoldingKeys {
   @JvmField
   val HIDE_GUTTER_RENDERER_FOR_COLLAPSED: Key<Boolean> = Key.create("FoldRegion.HIDE_GUTTER_RENDERER_FOR_COLLAPSED")
 
-  @ApiStatus.Internal
-  @JvmField
-  val SIGNATURE: Key<String> = Key.create("folding.signature")
-  @ApiStatus.Internal
-  const val NO_SIGNATURE: String = "folding.no.signature"
-
 
   /**
    * This key is needed for rendering inline completion.

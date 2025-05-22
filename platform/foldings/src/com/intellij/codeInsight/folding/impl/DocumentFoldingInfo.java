@@ -139,7 +139,9 @@ final class DocumentFoldingInfo implements CodeFoldingState {
       }
 
       boolean state = info != null && info.expanded;
-      region.setExpanded(state);
+      if (region.getUserData(ZOMBIE_BITTEN_KEY) == null) {
+        region.setExpanded(state);
+      }
     }
   }
 
