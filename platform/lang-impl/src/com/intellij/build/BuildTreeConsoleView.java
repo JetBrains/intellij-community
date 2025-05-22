@@ -150,6 +150,9 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
     JPanel myContentPanel = new JPanel();
     myContentPanel.setLayout(new CardLayout());
     myContentPanel.add(ScrollPaneFactory.createScrollPane(myTree, SideBorder.NONE), TREE);
+    if (Boolean.getBoolean("rd.build.tree.as.becontrol")) {
+      RemoteTransferUIManager.setWellBeControlizable(myContentPanel);
+    }
 
     if (ExperimentalUI.isNewUI()) {
       UIUtil.setBackgroundRecursively(myContentPanel, JBUI.CurrentTheme.ToolWindow.background());
