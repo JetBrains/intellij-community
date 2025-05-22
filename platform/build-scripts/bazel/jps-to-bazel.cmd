@@ -13,7 +13,7 @@ exec /bin/bash "$root/bazel.cmd" run "$@" //:jps-to-bazel
 :CMDSCRIPT
 
 pushd "%~dp0"
-call "%~dp0\..\..\..\..\bazel.cmd" run //:jps-to-bazel
+call "%~dp0\..\..\..\..\bazel.cmd" run //:jps-to-bazel <nul
 set _exit_code=%ERRORLEVEL%
 popd
 EXIT /B %_exit_code%
