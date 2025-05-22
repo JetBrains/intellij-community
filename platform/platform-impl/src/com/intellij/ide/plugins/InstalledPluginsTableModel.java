@@ -28,6 +28,7 @@ public class InstalledPluginsTableModel {
   private final Map<PluginId, PluginEnabledState> myEnabled = new HashMap<>();
   private final @Nullable Project myProject;
   protected final UUID sessionId = UUID.randomUUID();
+  @ApiStatus.Internal
   protected final PluginManagerSession mySession = initializeAndGetSession();
 
   public InstalledPluginsTableModel(@Nullable Project project) {

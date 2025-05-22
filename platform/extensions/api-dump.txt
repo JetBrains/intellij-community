@@ -190,7 +190,7 @@ f:com.intellij.openapi.extensions.PluginId
 - sf:getId(java.lang.String):com.intellij.openapi.extensions.PluginId
 - f:getIdString():java.lang.String
 - hashCode():I
-bc:com.intellij.openapi.extensions.PluginId$$serializer
+bf:com.intellij.openapi.extensions.PluginId$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.openapi.extensions.PluginId$$serializer
 - f:childSerializers():kotlinx.serialization.KSerializer[]

@@ -3,7 +3,9 @@ package com.intellij.ide.plugins.marketplace
 
 import com.intellij.openapi.extensions.PluginId
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Serializable
 class ApplyPluginsStateResult {
   val pluginsToEnable: MutableSet<PluginId> = HashSet()

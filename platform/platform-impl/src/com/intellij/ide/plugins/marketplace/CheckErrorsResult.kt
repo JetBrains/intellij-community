@@ -3,8 +3,10 @@ package com.intellij.ide.plugins.marketplace
 
 import com.intellij.openapi.util.NlsSafe
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 
 @Serializable
+@ApiStatus.Internal
 data class CheckErrorsResult(
   val isDisabledDependencyError: Boolean = false,
   @NlsSafe val loadingError: String? = null,

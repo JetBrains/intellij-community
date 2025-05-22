@@ -4,8 +4,10 @@ package com.intellij.ide.plugins.marketplace
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.extensions.PluginId
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 
 @Serializable
+@ApiStatus.Internal
 class InstallPluginResult {
   var installedDescriptor: PluginUiModel? = null
   var success: Boolean = true

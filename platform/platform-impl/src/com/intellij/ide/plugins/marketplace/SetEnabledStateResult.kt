@@ -3,8 +3,10 @@ package com.intellij.ide.plugins.marketplace
 
 import com.intellij.openapi.extensions.PluginId
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 
 @Serializable
+@ApiStatus.Internal
 class SetEnabledStateResult(
   val pluginNamesToSwitch: Set<String> = emptySet(),
   val pluginsIdsToSwitch: Set<PluginId> = emptySet(),

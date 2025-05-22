@@ -57,6 +57,7 @@ import com.intellij.xml.util.XmlStringUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.*
@@ -1430,10 +1431,12 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 }
 
+@ApiStatus.Internal
 fun loadPluginDetails(model: PluginUiModel): PluginUiModel? {
   return MarketplaceRequests.getInstance().loadPluginDetails(model)
 }
 
+@ApiStatus.Internal
 fun loadAllPluginDetails(existingModel: PluginUiModel, targetModel: PluginUiModel): PluginUiModel? {
   val marketplaceRequests = MarketplaceRequests.getInstance()
   if (!existingModel.suggestedFeatures.isEmpty()) {
@@ -1454,6 +1457,7 @@ fun loadAllPluginDetails(existingModel: PluginUiModel, targetModel: PluginUiMode
   return targetModel
 }
 
+@ApiStatus.Internal
 fun loadReviews(existingModel: PluginUiModel): PluginUiModel? {
   val reviewComments = ReviewsPageContainer(20, 0)
   val reviews = MarketplaceRequests.getInstance().loadPluginReviews(existingModel, reviewComments.getNextPage()) ?: emptyList()
@@ -1462,6 +1466,7 @@ fun loadReviews(existingModel: PluginUiModel): PluginUiModel? {
   return existingModel
 }
 
+@ApiStatus.Internal
 fun loadDependencyNames(targetModel: PluginUiModel): PluginUiModel? {
   val resultNode = targetModel
   val pluginIds = resultNode.dependencies

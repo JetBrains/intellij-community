@@ -3190,22 +3190,18 @@ f:com.intellij.ide.plugins.InstalledPluginsState
 - wasUpdated(com.intellij.openapi.extensions.PluginId):Z
 - wasUpdatedWithRestart(com.intellij.openapi.extensions.PluginId):Z
 c:com.intellij.ide.plugins.InstalledPluginsTableModel
-- psf:HIDE_IMPLEMENTATION_DETAILS:Z
+- pf:sessionId:java.util.UUID
 - pf:view:java.util.List
 - <init>(com.intellij.openapi.project.Project):V
-- pf:enableRows(java.util.Collection,com.intellij.ide.plugins.PluginEnableDisableAction):V
+- <init>(com.intellij.openapi.project.Project,java.util.Collection,java.util.Collection):V
 - pf:getEnabledMap():java.util.Map
-- ps:getPluginNameOrId(com.intellij.openapi.extensions.PluginId,com.intellij.ide.plugins.IdeaPluginDescriptor):java.lang.String
 - pf:getProject():com.intellij.openapi.project.Project
 - p:handleBeforeChangeEnableState(com.intellij.ide.plugins.IdeaPluginDescriptor,com.intellij.openapi.util.Pair):V
 - ps:isDeleted(com.intellij.ide.plugins.IdeaPluginDescriptor):Z
-- ps:isDisabled(com.intellij.openapi.extensions.PluginId,java.util.Map):Z
 - ps:isEnabled(com.intellij.openapi.extensions.PluginId,java.util.Map):Z
-- ps:isHidden(com.intellij.ide.plugins.IdeaPluginDescriptor):Z
-- ps:isHiddenImplementationDetail(com.intellij.ide.plugins.IdeaPluginDescriptor):Z
 - f:isLoaded(com.intellij.openapi.extensions.PluginId):Z
 - ps:isLoaded(com.intellij.openapi.extensions.PluginId,java.util.Map):Z
-- pf:setEnabled(com.intellij.openapi.extensions.PluginId,com.intellij.ide.plugins.PluginEnabledState):V
+- pF:setEnabled(com.intellij.openapi.extensions.PluginId,com.intellij.ide.plugins.PluginEnabledState):V
 - p:updatePluginDependencies(java.util.Map):V
 f:com.intellij.ide.plugins.LinkPanel
 - <init>(javax.swing.JPanel,Z):V
@@ -3579,7 +3575,7 @@ f:com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
 - f:getPluginId():java.lang.String
 - f:getVersion():java.lang.String
 - hashCode():I
-bc:com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate$$serializer
+bf:com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate$$serializer
 - f:childSerializers():kotlinx.serialization.KSerializer[]
@@ -3678,7 +3674,6 @@ c:com.intellij.ide.plugins.newui.PluginUpdatesService
 - calculateUpdates(java.util.function.Consumer):V
 - dispose():V
 - finishUpdate():V
-- s:getUpdateModels():java.util.Collection
 - s:getUpdates():java.util.Collection
 - s:getUpdatesTooltip():java.lang.String
 - s:isNeedUpdate(com.intellij.ide.plugins.IdeaPluginDescriptor):Z
