@@ -2,13 +2,14 @@
 package com.intellij.vcs.log
 
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface VcsLogFileHistoryProvider {
-  fun canShowFileHistory(paths: Collection<FilePath>, revisionNumber: String?): Boolean
+  fun canShowFileHistory(paths: Collection<FilePath>, revisionNumber: VcsRevisionNumber?): Boolean
 
-  fun showFileHistory(paths: Collection<FilePath>, revisionNumber: String?)
+  fun showFileHistory(paths: Collection<FilePath>, revisionNumber: VcsRevisionNumber?)
 
-  fun showFileHistory(paths: Collection<FilePath>, revisionNumber: String?, revisionToSelect: String)
+  fun showFileHistory(paths: Collection<FilePath>, revisionNumber: VcsRevisionNumber?, revisionToSelect: VcsRevisionNumber)
 }

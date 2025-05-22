@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.actions.AnnotationData
 import com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup
 import com.intellij.openapi.vcs.annotate.AnnotationGutterActionProvider
 import com.intellij.openapi.vcs.annotate.FileAnnotation
+import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogFileHistoryProvider
 import com.intellij.vcsUtil.VcsUtil
@@ -37,7 +38,7 @@ private class ShowInFileHistoryAnnotationAction(
 
     val annotationData = AnnotationData.extractFrom(project, file)
     val annotatedFilePath = annotationData?.filePath ?: VcsUtil.getFilePath(file)
-    val annotatedRevisionNumber = annotationData?.revisionNumber?.asString()
+    val annotatedRevisionNumber = annotationData?.revisionNumber
 
     e.presentation.isEnabledAndVisible = service.canShowFileHistory(listOf(annotatedFilePath), annotatedRevisionNumber)
   }
@@ -49,14 +50,14 @@ private class ShowInFileHistoryAnnotationAction(
 
     val annotationData = AnnotationData.extractFrom(project, file)
     val annotatedFilePath = annotationData?.filePath ?: VcsUtil.getFilePath(file)
-    val annotatedRevisionNumber = annotationData?.revisionNumber?.asString()
+    val annotatedRevisionNumber = annotationData?.revisionNumber
 
     service.showFileHistory(listOf(annotatedFilePath), annotatedRevisionNumber, lineRevisionNumber)
   }
 
-  private fun getLineRevisionNumber(e: AnActionEvent): String? {
+  private fun getLineRevisionNumber(e: AnActionEvent): VcsRevisionNumber? {
     val lineNumber = ShowAnnotateOperationsPopup.getAnnotationLineNumber(e.dataContext)
-    return annotation.getLineRevisionNumber(lineNumber)?.asString()
+    return annotation.getLineRevisionNumber(lineNumber)
   }
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT

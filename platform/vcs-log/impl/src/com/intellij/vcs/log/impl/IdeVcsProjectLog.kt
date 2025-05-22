@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
+import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
@@ -20,10 +21,12 @@ import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogProvider
+import com.intellij.vcs.log.history.VcsLogFileHistoryUiProvider
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToCommit
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToHash
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogUiImpl
+import com.intellij.vcs.log.util.VcsLogUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.guava.await
@@ -116,6 +119,26 @@ internal class IdeVcsProjectLog(
             }
           }
         }
+      }
+    }
+  }
+
+  override fun canShowFileHistory(paths: Collection<FilePath>, revisionNumber: VcsRevisionNumber?): Boolean {
+    return VcsLogFileHistoryUiProvider.select(project, paths, revisionNumber) != null
+  }
+
+  override fun openFileHistory(paths: Collection<FilePath>, revisionNumber: VcsRevisionNumber?) {
+    VcsLogFileHistoryUiProvider.select(project, paths, revisionNumber)?.showFileHistoryUi(project, paths, revisionNumber)
+  }
+
+  override fun openFileHistory(paths: Collection<FilePath>, revisionNumber: VcsRevisionNumber?, revisionToSelect: VcsRevisionNumber) {
+    val ui = VcsLogFileHistoryUiProvider.select(project, paths, revisionNumber)?.showFileHistoryUi(project, paths, revisionNumber, false) ?: return
+    val future = ui.jumpToHash(revisionToSelect.asString(), false, true)
+
+    coroutineScope.launch {
+      val title = VcsLogBundle.message("file.history.show.commit.in.history.process", VcsLogUtil.getShortHash(revisionToSelect.asString()))
+      withBackgroundProgress(project, title, true) {
+        future.await()
       }
     }
   }
