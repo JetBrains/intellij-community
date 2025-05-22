@@ -148,8 +148,8 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
         setUpTestLoggingFactory(sessionLifetime, session)
         val app = ApplicationManager.getApplication()
-        if (testMethodNonParameterizedName == null || testQualifiedClassName == null) {
-          LOG.info("Test session without test class to run.")
+        if (!session.runTestMethod) {
+          LOG.info("Test method will not be run.")
         }
         else {
           LOG.info("New test session: $testQualifiedClassName.$testMethodNonParameterizedName")
