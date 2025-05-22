@@ -44,7 +44,7 @@ public enum CLFlags {
 
   public boolean isFlagSet(Map<CLFlags, ? extends Collection<String>> flags) {
     Collection<String> value = flags.get(this);
-    return value != null && value.size() == 1 && Boolean.parseBoolean(value.iterator().next());
+    return value != null && (value.isEmpty() || value.size() == 1 && Boolean.parseBoolean(value.iterator().next()));
   }
 
   @Nullable
