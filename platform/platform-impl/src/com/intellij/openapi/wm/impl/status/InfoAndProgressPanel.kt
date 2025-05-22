@@ -1088,20 +1088,27 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
           var rightX = initialRightX
           var indicatorSize = initialIndicatorSize
           progressIcon.isVisible = false
-          if (showCounterInsteadOfMultiProcessLink) {
-            if (counterLabel.isVisible) {
+          var additionalWidth = 0
+
+          when {
+            showCounterInsteadOfMultiProcessLink && counterLabel.isVisible -> {
               rightX = setBounds(counterLabel, rightX, centerY, null, true) - gap
             }
-            else {
-              indicatorSize = indicatorSize ?: indicatorComponent.getPreferredSize()
-
-              val additionalWidth = counterLabel.preferredSize.width + gap
-              indicatorSize.width += additionalWidth
-              indicator?.addedProgressBarWidth = additionalWidth
+            showCounterInsteadOfMultiProcessLink /* && !counterLabel.isVisible */ -> {
+              additionalWidth = counterLabel.preferredSize.width + gap
+            }
+            multiProcessLink.isVisible /* && !showCounterInsteadOfMultiProcessLink */  -> {
+              rightX = setBounds(multiProcessLink, rightX, centerY, null, true) - gap
+            }
+            else /* !showCounterInsteadOfMultiProcessLink && !multiProcessLink.isVisible */ -> {
+              additionalWidth = multiProcessLink.preferredSize.width + gap
             }
           }
-          else if (multiProcessLink.isVisible) {
-            rightX = setBounds(multiProcessLink, rightX, centerY, null, true) - gap
+
+          if (additionalWidth != 0) {
+            indicatorSize = initialIndicatorSize ?: indicatorComponent.getPreferredSize()
+            indicatorSize.width += additionalWidth
+            indicator?.addedProgressBarWidth = additionalWidth
           }
           setBounds(indicatorComponent, rightX, centerY, indicatorSize, true)
         }
