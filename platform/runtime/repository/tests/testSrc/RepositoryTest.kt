@@ -6,7 +6,7 @@ import com.intellij.platform.runtime.repository.impl.RuntimeModuleRepositoryImpl
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
-import com.intellij.project.IntelliJProjectConfiguration
+import com.intellij.project.IntelliJProjectConfiguration.Companion.getLocalMavenRepo
 import com.intellij.testFramework.rules.TempDirectoryExtension
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -103,7 +103,7 @@ class RepositoryTest {
     val repository = createRepository(
       tempDirectory.rootPath,
       RawRuntimeModuleDescriptor.create("ij.foo", listOf("\$PROJECT_DIR$/foo.jar"), emptyList()),
-      RawRuntimeModuleDescriptor.create("ij.bar", listOf("\$MAVEN_REPOSITORY$/bar/bar.jar"), emptyList()),
+      RawRuntimeModuleDescriptor.create("ij.bar", listOf("${getLocalMavenRepo()}/bar/bar.jar"), emptyList()),
     )
     
     //ensure that tempDirectory will be treated as the project root if 'idea.home.path' isn't specified explicitly
@@ -120,7 +120,7 @@ class RepositoryTest {
     assertTrue(fooJarPath in possibleExpectedPaths, "$fooJarPath is not in $possibleExpectedPaths")
     
     val bar = repository.getModule(RuntimeModuleId.raw("ij.bar"))
-    assertEquals(listOf(IntelliJProjectConfiguration.getLocalMavenRepo().resolve("bar/bar.jar")), bar.resourceRootPaths)
+    assertEquals(listOf(getLocalMavenRepo().resolve("bar/bar.jar")), bar.resourceRootPaths)
   }
 
   @Test
