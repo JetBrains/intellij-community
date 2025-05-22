@@ -84,8 +84,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
   private @Nullable FUSEventSource myInstallSource;
 
   public MyPluginModel(@Nullable Project project) {
-    super(project, ContainerUtil.map(UiPluginManager.getInstance().getPlugins(), PluginUiModel::getDescriptor),
-          ContainerUtil.map(UiPluginManager.getInstance().getInstalledPlugins(), PluginUiModel::getDescriptor));
+    super(project);
     Window window = ProjectUtil.getActiveFrameOrWelcomeScreen();
     StatusBarEx statusBar = getStatusBar(window);
     myStatusBar = statusBar != null || window == null ?
@@ -605,10 +604,10 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
   private void appendOrUpdateDescriptor(@NotNull PluginUiModel descriptor) {
     int index = view.indexOf(descriptor);
     if (index < 0) {
-      view.add(descriptor.getDescriptor());
+      view.add(descriptor);
     }
     else {
-      view.set(index, descriptor.getDescriptor());
+      view.set(index, descriptor);
     }
   }
 

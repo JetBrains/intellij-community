@@ -24,7 +24,7 @@ public class InstalledPluginsTableModel {
   @ApiStatus.Internal
   public static final boolean HIDE_IMPLEMENTATION_DETAILS = !ApplicationManagerEx.isInIntegrationTest();
 
-  protected final List<IdeaPluginDescriptor> view = new ArrayList<>();
+  protected final List<PluginUiModel> view = new ArrayList<>();
   private final Map<PluginId, PluginEnabledState> myEnabled = new HashMap<>();
   private final @Nullable Project myProject;
   protected final UUID sessionId = UUID.randomUUID();
@@ -32,15 +32,15 @@ public class InstalledPluginsTableModel {
   protected final PluginManagerSession mySession = initializeAndGetSession();
 
   public InstalledPluginsTableModel(@Nullable Project project) {
-    this(project, new ArrayList<>(PluginManagerCore.getPluginSet().allPlugins), InstalledPluginsState.getInstance().getInstalledPlugins());
+    this(project, new ArrayList<>(UiPluginManager.getInstance().getPlugins()), UiPluginManager.getInstance().getInstalledPlugins());
   }
 
   public InstalledPluginsTableModel(@Nullable Project project,
-                                    @NotNull Collection<IdeaPluginDescriptor> allPlugins,
-                                    @NotNull Collection<IdeaPluginDescriptor> installedPlugins) {
+                                    @NotNull Collection<PluginUiModel> allPlugins,
+                                    @NotNull Collection<PluginUiModel> installedPlugins) {
     myProject = project;
     ApplicationInfo appInfo = ApplicationInfo.getInstance();
-    for (IdeaPluginDescriptor plugin : allPlugins) {
+    for (PluginUiModel plugin : allPlugins) {
       PluginId pluginId = plugin.getPluginId();
       if (appInfo.isEssentialPlugin(pluginId)) {
         setEnabled(pluginId, PluginEnabledState.ENABLED);
@@ -51,7 +51,7 @@ public class InstalledPluginsTableModel {
     }
     view.addAll(installedPlugins);
 
-    for (IdeaPluginDescriptor descriptor : view) {
+    for (PluginUiModel descriptor : view) {
       setEnabled(descriptor);
     }
   }
@@ -77,7 +77,7 @@ public class InstalledPluginsTableModel {
     return session;
   }
 
-  private void setEnabled(@NotNull IdeaPluginDescriptor ideaPluginDescriptor) {
+  private void setEnabled(@NotNull PluginUiModel ideaPluginDescriptor) {
     PluginId pluginId = ideaPluginDescriptor.getPluginId();
     PluginEnabledState enabled = ideaPluginDescriptor.isEnabled() ? PluginEnabledState.ENABLED : PluginEnabledState.DISABLED;
 
