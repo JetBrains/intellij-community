@@ -13,6 +13,7 @@ interface SettingsSavingComponent {
   suspend fun save()
 }
 
+@Deprecated("Use SettingsSavingComponent")
 interface SettingsSavingComponentJavaAdapter : SettingsSavingComponent {
   override suspend fun save() {
     blockingContext {
