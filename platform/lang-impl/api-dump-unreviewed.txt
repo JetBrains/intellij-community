@@ -7165,6 +7165,7 @@ f:com.intellij.find.FindUtil
 - s:showInUsageView(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement[],java.lang.String,com.intellij.openapi.project.Project):com.intellij.usages.UsageView
 - s:showInUsageView(com.intellij.psi.PsiElement,java.lang.Object[],com.intellij.util.Function,java.lang.String,com.intellij.util.Consumer,com.intellij.openapi.project.Project):com.intellij.usages.UsageView
 - s:updateFindInFileModel(com.intellij.openapi.project.Project,com.intellij.find.FindModel,Z):V
+- s:updateFindNextModel(com.intellij.openapi.project.Project,com.intellij.find.FindModel):V
 - s:useFindStringFromFindInFileModel(com.intellij.find.FindModel,com.intellij.openapi.editor.Editor):V
 com.intellij.find.FindUtil$ReplaceDelegate
 - a:shouldReplace(com.intellij.openapi.util.TextRange,java.lang.String):Z
