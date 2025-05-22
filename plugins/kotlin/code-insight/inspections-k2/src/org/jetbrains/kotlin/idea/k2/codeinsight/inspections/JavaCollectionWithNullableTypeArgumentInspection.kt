@@ -162,7 +162,7 @@ internal class JavaCollectionWithNullableTypeArgumentInspection :
         return this in collectionsWithNonNullableTypeParameters
     }
 
-    private class RemoveNullabilityModCommandAction() :
+    private class RemoveNullabilityModCommandAction :
         KotlinApplicableModCommandAction<KtElement, Unit>(elementClass = KtElement::class) {
 
         override fun getFamilyName(): @IntentionFamilyName String =
@@ -239,12 +239,10 @@ private fun KtTypeProjection.isExplicitlyNullable(): Boolean {
 /**
  * Checks if a type is implicitly nullable.
  *
- * We can't use just
- * `typeArgument.typeReference?.type?.canBeNull == true`
- *  at the call site.
- *  We have to resolve to symbol because we need to get rid of flexible types in cases of constructors with type arguments.
- *  This behavior of constructor type arguments being flexible is going to be changed in Kotlin 2.3 (KT-71718),
- *  but we can't fix it here because we don't want different code for different language versions.
+ * We can't use just `typeArgument.typeReference?.type?.canBeNull == true` at the call site.
+ * We have to resolve to symbol because we need to get rid of flexible types in cases of constructors with type arguments.
+ * This behavior of constructor type arguments being flexible is going to be changed in Kotlin 2.3 (KT-71718),
+ * but we can't fix it here because we don't want different code for different language versions.
  */
 context(KaSession)
 private fun KtTypeProjection.isImplicitlyNullable(): Boolean {
