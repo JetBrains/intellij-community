@@ -2,11 +2,13 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.PriorityAction
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil.htmlEmphasize
 import com.intellij.psi.*
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.util.RefactoringUIUtil
@@ -17,6 +19,7 @@ import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWithSelf
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.refactoring.canRefactorElement
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
@@ -60,7 +63,7 @@ class ConvertPropertyToFunctionIntention : PsiBasedModCommandAction<KtProperty>(
         element: KtProperty,
     ): ModCommand {
         val elementContext = analyze(element) {
-            prepareContext(element.symbol)
+            prepareContext(element)
         } ?: return ModCommand.nop()
         return ModCommand
             .showConflicts(elementContext.conflicts)
@@ -82,7 +85,7 @@ class ConvertPropertyToFunctionIntention : PsiBasedModCommandAction<KtProperty>(
     }
 
     private fun isApplicableByAnalyze(element: KtProperty): Boolean =
-        analyze(element) { prepareContext(element.symbol) } != null
+        analyze(element) { prepareContext(element, true) } != null
 }
 
 private fun convertPropertyToFunction(
@@ -167,8 +170,10 @@ private fun convertProperty(
 }
 
 private fun KaSession.prepareContext(
-    callableSymbol: KaCallableSymbol,
+    element: KtProperty,
+    applicabilityCheck: Boolean = false
 ): ElementContext? {
+    val callableSymbol: KaCallableSymbol = element.symbol
     val propertyName = callableSymbol.name?.asString() ?: return null
     val newName = JvmAbi.getterName(callableSymbol.name?.asString() ?: return null)
     val nameChanged = propertyName != newName
@@ -178,80 +183,92 @@ private fun KaSession.prepareContext(
     val kotlinRefsToReplaceWithCall = mutableListOf<KtSimpleNameExpression>()
     val refsToRename = mutableListOf<PsiReference>()
     val javaRefsToReplaceWithCall = mutableListOf<PsiReferenceExpression>()
-    for (callable in callables) {
 
-        if (callable !is PsiNamedElement) continue
+    if (!applicabilityCheck) {
+        for (callable in callables) {
+            if (callable !is PsiNamedElement) continue
 
-        if (!callable.canRefactorElement()) {
-            val renderedCallable = RefactoringUIUtil.getDescription(callable, true).capitalize()
-            conflicts.add(callable, KotlinBundle.message("can.t.modify.0", renderedCallable))
-        }
-
-        if (callable is KtParameter) {
-            conflicts.add(
-                callable,
-                if (callable.hasActualModifier()) KotlinBundle.message("property.has.an.actual.declaration.in.the.class.constructor")
-                else KotlinBundle.message("property.overloaded.in.child.class.constructor")
-            )
-        }
-
-        if (callable is KtProperty) {
-            callable.containingKtFile
-                .scopeContext(callable)
-                .compositeScope()
-                .callables { it == callableSymbol.name }
-                .filterIsInstance<KaNamedFunctionSymbol>()
-                .find {
-                    val receiverType = it.receiverType ?: return@find false
-                    (callableSymbol.containingSymbol as? KaClassifierSymbol)?.defaultType?.semanticallyEquals(receiverType)
-                        ?: return@find false
-                }?.let { reportDeclarationConflict(conflicts, it.psi!!) { s -> KotlinBundle.message("0.already.exists", s) } }
-        } else if (callable is PsiMethod) {
-            callable.checkDeclarationConflict(propertyName, conflicts, callables)
-        }
-
-        val usages = ReferencesSearch.search(callable).findAll()
-        for (usage in usages) {
-            if (usage is KtReference) {
-                if (usage is KtSimpleNameReference) {
-                    val expression = usage.expression
-                    if (expression.resolveToCall() != null && expression.getStrictParentOfType<KtCallableReferenceExpression>() == null) {
-                        kotlinRefsToReplaceWithCall.add(expression)
-                    } else if (nameChanged) {
-                        refsToRename.add(usage)
-                    }
-                } else {
-                    val refElement = usage.element
-                    conflicts.add(
-                        refElement,
-                        KotlinBundle.message(
-                            "unrecognized.reference.will.be.skipped.0", htmlEmphasize(refElement.text)
-                        )
-                    )
-                }
-                continue
+            if (!callable.canRefactorElement()) {
+                val renderedCallable = RefactoringUIUtil.getDescription(callable, true).capitalize()
+                conflicts.add(callable, KotlinBundle.message("can.t.modify.0", renderedCallable))
             }
 
-            val refElement = usage.element
-
-            if (refElement.text.endsWith(newName)) continue
-
-            if (usage is PsiJavaReference) {
-                if (usage.resolve() is PsiField && usage is PsiReferenceExpression) {
-                    javaRefsToReplaceWithCall.add(usage)
-                }
-                continue
-            }
-
-            conflicts.add(
-                refElement,
-                KotlinBundle.message(
-                    "can.t.replace.foreign.reference.with.call.expression.0",
-                    htmlEmphasize(refElement.text)
+            if (callable is KtParameter) {
+                conflicts.add(
+                    callable,
+                    if (callable.hasActualModifier()) KotlinBundle.message("property.has.an.actual.declaration.in.the.class.constructor")
+                    else KotlinBundle.message("property.overloaded.in.child.class.constructor")
                 )
-            )
+            }
+
+            if (callable is KtProperty) {
+                callable.containingKtFile
+                    .scopeContext(callable)
+                    .compositeScope()
+                    .callables { it == callableSymbol.name }
+                    .filterIsInstance<KaNamedFunctionSymbol>()
+                    .find {
+                        val receiverType = it.receiverType ?: return@find false
+                        (callableSymbol.containingSymbol as? KaClassifierSymbol)?.defaultType?.semanticallyEquals(receiverType)
+                            ?: return@find false
+                    }?.let { reportDeclarationConflict(conflicts, it.psi!!) { s -> KotlinBundle.message("0.already.exists", s) } }
+            } else if (callable is PsiMethod) {
+                callable.checkDeclarationConflict(propertyName, conflicts, callables)
+            }
+
+            val module = callable.module ?: continue
+            val scope = GlobalSearchScope.moduleWithDependentsScope(module)
+
+            val search = ReferencesSearch.search(callable, scope)
+            val usages = if (IntentionPreviewUtils.isIntentionPreviewActive()) {
+                listOfNotNull(search.findFirst())
+            } else {
+                search.findAll()
+            }
+
+            for (usage in usages) {
+                if (usage is KtReference) {
+                    if (usage is KtSimpleNameReference) {
+                        val expression = usage.expression
+                        if (expression.resolveToCall() != null && expression.getStrictParentOfType<KtCallableReferenceExpression>() == null) {
+                            kotlinRefsToReplaceWithCall.add(expression)
+                        } else if (nameChanged) {
+                            refsToRename.add(usage)
+                        }
+                    } else {
+                        val refElement = usage.element
+                        conflicts.add(
+                            refElement,
+                            KotlinBundle.message(
+                                "unrecognized.reference.will.be.skipped.0", htmlEmphasize(refElement.text)
+                            )
+                        )
+                    }
+                    continue
+                }
+
+                val refElement = usage.element
+
+                if (refElement.text.endsWith(newName)) continue
+
+                if (usage is PsiJavaReference) {
+                    if (usage.resolve() is PsiField && usage is PsiReferenceExpression) {
+                        javaRefsToReplaceWithCall.add(usage)
+                    }
+                    continue
+                }
+
+                conflicts.add(
+                    refElement,
+                    KotlinBundle.message(
+                        "can.t.replace.foreign.reference.with.call.expression.0",
+                        htmlEmphasize(refElement.text)
+                    )
+                )
+            }
         }
     }
+
     return ElementContext(
         callables,
         refsToRename,
