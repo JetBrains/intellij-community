@@ -161,6 +161,7 @@ internal class SettingsSyncPanelHolder() {
       .visible(holder.secondaryGroup!!.getDescriptors().size > 1 || !holder.secondaryGroup!!.isComplete())
       .onReset {
         subcategoryLinkCell.visible(holder.secondaryGroup!!.getDescriptors().size > 1 || !holder.secondaryGroup!!.isComplete())
+        subcategoryLink.isEnabled = holder.secondaryGroup!!.isComplete() || holder.isSynchronized
       }
     topCheckBox.addActionListener {
       holder.isSynchronized = topCheckBox.state != State.NOT_SELECTED
