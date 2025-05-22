@@ -18,6 +18,7 @@ jvm_library(
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/project-wizard/core",
     "//plugins/kotlin/project-wizard/idea",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/observable",
     "//platform/platform-impl:ide-impl",
     "//plugins/maven",
