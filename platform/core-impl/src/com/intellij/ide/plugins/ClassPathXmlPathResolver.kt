@@ -19,7 +19,7 @@ import java.io.InputStream
 @Internal
 class ClassPathXmlPathResolver(
   private val classLoader: ClassLoader,
-  @JvmField val isRunningFromSources: Boolean,
+  @JvmField val isRunningFromSourcesWithoutDevBuild: Boolean,
 ) : PathResolver {
   override val isFlat: Boolean
     get() = true
@@ -56,7 +56,7 @@ class ClassPathXmlPathResolver(
       val log = logger<ClassPathXmlPathResolver>()
       val moduleName = path.removeSuffix(".xml")
       when {
-        isRunningFromSources && path.startsWith("intellij.") && dataLoader.emptyDescriptorIfCannotResolve -> {
+        isRunningFromSourcesWithoutDevBuild && path.startsWith("intellij.") && dataLoader.emptyDescriptorIfCannotResolve -> {
           log.trace("Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader). ")
           return PluginDescriptorBuilder.builder().apply {
             `package` = "unresolved.$moduleName"
