@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Key
 import kotlinx.coroutines.CompletableDeferred
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters
+import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 
 private val LOG = fileLogger()
 
@@ -27,7 +28,7 @@ internal class JavaTestRunnerForMaven: TestRunner {
   override fun runTests(request: TestRunRequest): TestRunResult {
     LOG.info("Running tests: ${request.tests.joinToString()}")
     if (request.tests.isEmpty()) {
-      return TestRunResult(emptyList(), emptyList())
+      return TestRunResult(emptyList(), emptyList(), "")
     }
 
     val project = request.project
@@ -62,7 +63,18 @@ internal class JavaTestRunnerForMaven: TestRunner {
         }
       })
     }
-    MavenRunConfigurationType.runConfiguration(project, params, callback)
+    val runnerSettings = MavenRunnerSettings().also {
+      if (request.tests.any()) {
+        //todo check
+        it.setVmOptions("-Dtest=${request.tests.joinToString(separator = ",")}")
+      }
+    }
+
+    MavenRunConfigurationType.runConfiguration(project,
+                                               params,
+                                               null,
+                                               runnerSettings,
+                                               callback)
 
     LOG.info("await for process termination")
     runBlockingCancellable {
@@ -84,7 +96,7 @@ class MavenOutputParser {
       .filter { it.contains("FAILURE") }
       .map { trimTestLinePrefix(it) }
       .sorted()
-    return TestRunResult(passed, failed)
+    return TestRunResult(passed, failed, text)
   }
 
   private fun trimTestLinePrefix(source: String): String {
