@@ -601,6 +601,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
   override fun syncStatusChanged() {
     if (!::cellDropDownLink.isInitialized)
       return
+    updateUserAccountsList()
     if (!enableCheckbox.isSelected) {
       //statusLabel.icon = icons.SettingsSyncIcons.StatusDisabled
       cellDropDownLink.comment?.text = "" //message("sync.status.disabled.message")
