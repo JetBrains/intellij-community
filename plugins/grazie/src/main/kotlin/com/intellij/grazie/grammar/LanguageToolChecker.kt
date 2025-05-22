@@ -224,6 +224,9 @@ private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
     if (text.startsWith("'", match.fromPos) && text.subSequence(match.fromPos + 1, text.length).contains("'")) {
       return true // https://github.com/languagetool-org/languagetool/issues/7249
     }
+    if (match.fromPos > 1 && text.startsWith("'", match.fromPos) && text.subSequence(0, match.fromPos).count { it == '\'' } == 1) {
+      return true // https://github.com/languagetool-org/languagetool/issues/11379
+    }
     if (text.substring(match.fromPos, match.toPos) == "\"" && text.subSequence(0, match.fromPos).contains("\"")) {
       return true // e.g. commented raise ValueError(f"a very long text so that the vicinity of the error doesn't seem like code")
     }
