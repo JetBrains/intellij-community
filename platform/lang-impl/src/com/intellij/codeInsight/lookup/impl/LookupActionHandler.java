@@ -232,6 +232,9 @@ public abstract class LookupActionHandler extends EditorActionHandler {
         if (myOriginalHandler != null) {
           myOriginalHandler.execute(editor, caret, context);
         }
+        else {
+          lookup.hide();
+        }
         return;
       }
 
