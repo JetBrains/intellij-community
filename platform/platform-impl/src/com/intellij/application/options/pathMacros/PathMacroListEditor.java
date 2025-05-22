@@ -11,15 +11,13 @@ import com.intellij.ui.ToolbarDecorator;
 import com.intellij.util.text.StringTokenizer;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 public final class PathMacroListEditor {
-  JPanel myPanel;
-  private JTextField myIgnoredVariables;
-  private JPanel myPathVariablesPanel;
+
+  private final PathMacroListEditorUI ui;
   private final PathMacroTable myPathMacroTable;
 
   public PathMacroListEditor() {
@@ -28,7 +26,7 @@ public final class PathMacroListEditor {
 
   public PathMacroListEditor(final Collection<String> undefinedMacroNames) {
     myPathMacroTable = undefinedMacroNames != null ? new PathMacroTable(undefinedMacroNames) : new PathMacroTable();
-    myPathVariablesPanel.add(
+    ui = new PathMacroListEditorUI(
       ToolbarDecorator.createDecorator(myPathMacroTable)
         .setAddAction(new AnActionButtonRunnable() {
           @Override
@@ -36,23 +34,23 @@ public final class PathMacroListEditor {
             myPathMacroTable.addMacro();
           }
         }).setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          myPathMacroTable.removeSelectedMacros();
-        }
-      }).setEditAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          myPathMacroTable.editMacro();
-        }
-      }).disableUpDownActions().createPanel(), BorderLayout.CENTER);
+          @Override
+          public void run(AnActionButton button) {
+            myPathMacroTable.removeSelectedMacros();
+          }
+        }).setEditAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton button) {
+            myPathMacroTable.editMacro();
+          }
+        }).disableUpDownActions().createPanel());
 
     fillIgnoredVariables();
   }
 
   private void fillIgnoredVariables() {
     final Collection<String> ignored = PathMacros.getInstance().getIgnoredMacroNames();
-    myIgnoredVariables.setText(StringUtil.join(ignored, ";"));
+    ui.ignoredVariables.setText(StringUtil.join(ignored, ";"));
   }
 
   private boolean isIgnoredModified() {
@@ -61,7 +59,7 @@ public final class PathMacroListEditor {
   }
 
   private Collection<String> parseIgnoredVariables() {
-    final String s = myIgnoredVariables.getText();
+    final String s = ui.ignoredVariables.getText();
     final List<String> ignored = new ArrayList<>();
     final StringTokenizer st = new StringTokenizer(s, ";");
     while (st.hasMoreElements()) {
@@ -82,7 +80,7 @@ public final class PathMacroListEditor {
   }
 
   public JComponent getPanel() {
-    return myPanel;
+    return ui.getContent();
   }
 
   public void reset() {
