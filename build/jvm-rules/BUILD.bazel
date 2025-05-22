@@ -300,6 +300,12 @@ jvm_import(
 )
 
 jvm_import(
+    name = "annotations-for-patched-kotlin",
+    jar = "@annotations-for-patched-kotlin//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
     name = "kotlin-stdlib",
     jar = "@kotlin-stdlib//file",
     source_jar = "@kotlin-stdlib-sources//file",
@@ -465,6 +471,12 @@ jvm_import(
     name = "intellij-deps-fastutil",
     jar = "@intellij-deps-fastutil//file",
     source_jar = "@intellij-deps-fastutil-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "intellij-deps-fastutil-for-patched-kotlin",
+    jar = "@intellij-deps-fastutil-for-patched-kotlin//file",
     visibility = ["//visibility:public"],
 )
 

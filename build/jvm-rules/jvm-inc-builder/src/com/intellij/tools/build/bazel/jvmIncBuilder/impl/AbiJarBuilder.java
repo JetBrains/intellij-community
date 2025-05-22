@@ -3,7 +3,7 @@ package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
 
 import com.dynatrace.hash4j.hashing.HashStream64;
 import com.dynatrace.hash4j.hashing.Hashing;
-import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
+import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.InstrumentationClassFinder;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;

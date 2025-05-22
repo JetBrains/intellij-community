@@ -17,14 +17,14 @@ class KotlinMessageCollector(
   override fun report(severity: CompilerMessageSeverity, @Nls message: String, location: CompilerMessageSourceLocation?) {
     hasErrors = hasErrors || severity.isError
 
-    var prefix = ""
-    if (severity == CompilerMessageSeverity.EXCEPTION) {
-      prefix = "[Internal Error] "
-    }
+    var text = if (severity == CompilerMessageSeverity.EXCEPTION) "[Internal Error] $message"  else message
 
     val kind = kind(severity)
     if (kind != null) {
-      diagnosticSink.report(Message.create(myOwner, kind, prefix + message))
+      if (location != null) {
+        text += "\n\t${location.path} (${location.line}:${location.column})"
+      }
+      diagnosticSink.report(Message.create(myOwner, kind, text))
     }
   }
 

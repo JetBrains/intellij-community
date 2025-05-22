@@ -141,9 +141,9 @@ public class KotlinCompilerRunner implements CompilerRunner {
 
         org.jetbrains.kotlin.cli.common.ExitCode exitCode = pipeline.execute(kotlinArgs, services, messageCollector);
 
-        //if (diagnostic.hasErrors()) {
-        //  diagnostic.report(Message.create(this, Message.Kind.INFO, "Kotlin build options: " + myContext.getBuilderOptions().getKotlinOptions()));
-        //}
+        if (messageCollector.hasErrors()) {
+          diagnostic.report(Message.create(this, Message.Kind.INFO, "Compilation finished with errors. Compiler options used: " + myContext.getBuilderOptions().getKotlinOptions()));
+        }
 
         completedOk = exitCode == OK;
         return completedOk? ExitCode.OK : ExitCode.ERROR;
@@ -151,7 +151,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
       finally {
         processTrackers(out, generatedClasses);
         if (myModuleEntryPath != null) {
-          if (!completedOk || diagnostic.hasErrors()) {
+          if (!completedOk || messageCollector.hasErrors()) {
             byte[] content = myLastGoodModuleEntryContent;
             // ensure the output contains the last known good value
             myStorageManager.getCompositeOutputBuilder().putEntry(myModuleEntryPath, content);

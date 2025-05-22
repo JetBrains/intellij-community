@@ -17,18 +17,17 @@ kt_jvm_library(
   visibility = ["//visibility:public"],
   # buildifier: leave-alone
   deps = [
+    "//:annotations",
     "//dependency-graph",
     "//jps-builders-6:build-javac-rt",
     "//:jps-javac-extension",
-    "//:annotations",
     "//:h2-mvstore",
     "//:hash4j",
     "//:asm-all",
     "//:kotlin-metadata",
     "//:caffeine",
-    "//:intellij-deps-fastutil",
+    "//:intellij-deps-fastutil-for-patched-kotlin",
     "//:qdox",
-    "//:jps", # temporary dep for instrumentation-util and instrumenters, must be the last dep in classpath
     "//src/worker-framework",
     "//src/worker-util",
     "patched-kotlin-compiler-for-bazel",

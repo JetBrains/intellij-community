@@ -6,7 +6,7 @@ kt_jvm_library(
     kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
     deps = [
       "//:kotlin-stdlib",
-      "//:intellij-deps-fastutil",
+      "//:intellij-deps-fastutil-for-patched-kotlin",
       "//:kotlinx-collections-immutable",
       "//:collection",
     ],

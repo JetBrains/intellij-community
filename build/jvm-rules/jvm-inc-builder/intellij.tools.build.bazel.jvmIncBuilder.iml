@@ -8,7 +8,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.java.compiler.instrumentationUtil" />
     <orderEntry type="module" module-name="intellij.platform.jps.build.javac.rt" />
     <orderEntry type="module" module-name="intellij.platform.jps.build.dependencyGraph" />
     <orderEntry type="library" name="jps-javac-extension" level="project" />
@@ -18,7 +17,6 @@
     <orderEntry type="library" name="ASM" level="project" />
     <orderEntry type="library" name="kotlin-metadata" level="project" />
     <orderEntry type="library" name="caffeine" level="project" />
-    <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module-library">
       <library name="qdox-java-parser" type="repository">
         <properties include-transitive-deps="false" maven-id="com.thoughtworks.qdox:qdox:2.2.0">

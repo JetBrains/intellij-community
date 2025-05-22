@@ -9,18 +9,20 @@ import org.jetbrains.jps.dependency.GraphDataOutput;
 import org.jetbrains.jps.dependency.NodeSource;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class SourceSnapshotImpl implements NodeSourceSnapshot {
   private final Map<NodeSource, String> mySources;
 
   public SourceSnapshotImpl(Map<NodeSource, String> digestSources) {
-    mySources = Map.copyOf(digestSources);
+    // preserve the original map implementation, which may provide a specific iteration order
+    mySources = Collections.unmodifiableMap(digestSources);
   }
   
   public SourceSnapshotImpl(GraphDataInput in, DataReader<? extends NodeSource> sourceReader) throws IOException {
-    Map<NodeSource, String> sources = new HashMap<>();
+    Map<NodeSource, String> sources = new LinkedHashMap<>(); // preserve iteration order
     int count = in.readInt();
     while (count-- > 0) {
       String digest = in.readUTF();

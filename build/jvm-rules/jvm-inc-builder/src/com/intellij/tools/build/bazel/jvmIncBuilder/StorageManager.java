@@ -1,12 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.build.bazel.jvmIncBuilder;
 
-import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.AbiJarBuilder;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.CompositeZipOutputBuilder;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.Utils;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.ZipOutputBuilderImpl;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.PersistentMVStoreMapletFactory;
+import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.InstrumentationClassFinder;
 import com.sun.nio.file.ExtendedOpenOption;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -155,6 +155,12 @@ public class StorageManager implements CloseableExt {
       safeClose(config.getGraph(), saveChanges);
     }
 
+    InstrumentationClassFinder finder = myInstrumentationClassFinder;
+    if (finder != null) {
+      myInstrumentationClassFinder = null;
+      finder.releaseResources();
+    }
+    
     myComposite = null;
 
     safeClose(myOutputBuilder, saveChanges);

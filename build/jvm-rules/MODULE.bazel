@@ -770,6 +770,13 @@ http_file(
 )
 
 http_file(
+    name = "intellij-deps-fastutil-for-patched-kotlin",
+    downloaded_file_path = "intellij-deps-fastutil-8.5.13-jb4.jar",
+    sha256 = "46cb3758c236bac0631ae563aab11effce2677b9a010171f02d04f222f2e7bdb",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8.5.13-jb4/intellij-deps-fastutil-8.5.13-jb4.jar",
+)
+
+http_file(
     name = "intellij-deps-fastutil-sources",
     downloaded_file_path = "intellij-deps-fastutil-8.5.15-jb1-sources.jar",
     sha256 = "57d0e59cd6f6bd931d893ab0089bdcb13aee0ed78f1f8e85d88bc55b89815211",

@@ -116,6 +116,10 @@ public class JavaCompilerRunner implements CompilerRunner {
       myContext::isCanceled, javacTool, new FileDataProvider(outSink)
     );
 
+    if (outCollector.hasErrors()) {
+      diagnosticSink.report(Message.create(this, Message.Kind.INFO, "Compilation finished with errors. Compiler options used: " + myOptions));
+    }
+
     return compileOk ? ExitCode.OK : ExitCode.ERROR;
   }
 
@@ -132,6 +136,7 @@ public class JavaCompilerRunner implements CompilerRunner {
     private final DiagnosticSink myDiagnosticSink;
     private final OutputSink myOutSink;
     private final @NotNull NodeSourcePathMapper myPathMapper;
+    private boolean myHasErrors;
 
     OutputCollector(JavaCompilerRunner owner, @NotNull NodeSourcePathMapper pathMapper, DiagnosticSink diagnosticSink, OutputSink outSink) {
       myOwner = owner;
@@ -236,13 +241,20 @@ public class JavaCompilerRunner implements CompilerRunner {
       // empty
     }
 
+    public boolean hasErrors() {
+      return myHasErrors;
+    }
+
     @Override
     public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+      if (diagnostic.getKind() == Diagnostic.Kind.ERROR) {
+        myHasErrors = true;
+      }
       String message = diagnostic.getMessage(Locale.ENGLISH);
       StringBuilder msgBuilder = new StringBuilder(message);
       JavaFileObject source = diagnostic.getSource();
       if (source != null) {
-        msgBuilder.append("\n").append(source.getName());
+        msgBuilder.append("\n\t").append(source.getName());
         if (diagnostic.getPosition() != Diagnostic.NOPOS) {
           msgBuilder.append(" (").append(diagnostic.getLineNumber()).append(":").append(diagnostic.getColumnNumber()).append(")");
           try {
@@ -251,7 +263,7 @@ public class JavaCompilerRunner implements CompilerRunner {
             if (start >= 0 && end > start) {
               CharSequence charContent = source.getCharContent(true);
               if (end < charContent.length()) {
-                msgBuilder.append("\ncode: \"").append(charContent.subSequence(start, end)).append("\"");
+                msgBuilder.append("\n\tcode: \"").append(charContent.subSequence(start, end)).append("\"");
               }
             }
           }

@@ -236,6 +236,9 @@ public class BuildContextImpl implements BuildContext {
   @Override
   public void report(Message msg) {
     try {
+      if (msg.getSource() != null) {
+        myMessageSink.append(msg.getSource().getName()).append(": ");
+      }
       if (msg.getKind() == Message.Kind.ERROR) {
         myHasErrors = true;
         myMessageSink.append("Error: ");
