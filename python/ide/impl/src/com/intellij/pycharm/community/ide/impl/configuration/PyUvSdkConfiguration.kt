@@ -9,12 +9,14 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.onSuccess
+import com.jetbrains.python.projectModel.uv.UvProjectModelService
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.uv.impl.getUvExecutable
@@ -22,6 +24,7 @@ import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnvUnderProgress
 import com.jetbrains.python.venvReader.tryResolvePath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.nio.file.Path
 
 class PyUvSdkConfiguration : PyProjectSdkConfigurationExtension {
   companion object {
@@ -58,7 +61,15 @@ class PyUvSdkConfiguration : PyProjectSdkConfigurationExtension {
   override fun supportsHeadlessModel(): Boolean = true
 
   private suspend fun createUv(module: Module): PyResult<Sdk> {
-    val workingDir = tryResolvePath(module.basePath)
+    val venvParentDir: String?
+    if (Registry.`is`("python.project.model.uv", false)) {
+      val uvWorkspace = UvProjectModelService.findWorkspace(module)
+      venvParentDir = uvWorkspace?.root?.basePath ?: module.basePath
+    }
+    else {
+      venvParentDir = module.basePath
+    }
+    val workingDir: Path? = tryResolvePath(venvParentDir)
     if (workingDir == null) {
       return PyResult.failure(MessageError("Can't determine working dir for the module"))
     }

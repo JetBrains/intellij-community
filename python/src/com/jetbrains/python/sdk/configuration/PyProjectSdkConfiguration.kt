@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isNotificationSilentMode
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyBundle
@@ -24,9 +25,11 @@ import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonPluginDisposable
 import com.jetbrains.python.inspections.PyInspectionExtension
 import com.jetbrains.python.inspections.requirement.RunningPackagingTasksListener
+import com.jetbrains.python.projectModel.uv.UvProjectModelService
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.PySdkPopupFactory
 import com.jetbrains.python.sdk.configurePythonSdk
+import com.jetbrains.python.sdk.uv.isUv
 
 object PyProjectSdkConfiguration {
 
@@ -50,7 +53,20 @@ object PyProjectSdkConfiguration {
     ProgressManager.progress("")
     LOGGER.debug("Configuring sdk with ${extension.javaClass.canonicalName} extension")
 
-    supplier()?.let { setReadyToUseSdk(module.project, module, it) }
+    val sdk = supplier()
+    if (sdk != null) {
+      // TODO Move this to PyUvSdkConfiguration, show better notification
+      if (sdk.isUv && Registry.`is`("python.project.model.uv", false)) {
+        val ws = UvProjectModelService.findWorkspace(module)
+        if (ws != null) {
+          for (wsModule in ws.members + ws.root) {
+            setReadyToUseSdk(wsModule.project, wsModule, sdk)    
+          }
+          return
+        }
+      }
+      setReadyToUseSdk(module.project, module, sdk)
+    }
   }
 
   fun setReadyToUseSdk(project: Project, module: Module, sdk: Sdk) {

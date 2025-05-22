@@ -40,22 +40,36 @@ object UvProjectModelService : BaseProjectModelService<UvEntitySource, UvProject
 
   override fun getEntitySourceClass(): KClass<out EntitySource> = UvEntitySource::class
 
-  fun findSameWorkspaceMembers(module: Module): List<Module> {
+  fun findWorkspace(module: Module): UvWorkspace<Module>? {
     val wsmSnapshot = module.project.workspaceModel.currentSnapshot
     val moduleEntity = wsmSnapshot.resolve(ModuleId(module.name))!!
-    return findSameWorkspaceMembers(module.project, moduleEntity)
-      .mapNotNull { it.findModule(wsmSnapshot) }
+    val workspace = findWorkspace(module.project, moduleEntity)
+    if (workspace == null) {
+      return null
+    }
+    return UvWorkspace(
+      root = workspace.root.findModule(wsmSnapshot)!!,
+      members = workspace.members.mapNotNull { it.findModule(wsmSnapshot) }.toSet(),
+    )
   }
-  
-  fun findSameWorkspaceMembers(project: Project, module: ModuleEntity): List<ModuleEntity> {
-    val workspaceName = (module.exModuleOptions?.linkedProjectId ?: module.name).split(":")[0]
+
+  fun findWorkspace(project: Project, module: ModuleEntity): UvWorkspace<ModuleEntity>? {
+    val fullName = module.exModuleOptions?.linkedProjectId
+    if (fullName == null) return null
+    val workspaceName = fullName.split(":")[0]
     val currentSnapshot = project.workspaceModel.currentSnapshot
-    return currentSnapshot.entitiesBySource { it is UvEntitySource }
-      .filterIsInstance<ModuleEntity>()
-      .filter { 
-        val externalId = it.exModuleOptions?.linkedProjectId
-        externalId != null && (externalId == workspaceName || externalId.startsWith("$workspaceName:"))
-      }
-      .toList()
+    val rootModule = currentSnapshot.resolve(ModuleId(workspaceName))
+    return UvWorkspace(
+      root = rootModule!!,
+      members = currentSnapshot.entitiesBySource { it is UvEntitySource }
+        .filterIsInstance<ModuleEntity>()
+        .filter {
+          val externalId = it.exModuleOptions?.linkedProjectId
+          externalId != null && externalId.startsWith("$workspaceName:")
+        }
+        .toSet(),
+    )
   }
+
+  data class UvWorkspace<T>(val root: T, val members: Set<T>)
 }

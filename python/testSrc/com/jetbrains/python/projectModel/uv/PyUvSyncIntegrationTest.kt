@@ -4,7 +4,6 @@ package com.jetbrains.python.projectModel.uv
 import com.intellij.openapi.externalSystem.testFramework.fixtures.multiProjectFixture
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.workspaceModel
-import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ContentRootAssertions
 import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions
@@ -82,7 +81,7 @@ class PyUvSyncIntegrationTest {
       name = "lib2"
       dependencies = []
     """.trimIndent())
-    
+
     testRoot.createFile("packages/pkg/pyproject.toml").writeText("""
       [project]
       name = "pkg"
@@ -94,12 +93,14 @@ class PyUvSyncIntegrationTest {
 
     val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
     ModuleAssertions.assertModules(project, "main", "lib1", "lib2", "pkg")
-    val workspaceMembers = listOf(
-      project.findModule("main"),
-      project.findModule("lib1"),
-      project.findModule("lib2"),
+    val workspace = UvProjectModelService.UvWorkspace<ModuleEntity>(
+      root = project.findModule("main")!!,
+      members = setOf(
+        project.findModule("lib1")!!,
+        project.findModule("lib2")!!,
+      )
     )
-    
+
     ModuleAssertions.assertModuleEntity(project, "main") { module ->
       ContentRootAssertions.assertContentRoots(virtualFileUrlManager, module, testRoot)
       DependencyAssertions.assertDependencies(module, DependencyAssertions.INHERITED_SDK, DependencyAssertions.MODULE_SOURCE, "lib1", "lib2")
@@ -110,9 +111,7 @@ class PyUvSyncIntegrationTest {
         Assertions.assertTrue(dependency.exported)
       }
       Assertions.assertEquals("main", module.exModuleOptions?.linkedProjectId)
-      CollectionAssertions.assertEqualsUnordered(
-        workspaceMembers,
-        UvProjectModelService.findSameWorkspaceMembers(project, module)
+      Assertions.assertEquals(workspace, UvProjectModelService.findWorkspace(project, module)
       )
     }
 
@@ -123,9 +122,7 @@ class PyUvSyncIntegrationTest {
         Assertions.assertTrue(dependency.exported)
       }
       Assertions.assertEquals("main:lib1", module.exModuleOptions?.linkedProjectId)
-      CollectionAssertions.assertEqualsUnordered(
-        workspaceMembers,
-        UvProjectModelService.findSameWorkspaceMembers(project, module)
+      Assertions.assertEquals(workspace, UvProjectModelService.findWorkspace(project, module)
       )
     }
 
@@ -133,9 +130,7 @@ class PyUvSyncIntegrationTest {
       ContentRootAssertions.assertContentRoots(virtualFileUrlManager, module, testRoot.resolve("lib/lib2"))
       DependencyAssertions.assertDependencies(module, DependencyAssertions.INHERITED_SDK, DependencyAssertions.MODULE_SOURCE)
       Assertions.assertEquals("main:lib2", module.exModuleOptions?.linkedProjectId)
-      CollectionAssertions.assertEqualsUnordered(
-        workspaceMembers,
-        UvProjectModelService.findSameWorkspaceMembers(project, module)
+      Assertions.assertEquals(workspace, UvProjectModelService.findWorkspace(project, module)
       )
     }
 
@@ -143,17 +138,17 @@ class PyUvSyncIntegrationTest {
       ContentRootAssertions.assertContentRoots(virtualFileUrlManager, module, testRoot.resolve("packages/pkg"))
       DependencyAssertions.assertDependencies(module, DependencyAssertions.INHERITED_SDK, DependencyAssertions.MODULE_SOURCE)
       Assertions.assertEquals("pkg", module.exModuleOptions?.linkedProjectId)
-      CollectionAssertions.assertEqualsUnordered(
-        listOf(module),
-        UvProjectModelService.findSameWorkspaceMembers(project, module)
+      Assertions.assertEquals(
+        UvProjectModelService.UvWorkspace(module, emptySet()),
+        UvProjectModelService.findWorkspace(project, module)
       )
     }
   }
-  
+
   private fun Project.findModule(name: String): ModuleEntity? {
     return workspaceModel.currentSnapshot.resolve(ModuleId(name))
   }
-  
+
   private suspend fun syncAllProjects(project: Project) {
     multiprojectFixture.awaitProjectConfiguration(project) {
       UvProjectModelService.syncAllProjectModelRoots(project)
