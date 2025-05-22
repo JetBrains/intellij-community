@@ -108,11 +108,14 @@ public class BuildContextImpl implements BuildContext {
       options.add("8".equals(jvmTarget)? "1.8" : jvmTarget);
     }
 
+    StringBuilder optIns = new StringBuilder();
     for (String annotName : CLFlags.OPT_IN.getValue(flags)) {
-      options.add("-opt-in");
-      options.add(annotName);
+      optIns.append(annotName).append(",");
     }
-    
+    if (!optIns.isEmpty()) {
+      options.add("-opt-in=" + optIns.deleteCharAt(optIns.length() - 1));
+    }
+
     String warn = CLFlags.WARN.getOptionalScalarValue(flags);
     if ("off".equals(warn)) {
       options.add("-nowarn");
