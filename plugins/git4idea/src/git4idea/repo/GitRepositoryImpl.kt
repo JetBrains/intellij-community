@@ -4,7 +4,6 @@ package git4idea.repo
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.repo.Repository
 import com.intellij.dvcs.repo.RepositoryImpl
-import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
@@ -217,7 +216,7 @@ class GitRepositoryImpl private constructor(
   }
 
   override fun getRpcId(): RepositoryId {
-    return RepositoryId(projectId = project.projectId(), rootPath = root.rpcId())
+    return RepositoryId(projectId = project.projectId(), rootPath = root.path)
   }
 
   companion object {

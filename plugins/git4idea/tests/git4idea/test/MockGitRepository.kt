@@ -2,7 +2,6 @@
 package git4idea.test
 
 import com.intellij.dvcs.repo.Repository
-import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.projectId
@@ -126,7 +125,7 @@ class MockGitRepository(private val project: Project, private val root: VirtualF
   }
 
   override fun getRpcId(): RepositoryId {
-    return RepositoryId(projectId = project.projectId(), rootPath = root.rpcId())
+    return RepositoryId(projectId = project.projectId(), rootPath = root.path)
   }
 
   override fun dispose() {

@@ -30,7 +30,7 @@ internal class GitRdToolbarWidgetAction : ExpandableComboAction(), DumbAware {
     val project = event.project ?: return null
     val refs = GitRepositoriesFrontendHolder.getInstance(project).getAll().flatMap {
       buildList {
-        add(it.repositoryId.rootPath.toString())
+        add(it.repositoryId.toString())
         addAll(it.state.refs.localBranches.map { it.fullName })
         addAll(it.state.refs.remoteBranches.map { it.fullName })
       }

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.git.shared.repo
 
+import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
@@ -140,6 +141,7 @@ class GitRepositoriesFrontendHolder(
         shortName = repositoryDto.shortName,
         state = repositoryDto.state,
         favoriteRefs = repositoryDto.favoriteRefs,
+        rootFileId = repositoryDto.root,
       )
 
     private fun getUpdateType(rpcEvent: GitRepositoryEvent): UpdateType = when (rpcEvent) {
@@ -166,16 +168,15 @@ private open class GitRepositoryFrontendModelImpl(
   override val shortName: String,
   override var state: GitRepositoryState,
   override var favoriteRefs: GitFavoriteRefs,
+  private val rootFileId: VirtualFileId,
 ) : GitRepositoryFrontendModel {
-  override val root: VirtualFile by lazy {
-    repositoryId.rootPath.virtualFile()
-    ?: error("Cannot deserialize virtual file for repository root $repositoryId")
-  }
+  override val root: VirtualFile?
+    get() = rootFileId.virtualFile()
 }
 
-private class GitRepositoryFrontendModelStub(repositoryId: RepositoryId) : GitRepositoryFrontendModelImpl(
-  repositoryId,
-  "",
-  GitRepositoryState(null, null, GitReferencesSet.EMPTY, emptyList(), GitOperationState.DETACHED_HEAD, emptyMap()),
-  GitFavoriteRefs(emptySet(), emptySet(), emptySet())
-)
+private class GitRepositoryFrontendModelStub(override val repositoryId: RepositoryId) : GitRepositoryFrontendModel {
+  override val shortName = ""
+  override val state = GitRepositoryState(null, null, GitReferencesSet.EMPTY, emptyList(), GitOperationState.DETACHED_HEAD, emptyMap())
+  override val favoriteRefs = GitFavoriteRefs(emptySet(), emptySet(), emptySet())
+  override val root = null
+}

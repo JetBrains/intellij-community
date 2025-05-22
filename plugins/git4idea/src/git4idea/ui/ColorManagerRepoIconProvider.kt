@@ -4,24 +4,16 @@ package git4idea.ui
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode.Companion.getRepositoryIcon
 import com.intellij.icons.AllIcons
-import com.intellij.ide.vfs.virtualFile
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
 import com.intellij.vcs.git.shared.ui.GitRepoIconProvider
+import git4idea.repo.GitRepositoryIdCache
 import javax.swing.Icon
-
-private val LOG = Logger.getInstance(ColorManagerRepoIconProvider::class.java)
 
 class ColorManagerRepoIconProvider : GitRepoIconProvider {
   override fun getIcon(project: Project, repositoryId: RepositoryId): Icon {
     val colorManager = RepositoryChangesBrowserNode.getColorManager(project)
-    val virtualFile = repositoryId.rootPath.virtualFile()
-    if (virtualFile == null) {
-      LOG.error("Failed to deserialize virtual file id for repository root: ${repositoryId.rootPath}")
-      return AllIcons.Empty
-    }
-
-    return getRepositoryIcon(colorManager, virtualFile)
+    val root = GitRepositoryIdCache.getInstance(project).get(repositoryId)?.root
+    return if (root == null) AllIcons.Empty else getRepositoryIcon(colorManager, root)
   }
 }

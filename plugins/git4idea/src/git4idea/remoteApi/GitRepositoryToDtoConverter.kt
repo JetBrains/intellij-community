@@ -2,6 +2,7 @@
 package git4idea.remoteApi
 
 import com.intellij.dvcs.repo.Repository
+import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.components.service
 import com.intellij.vcs.git.shared.ref.GitCurrentRef
 import com.intellij.vcs.git.shared.ref.GitFavoriteRefs
@@ -25,7 +26,8 @@ internal object GitRepositoryToDtoConverter {
       repositoryId = repository.rpcId,
       shortName = VcsUtil.getShortVcsRootName(repository.project, repository.root),
       state = convertRepositoryState(repository),
-      favoriteRefs = collectFavorites(repository)
+      favoriteRefs = collectFavorites(repository),
+      root = repository.root.rpcId(),
     )
   }
 

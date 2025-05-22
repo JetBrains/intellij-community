@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.remoteApi
 
-import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -17,6 +16,7 @@ import com.intellij.vcs.git.shared.rpc.GitRepositoryEvent
 import git4idea.GitDisposable
 import git4idea.branch.GitRefType
 import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryIdCache
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
 import kotlinx.coroutines.channels.SendChannel
@@ -36,8 +36,7 @@ class GitRepositoryApiImpl : GitRepositoryApi {
 
   override suspend fun getRepository(repositoryId: RepositoryId): GitRepositoryDto? {
     val project = repositoryId.projectId.findProject()
-    val repoRoot = repositoryId.rootPath.virtualFile() ?: return null
-    return GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(repoRoot)?.let {
+    return GitRepositoryIdCache.getInstance(project).get(repositoryId)?.let {
       GitRepositoryToDtoConverter.convertToDto(it)
     }
   }

@@ -14,7 +14,7 @@ interface GitRepositoryFrontendModel: Comparable<GitRepositoryFrontendModel> {
   val shortName: String
   val state: GitRepositoryState
   val favoriteRefs: GitFavoriteRefs
-  val root: VirtualFile
+  val root: VirtualFile?
 
   override fun compareTo(other: GitRepositoryFrontendModel): Int =
     NaturalComparator.INSTANCE.compare(shortName, other.shortName)

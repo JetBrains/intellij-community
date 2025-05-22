@@ -129,9 +129,11 @@ internal fun getPreferredBranch(
   val repository = repositories.singleOrNull()
 
   if (repository != null) {
-    val recentBranch = GitVcsSettings.getInstance(project).recentBranchesByRepository[repository.root.path]?.let { recentBranchName ->
+    val root = repository.root?.path
+    val recentBranch = if (root != null) GitVcsSettings.getInstance(project).recentBranchesByRepository[root]?.let { recentBranchName ->
       localBranches.find { it.name == recentBranchName }
-    }
+    } else null
+
     return recentBranch ?: repository.state.currentBranch
   }
   else {
