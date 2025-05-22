@@ -1,6 +1,8 @@
 package com.intellij.settingsSync.core.config
 
 
+import com.intellij.BundleBase
+import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
@@ -245,6 +247,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
                   userId = userDropDownLink.selectedItem?.userId
                   providerCode = userDropDownLink.selectedItem?.providerCode
                 }
+                cellDropDownLink.comment?.text = ""
                 if (enableCheckbox.isSelected) {
                   syncConfigPanel.apply()
                 }
@@ -356,7 +359,9 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
           withContext(Dispatchers.EDT) {
             triggerUpdateConfigurable()
           }
-          cellDropDownLink.comment?.text = message("sync.status.will.enable")
+          cellDropDownLink.comment?.text = "<icon src='AllIcons.General.History'>&nbsp;" +
+                                           message("sync.status.will.enable",
+                                                   CommonBundle.getApplyButtonText().replace(BundleBase.MNEMONIC_STRING, ""))
         } else {
           enableCheckbox.isSelected = false
         }
@@ -607,34 +612,29 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       cellDropDownLink.comment?.text = "" //message("sync.status.disabled.message")
       return
     }
+    val currentStatus = SettingsSyncStatusTracker.getInstance().currentStatus
+    actionRequired.set(currentStatus is SettingsSyncStatusTracker.SyncStatus.ActionRequired)
     if (SettingsSyncSettings.getInstance().syncEnabled) {
-      val currentStatus = SettingsSyncStatusTracker.getInstance().currentStatus
-      actionRequired.set(currentStatus is SettingsSyncStatusTracker.SyncStatus.ActionRequired)
-      when(currentStatus) {
-        SettingsSyncStatusTracker.SyncStatus.Success -> {
-          //statusLabel.icon = icons.SettingsSyncIcons.StatusEnabled
+
+      if (currentStatus is SettingsSyncStatusTracker.SyncStatus.ActionRequired) {
+        actionRequiredAction = { currentStatus.execute(syncConfigPanel) }
+        actionRequiredLabel.text = currentStatus.message
+        actionRequiredButton.text = currentStatus.actionTitle
+        cellDropDownLink.comment?.text = message("sync.status.action.required.comment", currentStatus.actionTitle, currentStatus.message)
+      } else {
+        cellDropDownLink.comment?.text = ""
+        actionRequiredAction = null
+        actionRequiredLabel.text = ""
+        actionRequiredButton.text = ""
+        if (currentStatus == SettingsSyncStatusTracker.SyncStatus.Success) {
           val lastSyncTime = SettingsSyncStatusTracker.getInstance().getLastSyncTime()
           if (lastSyncTime > 0) {
-            cellDropDownLink.comment?.text = message("sync.status.last.sync.message", DateFormatUtil.formatPrettyDateTime(lastSyncTime))
+            cellDropDownLink.comment?.text = "<icon src='AllIcons.General.GreenCheckmark'>&nbsp;" + message("sync.status.last.sync.message", DateFormatUtil.formatPrettyDateTime(lastSyncTime))
           } else {
             cellDropDownLink.comment?.text = message("sync.status.enabled")
           }
-        }
-        is SettingsSyncStatusTracker.SyncStatus.Error -> {
+        } else if (currentStatus is SettingsSyncStatusTracker.SyncStatus.Error) {
           cellDropDownLink.comment?.text = message("sync.status.failed", currentStatus.errorMessage)
-          //statusLabel.icon = AllIcons.General.Error
-        }
-        is SettingsSyncStatusTracker.SyncStatus.ActionRequired -> {
-          actionRequiredAction = { currentStatus.execute(syncConfigPanel) }
-          actionRequiredLabel.text = currentStatus.message
-          actionRequiredButton.text = currentStatus.actionTitle
-          //actionRequiredData = Pair(currentStatus.message, currentStatus.actionTitle)
-          /*
-          cellDropDownLink.comment?.text = message("sync.status.action.required", currentStatus.message)
-          //statusLabel.icon = AllIcons.General.BalloonWarning
-          enableCheckbox.text = currentStatus.actionTitle
-          */
-
         }
       }
     }
