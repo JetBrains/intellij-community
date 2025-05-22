@@ -37,22 +37,20 @@ internal class TerminalInputMethodSupportTest : BasePlatformTestCase() {
 
   override fun runInDispatchThread(): Boolean = false
 
-  private suspend fun init(coroutineScope: CoroutineScope) {
-    withContext(Dispatchers.EDT) {
-      val model = TerminalTestUtil.createOutputModel(TerminalUiUtils.getDefaultMaxOutputLength())
-      editor = createEditor(model.document)
-      echoer = InputTextEchoer(model, coroutineScope)
-      TerminalOutputEditorInputMethodSupport(
-        editor,
-        coroutineScope,
-        getCaretPosition = {
-          val offset = model.cursorOffsetState.value
-          editor.offsetToLogicalPosition(offset)
-        },
-        cursorOffsetFlow = model.cursorOffsetState,
-        sendInputString = echoer::echo,
-      )
-    }
+  private suspend fun init(coroutineScope: CoroutineScope) = withContext(Dispatchers.EDT) {
+    val model = TerminalTestUtil.createOutputModel(TerminalUiUtils.getDefaultMaxOutputLength())
+    editor = createEditor(model.document)
+    echoer = InputTextEchoer(model, coroutineScope)
+    TerminalOutputEditorInputMethodSupport(
+      editor,
+      coroutineScope,
+      getCaretPosition = {
+        val offset = model.cursorOffsetState.value
+        editor.offsetToLogicalPosition(offset)
+      },
+      cursorOffsetFlow = model.cursorOffsetState,
+      sendInputString = echoer::echo,
+    )
   }
 
   private fun createEditor(document: Document): EditorEx {
@@ -64,7 +62,7 @@ internal class TerminalInputMethodSupportTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun basic() = timeoutRunBlockingInBackground {
+  fun `should handle repeated input of Korean characters`() = timeoutRunBlockingInBackground {
     for (i in 1..100) {
       val expectedDocumentText = "쇼ㅛ".repeat(i - 1) + "쇼"
       dispatchEventsAndAssert(
@@ -90,20 +88,20 @@ internal class TerminalInputMethodSupportTest : BasePlatformTestCase() {
     expectedComposedTextInlayOffset: Int,
   ) {
     withContext(Dispatchers.EDT) {
-      val component = editor.contentComponent
       for (event in events) {
-        component.dispatchEvent(event)
+        editor.contentComponent.dispatchEvent(event)
       }
     }
     echoer.await()
     // check on the next EDT tick to let `TerminalOutputEditorInputMethodSupport` process the cursor position changes
     withContext(Dispatchers.EDT) {
       assertEquals(expectedDocumentText, editor.document.text)
-      val inlay = editor.inlayModel.getInlineElementAt(editor.offsetToVisualPosition(expectedComposedTextInlayOffset))
-      assertNotNull(inlay)
-      val renderer = inlay!!.renderer
-      assertInstanceOf<InputMethodInlayRenderer>(renderer)
-      assertEquals(expectedComposedText, (renderer as InputMethodInlayRenderer).text)
+      val allInlays = editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength)
+      assertEquals(1, allInlays.size)
+      val inlay = allInlays.first()
+      assertEquals(expectedComposedTextInlayOffset, inlay.offset)
+      val renderer = assertInstanceOf<InputMethodInlayRenderer>(inlay.renderer)
+      assertEquals(expectedComposedText, renderer.text)
     }
   }
 
@@ -120,10 +118,10 @@ internal class TerminalInputMethodSupportTest : BasePlatformTestCase() {
 
   private fun <T> timeoutRunBlockingInBackground(action: suspend CoroutineScope.() -> T) {
     timeoutRunBlocking(timeout = 30.seconds, context = Dispatchers.Default) {
-      val coroutineScope = childScope("CoroutineScope for test " + getTestName(false))
+      val coroutineScope = childScope("CoroutineScope for $qualifiedTestMethodName")
       init(coroutineScope)
       action()
-      coroutineScope.cancel() // to stop collecting from the cursor position flow
+      coroutineScope.cancel() // stop collecting the cursor position flow by `TerminalOutputEditorInputMethodSupport`
     }
   }
 
@@ -131,14 +129,14 @@ internal class TerminalInputMethodSupportTest : BasePlatformTestCase() {
 
 private class InputTextEchoer(val outputModel: TerminalOutputModelImpl, val coroutineScope: CoroutineScope) {
 
-  private val buffer: StringBuilder = StringBuilder()
+  private val lineBuffer: StringBuilder = StringBuilder()
   private val jobs: MutableList<Job> = CopyOnWriteArrayList()
 
   @RequiresEdt
   fun echo(textChunk: String) {
     check(!textChunk.contains('\n'))
-    buffer.append(textChunk)
-    val line = buffer.toString()
+    lineBuffer.append(textChunk)
+    val line = lineBuffer.toString()
     val job = coroutineScope.launch(Dispatchers.EDT) {
       delay(10.milliseconds) // emulate delay of the round-trip
       outputModel.updateContent(0, line, emptyList())
@@ -151,6 +149,7 @@ private class InputTextEchoer(val outputModel: TerminalOutputModelImpl, val coro
   suspend fun await() {
     for (job in jobs) {
       job.join()
+      jobs.remove(job)
     }
   }
 }
