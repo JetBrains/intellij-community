@@ -132,6 +132,10 @@ internal class GitLabShareProjectDialogViewModel(
       onFailure = { it is HttpStatusErrorException && it.statusCode == 401 }
     )
   }
+
+  val hasValidAccount: StateFlow<Boolean> = _account.combineState(reloginRequired) {
+    account, reloginRequired -> account != null && !reloginRequired
+  }
   //endregion
 
   //region: validation util

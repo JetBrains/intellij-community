@@ -8,7 +8,6 @@ import com.intellij.collaboration.ui.util.*
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.observable.util.not
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.AnimatedIcon
@@ -100,8 +99,8 @@ internal object GitLabShareProjectDialogComponentFactory {
               .applyToComponent {
                 ClientProperty.put(this, AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true)
                 cs.launchNow {
-                  vm.reloginRequired.collectLatest { reloginRequired ->
-                    presentation.disabledIcon = if (!reloginRequired) AnimatedIcon.Default.INSTANCE else AllIcons.General.Refresh
+                  vm.hasValidAccount.collectLatest { hasValidAccount ->
+                    presentation.disabledIcon = if (hasValidAccount) AnimatedIcon.Default.INSTANCE else AllIcons.General.Refresh
                   }
                 }
               }
@@ -136,8 +135,8 @@ internal object GitLabShareProjectDialogComponentFactory {
                 .bindTextIn(cs, vm.description)
                 .align(AlignX.FILL)
             }
-          }.enabledIf(vm.account.valueFlow.mapState { it != null }.asObservableIn(cs))
-        }.enabledIf(vm.reloginRequired.asObservableIn(cs).not())
+          }
+        }.enabledIf(vm.hasValidAccount.asObservableIn(cs))
       }
     }
 
