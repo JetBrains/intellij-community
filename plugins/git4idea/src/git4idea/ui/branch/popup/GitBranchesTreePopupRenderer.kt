@@ -21,8 +21,6 @@ import com.intellij.vcs.git.shared.branch.calcTooltip
 import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
 import git4idea.GitRemoteBranch
 import git4idea.GitStandardLocalBranch
-import git4idea.branch.GitTagType
-import git4idea.i18n.GitBundle
 import git4idea.ui.branch.tree.GitBranchesTreeModel
 import git4idea.ui.branch.tree.GitBranchesTreeRenderer
 import icons.DvcsImplIcons
@@ -105,11 +103,7 @@ internal class GitBranchesTreePopupRenderer(treePopupStep: GitBranchesTreePopupS
       is PopupFactoryImpl.ActionItem -> KeymapUtil.getFirstKeyboardShortcutText(treeNode.action)
       is GitBranchesTreeModel.RepositoryNode -> treeNode.repository.state.getDisplayableBranchText()
       is GitStandardLocalBranch -> {
-        treeNode.getCommonTrackedBranch(treePopupStep.affectedRepositoriesFrontendModel)?.name
-      }
-      is GitTagType -> {
-        if (treePopupStep.repositories.any { it.tagHolder.isLoading }) GitBundle.message("group.Git.Tags.loading.text")
-        else null
+        treeNode.getCommonTrackedBranch(treePopupStep.affectedRepositories)?.name
       }
       else -> null
     }

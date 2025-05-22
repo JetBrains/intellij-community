@@ -26,6 +26,7 @@ import git4idea.config.GitVcsSettings
 import git4idea.config.GitVersion
 import git4idea.repo.GitRepoInfo
 import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryIdCache
 import git4idea.repo.GitRepositoryStateChangeListener
 import git4idea.ui.branch.GitCurrentBranchPresenter
 import kotlinx.coroutines.flow.Flow
@@ -40,7 +41,7 @@ internal class GitWidgetApiImpl : GitWidgetApi {
       fun trySendNewState() {
         val widgetState = getWidgetState(project, file)
         if (widgetState is GitWidgetState.OnRepository) {
-          val rootPath = widgetState.repository.rootPath.virtualFile()
+          val rootPath = GitRepositoryIdCache.getInstance(project).get(widgetState.repository)?.root
           if (rootPath != null) {
             GitVcsSettings.getInstance(project).setRecentRoot(rootPath.path)
           }

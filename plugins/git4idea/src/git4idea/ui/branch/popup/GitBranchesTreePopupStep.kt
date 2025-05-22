@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.popup
 
-import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.getCommonName
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.ide.DataManager
@@ -19,13 +18,11 @@ import com.intellij.ui.popup.ActionPopupOptions
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.vcs.git.shared.actions.GitDataKeys
-import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
+import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
+import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetKeys
 import git4idea.GitReference
 import git4idea.GitVcs
-import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.config.GitVcsSettings
-import git4idea.repo.GitRefUtil
-import git4idea.repo.GitRepository
 import git4idea.ui.branch.GIT_SINGLE_REF_ACTION_GROUP
 import git4idea.ui.branch.GitBranchPopupActions.EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP
 import git4idea.ui.branch.popup.GitBranchesTreePopupBase.Companion.TOP_LEVEL_ACTION_PLACE
@@ -35,8 +32,8 @@ import javax.swing.JComponent
 
 internal class GitBranchesTreePopupStep(
   project: Project,
-  selectedRepository: GitRepository?,
-  repositories: List<GitRepository>,
+  selectedRepository: GitRepositoryFrontendModel?,
+  repositories: List<GitRepositoryFrontendModel>,
   private val isFirstStep: Boolean,
 ) : GitBranchesTreePopupStepBase(project, selectedRepository, repositories) {
   private var finalRunnable: Runnable? = null
@@ -67,18 +64,15 @@ internal class GitBranchesTreePopupStep(
     private set
 
   override fun createTreeModel(filterActive: Boolean): GitBranchesTreeModel {
-    val holder = GitRepositoriesFrontendHolder.getInstance(project)
-    val repositoriesFrontendModel = repositories.map { holder.get(it.rpcId) }
-
     val model = when {
       !filterActive && repositories.size > 1 && !GitVcsSettings.getInstance(project).shouldExecuteOperationsOnAllRoots() && selectedRepository != null -> {
-        GitBranchesTreeSelectedRepoModel(project, holder.get(selectedRepository.rpcId), repositoriesFrontendModel, topLevelItems)
+        GitBranchesTreeSelectedRepoModel(project, selectedRepository, repositories, topLevelItems)
       }
       filterActive && repositories.size > 1 -> {
-        GitBranchesTreeMultiRepoFilteringModel(project, repositoriesFrontendModel, topLevelItems)
+        GitBranchesTreeMultiRepoFilteringModel(project, repositories, topLevelItems)
       }
-      !filterActive && repositories.size > 1 -> GitBranchesTreeMultiRepoModel(project, repositoriesFrontendModel, topLevelItems)
-      else -> GitBranchesTreeSingleRepoModel(project, repositoriesFrontendModel.first(), topLevelItems)
+      !filterActive && repositories.size > 1 -> GitBranchesTreeMultiRepoModel(project, repositories, topLevelItems)
+      else -> GitBranchesTreeSingleRepoModel(project, repositories.first(), topLevelItems)
     }
     return model.apply(GitBranchesTreeModel::init)
   }
@@ -91,8 +85,7 @@ internal class GitBranchesTreePopupStep(
 
   override fun onChosen(selectedValue: Any?, finalChoice: Boolean): PopupStep<out Any>? {
     if (selectedValue is GitBranchesTreeModel.RepositoryNode) {
-      val repo = repositories.find { it.rpcId == selectedValue.repository.repositoryId } ?: return null
-      return GitBranchesTreePopupStep(project, repo, listOf(repo), false)
+      return GitBranchesTreePopupStep(project, selectedValue.repository, listOf(selectedValue.repository), false)
     }
 
     val refUnderRepository = selectedValue as? GitBranchesTreeModel.RefUnderRepository
@@ -100,7 +93,7 @@ internal class GitBranchesTreePopupStep(
 
     if (reference != null) {
       val actionGroup = ActionManager.getInstance().getAction(GIT_SINGLE_REF_ACTION_GROUP) as? ActionGroup ?: DefaultActionGroup()
-      val repo = refUnderRepository?.repository?.let { refRepo -> repositories.find { it.rpcId == refRepo.repositoryId } }
+      val repo = refUnderRepository?.repository
       return createActionStep(actionGroup, project, selectedRepository, repo?.let(::listOf) ?: affectedRepositories, reference)
     }
 
@@ -113,7 +106,7 @@ internal class GitBranchesTreePopupStep(
       else {
         finalRunnable = Runnable {
           val place = if (isFirstStep) TOP_LEVEL_ACTION_PLACE else SINGLE_REPOSITORY_ACTION_PLACE
-          val dataContext = createDataContext(project, null, selectedRepository, affectedRepositories)
+          val dataContext = createDataContext(project, selectedRepository, affectedRepositories)
           ActionUtil.invokeAction(action, dataContext, place, null, null)
         }
       }
@@ -128,7 +121,7 @@ internal class GitBranchesTreePopupStep(
       !isFirstStep -> null
       repositories.size > 1 -> DvcsBundle.message("branch.popup.vcs.name.branches", GitVcs.DISPLAY_NAME.get())
       else -> repositories.single().let {
-        DvcsBundle.message("branch.popup.vcs.name.branches.in.repo", it.vcs.displayName, DvcsUtil.getShortRepositoryName(it))
+        DvcsBundle.message("branch.popup.vcs.name.branches.in.repo", GitVcs.DISPLAY_NAME.get(), it.shortName)
       }
     }
 
@@ -136,7 +129,7 @@ internal class GitBranchesTreePopupStep(
 
   fun isBranchesDiverged(): Boolean {
     return repositories.size > 1
-           && getCommonName(repositories) { GitRefUtil.getCurrentReference(it)?.fullName ?: return@getCommonName null } == null
+           && getCommonName(repositories) { it.state.currentBranch?.name ?: return@getCommonName null } == null
            && GitVcsSettings.getInstance(project).shouldExecuteOperationsOnAllRoots()
   }
 
@@ -151,9 +144,9 @@ internal class GitBranchesTreePopupStep(
     private fun createTopLevelActionItems(project: Project,
                                           actionGroup: ActionGroup,
                                           presentationFactory: PresentationFactory,
-                                          selectedRepository: GitRepository?,
-                                          repositories: List<GitRepository>): List<PopupFactoryImpl.ActionItem> {
-      val dataContext = createDataContext(project, null, selectedRepository, repositories)
+                                          selectedRepository: GitRepositoryFrontendModel?,
+                                          repositories: List<GitRepositoryFrontendModel>): List<PopupFactoryImpl.ActionItem> {
+      val dataContext = createDataContext(project, selectedRepository, repositories)
       val actionItems = ActionPopupStep.createActionItems(
         actionGroup, dataContext, TOP_LEVEL_ACTION_PLACE, presentationFactory,
         ActionPopupOptions.showDisabled())
@@ -167,10 +160,10 @@ internal class GitBranchesTreePopupStep(
 
     private fun createActionStep(actionGroup: ActionGroup,
                                  project: Project,
-                                 selectedRepository: GitRepository?,
-                                 repositories: List<GitRepository>,
+                                 selectedRepository: GitRepositoryFrontendModel?,
+                                 repositories: List<GitRepositoryFrontendModel>,
                                  reference: GitReference? = null): ListPopupStep<*> {
-      val dataContext = createDataContext(project, null, selectedRepository, repositories, reference)
+      val dataContext = createDataContext(project, selectedRepository, repositories, reference)
       return JBPopupFactory.getInstance()
         .createActionsStep(actionGroup, dataContext, SINGLE_REPOSITORY_ACTION_PLACE, false, true, null, null, false, 0, false)
     }
@@ -186,17 +179,18 @@ internal class GitBranchesTreePopupStep(
       return actionsWithSeparators
     }
 
-    internal fun createDataContext(project: Project,
-                                   component: JComponent?,
-                                   selectedRepository: GitRepository?,
-                                   repositories: List<GitRepository>,
-                                   reference: GitReference? = null): DataContext =
-      CustomizedDataContext.withSnapshot(
-        DataManager.getInstance().getDataContext(component)) { sink ->
+    internal fun createDataContext(
+      project: Project,
+      selectedRepository: GitRepositoryFrontendModel?,
+      repositories: List<GitRepositoryFrontendModel>,
+      reference: GitReference? = null,
+      component: JComponent? = null,
+    ): DataContext =
+      CustomizedDataContext.withSnapshot(DataManager.getInstance().getDataContext(component)) { sink ->
         sink[CommonDataKeys.PROJECT] = project
-        sink[GitBranchActionsDataKeys.AFFECTED_REPOSITORIES] = repositories
-        sink[GitBranchActionsDataKeys.SELECTED_REPOSITORY] = selectedRepository
         sink[GitDataKeys.SELECTED_REF] = reference
+        sink[GitBranchesWidgetKeys.SELECTED_REPOSITORY] = selectedRepository
+        sink[GitBranchesWidgetKeys.AFFECTED_REPOSITORIES] = repositories
       }
   }
 }

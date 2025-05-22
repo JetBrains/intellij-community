@@ -10,16 +10,10 @@ import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
-import com.intellij.vcs.git.frontend.actions.GitFrontendDataKeys
-import com.intellij.openapi.wm.impl.ExpandableComboAction
-import com.intellij.ui.RowIcon
-import com.intellij.vcs.git.frontend.GitFrontendBundle
 import com.intellij.vcs.git.shared.actions.GitDataKeys
 import com.intellij.vcs.git.shared.isRdBranchWidgetEnabled
 import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
 import com.intellij.vcs.git.shared.widget.GitToolbarWidgetActionBase
-import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetDataSnapshotProvider
-import com.intellij.vcs.git.shared.rpc.GitWidgetState
 import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetKeys
 import git4idea.GitStandardLocalBranch
 

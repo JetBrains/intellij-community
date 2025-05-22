@@ -7,13 +7,11 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.util.ui.JBDimension
-import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
 import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
 import git4idea.GitReference
 import git4idea.GitStandardLocalBranch
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
-import git4idea.repo.GitRepository
 import git4idea.ui.branch.popup.GitBranchesTreePopupBase
 import git4idea.ui.branch.popup.GitBranchesTreePopupMinimalRenderer
 import git4idea.ui.branch.popup.GitBranchesTreePopupStepBase
@@ -27,7 +25,7 @@ import javax.swing.tree.TreePath
 
 internal class GitCompareWithBranchPopupStep(
   project: Project,
-  private val repository: GitRepository,
+  private val repository: GitRepositoryFrontendModel,
   private val onRefSelected: Consumer<GitReference>,
 ) : GitBranchesTreePopupStepBase(project = project, selectedRepository = null, repositories = listOf(repository)) {
   private var finalRunnable: Runnable? = null
@@ -38,7 +36,7 @@ internal class GitCompareWithBranchPopupStep(
     private set
 
   override fun createTreeModel(filterActive: Boolean): GitBranchesTreeModel {
-    return GitCompareWithBranchesTreeModel(project, GitRepositoriesFrontendHolder.getInstance(project).get(repository.rpcId)).apply(GitBranchesTreeSingleRepoModel::init)
+    return GitCompareWithBranchesTreeModel(project, repository).apply(GitBranchesTreeSingleRepoModel::init)
   }
 
   override fun setTreeModel(treeModel: GitBranchesTreeModel) {

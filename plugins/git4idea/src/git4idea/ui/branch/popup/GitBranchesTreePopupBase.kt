@@ -45,7 +45,6 @@ import com.intellij.vcs.git.shared.widget.popup.GitBranchesWidgetPopup
 import git4idea.GitBranch
 import git4idea.GitDisposable
 import git4idea.GitReference
-import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.branch.GitBranchType
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
@@ -122,9 +121,11 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
       if (!isNewUI) installTitleToolbar()
       installResizeListener()
     }
+
     setUiDataProvider { sink ->
       sink[GitBranchesWidgetKeys.POPUP] = this@GitBranchesTreePopupBase
-      sink[GitBranchActionsDataKeys.AFFECTED_REPOSITORIES] = treeStep.repositories
+      sink[GitBranchesWidgetKeys.AFFECTED_REPOSITORIES] = treeStep.affectedRepositories
+      sink[GitBranchesWidgetKeys.SELECTED_REPOSITORY] = treeStep.selectedRepository
     }
 
     GitDisposable.getInstance(project).childScope("Git Branches Tree Popup").cancelledWith(this).also { scope ->
@@ -272,11 +273,11 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
         }
 
         val nodeToExpand = when {
-          node is GitBranch && isNestedPopup() && treeStep.affectedRepositories.any { it.currentBranch == node } -> node
-          node is GitBranch && !isNestedPopup() && treeStep.affectedRepositories.all { it.currentBranch == node } -> node
+          node is GitBranch && isNestedPopup() && treeStep.affectedRepositories.any { it.state.isCurrentRef(node) } -> node
+          node is GitBranch && !isNestedPopup() && treeStep.affectedRepositories.all { it.state.isCurrentRef(node) } -> node
           node is GitBranch && treeStep.affectedRepositories.any {
-            node in if (!GitVcsSettings.getInstance (it.project).showRecentBranches()) emptyList()
-            else it.branches.recentCheckoutBranches
+            node in if (!GitVcsSettings.getInstance (project).showRecentBranches()) emptyList()
+            else it.state.recentBranches
           } -> node
           node is RefUnderRepository && node.repository.state.isCurrentRef(node.ref) -> node
           node is RefTypeUnderRepository -> node
@@ -364,7 +365,8 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
         }
       }
       val resultContext = GitBranchesTreePopupStep.createDataContext(
-        project, contextComponent, treeStep.selectedRepository, treeStep.affectedRepositories)
+        project, treeStep.selectedRepository, treeStep.affectedRepositories, component = contextComponent,
+      )
       val actionPlace = getShortcutActionPlace()
       ActionUtil.invokeAction(action, resultContext, actionPlace, null, afterActionPerformed)
     }

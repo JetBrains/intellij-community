@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.popup
 
-import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.branch.DvcsBranchesDivergedBanner
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.openapi.actionSystem.ActionToolbar
@@ -13,6 +12,7 @@ import com.intellij.platform.project.projectId
 import com.intellij.ui.popup.WizardPopup
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.git.shared.ref.GitReferenceName
+import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
 import com.intellij.vcs.git.shared.rpc.GitRepositoryApi
 import com.intellij.vcs.git.shared.widget.actions.GitBranchesTreePopupFilterByAction
 import com.intellij.vcs.git.shared.widget.actions.GitBranchesTreePopupFilterByRepository
@@ -20,7 +20,6 @@ import git4idea.GitReference
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
-import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.SINGLE_REPOSITORY_ACTION_PLACE
 import git4idea.ui.branch.tree.GitBranchesTreeModel.RefUnderRepository
 import git4idea.ui.branch.tree.GitBranchesTreeRenderer
@@ -78,7 +77,7 @@ internal class GitBranchesTreePopup(
   private fun toggleFavorite(userObject: Any?) {
     val refUnderRepository = userObject as? RefUnderRepository
     val reference = userObject as? GitReference ?: refUnderRepository?.ref ?: return
-    val repositories = refUnderRepository?.repository?.let(::listOf) ?: treeStep.affectedRepositoriesFrontendModel
+    val repositories = refUnderRepository?.repository?.let(::listOf) ?: treeStep.affectedRepositories
 
     val makeFavorite = repositories.any { !it.favoriteRefs.contains(reference) }
 
@@ -148,8 +147,13 @@ internal class GitBranchesTreePopup(
 
     @VisibleForTesting
     internal fun createBranchesTreePopupStep(project: Project, selectedRepository: GitRepository?): GitBranchesTreePopupStep {
-      val repositories = DvcsUtil.sortRepositories(GitRepositoryManager.getInstance(project).repositories)
-      val selectedRepoIfNeeded = if (GitVcsSettings.getInstance(project).shouldExecuteOperationsOnAllRoots()) null else selectedRepository
+      val holder = GitRepositoriesFrontendHolder.getInstance(project)
+      val repositories = holder.getAll().sorted()
+
+      val selectedRepoIfNeeded =
+        if (GitVcsSettings.getInstance(project).shouldExecuteOperationsOnAllRoots()) null
+        else selectedRepository?.rpcId?.let { holder.get(it) }
+
       return GitBranchesTreePopupStep(project, selectedRepoIfNeeded, repositories, true)
     }
   }

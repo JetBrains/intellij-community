@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.popup
 
-import com.intellij.dvcs.DvcsUtil
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupStep
@@ -10,11 +9,10 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
+import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
 import git4idea.GitBranch
 import git4idea.GitReference
 import git4idea.branch.GitRefType
-import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchesMatcherWrapper
 import git4idea.ui.branch.getCommonText
 import git4idea.ui.branch.getInRepoText
@@ -26,14 +24,11 @@ import javax.swing.tree.TreePath
 
 internal abstract class GitBranchesTreePopupStepBase(
   internal val project: Project,
-  internal val selectedRepository: GitRepository?,
-  internal val repositories: List<GitRepository>,
+  internal val selectedRepository: GitRepositoryFrontendModel?,
+  internal val repositories: List<GitRepositoryFrontendModel>,
 ) : PopupStep<Any> {
   internal val affectedRepositories = selectedRepository?.let(::listOf) ?: repositories
-  internal val affectedRepositoriesIds = affectedRepositories.map { it.rpcId }
-  internal val affectedRepositoriesFrontendModel = GitRepositoriesFrontendHolder.getInstance(project).let { holder ->
-    affectedRepositoriesIds.map { holder.get(it) }
-  }
+  internal val affectedRepositoriesIds = affectedRepositories.map { it.repositoryId }
 
   internal abstract val treeModel: GitBranchesTreeModel
 
@@ -110,7 +105,7 @@ internal abstract class GitBranchesTreePopupStepBase(
     val value = node ?: return null
     return when (value) {
       is GitRefType -> when {
-        selectedRepository != null -> value.getInRepoText(DvcsUtil.getShortRepositoryName(selectedRepository))
+        selectedRepository != null -> value.getInRepoText(selectedRepository.shortName)
         repositories.size > 1 -> value.getCommonText()
         else -> value.getText()
       }

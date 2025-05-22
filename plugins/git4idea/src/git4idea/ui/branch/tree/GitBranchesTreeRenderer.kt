@@ -54,7 +54,7 @@ internal abstract class GitBranchesTreeRenderer(
   fun getIcon(treeNode: Any?, isSelected: Boolean): Icon? = when (treeNode) {
     is GitBranchesTreeModel.BranchesPrefixGroup -> GitBranchesTreeIconProvider.forGroup()
     is RefUnderRepository -> getBranchIcon(treeNode.ref, listOf(treeNode.repository), isSelected)
-    is GitReference -> getBranchIcon(treeNode, treePopupStep.affectedRepositoriesFrontendModel, selected = isSelected)
+    is GitReference -> getBranchIcon(treeNode, treePopupStep.affectedRepositories, selected = isSelected)
     else -> null
   }
 
