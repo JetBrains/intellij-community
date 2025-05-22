@@ -21,7 +21,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.rd.util.adviseSuspend
 import com.intellij.openapi.rd.util.setSuspend
 import com.intellij.openapi.ui.isFocusAncestor
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.remoteDev.tests.*
@@ -139,19 +138,21 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
     LOG.info("Advise for session. Current state: ${model.session.value}...")
     model.session.viewNotNull(lifetime) { sessionLifetime, session ->
-      val isNotRdHost = !(session.agentInfo.productType == RdProductType.REMOTE_DEVELOPMENT && session.agentInfo.agentType == RdAgentType.HOST)
+      val testMethodNonParameterizedName = session.rdAgentInfo.testMethodNonParameterizedName
+      val testQualifiedClassName = session.rdAgentInfo.testQualifiedClassName
+      val isNotRdHost = !(session.rdAgentInfo.productType == RdProductType.REMOTE_DEVELOPMENT && session.rdAgentInfo.agentType == RdAgentType.HOST)
 
       try {
         @OptIn(ExperimentalCoroutinesApi::class)
-        val sessionBgtDispatcher = Dispatchers.Default.limitedParallelism(1, "Test session dispatcher: ${session.testClassName}::${session.testMethodName}")
+        val sessionBgtDispatcher = Dispatchers.Default.limitedParallelism(1, "Test session dispatcher: ${testQualifiedClassName}::${testMethodNonParameterizedName}")
 
         setUpTestLoggingFactory(sessionLifetime, session)
         val app = ApplicationManager.getApplication()
-        if (session.testMethodName == null || session.testClassName == null) {
+        if (testMethodNonParameterizedName == null || testQualifiedClassName == null) {
           LOG.info("Test session without test class to run.")
         }
         else {
-          LOG.info("New test session: ${session.testClassName}.${session.testMethodName}")
+          LOG.info("New test session: $testQualifiedClassName.$testMethodNonParameterizedName")
 
           // Needed to enable proper focus behaviour
           if (SystemInfoRt.isWindows) {
@@ -165,16 +166,15 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
           LOG.info("Test class will be loaded from '${testPlugin.pluginId}' plugin")
 
-          val testClass = Class.forName(session.testClassName, true, testPlugin.pluginClassLoader)
+          val testClass = Class.forName(testQualifiedClassName, true, testPlugin.pluginClassLoader)
           val testClassObject = testClass.kotlin.createInstance() as DistributedTestPlayer
 
           // Tell test we are running it inside an agent
-          val agentInfo = AgentInfo(session.agentInfo, session.testClassName, session.testMethodName)
-          val (actionsMap, getComponentDataRequests) = testClassObject.initAgent(agentInfo)
+          val (actionsMap, getComponentDataRequests) = testClassObject.initAgent(session.rdAgentInfo)
 
           // Play test method
-          val testMethod = testClass.getMethod(session.testMethodName)
-          testClassObject.performInit(testMethod)
+          val testMethod = testClass.getMethod(testMethodNonParameterizedName)
+          testClassObject.performInit(testMethodNonParameterizedName)
           testMethod.invoke(testClassObject)
 
           suspend fun <T> runNext(
@@ -199,14 +199,14 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
                 assert(ClientId.current == clientId) { "ClientId '${ClientId.current}' should equal $clientId one when after request focus" }
 
-                val agentContext = when (session.agentInfo.agentType) {
-                  RdAgentType.HOST -> HostAgentContextImpl(session.agentInfo, protocol, coroutineContext)
-                  RdAgentType.CLIENT -> ClientAgentContextImpl(session.agentInfo, protocol, coroutineContext)
-                  RdAgentType.GATEWAY -> GatewayAgentContextImpl(session.agentInfo, protocol, coroutineContext)
+                val agentContext = when (session.rdAgentInfo.agentType) {
+                  RdAgentType.HOST -> HostAgentContextImpl(session.rdAgentInfo, protocol, coroutineContext)
+                  RdAgentType.CLIENT -> ClientAgentContextImpl(session.rdAgentInfo, protocol, coroutineContext)
+                  RdAgentType.GATEWAY -> GatewayAgentContextImpl(session.rdAgentInfo, protocol, coroutineContext)
                 }
 
                 val result = runLogged(actionTitle, timeout) {
-                   agentContext.action()
+                  agentContext.action()
                 }
 
                 // Assert state
@@ -216,7 +216,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
               }
             }
             catch (ex: Throwable) {
-              LOG.warn("${session.agentInfo.id}: ${actionTitle.let { "'$it' " }}hasn't finished successfully", ex)
+              LOG.warn("${session.rdAgentInfo.id}: ${actionTitle.let { "'$it' " }}hasn't finished successfully", ex)
               throw ex
             }
           }

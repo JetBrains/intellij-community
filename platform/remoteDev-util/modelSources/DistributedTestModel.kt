@@ -16,6 +16,9 @@ object DistributedTestModel : Ext(TestRoot) {
     field("launchNumber", int)
     field("agentType", RdAgentType)
     field("productType", RdProductType)
+    field("testQualifiedClassName", string.nullable)
+    field("testMethodNonParameterizedName", string.nullable)
+    field("testMethodWithParameterName", string.nullable)
   }
 
   private val RdAgentType = enum {
@@ -62,9 +65,7 @@ object DistributedTestModel : Ext(TestRoot) {
   }
 
   private val RdTestSession = classdef {
-    field("agentInfo", RdAgentInfo)
-    field("testClassName", string.nullable)
-    field("testMethodName", string.nullable)
+    field("rdAgentInfo", RdAgentInfo)
     field("traceCategories", immutableList(string))
     field("debugCategories", immutableList(string))
     property("ready", bool.nullable)
