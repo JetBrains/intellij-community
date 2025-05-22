@@ -1,12 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.diff
 
-import com.intellij.collaboration.async.*
+import com.intellij.collaboration.async.MappingScopedItemsContainer
+import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
-import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.filePath
-import com.intellij.collaboration.util.getOrNull
 import com.intellij.diff.util.Range
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
@@ -18,12 +19,8 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.ai.GHPRAICommentViewModel
 import org.jetbrains.plugins.github.ai.GHPRAIReviewExtension
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
-import org.jetbrains.plugins.github.api.data.pullrequest.isVisible
-import org.jetbrains.plugins.github.api.data.pullrequest.mapToLocation
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.provider.threadsComputationFlow
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentPosition
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
@@ -55,33 +52,31 @@ internal class GHPRDiffReviewViewModelImpl(
   private val change: RefComparisonChange,
   private val diffData: GitTextFilePatchWithHistory,
   private val threadsVms: GHPRThreadsViewModels,
-  private val discussionsViewOption: StateFlow<DiscussionsViewOption>,
+  allThreads: StateFlow<List<MappedGHPRReviewThreadDiffViewModel>>,
 ) : GHPRDiffReviewViewModel {
   private val cs = parentCs.childScope(javaClass.name)
 
   override val commentableRanges: List<Range> = diffData.patch.ranges
   override val canComment: Boolean = threadsVms.canComment
 
-  private val mappedThreads: StateFlow<Map<String, MappedGHPRReviewThreadDiffViewModel.MappingData>> =
-    dataProvider.reviewData.threadsComputationFlow
-      .transformConsecutiveSuccesses(false) {
-        combine(this, discussionsViewOption) { threads, viewOption ->
-          threads.associateBy(GHPullRequestReviewThread::id) { threadData ->
-            val isVisible = threadData.isVisible(viewOption)
-            val location = threadData.mapToLocation(diffData)
-            MappedGHPRReviewThreadDiffViewModel.MappingData(isVisible, location)
-          }
-        }
-      }.map { it.getOrNull().orEmpty() }.stateInNow(cs, emptyMap())
-
+  @OptIn(ExperimentalCoroutinesApi::class)
+  // Filter out only the threads relevant to the diff
   override val threads: StateFlow<Collection<GHPRReviewThreadDiffViewModel>> =
-    threadsVms.compactThreads.mapModelsToViewModels { sharedVm ->
-      MappedGHPRReviewThreadDiffViewModel(this, sharedVm, mappedThreads.mapNotNull { it[sharedVm.id] })
+    allThreads.flatMapLatest { allThreads ->
+      combine(allThreads.map { thread ->
+        thread.mapping.mapState { mapping -> thread.takeIf { mapping.change == this@GHPRDiffReviewViewModelImpl.change } }
+      }) { it.filterNotNull() }
     }.stateInNow(cs, emptyList())
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   override val locationsWithDiscussions: StateFlow<Set<DiffLineLocation>> =
-    mappedThreads.map {
-      it.values.mapNotNullTo(mutableSetOf()) { (isVisible, location) -> location?.takeIf { isVisible } }
+    threads.flatMapLatest { list ->
+      combine(list.map { thread ->
+        thread.mapping.mapState {
+          if (!it.isVisible) return@mapState null
+          it.location
+        }
+      }) { it.filterNotNull().toSet() }
     }.stateInNow(cs, emptySet())
 
   private val newCommentsContainer =

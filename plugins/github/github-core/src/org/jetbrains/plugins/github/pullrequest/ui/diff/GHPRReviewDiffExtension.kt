@@ -160,8 +160,8 @@ private class DiffEditorModel(
   private inner class MappedThread(parentCs: CoroutineScope, vm: GHPRReviewThreadDiffViewModel)
     : GHPREditorMappedComponentModel.Thread<GHPRCompactReviewThreadViewModel>(vm) {
     private val cs = parentCs.childScope(javaClass.name)
-    override val isVisible: StateFlow<Boolean> = combineStateIn(cs, vm.isVisible, hiddenState) { visible, hidden -> visible && !hidden }
-    override val line: StateFlow<Int?> = vm.location.mapState { loc -> loc?.let { locationToLine(it) } }
+    override val isVisible: StateFlow<Boolean> = combineStateIn(cs, vm.mapping, hiddenState) { mapping, hidden -> mapping.isVisible && !hidden }
+    override val line: StateFlow<Int?> = vm.mapping.mapState { mapping -> mapping.location?.let { locationToLine(it) } }
   }
 
   private inner class MappedNewComment(vm: GHPRNewCommentDiffViewModel)

@@ -14,12 +14,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.GitTextFilePatchWithHistory
+import git4idea.changes.findCumulativeChange
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
+import org.jetbrains.plugins.github.api.data.pullrequest.isVisible
+import org.jetbrains.plugins.github.api.data.pullrequest.mapToLocation
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
@@ -56,7 +59,7 @@ internal class GHPRDiffViewModelImpl(
   private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider,
   reviewVmHelper: GHPRReviewViewModelHelper,
-  private val threadsVms: GHPRThreadsViewModels,
+  private val threadsVm: GHPRThreadsViewModels,
 ) : GHPRDiffViewModel {
   private val cs = parentCs.childScope("GitHub Pull Request Diff View Model")
   private val reviewDataProvider = dataProvider.reviewData
@@ -95,6 +98,33 @@ internal class GHPRDiffViewModelImpl(
     reviewResult.isInProgress || threadsResult.isInProgress
   }
 
+  private val threadMappings: StateFlow<Map<String, GHPRReviewThreadDiffViewModel.MappingData>> =
+    dataProvider.reviewData.threadsComputationFlow
+      .transformConsecutiveSuccesses(false) {
+        combine(this, discussionsViewOption, changesFetchFlow) { threads, viewOption, allChangesOrNull ->
+          val allChanges = allChangesOrNull.getOrNull() ?: return@combine null
+
+          threads.associateBy(GHPullRequestReviewThread::id) { threadData ->
+            val isVisible = threadData.isVisible(viewOption)
+
+            val commitOid = threadData.commit?.oid
+                            ?: return@associateBy GHPRReviewThreadDiffViewModel.MappingData(isVisible, null, null)
+            val change = allChanges.findCumulativeChange(commitOid, threadData.path)
+                         ?: return@associateBy GHPRReviewThreadDiffViewModel.MappingData(isVisible, null, null)
+            val diffData = allChanges.patchesByChange[change]
+                           ?: return@associateBy GHPRReviewThreadDiffViewModel.MappingData(isVisible, change, null)
+
+            val location = threadData.mapToLocation(diffData)
+            GHPRReviewThreadDiffViewModel.MappingData(isVisible, change, location)
+          }
+        }
+      }.map { it.getOrNull().orEmpty() }.stateInNow(cs, emptyMap())
+
+  private val mappedThreads: StateFlow<List<MappedGHPRReviewThreadDiffViewModel>> =
+    threadsVm.compactThreads.mapModelsToViewModels { sharedVm ->
+      MappedGHPRReviewThreadDiffViewModel(this, sharedVm, threadMappings.mapNotNull { it[sharedVm.id] })
+    }.stateInNow(cs, emptyList())
+
   override fun reloadReview() {
     cs.launch {
       reviewDataProvider.signalPendingReviewNeedsReload()
@@ -116,7 +146,7 @@ internal class GHPRDiffViewModelImpl(
   }
 
   private fun CoroutineScope.createChangeVm(change: RefComparisonChange, diffData: GitTextFilePatchWithHistory) =
-    GHPRDiffReviewViewModelImpl(project, this, dataContext, dataProvider, change, diffData, threadsVms, discussionsViewOption)
+    GHPRDiffReviewViewModelImpl(project, this, dataContext, dataProvider, change, diffData, threadsVm, mappedThreads)
 
   suspend fun handleSelection(listener: (ListSelection<RefComparisonChange>?) -> Unit): Nothing {
     delegate.handleSelection(listener)
