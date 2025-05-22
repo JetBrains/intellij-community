@@ -57,6 +57,10 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
       }
     }
 
+  fun expandAllFoldings() {
+    driver.invokeAction("ExpandAllRegions", component = component)
+  }
+
   fun isEditable(): Boolean = editorComponent.isEditable()
 
   fun isSoftWrappingEnabled(): Boolean = interact { getSoftWrapModel().isSoftWrappingEnabled() }
