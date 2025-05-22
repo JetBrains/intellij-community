@@ -62,7 +62,6 @@ jvm_library(
     "//platform/eel-provider",
     "//platform/util/jdom",
   ],
-  exports = ["//plugins/terminal/completion"],
   runtime_deps = [":terminal_resources"]
 )
 

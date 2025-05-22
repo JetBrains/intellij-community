@@ -50,7 +50,6 @@ jvm_library(
   ],
   exports = [
     "//platform/util",
-    "//platform/extensions",
     "//xml/openapi:xml",
     "//platform/lang-api:lang",
     "//java/java-psi-api:psi",

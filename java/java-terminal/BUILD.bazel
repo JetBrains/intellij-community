@@ -17,6 +17,7 @@ jvm_library(
     "//plugins/terminal",
     "//platform/core-api:core",
     "//java/execution/impl",
+    "//plugins/terminal/completion",
     "//platform/lang-impl",
   ],
   runtime_deps = [":terminal_resources"]
@@ -44,6 +45,8 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/execution/impl",
+    "//plugins/terminal/completion",
+    "//plugins/terminal/completion:completion_test_lib",
     "//plugins/terminal",
     "//plugins/terminal:terminal_test_lib",
   ]

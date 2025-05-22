@@ -7,7 +7,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.util" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.monolith.main" scope="TEST" />
   </component>
 </module>
