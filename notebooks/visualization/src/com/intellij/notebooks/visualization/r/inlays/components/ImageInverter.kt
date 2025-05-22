@@ -33,7 +33,7 @@ class ImageInverter(foreground: Color, background: Color) {
    *
    * @return true if it's recommended to invert the image
    */
-  fun shouldInvert(image: BufferedImage, brightnessThreshold: Double = 0.7): Boolean {
+  fun shouldInvert(image: BufferedImage, brightnessThreshold: Double = 0.65): Boolean {
     val colors = getImageSample(image)
     val numberOfColorsInComplexImage = 5000
     val numberOfPixels = colors.size
