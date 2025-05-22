@@ -87,7 +87,6 @@ f:com.intellij.diff.comparison.TrimUtil
 - sf:isPunctuation(C):Z
 - sf:isPunctuation(I):Z
 - sf:isWhiteSpaceCodePoint(I):Z
-- sf:trim(I,I,java.util.BitSet):com.intellij.util.IntPair
 - sf:trim(java.lang.CharSequence,I,I):com.intellij.util.IntPair
 - sf:trim(java.lang.CharSequence,java.lang.CharSequence,I,I,I,I):com.intellij.diff.util.Range
 - sf:trim(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.util.Range):com.intellij.diff.util.Range
@@ -95,7 +94,6 @@ f:com.intellij.diff.comparison.TrimUtil
 - sf:trim(java.lang.CharSequence,java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.util.MergeRange):com.intellij.diff.util.MergeRange
 - sf:trimEnd(java.lang.CharSequence,I,I):I
 - sf:trimExpandRange(I,I,I,I,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.diff.util.Range
-- sf:trimExpandText(java.lang.CharSequence,java.lang.CharSequence,I,I,I,I,java.util.BitSet,java.util.BitSet):com.intellij.diff.util.Range
 - sf:trimStart(java.lang.CharSequence,I,I):I
 com.intellij.diff.comparison.iterables.DiffIterable
 - a:changes():java.util.Iterator
@@ -282,7 +280,7 @@ f:com.intellij.diff.util.MergeRangeUtil
 - sf:getLineLeftToRightThreeSideDiffType(com.intellij.diff.fragments.MergeLineFragment,java.util.List,java.util.List,com.intellij.diff.comparison.ComparisonPolicy):com.intellij.diff.util.MergeConflictType
 - sf:getLineMergeType(com.intellij.diff.fragments.MergeLineFragment,java.util.List,java.util.List,com.intellij.diff.comparison.ComparisonPolicy):com.intellij.diff.util.MergeConflictType
 - sf:getLineThreeWayDiffType(com.intellij.diff.fragments.MergeLineFragment,java.util.List,java.util.List,com.intellij.diff.comparison.ComparisonPolicy):com.intellij.diff.util.MergeConflictType
-- sf:getMergeType(java.util.function.Predicate,java.util.function.BiPredicate,java.util.function.BiPredicate,java.util.function.BooleanSupplier):com.intellij.diff.util.MergeConflictType
+- sf:getMergeType(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function0):com.intellij.diff.util.MergeConflictType
 - sf:getWordMergeType(com.intellij.diff.fragments.MergeWordFragment,java.util.List,com.intellij.diff.comparison.ComparisonPolicy):com.intellij.diff.util.MergeConflictType
 f:com.intellij.diff.util.Range
 - f:end1:I

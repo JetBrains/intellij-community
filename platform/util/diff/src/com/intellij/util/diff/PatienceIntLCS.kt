@@ -3,7 +3,7 @@ package com.intellij.util.diff
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.*
+import kotlin.jvm.JvmOverloads
 import kotlin.math.max
 import kotlin.math.min
 
@@ -81,7 +81,7 @@ class PatienceIntLCS @VisibleForTesting constructor(
         var c1: Int
         var c2: Int
         val matched = matching[0].size
-        assert(matched > 0)
+        check(matched > 0)
 
         c1 = matching[0][0]
         c2 = matching[1][0]

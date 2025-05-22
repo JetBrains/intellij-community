@@ -10,6 +10,9 @@ import com.intellij.util.containers.PeekableIteratorWrapper
 import com.intellij.util.diff.Diff
 import com.intellij.util.diff.FilesTooBigForDiffException
 import org.jetbrains.annotations.TestOnly
+import kotlin.jvm.JvmField
+import kotlin.jvm.JvmStatic
+import kotlin.jvm.JvmWildcard
 
 object DiffIterableUtil {
   @TestOnly
@@ -113,7 +116,7 @@ object DiffIterableUtil {
 
   @JvmStatic
   fun expandedIterable(iterable: DiffIterable, offset1: Int, offset2: Int, length1: Int, length2: Int): DiffIterable {
-    assert(offset1 + iterable.length1 <= length1 &&
+    check(offset1 + iterable.length1 <= length1 &&
            offset2 + iterable.length2 <= length2)
     return ExpandedDiffIterable(iterable, offset1, offset2, length1, length2)
   }
@@ -168,16 +171,16 @@ object DiffIterableUtil {
     verify(iterable)
 
     for (range in iterable.iterateUnchanged()) {
-      assert(range.end1 - range.start1 == range.end2 - range.start2)
+      check(range.end1 - range.start1 == range.end2 - range.start2)
     }
   }
 
   private fun verify(iterable: Iterable<Range>) {
     for (range in iterable) {
       // verify range
-      assert(range.start1 <= range.end1)
-      assert(range.start2 <= range.end2)
-      assert(range.start1 != range.end1 || range.start2 != range.end2)
+      check(range.start1 <= range.end1)
+      check(range.start2 <= range.end2)
+      check(range.start1 != range.end1 || range.start2 != range.end2)
     }
   }
 
@@ -190,17 +193,17 @@ object DiffIterableUtil {
       val range: Range = pair.first
       val equal: Boolean = pair.second
 
-      assert(last1 == range.start1)
-      assert(last2 == range.start2)
-      assert(lastEquals != equal)
+      check(last1 == range.start1)
+      check(last2 == range.start2)
+      check(lastEquals != equal)
 
       last1 = range.end1
       last2 = range.end2
       lastEquals = equal
     }
 
-    assert(last1 == iterable.length1)
-    assert(last2 == iterable.length2)
+    check(last1 == iterable.length1)
+    check(last2 == iterable.length2)
   }
 
   //
@@ -259,10 +262,10 @@ object DiffIterableUtil {
     open fun markEqual(index1: Int, index2: Int, end1: Int, end2: Int) {
       if (index1 == end1 && index2 == end2) return
 
-      assert(this.index1 <= index1)
-      assert(this.index2 <= index2)
-      assert(index1 <= end1)
-      assert(index2 <= end2)
+      check(this.index1 <= index1)
+      check(this.index2 <= index2)
+      check(index1 <= end1)
+      check(index2 <= end2)
 
       if (this.index1 != index1 || this.index2 != index2) {
         addChange(this.index1, this.index2, index1, index2)
@@ -272,8 +275,8 @@ object DiffIterableUtil {
     }
 
     protected open fun doFinish() {
-      assert(this.index1 <= this.length1)
-      assert(this.index2 <= this.length2)
+      check(this.index1 <= this.length1)
+      check(this.index2 <= this.length2)
 
       if (this.length1 != this.index1 || this.length2 != this.index2) {
         addChange(this.index1, this.index2, this.length1, this.length2)

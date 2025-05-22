@@ -11,6 +11,7 @@ import com.intellij.diff.util.Side.Companion.fromLeft
 import com.intellij.util.containers.PeekableIterator
 import com.intellij.util.containers.PeekableIteratorWrapper
 import com.intellij.util.diff.DiffConfig
+import kotlin.jvm.JvmStatic
 import kotlin.math.max
 import kotlin.math.min
 
@@ -21,7 +22,7 @@ object ComparisonMergeUtil {
     fragments2: FairDiffIterable,
     indicator: CancellationChecker
   ): MutableList<MergeRange> {
-    assert(fragments1.length1 == fragments2.length1)
+    check(fragments1.length1 == fragments2.length1)
     return FairMergeBuilder().execute(fragments1, fragments2)
   }
 
@@ -31,7 +32,7 @@ object ComparisonMergeUtil {
     trueEquality: SideEquality,
     indicator: CancellationChecker
   ): MutableList<MergeRange> {
-    assert(fragments1.length1 == fragments2.length1)
+    check(fragments1.length1 == fragments2.length1)
     return FairMergeBuilder(trueEquality).execute(fragments1, fragments2)
   }
 
@@ -116,12 +117,12 @@ object ComparisonMergeUtil {
     }
 
     fun markEqual(start1: Int, start2: Int, start3: Int, end1: Int, end2: Int, end3: Int) {
-      assert(myIndex1 <= start1)
-      assert(myIndex2 <= start2)
-      assert(myIndex3 <= start3)
-      assert(start1 <= end1)
-      assert(start2 <= end2)
-      assert(start3 <= end3)
+      check(myIndex1 <= start1)
+      check(myIndex2 <= start2)
+      check(myIndex3 <= start3)
+      check(start1 <= end1)
+      check(start2 <= end2)
+      check(start3 <= end3)
 
       processChange(myIndex1, myIndex2, myIndex3, start1, start2, start3)
 
@@ -131,9 +132,9 @@ object ComparisonMergeUtil {
     }
 
     fun finish(length1: Int, length2: Int, length3: Int): MutableList<MergeRange> {
-      assert(myIndex1 <= length1)
-      assert(myIndex2 <= length2)
-      assert(myIndex3 <= length3)
+      check(myIndex1 <= length1)
+      check(myIndex2 <= length2)
+      check(myIndex3 <= length3)
 
       processChange(myIndex1, myIndex2, myIndex3, length1, length2, length3)
 
@@ -158,8 +159,8 @@ object ComparisonMergeUtil {
 
     fun addIgnoredChanges(start1: Int, start2: Int, start3: Int, end1: Int, end2: Int, end3: Int) {
       val count = end2 - start2
-      assert(end1 - start1 == count)
-      assert(end3 - start3 == count)
+      check(end1 - start1 == count)
+      check(end3 - start3 == count)
 
       var firstIgnoredCount = -1
       for (i in 0..<count) {

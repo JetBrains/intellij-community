@@ -17,8 +17,6 @@ package com.intellij.util.diff;
 
 import junit.framework.TestCase;
 
-import java.util.BitSet;
-
 public class PatienceIntLCSTest extends TestCase {
   public void testEqual() throws FilesTooBigForDiffException {
     BitSet[] change = buildChange(new int[]{1, 2, 3}, new int[]{1, 2, 3});

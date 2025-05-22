@@ -152,7 +152,7 @@ internal class LineFragmentSplitter(
       if (index == -1) return 0
       if (index == words.size) return text.length
       val chunk = words[index]
-      assert(chunk is ByWordRt.NewlineChunk)
+      check(chunk is ByWordRt.NewlineChunk)
       return chunk.offset2
     }
 

@@ -2,6 +2,8 @@
 package com.intellij.diff.util
 
 import org.jetbrains.annotations.ApiStatus
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
 
 open class MergeConflictType @JvmOverloads constructor(
   open val type: Type,

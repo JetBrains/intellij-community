@@ -4,7 +4,9 @@ package com.intellij.util.diff
 import com.intellij.diff.util.Enumerator
 import com.intellij.openapi.util.text.LineTokenizer
 import org.jetbrains.annotations.NonNls
-import java.util.*
+import kotlin.jvm.JvmField
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import kotlin.math.min
 
 object Diff {
@@ -45,8 +47,8 @@ object Diff {
     if (changeRef != null) return changeRef.value
 
     val copyArray = startShift != 0 || endCut != 0
-    val ints1 = if (copyArray) Arrays.copyOfRange(array1, startShift, array1.size - endCut) else array1
-    val ints2 = if (copyArray) Arrays.copyOfRange(array2, startShift, array2.size - endCut) else array2
+    val ints1 = if (copyArray) array1.copyOfRange(startShift, array1.size - endCut) else array1
+    val ints2 = if (copyArray) array2.copyOfRange(startShift, array2.size - endCut) else array2
     return doBuildChanges(ints1, ints2, ChangeBuilder(startShift))
   }
 
@@ -150,7 +152,7 @@ object Diff {
       strings1 = trim(strings1)
       strings2 = trim(strings2)
     }
-    val change = buildChanges<String>(strings1, strings2)
+    val change = buildChanges(strings1, strings2)
     return translateLine(change, line, approximate)
   }
 

@@ -2,6 +2,7 @@
 package com.intellij.diff.fragments
 
 import org.jetbrains.annotations.ApiStatus
+import kotlin.jvm.JvmName
 
 /**
  * Modified part of the text

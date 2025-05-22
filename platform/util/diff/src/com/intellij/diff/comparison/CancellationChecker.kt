@@ -2,6 +2,7 @@
 package com.intellij.diff.comparison
 
 import com.intellij.openapi.progress.ProcessCanceledException
+import kotlin.jvm.JvmField
 
 interface CancellationChecker {
   @Throws(ProcessCanceledException::class)

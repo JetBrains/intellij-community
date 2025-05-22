@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.util
 
+import kotlin.jvm.JvmField
+
 open class MergeRange(
   @JvmField val start1: Int,
   @JvmField val end1: Int,

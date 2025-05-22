@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.stringHashCode
 import com.intellij.openapi.util.text.stringHashCodeIgnoreWhitespaces
 import com.intellij.util.diff.DiffConfig
 import org.jetbrains.annotations.Contract
+import kotlin.jvm.JvmStatic
 
 object ComparisonUtil {
   @JvmStatic

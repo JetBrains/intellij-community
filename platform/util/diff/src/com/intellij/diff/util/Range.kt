@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.util
 
+import kotlin.jvm.JvmField
+
 /**
  * Stores half-open intervals [start, end).
  */
@@ -15,7 +17,7 @@ class Range(start1: Int, end1: Int, start2: Int, end2: Int) {
   val end2: Int
 
   init {
-    assert(start1 <= end1 && start2 <= end2) { "[$start1, $end1, $start2, $end2]" }
+    check(start1 <= end1 && start2 <= end2) { "[$start1, $end1, $start2, $end2]" }
     this.start1 = start1
     this.end1 = end1
     this.start2 = start2

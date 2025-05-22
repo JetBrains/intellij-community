@@ -2,6 +2,7 @@
 package com.intellij.diff.tools.util.text
 
 import org.jetbrains.annotations.ApiStatus
+import kotlin.jvm.JvmName
 
 interface LineOffsets {
   fun getLineStart(line: Int): Int

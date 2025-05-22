@@ -13,6 +13,7 @@ import com.intellij.diff.util.Range
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntList
 import org.jetbrains.annotations.ApiStatus
+import kotlin.jvm.JvmStatic
 import kotlin.math.max
 import kotlin.math.min
 
@@ -215,7 +216,7 @@ object ByLineRt {
           }
         }
 
-        assert(subLines1.size > 0 && subLines2.size > 0)
+        check(subLines1.size > 0 && subLines2.size > 0)
         alignExactMatching(subLines1, subLines2)
 
         sample = null
@@ -270,7 +271,7 @@ object ByLineRt {
     lines1: List<Line>,
     lines2: List<Line>,
   ): IntArray {
-    assert(subLines1.size < subLines2.size)
+    check(subLines1.size < subLines2.size)
     val size = subLines1.size
 
     val comb = IntArray(size)
@@ -309,7 +310,7 @@ object ByLineRt {
 
         if (weight > bestWeight) {
           bestWeight = weight
-          System.arraycopy(comb, 0, best, 0, comb.size)
+          comb.copyInto(best, 0, 0, comb.size)
         }
       }
     }.run()
@@ -421,10 +422,10 @@ object ByLineRt {
 
     override fun equals(other: Any?): Boolean {
       if (this === other) return true
-      if (other == null || javaClass != other.javaClass) return false
+      if (other == null || this::class != other::class) return false
 
       val line = other as Line
-      assert(policy == line.policy)
+      check(policy == line.policy)
 
       if (hashCode() != line.hashCode()) return false
 

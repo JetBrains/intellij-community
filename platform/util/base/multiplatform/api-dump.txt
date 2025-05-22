@@ -5,6 +5,7 @@ c:com.intellij.openapi.progress.ProcessCanceledException
 - <init>():V
 - p:<init>(java.lang.String):V
 - <init>(java.lang.Throwable):V
+- getCause():java.lang.Throwable
 @:com.intellij.openapi.util.NlsSafe
 - java.lang.annotation.Annotation
 f:com.intellij.openapi.util.text.LineTokenizer

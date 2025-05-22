@@ -8,22 +8,19 @@ import com.intellij.diff.fragments.MergeLineFragment
 import com.intellij.diff.fragments.MergeWordFragment
 import com.intellij.diff.tools.util.text.LineOffsets
 import com.intellij.diff.util.DiffRangeUtil.getLinesContent
-import java.util.function.BiPredicate
-import java.util.function.BooleanSupplier
-import java.util.function.Predicate
 
 object MergeRangeUtil {
   @JvmStatic
   fun getMergeType(
-    emptiness: Predicate<in ThreeSide>,
-    equality: BiPredicate<in ThreeSide, in ThreeSide>,
-    trueEquality: BiPredicate<in ThreeSide, in ThreeSide>?,
-    conflictResolver: BooleanSupplier
+    emptiness: (ThreeSide) -> Boolean,
+    equality: (ThreeSide, ThreeSide) -> Boolean,
+    trueEquality: ((ThreeSide, ThreeSide) -> Boolean)?,
+    conflictResolver: () -> Boolean
   ): MergeConflictType {
-    val isLeftEmpty = emptiness.test(ThreeSide.LEFT)
-    val isBaseEmpty = emptiness.test(ThreeSide.BASE)
-    val isRightEmpty = emptiness.test(ThreeSide.RIGHT)
-    assert(!isLeftEmpty || !isBaseEmpty || !isRightEmpty)
+    val isLeftEmpty = emptiness(ThreeSide.LEFT)
+    val isBaseEmpty = emptiness(ThreeSide.BASE)
+    val isRightEmpty = emptiness(ThreeSide.RIGHT)
+    check(!isLeftEmpty || !isBaseEmpty || !isRightEmpty)
 
     if (isBaseEmpty) {
       if (isLeftEmpty) { // --=
@@ -33,7 +30,7 @@ object MergeRangeUtil {
         return MergeConflictType(MergeConflictType.Type.INSERTED, true, false)
       }
       else { // =-=
-        val equalModifications = equality.test(ThreeSide.LEFT, ThreeSide.RIGHT)
+        val equalModifications = equality(ThreeSide.LEFT, ThreeSide.RIGHT)
         if (equalModifications) {
           return MergeConflictType(MergeConflictType.Type.INSERTED, true, true)
         }
@@ -47,14 +44,14 @@ object MergeRangeUtil {
         return MergeConflictType(MergeConflictType.Type.DELETED, true, true)
       }
       else { // -==, ==-, ===
-        val unchangedLeft = equality.test(ThreeSide.BASE, ThreeSide.LEFT)
-        val unchangedRight = equality.test(ThreeSide.BASE, ThreeSide.RIGHT)
+        val unchangedLeft = equality(ThreeSide.BASE, ThreeSide.LEFT)
+        val unchangedRight = equality(ThreeSide.BASE, ThreeSide.RIGHT)
 
         if (unchangedLeft && unchangedRight) {
           checkNotNull(trueEquality)
-          val trueUnchangedLeft = trueEquality.test(ThreeSide.BASE, ThreeSide.LEFT)
-          val trueUnchangedRight = trueEquality.test(ThreeSide.BASE, ThreeSide.RIGHT)
-          assert(!trueUnchangedLeft || !trueUnchangedRight)
+          val trueUnchangedLeft = trueEquality(ThreeSide.BASE, ThreeSide.LEFT)
+          val trueUnchangedRight = trueEquality(ThreeSide.BASE, ThreeSide.RIGHT)
+          check(!trueUnchangedLeft || !trueUnchangedRight)
           return MergeConflictType(MergeConflictType.Type.MODIFIED, !trueUnchangedLeft, !trueUnchangedRight)
         }
 
@@ -63,12 +60,12 @@ object MergeRangeUtil {
         if (unchangedRight) return MergeConflictType(if (isLeftEmpty) MergeConflictType.Type.DELETED else MergeConflictType.Type.MODIFIED,
                                                      true, false)
 
-        val equalModifications = equality.test(ThreeSide.LEFT, ThreeSide.RIGHT)
+        val equalModifications = equality(ThreeSide.LEFT, ThreeSide.RIGHT)
         if (equalModifications) {
           return MergeConflictType(MergeConflictType.Type.MODIFIED, true, true)
         }
         else {
-          val canBeResolved = !isLeftEmpty && !isRightEmpty && conflictResolver.asBoolean
+          val canBeResolved = !isLeftEmpty && !isRightEmpty && conflictResolver()
           return MergeConflictType(MergeConflictType.Type.CONFLICT, true, true, if (canBeResolved) MergeConflictResolutionStrategy.TEXT else null)
         }
       }
@@ -82,12 +79,12 @@ object MergeRangeUtil {
     lineOffsets: List<LineOffsets>,
     policy: ComparisonPolicy
   ): MergeConflictType {
-    return getMergeType(Predicate { side -> isLineMergeIntervalEmpty(fragment, side) },
-                        BiPredicate { side1, side2 ->
+    return getMergeType({ side -> isLineMergeIntervalEmpty(fragment, side) },
+                        { side1, side2 ->
                           compareLineMergeContents(fragment, sequences, lineOffsets, policy, side1, side2)
                         },
                         null,
-                        BooleanSupplier { canResolveLineConflict(fragment, sequences, lineOffsets) })
+                        { canResolveLineConflict(fragment, sequences, lineOffsets) })
   }
 
   @JvmStatic
@@ -97,15 +94,15 @@ object MergeRangeUtil {
     lineOffsets: List<LineOffsets>,
     policy: ComparisonPolicy
   ): MergeConflictType {
-    return getMergeType(Predicate { side -> isLineMergeIntervalEmpty(fragment, side) },
-                        BiPredicate { side1, side2 ->
+    return getMergeType({ side -> isLineMergeIntervalEmpty(fragment, side) },
+                        { side1, side2 ->
                           compareLineMergeContents(fragment, sequences, lineOffsets, policy, side1, side2)
                         },
-                        BiPredicate { side1, side2 ->
+                        { side1, side2 ->
                           compareLineMergeContents(fragment, sequences, lineOffsets, ComparisonPolicy.DEFAULT, side1,
-                                                                  side2)
+                                                   side2)
                         },
-                        BooleanSupplier { canResolveLineConflict(fragment, sequences, lineOffsets) })
+                        { canResolveLineConflict(fragment, sequences, lineOffsets) })
   }
 
   private fun canResolveLineConflict(
@@ -162,12 +159,12 @@ object MergeRangeUtil {
     texts: List<CharSequence>,
     policy: ComparisonPolicy
   ): MergeConflictType {
-    return getMergeType(Predicate { side -> isWordMergeIntervalEmpty(fragment, side) },
-                        BiPredicate { side1, side2 ->
+    return getMergeType({ side -> isWordMergeIntervalEmpty(fragment, side) },
+                        { side1, side2 ->
                           compareWordMergeContents(fragment, texts, policy, side1, side2)
                         },
                         null,
-                        BooleanSupplier { false })
+                        { false })
   }
 
   @JvmStatic
@@ -202,20 +199,20 @@ object MergeRangeUtil {
     lineOffsets: List<LineOffsets>,
     policy: ComparisonPolicy
   ): MergeConflictType {
-    return getLeftToRightDiffType(Predicate { side -> isLineMergeIntervalEmpty(fragment, side) },
-                                  BiPredicate { side1, side2 ->
+    return getLeftToRightDiffType({ side -> isLineMergeIntervalEmpty(fragment, side) },
+                                  { side1, side2 ->
                                     compareLineMergeContents(fragment, sequences, lineOffsets, policy, side1, side2)
                                   })
   }
 
   private fun getLeftToRightDiffType(
-    emptiness: Predicate<ThreeSide>,
-    equality: BiPredicate<ThreeSide, ThreeSide>
+    emptiness: (ThreeSide) -> Boolean,
+    equality: (ThreeSide, ThreeSide) -> Boolean
   ): MergeConflictType {
-    val isLeftEmpty = emptiness.test(ThreeSide.LEFT)
-    val isBaseEmpty = emptiness.test(ThreeSide.BASE)
-    val isRightEmpty = emptiness.test(ThreeSide.RIGHT)
-    assert(!isLeftEmpty || !isBaseEmpty || !isRightEmpty)
+    val isLeftEmpty = emptiness(ThreeSide.LEFT)
+    val isBaseEmpty = emptiness(ThreeSide.BASE)
+    val isRightEmpty = emptiness(ThreeSide.RIGHT)
+    check(!isLeftEmpty || !isBaseEmpty || !isRightEmpty)
 
     if (isBaseEmpty) {
       if (isLeftEmpty) { // --=
@@ -233,9 +230,9 @@ object MergeRangeUtil {
         return MergeConflictType(MergeConflictType.Type.MODIFIED, true, true)
       }
       else { // -==, ==-, ===
-        val unchangedLeft = equality.test(ThreeSide.BASE, ThreeSide.LEFT)
-        val unchangedRight = equality.test(ThreeSide.BASE, ThreeSide.RIGHT)
-        assert(!unchangedLeft || !unchangedRight)
+        val unchangedLeft = equality(ThreeSide.BASE, ThreeSide.LEFT)
+        val unchangedRight = equality(ThreeSide.BASE, ThreeSide.RIGHT)
+        check(!unchangedLeft || !unchangedRight)
 
         if (unchangedLeft) {
           return MergeConflictType(if (isRightEmpty) MergeConflictType.Type.DELETED else MergeConflictType.Type.MODIFIED, false, true)

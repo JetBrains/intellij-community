@@ -2,7 +2,7 @@
 package com.intellij.diff.fragments
 
 import org.jetbrains.annotations.NonNls
-import java.util.*
+import kotlin.jvm.JvmOverloads
 
 open class LineFragmentImpl @JvmOverloads constructor(
   override val startLine1: Int,
@@ -58,7 +58,7 @@ open class LineFragmentImpl @JvmOverloads constructor(
     result = 31 * result + endOffset1
     result = 31 * result + startOffset2
     result = 31 * result + endOffset2
-    result = 31 * result + Objects.hashCode(innerFragments)
+    result = 31 * result + innerFragments.hashCode()
     return result
   }
 

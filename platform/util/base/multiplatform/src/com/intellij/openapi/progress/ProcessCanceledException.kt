@@ -22,14 +22,17 @@ import kotlin.coroutines.cancellation.CancellationException
  * @see [Threading Model](https://plugins.jetbrains.com/docs/intellij/threading-model.html)
  */
 open class ProcessCanceledException : CancellationException, ControlFlowException {
+  private var _cause: Throwable? = null
+  override val cause: Throwable?
+    get() = _cause
+
   constructor()
 
-  constructor(cause: Throwable?) : super(cause?.toString()) // repeat Throwable(Throwable) constructor logic
-  {
+  constructor(cause: Throwable?) : super(cause?.toString()) { // repeat Throwable(Throwable) constructor logic
     if (cause is ProcessCanceledException) {
       throw IllegalArgumentException("Must not self-wrap ProcessCanceledException: ", cause)
     }
-    initCause(cause)
+    this._cause = cause
   }
 
   protected constructor(message: String) : super(message)

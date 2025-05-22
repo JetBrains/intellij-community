@@ -2,6 +2,7 @@
 package com.intellij.diff.util
 
 import org.jetbrains.annotations.Contract
+import kotlin.jvm.JvmStatic
 
 enum class ThreeSide(open val index: Int) {
   LEFT(0),
@@ -37,31 +38,31 @@ enum class ThreeSide(open val index: Int) {
 
   @Contract(pure = true)
   open fun select(array: IntArray): Int {
-    assert(array.size == 3)
+    check(array.size == 3)
     return array[this.index]
   }
 
   @Contract(pure = true)
   open fun <T> select(array: Array<T>): T {
-    assert(array.size == 3)
+    check(array.size == 3)
     return array[this.index]
   }
 
   @Contract(pure = true)
   open fun <T : Any> selectNotNull(array: Array<T>): T {
-    assert(array.size == 3)
+    check(array.size == 3)
     return array[this.index]
   }
 
   @Contract(pure = true)
   open fun <T> select(list: List<T>): T {
-    assert(list.size == 3)
+    check(list.size == 3)
     return list[this.index]
   }
 
   @Contract(pure = true)
   open fun <T : Any> selectNotNull(list: List<T>): T {
-    assert(list.size == 3)
+    check(list.size == 3)
     return list[this.index]
   }
 
@@ -77,7 +78,7 @@ enum class ThreeSide(open val index: Int) {
     @Contract(pure = true)
     @JvmStatic
     fun <T> fromValue(list: List<T>, value: T): ThreeSide? {
-      assert(list.size == 3)
+      check(list.size == 3)
       val index = list.indexOf(value)
       return if (index != -1) fromIndex(index) else null
     }

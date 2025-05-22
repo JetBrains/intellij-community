@@ -3,7 +3,7 @@ package com.intellij.diff.tools.util.text
 
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntList
-import java.util.*
+import kotlin.jvm.JvmStatic
 
 class LineOffsetsImpl private constructor(private val myLineEnds: IntArray, override val textLength: Int) : LineOffsets {
   override fun getLineStart(line: Int): Int {
@@ -29,7 +29,7 @@ class LineOffsetsImpl private constructor(private val myLineEnds: IntArray, over
     if (offset == 0) return 0
     if (offset == textLength) return lineCount - 1
 
-    val bsResult = Arrays.binarySearch(myLineEnds, offset)
+    val bsResult = myLineEnds.binarySearch(offset)
     return if (bsResult >= 0) bsResult else -bsResult - 1
   }
 
@@ -63,4 +63,23 @@ class LineOffsetsImpl private constructor(private val myLineEnds: IntArray, over
       return LineOffsetsImpl(ends.toIntArray(), text.length)
     }
   }
+}
+
+internal fun IntArray.binarySearch(element: Int): Int {
+  var l = 0
+  var r = size - 1
+
+  while (l <= r) {
+    val m = (l + r) / 2
+    val midElement = get(m)
+
+    if (midElement < element) {
+      l = m + 1
+    } else if (midElement > element) {
+      r = m - 1
+    } else {
+      return m
+    }
+  }
+  return -(l + 1)
 }

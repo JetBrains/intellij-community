@@ -5,6 +5,8 @@ import com.intellij.diff.fragments.DiffFragment
 import com.intellij.diff.fragments.LineFragment
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmStatic
 
 enum class Side(open val index: Int) {
   LEFT(0),
@@ -42,37 +44,37 @@ enum class Side(open val index: Int) {
 
   @Contract(pure = true)
   open fun select(array: BooleanArray): Boolean {
-    assert(array.size == 2)
+    check(array.size == 2)
     return array[index]
   }
 
   @Contract(pure = true)
   open fun select(array: IntArray): Int {
-    assert(array.size == 2)
+    check(array.size == 2)
     return array[index]
   }
 
   @Contract(pure = true)
   open fun <T> select(array: Array<T>): T {
-    assert(array.size == 2)
+    check(array.size == 2)
     return array[index]
   }
 
   @Contract(pure = true)
   open fun <T : Any> selectNotNull(array: Array<T>): T {
-    assert(array.size == 2)
+    check(array.size == 2)
     return array[index]
   }
 
   @Contract(pure = true)
   open fun <T> select(list: List<T>): T {
-    assert(list.size == 2)
+    check(list.size == 2)
     return list[index]
   }
 
   @Contract(pure = true)
   open fun <T : Any> selectNotNull(list: List<T>): T {
-    assert(list.size == 2)
+    check(list.size == 2)
     return list[index]
   }
 
@@ -116,7 +118,7 @@ enum class Side(open val index: Int) {
     @JvmStatic
     @Contract(pure = true)
     fun <T> fromValue(list: List<T>, value: T): Side? {
-      assert(list.size == 2)
+      check(list.size == 2)
       val index = list.indexOf(value)
       return if (index != -1) fromIndex(index) else null
     }

@@ -9,6 +9,7 @@ import com.intellij.diff.comparison.iterables.FairDiffIterable
 import com.intellij.diff.util.Range
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntList
+import kotlin.jvm.JvmStatic
 
 object ByCharRt {
   @JvmStatic
@@ -41,8 +42,8 @@ object ByCharRt {
       offset1 = end1
       offset2 = end2
     }
-    assert(offset1 == text1.length)
-    assert(offset2 == text2.length)
+    check(offset1 == text1.length)
+    check(offset2 == text2.length)
 
     return DiffIterableUtil.fair(builder.finish())
   }

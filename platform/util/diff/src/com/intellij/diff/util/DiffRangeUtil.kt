@@ -3,6 +3,7 @@ package com.intellij.diff.util
 
 import com.intellij.diff.tools.util.text.LineOffsets
 import org.jetbrains.annotations.NonNls
+import kotlin.jvm.JvmStatic
 
 object DiffRangeUtil {
   @JvmStatic
@@ -18,7 +19,7 @@ object DiffRangeUtil {
     line2: Int,
     includeNewline: Boolean
   ): CharSequence {
-    assert(sequence.length == lineOffsets.textLength)
+    check(sequence.length == lineOffsets.textLength)
     val linesRange = getLinesRange(lineOffsets, line1, line2, includeNewline)
     return sequence.subSequence(linesRange.startOffset, linesRange.endOffset)
   }

@@ -5,7 +5,6 @@ import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntList
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.util.*
 
 @ApiStatus.Internal
 class Reindexer {
@@ -42,7 +41,7 @@ class Reindexer {
     val oldIndices: IntList = IntArrayList(toDiscard.size)
     for (i in toDiscard.indices) {
       val index = toDiscard[i]
-      if (Arrays.binarySearch(sorted1, index) >= 0) {
+      if (sorted1.binarySearch(index) >= 0) {
         discarded.add(index)
         oldIndices.add(i)
       }
@@ -66,16 +65,16 @@ class Reindexer {
       var x = 0
       var y = 0
       while (x < myDiscardedLengths[0] || y < myDiscardedLengths[1]) {
-        if ((x < myDiscardedLengths[0] && y < myDiscardedLengths[1]) && !discardedChanges[0].get(x) && !discardedChanges[1].get(y)) {
+        if ((x < myDiscardedLengths[0] && y < myDiscardedLengths[1]) && !discardedChanges[0][x] && !discardedChanges[1][y]) {
           x = increment(myOldIndices[0]!!, x, changes1, myOriginalLengths[0])
           y = increment(myOldIndices[1]!!, y, changes2, myOriginalLengths[1])
         }
-        else if (discardedChanges[0].get(x)) {
-          changes1.set(getOriginal(myOldIndices[0]!!, x))
+        else if (discardedChanges[0][x]) {
+          changes1[getOriginal(myOldIndices[0]!!, x)] = true
           x = increment(myOldIndices[0]!!, x, changes1, myOriginalLengths[0])
         }
-        else if (discardedChanges[1].get(y)) {
-          changes2.set(getOriginal(myOldIndices[1]!!, y))
+        else if (discardedChanges[1][y]) {
+          changes2[getOriginal(myOldIndices[1]!!, y)] = true
           y = increment(myOldIndices[1]!!, y, changes2, myOriginalLengths[1])
         }
       }
@@ -97,18 +96,18 @@ class Reindexer {
     var y = 0
     while (x < myOriginalLengths[0] && y < myOriginalLengths[1]) {
       val startX = x
-      while (x < myOriginalLengths[0] && y < myOriginalLengths[1] && !changes1.get(x) && !changes2.get(y)) {
+      while (x < myOriginalLengths[0] && y < myOriginalLengths[1] && !changes1[x] && !changes2[y]) {
         x++
         y++
       }
       if (x > startX) builder.addEqual(x - startX)
       var dx = 0
       var dy = 0
-      while (x < myOriginalLengths[0] && changes1.get(x)) {
+      while (x < myOriginalLengths[0] && changes1[x]) {
         dx++
         x++
       }
-      while (y < myOriginalLengths[1] && changes2.get(y)) {
+      while (y < myOriginalLengths[1] && changes2[y]) {
         dy++
         y++
       }
@@ -120,7 +119,7 @@ class Reindexer {
   companion object {
     private fun createSorted(ints1: IntArray): IntArray {
       val sorted1 = ints1.clone()
-      Arrays.sort(sorted1)
+      sorted1.sort()
       return sorted1
     }
 
@@ -138,4 +137,23 @@ class Reindexer {
       return i + 1
     }
   }
+}
+
+internal fun IntArray.binarySearch(element: Int): Int {
+  var l = 0
+  var r = size - 1
+
+  while (l <= r) {
+    val m = (l + r) / 2
+    val midElement = get(m)
+
+    if (midElement < element) {
+      l = m + 1
+    } else if (midElement > element) {
+      r = m - 1
+    } else {
+      return m
+    }
+  }
+  return -(l + 1)
 }

@@ -6,7 +6,8 @@ package com.intellij.diff.comparison
 
 import com.intellij.diff.util.MergeRange
 import com.intellij.diff.util.Range
-import java.util.*
+import org.jetbrains.annotations.ApiStatus
+import kotlin.jvm.JvmName
 
 fun isPunctuation(c: Char): Boolean {
   return isPunctuation(c.code)
@@ -47,11 +48,6 @@ fun isContinuousScript(c: Int): Boolean {
 fun trim(text: CharSequence, start: Int, end: Int): com.intellij.util.IntPair {
   return trim(start, end,
               { index -> text[index].isSpaceEnterOrTab() })
-}
-
-fun trim(start: Int, end: Int, ignored: BitSet): com.intellij.util.IntPair {
-  return trim(start, end,
-              { index -> ignored[index] })
 }
 
 fun trimStart(text: CharSequence, start: Int, end: Int): Int {
@@ -186,16 +182,6 @@ fun trimExpandRange(start1: Int, start2: Int, end1: Int, end2: Int,
                     { index -> ignored2(index) })
 }
 
-fun trimExpandText(text1: CharSequence, text2: CharSequence,
-                   start1: Int, start2: Int, end1: Int, end2: Int,
-                   ignored1: BitSet,
-                   ignored2: BitSet): Range {
-  return trimExpand(start1, start2, end1, end2,
-                    { index1, index2 -> text1[index1] == text2[index2] },
-                    { index -> ignored1[index] },
-                    { index -> ignored2[index] })
-}
-
 
 fun trim(text1: CharSequence, text2: CharSequence,
          range: Range): Range {
@@ -296,8 +282,9 @@ private inline fun trim(start1: Int, start2: Int, start3: Int, end1: Int, end2: 
   return MergeRange(start1, end1, start2, end2, start3, end3)
 }
 
-private inline fun trim(start: Int, end: Int,
-                        ignored: (Int) -> Boolean): com.intellij.util.IntPair {
+@ApiStatus.Internal
+fun trim(start: Int, end: Int,
+         ignored: (Int) -> Boolean): com.intellij.util.IntPair {
   var start = start
   var end = end
 
@@ -508,10 +495,11 @@ private inline fun expandIgnoredBackward(start1: Int, start2: Int, start3: Int, 
 // Trim Expand
 //
 
-private inline fun trimExpand(start1: Int, start2: Int, end1: Int, end2: Int,
-                              equals: (Int, Int) -> Boolean,
-                              ignored1: (Int) -> Boolean,
-                              ignored2: (Int) -> Boolean): Range {
+@ApiStatus.Internal
+fun trimExpand(start1: Int, start2: Int, end1: Int, end2: Int,
+               equals: (Int, Int) -> Boolean,
+               ignored1: (Int) -> Boolean,
+               ignored2: (Int) -> Boolean): Range {
   var start1 = start1
   var start2 = start2
   var end1 = end1

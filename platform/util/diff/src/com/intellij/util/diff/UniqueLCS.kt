@@ -4,7 +4,6 @@ package com.intellij.util.diff
 import it.unimi.dsi.fastutil.ints.Int2IntMap
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
 
 @ApiStatus.Internal
 class UniqueLCS internal constructor(
@@ -101,8 +100,8 @@ class UniqueLCS internal constructor(
     // return i + 1
     // assert a[i] != val
     private fun binarySearch(sequence: IntArray, value: Int, length: Int): Int {
-      val i = Arrays.binarySearch(sequence, 0, length, value)
-      assert(i < 0)
+      val i = sequence.binarySearch(value, 0, length)
+      check(i < 0)
       return -i - 1
     }
   }

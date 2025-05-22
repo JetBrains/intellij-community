@@ -21,6 +21,8 @@ import com.intellij.diff.util.Range
 import com.intellij.util.IntPair
 import com.intellij.util.text.MergingCharSequence
 import org.jetbrains.annotations.ApiStatus
+import kotlin.jvm.JvmField
+import kotlin.jvm.JvmStatic
 
 object ByWordRt {
   @JvmStatic
@@ -725,7 +727,7 @@ object ByWordRt {
     }
 
     fun matchForward(start1: Int, start2: Int, end1: Int, end2: Int) {
-      assert(lastStart1 == -1 && lastStart2 == -1 && lastEnd1 == -1 && lastEnd2 == -1)
+      check(lastStart1 == -1 && lastStart2 == -1 && lastEnd1 == -1 && lastEnd2 == -1)
 
       lastStart1 = start1
       lastStart2 = start2
@@ -734,16 +736,16 @@ object ByWordRt {
     }
 
     fun matchBackward(start1: Int, start2: Int, end1: Int, end2: Int) {
-      assert(lastStart1 != -1 && lastStart2 != -1 && lastEnd1 != -1 && lastEnd2 != -1)
+      check(lastStart1 != -1 && lastStart2 != -1 && lastEnd1 != -1 && lastEnd2 != -1)
 
       if (lastStart1 == start1 && lastStart2 == start2) { // pair of adjustment matched words, match gap between ("A B" - "A B")
-        assert(lastEnd1 == end1 && lastEnd2 == end2)
+        check(lastEnd1 == end1 && lastEnd2 == end2)
 
         matchRange(start1, start2, end1, end2)
         return
       }
       if (lastStart1 < start1 && lastStart2 < start2) { // pair of matched words, with few unmatched ones between ("A X B" - "A Y B")
-        assert(lastEnd1 <= start1 && lastEnd2 <= start2)
+        check(lastEnd1 <= start1 && lastEnd2 <= start2)
 
         matchRange(lastStart1, lastStart2, lastEnd1, lastEnd2)
         matchRange(start1, start2, end1, end2)
@@ -1051,7 +1053,7 @@ object ByWordRt {
 
     override fun equals(other: Any?): Boolean {
       if (this === other) return true
-      if (other == null || javaClass != other.javaClass) return false
+      if (other == null || this::class != other::class) return false
 
       val word = other as WordChunk
 
@@ -1071,13 +1073,13 @@ object ByWordRt {
 
     override fun equals(other: Any?): Boolean {
       if (this === other) return true
-      if (other == null || javaClass != other.javaClass) return false
+      if (other == null || this::class != other::class) return false
 
       return true
     }
 
     override fun hashCode(): Int {
-      return javaClass.hashCode()
+      return this::class.hashCode()
     }
   }
 

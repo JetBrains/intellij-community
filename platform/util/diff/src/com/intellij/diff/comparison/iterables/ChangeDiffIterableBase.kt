@@ -52,7 +52,7 @@ abstract class ChangeDiffIterableBase(override val length1: Int, override val le
 
     override fun next(): Range {
       if (myIterable.valid()) {
-        assert((myIterable.start1 - lastIndex1 != 0) || (myIterable.start2 - lastIndex2 != 0))
+        check((myIterable.start1 - lastIndex1 != 0) || (myIterable.start2 - lastIndex2 != 0))
         val chunk = Range(lastIndex1, myIterable.start1, lastIndex2,
                           myIterable.start2)
 
@@ -64,7 +64,7 @@ abstract class ChangeDiffIterableBase(override val length1: Int, override val le
         return chunk
       }
       else {
-        assert((myLength1 - lastIndex1 != 0) || (myLength2 - lastIndex2 != 0))
+        check((myLength1 - lastIndex1 != 0) || (myLength2 - lastIndex2 != 0))
         val chunk = Range(lastIndex1, myLength1, lastIndex2, myLength2)
 
         lastIndex1 = myLength1

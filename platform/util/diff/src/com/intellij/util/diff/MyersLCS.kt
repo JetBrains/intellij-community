@@ -2,7 +2,6 @@
 package com.intellij.util.diff
 
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sqrt
@@ -92,7 +91,7 @@ class MyersLCS(
     oldStart: Int, oldEnd: Int, newStart: Int, newEnd: Int, differenceEstimate: Int,
     throwException: Boolean
   ) {
-    assert(oldStart <= oldEnd && newStart <= newEnd)
+    check(oldStart <= oldEnd && newStart <= newEnd)
     if (oldStart < oldEnd && newStart < newEnd) {
       val oldLength = oldEnd - oldStart
       val newLength = newEnd - newStart
