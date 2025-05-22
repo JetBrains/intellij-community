@@ -16,6 +16,6 @@ class SeRunConfigurationsProviderFactory : SeWrappedLegacyContributorItemsProvid
 
   override suspend fun getItemsProvider(project: Project?, legacyContributor: SearchEverywhereContributor<Any>): SeItemsProvider? {
     if (project == null) return null
-    return SeRunConfigurationsProvider(SeAsyncContributorWrapper(legacyContributor))
+    return SeRunConfigurationsItemsProvider(SeAsyncContributorWrapper(legacyContributor))
   }
 }

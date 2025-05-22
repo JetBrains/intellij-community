@@ -45,7 +45,7 @@ class SeDefaultListItemRenderer {
               }
             }
           }
-          else ->  throw IllegalStateException("Item is not handled: $presentation")
+          else -> throw IllegalStateException("Item is not handled: $presentation")
         }
       }
       is SeResultListMoreRow -> icon(AnimatedIcon.Default.INSTANCE)

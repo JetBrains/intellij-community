@@ -16,5 +16,6 @@
     <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.symbols.SeSymbolsProviderFactory"/>
     <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.text.SeTextItemsProviderFactory"/>
     <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.topHit.SeBackendTopHitItemsProviderFactory"/>
+    <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.runConfigurations.SeRunConfigurationsProviderFactory"/>
   </extensions>
 </idea-plugin>
