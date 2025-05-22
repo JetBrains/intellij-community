@@ -37,6 +37,7 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.application
 import com.intellij.util.ui.UIUtil
+import icons.SettingsSyncIcons
 import kotlinx.coroutines.*
 import java.awt.Component
 import java.awt.Dimension
@@ -124,7 +125,7 @@ internal class JBAAuthService(private val cs: CoroutineScope) : SettingsSyncAuth
   override val providerName: String
     get() = "JetBrains"
 
-  override val icon = AllIcons.Ultimate.IdeaUltimatePromo
+  override val icon = SettingsSyncIcons.JetBrains
 
   override suspend fun login(parentComponent: Component?): SettingsSyncUserData? {
     val accountInfoService = getAccountInfoService()
