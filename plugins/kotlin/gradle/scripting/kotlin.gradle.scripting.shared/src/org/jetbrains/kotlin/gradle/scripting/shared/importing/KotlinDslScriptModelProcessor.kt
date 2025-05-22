@@ -26,9 +26,7 @@ fun saveGradleBuildEnvironment(resolverCtx: ProjectResolverContext) {
 
         synchronized(sync) {
             sync.gradleVersion = resolverCtx.projectGradleVersion
-            sync.javaHome = resolverCtx.buildEnvironment
-                ?.java?.javaHome?.path
-                ?.let { toSystemIndependentName(it) }
+            sync.javaHome = toSystemIndependentName(resolverCtx.buildEnvironment.java.javaHome.path)
 
             if (gradleHome != null) {
                 sync.gradleHome = toSystemIndependentName(gradleHome)

@@ -47,7 +47,6 @@ import org.gradle.tooling.model.ProjectModel;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
-import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.gradle.issue.DeprecatedGradleVersionIssue;
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
@@ -182,8 +181,7 @@ public final class GradleProjectResolver implements ExternalSystemProjectResolve
       );
 
       // auto-discover buildSrc projects of the main and included builds
-      var gradleVersion = resolverContext.getProjectGradleVersion();
-      if (gradleVersion != null && GradleVersionUtil.isGradleOlderThan(gradleVersion, "8.0")) {
+      if (GradleVersionUtil.isGradleOlderThan(resolverContext.getGradleVersion(), "8.0")) {
         var gradleHome = ObjectUtils.doIfNotNull(resolverContext.getUserData(GRADLE_HOME_DIR), it -> it.getPath());
         new GradleBuildSrcProjectsResolver(this, resolverContext, gradleHome, projectResolverChain)
           .discoverAndAppendTo(projectDataNode);
@@ -313,8 +311,8 @@ public final class GradleProjectResolver implements ExternalSystemProjectResolve
       var modelFetchActionResultHandler = new GradleModelFetchActionResultHandler(resolverContext);
       GradleModelFetchActionRunner.runAndTraceBuildAction(connection, resolverContext, buildAction, modelFetchActionResultHandler);
 
-      var gradleVersion = ObjectUtils.doIfNotNull(resolverContext.getProjectGradleVersion(), it -> GradleVersion.version(it));
-      if (gradleVersion != null && GradleJvmSupportMatrix.isGradleDeprecatedByIdea(gradleVersion)) {
+      var gradleVersion = resolverContext.getGradleVersion();
+      if (GradleJvmSupportMatrix.isGradleDeprecatedByIdea(gradleVersion)) {
         var projectPath = resolverContext.getProjectPath();
         var issue = new DeprecatedGradleVersionIssue(gradleVersion, projectPath);
         resolverContext.report(MessageEvent.Kind.WARNING, issue);

@@ -36,8 +36,7 @@ class KotlinDslScriptSyncContributor : GradleSyncContributor {
                 for (projectModel in buildModel.projects) {
                     val projectIdentifier = projectModel.projectIdentifier.projectPath
                     if (projectIdentifier == ":") {
-                        val gradleVersion = context.projectGradleVersion
-                        if (gradleVersion != null && kotlinDslScriptsModelImportSupported(gradleVersion)) {
+                        if (kotlinDslScriptsModelImportSupported(context.projectGradleVersion)) {
                             val model = context.getProjectModel(projectModel, KotlinDslScriptsModel::class.java)
                             if (model != null) {
                                 if (!processScriptModel(context, sync, model, projectIdentifier)) {
