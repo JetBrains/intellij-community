@@ -22,6 +22,7 @@ import com.intellij.util.lang.JavaVersion;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import kotlin.metadata.jvm.JvmMetadataUtil;
+import kotlinx.coroutines.Deferred;
 import net.n3.nanoxml.IXMLBuilder;
 import org.h2.mvstore.MVStore;
 import org.jetbrains.annotations.ApiStatus;
@@ -166,6 +167,7 @@ public final class ClasspathBootstrap {
     addToClassPath(cp, HashMapZipFile.class); // intellij.platform.util.zip
 
     ClassPathUtil.addKotlinStdlib(cp);
+    addToClassPath(cp, Deferred.class);  // kotlinx.coroutines, used intellij.platform.util, EnvironmentUtil
     addToClassPath(cp, JvmMetadataUtil.class);  // kotlin metadata parsing
     addToClassPath(cp, COMMON_REQUIRED_CLASSES);
     getNettyForJpsClasspath(path -> cp.add(path.toString()));
