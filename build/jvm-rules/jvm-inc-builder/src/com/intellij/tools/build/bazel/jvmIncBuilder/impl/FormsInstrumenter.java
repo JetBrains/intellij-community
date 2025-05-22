@@ -20,6 +20,6 @@ public class FormsInstrumenter implements BytecodeInstrumenter {
 
   @Override
   public byte @Nullable [] instrument(String filePath, ClassReader reader, ClassWriter writer, InstrumentationClassFinder finder) throws Exception {
-    return new byte[0]; // todo
+    return null; // todo
   }
 }

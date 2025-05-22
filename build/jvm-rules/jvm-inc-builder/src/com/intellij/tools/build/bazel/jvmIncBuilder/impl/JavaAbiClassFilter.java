@@ -12,7 +12,7 @@ import org.jetbrains.org.objectweb.asm.tree.MethodNode;
 import java.util.*;
 
 public class JavaAbiClassFilter extends ClassVisitor {
-
+  public static final String MODULE_INFO_CLASS_NAME = "module-info";
   private boolean isAbiClass;
   private boolean isKotlinClass;
   private Set<String> myExcludedClasses = new HashSet<>();
@@ -39,7 +39,7 @@ public class JavaAbiClassFilter extends ClassVisitor {
 
   @Override
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-    isAbiClass = isAbiVisible(access);
+    isAbiClass = MODULE_INFO_CLASS_NAME.equals(name) || isAbiVisible(access);
     if (isAbiClass) {
       super.visit(version, access, name, signature, superName, interfaces);
     }

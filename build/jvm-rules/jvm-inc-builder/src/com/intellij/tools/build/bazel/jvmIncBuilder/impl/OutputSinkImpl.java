@@ -11,6 +11,7 @@ import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.Instrumenter
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.BytecodeInstrumenter;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputSink;
 import kotlin.metadata.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.Node;
 import org.jetbrains.jps.dependency.NodeSource;
@@ -38,6 +39,7 @@ public class OutputSinkImpl implements OutputSink {
   private final Map<NodeSource, Set<Usage>> myPerSourceAdditionalUsages = new HashMap<>();
   private final List<NodeWithSources> myNodes = new ArrayList<>();
   private final Map<NodeSource, Set<Usage>> mySelfUsages = new HashMap<>();
+  private final @NotNull InstrumentationClassFinder myClassFinder;
 
 
   public static class NodeWithSources {
@@ -54,6 +56,7 @@ public class OutputSinkImpl implements OutputSink {
     myDiagnostic = diagnostic;
     myOutBuilder = sm.getOutputBuilder();
     myComposite = sm.getCompositeOutputBuilder();
+    myClassFinder = sm.getInstrumentationClassFinder();
     myInstrumenters = instrumenters;
   }
 
@@ -89,45 +92,38 @@ public class OutputSinkImpl implements OutputSink {
 
   private void processAndSave(OutputFile outFile, Iterable<NodeSource> originSources) {
     byte[] content = outFile.getContent();
-    myComposite.putEntry(outFile.getPath(), content); // make file content immediately available
+    // make file content immediately available, so that the instrumenter ClassFinder are able to access the original version
+    myComposite.putEntry(outFile.getPath(), content);
 
     if (outFile.getKind() == OutputFile.Kind.bytecode) {
       // todo: parse/instrument files and create nodes asynchronously?
       ClassReader reader = new FailSafeClassReader(content);
       associate(outFile.getPath(), originSources, reader, outFile.isFromGeneratedSource());
 
-      InstrumentationClassFinder finder = getInstrumentationClassFinder();
-      if (finder != null) {
-        boolean changes = false;
-        for (BytecodeInstrumenter instrumenter : myInstrumenters) {
-          try {
-            if (reader == null) {
-              reader = new FailSafeClassReader(content);
-            }
-            int version = InstrumenterClassWriter.getClassFileVersion(reader);
-            ClassWriter writer = new InstrumenterClassWriter(reader, InstrumenterClassWriter.getAsmClassWriterFlags(version), finder);
-            final byte[] instrumented = instrumenter.instrument(outFile.getPath(), reader, writer, finder);
-            if (instrumented != null) {
-              changes = true;
-              content = instrumented;
-              finder.cleanCachedData(reader.getClassName());
-              reader = null;
-            }
+      boolean changes = false;
+      for (BytecodeInstrumenter instrumenter : myInstrumenters) {
+        try {
+          if (reader == null) {
+            reader = new FailSafeClassReader(content);
           }
-          catch (Exception e) {
-            // todo: better diagnostics?
-            myDiagnostic.report(Message.error(instrumenter, e.getMessage()));
+          int version = InstrumenterClassWriter.getClassFileVersion(reader);
+          ClassWriter writer = new InstrumenterClassWriter(reader, InstrumenterClassWriter.getAsmClassWriterFlags(version), myClassFinder);
+          final byte[] instrumented = instrumenter.instrument(outFile.getPath(), reader, writer, myClassFinder);
+          if (instrumented != null) {
+            changes = true;
+            content = instrumented;
+            myClassFinder.cleanCachedData(reader.getClassName());
+            reader = null;
           }
         }
-        if (changes) {
-          myComposite.putEntry(outFile.getPath(), content);
+        catch (Exception e) {
+          myDiagnostic.report(Message.error(instrumenter, e.getMessage()));
         }
       }
+      if (changes) {
+        myComposite.putEntry(outFile.getPath(), content);
+      }
     }
-  }
-
-  private InstrumentationClassFinder getInstrumentationClassFinder() {
-    return null; // todo: required for the instrumentation
   }
 
   private void associate(String classFileName, Iterable<NodeSource> sources, ClassReader cr, boolean isGenerated) {
