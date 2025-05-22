@@ -128,15 +128,15 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       }
 
       updateUserAccountsList()
-      rowsRange {
-        row {
-          text(message("settings.sync.info.message"))
-          SettingsSyncCommunicatorProvider.PROVIDER_EP.extensionList.firstOrNull { it.isAvailable() && it.learnMoreLinkPair != null }?.also {
-            val linkPair = it.learnMoreLinkPair!!
-            browserLink(linkPair.first, linkPair.second)
-          }
+      val infoRow = row {
+        text(message("settings.sync.info.message"))
+        SettingsSyncCommunicatorProvider.PROVIDER_EP.extensionList.firstOrNull { it.isAvailable() && it.learnMoreLinkPair != null }?.also {
+          val linkPair = it.learnMoreLinkPair!!
+          browserLink(linkPair.first, linkPair.second)
         }
+      }
 
+      rowsRange {
         row {
           text(message("settings.sync.select.provider.message"))
         }
@@ -172,6 +172,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
         enableCheckbox.addActionListener {
           enableButtonAction()
         }
+        infoRow.visibleIf(enableCheckbox.selected.not())
         userDropDownLink = DropDownLink<UserProviderHolder?>(userProviderHolder) { link: DropDownLink<UserProviderHolder?>? -> showAccounts(link) }
         cellDropDownLink = cell(userDropDownLink).onChangedContext { component, context ->
           val event = context.event
@@ -309,20 +310,20 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
           }
         }.visibleIf(actionRequired)
 
-        rowsRange {
-          row {
-            text(message("settings.category.comment.ui.code.system.name"))
-          }
-          row {
-            text(message("settings.category.comment.keymap"))
-          }.topGap(TopGap.NONE)
-          row {
-            text(message("settings.category.comment.plugins"))
-          }.topGap(TopGap.NONE)
-          row {
-            text(message("settings.category.comment.tools"))
-          }.topGap(TopGap.NONE)
-        }.visibleIf(enableCheckbox.selected.not())
+        //rowsRange {
+        //  row {
+        //    text(message("settings.category.comment.ui.code.system.name"))
+        //  }
+        //  row {
+        //    text(message("settings.category.comment.keymap"))
+        //  }.topGap(TopGap.NONE)
+        //  row {
+        //    text(message("settings.category.comment.plugins"))
+        //  }.topGap(TopGap.NONE)
+        //  row {
+        //    text(message("settings.category.comment.tools"))
+        //  }.topGap(TopGap.NONE)
+        //}.visibleIf(enableCheckbox.selected.not())
 
       }.visibleIf(wasUsedBefore)
 
