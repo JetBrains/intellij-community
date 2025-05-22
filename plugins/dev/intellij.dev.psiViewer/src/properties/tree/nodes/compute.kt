@@ -1,10 +1,8 @@
 package com.intellij.dev.psiViewer.properties.tree.nodes
 
-import com.intellij.dev.psiViewer.properties.tree.PsiViewerPropertyNode
-import com.intellij.dev.psiViewer.properties.tree.appendPresentation
+import com.intellij.dev.psiViewer.properties.tree.*
 import com.intellij.dev.psiViewer.properties.tree.nodes.apiMethods.PsiViewerApiMethod
 import com.intellij.dev.psiViewer.properties.tree.nodes.apiMethods.psiViewerApiMethods
-import com.intellij.dev.psiViewer.properties.tree.prependPresentation
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.ui.SimpleTextAttributes
@@ -50,18 +48,18 @@ private suspend fun computePsiViewerNodeByMethodCall(
   val matchedNodeFactory = PsiViewerPropertyNode.Factory.findMatchingFactory(returnType)
   if (matchedNodeFactory != null) {
     return methodReturnValuePsiViewerNode(
-      value = psiViewerApiMethod.invoke(),
+      value = nodeContext.apiMethodEvaluator.evaluate(psiViewerApiMethod),
       psiViewerApiMethod.name,
       psiViewerApiMethod.returnType,
       matchedNodeFactory,
       nodeContext
-    )
+    )?.withApiMethod(psiViewerApiMethod)
   }
 
   val returnedCollectionType = psiViewerApiMethod.returnType.returnedCollectionType ?: return null
   val matchedNodeFactoryOfCollectionType = PsiViewerPropertyNode.Factory.findMatchingFactory(returnedCollectionType) ?: return null
 
-  val returnedValue = psiViewerApiMethod.invoke() ?: return null
+  val returnedValue = nodeContext.apiMethodEvaluator.evaluate(psiViewerApiMethod) ?: return null
   val returnedList = (returnedValue as? Array<*>)?.toList() ?: (returnedValue as? Collection<*>) ?: return null
 
   val childrenNodes = coroutineScope {
@@ -92,6 +90,7 @@ private suspend fun computePsiViewerNodeByMethodCall(
   val node = PsiViewerPropertyNodeImpl(methodNamePresentation(psiViewerApiMethod.name), childrenNodes, weight)
     .appendPresentation(returnedListPresentation)
     .appendPresentation(methodReturnTypePresentation(psiViewerApiMethod.returnType))
+    .withApiMethod(psiViewerApiMethod)
 
   return if (childrenNodes.isNotEmpty() || nodeContext.showEmptyNodes) node else null
 }
@@ -100,7 +99,7 @@ suspend fun computePsiViewerApiClassesNodes(
   apiClasses: List<Class<*>>,
   instance: Any,
   nodeContext: PsiViewerPropertyNode.Context,
-): List<PsiViewerPropertyNodeImpl> {
+): List<PsiViewerPropertyNode> {
   return coroutineScope {
     val apiClassesNodes = apiClasses
       .mapIndexed { idx, apiClass ->
@@ -122,8 +121,9 @@ suspend fun psiViewerPropertyNodeForApiClass(
   apiClass: Class<*>,
   apiMethods: List<PsiViewerApiMethod>,
   weight: Int,
-): PsiViewerPropertyNodeImpl? {
+): PsiViewerPropertyNode? {
   val childrenNodesForApiClass = computePsiViewerPropertyNodesByCallingApiMethods(nodeContext, apiMethods)
+    .map { it.withApiClass(apiClass) }
   if (childrenNodesForApiClass.isEmpty()) return null
 
   val presentation = PsiViewerPropertyNode.Presentation {
@@ -131,7 +131,7 @@ suspend fun psiViewerPropertyNodeForApiClass(
     it.append(apiClass.canonicalName, SimpleTextAttributes.REGULAR_ATTRIBUTES)
   }
 
-  return PsiViewerPropertyNodeImpl(presentation, childrenNodesForApiClass, weight)
+  return PsiViewerPropertyNodeImpl(presentation, childrenNodesForApiClass, weight).withApiClass(apiClass)
 }
 
 suspend fun computePsiViewerPropertyNodesByCallingApiMethods(

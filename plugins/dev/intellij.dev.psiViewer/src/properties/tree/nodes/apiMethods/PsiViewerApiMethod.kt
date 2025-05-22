@@ -9,12 +9,39 @@ fun Class<*>.psiViewerApiMethods(instance: Any): List<PsiViewerApiMethod> {
   return PsiViewerApiMethod.Provider.EP_NAME.extensionList.flatMap { it.apiMethods(instance, this) }
 }
 
+fun interface PsiViewerApiMethodEvaluator {
+  companion object {
+    val default: PsiViewerApiMethodEvaluator = defaultPsiViewerApiMethodEvaluator()
+  }
+
+  suspend fun evaluate(method: PsiViewerApiMethod): Any?
+}
+
+private fun defaultPsiViewerApiMethodEvaluator() = object : PsiViewerApiMethodEvaluator {
+  override suspend fun evaluate(method: PsiViewerApiMethod): Any? {
+    return try {
+      method.evaluator.invoke()
+    }
+    catch (ce : CancellationException) {
+      throw ce
+    }
+    catch (e : Throwable) {
+      if (e is ControlFlowException) {
+        throw e
+      }
+      thisLogger().warn("Failed to evaluate method ${method.name}", e)
+      null
+    }
+  }
+
+}
+
 class PsiViewerApiMethod(
   val name: String,
   val returnType: ReturnType,
-  private val evaluator: suspend () -> Any?
+  val evaluator: suspend () -> Any?
 ) {
-  class ReturnType(
+  data class ReturnType(
     val returnType: Class<*>,
     val returnedCollectionType: Class<*>?,
   )
@@ -27,19 +54,7 @@ class PsiViewerApiMethod(
     fun apiMethods(instance: Any, clazz: Class<*>): List<PsiViewerApiMethod>
   }
 
-  suspend fun invoke(): Any? {
-    return try {
-      evaluator.invoke()
-    }
-    catch (ce : CancellationException) {
-      throw ce
-    }
-    catch (e : Throwable) {
-      if (e is ControlFlowException) {
-        throw e
-      }
-      thisLogger().warn("Failed to evaluate method $name", e)
-      null
-    }
+  override fun toString(): String {
+    return "Method $name | $returnType"
   }
 }

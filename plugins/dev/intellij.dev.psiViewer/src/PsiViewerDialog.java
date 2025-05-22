@@ -90,8 +90,8 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.regex.Pattern;
 
@@ -194,7 +194,7 @@ public class PsiViewerDialog extends DialogWrapper implements UiDataProvider {
     myPsiUpdateAlarm = new SingleAlarm(this::doUpdatePsi, 1500, getDisposable());
 
     myCoroutineScope = CoroutineScopeKt.CoroutineScope(ModalityKt.asContextElement(ModalityState.nonModal()));
-    myPsiViewerPropertiesTabViewModel = new PsiViewerPropertiesTabViewModel(myProject, myCoroutineScope, PsiViewerSettings.getSettings(), (psiElement) -> {
+    myPsiViewerPropertiesTabViewModel = new PsiViewerPropertiesTabViewModel(myProject, myCoroutineScope, myOriginalPsiFile, PsiViewerSettings.getSettings(), (psiElement) -> {
       focusTree();
       selectElement(psiElement);
     });
