@@ -2003,8 +2003,8 @@ jvm_import(
 
 jvm_import(
   name = "gson",
-  jar = "@gson-2_12_1_http//file",
-  source_jar = "@gson-2_12_1-sources_http//file",
+  jar = "@gson-2_13_1_http//file",
+  source_jar = "@gson-2_13_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

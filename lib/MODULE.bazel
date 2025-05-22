@@ -2610,17 +2610,17 @@ http_file(
 )
 
 http_file(
-  name = "gson-2_12_1_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/code/gson/gson/2.12.1/gson-2.12.1.jar",
-  sha256 = "ebee13d5fb7477cd7f1cc010e0c356df8ca80709715248da97f79e35ccb4fbec",
-  downloaded_file_path = "gson-2.12.1.jar"
+  name = "gson-2_13_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/code/gson/gson/2.13.1/gson-2.13.1.jar",
+  sha256 = "94855942d4992f112946d3de1c334e709237b8126d8130bf07807c018a4a2120",
+  downloaded_file_path = "gson-2.13.1.jar"
 )
 
 http_file(
-  name = "gson-2_12_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/code/gson/gson/2.12.1/gson-2.12.1-sources.jar",
-  sha256 = "c5ab4ceb195f2a9278058d6a396c4872a1a07ed8b53fe80230dfd3f173d7cf56",
-  downloaded_file_path = "gson-2.12.1-sources.jar"
+  name = "gson-2_13_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/code/gson/gson/2.13.1/gson-2.13.1-sources.jar",
+  sha256 = "3317b8662ebc2b7a5ff34af2214cd0f8d74d37a9fa9757be494ad8824e96eee7",
+  downloaded_file_path = "gson-2.13.1-sources.jar"
 )
 
 http_file(
@@ -9351,6 +9351,13 @@ http_file(
 )
 
 http_file(
+  name = "gson-2_12_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/code/gson/gson/2.12.1/gson-2.12.1.jar",
+  sha256 = "ebee13d5fb7477cd7f1cc010e0c356df8ca80709715248da97f79e35ccb4fbec",
+  downloaded_file_path = "gson-2.12.1.jar"
+)
+
+http_file(
   name = "maven-resolver-util-2_0_7_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-util/2.0.7/maven-resolver-util-2.0.7.jar",
   sha256 = "0c56c2dd5aaeacc531b5a9e564124a32610f88875822545ee89eea79cdb7755b",
@@ -9712,6 +9719,13 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-spi/2.0.7/maven-resolver-spi-2.0.7-sources.jar",
   sha256 = "342b161f97a238b77191630542841219997f3c9de1cebba128cfefb7487f377b",
   downloaded_file_path = "maven-resolver-spi-2.0.7-sources.jar"
+)
+
+http_file(
+  name = "gson-2_12_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/code/gson/gson/2.12.1/gson-2.12.1-sources.jar",
+  sha256 = "c5ab4ceb195f2a9278058d6a396c4872a1a07ed8b53fe80230dfd3f173d7cf56",
+  downloaded_file_path = "gson-2.12.1-sources.jar"
 )
 
 http_file(
