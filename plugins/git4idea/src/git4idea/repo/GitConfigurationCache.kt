@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
-import com.github.benmanes.caffeine.cache.AsyncCache
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.openapi.Disposable
@@ -12,15 +11,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.messages.MessageBusConnection
+import fleet.multiplatform.shims.ConcurrentHashMap
 import git4idea.config.GitConfigUtil
-import git4idea.util.CaffeineUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.future.future
 import org.jetbrains.annotations.ApiStatus
+import java.util.*
+import kotlin.jvm.optionals.getOrNull
 
 @ApiStatus.Experimental
 @Service(Service.Level.APP)
-class GitConfigurationCache(cs: CoroutineScope) : GitConfigurationCacheBase(cs) {
+class GitConfigurationCache() : GitConfigurationCacheBase() {
   companion object {
     @JvmStatic
     fun getInstance(): GitConfigurationCache = service()
@@ -29,7 +28,7 @@ class GitConfigurationCache(cs: CoroutineScope) : GitConfigurationCacheBase(cs) 
 
 @ApiStatus.Experimental
 @Service(Service.Level.PROJECT)
-class GitProjectConfigurationCache(val project: Project, cs: CoroutineScope) : GitConfigurationCacheBase(cs) {
+class GitProjectConfigurationCache(val project: Project) : GitConfigurationCacheBase() {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): GitProjectConfigurationCache = project.service()
@@ -56,13 +55,13 @@ class GitProjectConfigurationCache(val project: Project, cs: CoroutineScope) : G
   }
 
   fun clearForRepo(repository: GitRepository) {
-    cache.asMap().keys.removeIf {
+    cache.keys.removeIf {
       it is GitRepositoryConfigKey && it.repository == repository
     }
   }
 
   private fun clearInvalidKeys() {
-    cache.asMap().keys.removeIf {
+    cache.keys.removeIf {
       it is GitRepositoryConfigKey && it.repository.isDisposed
     }
   }
@@ -70,19 +69,17 @@ class GitProjectConfigurationCache(val project: Project, cs: CoroutineScope) : G
   data class RepoConfigKey(override val repository: GitRepository, val key: String) : GitRepositoryConfigKey<String?>
 }
 
-abstract class GitConfigurationCacheBase(private val cs: CoroutineScope) : Disposable {
-  protected val cache: AsyncCache<GitConfigKey<*>, Any?> = CaffeineUtil
-    .withIoExecutor()
-    .buildAsync()
+abstract class GitConfigurationCacheBase() : Disposable {
+  protected val cache: MutableMap<GitConfigKey<*>, Optional<*>> = ConcurrentHashMap()
 
   @RequiresBackgroundThread
   @Suppress("UNCHECKED_CAST")
-  fun <T> computeCachedValue(configKey: GitConfigKey<T>, computeValue: suspend () -> T): T = cache.get(configKey) { _, _ ->
-    cs.future { computeValue() }
-  }.get() as T
+  fun <T> computeCachedValue(configKey: GitConfigKey<T>, computeValue: () -> T): T {
+    return cache.computeIfAbsent(configKey) { k -> Optional.ofNullable(computeValue()) }.getOrNull() as T
+  }
 
   fun clearCache() {
-    cache.synchronous().invalidateAll()
+    cache.clear()
   }
 
   override fun dispose() {

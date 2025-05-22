@@ -237,6 +237,7 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
   private fun readLengthFromGit(root: VirtualFile, hash: String): Long {
     try {
       val h = GitLineHandler(project, root, GitCommand.CAT_FILE)
+      h.isEnableInteractiveCallbacks = false
       h.setSilent(true)
       h.addParameters("-s")
       h.addParameters(hash)
