@@ -2,8 +2,11 @@
 package com.intellij.codeInsight.intention.impl.preview
 
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewDiffResult.Companion.fromCustomDiff
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo.CustomDiff
+import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
 import org.junit.Test
 
@@ -138,9 +141,9 @@ class IntentionPreviewDiffResultTest : LightPlatformCodeInsightFixture4TestCase(
     """.trimIndent(), """
       non changed
       preserved
-    """.trimIndent(), "Test.txt")
+    """.trimIndent(), "Test.xml")
     assertEquals("""
-      // Test.txt
+      <!-- Test.xml -->
       ---------------------
       1 : #-prefix-#
       2 : preserved
@@ -163,12 +166,15 @@ class IntentionPreviewDiffResultTest : LightPlatformCodeInsightFixture4TestCase(
   }
   
   @Test
+  fun testAddSpaceAtTheEnd() {
+    val diffs = createDiffs("class Test{}", "class Test{} ")
+    assertEquals("0 : class Test{}#+ +#", diffs)
+  }
+  
+  @Test
   fun testLotsOfLines() {
-    val oldText = (1..200).map { "line $it" }.joinToString("\n")
-    val newText = oldText.replace("1", "I")
-    val diffs = createDiffs(oldText, newText, "MyFile.txt")
-    assertEquals("""
-      // MyFile.txt
+    val diffTo109 = """
+      // MyFile.java
       ---------------------
       0 : line #!I!#
       ---------------------
@@ -210,9 +216,83 @@ class IntentionPreviewDiffResultTest : LightPlatformCodeInsightFixture4TestCase(
       107: line I08
       108: line I09
       109: line II0
+    """.trimIndent()
+    val diffTo109AndEllipsis = "$diffTo109\n---------------------\n..."
+    val oldText1 = (1..110).joinToString("\n") { "line $it" } + "\nline 222\nline 223"
+    assertEquals(diffTo109, createDiffs(oldText1, oldText1.replace("1", "I"), "MyFile.java"))
+    val oldText2 = (1..110).joinToString("\n") { "line $it" } + "\nline 222\nline 223\nline 331"
+    assertEquals(diffTo109AndEllipsis, createDiffs(oldText2, oldText2.replace("1", "I"), "MyFile.java"))
+    val oldText3 = (1..200).joinToString("\n") { "line $it" }
+    assertEquals(diffTo109AndEllipsis, createDiffs(oldText3, oldText3.replace("1", "I"), "MyFile.java"))
+  }
+  
+  @Test
+  fun testLotsOfLinesWithFragments() {
+    val oldText = (1..200).joinToString("\n") { "line $it" }
+    val newText = (20..180).joinToString("\n") { "line $it" }
+    assertEquals("""
+      0 : #-line 1
+      1 : line 2
+      2 : line 3
+      3 : line 4
+      4 : line 5
+      5 : line 6
+      6 : line 7
+      7 : line 8
+      8 : line 9
+      9 : line 10
+      10: line 11
+      11: line 12
+      12: line 13
+      13: line 14
+      14: line 15
+      15: line 16
+      16: line 17
+      17: line 18
+      18: line 19-#
+      ---------------------
+      180: #-line 181
+      181: line 182
+      182: line 183
+      183: line 184
+      184: line 185
+      185: line 186
+      186: line 187
+      187: line 188
+      188: line 189
+      189: line 190
+      190: line 191
+      191: line 192
+      192: line 193-#
       ---------------------
       ...
-    """.trimIndent(), diffs)
+    """.trimIndent(), createDiffs(oldText, newText))
+  }
+  
+  @Test
+  fun testMultiDiff() {
+    val multiFileDiff = IntentionPreviewInfo.MultiFileDiff(listOf(
+      CustomDiff(JavaFileType.INSTANCE, "Test1.java", "class A {}", "class B {}"),
+      CustomDiff(JavaFileType.INSTANCE, "Test2.java", "class C {}", "class D {}"),
+    ))
+    val result = IntentionPreviewDiffResult.fromMultiDiff(multiFileDiff).formatResult()
+    assertEquals("""
+      // Test1.java
+      ---------------------
+      class #!B!# {}
+      ---------------------
+      // Test2.java
+      ---------------------
+      class #!D!# {}
+    """.trimIndent(), result)
+  }
+  
+  @Test
+  fun testNoLineNumbersIgnoreWhiteSpace() {
+    val result = IntentionPreviewDiffResult.create(
+      JavaFileType.INSTANCE, "class A {}", "class A {} ", ComparisonPolicy.IGNORE_WHITESPACES, false, "Test.java"
+    ).formatResult()
+    assertEquals("", result)
   }
   
   /**
@@ -227,7 +307,12 @@ class IntentionPreviewDiffResultTest : LightPlatformCodeInsightFixture4TestCase(
    * @param fileName (optional) name of the file to be used; it creates a separate chunk with a comment
    */
   private fun createDiffs(origText: String, modifiedText: String, fileName: String? = null): String {
-    return fromCustomDiff(CustomDiff(JavaFileType.INSTANCE, fileName, origText, modifiedText, true)).shorten(32).diffs.joinToString(
+    val fileType = if (fileName == null) JavaFileType.INSTANCE else FileTypeManager.getInstance().getFileTypeByFileName(fileName)
+    return fromCustomDiff(CustomDiff(fileType, fileName, origText, modifiedText, true)).shorten(32).formatResult()
+  }
+
+  private fun IntentionPreviewDiffResult.formatResult(): String {
+    return diffs.joinToString(
       separator = "\n---------------------\n") { diffInfo ->
       val addends = diffInfo.fragments.flatMap { fragment ->
         listOf(fragment.start to when (fragment.type) {

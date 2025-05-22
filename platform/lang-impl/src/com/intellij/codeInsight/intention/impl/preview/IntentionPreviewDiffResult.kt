@@ -31,7 +31,7 @@ data class IntentionPreviewDiffResult(val diffs: List<DiffInfo>, @TestOnly val n
       if (this.length <= length) return this
       val newText = fileText.lines().take(length).joinToString("\n")
       val newFragments = fragments.filter { it.start < newText.length }
-        .map { if (it.end >= newText.length) it else it.copy(end = newText.length) }
+        .map { if (it.end <= newText.length) it else it.copy(end = newText.length) }
       return DiffInfo(fileType, newText, startLine, length, newFragments)
     }
   }
@@ -47,6 +47,7 @@ data class IntentionPreviewDiffResult(val diffs: List<DiffInfo>, @TestOnly val n
       }
       val ellipsis = DiffInfo(PlainTextFileType.INSTANCE, "...", -1, 1, listOf())
       if (nextLength == maxLines) {
+        if (idx == diffs.size - 1) return this
         return IntentionPreviewDiffResult(diffs.subList(0, idx + 1) + ellipsis, newText)
       }
       return IntentionPreviewDiffResult(diffs.subList(0, idx) +
