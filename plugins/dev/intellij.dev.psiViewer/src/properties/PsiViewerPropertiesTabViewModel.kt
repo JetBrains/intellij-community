@@ -3,7 +3,7 @@ package com.intellij.dev.psiViewer.properties
 import com.intellij.dev.psiViewer.PsiViewerSettings
 import com.intellij.dev.psiViewer.properties.tree.PsiViewerPropertiesTreeViewModel
 import com.intellij.dev.psiViewer.properties.tree.PsiViewerPropertyNode
-import com.intellij.dev.psiViewer.properties.tree.nodes.apiMethods.PsiViewerApiMethodEvaluator
+import com.intellij.dev.psiViewer.properties.tree.nodes.apiMethods.PsiViewerApiMethod
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.asContextElement
@@ -37,8 +37,8 @@ class PsiViewerPropertiesTabViewModel(
         project,
         rootPsiFile,
         settings.showEmptyProperties,
-        PsiViewerApiMethodEvaluator.default,
-        this::getPsiSelectorInMainTree,
+        apiMethodProviders = PsiViewerApiMethod.Provider.EP_NAME.extensionList,
+        psiSelectorInMainTree = this::getPsiSelectorInMainTree,
         currentDepth = PsiViewerPropertyNode.Context.Depth(0, 0, 0),
         depthLimit = PsiViewerPropertyNode.Context.Depth(Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE)
       )

@@ -1,7 +1,6 @@
 package com.intellij.dev.psiViewer.properties.tree
 
 import com.intellij.dev.psiViewer.properties.tree.nodes.apiMethods.PsiViewerApiMethod
-import com.intellij.dev.psiViewer.properties.tree.nodes.apiMethods.PsiViewerApiMethodEvaluator
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.thisLogger
@@ -17,7 +16,7 @@ interface PsiViewerPropertyNode {
     val project: Project,
     val rootPsiFile: PsiFile?,
     val showEmptyNodes: Boolean,
-    val apiMethodEvaluator: PsiViewerApiMethodEvaluator,
+    val apiMethodProviders: List<PsiViewerApiMethod.Provider>,
     val psiSelectorInMainTree: suspend (PsiElement) -> Runnable?,
 
     val currentDepth: Depth,

@@ -48,7 +48,7 @@ private suspend fun computePsiViewerNodeByMethodCall(
   val matchedNodeFactory = PsiViewerPropertyNode.Factory.findMatchingFactory(returnType)
   if (matchedNodeFactory != null) {
     return methodReturnValuePsiViewerNode(
-      value = nodeContext.apiMethodEvaluator.evaluate(psiViewerApiMethod),
+      value = psiViewerApiMethod.invoke(),
       psiViewerApiMethod.name,
       psiViewerApiMethod.returnType,
       matchedNodeFactory,
@@ -59,7 +59,7 @@ private suspend fun computePsiViewerNodeByMethodCall(
   val returnedCollectionType = psiViewerApiMethod.returnType.returnedCollectionType ?: return null
   val matchedNodeFactoryOfCollectionType = PsiViewerPropertyNode.Factory.findMatchingFactory(returnedCollectionType) ?: return null
 
-  val returnedValue = nodeContext.apiMethodEvaluator.evaluate(psiViewerApiMethod) ?: return null
+  val returnedValue = psiViewerApiMethod.invoke() ?: return null
   val returnedList = (returnedValue as? Array<*>)?.toList() ?: (returnedValue as? Collection<*>) ?: return null
 
   val childrenNodes = coroutineScope {
@@ -104,7 +104,7 @@ suspend fun computePsiViewerApiClassesNodes(
     val apiClassesNodes = apiClasses
       .mapIndexed { idx, apiClass ->
         async {
-          val apiMethods = apiClass.psiViewerApiMethods(instance)
+          val apiMethods = apiClass.psiViewerApiMethods(nodeContext, instance)
           psiViewerPropertyNodeForApiClass(nodeContext, apiClass, apiMethods, weight = idx)
         }
       }
