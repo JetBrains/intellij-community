@@ -115,8 +115,8 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
         String rootProjectPath = determineRootProject(projectPath);
         GradleWrapperHelper.ensureInstalledWrapper(id, rootProjectPath, settings, listener, cancellationToken);
       }
-      GradleExecutionHelper.execute(projectPath, settings, id, listener, cancellationToken, connection -> {
-        executeTasks(projectPath, id, settings, listener, connection, cancellationToken);
+      GradleExecutionHelper.execute(projectPath, settings, id, listener, cancellationToken, (connection, buildEnvironment) -> {
+        executeTasks(projectPath, id, settings, listener, connection, cancellationToken, buildEnvironment);
         return null;
       });
     }
@@ -131,54 +131,38 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     @NotNull GradleExecutionSettings settings,
     @NotNull ExternalSystemTaskNotificationListener listener,
     @NotNull ProjectConnection connection,
-    @NotNull CancellationToken cancellationToken
+    @NotNull CancellationToken cancellationToken,
+    @NotNull BuildEnvironment buildEnvironment
   ) {
-    BuildEnvironment buildEnvironment = null;
-    try {
-      buildEnvironment = GradleExecutionHelper.getBuildEnvironment(connection, id, listener, cancellationToken, settings);
-      var gradleVersion = getGradleVersion(buildEnvironment);
+    var gradleVersion = GradleVersion.version(buildEnvironment.getGradle().getGradleVersion());
 
-      setupGradleScriptDebugging(settings);
-      setupDebuggerDispatchPort(settings);
-      setupBuiltInTestEvents(settings, gradleVersion);
+    setupGradleScriptDebugging(settings);
+    setupDebuggerDispatchPort(settings);
+    setupBuiltInTestEvents(settings, gradleVersion);
 
-      configureTasks(projectPath, id, settings, gradleVersion);
+    configureTasks(projectPath, id, settings, gradleVersion);
 
-      for (GradleBuildParticipant buildParticipant : settings.getExecutionWorkspace().getBuildParticipants()) {
-        settings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
-      }
-      prepareTaskState(id, settings, listener);
-
-      if (Registry.is("gradle.report.recently.saved.paths")) {
-        ApplicationManager.getApplication()
-          .getService(GradleFileModificationTracker.class)
-          .notifyConnectionAboutChangedPaths(connection);
-      }
-
-      var operation = isApplicableTestLauncher(id, projectPath, settings, gradleVersion)
-                      ? connection.newTestLauncher()
-                      : connection.newBuild();
-      GradleExecutionHelper.prepareForExecution(operation, cancellationToken, id, settings, listener, buildEnvironment);
-      if (operation instanceof BuildLauncher) {
-        ((BuildLauncher)operation).run();
-      }
-      else {
-        ((TestLauncher)operation).run();
-      }
+    for (GradleBuildParticipant buildParticipant : settings.getExecutionWorkspace().getBuildParticipants()) {
+      settings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
     }
-    catch (RuntimeException e) {
-      LOG.debug("Gradle build launcher error", e);
-      final GradleProjectResolverExtension projectResolverChain = GradleProjectResolver.createProjectResolverChain();
-      throw projectResolverChain.getUserFriendlyError(buildEnvironment, e, projectPath, null);
-    }
-  }
+    prepareTaskState(id, settings, listener);
 
-  private static @Nullable GradleVersion getGradleVersion(@Nullable BuildEnvironment buildEnvironment) {
-    return Optional.ofNullable(buildEnvironment)
-      .map(it -> it.getGradle())
-      .map(it -> it.getGradleVersion())
-      .map(it -> GradleInstallationManager.getGradleVersionSafe(it))
-      .orElse(null);
+    if (Registry.is("gradle.report.recently.saved.paths")) {
+      ApplicationManager.getApplication()
+        .getService(GradleFileModificationTracker.class)
+        .notifyConnectionAboutChangedPaths(connection);
+    }
+
+    var operation = isApplicableTestLauncher(id, projectPath, settings, gradleVersion)
+                    ? connection.newTestLauncher()
+                    : connection.newBuild();
+    GradleExecutionHelper.prepareForExecution(operation, cancellationToken, id, settings, listener, buildEnvironment);
+    if (operation instanceof BuildLauncher) {
+      ((BuildLauncher)operation).run();
+    }
+    else {
+      ((TestLauncher)operation).run();
+    }
   }
 
   private static boolean isApplicableTestLauncher(

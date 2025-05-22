@@ -13,6 +13,7 @@ import org.gradle.tooling.model.BuildModel;
 import org.gradle.tooling.model.ProjectModel;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.IdeaModule;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,7 @@ import java.util.Collection;
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.NonExtendable
 public interface ProjectResolverContext extends UserDataHolderEx {
   @NotNull
   ExternalSystemTaskId getExternalSystemTaskId();
@@ -56,8 +58,7 @@ public interface ProjectResolverContext extends UserDataHolderEx {
 
   boolean isDelegatedBuild();
 
-  @Nullable
-  BuildEnvironment getBuildEnvironment();
+  @NotNull BuildEnvironment getBuildEnvironment();
 
   @NotNull
   GradleLightBuild getRootBuild();
@@ -99,8 +100,9 @@ public interface ProjectResolverContext extends UserDataHolderEx {
 
   boolean hasModulesWithModel(@NotNull Class<?> modelClass);
 
-  @Nullable
-  String getProjectGradleVersion();
+  @NotNull String getProjectGradleVersion();
+
+  @NotNull GradleVersion getGradleVersion();
 
   @Nullable
   String getBuildSrcGroup();

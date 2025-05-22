@@ -139,7 +139,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
       });
     }
     catch (Exception e) {
-      LOG.debug(e);
+      LOG.warn(myId + ": Task execution failed", e);
     }
     catch (Throwable e) {
       LOG.error(e);

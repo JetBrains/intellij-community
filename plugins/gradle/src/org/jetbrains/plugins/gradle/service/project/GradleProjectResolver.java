@@ -23,7 +23,6 @@ import com.intellij.openapi.externalSystem.service.project.ExternalSystemProject
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemSyncActionsCollector;
 import com.intellij.openapi.externalSystem.statistics.Phase;
 import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -31,7 +30,6 @@ import com.intellij.openapi.util.io.CanonicalPathPrefixTree;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
@@ -74,6 +72,7 @@ import org.jetbrains.plugins.gradle.util.GradleModuleDataKt;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -178,7 +177,7 @@ public final class GradleProjectResolver implements ExternalSystemProjectResolve
 
       var projectResolverChain = createProjectResolverChain(resolverContext);
 
-      var projectDataNode = executeProjectResolverTask(resolverContext, projectResolverChain, connection ->
+      var projectDataNode = executeProjectResolverTask(resolverContext, connection ->
         doResolveProjectInfo(connection, resolverContext, projectResolverChain)
       );
 
@@ -191,6 +190,14 @@ public final class GradleProjectResolver implements ExternalSystemProjectResolve
       }
 
       return projectDataNode;
+    }
+    catch (CancellationException ce) {
+      throw ce;
+    }
+    catch (RuntimeException e) {
+      ExternalSystemSyncActionsCollector.logError(id.findProject(), id.getId(), extractCause(e));
+      ExternalSystemSyncActionsCollector.logSyncFinished(id.findProject(), id.getId(), false);
+      throw e;
     }
     finally {
       gradleExecutionSpan.end();
@@ -219,7 +226,6 @@ public final class GradleProjectResolver implements ExternalSystemProjectResolve
 
   static <R> R executeProjectResolverTask(
     @NotNull DefaultProjectResolverContext resolverContext,
-    @NotNull GradleProjectResolverExtension projectResolverChain,
     @NotNull Function<ProjectConnection, R> task
   ) {
     var projectPath = resolverContext.getProjectPath();
@@ -228,31 +234,9 @@ public final class GradleProjectResolver implements ExternalSystemProjectResolve
     var listener = resolverContext.getListener();
     var cancellationToken = resolverContext.getCancellationToken();
 
-    return GradleExecutionHelper.execute(projectPath, settings, id, listener, cancellationToken, connection -> {
-      BuildEnvironment buildEnvironment = null;
-      try {
-        buildEnvironment = GradleExecutionHelper.getBuildEnvironment(connection, id, listener, cancellationToken, settings);
-        if (buildEnvironment != null) {
-          resolverContext.setBuildEnvironment(buildEnvironment);
-        }
-
-        return task.apply(connection);
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (RuntimeException e) {
-        LOG.info("Gradle project resolve error", e);
-        var esException = ExceptionUtil.findCause(e, ExternalSystemException.class);
-        if (esException != null && esException != e) {
-          LOG.info("\nCaused by: " + esException.getOriginalReason());
-        }
-
-        ExternalSystemSyncActionsCollector.logError(id.findProject(), id.getId(), extractCause(e));
-        ExternalSystemSyncActionsCollector.logSyncFinished(id.findProject(), id.getId(), false);
-
-        throw projectResolverChain.getUserFriendlyError(buildEnvironment, e, projectPath, null);
-      }
+    return GradleExecutionHelper.execute(projectPath, settings, id, listener, cancellationToken, (connection, buildEnvironment) -> {
+      resolverContext.setBuildEnvironment(buildEnvironment);
+      return task.apply(connection);
     });
   }
 
@@ -262,7 +246,7 @@ public final class GradleProjectResolver implements ExternalSystemProjectResolve
     @NotNull GradleProjectResolverExtension projectResolverChain
   ) throws IllegalArgumentException, IllegalStateException {
 
-    var buildAction = new GradleModelFetchAction();
+    var buildAction = new GradleModelFetchAction(resolverContext.getGradleVersion());
 
     GradleExecutionSettings executionSettings = resolverContext.getSettings();
 
@@ -308,7 +292,7 @@ public final class GradleProjectResolver implements ExternalSystemProjectResolve
 
     var environmentConfigurationProvider = ExternalSystemExecutionAware.getEnvironmentConfigurationProvider(executionSettings);
     var pathMapper = ObjectUtils.doIfNotNull(environmentConfigurationProvider, it -> it.getPathMapper());
-    var models = new GradleIdeaModelHolder(pathMapper, resolverContext.getBuildEnvironment());
+    var models = new GradleIdeaModelHolder(pathMapper);
     resolverContext.setModels(models);
 
 

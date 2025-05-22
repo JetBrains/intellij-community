@@ -40,6 +40,7 @@ import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
 import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider;
 import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelperExtension;
+import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLine;
@@ -50,6 +51,8 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.CancellationException;
+import java.util.function.BiFunction;
 
 /**
  * This is the low-level Gradle execution API that connects and interacts with the Gradle daemon using the Gradle tooling API.
@@ -179,6 +182,30 @@ public final class GradleExecutionHelper {
         ExternalSystemException externalSystemException = new ExternalSystemException(ExceptionUtil.getMessage(rootCause), e);
         externalSystemException.initCause(e);
         throw externalSystemException;
+      }
+    });
+  }
+
+  public static <T> T execute(
+    @NotNull String projectPath,
+    @NotNull GradleExecutionSettings settings,
+    @NotNull ExternalSystemTaskId taskId,
+    @NotNull ExternalSystemTaskNotificationListener listener,
+    @NotNull CancellationToken cancellationToken,
+    @NotNull BiFunction<? super ProjectConnection, ? super BuildEnvironment, ? extends T> action
+  ) {
+    return execute(projectPath, settings, taskId, listener, cancellationToken, connection -> {
+      BuildEnvironment buildEnvironment = null;
+      try {
+        buildEnvironment = getBuildEnvironment(connection, taskId, listener, cancellationToken, settings);
+        return action.apply(connection, buildEnvironment);
+      }
+      catch (CancellationException ce) {
+        throw ce;
+      }
+      catch (Exception ex) {
+        throw GradleProjectResolver.createProjectResolverChain()
+          .getUserFriendlyError(buildEnvironment, ex, projectPath, null);
       }
     });
   }
@@ -444,16 +471,18 @@ public final class GradleExecutionHelper {
     operation.setEnvironmentVariables(effectiveEnvironment);
   }
 
-  public static @Nullable BuildEnvironment getBuildEnvironment(@NotNull ProjectConnection connection,
-                                                               @NotNull ExternalSystemTaskId taskId,
-                                                               @NotNull ExternalSystemTaskNotificationListener listener,
-                                                               @Nullable CancellationToken cancellationToken,
-                                                               @Nullable GradleExecutionSettings settings) {
+  public static @NotNull BuildEnvironment getBuildEnvironment(
+    @NotNull ProjectConnection connection,
+    @NotNull ExternalSystemTaskId taskId,
+    @NotNull ExternalSystemTaskNotificationListener listener,
+    @Nullable CancellationToken cancellationToken,
+    @Nullable GradleExecutionSettings settings
+  ) {
     Span span = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
       .spanBuilder("GetBuildEnvironment")
       .startSpan();
     try (Scope ignore = span.makeCurrent()) {
-      BuildEnvironment buildEnvironment = null;
+      BuildEnvironment buildEnvironment;
       try {
         ModelBuilder<BuildEnvironment> modelBuilder = connection.model(BuildEnvironment.class);
         if (cancellationToken != null) {
@@ -472,15 +501,21 @@ public final class GradleExecutionHelper {
 
         buildEnvironment = modelBuilder.get();
       }
-      catch (Throwable t) {
-        span.recordException(t);
-        span.setStatus(StatusCode.ERROR);
-        LOG.warn("Failed to obtain build environment from Gradle daemon.", t);
+      catch (Exception ex) {
+        throw new RuntimeException("Failed to obtain build environment from Gradle daemon.", ex);
       }
-      if (buildEnvironment != null) {
-        checkThatGradleBuildEnvironmentIsSupportedByIdea(buildEnvironment);
-      }
+
+      checkThatGradleBuildEnvironmentIsSupportedByIdea(buildEnvironment);
+
       return buildEnvironment;
+    }
+    catch (CancellationException ce) {
+      throw ce;
+    }
+    catch (Exception ex) {
+      span.recordException(ex);
+      span.setStatus(StatusCode.ERROR);
+      throw ex;
     }
     finally {
       span.end();

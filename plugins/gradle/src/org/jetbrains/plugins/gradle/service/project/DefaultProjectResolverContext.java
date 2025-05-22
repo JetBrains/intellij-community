@@ -22,6 +22,7 @@ import org.gradle.tooling.model.BuildIdentifier;
 import org.gradle.tooling.model.BuildModel;
 import org.gradle.tooling.model.ProjectModel;
 import org.gradle.tooling.model.build.BuildEnvironment;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +49,6 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   private final @NotNull GradleProjectResolverIndicator myProjectResolverIndicator;
   private @Nullable GradleIdeaModelHolder myModels;
   private File myGradleUserHome;
-  private @Nullable String myProjectGradleVersion;
   private final boolean myBuildSrcProject;
   private @Nullable String myBuildSrcGroup;
   private @Nullable BuildEnvironment myBuildEnvironment;
@@ -198,11 +198,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
       LOG.debug("The streaming Gradle model fetching isn't applicable: project is closed: " + projectId);
       return false;
     }
-    var gradleVersion = context.getProjectGradleVersion();
-    if (gradleVersion == null) {
-      LOG.debug("The streaming Gradle model fetching isn't applicable: Gradle version cannot be determined");
-      return false;
-    }
+    var gradleVersion = context.getGradleVersion();
     if (GradleVersionUtil.isGradleOlderThan(gradleVersion, "8.6")) {
       LOG.debug("The streaming Gradle model fetching isn't applicable: unsupported Gradle version: " + gradleVersion);
       return false;
@@ -287,14 +283,13 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   }
 
   @Override
-  public String getProjectGradleVersion() {
-    if (myProjectGradleVersion == null) {
-      var buildEnvironment = getBuildEnvironment();
-      if (buildEnvironment != null) {
-        myProjectGradleVersion = buildEnvironment.getGradle().getGradleVersion();
-      }
-    }
-    return myProjectGradleVersion;
+  public @NotNull String getProjectGradleVersion() {
+    return getBuildEnvironment().getGradle().getGradleVersion();
+  }
+
+  @Override
+  public @NotNull GradleVersion getGradleVersion() {
+    return GradleVersion.version(getProjectGradleVersion());
   }
 
   public boolean isBuildSrcProject() {
@@ -334,9 +329,12 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   }
 
   @Override
-  public @Nullable BuildEnvironment getBuildEnvironment() {
-    if (myBuildEnvironment == null && myModels != null) {
-      myBuildEnvironment = myModels.getBuildEnvironment();
+  public @NotNull BuildEnvironment getBuildEnvironment() {
+    if (myBuildEnvironment == null) {
+      throw new IllegalStateException(
+        "The Gradle " + myExternalSystemTaskId + " isn't started.\n" +
+        "See GradleProjectResolver.executeProjectResolverTask from more details."
+      );
     }
     return myBuildEnvironment;
   }
