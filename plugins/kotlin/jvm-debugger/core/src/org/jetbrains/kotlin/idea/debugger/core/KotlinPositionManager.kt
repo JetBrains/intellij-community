@@ -13,6 +13,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContext
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.impl.DexDebugFacility
+import com.intellij.debugger.impl.wrapIncompatibleThreadStateException
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.debugger.requests.ClassPrepareRequestor
@@ -615,18 +616,13 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     }
 
     @RequiresReadLockAbsence
-    private fun findTargetClasses(candidates: List<ReferenceType>, sourcePosition: SourcePosition): List<ReferenceType> {
-        try {
+    private fun findTargetClasses(candidates: List<ReferenceType>, sourcePosition: SourcePosition): List<ReferenceType> =
+        wrapIncompatibleThreadStateException {
             val matchingCandidates = candidates
                 .flatMap { referenceType -> debugProcess.findTargetClasses(referenceType, sourcePosition.line) }
 
-            return matchingCandidates.ifEmpty { candidates }
-        } catch (e: IncompatibleThreadStateException) {
-            return emptyList()
-        } catch (e: VMDisconnectedException) {
-            return emptyList()
-        }
-    }
+            matchingCandidates.ifEmpty { candidates }
+        } ?: emptyList()
 
     override fun locationsOfLine(type: ReferenceType, position: SourcePosition): List<Location> {
         if (position.file !is KtFile) {

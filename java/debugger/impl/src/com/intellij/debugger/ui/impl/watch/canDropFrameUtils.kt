@@ -4,6 +4,7 @@ package com.intellij.debugger.ui.impl.watch
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.withDebugContext
 import com.intellij.debugger.impl.DebuggerUtilsAsync
+import com.intellij.debugger.impl.wrapIncompatibleThreadStateException
 import com.intellij.util.ThreeState
 import com.sun.jdi.Method
 import kotlinx.coroutines.Dispatchers
@@ -21,20 +22,22 @@ internal fun StackFrameDescriptorImpl.canDropFrameAsync(): CompletableFuture<Boo
   val managerThread = frameProxy.virtualMachine.debugProcess.managerThread
   return managerThread.coroutineScope.future(Dispatchers.Default) {
     withDebugContext(managerThread) {
-      val frames = try {
-        frameProxy.threadProxy().frames()
-      }
-      catch (_: EvaluateException) {
-        return@withDebugContext false
-      }
+      wrapIncompatibleThreadStateException {
+        val frames = try {
+          frameProxy.threadProxy().frames()
+        }
+        catch (_: EvaluateException) {
+          return@withDebugContext false
+        }
 
-      isSafeToDropFrame(uiIndex, unsureIfCallerFrameAbsent = false) { i ->
-        val frame = frames.getOrNull(i) ?: return@withDebugContext false
+        isSafeToDropFrame(uiIndex, unsureIfCallerFrameAbsent = false) { i ->
+          val frame = frames.getOrNull(i) ?: return@withDebugContext false
 
-        val location = frame.locationAsync().await()
-        DebuggerUtilsAsync.method(location).await()
-      }.toBoolean()
-    }
+          val location = frame.locationAsync().await()
+          DebuggerUtilsAsync.method(location).await()
+        }.toBoolean()
+      }
+    } ?: false
   }
 }
 

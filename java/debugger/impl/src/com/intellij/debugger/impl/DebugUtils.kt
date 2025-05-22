@@ -27,6 +27,22 @@ class HelperClassNotAvailableException(message: String) : EvaluateException(mess
  */
 class MethodNotFoundException(message: String) : EvaluateException(message)
 
+
+inline fun <T> wrapIncompatibleThreadStateException(block: () -> T): T? = try {
+  block()
+}
+catch (e: EvaluateException) {
+  if (e.cause is IncompatibleThreadStateException) {
+    null
+  }
+  else {
+    throw e
+  }
+}
+catch (_: IncompatibleThreadStateException) {
+  null
+}
+
 internal inline fun <T, E : Exception> suppressExceptions(
   defaultValue: T?,
   rethrow: Class<E>? = null,
