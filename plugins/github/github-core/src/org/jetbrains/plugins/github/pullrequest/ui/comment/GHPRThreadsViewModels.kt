@@ -15,16 +15,26 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.threadsComputation
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModelImpl
 
-internal class GHPRThreadsViewModels(
+internal interface GHPRThreadsViewModels {
+  val canComment: Boolean
+
+  val compactThreads: StateFlow<Collection<GHPRCompactReviewThreadViewModel>>
+  val newComments: StateFlow<Map<GHPRReviewCommentPosition, GHPRReviewNewCommentEditorViewModel>>
+
+  fun requestNewComment(location: GHPRReviewCommentPosition): GHPRReviewNewCommentEditorViewModel
+  fun cancelNewComment(location: GHPRReviewCommentPosition)
+}
+
+internal class GHPRThreadsViewModelsImpl(
   private val project: Project,
   parentCs: CoroutineScope,
   private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider,
-) {
+) : GHPRThreadsViewModels {
   private val cs = parentCs.childScope(javaClass.name)
-  val canComment: Boolean = dataProvider.reviewData.canComment()
+  override val canComment: Boolean = dataProvider.reviewData.canComment()
 
-  val compactThreads: StateFlow<Collection<GHPRCompactReviewThreadViewModel>> =
+  override val compactThreads: StateFlow<Collection<GHPRCompactReviewThreadViewModel>> =
     dataProvider.reviewData.threadsComputationFlow
       .transformConsecutiveSuccesses(false) {
         mapDataToModel(GHPullRequestReviewThread::id,
@@ -37,9 +47,9 @@ internal class GHPRThreadsViewModels(
     UpdateableGHPRCompactReviewThreadViewModel(project, this, dataContext, dataProvider, initialData)
 
   private val _newComments = MutableStateFlow<Map<GHPRReviewCommentPosition, GHPRReviewNewCommentEditorViewModelImpl>>(emptyMap())
-  val newComments: StateFlow<Map<GHPRReviewCommentPosition, GHPRReviewNewCommentEditorViewModel>> = _newComments.asStateFlow()
+  override val newComments: StateFlow<Map<GHPRReviewCommentPosition, GHPRReviewNewCommentEditorViewModel>> = _newComments.asStateFlow()
 
-  fun requestNewComment(location: GHPRReviewCommentPosition): GHPRReviewNewCommentEditorViewModel =
+  override fun requestNewComment(location: GHPRReviewCommentPosition): GHPRReviewNewCommentEditorViewModel =
     _newComments.updateAndGet { currentNewComments ->
       if (!currentNewComments.containsKey(location)) {
         val vm = createNewCommentVm(location)
@@ -50,7 +60,7 @@ internal class GHPRThreadsViewModels(
       }
     }[location]!!
 
-  fun cancelNewComment(location: GHPRReviewCommentPosition) =
+  override fun cancelNewComment(location: GHPRReviewCommentPosition) =
     _newComments.update {
       val oldVm = it[location]
       val newMap = it - location

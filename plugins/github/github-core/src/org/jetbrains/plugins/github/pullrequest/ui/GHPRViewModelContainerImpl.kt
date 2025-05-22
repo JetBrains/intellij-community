@@ -22,7 +22,7 @@ import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProject
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
-import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModelsImpl
 import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffViewModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewInEditorViewModel
@@ -91,7 +91,7 @@ internal class GHPRViewModelContainerImpl(
     GHPRBranchWidgetViewModelImpl(project, cs, settings, dataProvider, branchStateVm, reviewVmHelper, pullRequestId, viewPullRequest)
   }
 
-  private val threadsVms = GHPRThreadsViewModels(project, cs, dataContext, dataProvider)
+  private val threadsVms = GHPRThreadsViewModelsImpl(project, cs, dataContext, dataProvider)
   override val diffVm: GHPRDiffViewModel by lazy {
     GHPRDiffViewModelImpl(project, cs, dataContext, dataProvider, reviewVmHelper, threadsVms).apply {
       setup()
