@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogStorage
+import com.intellij.vcs.log.history.VcsLogFileHistoryUiProvider.Companion.jumpToNearestCommit
 import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToGraphRow
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
@@ -19,10 +20,10 @@ import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcs.log.visible.filters.matches
-import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.ApiStatus
 
-internal interface VcsLogFileHistoryUiProvider {
+@ApiStatus.Internal
+interface VcsLogFileHistoryUiProvider {
   fun canShowFileHistory(project: Project, paths: Collection<FilePath>, revisionNumber: VcsRevisionNumber?): Boolean
   fun showFileHistoryUi(project: Project, paths: Collection<FilePath>, revisionNumber: VcsRevisionNumber?, selectRow: Boolean = true): VcsLogUiEx?
 
@@ -31,6 +32,24 @@ internal interface VcsLogFileHistoryUiProvider {
       return listOf(VcsLogSingleFileHistoryProvider, VcsLogDirectoryHistoryProvider).firstOrNull {
         it.canShowFileHistory(project, paths, revisionNumber)
       }
+    }
+
+    fun VcsLogUiEx.jumpToNearestCommit(storage: VcsLogStorage, hash: Hash, root: VirtualFile, silently: Boolean) {
+      jumpTo(hash, { visiblePack: VisiblePack, h: Hash? ->
+        if (!storage.containsCommit(CommitId(h!!, root))) return@jumpTo VcsLogUiEx.COMMIT_NOT_FOUND
+
+        val commitIndex = storage.getCommitIndex(h, root)
+        var rowIndex = visiblePack.visibleGraph.getVisibleRowIndex(commitIndex)
+        if (rowIndex == null) {
+          rowIndex = findVisibleAncestorRow(commitIndex, visiblePack)
+        }
+        rowIndex ?: VcsLogUiEx.COMMIT_DOES_NOT_MATCH
+      }, SettableFuture.create(), silently, true)
+    }
+
+    fun triggerFileHistoryUsage(project: Project, paths: Collection<FilePath>, hash: Hash?) {
+      val kind = if (paths.size > 1) "multiple" else if (paths.first().isDirectory) "folder" else "file"
+      VcsLogUsageTriggerCollector.triggerFileHistoryUsage(project, kind, hash != null)
     }
   }
 }
@@ -48,7 +67,7 @@ private object VcsLogDirectoryHistoryProvider : VcsLogFileHistoryUiProvider {
     val hash = revisionNumber?.asString()?.let { HashImpl.build(it) }
     val root = VcsLogUtil.getActualRoot(project, paths.first())!!
 
-    triggerFileHistoryUsage(project, paths, hash)
+    VcsLogFileHistoryUiProvider.triggerFileHistoryUsage(project, paths, hash)
 
     val logManager = VcsProjectLog.getInstance(project).logManager as? IdeVcsLogManager ?: return null
 
@@ -89,7 +108,7 @@ private object VcsLogSingleFileHistoryProvider : VcsLogFileHistoryUiProvider {
     if (!isNewHistoryEnabled() || paths.size != 1) return false
 
     val root = VcsLogUtil.getActualRoot(project, paths.single()) ?: return false
-    val correctedPath = getCorrectedPath(project, paths.single(), revisionNumber != null)
+    val correctedPath = FileHistoryUtil.getCorrectedPath(project, paths.single(), revisionNumber != null)
     if (correctedPath.isDirectory) return false
 
     val logProvider = VcsProjectLog.getInstance(project).dataManager?.logProviders?.get(root)
@@ -100,12 +119,12 @@ private object VcsLogSingleFileHistoryProvider : VcsLogFileHistoryUiProvider {
     if (paths.size != 1) return null
 
     val root = VcsLogUtil.getActualRoot(project, paths.first())!!
-    val path = getCorrectedPath(project, paths.single(), revisionNumber != null)
+    val path = FileHistoryUtil.getCorrectedPath(project, paths.single(), revisionNumber != null)
     if (path.isDirectory) return null
 
 
     val hash = revisionNumber?.asString()?.let { HashImpl.build(it) }
-    triggerFileHistoryUsage(project, paths, hash)
+    VcsLogFileHistoryUiProvider.triggerFileHistoryUsage(project, paths, hash)
 
     val logManager = VcsProjectLog.getInstance(project).logManager!!
 
@@ -138,27 +157,4 @@ private fun selectRowWhenOpen(logManager: VcsLogManager, hash: Hash?, root: Virt
   else if (firstTime) {
     ui.jumpToGraphRow(0, true, true)
   }
-}
-
-private fun VcsLogUiEx.jumpToNearestCommit(storage: VcsLogStorage, hash: Hash, root: VirtualFile, silently: Boolean) {
-  jumpTo(hash, { visiblePack: VisiblePack, h: Hash? ->
-    if (!storage.containsCommit(CommitId(h!!, root))) return@jumpTo VcsLogUiEx.COMMIT_NOT_FOUND
-
-    val commitIndex = storage.getCommitIndex(h, root)
-    var rowIndex = visiblePack.visibleGraph.getVisibleRowIndex(commitIndex)
-    if (rowIndex == null) {
-      rowIndex = findVisibleAncestorRow(commitIndex, visiblePack)
-    }
-    rowIndex ?: VcsLogUiEx.COMMIT_DOES_NOT_MATCH
-  }, SettableFuture.create(), silently, true)
-}
-
-private fun getCorrectedPath(project: Project, path: FilePath, isRevisionHistory: Boolean): FilePath {
-  if (isRevisionHistory) return path
-  return VcsUtil.getLastCommitPath(project, path)
-}
-
-private fun triggerFileHistoryUsage(project: Project, paths: Collection<FilePath>, hash: Hash?) {
-  val kind = if (paths.size > 1) "multiple" else if (paths.first().isDirectory) "folder" else "file"
-  VcsLogUsageTriggerCollector.triggerFileHistoryUsage(project, kind, hash != null)
 }

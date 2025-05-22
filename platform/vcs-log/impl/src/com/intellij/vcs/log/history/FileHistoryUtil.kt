@@ -20,6 +20,7 @@ import com.intellij.vcs.log.impl.VcsChangesMerger
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import com.intellij.vcs.log.visible.filters.matches
 import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 
@@ -121,6 +122,29 @@ object FileHistoryUtil {
 
     if (forPathsFilter.isNotEmpty()) return VcsLogFilterObject.fromPaths(forPathsFilter)
     return VcsLogFilterObject.fromRoots(forRootFilter)
+  }
+
+  @Internal
+  fun getCorrectedPath(project: Project, path: FilePath, isRevisionHistory: Boolean): FilePath {
+    if (isRevisionHistory) return path
+    return VcsUtil.getLastCommitPath(project, path)
+  }
+
+  @Internal
+  fun createHashFilter(hash: Hash?, root: VirtualFile): VcsLogFilter {
+    if (hash == null) {
+      return VcsLogFilterObject.fromBranch(VcsLogUtil.HEAD)
+    }
+
+    return VcsLogFilterObject.fromCommit(CommitId(hash, root))
+  }
+
+  @Internal
+  fun matches(filters: VcsLogFilterCollection, pathsFilter: VcsLogFilter, hashFilter: VcsLogFilter): Boolean {
+    if (!filters.matches(hashFilter.key, pathsFilter.key)) {
+      return false
+    }
+    return filters.get(pathsFilter.key) == pathsFilter && filters.get(hashFilter.key) == hashFilter
   }
 
   private class MyVcsChangesMerger(

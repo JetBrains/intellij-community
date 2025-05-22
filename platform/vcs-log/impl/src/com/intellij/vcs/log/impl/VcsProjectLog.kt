@@ -62,10 +62,13 @@ abstract class VcsProjectLog internal constructor() { // not an interface due to
 
   abstract fun showRevisionInMainLog(hash: Hash)
 
+  @Internal
   abstract fun canShowFileHistory(paths: Collection<FilePath>, revisionNumber: VcsRevisionNumber?): Boolean
 
+  @Internal
   abstract fun openFileHistory(paths: Collection<FilePath>, revisionNumber: VcsRevisionNumber?)
 
+  @Internal
   abstract fun openFileHistory(paths: Collection<FilePath>, revisionNumber: VcsRevisionNumber?, revisionToSelect: VcsRevisionNumber)
 
   /**
