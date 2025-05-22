@@ -188,8 +188,8 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       }.visibleIf(wasUsedBefore)
 
       // settings to sync
-      group(message("enable.dialog.select.what.to.sync")) {
-        rowsRange {
+      rowsRange {
+        group(message("enable.dialog.select.what.to.sync")) {
           row {
             icon(AllIcons.General.BalloonWarning).applyToComponent {
               isOpaque = true
@@ -250,7 +250,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
                 }
                 if (SettingsSyncSettings.getInstance().syncEnabled != enableCheckbox.isSelected) {
                   if (enableCheckbox.isSelected) {
-                    SettingsSyncSettings.getInstance().syncEnabled = enableCheckbox.isSelected
+                    SettingsSyncSettings.getInstance().syncEnabled = true
                     if (enableSyncOption.get() == InitSyncType.GET_FROM_SERVER) {
                       syncEnabler.getSettingsFromServer()
                     }
@@ -259,24 +259,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
                     }
                   }
                   else {
-                    when (disableSyncOption.get()) {
-                      DisableSyncType.DISABLE_AND_REMOVE_DATA -> {
-                        disableAndRemoveData()
-                        SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(
-                          SettingsSyncEventsStatistics.ManualDisableMethod.DISABLED_AND_REMOVED_DATA_FROM_SERVER)
-                      }
-                      DisableSyncType.DISABLE -> {
-                        SettingsSyncSettings.getInstance().syncEnabled = false
-                        syncStatusChanged()
-                        SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(SettingsSyncEventsStatistics.ManualDisableMethod.DISABLED_ONLY)
-                      }
-                      else -> {
-                        SettingsSyncSettings.getInstance().syncEnabled = false
-                        syncStatusChanged()
-                        SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(SettingsSyncEventsStatistics.ManualDisableMethod.DISABLED_ONLY)
-                      }
-                    }
-                    SettingsSyncSettings.getInstance().syncEnabled = enableCheckbox.isSelected
+                    handleDisableSync()
                   }
                   // clear the flag
                   remoteSettingsExist.set(false)
@@ -306,27 +289,32 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
           }
         }.visibleIf(actionRequired)
 
-        //rowsRange {
-        //  row {
-        //    text(message("settings.category.comment.ui.code.system.name"))
-        //  }
-        //  row {
-        //    text(message("settings.category.comment.keymap"))
-        //  }.topGap(TopGap.NONE)
-        //  row {
-        //    text(message("settings.category.comment.plugins"))
-        //  }.topGap(TopGap.NONE)
-        //  row {
-        //    text(message("settings.category.comment.tools"))
-        //  }.topGap(TopGap.NONE)
-        //}.visibleIf(enableCheckbox.selected.not())
-
       }.visibleIf(wasUsedBefore)
 
       // apply necessary changes
     }
     syncStatusChanged()
     return configPanel
+  }
+
+  private fun handleDisableSync() {
+    SettingsSyncSettings.getInstance().syncEnabled = false
+    when (disableSyncOption.get()) {
+      DisableSyncType.DISABLE_AND_REMOVE_DATA -> {
+        disableAndRemoveData()
+        SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(
+          SettingsSyncEventsStatistics.ManualDisableMethod.DISABLED_AND_REMOVED_DATA_FROM_SERVER)
+      }
+      DisableSyncType.DISABLE -> {
+        syncStatusChanged()
+        SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(SettingsSyncEventsStatistics.ManualDisableMethod.DISABLED_ONLY)
+      }
+      else -> {
+        syncStatusChanged()
+        SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(SettingsSyncEventsStatistics.ManualDisableMethod.DISABLED_ONLY)
+      }
+    }
+    disableSyncOption.set(DisableSyncType.DISABLE)
   }
 
   private fun enableButtonAction(){
@@ -376,6 +364,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       } else {
         enableCheckbox.isSelected = true
       }
+      handleDisableSync()
     }
   }
 
@@ -410,6 +399,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     if (code == 1) {
       enableCheckbox.isSelected = false
       disableSyncOption.set(DisableSyncType.DISABLE)
+      handleDisableSync()
     }
   }
 
