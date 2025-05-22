@@ -49,7 +49,7 @@ public class BraceHighlightingHandlerTest extends LightPlatformCodeInsightTestCa
     Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
     List<Pair<Integer, String>> markers = new ArrayList<>();
     Alarm alarm = psiFile.getProject().getService(BackgroundHighlighter.class).alarm;
-    new BraceHighlightingHandler(psiFile.getProject(), editor, alarm, psiFile).updateBraces();
+    new BraceHighlightingHandler(psiFile.getProject(), editor, alarm, psiFile).updateBraces(true);
     RangeHighlighter[] highlighters = editor.getMarkupModel().getAllHighlighters();
     for (RangeHighlighter highlighter : highlighters) {
       if (highlighter.getLayer() == BraceHighlightingHandler.LAYER) {

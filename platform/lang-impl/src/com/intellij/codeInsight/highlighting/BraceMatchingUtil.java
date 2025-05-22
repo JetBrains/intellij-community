@@ -7,6 +7,7 @@ import com.intellij.ide.highlighter.custom.impl.CustomFileTypeBraceMatcher;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageBraceMatching;
 import com.intellij.lang.PairedBraceMatcher;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -75,14 +76,14 @@ public final class BraceMatchingUtil {
     CharSequence text = editor.getDocument().getCharsSequence();
 
     HighlighterIterator iterator = highlighter.createIterator(offset);
-    FileType fileType = iterator.atEnd() ? null : getFileType(psiFile, iterator.getStart());
+    FileType fileType = iterator.atEnd() ? null : ReadAction.compute(() -> psiFile.isValid() ? getFileType(psiFile, iterator.getStart()) : null);
 
     boolean isBeforeOrInsideLeftBrace = fileType != null && isLBraceToken(iterator, text, fileType);
     boolean isBeforeOrInsideRightBrace = !isBeforeOrInsideLeftBrace && fileType != null && isRBraceToken(iterator, text, fileType);
     boolean isInsideBrace = (isBeforeOrInsideLeftBrace || isBeforeOrInsideRightBrace) && iterator.getStart() < offset;
 
     HighlighterIterator preOffsetIterator = offset > 0 && !isInsideBrace ? highlighter.createIterator(offset - 1) : null;
-    FileType preOffsetFileType = preOffsetIterator != null ? getFileType(psiFile, preOffsetIterator.getStart()) : null;
+    FileType preOffsetFileType = preOffsetIterator == null ? null : ReadAction.compute(() -> psiFile.isValid() ? getFileType(psiFile, preOffsetIterator.getStart()) : null);
 
     boolean isAfterLeftBrace = preOffsetIterator != null &&
                                isLBraceToken(preOffsetIterator, text, preOffsetFileType);
@@ -351,7 +352,6 @@ public final class BraceMatchingUtil {
    * @param stopOnFirstFinishedGroup are we searching for the last corresponding brace in a line of wrapped braces?
    *                                   Examples: `<caret>[{}]()(){}()` if stopOnFirstFinishedGroup == true
    *                                                            ^
-   *
    *                                             `<caret>[{}]()(){}()` if stopOnFirstFinishedGroup == true
    *                                                          ^
    * @return the offset of the found parenth or -1

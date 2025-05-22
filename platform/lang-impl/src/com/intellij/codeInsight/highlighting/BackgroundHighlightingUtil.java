@@ -17,6 +17,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -39,7 +40,9 @@ public final class BackgroundHighlightingUtil {
   @RequiresBackgroundThread
   static Pair<PsiFile, Editor> findInjected(@NotNull Editor editor, @NotNull Project project, int offsetBefore) {
     PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
-    if (psiFile == null) return null;
+    if (psiFile == null || !psiFile.isValid()) {
+      return null;
+    }
     if (psiFile instanceof PsiCompiledFile) {
       psiFile = ((PsiCompiledFile)psiFile).getDecompiledPsiFile();
     }
@@ -60,6 +63,7 @@ public final class BackgroundHighlightingUtil {
            UIUtil.isShowing(editor.getContentComponent());
   }
 
+  @RequiresEdt
   static boolean needMatching(@NotNull Editor newEditor, @NotNull CodeInsightSettings codeInsightSettings) {
     if (isLocalEditorSupport(newEditor)) {
       return checkFrontend();

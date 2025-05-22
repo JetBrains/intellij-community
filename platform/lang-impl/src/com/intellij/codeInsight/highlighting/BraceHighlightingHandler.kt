@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting
 
+
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.hint.EditorFragmentComponent
 import com.intellij.codeWithMe.ClientId
@@ -64,7 +65,6 @@ class BraceHighlightingHandler internal constructor(
   private val psiFile: PsiFile,
 ) {
   private val document = editor.document
-  private val codeInsightSettings = CodeInsightSettings.getInstance()
 
   companion object {
     const val LAYER: Int = HighlighterLayer.LAST + 1
@@ -177,15 +177,15 @@ class BraceHighlightingHandler internal constructor(
   }
 
   @RequiresEdt
-  fun updateBraces() {
+  @ApiStatus.Internal
+  fun updateBraces(needMatching: Boolean) {
     ThreadingAssertions.assertEventDispatchThread()
 
     clearBraceHighlighters(editor)
 
-    if (!BackgroundHighlightingUtil.needMatching(editor, codeInsightSettings)) {
+    if (!needMatching) {
       return
     }
-
     var offset = editor.caretModel.offset
     val chars = editor.document.charsSequence
 
@@ -231,7 +231,7 @@ class BraceHighlightingHandler internal constructor(
       }
     }
 
-    if (codeInsightSettings.HIGHLIGHT_SCOPE) {
+    if (CodeInsightSettings.getInstance().HIGHLIGHT_SCOPE) {
       SlowOperations.knownIssue("IJPL-162400").use {
         highlightScope(offset)
       }

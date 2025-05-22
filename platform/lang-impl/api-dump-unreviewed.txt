@@ -3266,7 +3266,6 @@ f:com.intellij.codeInsight.highlighting.BraceHighlightingHandler
 - f:highlightBraces(com.intellij.openapi.util.TextRange,com.intellij.openapi.util.TextRange,Z,Z,com.intellij.openapi.fileTypes.FileType):V
 - sf:lineMarkFragment(com.intellij.openapi.editor.ex.EditorEx,com.intellij.openapi.editor.Document,I,I,Z):V
 - sf:showScopeHint(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,I,I):V
-- f:updateBraces():V
 f:com.intellij.codeInsight.highlighting.BraceHighlightingHandler$Companion
 - f:createLineMarkerRenderer(Z):com.intellij.openapi.editor.markup.LineMarkerRenderer
 - f:getLazyParsableHighlighterIfAny(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.openapi.editor.highlighter.EditorHighlighter
