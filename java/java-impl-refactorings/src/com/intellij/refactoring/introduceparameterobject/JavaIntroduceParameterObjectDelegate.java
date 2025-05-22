@@ -7,7 +7,6 @@ import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -15,6 +14,7 @@ import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -67,7 +67,7 @@ public final class JavaIntroduceParameterObjectDelegate
     String baseParameterName = StringUtil.decapitalize(descriptor.getClassName());
     final Project project = method.getProject();
 
-    if (!PsiNameHelper.getInstance(project).isIdentifier(baseParameterName, LanguageLevel.HIGHEST)) {
+    if (!PsiNameHelper.getInstance(project).isIdentifier(baseParameterName, PsiUtil.getLanguageLevel(method))) {
       baseParameterName = StringUtil.fixVariableNameDerivedFromPropertyName(baseParameterName);
     }
     final String paramName = body != null
