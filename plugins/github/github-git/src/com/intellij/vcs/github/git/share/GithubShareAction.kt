@@ -1,12 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.github.git.share
+package com.intellij.vcs.github.git.share
 
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
-import org.jetbrains.plugins.github.GHShareProjectUtil
+import com.intellij.vcs.github.git.GHShareProjectUtil
 
 internal class GithubShareAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread {
