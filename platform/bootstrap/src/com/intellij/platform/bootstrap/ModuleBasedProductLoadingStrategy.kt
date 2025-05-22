@@ -77,10 +77,16 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
   ): Deferred<List<DiscoveredPluginsList>> {
     val platformPrefix = PlatformUtils.getPlatformPrefix()
     val isInDevServerMode = AppMode.isDevServer()
-    val pathResolver = ClassPathXmlPathResolver(mainClassLoader, isRunningFromSourcesWithoutDevBuild = isRunningFromSources && !isInDevServerMode)
-    val useCoreClassLoader = pathResolver.isRunningFromSourcesWithoutDevBuild ||
-                             platformPrefix.startsWith("CodeServer") ||
+    val isRunningFromSourcesWithoutDevBuild = isRunningFromSources && !isInDevServerMode
+    val classpathPathResolver = ClassPathXmlPathResolver(mainClassLoader, isRunningFromSourcesWithoutDevBuild = isRunningFromSourcesWithoutDevBuild)
+    val useCoreClassLoader = platformPrefix.startsWith("CodeServer") ||
                              java.lang.Boolean.getBoolean("idea.force.use.core.classloader")
+    val pathResolver = if (isRunningFromSourcesWithoutDevBuild) {
+      RunningFromSourceModuleBasedPathResolver(moduleRepository, fallbackResolver = classpathPathResolver)
+    }
+    else {
+      classpathPathResolver
+    }
     val (corePlugin, _) = scope.loadCorePlugin(platformPrefix, isInDevServerMode, isUnitTestMode, isRunningFromSources, loadingContext, pathResolver, useCoreClassLoader, mainClassLoader)
     val custom = loadCustomPluginDescriptors(scope, customPluginDir, loadingContext, zipPool)
     val bundled = loadBundledPluginDescriptors(scope, loadingContext, zipPool)
