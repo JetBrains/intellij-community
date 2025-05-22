@@ -26,7 +26,6 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.codeinsight.utils.singleReturnExpressionOrNull
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.doPostponedOperationsAndUnblockDocument
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.KtCompletionExtensionCandidateChecker
@@ -48,20 +47,14 @@ import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.yieldIfNotNull
 
 internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<C : KotlinRawPositionContext>(
-    parameters: KotlinFirCompletionParameters,
     sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<C>(parameters, sink, priority) {
+) : FirCompletionContributorBase<C>(sink, priority) {
 
     class All(
-        parameters: KotlinFirCompletionParameters,
         sink: LookupElementSink,
         priority: Int = 0,
-    ) : FirTrailingFunctionParameterNameCompletionContributorBase<KotlinExpressionNameReferencePositionContext>(
-        parameters,
-        sink,
-        priority,
-    ) {
+    ) : FirTrailingFunctionParameterNameCompletionContributorBase<KotlinExpressionNameReferencePositionContext>(sink, priority) {
 
         context(KaSession)
         override fun complete(
@@ -85,10 +78,9 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
     }
 
     class Missing(
-        parameters: KotlinFirCompletionParameters,
         sink: LookupElementSink,
         priority: Int = 0,
-    ) : FirTrailingFunctionParameterNameCompletionContributorBase<KotlinSimpleParameterPositionContext>(parameters, sink, priority) {
+    ) : FirTrailingFunctionParameterNameCompletionContributorBase<KotlinSimpleParameterPositionContext>(sink, priority) {
 
         context(KaSession)
         override fun complete(

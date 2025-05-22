@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiers
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtOutsideTowerScopeKinds
@@ -38,10 +37,9 @@ import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.utils.yieldIfNotNull
 
 internal open class FirClassifierCompletionContributor(
-    parameters: KotlinFirCompletionParameters,
     sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinNameReferencePositionContext>(parameters, sink, priority) {
+) : FirCompletionContributorBase<KotlinNameReferencePositionContext>(sink, priority) {
 
     context(KaSession)
     protected open fun filterClassifiers(classifierSymbol: KaClassifierSymbol): Boolean = true
@@ -211,10 +209,9 @@ internal open class FirClassifierCompletionContributor(
 }
 
 internal class FirAnnotationCompletionContributor(
-    parameters: KotlinFirCompletionParameters,
     sink: LookupElementSink,
     priority: Int = 0,
-) : FirClassifierCompletionContributor(parameters, sink, priority) {
+) : FirClassifierCompletionContributor(sink, priority) {
 
     context(KaSession)
     override fun filterClassifiers(classifierSymbol: KaClassifierSymbol): Boolean = when (classifierSymbol) {
@@ -237,10 +234,9 @@ internal class FirAnnotationCompletionContributor(
 }
 
 internal class FirClassifierReferenceCompletionContributor(
-    parameters: KotlinFirCompletionParameters,
     sink: LookupElementSink,
     priority: Int
-) : FirClassifierCompletionContributor(parameters, sink, priority) {
+) : FirClassifierCompletionContributor(sink, priority) {
 
     context(KaSession)
     override fun getImportingStrategy(classifierSymbol: KaClassifierSymbol): ImportStrategy = when (classifierSymbol) {

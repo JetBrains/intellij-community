@@ -5,7 +5,6 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
 import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtOutsideTowerScopeKinds
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.resolveReceiverToSymbols
@@ -16,10 +15,9 @@ import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 
 internal class FirPackageCompletionContributor(
-    parameters: KotlinFirCompletionParameters,
     sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinRawPositionContext>(parameters, sink, priority) {
+) : FirCompletionContributorBase<KotlinRawPositionContext>(sink, priority) {
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)

@@ -35,10 +35,9 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 
 internal class FirVariableOrParameterNameWithTypeCompletionContributor(
-    parameters: KotlinFirCompletionParameters,
     sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinRawPositionContext>(parameters, sink, priority) {
+) : FirCompletionContributorBase<KotlinRawPositionContext>(sink, priority) {
 
     private val nameFiltersWithUserPrefixes: List<Pair<NameFilter, String>> = getNameFiltersWithUserPrefixes()
 

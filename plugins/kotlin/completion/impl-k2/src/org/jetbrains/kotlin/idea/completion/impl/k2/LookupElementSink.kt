@@ -27,7 +27,7 @@ import kotlin.time.Duration
 
 internal class LookupElementSink(
     private val resultSet: CompletionResultSet,
-    private val parameters: KotlinFirCompletionParameters,
+    internal val parameters: KotlinFirCompletionParameters,
     private val groupPriority: Int = 0,
     private val contributorClass: Class<FirCompletionContributor<*>>? = null,
 ) {

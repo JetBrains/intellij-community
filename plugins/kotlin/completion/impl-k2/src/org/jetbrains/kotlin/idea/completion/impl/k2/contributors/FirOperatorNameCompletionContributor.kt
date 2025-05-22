@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalElementOfSelf
 import org.jetbrains.kotlin.idea.completion.implCommon.OperatorNameCompletion
@@ -11,14 +10,9 @@ import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeNameReferencePositionContext
 
 internal class FirOperatorNameCompletionContributor(
-    parameters: KotlinFirCompletionParameters,
     sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinTypeNameReferencePositionContext>(
-    parameters,
-    sink,
-    priority,
-) {
+) : FirCompletionContributorBase<KotlinTypeNameReferencePositionContext>(sink, priority) {
     context(KaSession)
     override fun complete(
         positionContext: KotlinTypeNameReferencePositionContext,

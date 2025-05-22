@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.resolveReceiverToSymbols
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.staticScope
@@ -17,10 +16,9 @@ import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinImportDirectivePositionContext
 
 internal class FirImportDirectivePackageMembersCompletionContributor(
-    parameters: KotlinFirCompletionParameters,
     sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinImportDirectivePositionContext>(parameters, sink, priority) {
+) : FirCompletionContributorBase<KotlinImportDirectivePositionContext>(sink, priority) {
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)

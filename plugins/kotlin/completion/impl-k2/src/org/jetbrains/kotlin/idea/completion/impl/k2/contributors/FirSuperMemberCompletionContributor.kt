@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.idea.completion.ItemPriority
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtOutsideTowerScopeKinds
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.collectNonExtensionsForType
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
@@ -34,10 +33,9 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtSuperExpression
 
 internal class FirSuperMemberCompletionContributor(
-    parameters: KotlinFirCompletionParameters,
     sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinSuperReceiverNameReferencePositionContext>(parameters, sink, priority) {
+) : FirCompletionContributorBase<KotlinSuperReceiverNameReferencePositionContext>(sink, priority) {
 
     private data class CallableInfo(
         private val _type: KaType,

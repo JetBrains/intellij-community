@@ -48,19 +48,21 @@ import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContext>(
-    protected val parameters: KotlinFirCompletionParameters,
     sink: LookupElementSink,
     priority: Int,
 ) : FirCompletionContributor<C> {
+
+    protected val sink: LookupElementSink = sink
+        .withPriority(priority)
+        .withContributorClass(this@FirCompletionContributorBase.javaClass)
+
+    protected val parameters: KotlinFirCompletionParameters
+        get() = sink.parameters
 
     protected open val prefixMatcher: PrefixMatcher
         get() = sink.prefixMatcher
 
     protected val visibilityChecker = CompletionVisibilityChecker(parameters)
-
-    protected val sink: LookupElementSink = sink
-        .withPriority(priority)
-        .withContributorClass(this@FirCompletionContributorBase.javaClass)
 
     protected val originalKtFile: KtFile // todo inline
         get() = parameters.originalFile

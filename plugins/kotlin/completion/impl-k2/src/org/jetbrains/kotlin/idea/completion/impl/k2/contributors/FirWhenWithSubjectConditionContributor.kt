@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRang
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.base.util.letIf
 import org.jetbrains.kotlin.idea.completion.InsertionHandlerBase
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiers
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
@@ -44,10 +43,9 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.renderer.render
 
 internal class FirWhenWithSubjectConditionContributor(
-    parameters: KotlinFirCompletionParameters,
     sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinWithSubjectEntryPositionContext>(parameters, sink, priority) {
+) : FirCompletionContributorBase<KotlinWithSubjectEntryPositionContext>(sink, priority) {
 
     private val onTypingIsKeyword: Boolean =
         super.prefixMatcher.prefix.let { prefix ->

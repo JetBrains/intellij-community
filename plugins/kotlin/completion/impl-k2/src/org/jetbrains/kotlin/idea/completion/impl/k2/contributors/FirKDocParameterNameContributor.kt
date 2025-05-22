@@ -6,7 +6,6 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtOutsideTowerScopeKinds
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
@@ -19,10 +18,9 @@ import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KDocNameReferencePositionContext
 
 internal open class FirKDocParameterNameContributor(
-    parameters: KotlinFirCompletionParameters,
     sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KDocNameReferencePositionContext>(parameters, sink, priority) {
+) : FirCompletionContributorBase<KDocNameReferencePositionContext>(sink, priority) {
 
     context(KaSession)
     override fun complete(

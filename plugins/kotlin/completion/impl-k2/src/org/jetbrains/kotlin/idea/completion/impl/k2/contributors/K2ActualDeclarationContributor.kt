@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.keywords.ActualKeywordHandler
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
@@ -29,10 +28,9 @@ import org.jetbrains.kotlin.psi.KtTypeReference
  * @see ActualKeywordHandler
  */
 internal class K2ActualDeclarationContributor(
-    parameters: KotlinFirCompletionParameters,
     sink: LookupElementSink,
     priority: Int,
-) : FirCompletionContributorBase<KotlinRawPositionContext>(parameters, sink, priority) {
+) : FirCompletionContributorBase<KotlinRawPositionContext>(sink, priority) {
 
     context(KaSession)
     override fun complete(
