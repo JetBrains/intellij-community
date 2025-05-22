@@ -337,7 +337,7 @@ e:com.intellij.diff.util.ThreeSide
 - sf:fromValue(java.util.List,java.lang.Object):com.intellij.diff.util.ThreeSide
 - s:getEntries():kotlin.enums.EnumEntries
 - getIndex():I
-- sf:map(com.intellij.util.Function):java.util.List
+- sf:map(kotlin.jvm.functions.Function1):java.util.List
 - select(I,I,I):I
 - select(java.lang.Object,java.lang.Object,java.lang.Object):java.lang.Object
 - select(java.util.List):java.lang.Object
@@ -351,7 +351,7 @@ e:com.intellij.diff.util.ThreeSide
 f:com.intellij.diff.util.ThreeSide$Companion
 - f:fromIndex(I):com.intellij.diff.util.ThreeSide
 - f:fromValue(java.util.List,java.lang.Object):com.intellij.diff.util.ThreeSide
-- f:map(com.intellij.util.Function):java.util.List
+- f:map(kotlin.jvm.functions.Function1):java.util.List
 f:com.intellij.util.diff.Diff
 - sf:INSTANCE:com.intellij.util.diff.Diff
 - sf:buildChanges(java.lang.CharSequence,java.lang.CharSequence):com.intellij.util.diff.Diff$Change

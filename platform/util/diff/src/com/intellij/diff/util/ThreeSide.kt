@@ -1,9 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.util
 
-import com.intellij.util.Function
 import org.jetbrains.annotations.Contract
-import java.util.*
 
 enum class ThreeSide(open val index: Int) {
   LEFT(0),
@@ -85,8 +83,8 @@ enum class ThreeSide(open val index: Int) {
     }
 
     @JvmStatic
-    fun <T> map(function: Function<in ThreeSide, out T>): MutableList<T> {
-      return Arrays.asList<T>(function.`fun`(LEFT), function.`fun`(BASE), function.`fun`(RIGHT))
+    fun <T> map(function: (ThreeSide) -> T): MutableList<T> {
+      return mutableListOf(function(LEFT), function(BASE), function(RIGHT))
     }
   }
 }
