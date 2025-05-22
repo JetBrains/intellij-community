@@ -228,7 +228,7 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   private fun getTeamcityJavaItemDefinition(): String? {
-    return System.getenv("TEAMCITY_WLS_JDK_DEFINITION")
+    return System.getenv("TEAMCITY_WSL_JDK_DEFINITION")
   }
 
   protected fun waitForMavenUtilRunnablesComplete() {
