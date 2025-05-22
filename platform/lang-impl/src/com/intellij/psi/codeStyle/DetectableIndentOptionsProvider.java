@@ -348,4 +348,12 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     if (!detectionEnabled && !Registry.is("editor.indentProviderUX.new"))
       showDisabledDetectionNotification(project);
   }
+
+  public static boolean isIndentDetectionContributor(CodeStyleStatusBarUIContributor codeStyleStatusBarUIContributor) {
+    if (codeStyleStatusBarUIContributor instanceof IndentStatusBarUIContributor indentStatusBarUIContributor) {
+      String hint = indentStatusBarUIContributor.getHint();
+      return hint == null || hint.equals(LangBundle.message("indent.option.detected"));
+    }
+    return false;
+  }
 }

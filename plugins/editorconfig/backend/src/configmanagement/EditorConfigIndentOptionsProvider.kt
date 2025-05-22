@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
+import com.intellij.psi.codeStyle.DetectableIndentOptionsProvider
 import com.intellij.psi.codeStyle.FileIndentOptionsProvider
 import com.intellij.psi.codeStyle.IndentStatusBarUIContributor
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor
@@ -38,7 +39,7 @@ internal class EditorConfigIndentOptionsProvider : FileIndentOptionsProvider() {
   override fun getActivatingAction(activeUiContributor: CodeStyleStatusBarUIContributor?, file: PsiFile): AnAction? {
     if (Registry.`is`("editor.indentProviderUX.new")
         && Utils.isFullIntellijSettingsSupport()
-        && activeUiContributor !is EditorConfigIndentStatusBarUIContributor
+        && (activeUiContributor == null || DetectableIndentOptionsProvider.isIndentDetectionContributor(activeUiContributor))
         && !Utils.isEnabled(file.project)) {
       return DumbAwareAction.create(EditorConfigBundle.message("action.enable")) {
           EditorConfigActionUtil.setEditorConfigEnabled(file.project, true)
