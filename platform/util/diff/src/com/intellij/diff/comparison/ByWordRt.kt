@@ -599,8 +599,8 @@ object ByWordRt {
     var wordHash = 0
 
     while (offset < len) {
-      val ch = Character.codePointAt(text, offset)
-      val charCount = Character.charCount(ch)
+      val ch = text.codePointAt(offset)
+      val charCount = ch.charCount()
 
       val isAlpha = isAlpha(ch)
       val isWordPart = isAlpha && !isContinuousScript(ch)

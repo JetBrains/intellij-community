@@ -31,17 +31,17 @@ fun isWhiteSpaceCodePoint(c: Int): Boolean {
 
 fun isContinuousScript(c: Int): Boolean {
   if (c < 128) return false
-  if (Character.isDigit(c)) return false
+  if (c.isDecimalDigit()) return false
 
-  if (!Character.isBmpCodePoint(c)) return true
-  if (Character.isIdeographic(c)) return true
-  if (!Character.isAlphabetic(c)) return true
+  if (!c.isBmpCodePoint()) return true
 
-  val script = Character.UnicodeScript.of(c)
-  return script == Character.UnicodeScript.HIRAGANA ||
-         script == Character.UnicodeScript.KATAKANA ||
-         script == Character.UnicodeScript.THAI ||
-         script == Character.UnicodeScript.JAVANESE
+  if (c.isIdeographic()) return true
+  if (!c.isAlphabetic()) return true
+
+  return c.isHiraganaScript() ||
+         c.isKatakanaScript() ||
+         c.isThaiScript() ||
+         c.isJavaneseScript()
 }
 
 fun trim(text: CharSequence, start: Int, end: Int): com.intellij.util.IntPair {

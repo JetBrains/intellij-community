@@ -222,8 +222,8 @@ object ByCharRt {
     var offset = 0
 
     while (offset < len) {
-      val ch = Character.codePointAt(text, offset)
-      val charCount = Character.charCount(ch)
+      val ch = text.codePointAt(offset)
+      val charCount = ch.charCount()
 
       list.add(ch)
 
@@ -241,8 +241,8 @@ object ByCharRt {
     var offset = 0
 
     while (offset < len) {
-      val ch = Character.codePointAt(text, offset)
-      val charCount = Character.charCount(ch)
+      val ch = text.codePointAt(offset)
+      val charCount = ch.charCount()
 
       if (!isWhiteSpaceCodePoint(ch)) {
         codePoints.add(ch)
@@ -273,7 +273,7 @@ object ByCharRt {
   private fun countChars(codePoints: IntArray, start: Int, end: Int): Int {
     var count = 0
     for (i in start until end) {
-      count += Character.charCount(codePoints[i])
+      count += codePoints[i].charCount()
     }
     return count
   }
@@ -284,7 +284,7 @@ object ByCharRt {
     }
 
     fun charOffsetAfter(index: Int): Int {
-      return offsets[index] + Character.charCount(codePoints[index])
+      return offsets[index] + codePoints[index].charCount()
     }
   }
 }
