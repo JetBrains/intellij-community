@@ -166,8 +166,6 @@ internal open class FirCallableCompletionContributor(
                     )
                 }
             }.forEach(sink::addElement)
-
-        logger<FirCallableCompletionContributor>().debug("Suspicious calculations took ${sink.duration}")
     }
 
     context(KaSession)
