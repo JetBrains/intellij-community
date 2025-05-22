@@ -126,10 +126,6 @@ f:com.intellij.collaboration.api.httpclient.InflatedStreamReadingBodyHandler
 - java.net.http.HttpResponse$BodyHandler
 - <init>(kotlin.jvm.functions.Function2):V
 - apply(java.net.http.HttpResponse$ResponseInfo):java.net.http.HttpResponse$BodySubscriber
-f:com.intellij.collaboration.api.httpclient.LazyBodyHandler
-- java.net.http.HttpResponse$BodyHandler
-- <init>(java.net.http.HttpResponse$BodyHandler):V
-- apply(java.net.http.HttpResponse$ResponseInfo):java.net.http.HttpResponse$BodySubscriber
 c:com.intellij.collaboration.api.httpclient.RequestTimeoutConfigurer
 - com.intellij.collaboration.api.httpclient.HttpRequestConfigurer
 - <init>():V
