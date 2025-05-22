@@ -123,7 +123,7 @@ object SuvorovProgress {
     }
     else {
       val window = SwingUtilities.getRootPane(KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner)
-      PotemkinOverlayProgress(window)
+      PotemkinOverlayProgress(window, false)
     }.apply { setDelayInMillis(showingDelay) }
   }
 

@@ -47,6 +47,7 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
   private long myLastUiUpdate = myCreatedAt;
   private long myLastInteraction;
   private boolean myShowing;
+  private final boolean myCancellable;
 
   static {
     // preload classes
@@ -56,7 +57,13 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
 
   @Obsolete
   public PotemkinOverlayProgress(@Nullable Component component) {
+    this(component, true);
+  }
+
+  @Obsolete
+  public PotemkinOverlayProgress(@Nullable Component component, boolean cancellable) {
     EDT.assertIsEdt();
+    myCancellable = cancellable;
     myComponent = component;
     myEventStealer = PotemkinProgress.startStealingInputEvents(this::dispatchInputEvent, this);
   }
@@ -142,15 +149,15 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
   }
 
   private void paintProgress() {
-    paintOverlayProgress(SwingUtilities.getRootPane(myComponent), myCreatedAt);
+    paintOverlayProgress(SwingUtilities.getRootPane(myComponent), myCreatedAt, myCancellable);
   }
 
-  private static void paintOverlayProgress(@Nullable JRootPane rootPane, long createdAt) {
+  private static void paintOverlayProgress(@Nullable JRootPane rootPane, long createdAt, boolean cancellable) {
     IdeGlassPane glassPane = rootPane == null ? null : ObjectUtils.tryCast(rootPane.getGlassPane(), IdeGlassPane.class);
     if (glassPane == null) return;
     long roundedDuration = TimeoutUtil.getDurationMillis(createdAt) / 1000 * 1000;
     //noinspection HardCodedStringLiteral
-    String text = KeymapUtil.getShortcutText(CANCEL_SHORTCUT) + " to cancel, " +
+    String text = (cancellable ? KeymapUtil.getShortcutText(CANCEL_SHORTCUT) + " to cancel, " : "") +
                   KeymapUtil.getShortcutText(DUMP_SHORTCUT) + " to dump threads (" +
                   NlsMessages.formatDurationApproximateNarrow(roundedDuration) + ")";
     Graphics graphics = GraphicsUtil.safelyGetGraphics(rootPane);
