@@ -274,7 +274,8 @@ public final class ExtractLightMethodObjectHandler {
     }
     if (isValidVariableType(expressionType)) {
       String uniqueResultName = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName("result", elementsCopy[0], true);
-      String statementText = expressionType.getCanonicalText() + " " + uniqueResultName + " = " + expr.getText() + ";";
+      String text = PsiTypes.nullType().equals(expressionType) ? CommonClassNames.JAVA_LANG_OBJECT : expressionType.getCanonicalText();
+      String statementText = text + " " + uniqueResultName + " = " + expr.getText() + ";";
       elementsCopy[elementsCopy.length - 1] = elementsCopy[elementsCopy.length - 1]
         .replace(elementFactory.createStatementFromText(statementText, elementsCopy[elementsCopy.length - 1]));
     }
