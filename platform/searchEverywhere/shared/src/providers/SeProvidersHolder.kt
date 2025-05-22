@@ -106,14 +106,18 @@ class SeProvidersHolder(
 
       // From com.intellij.ide.actions.searcheverywhere.SearchEverywhereHeader.createTabs
       try {
-        TabsCustomizationStrategy.getInstance().getSeparateTabContributors(allContributors.values.toList())
-          .filterIsInstance<SearchEverywhereContributor<Any>>()
-          .associateBy { it.searchProviderId }
+        withContext(Dispatchers.EDT) {
+          TabsCustomizationStrategy.getInstance().getSeparateTabContributors(allContributors.values.toList())
+            .filterIsInstance<SearchEverywhereContributor<Any>>()
+            .associateBy { it.searchProviderId }
+        }
       }
       catch (e: Exception) {
         Logger.getInstance(SearchEverywhereHeader::class.java).error(e)
         allContributors.filter { it.value.isShownInSeparateTab }
-      }.forEach { separateTabContributors[it.key] = it.value }
+      }.forEach {
+        separateTabContributors[it.key] = it.value
+      }
     }
   }
 }
