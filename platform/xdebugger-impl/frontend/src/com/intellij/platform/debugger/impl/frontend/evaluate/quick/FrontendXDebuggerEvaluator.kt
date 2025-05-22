@@ -20,7 +20,6 @@ import com.intellij.xdebugger.impl.rpc.XStackFrameId
 import com.intellij.xdebugger.impl.rpc.toRpc
 import fleet.util.logging.logger
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.future
 import kotlinx.coroutines.launch
@@ -61,10 +60,10 @@ internal open class FrontendXDebuggerEvaluator(
     }
   }
 
-  protected fun evaluateByRpc(callback: XEvaluationCallback, evaluate: suspend () -> Deferred<XEvaluationResult>) {
+  protected fun evaluateByRpc(callback: XEvaluationCallback, evaluate: suspend () -> XEvaluationResult) {
     evaluatorScope.launch(Dispatchers.EDT) {
       try {
-        val evaluation = evaluate().await()
+        val evaluation = evaluate()
         when (evaluation) {
           is XEvaluationResult.Evaluated -> callback.evaluated(FrontendXValue.create(project, evaluatorScope, evaluation.valueId, false))
           is XEvaluationResult.EvaluationError -> callback.errorOccurred(evaluation.errorMessage)
@@ -83,7 +82,7 @@ internal open class FrontendXDebuggerEvaluator(
 
   override fun getExpressionInfoAtOffsetAsync(project: Project, document: Document, offset: Int, sideEffectsAllowed: Boolean): Promise<ExpressionInfo?> {
     return evaluatorScope.future {
-      XDebuggerEvaluatorApi.getInstance().expressionInfoAtOffset(frameId, document.rpcId(), offset, sideEffectsAllowed).await()
+      XDebuggerEvaluatorApi.getInstance().expressionInfoAtOffset(frameId, document.rpcId(), offset, sideEffectsAllowed)
     }.asPromise()
   }
 }
