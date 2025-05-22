@@ -3,8 +3,11 @@ package org.jetbrains.intellij.build.bazel
 
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
+import kotlin.io.path.exists
+import kotlin.io.path.isRegularFile
 
 internal data class ModuleDescriptor(
+  @JvmField val imlFile: Path,
   @JvmField val module: JpsModule,
   @JvmField val contentRoots: List<Path>,
   @JvmField val sources: List<SourceDirDescriptor>,
@@ -31,6 +34,18 @@ internal data class ModuleDescriptor(
 
     require(relativePathFromProjectRoot.startsWith("community") == isCommunity) {
       "relativePathFromProjectRoot must start with 'community' if isCommunity is true: $relativePathFromProjectRoot, isCommunity=$isCommunity"
+    }
+
+    require(imlFile.isAbsolute) {
+      "imlFile must be an absolute path: $imlFile"
+    }
+
+    require(imlFile.exists()) {
+      "imlFile must be exist: $imlFile"
+    }
+
+    require(imlFile.isRegularFile()) {
+      "imlFile must be a regular file: $imlFile"
     }
   }
 }

@@ -102,6 +102,7 @@ internal class BazelBuildFileGenerator(
     }
 
     val moduleContent = ModuleDescriptor(
+      imlFile = imlDir.resolve("${module.name}.iml"),
       module = module,
       contentRoots = contentRoots,
       bazelBuildFileDir = bazelBuildDir,

@@ -227,6 +227,26 @@ internal fun generateDeps(
       "Do not export jetbrains-jewel-markdown-laf-bridge-styling (module=$dependentModuleName})"
     }
   }
+
+  fun checkForDuplicates(listMoniker: String, list: List<String>) {
+    if (list.distinct() == list) {
+      return
+    }
+
+    val duplicates = list
+      .groupBy { it }
+      .filter { it.value.size > 1 }
+      .map { it.key }
+      .sorted()
+    error("Duplicate $listMoniker ${duplicates} for module '${module.module.name}',\ncheck ${module.imlFile}")
+  }
+
+  checkForDuplicates("bazel deps", deps)
+  checkForDuplicates("bazel associates", associates)
+  checkForDuplicates("bazel runtimeDeps", runtimeDeps)
+  checkForDuplicates("bazel exports", exports)
+  checkForDuplicates("bazel provided", provided)
+
   return ModuleDeps(deps = deps, associates = associates, runtimeDeps = runtimeDeps, exports = exports, provided = provided, plugins = plugins.toList())
 }
 
