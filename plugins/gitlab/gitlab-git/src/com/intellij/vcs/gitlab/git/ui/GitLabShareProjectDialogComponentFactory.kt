@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gitlab.git.share.ui
+package com.intellij.vcs.gitlab.git.ui
 
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapState

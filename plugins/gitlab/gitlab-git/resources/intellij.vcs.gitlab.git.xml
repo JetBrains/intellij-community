@@ -6,7 +6,7 @@
   </dependencies>
 
   <actions>
-    <action id="GitLab.Share" class="org.jetbrains.plugins.gitlab.git.share.GitLabShareProjectAction"
+    <action id="GitLab.Share" class="com.intellij.vcs.gitlab.git.GitLabShareProjectAction"
             icon="com.intellij.vcs.gitlab.icons.GitlabIcons.GitLabLogo">
       <add-to-group group-id="GitLab.Main.Group"/>
     </action>
