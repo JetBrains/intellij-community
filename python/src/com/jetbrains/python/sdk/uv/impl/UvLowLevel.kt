@@ -5,12 +5,9 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.intellij.util.io.delete
-import com.jetbrains.python.errorProcessing.ExecError
-import com.jetbrains.python.errorProcessing.ExecErrorReason
-import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.*
 import com.jetbrains.python.errorProcessing.PyExecResult
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.errorProcessing.failure
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.common.NormalizedPythonPackageName
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
@@ -21,6 +18,8 @@ import com.jetbrains.python.sdk.uv.UvCli
 import com.jetbrains.python.sdk.uv.UvLowLevel
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import com.jetbrains.python.venvReader.tryResolvePath
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
@@ -126,6 +125,13 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
     catch (e: Exception) {
       return failure(e.message ?: "")
     }
+  }
+
+  override suspend fun listTopLevelPackages(): PyResult<List<PythonPackage>> {
+    val out = uvCli.runUv(cwd, "tree", "--depth=1")
+      .getOr { return it }
+
+    return PyExecResult.success(parsePackageList(out))
   }
 
   override suspend fun listPackageRequirements(name: PythonPackage): PyResult<List<NormalizedPythonPackageName>> {
@@ -249,6 +255,19 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
     return uvCli.runUv(cwd, "lock")
   }
 
+  suspend fun parsePackageList(input: String): List<PythonPackage> = withContext(Dispatchers.Default) {
+    val packageList = mutableListOf<PythonPackage>()
+
+    for (line in input.lines().drop(1)) {
+      val parts = line.trim().split(WHITESPACE_REGEX).drop(1)
+      val packageName = parts[0]
+      val version = parts.getOrElse(1) { "" }
+      packageList.add(PythonPackage(packageName, version, false))
+    }
+
+    packageList
+  }
+
   private fun parsePackageRequirements(input: String): List<NormalizedPythonPackageName> {
     val requiresLine = input.lines().find { it.startsWith(REQUIRES_LINE_PREFIX) } ?: return emptyList()
 
@@ -261,6 +280,7 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
   }
 
   companion object {
+    private val WHITESPACE_REGEX = Regex("\\s+")
     private const val REQUIRES_LINE_PREFIX = "Requires:"
   }
 }

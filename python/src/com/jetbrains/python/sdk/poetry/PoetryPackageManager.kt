@@ -2,7 +2,9 @@
 package com.jetbrains.python.sdk.poetry
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.packaging.PythonDependenciesExtractor
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
@@ -10,6 +12,7 @@ import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
+import com.jetbrains.python.sdk.pythonSdk
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
@@ -17,6 +20,7 @@ import org.jetbrains.annotations.TestOnly
 class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
   @Volatile
   override var installedPackages: List<PythonPackage> = emptyList()
+  override var dependencies: List<PythonPackage> = emptyList()
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager(project)
 
 
@@ -63,6 +67,15 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
   override suspend fun loadOutdatedPackagesCommand(): Result<List<PythonOutdatedPackage>> = poetryShowOutdated(sdk).map {
     it.values.toList()
   }
+
+  override suspend fun reloadDependencies(): List<PythonPackage> {
+    val dependenciesExtractor = PythonDependenciesExtractor.forSdk(sdk) ?: return emptyList()
+    val targetModule = project.modules.find { it.pythonSdk == sdk } ?: return emptyList()
+    dependencies = dependenciesExtractor.extract(targetModule)
+    return dependencies
+  }
+
+  override fun listDependencies(): List<PythonPackage> = dependencies
 
   private fun PythonRepositoryPackageSpecification.getPackageWithVersionInPoetryFormat(): String {
     return versionSpec?.let { "$name@${it.presentableText}" } ?: name

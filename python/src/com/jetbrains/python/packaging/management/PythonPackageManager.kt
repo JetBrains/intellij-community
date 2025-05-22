@@ -43,6 +43,8 @@ fun PythonRepositoryPackageSpecification.toInstallRequest(): PythonPackageInstal
 @ApiStatus.Experimental
 abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
   abstract var installedPackages: List<PythonPackage>
+  @get:ApiStatus.Internal @set:ApiStatus.Internal
+  protected abstract var dependencies: List<PythonPackage>
 
   @ApiStatus.Internal
   @Volatile
@@ -130,14 +132,16 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
   abstract suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): Result<Unit>
   @ApiStatus.Internal
   abstract suspend fun updatePackageCommand(specification: PythonRepositoryPackageSpecification): Result<Unit>
-
   @ApiStatus.Internal
   abstract suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<Unit>
-
   @ApiStatus.Internal
   abstract suspend fun reloadPackagesCommand(): Result<List<PythonPackage>>
   @ApiStatus.Internal
   abstract suspend fun loadOutdatedPackagesCommand(): Result<List<PythonOutdatedPackage>>
+  @ApiStatus.Internal
+  abstract suspend fun reloadDependencies(): List<PythonPackage>
+  @ApiStatus.Internal
+  abstract fun listDependencies(): List<PythonPackage>
 
   internal suspend fun refreshPaths() {
     edtWriteAction {

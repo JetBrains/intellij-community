@@ -2,20 +2,24 @@
 package com.jetbrains.python.sdk.uv
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.errorProcessing.PyExecResult
 import com.jetbrains.python.errorProcessing.asKotlinResult
+import com.jetbrains.python.packaging.PythonDependenciesExtractor
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.management.*
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
+import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.uv.impl.createUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
 import java.nio.file.Path
 
 internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLowLevel) : PythonPackageManager(project, sdk) {
   override var installedPackages: List<PythonPackage> = emptyList()
+  override var dependencies: List<PythonPackage> = emptyList()
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager(project)
 
 
@@ -72,6 +76,15 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
   suspend fun lock(): PyExecResult<String> {
     return uv.lock()
   }
+
+  override suspend fun reloadDependencies(): List<PythonPackage> {
+    val dependenciesExtractor = PythonDependenciesExtractor.forSdk(sdk) ?: return emptyList()
+    val targetModule = project.modules.find { it.pythonSdk == sdk } ?: return emptyList()
+    dependencies = dependenciesExtractor.extract(targetModule)
+    return dependencies
+  }
+
+  override fun listDependencies(): List<PythonPackage> = dependencies
 }
 
 class UvPackageManagerProvider : PythonPackageManagerProvider {

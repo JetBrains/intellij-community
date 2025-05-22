@@ -41,6 +41,7 @@ private fun PythonPackageInstallRequest.buildInstallationArguments(): Result<Lis
 class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
   @Volatile
   override var installedPackages: List<PythonPackage> = emptyList()
+  override var dependencies: List<PythonPackage> = emptyList()
   override val repositoryManager: PythonRepositoryManager = CondaRepositoryManger(project, sdk)
 
   override suspend fun loadOutdatedPackagesCommand(): Result<List<PythonOutdatedPackage>> {
@@ -91,6 +92,10 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pro
     catch (ex: ExecutionException) {
       Result.failure(ex)
     }
+
+  override suspend fun reloadDependencies(): List<PythonPackage> = dependencies
+
+  override fun listDependencies(): List<PythonPackage> = dependencies
 
   private fun parseCondaPackageList(text: String): List<CondaPackage> {
     return text.lineSequence()

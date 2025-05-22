@@ -19,6 +19,7 @@ internal class CompositePythonPackageManager(
 
   @Volatile
   override var installedPackages: List<PythonPackage> = emptyList()
+  override var dependencies: List<PythonPackage> = emptyList()
 
   override var repositoryManager: PythonRepositoryManager =
     CompositePythonRepositoryManager(project, managers.map { it.repositoryManager })
@@ -90,6 +91,10 @@ internal class CompositePythonPackageManager(
       ))
     }
   }
+
+  override suspend fun reloadDependencies(): List<PythonPackage> = dependencies
+
+  override fun listDependencies(): List<PythonPackage> = dependencies
 
   private suspend fun processPackageOperation(
     errorMessageKey: String,

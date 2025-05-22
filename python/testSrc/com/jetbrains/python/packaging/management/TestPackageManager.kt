@@ -13,7 +13,7 @@ import org.jetbrains.annotations.TestOnly
 class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
 
   override var installedPackages: List<PythonPackage> = DEFAULT_PACKAGES.toMutableList()
-
+  override var dependencies: List<PythonPackage> = emptyList()
   private var packageNames: List<String> = emptyList()
   private var packageDetails: PythonPackageDetails? = null
 
@@ -55,6 +55,10 @@ class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManage
   override suspend fun reloadPackagesCommand(): Result<List<PythonPackage>> {
     return Result.success(installedPackages)
   }
+
+  override suspend fun reloadDependencies(): List<PythonPackage> = dependencies
+
+  override fun listDependencies(): List<PythonPackage> = dependencies
 
   private fun findPackageByName(name: String): PythonPackage? {
     return installedPackages.find { it.name == name }

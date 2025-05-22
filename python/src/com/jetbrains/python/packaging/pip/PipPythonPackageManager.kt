@@ -43,6 +43,7 @@ private fun PythonPackageInstallRequest.buildPipInstallArguments(): List<String>
 open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
   @Volatile
   override var installedPackages: List<PythonPackage> = emptyList()
+  override var dependencies: List<PythonPackage> = emptyList()
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager(project)
 
   override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): Result<Unit> {
@@ -109,6 +110,10 @@ open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageMa
       return Result.failure(ex)
     }
   }
+
+  override suspend fun reloadDependencies(): List<PythonPackage> = dependencies
+
+  override fun listDependencies(): List<PythonPackage> = dependencies
 }
 
 @ApiStatus.Internal
