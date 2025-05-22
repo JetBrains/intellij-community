@@ -13,7 +13,8 @@
           "features": [],
           "additional": {
             "prompt": "Explain KeycloakSession class",
-            "chatSessionModes": "CODEBASE",
+            "chatSessionModes": "CHAT",
+            "codebase": true,
             "expectedFunctions": "exact_search"
           }
         },
@@ -29,7 +30,8 @@
           "features": [],
           "additional": {
             "prompt": "What methods does class AuthenticationManager have?",
-            "chatSessionModes": "CODEBASE",
+            "chatSessionModes": "CHAT",
+            "codebase": true,
             "expectedFunctions": "exact_search"
           }
         },
@@ -77,7 +79,8 @@
           "features": [],
           "additional": {
             "prompt": "Find all usages of the class RealmModel in the project",
-            "chatSessionModes": "CODEBASE",
+            "chatSessionModes": "CHAT",
+            "codebase": true,
             "expectedFunctions": "find_usages"
           }
         },
@@ -93,7 +96,8 @@
           "features": [],
           "additional": {
             "prompt": "Find all places in code where constructor of the class UserSessionModel is used",
-            "chatSessionModes": "CODEBASE",
+            "chatSessionModes": "CHAT",
+            "codebase": true,
             "expectedFunctions": "find_usages"
           }
         },
@@ -109,7 +113,8 @@
           "features": [],
           "additional": {
             "prompt": "Find all usages of the method createUser from the class UserProvider in the project",
-            "chatSessionModes": "CODEBASE",
+            "chatSessionModes": "CHAT",
+            "codebase": true,
             "expectedFunctions": "find_usages"
           }
         },
@@ -125,7 +130,8 @@
           "features": [],
           "additional": {
             "prompt": "Give me the files that contain the text 'KeycloakModelUtils'",
-            "chatSessionModes": "CODEBASE",
+            "chatSessionModes": "CHAT",
+            "codebase": true,
             "expectedFunctions": "find_text"
           }
         },
@@ -157,7 +163,8 @@
           "features": [],
           "additional": {
             "prompt": "Find all files that contain a substring that matches given regex: `\\.authenticate`",
-            "chatSessionModes": "CODEBASE",
+            "chatSessionModes": "CHAT",
+            "codebase": true,
             "expectedFunctions": "find_text"
           }
         },
@@ -509,7 +516,8 @@
           "features": [],
           "additional": {
             "prompt": "What are the file contents of DefaultSecurityHeadersProvider",
-            "chatSessionModes": "CODEBASE",
+            "chatSessionModes": "CHAT",
+            "codebase": true,
             "expectedFunctions": "read_file"
           }
         },
@@ -525,7 +533,8 @@
           "features": [],
           "additional": {
             "prompt": "Give me the content of the first 10 lines from file DefaultSecurityHeadersProvider",
-            "chatSessionModes": "CODEBASE",
+            "chatSessionModes": "CHAT",
+            "codebase": true,
             "expectedFunctions": "read_file"
           }
         },
@@ -541,7 +550,8 @@
           "features": [],
           "additional": {
             "prompt": "Give me all imports from file DefaultSecurityHeadersProvider",
-            "chatSessionModes": "CODEBASE",
+            "chatSessionModes": "CHAT",
+            "codebase": true,
             "expectedFunctions": "read_file"
           }
         },
@@ -557,7 +567,8 @@
           "features": [],
           "additional": {
             "prompt": "What is this project about?",
-            "chatSessionModes": "CODEBASE",
+            "chatSessionModes": "CHAT",
+            "codebase": true,
             "expectedFunctions": "list_files_in_folder"
           }
         },
@@ -573,7 +584,8 @@
           "features": [],
           "additional": {
             "prompt": "What is the content of src directory?",
-            "chatSessionModes": "CODEBASE",
+            "chatSessionModes": "CHAT",
+            "codebase": true,
             "expectedFunctions": "list_files_in_folder"
           }
         },
@@ -589,7 +601,8 @@
           "features": [],
           "additional": {
             "prompt": "Are there any files in the test directory?",
-            "chatSessionModes": "CODEBASE",
+            "chatSessionModes": "CHAT",
+            "codebase": true,
             "expectedFunctions": "list_files_in_folder"
           }
         },
