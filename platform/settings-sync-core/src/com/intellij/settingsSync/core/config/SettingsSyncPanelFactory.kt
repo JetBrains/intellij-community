@@ -24,6 +24,7 @@ import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.ThreeStateCheckBox.State
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
+import java.awt.Color
 import javax.swing.BoxLayout
 import javax.swing.JCheckBox
 import javax.swing.JComponent
@@ -255,6 +256,11 @@ internal class SettingsSyncPanelHolder() {
   private class PluginsCheckboxList(
     val descriptors: List<SettingsSyncSubcategoryDescriptor>,
     listener : CheckBoxListListener) : CheckBoxList<SettingsSyncSubcategoryDescriptor>(listener) {
+
+
+    override fun getBackground(isSelected: Boolean): Color? {
+      return super.getBackground(false)
+    }
 
     override fun adjustRendering(rootComponent: JComponent,
                                  checkBox: JCheckBox?,
