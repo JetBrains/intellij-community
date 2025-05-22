@@ -12,6 +12,7 @@ java_library(
     "//platform/vcs-impl/frontend",
     "//platform/bookmarks/frontend",
     "//platform/recentFiles/frontend",
+    "//platform/pluginManager/frontend",
     "//platform/execution-impl/frontend",
     "//platform/execution.dashboard/frontend",
     "//platform/execution.serviceView/frontend",
