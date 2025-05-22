@@ -279,7 +279,11 @@ public class UndoManagerImpl extends UndoManager {
     mySharedUndoStacksHolder.trimStacks(Collections.singleton(docRef));
   }
 
-  void onCommandStarted(Project project, UndoConfirmationPolicy undoConfirmationPolicy, boolean recordOriginalReference) {
+  void onCommandStarted(
+    @Nullable Project project,
+    @NotNull UndoConfirmationPolicy undoConfirmationPolicy,
+    boolean recordOriginalReference
+  ) {
     UndoClientState state = getClientState();
     if (state == null || !state.isInsideCommand()) {
       for (UndoProvider undoProvider : getUndoProviders()) {
@@ -291,7 +295,11 @@ public class UndoManagerImpl extends UndoManager {
     }
   }
 
-  void onCommandFinished(Project project, @Command String commandName, Object commandGroupId) {
+  void onCommandFinished(
+    @Nullable Project project,
+    @Nullable @Command String commandName,
+    @Nullable Object commandGroupId
+  ) {
     UndoClientState state = getClientState();
     if (state != null) {
       state.commandFinished(getEditorProvider(), commandName, commandGroupId);

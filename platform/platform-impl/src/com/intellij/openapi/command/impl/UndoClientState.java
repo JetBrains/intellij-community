@@ -161,7 +161,7 @@ final class UndoClientState implements Disposable {
   void commandStarted(
     @Nullable Project commandProject,
     @NotNull CurrentEditorProvider editorProvider,
-    UndoConfirmationPolicy undoConfirmationPolicy,
+    @NotNull UndoConfirmationPolicy undoConfirmationPolicy,
     boolean recordOriginalReference
   ) {
     if (!isInsideCommand()) {
@@ -182,7 +182,7 @@ final class UndoClientState implements Disposable {
 
   void commandFinished(
     @NotNull CurrentEditorProvider editorProvider,
-    @Command String commandName,
+    @Nullable @Command String commandName,
     @Nullable Object groupId
   ) {
     if (!isInsideCommand()) {
