@@ -528,5 +528,13 @@
                      language="kotlin"
                      key="inspection.unused.unary.operator.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ReplaceMapGetOrDefaultInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="INFORMATION"
+                     language="kotlin"
+                     key="map.get.or.default.can.be.replaced.with.indexing.and.elvis.operator" bundle="messages.KotlinBundle"/>
+
   </extensions>
 </idea-plugin>

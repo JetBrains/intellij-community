@@ -1,4 +1,4 @@
-// IS_APPLICABLE: false
+// PROBLEM: none
 // RUNTIME_WITH_FULL_JDK
 fun main() {
     val map = mapOf(1 to "", 2 to null)

@@ -16658,35 +16658,6 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/intentions/replaceMapGetOrDefault")
-    public static class ReplaceMapGetOrDefault extends AbstractK1IntentionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K1;
-        }
-
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("inExpression.kt")
-        public void testInExpression() throws Exception {
-            runTest("testData/intentions/replaceMapGetOrDefault/inExpression.kt");
-        }
-
-        @TestMetadata("nullableValue.kt")
-        public void testNullableValue() throws Exception {
-            runTest("testData/intentions/replaceMapGetOrDefault/nullableValue.kt");
-        }
-
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("testData/intentions/replaceMapGetOrDefault/simple.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/replaceSizeCheckWithIsNotEmpty")
     public static class ReplaceSizeCheckWithIsNotEmpty extends AbstractK1IntentionTest {
         @java.lang.Override

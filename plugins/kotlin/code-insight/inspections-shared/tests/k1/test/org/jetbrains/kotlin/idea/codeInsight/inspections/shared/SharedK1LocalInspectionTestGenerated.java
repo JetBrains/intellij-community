@@ -3709,6 +3709,35 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/replaceMapGetOrDefault")
+    public static class ReplaceMapGetOrDefault extends AbstractSharedK1LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("inExpression.kt")
+        public void testInExpression() throws Exception {
+            runTest("../testData/inspectionsLocal/replaceMapGetOrDefault/inExpression.kt");
+        }
+
+        @TestMetadata("nullableValue.kt")
+        public void testNullableValue() throws Exception {
+            runTest("../testData/inspectionsLocal/replaceMapGetOrDefault/nullableValue.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../testData/inspectionsLocal/replaceMapGetOrDefault/simple.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/replacePrintlnWithLogging")
     public static class ReplacePrintlnWithLogging extends AbstractSharedK1LocalInspectionTest {
         @java.lang.Override
