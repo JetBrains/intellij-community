@@ -232,7 +232,11 @@ f:com.intellij.diff.util.DiffRangeUtil
 - sf:getLines(java.lang.CharSequence,com.intellij.diff.tools.util.text.LineOffsets,I,I):java.util.List
 - sf:getLinesContent(java.lang.CharSequence,com.intellij.diff.tools.util.text.LineOffsets,I,I):java.lang.CharSequence
 - sf:getLinesContent(java.lang.CharSequence,com.intellij.diff.tools.util.text.LineOffsets,I,I,Z):java.lang.CharSequence
-- sf:getLinesRange(com.intellij.diff.tools.util.text.LineOffsets,I,I,Z):com.intellij.openapi.util.TextRange
+- sf:getLinesRange(com.intellij.diff.tools.util.text.LineOffsets,I,I,Z):com.intellij.diff.util.LinesRange
+f:com.intellij.diff.util.LinesRange
+- <init>(I,I):V
+- f:getEndOffset():I
+- f:getStartOffset():I
 e:com.intellij.diff.util.MergeConflictResolutionStrategy
 - java.lang.Enum
 - sf:DEFAULT:com.intellij.diff.util.MergeConflictResolutionStrategy

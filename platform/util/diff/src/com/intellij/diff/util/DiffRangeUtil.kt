@@ -2,7 +2,6 @@
 package com.intellij.diff.util
 
 import com.intellij.diff.tools.util.text.LineOffsets
-import com.intellij.openapi.util.TextRange
 import org.jetbrains.annotations.NonNls
 
 object DiffRangeUtil {
@@ -20,20 +19,21 @@ object DiffRangeUtil {
     includeNewline: Boolean
   ): CharSequence {
     assert(sequence.length == lineOffsets.textLength)
-    return getLinesRange(lineOffsets, line1, line2, includeNewline).subSequence(sequence)
+    val linesRange = getLinesRange(lineOffsets, line1, line2, includeNewline)
+    return sequence.subSequence(linesRange.startOffset, linesRange.endOffset)
   }
 
   @JvmStatic
-  fun getLinesRange(lineOffsets: LineOffsets, line1: Int, line2: Int, includeNewline: Boolean): TextRange {
+  fun getLinesRange(lineOffsets: LineOffsets, line1: Int, line2: Int, includeNewline: Boolean): LinesRange {
     return if (line1 == line2) {
       val lineStartOffset = if (line1 < lineOffsets.lineCount) lineOffsets.getLineStart(line1) else lineOffsets.textLength
-      TextRange(lineStartOffset, lineStartOffset)
+      LinesRange(lineStartOffset, lineStartOffset)
     }
     else {
       val startOffset = lineOffsets.getLineStart(line1)
       var endOffset = lineOffsets.getLineEnd(line2 - 1)
       if (includeNewline && endOffset < lineOffsets.textLength) endOffset++
-      TextRange(startOffset, endOffset)
+      LinesRange(startOffset, endOffset)
     }
   }
 
@@ -57,3 +57,5 @@ object DiffRangeUtil {
     return result
   }
 }
+
+class LinesRange(val startOffset: Int, val endOffset: Int)

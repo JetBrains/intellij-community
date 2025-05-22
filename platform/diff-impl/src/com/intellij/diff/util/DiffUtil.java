@@ -75,6 +75,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -1273,7 +1274,8 @@ public final class DiffUtil {
   }
 
   public static @NotNull TextRange getLinesRange(@NotNull Document document, int line1, int line2, boolean includeNewline) {
-    return DiffRangeUtil.getLinesRange(LineOffsetsUtil.create(document), line1, line2, includeNewline);
+    LinesRange linesRange = DiffRangeUtil.getLinesRange(LineOffsetsUtil.create(document), line1, line2, includeNewline);
+    return new TextRange(linesRange.getStartOffset(), linesRange.getEndOffset());
   }
 
 
