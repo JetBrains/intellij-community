@@ -8,7 +8,6 @@ import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.util.io.*
 import org.junit.ComparisonFailure
 import java.io.File
-import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
@@ -47,9 +46,9 @@ sealed class DirectorySpecBase(override val originalFile: Path?) : DirectoryCont
     children[name] = spec
   }
 
-  protected fun generateInDirectory(target: File) {
+  protected fun generateInDirectory(target: Path) {
     for ((name, child) in children) {
-      child.generate(File(target, name))
+      child.generate(path = target.resolve(name))
     }
   }
 
@@ -79,28 +78,26 @@ sealed class DirectorySpecBase(override val originalFile: Path?) : DirectoryCont
 }
 
 class DirectorySpec(originalFile: Path? = null) : DirectorySpecBase(originalFile) {
-  override fun generate(target: File) {
-    if (!FileUtil.createDirectory(target)) {
-      throw IOException("Cannot create directory $target")
-    }
-    generateInDirectory(target)
+  override fun generate(path: Path) {
+    path.createParentDirectories()
+    generateInDirectory(path)
   }
 }
 
 sealed class ZipSpecBase(private val extension: String) : DirectorySpecBase(null) {
-  override fun generate(target: File) {
+  override fun generate(path: Path) {
     val contentDir = FileUtil.createTempDirectory("$extension-content", null, false)
     try {
-      generateInDirectory(contentDir)
-      FileUtil.createParentDirs(target)
-      compress(contentDir, target)
+      generateInDirectory(contentDir.toPath())
+      path.createParentDirectories()
+      compress(contentDir, path)
     }
     finally {
       FileUtil.delete(contentDir)
     }
   }
 
-  abstract fun compress(contentDir: File, target: File)
+  abstract fun compress(contentDir: File, target: Path)
 
   override fun generateInTempDir(): Path {
     val target = FileUtil.createTempFile("$extension-by-spec", ".$extension", true)
@@ -110,13 +107,13 @@ sealed class ZipSpecBase(private val extension: String) : DirectorySpecBase(null
 }
 
 class ZipSpec(val level: Int = Deflater.DEFAULT_COMPRESSION) : ZipSpecBase("zip") {
-  override fun compress(contentDir: File, target: File) {
+  override fun compress(contentDir: File, target: Path) {
     Compressor.Zip(target).withLevel(level).use { it.addDirectory(contentDir) }
   }
 }
 
 class JarSpec : ZipSpecBase("jar") {
-  override fun compress(contentDir: File, target: File) {
+  override fun compress(contentDir: File, target: Path) {
     Compressor.Jar(target).use {
       val manifestFile = File(contentDir, JarFile.MANIFEST_NAME)
       if (manifestFile.exists()) {
@@ -130,8 +127,8 @@ class JarSpec : ZipSpecBase("jar") {
 }
 
 class FileSpec(val content: ByteArray?, override val originalFile: Path? = null) : DirectoryContentSpecImpl() {
-  override fun generate(target: File) {
-    FileUtil.writeToFile(target, content ?: ByteArray(0))
+  override fun generate(path: Path) {
+    path.write(content ?: ByteArray(0))
   }
 
   override fun generateInTempDir(): Path {

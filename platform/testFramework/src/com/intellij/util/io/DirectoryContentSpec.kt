@@ -91,9 +91,15 @@ abstract class DirectoryContentBuilder {
 
 interface DirectoryContentSpec {
   /**
+   * Generates files, directories and archives accordingly to this specification in a directory designated by [path]
+   */
+  fun generate(path: Path)
+
+  /**
    * Generates files, directories and archives accordingly to this specification in [target] directory
    */
-  fun generate(target: File)
+  @Deprecated("Use generate(Path) instead")
+  fun generate(target: File): Unit = generate(target.toPath())
 
   /**
    * Generates files, directories and archives accordingly to this specification in a temp directory and return that directory.
