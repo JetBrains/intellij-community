@@ -18,7 +18,6 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.TitledIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
@@ -221,8 +220,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
           throw new RuntimeException(e);
         }
         Span span = startProcessSpan(progress);
-        long startMillis = System.currentTimeMillis();
-        logProcessIndicator(progress, true, startMillis);
+        logProcessIndicator(progress, true);
         if (span == null) {
           process.run();
         }
@@ -232,7 +230,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
             return null;
           });
         }
-        logProcessIndicator(progress, false, startMillis);
+        logProcessIndicator(progress, false);
       }
       finally {
         if (progress != null && progress.isRunning()) {
@@ -252,29 +250,11 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     return  ((TitledIndicator)progress).getTitle();
   }
 
-  private static void logProcessIndicator(@Nullable ProgressIndicator progress, boolean started, long startMillis) {
+  private static void logProcessIndicator(@Nullable ProgressIndicator progress, boolean started) {
     String progressText = getProgressIndicatorText(progress);
     if (ApplicationManagerEx.isInIntegrationTest()) {
       if (progressText != null) {
         LOG.info("Progress indicator:" + (started ? "started" : "finished") + ":" + progressText);
-      }
-      if (System.getProperty("idea.performanceReport.projectName") != null) { //in startup tests only
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          String message = StringUtil.notNullize(progressText, "<empty>");
-          if (started) {
-            throw new RuntimeException("Progress Indicator Test Stats:\n" +
-                                       "started\n" +
-                                       "message: " + message);
-          }
-          else {
-            long lengthMillis = System.currentTimeMillis() - startMillis;
-            throw new RuntimeException("Progress Indicator Test Stats:\n" +
-                                       "finished\n" +
-                                       ((lengthMillis >= 3000) ? "Progress is long enough" : "Short progress") + "\n" +
-                                       "millis: " + lengthMillis + "\n" +
-                                       "message: " + message);
-          }
-        });
       }
     }
   }
