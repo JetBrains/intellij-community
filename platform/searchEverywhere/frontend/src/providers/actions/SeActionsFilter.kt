@@ -8,7 +8,7 @@ import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class SeActionsFilter(val includeDisabled: Boolean): SeFilter {
+class SeActionsFilter(val includeDisabled: Boolean) : SeFilter {
   override fun toState(): SeFilterState =
     SeFilterState.Data(mapOf(KEY_INCLUDE_DISABLED to SeFilterValue.One(includeDisabled.toString())))
 
@@ -18,9 +18,9 @@ class SeActionsFilter(val includeDisabled: Boolean): SeFilter {
     fun from(state: SeFilterState): SeActionsFilter {
       when (state) {
         is SeFilterState.Data -> {
-          val includeDisabled = (state.map[KEY_INCLUDE_DISABLED] ?: state.map[SeEverywhereFilter.KEY_IS_EVERYWHERE])?.let {
+          val includeDisabled = (state.map[KEY_INCLUDE_DISABLED]?.let {
             it as? SeFilterValue.One
-          }?.value?.toBoolean() ?: false
+          }?.value?.toBoolean() ?: SeEverywhereFilter.isEverywhere(state)) ?: false
 
           return SeActionsFilter(includeDisabled)
         }

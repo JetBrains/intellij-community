@@ -15,7 +15,7 @@ import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
 import com.intellij.platform.searchEverywhere.providers.SeAsyncWeightedContributorWrapper
-import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter.Companion.KEY_IS_EVERYWHERE
+import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter
 import com.intellij.platform.searchEverywhere.providers.SeTypeVisibilityStateProviderDelegate
 import com.intellij.platform.searchEverywhere.providers.getExtendedDescription
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetsFilter
@@ -48,17 +48,19 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncWeightedC
     val inputQuery = params.inputQuery
     val defaultMatchers = createDefaultMatchers(inputQuery)
 
-    val isEverywhere = (params.filter as? SeFilterState.Data)?.map[KEY_IS_EVERYWHERE]?.let {
-      it as? SeFilterValue.One
-    }?.value
-    if (isEverywhere != null) {
-      val searchScopeInfo = searchScopesInfo.getValue()
-      applyScope(searchScopeInfo?.run { if (isEverywhere.toBoolean()) everywhereScopeId else projectScopeId })
+    val scopeToApply: String? = SeEverywhereFilter.isEverywhere(params.filter)?.let { isEverywhere ->
+      searchScopesInfo.getValue()?.let { searchScopesInfo ->
+        if (isEverywhere) searchScopesInfo.everywhereScopeId else searchScopesInfo.projectScopeId
+      }
+    } ?: run {
+      val targetsFilter = SeTargetsFilter.from(params.filter)
+      SeTypeVisibilityStateProviderDelegate.applyTypeVisibilityStates<T>(
+        contributorWrapper.contributor,
+        targetsFilter.hiddenTypes
+      )
+      targetsFilter.selectedScopeId
     }
-
-    val targetsFilter = SeTargetsFilter.from(params.filter)
-    applyScope(targetsFilter.selectedScopeId)
-    SeTypeVisibilityStateProviderDelegate.applyTypeVisibilityStates<T>(contributorWrapper.contributor, targetsFilter.hiddenTypes)
+    applyScope(scopeToApply)
 
     coroutineToIndicator {
       val indicator = DelegatingProgressIndicator(ProgressManager.getGlobalProgressIndicator())

@@ -8,7 +8,7 @@ import com.intellij.platform.searchEverywhere.SeProviderId
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class SeEverywhereFilter(val isEverywhere: Boolean, val disabledProviderIds: List<SeProviderId>): SeFilter {
+class SeEverywhereFilter(val isEverywhere: Boolean, val disabledProviderIds: List<SeProviderId>) : SeFilter {
   override fun toState(): SeFilterState =
     SeFilterState.Data(mapOf(KEY_IS_EVERYWHERE to SeFilterValue.One(isEverywhere.toString()),
                              ENABLED_PROVIDER_IDS to SeFilterValue.Many(disabledProviderIds.map { it.value })))
@@ -23,9 +23,7 @@ class SeEverywhereFilter(val isEverywhere: Boolean, val disabledProviderIds: Lis
     fun from(state: SeFilterState): SeEverywhereFilter {
       when (state) {
         is SeFilterState.Data -> {
-          val isEverywhere = state.map[KEY_IS_EVERYWHERE]?.let {
-            it as? SeFilterValue.One
-          }?.value?.toBoolean() ?: false
+          val isEverywhere = isEverywhere(state) ?: false
 
           val disabledProviderIds = state.map[ENABLED_PROVIDER_IDS]?.let {
             it as? SeFilterValue.Many
@@ -38,5 +36,8 @@ class SeEverywhereFilter(val isEverywhere: Boolean, val disabledProviderIds: Lis
         SeFilterState.Empty -> return SeEverywhereFilter(false, emptyList())
       }
     }
+
+    fun isEverywhere(state: SeFilterState): Boolean? =
+      (state as? SeFilterState.Data)?.map?.get(KEY_IS_EVERYWHERE)?.let { it as? SeFilterValue.One }?.value?.toBoolean()
   }
 }
