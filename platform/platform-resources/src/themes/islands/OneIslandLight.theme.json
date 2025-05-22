@@ -114,6 +114,16 @@
 
     "HelpBrowser.UserMessage.background": "#DFE1E5CC",
 
+    "RecentProject.Color1.MainToolbarGradientStart": "#f5ece9",
+    "RecentProject.Color2.MainToolbarGradientStart": "#edebe1",
+    "RecentProject.Color3.MainToolbarGradientStart": "#e3e8dc",
+    "RecentProject.Color4.MainToolbarGradientStart": "#e4e9ed",
+    "RecentProject.Color5.MainToolbarGradientStart": "#e7e6f0",
+    "RecentProject.Color6.MainToolbarGradientStart": "#f3edf5",
+    "RecentProject.Color7.MainToolbarGradientStart": "#f0ebf5",
+    "RecentProject.Color8.MainToolbarGradientStart": "#e1ebe9",
+    "RecentProject.Color9.MainToolbarGradientStart": "#e1ebe3",
+
     "RecentProject": {
       "Color1": {
         "MainToolbarGradientStart": "#F5D4C1",
