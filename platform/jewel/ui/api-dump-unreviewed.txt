@@ -2585,6 +2585,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$FileTypes
 - sf:Hprof:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Htaccess:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Html:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Http:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:I18n:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Idl:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Image:org.jetbrains.jewel.ui.icon.IntelliJIconKey

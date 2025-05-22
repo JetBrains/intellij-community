@@ -445,6 +445,7 @@ public final class AllIconsKeys {
     /** 16x16 */ public static final @NotNull IntelliJIconKey Hprof = new IntelliJIconKey("fileTypes/hprof.svg", "fileTypes/hprof.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Htaccess = new IntelliJIconKey("fileTypes/htaccess.svg", "fileTypes/htaccess.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Html = new IntelliJIconKey("fileTypes/html.svg", "expui/fileTypes/html.svg", AllIconsKeys.class);
+    /** 16x16 */ public static final @NotNull IntelliJIconKey Http = new IntelliJIconKey("fileTypes/http.svg", "expui/fileTypes/http.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey I18n = new IntelliJIconKey("fileTypes/i18n.svg", "expui/fileTypes/i18n.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Idl = new IntelliJIconKey("fileTypes/idl.svg", "expui/fileTypes/idl.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Image = new IntelliJIconKey("fileTypes/image.svg", "expui/fileTypes/image.svg", AllIconsKeys.class);

@@ -263,6 +263,7 @@
       "editorConfig.svg": "nodes/editorconfig.svg",
       "diagram.svg": "fileTypes/diagram.svg",
       "html.svg": "fileTypes/html.svg",
+      "http.svg": "fileTypes/http.svg",
       "ideaModule.svg": "nodes/ideaModule.svg",
       "idl.svg": "fileTypes/idl.svg",
       "i18n.svg": "fileTypes/i18n.svg",

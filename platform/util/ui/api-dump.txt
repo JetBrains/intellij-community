@@ -419,6 +419,7 @@ f:com.intellij.icons.AllIcons$FileTypes
 - sf:Hprof:javax.swing.Icon
 - sf:Htaccess:javax.swing.Icon
 - sf:Html:javax.swing.Icon
+- sf:Http:javax.swing.Icon
 - sf:I18n:javax.swing.Icon
 - sf:Idl:javax.swing.Icon
 - sf:Image:javax.swing.Icon
