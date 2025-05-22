@@ -14,6 +14,8 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.util.registry.Registry.Companion.stringValue
 import com.intellij.openapi.util.text.StringUtil
@@ -74,7 +76,16 @@ class MavenIndexerCMDState(
 
       val dependenciesUrls = parseDependenciesUrls(mavenIndexerIml) ?: throw RuntimeException("Cannot parse maven.server.indexer.iml")
       val pathMacros = PathMacros.getInstance()
-      val pathToRepo = pathMacros.getValue(PathMacrosImpl.MAVEN_REPOSITORY) ?: throw RuntimeException("Cannot find maven repo")
+      val pathToRepo = pathMacros.getValue(PathMacrosImpl.MAVEN_REPOSITORY)
+        ?.replace('\\', '/')
+        ?.let {
+        if (FileUtil.isAbsolute(it) && SystemInfo.isWindows) {
+          // absolute paths on windows (e.g. 'C:/dir') require additional '`'/` char in the front to be a valid file:// URI.
+          "/$it"
+        } else {
+          it
+        }
+      } ?: throw RuntimeException("Cannot find maven repo")
 
       for (depTemplate in dependenciesUrls) {
         val url = depTemplate.replace('$' + PathMacrosImpl.MAVEN_REPOSITORY + '$', pathToRepo)
