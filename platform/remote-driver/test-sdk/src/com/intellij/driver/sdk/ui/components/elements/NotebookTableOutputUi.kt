@@ -76,7 +76,13 @@ class NotebookTableOutputUi(data: ComponentData) : UiComponent(data) {
     val iconFileName = if (forward) "playForward.svg" else "playBack.svg"
     val button = x("//div[@myicon='$iconFileName']")
     val textBefore = tableView.getValueAt(0, 0)
-    button.waitFound(30.seconds)
+    driver.withThreadDumps(
+      "threadDumps-goOtherPage",
+      "threadDump-waiting-$iconFileName",
+      5.seconds,
+    ) {
+      button.waitFound(30.seconds)
+    }
     button.click()
     waitFor("expect the cell [0,0] doesn't contain '$textBefore' anymore") {
       tableView.getValueAt(0, 0) != textBefore
