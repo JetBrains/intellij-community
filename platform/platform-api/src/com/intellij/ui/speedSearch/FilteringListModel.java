@@ -70,7 +70,10 @@ public class FilteringListModel<T> extends AbstractListModel<T> {
   private void commit(List<T> newData) {
     Diff.Change change;
     try {
-      change = Diff.buildChanges(myData.toArray(), newData.toArray(), HashingStrategy.identity());
+      change = Diff.buildChanges(
+        myData.stream().map(e -> new IdentityWrapper(e)).toArray(),
+        newData.stream().map(e -> new IdentityWrapper(e)).toArray()
+      );
     }
     catch (FilesTooBigForDiffException e) {
       replace(0, myData.size(), newData);
@@ -83,6 +86,28 @@ public class FilteringListModel<T> extends AbstractListModel<T> {
         replace(ch.line0, ch.line0 + ch.deleted, newData.subList(ch.line1, ch.line1 + ch.inserted));
       }
       assert myData.equals(newData);
+    }
+  }
+
+  private class IdentityWrapper {
+    private final Object myElement;
+
+    IdentityWrapper(T element) {
+      myElement = element;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == null) return false;
+      if (obj instanceof FilteringListModel<?>.IdentityWrapper wrapper) {
+        return myElement == wrapper.myElement;
+      }
+      return false;
+    }
+
+    @Override
+    public int hashCode() {
+      return System.identityHashCode(myElement);
     }
   }
 

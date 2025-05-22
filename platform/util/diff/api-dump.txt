@@ -357,7 +357,6 @@ f:com.intellij.util.diff.Diff
 - sf:buildChanges(java.lang.CharSequence,java.lang.CharSequence):com.intellij.util.diff.Diff$Change
 - sf:buildChanges(I[],I[]):com.intellij.util.diff.Diff$Change
 - sf:buildChanges(java.lang.Object[],java.lang.Object[]):com.intellij.util.diff.Diff$Change
-- sf:buildChanges(java.lang.Object[],java.lang.Object[],com.intellij.util.containers.HashingStrategy):com.intellij.util.diff.Diff$Change
 - sf:linesDiff(java.lang.CharSequence[],java.lang.CharSequence[]):java.lang.CharSequence
 - sf:splitLines(java.lang.CharSequence):java.lang.String[]
 - sf:translateLine(com.intellij.util.diff.Diff$Change,I):I

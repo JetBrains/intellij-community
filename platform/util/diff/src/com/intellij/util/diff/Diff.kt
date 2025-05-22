@@ -1,9 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.diff
 
+import com.intellij.diff.util.Enumerator
 import com.intellij.openapi.util.text.LineTokenizer
-import com.intellij.util.containers.Enumerator
-import com.intellij.util.containers.HashingStrategy
 import org.jetbrains.annotations.NonNls
 import java.util.*
 import kotlin.math.min
@@ -23,24 +22,14 @@ object Diff {
   @JvmStatic
   @Throws(FilesTooBigForDiffException::class)
   fun <T> buildChanges(objects1: Array<T>, objects2: Array<T>): Change? {
-    return buildChanges(objects1, objects2, HashingStrategy.canonical<T>())
-  }
-
-  @JvmStatic
-  @Throws(FilesTooBigForDiffException::class)
-  fun <T> buildChanges(
-    objects1: Array<T>,
-    objects2: Array<T>,
-    strategy: HashingStrategy<T>
-  ): Change? {
-    val startShift = getStartShift(objects1, objects2, strategy)
-    val endCut = getEndCut(objects1, objects2, startShift, strategy)
+    val startShift = getStartShift(objects1, objects2)
+    val endCut = getEndCut(objects1, objects2, startShift)
 
     val changeRef = doBuildChangesFast(objects1.size, objects2.size, startShift, endCut)
     if (changeRef != null) return changeRef.value
 
     val trimmedLength = objects1.size + objects2.size - 2 * startShift - 2 * endCut
-    val enumerator = Enumerator(trimmedLength, strategy)
+    val enumerator = Enumerator<T>(trimmedLength)
     val ints1 = enumerator.enumerate(objects1, startShift, endCut)
     val ints2 = enumerator.enumerate(objects2, startShift, endCut)
     return doBuildChanges(ints1, ints2, ChangeBuilder(startShift))
@@ -110,22 +99,22 @@ object Diff {
     return builder.firstChange
   }
 
-  private fun <T> getStartShift(o1: Array<T>, o2: Array<T>, strategy: HashingStrategy<T>): Int {
+  private fun <T> getStartShift(o1: Array<T>, o2: Array<T>): Int {
     val size = min(o1.size, o2.size)
     var idx = 0
     for (i in 0..<size) {
-      if (!strategy.equals(o1[i], o2[i])) break
+      if (o1[i] != o2[i]) break
       ++idx
     }
     return idx
   }
 
-  private fun <T> getEndCut(o1: Array<T>, o2: Array<T>, startShift: Int, strategy: HashingStrategy<T>): Int {
+  private fun <T> getEndCut(o1: Array<T>, o2: Array<T>, startShift: Int): Int {
     val size = min(o1.size, o2.size) - startShift
     var idx = 0
 
     for (i in 0..<size) {
-      if (!strategy.equals(o1[o1.size - i - 1], o2[o2.size - i - 1])) break
+      if (o1[o1.size - i - 1] != o2[o2.size - i - 1]) break
       ++idx
     }
     return idx

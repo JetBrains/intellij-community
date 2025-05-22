@@ -610,9 +610,7 @@ sealed interface ComputedListChange<out V> {
  * Changes can only be reported for immutable items, as we do not store a deep copy previous state.
  */
 @ApiStatus.Internal
-fun <T> StateFlow<Iterable<T>>.changesFlow(
-  hashingStrategy: HashingStrategy<T> = HashingStrategy.canonical<T>(),
-): Flow<List<ComputedListChange<T>>> =
+fun <T> StateFlow<Iterable<T>>.changesFlow(): Flow<List<ComputedListChange<T>>> =
   channelFlow {
     val stateFlow = this@changesFlow
 
@@ -626,8 +624,7 @@ fun <T> StateFlow<Iterable<T>>.changesFlow(
         @Suppress("UNCHECKED_CAST")
         val changes = Diff.buildChanges(
           list.toArray(arrayOf<Any?>()) as Array<T>,
-          newList.toArray(arrayOf<Any?>()) as Array<T>,
-          hashingStrategy
+          newList.toArray(arrayOf<Any?>()) as Array<T>
         )?.toList() ?: emptyList()
 
         buildList {
