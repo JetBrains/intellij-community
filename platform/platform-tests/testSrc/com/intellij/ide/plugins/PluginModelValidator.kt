@@ -24,7 +24,6 @@ import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
-import org.opentest4j.MultipleFailuresError
 import java.io.StringWriter
 import java.nio.file.Path
 import kotlin.io.path.*
@@ -274,21 +273,6 @@ class PluginModelValidator(
       checkDependencies(descriptor.dependencies, pluginInfo, pluginInfo, moduleNameToInfo, sourceModuleNameToFileInfo,
                         registeredContentModules)
 
-      // in the end, after processing content and dependencies
-      if (validationOptions.reportDependsTagInPluginXmlWithPackageAttribute && pluginInfo.packageName != null) {
-        descriptor.depends.firstOrNull { !it.isOptional }?.let {
-          reportError(
-            "The old format should not be used for a plugin with the specified package prefix (${pluginInfo.packageName}), but `depends` tag is used." +
-            " Please use the new format (see https://github.com/JetBrains/intellij-community/blob/master/docs/plugin.md#the-dependencies-element)",
-            pluginInfo.sourceModule,
-            mapOf(
-              "descriptorFile" to pluginInfo.descriptorFile,
-              "depends" to it,
-            ),
-          )
-        }
-      }
-
       for (contentModuleInfo in pluginInfo.content) {
         checkDependencies(
           dependenciesElements = contentModuleInfo.descriptor.dependencies,
@@ -310,9 +294,44 @@ class PluginModelValidator(
           )
         }
       }
+
+      // in the end, after processing content and dependencies
+      checkDepends(pluginInfo, descriptor)
     }
 
     return PluginValidationResult(_errors, pluginIdToInfo)
+  }
+
+  private fun checkDepends(
+    pluginInfo: ModuleInfo,
+    descriptor: RawPluginDescriptor,
+  ) {
+    val dependsPerTarget = descriptor.depends.groupBy { it.pluginId }
+    for ((target, depends) in dependsPerTarget.filter { (_, depends) -> depends.any { it.isOptional } && depends.any { !it.isOptional } }) {
+      if (pluginInfo.sourceModule.name in setOf("intellij.android.plugin.descriptor", "intellij.rider.plugins.android")) continue
+      reportError(
+        message = "Both optional and strict <depends> found targeting the plugin '${target}'.",
+        sourceModule = pluginInfo.sourceModule,
+        params = mapOf(
+          "descriptorFile" to pluginInfo.descriptorFile,
+          "depends" to depends,
+        )
+      )
+    }
+
+    if (validationOptions.reportDependsTagInPluginXmlWithPackageAttribute && pluginInfo.packageName != null) {
+      descriptor.depends.firstOrNull { !it.isOptional }?.let {
+        reportError(
+          "The old format should not be used for a plugin with the specified package prefix (${pluginInfo.packageName}), but `depends` tag is used." +
+          " Please use the new format (see https://github.com/JetBrains/intellij-community/blob/master/docs/plugin.md#the-dependencies-element)",
+          pluginInfo.sourceModule,
+          mapOf(
+            "descriptorFile" to pluginInfo.descriptorFile,
+            "depends" to it,
+          ),
+        )
+      }
+    }
   }
 
   private fun checkDependencies(
