@@ -14,6 +14,7 @@ import java.util.*;
 public class JavaAbiClassFilter extends ClassVisitor {
   public static final String MODULE_INFO_CLASS_NAME = "module-info";
   private boolean isAbiClass;
+  private boolean allowPackageLocalMethods;
   private boolean isKotlinClass;
   private Set<String> myExcludedClasses = new HashSet<>();
   private List<FieldNode> myFields = new ArrayList<>();
@@ -40,6 +41,7 @@ public class JavaAbiClassFilter extends ClassVisitor {
   @Override
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
     isAbiClass = MODULE_INFO_CLASS_NAME.equals(name) || isAbiVisible(access);
+    allowPackageLocalMethods = name.contains("/android/");   // todo: temporary condition to enable android tests compilation
     if (isAbiClass) {
       super.visit(version, access, name, signature, superName, interfaces);
     }
@@ -50,6 +52,10 @@ public class JavaAbiClassFilter extends ClassVisitor {
 
   private static boolean isAbiVisible(int access) {
     return (access & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED)) != 0;
+  }
+
+  private static boolean isPackageLocal(int access) {
+    return (access & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE)) == 0;
   }
 
   @Override
@@ -72,7 +78,7 @@ public class JavaAbiClassFilter extends ClassVisitor {
 
   @Override
   public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-    if (isAbiVisible(access)) {
+    if (isAbiVisible(access) || (allowPackageLocalMethods && isPackageLocal(access))) {
       MethodNode method = new MethodNode(Opcodes.API_VERSION, access, name, descriptor, signature, exceptions);
       myMethods.add(method);
       return method;
