@@ -6,7 +6,7 @@ c:com.intellij.extapi.psi.StubBasedPsiElementBase
 - *f:getRequiredStubOrPsiChild(com.intellij.psi.tree.IElementType,java.lang.Class):com.intellij.psi.PsiElement
 - *f:getStubOrPsiChild(com.intellij.psi.tree.IElementType):com.intellij.psi.PsiElement
 - *f:getStubOrPsiChild(com.intellij.psi.tree.IElementType,java.lang.Class):com.intellij.psi.PsiElement
-*f:com.intellij.ide.plugins.IdeaPluginDescriptorKt
+*f:com.intellij.ide.plugins.IdeaPluginDescriptorExtensions
 - *sf:getContentModuleName(com.intellij.ide.plugins.IdeaPluginDescriptor):java.lang.String
 - *sf:getMainDescriptor(com.intellij.ide.plugins.IdeaPluginDescriptor):com.intellij.ide.plugins.IdeaPluginDescriptor
 - *sf:getModuleDependencies(com.intellij.ide.plugins.IdeaPluginDescriptor):com.intellij.ide.plugins.ModuleDependencies
