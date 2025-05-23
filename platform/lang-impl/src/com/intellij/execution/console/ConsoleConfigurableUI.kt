@@ -12,11 +12,15 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.selected
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.event.DocumentEvent
 
 @ApiStatus.Internal
-internal class ConsoleConfigurableUI {
+internal class ConsoleConfigurableUI(
+  isEditFoldingsOnly: Boolean, positivePanel: JComponent, negativePanel: JComponent,
+  appendConfigurables: (Panel) -> Unit,
+) {
 
   lateinit var cbUseSoftWrapsAtConsole: JBCheckBox
   lateinit var commandsHistoryLimitField: JBTextField
@@ -28,42 +32,56 @@ internal class ConsoleConfigurableUI {
   val encodingComboBox = ConsoleEncodingComboBox()
 
   val content = panel {
+    rowsRange {
+      row {
+        cbUseSoftWrapsAtConsole = checkBox(ApplicationBundle.message("checkbox.use.soft.wraps.at.console"))
+          .component
+      }
+      row(ApplicationBundle.message("editbox.console.history.limit")) {
+        commandsHistoryLimitField = textField()
+          .columns(COLUMNS_TINY)
+          .component
+      }
+
+      row {
+        cbOverrideConsoleCycleBufferSize = checkBox(ApplicationBundle.message("checkbox.override.console.cycle.buffer.size", (ConsoleBuffer.getLegacyCycleBufferSize() / 1024).toString()))
+          .gap(RightGap.SMALL)
+          .component
+        consoleCycleBufferSizeField = textField()
+          .columns(COLUMNS_TINY)
+          .gap(RightGap.SMALL)
+          .enabledIf(cbOverrideConsoleCycleBufferSize.selected)
+          .applyToComponent {
+            document.addDocumentListener(object : DocumentAdapter() {
+              override fun textChanged(e: DocumentEvent) {
+                updateWarningLabel()
+              }
+            })
+          }.component
+        label(ExecutionBundle.message("settings.console.kb"))
+        consoleBufferSizeWarningLabel = label("")
+          .visibleIf(cbOverrideConsoleCycleBufferSize.selected)
+          .applyToComponent {
+            foreground = JBColor.red
+          }.component
+      }.visible(ConsoleBuffer.useCycleBuffer())
+
+      row(ApplicationBundle.message("combobox.console.default.encoding.label")) {
+        cell(encodingComboBox)
+      }.layout(RowLayout.INDEPENDENT)
+    }.visible(!isEditFoldingsOnly)
+
     row {
-      cbUseSoftWrapsAtConsole = checkBox(ApplicationBundle.message("checkbox.use.soft.wraps.at.console"))
-        .component
-    }
-    row(ApplicationBundle.message("editbox.console.history.limit")) {
-      commandsHistoryLimitField = textField()
-        .columns(COLUMNS_TINY)
-        .component
+      cell(positivePanel)
+        .align(AlignX.FILL)
     }
 
     row {
-      cbOverrideConsoleCycleBufferSize = checkBox(ApplicationBundle.message("checkbox.override.console.cycle.buffer.size", (ConsoleBuffer.getLegacyCycleBufferSize() / 1024).toString()))
-        .gap(RightGap.SMALL)
-        .component
-      consoleCycleBufferSizeField = textField()
-        .columns(COLUMNS_TINY)
-        .gap(RightGap.SMALL)
-        .enabledIf(cbOverrideConsoleCycleBufferSize.selected)
-        .applyToComponent {
-          document.addDocumentListener(object : DocumentAdapter() {
-            override fun textChanged(e: DocumentEvent) {
-              updateWarningLabel()
-            }
-          })
-        }.component
-      label(ExecutionBundle.message("settings.console.kb"))
-      consoleBufferSizeWarningLabel = label("")
-        .visibleIf(cbOverrideConsoleCycleBufferSize.selected)
-        .applyToComponent {
-          foreground = JBColor.red
-        }.component
-    }.visible(ConsoleBuffer.useCycleBuffer())
+      cell(negativePanel)
+        .align(AlignX.FILL)
+    }
 
-    row(ApplicationBundle.message("combobox.console.default.encoding.label")) {
-      cell(encodingComboBox)
-    }.layout(RowLayout.INDEPENDENT)
+    appendConfigurables(this)
   }
 
   private fun updateWarningLabel() {

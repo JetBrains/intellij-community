@@ -9,12 +9,12 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.BoundCompositeSearchableConfigurable;
+import com.intellij.openapi.options.ConfigurableBuilder;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
+import com.intellij.openapi.ui.DialogPanel;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -22,14 +22,15 @@ import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
 import com.intellij.openapi.vfs.encoding.EncodingReference;
 import com.intellij.ui.AddEditDeleteListPanel;
 import com.intellij.ui.ListSpeedSearch;
+import com.intellij.ui.dsl.builder.Panel;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -38,56 +39,51 @@ import java.util.List;
 import static com.intellij.openapi.options.Configurable.isCheckboxModified;
 import static com.intellij.openapi.options.Configurable.isFieldModified;
 
-public class ConsoleConfigurable extends CompositeConfigurable<UnnamedConfigurable> implements SearchableConfigurable {
+@ApiStatus.Internal
+public class ConsoleConfigurable extends BoundCompositeSearchableConfigurable<ConsoleOptionsProvider> {
   private static final Logger LOG = Logger.getInstance(ConsoleConfigurable.class);
 
-  private JPanel myMainComponent;
   private ConsoleConfigurableUI ui;
 
   private MyAddDeleteListPanel myPositivePanel;
   private MyAddDeleteListPanel myNegativePanel;
   private final ConsoleFoldingSettings mySettings = ConsoleFoldingSettings.getSettings();
 
-  private static final ExtensionPointName<ConsoleConfigurableEP>
-    EP_NAME = ExtensionPointName.create("com.intellij.consoleConfigurableProvider");
+  public ConsoleConfigurable() {
+    super(ExecutionBundle.message("configurable.ConsoleConfigurable.display.name"), "reference.idesettings.console.folding",
+          ExecutionBundle.message("configurable.ConsoleConfigurable.display.name"));
+  }
 
   @ApiStatus.Internal
   @Override
-  protected @Unmodifiable @NotNull List<UnnamedConfigurable> createConfigurables() {
-    return ContainerUtil.sorted(ConfigurableWrapper.createConfigurables(EP_NAME),
+  @Unmodifiable
+  @NotNull
+  public List<ConsoleOptionsProvider> createConfigurables() {
+    return ContainerUtil.sorted(ConfigurableWrapper.createConfigurables(ConsoleOptionsProviderEP.EP_NAME),
                                 Comparator.comparing(ConfigurableBuilder::getConfigurableTitle));
   }
 
   @Override
-  public JComponent createComponent() {
-    if (ui == null) {
-      myMainComponent = new JPanel(new BorderLayout());
-      ui = new ConsoleConfigurableUI();
+  public @NotNull DialogPanel createPanel() {
+    myPositivePanel =
+      new MyAddDeleteListPanel(ApplicationBundle.message("console.fold.console.lines"),
+                               ApplicationBundle.message("console.enter.substring.folded"));
+    myNegativePanel = new MyAddDeleteListPanel(ApplicationBundle.message("console.fold.exceptions"),
+                                               ApplicationBundle.message("console.enter.substring.dont.fold"));
+    myPositivePanel.getEmptyText().setText(ApplicationBundle.message("console.fold.nothing"));
+    myNegativePanel.getEmptyText().setText(ApplicationBundle.message("console.no.exceptions"));
 
-      if (!editFoldingsOnly()) {
-        myMainComponent.add(ui.getContent(), BorderLayout.NORTH);
-      }
-      Splitter splitter = new Splitter(true);
-      myMainComponent.add(splitter, BorderLayout.CENTER);
-      myPositivePanel =
-        new MyAddDeleteListPanel(ApplicationBundle.message("console.fold.console.lines"),
-                                 ApplicationBundle.message("console.enter.substring.folded"));
-      myNegativePanel = new MyAddDeleteListPanel(ApplicationBundle.message("console.fold.exceptions"),
-                                                 ApplicationBundle.message("console.enter.substring.dont.fold"));
-      splitter.setFirstComponent(myPositivePanel);
-      splitter.setSecondComponent(myNegativePanel);
-
-      myPositivePanel.getEmptyText().setText(ApplicationBundle.message("console.fold.nothing"));
-      myNegativePanel.getEmptyText().setText(ApplicationBundle.message("console.no.exceptions"));
-
-      for (var c : getConfigurables()) {
-        var panel = c.createComponent();
-        if (panel != null) {
-          myMainComponent.add(panel, BorderLayout.SOUTH);
+    ui = new ConsoleConfigurableUI(editFoldingsOnly(), myPositivePanel, myNegativePanel, new Function1<>() {
+      @Override
+      public Unit invoke(Panel panel) {
+        for (ConsoleOptionsProvider configurable : getConfigurables()) {
+          appendDslConfigurable(panel, configurable);
         }
+        return null;
       }
-    }
-    return myMainComponent;
+    });
+
+    return ui.getContent();
   }
 
   protected boolean editFoldingsOnly() {
@@ -130,7 +126,7 @@ public class ConsoleConfigurable extends CompositeConfigurable<UnnamedConfigurab
   }
 
   @Override
-  public void apply() throws ConfigurationException {
+  public void apply() {
     super.apply();
 
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
@@ -201,25 +197,9 @@ public class ConsoleConfigurable extends CompositeConfigurable<UnnamedConfigurab
   public void disposeUIResources() {
     super.disposeUIResources();
 
-    myMainComponent = null;
     ui = null;
     myNegativePanel = null;
     myPositivePanel = null;
-  }
-
-  @Override
-  public @NotNull String getId() {
-    return getDisplayName();
-  }
-
-  @Override
-  public String getDisplayName() {
-    return ExecutionBundle.message("configurable.ConsoleConfigurable.display.name");
-  }
-
-  @Override
-  public String getHelpTopic() {
-    return "reference.idesettings.console.folding";
   }
 
   private static final class MyAddDeleteListPanel extends AddEditDeleteListPanel<String> {
@@ -237,25 +217,26 @@ public class ConsoleConfigurable extends CompositeConfigurable<UnnamedConfigurab
     }
 
     private @Nullable String showEditDialog(final String initialValue) {
-      return Messages.showInputDialog(this, myQuery, ExecutionBundle.message("dialog.title.folding.pattern"), Messages.getQuestionIcon(), initialValue, new InputValidatorEx() {
-        @Override
-        public boolean checkInput(String inputString) {
-          return !StringUtil.isEmpty(inputString);
-        }
-
-        @Override
-        public boolean canClose(String inputString) {
-          return !StringUtil.isEmpty(inputString);
-        }
-
-        @Override
-        public @NlsContexts.DetailedDescription @Nullable String getErrorText(String inputString) {
-          if (!checkInput(inputString)) {
-            return ExecutionBundle.message("message.console.folding.rule.string.cannot.be.empty");
+      return Messages.showInputDialog(this, myQuery, ExecutionBundle.message("dialog.title.folding.pattern"), Messages.getQuestionIcon(),
+                                      initialValue, new InputValidatorEx() {
+          @Override
+          public boolean checkInput(String inputString) {
+            return !StringUtil.isEmpty(inputString);
           }
-          return null;
-        }
-      });
+
+          @Override
+          public boolean canClose(String inputString) {
+            return !StringUtil.isEmpty(inputString);
+          }
+
+          @Override
+          public @NlsContexts.DetailedDescription @Nullable String getErrorText(String inputString) {
+            if (!checkInput(inputString)) {
+              return ExecutionBundle.message("message.console.folding.rule.string.cannot.be.empty");
+            }
+            return null;
+          }
+        });
     }
 
     void resetFrom(List<String> patterns) {

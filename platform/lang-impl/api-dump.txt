@@ -1,0 +1,6 @@
+com.intellij.execution.console.ConsoleOptionsProvider
+- com.intellij.openapi.options.UnnamedConfigurable
+f:com.intellij.execution.console.ConsoleOptionsProviderEP
+- com.intellij.openapi.options.ConfigurableEP
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- <init>():V

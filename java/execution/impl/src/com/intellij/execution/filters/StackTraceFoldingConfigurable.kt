@@ -2,34 +2,26 @@
 package com.intellij.execution.filters
 
 import com.intellij.execution.ExecutionBundle
-import com.intellij.openapi.options.BoundConfigurable
-import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.dsl.builder.RightGap
-import com.intellij.ui.dsl.builder.bindIntText
-import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.columns
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.selected
+import com.intellij.execution.console.ConsoleOptionsProvider
+import com.intellij.openapi.options.UiDslUnnamedConfigurable
+import com.intellij.ui.dsl.builder.*
 
-internal class StackTraceFoldingConfigurable : BoundConfigurable(ExecutionBundle.message("stack.trace.folding.configurable.name")) {
+internal class StackTraceFoldingConfigurable : UiDslUnnamedConfigurable.Simple(), ConsoleOptionsProvider {
 
-  private val settings = StackTraceFoldingSettings.getInstance()
-
-  override fun createPanel(): DialogPanel {
-    return panel {
-      group(displayName) {
-        row {
-          val enabled = checkBox(ExecutionBundle.message("stack.trace.folding.configurable.size.setting.name.prefix"))
-            .bindSelected(settings::foldJavaStackTrace)
-            .gap(RightGap.SMALL)
-          intTextField(0..Int.MAX_VALUE)
-            .bindIntText(settings::foldJavaStackTraceGreaterThan)
-            .columns(4)
-            .enabledIf(enabled.selected)
-            .gap(RightGap.SMALL)
-          @Suppress("DialogTitleCapitalization")
-          label(ExecutionBundle.message("stack.trace.folding.configurable.size.setting.name.suffix"))
-        }
+  override fun Panel.createContent() {
+    val settings = StackTraceFoldingSettings.getInstance()
+    group(ExecutionBundle.message("stack.trace.folding.configurable.name")) {
+      row {
+        val enabled = checkBox(ExecutionBundle.message("stack.trace.folding.configurable.size.setting.name.prefix"))
+          .bindSelected(settings::foldJavaStackTrace)
+          .gap(RightGap.SMALL)
+        intTextField(0..Int.MAX_VALUE)
+          .bindIntText(settings::foldJavaStackTraceGreaterThan)
+          .columns(4)
+          .enabledIf(enabled.selected)
+          .gap(RightGap.SMALL)
+        @Suppress("DialogTitleCapitalization")
+        label(ExecutionBundle.message("stack.trace.folding.configurable.size.setting.name.suffix"))
       }
     }
   }
