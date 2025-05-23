@@ -979,7 +979,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
       selector.accept(this);
       if (syntheticVar) {
-        expressionValue = createTempVariable(targetType);
+        expressionValue = targetType == null ? 
+                          myCurrentFlow.createTempVariable(DfType.TOP) : createTempVariable(targetType);
         addInstruction(new SimpleAssignmentInstruction(null, expressionValue));
       }
       addInstruction(new PopInstruction());

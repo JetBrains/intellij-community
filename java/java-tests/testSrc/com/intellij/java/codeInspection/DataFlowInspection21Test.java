@@ -184,4 +184,8 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
     DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
     doTest();
   }
+  
+  public void testSwitchNoUnreachableBranchesDueToUnresolvedType() {
+    doTest();
+  }
 }
