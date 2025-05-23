@@ -14,6 +14,8 @@ import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.feedback.askForFeedbackIfReworkedTerminalDisabled
+import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
+import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 
 internal sealed class TerminalChangeEngineAction(private val engine: TerminalEngine) : DumbAwareToggleAction() {
   init {
@@ -32,7 +34,8 @@ internal sealed class TerminalChangeEngineAction(private val engine: TerminalEng
       // Call save manually, because otherwise this change will be synced to backend only at some time later.
       saveSettingsForRemoteDevelopment(application)
 
-      TerminalToolWindowManager.getInstance(project).createNewSession()
+      val startupFusInfo = TerminalStartupFusInfo(TerminalOpeningWay.SWITCH_ENGINE)
+      TerminalToolWindowManager.getInstance(project).createNewSession(startupFusInfo)
     }
   }
 
@@ -48,10 +51,6 @@ internal sealed class TerminalChangeEngineAction(private val engine: TerminalEng
                                           // show this option as well to avoid strange behavior when nothing is selected in the popup.
                                           TerminalOptionsProvider.instance.terminalEngine == TerminalEngine.NEW_TERMINAL)
     e.presentation.keepPopupOnPerform = KeepPopupOnPerform.IfRequested
-
-    if (engine == TerminalEngine.REWORKED) {
-      e.presentation.putClientProperty(ActionUtil.SECONDARY_ICON, AllIcons.General.Beta)
-    }
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

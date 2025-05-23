@@ -101,11 +101,7 @@ class TerminalUiSettingsManager internal constructor() : PersistentStateComponen
     }
   }
 
-  fun getFontSize(): Int {
-    return (getFontSize2D() + 0.5).toInt()
-  }
-
-  fun getFontSize2D(): Float {
+  fun getFontSize(): Float {
     if (fontSize <= 0) {
       fontSize = detectFontSize()
     }

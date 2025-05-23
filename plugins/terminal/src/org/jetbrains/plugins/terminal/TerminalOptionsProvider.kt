@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.terminal.TerminalUiSettingsManager.CursorShape
+import com.intellij.util.PlatformUtils
 import com.intellij.util.application
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -32,7 +33,7 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
   override fun loadState(newState: State) {
     state = newState
 
-    performSettingsMigrationOnce()
+    performSettingsInitializationOnce()
 
     // In the case of RemDev settings are synced from backend to frontend using `loadState` method.
     // So, notify the listeners on every `loadState` to not miss the change.
@@ -46,6 +47,9 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
   class State {
     @ApiStatus.Internal
     var terminalEngine: TerminalEngine = TerminalEngine.CLASSIC
+
+    @ApiStatus.Internal
+    var terminalEngineInRemDev: TerminalEngine = TerminalEngine.REWORKED
 
     var myTabName: @Nls String = TerminalBundle.message("local.terminal.default.name")
     var myCloseSessionOnLogout: Boolean = true
@@ -80,13 +84,25 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
 
   // Nice property delegation (var shellPath: String? by state::myShellPath) cannot be used on `var` properties (KTIJ-19450)
 
+  /**
+   * We use different default values for the terminal engine in monolith and RemDev mode.
+   * So, the getter returns the state depending on that.
+   * But the setter applies the provided value to both monolith and RemDev modes.
+   * So, when a user changes the default in any mode, it will be applied everywhere.
+   */
   @get:ApiStatus.Internal
   @set:ApiStatus.Internal
   var terminalEngine: TerminalEngine
-    get() = state.terminalEngine
+    get() {
+      return if (AppMode.isRemoteDevHost() || PlatformUtils.isJetBrainsClient()) {
+        state.terminalEngineInRemDev
+      }
+      else state.terminalEngine
+    }
     set(value) {
-      if (state.terminalEngine != value) {
+      if (state.terminalEngine != value || state.terminalEngineInRemDev != value) {
         state.terminalEngine = value
+        state.terminalEngineInRemDev = value
         fireSettingsChanged()
       }
     }
@@ -216,7 +232,7 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
       }
     }
 
-  private fun performSettingsMigrationOnce() {
+  private fun performSettingsInitializationOnce() {
     RunOnceUtil.runOnceForApp("TerminalOptionsProvider.migration.2025.1.1") {
       // If the settings update is happened in IDE backend, let's skip it.
       // Because we should receive the values from the frontend and use it.
@@ -225,7 +241,7 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
 
       try {
         migrateCursorShape()
-        migrateTerminalEngine()
+        initializeTerminalEngine()
       }
       finally {
         // Trigger sending the updated values to the backend
@@ -243,7 +259,19 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
     LOG.info("Initialized TerminalOptionsProvider.cursorShape value to ${state.cursorShape}")
   }
 
-  private fun migrateTerminalEngine() {
+  private fun initializeTerminalEngine() {
+    if (TerminalNewUserTracker.isNewUser()) {
+      state.terminalEngine = TerminalEngine.REWORKED
+      TerminalNewUserTracker.clearNewUserValue()
+
+      LOG.info("Initialized TerminalOptionsProvider.terminalEngine to ${state.terminalEngine} (new user).")
+    }
+    else {
+      migrateTerminalEngineFromRegistry()
+    }
+  }
+
+  private fun migrateTerminalEngineFromRegistry() {
     // The initial state of the terminal engine value should be composed out of registry values
     // used previously to determine what terminal to use.
     val isReworkedValue = Registry.`is`(LocalBlockTerminalRunner.REWORKED_BLOCK_TERMINAL_REGISTRY)
@@ -257,7 +285,7 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
       else -> TerminalEngine.CLASSIC
     }
 
-    LOG.info("Initialized TerminalOptionsProvider.terminalEngine value to ${state.terminalEngine}")
+    LOG.info("Initialized TerminalOptionsProvider.terminalEngine value from registry to ${state.terminalEngine}")
   }
 
   companion object {

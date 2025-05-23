@@ -13,6 +13,7 @@ data class TerminalSessionTab(
   val name: String?,
   val isUserDefinedName: Boolean,
   val shellCommand: List<String>?,
+  val workingDirectory: String?,
   val sessionId: TerminalSessionId?,
   val portForwardingId: TerminalPortForwardingId?,
 )

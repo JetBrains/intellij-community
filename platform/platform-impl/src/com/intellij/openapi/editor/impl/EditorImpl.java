@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
+import com.intellij.openapi.editor.actions.ChangeEditorFontSizeStrategy;
 import com.intellij.openapi.editor.actions.CopyAction;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.impl.*;
@@ -44,6 +45,8 @@ import com.intellij.openapi.editor.impl.stickyLines.StickyLinesModel;
 import com.intellij.openapi.editor.impl.stickyLines.VisualStickyLines;
 import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLineShadowPainter;
 import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLinesPanel;
+import com.intellij.openapi.editor.impl.view.CharacterGrid;
+import com.intellij.openapi.editor.impl.view.CharacterGridImpl;
 import com.intellij.openapi.editor.impl.view.EditorView;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -343,6 +346,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   final EditorView myView;
   final @Nullable EditorView myAdView;
   private static final boolean AD_V2 = Registry.is("ijpl.rhizome.ad.v2.enabled", false);
+
+  private @Nullable CharacterGridImpl myCharacterGrid;
 
   private boolean myCharKeyPressed;
   private boolean myNeedToSelectPreviousChar;
@@ -1343,21 +1348,27 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void setFontSize(int fontSize) {
-    ReadAction.run(() -> setFontSize(fontSize, null));
+    ReadAction.run(() -> setFontSizeImpl(fontSize, null, false));
   }
 
   @Override
   public void setFontSize(float fontSize) {
-    ReadAction.run(() -> setFontSize(fontSize, null));
+    ReadAction.run(() -> setFontSizeImpl(fontSize, null, false));
+  }
+
+  @ApiStatus.Internal
+  public void setFontSize(float fontSize, @Nullable Point zoomCenter, boolean validateImmediately) {
+    ReadAction.run(() -> setFontSizeImpl(fontSize, zoomCenter, validateImmediately));
   }
 
   /**
    * Changes editor font size, attempting to keep a given point unmoved. If point is not given, the top left screen corner is assumed.
    *
-   * @param fontSize   new font size
-   * @param zoomCenter zoom point, relative to viewport
+   * @param fontSize            new font size
+   * @param zoomCenter          zoom point, relative to viewport
+   * @param validateImmediately immediately update the editor's size (slower, but more accurate when the point is close to the bottom edge)
    */
-  private void setFontSize(float fontSize, @Nullable Point zoomCenter) {
+  private void setFontSizeImpl(float fontSize, @Nullable Point zoomCenter, boolean validateImmediately) {
     int oldFontSize = myScheme.getEditorFontSize();
     float oldFontSize2D = myScheme.getEditorFontSize2D();
 
@@ -1373,9 +1384,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     float newFontSize2D = myScheme.getEditorFontSize2D(); // the resulting font size might be different due to applied min/max limits
     myPropertyChangeSupport.firePropertyChange(PROP_FONT_SIZE, oldFontSize, newFontSize);
     myPropertyChangeSupport.firePropertyChange(PROP_FONT_SIZE_2D, oldFontSize2D, newFontSize2D);
-    // Update vertical scroll bar bounds if necessary (we had a problem that use increased editor font size, and it was not possible
-    // to scroll to the bottom of the document).
-    myScrollPane.getViewport().invalidate();
+    if (validateImmediately) {
+      // This is a slow operation and may cause performance issues when zooming large files using the mouse wheel.
+      // On the other hand, the terminal needs this option because it uses the bottom-left corner as the zoom point,
+      // and it doesn't work properly when the font size is increased, because we need to recompute the size immediately
+      // to be able to scroll down that much.
+      validateSize();
+    }
+    else {
+      // Update vertical scroll bar bounds if necessary (we had a problem that use increased editor font size, and it was not possible
+      // to scroll to the bottom of the document).
+      myScrollPane.getViewport().invalidate();
+    }
 
     Point shiftedZoomCenterAbsolute = logicalPositionToXY(zoomCenterLogical);
     myScrollingModel.disableAnimation();
@@ -2051,6 +2071,40 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public void removeEditorMouseMotionListener(@NotNull EditorMouseMotionListener listener) {
     boolean success = myMouseMotionListeners.remove(listener);
     LOG.assertTrue(success || isReleased);
+  }
+
+  /**
+   * Sets a callback invoked after every repaint request.
+   * <p>
+   *   The callback is only invoked if the component is showing and the request has a non-empty rectangle.
+   *   In other words, it's invoked when the repaint request is likely to be followed by an actual painting operation.
+   * </p>
+   * <p>
+   *   The callback must be fast, non-intrusive, and should not throw any exceptions.
+   * </p>
+   * <p>
+   *   This is an internal hack, which is why it doesn't follow the usual add-listener pattern.
+   * </p>
+   * @param callback the callback, {@code null} removes the callback
+   */
+  @ApiStatus.Internal
+  public void setRepaintCallback(@Nullable Runnable callback) {
+    myEditorComponent.setRepaintCallback(callback);
+  }
+
+  /**
+   * Sets a callback invoked after every paint operation.
+   * <p>
+   *   The callback must be fast, non-intrusive, and should not throw any exceptions.
+   * </p>
+   * <p>
+   *   This is an internal hack, which is why it doesn't follow the usual add-listener pattern.
+   * </p>
+   * @param callback the callback, {@code null} removes the callback
+   */
+  @ApiStatus.Internal
+  public void setPaintCallback(@Nullable Runnable callback) {
+    myView.setPaintCallback(callback);
   }
 
   @Override
@@ -3596,6 +3650,28 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public @NotNull DeleteProvider getDeleteProvider() {
     return getViewer();
+  }
+
+  /**
+   * Returns the instance of the character grid corresponding to this editor
+   * <p>
+   *   A non-{@code null} value is only returned when the character grid mode is enabled,
+   *   see {@link EditorSettings#setCharacterGridWidthMultiplier(Float)}.
+   * </p>
+   * @return the current character grid instance or {@code null} if the editor is not in the grid mode
+   */
+  @ApiStatus.Internal
+  public @Nullable CharacterGrid getCharacterGrid() {
+    if (getSettings().getCharacterGridWidthMultiplier() == null) {
+      myCharacterGrid = null;
+      return null;
+    }
+    else {
+      if (myCharacterGrid == null) {
+        myCharacterGrid = new CharacterGridImpl(this);
+      }
+      return myCharacterGrid;
+    }
   }
 
   private final class MyEditable implements CutProvider, CopyProvider, PasteProvider, DeleteProvider, DumbAware {
@@ -5745,6 +5821,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           boolean isWheelFontChangePersistent = EditorSettingsExternalizable.getInstance().isWheelFontChangePersistent()
                                                 && !UISettings.getInstance().getPresentationMode();
           float shift = e.getWheelRotation();
+
+          var strategy = getUserData(ChangeEditorFontSizeStrategy.KEY);
+          if (strategy != null) {
+            strategy.setFontSize(strategy.getFontSize() - shift);
+            return;
+          }
+
           float size = myScheme.getEditorFontSize2D();
           if (isWheelFontChangePersistent) {
             size = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize2D();
@@ -5753,12 +5836,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           size -= shift;
           if (size >= MIN_FONT_SIZE) {
             if (isWheelFontChangePersistent) {
-              setFontSize(UISettingsUtils.getInstance().scaleFontSize(size),
-                          convertPoint(this, e.getPoint(), getViewport()));
+              setFontSizeImpl(UISettingsUtils.getInstance().scaleFontSize(size),
+                              convertPoint(this, e.getPoint(), getViewport()), false);
               adjustGlobalFontSize(size);
             }
             else {
-              setFontSize(size, convertPoint(this, e.getPoint(), getViewport()));
+              setFontSizeImpl(size, convertPoint(this, e.getPoint(), getViewport()), false);
             }
           }
           return;

@@ -341,7 +341,11 @@ class TerminalOutputController(
 
   private fun updateHighlightings(block: CommandBlock, replaceOffset: Int, styles: List<StyleRange>) {
     val replaceHighlightings = styles.map {
-      HighlightingInfo(replaceOffset + it.startOffset, replaceOffset + it.endOffset, it.style.toTextAttributesProvider())
+      HighlightingInfo(
+        startOffset = (replaceOffset + it.startOffset).toInt(),
+        endOffset = (replaceOffset + it.endOffset).toInt(),
+        textAttributesProvider = it.style.toTextAttributesProvider()
+      )
     }
     val newHighlightings = outputModel.getHighlightings(block).asSequence()
       .filter { it.endOffset <= replaceOffset }

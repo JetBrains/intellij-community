@@ -2,13 +2,16 @@
 package com.intellij.terminal
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface TerminalFontSizeProvider {
-  fun getFontSize(): Int
+  companion object {
+    @JvmField val KEY: Key<TerminalFontSizeProvider> = Key.create("TerminalFontSizeProvider")
+  }
 
-  fun getFontSize2D(): Float
+  fun getFontSize(): Float
 
   /**
    * Sets temporary font size without changing the size in the settings.
@@ -24,6 +27,6 @@ interface TerminalFontSizeProvider {
   fun addListener(parentDisposable: Disposable, listener: Listener)
 
   interface Listener {
-    fun fontChanged()
+    fun fontChanged(showZoomIndicator: Boolean)
   }
 }

@@ -6,7 +6,9 @@ import com.intellij.terminal.session.dto.TerminalBlocksModelStateDto
 import com.intellij.terminal.session.dto.TerminalOutputModelStateDto
 import com.intellij.terminal.session.dto.TerminalStateDto
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
+import kotlin.time.TimeMark
 
 @ApiStatus.Internal
 @Serializable
@@ -17,13 +19,16 @@ sealed interface TerminalOutputEvent
 data class TerminalContentUpdatedEvent(
   val text: String,
   val styles: List<StyleRangeDto>,
-  val startLineLogicalIndex: Int,
+  val startLineLogicalIndex: Long,
+  /** This value is used only on Backend. It is always null on the Frontend. */
+  @Transient
+  val readTime: TimeMark? = null,
 ) : TerminalOutputEvent
 
 @ApiStatus.Internal
 @Serializable
 data class TerminalCursorPositionChangedEvent(
-  val logicalLineIndex: Int,
+  val logicalLineIndex: Long,
   val columnIndex: Int,
 ) : TerminalOutputEvent
 
@@ -60,7 +65,7 @@ data class TerminalCommandStartedEvent(val command: String) : TerminalShellInteg
 
 @ApiStatus.Internal
 @Serializable
-data class TerminalCommandFinishedEvent(val command: String, val exitCode: Int) : TerminalShellIntegrationEvent
+data class TerminalCommandFinishedEvent(val command: String, val exitCode: Int, val currentDirectory: String) : TerminalShellIntegrationEvent
 
 @ApiStatus.Internal
 @Serializable

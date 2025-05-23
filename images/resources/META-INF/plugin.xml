@@ -24,6 +24,7 @@
                         serviceImplementation="org.intellij.images.fileTypes.impl.ImageFileTypeManagerImpl"/>
     <applicationService serviceInterface="org.intellij.images.options.OptionsManager"
                         serviceImplementation="org.intellij.images.options.impl.OptionsManagerImpl"/>
+    <applicationService serviceImplementation="org.intellij.images.scientific.utils.BinarizationThresholdConfig"/>
     <projectService serviceInterface="org.intellij.images.thumbnail.ThumbnailManager"
                     serviceImplementation="org.intellij.images.thumbnail.impl.ThumbnailManagerImpl"/>
     <!-- ImageIO.getReaderFormatNames() -->
@@ -47,8 +48,9 @@
     <registryKey key="ide.images.show.grid.after.every.x.pixels" defaultValue="1" description="Pixels between grid lines"/>
     <registryKey key="ide.images.change.background.action.enabled" defaultValue="false"
                  description="Show action for changing background in the editor toolbar"/>
-    <registryKey key="ide.images.sci.mode.channels.operations" defaultValue="false"
+    <registryKey key="ide.images.sci.mode.channels.operations" defaultValue="true"
                  description="Show combobox for image channels operations"/>
+    <statistics.counterUsagesCollector implementationClass="org.intellij.images.scientific.statistics.ScientificImageActionsCollector"/>
   </extensions>
 
   <actions>
@@ -158,6 +160,14 @@
       <action class="org.intellij.images.scientific.action.CopyImageAction"
               id="Images.CopyImageAction"
               icon="AllIcons.Actions.Copy">
+      </action>
+      <action class="org.intellij.images.scientific.action.RotateImageAction"
+              id="Images.RotateImageAction"
+              icon="AllIcons.Actions.Refresh">
+      </action>
+      <action class="org.intellij.images.scientific.action.NormalizeImageAction"
+              id="Images.NormalizeImageAction"
+              icon="AllIcons.Actions.Colors">
       </action>
       <group id="Images.ImageOperationsGroup"
              class="org.intellij.images.scientific.action.ImageOperationsActionGroup"/>

@@ -6,8 +6,9 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 data class TerminalOutputModelState(
   val text: String,
-  val trimmedLinesCount: Int,
-  val trimmedCharsCount: Int,
+  val trimmedLinesCount: Long,
+  val trimmedCharsCount: Long,
+  val firstLineTrimmedCharsCount: Int,
   val cursorOffset: Int,
   val highlightings: List<StyleRange>,
 )

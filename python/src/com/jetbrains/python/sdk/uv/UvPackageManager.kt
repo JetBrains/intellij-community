@@ -61,8 +61,8 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
 
   override suspend fun reloadPackagesCommand(): Result<List<PythonPackage>> {
     // ignoring errors as handling outdated packages is a pretty new option
-    uv.listOutdatedPackages().onSuccess {
-      outdatedPackages = it.associateBy { it.name }
+    uv.listOutdatedPackages().onSuccess { packages ->
+      outdatedPackages = packages.associateBy { it.name }
     }
 
     return uv.listPackages()

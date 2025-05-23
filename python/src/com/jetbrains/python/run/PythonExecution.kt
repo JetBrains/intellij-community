@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.encoding.EncodingManager
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.charset.Charset
+import java.nio.file.Path
 
 /**
  * Represents the Python script or module to be executed and its parameters.
@@ -75,6 +76,10 @@ sealed class PythonExecution {
     fun visit(pythonScriptExecution: PythonScriptExecution)
 
     fun visit(pythonModuleExecution: PythonModuleExecution)
+
+    fun visit(pythonToolScriptExecution: PythonToolScriptExecution)
+
+    fun visit(pythonToolModuleExecution: PythonToolModuleExecution)
   }
 
   companion object {
@@ -95,5 +100,37 @@ class PythonScriptExecution : PythonExecution() {
 class PythonModuleExecution : PythonExecution() {
   var moduleName: String? = null
 
+  override fun accept(visitor: Visitor) = visitor.visit(this)
+}
+
+@ApiStatus.Internal
+sealed class PythonToolExecution(
+  val toolPath: Path,
+  val toolParams: List<String>,
+) : PythonExecution() {
+  override fun accept(visitor: Visitor) {
+    when (this) {
+      is PythonToolScriptExecution -> visitor.visit(this)
+      is PythonToolModuleExecution -> visitor.visit(this)
+    }
+  }
+}
+
+@ApiStatus.Internal
+class PythonToolScriptExecution(
+  toolPath: Path,
+  toolParams: List<String>,
+  val pythonScriptPath: TargetEnvironmentFunction<Path>
+) : PythonToolExecution(toolPath, toolParams) {
+  override fun accept(visitor: Visitor) = visitor.visit(this)
+}
+
+@ApiStatus.Internal
+class PythonToolModuleExecution(
+  toolPath: Path,
+  toolParams: List<String>,
+  val moduleName: String,
+  val moduleFlag: String
+) : PythonToolExecution(toolPath, toolParams) {
   override fun accept(visitor: Visitor) = visitor.visit(this)
 }

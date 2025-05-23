@@ -62,7 +62,9 @@ public abstract class ChangeEditorFontSizeAction extends AnAction implements Dum
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(getEditor(e) != null);
+    var editor = getEditor(e);
+    var strategy = editor == null ? null : editor.getUserData(ChangeEditorFontSizeStrategy.KEY);
+    e.getPresentation().setEnabled(editor != null && (strategy == null || !strategy.getOverridesChangeFontSizeActions()));
   }
 
   public static final class IncreaseEditorFontSize extends ChangeEditorFontSizeAction {

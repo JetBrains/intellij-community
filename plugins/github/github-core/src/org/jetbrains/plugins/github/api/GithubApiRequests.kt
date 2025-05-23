@@ -594,7 +594,7 @@ object GithubApiRequests {
         server: GithubServerPath, repoPath: GHRepositoryPath?, state: String?, assignee: String?, query: String?,
         pagination: GithubRequestPagination? = null,
       ) =
-        get(getUrl(server, urlSuffix, urlSuffix,
+        get(getUrl(server, Search.urlSuffix, urlSuffix,
                    urlQuery {
                      param("q", searchQuery {
                        term(QualifierName.repo.createTerm(repoPath?.toString().orEmpty()))

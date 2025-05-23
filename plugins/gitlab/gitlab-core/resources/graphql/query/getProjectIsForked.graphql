@@ -1,0 +1,5 @@
+query($projectId: ID!) {
+  project(fullPath: $projectId) {
+    isForked
+  }
+}

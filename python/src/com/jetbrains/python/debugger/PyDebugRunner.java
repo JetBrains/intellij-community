@@ -360,6 +360,14 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
    */
   protected @NotNull Promise<@Nullable RunContentDescriptor> execute(@NotNull ExecutionEnvironment environment, @NotNull RunProfileState state)
     throws ExecutionException {
+    // aborts the execution of the run configuration if `.canRun` returns false
+    // this is used for cases in which a user action prevents the execution; for example,
+    // a warning dialog could be displayed to the user asking them if they wish to proceed with
+    // running the configuration
+    if (state instanceof PythonCommandLineState pythonState && !pythonState.canRun()) {
+      return Promises.resolvedPromise(null);
+    }
+
     return createSession(state, environment)
       .thenAsync(session -> AppUIExecutor.onUiThread().submit(() -> {
         initSession(session, state, environment.getExecutor());
@@ -602,20 +610,32 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     configureDebugConnectionParameters(debugParams, serverLocalPort);
   }
 
-  private @NotNull PythonScriptExecution prepareDebuggerScriptExecution(@NotNull Project project,
+  private @NotNull PythonExecution prepareDebuggerScriptExecution(@NotNull Project project,
                                                                         @NotNull Function<TargetEnvironment, HostPort> serverPortOnTarget,
                                                                         @NotNull PythonCommandLineState pyState,
-                                                                        @NotNull PythonExecution originalPythonScript,
+                                                                        @NotNull PythonExecution originalExecution,
                                                                         @Nullable RunProfile runProfile,
                                                                         @NotNull HelpersAwareTargetEnvironmentRequest request) {
-    PythonScriptExecution debuggerScript = PythonScripts.prepareHelperScriptExecution(PythonHelper.DEBUGGER, request);
+    PythonExecution debuggerScript;
+
+    if (originalExecution instanceof PythonToolExecution pythonToolExecution) {
+      debuggerScript = PythonScripts.prepareHelperScriptViaToolExecution(
+        PythonHelper.DEBUGGER,
+        request,
+        pythonToolExecution.getToolPath(),
+        pythonToolExecution.getToolParams()
+      );
+    }
+    else {
+      debuggerScript = PythonScripts.prepareHelperScriptExecution(PythonHelper.DEBUGGER, request);
+    }
 
     TargetEnvironmentRequest targetEnvironmentRequest = request.getTargetEnvironmentRequest();
-    PythonScripts.extendEnvs(debuggerScript, originalPythonScript.getEnvs(), targetEnvironmentRequest.getTargetPlatform());
+    PythonScripts.extendEnvs(debuggerScript, originalExecution.getEnvs(), targetEnvironmentRequest.getTargetPlatform());
 
-    debuggerScript.setWorkingDir(originalPythonScript.getWorkingDir());
+    debuggerScript.setWorkingDir(originalExecution.getWorkingDir());
 
-    originalPythonScript.accept(new PythonExecution.Visitor() {
+    originalExecution.accept(new PythonExecution.Visitor() {
       @Override
       public void visit(@NotNull PythonScriptExecution pythonScriptExecution) {
         // do nothing
@@ -625,6 +645,18 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       public void visit(@NotNull PythonModuleExecution pythonModuleExecution) {
         // add module flag only after command line parameters
         debuggerScript.addParameter(MODULE_PARAM);
+      }
+
+      @Override
+      public void visit(@NotNull PythonToolScriptExecution pythonToolScriptExecution) {
+        // do nothing
+      }
+
+      @Override
+      public void visit(@NotNull PythonToolModuleExecution pythonToolModuleExecution) {
+        // add module flag only after command line parameters
+        var moduleFlag = pythonToolModuleExecution.getModuleFlag();
+        debuggerScript.addParameter(moduleFlag);
       }
     });
 
@@ -642,7 +674,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       configureClientModeDebugConnectionParameters(debuggerScript, serverPortOnTarget);
     }
 
-    originalPythonScript.accept(new PythonExecution.Visitor() {
+    originalExecution.accept(new PythonExecution.Visitor() {
       @Override
       public void visit(@NotNull PythonScriptExecution pythonScriptExecution) {
         Function<TargetEnvironment, String> scriptPath = pythonScriptExecution.getPythonScriptPath();
@@ -664,9 +696,21 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
           throw new IllegalArgumentException("Python module name must be set");
         }
       }
+
+      @Override
+      public void visit(@NotNull PythonToolScriptExecution pythonToolScriptExecution) {
+        Function<TargetEnvironment, Path> scriptPath = pythonToolScriptExecution.getPythonScriptPath();
+        debuggerScript.addParameter(scriptPath.andThen((it) -> it.toString()));
+      }
+
+      @Override
+      public void visit(@NotNull PythonToolModuleExecution pythonToolModuleExecution) {
+        String moduleName = pythonToolModuleExecution.getModuleName();
+        debuggerScript.addParameter(moduleName);
+      }
     });
 
-    debuggerScript.getParameters().addAll(originalPythonScript.getParameters());
+    debuggerScript.getParameters().addAll(originalExecution.getParameters());
 
     return debuggerScript;
   }

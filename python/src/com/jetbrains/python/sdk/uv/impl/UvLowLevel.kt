@@ -8,6 +8,7 @@ import com.intellij.util.io.delete
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
+import com.jetbrains.python.sdk.uv.ScriptSyncCheckResult
 import com.jetbrains.python.sdk.uv.UvCli
 import com.jetbrains.python.sdk.uv.UvLowLevel
 import com.jetbrains.python.venvReader.VirtualEnvReader
@@ -15,6 +16,9 @@ import com.jetbrains.python.venvReader.tryResolvePath
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
+
+private const val NO_METADATA_MESSAGE = "does not contain a PEP 723 metadata tag"
+private const val OUTDATED_ENV_MESSAGE = "The environment is outdated"
 
 private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLevel {
   override suspend fun initializeEnvironment(init: Boolean, python: Path?): Result<Path> {
@@ -97,7 +101,6 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
   }
 
   override suspend fun listOutdatedPackages(): Result<List<PythonOutdatedPackage>> {
-
     val out = uvCli.runUv(cwd, "pip", "list", "--outdated", "--format", "json")
       .getOrElse { return Result.failure(it) }
 
@@ -144,6 +147,54 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
       .onFailure { return Result.failure(it) }
 
     return Result.success(Unit)
+  }
+
+  override suspend fun isProjectSynced(inexact: Boolean): Result<Boolean> {
+    val args = constructSyncArgs(inexact)
+
+    uvCli.runUv(cwd, *args.toTypedArray())
+      .onFailure {
+        val stderr = it.message ?: ""
+
+        if (stderr.contains(OUTDATED_ENV_MESSAGE)) {
+          return Result.success(false)
+        }
+
+        return Result.failure(it)
+      }
+
+    return Result.success(true)
+  }
+
+  override suspend fun isScriptSynced(inexact: Boolean, scriptPath: Path): Result<ScriptSyncCheckResult> {
+    val args = constructSyncArgs(inexact) + listOf("--script", scriptPath.pathString)
+
+    uvCli.runUv(cwd, *args.toTypedArray())
+      .onFailure {
+        val stderr = it.message ?: ""
+
+        if (stderr.contains(NO_METADATA_MESSAGE)) {
+          return Result.success(ScriptSyncCheckResult.NoInlineMetadata)
+        }
+
+        if (stderr.contains(OUTDATED_ENV_MESSAGE)) {
+          return Result.success(ScriptSyncCheckResult.NotSynced)
+        }
+
+        return Result.failure(it)
+      }
+
+    return Result.success(ScriptSyncCheckResult.Synced)
+  }
+
+  fun constructSyncArgs(inexact: Boolean): MutableList<String> {
+    val args = mutableListOf("sync", "--check")
+
+    if (inexact) {
+      args += "--inexact"
+    }
+
+    return args
   }
 
   fun formatPackageName(name: PythonPackageSpecification): String {
