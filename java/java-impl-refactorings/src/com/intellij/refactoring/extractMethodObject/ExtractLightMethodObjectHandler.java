@@ -130,9 +130,7 @@ public final class ExtractLightMethodObjectHandler {
     PsiElement lastElement = ArrayUtil.getLastElement(elementsCopy);
     if (lastElement instanceof PsiExpressionStatement expressionStatement) {
       PsiExpression expr = expressionStatement.getExpression();
-      if (!(expr instanceof PsiAssignmentExpression)) {
-        generateResult(project, expr, elementsCopy, elementFactory);
-      }
+      generateResult(project, expr, elementsCopy, elementFactory);
     }
     else if (lastElement instanceof PsiReturnStatement returnStatement) {
       PsiExpression expr = returnStatement.getReturnValue();
