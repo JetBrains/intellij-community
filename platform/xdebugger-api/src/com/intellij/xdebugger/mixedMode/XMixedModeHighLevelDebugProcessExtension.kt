@@ -17,7 +17,11 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface XMixedModeHighLevelDebugProcessExtension : XMixedModeDebugProcessExtension {
-  fun pauseMixedModeSession()
+  /**
+   * @param stopEventThreadId - XSuspendContext::getActiveExecutionStack must represent a thread with a corresponding id.
+   * MixedModeProcessTransitionStateMachine specifies it when handling some tricky scenarios
+   */
+  fun pauseMixedModeSession(stopEventThreadId : Long?)
 
   suspend fun isStepWillBringIntoLowLevelCode(suspendContext: XSuspendContext): Boolean
 

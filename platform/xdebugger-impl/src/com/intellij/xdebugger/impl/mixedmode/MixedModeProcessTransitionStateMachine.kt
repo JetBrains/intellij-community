@@ -34,7 +34,7 @@ internal class MixedModeProcessTransitionStateMachine(
   class ResumeLowResumeStarted(high: XSuspendContext) : WithHighLevelDebugSuspendContextState(high)
   object ResumeLowRunHighResumeStarted : State
   class ResumeLowStoppedAfterRunWhileHighResuming(val low: XSuspendContext) : State
-  object WaitingForHighProcessPositionReached : State
+  class WaitingForHighProcessPositionReached(val threadInitiatedStopId : Long?) : State
   object LeaveHighRunningWaitingForLowStop : State
   class HighStoppedWaitingForLowProcessToStop(val highSuspendContext: XSuspendContext?) : State
   class OnlyHighStopped(val highSuspendContext: XSuspendContext?) : State
@@ -124,7 +124,8 @@ internal class MixedModeProcessTransitionStateMachine(
       is HighLevelPositionReached -> {
         when (currentState) {
           is WaitingForHighProcessPositionReached, is BothRunning -> {
-            val stopThreadId = highExtension.getStoppedThreadId(event.suspendContext)
+            val stopThreadId = (currentState as? WaitingForHighProcessPositionReached)?.threadInitiatedStopId
+                               ?: highExtension.getStoppedThreadId(event.suspendContext)
             lowExtension.pauseMixedModeSession(stopThreadId)
 
             logger.info("Low level process has been stopped")
@@ -156,7 +157,8 @@ internal class MixedModeProcessTransitionStateMachine(
                   return@run createStoppedStateWhenHighCantStop(event.suspendContext)
               }
 
-              lowExtension.continueAllThreads(setOf(lowExtension.getStoppedThreadId(event.suspendContext)), silent = true)
+              val eventThreadId = lowExtension.getStoppedThreadId(event.suspendContext)
+              lowExtension.continueAllThreads(setOf(eventThreadId), silent = true)
 
               if (currentState is BothRunning && currentState.activeManagedStepping) {
                 logger.info("Aborting the active managed step when we're in BothRunning state with an active breakpoint")
@@ -164,8 +166,8 @@ internal class MixedModeProcessTransitionStateMachine(
               }
 
               // please keep don't await it, it will break the status change logic
-              highExtension.pauseMixedModeSession()
-              return@run WaitingForHighProcessPositionReached
+              highExtension.pauseMixedModeSession(eventThreadId)
+              return@run WaitingForHighProcessPositionReached(eventThreadId) // If we are stopping on a breakpoint, we need to show the thread on which the breakpoint was hit
             }
 
             changeState(newState)
@@ -329,14 +331,15 @@ internal class MixedModeProcessTransitionStateMachine(
             logger.info("We've met a native stop (breakpoint or other kind) while resuming. Now managed resume is completed, " +
                         "but the event thread is stopped by a low level debugger. Need to pause the process completely if that's possible")
 
+            val threadIdInitiatedStop = lowExtension.getStoppedThreadId(currentState.low)
             val canStopHere = highExtension.canStopHere(currentState.low)
             if (canStopHere)
-              handlePauseEventWhenBothRunning()
+              handlePauseEventWhenBothRunning(threadIdInitiatedStop)
             else {
               logger.info("High-level debug process can't stop here. Will leave it running and pause the low-level process")
               // we have recovered the high-level debug process from being blocked trying to resume,
               // now we need to stop the low-debug process
-              lowExtension.pauseMixedModeSession(lowExtension.getStoppedThreadId(currentState.low))
+              lowExtension.pauseMixedModeSession(threadIdInitiatedStop)
               changeState(LeaveHighRunningWaitingForLowStop)
             }
           }
@@ -381,9 +384,9 @@ internal class MixedModeProcessTransitionStateMachine(
     }
   }
 
-  private suspend fun handlePauseEventWhenBothRunning() {
-    highExtension.pauseMixedModeSession()
-    changeState(WaitingForHighProcessPositionReached)
+  private suspend fun handlePauseEventWhenBothRunning(threadToSelect : Long? = null) {
+    highExtension.pauseMixedModeSession(threadToSelect)
+    changeState(WaitingForHighProcessPositionReached(threadToSelect))
   }
 
   private suspend fun changeState(newState: State) {
