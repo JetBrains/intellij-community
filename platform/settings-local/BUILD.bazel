@@ -34,7 +34,6 @@ jvm_library(
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "@lib//:mvstore",
-    "@lib//:platform-settings-local-kotlinx-serialization-cbor",
     "@lib//:jackson",
     "@lib//:platform-settings-local-jackson-dataformat-cbor",
     "//platform/util/jdom",
@@ -43,6 +42,7 @@ jvm_library(
     "//platform/object-serializer",
     "@lib//:kotlinx-serialization-json",
     "@lib//:aalto-xml",
+    "@lib//:kotlinx-serialization-cbor",
   ],
   runtime_deps = [":settings-local_resources"]
 )
@@ -71,7 +71,6 @@ jvm_library(
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "@lib//:mvstore",
-    "@lib//:platform-settings-local-kotlinx-serialization-cbor",
     "@lib//:jackson",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
@@ -88,6 +87,7 @@ jvm_library(
     "@lib//:aalto-xml",
     "//community-resources:customization",
     "//platform/testFramework/core",
+    "@lib//:kotlinx-serialization-cbor",
   ],
   runtime_deps = [":settings-local_resources"]
 )

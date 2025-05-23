@@ -14,7 +14,6 @@ bf:com.intellij.platform.buildData.productInfo.CustomCommandLaunchData$$serializ
 - f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.buildData.productInfo.CustomCommandLaunchData
 - f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
 - f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.buildData.productInfo.CustomCommandLaunchData):V
-- typeParametersSerializers():kotlinx.serialization.KSerializer[]
 f:com.intellij.platform.buildData.productInfo.CustomCommandLaunchData$Companion
 - f:serializer():kotlinx.serialization.KSerializer
 f:com.intellij.platform.buildData.productInfo.CustomProperty
@@ -28,7 +27,6 @@ bf:com.intellij.platform.buildData.productInfo.CustomProperty$$serializer
 - f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.buildData.productInfo.CustomProperty
 - f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
 - f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.buildData.productInfo.CustomProperty):V
-- typeParametersSerializers():kotlinx.serialization.KSerializer[]
 f:com.intellij.platform.buildData.productInfo.CustomProperty$Companion
 - f:serializer():kotlinx.serialization.KSerializer
 f:com.intellij.platform.buildData.productInfo.CustomPropertyNames
@@ -44,7 +42,6 @@ bf:com.intellij.platform.buildData.productInfo.ProductFlavorData$$serializer
 - f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.buildData.productInfo.ProductFlavorData
 - f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
 - f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.buildData.productInfo.ProductFlavorData):V
-- typeParametersSerializers():kotlinx.serialization.KSerializer[]
 f:com.intellij.platform.buildData.productInfo.ProductFlavorData$Companion
 - f:serializer():kotlinx.serialization.KSerializer
 f:com.intellij.platform.buildData.productInfo.ProductInfoData
@@ -71,7 +68,6 @@ bf:com.intellij.platform.buildData.productInfo.ProductInfoData$$serializer
 - f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.buildData.productInfo.ProductInfoData
 - f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
 - f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.buildData.productInfo.ProductInfoData):V
-- typeParametersSerializers():kotlinx.serialization.KSerializer[]
 f:com.intellij.platform.buildData.productInfo.ProductInfoData$Companion
 - f:serializer():kotlinx.serialization.KSerializer
 f:com.intellij.platform.buildData.productInfo.ProductInfoLaunchData
@@ -93,6 +89,5 @@ bf:com.intellij.platform.buildData.productInfo.ProductInfoLaunchData$$serializer
 - f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.buildData.productInfo.ProductInfoLaunchData
 - f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
 - f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.buildData.productInfo.ProductInfoLaunchData):V
-- typeParametersSerializers():kotlinx.serialization.KSerializer[]
 f:com.intellij.platform.buildData.productInfo.ProductInfoLaunchData$Companion
 - f:serializer():kotlinx.serialization.KSerializer

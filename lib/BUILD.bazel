@@ -4049,9 +4049,16 @@ java_library(
 )
 
 jvm_import(
+  name = "kotlinx-serialization-cbor",
+  jar = "@kotlinx-serialization-cbor-jvm-1_8_1_http//file",
+  source_jar = "@kotlinx-serialization-cbor-jvm-1_8_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
   name = "kotlinx-serialization-core",
-  jar = "@kotlinx-serialization-core-jvm-1_7_3_http//file",
-  source_jar = "@kotlinx-serialization-core-jvm-1_7_3-sources_http//file",
+  jar = "@kotlinx-serialization-core-jvm-1_8_1_http//file",
+  source_jar = "@kotlinx-serialization-core-jvm-1_8_1-sources_http//file",
   exported_compiler_plugins = ["@lib//:kotlin-serialization-plugin"],
   visibility = ["//visibility:public"]
 )
@@ -4066,8 +4073,8 @@ kt_jvm_library(
 
 jvm_import(
   name = "kotlinx-serialization-json",
-  jar = "@kotlinx-serialization-json-jvm-1_7_3_http//file",
-  source_jar = "@kotlinx-serialization-json-jvm-1_7_3-sources_http//file",
+  jar = "@kotlinx-serialization-json-jvm-1_8_1_http//file",
+  source_jar = "@kotlinx-serialization-json-jvm-1_8_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -4080,15 +4087,15 @@ java_library(
 
 jvm_import(
   name = "kotlinx-serialization-json-io",
-  jar = "@kotlinx-serialization-json-io-jvm-1_7_3_http//file",
-  source_jar = "@kotlinx-serialization-json-io-jvm-1_7_3-sources_http//file",
+  jar = "@kotlinx-serialization-json-io-jvm-1_8_1_http//file",
+  source_jar = "@kotlinx-serialization-json-io-jvm-1_8_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinx-serialization-protobuf",
-  jar = "@kotlinx-serialization-protobuf-jvm-1_7_3_http//file",
-  source_jar = "@kotlinx-serialization-protobuf-jvm-1_7_3-sources_http//file",
+  jar = "@kotlinx-serialization-protobuf-jvm-1_8_1_http//file",
+  source_jar = "@kotlinx-serialization-protobuf-jvm-1_8_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8212,13 +8219,6 @@ jvm_import(
   name = "platform-settings-local-jackson-dataformat-cbor",
   jar = "@jackson-dataformat-cbor-2_16_0_http//file",
   source_jar = "@jackson-dataformat-cbor-2_16_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "platform-settings-local-kotlinx-serialization-cbor",
-  jar = "@kotlinx-serialization-cbor-jvm-1_7_3_http//file",
-  source_jar = "@kotlinx-serialization-cbor-jvm-1_7_3-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

@@ -2,6 +2,7 @@
 package fleet.util.serialization
 
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SealedSerializationApi
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -19,6 +20,7 @@ import kotlinx.serialization.json.JsonObject
  * It means that even when decoder failed to decode current element it still can be used to decode next element
  * It can be useful to successfully decode incomplete data like arrays with errors
  */
+@OptIn(SealedSerializationApi::class)
 interface ResistantJsonDecoder : JsonDecoder
 
 fun <T : Any> ResistantJsonDecoder.decodeOrNull(body: ResistantJsonDecoder.() -> T): T? {

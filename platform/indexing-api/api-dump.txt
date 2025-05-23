@@ -93,7 +93,6 @@ bf:com.intellij.find.FindModel$$serializer
 - f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.find.FindModel
 - f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
 - f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.find.FindModel):V
-- typeParametersSerializers():kotlinx.serialization.KSerializer[]
 f:com.intellij.find.FindModel$Companion
 - f:initStringToFind(com.intellij.find.FindModel,java.lang.String):V
 - f:serializer():kotlinx.serialization.KSerializer

@@ -5599,59 +5599,73 @@ http_file(
 )
 
 http_file(
-  name = "kotlinx-serialization-core-jvm-1_7_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-core-jvm/1.7.3/kotlinx-serialization-core-jvm-1.7.3.jar",
-  sha256 = "f0adde45864144475385cf4aa7e0b7feb27f61fcf9472665ed98cc971b06b1eb",
-  downloaded_file_path = "kotlinx-serialization-core-jvm-1.7.3.jar"
+  name = "kotlinx-serialization-cbor-jvm-1_8_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-cbor-jvm/1.8.1/kotlinx-serialization-cbor-jvm-1.8.1.jar",
+  sha256 = "604c4130ca7a0e979a449cf550087a5c2c586485e8af01dcf24b03b7b287306d",
+  downloaded_file_path = "kotlinx-serialization-cbor-jvm-1.8.1.jar"
 )
 
 http_file(
-  name = "kotlinx-serialization-core-jvm-1_7_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-core-jvm/1.7.3/kotlinx-serialization-core-jvm-1.7.3-sources.jar",
-  sha256 = "d084ce9bf130919d4b899db09896531440d1e330919187c7932d7fe0fa5257b8",
-  downloaded_file_path = "kotlinx-serialization-core-jvm-1.7.3-sources.jar"
+  name = "kotlinx-serialization-cbor-jvm-1_8_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-cbor-jvm/1.8.1/kotlinx-serialization-cbor-jvm-1.8.1-sources.jar",
+  sha256 = "5764d9dd773e48dca2ad2376005281b09bc4a9d38b2512f82421cae43eb163b2",
+  downloaded_file_path = "kotlinx-serialization-cbor-jvm-1.8.1-sources.jar"
 )
 
 http_file(
-  name = "kotlinx-serialization-json-jvm-1_7_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-json-jvm/1.7.3/kotlinx-serialization-json-jvm-1.7.3.jar",
-  sha256 = "b1e9138499ed8d20375edda3f2b1c95f3103a258eff6af9edc5ea07100f2b29c",
-  downloaded_file_path = "kotlinx-serialization-json-jvm-1.7.3.jar"
+  name = "kotlinx-serialization-core-jvm-1_8_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-core-jvm/1.8.1/kotlinx-serialization-core-jvm-1.8.1.jar",
+  sha256 = "3565b6d4d789bf70683c45566944287fc1d8dc75c23d98bd87d01059cc76f2b3",
+  downloaded_file_path = "kotlinx-serialization-core-jvm-1.8.1.jar"
 )
 
 http_file(
-  name = "kotlinx-serialization-json-jvm-1_7_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-json-jvm/1.7.3/kotlinx-serialization-json-jvm-1.7.3-sources.jar",
-  sha256 = "fddb3c7e3c92692769285476308dd7a39009aed1e8ae80112169d72d75a275ab",
-  downloaded_file_path = "kotlinx-serialization-json-jvm-1.7.3-sources.jar"
+  name = "kotlinx-serialization-core-jvm-1_8_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-core-jvm/1.8.1/kotlinx-serialization-core-jvm-1.8.1-sources.jar",
+  sha256 = "d4a7221a0c2ccb47bc736340344b256506cf8a5a49882883f8f56385ae69a1bc",
+  downloaded_file_path = "kotlinx-serialization-core-jvm-1.8.1-sources.jar"
 )
 
 http_file(
-  name = "kotlinx-serialization-json-io-jvm-1_7_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-json-io-jvm/1.7.3/kotlinx-serialization-json-io-jvm-1.7.3.jar",
-  sha256 = "963372b471616c2cd421fdea8085c4afb801a9aa71e5ef3acd1ba66e3450216c",
-  downloaded_file_path = "kotlinx-serialization-json-io-jvm-1.7.3.jar"
+  name = "kotlinx-serialization-json-jvm-1_8_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-json-jvm/1.8.1/kotlinx-serialization-json-jvm-1.8.1.jar",
+  sha256 = "8769e5647557e3700919c32d508f5c5dad53c5d8234cd10846354fbcff14aa24",
+  downloaded_file_path = "kotlinx-serialization-json-jvm-1.8.1.jar"
 )
 
 http_file(
-  name = "kotlinx-serialization-json-io-jvm-1_7_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-json-io-jvm/1.7.3/kotlinx-serialization-json-io-jvm-1.7.3-sources.jar",
-  sha256 = "60a176e88a074452f03e7f359f33bed4ca734e24e008c50677468fd253af9e98",
-  downloaded_file_path = "kotlinx-serialization-json-io-jvm-1.7.3-sources.jar"
+  name = "kotlinx-serialization-json-jvm-1_8_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-json-jvm/1.8.1/kotlinx-serialization-json-jvm-1.8.1-sources.jar",
+  sha256 = "5c76c02a6bc319d307a73b2bb4e77d1a0d3c1a25b78e559f662e2eb8ed29cdad",
+  downloaded_file_path = "kotlinx-serialization-json-jvm-1.8.1-sources.jar"
 )
 
 http_file(
-  name = "kotlinx-serialization-protobuf-jvm-1_7_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-protobuf-jvm/1.7.3/kotlinx-serialization-protobuf-jvm-1.7.3.jar",
-  sha256 = "7c85fb07055583a2e58dfdcee9dc19fef7255a323285707f82a0adc84f2ee84d",
-  downloaded_file_path = "kotlinx-serialization-protobuf-jvm-1.7.3.jar"
+  name = "kotlinx-serialization-json-io-jvm-1_8_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-json-io-jvm/1.8.1/kotlinx-serialization-json-io-jvm-1.8.1.jar",
+  sha256 = "ab5ec8ea48815197c46a7df9f418a62791fe91cda5023b941ce4de872d810cc1",
+  downloaded_file_path = "kotlinx-serialization-json-io-jvm-1.8.1.jar"
 )
 
 http_file(
-  name = "kotlinx-serialization-protobuf-jvm-1_7_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-protobuf-jvm/1.7.3/kotlinx-serialization-protobuf-jvm-1.7.3-sources.jar",
-  sha256 = "8123bb226afaee134ac406423686c35474ce53c8bc67760a09b595fd56c58a07",
-  downloaded_file_path = "kotlinx-serialization-protobuf-jvm-1.7.3-sources.jar"
+  name = "kotlinx-serialization-json-io-jvm-1_8_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-json-io-jvm/1.8.1/kotlinx-serialization-json-io-jvm-1.8.1-sources.jar",
+  sha256 = "d2576ea868d4654376dbbb103c53144a3574dc4e5e9a37eee7844dc00342418e",
+  downloaded_file_path = "kotlinx-serialization-json-io-jvm-1.8.1-sources.jar"
+)
+
+http_file(
+  name = "kotlinx-serialization-protobuf-jvm-1_8_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-protobuf-jvm/1.8.1/kotlinx-serialization-protobuf-jvm-1.8.1.jar",
+  sha256 = "fbd174f72ea82364baa112069f2d7b361758f6b68bd81d2ac51b02c66a48e924",
+  downloaded_file_path = "kotlinx-serialization-protobuf-jvm-1.8.1.jar"
+)
+
+http_file(
+  name = "kotlinx-serialization-protobuf-jvm-1_8_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-protobuf-jvm/1.8.1/kotlinx-serialization-protobuf-jvm-1.8.1-sources.jar",
+  sha256 = "e4a4de5cff003c53d5d3c5b979de4b68207e4c3b861a92f490f0ea88e2cd5330",
+  downloaded_file_path = "kotlinx-serialization-protobuf-jvm-1.8.1-sources.jar"
 )
 
 http_file(
@@ -11679,20 +11693,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/fasterxml/jackson/dataformat/jackson-dataformat-cbor/2.16.0/jackson-dataformat-cbor-2.16.0-sources.jar",
   sha256 = "329af252d3702453f3bb942f9ba793873a3ab4ebef348ef4d61975d54e155e9c",
   downloaded_file_path = "jackson-dataformat-cbor-2.16.0-sources.jar"
-)
-
-http_file(
-  name = "kotlinx-serialization-cbor-jvm-1_7_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-cbor-jvm/1.7.3/kotlinx-serialization-cbor-jvm-1.7.3.jar",
-  sha256 = "ec45d74e2293eacbc1f804f3ec55d4908f9905ac5053316b565f1b66326f1f70",
-  downloaded_file_path = "kotlinx-serialization-cbor-jvm-1.7.3.jar"
-)
-
-http_file(
-  name = "kotlinx-serialization-cbor-jvm-1_7_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-cbor-jvm/1.7.3/kotlinx-serialization-cbor-jvm-1.7.3-sources.jar",
-  sha256 = "91ac6c3b6539c6bbdfc1a3713c9068056f990a930fae192ac9d868fd0253586e",
-  downloaded_file_path = "kotlinx-serialization-cbor-jvm-1.7.3-sources.jar"
 )
 
 http_file(
