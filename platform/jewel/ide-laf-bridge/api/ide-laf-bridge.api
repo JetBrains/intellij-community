@@ -41,6 +41,7 @@ public final class org/jetbrains/jewel/bridge/BridgeUtilsKt {
 	public static synthetic fun retrieveTextStyle-WdJyH8Q$default (Ljava/lang/String;JJZIJILjava/lang/Object;)Landroidx/compose/ui/text/TextStyle;
 	public static final fun retrieveTextStyle-tD9LlGs (Ljava/lang/String;Ljava/lang/String;JZIJ)Landroidx/compose/ui/text/TextStyle;
 	public static synthetic fun retrieveTextStyle-tD9LlGs$default (Ljava/lang/String;Ljava/lang/String;JZIJILjava/lang/Object;)Landroidx/compose/ui/text/TextStyle;
+	public static final fun toAwtColor-8_81llA (J)Ljava/awt/Color;
 	public static final fun toComposeColor (Ljava/awt/Color;)J
 	public static final fun toComposeColorOrUnspecified (Ljava/awt/Color;)J
 	public static final fun toDpSize (Lcom/intellij/util/ui/JBDimension;)J
