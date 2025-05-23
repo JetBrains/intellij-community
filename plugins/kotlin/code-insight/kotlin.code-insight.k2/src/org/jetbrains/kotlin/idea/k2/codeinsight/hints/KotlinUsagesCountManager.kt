@@ -58,9 +58,6 @@ private fun usageCount(
     file: PsiFile,
     scope: SearchScope,
 ): Int {
-    if (file.virtualFile !in scope) {
-        return 0
-    }
     val isCheapEnough = isCheapEnoughToSearchUsages(namedDeclaration)
     if (isCheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) {
         return 0

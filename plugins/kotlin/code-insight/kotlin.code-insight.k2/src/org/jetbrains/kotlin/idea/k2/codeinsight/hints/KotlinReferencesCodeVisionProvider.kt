@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.hints
 import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
 import com.intellij.codeInsight.hints.codeVision.CodeVisionProviderBase
 import com.intellij.codeInsight.hints.codeVision.RenameAwareReferencesCodeVisionProvider
-import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.java.JavaBundle
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -28,8 +27,6 @@ class KotlinReferencesCodeVisionProvider : RenameAwareReferencesCodeVisionProvid
 
     private fun getVisionInfo(element: PsiElement, file: PsiFile): CodeVisionProviderBase.CodeVisionInfo? {
         val namedDeclaration = element as? KtNamedDeclaration ?: return null
-        if (ScratchUtil.isScratch(file.virtualFile)) return null
-
         val result = KotlinUsagesCountManager.getInstance(element.getProject()).countMemberUsages(file, namedDeclaration)
         if (result == 0) return null
         return CodeVisionProviderBase.CodeVisionInfo(KotlinBundle.message("hints.codevision.usages.format", result), result)
