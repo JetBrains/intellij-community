@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleType
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringBundle
@@ -79,7 +80,9 @@ fun checkModuleDependencyConflictsForInternalUsages(
                     val referencedDeclaration = usageInfo.upToDateReferencedElement as? KtNamedDeclaration ?: return@tryFindConflict null
                     if (referencedDeclaration.isInternal) return@tryFindConflict null
                     if (target.resolveScope.contains(referencedDeclaration)) return@tryFindConflict null
-                    usageElement.createAccessibilityConflictInternal(referencedDeclaration, target.module ?: return@tryFindConflict null)
+                    val module = target.module ?: return@tryFindConflict null
+                    if (ModuleType.isInternal(module)) return@tryFindConflict null
+                    usageElement.createAccessibilityConflictInternal(referencedDeclaration, module)
                 }
             }
     }.toMultiMap()
