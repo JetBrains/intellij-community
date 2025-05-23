@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.branch
 
 import com.intellij.codeInsight.hint.HintManager
@@ -19,11 +19,13 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import javax.swing.BorderFactory
 import javax.swing.SwingConstants
 import javax.swing.event.HyperlinkEvent
 
+@ApiStatus.Internal
 class DvcsBranchesDivergedBanner private constructor(helpId: @NonNls String) {
 
   private val helpButton =

@@ -143,11 +143,6 @@ f:com.intellij.dvcs.branch.DvcsBranchUtil
 - s:getPathFor(com.intellij.dvcs.repo.Repository):java.lang.String
 - s:shortenBranchName(java.lang.String):java.lang.String
 - s:swapRevisions(java.util.List):java.util.List
-f:com.intellij.dvcs.branch.DvcsBranchesDivergedBanner
-- sf:Companion:com.intellij.dvcs.branch.DvcsBranchesDivergedBanner$Companion
-f:com.intellij.dvcs.branch.DvcsBranchesDivergedBanner$Companion
-- f:create(java.lang.String,java.lang.String):com.intellij.openapi.ui.DialogPanel
-- bs:create$default(com.intellij.dvcs.branch.DvcsBranchesDivergedBanner$Companion,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.openapi.ui.DialogPanel
 a:com.intellij.dvcs.branch.DvcsMultiRootBranchConfig
 - pf:myRepositories:java.util.Collection
 - <init>(java.util.Collection):V
