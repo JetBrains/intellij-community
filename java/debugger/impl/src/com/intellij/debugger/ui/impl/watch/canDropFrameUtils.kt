@@ -6,10 +6,9 @@ import com.intellij.debugger.engine.withDebugContext
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.impl.wrapIncompatibleThreadStateException
 import com.intellij.util.ThreeState
+import com.intellij.util.suspendingLazy
 import com.sun.jdi.Method
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
 import java.util.concurrent.CompletableFuture
@@ -23,7 +22,7 @@ internal fun StackFrameDescriptorImpl.canDropFrameSync(): ThreeState {
 internal fun StackFrameDescriptorImpl.canDropFrameAsync(): CompletableFuture<Boolean> {
   val managerThread = frameProxy.virtualMachine.debugProcess.managerThread
   return managerThread.coroutineScope.future(Dispatchers.Default) {
-    val lazyFrames = async(start = CoroutineStart.LAZY) {
+    val lazyFrames = suspendingLazy {
       withDebugContext(managerThread) {
         try {
           frameProxy.threadProxy().frames()
@@ -35,21 +34,16 @@ internal fun StackFrameDescriptorImpl.canDropFrameAsync(): CompletableFuture<Boo
     }
 
     suspend fun computeMethod(frameIndex: Int): Method? = wrapIncompatibleThreadStateException {
-      val frame = lazyFrames.await()?.getOrNull(frameIndex) ?: return null
+      val frame = lazyFrames.getValue()?.getOrNull(frameIndex) ?: return null
       withDebugContext(managerThread) {
         val location = frame.locationAsync().await()
         DebuggerUtilsAsync.method(location).await()
       }
     }
 
-    try {
-      isSafeToDropFrame(uiIndex, unsureIfCallerFrameAbsent = false) { i ->
-        methodOccurrence.getMethodOccurrence(i)?.method ?: computeMethod(i)
-      }.toBoolean()
-    }
-    finally {
-      lazyFrames.cancel()
-    }
+    isSafeToDropFrame(uiIndex, unsureIfCallerFrameAbsent = false) { i ->
+      methodOccurrence.getMethodOccurrence(i)?.method ?: computeMethod(i)
+    }.toBoolean()
   }
 }
 
