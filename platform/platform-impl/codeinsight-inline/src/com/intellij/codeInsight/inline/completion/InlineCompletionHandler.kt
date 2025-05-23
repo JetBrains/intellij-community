@@ -5,6 +5,7 @@ import com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorT
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.listeners.InlineSessionWiseCaretListener
 import com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionDocumentChangesTrackerImpl
+import com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionTypingSessionTracker
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsListener
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
@@ -249,6 +250,9 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
     sendEvent = ::invokeEvent,
     invalidateOnUnknownChange = { sessionManager.invalidate(UpdateSessionResult.Invalidated.Reason.UnclassifiedDocumentChange) }
   )
+
+  @ApiStatus.Internal
+  val typingSessionTracker: InlineCompletionTypingSessionTracker = InlineCompletionTypingSessionTracker()
 
   @ApiStatus.Internal
   protected fun performHardHide(context: InlineCompletionContext, finishType: FinishType) {

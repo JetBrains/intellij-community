@@ -922,6 +922,8 @@
                          order="after hide-hints" id="hide-search"/>
 
     <editorTypedHandler implementationClass="com.intellij.codeInsight.lookup.impl.LookupTypedHandler" id="lookup"/>
+    <editorTypedHandler implementationClass="com.intellij.codeInsight.inline.completion.InlineCompletionTypedHandler"
+                        id="inline.completion"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler" id="completionAutoPopup"
                   order="first"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.SelectionQuotingTypedHandler" id="selectionQuoting"/>

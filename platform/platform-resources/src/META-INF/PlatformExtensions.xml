@@ -2037,8 +2037,6 @@
     <listener class="com.intellij.ide.ui.laf.LafAndEditorColorSchemeDynamicPluginListener"
               topic="com.intellij.ide.plugins.DynamicPluginListener"/>
 
-    <listener class="com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionTypingListener"
-              topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
     <listener class="com.intellij.diff.tools.combined.CombinedDiffAdvancedSettingsChangeListener"
               topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener"/>
 
