@@ -142,7 +142,7 @@ public class BuildContextImpl implements BuildContext {
     return options;
   }
   
-  private static @NotNull List<String> buildJavaOptions(Map<CLFlags, List<String>> flags) {
+  private @NotNull List<String> buildJavaOptions(Map<CLFlags, List<String>> flags) {
     // for now, only options available in the flags map can be specified in the build configuration
     List<String> options = new ArrayList<>();
     options.add("-encoding"); // todo: for now hardcoded
@@ -156,6 +156,11 @@ public class BuildContextImpl implements BuildContext {
       options.add("-target");
       options.add(jvmTarget);
     }
+
+    Path trashDir = DataPaths.getTrashDir(this);
+    options.add("-s");
+    options.add(trashDir.toString()); // put AP-generated sources to trash dir
+
     for (String exp : CLFlags.ADD_EXPORT.getValue(flags)) {
       options.add("--add-exports");
       options.add(exp);

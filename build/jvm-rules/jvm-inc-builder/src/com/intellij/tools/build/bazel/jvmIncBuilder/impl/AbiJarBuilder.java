@@ -103,6 +103,9 @@ public class AbiJarBuilder extends ZipOutputBuilderImpl {
 
   private byte @Nullable [] filterAbiJarContent(String entryName, byte[] content) {
     if (myClassFinder == null || content == null || !entryName.endsWith(".class")) {
+      if (entryName.endsWith(".java")) {
+        return null;  // do not save AP-produced sources in abi jar
+      }
       return content; // no instrumentation, if the entry is not a class file, or the class finder is not specified
     }
     // todo: for kotlin-generated classes use KotlinAnnotationVisitor, abiMetadataProcessor

@@ -4,6 +4,7 @@ package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
 import com.intellij.tools.build.bazel.jvmIncBuilder.*;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.CompilerDataSink;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.CompilerRunner;
+import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputExplorer;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputSink;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
 import org.jetbrains.jps.dependency.NodeSource;
 import org.jetbrains.jps.dependency.NodeSourcePathMapper;
+import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.incremental.BinaryContent;
 import org.jetbrains.jps.javac.*;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
@@ -18,7 +20,9 @@ import org.jetbrains.jps.javac.ast.api.JavacFileData;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
 
 import javax.lang.model.element.Modifier;
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileManager;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.util.*;
 
@@ -95,7 +99,8 @@ public class JavaCompilerRunner implements CompilerRunner {
   @Override
   public ExitCode compile(Iterable<NodeSource> sources, Iterable<NodeSource> deletedSources, DiagnosticSink diagnosticSink, OutputSink outSink) {
     NodeSourcePathMapper pathMapper = myContext.getPathMapper();
-    OutputCollector outCollector = new OutputCollector(this, pathMapper, diagnosticSink, outSink);
+    SourcesFilteringOutputSink srcFilteringSink = new SourcesFilteringOutputSink(outSink);
+    OutputCollector outCollector = new OutputCollector(this, pathMapper, diagnosticSink, srcFilteringSink);
     JavacCompilerTool javacTool = new JavacCompilerTool();
     // set non-null output, pointing to a non-existent dir. Need this to enable JavacFileManager creating OutputFileObjects
     Map<File, Set<File>> outputDir = Map.of(myContext.getDataDir().resolve("__temp__").toFile(), Set.of());
@@ -108,19 +113,26 @@ public class JavaCompilerRunner implements CompilerRunner {
     logCompiledFiles(myContext, sources);
 
     // todo: revise command line options to ensure correct compilation
-    final boolean compileOk = JavacMain.compile(
-      myOptions,
-      map(sources, ns -> pathMapper.toPath(ns).toFile()),
-      myClassPath, platformCp, myModulePath, upgradeModulePath, sourcePath,
-      outputDir, outCollector, outCollector,
-      myContext::isCanceled, javacTool, new FileDataProvider(outSink)
-    );
+    try {
+      final boolean compileOk = JavacMain.compile(
+        myOptions,
+        map(sources, ns -> pathMapper.toPath(ns).toFile()),
+        myClassPath, platformCp, myModulePath, upgradeModulePath, sourcePath,
+        outputDir, outCollector, outCollector,
+        myContext::isCanceled, javacTool, new FileDataProvider(outSink)
+      );
 
-    if (outCollector.hasErrors()) {
-      diagnosticSink.report(Message.create(this, Message.Kind.INFO, "Compilation finished with errors. Compiler options used: " + myOptions));
+      if (outCollector.hasErrors()) {
+        diagnosticSink.report(Message.create(this, Message.Kind.INFO, "Compilation finished with errors. Compiler options used: " + myOptions));
+      }
+
+      return compileOk ? ExitCode.OK : ExitCode.ERROR;
     }
-
-    return compileOk ? ExitCode.OK : ExitCode.ERROR;
+    finally {
+      for (String generatedSourcesPath : srcFilteringSink.getGeneratedSourcesPaths()) {
+        outSink.deletePath(generatedSourcesPath); // for now, remove generated sources from the resulting artifact
+      }
+    }
   }
 
   /** @noinspection ConstantValue*/
@@ -284,9 +296,9 @@ public class JavaCompilerRunner implements CompilerRunner {
   }
 
   private static class FileDataProvider implements InputFileDataProvider {
-    private final OutputSink myOutSink;
+    private final OutputExplorer myOutSink;
 
-    FileDataProvider(OutputSink outSink) {
+    FileDataProvider(OutputExplorer outSink) {
       myOutSink = outSink;
     }
 
@@ -348,5 +360,66 @@ public class JavaCompilerRunner implements CompilerRunner {
       }
     }
     return options;
+  }
+
+  private static final class SourcesFilteringOutputSink implements OutputSink {
+    private final OutputSink myDelegate;
+    private final Set<String> myGeneratedSourcesPaths = new HashSet<>();
+
+    SourcesFilteringOutputSink(OutputSink delegate) {
+      myDelegate = delegate;
+    }
+
+    @Override
+    public void addFile(OutputFile outFile, Iterable<NodeSource> originSources) {
+      if (outFile.getKind() == OutputFile.Kind.source) {
+        myGeneratedSourcesPaths.add(outFile.getPath());
+      }
+      myDelegate.addFile(outFile, originSources);
+    }
+    
+    public Iterable<String> getGeneratedSourcesPaths() {
+      return myGeneratedSourcesPaths;
+    }
+
+    @Override
+    public boolean deletePath(String path) {
+      return myDelegate.deletePath(path);
+    }
+
+    @Override
+    public Iterable<String> list(String packageName, boolean recurse) {
+      return myDelegate.list(packageName, recurse);
+    }
+
+    @Override
+    public Iterable<String> listFiles(String packageName, boolean recurse) {
+      return myDelegate.listFiles(packageName, recurse);
+    }
+
+    @Override
+    public byte @Nullable [] getFileContent(String path) {
+      return myDelegate.getFileContent(path);
+    }
+
+    @Override
+    public void registerImports(String className, Collection<String> classImports, Collection<String> staticImports) {
+      myDelegate.registerImports(className, classImports, staticImports);
+    }
+
+    @Override
+    public void registerConstantReferences(String className, Collection<ConstantRef> cRefs) {
+      myDelegate.registerConstantReferences(className, cRefs);
+    }
+
+    @Override
+    public void registerUsage(String className, Usage usage) {
+      myDelegate.registerUsage(className, usage);
+    }
+
+    @Override
+    public void registerUsage(NodeSource source, Usage usage) {
+      myDelegate.registerUsage(source, usage);
+    }
   }
 }
