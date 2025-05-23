@@ -43,6 +43,7 @@ jvm_library(
     "//plugins/git4idea:vcs-git_test_lib",
     "//plugins/git4idea/shared",
     "//platform/vcs-api/vcs-api-core:vcs-core",
+    "//platform/vcs-api/vcs-api-core:vcs-core_test_lib",
     "//platform/vcs-log/api:vcs-log",
     "//platform/vcs-log/impl",
     "//platform/vcs-log/impl:impl_test_lib",

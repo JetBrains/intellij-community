@@ -52,6 +52,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/vcs-impl/lang",
     "//platform/vcs-api/vcs-api-core:vcs-core",
+    "//platform/vcs-api/vcs-api-core:vcs-core_test_lib",
     "//platform/vcs-api:vcs",
     "//platform/core-api:core",
     "//platform/ide-core-impl",

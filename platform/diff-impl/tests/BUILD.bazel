@@ -29,6 +29,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/util/diff",
     "//platform/vcs-api/vcs-api-core:vcs-core",
+    "//platform/vcs-api/vcs-api-core:vcs-core_test_lib",
     "@lib//:mockito",
     "//platform/analysis-api:analysis",
     "//platform/editor-ui-ex:editor-ex",
