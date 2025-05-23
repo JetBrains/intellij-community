@@ -25,7 +25,6 @@ class MavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrati
     createMavenPomFile("workspace/maven-app", "org.example:maven-app:1.0-SNAPSHOT") {
       dependency("compile", "org.example:maven-lib:1.0-SNAPSHOT")
     }
-    createMavenPomFile("workspace/maven-lib", "org.example:maven-lib:1.0-SNAPSHOT")
 
     openProject("workspace").useProjectAsync { project ->
       assertModules(project, "workspace")
@@ -38,6 +37,7 @@ class MavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrati
                            "Maven: org.example:maven-lib:1.0-SNAPSHOT")
       }
 
+      createMavenPomFile("workspace/maven-lib", "org.example:maven-lib:1.0-SNAPSHOT")
       linkProject(project, "workspace/maven-lib", SYSTEM_ID)
 
       assertModules(project, "workspace", "maven-app", "maven-lib")
@@ -58,12 +58,12 @@ class MavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrati
     createMavenPomFile("workspace/maven-app", "org.example:maven-app:1.0-SNAPSHOT") {
       dependency("compile", "org.example:maven-lib:1.0-SNAPSHOT")
     }
-    createMavenPomFile("workspace/maven-lib", "org.example:maven-lib:1.0-SNAPSHOT")
 
     openProject("workspace").useProjectAsync { project ->
       assertModules(project, "workspace")
 
       linkProject(project, "workspace/maven-app", SYSTEM_ID)
+      createMavenPomFile("workspace/maven-lib", "org.example:maven-lib:1.0-SNAPSHOT")
       linkProject(project, "workspace/maven-lib", SYSTEM_ID)
       unlinkProject(project, "workspace/maven-lib", SYSTEM_ID)
 
@@ -88,14 +88,6 @@ class MavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrati
     createMavenPomFile("workspace/maven-app", "org.example:maven-app:1.0-SNAPSHOT") {
       dependency("compile", "org.example:maven-lib:1.0-SNAPSHOT")
     }
-    createMavenConfigFile("workspace/maven-lib", "--settings=" + MavenConstants.SETTINGS_XML)
-    createMavenSettingsFile("workspace/maven-lib") {
-      property("localRepository", testRoot.resolve("workspace/repository").toCanonicalPath())
-    }
-    createMavenPomFile("workspace/maven-lib", "org.example:maven-lib:1.0-SNAPSHOT") {
-      dependency("compile", "org.example:maven-super-lib:1.0-SNAPSHOT")
-    }
-    createMavenPomFile("workspace/maven-super-lib", "org.example:maven-super-lib:1.0-SNAPSHOT")
 
     openProject("workspace").useProjectAsync { project ->
       assertModules(project, "workspace")
@@ -108,6 +100,15 @@ class MavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrati
                            "Maven: org.example:maven-lib:1.0-SNAPSHOT",
                            "Maven: org.example:maven-super-lib:1.0-SNAPSHOT")
       }
+
+      createMavenConfigFile("workspace/maven-lib", "--settings=" + MavenConstants.SETTINGS_XML)
+      createMavenSettingsFile("workspace/maven-lib") {
+        property("localRepository", testRoot.resolve("workspace/repository").toCanonicalPath())
+      }
+      createMavenPomFile("workspace/maven-lib", "org.example:maven-lib:1.0-SNAPSHOT") {
+        dependency("compile", "org.example:maven-super-lib:1.0-SNAPSHOT")
+      }
+      createMavenPomFile("workspace/maven-super-lib", "org.example:maven-super-lib:1.0-SNAPSHOT")
 
       linkProject(project, "workspace/maven-lib", SYSTEM_ID)
 
