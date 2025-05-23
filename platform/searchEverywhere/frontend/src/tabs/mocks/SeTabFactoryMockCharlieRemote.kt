@@ -8,14 +8,16 @@ import com.intellij.platform.searchEverywhere.SeSessionEntity
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.SeTabFactory
 import fleet.kernel.DurableRef
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 class SeTabFactoryMockCharlieRemote : SeTabFactory {
-  override fun getTab(project: Project?, sessionRef: DurableRef<SeSessionEntity>, initEvent: AnActionEvent): SeTab =
+  override fun getTab(scope: CoroutineScope, project: Project?, sessionRef: DurableRef<SeSessionEntity>, initEvent: AnActionEvent): SeTab =
     SeTabMock.create(project,
                      sessionRef,
                      "Charlie-Remote",
                      listOf(SeProviderId("SearchEverywhereItemsProviderMock_MockBackend")),
-                     initEvent)
+                     initEvent,
+                     scope)
 }

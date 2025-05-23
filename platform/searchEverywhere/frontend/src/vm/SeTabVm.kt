@@ -13,7 +13,7 @@ import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfo
 import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.utils.SuspendLazyProperty
-import com.intellij.platform.searchEverywhere.frontend.utils.suspendLazy
+import com.intellij.platform.searchEverywhere.frontend.utils.initAsync
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -32,7 +32,7 @@ class SeTabVm(
 ) {
   val searchResults: StateFlow<Flow<SeThrottledItems<SeResultEvent>>> get() = _searchResults.asStateFlow()
   val name: String get() = tab.name
-  val filterEditor: SuspendLazyProperty<SeFilterEditor?> = suspendLazy { tab.getFilterEditor() }
+  val filterEditor: SuspendLazyProperty<SeFilterEditor?> = initAsync(coroutineScope) { tab.getFilterEditor() }
   val tabId: String get() = tab.id
 
   private val shouldLoadMoreFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)

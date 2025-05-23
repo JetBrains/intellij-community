@@ -14,7 +14,7 @@ import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
 import com.intellij.platform.searchEverywhere.frontend.tabs.target.SeTargetsFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.utils.SuspendLazyProperty
-import com.intellij.platform.searchEverywhere.frontend.utils.suspendLazy
+import com.intellij.platform.searchEverywhere.frontend.utils.initAsync
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import org.jetbrains.annotations.ApiStatus
@@ -24,7 +24,9 @@ class SeClassesTab(private val delegate: SeTabDelegate) : SeTab {
   override val name: String get() = GotoClassPresentationUpdater.getTabTitlePluralized()
   override val shortName: String get() = name
   override val id: String get() = "ClassSearchEverywhereContributor"
-  private val filterEditor: SuspendLazyProperty<SeFilterEditor> = suspendLazy { SeTargetsFilterEditor(delegate.getSearchScopesInfos().firstOrNull(), delegate.getTypeVisibilityStates()) }
+  private val filterEditor: SuspendLazyProperty<SeFilterEditor> = initAsync(delegate.scope) {
+    SeTargetsFilterEditor(delegate.getSearchScopesInfos().firstOrNull(), delegate.getTypeVisibilityStates())
+  }
 
   override fun getItems(params: SeParams): Flow<SeResultEvent> =
     if (params.inputQuery.isEmpty()) emptyFlow()

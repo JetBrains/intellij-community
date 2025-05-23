@@ -10,16 +10,18 @@ import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.SeTabFactory
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
 import fleet.kernel.DurableRef
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 class SeActionsTabFactory : SeTabFactory {
-  override fun getTab(project: Project?, sessionRef: DurableRef<SeSessionEntity>, initEvent: AnActionEvent): SeTab? {
+  override fun getTab(scope: CoroutineScope, project: Project?, sessionRef: DurableRef<SeSessionEntity>, initEvent: AnActionEvent): SeTab? {
     val delegate = SeTabDelegate(project,
                                  sessionRef,
                                  "Actions",
                                  listOf(SeProviderId(SeProviderIdUtils.ACTIONS_ID)),
-                                 initEvent)
+                                 initEvent,
+                                 scope)
 
     return SeActionsTab(delegate)
   }

@@ -14,16 +14,11 @@ import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeResultEvent
-import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfo
-import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfoProvider
-import com.intellij.platform.searchEverywhere.frontend.SeFilterActionsPresentation
-import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
-import com.intellij.platform.searchEverywhere.frontend.SeFilterPresentation
-import com.intellij.platform.searchEverywhere.frontend.SeTab
+import com.intellij.platform.searchEverywhere.frontend.*
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
 import com.intellij.platform.searchEverywhere.frontend.tabs.utils.SeFilterEditorBase
 import com.intellij.platform.searchEverywhere.frontend.utils.SuspendLazyProperty
-import com.intellij.platform.searchEverywhere.frontend.utils.suspendLazy
+import com.intellij.platform.searchEverywhere.frontend.utils.initAsync
 import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter
 import com.intellij.ui.IdeUICustomization
 import kotlinx.coroutines.flow.Flow
@@ -41,7 +36,9 @@ class SeAllTab(private val delegate: SeTabDelegate) : SeTab {
     get() = name
 
   override val id: String get() = ID
-  private val filterEditor: SuspendLazyProperty<SeFilterEditor> = suspendLazy { SeAllFilterEditor(delegate.getProvidersIdToName()) }
+  private val filterEditor: SuspendLazyProperty<SeFilterEditor> = initAsync(delegate.scope) {
+    SeAllFilterEditor(delegate.getProvidersIdToName())
+  }
 
   override fun getItems(params: SeParams): Flow<SeResultEvent> {
     if (params.inputQuery.isEmpty()) return emptyFlow()

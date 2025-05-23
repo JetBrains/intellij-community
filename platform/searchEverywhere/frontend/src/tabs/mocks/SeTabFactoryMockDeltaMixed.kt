@@ -10,16 +10,18 @@ import com.intellij.platform.searchEverywhere.frontend.SeTabFactory
 import com.intellij.platform.searchEverywhere.providers.mocks.SeItemsProviderFactoryMockAlphaLocal
 import com.intellij.platform.searchEverywhere.providers.mocks.SeItemsProviderFactoryMockBetaLocal
 import fleet.kernel.DurableRef
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 class SeTabFactoryMockDeltaMixed : SeTabFactory {
-  override fun getTab(project: Project?, sessionRef: DurableRef<SeSessionEntity>, initEvent: AnActionEvent): SeTab =
+  override fun getTab(scope: CoroutineScope, project: Project?, sessionRef: DurableRef<SeSessionEntity>, initEvent: AnActionEvent): SeTab =
     SeTabMock.create(project,
                      sessionRef,
                      "DeltaMixed",
                      listOf(SeProviderId(SeItemsProviderFactoryMockAlphaLocal.ID),
                             SeProviderId(SeItemsProviderFactoryMockBetaLocal.ID),
                             SeProviderId("SearchEverywhereItemsProviderMock_MockBackend")),
-                     initEvent)
+                     initEvent,
+                     scope)
 }

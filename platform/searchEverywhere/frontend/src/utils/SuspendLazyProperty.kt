@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.utils
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
@@ -38,3 +40,11 @@ class SuspendLazyProperty<T>(
 
 @ApiStatus.Internal
 fun <T> suspendLazy(initializer: suspend () -> T): SuspendLazyProperty<T> = SuspendLazyProperty(initializer)
+
+@ApiStatus.Internal
+fun <T> initAsync(scope: CoroutineScope, initializer: suspend () -> T): SuspendLazyProperty<T> =
+  SuspendLazyProperty(initializer).also {
+    scope.launch {
+      it.getValue()
+    }
+  }
