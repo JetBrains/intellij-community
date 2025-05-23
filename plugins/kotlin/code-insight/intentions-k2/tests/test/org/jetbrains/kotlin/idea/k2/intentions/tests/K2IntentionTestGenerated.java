@@ -10313,7 +10313,84 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/addLabeledReturnInLambda")
+    public static class AddLabeledReturnInLambda extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("insideParenthesis.kt")
+        public void testInsideParenthesis() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addLabeledReturnInLambda/insideParenthesis.kt");
+        }
+
+        @TestMetadata("labeledLambda.kt")
+        public void testLabeledLambda() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addLabeledReturnInLambda/labeledLambda.kt");
+        }
+
+        @TestMetadata("loop.kt")
+        public void testLoop() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addLabeledReturnInLambda/loop.kt");
+        }
+
+        @TestMetadata("multipleBlocks.kt")
+        public void testMultipleBlocks() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addLabeledReturnInLambda/multipleBlocks.kt");
+        }
+
+        @TestMetadata("multipleHighOrderFun.kt")
+        public void testMultipleHighOrderFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addLabeledReturnInLambda/multipleHighOrderFun.kt");
+        }
+
+        @TestMetadata("multipleHighOrderFun2.kt")
+        public void testMultipleHighOrderFun2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addLabeledReturnInLambda/multipleHighOrderFun2.kt");
+        }
+
+        @TestMetadata("normal.kt")
+        public void testNormal() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addLabeledReturnInLambda/normal.kt");
+        }
+
+        @TestMetadata("notLast.kt")
+        public void testNotLast() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addLabeledReturnInLambda/notLast.kt");
+        }
+
+        @TestMetadata("returnStatement.kt")
+        public void testReturnStatement() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addLabeledReturnInLambda/returnStatement.kt");
+        }
+
+        @TestMetadata("suspend.kt")
+        public void testSuspend() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addLabeledReturnInLambda/suspend.kt");
+        }
+
+        @TestMetadata("unit.kt")
+        public void testUnit() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addLabeledReturnInLambda/unit.kt");
+        }
+
+        @TestMetadata("withLabeledReturn.kt")
+        public void testWithLabeledReturn() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addLabeledReturnInLambda/withLabeledReturn.kt");
+        }
+
+        @TestMetadata("withReturn.kt")
+        public void testWithReturn() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addLabeledReturnInLambda/withReturn.kt");
+        }
+    }
 
 
 
