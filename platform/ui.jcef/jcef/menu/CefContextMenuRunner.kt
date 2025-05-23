@@ -20,6 +20,9 @@ internal class CefContextMenuRunner : CefContextMenuHandlerAdapter() {
       return true
     }
 
+    if (isJcefContextMenuActionGroupRegistered()) {
+      return true
+    }
     val menuAdapter = JBCefMenuAdapter(model) { selectedItem ->
       if (selectedItem == null) {
         callback.cancel()
