@@ -34,6 +34,7 @@ import com.intellij.refactoring.util.VariableData;
 import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.siyeh.ig.jdk.VarargParameterInspection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -504,7 +505,19 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
     newExpressions.forEach((constructor, callSites) -> {
       fillParameterList(constructor);
-      createAssignmentStatements(constructor);
+
+      // In case of a this() chained constructor call, don't set the fields, and instead append the parameters to the this() call.
+      // Otherwise, set the fields in the constructor.
+      PsiMethodCallExpression thisOrSuperCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(constructor);
+      if (JavaPsiConstructorUtil.isChainedConstructorCall(thisOrSuperCall)) {
+        for (VariableInfo info : myVariableInfos) {
+          if (info.passAsParameter) {
+            thisOrSuperCall.getArgumentList().add(factory.createExpressionFromText(info.parameterName, null));
+          }
+        }
+      } else {
+        createAssignmentStatements(constructor);
+      }
 
       appendInitializers(constructor);
       for (PsiNewExpression callSite : callSites) {

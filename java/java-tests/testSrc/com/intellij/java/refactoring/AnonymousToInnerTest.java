@@ -146,6 +146,10 @@ public class AnonymousToInnerTest extends LightJavaCodeInsightTestCase {
     doTest("MyClass", true);
   }
 
+  public void testChainedConstructor() {
+    doTest("Inner", true);
+  }
+
   private void doTest(final String newClassName, final boolean makeStatic) {
     configureByFile(TEST_ROOT + getTestName(true) + ".java");
     AnonymousToInnerHandler handler = new AnonymousToInnerHandler() {
