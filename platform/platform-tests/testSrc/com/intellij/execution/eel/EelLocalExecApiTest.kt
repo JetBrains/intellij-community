@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.eel
 
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.process.UnixSignal
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.*
@@ -14,12 +15,17 @@ import com.intellij.platform.tests.eelHelpers.ttyAndExit.*
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import io.ktor.util.decodeString
+import io.mockk.coEvery
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 import kotlinx.coroutines.*
 import org.hamcrest.CoreMatchers
 import org.hamcrest.CoreMatchers.anyOf
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.*
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import java.nio.ByteBuffer
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
@@ -221,6 +227,35 @@ class EelLocalExecApiTest {
       ExitType.EXIT_WITH_COMMAND -> {
         assertEquals(GRACEFUL_EXIT_CODE, exitCode) // Graceful exit
       }
+    }
+  }
+
+
+  /**
+   * `PATH` variable might contain just, it must not break `[where]
+   */
+  @ParameterizedTest
+  @ValueSource(chars = ['\'', ':', ';', ' ', '\b', '\r', '\n', '"', '/', '\\', ' '])
+  fun junkInPathDoesNotBreakWhereTest(
+    junkChar: Char,
+  ): Unit = timeoutRunBlocking(10.minutes) {
+    val junkCharStr = junkChar.toString()
+
+    val (shell, _) = localEel.exec.getShell()
+    assert(localEel.exec.where(shell.fileName) != null) { "No shell found on PATH: can't check path" }
+
+    // To make sure this mocking work, we look for the shell.
+    mockkStatic(PathEnvironmentVariableUtil::class)
+    try {
+      coEvery { PathEnvironmentVariableUtil.getPathVariableValue() }.returns(junkCharStr)
+      assert(localEel.exec.where(shell.fileName) == null) { "Failed to substitute path, real path was used, we test nothing" }
+
+      // These functions shouldn't fail
+      localEel.exec.where(junkCharStr)
+      localEel.exec.where("file")
+    }
+    finally {
+      unmockkStatic(PathEnvironmentVariableUtil::class)
     }
   }
 
