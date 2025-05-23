@@ -24,6 +24,7 @@ jvm_library(
     "//platform/platform-impl/rpc",
     "//platform/diagnostic",
     "@lib//:opentelemetry",
+    "//platform/platform-impl:ide-impl",
   ],
   runtime_deps = [":shared_resources"]
 )

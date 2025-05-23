@@ -13,8 +13,6 @@
 *f:com.intellij.codeInsight.hints.VcsCodeVisionLanguageContext$Companion
 - sf:EXTENSION:java.lang.String
 - f:getProvidersExtensionPoint():com.intellij.lang.LanguageExtension
-*:com.intellij.openapi.vcs.LinkDescriptor
-- a:getRange():com.intellij.openapi.util.TextRange
 *:com.intellij.openapi.vcs.VcsFileListenerIgnoredFilesProvider
 - *sf:Companion:com.intellij.openapi.vcs.VcsFileListenerIgnoredFilesProvider$Companion
 - s:isAdditionAllowed(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath):Z

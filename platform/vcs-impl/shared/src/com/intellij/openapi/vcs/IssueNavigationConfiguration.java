@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs;
 
@@ -13,6 +13,7 @@ import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,10 +26,18 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
-@State(name = "IssueNavigationConfiguration", storages = @Storage("vcs.xml"))
+/**
+ * Settings state is available both on frontend and backend.
+ * However, the synchronization direction is only backend -> frontend, which provides only read access on the frontend side.
+ *
+ * @see com.intellij.platform.vcs.impl.shared.VcsRemoteSettingsInfoProvider
+ */
+@State(name = IssueNavigationConfiguration.SETTINGS_KEY, storages = @Storage("vcs.xml"))
 public class IssueNavigationConfiguration extends SimpleModificationTracker
   implements PersistentStateComponent<IssueNavigationConfiguration> {
+  @ApiStatus.Internal
+  public static final String SETTINGS_KEY = "IssueNavigationConfiguration";
+
   private static final Logger LOG = Logger.getInstance(IssueNavigationConfiguration.class);
 
   public static IssueNavigationConfiguration getInstance(Project project) {
@@ -54,6 +63,11 @@ public class IssueNavigationConfiguration extends SimpleModificationTracker
   @Override
   public void loadState(@NotNull IssueNavigationConfiguration state) {
     XmlSerializerUtil.copyBean(state, this);
+  }
+
+  @Override
+  public void noStateLoaded() {
+    loadState(new IssueNavigationConfiguration());
   }
 
   public static class LinkMatch implements LinkDescriptor, Comparable {

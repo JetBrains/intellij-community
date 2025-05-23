@@ -12,7 +12,6 @@
 
     <projectService serviceInterface="com.intellij.openapi.vcs.AbstractVcsHelper"
                     serviceImplementation="com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl"/>
-    <projectService serviceImplementation="com.intellij.openapi.vcs.IssueNavigationConfiguration"/>
     <projectService serviceImplementation="com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationSettings"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.roots.VcsRootDetector"
                     serviceImplementation="com.intellij.openapi.vcs.roots.VcsRootDetectorImpl"/>
