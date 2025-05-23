@@ -11,6 +11,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix
 import com.jetbrains.plugin.structure.intellij.problems.NoDependencies
 import com.jetbrains.plugin.structure.intellij.problems.ProhibitedModuleExposed
+import com.jetbrains.plugin.structure.intellij.problems.ReleaseDateInFuture
 import com.jetbrains.plugin.structure.intellij.problems.ReleaseVersionAndPluginVersionMismatch
 import com.jetbrains.plugin.structure.intellij.problems.ServiceExtensionPointPreloadNotSupported
 import com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginId
@@ -96,6 +97,12 @@ abstract class JetBrainsProductProperties : ProductProperties() {
        * and `version` is [BuildContext.pluginBuildNumber] by default
        */
       is ReleaseVersionAndPluginVersionMismatch -> true
+      /**
+       * The `release-date` attribute for a plugin.xml is pre-filled with an [ApplicationInfoProperties.majorReleaseDate]
+       * which may be just an estimation and set in the future.
+       * See IJI-673.
+       */
+      is ReleaseDateInFuture -> true
       else -> false
     }
   }
