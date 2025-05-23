@@ -9,12 +9,13 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.Cancellation
+import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object InlineCompletionLogs : CounterUsagesCollector() {
   // TODO use ML_RECORDER_ID
-  val GROUP: EventLogGroup = EventLogGroup("inline.completion.v2", 41, recorder = "ML")
+  val GROUP: EventLogGroup = EventLogGroup("inline.completion.v2", 42, recorder = "ML")
 
   val INSERTED_STATE_EVENT: VarargEventId = GROUP.registerVarargEvent(
     "inserted_state",
@@ -30,7 +31,17 @@ object InlineCompletionLogs : CounterUsagesCollector() {
     EventFields.Language,
   )
 
+  val modelRequestSent: EventId2<Long, Class<*>?> = GROUP.registerEvent("model_request_sent",
+                                                                        EventFields.Long("request_id"),
+                                                                        EventFields.Class("client"),
+                                                                        "Indicates that the call to the model was initiated"
+  )
+
   override fun getGroup(): EventLogGroup = GROUP
+
+  fun onModelRequestSent(project: Project, requestId: Long, clientClass: Class<*>) {
+    modelRequestSent.log(project, requestId, clientClass)
+  }
 
   init {
     Session.SESSION_EVENT // access session_event to load it
