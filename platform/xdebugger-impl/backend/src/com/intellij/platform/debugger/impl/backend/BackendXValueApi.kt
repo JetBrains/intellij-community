@@ -17,7 +17,6 @@ import com.intellij.xdebugger.frame.XFullValueEvaluator.XFullValueEvaluationCall
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
-import com.intellij.xdebugger.impl.ui.tree.actions.computeSourcePositionWithTimeout
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
