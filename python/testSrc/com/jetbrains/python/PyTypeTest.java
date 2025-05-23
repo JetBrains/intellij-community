@@ -2564,7 +2564,7 @@ public class PyTypeTest extends PyTestCase {
           final List<PyClassLikeType> superClassTypes = ((PyClassType)type).getSuperClassTypes(context);
           assertEquals(1, superClassTypes.size());
 
-          assertInstanceOf(superClassTypes.get(0), PyNamedTupleType.class);
+          assertInstanceOf(superClassTypes.get(0), PyClassTypeImpl.class);
         }
       }
     );
