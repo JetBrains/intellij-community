@@ -90,6 +90,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/canBeVal")
             model("${idea}/inspectionsLocal/replaceSubstring")
             model("${idea}/inspectionsLocal/replaceWithIgnoreCaseEquals")
+            model("${idea}/inspectionsLocal/replaceToWithInfixForm")
             model("${idea}/inspectionsLocal/addOperatorModifier")
             model("${idea}/inspectionsLocal/kotlinUnreachableCode")
             model("${idea}/inspectionsLocal/removeRedundantLabel")

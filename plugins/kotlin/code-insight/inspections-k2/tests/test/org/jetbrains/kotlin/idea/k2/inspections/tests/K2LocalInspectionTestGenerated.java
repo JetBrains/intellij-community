@@ -13834,6 +13834,35 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/replaceToWithInfixForm")
+    public static class ReplaceToWithInfixForm extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("base.kt")
+        public void testBase() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceToWithInfixForm/base.kt");
+        }
+
+        @TestMetadata("nonPair.kt")
+        public void testNonPair() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceToWithInfixForm/nonPair.kt");
+        }
+
+        @TestMetadata("typeArguments.kt")
+        public void testTypeArguments() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceToWithInfixForm/typeArguments.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/addOperatorModifier")
     public static class AddOperatorModifier extends AbstractK2LocalInspectionTest {
         @java.lang.Override
