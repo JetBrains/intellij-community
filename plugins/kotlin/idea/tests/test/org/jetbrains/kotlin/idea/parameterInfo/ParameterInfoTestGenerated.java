@@ -116,6 +116,16 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("brokenLambdaArgument.kt")
+        public void testBrokenLambdaArgument() throws Exception {
+            runTest("testData/parameterInfo/functionCall/brokenLambdaArgument.kt");
+        }
+
+        @TestMetadata("brokenLambdaArgument2.kt")
+        public void testBrokenLambdaArgument2() throws Exception {
+            runTest("testData/parameterInfo/functionCall/brokenLambdaArgument2.kt");
+        }
+
         @TestMetadata("Conflicting.kt")
         public void testConflicting() throws Exception {
             runTest("testData/parameterInfo/functionCall/Conflicting.kt");
