@@ -13,6 +13,7 @@ import com.intellij.ide.ui.toSerializableTextChunk
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -51,7 +52,8 @@ internal class FindRemoteApiImpl : FindRemoteApi {
           return@coroutineScope
         }
         val filesToScanInitially = filesToScanInitially.mapNotNull { it.virtualFile() }.toSet()
-        val scope = FindInProjectUtil.getGlobalSearchScope(project, findModel)
+        //TODO there should be read action in case of the loading from a directory
+        val scope = readAction {  FindInProjectUtil.getGlobalSearchScope(project, findModel) }
         FindInProjectUtil.findUsages(findModel, project, progressIndicator, presentation, filesToScanInitially) { usageInfo ->
           val virtualFile = usageInfo.virtualFile
           if (virtualFile == null)
