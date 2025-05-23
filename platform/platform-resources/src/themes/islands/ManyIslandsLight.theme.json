@@ -71,11 +71,14 @@
     "EditorTabs": {
       "background": "BackgroundLight",
       "underTabsBorderColor": "BackgroundDark",
-      "underlinedBorder": "Blue10",
-      "underlinedTabBackground": "Blue11",
-      "inactiveUnderlinedTabBorder": "Gray12",
+      "underlinedBorderColor": "Blue9",
+      "underlinedTabBackground": "#D4E2FFB3",
+      "inactiveUnderlinedTabBorderColor": "Gray10",
       "inactiveUnderlinedTabBackground": "Gray12",
-      "hoverBackground": "Gray13"
+      "hoverBackground": "#0000000C",
+
+      "tabInsets": "-6,8,-6,8",
+      "tabContentActionsRightInsets": "0,2,0,2"
     },
 
     "Editor.SearchField.background": "BackgroundLight",

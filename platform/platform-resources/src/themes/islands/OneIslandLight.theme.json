@@ -67,11 +67,19 @@
 
     "EditorTabs": {
       "background": "BackgroundLight",
-      "underlinedTabBackground": "Blue11",
-      "hoverBackground": "Gray13",
-      "underTabsBorderColor": "BackgroundDark"
+      "underTabsBorderColor": "BackgroundDark",
+      "underlinedBorderColor": "Blue9",
+      "underlinedTabBackground": "#D4E2FFB3",
+      "inactiveUnderlinedTabBorderColor": "Gray10",
+      "inactiveUnderlinedTabBackground": "Gray12",
+      "hoverBackground": "#0000000C",
+
+      "tabInsets": "-6,8,-6,8",
+      "tabContentActionsRightInsets": "0,2,0,2"
     },
+
     "Editor.SearchField.background": "BackgroundLight",
+
     "Editor.ToolTip": {
       "background": "TooltipBackground",
       "border": "TooltipBackground"
@@ -83,6 +91,11 @@
     },
 
     "NavBar.borderColor": "BorderTransparent",
+
+    "FileColor": {
+      "Yellow": "#fcf4e1",
+      "Green": "#e6f7e8"
+    },
 
     "Popup": {
       "background": "PopupBackground",
