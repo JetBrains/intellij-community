@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.FontPreferences
 import com.intellij.openapi.editor.colors.impl.AppConsoleFontOptions
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
@@ -91,7 +92,9 @@ class TerminalFontSettingsService : AppFontOptions<TerminalFontSettingsState>() 
 
   override fun noStateLoaded() {
     // the state is mostly inherited from the console settings
-    val defaultState = TerminalFontSettingsState(AppConsoleFontOptions.getInstance().fontPreferences)
+    val colorsManager = EditorColorsManager.getInstance()
+    val currentScheme = colorsManager.activeVisibleScheme ?: colorsManager.defaultScheme
+    val defaultState = TerminalFontSettingsState(currentScheme.consoleFontPreferences)
     // except the line spacing: it is only inherited if it's different from the default, otherwise we use our own default
     val userSetConsoleLineSpacing = TerminalLineSpacing.ofFloat(defaultState.LINE_SPACING)
     val defaultConsoleLineSpacing = TerminalLineSpacing.ofFloat(FontPreferences.DEFAULT_LINE_SPACING)
