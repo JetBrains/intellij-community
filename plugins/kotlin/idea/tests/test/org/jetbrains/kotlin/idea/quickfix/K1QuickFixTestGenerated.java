@@ -7240,6 +7240,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     runTest("testData/quickfix/createFromUsage/createVariable/primaryParameter/fromCallExpression.kt");
                 }
 
+                @TestMetadata("fromDefaultValuePositionWithComma.kt")
+                public void testFromDefaultValuePositionWithComma() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createVariable/primaryParameter/fromDefaultValuePositionWithComma.kt");
+                }
+
                 @TestMetadata("fromDelegationCall.kt")
                 public void testFromDelegationCall() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createVariable/primaryParameter/fromDelegationCall.kt");

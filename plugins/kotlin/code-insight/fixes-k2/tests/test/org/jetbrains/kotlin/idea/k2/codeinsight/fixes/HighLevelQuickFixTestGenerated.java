@@ -9577,6 +9577,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/primaryParameter/fromCallExpression.kt");
             }
 
+            @TestMetadata("fromDefaultValuePositionWithComma.kt")
+            public void testFromDefaultValuePositionWithComma() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/primaryParameter/fromDefaultValuePositionWithComma.kt");
+            }
+
             @TestMetadata("fromDelegationCall.kt")
             public void testFromDelegationCall() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/primaryParameter/fromDelegationCall.kt");
