@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -159,7 +159,8 @@ public class MapIndexStorage<Key, Value> extends IndexStorageLockingBase impleme
     if (myReadOnly) {
       throw new IncorrectOperationException("Index storage is read-only");
     }
-    withWriteLock(() -> {
+    //inlined .withWriteLock() to avoid frequent lambda allocation
+    try (LockStamp ignored = lockForWrite()) {
       try {
         myMap.markDirty();
         if (myKeyIsUniqueForIndexedFile) {
@@ -174,7 +175,7 @@ public class MapIndexStorage<Key, Value> extends IndexStorageLockingBase impleme
       catch (IOException e) {
         throw new StorageException(e);
       }
-    });
+    }
   }
 
   @Override
@@ -182,7 +183,9 @@ public class MapIndexStorage<Key, Value> extends IndexStorageLockingBase impleme
     if (myReadOnly) {
       throw new IncorrectOperationException("Index storage is read-only");
     }
-    withWriteLock(() -> {
+
+    //inlined .withWriteLock() to avoid frequent lambda allocation
+    try (LockStamp ignored = lockForWrite()) {
       try {
         myMap.markDirty();
         if (myKeyIsUniqueForIndexedFile) {
@@ -196,7 +199,7 @@ public class MapIndexStorage<Key, Value> extends IndexStorageLockingBase impleme
       catch (IOException e) {
         throw new StorageException(e);
       }
-    });
+    }
   }
 
   @Override
@@ -204,22 +207,26 @@ public class MapIndexStorage<Key, Value> extends IndexStorageLockingBase impleme
     if (myReadOnly) {
       throw new IncorrectOperationException("Index storage is read-only");
     }
-    withWriteLock(() -> {
-      try {
-        myMap.markDirty();
-        if (myKeyIsUniqueForIndexedFile) {
-          assertKeyInputIdConsistency(key, inputId);
-          removeSingleValueDirectly(key, inputId);
+
+    // important: assuming the key exists in the index
+
+    //inlined .withWriteLock() to avoid frequent lambda allocation
+    try (LockStamp ignored = lockForWrite()) {
+        try {
+          myMap.markDirty();
+          if (myKeyIsUniqueForIndexedFile) {
+            assertKeyInputIdConsistency(key, inputId);
+            removeSingleValueDirectly(key, inputId);
+          }
+          else {
+            // important: assuming the key exists in the index
+            myCache.read(key).removeAssociatedValue(inputId);
+          }
         }
-        else {
-          // important: assuming the key exists in the index
-          myCache.read(key).removeAssociatedValue(inputId);
+        catch (IOException e) {
+          throw new StorageException(e);
         }
-      }
-      catch (IOException e) {
-        throw new StorageException(e);
-      }
-    });
+    }
   }
 
   private @NotNull Path getStorageFile() {
