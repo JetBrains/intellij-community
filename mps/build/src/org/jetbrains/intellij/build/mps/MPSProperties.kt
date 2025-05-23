@@ -65,6 +65,9 @@ class MPSProperties : JetBrainsProductProperties() {
             "intellij.laf.macos"
         )
 
+        // A plugin from intellij-community may refer to some additional modules located in the ultimate
+        // part of the project, and they should be skipped while building from intellij-community sources
+        productLayout.skipUnresolvedContentModules = true
         productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
         productLayout.buildAllCompatiblePlugins = false
         productLayout.compatiblePluginsToIgnore = persistentListOf("intellij.java.plugin")
