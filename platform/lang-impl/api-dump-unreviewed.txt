@@ -4051,6 +4051,10 @@ f:com.intellij.codeInsight.hints.settings.InlaySettingsPanel$Companion
 f:com.intellij.codeInsight.hints.settings.language.SingleLanguageInlayHintsSettingsPanelKt
 - sf:createEditor(com.intellij.lang.Language,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):com.intellij.ui.EditorTextField
 - sf:isInlaySettingsEditor(com.intellij.openapi.editor.Editor):Z
+f:com.intellij.codeInsight.inline.completion.FullLineCompletionTypedHandler
+- com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase
+- <init>(com.intellij.openapi.editor.actionSystem.TypedActionHandler):V
+- execute(com.intellij.openapi.editor.Editor,C,com.intellij.openapi.actionSystem.DataContext):V
 com.intellij.codeInsight.intention.impl.AbstractIntentionPopup
 - com.intellij.openapi.Disposable
 - a:close():V
