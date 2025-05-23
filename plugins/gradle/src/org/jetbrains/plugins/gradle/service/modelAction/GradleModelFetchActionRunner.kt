@@ -92,14 +92,7 @@ class GradleModelFetchActionRunner private constructor(
   }
 
   private fun <T : LongRunningOperation> T.prepareOperationForSync(): T {
-    GradleExecutionHelper.prepareForExecution(
-      this,
-      resolverContext.cancellationToken,
-      resolverContext.externalSystemTaskId,
-      resolverContext.settings,
-      resolverContext.listener,
-      resolverContext.buildEnvironment
-    )
+    GradleExecutionHelper.prepareForExecution(this, resolverContext)
     return this
   }
 

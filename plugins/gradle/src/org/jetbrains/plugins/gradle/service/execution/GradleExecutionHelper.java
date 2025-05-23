@@ -52,7 +52,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CancellationException;
-import java.util.function.BiFunction;
 
 /**
  * This is the low-level Gradle execution API that connects and interacts with the Gradle daemon using the Gradle tooling API.
@@ -131,7 +130,7 @@ public final class GradleExecutionHelper {
   }
 
   /**
-   * @deprecated Use instead the static variant of this method.
+   * @deprecated use the {@link GradleExecutionHelper#execute} function with {@link GradleExecutionContext} instead
    */
   @Deprecated
   public <T> T execute(
@@ -142,6 +141,10 @@ public final class GradleExecutionHelper {
     return execute(projectPath, settings, null, null, null, f);
   }
 
+  /**
+   * @deprecated use the {@link GradleExecutionHelper#execute} function with {@link GradleExecutionContext} instead
+   */
+  @Deprecated
   public static <T> T execute(
     @NotNull String projectPath,
     @Nullable GradleExecutionSettings settings,
@@ -187,36 +190,49 @@ public final class GradleExecutionHelper {
   }
 
   public static <T> T execute(
-    @NotNull String projectPath,
-    @NotNull GradleExecutionSettings settings,
-    @NotNull ExternalSystemTaskId taskId,
-    @NotNull ExternalSystemTaskNotificationListener listener,
-    @NotNull CancellationToken cancellationToken,
-    @NotNull BiFunction<? super ProjectConnection, ? super BuildEnvironment, ? extends T> action
+    @NotNull GradleExecutionContextImpl context,
+    @NotNull java.util.function.Function<? super ProjectConnection, ? extends T> action
   ) {
-    return execute(projectPath, settings, taskId, listener, cancellationToken, connection -> {
-      BuildEnvironment buildEnvironment = null;
-      try {
-        buildEnvironment = getBuildEnvironment(connection, taskId, listener, cancellationToken, settings);
-        return action.apply(connection, buildEnvironment);
-      }
-      catch (CancellationException ce) {
-        throw ce;
-      }
-      catch (Exception ex) {
-        throw GradleProjectResolver.createProjectResolverChain()
-          .getUserFriendlyError(buildEnvironment, ex, projectPath, null);
-      }
-    });
+    return execute(
+      context.getProjectPath(), context.getSettings(), context.getTaskId(), context.getListener(), context.getCancellationToken(),
+      connection -> {
+        BuildEnvironment buildEnvironment = null;
+        try {
+          buildEnvironment = getBuildEnvironment(connection, context);
+          context.setBuildEnvironment(buildEnvironment);
+          return action.apply(connection);
+        }
+        catch (CancellationException ce) {
+          throw ce;
+        }
+        catch (Exception ex) {
+          throw GradleProjectResolver.createProjectResolverChain()
+            .getUserFriendlyError(buildEnvironment, ex, context.getProjectPath(), null);
+        }
+      });
   }
 
+  public static void prepareForExecution(
+    @NotNull LongRunningOperation operation,
+    @NotNull GradleExecutionContext context
+  ) {
+    prepareForExecution(
+      operation,
+      context.getCancellationToken(), context.getTaskId(), context.getSettings(), context.getListener(), context.getBuildEnvironment()
+    );
+  }
+
+  /**
+   * @deprecated use the {@link GradleExecutionHelper#prepareForExecution} function with {@link GradleExecutionContext} instead
+   */
+  @Deprecated
   public static void prepareForExecution(
     @NotNull LongRunningOperation operation,
     @NotNull CancellationToken cancellationToken,
     @NotNull ExternalSystemTaskId id,
     @NotNull GradleExecutionSettings settings,
     @NotNull ExternalSystemTaskNotificationListener listener,
-    @Nullable BuildEnvironment buildEnvironment
+    @NotNull BuildEnvironment buildEnvironment
   ) {
     clearSystemProperties(operation);
 
@@ -471,6 +487,20 @@ public final class GradleExecutionHelper {
     operation.setEnvironmentVariables(effectiveEnvironment);
   }
 
+  private static @NotNull BuildEnvironment getBuildEnvironment(
+    @NotNull ProjectConnection connection,
+    @NotNull GradleExecutionContext context
+  ) {
+    return getBuildEnvironment(
+      connection, context.getTaskId(), context.getListener(), context.getCancellationToken(), context.getSettings()
+    );
+  }
+
+  /**
+   * @deprecated use the {@link GradleExecutionHelper#execute} function with {@link GradleExecutionContext} instead.
+   * The {@link BuildEnvironment} model will be automatically provided to {@link GradleExecutionContext}.
+   */
+  @Deprecated
   public static @NotNull BuildEnvironment getBuildEnvironment(
     @NotNull ProjectConnection connection,
     @NotNull ExternalSystemTaskId taskId,

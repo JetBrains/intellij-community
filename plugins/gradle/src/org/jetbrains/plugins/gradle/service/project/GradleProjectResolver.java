@@ -56,9 +56,7 @@ import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.model.data.CompositeBuildData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.remote.impl.GradleLibraryNamesMixer;
-import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
-import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
-import org.jetbrains.plugins.gradle.service.execution.GradleWrapperHelper;
+import org.jetbrains.plugins.gradle.service.execution.*;
 import org.jetbrains.plugins.gradle.service.modelAction.GradleIdeaModelHolder;
 import org.jetbrains.plugins.gradle.service.modelAction.GradleModelFetchActionRunner;
 import org.jetbrains.plugins.gradle.service.syncAction.GradleModelFetchActionResultHandler;
@@ -73,7 +71,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -176,7 +173,7 @@ public final class GradleProjectResolver implements ExternalSystemProjectResolve
 
       var projectResolverChain = createProjectResolverChain(resolverContext);
 
-      var projectDataNode = executeProjectResolverTask(resolverContext, connection ->
+      var projectDataNode = GradleExecutionHelper.execute(resolverContext, connection ->
         doResolveProjectInfo(connection, resolverContext, projectResolverChain)
       );
 
@@ -220,22 +217,6 @@ public final class GradleProjectResolver implements ExternalSystemProjectResolve
     finally {
       myCancellationMap.remove(taskId, cancellationTokenSource);
     }
-  }
-
-  static <R> R executeProjectResolverTask(
-    @NotNull DefaultProjectResolverContext resolverContext,
-    @NotNull Function<ProjectConnection, R> task
-  ) {
-    var projectPath = resolverContext.getProjectPath();
-    var id = resolverContext.getExternalSystemTaskId();
-    var settings = resolverContext.getSettings();
-    var listener = resolverContext.getListener();
-    var cancellationToken = resolverContext.getCancellationToken();
-
-    return GradleExecutionHelper.execute(projectPath, settings, id, listener, cancellationToken, (connection, buildEnvironment) -> {
-      resolverContext.setBuildEnvironment(buildEnvironment);
-      return task.apply(connection);
-    });
   }
 
   @NotNull DataNode<ProjectData> doResolveProjectInfo(

@@ -35,7 +35,6 @@ import com.intellij.task.RunConfigurationTaskState;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.api.Task;
 import org.gradle.tooling.*;
-import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -43,10 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.data.CompositeBuildData;
 import org.jetbrains.plugins.gradle.service.GradleFileModificationTracker;
-import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.execution.*;
-import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
-import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
 import org.jetbrains.plugins.gradle.service.project.GradleTasksIndices;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleBuildParticipant;
@@ -115,8 +111,12 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
         String rootProjectPath = determineRootProject(projectPath);
         GradleWrapperHelper.ensureInstalledWrapper(id, rootProjectPath, settings, listener, cancellationToken);
       }
-      GradleExecutionHelper.execute(projectPath, settings, id, listener, cancellationToken, (connection, buildEnvironment) -> {
-        executeTasks(projectPath, id, settings, listener, connection, cancellationToken, buildEnvironment);
+      GradleExecutionContextImpl context = new GradleExecutionContextImpl(
+        projectPath, id, settings, listener, cancellationToken
+      );
+      GradleExecutionHelper.execute(context, connection -> {
+        prepareSettingsForExecution(settings, context);
+        executeTasks(connection, context);
         return null;
       });
     }
@@ -125,56 +125,50 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     }
   }
 
-  private static void executeTasks(
-    @NotNull String projectPath,
-    @NotNull ExternalSystemTaskId id,
+  private static void prepareSettingsForExecution(
     @NotNull GradleExecutionSettings settings,
-    @NotNull ExternalSystemTaskNotificationListener listener,
-    @NotNull ProjectConnection connection,
-    @NotNull CancellationToken cancellationToken,
-    @NotNull BuildEnvironment buildEnvironment
+    @NotNull GradleExecutionContext context
   ) {
-    var gradleVersion = GradleVersion.version(buildEnvironment.getGradle().getGradleVersion());
-
     setupGradleScriptDebugging(settings);
     setupDebuggerDispatchPort(settings);
-    setupBuiltInTestEvents(settings, gradleVersion);
+    setupBuiltInTestEvents(settings, context);
 
-    configureTasks(projectPath, id, settings, gradleVersion);
+    configureTasks(settings, context);
 
-    for (GradleBuildParticipant buildParticipant : settings.getExecutionWorkspace().getBuildParticipants()) {
+    for (GradleBuildParticipant buildParticipant : context.getSettings().getExecutionWorkspace().getBuildParticipants()) {
       settings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
     }
-    prepareTaskState(id, settings, listener);
+    prepareTaskState(settings, context);
+  }
 
+  private static void executeTasks(
+    @NotNull ProjectConnection connection,
+    @NotNull GradleExecutionContext context
+  ) {
     if (Registry.is("gradle.report.recently.saved.paths")) {
       ApplicationManager.getApplication()
         .getService(GradleFileModificationTracker.class)
         .notifyConnectionAboutChangedPaths(connection);
     }
 
-    var operation = isApplicableTestLauncher(id, projectPath, settings, gradleVersion)
-                    ? connection.newTestLauncher()
-                    : connection.newBuild();
-    GradleExecutionHelper.prepareForExecution(operation, cancellationToken, id, settings, listener, buildEnvironment);
-    if (operation instanceof BuildLauncher) {
-      ((BuildLauncher)operation).run();
+    if (isApplicableTestLauncher(context)) {
+      var operation = connection.newTestLauncher();
+      GradleExecutionHelper.prepareForExecution(operation, context);
+      operation.run();
     }
     else {
-      ((TestLauncher)operation).run();
+      var operation = connection.newBuild();
+      GradleExecutionHelper.prepareForExecution(operation, context);
+      operation.run();
     }
   }
 
-  private static boolean isApplicableTestLauncher(
-    @NotNull ExternalSystemTaskId id,
-    @NotNull String projectPath,
-    @NotNull GradleExecutionSettings settings,
-    @Nullable GradleVersion gradleVersion
-  ) {
+  private static boolean isApplicableTestLauncher(@NotNull GradleExecutionContext context) {
     if (!Registry.is("gradle.testLauncherAPI.enabled")) {
       LOG.debug("TestLauncher isn't applicable: disabled by registry");
       return false;
     }
+    var settings = context.getSettings();
     if (ExternalSystemExecutionAware.hasTargetEnvironmentConfiguration(settings)) {
       LOG.debug("TestLauncher isn't applicable: unsupported execution with remote target");
       return false;
@@ -183,19 +177,13 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       LOG.debug("TestLauncher isn't applicable: RC doesn't expect task rerun");
       return false;
     }
-    if (gradleVersion == null) {
-      LOG.debug("TestLauncher isn't applicable: Gradle version cannot be determined");
-      return false;
-    }
+    var gradleVersion = context.getGradleVersion();
     if (GradleVersionUtil.isGradleOlderThan(gradleVersion, "8.3")) {
       LOG.debug("TestLauncher isn't applicable: unsupported Gradle version: " + gradleVersion);
       return false;
     }
-    var project = id.findProject();
-    if (project == null) {
-      LOG.debug("TestLauncher isn't applicable: Project is already closed");
-      return false;
-    }
+    var project = context.getProject();
+    var projectPath = context.getProjectPath();
     if (GradleVersionUtil.isGradleOlderThan(gradleVersion, "8.4") && hasProjectIncludedBuild(project, projectPath)) {
       LOG.debug("TestLauncher isn't applicable: Project has included build. " + gradleVersion);
       return false;
@@ -270,9 +258,10 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     return false;
   }
 
-  private static void prepareTaskState(@NotNull ExternalSystemTaskId id,
-                                       @NotNull GradleExecutionSettings settings,
-                                       @NotNull ExternalSystemTaskNotificationListener listener) {
+  private static void prepareTaskState(
+    @NotNull GradleExecutionSettings settings,
+    @NotNull GradleExecutionContext context
+  ) {
     if (ExternalSystemExecutionAware.hasTargetEnvironmentConfiguration(settings)) return; // Prepared by TargetBuildLauncher.
 
     RunConfigurationTaskState taskState = settings.getUserData(RunConfigurationTaskState.getKEY());
@@ -292,7 +281,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     catch (ExecutionException e) {
       throw new RuntimeException(e);
     }
-    listener.onEnvironmentPrepared(id);
+    context.getListener().onEnvironmentPrepared(context.getTaskId());
   }
 
   @Override
@@ -325,6 +314,14 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     settings.setTasks(taskNames);
     settings.setJvmParameters(jvmParametersSetup);
     configureTasks("", id, settings, null);
+  }
+
+  @ApiStatus.Internal
+  public static void configureTasks(
+    @NotNull GradleExecutionSettings settings,
+    @NotNull GradleExecutionContext context
+  ) {
+    configureTasks(context.getProjectPath(), context.getTaskId(), settings, context.getGradleVersion());
   }
 
   @ApiStatus.Internal
@@ -393,8 +390,11 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     }
   }
 
-  private static void setupBuiltInTestEvents(@NotNull GradleExecutionSettings settings, @Nullable GradleVersion gradleVersion) {
-    if (gradleVersion != null && GradleVersionUtil.isGradleAtLeast(gradleVersion, "7.6")) {
+  private static void setupBuiltInTestEvents(
+    @NotNull GradleExecutionSettings settings,
+    @NotNull GradleExecutionContext context
+  ) {
+    if (GradleVersionUtil.isGradleAtLeast(context.getGradleVersion(), "7.6")) {
       settings.setBuiltInTestEventsUsed(true);
     }
   }

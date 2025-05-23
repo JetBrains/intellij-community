@@ -17,6 +17,7 @@ import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.model.data.CompositeBuildData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
+import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -190,7 +191,7 @@ public final class GradleBuildSrcProjectsResolver {
       return;
     }
 
-    var buildSrcProjectDataNode = GradleProjectResolver.executeProjectResolverTask(buildSrcResolverCtx, connection ->
+    var buildSrcProjectDataNode = GradleExecutionHelper.execute(buildSrcResolverCtx, connection ->
       myProjectResolver.doResolveProjectInfo(connection, buildSrcResolverCtx, myResolverChain)
     );
 
