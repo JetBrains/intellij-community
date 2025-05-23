@@ -2869,4 +2869,17 @@ def foo(param: str | int) -> TypeGuard[str]:
                    e = Ellipsis
                    """);
   }
+
+  public void testNamedTupleCompatibleWithTuple() {
+    doTestByText("""
+                   from typing import NamedTuple
+                   
+                   class NT(NamedTuple):
+                       a: str
+                       b: int
+
+                   x: tuple[str, int] = NT("a", 1)
+                   y: tuple[str, int, str] = <warning descr="Expected type 'tuple[str, int, str]', got 'NT' instead">NT("a", 1)</warning>
+                   """);
+  }
 }

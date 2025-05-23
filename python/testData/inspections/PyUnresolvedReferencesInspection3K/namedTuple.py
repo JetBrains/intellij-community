@@ -20,3 +20,15 @@ class C(namedtuple('C', 'x y')):
 
 c = C()
 print(c.x, c.y, c.<warning descr="Unresolved attribute reference 'z' for class 'C'">z</warning>, c.f())
+
+from typing import NamedTuple
+
+class NT(NamedTuple):
+    x: int
+    y: int
+
+    def f(self):
+        return self
+
+nt = NT()
+print(nt.x, nt.y, nt.<warning descr="Unresolved attribute reference 'z' for class 'NT'">z</warning>, nt.f())
