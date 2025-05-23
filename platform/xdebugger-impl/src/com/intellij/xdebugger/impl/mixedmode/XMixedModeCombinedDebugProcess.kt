@@ -73,7 +73,7 @@ class XMixedModeCombinedDebugProcess(
       while (true) {
         when(val newState = stateMachine.stateChannel.receive()) {
           is BothStopped -> {
-            val ctx = XMixedModeSuspendContext(session, newState.low, newState.high, lowExtension, coroutineScope)
+            val ctx = XMixedModeSuspendContext(session, newState.low, newState.high, lowExtension, stateMachine.suspendContextCoroutine)
             withContext(Dispatchers.EDT) {
               positionReachedInProgress = true
               try {
