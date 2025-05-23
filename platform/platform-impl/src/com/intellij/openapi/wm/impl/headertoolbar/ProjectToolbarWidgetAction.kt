@@ -21,10 +21,10 @@ import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.openapi.wm.impl.LEFT_ICONS_KEY
 import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.openapi.wm.impl.ToolbarComboButtonModel
-import com.intellij.ui.ClientProperty
-import com.intellij.ui.GroupHeaderSeparator
-import com.intellij.ui.IdeUICustomization
+import com.intellij.ui.*
+import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
 import com.intellij.ui.dsl.builder.panel
@@ -32,6 +32,7 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.popup.ActionPopupOptions
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
+import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.ui.util.maximumWidth
@@ -39,6 +40,7 @@ import com.intellij.util.IconUtil
 import com.intellij.util.ui.*
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import kotlinx.coroutines.awaitCancellation
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.event.ComponentAdapter
@@ -143,6 +145,10 @@ class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
     }
 
     val result = JBPopupFactory.getInstance().createListPopup(it, step, renderer)
+
+    if (result is ListPopupImpl) {
+      ClientProperty.put(result.list, AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true)
+    }
 
     return result
   }
@@ -306,6 +312,17 @@ private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionIt
                 .applyToComponent {
                   foreground = if (isSelected) NamedColorUtil.getListSelectionForeground(true) else UIUtil.getListForeground()
                 }.component
+
+              if (action.isProjectOpening) {
+                panel {
+                  row {
+                    icon(AnimatedIcon.Default.INSTANCE)
+                    label(UIBundle.message("project.widget.opening.project.progress.text"))
+                  }
+                }
+                  .align(AlignX.RIGHT)
+                  .align(AlignY.CENTER)
+              }
             }
             val providerPath = action.providerPathToDisplay
             if (providerPath != null) {
@@ -400,4 +417,7 @@ interface ProjectToolbarWidgetPresentable {
   val projectIcon: Icon
   val providerIcon: Icon?
   val activationTimestamp: Long?
+
+  @get:ApiStatus.Internal
+  val isProjectOpening: Boolean get() = false
 }

@@ -319,6 +319,8 @@ private class RemoteRecentProjectAction(val projectId: String, val project: Rece
             ?: RecentProjectsManagerBase.getInstanceEx().getNonLocalProjectIcon(projectId, true, unscaledProjectIconSize(), project.displayName)
   override val providerIcon: Icon? get() = project.providerIcon
   override val activationTimestamp: Long? get() = project.activationTimestamp
+
+  override val isProjectOpening: Boolean get() = project.projectOpenState == OpenRecentProjectStatus.Progress
 }
 
 private fun getProviderProjectId(provider: RecentProjectProvider, project: RecentProject): String {
