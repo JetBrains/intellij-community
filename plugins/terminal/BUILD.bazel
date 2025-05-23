@@ -60,7 +60,6 @@ jvm_library(
     "//platform/project/shared:project",
     "//platform/eel",
     "//platform/eel-provider",
-    "//platform/util/jdom",
   ],
   runtime_deps = [":terminal_resources"]
 )
@@ -121,7 +120,6 @@ jvm_library(
     "//platform/project/shared:project",
     "//platform/eel",
     "//platform/eel-provider",
-    "//platform/util/jdom",
   ],
   runtime_deps = [
     ":terminal_resources",
