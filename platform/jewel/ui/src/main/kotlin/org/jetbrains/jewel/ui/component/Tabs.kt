@@ -2,6 +2,7 @@ package org.jetbrains.jewel.ui.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.HoverInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
@@ -24,7 +25,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
@@ -33,7 +33,12 @@ import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.isTertiary
 import androidx.compose.ui.input.pointer.onPointerEvent
+import androidx.compose.ui.semantics.CollectionItemInfo
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.collectionItemInfo
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Active
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Enabled
@@ -115,6 +120,7 @@ internal fun TabImpl(
     tabStyle: TabStyle,
     modifier: Modifier = Modifier,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    tabIndex: Int,
 ) {
     var tabState by remember { mutableStateOf(TabState.of(selected = tabData.selected, active = isActive)) }
     remember(tabData.selected, isActive) { tabState = tabState.copy(selected = tabData.selected, active = isActive) }
@@ -142,7 +148,13 @@ internal fun TabImpl(
             modifier
                 .height(tabStyle.metrics.tabHeight)
                 .background(backgroundColor)
-                .focusProperties { canFocus = false }
+                .semantics(mergeDescendants = true) {
+                    role = Role.Tab
+                    selected = tabData.selected
+                    collectionItemInfo =
+                        CollectionItemInfo(rowIndex = 0, rowSpan = 1, columnIndex = tabIndex, columnSpan = 1)
+                }
+                .focusable(enabled = tabData.selected, interactionSource = interactionSource)
                 .selectable(
                     onClick = tabData.onClick,
                     selected = tabData.selected,
@@ -169,6 +181,7 @@ internal fun TabImpl(
             horizontalArrangement = Arrangement.spacedBy(tabStyle.metrics.closeContentGap),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            // Tab content and close icon
             tabData.content(TabContentScopeContainer(), tabState)
 
             val showCloseIcon =
@@ -187,9 +200,7 @@ internal fun TabImpl(
                             is PressInteraction.Release -> {
                                 closeButtonState = closeButtonState.copy(pressed = false)
                             }
-
                             is HoverInteraction.Enter -> closeButtonState = closeButtonState.copy(hovered = true)
-
                             is HoverInteraction.Exit -> closeButtonState = closeButtonState.copy(hovered = false)
                         }
                     }
