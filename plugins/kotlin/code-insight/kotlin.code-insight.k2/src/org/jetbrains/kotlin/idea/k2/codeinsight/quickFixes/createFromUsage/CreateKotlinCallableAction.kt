@@ -152,15 +152,15 @@ internal class CreateKotlinCallableAction(
 
         return buildString {
             for (annotation in request.annotations) {
+                if (isNotEmpty()) append(" ")
                 append('@')
                 append(annotation.qualifiedName)
-                append(' ')
             }
 
             for (modifier in request.modifiers) {
+                if (isNotEmpty()) append(" ")
                 val string = CreateFromUsageUtil.visibilityModifierToString(modifier) ?: continue
                 append(string)
-                append(' ')
             }
 
             if (abstract) {
@@ -178,7 +178,7 @@ internal class CreateKotlinCallableAction(
             append(renderTypeParameterDeclarations(request, container, receiverTypeText))
             if ((request as? CreateMethodFromKotlinUsageRequest)?.isExtension == true) {
                 if (receiver.isNotEmpty()) {
-                    append("$receiver ")
+                    append(receiver)
                 }
             }
             append(request.methodName)
