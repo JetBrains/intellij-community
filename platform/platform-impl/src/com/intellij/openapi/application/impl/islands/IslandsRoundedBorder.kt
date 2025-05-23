@@ -22,7 +22,7 @@ internal class IslandsRoundedBorder(fillColor: (JComponent) -> Paint?) :
     JBUI.getInt("Island.arc", 10),
     JBUI.scale(2),
     JBInsets.create("Island.border1.insets", JBInsets(4, 4, 4, 4)),
-    JBInsets.create("Island.border2.insets", JBInsets(2, 2, 2, 2))) {
+    JBInsets.create("Island.border2.insets", JBInsets(3, 3, 3, 3))) {
 
   companion object {
     fun createToolWindowBorder(component: JComponent, child: JComponent) {
