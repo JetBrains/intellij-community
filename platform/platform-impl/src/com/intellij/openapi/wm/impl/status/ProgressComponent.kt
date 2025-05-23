@@ -183,6 +183,7 @@ open class ProgressComponent(val isCompact: Boolean, val info: TaskInfo, progres
       progress.setValue((fraction * 99 + 1).toInt())
     }
 
+    val oldTextValue = this.textValue
     val text = indicatorModel.getText()
     val text2 = indicatorModel.getDetails()
     this.textValue = text ?: ""
@@ -191,6 +192,8 @@ open class ProgressComponent(val isCompact: Boolean, val info: TaskInfo, progres
     if (isCompact && StringUtil.isEmpty(this.textValue)) {
       this.textValue = indicatorModel.title
     }
+
+    IntegrationTestsProgressesTracker.progressTitleChanged(indicatorModel, oldTextValue?: "", this.textValue?: "")
 
     if (this.isStopping) {
       if (isCompact) {
