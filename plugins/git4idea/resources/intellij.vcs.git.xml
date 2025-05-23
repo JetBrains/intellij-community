@@ -526,6 +526,9 @@
     <reference ref="Git.Unshallow"/>
 
     <action id="gpg.agent.configuration" class="git4idea.commit.signing.GpgAgentConfigurationAction"/>
+
+    <action id="Git.Branches.Popup.Fetch"
+            class="git4idea.ui.branch.GitBranchPopupFetchAction"/>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
