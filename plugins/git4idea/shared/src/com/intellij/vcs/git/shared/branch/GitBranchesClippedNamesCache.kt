@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.ui.branch
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.vcs.git.shared.branch
 
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
@@ -7,7 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import git4idea.ui.branch.GitBranchPopupActions.truncateBranchName
+import com.intellij.vcs.git.shared.ui.GitBranchPresentation
 import java.util.concurrent.TimeUnit
 
 @Service(Service.Level.PROJECT)
@@ -42,7 +42,7 @@ class GitBranchesClippedNamesCache(private val project: Project) : Disposable {
   }
 
   private fun truncateBranchName(branchName: String, maxBranchNameLength: Int): ClippedBranch {
-    return ClippedBranch(truncateBranchName(project, branchName, maxBranchNameLength, 0, 0), maxBranchNameLength)
+    return ClippedBranch(GitBranchPresentation.truncateBranchName(project, branchName, maxBranchNameLength, 0, 0), maxBranchNameLength)
   }
 
   fun clear() = cache.invalidateAll()

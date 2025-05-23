@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.messages.Topic
 import com.intellij.vcs.git.shared.branch.calcTooltip
+import com.intellij.vcs.git.shared.ui.GitBranchPresentation
 import git4idea.GitTag
 import git4idea.GitUtil
 import git4idea.GitVcs
@@ -84,10 +85,7 @@ private fun getDefaultPresentation(repository: GitRepository): GitCurrentBranchP
 
 private fun calcText(repository: GitRepository): @NlsSafe String =
   StringUtil.escapeMnemonics(GitBranchUtil.getDisplayableBranchText(repository) { branchName ->
-    GitBranchPopupActions.truncateBranchName(repository.project, branchName,
-                                             GitToolbarWidgetAction.BRANCH_NAME_MAX_LENGTH,
-                                             GitBranchPopupActions.BRANCH_NAME_SUFFIX_LENGTH,
-                                             GitBranchPopupActions.BRANCH_NAME_LENGTH_DELTA)
+    GitBranchPresentation.truncateBranchName(repository.project, branchName, GitToolbarWidgetAction.BRANCH_NAME_MAX_LENGTH)
   })
 
 private fun GitRepository.calcIcon(): Icon? {

@@ -17,11 +17,11 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UpdateScaleHelper
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.vcs.git.shared.branch.GitBranchesClippedNamesCache
 import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
 import com.intellij.vcs.git.shared.ui.GitBranchesTreeIconProvider
 import git4idea.GitBranch
 import git4idea.GitReference
-import git4idea.ui.branch.GitBranchesClippedNamesCache
 import git4idea.ui.branch.popup.GitBranchesTreePopupBase
 import git4idea.ui.branch.popup.GitBranchesTreePopupStepBase
 import git4idea.ui.branch.tree.GitBranchesTreeModel.RefUnderRepository

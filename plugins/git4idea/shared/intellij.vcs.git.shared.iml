@@ -46,5 +46,6 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl.shared" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
+    <orderEntry type="library" name="caffeine" level="project" />
   </component>
 </module>
