@@ -8,72 +8,72 @@ import org.jetbrains.annotations.Contract
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmStatic
 
-enum class Side(open val index: Int) {
+enum class Side(val index: Int) {
   LEFT(0),
   RIGHT(1);
 
-  open val isLeft: Boolean
+  val isLeft: Boolean
     get() = index == 0
 
   @Contract(pure = true)
-  open fun other(): Side {
+  fun other(): Side {
     return if (isLeft) RIGHT else LEFT
   }
 
   @Contract(pure = true)
-  open fun other(other: Boolean): Side {
+  fun other(other: Boolean): Side {
     return if (other) other() else this
   }
 
   //
   // Helpers
   //
-  open fun select(left: Int, right: Int): Int {
+  fun select(left: Int, right: Int): Int {
     return if (isLeft) left else right
   }
 
   @Contract(value = "!null, !null -> !null; null, null -> null", pure = true)
-  open fun <T> select(left: T, right: T): T {
+  fun <T> select(left: T, right: T): T {
     return if (isLeft) left else right
   }
 
   @Contract(pure = true)
-  open fun <T : Any> selectNotNull(left: T, right: T): T {
+  fun <T : Any> selectNotNull(left: T, right: T): T {
     return if (isLeft) left else right
   }
 
   @Contract(pure = true)
-  open fun select(array: BooleanArray): Boolean {
+  fun select(array: BooleanArray): Boolean {
     check(array.size == 2)
     return array[index]
   }
 
   @Contract(pure = true)
-  open fun select(array: IntArray): Int {
+  fun select(array: IntArray): Int {
     check(array.size == 2)
     return array[index]
   }
 
   @Contract(pure = true)
-  open fun <T> select(array: Array<T>): T {
+  fun <T> select(array: Array<T>): T {
     check(array.size == 2)
     return array[index]
   }
 
   @Contract(pure = true)
-  open fun <T : Any> selectNotNull(array: Array<T>): T {
+  fun <T : Any> selectNotNull(array: Array<T>): T {
     check(array.size == 2)
     return array[index]
   }
 
   @Contract(pure = true)
-  open fun <T> select(list: List<T>): T {
+  fun <T> select(list: List<T>): T {
     check(list.size == 2)
     return list[index]
   }
 
   @Contract(pure = true)
-  open fun <T : Any> selectNotNull(list: List<T>): T {
+  fun <T : Any> selectNotNull(list: List<T>): T {
     check(list.size == 2)
     return list[index]
   }
@@ -81,19 +81,19 @@ enum class Side(open val index: Int) {
   //
   // Fragments
   //
-  open fun getStartOffset(fragment: DiffFragment): Int {
+  fun getStartOffset(fragment: DiffFragment): Int {
     return if (isLeft) fragment.startOffset1 else fragment.startOffset2
   }
 
-  open fun getEndOffset(fragment: DiffFragment): Int {
+  fun getEndOffset(fragment: DiffFragment): Int {
     return if (isLeft) fragment.endOffset1 else fragment.endOffset2
   }
 
-  open fun getStartLine(fragment: LineFragment): Int {
+  fun getStartLine(fragment: LineFragment): Int {
     return if (isLeft) fragment.startLine1 else fragment.startLine2
   }
 
-  open fun getEndLine(fragment: LineFragment): Int {
+  fun getEndLine(fragment: LineFragment): Int {
     return if (isLeft) fragment.endLine1 else fragment.endLine2
   }
 
@@ -131,5 +131,4 @@ enum class Side(open val index: Int) {
   @ApiStatus.Internal
   @Deprecated("Use #isLeft instead", ReplaceWith("isLeft"))
   fun isLeft(): Boolean = isLeft
-
 }

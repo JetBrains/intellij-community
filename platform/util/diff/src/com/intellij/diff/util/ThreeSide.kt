@@ -4,7 +4,7 @@ package com.intellij.diff.util
 import org.jetbrains.annotations.Contract
 import kotlin.jvm.JvmStatic
 
-enum class ThreeSide(open val index: Int) {
+enum class ThreeSide(val index: Int) {
   LEFT(0),
   BASE(1),
   RIGHT(2);
@@ -13,7 +13,7 @@ enum class ThreeSide(open val index: Int) {
   // Helpers
   //
   @Contract(value = "!null, !null, !null -> !null; null, null, null -> null", pure = true)
-  open fun <T> select(left: T, base: T, right: T): T {
+  fun <T> select(left: T, base: T, right: T): T {
     if (this.index == 0) return left
     if (this.index == 1) return base
     if (this.index == 2) return right
@@ -21,7 +21,7 @@ enum class ThreeSide(open val index: Int) {
   }
 
   @Contract(pure = true)
-  open fun <T : Any> selectNotNull(left: T, base: T, right: T): T {
+  fun <T : Any> selectNotNull(left: T, base: T, right: T): T {
     if (this.index == 0) return left
     if (this.index == 1) return base
     if (this.index == 2) return right
@@ -29,7 +29,7 @@ enum class ThreeSide(open val index: Int) {
   }
 
   @Contract(pure = true)
-  open fun select(left: Int, base: Int, right: Int): Int {
+  fun select(left: Int, base: Int, right: Int): Int {
     if (this.index == 0) return left
     if (this.index == 1) return base
     if (this.index == 2) return right
@@ -37,31 +37,31 @@ enum class ThreeSide(open val index: Int) {
   }
 
   @Contract(pure = true)
-  open fun select(array: IntArray): Int {
+  fun select(array: IntArray): Int {
     check(array.size == 3)
     return array[this.index]
   }
 
   @Contract(pure = true)
-  open fun <T> select(array: Array<T>): T {
+  fun <T> select(array: Array<T>): T {
     check(array.size == 3)
     return array[this.index]
   }
 
   @Contract(pure = true)
-  open fun <T : Any> selectNotNull(array: Array<T>): T {
+  fun <T : Any> selectNotNull(array: Array<T>): T {
     check(array.size == 3)
     return array[this.index]
   }
 
   @Contract(pure = true)
-  open fun <T> select(list: List<T>): T {
+  fun <T> select(list: List<T>): T {
     check(list.size == 3)
     return list[this.index]
   }
 
   @Contract(pure = true)
-  open fun <T : Any> selectNotNull(list: List<T>): T {
+  fun <T : Any> selectNotNull(list: List<T>): T {
     check(list.size == 3)
     return list[this.index]
   }
