@@ -120,6 +120,8 @@ data class SimpleEditorLayout(
   }
 
   override fun unfold(affectedFolds: List<Interval<*, Fold>>) {}
+
+  override fun toggleFolds(add: List<Interval<*, Fold>>, remove: List<Interval<*, Fold>>, isConfirm: Boolean) {}
 }
 
 class SimpleEditorLayoutComponent(var state: SimpleEditorLayout) : DocumentComponent {
