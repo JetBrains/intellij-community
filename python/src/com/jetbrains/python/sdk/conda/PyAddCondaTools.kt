@@ -149,14 +149,14 @@ private fun NewCondaEnvRequest.toIdentity(): PyCondaEnvIdentity =
 /**
  * Detects conda binary in well-known locations on the local machine.
  */
-suspend fun suggestCondaPath(): FullPathOnTarget? {
-  return suggestCondaPath(TargetEnvironmentRequestCommandExecutor(LocalTargetEnvironmentRequest()))
+suspend fun suggestCondaPath(filter: (FullPathOnTarget) -> Boolean = { true }): FullPathOnTarget? {
+  return suggestCondaPath(TargetEnvironmentRequestCommandExecutor(LocalTargetEnvironmentRequest()), filter)
 }
 
 /**
  * Detects conda binary in well-known locations on target
  */
-internal suspend fun suggestCondaPath(targetCommandExecutor: TargetCommandExecutor): FullPathOnTarget? {
+internal suspend fun suggestCondaPath(targetCommandExecutor: TargetCommandExecutor, filter: (FullPathOnTarget) -> Boolean = { true }): FullPathOnTarget? {
   val targetPlatform = withContext(Dispatchers.IO) {
     targetCommandExecutor.targetPlatform.await()
   }
@@ -185,7 +185,7 @@ internal suspend fun suggestCondaPath(targetCommandExecutor: TargetCommandExecut
       possiblePaths = arrayOf(it.pathString) + possiblePaths
     }
   }
-  return possiblePaths.firstNotNullOfOrNull { targetCommandExecutor.getExpandedPathIfExecutable(it) }
+  return possiblePaths.firstNotNullOfOrNull { targetCommandExecutor.getExpandedPathIfExecutable(it)?.takeIf { filter(it) } }
 }
 
 private val TargetCommandExecutor.isLocalMachineExecutor: Boolean
