@@ -11,7 +11,6 @@ import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellStartupOptions
-import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalPortForwardingId
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
@@ -29,7 +28,7 @@ internal class TerminalSessionsManager {
    * And if the process is terminated on its own, for example, if user executes `exit` or press Ctrl+D,
    * then the [scope] will be canceled as well.
    */
-  suspend fun startSession(
+  fun startSession(
     options: ShellStartupOptions,
     project: Project,
     scope: CoroutineScope,
@@ -52,13 +51,10 @@ internal class TerminalSessionsManager {
 
     val sessionId = storeSession(stateAwareSession, scope)
 
-    val portForwardingScope = scope.childScope("PortForwarding")
-    val portForwardingId = TerminalPortForwardingManager.getInstance(project).setupPortForwarding(observableTtyConnector, portForwardingScope)
-
     return TerminalSessionStartResult(
       configuredOptions,
       sessionId,
-      portForwardingId
+      observableTtyConnector
     )
   }
 
@@ -88,5 +84,5 @@ internal class TerminalSessionsManager {
 internal data class TerminalSessionStartResult(
   val configuredOptions: ShellStartupOptions,
   val sessionId: TerminalSessionId,
-  val portForwardingId: TerminalPortForwardingId?,
+  val ttyConnector: ObservableTtyConnector,
 )
