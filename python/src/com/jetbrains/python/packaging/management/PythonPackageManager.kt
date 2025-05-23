@@ -179,7 +179,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
       return
     }
     val loadedPackages = loadOutdatedPackagesCommand().getOrElse {
-      thisLogger().error("Failed to load outdated packages", it)
+      thisLogger().warn("Failed to load outdated packages", it)
       emptyList()
     }
 

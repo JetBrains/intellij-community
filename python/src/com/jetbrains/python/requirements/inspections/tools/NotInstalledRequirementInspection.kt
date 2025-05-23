@@ -5,8 +5,10 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.PsiElementVisitor
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.requirements.RequirementsFile
@@ -14,6 +16,7 @@ import com.jetbrains.python.requirements.RequirementsInspectionVisitor
 import com.jetbrains.python.requirements.getPythonSdk
 import com.jetbrains.python.requirements.inspections.quickfixes.InstallAllRequirementsQuickFix
 import com.jetbrains.python.requirements.inspections.quickfixes.InstallRequirementQuickFix
+import com.jetbrains.python.requirements.inspections.quickfixes.PyGenerateRequirementsFileQuickFix
 
 class NotInstalledRequirementInspection : LocalInspectionTool() {
   override fun buildVisitor(
@@ -25,6 +28,14 @@ class NotInstalledRequirementInspection : LocalInspectionTool() {
       val requirements = requirementsFile.requirements().toList()
       val psiFile = session.file
       val sdk = getPythonSdk(psiFile) ?: return
+
+      if (psiFile.text.isNullOrBlank()) {
+        val fixes = ModuleUtilCore.findModuleForPsiElement(psiFile)?.let { module ->
+          arrayOf(PyGenerateRequirementsFileQuickFix(module))
+        } ?: emptyArray()
+        holder.registerProblem(psiFile, PyPsiBundle.message("INSP.package.requirements.requirements.file.empty"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, *fixes)
+        return
+      }
 
       val packageManager = PythonPackageManager.forSdk(psiFile.project, sdk)
 
