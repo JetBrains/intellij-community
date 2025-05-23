@@ -524,11 +524,12 @@ public class PyDebugValue extends XNamedValue {
   }
 
   private static boolean checkAndShowViewAsImageOnScreen(PyDebugValue debugValue) {
-    boolean showViewAsImage = Registry.get("actions.show.as.image.visibility").asBoolean();
-    if (!showViewAsImage) {
+    try {
+      return Registry.get("actions.show.as.image.visibility").asBoolean()
+             && checkAndEnableViewAsImageVisibility(debugValue);
+    } catch (MissingResourceException e) {
       return false;
     }
-    return checkAndEnableViewAsImageVisibility(debugValue);
   }
 
   private static boolean checkAndEnableViewAsImageVisibility(PyDebugValue debugValue) {
