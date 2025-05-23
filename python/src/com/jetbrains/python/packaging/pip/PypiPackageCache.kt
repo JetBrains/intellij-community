@@ -14,6 +14,7 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.cache.PythonPackageCache
 import com.jetbrains.python.packaging.common.PythonRankingAwarePackageNameComparator
+import com.jetbrains.python.packaging.normalizePackageName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -98,7 +99,7 @@ class PypiPackageCache : PythonPackageCache<String> {
       }
 
       LOG.info("Package list loaded from file with ${packageList.size} entries")
-      cache = packageList
+      cache = packageList.map { normalizePackageName(it) }.toSet()
       true
     }
   }
@@ -141,7 +142,9 @@ class PypiPackageCache : PythonPackageCache<String> {
   class PypiPackageLoader {
     @RequiresBackgroundThread
     fun loadPackages(): Result<Collection<String>, IOException> = try {
-      Result.success(PyPIPackageUtil.parsePyPIListFromWeb(PyPIPackageUtil.PYPI_LIST_URL))
+      val pypiPackages = PyPIPackageUtil.parsePyPIListFromWeb(PyPIPackageUtil.PYPI_LIST_URL)
+        .map { normalizePackageName(it) }.toSet()
+      Result.success(pypiPackages)
     }
     catch (e: IOException) {
       Result.failure(e)

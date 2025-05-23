@@ -19,7 +19,6 @@ import com.jetbrains.python.packaging.cache.PythonSimpleRepositoryCache
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
-import com.jetbrains.python.packaging.normalizePackageName
 import com.jetbrains.python.packaging.pyRequirementVersionSpec
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
@@ -126,9 +125,7 @@ open class PyPackageRepository() {
   }
 
 
-  protected open fun hasPackage(packageName: String, versionSpecs: PyRequirementVersionSpec?): Boolean = getPackages().any {
-    normalizePackageName(it) == packageName
-  }
+  protected open fun hasPackage(packageName: String, versionSpecs: PyRequirementVersionSpec?): Boolean = packageName in getPackages()
 
   open fun getPackages(): Set<String> = service<PythonSimpleRepositoryCache>()[this] ?: emptySet()
 
