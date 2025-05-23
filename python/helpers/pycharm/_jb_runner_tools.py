@@ -74,6 +74,32 @@ def set_parallel_mode():
 def is_parallel_mode():
     return _TREE_MANAGER_HOLDER.parallel
 
+_socket = None
+
+def _try_open_socket():
+    if os.environ.get('JB_TEAMCITY_SOCKET_PATH'):
+        family = 'AF_UNIX'
+        address = os.environ.get('JB_TEAMCITY_SOCKET_PATH')
+    elif os.environ.get('JB_TEAMCITY_SOCKET_PORT'):
+        family = 'AF_INET'
+        address = (os.environ.get('JB_TEAMCITY_SOCKET_HOST', 'localhost'), int(os.environ.get('JB_TEAMCITY_SOCKET_PORT')))
+    else:
+        return None
+
+    import socket
+    new_socket = socket.socket(getattr(socket, family), socket.SOCK_STREAM)
+    new_socket.connect(address)
+    import atexit
+    atexit.register(new_socket.close)  # good style and avoids warning
+    return new_socket
+
+
+class _SocketTeamCityMessagesPrinter(output.TeamCityMessagesPrinter):
+    def __init__(self, context_manager=None):
+        super(_SocketTeamCityMessagesPrinter, self).__init__(output=_socket, context_manager=context_manager)
+
+    def _output(self, message):
+        self.output.sendall(message)
 
 # Monkeypatching TC
 _old_service_messages = messages.TeamcityServiceMessages
@@ -90,6 +116,13 @@ class NewTeamcityServiceMessages(_old_service_messages):
     def __init__(self, *args, **kwargs):
         super(NewTeamcityServiceMessages, self).__init__(*args, **kwargs)
         NewTeamcityServiceMessages.INSTANCE = self
+
+        global _socket  # reuse socket to ensure order of messages
+        if _socket is None:
+            _socket = _try_open_socket()
+        if _socket is not None:
+            self.output_handler = _SocketTeamCityMessagesPrinter(self.output_handler.context_manager)
+
         self.stderr_output_manager = output.TeamCityMessagesPrinter(
             output=sys.stderr,
             context_manager=self.output_handler.context_manager
