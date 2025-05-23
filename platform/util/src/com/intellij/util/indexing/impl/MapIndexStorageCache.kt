@@ -181,21 +181,22 @@ object SlruIndexStorageCacheProvider : MapIndexStorageCacheProvider {
     cacheSize: Int,
     val converter: InlineKeyDescriptor<Key>,
   ) : MapIndexStorageCache<Key, Value> {
-    private val cache = object : SLRUIntObjectCache<ChangeTrackingValueContainer<Value>>(cacheSize, cacheSize / 4) {
-      override fun createValue(key: Int): ChangeTrackingValueContainer<Value> {
+    private val cache = SLRUIntObjectCache<ChangeTrackingValueContainer<Value>>(
+      /*protectedQueueSize: */ cacheSize,
+      /*probationQueueSize: */ cacheSize / 4,
+      { key: Int ->
         totalUncachedReads.incrementAndGet()
-        return valueReader.apply(converter.fromInt(key))
-      }
-
-      override fun onEvict(key: Int, valueContainer: ChangeTrackingValueContainer<Value>) {
+        valueReader.apply(converter.fromInt(key))
+      },
+      { key: Int, valueContainer: ChangeTrackingValueContainer<Value> ->
         totalEvicted.incrementAndGet()
         evictedValuesPersister.accept(converter.fromInt(key), valueContainer)
       }
-    }
+    )
 
     override fun read(key: Key): ChangeTrackingValueContainer<Value> {
       totalReads.incrementAndGet()
-      return cache.get(converter.toInt(key))
+      return cache.getOrCreate(converter.toInt(key))
     }
 
     override fun readIfCached(key: Key): ChangeTrackingValueContainer<Value>? {
@@ -208,7 +209,7 @@ object SlruIndexStorageCacheProvider : MapIndexStorageCacheProvider {
     }
 
     override fun invalidateAll() {
-      cache.clear()
+      cache.evictAll()
     }
   }
 }

@@ -135,7 +135,11 @@ public class MapsImplBenchmark {
         };
 
         case "SLRUIntObjectMap" -> new AbstractMap<>() {
-          private final SLRUIntObjectMap<Object> map = new SLRUIntObjectMap<>(dataContext.KEYS_COUNT * 3 / 4, dataContext.KEYS_COUNT / 4);
+          private final SLRUIntObjectMap<Object> map = new SLRUIntObjectMap<>(
+            dataContext.KEYS_COUNT * 3 / 4,
+            dataContext.KEYS_COUNT / 4,
+            (key, value) -> { /* nothing */ }
+          );
 
           @Override
           public @NotNull Set<Entry<Object, Object>> entrySet() {

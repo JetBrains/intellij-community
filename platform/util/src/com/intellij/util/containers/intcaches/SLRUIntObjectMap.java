@@ -12,11 +12,13 @@ import java.util.function.Consumer;
 
 /** Specialization of {@link com.intellij.util.containers.SLRUMap} for int keys */
 @ApiStatus.Internal
-public class SLRUIntObjectMap<V> {
+public final class SLRUIntObjectMap<V> {
   private static final int QUEUES_SIZE_SCALING = Integer.getInteger("idea.slru.factor", 1);
 
   private final LinkedCustomIntObjectHashMap<V> protectedQueue;
   private final LinkedCustomIntObjectHashMap<V> probationalQueue;
+
+  private final SLRUIntObjectMap.@NotNull EvictionCallback<? super V> evictionCallback;
 
   private final int protectedQueueSize;
   private final int probationalQueueSize;
@@ -25,9 +27,13 @@ public class SLRUIntObjectMap<V> {
   private int protectedHits;
   private int misses;
 
-  public SLRUIntObjectMap(int protectedQueueSize, int probationalQueueSize) {
+  public SLRUIntObjectMap(int protectedQueueSize,
+                          int probationalQueueSize,
+                          @NotNull EvictionCallback<? super V> evictionCallback) {
     this.protectedQueueSize = protectedQueueSize * QUEUES_SIZE_SCALING;
     this.probationalQueueSize = probationalQueueSize * QUEUES_SIZE_SCALING;
+
+    this.evictionCallback = evictionCallback;
 
     probationalQueue = new LinkedCustomIntObjectHashMap<>((size, key, value) -> {
       if (size > this.probationalQueueSize) {
@@ -80,7 +86,9 @@ public class SLRUIntObjectMap<V> {
     }
   }
 
-  protected void onEvict(int key, @NotNull V value) { }
+  private void onEvict(int key, @NotNull V value) {
+    evictionCallback.evicted(key, value);
+  }
 
   public boolean remove(int key) {
     V value = protectedQueue.remove(key);
@@ -142,5 +150,9 @@ public class SLRUIntObjectMap<V> {
 
   public @NotNull String dumpStats() {
     return "probational hits = " + probationalHits + ", protected hits = " + protectedHits + ", misses = " + misses;
+  }
+
+  public interface EvictionCallback<V> {
+    void evicted(int key, V value);
   }
 }

@@ -2,49 +2,55 @@
 
 package com.intellij.util.containers.intcaches;
 
+import com.intellij.util.containers.intcaches.SLRUIntObjectMap.EvictionCallback;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.function.IntFunction;
 
-/** Specialization of {@link com.intellij.util.containers.SLRUCache} for int keys */
+/** Specialization of {@link com.intellij.util.containers.SLRUCache} for int keys. */
 @ApiStatus.Internal
-public abstract class SLRUIntObjectCache<V> extends SLRUIntObjectMap<V> {
+public class SLRUIntObjectCache<V> {
 
-  //TODO RC: use delegation instead of inheritance
+  private final SLRUIntObjectMap<V> map;
 
-  protected SLRUIntObjectCache(int protectedQueueSize, int probationalQueueSize) {
-    super(protectedQueueSize, probationalQueueSize);
+  private final @NotNull IntFunction<? extends @NotNull V> valueProducer;
+
+  public SLRUIntObjectCache(int protectedQueueSize,
+                            int probationalQueueSize,
+                            @NotNull IntFunction<? extends @NotNull V> valueProducer,
+                            @NotNull EvictionCallback<? super V> evictionCallback) {
+    this.map = new SLRUIntObjectMap<>(
+      protectedQueueSize,
+      probationalQueueSize,
+      evictionCallback
+    );
+    this.valueProducer = valueProducer;
   }
 
-  public abstract @NotNull V createValue(int key);
+  public @Nullable V getIfCached(int key) {
+    return map.get(key);
+  }
 
-  @Override
-  public @NotNull V get(int key) {
+  public @NotNull V getOrCreate(int key) {
     V value = getIfCached(key);
     if (value != null) {
       return value;
     }
 
-    value = createValue(key);
-    put(key, value);
+    value = valueProducer.apply(key);
+    map.put(key, value);
 
     return value;
   }
 
-  public @Nullable V getIfCached(int key) {
-    return super.get(key);
+  public Collection<V> values() {
+    return map.values();
   }
 
-  public static @NotNull <V> SLRUIntObjectCache<V> slruCache(int protectedQueueSize,
-                                                             int probationalQueueSize,
-                                                             @NotNull IntFunction<? extends @NotNull V> valueProducer) {
-    return new SLRUIntObjectCache<V>(protectedQueueSize, probationalQueueSize) {
-      @Override
-      public @NotNull V createValue(int key) {
-        return valueProducer.apply(key);
-      }
-    };
+  public void evictAll() {
+    map.clear();
   }
 }
