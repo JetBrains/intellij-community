@@ -88,6 +88,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/filterIsInstanceAlwaysEmpty")
             model("${idea}/inspectionsLocal/selfReferenceConstructorParameter")
             model("${idea}/inspectionsLocal/canBeVal")
+            model("${idea}/inspectionsLocal/mapGetWithNotNullAssertionOperator")
             model("${idea}/inspectionsLocal/replaceSubstring")
             model("${idea}/inspectionsLocal/replaceWithIgnoreCaseEquals")
             model("${idea}/inspectionsLocal/replaceToWithInfixForm")
