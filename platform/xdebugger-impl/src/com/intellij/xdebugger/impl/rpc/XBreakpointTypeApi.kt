@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.rpc
 
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.openapi.editor.impl.EditorId
+import com.intellij.platform.debugger.impl.rpc.TimeoutSafeResult
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
@@ -26,7 +27,7 @@ interface XBreakpointTypeApi : RemoteApi<Unit> {
 
   suspend fun getBreakpointsInfoForEditor(projectId: ProjectId, editorId: EditorId, start: Int, endInclusive: Int): List<XBreakpointsLineInfo>?
 
-  suspend fun addBreakpointThroughLux(projectId: ProjectId, typeId: XBreakpointTypeId): Deferred<XBreakpointDto?>
+  suspend fun addBreakpointThroughLux(projectId: ProjectId, typeId: XBreakpointTypeId): TimeoutSafeResult<XBreakpointDto?>
 
   suspend fun toggleLineBreakpoint(projectId: ProjectId, request: XLineBreakpointInstallationRequest): XToggleLineBreakpointResponse?
 

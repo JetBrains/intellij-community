@@ -12,9 +12,9 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface XDebuggerNavigationApi : RemoteApi<Unit> {
-  suspend fun navigateToXValue(xValueId: XValueId): Deferred<Boolean>
+  suspend fun navigateToXValue(xValueId: XValueId): TimeoutSafeResult<Boolean>
 
-  suspend fun navigateToXValueType(xValueId: XValueId): Deferred<Boolean>
+  suspend fun navigateToXValueType(xValueId: XValueId): TimeoutSafeResult<Boolean>
 
   companion object {
     @JvmStatic

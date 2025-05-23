@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface XDebuggerValueModifierApi : RemoteApi<Unit> {
-  suspend fun setValue(xValueId: XValueId, xExpressionDto: XExpressionDto): Deferred<SetValueResult>
+  suspend fun setValue(xValueId: XValueId, xExpressionDto: XExpressionDto): TimeoutSafeResult<SetValueResult>
 
   suspend fun initialValueEditorText(xValueId: XValueId): String?
 

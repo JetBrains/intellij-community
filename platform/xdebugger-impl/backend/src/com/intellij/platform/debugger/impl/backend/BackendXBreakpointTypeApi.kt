@@ -15,6 +15,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.platform.debugger.impl.rpc.TimeoutSafeResult
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.platform.project.findProjectOrNull
@@ -107,7 +108,7 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     }
   }
 
-  override suspend fun addBreakpointThroughLux(projectId: ProjectId, typeId: XBreakpointTypeId): Deferred<XBreakpointDto?> {
+  override suspend fun addBreakpointThroughLux(projectId: ProjectId, typeId: XBreakpointTypeId): TimeoutSafeResult<XBreakpointDto?> {
     val project = projectId.findProjectOrNull() ?: return CompletableDeferred<XBreakpointDto?>(value = null)
     val type = XBreakpointUtil.findType(typeId.id) ?: return CompletableDeferred<XBreakpointDto?>(value = null)
     return project.service<BackendXBreakpointTypeApiProjectCoroutineScope>().cs.async(Dispatchers.EDT) {

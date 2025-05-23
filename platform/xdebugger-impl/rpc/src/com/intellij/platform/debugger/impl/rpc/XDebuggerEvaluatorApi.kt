@@ -28,11 +28,11 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface XDebuggerEvaluatorApi : RemoteApi<Unit> {
-  suspend fun evaluate(frameId: XStackFrameId, expression: String, position: XSourcePositionDto?): XEvaluationResult
+  suspend fun evaluate(frameId: XStackFrameId, expression: String, position: XSourcePositionDto?): TimeoutSafeResult<XEvaluationResult>
 
-  suspend fun evaluateXExpression(frameId: XStackFrameId, expression: XExpressionDto, position: XSourcePositionDto?): XEvaluationResult
+  suspend fun evaluateXExpression(frameId: XStackFrameId, expression: XExpressionDto, position: XSourcePositionDto?): TimeoutSafeResult<XEvaluationResult>
 
-  suspend fun evaluateInDocument(frameId: XStackFrameId, documentId: DocumentId, offset: Int, type: ValueHintType): XEvaluationResult
+  suspend fun evaluateInDocument(frameId: XStackFrameId, documentId: DocumentId, offset: Int, type: ValueHintType): TimeoutSafeResult<XEvaluationResult>
 
   suspend fun expressionInfoAtOffset(frameId: XStackFrameId, documentId: DocumentId, offset: Int, sideEffectsAllowed: Boolean): ExpressionInfo?
 

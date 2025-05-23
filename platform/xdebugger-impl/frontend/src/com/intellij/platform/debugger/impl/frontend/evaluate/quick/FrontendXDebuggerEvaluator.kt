@@ -6,6 +6,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
+import com.intellij.platform.debugger.impl.rpc.TimeoutSafeResult
 import com.intellij.platform.debugger.impl.rpc.XDebuggerEvaluatorApi
 import com.intellij.platform.debugger.impl.rpc.XDebuggerEvaluatorDto
 import com.intellij.platform.debugger.impl.rpc.XEvaluationResult
@@ -60,10 +61,10 @@ internal open class FrontendXDebuggerEvaluator(
     }
   }
 
-  protected fun evaluateByRpc(callback: XEvaluationCallback, evaluate: suspend () -> XEvaluationResult) {
+  protected fun evaluateByRpc(callback: XEvaluationCallback, evaluate: suspend () -> TimeoutSafeResult<XEvaluationResult>) {
     evaluatorScope.launch(Dispatchers.EDT) {
       try {
-        val evaluation = evaluate()
+        val evaluation = evaluate().await()
         when (evaluation) {
           is XEvaluationResult.Evaluated -> callback.evaluated(FrontendXValue.create(project, evaluatorScope, evaluation.valueId, false))
           is XEvaluationResult.EvaluationError -> callback.errorOccurred(evaluation.errorMessage)

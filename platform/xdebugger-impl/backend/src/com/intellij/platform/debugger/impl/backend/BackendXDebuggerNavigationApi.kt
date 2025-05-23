@@ -5,6 +5,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.platform.debugger.impl.rpc.TimeoutSafeResult
 import com.intellij.platform.debugger.impl.rpc.XDebuggerNavigationApi
 import com.intellij.xdebugger.frame.XNavigatable
 import com.intellij.xdebugger.frame.XValue
@@ -14,19 +15,19 @@ import com.intellij.xdebugger.impl.ui.tree.actions.computeSourcePositionWithTime
 import kotlinx.coroutines.*
 
 internal class BackendXDebuggerNavigationApi : XDebuggerNavigationApi {
-  override suspend fun navigateToXValue(xValueId: XValueId): Deferred<Boolean> {
+  override suspend fun navigateToXValue(xValueId: XValueId): TimeoutSafeResult<Boolean> {
     return navigate(xValueId) { xValue, navigatable ->
       xValue.computeSourcePosition(navigatable)
     }
   }
 
-  override suspend fun navigateToXValueType(xValueId: XValueId): Deferred<Boolean> {
+  override suspend fun navigateToXValueType(xValueId: XValueId): TimeoutSafeResult<Boolean> {
     return navigate(xValueId) { xValue, navigatable ->
       xValue.computeTypeSourcePosition(navigatable)
     }
   }
 
-  private fun navigate(xValueId: XValueId, compute: (XValue, XNavigatable) -> Unit): Deferred<Boolean> {
+  private fun navigate(xValueId: XValueId, compute: (XValue, XNavigatable) -> Unit): TimeoutSafeResult<Boolean> {
     val xValueModel = BackendXValueModel.findById(xValueId) ?: return CompletableDeferred(false)
     val project = xValueModel.session.project
     val xValue = xValueModel.xValue

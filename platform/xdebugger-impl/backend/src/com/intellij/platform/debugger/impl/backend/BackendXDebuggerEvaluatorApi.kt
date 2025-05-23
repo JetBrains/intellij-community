@@ -8,11 +8,8 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.platform.debugger.impl.rpc.XDebuggerEvaluatorApi
-import com.intellij.platform.debugger.impl.rpc.XEvaluationResult
-import com.intellij.platform.debugger.impl.rpc.XFullValueEvaluatorDto
+import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.debugger.impl.rpc.XFullValueEvaluatorDto.FullValueEvaluatorLinkAttributes
-import com.intellij.platform.debugger.impl.rpc.XValueDto
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.evaluation.ExpressionInfo
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
@@ -36,19 +33,19 @@ import kotlinx.coroutines.future.await
 import org.jetbrains.concurrency.asDeferred
 
 internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
-  override suspend fun evaluate(frameId: XStackFrameId, expression: String, position: XSourcePositionDto?): XEvaluationResult {
+  override suspend fun evaluate(frameId: XStackFrameId, expression: String, position: XSourcePositionDto?): TimeoutSafeResult<XEvaluationResult> {
     return evaluate(frameId) { project, evaluator, callback ->
       evaluator.evaluate(expression, callback, position?.sourcePosition())
     }
   }
 
-  override suspend fun evaluateXExpression(frameId: XStackFrameId, expression: XExpressionDto, position: XSourcePositionDto?): XEvaluationResult {
+  override suspend fun evaluateXExpression(frameId: XStackFrameId, expression: XExpressionDto, position: XSourcePositionDto?): TimeoutSafeResult<XEvaluationResult> {
     return evaluate(frameId) { project, evaluator, callback ->
       evaluator.evaluate(expression.xExpression(), callback, position?.sourcePosition())
     }
   }
 
-  override suspend fun evaluateInDocument(frameId: XStackFrameId, documentId: DocumentId, offset: Int, type: ValueHintType): XEvaluationResult {
+  override suspend fun evaluateInDocument(frameId: XStackFrameId, documentId: DocumentId, offset: Int, type: ValueHintType): TimeoutSafeResult<XEvaluationResult> {
     return evaluate(frameId) { project, evaluator, callback ->
       val document = documentId.document()!!
       if (evaluator is XDebuggerDocumentOffsetEvaluator) {
@@ -74,11 +71,11 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
   private suspend fun evaluate(
     frameId: XStackFrameId,
     evaluateFun: suspend (Project, XDebuggerEvaluator, XEvaluationCallback) -> Unit,
-  ): XEvaluationResult {
+  ): TimeoutSafeResult<XEvaluationResult> {
     val stackFrameModel = frameId.findValue()
-                          ?: return XEvaluationResult.EvaluationError(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.no.evaluator.id"))
+                          ?: return CompletableDeferred(XEvaluationResult.EvaluationError(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.no.evaluator.id")))
     val evaluator = stackFrameModel.stackFrame.evaluator
-                    ?: return XEvaluationResult.EvaluationError(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.no.evaluator.id"))
+                    ?: return CompletableDeferred(XEvaluationResult.EvaluationError(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.no.evaluator.id")))
     val session = stackFrameModel.session
     val evaluationResult = CompletableDeferred<XEvaluationResult>()
     val evaluationCoroutineScope = session.coroutineScope
@@ -104,7 +101,7 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
       evaluateFun(session.project, evaluator, callback)
     }
 
-    return evaluationResult.await()
+    return evaluationResult
   }
 }
 

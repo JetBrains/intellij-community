@@ -3,17 +3,17 @@ package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.debugger.impl.rpc.SetValueResult
+import com.intellij.platform.debugger.impl.rpc.TimeoutSafeResult
 import com.intellij.platform.debugger.impl.rpc.XDebuggerValueModifierApi
 import com.intellij.xdebugger.frame.XValueModifier
-import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import com.intellij.xdebugger.impl.rpc.XExpressionDto
 import com.intellij.xdebugger.impl.rpc.XValueId
+import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import com.intellij.xdebugger.impl.rpc.xExpression
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Deferred
 
 internal class BackendXDebuggerValueModifierApi : XDebuggerValueModifierApi {
-  override suspend fun setValue(xValueId: XValueId, xExpressionDto: XExpressionDto): Deferred<SetValueResult> {
+  override suspend fun setValue(xValueId: XValueId, xExpressionDto: XExpressionDto): TimeoutSafeResult<SetValueResult> {
     val xValue = BackendXValueModel.findById(xValueId)?.xValue ?: return CompletableDeferred(SetValueResult.Success)
     val valueSetDeferred = CompletableDeferred<SetValueResult>()
 
