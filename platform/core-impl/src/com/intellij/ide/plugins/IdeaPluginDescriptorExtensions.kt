@@ -22,5 +22,9 @@ val IdeaPluginDescriptor.isRequiredContentModule: Boolean
 val IdeaPluginDescriptor.moduleDependencies: ModuleDependencies
   get() = (this as IdeaPluginDescriptorImpl).moduleDependencies
 
+@get:ApiStatus.Experimental
+val IdeaPluginDescriptor.contentModules: List<IdeaPluginDescriptor>
+  get() = if (this is PluginMainDescriptor) contentModules else emptyList()
+
 @ApiStatus.Experimental
 fun IdeaPluginDescriptor.getMainDescriptor(): IdeaPluginDescriptor = (this as IdeaPluginDescriptorImpl).getMainDescriptor()
