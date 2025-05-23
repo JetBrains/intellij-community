@@ -63,6 +63,7 @@ java_library(
     "//plugins/kotlin/features-trainer/tests",
     "//plugins/kotlin/base/fir/project-structure",
     "//plugins/kotlin/gradle/code-insight-groovy/tests.k2",
+    "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k2:kotlin-gradle-scripting-k2",
   ]
 )
 ### auto-generated section `build kotlin.fir-all-tests` end

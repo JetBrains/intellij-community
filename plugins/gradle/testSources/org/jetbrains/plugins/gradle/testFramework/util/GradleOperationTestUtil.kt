@@ -50,7 +50,9 @@ suspend fun awaitGradleOpenProjectConfiguration(openProject: suspend () -> Proje
 }
 
 suspend fun <R> awaitGradleProjectConfiguration(project: Project, action: suspend () -> R): R {
-  return project.trackActivity(TestGradleProjectConfigurationActivityKey, action).also {
+  try {
+    return project.trackActivity(TestGradleProjectConfigurationActivityKey, action)
+  } finally {
     TestObservation.awaitConfiguration(project, DEFAULT_SYNC_TIMEOUT)
     IndexingTestUtil.suspendUntilIndexesAreReady(project)
   }

@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.shared
 
-import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -63,9 +62,7 @@ class GradleScriptRefinedConfigurationProvider(
                 ide.dependenciesSources(JvmDependency(it.sourcePath.map { File(it) }))
             }.adjustByDefinition(definition)
 
-            val updatedConfiguration = smartReadAction(project) {
-                refineScriptCompilationConfiguration(sourceCode, definition, project, configuration)
-            }
+            val updatedConfiguration = refineScriptCompilationConfiguration(sourceCode, definition, project, configuration)
 
             it.virtualFile to ScriptConfigurationWithSdk(updatedConfiguration, sdk)
         }

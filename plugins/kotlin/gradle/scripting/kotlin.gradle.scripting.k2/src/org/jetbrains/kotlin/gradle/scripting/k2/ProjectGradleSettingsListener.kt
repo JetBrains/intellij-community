@@ -3,12 +3,13 @@ package org.jetbrains.kotlin.gradle.scripting.k2
 
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.suspendCancellableCoroutine
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptModel
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptRefinedConfigurationProvider
 import org.jetbrains.kotlin.gradle.scripting.shared.getGradleVersion
@@ -30,8 +31,9 @@ class ProjectGradleSettingsListener(
 
     override fun onProjectsLinked(settings: MutableCollection<GradleProjectSettings>) {
         val buildRootsManager = GradleBuildRootsLocator.getInstance(project)
-        settings.forEach {
-            coroutineScope.launchTracked(Dispatchers.IO) {
+        coroutineScope.launchTracked {
+            awaitExternalSystemInitialization()
+            settings.forEach {
                 val gradleVersion = getGradleVersion(project, it)
                 edtWriteAction {
                     val newRoot = buildRootsManager.loadLinkedRoot(it, gradleVersion)
@@ -43,8 +45,9 @@ class ProjectGradleSettingsListener(
 
     override fun onProjectsLoaded(settings: Collection<GradleProjectSettings>) {
         val buildRootsManager = GradleBuildRootsLocator.getInstance(project)
-        settings.forEach {
-            coroutineScope.launchTracked(Dispatchers.IO) {
+        coroutineScope.launchTracked {
+            awaitExternalSystemInitialization()
+            settings.forEach {
                 val gradleVersion = getGradleVersion(project, it)
                 val newRoot = edtWriteAction {
                     buildRootsManager.loadLinkedRoot(it, gradleVersion)
@@ -52,6 +55,14 @@ class ProjectGradleSettingsListener(
                 if (newRoot is Imported) {
                     loadScriptConfigurations(newRoot.data)
                 }
+            }
+        }
+    }
+
+    private suspend fun awaitExternalSystemInitialization() {
+        suspendCancellableCoroutine { continuation ->
+            ExternalProjectsManagerImpl.getInstance(project).runWhenInitialized {
+                continuation.resumeWith(Result.success(Unit))
             }
         }
     }

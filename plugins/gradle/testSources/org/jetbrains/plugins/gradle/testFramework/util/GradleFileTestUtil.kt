@@ -128,10 +128,10 @@ fun Path.createSettingsFile(
   relativeModulePath: String = ".",
   gradleDsl: GradleDsl = GradleDsl.KOTLIN,
   configure: GradleSettingScriptBuilder<*>.() -> Unit,
-) {
-  findOrCreateDirectory(relativeModulePath)
+): Path {
+  return findOrCreateDirectory(relativeModulePath)
     .findOrCreateFile(getSettingsScriptName(gradleDsl))
-    .writeText(settingsScript(gradleVersion, gradleDsl, configure))
+    .also { it.writeText(settingsScript(gradleVersion, gradleDsl, configure)) }
 }
 
 fun Path.createBuildFile(
@@ -139,8 +139,8 @@ fun Path.createBuildFile(
   relativeModulePath: String = ".",
   gradleDsl: GradleDsl = GradleDsl.KOTLIN,
   configure: GradleBuildScriptBuilder<*>.() -> Unit,
-) {
-  findOrCreateDirectory(relativeModulePath)
+): Path {
+  return findOrCreateDirectory(relativeModulePath)
     .findOrCreateFile(getBuildScriptName(gradleDsl))
-    .writeText(buildScript(gradleVersion, gradleDsl, configure))
+    .also { it.writeText(buildScript(gradleVersion, gradleDsl, configure)) }
 }
