@@ -31,7 +31,6 @@ class EelLocalExecApiTest {
   companion object {
     private const val PTY_COLS = 42
     private const val PTY_ROWS = 24
-    private val NEW_LINES = Regex("\r?\n")
 
     private lateinit var executor: JavaMainClassExecutor
 
@@ -95,10 +94,10 @@ class EelLocalExecApiTest {
   private suspend fun testOutputImpl(ptyManagement: PTYManagement, exitType: ExitType) {
     val builder = executor.createBuilderToExecuteMain(localEel.exec)
     builder.interactionOptions(when (ptyManagement) {
-                                  PTYManagement.NO_PTY -> null
-                                  PTYManagement.PTY_SIZE_FROM_START -> Pty(PTY_COLS, PTY_ROWS, true)
-                                  PTYManagement.PTY_RESIZE_LATER -> Pty(PTY_COLS - 1, PTY_ROWS - 1, true) // wrong tty size: will resize in the test
-                                })
+                                 PTYManagement.NO_PTY -> null
+                                 PTYManagement.PTY_SIZE_FROM_START -> Pty(PTY_COLS, PTY_ROWS, true)
+                                 PTYManagement.PTY_RESIZE_LATER -> Pty(PTY_COLS - 1, PTY_ROWS - 1, true) // wrong tty size: will resize in the test
+                               })
     val process = builder.eelIt()
 
     // Resize tty
@@ -117,7 +116,8 @@ class EelLocalExecApiTest {
       }
     }
 
-    val text = ByteBuffer.allocate(8192)
+    val dirtyBuffer = ByteBuffer.allocate(8192)
+    val cleanBuffer = CleanBuffer()
     withContext(Dispatchers.Default) {
       withTimeoutOrNull(10.seconds) {
         val helloStream = if (ptyManagement == PTYManagement.NO_PTY) {
@@ -126,23 +126,30 @@ class EelLocalExecApiTest {
         else {
           process.stdout // stderr is redirected to stdout when launched with PTY
         }
-        while (helloStream.receive(text) != ReadResult.EOF) {
-          if (HELLO in text.slice(0, text.position()).decodeString()) break
+        while (helloStream.receive(dirtyBuffer) != ReadResult.EOF) {
+          cleanBuffer.add(dirtyBuffer.flip().decodeString())
+          dirtyBuffer.clear()
+          if (HELLO in cleanBuffer.getString()) {
+            break
+          }
         }
       }
-      text.limit(text.position()).rewind()
-      assertThat("No ${HELLO} reported in stderr", text.decodeString(), CoreMatchers.containsString(HELLO))
+      assertThat("No ${HELLO} reported in stderr", cleanBuffer.getString(), CoreMatchers.containsString(HELLO))
     }
 
 
     // Test tty api
-    var ttyState: TTYState? = null
-    text.clear()
-    while (ttyState == null) {
-      process.stdout.receive(text)
-      // tty might insert "\r\n", we need to remove them, hence, NEW_LINES.
-      // Schlemiel the Painter's Algorithm is OK in tests: do not use in production
-      ttyState = TTYState.deserializeIfValid(text.slice(0, text.position()).decodeString().replace(NEW_LINES, ""))
+    var ttyState: TTYState?
+    cleanBuffer.setPosEnd(HELLO)
+    while (true) {
+
+      ttyState = TTYState.deserializeIfValid(cleanBuffer.getString())
+      if (ttyState != null) {
+        break
+      }
+      process.stdout.receive(dirtyBuffer)
+      cleanBuffer.add(dirtyBuffer.flip().decodeString())
+      dirtyBuffer.clear()
     }
     when (ptyManagement) {
       PTYManagement.PTY_SIZE_FROM_START, PTYManagement.PTY_RESIZE_LATER -> {
@@ -233,6 +240,6 @@ class EelLocalExecApiTest {
    * Sends [command] to the helper and flush
    */
   private suspend fun EelProcess.sendCommand(command: Command) {
-    stdin.sendWholeText(command.name + "\n")
+    stdin.sendWholeText(command.name + "\r\n") // terminal needs \r\n
   }
 }
