@@ -95,7 +95,7 @@ class SmartStepTargetVisitor(
             } ?: return false
             val declaration = propertyAccessSymbol.psi
             if (declaration is PsiMethod) {
-                append(MethodSmartStepTarget(declaration, null, expression, true, lines))
+                append(MethodSmartStepTarget(declaration, null, expression, false, lines))
                 return true
             }
             return false

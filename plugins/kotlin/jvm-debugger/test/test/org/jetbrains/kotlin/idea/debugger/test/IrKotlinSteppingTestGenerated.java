@@ -2003,6 +2003,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/custom/smartStepWithInlineClass.kt");
         }
 
+        @TestMetadata("ssiJavaProperty.kt")
+        public void testSsiJavaProperty() throws Exception {
+            runTest("testData/stepping/custom/ssiJavaProperty.kt");
+        }
+
         @TestMetadata("stepIntoLibWithSources.kt")
         public void testStepIntoLibWithSources() throws Exception {
             runTest("testData/stepping/custom/stepIntoLibWithSources.kt");
