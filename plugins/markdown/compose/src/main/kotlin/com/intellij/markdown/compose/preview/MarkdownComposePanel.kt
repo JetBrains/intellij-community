@@ -36,11 +36,16 @@ import org.jetbrains.jewel.bridge.code.highlighting.CodeHighlighterFactory
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.code.highlighting.NoOpCodeHighlighter
+import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.markdown.bridge.ProvideMarkdownStyling
+import org.jetbrains.jewel.intui.markdown.bridge.styling.extensions.github.alerts.create
 import org.jetbrains.jewel.intui.markdown.bridge.styling.extensions.github.tables.create
 import org.jetbrains.jewel.markdown.Markdown
 import org.jetbrains.jewel.markdown.MarkdownMode
 import org.jetbrains.jewel.markdown.extensions.autolink.AutolinkProcessorExtension
+import org.jetbrains.jewel.markdown.extensions.github.alerts.AlertStyling
+import org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlertProcessorExtension
+import org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlertRendererExtension
 import org.jetbrains.jewel.markdown.extensions.github.strikethrough.GitHubStrikethroughProcessorExtension
 import org.jetbrains.jewel.markdown.extensions.github.strikethrough.GitHubStrikethroughRendererExtension
 import org.jetbrains.jewel.markdown.extensions.github.tables.GfmTableStyling
@@ -57,7 +62,7 @@ import kotlin.time.Duration.Companion.milliseconds
 internal class MarkdownComposePanel(
   private val project: Project?,
   private val virtualFile: VirtualFile?,
-  private val updateHandler: MarkdownUpdateHandler = MarkdownUpdateHandler.Debounced()
+  private val updateHandler: MarkdownUpdateHandler = MarkdownUpdateHandler.Debounced(),
 ) : MarkdownHtmlPanelEx, UserDataHolder by UserDataHolderBase() {
 
   constructor() : this(null, null)
@@ -76,33 +81,45 @@ internal class MarkdownComposePanel(
   private fun MarkdownPanel() {
     val scheme = PreviewStyleScheme.fromCurrentTheme()
     val fontSize = scheme.fontSize.sp / scheme.scale
+
     val scrollState = rememberScrollState(0)
     val scrollingSynchronizer = remember(scrollState) { ScrollingSynchronizer.create(scrollState) }
-    val markdownStyling = remember(scheme, fontSize) { JcefLikeMarkdownStyling(scheme, fontSize) }
     val markdownMode = remember(scrollingSynchronizer) {
       MarkdownMode.EditorPreview(scrollingSynchronizer)
     }
+
     val processor = remember(markdownMode) {
       MarkdownProcessor(
         listOf(
           GitHubTableProcessorExtension,
           GitHubStrikethroughProcessorExtension(),
           AutolinkProcessorExtension,
+          GitHubAlertProcessorExtension,
         ),
         markdownMode,
       )
     }
-    val tableRenderer = remember(markdownStyling) {
+
+    val isDark = JewelTheme.isDark
+    val markdownStyling = remember(scheme, fontSize) { JcefLikeMarkdownStyling(scheme, fontSize) }
+    val tableRenderer = remember(isDark, markdownStyling) {
       GitHubTableRendererExtension(GfmTableStyling.create(), markdownStyling)
     }
-    val allRenderingExtensions = listOf(tableRenderer, GitHubStrikethroughRendererExtension)
-    val blockRenderer = remember(markdownStyling) {
+
+    val alertRenderer = remember(isDark, markdownStyling) {
+      GitHubAlertRendererExtension(AlertStyling.create(), markdownStyling)
+    }
+
+    val allRenderingExtensions = remember(tableRenderer, alertRenderer) { listOf(tableRenderer, GitHubStrikethroughRendererExtension, alertRenderer) }
+
+    val blockRenderer = remember(markdownStyling, allRenderingExtensions) {
       ScrollSyncMarkdownBlockRenderer(
-        markdownStyling,
-        allRenderingExtensions,
-        DefaultInlineMarkdownRenderer(allRenderingExtensions),
+        rootStyling = markdownStyling,
+        renderingExtensions = allRenderingExtensions,
+        inlineRenderer = DefaultInlineMarkdownRenderer(allRenderingExtensions),
       )
     }
+
     ProvideMarkdownStyling(
       markdownMode = markdownMode,
       markdownProcessor = processor,
@@ -132,10 +149,11 @@ internal class MarkdownComposePanel(
   @OptIn(FlowPreview::class)
   @Suppress("FunctionName")
   @Composable
-  private fun MarkdownPreviewPanel(scrollState: ScrollState,
-                                   scrollingSynchronizer: ScrollingSynchronizer?,
-                                   blockRenderer: ScrollSyncMarkdownBlockRenderer,
-                                   animationSpec: AnimationSpec<Float> = TweenSpec(easing = LinearEasing)
+  private fun MarkdownPreviewPanel(
+    scrollState: ScrollState,
+    scrollingSynchronizer: ScrollingSynchronizer?,
+    blockRenderer: ScrollSyncMarkdownBlockRenderer,
+    animationSpec: AnimationSpec<Float> = TweenSpec(easing = LinearEasing),
   ) {
     val request by updateHandler.requests.collectAsState(null)
     (request as? PreviewRequest.Update)?.let {
@@ -170,7 +188,7 @@ internal class MarkdownComposePanel(
             MarkdownLinkOpener.getInstance().openLink(project, url)
           else
             MarkdownLinkOpener.getInstance().openLink(project, url, virtualFile)
-                     },
+        },
         blockRenderer = blockRenderer,
       )
     }
