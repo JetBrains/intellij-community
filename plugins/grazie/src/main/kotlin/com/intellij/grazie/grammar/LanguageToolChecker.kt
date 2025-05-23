@@ -195,6 +195,7 @@ private val interner = Interner.createWeakInterner<String>()
 private val sentenceSeparationRules = setOf("LC_AFTER_PERIOD", "PUNT_GEEN_HL", "KLEIN_NACH_PUNKT")
 private val openClosedRangeStart = Regex("[\\[(].+?(\\.\\.|:|,|;).+[])]")
 private val openClosedRangeEnd = Regex(".*" + openClosedRangeStart.pattern)
+private val quotedLiteralPattern = Regex("['\"]\\S+['\"]")
 
 internal fun grammarRules(tool: JLanguageTool, lang: Lang): List<LanguageToolRule> {
   return tool.allRules.asSequence()
@@ -236,6 +237,10 @@ private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
     if (couldBeOpenClosedRange(text, match.fromPos)) {
       return true
     }
+
+    if (isPartOfQuotedLiteralText(match, text)) {
+      return true
+    }
   }
 
   if (match.rule.id == "ARTICLE_ADJECTIVE_OF" && text.substring(match.fromPos, match.toPos).equals("iterable", ignoreCase = true)) {
@@ -258,6 +263,12 @@ private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
   }
 
   return false
+}
+
+private fun isPartOfQuotedLiteralText(match: RuleMatch, text: TextContent): Boolean {
+  return quotedLiteralPattern.findAll(text.toString())
+    .map { TextRange(it.range.first, it.range.last) }
+    .any { it.intersectsStrict(match.fromPos, match.toPos) }
 }
 
 // https://github.com/languagetool-org/languagetool/issues/6566

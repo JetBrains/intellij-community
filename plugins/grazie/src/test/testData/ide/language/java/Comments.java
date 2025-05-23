@@ -86,4 +86,12 @@ class ForMultiLanguageSupport {
   //        for (Person person : people) {
   //            System.out.println(person);
   //        }
+
+  // if the subject includes the
+  //    string '|6xX$\WG-C?|' or the author includes the string
+  //    '|^#=)A?mUi5|' ; this is however highly unlikely...
+
+  // if the subject includes the
+  //    string '|6xX$\WG-C?|' or the author includes the string
+  //    '|^#=(A?mUi5|' ; this is however highly unlikely...
 }
