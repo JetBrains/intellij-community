@@ -78,8 +78,8 @@ class SeLocalItemDataProvider(private val provider: SeItemsProvider,
     return (provider as? SeSearchScopesProvider)?.getSearchScopesInfo()
   }
 
-  suspend fun getTypeVisibilityStates(): List<SeTypeVisibilityStatePresentation>? =
-    (provider as? SeTypeVisibilityStateProvider)?.getTypeVisibilityStates()
+  suspend fun getTypeVisibilityStates(index: Int): List<SeTypeVisibilityStatePresentation>? =
+    (provider as? SeTypeVisibilityStateProvider)?.getTypeVisibilityStates(index)
 
   /**
    * Defines if results can be shown in <i>Find</i> toolwindow.

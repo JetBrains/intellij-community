@@ -61,9 +61,8 @@ class SeFrontendItemDataProvidersFacade(private val projectId: ProjectId,
       projectId, providerIds = providerIds, sessionRef = sessionRef, dataContextId = dataContextId, isAllTab = isAllTab
     )
 
-  suspend fun getTypeVisibilityStates(): List<SeTypeVisibilityStatePresentation> =
-    SeRemoteApi.getInstance().getTypeVisibilityStatesForProviders(
-      projectId, providerIds = providerIds, sessionRef = sessionRef, dataContextId = dataContextId, isAllTab = isAllTab
+  suspend fun getTypeVisibilityStates(index: Int): List<SeTypeVisibilityStatePresentation> =
+    SeRemoteApi.getInstance().getTypeVisibilityStatesForProvider(index = index, projectId = projectId, providerIds = providerIds, sessionRef = sessionRef, dataContextId = dataContextId, isAllTab = isAllTab
     )
 
   suspend fun canBeShownInFindResults(): Boolean {

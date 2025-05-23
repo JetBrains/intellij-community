@@ -38,6 +38,6 @@ class SeRecentFilesProvider(private val contributorWrapper: SeAsyncWeightedContr
 
   override suspend fun getSearchScopesInfo(): SeSearchScopesInfo? = targetsProviderDelegate.searchScopesInfo.getValue()
 
-  override suspend fun getTypeVisibilityStates(): List<SeTypeVisibilityStatePresentation> =
-    targetsProviderDelegate.getTypeVisibilityStates<FileTypeRef>()
+  override suspend fun getTypeVisibilityStates(index: Int): List<SeTypeVisibilityStatePresentation> =
+    targetsProviderDelegate.getTypeVisibilityStates<FileTypeRef>(index)
 }

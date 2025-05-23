@@ -59,8 +59,8 @@ class SeTabDelegate(
     return providers.getValue().getSearchScopesInfos()
   }
 
-  suspend fun getTypeVisibilityStates(): List<SeTypeVisibilityStatePresentation> {
-    return providers.getValue().getTypeVisibilityStates()
+  suspend fun getTypeVisibilityStates(index: Int = 0): List<SeTypeVisibilityStatePresentation> {
+    return providers.getValue().getTypeVisibilityStates(index)
   }
 
   suspend fun itemSelected(itemData: SeItemData, modifiers: Int, searchText: String): Boolean {
@@ -93,9 +93,9 @@ class SeTabDelegate(
       return localProviders.values.any { it.canBeShownInFindResults() } || frontendProvidersFacade?.canBeShownInFindResults() == true
     }
 
-    suspend fun getTypeVisibilityStates(): List<SeTypeVisibilityStatePresentation> {
-      return localProviders.values.flatMap { it.getTypeVisibilityStates() ?: emptyList() } +
-             (frontendProvidersFacade?.getTypeVisibilityStates() ?: emptyList())
+    suspend fun getTypeVisibilityStates(index: Int = 0): List<SeTypeVisibilityStatePresentation> {
+      return localProviders.values.flatMap { it.getTypeVisibilityStates(index) ?: emptyList() } +
+             (frontendProvidersFacade?.getTypeVisibilityStates(index) ?: emptyList())
     }
 
     fun getItems(params: SeParams, disabledProviders: List<SeProviderId>, mapToResultEvent: suspend (SeItemData) -> SeResultEvent?): Flow<SeResultEvent> {

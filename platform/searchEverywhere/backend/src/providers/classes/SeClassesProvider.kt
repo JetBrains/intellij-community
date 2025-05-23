@@ -37,6 +37,7 @@ class SeClassesProvider(private val contributorWrapper: SeAsyncWeightedContribut
   }
 
   override suspend fun getSearchScopesInfo(): SeSearchScopesInfo? = targetsProviderDelegate.searchScopesInfo.getValue()
-  override suspend fun getTypeVisibilityStates(): List<SeTypeVisibilityStatePresentation> =
-    targetsProviderDelegate.getTypeVisibilityStates<LanguageRef>()
+
+  override suspend fun getTypeVisibilityStates(index: Int): List<SeTypeVisibilityStatePresentation> =
+    targetsProviderDelegate.getTypeVisibilityStates<LanguageRef>(index)
 }

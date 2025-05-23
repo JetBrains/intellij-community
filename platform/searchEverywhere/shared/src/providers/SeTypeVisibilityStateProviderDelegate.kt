@@ -9,8 +9,8 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object SeTypeVisibilityStateProviderDelegate {
-  fun <T> getStates(contributor: WeightedSearchEverywhereContributor<Any>): List<SeTypeVisibilityStatePresentation> {
-    val searchEverywhereFiltersAction: SearchEverywhereFiltersAction<T> = contributor.filterAction() ?: return emptyList()
+  fun <T> getStates(contributor: WeightedSearchEverywhereContributor<Any>, index: Int): List<SeTypeVisibilityStatePresentation> {
+    val searchEverywhereFiltersAction: SearchEverywhereFiltersAction<T> = contributor.filterAction(index) ?: return emptyList()
 
     val filter = searchEverywhereFiltersAction.filter
     val elements = filter.allElements
@@ -24,17 +24,22 @@ object SeTypeVisibilityStateProviderDelegate {
 
   fun <T> applyTypeVisibilityStates(contributor: WeightedSearchEverywhereContributor<Any>, hiddenTypes: List<String>?) {
     if (hiddenTypes == null) return
-    val searchEverywhereFiltersAction: SearchEverywhereFiltersAction<T> = contributor.filterAction() ?: return
+    val searchEverywhereFiltersActions: List<SearchEverywhereFiltersAction<T>> = contributor.allFilterActions()
 
-    val hiddenTypesSet = hiddenTypes.toSet()
-    val filter = searchEverywhereFiltersAction.filter
-    val elements = filter.allElements
+    searchEverywhereFiltersActions.forEach { action ->
+      val hiddenTypesSet = hiddenTypes.toSet()
+      val filter = action.filter
+      val elements = filter.allElements
 
-    elements.forEach {
-      filter.setSelected(it, !hiddenTypesSet.contains(filter.getElementText(it)))
+      elements.forEach {
+        filter.setSelected(it, !hiddenTypesSet.contains(filter.getElementText(it)))
+      }
     }
   }
 
-  private fun <T> WeightedSearchEverywhereContributor<Any>.filterAction() =
-    getActions { }.filterIsInstance<SearchEverywhereFiltersAction<T>>().firstOrNull()
+  private fun <T> WeightedSearchEverywhereContributor<Any>.filterAction(index: Int): SearchEverywhereFiltersAction<T>? =
+    allFilterActions<T>().getOrNull(index)
+
+  private fun <T> WeightedSearchEverywhereContributor<Any>.allFilterActions(): List<SearchEverywhereFiltersAction<T>> =
+    getActions { }.filterIsInstance<SearchEverywhereFiltersAction<T>>()
 }

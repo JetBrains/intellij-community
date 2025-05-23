@@ -71,7 +71,8 @@ interface SeRemoteApi : RemoteApi<Unit> {
     isAllTab: Boolean,
   ): Map<SeProviderId, SeSearchScopesInfo>
 
-  suspend fun getTypeVisibilityStatesForProviders(
+  suspend fun getTypeVisibilityStatesForProvider(
+    index: Int,
     projectId: ProjectId,
     sessionRef: DurableRef<SeSessionEntity>,
     dataContextId: DataContextId,

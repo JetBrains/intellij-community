@@ -122,6 +122,7 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
   }
 
   suspend fun getTypeVisibilityStatesForProviders(
+    index: Int,
     sessionRef: DurableRef<SeSessionEntity>,
     dataContextId: DataContextId,
     providerIds: List<SeProviderId>,
@@ -129,7 +130,7 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
   ): List<SeTypeVisibilityStatePresentation> {
     return providerIds.mapNotNull { providerId ->
       val provider = getProvidersHolder(sessionRef, dataContextId)?.get(providerId, isAllTab)
-      provider?.getTypeVisibilityStates()
+      provider?.getTypeVisibilityStates(index)
     }.flatten()
   }
 
