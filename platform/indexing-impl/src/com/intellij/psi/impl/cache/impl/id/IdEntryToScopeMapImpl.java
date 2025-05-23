@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.cache.impl.id;
 
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
@@ -18,7 +18,8 @@ import java.util.function.BiConsumer;
 public class IdEntryToScopeMapImpl extends AbstractMap<IdIndexEntry, Integer> implements IdEntryToScopeMap {
 
   //TODO RC: since occurence mask is really a byte, Int2ByteMap will be more optimal
-  private final @NotNull Int2IntMap idHashToScopeMask;
+  @SuppressWarnings("SSBasedInspection")
+  private final @NotNull Int2IntOpenHashMap idHashToScopeMask;
 
   public IdEntryToScopeMapImpl() {
     this(new Int2IntOpenHashMap());
@@ -28,7 +29,8 @@ public class IdEntryToScopeMapImpl extends AbstractMap<IdIndexEntry, Integer> im
     this(new Int2IntOpenHashMap(initialCapacity));
   }
 
-  public IdEntryToScopeMapImpl(@NotNull Int2IntMap hashToScopeMask) {
+  @SuppressWarnings("SSBasedInspection")
+  public IdEntryToScopeMapImpl(@NotNull Int2IntOpenHashMap hashToScopeMask) {
     this.idHashToScopeMask = hashToScopeMask;
   }
 
@@ -116,13 +118,18 @@ public class IdEntryToScopeMapImpl extends AbstractMap<IdIndexEntry, Integer> im
   }
 
   @Override
-  public void forEach(BiConsumer<? super IdIndexEntry, ? super Integer> consumer) {
-    idHashToScopeMask.forEach((hash, value) -> consumer.accept(new IdIndexEntry(hash), value));
+  public void forEach(@NotNull BiConsumer<? super IdIndexEntry, ? super Integer> consumer) {
+    forEach((hash, value) -> {
+      consumer.accept(new IdIndexEntry(hash), value);
+      return true;
+    });
   }
 
   @Override
   public void forEach(@NotNull BiIntConsumer consumer) {
-    for (Int2IntMap.Entry entry : idHashToScopeMask.int2IntEntrySet()) {
+    ObjectIterator<Int2IntMap.Entry> iterator = idHashToScopeMask.int2IntEntrySet().fastIterator();
+    while (iterator.hasNext()) {
+      Int2IntMap.Entry entry = iterator.next();
       int idHash = entry.getIntKey();
       int scopeMask = entry.getIntValue();
       if (!consumer.consume(idHash, scopeMask)) {
