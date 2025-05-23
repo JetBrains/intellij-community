@@ -2229,6 +2229,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       myPredefinedThread = thread;
     }
 
+    private boolean isDebuggerAgentAvailable() {
+      return !getVirtualMachineProxy().classesByName("com.intellij.rt.debugger.agent.DebuggerAgent").isEmpty();
+    }
+
     @Override
     public void action() {
       if (!isAttached() || getVirtualMachineProxy().isPausePressed()) {
@@ -2239,6 +2243,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         tryPauseWithEvaluatableContext();
       } else {
         fallbackPauseWithNonEvaluatableContext();
+        DebuggerStatistics.logEvaluatablePauseDisabled(project);
       }
     }
 
@@ -2287,16 +2292,16 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                   var evaluatableContext = evaluatableContextFuture.get();
                   assert evaluatableContext != null;
                   setSuspendContextAndCheckConsistency(evaluatableContext);
+                  DebuggerStatistics.logEvaluatablePauseSuccess(project, isDebuggerAgentAvailable());
                 } else {
-                  if (Registry.is("debugger.run.suspend.helper")) {
-                    logError("[evaluatable pause]: Failed to provide evaluatable context on pause with enabled Suspend Helper Thread, falling back to the regular pause on timeout.", error);
-                  }
                   fallbackPauseWithNonEvaluatableContext();
+                  DebuggerStatistics.logEvaluatablePauseFailure(project, isDebuggerAgentAvailable());
                 }
               } else {
                 var evaluatableContext = evaluatableContextFuture.get();
                 assert evaluatableContext != null;
                 setSuspendContextAndCheckConsistency(evaluatableContext);
+                DebuggerStatistics.logEvaluatablePauseSuccess(project, isDebuggerAgentAvailable());
               }
             }
           });
