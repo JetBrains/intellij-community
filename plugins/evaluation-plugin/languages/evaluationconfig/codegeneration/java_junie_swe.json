@@ -4,7 +4,8 @@
   "revision": "fb695545312cc2340604e61642f36138152fba93",
   "outputDir": "bin/ml-eval-code-generation-junie-swe-java-output",
   "strategy": {
-    "instanceId": "fasterxml__jackson-core-1172"
+    "instanceId": "fasterxml__jackson-core-1172",
+    "iterations": 1
   },
   "fileDataset": {
     "url": "remote:https://huggingface.co/datasets/JetBrains/eval_plugin/resolve/main/junie-swe/java/java_swe_bench.json"
