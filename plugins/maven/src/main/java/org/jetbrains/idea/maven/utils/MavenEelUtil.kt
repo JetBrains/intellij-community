@@ -28,14 +28,13 @@ import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkPredicate
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
-import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.getPath
+import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asNioPath
-import com.intellij.platform.eel.provider.asNioPathOrNull
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.EelPathUtils.getActualPath
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
@@ -491,28 +490,21 @@ object MavenEelUtil {
 
   private fun EelApi.tryMavenFromPath(): MavenInSpecificPath? {
     val eelPath = runBlockingMaybeCancellable { exec.where("mvn") } ?: return null
-    val pathOnTarget = Path.of(eelPath.toString())
-    // it is necessary to convert the path to the canonical representation
-    // otherwise WindowsPath would turn the path into the non-absolute representation of the path
-    val mavenHomeCanonicalPath = pathOnTarget.parent?.parent?.toCanonicalPath() ?: return null
-    return fs.tryMavenRoot(mavenHomeCanonicalPath)
+    val mavenHome = eelPath.parent?.parent ?: return null
+    return fs.tryMavenRoot(mavenHome)
   }
 
   private fun EelFileSystemApi.tryMavenRoot(path: String): MavenInSpecificPath? {
+    return tryMavenRoot(getPath(path))
+  }
+
+  private fun EelFileSystemApi.tryMavenRoot(path: EelPath): MavenInSpecificPath? {
+    val home = path.asNioPath()
     // we want to prevent paths like "\\wsl.localhost\Ubuntu\mnt\c\Something\something" from being leaked into the execution
-    if (!path.isActualPathString()) {
-      return null
-    }
-    val home = getPath(path).asNioPath()
-    if (isValidMavenHome(home)) {
+    if (isValidMavenHome(home) && home == getActualPath(home)) {
       MavenLog.LOG.debug("Maven home found at $path")
       return MavenInSpecificPath(home)
     }
     return null
-  }
-
-  private fun String.isActualPathString(): Boolean {
-    val path = Path.of(this)
-    return path == getActualPath(path)
   }
 }
