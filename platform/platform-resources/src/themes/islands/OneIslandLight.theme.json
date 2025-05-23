@@ -67,8 +67,8 @@
 
     "EditorTabs": {
       "background": "BackgroundLight",
-      "underlinedTabBackground": "BackgroundLight",
-      "hoverBackground": "BackgroundLight",
+      "underlinedTabBackground": "Blue11",
+      "hoverBackground": "Gray13",
       "underTabsBorderColor": "BackgroundDark"
     },
     "Editor.SearchField.background": "BackgroundLight",
@@ -81,6 +81,8 @@
       "borderColor": "BorderDark",
       "EditorPane.borderColor": "BorderDark"
     },
+
+    "NavBar.borderColor": "BorderTransparent",
 
     "Popup": {
       "background": "PopupBackground",

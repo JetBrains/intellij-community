@@ -98,8 +98,8 @@
 
     "EditorTabs": {
       "background": "BackgroundDark",
-      "underlinedTabBackground": "BackgroundDark",
-      "hoverBackground": "BackgroundDark",
+      "underlinedTabBackground": "Blue1",
+      "hoverBackground": "Gray2",
       "underTabsBorderColor": "BackgroundLight"
     },
     "Editor": {
@@ -121,6 +121,8 @@
       "Yellow": "#362924",
       "Green": "#223023"
     },
+
+    "NavBar.borderColor": "BorderTransparent",
 
     "Popup": {
       "background": "PopupBackground",

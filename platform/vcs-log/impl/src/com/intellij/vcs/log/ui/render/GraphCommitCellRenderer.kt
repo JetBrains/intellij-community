@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.render
 
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer
@@ -182,9 +183,9 @@ class GraphCommitCellRenderer(
     }
 
     public override fun paintComponent(g: Graphics) {
-      super.paintComponent(g)
+      val g2d = (InternalUICustomization.getInstance()?.preserveGraphics(g) ?: g) as Graphics2D
+      super.paintComponent(g2d)
 
-      val g2d = g as Graphics2D
       if (!referencePainter.isLeftAligned) {
         val start = max(graphWidth.toDouble(), (width - referencePainter.getSize().width).toDouble()).toInt()
         referencePainter.paint(g2d, start, 0, height)
@@ -335,7 +336,7 @@ class GraphCommitCellRenderer(
     }
 
     override fun paintComponent(g: Graphics) {
-      val g2d = g as Graphics2D
+      val g2d = (InternalUICustomization.getInstance()?.preserveGraphics(g) ?: g) as Graphics2D
       painter.paint(g2d, printElements)
     }
 

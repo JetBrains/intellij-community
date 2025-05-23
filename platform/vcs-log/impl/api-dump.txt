@@ -1218,6 +1218,7 @@ a:com.intellij.vcs.log.ui.table.VcsLogIconCellRenderer
 - pa:customize(com.intellij.vcs.log.ui.table.VcsLogGraphTable,java.lang.Object,Z,Z,I,I):V
 - pf:customizeCellRenderer(javax.swing.JTable,java.lang.Object,Z,Z,I,I):V
 - getPreferredWidth():com.intellij.vcs.log.ui.table.VcsLogCellRenderer$PreferredWidth
+- paintComponent(java.awt.Graphics):V
 com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn
 - com.intellij.vcs.log.ui.table.column.VcsLogColumn
 - sf:Companion:com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn$Companion

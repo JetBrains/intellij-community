@@ -31,12 +31,10 @@ import com.intellij.toolWindow.FrameLayeredPane
 import com.intellij.toolWindow.xNext.island.XNextIslandHolder
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.JBColor
-import com.intellij.ui.tabs.impl.JBEditorTabs
 import com.intellij.ui.tabs.impl.TabPainterAdapter
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Graphics
@@ -205,9 +203,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
   override fun paintBeforeEditorEmptyText(component: JComponent, graphics: Graphics) {
     if (isManyIslandEnabled) {
-      val g = IdeBackgroundUtil.getOriginalGraphics(graphics)
-      g.color = UIUtil.findComponentOfType(component.rootPane, JBEditorTabs::class.java)?.background ?: return
-      g.fillRect(0, 0, component.width, component.height)
+      IslandsRoundedBorder.paintBeforeEditorEmptyText(component, graphics)
     }
   }
 

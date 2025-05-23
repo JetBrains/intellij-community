@@ -1,12 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table
 
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.ui.ColoredTableCellRenderer
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Borders
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer.VcsLogTableCellState
+import java.awt.Graphics
 import javax.swing.JTable
 
 private val PADDING: JBInsets = JBUI.insets(0, 7, 0, 13)
@@ -19,6 +21,10 @@ abstract class VcsLogIconCellRenderer : ColoredTableCellRenderer(), VcsLogCellRe
     iconTextGap = 0
 
     isTransparentIconBackground = true
+  }
+
+  public override fun paintComponent(g: Graphics) {
+    super.paintComponent(InternalUICustomization.getInstance()?.preserveGraphics(g) ?: g)
   }
 
   final override fun customizeCellRenderer(table: JTable, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {

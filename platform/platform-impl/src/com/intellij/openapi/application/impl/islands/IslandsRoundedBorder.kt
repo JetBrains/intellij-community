@@ -29,10 +29,16 @@ internal class IslandsRoundedBorder(fillColor: (JComponent) -> Paint?) :
       component.border = IslandsRoundedBorder { child.background }
     }
 
-    fun createEditorBorder(component: EditorsSplitters) {
-      component.border = IslandsRoundedBorder {
+    fun createEditorBorder(editorsSplitters: EditorsSplitters) {
+      editorsSplitters.border = IslandsRoundedBorder {
         UIUtil.findComponentOfType(it, JBEditorTabs::class.java)?.background ?: it.background
       }
+    }
+
+    fun paintBeforeEditorEmptyText(component: JComponent, graphics: Graphics) {
+      val g = IdeBackgroundUtil.getOriginalGraphics(graphics)
+      g.color = UIUtil.findComponentOfType(component.rootPane, JBEditorTabs::class.java)?.background ?: return
+      g.fillRect(0, 0, component.width, component.height)
     }
   }
 }

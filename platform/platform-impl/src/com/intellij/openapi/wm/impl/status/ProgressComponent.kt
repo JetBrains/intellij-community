@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.progress.ProgressModel
 import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.ui.popup.IconButton
@@ -261,6 +262,10 @@ open class ProgressComponent(val isCompact: Boolean, val info: TaskInfo, progres
           }
         }
       })
+    }
+
+    override fun paint(g: Graphics) {
+      super.paint(InternalUICustomization.getInstance()?.preserveGraphics(g))
     }
 
     override fun paintComponent(g: Graphics) {

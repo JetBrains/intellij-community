@@ -95,6 +95,8 @@
       "Green": "#edfaef"
     },
 
+    "NavBar.borderColor": "BorderTransparent",
+
     "Popup": {
       "background": "PopupBackground",
       "Header.activeBackground": "PopupBackground",

@@ -15,6 +15,7 @@ import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
@@ -523,6 +524,7 @@ class EditorWindow internal constructor(
       splitter.firstComponent = newWindow.component
       splitter.secondComponent = existingEditor
     }
+    InternalUICustomization.getInstance()?.installEditorBackground(newWindow.component)
     normalizeProportionsIfNeed(existingEditor)
 
     // open only selected file in the new splitter instead of opening all tabs

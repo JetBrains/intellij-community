@@ -3,7 +3,7 @@
   "dark": true,
   "author": "JetBrains",
   "parentTheme": "ExperimentalDark",
-  "editorScheme": "One Island Darker",
+  "editorScheme": "Dark",
   "colors": {
     "Gray3": "#393B40",
     "Gray2.5": "#323438",
@@ -131,6 +131,8 @@
       "Yellow": "#291f1c",
       "Green": "#1c261c"
     },
+
+    "NavBar.borderColor": "BorderTransparent",
 
     "Popup": {
       "background": "PopupBackground",

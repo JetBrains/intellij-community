@@ -3,7 +3,7 @@
   "dark": true,
   "author": "JetBrains",
   "parentTheme": "ExperimentalDark",
-  "editorScheme": "One Island Darkest",
+  "editorScheme": "Dark",
   "colors": {
     "Gray3": "#393B40",
     "Gray2.5": "#323438",
@@ -96,8 +96,8 @@
 
     "EditorTabs": {
       "background": "BackgroundDark",
-      "underlinedTabBackground": "BackgroundDark",
-      "hoverBackground": "BackgroundDark",
+      "underlinedTabBackground": "Blue1",
+      "hoverBackground": "Gray2",
       "underTabsBorderColor": "BackgroundLight"
     },
     "Editor.SearchField.background": "BackgroundMid",
@@ -115,6 +115,8 @@
       "Yellow": "#362924",
       "Green": "#223023"
     },
+
+    "NavBar.borderColor": "BorderTransparent",
 
     "Popup": {
       "background": "PopupBackground",

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table
 
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.ui.ColoredTableCellRenderer
 import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.vcs.log.VcsLogHighlighter
@@ -9,6 +10,7 @@ import com.intellij.vcs.log.util.VcsLogUiUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Font
+import java.awt.Graphics
 import javax.swing.JTable
 
 /**
@@ -26,6 +28,10 @@ class VcsLogStringCellRenderer internal constructor(
 
   init {
     cellState = VcsLogTableCellState()
+  }
+
+  public override fun paintComponent(g: Graphics) {
+    super.paintComponent(InternalUICustomization.getInstance()?.preserveGraphics(g) ?: g)
   }
 
   override fun customizeCellRenderer(table: JTable, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
