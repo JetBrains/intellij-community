@@ -13,6 +13,14 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
+  deps = [
+    "@lib//:opentelemetry",
+    "@lib//:jetbrains-annotations",
+    "@lib//:opentelemetry-exporter-otlp-common",
+    "@lib//:jackson",
+    "@lib//:io-opentelemetry-sdk-extension-autoconfigure-spi-provided",
+    "@lib//:jackson-databind",
+  ],
   runtime_deps = [":diagnostic-telemetry-agent-extension_resources"]
 )
 
@@ -22,6 +30,16 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
   associates = [":diagnostic-telemetry-agent-extension"],
+  deps = [
+    "@lib//:opentelemetry",
+    "@lib//:jetbrains-annotations",
+    "@lib//:junit5",
+    "@lib//:opentelemetry-exporter-otlp-common",
+    "@lib//:jackson",
+    "@lib//:io-opentelemetry-sdk-extension-autoconfigure-spi-provided",
+    "@lib//:jackson-databind",
+    "@lib//:kotlin-stdlib",
+  ],
   runtime_deps = [":diagnostic-telemetry-agent-extension_resources"]
 )
 

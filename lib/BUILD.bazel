@@ -2217,6 +2217,20 @@ jvm_import(
 )
 
 jvm_import(
+  name = "io-opentelemetry-sdk-extension-autoconfigure-spi",
+  jar = "@opentelemetry-sdk-extension-autoconfigure-spi-1_45_0_http//file",
+  source_jar = "@opentelemetry-sdk-extension-autoconfigure-spi-1_45_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "io-opentelemetry-sdk-extension-autoconfigure-spi-provided",
+  exports = [":io-opentelemetry-sdk-extension-autoconfigure-spi"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
   name = "ion",
   jar = "@ion-java-1_11_10_http//file",
   source_jar = "@ion-java-1_11_10-sources_http//file",
