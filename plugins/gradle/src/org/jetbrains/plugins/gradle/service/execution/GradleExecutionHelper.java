@@ -51,11 +51,23 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
+/**
+ * This is the low-level Gradle execution API that connects and interacts with the Gradle daemon using the Gradle tooling API.
+ * <p>
+ * Consider using the high-level Gradle execution APIs instead:
+ * <ul>
+ * <li>{@link com.intellij.openapi.externalSystem.util.ExternalSystemUtil#runTask}</li>
+ * <li>{@link com.intellij.openapi.externalSystem.util.task.TaskExecutionUtil#runTask}</li>
+ * </ul>
+ *
+ * @see <a href="https://docs.gradle.org/current/userguide/tooling_api.html">Gradle tooling API</a>
+ */
+@ApiStatus.Internal
 public final class GradleExecutionHelper {
 
   /**
    * @deprecated Use helper methods without object instantiation.
-   * All method is this class is static.
+   * All methods in this class are static.
    */
   @Deprecated
   public GradleExecutionHelper() { }
@@ -171,7 +183,6 @@ public final class GradleExecutionHelper {
     });
   }
 
-  @ApiStatus.Internal
   public static void prepareForExecution(
     @NotNull LongRunningOperation operation,
     @NotNull CancellationToken cancellationToken,
@@ -258,7 +269,6 @@ public final class GradleExecutionHelper {
     }
   }
 
-  @ApiStatus.Internal
   @VisibleForTesting
   public static void setupJvmArguments(
     @NotNull LongRunningOperation operation,
@@ -364,7 +374,6 @@ public final class GradleExecutionHelper {
     }
   }
 
-  @ApiStatus.Internal
   @VisibleForTesting
   public static void setupLogging(
     @NotNull GradleExecutionSettings settings,
@@ -531,7 +540,6 @@ public final class GradleExecutionHelper {
     }
   }
 
-  @ApiStatus.Internal
   @VisibleForTesting
   public static @NotNull List<String> obfuscatePasswordParameters(@NotNull List<String> commandLineArguments) {
     List<String> replaced = new ArrayList<>(commandLineArguments.size());
