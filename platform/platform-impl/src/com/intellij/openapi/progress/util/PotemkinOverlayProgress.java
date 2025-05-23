@@ -44,7 +44,7 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
     KeyStroke.getKeyStroke(KeyEvent.VK_D, (SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK)), null);
 
   private final Component myComponent;
-  private final PotemkinProgress.EventStealer myEventStealer;
+  private final EventStealer myEventStealer;
   private final long myCreatedAt = System.nanoTime();
   private int myDelayInMillis = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS * 10;
   private long myLastUiUpdate = myCreatedAt;
@@ -147,7 +147,7 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
     return null;
   }
 
-  public List<InputEvent> drainUndispatchedInputEvents() {
+  private List<InputEvent> drainUndispatchedInputEvents() {
     return myEventStealer.drainUndispatchedInputEvents();
   }
 
