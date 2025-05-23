@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.lexer.KtTokens.LBRACE
 import org.jetbrains.kotlin.lexer.KtTokens.WHITE_SPACE_OR_COMMENT_BIT_SET
 import org.jetbrains.kotlin.parsing.KotlinExpressionParsing
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 
 class JoinStatementsAddSemicolonHandler : JoinRawLinesHandlerDelegate {
@@ -28,10 +29,12 @@ class JoinStatementsAddSemicolonHandler : JoinRawLinesHandlerDelegate {
         val element1 = linebreak.firstMaterialSiblingSameLine { prevSibling } ?: return CANNOT_JOIN
         val element2 = linebreak.firstMaterialSiblingSameLine { nextSibling } ?: return CANNOT_JOIN
 
-        if (parent.node.elementType != BLOCK) return CANNOT_JOIN
-        if (linebreak.text.count { it == '\n' } > 1) return CANNOT_JOIN
-        if (!element1.isStatement()) return CANNOT_JOIN
-        if (!element2.isStatement()) return CANNOT_JOIN
+        if (element1 !is KtPropertyAccessor || element2 !is KtPropertyAccessor) {
+            if (parent.node.elementType != BLOCK) return CANNOT_JOIN
+            if (linebreak.text.count { it == '\n' } > 1) return CANNOT_JOIN
+            if (!element1.isStatement()) return CANNOT_JOIN
+            if (!element2.isStatement()) return CANNOT_JOIN
+        }
 
         document.replaceString(linebreak.textRange.startOffset, linebreak.textRange.endOffset, " ")
         document.insertString(element1.textRange.endOffset, ";")
@@ -39,7 +42,7 @@ class JoinStatementsAddSemicolonHandler : JoinRawLinesHandlerDelegate {
         return linebreak.textRange.startOffset + 1
     }
 
-    override fun tryJoinLines(document: Document, file: PsiFile, start: Int, end: Int) = CANNOT_JOIN
+    override fun tryJoinLines(document: Document, file: PsiFile, start: Int, end: Int): Int = CANNOT_JOIN
 
     private fun PsiElement.firstMaterialSiblingSameLine(getNext: PsiElement.() -> PsiElement?): PsiElement? {
         var element = this
