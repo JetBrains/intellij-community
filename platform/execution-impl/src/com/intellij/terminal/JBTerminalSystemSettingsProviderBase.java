@@ -254,7 +254,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
 
   @ApiStatus.Internal
   public FontPreferences getFontPreferences() {
-    return getColorsScheme().getFontPreferences();
+    return getColorsScheme().getConsoleFontPreferences();
   }
 
   @Override
