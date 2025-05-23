@@ -151,6 +151,14 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
           }
         }
       }
+      else {
+        if (saveChanges && !Files.exists(myWriteZipPath)) {
+          // ensure an empty output file exists, even if there are no changes (bazel requirement)
+          try (var zos = new ZipOutputStream(openOutputStream(myWriteZipPath))) {
+            zos.setLevel(Deflater.BEST_SPEED);
+          }
+        }
+      }
     }
     else {
       // augment entry map with all currently present directory entries
