@@ -5,6 +5,7 @@ import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
@@ -38,7 +39,8 @@ final class JavaFramesListRenderer {
       component.append(label.substring(closingBrace + 1), attributes);
     }
 
-    if (isOccurrenceOfSelectedFrame(selectedDescriptor, descriptor) && descriptor.isRecursiveCall()) {
+    // TODO IJPL-189114 Disabled in split debugger because it requires repeated `customizePresentation` calls on frontend
+    if (!XDebugSessionProxy.useFeProxy() && isOccurrenceOfSelectedFrame(selectedDescriptor, descriptor) && descriptor.isRecursiveCall()) {
       component.append(" [" + descriptor.getOccurrenceIndex() + "]", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
   }
