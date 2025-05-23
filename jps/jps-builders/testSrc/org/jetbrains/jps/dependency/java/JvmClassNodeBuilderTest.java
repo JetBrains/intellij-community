@@ -3,7 +3,7 @@ package org.jetbrains.jps.dependency.java;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.FailSafeClassReader;
+import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import junit.framework.TestCase;
 import org.jetbrains.jps.util.Iterators;
 import org.jetbrains.org.objectweb.asm.ClassReader;
