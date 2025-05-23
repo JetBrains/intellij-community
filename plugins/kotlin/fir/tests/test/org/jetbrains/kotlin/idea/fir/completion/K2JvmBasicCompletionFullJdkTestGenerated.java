@@ -33,6 +33,11 @@ public abstract class K2JvmBasicCompletionFullJdkTestGenerated extends AbstractK
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("ChainCompletionRemaining.kt")
+        public void testChainCompletionRemaining() throws Exception {
+            runTest("../../completion/testData/basic/fullJdk/chain/ChainCompletionRemaining.kt");
+        }
+
         @TestMetadata("ChainedCallableCompletion.kt")
         public void testChainedCallableCompletion() throws Exception {
             runTest("../../completion/testData/basic/fullJdk/chain/ChainedCallableCompletion.kt");

@@ -41,6 +41,10 @@ internal class LookupElementSink(
     fun withContributorClass(contributorClass: Class<FirCompletionContributor<*>>): LookupElementSink =
         LookupElementSink(resultSet, parameters, groupPriority, contributorClass)
 
+    fun passResult(result: CompletionResult) {
+        resultSet.passResult(result)
+    }
+
     fun addElement(element: LookupElement) {
         decorateLookupElement(element)
             ?.let(resultSet::addElement)

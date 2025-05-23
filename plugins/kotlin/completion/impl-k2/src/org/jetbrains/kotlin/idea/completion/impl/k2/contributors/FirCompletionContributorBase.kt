@@ -193,23 +193,30 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
 
         sink.runRemainingContributors(parameters.delegate) { completionResult ->
             val lookupElement = completionResult.lookupElement
-            val (_, importStrategy) = lookupElement.`object` as? ClassifierLookupObject
-                ?: return@runRemainingContributors
-
-            val nameToImport = when (importStrategy) {
+            val classifierLookupObject = lookupElement.`object` as? ClassifierLookupObject
+            val nameToImport = when (val importStrategy = classifierLookupObject?.importingStrategy) {
                 is ImportStrategy.AddImport -> importStrategy.nameToImport
                 is ImportStrategy.InsertFqNameAndShorten -> importStrategy.fqName
-                ImportStrategy.DoNothing -> null
-            } ?: return@runRemainingContributors
+                else -> null
+            }
+
+            if (nameToImport == null) {
+                sink.passResult(completionResult)
+                return@runRemainingContributors
+            }
 
             val expression = KtPsiFactory.contextual(explicitReceiver)
                 .createExpression(nameToImport.render() + "." + positionContext.nameExpression.text) as KtDotQualifiedExpression
 
             val receiverExpression = expression.receiverExpression as? KtDotQualifiedExpression
-                ?: return@runRemainingContributors
-
             val nameExpression = expression.selectorExpression as? KtNameReferenceExpression
-                ?: return@runRemainingContributors
+
+            if (receiverExpression == null
+                || nameExpression == null
+            ) {
+                sink.passResult(completionResult)
+                return@runRemainingContributors
+            }
 
             analyze(nameExpression) {
                 createLookupElements(

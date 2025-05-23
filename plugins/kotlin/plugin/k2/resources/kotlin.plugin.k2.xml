@@ -116,7 +116,7 @@
                             implementationClass="org.jetbrains.kotlin.idea.completion.KotlinFirCompletionContributor"/>
 
     <completion.contributor language="kotlin"
-                            order="first, after KotlinDumbCompletionContributor"
+                            order="last, before default"
                             implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.KotlinChainCompletionContributor"/>
 
     <registryKey key="kotlin.k2.chain.completion.enabled"
