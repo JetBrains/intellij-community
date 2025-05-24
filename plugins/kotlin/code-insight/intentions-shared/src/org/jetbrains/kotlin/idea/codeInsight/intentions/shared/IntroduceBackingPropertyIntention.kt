@@ -47,29 +47,29 @@ class IntroduceBackingPropertyIntention :
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("introduce.backing.property")
 
-    override fun KaSession.prepareContext(property: KtProperty): Context? {
-        val name = property.name ?: return null
-        if (!isBackingFieldRequiredAndCanBeUsed(property)) return null
+    override fun KaSession.prepareContext(element: KtProperty): Context? {
+        val name = element.name ?: return null
+        if (!isBackingFieldRequiredAndCanBeUsed(element)) return null
 
-        val containingClass = property.getStrictParentOfType<KtClassOrObject>() ?: return null
+        val containingClass = element.getStrictParentOfType<KtClassOrObject>() ?: return null
         if (containingClass.isExpectDeclaration()) return null
         return if (containingClass.declarations.none { it is KtProperty && it.name == "_$name" }) {
-            val getterFieldReferences = property.getter?.let { collectFieldReferences(it) } ?: emptyList()
-            val setterFieldReferences = if (property.isVar) {
-                property.setter?.let { collectFieldReferences(it) } ?: emptyList()
+            val getterFieldReferences = element.getter?.let { collectFieldReferences(it) } ?: emptyList()
+            val setterFieldReferences = if (element.isVar) {
+                element.setter?.let { collectFieldReferences(it) } ?: emptyList()
             } else {
                 emptyList()
             }
-            Context(getTypeInfo(property), getterFieldReferences, setterFieldReferences)
+            Context(getTypeInfo(element), getterFieldReferences, setterFieldReferences)
         } else {
             null
         }
     }
 
-    override fun isApplicableByPsi(property: KtProperty): Boolean {
-        property.name ?: return false
-        if (property.hasModifier(KtTokens.CONST_KEYWORD)) return false
-        return !property.hasJvmFieldAnnotation()
+    override fun isApplicableByPsi(element: KtProperty): Boolean {
+        element.name ?: return false
+        if (element.hasModifier(KtTokens.CONST_KEYWORD)) return false
+        return !element.hasJvmFieldAnnotation()
     }
 
     private fun KaSession.isBackingFieldRequiredAndCanBeUsed(property: KtProperty): Boolean {
@@ -99,7 +99,7 @@ class IntroduceBackingPropertyIntention :
     }
 
     private fun replaceFieldReferences(
-        project: Project, propertyName: String, context: IntroduceBackingPropertyIntention.Context, updater: ModPsiUpdater
+        project: Project, propertyName: String, context: Context, updater: ModPsiUpdater
     ) {
         fun replaceFieldReference(reference: SmartPsiElementPointer<KtSimpleNameExpression>) {
             val writableElement = reference.element?.let { updater.getWritable(it) } ?: return
@@ -113,7 +113,7 @@ class IntroduceBackingPropertyIntention :
         }
     }
 
-    private fun removeInitializer(project: Project, property: KtProperty, context: IntroduceBackingPropertyIntention.Context) {
+    private fun removeInitializer(project: Project, property: KtProperty, context: Context) {
         property.removeModifier(KtTokens.LATEINIT_KEYWORD)
         if (property.typeReference == null) {
             updateTypeForDeclarationInDummyFile(property, context.typeInfo, project)
