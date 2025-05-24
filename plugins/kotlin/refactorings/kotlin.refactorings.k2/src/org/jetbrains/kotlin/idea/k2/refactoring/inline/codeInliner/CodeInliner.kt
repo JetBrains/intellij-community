@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner
 
-import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
@@ -115,8 +114,7 @@ class CodeInliner(
         var receiverType =
             receiver?.let {
                 analyze(it) {
-                    val type = it.expressionType
-                    type to (type?.nullability == KaTypeNullability.NULLABLE || type is KaFlexibleType && type.upperBound.nullability == KaTypeNullability.NULLABLE)
+                    createTypeDescription(it.expressionType)
                 }
             }
 
@@ -139,7 +137,7 @@ class CodeInliner(
                     }
                     receiver = psiFactory.createExpression(thisText)
                     val type = receiverValue.type
-                    receiverType = type to (type.nullability == KaTypeNullability.NULLABLE)
+                    receiverType = createTypeDescription(type)
                 }
             }
         }
@@ -208,14 +206,14 @@ class CodeInliner(
             importPath to target
         }
 
-        if (elementToBeReplaced is KtSafeQualifiedExpression && receiverType?.second == true) {
-            wrapCodeForSafeCall(receiver!!, receiverType.first, elementToBeReplaced)
+        if (elementToBeReplaced is KtSafeQualifiedExpression && receiverType?.isMarkedNullable == true) {
+            wrapCodeForSafeCall(receiver!!, receiverType, elementToBeReplaced)
         } else if (call is KtBinaryExpression && call.operationToken == KtTokens.IDENTIFIER) {
             keepInfixFormIfPossible(importDeclarations.map { it.second })
         }
 
         codeToInline.convertToCallableReferenceIfNeeded(elementToBeReplaced)
-        introduceVariablesForParameters(elementToBeReplaced, receiver, receiverType?.first, introduceValueForParameters)
+        introduceVariablesForParameters(elementToBeReplaced, receiver, receiverType, introduceValueForParameters)
 
         codeToInline.extraComments?.restoreComments(elementToBeReplaced)
         findAndMarkNewDeclarations()
@@ -355,7 +353,7 @@ class CodeInliner(
 
         markAsUserCode(resultExpression)
 
-        val expressionType = analyze(call) { resultExpression.expressionType }
+        val expressionType = analyze(call) { createTypeDescription(resultExpression.expressionType) }
         if (argumentExpressionsForParameter.isEmpty() && callableDeclaration is KtFunction) {
             //encode default value
             val allParameters = callableDeclaration.valueParameters()
@@ -372,12 +370,22 @@ class CodeInliner(
         return Argument(resultExpression, expressionType, isNamed = isNamed, argumentExpressionsForParameter.isEmpty())
     }
 
+    @OptIn(KaExperimentalApi::class)
+    context(KaSession)
+    private fun createTypeDescription(type: KaType?): TypeDescription? {
+        if (type == null) return null
+        return TypeDescription(type.render(position = Variance.INVARIANT),
+                               type is KaErrorType,
+                               type.nullability == KaTypeNullability.NULLABLE || type is KaFlexibleType && type.upperBound.nullability == KaTypeNullability.NULLABLE
+        )
+    }
+
     private fun argumentForPropertySetter(): Argument? {
         val expr = (call as? KtExpression)
             ?.getQualifiedExpressionForSelectorOrThis()
             ?.getAssignmentByLHS()
             ?.right ?: return null
-        return Argument(expr, analyze(call) { expr.expressionType })
+        return Argument(expr, analyze(call) { createTypeDescription(expr.expressionType) })
     }
 
     private fun argumentForVarargParameter(argumentExpressionsForParameter: List<KtExpression>, parameter: KtParameter): Argument? {
@@ -386,7 +394,7 @@ class CodeInliner(
             if (single?.getSpreadElement() != null) {
                 val expression = argumentExpressionsForParameter.first()
                 markAsUserCode(expression)
-                return Argument(expression, expression.expressionType, isNamed = single.isNamed())
+                return Argument(expression, createTypeDescription(expression.expressionType), isNamed = single.isNamed())
             }
             val parameterType = parameter.returnType
             val elementType = parameterType.arrayElementType ?: return null
@@ -405,7 +413,7 @@ class CodeInliner(
                 }
                 appendFixedText(")")
             }
-            Argument(expression, expression.expressionType)
+            Argument(expression, createTypeDescription(expression.expressionType))
         }
     }
 
@@ -430,7 +438,7 @@ class CodeInliner(
 
     override fun introduceValue(
         value: KtExpression,
-        valueType: KaType?,
+        valueType: TypeDescription?,
         usages: Collection<KtExpression>,
         expressionToBeReplaced: KtExpression,
         nameSuggestion: String?,
