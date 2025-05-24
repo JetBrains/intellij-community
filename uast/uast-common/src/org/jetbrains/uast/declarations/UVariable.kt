@@ -95,6 +95,22 @@ interface UField : UVariable, PsiField {
   @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiField
 
+  /**
+   * Annotations on source PSI.
+   *
+   * If annotations are annotated with no specific use-site, it follows default rules
+   * according to https://kotlinlang.org/docs/annotations.html#annotation-use-site-targets
+   * where `param`, `property`, and `field` are considered in order. Therefore, it is likely
+   * that the annotation is applied to property (before field) and belongs to $annotations
+   * in JVM bytecode. This might not be a user's intention, and some static analyses and/or
+   * inspections still depend on annotation without a use-site on property.
+   * To make [UVariable]'s annotation modeling accurate (i.e., conform to those in JVM bytecode)
+   * while mitigating existing analyses' behavior, this returns annotations on source PSI.
+   */
+  @get:ApiStatus.Experimental
+  val sourceAnnotations: List<UAnnotation>?
+    get() = null
+
   override fun asLogString(): String = log("name = $name")
 
   override fun accept(visitor: UastVisitor) {
