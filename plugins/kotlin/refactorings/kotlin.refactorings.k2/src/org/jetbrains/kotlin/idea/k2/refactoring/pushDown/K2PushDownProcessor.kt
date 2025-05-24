@@ -66,21 +66,22 @@ internal class K2PushDownProcessor(
 ) : KotlinPushDownProcessor(project) {
     override val context: K2PushDownContext = K2PushDownContext(sourceClass, membersToMove)
 
-    override fun renderSourceClassForConflicts(): String =
-        analyze(context.sourceClass) { context.sourceClass.symbol.renderForConflicts(analysisSession = this) }
+    override fun renderSourceClassForConflicts(): String = analyze(context.sourceClass) {
+        context.sourceClass.symbol.renderForConflicts(analysisSession = this)
+    }
 
     override fun analyzePushDownConflicts(
         usages: Array<out UsageInfo>,
-    ): MultiMap<PsiElement, String> =
-        analyze(context.sourceClass) { analyzePushDownConflicts(context, usages) }
+    ): MultiMap<PsiElement, String> = analyze(context.sourceClass) {
+        analyzePushDownConflicts(context, usages)
+    }
 
     override fun performRefactoring(usages: Array<out UsageInfo>) {
         val actionsContext = PushDownActionsContext()
         try {
             prepareRefactoring(usages, actionsContext)
             executeRefactoring(usages, actionsContext)
-        }
-        finally {
+        } finally {
             clearMarking(actionsContext.markedElements)
         }
     }

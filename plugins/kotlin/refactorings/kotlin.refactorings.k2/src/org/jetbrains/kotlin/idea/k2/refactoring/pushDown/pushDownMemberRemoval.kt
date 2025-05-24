@@ -41,13 +41,11 @@ private fun KaSession.createRemoveCallableMemberAction(
             var type = (memberSymbol as KaCallableSymbol).returnType
             if (type is KaErrorType) {
                 type = builtinTypes.nullableAny
-            }
-            else {
+            } else {
                 type = substitutor.substitute(type)
             }
             (member is KtProperty || !type.isUnitType) to type
-        }
-        else {
+        } else {
             false to null
         }
 
@@ -81,8 +79,7 @@ private fun KaSession.createRemoveClassLikeMemberAction(
         ) ?: return null
 
         RemovalAction { sourceClass.removeSuperTypeListEntry(superTypeListEntry) }
-    }
-    else {
+    } else {
         RemovalAction { member.delete() }
     }
 }
