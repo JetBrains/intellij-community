@@ -5744,6 +5744,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/member/inconsistentTypes.kt");
                     }
 
+                    @TestMetadata("innerClass.kt")
+                    public void testInnerClass() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/innerClass.kt");
+                    }
+
                     @TestMetadata("propertyOnUserType.kt")
                     public void testPropertyOnUserType() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/member/propertyOnUserType.kt");

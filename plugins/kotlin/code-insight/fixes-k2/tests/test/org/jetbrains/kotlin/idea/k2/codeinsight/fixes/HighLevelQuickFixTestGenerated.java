@@ -10389,6 +10389,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/member/inconsistentTypes.kt");
             }
 
+            @TestMetadata("innerClass.kt")
+            public void testInnerClass() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/member/innerClass.kt");
+            }
+
             @TestMetadata("propertyOnUserType.kt")
             public void testPropertyOnUserType() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/member/propertyOnUserType.kt");

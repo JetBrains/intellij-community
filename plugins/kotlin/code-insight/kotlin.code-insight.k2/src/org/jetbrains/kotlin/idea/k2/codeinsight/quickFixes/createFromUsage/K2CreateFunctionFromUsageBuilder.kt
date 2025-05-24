@@ -76,9 +76,10 @@ object K2CreateFunctionFromUsageBuilder {
         // Register default create-from-usage request.
         // TODO: Check whether this class or file can be edited (Use `canRefactor()`).
         val implicitReceivers = computeImplicitReceiverType(calleeExpression)
-        val defaultContainers = when (val ktClassOrPsiClass = receiverExpression?.getClassOfExpressionType()) {
-            is PsiClass -> listOf(ktClassOrPsiClass)
-            is KtClassOrObject -> listOf(ktClassOrPsiClass)
+        val receiverClass = receiverExpression?.getClassOfExpressionType()
+        val defaultContainers = when (receiverClass) {
+            is PsiClass -> listOf(receiverClass)
+            is KtClassOrObject -> listOf(receiverClass)
             else -> implicitReceivers.map { it.convertToClass() }.takeIf { it.isNotEmpty() } ?: listOf(PsiTreeUtil.getParentOfType(
                 /* element = */ calleeExpression,
                 /* aClass = */ KtClassOrObject::class.java,
@@ -101,7 +102,7 @@ object K2CreateFunctionFromUsageBuilder {
                     functionCall = callExpression,
                     modifiers = modifiers,
                     receiverExpression = receiverExpression,
-                    receiverType = implicitReceivers.getOrNull(index),
+                    receiverType = implicitReceivers.getOrNull(index).takeUnless { receiverClass is KtClassOrObject || receiverClass is PsiClass },
                     isExtension = false,
                     isAbstractClassOrInterface = false,
                     isForCompanion = shouldCreateCompanionClass
