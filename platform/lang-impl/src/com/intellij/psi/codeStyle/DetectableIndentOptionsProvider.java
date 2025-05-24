@@ -101,7 +101,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     myIsEnabledInTest = isEnabledInTest;
   }
 
-  private boolean isApplicableForFile(@NotNull VirtualFile file) {
+  boolean isApplicableForFile(@NotNull VirtualFile file) {
     if (!file.isValid() ||
         !file.isWritable() ||
         ScratchUtil.isScratch(file)) {
@@ -125,11 +125,9 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     return false;
   }
 
-  @TestOnly
   public static @Nullable DetectableIndentOptionsProvider getInstance() {
     return EP_NAME.findExtension(DetectableIndentOptionsProvider.class);
   }
-
 
   private void disableForFile(@NotNull VirtualFile file, @NotNull IndentOptions indentOptions) {
     myDiscardedOptions.put(file, indentOptions);

@@ -787,6 +787,15 @@ f:com.intellij.platform.ide.documentation.ActionsKt
 *:com.intellij.platform.ide.documentation.DocumentationBrowserFacade
 - a:getTargetPointer():com.intellij.model.Pointer
 - a:reload():V
+*f:com.intellij.psi.codeStyle.DetectableIndentSettingsModifier
+- com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier
+- <init>():V
+- getDisablingFunction(com.intellij.openapi.project.Project):java.util.function.Consumer
+- getName():java.lang.String
+- getStatusBarUiContributor(com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings):com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor
+- mayOverrideSettingsOf(com.intellij.openapi.project.Project):Z
+- modifySettings(com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings,com.intellij.psi.PsiFile):Z
+- modifySettingsAndUiCustomization(com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings,com.intellij.psi.PsiFile):Z
 *f:com.intellij.psi.impl.source.resolve.reference.PsiReferenceUtil
 - s:findReferenceOfClass(com.intellij.psi.PsiReference,java.lang.Class):com.intellij.psi.PsiReference
 - s:unwrapMultiReference(com.intellij.psi.PsiReference):java.util.List

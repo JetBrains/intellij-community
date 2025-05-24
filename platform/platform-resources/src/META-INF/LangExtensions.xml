@@ -1260,6 +1260,7 @@
                             order="after ReadOnlyAttribute"/>
 
     <fileIndentOptionsProvider implementation="com.intellij.psi.codeStyle.DetectableIndentOptionsProvider" order="last"/>
+    <codeStyleSettingsModifier id="com.intellij.psi.codeStyle.DetectableIndentSettingsModifier" implementation="com.intellij.psi.codeStyle.DetectableIndentSettingsModifier" order="last"/>
     <lang.formatter.restriction implementation="com.intellij.formatting.ExcludedFileFormattingRestriction"/>
 
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.refactoring.changeSignature.inplace.EscapeHandler"
