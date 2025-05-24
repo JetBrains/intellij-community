@@ -48,5 +48,6 @@
     <orderEntry type="library" name="maven-resolver-provider" level="project" />
     <orderEntry type="module" module-name="intellij.java.syntax" />
     <orderEntry type="library" name="slf4j-api" level="project" />
+    <orderEntry type="library" name="ASM" level="project" />
   </component>
 </module>

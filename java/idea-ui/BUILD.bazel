@@ -52,6 +52,7 @@ jvm_library(
     "@lib//:maven-resolver-provider",
     "//java/java-syntax:syntax",
     "@lib//:slf4j-api",
+    "@lib//:asm",
   ],
   runtime_deps = [":ui_resources"]
 )

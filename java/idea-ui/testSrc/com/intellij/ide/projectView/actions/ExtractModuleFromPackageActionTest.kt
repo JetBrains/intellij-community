@@ -1,9 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.actions
 
-import com.intellij.ide.extractModule.ExtractModuleFromPackageAction
+import com.intellij.ide.extractModule.ExtractModuleService
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.compiler.CompilerMessageCategory
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -11,15 +14,18 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.CompilerTester
+import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.SoftAssertions
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Path
-import java.util.concurrent.TimeUnit
 import kotlin.io.path.invariantSeparatorsPathString
 
 class ExtractModuleFromPackageActionTest {
@@ -32,6 +38,10 @@ class ExtractModuleFromPackageActionTest {
   @Rule
   @JvmField
   val projectModel = ProjectModelRule()
+
+  @Rule
+  @JvmField
+  val disposableRule = DisposableRule()
 
   @Test
   fun `extract module in place`() {
@@ -78,10 +88,44 @@ class ExtractModuleFromPackageActionTest {
     assertThat(mainRoots.dependencies).containsExactly(dep2, exported)
   }
 
+  @Test
+  fun `add dependencies from others modules after extracting`() {
+    val (main, directory) = prepareProject()
+    val otherModuleWithoutReference = projectModel.createModule("otherWithoutReference")
+
+    val otherModuleWithReference = projectModel.createModule("otherWithReference")
+    projectModel.addSourceRoot(otherModuleWithReference, "src", JavaSourceRootType.SOURCE).let {
+      VfsTestUtil.createFile(it, "other/Other.java", "package other;\npublic class Other { main.MyClass myClass; xxx.Main main; }")
+    }
+
+    val otherModuleWithReferenceOnExtractedOnly = projectModel.createModule("otherWithReferenceOnExtracedOnly")
+    projectModel.addSourceRoot(otherModuleWithReferenceOnExtractedOnly, "src", JavaSourceRootType.SOURCE).let {
+      VfsTestUtil.createFile(it, "other2/Other2.java", "package other2;\npublic class Other2 { xxx.Main other2; }")
+    }
+
+    ModuleRootModificationUtil.addDependency(otherModuleWithoutReference, main)
+    ModuleRootModificationUtil.addDependency(otherModuleWithReference, main)
+    ModuleRootModificationUtil.addDependency(otherModuleWithReferenceOnExtractedOnly, main)
+
+    extractModule(directory, main, null)
+    val extracted = projectModel.moduleManager.findModuleByName("main.xxx")!!
+
+    with(SoftAssertions()) {
+      assertThat(ModuleRootManager.getInstance(otherModuleWithReference).dependencies).containsExactly(main, extracted)
+      assertThat(ModuleRootManager.getInstance(otherModuleWithoutReference).dependencies).containsExactly(main)
+      assertThat(ModuleRootManager.getInstance(otherModuleWithReferenceOnExtractedOnly).dependencies).containsExactly(extracted)
+      assertAll()
+    }
+  }
+
   private fun extractModule(directory: PsiDirectory, main: Module, targetSourceRoot: String?) {
-    val promise = ExtractModuleFromPackageAction.extractModuleFromDirectory(directory, main, "main.xxx",
-                                                                            targetSourceRoot)
-    promise.blockingGet(10, TimeUnit.SECONDS)
+    val compilerTester = CompilerTester(projectModel.project, ModuleManager.getInstance(projectModel.project).modules.toList(), disposableRule.disposable)
+    val messages = compilerTester.rebuild()
+    assertThat(messages.filter { it.category == CompilerMessageCategory.ERROR }).isEmpty()
+    runBlocking {
+      projectModel.project.service<ExtractModuleService>().extractModuleFromDirectory(directory, main, "main.xxx",
+                                                                                      targetSourceRoot)
+    }
   }
 
   private fun prepareProject(addDirectUsageOfExportedModule: Boolean = false): Pair<Module, PsiDirectory> {
@@ -96,8 +140,8 @@ class ExtractModuleFromPackageActionTest {
     val dep1Src = projectModel.addSourceRoot(dep1, "src", JavaSourceRootType.SOURCE)
     val dep2Src = projectModel.addSourceRoot(dep2, "src", JavaSourceRootType.SOURCE)
     val exportedSrc = projectModel.addSourceRoot(exported, "src", JavaSourceRootType.SOURCE)
-    val mainClass = VfsTestUtil.createFile(mainSrc, "xxx/Main.java", "package xxx;\nclass Main extends dep1.Dep1 { exported.Util u; }")
-    VfsTestUtil.createFile(mainSrc, "main/MyClass.java", "package main;\nclass MyClass {}")
+    val mainClass = VfsTestUtil.createFile(mainSrc, "xxx/Main.java", "package xxx;\npublic class Main extends dep1.Dep1 { exported.Util u; }")
+    VfsTestUtil.createFile(mainSrc, "main/MyClass.java", "package main;\npublic class MyClass { dep2.Dep2 d; }")
     if (addDirectUsageOfExportedModule) {
       VfsTestUtil.createFile(mainSrc, "main/ExportedUsage.java", "package main;\nclass ExportedUsage { exported.Util u; }")
     }
