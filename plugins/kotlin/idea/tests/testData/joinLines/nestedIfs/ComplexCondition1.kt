@@ -1,3 +1,11 @@
+// AFTER_ERROR: Unresolved reference: a
+// AFTER_ERROR: Unresolved reference: b
+// AFTER_ERROR: Unresolved reference: c
+// AFTER_ERROR: Unresolved reference: d
+// K2_AFTER_ERROR: Unresolved reference 'a'.
+// K2_AFTER_ERROR: Unresolved reference 'b'.
+// K2_AFTER_ERROR: Unresolved reference 'c'.
+// K2_AFTER_ERROR: Unresolved reference 'd'.
 fun foo() {
     <caret>if (a && b) {
         if (c && d) foo()

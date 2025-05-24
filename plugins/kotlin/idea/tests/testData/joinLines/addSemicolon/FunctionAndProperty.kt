@@ -1,6 +1,7 @@
 class A {
+    val y = 1
     fun f(){}<caret>
-    val x: Int
+    var x: Int
         get() = y
         set(value) {}
 }
