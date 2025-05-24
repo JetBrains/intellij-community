@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.impl.ToolWindowUIDecorator
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
@@ -70,14 +71,18 @@ internal class IslandsUICustomization : InternalUICustomization() {
       val uiThemeManager = UiThemeProviderListManager.getInstance()
       val isLight = JBColor.isBright()
 
-      val newTheme = when (type) {
+      val editorScheme: String
+      var newTheme = when (type) {
         "island" -> {
+          editorScheme = if (isLight) "Light" else "One Island Darker"
           uiThemeManager.findThemeById(if (isLight) "One Island Light" else "One Island Darker")
         }
         "islands" -> {
+          editorScheme = if (isLight) "Light" else "One Island Darker"
           uiThemeManager.findThemeById(if (isLight) "Many Islands Light" else "Many Islands Darker")
         }
         else -> {
+          editorScheme = if (isLight) "Light" else "Dark"
           uiThemeManager.findThemeById(if (isLight) "ExperimentalLight" else "ExperimentalDark")
         }
       }
@@ -85,11 +90,15 @@ internal class IslandsUICustomization : InternalUICustomization() {
       val lafManager = LafManager.getInstance()
 
       if (newTheme == null) {
-        lafManager.setCurrentLookAndFeel((if (isLight) lafManager.defaultLightLaf else lafManager.defaultDarkLaf)!!, true)
+        newTheme = if (isLight) lafManager.defaultLightLaf else lafManager.defaultDarkLaf
+        lafManager.setCurrentLookAndFeel(newTheme!!, true)
       }
       else {
         lafManager.setCurrentLookAndFeel(newTheme, true)
       }
+
+      val colorsManager = EditorColorsManager.getInstance()
+      newTheme.installEditorScheme(colorsManager.getScheme(editorScheme) ?: colorsManager.defaultScheme)
 
       if (PluginManagerConfigurable.showRestartDialog(IdeBundle.message("dialog.title.restart.required"), Function {
           IdeBundle.message("dialog.message.must.be.restarted.for.changes.to.take.effect",
