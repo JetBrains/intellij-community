@@ -48,18 +48,32 @@ public final class StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static char toUpperCase(char a) {
-    if (a < 'a') return a;
-    if (a <= 'z') return (char)(a + ('A' - 'a'));
-    return Character.toUpperCase(a);
+  public static char toUpperCase(char ch) {
+    //if (a < 'a') return a;
+    //if (a <= 'z') return (char)(ch + ('A' - 'a'));
+
+    if (ch <= 0x7F) {
+      if (ch >= 'a' && ch <= 'z') {
+        //in ASCII lower and upper case letters differ by a single bit:
+        return (char)(ch & 0b1101_1111);
+        //legacy version: (char)(ch + ('A' - 'a')) -- a bit slower in benchmarks
+      }
+      return ch;
+    }
+    return Character.toUpperCase(ch);
   }
 
   @Contract(pure = true)
-  public static char toLowerCase(char a) {
-    if (a <= 'z') {
-      return a >= 'A' && a <= 'Z' ? (char)(a + ('a' - 'A')) : a;
+  public static char toLowerCase(char ch) {
+    if (ch <= 0x7F) {
+      if (ch >= 'A' && ch <= 'Z') {
+        //in ASCII lower and upper case letters differ by a single bit:
+        return (char)(ch | 0b0010_0000);
+        //legacy version: (char)(ch + ('a' - 'A')) -- a bit slower in benchmarks
+      }
+      return ch;
     }
-    return Character.toLowerCase(a);
+    return Character.toLowerCase(ch);
   }
 
   /**
@@ -178,8 +192,11 @@ public final class StringUtilRt {
   @Contract(pure = true)
   public static int parseInt(@Nullable String string, int defaultValue) {
     if (string != null) {
-      try { return Integer.parseInt(string); }
-      catch (NumberFormatException ignored) { }
+      try {
+        return Integer.parseInt(string);
+      }
+      catch (NumberFormatException ignored) {
+      }
     }
     return defaultValue;
   }
@@ -187,8 +204,11 @@ public final class StringUtilRt {
   @Contract(pure = true)
   public static long parseLong(@Nullable String string, long defaultValue) {
     if (string != null) {
-      try { return Long.parseLong(string); }
-      catch (NumberFormatException ignored) { }
+      try {
+        return Long.parseLong(string);
+      }
+      catch (NumberFormatException ignored) {
+      }
     }
     return defaultValue;
   }
@@ -196,8 +216,11 @@ public final class StringUtilRt {
   @Contract(pure = true)
   public static double parseDouble(@Nullable String string, double defaultValue) {
     if (string != null) {
-      try { return Double.parseDouble(string); }
-      catch (NumberFormatException ignored) { }
+      try {
+        return Double.parseDouble(string);
+      }
+      catch (NumberFormatException ignored) {
+      }
     }
     return defaultValue;
   }
@@ -288,7 +311,7 @@ public final class StringUtilRt {
     return -1;
   }
 
-  @Contract(value = "null -> true",pure = true)
+  @Contract(value = "null -> true", pure = true)
   public static boolean isEmpty(@Nullable CharSequence cs) {
     return cs == null || cs.length() == 0;
   }
