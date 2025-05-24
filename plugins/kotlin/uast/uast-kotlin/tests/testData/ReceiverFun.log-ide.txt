@@ -2,8 +2,8 @@ UFile (package = )
     UClass (name = ReceiverFunKt)
         UMethod (name = foo)
             UParameter (name = $this$foo)
-                UAnnotation (fqName = MyReceiverAnnotation)
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+                UAnnotation (fqName = MyReceiverAnnotation)
             UBlockExpression
                 UReturnExpression
                     UQualifiedReferenceExpression
@@ -11,11 +11,11 @@ UFile (package = )
                         USimpleNameReferenceExpression (identifier = length)
         UMethod (name = getRx)
             UParameter (name = $this$rx)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
                 UAnnotation (fqName = MyReceiverAnnotation)
                     UNamedExpression (name = name)
                         UPolyadicExpression (operator = +)
                             ULiteralExpression (value = "RegExp")
-                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UReturnExpression
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))

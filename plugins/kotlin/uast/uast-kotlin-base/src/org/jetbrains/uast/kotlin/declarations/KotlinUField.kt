@@ -4,11 +4,16 @@ package org.jetbrains.uast.kotlin
 import com.intellij.psi.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.uast.UAnnotation
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UField
 import org.jetbrains.uast.UFieldEx
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.visitor.UastVisitor
 
@@ -27,11 +32,6 @@ open class KotlinUField(
     override fun getType(): PsiType {
         return delegateExpression?.getExpressionType() ?: javaPsi.type
     }
-
-    override fun acceptsAnnotationTarget(target: AnnotationUseSiteTarget?): Boolean =
-        target == AnnotationUseSiteTarget.FIELD ||
-                target == AnnotationUseSiteTarget.PROPERTY_DELEGATE_FIELD ||
-                (sourcePsi is KtProperty) && (target == null || target == AnnotationUseSiteTarget.PROPERTY)
 
     override fun getInitializer(): PsiExpression? {
         return super<AbstractKotlinUVariable>.getInitializer()
@@ -69,6 +69,33 @@ open class KotlinUField(
         // NB: use of (potentially delegated) `type`, instead of `javaPsiInternal.type`, is the only major difference.
         append("var ").append(javaPsi.name).append(": ").append(type.getCanonicalText(false))
         uastInitializer?.let { initializer -> append(" = " + initializer.asRenderString()) }
+    }
+
+    private val defaultUseSiteAnnotationsPart = UastLazyPart<List<UAnnotation>?>()
+
+    override val defaultUseSiteAnnotations: List<UAnnotation>?
+        get() = defaultUseSiteAnnotationsPart.getOrBuild {
+            val entries =
+                when (val origin = sourcePsi) {
+                    is KtParameter -> origin.annotationEntries
+                    is KtProperty -> origin.annotationEntries
+                    else -> return@getOrBuild null
+                }
+            defaultUseSiteAnnotations(entries)
+        }
+
+    private fun defaultUseSiteAnnotations(entries: List<KtAnnotationEntry>): List<UAnnotation>? {
+        var annotations: MutableList<UAnnotation>? = null
+        for (ktAnnotation in entries) {
+            val site = ktAnnotation.useSiteTarget?.getAnnotationUseSiteTarget()
+            if (site == null || site == AnnotationUseSiteTarget.PROPERTY) {
+                val annotation =
+                    baseResolveProviderService.baseKotlinConverter.convertAnnotation(ktAnnotation, this)
+                val list = annotations ?: mutableListOf<UAnnotation>().also { annotations = it }
+                list.add(annotation)
+            }
+        }
+        return annotations
     }
 }
 

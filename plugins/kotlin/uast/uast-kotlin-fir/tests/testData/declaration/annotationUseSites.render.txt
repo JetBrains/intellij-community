@@ -1,0 +1,47 @@
+public abstract annotation Anno {
+}
+
+public final class Foo {
+    @org.jetbrains.annotations.NotNull private var annotatedWithGet: int
+    @org.jetbrains.annotations.NotNull private var annotatedWithSet: int
+    @org.jetbrains.annotations.NotNull private var annotatedWithProperty: int
+    @org.jetbrains.annotations.NotNull private var annotatedWithParam: int
+    @org.jetbrains.annotations.NotNull @Anno private var annotatedWithField: int
+    @org.jetbrains.annotations.NotNull private var annotatedWithDefault: int
+    @Anno
+    public final fun getAnnotatedWithGet() : int = UastEmptyExpression
+    public final fun setAnnotatedWithGet(<set-?>: int) : void = UastEmptyExpression
+    public final fun getAnnotatedWithSet() : int = UastEmptyExpression
+    @Anno
+    public final fun setAnnotatedWithSet(<set-?>: int) : void = UastEmptyExpression
+    public final fun getAnnotatedWithProperty() : int = UastEmptyExpression
+    public final fun setAnnotatedWithProperty(<set-?>: int) : void = UastEmptyExpression
+    public final fun getAnnotatedWithParam() : int = UastEmptyExpression
+    public final fun setAnnotatedWithParam(<set-?>: int) : void = UastEmptyExpression
+    public final fun getAnnotatedWithField() : int = UastEmptyExpression
+    public final fun setAnnotatedWithField(<set-?>: int) : void = UastEmptyExpression
+    public final fun getAnnotatedWithDefault() : int = UastEmptyExpression
+    public final fun setAnnotatedWithDefault(<set-?>: int) : void = UastEmptyExpression
+    public fun Foo(@org.jetbrains.annotations.NotNull annotatedWithGet: int, @org.jetbrains.annotations.NotNull annotatedWithSet: int, @org.jetbrains.annotations.NotNull annotatedWithProperty: int, @org.jetbrains.annotations.NotNull @Anno annotatedWithParam: int, @org.jetbrains.annotations.NotNull annotatedWithField: int, @org.jetbrains.annotations.NotNull @Anno annotatedWithDefault: int) = UastEmptyExpression
+}
+
+public final class Bar {
+    @org.jetbrains.annotations.NotNull private var annotatedWithGet: int = 0
+    @org.jetbrains.annotations.NotNull private var annotatedWithSet: int = 1
+    @org.jetbrains.annotations.NotNull private var annotatedWithProperty: int = 2
+    @org.jetbrains.annotations.NotNull @Anno private var annotatedWithField: int = 3
+    @org.jetbrains.annotations.NotNull private var annotatedWithDefault: int = 4
+    @Anno
+    public final fun getAnnotatedWithGet() : int = UastEmptyExpression
+    public final fun setAnnotatedWithGet(<set-?>: int) : void = UastEmptyExpression
+    public final fun getAnnotatedWithSet() : int = UastEmptyExpression
+    @Anno
+    public final fun setAnnotatedWithSet(<set-?>: int) : void = UastEmptyExpression
+    public final fun getAnnotatedWithProperty() : int = UastEmptyExpression
+    public final fun setAnnotatedWithProperty(<set-?>: int) : void = UastEmptyExpression
+    public final fun getAnnotatedWithField() : int = UastEmptyExpression
+    public final fun setAnnotatedWithField(<set-?>: int) : void = UastEmptyExpression
+    public final fun getAnnotatedWithDefault() : int = UastEmptyExpression
+    public final fun setAnnotatedWithDefault(<set-?>: int) : void = UastEmptyExpression
+    public fun Bar() = UastEmptyExpression
+}

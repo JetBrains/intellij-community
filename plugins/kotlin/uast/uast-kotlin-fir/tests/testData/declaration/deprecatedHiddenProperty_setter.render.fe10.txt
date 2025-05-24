@@ -1,7 +1,7 @@
 package test.pkg
 
 public final class Test {
-    @org.jetbrains.annotations.Nullable @kotlin.Deprecated(message = "no more property", level = DeprecationLevel.HIDDEN) private var pOld_setter_deprecatedOnProperty: java.lang.String = null
+    @org.jetbrains.annotations.Nullable private var pOld_setter_deprecatedOnProperty: java.lang.String = null
     @org.jetbrains.annotations.Nullable private var pOld_setter_deprecatedOnGetter: java.lang.String = null
     @org.jetbrains.annotations.Nullable private var pOld_setter_deprecatedOnSetter: java.lang.String = null
     @org.jetbrains.annotations.Nullable private var pNew_setter: java.lang.String = null

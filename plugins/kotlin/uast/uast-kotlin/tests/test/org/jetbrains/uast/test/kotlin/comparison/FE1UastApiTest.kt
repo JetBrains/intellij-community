@@ -133,11 +133,6 @@ class FE1UastApiTest : AbstractFE1UastTest() {
             doTest("EnumValueMembers", ::checkCallbackForEnumValueMembers)
         }
 
-        @TestMetadata("SimpleAnnotated.kt")
-        fun testSimpleAnnotated() {
-            doTest("SimpleAnnotated", ::checkCallbackForSimpleAnnotated)
-        }
-
         @TestMetadata("SuperCalls.kt")
         fun testSuperCalls() {
             doTest("SuperCalls", ::checkCallbackForSuperCalls)
