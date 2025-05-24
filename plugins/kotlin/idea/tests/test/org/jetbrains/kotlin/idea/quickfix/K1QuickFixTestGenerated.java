@@ -5639,6 +5639,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/member/doNotStripPrefix.kt");
                     }
 
+                    @TestMetadata("fromExtensionFunction.kt")
+                    public void testFromExtensionFunction() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/fromExtensionFunction.kt");
+                    }
+
                     @TestMetadata("funExtraArgs.kt")
                     public void testFunExtraArgs() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/member/funExtraArgs.kt");

@@ -10284,6 +10284,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/member/doNotStripPrefix.kt");
             }
 
+            @TestMetadata("fromExtensionFunction.kt")
+            public void testFromExtensionFunction() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/member/fromExtensionFunction.kt");
+            }
+
             @TestMetadata("funExtraArgs.kt")
             public void testFunExtraArgs() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/member/funExtraArgs.kt");

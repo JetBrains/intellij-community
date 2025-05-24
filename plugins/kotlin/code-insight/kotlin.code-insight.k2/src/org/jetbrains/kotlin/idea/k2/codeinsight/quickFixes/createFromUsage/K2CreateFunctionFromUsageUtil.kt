@@ -32,7 +32,6 @@ import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
-import org.jetbrains.kotlin.idea.caches.resolve.KtFileClassProviderImpl
 import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.idea.refactoring.canRefactorElement
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -159,7 +158,7 @@ object K2CreateFunctionFromUsageUtil {
     fun KaType.convertToJvmType(useSitePosition: PsiElement): JvmType? = asPsiType(useSitePosition, allowErrorTypes = false)
 
     context (KaSession)
-    private fun KtExpression.getClassOfExpressionType(): PsiElement? = when (val symbol = resolveExpression()) {
+    fun KtExpression.getClassOfExpressionType(): PsiElement? = when (val symbol = resolveExpression()) {
         //is KaCallableSymbol -> symbol.returnType.expandedClassSymbol // When the receiver is a function call or access to a variable
         is KaClassLikeSymbol -> symbol // When the receiver is an object
         else -> expressionType?.expandedSymbol
@@ -218,20 +217,6 @@ object K2CreateFunctionFromUsageUtil {
             is KtClass -> containerPsi.getContainerClass()
             is KtClassOrObject -> containerPsi.toLightClass()
             else -> getContainerClass()
-        }
-    }
-    context (KaSession)
-    internal fun KtSimpleNameExpression.getReceiverOrContainerPsiElement(): PsiElement? {
-        val receiverExpression = getReceiverExpression()
-        return when (val ktClassOrPsiClass = receiverExpression?.getClassOfExpressionType()) {
-            is PsiClass -> ktClassOrPsiClass
-            is KtClassOrObject -> ktClassOrPsiClass
-            else -> K2CreateFunctionFromUsageBuilder.computeImplicitReceiverClass(this) ?: PsiTreeUtil.getParentOfType(
-                /* element = */ this,
-                /* aClass = */ KtClassOrObject::class.java,
-                /* strict = */ false,
-                /* ...stopAt = */ KtSuperTypeList::class.java, KtPrimaryConstructor::class.java, KtConstructorDelegationCall::class.java
-            )
         }
     }
 
