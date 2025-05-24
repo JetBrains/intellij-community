@@ -8794,7 +8794,119 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/toInfixCall")
+    public static class ToInfixCall extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("binaryExpressionArgument.kt")
+        public void testBinaryExpressionArgument() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toInfixCall/binaryExpressionArgument.kt");
+        }
+
+        @TestMetadata("caretInsideCalleeExpr.kt")
+        public void testCaretInsideCalleeExpr() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toInfixCall/caretInsideCalleeExpr.kt");
+        }
+
+        @TestMetadata("caretInsideReceiverExpr.kt")
+        public void testCaretInsideReceiverExpr() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toInfixCall/caretInsideReceiverExpr.kt");
+        }
+
+        @TestMetadata("doubleFunctionCall.kt")
+        public void testDoubleFunctionCall() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toInfixCall/doubleFunctionCall.kt");
+        }
+
+        @TestMetadata("doubleFunctionCallWithoutParentheses.kt")
+        public void testDoubleFunctionCallWithoutParentheses() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toInfixCall/doubleFunctionCallWithoutParentheses.kt");
+        }
+
+        @TestMetadata("functionLiteralArgument.kt")
+        public void testFunctionLiteralArgument() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toInfixCall/functionLiteralArgument.kt");
+        }
+
+        @TestMetadata("functionSafeCall.kt")
+        public void testFunctionSafeCall() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toInfixCall/functionSafeCall.kt");
+        }
+
+        @TestMetadata("inapplicableCaretPosition.kt")
+        public void testInapplicableCaretPosition() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toInfixCall/inapplicableCaretPosition.kt");
+        }
+
+        @TestMetadata("multipleArguments.kt")
+        public void testMultipleArguments() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toInfixCall/multipleArguments.kt");
+        }
+
+        @TestMetadata("namedArgument.kt")
+        public void testNamedArgument() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toInfixCall/namedArgument.kt");
+        }
+
+        @TestMetadata("noExplicitReceiver.kt")
+        public void testNoExplicitReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toInfixCall/noExplicitReceiver.kt");
+        }
+
+        @TestMetadata("notInfix.kt")
+        public void testNotInfix() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toInfixCall/notInfix.kt");
+        }
+
+        @TestMetadata("nullAssertedReceiver.kt")
+        public void testNullAssertedReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toInfixCall/nullAssertedReceiver.kt");
+        }
+
+        @TestMetadata("packageFunctionCall.kt")
+        public void testPackageFunctionCall() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toInfixCall/packageFunctionCall.kt");
+        }
+
+        @TestMetadata("propertyAccess.kt")
+        public void testPropertyAccess() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toInfixCall/propertyAccess.kt");
+        }
+
+        @TestMetadata("secondParameterLabeled.kt")
+        public void testSecondParameterLabeled() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toInfixCall/secondParameterLabeled.kt");
+        }
+
+        @TestMetadata("simpleArgumentAndFunctionLiteralArgument.kt")
+        public void testSimpleArgumentAndFunctionLiteralArgument() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toInfixCall/simpleArgumentAndFunctionLiteralArgument.kt");
+        }
+
+        @TestMetadata("simpleMethodCall.kt")
+        public void testSimpleMethodCall() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toInfixCall/simpleMethodCall.kt");
+        }
+
+        @TestMetadata("singlePackageFunctionCall.kt")
+        public void testSinglePackageFunctionCall() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toInfixCall/singlePackageFunctionCall.kt");
+        }
+
+        @TestMetadata("zeroArguments.kt")
+        public void testZeroArguments() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toInfixCall/zeroArguments.kt");
+        }
+    }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/convertArrayParameterToVararg")
