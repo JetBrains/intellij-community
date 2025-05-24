@@ -57,6 +57,11 @@ interface TokenList {
   }
 }
 
+/**
+ * Performs lexing of the given text with the given lexer.
+ *
+ * @return a TokenList representing the result of lexing
+ */
 fun performLexing(
   text: CharSequence,
   lexer: Lexer,
@@ -82,6 +87,9 @@ fun performLexing(
   return sequence
 }
 
+/**
+ * Creates a TokenList from the given arrays.
+ */
 fun TokenList(
   lexStarts: IntArray,
   lexTypes: Array<SyntaxElementType>,
@@ -89,6 +97,9 @@ fun TokenList(
   tokenizedText: CharSequence,
 ): TokenList = TokenSequence(lexStarts, lexTypes, tokenCount, tokenizedText)
 
+/**
+ * Creates an adapter from the given TokenList to [Lexer] interface.
+ */
 fun tokenListLexer(tokenList: TokenList, logger: Logger? = null): Lexer =
   TokenListLexerImpl(tokenList, logger)
 
