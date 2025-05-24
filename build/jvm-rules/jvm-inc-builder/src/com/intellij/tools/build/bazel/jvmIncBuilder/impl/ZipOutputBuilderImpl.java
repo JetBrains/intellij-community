@@ -2,9 +2,6 @@
 package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
 
 import com.intellij.tools.build.bazel.jvmIncBuilder.ZipOutputBuilder;
-import org.h2.mvstore.MVMap;
-import org.h2.mvstore.MVStore;
-import org.h2.mvstore.OffHeapStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,8 +31,7 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
   private final @NotNull Path myReadZipPath;
   private final @Nullable ZipFile myReadZipFile;
 
-  private final MVStore myDataSwapStore;
-  private final MVMap<String, byte[]> mySwap;
+  private final Map<String, byte[]> mySwap;
   private final Map<String, Set<String>> myDirIndex = new HashMap<>();
   private boolean myHasChanges;
 
@@ -44,15 +40,13 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
   }
   
   public ZipOutputBuilderImpl(@NotNull Path readZipPath, @NotNull Path writeZipPath) throws IOException {
+    this(new HashMap<>(), readZipPath, writeZipPath);
+  }
+  
+  public ZipOutputBuilderImpl(Map<String, byte[]> dataSwap, @NotNull Path readZipPath, @NotNull Path writeZipPath) throws IOException {
     myReadZipPath = readZipPath;
     myWriteZipPath = writeZipPath;
-    myDataSwapStore = new MVStore.Builder()
-      .fileStore(new OffHeapStore())
-      .autoCommitDisabled()
-      .cacheSize(8)
-      .open();
-    myDataSwapStore.setVersionsToKeep(0);
-    mySwap = myDataSwapStore.openMap("data-swap");
+    mySwap = dataSwap;
     myReadZipFile = openZipFile(readZipPath);
     if (myReadZipFile != null) {
       // load existing entries
@@ -141,63 +135,67 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
 
   @Override
   public void close(boolean saveChanges) throws IOException {
-    if (!myHasChanges || !saveChanges) {
-      if (myReadZipFile != null) { 
-        myReadZipFile.close();
-        if (saveChanges && !myReadZipPath.equals(myWriteZipPath)) {
-          // ensure content at the destination path is the same as the source content
-          if (!Files.exists(myWriteZipPath) || !Files.isSameFile(myReadZipPath, myWriteZipPath)) {
-            Files.copy(myReadZipPath, myWriteZipPath, StandardCopyOption.REPLACE_EXISTING);
+    try {
+      if (!myHasChanges || !saveChanges) {
+        if (myReadZipFile != null) {
+          myReadZipFile.close();
+          if (saveChanges && !myReadZipPath.equals(myWriteZipPath)) {
+            // ensure content at the destination path is the same as the source content
+            if (!Files.exists(myWriteZipPath) || !Files.isSameFile(myReadZipPath, myWriteZipPath)) {
+              Files.copy(myReadZipPath, myWriteZipPath, StandardCopyOption.REPLACE_EXISTING);
+            }
+          }
+        }
+        else {
+          if (saveChanges && !Files.exists(myWriteZipPath)) {
+            // ensure an empty output file exists, even if there are no changes (bazel requirement)
+            try (var zos = new ZipOutputStream(openOutputStream(myWriteZipPath))) {
+              zos.setLevel(Deflater.BEST_SPEED);
+            }
           }
         }
       }
       else {
-        if (saveChanges && !Files.exists(myWriteZipPath)) {
-          // ensure an empty output file exists, even if there are no changes (bazel requirement)
-          try (var zos = new ZipOutputStream(openOutputStream(myWriteZipPath))) {
-            zos.setLevel(Deflater.BEST_SPEED);
+        // augment entry map with all currently present directory entries
+        for (String dirName : myDirIndex.keySet()) {
+          ZipEntry existingEntry = myExistingDirectories.get(dirName);
+          if (existingEntry == null && "/".equals(dirName)) {
+            continue; // keep root '/' entry if it were present in the original zip
+          }
+          if (existingEntry != null) {
+            myEntries.put(dirName, EntryData.create(myReadZipFile, existingEntry));
+          }
+          else {
+            myEntries.put(dirName, EntryData.create(dirName, EntryData.NO_DATA_BYTES));
+          }
+        }
+        boolean useTempOutput = myReadZipFile != null /*srcZip exists*/ && Files.exists(myWriteZipPath) && Files.isSameFile(myReadZipPath, myWriteZipPath);
+        Path outputPath = useTempOutput? getTempOutputPath() : myWriteZipPath;
+        try (var zos = new ZipOutputStream(openOutputStream(outputPath))) {
+          zos.setLevel(Deflater.BEST_SPEED);
+          for (Iterator<Map.Entry<String, EntryData>> it = myEntries.entrySet().iterator(); it.hasNext(); ) {
+            EntryData data = it.next().getValue();
+            ZipEntry zipEntry = data.getZipEntry();
+            zos.putNextEntry(zipEntry);
+            if (!zipEntry.isDirectory()) {
+              // either new content or the one loaded from the previous file
+              data.transferTo(zos);
+            }
+            it.remove();
+          }
+        }
+        finally {
+          if (myReadZipFile != null) {
+            myReadZipFile.close();
+          }
+          if (useTempOutput) {
+            Files.move(outputPath, myWriteZipPath, StandardCopyOption.REPLACE_EXISTING);
           }
         }
       }
     }
-    else {
-      // augment entry map with all currently present directory entries
-      for (String dirName : myDirIndex.keySet()) {
-        ZipEntry existingEntry = myExistingDirectories.get(dirName);
-        if (existingEntry == null && "/".equals(dirName)) {
-          continue; // keep root '/' entry if it were present in the original zip
-        }
-        if (existingEntry != null) {
-          myEntries.put(dirName, EntryData.create(myReadZipFile, existingEntry));
-        }
-        else {
-          myEntries.put(dirName, EntryData.create(dirName, EntryData.NO_DATA_BYTES));
-        }
-      }
-      boolean useTempOutput = myReadZipFile != null /*srcZip exists*/ && Files.exists(myWriteZipPath) && Files.isSameFile(myReadZipPath, myWriteZipPath);
-      Path outputPath = useTempOutput? getTempOutputPath() : myWriteZipPath;
-      try (var zos = new ZipOutputStream(openOutputStream(outputPath))) {
-        zos.setLevel(Deflater.BEST_SPEED);
-        for (Iterator<Map.Entry<String, EntryData>> it = myEntries.entrySet().iterator(); it.hasNext(); ) {
-          EntryData data = it.next().getValue();
-          ZipEntry zipEntry = data.getZipEntry();
-          zos.putNextEntry(zipEntry);
-          if (!zipEntry.isDirectory()) {
-            // either new content or the one loaded from the previous file
-            data.transferTo(zos);
-          }
-          it.remove();
-        }
-      }
-      finally {
-        if (myReadZipFile != null) {
-          myReadZipFile.close();
-        }
-        myDataSwapStore.close();
-        if (useTempOutput) {
-          Files.move(outputPath, myWriteZipPath, StandardCopyOption.REPLACE_EXISTING);
-        }
-      }
+    finally {
+      mySwap.clear();
     }
   }
 
@@ -334,7 +332,8 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
     }
 
     protected final byte @Nullable [] getCached() {
-      return myCached != null? myCached.get() : null;
+      SoftReference<byte[]> cached = myCached;
+      return cached != null? cached.get() : null;
     }
 
     @Override

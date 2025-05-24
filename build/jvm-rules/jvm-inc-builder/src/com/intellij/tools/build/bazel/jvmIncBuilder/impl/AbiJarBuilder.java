@@ -29,11 +29,11 @@ public class AbiJarBuilder extends ZipOutputBuilderImpl {
   }
 
   public AbiJarBuilder(Path readZipPath, Path writeZipPath) throws IOException {
-    this(readZipPath, writeZipPath, null);
+    this(new HashMap<>(), readZipPath, writeZipPath, null);
   }
 
-  public AbiJarBuilder(Path readZipPath, Path writeZipPath, @Nullable InstrumentationClassFinder classFinder) throws IOException {
-    super(readZipPath, writeZipPath);
+  public AbiJarBuilder(Map<String, byte[]> dataSwap, Path readZipPath, Path writeZipPath, @Nullable InstrumentationClassFinder classFinder) throws IOException {
+    super(dataSwap, readZipPath, writeZipPath);
     myClassFinder = classFinder;
     byte[] content = getContent(PACKAGE_INDEX_STORAGE_ENTRY_NAME);
     if (content != null) {

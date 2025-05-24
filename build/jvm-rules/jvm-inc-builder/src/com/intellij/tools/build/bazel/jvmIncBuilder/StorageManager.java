@@ -8,6 +8,8 @@ import com.intellij.tools.build.bazel.jvmIncBuilder.impl.ZipOutputBuilderImpl;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.PersistentMVStoreMapletFactory;
 import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.InstrumentationClassFinder;
 import com.sun.nio.file.ExtendedOpenOption;
+import org.h2.mvstore.MVStore;
+import org.h2.mvstore.OffHeapStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.DependencyGraph;
@@ -19,10 +21,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 import static org.jetbrains.jps.util.Iterators.*;
@@ -34,13 +33,20 @@ public class StorageManager implements CloseableExt {
   private AbiJarBuilder myAbiOutputBuilder;
   private CompositeZipOutputBuilder myComposite;
   private InstrumentationClassFinder myInstrumentationClassFinder;
+  private final MVStore myDataSwapStore;
 
   public StorageManager(BuildContext context) {
     myContext = context;
+    myDataSwapStore = new MVStore.Builder()
+      .fileStore(new OffHeapStore())
+      .autoCommitDisabled()
+      .cacheSize(8)
+      .open();
+    myDataSwapStore.setVersionsToKeep(0);
   }
 
   public void cleanBuildState() throws IOException {
-    close(false);
+    closeDataStorages(false);
     Path output = myContext.getOutputZip();
     Path abiOutput = myContext.getAbiOutputZip();
 
@@ -80,6 +86,10 @@ public class StorageManager implements CloseableExt {
     return dir;
   }
 
+  public <K, V> Map<K, V> createOffHeapMap(String name) {
+    return myDataSwapStore.openMap(name);
+  }
+
   @NotNull
   public GraphConfiguration getGraphConfiguration() throws IOException {
     GraphConfiguration config = myGraphConfig;
@@ -96,8 +106,9 @@ public class StorageManager implements CloseableExt {
   public ZipOutputBuilderImpl getOutputBuilder() throws IOException {
     ZipOutputBuilderImpl builder = myOutputBuilder;
     if (builder == null) {
-      Path previousOutput = DataPaths.getJarBackupStoreFile(myContext, myContext.getOutputZip());
-      myOutputBuilder = builder = new ZipOutputBuilderImpl(previousOutput, myContext.getOutputZip());
+      Path output = myContext.getOutputZip();
+      Path previousOutput = DataPaths.getJarBackupStoreFile(myContext, output);
+      myOutputBuilder = builder = new ZipOutputBuilderImpl(createOffHeapMap(output.getFileName().toString()), previousOutput, output);
     }
     return builder;
   }
@@ -109,7 +120,7 @@ public class StorageManager implements CloseableExt {
       Path abiOutputPath = myContext.getAbiOutputZip();
       if (abiOutputPath != null) {
         Path previousAbiOutput = DataPaths.getJarBackupStoreFile(myContext, abiOutputPath);
-        myAbiOutputBuilder = builder = new AbiJarBuilder(previousAbiOutput, abiOutputPath, getInstrumentationClassFinder());
+        myAbiOutputBuilder = builder = new AbiJarBuilder(createOffHeapMap(abiOutputPath.getFileName().toString()), previousAbiOutput, abiOutputPath, getInstrumentationClassFinder());
       }
     }
     return builder;
@@ -143,12 +154,21 @@ public class StorageManager implements CloseableExt {
   }
 
   @Override
-  public void close() {
+  public final void close() {
     close(true);
   }
 
   @Override
   public void close(boolean saveChanges) {
+    try {
+      closeDataStorages(saveChanges);
+    }
+    finally {
+      myDataSwapStore.close();
+    }
+  }
+
+  private void closeDataStorages(boolean saveChanges) {
     GraphConfiguration config = myGraphConfig;
     if (config != null) {
       myGraphConfig = null;
@@ -160,7 +180,7 @@ public class StorageManager implements CloseableExt {
       myInstrumentationClassFinder = null;
       finder.releaseResources();
     }
-    
+
     myComposite = null;
 
     safeClose(myOutputBuilder, saveChanges);
