@@ -2,13 +2,9 @@
 package org.intellij.plugins.markdown.ui.preview;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import kotlin.Unit;
-import kotlin.coroutines.Continuation;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,13 +13,13 @@ import javax.swing.*;
 import java.nio.file.Path;
 import java.util.EventListener;
 
-public interface MarkdownHtmlPanel extends ScrollableMarkdownPreview, Disposable {
+public interface MarkdownHtmlPanel extends Disposable {
   @NotNull JComponent getComponent();
 
   /**
    * Updates current HTML content with the new one.
    * <br/>
-   * Note: If you want local paths inside the html to be correctly resolved, use {@link #setHtml(String, int, Path)} instead.
+   * Note: If you want local paths inside the HTML to be correctly resolved, use {@link #setHtml(String, int, Path)} instead.
    *
    * @param html new HTML content.
    * @param initialScrollOffset Offset in the original document which will be used to initially position preview content.
@@ -72,22 +68,13 @@ public interface MarkdownHtmlPanel extends ScrollableMarkdownPreview, Disposable
 
   void reloadWithOffset(int offset);
 
-   /**
-   * @deprecated implement {@code scrollTo(editor, line, $completion)} instead
-   */
-  @Deprecated
-  default void scrollToMarkdownSrcOffset(int offset, boolean smooth) {}
-
-  @Override
-  @Nullable
-  default Object scrollTo(@NotNull Editor editor, int line, @NotNull Continuation<? super @NotNull Unit> $completion) {
-    scrollToMarkdownSrcOffset(EditorUtil.getVisualLineEndOffset(editor, line), true);
-    return null;
-  }
+  default void ensureMarkdownSrcOffsetIsVisible(int offset) {}
 
   interface ScrollListener extends EventListener {
+    @SuppressWarnings("unused")
     void onScroll(int offset);
   }
+
   @SuppressWarnings("unused")
   void addScrollListener(ScrollListener listener);
 
