@@ -215,12 +215,13 @@ public class MapsImplBenchmark {
   public static void main(final String[] args) throws RunnerException {
     final Options opt = new OptionsBuilder()
       .jvmArgs()
-      .forks(0)
+      //.forks(1)
       .threads(1)
       //.mode(Mode.SingleShotTime)
       //.warmupIterations(1000)
       //.warmupBatchSize(1000)
       //.measurementIterations(1000)
+      .jvmArgs("-XX:+UseG1GC")//UseSerialGC, UseParallelGC, UseG1GC
       .include("\\W" + MapsImplBenchmark.class.getSimpleName() + ".*")
       .build();
 

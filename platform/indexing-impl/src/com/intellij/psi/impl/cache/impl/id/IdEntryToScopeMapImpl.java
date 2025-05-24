@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.cache.impl.id;
 
+import it.unimi.dsi.fastutil.HashCommon;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntIterator;
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.function.IntBinaryOperator;
 
 /**
  * Implementation of {@link IdEntryToScopeMap}, uses {@link Int2IntMap} under the hood
@@ -17,21 +19,19 @@ import java.util.function.BiConsumer;
 @ApiStatus.Internal
 public class IdEntryToScopeMapImpl extends AbstractMap<IdIndexEntry, Integer> implements IdEntryToScopeMap {
 
-  //TODO RC: since occurence mask is really a byte, Int2ByteMap will be more optimal
-  @SuppressWarnings("SSBasedInspection")
-  private final @NotNull Int2IntOpenHashMap idHashToScopeMask;
+  //TODO RC: since occurence mask is really a byte, Int2ByteOpenHashMap will be even more optimal
+  private final @NotNull Int2IntOpenHashMapWithFastMergeInt idHashToScopeMask;
 
   public IdEntryToScopeMapImpl() {
-    this(new Int2IntOpenHashMap());
+    this(new Int2IntOpenHashMapWithFastMergeInt());
   }
 
   public IdEntryToScopeMapImpl(int initialCapacity) {
-    this(new Int2IntOpenHashMap(initialCapacity));
+    this(new Int2IntOpenHashMapWithFastMergeInt(initialCapacity));
   }
 
-  @SuppressWarnings("SSBasedInspection")
-  public IdEntryToScopeMapImpl(@NotNull Int2IntOpenHashMap hashToScopeMask) {
-    this.idHashToScopeMask = hashToScopeMask;
+  private IdEntryToScopeMapImpl(@NotNull Int2IntOpenHashMapWithFastMergeInt hashToScopeMask) {
+    idHashToScopeMask = hashToScopeMask;
   }
 
   @Override
@@ -41,7 +41,10 @@ public class IdEntryToScopeMapImpl extends AbstractMap<IdIndexEntry, Integer> im
 
   @Override
   public boolean containsKey(Object key) {
-    return key instanceof IdIndexEntry entry && idHashToScopeMask.containsKey(entry.getWordHashCode());
+    if (key instanceof IdIndexEntry entry) {
+      return idHashToScopeMask.containsKey(entry.getWordHashCode());
+    }
+    return false;
   }
 
   @Override
@@ -57,7 +60,7 @@ public class IdEntryToScopeMapImpl extends AbstractMap<IdIndexEntry, Integer> im
     return new AbstractSet<>() {
       @Override
       public boolean contains(Object o) {
-        return o instanceof IdIndexEntry entry && idHashToScopeMask.containsKey(entry.getWordHashCode());
+        return containsKey(o);
       }
 
       @Override
@@ -141,5 +144,60 @@ public class IdEntryToScopeMapImpl extends AbstractMap<IdIndexEntry, Integer> im
   public void updateMask(int hash,
                          int occurrenceMask) {
     idHashToScopeMask.mergeInt(hash, occurrenceMask, (prev, cur) -> prev | cur);
+  }
+
+  /**
+   * We use {@link Int2IntMap#mergeInt(int, int, IntBinaryOperator)} a lot in this class, but its implementation
+   * in {@link Int2IntMap} is very generic, hence not very efficient -- so we provide a more efficient implementation
+   * here.
+   * Improvement is not very significant, but still.
+   */
+  public static class Int2IntOpenHashMapWithFastMergeInt extends Int2IntOpenHashMap {
+    public Int2IntOpenHashMapWithFastMergeInt() {
+    }
+
+    public Int2IntOpenHashMapWithFastMergeInt(int expected) {
+      super(expected);
+    }
+
+
+    @Override
+    public int mergeInt(int key,
+                        int value,
+                        @NotNull IntBinaryOperator remappingFunction) {
+      if (key == 0) {//0 is a special value, which means 'free slot', so key=0 needs special processing
+        if (containsNullKey) {
+          int oldValue = this.value[n];
+          int newValue = remappingFunction.applyAsInt(oldValue, value);
+          if(newValue == oldValue){
+            return oldValue;
+          }
+          this.value[n] = newValue;
+          return newValue;
+        }
+        else {
+          put(key, value);
+          return value;
+        }
+      }
+
+      int[] keys = this.key;
+      for (int pos = HashCommon.mix(key) & mask; ; pos = (pos + 1) & mask) {
+        int currKey = keys[pos];
+        if (currKey == 0) {// key is not found
+          put(key, value);
+          return value;
+        }
+        else if (key == currKey) {
+          int oldValue = this.value[pos];
+          int newValue = remappingFunction.applyAsInt(oldValue, value);
+          if(newValue == oldValue){
+            return oldValue;
+          }
+          this.value[pos] = newValue;
+          return newValue;
+        }
+      }
+    }
   }
 }
