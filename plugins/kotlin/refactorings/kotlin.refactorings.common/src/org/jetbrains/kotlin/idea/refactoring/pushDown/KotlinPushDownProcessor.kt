@@ -81,10 +81,4 @@ abstract class KotlinPushDownProcessor(
         usages: Array<out UsageInfo>,
     ): MultiMap<PsiElement, String>
 
-    protected abstract fun pushDownToClass(
-        targetClass: KtClassOrObject,
-    )
-
-    protected abstract fun removeOriginalMembers()
-
 }

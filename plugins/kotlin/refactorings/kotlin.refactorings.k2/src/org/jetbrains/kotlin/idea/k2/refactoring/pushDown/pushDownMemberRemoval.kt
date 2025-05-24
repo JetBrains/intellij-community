@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.pushDown
 
-import kotlinx.coroutines.Runnable
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -22,7 +21,7 @@ internal fun KaSession.createRemoveOriginalMemberAction(
     sourceClass: KtClass,
     memberInfo: KotlinMemberInfo,
     substitutor: KaSubstitutor,
-): Runnable? = when (memberInfo.member) {
+): RemovalAction? = when (memberInfo.member) {
     is KtProperty, is KtNamedFunction -> createRemoveCallableMemberAction(memberInfo, sourceClass, substitutor)
     is KtClassOrObject, is KtPsiClassWrapper -> createRemoveClassLikeMemberAction(memberInfo, sourceClass)
     else -> null
@@ -33,7 +32,7 @@ private fun KaSession.createRemoveCallableMemberAction(
     memberInfo: KotlinMemberInfo,
     sourceClass: KtClass,
     substitutor: KaSubstitutor,
-): Runnable? {
+): RemovalAction? {
     val member = memberInfo.member as KtCallableDeclaration
     val memberSymbol = member.symbol
 
@@ -42,17 +41,19 @@ private fun KaSession.createRemoveCallableMemberAction(
             var type = (memberSymbol as KaCallableSymbol).returnType
             if (type is KaErrorType) {
                 type = builtinTypes.nullableAny
-            } else {
+            }
+            else {
                 type = substitutor.substitute(type)
             }
             (member is KtProperty || !type.isUnitType) to type
-        } else {
+        }
+        else {
             false to null
         }
 
         val renderedType = type?.render(position = Variance.INVARIANT)
 
-        return Runnable {
+        return RemovalAction {
             if (member.hasModifier(KtTokens.PRIVATE_KEYWORD)) {
                 member.addModifier(KtTokens.PROTECTED_KEYWORD)
             }
@@ -65,13 +66,13 @@ private fun KaSession.createRemoveCallableMemberAction(
         }
     }
 
-    return Runnable { member.delete() }
+    return RemovalAction { member.delete() }
 }
 
 private fun KaSession.createRemoveClassLikeMemberAction(
     memberInfo: KotlinMemberInfo,
     sourceClass: KtClass,
-): Runnable? {
+): RemovalAction? {
     val member = memberInfo.member
     return if (memberInfo.overrides != null) {
         val superTypeListEntry = findSuperTypeEntryForSymbol(
@@ -79,8 +80,9 @@ private fun KaSession.createRemoveClassLikeMemberAction(
             member.symbol as KaClassSymbol,
         ) ?: return null
 
-        Runnable { sourceClass.removeSuperTypeListEntry(superTypeListEntry) }
-    } else {
-        Runnable { member.delete() }
+        RemovalAction { sourceClass.removeSuperTypeListEntry(superTypeListEntry) }
+    }
+    else {
+        RemovalAction { member.delete() }
     }
 }

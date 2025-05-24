@@ -36,7 +36,7 @@ class K1PushDownProcessor(
     ): MultiMap<PsiElement, String> =
         analyzePushDownConflicts(context, usages)
 
-    override fun pushDownToClass(targetClass: KtClassOrObject) {
+    private fun pushDownToClass(targetClass: KtClassOrObject) {
         val sourceClassType = context.sourceClassDescriptor.defaultType
         val targetClassDescriptor = context.resolutionFacade.resolveToDescriptor(targetClass) as ClassDescriptor
         val substitutor = getTypeSubstitution(sourceClassType, targetClassDescriptor.defaultType)?.toSubstitutor().orEmpty()
@@ -78,7 +78,7 @@ class K1PushDownProcessor(
         }
     }
 
-    override fun removeOriginalMembers() {
+    private fun removeOriginalMembers() {
         for (memberInfo in context.membersToMove) {
             val member = memberInfo.member
             val memberDescriptor = context.memberDescriptors[member] ?: continue

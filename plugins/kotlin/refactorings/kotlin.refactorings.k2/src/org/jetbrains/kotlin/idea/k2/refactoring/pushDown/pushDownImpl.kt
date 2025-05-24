@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.types.Variance
-import java.util.concurrent.Callable
 
 internal data class MemberContext(
     val member: KtCallableDeclaration,
@@ -31,7 +30,7 @@ internal fun KaSession.createPushDownAction(
     memberInfo: KotlinMemberInfo,
     targetClass: KtClassOrObject,
     substitutor: KaSubstitutor,
-): Callable<KtNamedDeclaration>? = when (memberInfo.member) {
+): PushDownAction? = when (memberInfo.member) {
     is KtProperty, is KtNamedFunction ->
         createPushDownActionForCallableMember(
             memberInfo,
@@ -64,7 +63,7 @@ private fun KaSession.createPushDownActionForCallableMember(
     memberInfo: KotlinMemberInfo,
     targetClass: KtClassOrObject,
     substitutor: KaSubstitutor,
-): Callable<KtNamedDeclaration>? {
+): PushDownAction? {
     val targetClassSymbol = targetClass.symbol as KaClassSymbol
     val member = memberInfo.member as KtCallableDeclaration
     val memberSymbol = member.symbol
@@ -82,7 +81,7 @@ private fun KaSession.createPushDownActionForCallableMember(
         memberSymbol.allOverriddenSymbols.none(),
     )
 
-    return Callable<KtNamedDeclaration> {
+    return PushDownAction {
         if (targetMember != null) {
             updateExistingCallableMember(
                 memberContext,
@@ -141,7 +140,7 @@ private fun KaSession.createPushDownActionForClassLikeMember(
     sourceClass: KtClassOrObject,
     targetClass: KtClassOrObject,
     substitutor: KaSubstitutor,
-): Callable<KtNamedDeclaration>? {
+): PushDownAction? {
     return if (memberInfo.overrides != null) {
         val superTypeListEntry = findSuperTypeEntryForSymbol(
             sourceClass,
@@ -159,12 +158,12 @@ private fun KaSession.createPushDownActionForClassLikeMember(
 
         val renderedType = typeInTargetClass.render(position = Variance.INVARIANT)
         val newSpecifier = KtPsiFactory(targetClass.project).createSuperTypeEntry(renderedType)
-        Callable<KtNamedDeclaration> {
+        PushDownAction {
             targetClass.addSuperTypeListEntry(newSpecifier)
             null
         }
     } else {
-        Callable<KtNamedDeclaration> {
+        PushDownAction {
             addMemberToTarget(memberInfo.member, targetClass)
         }
     }
