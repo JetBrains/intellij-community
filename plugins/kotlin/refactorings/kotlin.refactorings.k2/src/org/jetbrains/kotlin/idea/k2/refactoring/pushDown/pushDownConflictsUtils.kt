@@ -112,12 +112,12 @@ private fun KaSession.checkMemberClashing(
 ) {
     when (member) {
         is KtNamedFunction, is KtProperty -> {
-            val memberDescriptor = member.symbol as KaCallableSymbol
+            val callableSymbol = member.symbol as KaCallableSymbol
             val clashingSymbol =
-                targetClassSymbol.findCallableMemberBySignature(memberDescriptor.substitute(substitutor), ignoreReturnType = true)
+                targetClassSymbol.findCallableMemberBySignature(callableSymbol.substitute(substitutor), ignoreReturnType = true)
             val clashingDeclaration = clashingSymbol?.psi as? KtNamedDeclaration
             if (clashingSymbol != null && clashingDeclaration != null) {
-                if (memberDescriptor.modality != KaSymbolModality.ABSTRACT && member !in membersToKeepAbstract) {
+                if (callableSymbol.modality != KaSymbolModality.ABSTRACT && member !in membersToKeepAbstract) {
                     val message = KotlinBundle.message(
                         "text.0.already.contains.1",
                         targetClassSymbol.renderForConflicts(analysisSession = this),
@@ -166,12 +166,12 @@ private fun KaSession.checkSuperCalls(
             override fun visitSuperExpression(expression: KtSuperExpression) {
                 val qualifiedExpression = expression.getQualifiedExpressionForReceiver() ?: return
                 val refExpr = qualifiedExpression.selectorExpression.getCalleeExpressionIfAny() as? KtSimpleNameExpression ?: return
-                for (descriptor in refExpr.mainReference.resolveToSymbols()) {
-                    val memberSymbol = descriptor as? KaCallableSymbol ?: continue
-                    val containingClass = memberSymbol.containingDeclaration as? KaClassSymbol ?: continue
+                for (symbol in refExpr.mainReference.resolveToSymbols()) {
+                    val callableSymbol = symbol as? KaCallableSymbol ?: continue
+                    val containingClass = callableSymbol.containingDeclaration as? KaClassSymbol ?: continue
                     if (!(context.sourceClass.symbol as KaClassSymbol).isSubClassOf(containingClass)) continue
                     val memberInSource = (context.sourceClass.symbol as KaClassSymbol).findCallableMemberBySignature(
-                        memberSymbol.asSignature(),
+                        callableSymbol.asSignature(),
                         ignoreReturnType = true
                     )?.psi
                         ?: continue

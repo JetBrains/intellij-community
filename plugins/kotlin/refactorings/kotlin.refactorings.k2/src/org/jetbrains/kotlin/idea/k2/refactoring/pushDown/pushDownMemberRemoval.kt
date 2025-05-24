@@ -73,7 +73,7 @@ private fun KaSession.createRemoveClassLikeMemberAction(
 ): RemovalAction? {
     val member = memberInfo.member
     return if (memberInfo.overrides != null) {
-        val superTypeListEntry = findSuperTypeEntryForSymbol(
+        val superTypeListEntry = getSuperTypeEntryBySymbol(
             sourceClass,
             member.symbol as KaClassSymbol,
         ) ?: return null

@@ -50,7 +50,7 @@ internal fun KaSession.createPushDownAction(
     else -> null
 }
 
-internal fun KaSession.findSuperTypeEntryForSymbol(
+internal fun KaSession.getSuperTypeEntryBySymbol(
     sourceClass: KtClassOrObject,
     symbol: KaClassSymbol,
 ): KtSuperTypeListEntry? = sourceClass.superTypeListEntries.firstOrNull {
@@ -142,7 +142,7 @@ private fun KaSession.createPushDownActionForClassLikeMember(
     substitutor: KaSubstitutor,
 ): PushDownAction? {
     return if (memberInfo.overrides != null) {
-        val superTypeListEntry = findSuperTypeEntryForSymbol(
+        val superTypeListEntry = getSuperTypeEntryBySymbol(
             sourceClass,
             memberInfo.member.symbol as KaClassSymbol,
         ) ?: return null
