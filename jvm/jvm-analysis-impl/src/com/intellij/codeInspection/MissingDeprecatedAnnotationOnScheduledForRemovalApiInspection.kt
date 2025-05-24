@@ -69,7 +69,11 @@ class MissingDeprecatedAnnotationOnScheduledForRemovalApiInspection : LocalInspe
     private fun hasDeprecatedAnnotation(node: UAnnotated) =
       node.findAnnotation(DEPRECATED_ANNOTATION_NAME) != null ||
       node.findAnnotation(KOTLIN_DEPRECATED_ANNOTATION_NAME) != null ||
-      node.findAnnotation(SCALA_DEPRECATED_ANNOTATION_NAME) != null
+      node.findAnnotation(SCALA_DEPRECATED_ANNOTATION_NAME) != null ||
+      (
+        node is UField &&
+        node.sourceAnnotations?.find { it.qualifiedName == KOTLIN_DEPRECATED_ANNOTATION_NAME } != null
+      )
 
     private fun isScheduledForRemoval(annotated: UAnnotated): Boolean =
       annotated.findAnnotation(SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME) != null

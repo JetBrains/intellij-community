@@ -2148,6 +2148,7 @@ interface UastApiFixtureTestBase {
             """.trimIndent()
         )
 
+        val annoName = "test.pkg.Anno"
         var count = 0
         val uFile = myFixture.file.toUElementOfType<UFile>()!!
         uFile.accept(
@@ -2156,10 +2157,13 @@ interface UastApiFixtureTestBase {
                     if (!node.name.startsWith("with"))
                         return super.visitField(node)
 
-                    val uAnnos = node.uAnnotations.filter { it.qualifiedName == "test.pkg.Anno" }
+                    val sAnnos = node.sourceAnnotations?.filter { it.qualifiedName == annoName }
+                    TestCase.assertEquals(node.name, 1, sAnnos?.size)
+
+                    val uAnnos = node.uAnnotations.filter { it.qualifiedName == annoName }
                     TestCase.assertEquals(node.name, 0, uAnnos.size)
 
-                    val jAnnos = (node.javaPsi as? PsiField)?.annotations?.filter { it.qualifiedName == "test.pkg.Anno" }
+                    val jAnnos = (node.javaPsi as? PsiField)?.annotations?.filter { it.qualifiedName == annoName }
                     TestCase.assertEquals(node.name, 0, jAnnos?.size)
 
                     count++
@@ -2170,10 +2174,10 @@ interface UastApiFixtureTestBase {
                     if (!node.name.startsWith("getWith"))
                         return super.visitMethod(node)
 
-                    val uAnnos = node.uAnnotations.filter { it.qualifiedName == "test.pkg.Anno" }
+                    val uAnnos = node.uAnnotations.filter { it.qualifiedName == annoName }
                     TestCase.assertEquals(node.name, 0, uAnnos.size)
 
-                    val jAnnos = node.javaPsi.annotations.filter { it.qualifiedName == "test.pkg.Anno" }
+                    val jAnnos = node.javaPsi.annotations.filter { it.qualifiedName == annoName }
                     TestCase.assertEquals(node.name, 0, jAnnos.size)
 
                     count++
