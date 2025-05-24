@@ -3,9 +3,14 @@
     <module name="kotlin.searching.k2"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
-    <refactoring.moveHandler order="first" implementation="org.jetbrains.kotlin.idea.k2.refactoring.move.K2MoveHandler"/>
-    <moveFileHandler implementation="org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveFilesHandler"/>
+    <refactoring.moveHandler
+            id="kotlin.moveHandler" order="first"
+            implementation="org.jetbrains.kotlin.idea.k2.refactoring.move.K2MoveHandler"/>
+    <moveFileHandler
+            id="kotlin.moveFiles"
+            implementation="org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveFilesHandler"/>
     <refactoring.moveDirectoryWithClassesHelper
+            id="kotlin.moveDirectoryWithClasses"
             implementation="org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveDirectoryWithClassesHelper"/>
     <registryKey
             key="kotlin.move.show.move.to.class"
