@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.types.Variance
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.sure
 
 @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
@@ -305,7 +306,7 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
             } else {
                 val (receiverValue, isSameReceiverType, deleteReceiver) = analyze(expression) {
                     val resolveCall = expression.resolveToCall()
-                    val partiallyAppliedSymbol = resolveCall?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
+                    val partiallyAppliedSymbol = resolveCall?.calls?.firstIsInstanceOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
 
                     val value =
                         (partiallyAppliedSymbol?.extensionReceiver ?: partiallyAppliedSymbol?.dispatchReceiver) as? KaImplicitReceiverValue

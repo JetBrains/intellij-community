@@ -12009,6 +12009,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/addImplicitReceiverNested.kt");
             }
 
+            @TestMetadata("ambiguousCall.kt")
+            public void testAmbiguousCall() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/ambiguousCall.kt");
+            }
+
             @TestMetadata("annotationWithErrorReplacement.kt")
             public void testAnnotationWithErrorReplacement() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/annotationWithErrorReplacement.kt");
