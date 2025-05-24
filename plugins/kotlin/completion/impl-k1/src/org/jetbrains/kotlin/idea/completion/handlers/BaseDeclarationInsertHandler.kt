@@ -6,7 +6,6 @@ import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
-import org.jetbrains.kotlin.renderer.render
 
 open class BaseDeclarationInsertHandler : InsertHandler<LookupElement> {
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
@@ -16,7 +15,7 @@ open class BaseDeclarationInsertHandler : InsertHandler<LookupElement> {
             if (startOffset > 0 && context.document.isTextAt(startOffset - 1, "`")) {
                 context.document.deleteString(startOffset - 1, startOffset)
             }
-            context.document.replaceString(context.startOffset, context.tailOffset, name.render())
+            context.document.replaceString(context.startOffset, context.tailOffset, name.renderIdentifier())
         }
     }
 }
