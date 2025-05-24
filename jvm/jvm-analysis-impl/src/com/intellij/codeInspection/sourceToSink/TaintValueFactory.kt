@@ -165,7 +165,11 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
     }
     val toUElement = owner.toUElement()
     if (info == TaintValue.UNKNOWN && toUElement is UVariable) {
-      return toUElement.uAnnotations
+      val uAnnotations = toUElement.uAnnotations.toMutableList()
+      if (toUElement is UField) {
+        toUElement.defaultUseSiteAnnotations?.let { uAnnotations += it }
+      }
+      return uAnnotations
                .mapNotNull { fromUAnnotation(it) }
                .firstOrNull { it != TaintValue.UNKNOWN } ?: info
     }
