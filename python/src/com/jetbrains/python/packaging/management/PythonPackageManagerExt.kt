@@ -34,6 +34,7 @@ import kotlin.math.min
 fun PythonPackageManager.hasInstalledPackage(packageName: String, version: String? = null): Boolean =
   getPackage(packageName, version) != null
 
+@ApiStatus.Internal
 fun PythonPackageManager.getPackage(packageName: String, version: String? = null): PythonPackage? {
   return installedPackages.firstOrNull { it.name == packageName && (version == null || version == it.version) }
 }

@@ -59,9 +59,10 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
 
   abstract val repositoryManager: PythonRepositoryManager
 
-
+  @ApiStatus.Internal
   fun isPackageInstalled(pkg: PythonPackage): Boolean = installedPackages.any { it.name == pkg.name }
 
+  @ApiStatus.Internal
   fun findPackageSpecificationWithVersionSpec(
     packageName: String,
     versionSpec: PyRequirementVersionSpec? = null,
@@ -71,6 +72,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
     }
   }
 
+  @ApiStatus.Internal
   fun findPackageSpecification(
     packageName: String,
     version: String? = null,
@@ -80,6 +82,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
     return findPackageSpecificationWithVersionSpec(packageName, versionSpec)
   }
 
+  @ApiStatus.Internal
   suspend fun installPackage(installRequest: PythonPackageInstallRequest, options: List<String> = emptyList()): Result<List<PythonPackage>> {
     val progressTitle = when (installRequest) {
       is PythonPackageInstallRequest.AllRequirements -> PyBundle.message("python.packaging.installing.requirements")
@@ -122,7 +125,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
     return reloadPackages()
   }
 
-
+  @ApiStatus.Internal
   suspend fun uninstallPackage(vararg packages: String): Result<List<PythonPackage>> {
     if (packages.isEmpty()) {
       return Result.success(installedPackages)
@@ -145,6 +148,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
     return reloadPackages()
   }
 
+  @ApiStatus.Internal
   open suspend fun reloadPackages(): Result<List<PythonPackage>> {
     val progressTitle = PyBundle.message("python.toolwindow.packages.update.packages")
     val packages = executeCommand(progressTitle) {
@@ -212,6 +216,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
     operation()
   }
 
+  @ApiStatus.Internal
   suspend fun waitForInit() {
     lazyInitialization.await()
   }
@@ -240,6 +245,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
     return dependencies
   }
 
+  @ApiStatus.Internal
   fun listDependencies(): List<PythonPackage> = dependencies
 
   companion object {

@@ -11,6 +11,7 @@ import com.jetbrains.python.packaging.PyPackageInstallUtils
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonSdk
+import org.jetbrains.annotations.ApiStatus
 
 class PythonInstallPackageFilter(val project: Project, var editor: EditorImpl? = null) : Filter {
   override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
@@ -39,5 +40,6 @@ class PythonInstallPackageFilter(val project: Project, var editor: EditorImpl? =
     return PythonSdkUtil.findPythonSdk(pyPsiFile)
   }
 
+  @ApiStatus.Internal
   override fun isDumbAware(): Boolean = true
 }

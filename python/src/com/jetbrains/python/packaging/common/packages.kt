@@ -47,6 +47,8 @@ open class PythonPackage(name: String, val version: String, val isEditableMode: 
 class PythonOutdatedPackage(name: String, version: String, val latestVersion: String)
   : PythonPackage(name, version, false) {
   override fun toString(): String = "PythonOutdatedPackage(name='$name', version='$version', latestVersion='$latestVersion')"
+
+  @ApiStatus.Internal
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
@@ -57,6 +59,7 @@ class PythonOutdatedPackage(name: String, version: String, val latestVersion: St
     return latestVersion == other.latestVersion
   }
 
+  @ApiStatus.Internal
   override fun hashCode(): Int {
     var result = super.hashCode()
     result = 31 * result + latestVersion.hashCode()

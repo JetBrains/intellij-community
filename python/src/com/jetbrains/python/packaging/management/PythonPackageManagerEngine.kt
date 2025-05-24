@@ -7,7 +7,7 @@ import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecificatio
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-interface PythonPackageManagerEngine {
+internal interface PythonPackageManagerEngine {
   @ApiStatus.Internal
   suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): Result<Unit>
 

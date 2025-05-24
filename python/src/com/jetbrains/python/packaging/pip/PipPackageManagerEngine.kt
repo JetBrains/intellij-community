@@ -38,7 +38,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import kotlin.math.min
 
-class PipPackageManagerEngine(
+internal class PipPackageManagerEngine(
   private val project: Project,
   private val sdk: Sdk,
 ) : PythonPackageManagerEngine {

@@ -109,12 +109,14 @@ open class PyPackageRepository() {
     PasswordSafe.instance.set(attributes, null)
   }
 
+  @ApiStatus.Internal
   fun findPackageSpecificationWithSpec(packageName: String, versionSpecs: PyRequirementVersionSpec? = null): PythonRepositoryPackageSpecification? =
     if (hasPackage(packageName, versionSpecs))
       PythonRepositoryPackageSpecification(this, packageName, versionSpecs)
     else
       null
 
+  @ApiStatus.Internal
   fun findPackageSpecification(
     packageName: String,
     version: String? = null,
