@@ -25,6 +25,16 @@ fun registerParse(builder: SyntaxTreeBuilder, language: Language, parsingTimeNs:
 }
 
 @ApiStatus.Experimental
+fun registerLexing(language: Language, textLength: Long, lexingTimeNs: Long) {
+  val handler = ApplicationManager.getApplication().getService(ParserDiagnosticsHandler::class.java)
+  if (handler is ParsingDiagnosticsHandler) {
+    handler.registerLexing(language, textLength, lexingTimeNs)
+  }
+}
+
+@ApiStatus.Experimental
 interface ParsingDiagnosticsHandler {
   fun registerParse(builder: SyntaxTreeBuilder, language: Language, parsingTimeNs: Long)
+
+  fun registerLexing(language: Language, textLength: Long, lexingTimeNs: Long)
 }

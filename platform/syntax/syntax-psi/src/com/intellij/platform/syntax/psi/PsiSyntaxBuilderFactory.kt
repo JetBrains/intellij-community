@@ -11,10 +11,10 @@ import com.intellij.platform.syntax.parser.WhitespaceOrCommentBindingPolicy
 import com.intellij.platform.syntax.psi.impl.LazyParseableToken
 import com.intellij.platform.syntax.psi.impl.PsiSyntaxBuilderImpl
 import com.intellij.platform.syntax.psi.impl.extractCachedLexemes
+import com.intellij.platform.syntax.psi.impl.performLexingIfNecessary
 import com.intellij.psi.impl.source.tree.SharedImplUtil
 import com.intellij.psi.text.BlockSupport
 import com.intellij.psi.tree.IElementType
-import kotlin.jvm.JvmStatic
 
 @Service(Service.Level.APP)
 class PsiSyntaxBuilderFactory {
@@ -28,19 +28,20 @@ class PsiSyntaxBuilderFactory {
     val tokenConverter = getConverter(lang, chameleon.getElementType())
     val syntaxDefinition = LanguageSyntaxDefinitions.INSTANCE.forLanguage(lang) ?: throw IllegalStateException("No SyntaxDefinition for language: $lang")
     val actualLexer = lexer ?: syntaxDefinition.getLexer()
+    val cachedLexemes = extractCachedLexemes(chameleon)
+    val lexingResult = performLexingIfNecessary(cachedLexemes, actualLexer, text, lang)
 
     return PsiSyntaxBuilderImpl(
       file = SharedImplUtil.getContainingFile(chameleon),
       parserDefinition = parserDefinition,
       syntaxDefinition = syntaxDefinition,
-      lexer = actualLexer,
+      tokenList = lexingResult,
       charTable = SharedImplUtil.findCharTableByTree(chameleon),
       text = text,
       originalTree = Pair.getFirst(chameleon.getUserData(BlockSupport.TREE_TO_BE_REPARSED)),
       lastCommittedText = Pair.getSecond(chameleon.getUserData(BlockSupport.TREE_TO_BE_REPARSED)),
       parentLightTree = null,
       startOffset = 0,
-      cachedLexemes = extractCachedLexemes(chameleon),
       tokenConverter = tokenConverter,
       opaquePolicy = null,
       whitespaceOrCommentBindingPolicy = DefaultWhitespaceOrCommentPolicy(tokenConverter),
@@ -57,18 +58,19 @@ class PsiSyntaxBuilderFactory {
     val tokenConverter = getConverter(lang, chameleon.getTokenType())
     val languageSyntaxDefinition = LanguageSyntaxDefinitions.INSTANCE.forLanguage(lang)
     val actualLexer = lexer ?: languageSyntaxDefinition.getLexer()
+    val cachedLexemes = extractCachedLexemes(chameleon)
+    val lexingResult = performLexingIfNecessary(cachedLexemes, actualLexer, text, lang)
     return PsiSyntaxBuilderImpl(
       file = chameleon.getContainingFile(),
       parserDefinition = parserDefinition,
       syntaxDefinition = languageSyntaxDefinition,
-      lexer = actualLexer,
       charTable = chameleon.getCharTable(),
       text = text,
       originalTree = null,
       lastCommittedText = null,
       parentLightTree = (chameleon as LazyParseableToken).parentStructure,
       startOffset = chameleon.startOffset,
-      cachedLexemes = extractCachedLexemes(chameleon),
+      tokenList = lexingResult,
       tokenConverter = tokenConverter,
       opaquePolicy = null,
       whitespaceOrCommentBindingPolicy = DefaultWhitespaceOrCommentPolicy(tokenConverter),

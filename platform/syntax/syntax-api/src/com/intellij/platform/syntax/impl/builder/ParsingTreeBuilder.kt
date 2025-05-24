@@ -1,39 +1,35 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.syntax.impl.builder
 
-import com.intellij.platform.syntax.SyntaxElementType
-import com.intellij.platform.syntax.SyntaxElementTypeSet
-import com.intellij.platform.syntax.impl.fastutil.ints.isEmpty
-import com.intellij.platform.syntax.lexer.Lexer
-import com.intellij.platform.syntax.lexer.TokenList
-import com.intellij.platform.syntax.lexer.TokenSequence
-import com.intellij.platform.syntax.lexer.performLexing
-import com.intellij.platform.syntax.parser.*
-import com.intellij.platform.syntax.parser.SyntaxTreeBuilder.Production
 import com.intellij.platform.syntax.CancellationProvider
 import com.intellij.platform.syntax.Logger
 import com.intellij.platform.syntax.Logger.Attachment
+import com.intellij.platform.syntax.SyntaxElementType
+import com.intellij.platform.syntax.SyntaxElementTypeSet
+import com.intellij.platform.syntax.impl.fastutil.ints.isEmpty
+import com.intellij.platform.syntax.lexer.TokenList
+import com.intellij.platform.syntax.lexer.TokenSequence
+import com.intellij.platform.syntax.parser.*
+import com.intellij.platform.syntax.parser.SyntaxTreeBuilder.Production
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import kotlin.math.abs
 import kotlin.math.max
-import kotlin.time.measureTimedValue
 
 internal class ParsingTreeBuilder(
-  val lexer: Lexer,
   override val text: CharSequence,
   val myWhitespaces: SyntaxElementTypeSet,
   private var myComments: SyntaxElementTypeSet,
   val startOffset: Int,
   private var myWhitespaceSkippedCallback: WhitespaceSkippedCallback?,
-  cachedLexemes: TokenList?,
+  lexemes: TokenList,
   private var myDebugMode: Boolean,
   val language: String?,
   val logger: Logger,
   val cancellationProvider: CancellationProvider?,
   private val whitespaceOrCommentBindingPolicy: WhitespaceOrCommentBindingPolicy,
   private val opaquePolicy: OpaqueElementPolicy,
-) : SyntaxTreeBuilder, DiagnosticAwareBuilder {
+) : SyntaxTreeBuilder {
   internal val myLexStarts: IntArray
   private val myLexTypes: Array<SyntaxElementType>
   val lexemeCount: Int
@@ -54,17 +50,10 @@ internal class ParsingTreeBuilder(
   // shame for this mutable state
   private var myRemapper: SyntaxElementTypeRemapper? = null
 
-  /**
-   * @return lexing time in nanoseconds
-   * @see .performLexing
-   */
-  override val lexingTimeNs: Long
-
   init {
-    val (tokens, _lexingTimeNs) = performLexing(cachedLexemes, text, lexer, cancellationProvider, logger)
-    lexingTimeNs = _lexingTimeNs
+    val tokens = lexemes as TokenSequence
     myLexStarts = tokens.lexStarts
-    myLexTypes = tokens.lexTypes
+    myLexTypes = tokens.lexTypes  // todo do we need to copy the array because of remapping (which modifies it)
     lexemeCount = tokens.tokenCount
     DIAGNOSTICS?.registerPass(text.length, lexemeCount)
   }
@@ -518,31 +507,3 @@ internal class ParsingTreeBuilder(
 
 private const val UNBALANCED_MESSAGE: @NonNls String = "Unbalanced tree. Most probably caused by unbalanced markers. " +
                                                        "Try calling setDebugMode(true) against PsiBuilder passed to identify exact location of the problem"
-
-private fun performLexing(
-  cachedLexemes: TokenList?,
-  text: CharSequence,
-  lexer: Lexer,
-  cancellationProvider: CancellationProvider?,
-  logger: Logger?,
-): LexingResult {
-  if (cachedLexemes is TokenSequence) {
-    require(cachedLexemes.lexStarts[cachedLexemes.tokenCount] == text.length)
-
-    if (doLexingOptimizationCorrectionCheck()) {
-      cachedLexemes.assertMatches(text, lexer, cancellationProvider, logger)
-    }
-    return LexingResult(cachedLexemes, 0)
-  }
-  // todo do we need to cover a raw TokenList?
-  val (sequence, duration) = measureTimedValue {
-    performLexing(text, lexer, cancellationProvider, logger) as TokenSequence
-  }
-  return LexingResult(sequence, duration.inWholeNanoseconds)
-}
-
-private data class LexingResult(val tokens: TokenSequence, val lexingTimeNs: Long)
-
-private fun doLexingOptimizationCorrectionCheck(): Boolean {
-  return false // set to true to check that re-lexing of chameleons produces the same sequence as cached one
-}

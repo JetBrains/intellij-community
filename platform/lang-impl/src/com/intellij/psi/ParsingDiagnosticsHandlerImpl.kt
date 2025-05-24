@@ -7,7 +7,6 @@ import com.intellij.lang.impl.PsiBuilderAdapter
 import com.intellij.lang.impl.PsiBuilderImpl
 import com.intellij.platform.diagnostic.telemetry.PlatformMetrics
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.syntax.impl.builder.DiagnosticAwareBuilder
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.psi.ParsingDiagnosticsHandler
 import com.intellij.psi.ParsingDiagnostics.ParserDiagnosticsHandler
@@ -44,14 +43,15 @@ class ParsingDiagnosticsHandlerImpl : ParserDiagnosticsHandler, ParsingDiagnosti
   override fun registerParse(builder: SyntaxTreeBuilder, language: Language, parsingTimeNs: Long) {
     diagnosticsEntries.computeIfAbsent(language.id) { DiagnosticsEntry(it) }.apply {
       val textLength = builder.text.length.toLong()
-
-      if (builder is DiagnosticAwareBuilder && builder.lexingTimeNs > 0) {
-        lexerSizeCounter.add(textLength)
-        lexerTimeCounter.add(builder.lexingTimeNs)
-      }
-
       parserSizeCounter.add(textLength)
       parserTimeCounter.add(parsingTimeNs)
+    }
+  }
+
+  override fun registerLexing(language: Language, textLength: Long, lexingTimeNs: Long) {
+    diagnosticsEntries.computeIfAbsent(language.id) { DiagnosticsEntry(it) }.apply {
+      lexerSizeCounter.add(textLength)
+      lexerTimeCounter.add(lexingTimeNs)
     }
   }
 

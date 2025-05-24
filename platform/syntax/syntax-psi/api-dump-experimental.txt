@@ -28,9 +28,11 @@
 *f:com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions$Companion
 - f:getINSTANCE():com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions
 *f:com.intellij.platform.syntax.psi.ParsingDiagnostics
+- *sf:registerLexing(com.intellij.lang.Language,J,J):V
 - *sf:registerParse(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.lang.Language,J):V
 - *sf:registerParse(com.intellij.platform.syntax.psi.PsiSyntaxBuilder,com.intellij.lang.Language,J):V
 *:com.intellij.platform.syntax.psi.ParsingDiagnosticsHandler
+- a:registerLexing(com.intellij.lang.Language,J,J):V
 - a:registerParse(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.lang.Language,J):V
 *:com.intellij.platform.syntax.psi.PsiSyntaxBuilder
 - com.intellij.openapi.util.UserDataHolder

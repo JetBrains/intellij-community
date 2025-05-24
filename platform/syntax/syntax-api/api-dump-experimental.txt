@@ -163,10 +163,9 @@
 - a:isErrorMarker():Z
 *f:com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory
 - sf:INSTANCE:com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory
-- sf:builder(java.lang.CharSequence,java.util.Set,java.util.Set,com.intellij.platform.syntax.lexer.Lexer):com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory$Builder
+- sf:builder(java.lang.CharSequence,com.intellij.platform.syntax.lexer.TokenList,java.util.Set,java.util.Set):com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory$Builder
 *:com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory$Builder
 - a:build():com.intellij.platform.syntax.parser.SyntaxTreeBuilder
-- a:withCachedLexemes(com.intellij.platform.syntax.lexer.TokenList):com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory$Builder
 - a:withCancellationProvider(com.intellij.platform.syntax.CancellationProvider):com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory$Builder
 - a:withDebugMode(Z):com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory$Builder
 - a:withLanguage(java.lang.String):com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory$Builder

@@ -12,7 +12,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.UnprotectedUserDataHolder
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.syntax.SyntaxElementType
-import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.lexer.TokenList
 import com.intellij.platform.syntax.parser.*
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
@@ -43,14 +42,13 @@ internal class PsiSyntaxBuilderImpl(
   internal var file: PsiFile?,
   private val parserDefinition: ParserDefinition,
   syntaxDefinition: LanguageSyntaxDefinition,
-  val lexer: Lexer,
   internal var charTable: CharTable?,
   private val text: CharSequence,
   private val originalTree: ASTNode?,
   private val lastCommittedText: CharSequence?,
   private val parentLightTree: FlyweightCapableTreeStructure<LighterASTNode>?,
   internal val startOffset: Int,
-  cachedLexemes: TokenList?,
+  private val tokenList: TokenList,
   private val tokenConverter: ElementTypeConverter,
   opaquePolicy: OpaqueElementPolicy?,
   whitespaceOrCommentBindingPolicy: WhitespaceOrCommentBindingPolicy?,
@@ -60,10 +58,9 @@ internal class PsiSyntaxBuilderImpl(
     text = text,
     whitespaces = syntaxDefinition.getWhitespaceTokens(),
     comments = syntaxDefinition.getCommentTokens(),
-    lexer = lexer
+    tokenList = tokenList,
   )
     .withStartOffset(startOffset)
-    .withCachedLexemes(cachedLexemes)
     .withDebugMode(false)
     .withLanguage(this.file?.getLanguage()?.toString())
     .withCancellationProvider { ProgressManager.checkCanceled() }

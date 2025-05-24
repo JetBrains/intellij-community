@@ -8,14 +8,20 @@ import com.intellij.platform.syntax.CancellationProvider
 import com.intellij.platform.syntax.Logger
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.SyntaxElementTypeSet
+import com.intellij.platform.syntax.impl.builder.DIAGNOSTICS
 import kotlin.jvm.JvmName
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * This class represents the result of lexing: text and the tokens produced from it by some lexer.
- * It allows clients to inspect all tokens at once and easily move back and forward to implement some simple lexer-based checks.
+ * This interface represents the result of lexing: text and the tokens produced from it by some lexer.
+ * It allows clients to inspect all tokens at once and move back and forward to implement some simple lexer-based checks.
+ *
+ * @see TokenList(IntArray, Array<SyntaxElementType>, int, CharSequence)
+ * @see performLexing
+ * @see tokenListLexer
  */
 @ApiStatus.Experimental
+@ApiStatus.NonExtendable
 interface TokenList {
   /**
    * @return the number of tokens inside
@@ -70,7 +76,10 @@ fun performLexing(
     }
   }
   val sequence = Builder(text, lexer, cancellationProvider, logger).performLexing()
-  return sequence as TokenList
+
+  DIAGNOSTICS?.registerPass(text.length, sequence.tokenCount)
+
+  return sequence
 }
 
 fun TokenList(
