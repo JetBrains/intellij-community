@@ -17,17 +17,27 @@ class JoinWhenEntryHandler : JoinRawLinesHandlerDelegate {
         val element = file.findElementAt(start) ?: return CANNOT_JOIN
 
         val entry = element.getPrevSiblingIgnoringWhitespaceAndComments() as? KtWhenEntry ?: return CANNOT_JOIN
-        if (entry.hasComments()) return CANNOT_JOIN
         val entryLastCondition = entry.conditions.lastOrNull() ?: return CANNOT_JOIN
         val whenExpression = entry.parent as? KtWhenExpression ?: return CANNOT_JOIN
-
         val nextEntry = entry.getNextSiblingIgnoringWhitespaceAndComments() as? KtWhenEntry ?: return CANNOT_JOIN
-        if (nextEntry.isElse || nextEntry.hasComments() || !nextEntry.hasSameExpression(entry)) return CANNOT_JOIN
-        val nextEntryFirstCondition = nextEntry.conditions.firstOrNull() ?: return CANNOT_JOIN
 
+        if (nextEntry.isElse) return CANNOT_JOIN
+        if (entry.hasComments() || nextEntry.hasComments() || !nextEntry.hasSameExpression(entry)) {
+            return joinWithSemicolon(document, entry, nextEntry)
+        }
+        val nextEntryFirstCondition = nextEntry.conditions.firstOrNull() ?: return CANNOT_JOIN
         val separator = if (whenExpression.subjectExpression != null) ", " else " || "
         document.replaceString(entryLastCondition.endOffset, nextEntryFirstCondition.startOffset, separator)
         return entry.startOffset
+    }
+
+    private fun joinWithSemicolon(
+        document: Document,
+        entry: KtWhenEntry,
+        nextEntry: KtWhenEntry
+    ): Int {
+        document.replaceString(entry.textRange.endOffset, nextEntry.textRange.startOffset, "; ")
+        return entry.textRange.endOffset + 1
     }
 
     override fun tryJoinLines(document: Document, file: PsiFile, start: Int, end: Int): Int = CANNOT_JOIN
