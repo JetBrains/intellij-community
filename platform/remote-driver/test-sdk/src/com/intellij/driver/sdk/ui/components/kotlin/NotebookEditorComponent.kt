@@ -32,6 +32,11 @@ fun Finder.notebookEditor(action: NotebookEditorUiComponent.() -> Unit) {
   return notebookEditor().action()
 }
 
+typealias CellSelector = (List<UiComponent>) -> UiComponent
+
+val FirstCell: CellSelector = { it.first() }
+val LastCell: CellSelector = { it.last() }
+
 
 class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComponent(data) {
   private val addCellBelow
@@ -90,6 +95,24 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
         it.getParent().x { contains(byAttribute("defaulticon", "greenCheckmark.svg")) }.present()
       }
     }
+  }
+
+  fun clickOnCell(cellSelector: CellSelector) {
+    val cellEditors = notebookCellEditors
+    val cell = cellSelector(cellEditors)
+    cell.click()
+  }
+
+  fun typeInCell(cellSelector: CellSelector, text: String) {
+    clickOnCell(cellSelector)
+    keyboard {
+      typeText(text)
+    }
+  }
+
+  fun pasteToCell(cellSelector: CellSelector, text: String) {
+    clickOnCell(cellSelector)
+    driver.ui.pasteText(text)
   }
 
 
