@@ -7,8 +7,10 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.COMPONENT_SCOPE_KEY
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.EdtImmediate
+import com.intellij.openapi.application.UiImmediate
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ClientProperty
+import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.StateFlow
 import javax.swing.JComponent
@@ -138,7 +140,28 @@ object ComponentListPanelFactory {
     gap: Int = 0,
     componentFactory: CoroutineScope.(T) -> JComponent,
   ): JPanel {
-    return createListPanel(parentCs, items, ::VerticalListPanel, panelInitializer, gap, componentFactory)
+    val panel = VerticalListPanel(gap).apply(panelInitializer)
+    parentCs.launchNow(CoroutineName("List panel scope") + Dispatchers.EDT) {
+      panel.showItems(items, componentFactory)
+    }
+    return panel
+  }
+
+  /**
+   * @param T must implement proper equals/hashCode
+   */
+  fun <T : Any> createVertical(
+    items: StateFlow<List<T>>,
+    gap: Int = 0,
+    componentFactory: CoroutineScope.(T) -> JComponent,
+  ): JPanel {
+    return VerticalListPanel(gap).apply {
+      launchOnShow("List panel scope") {
+        withContext(Dispatchers.UiImmediate) {
+          showItems(items, componentFactory)
+        }
+      }
+    }
   }
 
   /**
@@ -151,36 +174,31 @@ object ComponentListPanelFactory {
     gap: Int = 0,
     componentFactory: CoroutineScope.(T) -> JComponent,
   ): JPanel {
-    return createListPanel(parentCs, items, ::HorizontalListPanel, panelInitializer, gap, componentFactory)
+    val panel = HorizontalListPanel(gap).apply(panelInitializer)
+    parentCs.launchNow(CoroutineName("List panel scope") + Dispatchers.EDT) {
+      panel.showItems(items, componentFactory)
+    }
+    return panel
   }
 
-  private fun <T : Any> createListPanel(
-    parentCs: CoroutineScope,
-    items: StateFlow<List<T>>,
-    panelFactory: (Int) -> JPanel,
-    panelInitializer: JPanel.() -> Unit = {},
-    gap: Int = 0,
-    componentFactory: CoroutineScope.(T) -> JComponent,
-  ): JPanel {
-    val cs = parentCs.childScope("List panel", Dispatchers.EDT)
-    val panel = panelFactory(gap).apply(panelInitializer)
-
-    fun addComponent(idx: Int, item: T) {
-      val scope = cs.childScope("Child component scope for $item")
-      val component = scope.componentFactory(item).also {
-        ClientProperty.put(it, COMPONENT_SCOPE_KEY, scope)
+  private suspend fun <T : Any> JPanel.showItems(items: StateFlow<List<T>>, componentFactory: CoroutineScope.(T) -> JComponent): Nothing {
+    coroutineScope {
+      val cs = this
+      fun addComponent(idx: Int, item: T) {
+        val scope = cs.childScope("Child component scope for $item")
+        val component = scope.componentFactory(item).also {
+          ClientProperty.put(it, COMPONENT_SCOPE_KEY, scope)
+        }
+        add(component, idx)
       }
-      panel.add(component, idx)
-    }
 
-    fun removeComponent(idx: Int) {
-      val component = panel.getComponent(idx)
-      val componentCs = ClientProperty.get(component, COMPONENT_SCOPE_KEY)
-      componentCs?.cancel()
-      panel.remove(idx)
-    }
+      fun removeComponent(idx: Int) {
+        val component = getComponent(idx)
+        val componentCs = ClientProperty.get(component, COMPONENT_SCOPE_KEY)
+        componentCs?.cancel()
+        remove(idx)
+      }
 
-    cs.launchNow {
       items.changesFlow().collect { changes ->
         // apply changes. changesFlow should already order them in an applicable way
         for (change in changes) {
@@ -193,11 +211,11 @@ object ComponentListPanelFactory {
         }
 
         if (changes.isNotEmpty()) {
-          panel.revalidate()
-          panel.repaint()
+          revalidate()
+          repaint()
         }
       }
     }
-    return panel
+    awaitCancellation()
   }
 }
