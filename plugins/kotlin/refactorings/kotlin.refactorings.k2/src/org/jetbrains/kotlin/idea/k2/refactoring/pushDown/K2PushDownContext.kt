@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.pushDown.KotlinPushDownContext
 import org.jetbrains.kotlin.psi.KtClass
 
-class K2PushDownContext(
+internal class K2PushDownContext(
     sourceClass: KtClass,
     membersToMove: List<KotlinMemberInfo>,
 ) : KotlinPushDownContext(sourceClass, membersToMove)

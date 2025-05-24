@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.renderForConflict
 
 @Nls
 @OptIn(KaExperimentalApi::class)
-fun KaDeclarationSymbol.renderForConflicts(
+internal fun KaDeclarationSymbol.renderForConflicts(
     analysisSession: KaSession,
 ): String = with(analysisSession) {
     renderForConflict(CallableRenderer)
