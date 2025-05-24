@@ -334,6 +334,7 @@ object K2CreatePropertyFromUsageBuilder {
 
                 val declarationInContainer =
                     CreateFromUsageUtil.placeDeclarationInContainer(createdDeclaration, adjustedContainer, actualAnchor)
+                editor?.caretModel?.moveToOffset(declarationInContainer.textRange.endOffset)
                 shortenReferences(declarationInContainer)
             }
         }

@@ -1,9 +1,9 @@
 // "Create abstract property 'foo'" "true"
 interface AbstractFromAssignment {
-    var foo: String
+    var foo: String<caret>
 
     fun defaultFun() {
-        fo<caret>o = "gg"
+        foo = "gg"
     }
 }
 

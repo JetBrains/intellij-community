@@ -4,11 +4,11 @@
 // K2_AFTER_ERROR: Property must be initialized.
 
 
-val foo: Any
+val foo: Any<caret>
 
 class CtorChain(val pi: Int) {
     constructor() : this(0)
-    constructor(ps: String) : this(f<caret>oo)
+    constructor(ps: String) : this(foo)
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix
