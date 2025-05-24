@@ -95,7 +95,7 @@ interface MapIndexStorageCacheProvider {
 @Internal
 object SlruIndexStorageCacheProvider : MapIndexStorageCacheProvider {
   //RC: unfortunately, we can't create thread-unsafe cache now and rely on storage lock, because storage lock is RW, and we
-  // often _modify_ the cache under storage read operation/storage read lock
+  // often _modify_ the cache under storage _read_ operation (=storage _read_ lock)
   private const val THREAD_SAFE_IMPL = true
 
   init {
@@ -175,6 +175,11 @@ object SlruIndexStorageCacheProvider : MapIndexStorageCacheProvider {
     }
   }
 
+  //MAYBE RC: currently we protect the cache with a lock _around_ all accesses. This could be relaxed: with some
+  //          (reasonable) effort cache itself could be made thread-safe-for-reads, with lock only on cache update.
+  //          According to OTel metrics, cache efficacy is quite high (80-90% cache-hits), so such an optimization
+  //          could reduce a number of lock acquisition/release operations ~5-10x -- even though most of locks
+  //          acquisitions now are uncontended, still it could make a visible effect.
   private class SlruCacheForIntKeys<Key : Any, Value>(
     val valueReader: Function<Key, ChangeTrackingValueContainer<Value>>,
     val evictedValuesPersister: BiConsumer<Key, ChangeTrackingValueContainer<Value>>,
@@ -182,8 +187,8 @@ object SlruIndexStorageCacheProvider : MapIndexStorageCacheProvider {
     val converter: InlineKeyDescriptor<Key>,
   ) : MapIndexStorageCache<Key, Value> {
     private val cache = SLRUIntObjectCache<ChangeTrackingValueContainer<Value>>(
-      /*protectedQueueSize: */ cacheSize,
-      /*probationQueueSize: */ cacheSize / 4,
+      /* protectedQueueSize: */ cacheSize,
+      /* probationQueueSize: */ cacheSize / 4,
       { key: Int ->
         totalUncachedReads.incrementAndGet()
         valueReader.apply(converter.fromInt(key))
@@ -240,6 +245,10 @@ internal class LockedCacheWrapper<Key : Any, Value>(private val underlyingCache:
     finally {
       cacheAccessLock.unlock()
     }
+  }
+
+  override fun toString(): String {
+    return "LockedCacheWrapper(underlying: $underlyingCache)"
   }
 }
 
