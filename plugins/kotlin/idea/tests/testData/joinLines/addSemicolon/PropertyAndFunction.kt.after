@@ -1,0 +1,5 @@
+class A {
+    val x: Int
+        get() = y
+        set(value) {};<caret> fun f(){}
+}

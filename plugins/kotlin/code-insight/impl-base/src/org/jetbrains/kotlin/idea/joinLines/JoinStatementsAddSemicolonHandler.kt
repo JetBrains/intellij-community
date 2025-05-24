@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.lexer.KtTokens.LBRACE
 import org.jetbrains.kotlin.lexer.KtTokens.WHITE_SPACE_OR_COMMENT_BIT_SET
 import org.jetbrains.kotlin.parsing.KotlinExpressionParsing
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 
@@ -29,9 +30,14 @@ class JoinStatementsAddSemicolonHandler : JoinRawLinesHandlerDelegate {
         val element1 = linebreak.firstMaterialSiblingSameLine { prevSibling } ?: return CANNOT_JOIN
         val element2 = linebreak.firstMaterialSiblingSameLine { nextSibling } ?: return CANNOT_JOIN
 
-        if (element1 !is KtPropertyAccessor || element2 !is KtPropertyAccessor) {
+        if (linebreak.text.count { it == '\n' } > 1) return CANNOT_JOIN
+
+        if (
+            (element1 !is KtPropertyAccessor && element2 !is KtPropertyAccessor) &&
+            // `val x=1 fun f(){}` is error; while `fun f(){} val x=1` is OK
+            (element1 !is KtProperty)
+        ) {
             if (parent.node.elementType != BLOCK) return CANNOT_JOIN
-            if (linebreak.text.count { it == '\n' } > 1) return CANNOT_JOIN
             if (!element1.isStatement()) return CANNOT_JOIN
             if (!element2.isStatement()) return CANNOT_JOIN
         }
