@@ -22,7 +22,7 @@ public final class PyStdlibUtil {
   private PyStdlibUtil() {
   }
 
-  public static @Nullable Collection<String> getPackages() {
+  public static @Nullable Set<String> getPackages() {
     return PACKAGES.get();
   }
 

@@ -15,7 +15,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.messages.Topic
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.onFailure
@@ -25,8 +24,7 @@ import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
-import com.jetbrains.python.packaging.pyRequirementVersionSpec
-import com.jetbrains.python.packaging.requirement.PyRequirementRelation
+import com.jetbrains.python.packaging.normalizePackageName
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 import com.jetbrains.python.sdk.PythonSdkCoroutineService
 import com.jetbrains.python.sdk.PythonSdkUpdater
@@ -36,9 +34,12 @@ import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
-import org.jetbrains.annotations.Nls
 
 
+/**
+ * Represents a Python package manager for a specific Python SDK. Encapsulate main operations with package managers
+ * @see com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI to execute commands with UI handlers
+ */
 @ApiStatus.Experimental
 abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
   private val lazyInitialization by lazy {
@@ -52,19 +53,15 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
   @set:ApiStatus.Internal
   protected open var dependencies: List<PythonPackage> = emptyList()
 
+  @ApiStatus.Internal
   @Volatile
-  open var installedPackages: List<PythonPackage> = emptyList()
-    protected set
+  protected open var installedPackages: List<PythonPackage> = emptyList()
 
   @ApiStatus.Internal
   @Volatile
-  var outdatedPackages: Map<String, PythonOutdatedPackage> = emptyMap()
-    private set
+  protected var outdatedPackages: Map<String, PythonOutdatedPackage> = emptyMap()
 
   abstract val repositoryManager: PythonRepositoryManager
-
-  @ApiStatus.Internal
-  fun isPackageInstalled(pkg: PythonPackage): Boolean = installedPackages.any { it.name == pkg.name }
 
   @ApiStatus.Internal
   fun findPackageSpecificationWithVersionSpec(
@@ -77,50 +74,17 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
   }
 
   @ApiStatus.Internal
-  fun findPackageSpecification(
-    packageName: String,
-    version: String? = null,
-    relation: PyRequirementRelation = PyRequirementRelation.EQ,
-  ): PythonRepositoryPackageSpecification? {
-    val versionSpec = version?.let { pyRequirementVersionSpec(relation, version) }
-    return findPackageSpecificationWithVersionSpec(packageName, versionSpec)
-  }
-
-  @ApiStatus.Internal
   suspend fun installPackage(installRequest: PythonPackageInstallRequest, options: List<String> = emptyList()): PyResult<List<PythonPackage>> {
-    val progressTitle = when (installRequest) {
-      is PythonPackageInstallRequest.AllRequirements -> PyBundle.message("python.packaging.installing.requirements")
-      is PythonPackageInstallRequest.ByLocation -> PyBundle.message("python.packaging.installing.package", installRequest.title)
-      is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications -> if (installRequest.specifications.size == 1) {
-        PyBundle.message("python.packaging.installing.package", installRequest.specifications.first().name)
-      }
-      else {
-        PyBundle.message("python.packaging.installing.packages")
-      }
-    }
-
-    executeCommand(progressTitle) {
-      waitForInit()
-      installPackageCommand(installRequest, options)
-    }.getOr { return it }
-
+    waitForInit()
+    installPackageCommand(installRequest, options).getOr { return it }
 
     return reloadPackages()
   }
 
   @ApiStatus.Internal
   suspend fun updatePackages(vararg packages: PythonRepositoryPackageSpecification): PyResult<List<PythonPackage>> {
-    val progressTitle = if (packages.size > 1) {
-      PyBundle.message("python.packaging.updating.packages")
-    }
-    else {
-      PyBundle.message("python.packaging.updating.package", packages.first().name)
-    }
-
-    executeCommand(progressTitle) {
-      waitForInit()
-      updatePackageCommand(*packages)
-    }.getOr { return it }
+    waitForInit()
+    updatePackageCommand(*packages).getOr { return it }
 
     return reloadPackages()
   }
@@ -131,27 +95,15 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
       return PyResult.success(installedPackages)
     }
 
-    val progressTitle = if (packages.size > 1) {
-      PyBundle.message("python.packaging.uninstall.packages")
-    }
-    else {
-      PyBundle.message("python.packaging.uninstall.package", packages.first())
-    }
-
-    executeCommand(progressTitle) {
-      waitForInit()
-      uninstallPackageCommand(*packages)
-    }.getOr { return it }
-
+    waitForInit()
+    val normalizedPackagesNames = packages.map { normalizePackageName(it) }
+    uninstallPackageCommand(*normalizedPackagesNames.toTypedArray()).getOr { return it }
     return reloadPackages()
   }
 
   @ApiStatus.Internal
   open suspend fun reloadPackages(): PyResult<List<PythonPackage>> {
-    val progressTitle = PyBundle.message("python.toolwindow.packages.update.packages")
-    val packages = executeCommand(progressTitle) {
-      loadPackagesCommand()
-    }.getOr {
+    val packages = loadPackagesCommand().getOr {
       outdatedPackages = emptyMap()
       installedPackages = emptyList()
       return it
@@ -175,13 +127,36 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
     return PyResult.success(packages)
   }
 
+  @ApiStatus.Internal
+  suspend fun listInstalledPackages(): List<PythonPackage> {
+    waitForInit()
+    return listInstalledPackagesSnapshot()
+  }
+
+  @ApiStatus.Internal
+  fun listInstalledPackagesSnapshot(): List<PythonPackage> {
+    return installedPackages
+  }
+
+  @ApiStatus.Internal
+  suspend fun listOutdatedPackages(): Map<String, PythonOutdatedPackage> {
+    waitForInit()
+    return listOutdatedPackagesSnapshot()
+  }
+
+
+  @ApiStatus.Internal
+  fun listOutdatedPackagesSnapshot(): Map<String, PythonOutdatedPackage> {
+    return outdatedPackages
+  }
+
   private suspend fun reloadOutdatedPackages() {
     if (installedPackages.isEmpty()) {
       outdatedPackages = emptyMap()
       return
     }
     val loadedPackages = loadOutdatedPackagesCommand().onFailure {
-     thisLogger().warn("Failed to load outdated packages $it")
+      thisLogger().warn("Failed to load outdated packages $it")
     }.getOrNull() ?: emptyList()
 
     val packageMap = loadedPackages.associateBy { it.name }
@@ -194,7 +169,6 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
     }
   }
 
-
   private suspend fun refreshPaths() = edtWriteAction {
     // Background refreshing breaks structured concurrency: there is a some activity in background that locks files.
     // Temporary folders can't be deleted on Windows due to that.
@@ -204,13 +178,6 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
       VfsUtil.markDirtyAndRefresh(true, true, true, *sdk.rootProvider.getFiles(OrderRootType.CLASSES))
     }
     PythonSdkUpdater.scheduleUpdate(sdk, project)
-  }
-
-  private suspend fun <T> executeCommand(
-    progressTitle: @Nls String,
-    operation: suspend (() -> PyResult<T>),
-  ): PyResult<T> = PythonPackageManagerUIHelpers.runPackagingOperationBackground(project, progressTitle) {
-    operation()
   }
 
   @ApiStatus.Internal
@@ -262,3 +229,5 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
     val RUNNING_PACKAGING_TASKS: Key<Boolean> = Key.create("PyPackageRequirementsInspection.RunningPackagingTasks")
   }
 }
+
+

@@ -20,7 +20,6 @@ import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCol
 import com.jetbrains.python.newProjectWizard.impl.PyV3GeneratorPeer
 import com.jetbrains.python.newProjectWizard.impl.PyV3UIServicesProd
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows.Companion.validatePath
-import com.jetbrains.python.onFailure
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
 import com.jetbrains.python.statistics.version
 import kotlinx.coroutines.CoroutineScope
@@ -91,9 +90,7 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
       // Either base settings (which create venv) might generate some or type-specific settings (like Django) may.
       // So we expand it right after SDK generation, but if there are no files yet, we do it again after project generation
       uiServices.expandProjectTreeView(project)
-      typeSpecificSettings.generateProject(module, baseDir, sdk).onFailure {
-        uiServices.errorSink.emit(it)
-      }
+      typeSpecificSettings.generateProject(module, baseDir, sdk, uiServices.errorSink)
       uiServices.expandProjectTreeView(project)
     }
   }

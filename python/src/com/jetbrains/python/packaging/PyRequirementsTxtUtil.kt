@@ -14,6 +14,8 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.Sdk
@@ -29,12 +31,15 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiPackageUtil
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonFileType
+import com.jetbrains.python.packaging.common.PythonPackage
+import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.PySdkPopupFactory
 import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.util.runWithModalBlockingOrInBackground
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Paths
-import java.util.Locale
+import java.util.*
 
 
 /**
@@ -46,25 +51,28 @@ import java.util.Locale
  */
 @ApiStatus.Internal
 
-data class PyRequirementsAnalysisResult(val currentFileOutput: List<String>,
-                                        val baseFilesOutput: Map<VirtualFile, List<String>>,
-                                        val unhandledLines: List<String>,
-                                        val unchangedInBaseFiles: List<String>) {
+data class PyRequirementsAnalysisResult(
+  val currentFileOutput: List<String>,
+  val baseFilesOutput: Map<VirtualFile, List<String>>,
+  val unhandledLines: List<String>,
+  val unchangedInBaseFiles: List<String>,
+) {
   companion object {
     fun empty() = PyRequirementsAnalysisResult(emptyList(), emptyMap(), emptyList(), emptyList())
   }
 
-  fun withImportedPackages(importedPackages: Map<String, PyPackage>, settings: PyPackageRequirementsSettings): PyRequirementsAnalysisResult {
+  fun withImportedPackages(importedPackages: MutableMap<String, PythonPackage>, settings: PyPackageRequirementsSettings): PyRequirementsAnalysisResult {
     val newCurrentFile = currentFileOutput + importedPackages.values.map {
-      if (settings.specifyVersion) "${it.name}${settings.versionSpecifier.separator}${it.version}" else it.name
+      if (settings.specifyVersion) "${it.presentableName}${settings.versionSpecifier.separator}${it.version}" else it.presentableName
     }
     return PyRequirementsAnalysisResult(newCurrentFile, baseFilesOutput, unhandledLines, unchangedInBaseFiles)
   }
 }
+
 private class PyCollectImportsTask(
   private val module: Module,
   private val psiManager: PsiManager,
-  @NlsContexts.DialogTitle title: String
+  @NlsContexts.DialogTitle title: String,
 ) : Task.WithResult<Set<String>, Exception>(module.project, title, true) {
 
   override fun compute(indicator: ProgressIndicator): Set<String> {
@@ -142,11 +150,13 @@ internal fun syncWithImports(module: Module) {
   }
 }
 
-private fun showNotification(notificationGroup: NotificationGroup,
-                             type: NotificationType,
-                             @NlsContexts.NotificationContent text: String,
-                             project: Project,
-                             action: NotificationAction? = null) {
+private fun showNotification(
+  notificationGroup: NotificationGroup,
+  type: NotificationType,
+  @NlsContexts.NotificationContent text: String,
+  project: Project,
+  action: NotificationAction? = null,
+) {
   val notification = notificationGroup.createNotification(PyBundle.message("python.requirements.balloon"), text, type)
   if (action != null) notification.addAction(action)
   notification.notify(project)
@@ -160,11 +170,14 @@ private fun prepareRequirementsText(module: Module, sdk: Sdk, settings: PyPackag
   val task = PyCollectImportsTask(module, psiManager, dialogTitle)
   task.queue()
 
-  val installedPackages = PyPackageManager.getInstance(sdk).refreshAndGetPackages(false)
+  val installedPackages = runWithModalBlockingOrInBackground(module.project, PyBundle.message("python.packaging.list.packages")) {
+    PythonPackageManager.forSdk(module.project, sdk).listInstalledPackages()
+  }
+
   val importedPackages = task.result.asSequence()
     .flatMap { topLevelPackage ->
       val alias = PyPsiPackageUtil.moduleToPackageName(topLevelPackage, default = "")
-      sequence {  
+      sequence {
         yield(topLevelPackage)
         if (alias.isNotEmpty()) yield(alias)
       }.mapNotNull { name -> installedPackages.find { StringUtil.equalsIgnoreCase(it.name, name) } }
@@ -194,7 +207,7 @@ private fun showSyncSettingsDialog(project: Project, settings: PyPackageRequirem
         .focused()
     }
     row(PyBundle.message("python.requirements.version.label")) {
-      comboBox(PyRequirementsVersionSpecifierType.values().asList())
+      comboBox(PyRequirementsVersionSpecifierType.entries)
         .bindItem(settings::getVersionSpecifier, settings::setVersionSpecifier)
         .align(AlignX.FILL)
     }
@@ -224,6 +237,6 @@ private fun showSyncSettingsDialog(project: Project, settings: PyPackageRequirem
 
 private fun addImports(file: PyFile, imported: MutableSet<String>) {
   (file.importTargets.asSequence().mapNotNull { it.importedQName?.firstComponent } +
-  file.fromImports.asSequence().mapNotNull { it.importSourceQName?.firstComponent })
+   file.fromImports.asSequence().mapNotNull { it.importSourceQName?.firstComponent })
     .forEach { imported.add(it) }
 }

@@ -28,7 +28,7 @@ internal class OutdatedRequirementInspection : LocalInspectionTool() {
 
       val packageManager = PythonPackageManager.Companion.forSdk(psiFile.project, sdk)
 
-      val outdatedPackages = packageManager.outdatedPackages.toMap()
+      val outdatedPackages = packageManager.listOutdatedPackagesSnapshot().toMap()
       if (outdatedPackages.isEmpty())
         return
 

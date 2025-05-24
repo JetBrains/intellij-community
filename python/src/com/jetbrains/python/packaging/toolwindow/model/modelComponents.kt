@@ -41,6 +41,6 @@ class InstallablePackage(name: String, override val repository: PyPackageReposit
 
 class ExpandResultNode(var more: Int, override val repository: PyPackageRepository) : DisplayablePackage("", repository)
 
-open class PyPackagesViewData(@NlsSafe val repository: PyPackageRepository, val packages: List<DisplayablePackage>, val exactMatch: Int = -1, val moreItems: Int = 0)
+open class PyPackagesViewData(val repository: PyPackageRepository, val packages: List<DisplayablePackage>, val exactMatch: Int = -1, val moreItems: Int = 0)
 
 class PyInvalidRepositoryViewData(repository: PyPackageRepository) : PyPackagesViewData(repository, emptyList())

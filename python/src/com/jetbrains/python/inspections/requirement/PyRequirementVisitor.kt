@@ -88,7 +88,7 @@ class PyRequirementVisitor(
     ignoredPackages: Set<String?>,
   ): List<PyRequirement> {
     val requirements = getRequirements(module) ?: return emptyList()
-    val installedPackages = manager.installedPackages
+    val installedPackages = manager.listInstalledPackagesSnapshot()
     val modulePackages = collectPackagesInModule(module)
 
     return requirements.filter { requirement ->
@@ -198,7 +198,7 @@ class PyRequirementVisitor(
     val requirements = getListedRequirements(module)
     if (requirements == null) return null
 
-    val packages = packageManager.installedPackages
+    val packages = packageManager.listInstalledPackagesSnapshot()
     return getTransitiveRequirements(packages.toPyPackages(), requirements, HashSet()) + requirements
   }
 

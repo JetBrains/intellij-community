@@ -8,9 +8,9 @@ import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceCacheFillService
 import com.intellij.util.messages.MessageBusConnection
-import com.jetbrains.python.packaging.PyPackageInstallUtils
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.hasInstalledPackage
 import com.jetbrains.python.sdk.PythonSdkUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -60,7 +60,7 @@ class HuggingFaceLibrariesTracker(
 
   private fun getProjectPythonSdk(): Sdk? = PythonSdkUtil.findPythonSdk(project.modules.firstOrNull())
 
-  private fun updateHFLibraryInstallStatus() {
+  private suspend fun updateHFLibraryInstallStatus() {
     if (isAnyHFLibraryInstalled) return  // assuming that if was found once - always relevant
 
     val sdk = getProjectPythonSdk() ?: return
@@ -72,9 +72,12 @@ class HuggingFaceLibrariesTracker(
     }
   }
 
-  private fun isAnyHFLibraryInstalledInSdk(sdk: Sdk): Boolean = relevantLibraries.any { lib ->
-    PyPackageInstallUtils.getPackageVersion(project, sdk, lib) != null
+  private suspend fun isAnyHFLibraryInstalledInSdk(sdk: Sdk): Boolean {
+    val packageManager = PythonPackageManager.forSdk(project, sdk)
+    return relevantLibraries.any { lib ->
+      packageManager.hasInstalledPackage(lib)
+    }
   }
 
-  override fun dispose() = detachSdkListener()
+  override fun dispose(): Unit = detachSdkListener()
 }

@@ -1945,15 +1945,15 @@ public class PyRequirementTest extends PyTestCase {
   // TODO: hashes
   // https://www.python.org/dev/peps/pep-0508/#names
   public void testRequirement() {
-    assertEquals(pyRequirement("Orange-Bioinformatics"), fromLine("Orange-Bioinformatics"));
-    assertEquals(pyRequirement("MOCPy"), fromLine("MOCPy"));
-    assertEquals(pyRequirement("score.webassets"), fromLine("score.webassets"));
-    assertEquals(pyRequirement("pip_helpers"), fromLine("pip_helpers"));
-    assertEquals(pyRequirement("Django"), fromLine("Django"));
-    assertEquals(pyRequirement("django"), fromLine("django"));
-    assertEquals(pyRequirement("pinax-utils"), fromLine("pinax-utils"));
-    assertEquals(pyRequirement("no_limit_nester"), fromLine("no_limit_nester"));
-    assertEquals(pyRequirement("Flask-Celery-py3"), fromLine("Flask-Celery-py3"));
+    assertEquals(pyRequirement("Orange-Bioinformatics",null), fromLine("Orange-Bioinformatics"));
+    assertEquals(pyRequirement("MOCPy",null), fromLine("MOCPy"));
+    assertEquals(pyRequirement("score.webassets",null), fromLine("score.webassets"));
+    assertEquals(pyRequirement("pip_helpers",null), fromLine("pip_helpers"));
+    assertEquals(pyRequirement("Django",null), fromLine("Django"));
+    assertEquals(pyRequirement("django",null), fromLine("django"));
+    assertEquals(pyRequirement("pinax-utils",null), fromLine("pinax-utils"));
+    assertEquals(pyRequirement("no_limit_nester",null), fromLine("no_limit_nester"));
+    assertEquals(pyRequirement("Flask-Celery-py3",null), fromLine("Flask-Celery-py3"));
   }
 
   // https://www.python.org/dev/peps/pep-0440/
@@ -2384,7 +2384,9 @@ public class PyRequirementTest extends PyTestCase {
     final VirtualFile requirementsFile = getVirtualFileByName(getTestDataPath() + "/requirement/recursive/requirements.txt");
     assertNotNull(requirementsFile);
 
-    assertEquals(Arrays.asList(pyRequirement("bitly_api"), pyRequirement("numpy"), pyRequirement("SomeProject")),
+    assertEquals(Arrays.asList(pyRequirement("bitly_api",null),
+                               pyRequirement("numpy",null),
+                               pyRequirement("SomeProject",null)),
                  PyRequirementParser.fromFile(requirementsFile));
   }
 

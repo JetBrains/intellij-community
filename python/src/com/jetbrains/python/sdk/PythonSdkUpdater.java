@@ -174,7 +174,7 @@ public final class PythonSdkUpdater {
       ContainerUtil.addIfNotNull(allStubRoots, PyTypeShed.INSTANCE.getThirdPartyStubRoot());
       ContainerUtil.addIfNotNull(allStubRoots, PyBundledStubs.INSTANCE.getRoot());
       PythonPackageManager packageManager = PythonPackageManager.Companion.forSdk(myProject, sdk);
-      Set<String> installedPackageNames = ContainerUtil.map2Set(packageManager.getInstalledPackages(), PythonPackage::getName);
+      Set<String> installedPackageNames = ContainerUtil.map2Set(packageManager.listInstalledPackagesSnapshot(), PythonPackage::getName);
       List<VirtualFile> bundledStubRoots = StreamEx.of(allStubRoots)
         .flatArray(root -> root.getChildren())
         .filter(VirtualFile::isDirectory)
@@ -222,6 +222,7 @@ public final class PythonSdkUpdater {
         indicator.setText2("");
         PyPackageManager.getInstance(sdk).refreshAndGetPackages(true);
         //It internally invoke lazy list packages update on first call
+
         PythonPackageManager.Companion.forSdk(myProject, mySdk);
       }
       catch (ExecutionException e) {

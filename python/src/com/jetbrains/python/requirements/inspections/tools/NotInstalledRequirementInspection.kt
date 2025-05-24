@@ -39,7 +39,7 @@ class NotInstalledRequirementInspection : LocalInspectionTool() {
 
       val packageManager = PythonPackageManager.forSdk(psiFile.project, sdk)
 
-      val packages = packageManager.installedPackages.map { it.name }
+      val packages = packageManager.listInstalledPackagesSnapshot().map { it.name }
 
       val notInstalledRequirementsWithPsi = requirements.mapNotNull { requirement ->
         val pyRequirement = PyRequirementParser.fromLine(requirement.text) ?: return@mapNotNull null

@@ -169,12 +169,6 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     PyPackageService.getInstance().addSdkToUserSite(mySdk.getHomePath(), newValue);
   }
 
-  @Override
-  public @NotNull List<? extends InstalledPackage> getInstalledPackagesList() throws ExecutionException {
-    List<PyPackage> packages = new ArrayList<>(PyPackageManager.getInstance(mySdk).refreshAndGetPackages(true));
-    packages.sort(Comparator.comparing(InstalledPackage::getName));
-    return packages;
-  }
 
   @Override
   public void installPackage(@NotNull RepoPackage repoPackage,
@@ -201,7 +195,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
       extraArgs.add("-U");
     }
     final PyRequirement req = version == null
-                              ? PyRequirementsKt.pyRequirement(packageName)
+                              ? PyRequirementsKt.pyRequirement(packageName,null)
                               : PyRequirementsKt.pyRequirement(packageName, PyRequirementRelation.EQ, version);
 
     final PyPackageManagerUI ui = new PyPackageManagerUI(myProject, mySdk, new PyPackageManagerUI.Listener() {

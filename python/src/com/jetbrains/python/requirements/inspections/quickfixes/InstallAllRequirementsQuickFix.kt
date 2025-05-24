@@ -8,8 +8,8 @@ import com.intellij.openapi.project.Project
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyPackageInstallUtils
 import com.jetbrains.python.packaging.PyRequirement
-import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.management.PythonPackagesInstaller
+import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
+import com.jetbrains.python.packaging.management.ui.installPyRequirementsBackground
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.requirements.getPythonSdk
 import kotlinx.coroutines.Dispatchers
@@ -29,8 +29,9 @@ internal class InstallAllRequirementsQuickFix(val requirements: List<PyRequireme
 
     PyPackageCoroutine.getScope(project).launch(Dispatchers.Default) {
       val sdk = getPythonSdk(file) ?: return@launch
-      val manager = PythonPackageManager.Companion.forSdk(project, sdk)
-      PythonPackagesInstaller.installWithRequirements(manager, confirmedPackages, emptyList())
+      val manager = PythonPackageManagerUI.forSdk(project, sdk)
+      manager.installPyRequirementsBackground(confirmedPackages.toList(), emptyList<String>()
+      )
     }
   }
 

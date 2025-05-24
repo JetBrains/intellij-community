@@ -10,30 +10,21 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.popup.Balloon
-import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.Version
-import com.intellij.ui.awt.RelativePoint
-import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiPackageUtil
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibUtil
-import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.inspections.quickfix.InstallPackageQuickFix
-import com.jetbrains.python.packaging.common.PythonPackage
+import com.jetbrains.python.packaging.PyPIPackageUtil.INSTANCE
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.management.toInstallRequest
+import com.jetbrains.python.packaging.management.hasInstalledPackageSnapshot
+import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
+import com.jetbrains.python.packaging.management.ui.installPackageBackground
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 import com.jetbrains.python.packaging.ui.PyChooseRequirementsDialog
-import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.statistics.PyPackagesUsageCollector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.JLabel
-import javax.swing.UIManager
 
 /**
  * PyCharm doesn't provide any API for package management for external plugins.
@@ -59,29 +50,24 @@ object PyPackageInstallUtils {
 
 
   fun offeredPackageForNotFoundModule(project: Project, sdk: Sdk, moduleName: String): String? {
-    val shouldToInstall = checkShouldToInstall(project, sdk, moduleName)
+    val shouldToInstall = checkShouldToInstallSnapshot(project, sdk, moduleName)
     if (!shouldToInstall)
       return null
     return PyPsiPackageUtil.moduleToPackageName(moduleName)
   }
 
-  fun checkShouldToInstall(project: Project, sdk: Sdk, moduleName: String): Boolean {
+  fun checkShouldToInstallSnapshot(project: Project, sdk: Sdk, moduleName: String): Boolean {
     val packageName = PyPsiPackageUtil.moduleToPackageName(moduleName)
-    return !checkIsInstalled(project, sdk, packageName) && checkExistsInRepository(packageName)
+    return !checkIsInstalledSnapshot(project, sdk, packageName) && INSTANCE.isInPyPI(packageName)
   }
 
-  fun checkIsInstalled(project: Project, sdk: Sdk, packageName: String): Boolean {
-    val isStdLib = (PyStdlibUtil.getPackages() as Set<*>).contains(packageName)
+  fun checkIsInstalledSnapshot(project: Project, sdk: Sdk, packageName: String): Boolean {
+    val isStdLib = PyStdlibUtil.getPackages()?.contains(packageName) ?: false
     if (isStdLib) {
       return true
     }
-    val packageManager = getPackageManagerOrNull(project, sdk) ?: return false
-    return packageManager.installedPackages.any { normalizePackageName(it.name) == packageName }
-  }
-
-  private fun checkExistsInRepository(packageName: String): Boolean {
-    val normalizedName = normalizePackageName(packageName)
-    return PyPIPackageUtil.INSTANCE.isInPyPI(normalizedName)
+    val packageManager = PythonPackageManager.forSdk(project, sdk)
+    return packageManager.hasInstalledPackageSnapshot(packageName)
   }
 
 
@@ -91,8 +77,7 @@ object PyPackageInstallUtils {
     }
     if (!isConfirmed)
       return
-    val result = installPackage(project, sdk, packageName, versionSpec = versionSpec)
-    result.getOrThrow()
+    PythonPackageManagerUI.forSdk(project, sdk).installPackageBackground(packageName, versionSpec = versionSpec)
   }
 
   fun confirmInstall(project: Project, packageName: String): Boolean {
@@ -113,86 +98,6 @@ object PyPackageInstallUtils {
     return true
   }
 
-  suspend fun upgradePackage(project: Project, sdk: Sdk, packageName: String, version: String? = null): PyResult<List<PythonPackage>> {
-    val pythonPackageManager = getPackageManagerOrNull(project, sdk)
-    val packageSpecification = pythonPackageManager?.repositoryManager?.repositories?.firstOrNull()?.findPackageSpecification(packageName, version)
-                               ?: return PyResult.localizedError("Could not find any repositories")
-
-    return pythonPackageManager.updatePackages(packageSpecification)
-  }
-
-  suspend fun installPackage(
-    project: Project,
-    sdk: Sdk,
-    packageName: String,
-    versionSpec: PyRequirementVersionSpec? = null,
-    options: List<String> = emptyList(),
-  ): PyResult<List<PythonPackage>> {
-    val pythonPackageManager = PythonPackageManager.forSdk(project, sdk)
-
-    val spec = pythonPackageManager.findPackageSpecificationWithVersionSpec(packageName, versionSpec)
-               ?: return PyResult.localizedError("Package $packageName not found in any repository")
-
-    return pythonPackageManager.installPackage(spec.toInstallRequest(), options)
-  }
-
-
-  /**
-   * NOTE calling this functions REQUIRED init package list before the calling!
-   */
-  fun getPackageVersion(project: Project, sdk: Sdk, packageName: String): Version? {
-    val pythonPackage = getPackage(project, sdk, packageName)
-    val version = pythonPackage?.version ?: return null
-    return Version.parseVersion(version)
-  }
-
-  private fun getPackage(
-    project: Project,
-    sdk: Sdk,
-    packageName: String,
-  ): PythonPackage? {
-    val pythonPackageManager = getPackageManagerOrNull(project, sdk)
-    val installedPackages = pythonPackageManager?.installedPackages ?: return null
-
-    val pythonPackage = installedPackages.firstOrNull { it.name == packageName }
-    return pythonPackage
-  }
-
-  suspend fun uninstall(project: Project, sdk: Sdk, libName: String) {
-    val pythonPackageManager = getPackageManagerOrNull(project, sdk) ?: return
-    val pythonPackage = getPackage(project, sdk, libName) ?: return
-    pythonPackageManager.uninstallPackage(pythonPackage.name)
-  }
-
-
-  fun invokeInstallPackage(project: Project, pythonSdk: Sdk, packageName: String, point: RelativePoint, versionSpec: PyRequirementVersionSpec? = null) {
-    PyPackageCoroutine.launch(project) {
-      val loadBalloon = showBalloon(point, PyBundle.message("python.packaging.installing.package", packageName), BalloonStyle.INFO)
-      try {
-        confirmAndInstall(project, pythonSdk, packageName, versionSpec = versionSpec)
-        loadBalloon.hide()
-        PyPackagesUsageCollector.installPackageFromConsole.log(project)
-        showBalloon(point, PyBundle.message("python.packaging.notification.description.installed.packages", packageName), BalloonStyle.SUCCESS)
-      }
-      catch (t: Throwable) {
-        loadBalloon.hide()
-        PyPackagesUsageCollector.failInstallPackageFromConsole.log(project)
-        showBalloon(point, PyBundle.message("python.new.project.install.failed.title", packageName), BalloonStyle.ERROR)
-        throw t
-      }
-      PyResult.success(Unit)
-    }
-  }
-
-  private fun getPackageManagerOrNull(
-    project: Project,
-    sdk: Sdk,
-  ): PythonPackageManager? = try {
-    PythonPackageManager.forSdk(project, sdk)
-  }
-  catch (_: Throwable) {
-    null
-  }
 
   private class ConfirmPackageInstallationDoNotAskOption : DoNotAskOption.Adapter() {
     override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
@@ -201,29 +106,6 @@ object PyPackageInstallUtils {
       }
     }
   }
-
-  private suspend fun showBalloon(point: RelativePoint, @NlsContexts.DialogMessage text: String, style: BalloonStyle): Balloon =
-    withContext(Dispatchers.EDT) {
-      val content = JLabel()
-      val (borderColor, fillColor) = when (style) {
-        BalloonStyle.SUCCESS -> JBUI.CurrentTheme.Banner.SUCCESS_BORDER_COLOR to JBUI.CurrentTheme.Banner.SUCCESS_BACKGROUND
-        BalloonStyle.INFO -> JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR to JBUI.CurrentTheme.Banner.INFO_BACKGROUND
-        BalloonStyle.ERROR -> JBUI.CurrentTheme.Validator.errorBorderColor() to JBUI.CurrentTheme.Validator.errorBackgroundColor()
-      }
-      val balloonBuilder = JBPopupFactory.getInstance()
-        .createBalloonBuilder(content)
-        .setBorderInsets(UIManager.getInsets("Balloon.error.textInsets"))
-        .setBorderColor(borderColor)
-        .setFillColor(fillColor)
-        .setHideOnClickOutside(true)
-        .setHideOnFrameResize(false)
-      content.text = text
-      val balloon = balloonBuilder.createBalloon()
-      balloon.show(point, Balloon.Position.below)
-      balloon
-    }
-
-  enum class BalloonStyle { ERROR, INFO, SUCCESS }
 }
 
 

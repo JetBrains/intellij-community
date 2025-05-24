@@ -17,7 +17,10 @@ import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
  * @see PyRequirementParser.fromText
  * @see PyRequirementParser.fromFile
  */
-fun pyRequirement(name: String): PyRequirement = PyRequirementImpl(name, emptyList(), listOf(name), "")
+fun pyRequirement(name: String, versionSpec: PyRequirementVersionSpec? = null): PyRequirement = PyRequirementImpl(name,
+                                                                                                                  listOfNotNull(versionSpec),
+                                                                                                                  listOf(name),
+                                                                                                                  "")
 
 /**
  * This helper is not an API, consider using methods listed below.
@@ -31,6 +34,7 @@ fun pyRequirement(name: String): PyRequirement = PyRequirementImpl(name, emptyLi
  */
 fun pyRequirement(name: String, relation: PyRequirementRelation, version: String): PyRequirement =
   pyRequirement(name, relation, version, "")
+
 
 /**
  * This helper is not an API, consider using methods listed below.

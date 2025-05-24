@@ -21,12 +21,8 @@ internal class UpdatePackageToLatestAction : DumbAwareAction() {
     }
 
     val service = PyPackagingToolWindowService.getInstance(project)
-
     PyPackageCoroutine.getIoScope(project).launch {
-      val packageSpecifications = packages.mapNotNull { pkg ->
-        pkg.repository?.findPackageSpecification(pkg.name)
-      }.toTypedArray()
-      service.updatePackage(*packageSpecifications)
+      service.updatePackages(*packages.map { it.name }.toTypedArray())
     }
   }
 

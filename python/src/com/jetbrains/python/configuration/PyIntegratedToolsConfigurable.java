@@ -165,7 +165,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
             }
           }
         });
-        ui.install(Collections.singletonList(PyRequirementsKt.pyRequirement(name)), Collections.emptyList());
+        ui.install(Collections.singletonList(PyRequirementsKt.pyRequirement(name,null)), Collections.emptyList());
       }
     };
   }

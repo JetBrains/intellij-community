@@ -11,6 +11,7 @@ import com.jetbrains.env.PyEnvTestCase
 import com.jetbrains.env.PyExecutionFixtureTestTask
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.hasInstalledPackage
 import com.jetbrains.python.packaging.management.toInstallRequest
 import com.jetbrains.python.packaging.repository.PyPIPackageRepository
 import com.jetbrains.python.sdk.PythonSdkType
@@ -89,10 +90,10 @@ class PythonPackageManagerNullAdditionalDataTask(private val pkg: PythonReposito
       val manager = PythonPackageManager.forSdk(myFixture.project, configuredSdk)
 
       manager.installPackage(pkg.toInstallRequest(), emptyList())
-      assertTrue("Package should be installed", manager.installedPackages.map { it.name }.contains(pkg.name))
+      assertTrue("Package should be installed", manager.hasInstalledPackage(pkg.name))
 
       manager.uninstallPackage(pkg.name)
-      assertTrue("Package should be uninstalled", !manager.installedPackages.map { it.name }.contains(pkg.name))
+      assertTrue("Package should be uninstalled", !manager.hasInstalledPackage(pkg.name))
     }
   }
 

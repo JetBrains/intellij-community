@@ -44,7 +44,7 @@ abstract class PyRunAnythingPackageProvider : RunAnythingCommandLineProvider() {
           it.startsWith(commandLine.toComplete)
         }.asSequence()
       }
-      return packageManager.installedPackages.map { it.name }.filter { it.startsWith(commandLine.toComplete) }.asSequence()
+      return packageManager.listInstalledPackagesSnapshot().map { it.name }.filter { it.startsWith(commandLine.toComplete) }.asSequence()
     }
     val last = commandLine.parameters.last()
     if (isInstall) {

@@ -20,18 +20,19 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.jetbrains.python.packaging.common.PythonPackage
-import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
-import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
+import com.jetbrains.python.packaging.PyRequirement
+import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
+import com.jetbrains.python.packaging.management.ui.installPyRequirementsBackground
 import com.jetbrains.python.packaging.pip.PipPythonPackageManager
-import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration
 import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.exists
+import kotlin.io.path.readText
 
 class SetupPythonInterpreterStepFactory(private val project: Project) : SetupSdkStepFactory {
   override fun isApplicable(language: Language): Boolean = language == Language.PYTHON
@@ -143,47 +144,32 @@ private class SetupPythonInterpreterStep(
   }
 
   private suspend fun installPackages(sdk: Sdk) {
-    val packageManager = PythonPackageManager.forSdk(project, sdk)
-    packageManager.reloadPackages()
-
-    val packages = readRequiredPackages(packageManager).filterNot { packageManager.isPackageInstalled(PythonPackage(it.name, "", false)) }
+    val packages = readRequiredPackages()
     if (packages.isEmpty()) {
       println("No packages to install. Skipping.")
       return
     }
 
-    val cacheOptions = if (preferences.cacheDir == null) emptyList()
-    else when (packageManager) {
-      is PipPythonPackageManager -> listOf("--cache-dir=${preferences.cacheDir}/pip")
-      else -> emptyList()
-    }
-
     // resolves `'runBlockingCancellable' is forbidden in the Write Action` from PythonSdkUpdater.scheduleUpdate
     keepTasksAsynchronousInHeadlessMode {
-      val installRequest = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(packages)
-
-      packageManager.installPackage(installRequest, cacheOptions)
+      val cacheOptions = if (preferences.cacheDir == null) emptyList()
+      else when (PythonPackageManager.forSdk(project, sdk)) {
+        is PipPythonPackageManager -> listOf("--cache-dir=${preferences.cacheDir}/pip")
+        else -> emptyList()
+      }
+      val packageManager = PythonPackageManagerUI.forSdk(project, sdk)
+      packageManager.installPyRequirementsBackground(packages, cacheOptions) ?: return@keepTasksAsynchronousInHeadlessMode
       println("Installed packages: ${packages.joinToString(", ") { it.name }}")
     }
   }
 
-  private fun readRequiredPackages(packageManager: PythonPackageManager): List<PythonRepositoryPackageSpecification> {
+  private fun readRequiredPackages(): List<PyRequirement> {
     val projectPath = project.basePath ?: return emptyList()
     val requirementsTxt = Path.of(projectPath).resolve("requirements.txt")
     if (!requirementsTxt.exists()) {
       return emptyList()
     }
-    return requirementsTxt.toFile().inputStream().bufferedReader().use { reader ->
-      reader.readLines().filter { it.isNotBlank() }.mapNotNull { line ->
-        val relation = PyRequirementRelation.entries.find { line.contains(it.presentableText) }
-        val parts = if (relation != null) line.split(relation.presentableText).map { it.trim() } else listOf(line.trim())
-        packageManager.findPackageSpecification(
-          packageName = parts[0],
-          version = parts.getOrNull(1),
-          relation = relation ?: PyRequirementRelation.EQ
-        )
-      }
-    }
+    return PyRequirementParser.fromText(requirementsTxt.readText())
   }
 
   private fun isProjectLocal(path: String?): Boolean {

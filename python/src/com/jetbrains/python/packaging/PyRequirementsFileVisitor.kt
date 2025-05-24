@@ -5,12 +5,14 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.packaging.common.PythonPackage
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 @ApiStatus.Internal
 
-class PyRequirementsFileVisitor(private val importedPackages: MutableMap<String, PyPackage>,
-                                private val settings: PyPackageRequirementsSettings) {
+class PyRequirementsFileVisitor(private val importedPackages: MutableMap<String, PythonPackage>,
+                                private val settings: PyPackageRequirementsSettings
+) {
 
   private val collectedOutput: MutableMap<VirtualFile, MutableList<String>> = mutableMapOf()
   private val unmatchedLines: MutableList<String> = mutableListOf()
@@ -91,7 +93,7 @@ class PyRequirementsFileVisitor(private val importedPackages: MutableMap<String,
     collectedOutput[requirementsFile.virtualFile] = outputLines
   }
 
-  private fun formatRequirement(requirement: PyRequirement, pkg: PyPackage, lines: List<String>): List<String> = when {
+  private fun formatRequirement(requirement: PyRequirement, pkg: PythonPackage, lines: List<String>): List<String> = when {
     // keeping editable and vcs requirements
     requirement.isEditable || vcsPrefixes.any { lines.first().startsWith(it) } -> lines
     // existing version separators match the current package version

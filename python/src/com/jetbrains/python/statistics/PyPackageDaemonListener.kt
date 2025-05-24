@@ -68,7 +68,7 @@ class PackageDaemonTaskExecutor(private val cs: CoroutineScope) {
         val packages2Versions = sdk?.let {
           // it's mock sdk
           if (sdk.sdkAdditionalData == null) return@let emptyMap()
-          val packagesFromPackageManager = PythonPackageManager.forSdk(project, sdk).installedPackages
+          val packagesFromPackageManager = PythonPackageManager.forSdk(project, sdk).listInstalledPackagesSnapshot()
           packagesFromPackageManager.associate { it.name to it.version }
         } ?: emptyMap()
 

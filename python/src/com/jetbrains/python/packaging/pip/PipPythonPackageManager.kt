@@ -16,6 +16,7 @@ import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecificatio
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
+import com.jetbrains.python.packaging.management.hasInstalledPackage
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.statistics.version
 import org.jetbrains.annotations.ApiStatus
@@ -47,21 +48,21 @@ open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageMa
 class PipManagementInstaller(private val sdk: Sdk, private val manager: PythonPackageManager) {
   private val languageLevel: LanguageLevel = sdk.version
 
-  fun installManagementIfNeeded(): Boolean {
+  suspend fun installManagementIfNeeded(): Boolean {
     if (hasManagement()) return true
     return performManagementInstallation()
   }
 
-  private fun performManagementInstallation(): Boolean = installManagement()
+  private suspend fun performManagementInstallation(): Boolean = installManagement()
 
-  fun hasManagement(): Boolean =
-    languageLevel < LanguageLevel.PYTHON27 || (manager.isPackageInstalled(PIP_PACKAGE) && hasSetuptools())
+  suspend fun hasManagement(): Boolean =
+    languageLevel < LanguageLevel.PYTHON27 || (manager.hasInstalledPackage(PIP_PACKAGE) && hasSetuptools())
 
-  private fun installManagement(): Boolean =
+  private suspend fun installManagement(): Boolean =
     installWheelIfMissing(::hasPip, WheelFiles.PIP_WHEEL_NAME) &&
     installWheelIfMissing(::hasSetuptools, WheelFiles.SETUPTOOLS_WHEEL_NAME)
 
-  private fun installWheelIfMissing(requirementCheck: () -> Boolean, wheelNameToInstall: String): Boolean {
+  private suspend fun installWheelIfMissing(requirementCheck: suspend () -> Boolean, wheelNameToInstall: String): Boolean {
     if (!requirementCheck()) {
       val wheelPathToInstall = findPathInHelpers(wheelNameToInstall)?.toString() ?: return false
       return installUsingPipWheel("--no-index", wheelPathToInstall)
@@ -86,12 +87,12 @@ class PipManagementInstaller(private val sdk: Sdk, private val manager: PythonPa
       throw ExecutionException(ex.message, ex)
     }
 
-  private fun hasPip(): Boolean = manager.isPackageInstalled(PIP_PACKAGE)
+  private suspend fun hasPip(): Boolean = manager.hasInstalledPackage(PIP_PACKAGE)
 
-  private fun hasSetuptools(): Boolean =
+  private suspend fun hasSetuptools(): Boolean =
     languageLevel >= LanguageLevel.PYTHON312 ||
-    manager.isPackageInstalled(SETUPTOOLS_PACKAGE) ||
-    manager.isPackageInstalled(DISTRIBUTE_PACKAGE)
+    manager.hasInstalledPackage(SETUPTOOLS_PACKAGE) ||
+    manager.hasInstalledPackage(DISTRIBUTE_PACKAGE)
 
   private fun buildCommandArguments(wheelPath: Path, vararg additionalArgs: String): List<String> =
     listOfNotNull(sdk.homePath.toString(), wheelPath.toString(), "install") + additionalArgs

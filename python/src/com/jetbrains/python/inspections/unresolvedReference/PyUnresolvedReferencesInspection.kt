@@ -181,7 +181,7 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
     }
 
     private fun createInstallAndImportQuickFix(project: Project, pythonSdk: Sdk, packageName: String, asName: String?): LocalQuickFix? {
-      return if (PyPackageInstallUtils.checkShouldToInstall(project, pythonSdk, packageName))
+      return if (PyPackageInstallUtils.checkShouldToInstallSnapshot(project, pythonSdk, packageName))
         InstallAndImportPackageQuickFix(packageName, asName)
       else
         null

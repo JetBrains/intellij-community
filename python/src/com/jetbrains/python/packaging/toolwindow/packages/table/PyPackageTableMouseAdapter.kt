@@ -49,10 +49,8 @@ internal class PyPackageTableMouseAdapter(private val table: PyPackagesTable) : 
         selectedPackage.canBeUpdated &&
         selectedPackage.repository != null &&
         selectedPackage.nextVersion != null) {
-      val specification = selectedPackage.repository.findPackageSpecification(selectedPackage.name) ?: return
-
       PyPackageCoroutine.launch(project) {
-        project.service<PyPackagingToolWindowService>().updatePackage(specification)
+        project.service<PyPackagingToolWindowService>().updatePackages(selectedPackage.name)
       }
     }
   }

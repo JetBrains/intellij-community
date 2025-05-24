@@ -4,25 +4,51 @@
 package com.jetbrains.python.packaging.management
 
 import com.jetbrains.python.packaging.common.PythonPackage
+import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
+import com.jetbrains.python.packaging.normalizePackageName
+import com.jetbrains.python.packaging.pyRequirementVersionSpec
 import com.jetbrains.python.packaging.repository.PyPackageRepository
+import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import org.jetbrains.annotations.ApiStatus
 
 
 @ApiStatus.Internal
-fun PythonPackageManager.hasInstalledPackage(packageName: String, version: String? = null): Boolean =
-  getPackage(packageName, version) != null
+fun PythonPackageManager.getInstalledPackageSnapshot(packageName: String, version: String? = null): PythonPackage? {
+  val normalizedPackage = normalizePackageName(packageName)
+  return listInstalledPackagesSnapshot().firstOrNull { it.name == normalizedPackage && (version == null || version == it.version) }
+}
 
 @ApiStatus.Internal
-fun PythonPackageManager.getPackage(packageName: String, version: String? = null): PythonPackage? {
-  return installedPackages.firstOrNull { it.name == packageName && (version == null || version == it.version) }
+fun PythonPackageManager.hasInstalledPackageSnapshot(packageName: String, version: String? = null): Boolean =
+  getInstalledPackageSnapshot(packageName, version) != null
+
+
+@ApiStatus.Internal
+suspend fun PythonPackageManager.hasInstalledPackage(pyPackage: PythonPackage): Boolean =
+  getInstalledPackage(pyPackage.name, pyPackage.version) != null
+
+@ApiStatus.Internal
+suspend fun PythonPackageManager.hasInstalledPackage(packageName: String, version: String? = null): Boolean =
+  getInstalledPackage(packageName, version) != null
+
+
+@ApiStatus.Internal
+suspend fun PythonPackageManager.getInstalledPackage(packageName: String, version: String? = null): PythonPackage? {
+  waitForInit()
+  return getInstalledPackageSnapshot(packageName, version)
+}
+
+@ApiStatus.Internal
+fun PythonPackageManager.findPackageSpecification(
+  packageName: String,
+  version: String? = null,
+  relation: PyRequirementRelation = PyRequirementRelation.EQ,
+): PythonRepositoryPackageSpecification? {
+  val versionSpec = version?.let { pyRequirementVersionSpec(relation, version) }
+  return findPackageSpecificationWithVersionSpec(packageName, versionSpec)
 }
 
 @ApiStatus.Internal
 fun PythonRepositoryManager.packagesByRepository(): Sequence<Pair<PyPackageRepository, Set<String>>> {
   return repositories.asSequence().map { it to it.getPackages() }
-}
-
-@ApiStatus.Internal
-fun PythonPackageManager.isInstalled(name: String): Boolean {
-  return installedPackages.any { it.name.equals(name, ignoreCase = true) }
 }

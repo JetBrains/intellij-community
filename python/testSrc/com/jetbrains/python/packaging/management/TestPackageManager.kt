@@ -3,6 +3,7 @@ package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.testFramework.replaceService
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridge
 import com.jetbrains.python.packaging.common.*
@@ -111,6 +112,13 @@ class TestPythonPackageManagerService(val installedPackages: List<PythonPackage>
 
   override fun getServiceScope(): CoroutineScope {
     return CoroutineScope(Job())
+  }
+
+  companion object {
+    @JvmStatic
+    fun replacePythonPackageManagerServiceWithTestInstance(project: Project, installedPackages: List<PythonPackage> = emptyList()) {
+      project.replaceService(PythonPackageManagerService::class.java, TestPythonPackageManagerService(installedPackages), project)
+    }
   }
 }
 
