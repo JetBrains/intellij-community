@@ -5,15 +5,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.util.Iterators;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.UTFDataFormatException;
+import java.io.*;
 import java.lang.ref.SoftReference;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 public final class RW {
   private static final int STRING_HEADER_SIZE = 1;
@@ -58,6 +56,24 @@ public final class RW {
 
   public static String readUTF(@NotNull DataInput storage) throws IOException {
     return readUTFFast(getBuffer(), storage);
+  }
+
+  public static byte[] readAllBytes(InputStream in) throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    transferTo(in, out);
+    return out.toByteArray();
+  }
+
+  public static long transferTo(InputStream in, OutputStream out) throws IOException {
+    Objects.requireNonNull(out, "out");
+    long transferred = 0;
+    byte[] buffer = getBuffer();
+    int read;
+    while ((read = in.read(buffer, 0, buffer.length)) >= 0) {
+      out.write(buffer, 0, read);
+      transferred += read;
+    }
+    return transferred;
   }
 
   private static void writeUTFFast(byte @NotNull [] buffer, @NotNull DataOutput storage, @NotNull CharSequence value) throws IOException {

@@ -39,6 +39,11 @@ public final class SnapshotDeltaImpl extends ElementSnapshotDeltaImpl<NodeSource
   }
 
   @Override
+  public int getChangedPercent() {
+    return myIsWholeTargetRecompile? 100 : myRecompileMarked.size() * 100 / count(getBaseSnapshot().getElements());
+  }
+
+  @Override
   public @NotNull Iterable<@NotNull NodeSource> getModified() {
     return myIsWholeTargetRecompile? getBaseSnapshot().getElements() : myRecompileMarked;
   }

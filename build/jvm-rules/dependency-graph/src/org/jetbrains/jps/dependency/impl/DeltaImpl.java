@@ -26,7 +26,7 @@ public final class DeltaImpl extends GraphImpl implements Delta {
   private final Set<NodeSource> myBaseSources;
   private final Set<NodeSource> myDeletedSources;
   
-  DeltaImpl(Iterable<NodeSource> baseSources, Iterable<NodeSource> deletedSources) {
+  public DeltaImpl(Iterable<NodeSource> baseSources, Iterable<NodeSource> deletedSources) {
     super(Containers.MEMORY_CONTAINER_FACTORY);
     addIndex(new SubclassesIndex(Containers.MEMORY_CONTAINER_FACTORY));
     addIndex(new TypealiasesIndex(Containers.MEMORY_CONTAINER_FACTORY)); // todo: make registration 'pluggable', e.g. via DifferentiateStrategy

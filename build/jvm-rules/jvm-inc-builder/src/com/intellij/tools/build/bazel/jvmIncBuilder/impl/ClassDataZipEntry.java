@@ -4,11 +4,14 @@ package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
 import com.intellij.tools.build.bazel.jvmIncBuilder.ZipOutputBuilder;
 import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.FailSafeClassReader;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.dependency.impl.RW;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import static org.jetbrains.jps.util.Iterators.filter;
 import static org.jetbrains.jps.util.Iterators.map;
@@ -22,6 +25,8 @@ public interface ClassDataZipEntry {
     return ZipOutputBuilder.getParentEntryName(getPath());
   }
 
+  byte[] getContent();
+
   // asm class reader to read entry data
   ClassReader getClassReader();
 
@@ -29,8 +34,8 @@ public interface ClassDataZipEntry {
     return entryName.endsWith(".class");
   }
 
-  static Iterator<ClassDataZipEntry> fromZipOutputBuilder(ZipOutputBuilder builder) {
-    return map(filter(builder.getEntryNames().iterator(), ClassDataZipEntry::isClassDataEntry), entryName -> new ClassDataZipEntry() {
+  static ClassDataZipEntry create(String entryName, ZipOutputBuilder zipData) {
+    return new ClassDataZipEntry() {
       private ClassReader reader = null;
 
       @Override
@@ -39,36 +44,52 @@ public interface ClassDataZipEntry {
       }
 
       @Override
+      public byte[] getContent() {
+        return zipData.getContent(entryName);
+      }
+
+      @Override
       public ClassReader getClassReader() {
         if (reader == null) {
-          reader = new FailSafeClassReader(builder.getContent(entryName));
+          reader = new FailSafeClassReader(getContent());
         }
         return reader;
       }
-    });
+    };
+  }
+
+  static ClassDataZipEntry create(ZipEntry entry, ZipInputStream in) {
+    try {
+      byte[] bytes = RW.readAllBytes(in);
+      return new ClassDataZipEntry() {
+        private final ClassReader reader = new FailSafeClassReader(bytes);
+
+        @Override
+        public String getPath() {
+          return entry.getName();
+        }
+
+        @Override
+        public byte[] getContent() {
+          return bytes;
+        }
+
+        @Override
+        public ClassReader getClassReader() {
+          return reader;
+        }
+      };
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  static Iterator<ClassDataZipEntry> fromZipOutputBuilder(ZipOutputBuilder builder) {
+    return map(filter(builder.getEntryNames().iterator(), ClassDataZipEntry::isClassDataEntry), entryName -> create(entryName, builder));
   }
 
   static Iterator<ClassDataZipEntry> fromSteam(InputStream is) {
-    return map(filter(new ZipEntryIterator(is), se -> isClassDataEntry(se.getEntry().getName())), se -> new ClassDataZipEntry() {
-      private ClassReader reader = null;
-
-      @Override
-      public String getPath() {
-        return se.getEntry().getName();
-      }
-
-      @Override
-      public ClassReader getClassReader() {
-        if (reader == null) {
-          try {
-            reader = new FailSafeClassReader(se.getStream());
-          }
-          catch (IOException e) {
-            throw new RuntimeException(e);
-          }
-        }
-        return reader;
-      }
-    });
+    return map(filter(new ZipEntryIterator(is), se -> isClassDataEntry(se.getEntry().getName())), se -> create(se.getEntry(), se.getStream()));
   }
 }

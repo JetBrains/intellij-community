@@ -524,13 +524,19 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
       }
     }
 
-    Iterators.BooleanFunction<? super Proto> visibilityFilter = proto -> proto.isPublic() || proto.isProtected();
-    var fields = myIsLibraryMode? Iterators.filter(myFields, visibilityFilter) : myFields;
-    var methods = myIsLibraryMode? Iterators.filter(myMethods, visibilityFilter) : myMethods;
+    var fields = myIsLibraryMode? Iterators.filter(myFields, JvmClassNodeBuilder::isAbiNode) : myFields;
+    var methods = myIsLibraryMode? Iterators.filter(myMethods, JvmClassNodeBuilder::isAbiNode) : myMethods;
     var usages = myIsLibraryMode? Set.<Usage>of() : myUsages;
     return new JvmClass(
       flags, mySignature, myName, myFileName, mySuperClass, myOuterClassName.get(), myInterfaces, fields, methods, myAnnotations, myTargets, myRetentionPolicy, usages, myMetadata
     );
+  }
+
+  /**
+   * @return true, if the given node should be included in the 'ABI' class snapshot
+   */
+  public static boolean isAbiNode(Proto proto) {
+    return proto.isPublic() || proto.isProtected() || proto instanceof JvmModule;
   }
 
   @Override

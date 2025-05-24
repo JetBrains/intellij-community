@@ -4,6 +4,7 @@ package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
 import com.intellij.tools.build.bazel.jvmIncBuilder.ZipOutputBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.dependency.impl.RW;
 
 import java.io.*;
 import java.lang.invoke.MethodHandle;
@@ -287,7 +288,7 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
         @Override
         protected byte[] loadData() throws IOException {
           try (InputStream is = zip.getInputStream(entry)) {
-            return is.readAllBytes();
+            return RW.readAllBytes(is);
           }
         }
 
@@ -298,7 +299,7 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
             os.write(data);
           }
           else {
-            StreamAccessor.unwrapInputStream(zip.getInputStream(entry)).transferTo(StreamAccessor.unwrapOutputStream(os));
+            RW.transferTo(StreamAccessor.unwrapInputStream(zip.getInputStream(entry)), StreamAccessor.unwrapOutputStream(os));
           }
         }
 

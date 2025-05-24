@@ -32,6 +32,8 @@ public interface NodeSourceSnapshotDelta extends ElementSnapshotDelta<NodeSource
 
   boolean hasChanges();
 
+  int getChangedPercent();
+
   /**
    * Provides a SourceSnapshot view for the delta where digests for files marked for recompilation are ignored
    */

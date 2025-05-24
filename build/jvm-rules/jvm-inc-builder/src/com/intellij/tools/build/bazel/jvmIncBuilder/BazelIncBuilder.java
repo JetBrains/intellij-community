@@ -2,14 +2,15 @@
 package com.intellij.tools.build.bazel.jvmIncBuilder;
 
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.*;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.DeltaView;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.LibraryGraphLoader;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.BytecodeInstrumenter;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.CompilerRunner;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputSink;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.*;
-import org.jetbrains.jps.dependency.impl.PathSource;
 import org.jetbrains.jps.dependency.java.JVMClassNode;
-import org.jetbrains.jps.dependency.java.JvmClassNodeBuilder;
+import org.jetbrains.jps.util.Pair;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -21,6 +22,8 @@ import static org.jetbrains.jps.util.Iterators.*;
 
 /** @noinspection SSBasedInspection*/
 public class BazelIncBuilder {
+  // recompile all, if more than X percent of files has been changed; for incremental tests, set equal to 100
+  private static final int RECOMPILE_CHANGED_RATIO_PERCENT = 85;
 
   public ExitCode build(BuildContext context) {
     // todo: support cancellation checks
@@ -41,24 +44,14 @@ public class BazelIncBuilder {
         srcSnapshotDelta.markRecompileAll(); // force rebuild
       }
       else {
-        // output checks
-        ZipOutputBuilderImpl outputBuilder = storageManager.getOutputBuilder();
-        AbiJarBuilder abiOutputBuilder = storageManager.getAbiOutputBuilder();
-        if (abiOutputBuilder != null && !abiOutputBuilder.isInputZipExist()) {
-          // populate abi builder from existing output builder
-          for (String entryName : outputBuilder.getEntryNames()) {
-            abiOutputBuilder.putEntry(entryName, outputBuilder.getContent(entryName));
-          }
-        }
-
         ConfigurationState pastState = ConfigurationState.loadSavedState(context);
         ConfigurationState presentState = new ConfigurationState(context.getPathMapper(), context.getSources(), context.getBinaryDependencies());
 
         srcSnapshotDelta = new SnapshotDeltaImpl(pastState.getSources(), context.getSources());
-        if (!srcSnapshotDelta.isRecompileAll() && pastState.getClasspathStructureDigest() != presentState.getClasspathStructureDigest()) {
+        if (shouldRecompileAll(srcSnapshotDelta) || pastState.getClasspathStructureDigest() != presentState.getClasspathStructureDigest()) {
           srcSnapshotDelta.markRecompileAll();
         }
-        if (!srcSnapshotDelta.isRecompileAll()) {
+        else {
           Predicate<NodeSource> isLibTracked = ns -> DataPaths.isLibraryTracked(ns.toString());
           ElementSnapshotDeltaImpl<NodeSource> libsSnapshotDelta = new ElementSnapshotDeltaImpl<>(
             ElementSnapshot.derive(pastState.getLibraries(), isLibTracked),
@@ -66,46 +59,58 @@ public class BazelIncBuilder {
           );
           modifiedLibraries = libsSnapshotDelta.getModified();
           deletedLibraries = libsSnapshotDelta.getDeleted();
-        }
-      }
 
-      if (!srcSnapshotDelta.isRecompileAll()) {
-
-        if (!isEmpty(modifiedLibraries)) {
-          // differentiate library deps
-          try {
+          if (!isEmpty(modifiedLibraries)) {
+            // differentiate library deps
             List<Graph> pastLibGraphs = new ArrayList<>();
             List<Graph> presentLibGraphs = new ArrayList<>();
             Set<NodeSource> changedLibNodeSources = new HashSet<>();
             Set<NodeSource> deletedLibNodeSources = new HashSet<>();
-            DependencyGraph graph = storageManager.getGraph();
-            for (Path presentLib : map(modifiedLibraries, context.getPathMapper()::toPath)) {
-              Path pastLib = DataPaths.getJarBackupStoreFile(context, presentLib);
-              NodeSourceSnapshotDelta delta = createLibraryNodeSourceSnapshotDelta(pastLib, presentLib);
-              if (!isEmpty(delta.getModified()) || !isEmpty(delta.getDeleted())) {
-                collect(delta.getModified(), changedLibNodeSources);
-                collect(delta.getDeleted(), deletedLibNodeSources);
-                // todo: caching for loaded graphs?
-                pastLibGraphs.add(loadReadonlyLibraryGraph(graph, pastLib));
-                presentLibGraphs.add(loadReadonlyLibraryGraph(graph, presentLib));
+            for (NodeSource presentLib : modifiedLibraries) {
+              Path presentLibPath = context.getPathMapper().toPath(presentLib);
+              Path pastLibPath = DataPaths.getJarBackupStoreFile(context, presentLibPath);
+              try {
+                Pair<NodeSourceSnapshot, Graph> presentGraph = LibraryGraphLoader.getLibraryGraph(presentLib, presentState.getLibraries().getDigest(presentLib), presentLibPath);
+                Pair<NodeSourceSnapshot, Graph> pastGraph = LibraryGraphLoader.getLibraryGraph(presentLib, pastState.getLibraries().getDigest(presentLib), pastLibPath);
+                NodeSourceSnapshotDelta delta = new SnapshotDeltaImpl(pastGraph.first, presentGraph.first);
+                if (!isEmpty(delta.getModified()) || !isEmpty(delta.getDeleted())) {
+                  collect(delta.getModified(), changedLibNodeSources);
+                  collect(delta.getDeleted(), deletedLibNodeSources);
+                  pastLibGraphs.add(pastGraph.second); // all nodes of the past state should be available for analysis
+                  presentLibGraphs.add(presentGraph.second);
+                }
+              }
+              catch (Exception e) { // problems loading library graphs
+                srcSnapshotDelta.markRecompileAll();
+                context.report(Message.create(null, Message.Kind.WARNING, e));
+                break;
               }
             }
+
             if (!changedLibNodeSources.isEmpty() || !deletedLibNodeSources.isEmpty()) {
-              Delta libDelta = new DeltaView(changedLibNodeSources, deletedLibNodeSources, CompositeGraph.create(presentLibGraphs));
-              srcSnapshotDelta = graphUpdater.updateBeforeCompilation(graph, srcSnapshotDelta, libDelta, pastLibGraphs);
+              try {
+                Delta libDelta = new DeltaView(changedLibNodeSources, deletedLibNodeSources, CompositeGraph.create(presentLibGraphs));
+                srcSnapshotDelta = graphUpdater.updateBeforeCompilation(storageManager.getGraph(), srcSnapshotDelta, libDelta, pastLibGraphs);
+                if (shouldRecompileAll(srcSnapshotDelta)) {
+                  srcSnapshotDelta.markRecompileAll();
+                }
+              }
+              catch (IOException e) {
+                srcSnapshotDelta.markRecompileAll();
+                context.report(Message.create(null, Message.Kind.WARNING, e));
+              }
             }
           }
-          catch (IOException e) {
-            // todo: info diagnostic
-            srcSnapshotDelta.markRecompileAll();
-          }
-        }
 
-        if (!srcSnapshotDelta.isRecompileAll()) {
           // expand compile scope
-          DependencyGraph graph = storageManager.getGraph();
-          Delta sourceOnlyDelta = graph.createDelta(srcSnapshotDelta.getModified(), srcSnapshotDelta.getDeleted(), true);
-          srcSnapshotDelta = graphUpdater.updateBeforeCompilation(graph, srcSnapshotDelta, sourceOnlyDelta, List.of());
+          if (!srcSnapshotDelta.isRecompileAll()) {
+            DependencyGraph graph = storageManager.getGraph();
+            Delta sourceOnlyDelta = graph.createDelta(srcSnapshotDelta.getModified(), srcSnapshotDelta.getDeleted(), true);
+            srcSnapshotDelta = graphUpdater.updateBeforeCompilation(graph, srcSnapshotDelta, sourceOnlyDelta, List.of());
+            if (shouldRecompileAll(srcSnapshotDelta)) {
+              srcSnapshotDelta.markRecompileAll();
+            }
+          }
         }
       }
 
@@ -258,6 +263,10 @@ public class BazelIncBuilder {
     }
   }
 
+  private static boolean shouldRecompileAll(NodeSourceSnapshotDelta srcSnapshotDelta) {
+    return srcSnapshotDelta.isRecompileAll() || srcSnapshotDelta.getChangedPercent() > RECOMPILE_CHANGED_RATIO_PERCENT;
+  }
+
   private static void cleanOutputsForCompiledFiles(BuildContext context, NodeSourceSnapshotDelta snapshotDelta, DependencyGraph depGraph, CompilerRunner compiler, OutputSink outSink) {
     // separately logging deleted outputs for 'deleted' and 'modified' sources to adjust for existing test data
     Collection<String> cleanedOutputsOfDeletedSources = deleteCompilerOutputs(
@@ -304,49 +313,6 @@ public class BazelIncBuilder {
     Delta delta = depGraph.createDelta(snapshotDelta.getModified(), snapshotDelta.getDeleted(), false);
     for (var pair : outSink.getNodes()) {
       delta.associate(pair.node, pair.sources);
-    }
-    return delta;
-  }
-
-  private static NodeSourceSnapshotDelta createLibraryNodeSourceSnapshotDelta(Path pastJar, Path presentJar) throws IOException {
-    try (var pastBuilder = new AbiJarBuilder(pastJar)) {
-      try (var presentBuilder = new AbiJarBuilder(presentJar)) {
-        return new SnapshotDeltaImpl(createLibraryNodeSourceSnapshot(pastBuilder), createLibraryNodeSourceSnapshot(presentBuilder));
-      }
-    }
-  }
-
-  private static NodeSourceSnapshot createLibraryNodeSourceSnapshot(AbiJarBuilder builder) {
-    Map<NodeSource, String> result = new HashMap<>();
-    for (Map.Entry<String, Long> entry : builder.getPackageIndex().entrySet()) {
-      result.put(new PathSource(entry.getKey()), Long.toHexString(entry.getValue()));
-    }
-    return new SourceSnapshotImpl(result);
-  }
-
-  private static Graph loadReadonlyLibraryGraph(DependencyGraph depGraph, ZipOutputBuilder builder) {
-    return loadReadonlyLibraryGraph(depGraph.createDelta(Set.of(), Set.of(), false), ClassDataZipEntry.fromZipOutputBuilder(builder));
-  }
-
-  private static Graph loadReadonlyLibraryGraph(DependencyGraph depGraph, Path jarPath) throws IOException {
-    try (var is = Files.newInputStream(jarPath)) {
-      return loadReadonlyLibraryGraph(depGraph.createDelta(Set.of(), Set.of(), false), ClassDataZipEntry.fromSteam(is));
-    }
-  }
-
-  private static Graph loadReadonlyLibraryGraph(Delta delta, Iterator<ClassDataZipEntry> entries) {
-    // for this presentation we use packages as 'node sources', and class files in the corresponding package as 'nodes'
-    Map<String, Iterable<NodeSource>> sourcesMap = new HashMap<>();
-    while (entries.hasNext()) {
-      ClassDataZipEntry entry = entries.next();
-      String path = entry.getPath();
-      String parent = entry.getParent();
-      if (parent != null) {
-        delta.associate(
-          JvmClassNodeBuilder.createForLibrary(path, entry.getClassReader()).getResult(),
-          sourcesMap.computeIfAbsent(parent, n -> Set.of(new PathSource(n)))
-        );
-      }
     }
     return delta;
   }
