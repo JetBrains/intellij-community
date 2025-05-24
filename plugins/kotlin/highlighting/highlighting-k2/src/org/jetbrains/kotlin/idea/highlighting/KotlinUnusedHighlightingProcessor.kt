@@ -111,6 +111,9 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
                     if (expression.isConstructorCallReference()) {
                         refHolder.registerLocalRef((expression.mainReference.resolveToSymbol() as? KaConstructorSymbol)?.psi)
                     }
+                    else if (expression is KtOperationReferenceExpression) {
+                        refHolder.registerLocalRef(symbol?.psi)
+                    }
                     else if (symbol is KaClassifierSymbol) {
                         refHolder.registerLocalRef(symbol.psi)
                     }

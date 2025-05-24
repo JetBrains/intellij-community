@@ -17661,6 +17661,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/unusedSymbol/companionViaImport2.kt");
             }
 
+            @TestMetadata("containsOperator.kt")
+            public void testContainsOperator() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/containsOperator.kt");
+            }
+
             @TestMetadata("contextReceiver.kt")
             public void testContextReceiver() throws Exception {
                 runTest("testData/inspectionsLocal/unusedSymbol/contextReceiver.kt");
@@ -17999,6 +18004,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("propertyViaSetter.kt")
             public void testPropertyViaSetter() throws Exception {
                 runTest("testData/inspectionsLocal/unusedSymbol/propertyViaSetter.kt");
+            }
+
+            @TestMetadata("publicContainsOperator.kt")
+            public void testPublicContainsOperator() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/publicContainsOperator.kt");
             }
 
             @TestMetadata("secondaryConstructor.kt")

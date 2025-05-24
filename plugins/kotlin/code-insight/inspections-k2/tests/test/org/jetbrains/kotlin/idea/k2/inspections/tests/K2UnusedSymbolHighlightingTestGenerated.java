@@ -277,6 +277,11 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/companionViaImport2.kt");
         }
 
+        @TestMetadata("containsOperator.kt")
+        public void testContainsOperator() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/containsOperator.kt");
+        }
+
         @TestMetadata("contextReceiver.kt")
         public void testContextReceiver() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/contextReceiver.kt");
@@ -615,6 +620,11 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
         @TestMetadata("propertyViaSetter.kt")
         public void testPropertyViaSetter() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/propertyViaSetter.kt");
+        }
+
+        @TestMetadata("publicContainsOperator.kt")
+        public void testPublicContainsOperator() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/publicContainsOperator.kt");
         }
 
         @TestMetadata("secondaryConstructor.kt")
