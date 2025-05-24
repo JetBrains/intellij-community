@@ -75,6 +75,8 @@ class IntroduceBackingPropertyIntention :
     private fun KaSession.isBackingFieldRequiredAndCanBeUsed(property: KtProperty): Boolean {
         if (property.isAbstract()) return false
 
+        if (property.isLocal) return false
+
         if (isBackingFieldRequired(property)) return true
 
         val getter = property.getter

@@ -1269,6 +1269,11 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
             runTest("../testData/intentions/introduceBackingProperty/lateinitVar.kt");
         }
 
+        @TestMetadata("localProperty.kt")
+        public void testLocalProperty() throws Exception {
+            runTest("../testData/intentions/introduceBackingProperty/localProperty.kt");
+        }
+
         @TestMetadata("semicolon.kt")
         public void testSemicolon() throws Exception {
             runTest("../testData/intentions/introduceBackingProperty/semicolon.kt");
