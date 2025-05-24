@@ -8,7 +8,7 @@ import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.impl.fastutil.ints.isEmpty
 import com.intellij.platform.syntax.lexer.TokenList
-import com.intellij.platform.syntax.lexer.TokenSequence
+import com.intellij.platform.syntax.lexer.TokenListImpl
 import com.intellij.platform.syntax.parser.*
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder.Production
 import org.jetbrains.annotations.Nls
@@ -51,7 +51,7 @@ internal class ParsingTreeBuilder(
   private var myRemapper: SyntaxElementTypeRemapper? = null
 
   init {
-    val tokens = lexemes as TokenSequence
+    val tokens = lexemes as TokenListImpl
     myLexStarts = tokens.lexStarts
     myLexTypes = tokens.lexTypes  // todo do we need to copy the array because of remapping (which modifies it)
     lexemeCount = tokens.tokenCount
@@ -354,7 +354,7 @@ internal class ParsingTreeBuilder(
   }
 
   override val tokens: TokenList
-    get() = TokenSequence(myLexStarts, myLexTypes, lexemeCount, text)
+    get() = TokenListImpl(myLexStarts, myLexTypes, lexemeCount, text)
 
   inner class ProductionResultImpl : ProductionResult {
     override val productionMarkers: ProductionMarkerList = object : ProductionMarkerList {

@@ -9,7 +9,11 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.time.measureTime
 
-internal class TokenSequence(
+/**
+ * Note that [lexStarts] and [lexTypes] can be longer than [tokenCount].
+ * It's guaranteed that [lexStarts] and [lexTypes] contain all tokens from 0 to [tokenCount] - 1, but tail elements can be empty.
+ */
+internal class TokenListImpl(
   internal val lexStarts: IntArray,
   internal val lexTypes: Array<SyntaxElementType>,
   override val tokenCount: Int,
@@ -143,7 +147,7 @@ internal class Builder(
     lexTypes = arrayOfNulls(approxLexCount)
   }
 
-  fun performLexing(): TokenSequence {
+  fun performLexing(): TokenListImpl {
     lexer.start(text)
     var i = 0
     var offset = 0
@@ -169,7 +173,7 @@ internal class Builder(
 
     lexStarts[i] = text.length
 
-    return TokenSequence(lexStarts, lexTypes as Array<SyntaxElementType>, i, text)
+    return TokenListImpl(lexStarts, lexTypes as Array<SyntaxElementType>, i, text)
   }
 
   private fun reportDescendingOffsets(tokenIndex: Int, offset: Int, tokenStart: Int) {

@@ -70,9 +70,9 @@ fun performLexing(
 ): TokenList {
   if (lexer is TokenListLexerImpl) {
     val existing = lexer.tokens
-    if (existing is TokenSequence && equal(text, existing.tokenizedText)) {
+    if (existing is TokenListImpl && equal(text, existing.tokenizedText)) {
       // prevent clients like PsiBuilder from modifying shared token types
-      return TokenSequence(
+      return TokenListImpl(
         lexStarts = existing.lexStarts,
         lexTypes = existing.lexTypes.copyOf(),
         tokenCount = existing.tokenCount,
@@ -95,7 +95,7 @@ fun TokenList(
   lexTypes: Array<SyntaxElementType>,
   tokenCount: Int,
   tokenizedText: CharSequence,
-): TokenList = TokenSequence(lexStarts, lexTypes, tokenCount, tokenizedText)
+): TokenList = TokenListImpl(lexStarts, lexTypes, tokenCount, tokenizedText)
 
 /**
  * Creates an adapter from the given TokenList to [Lexer] interface.
