@@ -34,7 +34,6 @@ generics_paramspec_semantics.py
 generics_self_advanced.py
 generics_self_basic.py
 generics_self_usage.py
-generics_syntax_declarations.py
 generics_syntax_infer_variance.py
 generics_syntax_scoping.py
 generics_typevartuple_basic.py

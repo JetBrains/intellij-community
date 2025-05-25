@@ -316,6 +316,9 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
   }
 
   private boolean ignoreUnresolvedMemberForType(@NotNull PyType type, PsiReference reference, String name) {
+    if (type instanceof PyTypeVarType typeVarType) {
+      return typeVarType.getBound() == null && typeVarType.getDefaultType() == null && typeVarType.getConstraints().isEmpty();
+    }
     if (PyTypeChecker.isUnknown(type, myTypeEvalContext)) {
       // this almost always means that we don't know the type, so don't show an error in this case
       return true;

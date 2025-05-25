@@ -390,4 +390,61 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
                  a: A<warning>[</warning>int]
                  """);
   }
+
+  // PY-76895
+  public void testUnresolvedReferenceReportedIfTypeVarHasBound() {
+    doTestByText("""
+                 from typing import TypeVar, Generic
+                 T = TypeVar("T", bound=str)
+                 class Test(Generic[T]):
+                    def foo(self, x: T):
+                        x.capitalize()
+                        x.<warning descr="Cannot find reference 'is_integer' in 'T'">is_integer</warning>()  # E
+                 """);
+    doTestByText("""
+                 class Test[T: str]:
+                     def foo(self, x: T):
+                         x.capitalize()
+                         x.<warning descr="Cannot find reference 'is_integer' in 'T'">is_integer</warning>()  # E
+                 """);
+  }
+
+  // PY-76895
+  public void testUnresolvedReferenceReportedIfTypeVarHasConstraints() {
+    doTestByText("""
+                 from typing import TypeVar, Generic
+                 T = TypeVar("T", int, str)
+                 class Test(Generic[T]):
+                    def foo(self, x: T):
+                        x.capitalize() # OK
+                        x.is_integer()  # OK
+                        x.<warning descr="Cannot find reference 'hex' in 'T'">hex</warning>()  # E
+                 """);
+    doTestByText("""
+                 class Test[T: (str, int)]:
+                     def foo(self, x: T):
+                         x.capitalize() # OK
+                         x.is_integer()  # OK
+                         x.<warning descr="Cannot find reference 'hex' in 'T'">hex</warning>()  # E
+                 """);
+
+  }
+
+  // PY-76895
+  public void testUnresolvedReferenceReportedIfTypeVarHasDefault() {
+    doTestByText("""
+                 from typing import TypeVar, Generic
+                 T = TypeVar("T", default=str)
+                 class Test(Generic[T]):
+                    def foo(self, x: T):
+                        x.capitalize()
+                        x.<warning descr="Cannot find reference 'is_integer' in 'T'">is_integer</warning>()  # E
+                 """);
+    doTestByText("""
+                 class Test[T = str]:
+                     def foo(self, x: T):
+                         x.capitalize() # OK
+                         x.<warning descr="Cannot find reference 'is_integer' in 'T'">is_integer</warning>()  # E
+                 """);
+  }
 }
