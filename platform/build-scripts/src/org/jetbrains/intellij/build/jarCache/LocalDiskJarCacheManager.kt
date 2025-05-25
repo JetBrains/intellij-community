@@ -149,7 +149,8 @@ private suspend fun produceAndCache(
       Files.createLink(targetFile, cacheFile)
     }
     catch (e: IOException) {
-      throw RuntimeException("Cannot create link from $cacheFile to $targetFile (cacheFile exists: ${Files.exists(cacheFile)})", e)
+      throw RuntimeException("Cannot create a hard link from $cacheFile to $targetFile (cacheFile exists: ${Files.exists(cacheFile)}).\n" +
+                             "Hard links must be on the same file system", e)
     }
   }
 
