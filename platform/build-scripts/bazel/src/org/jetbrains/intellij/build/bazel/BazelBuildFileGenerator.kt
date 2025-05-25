@@ -88,8 +88,13 @@ internal class BazelBuildFileGenerator(
 
     var bazelBuildDir = imlDir
     while (!contentRoots.all { it.startsWith(bazelBuildDir) }) {
-      bazelBuildDir = bazelBuildDir.parent!!
+      bazelBuildDir = bazelBuildDir.parent
+                      ?: error(
+                        "Unable to find parent for all content roots above $imlDir for module ${module.name}.\n" +
+                        "content roots: ${contentRoots.joinToString(" ")}"
+                      )
     }
+
     val isCommunity = imlDir.startsWith(communityDir)
     if (isCommunity && !bazelBuildDir.startsWith(communityDir)) {
       throw IllegalStateException("Computed dir for BUILD.bazel for community module ${module.name} is not under community directory")
