@@ -148,7 +148,9 @@ class PluginModelValidatorTest {
       referencedPluginIdsOfExternalPlugins = setOf("com.intellij.modules.lang")
     ))
     assertThat(result.errors.joinToString { it.message!! }).isEqualTo("""
-      Old format must be not used for a module but `depends` tag is used (
+      Element 'depends' has no effect in a content module descriptor (
+        referencedDescriptorFile=intellij.plugin.module/intellij.plugin.module.xml
+      ), Old format must be not used for a module but `depends` tag is used (
         descriptorFile=intellij.plugin.module/intellij.plugin.module.xml,
         depends=DependsElement(pluginId=com.intellij.modules.lang)
       )

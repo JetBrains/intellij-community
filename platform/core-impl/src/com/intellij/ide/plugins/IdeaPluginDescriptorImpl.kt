@@ -195,11 +195,7 @@ sealed class IdeaPluginDescriptorImpl(
       }
     }
 
-    // TODO move to PluginModelValidator
-    internal fun IdeaPluginDescriptorImpl.logUnexpectedElement(elementName: String, selector: () -> Boolean) {
-      if (!selector()) {
-        return
-      }
+    internal fun IdeaPluginDescriptor.logUnexpectedElement(elementName: String) {
       LOG.warnInProduction(PluginException(buildString {
         append("Plugin descriptor for ")
         when (this@logUnexpectedElement) {
@@ -212,33 +208,33 @@ sealed class IdeaPluginDescriptorImpl(
       }, pluginId))
     }
 
-    internal fun IdeaPluginDescriptorImpl.logSubDescriptorUnexpectedElements(raw: RawPluginDescriptor) {
-      logUnexpectedElement(PluginXmlConst.ID_ELEM) { raw.id != null }
-      logUnexpectedElement(PluginXmlConst.NAME_ELEM) { raw.name != null }
+    internal fun reportSubDescriptorUnexpectedElements(raw: RawPluginDescriptor, reporter: (elementName: String) -> Unit) {
+      if (raw.id != null) reporter(PluginXmlConst.ID_ELEM)
+      if (raw.name != null) reporter(PluginXmlConst.NAME_ELEM)
 
-      logUnexpectedElement(PluginXmlConst.PLUGIN_ALLOW_BUNDLED_UPDATE_ATTR) { raw.isBundledUpdateAllowed }
-      logUnexpectedElement(PluginXmlConst.PLUGIN_REQUIRE_RESTART_ATTR) { raw.isRestartRequired }
-      logUnexpectedElement(PluginXmlConst.PLUGIN_IMPLEMENTATION_DETAIL_ATTR) { raw.isImplementationDetail }
+      if (raw.isBundledUpdateAllowed) reporter(PluginXmlConst.PLUGIN_ALLOW_BUNDLED_UPDATE_ATTR)
+      if (raw.isRestartRequired) reporter(PluginXmlConst.PLUGIN_REQUIRE_RESTART_ATTR)
+      if (raw.isImplementationDetail) reporter(PluginXmlConst.PLUGIN_IMPLEMENTATION_DETAIL_ATTR)
 
-      logUnexpectedElement(PluginXmlConst.VERSION_ELEM) { raw.version != null }
-      logUnexpectedElement(PluginXmlConst.IDEA_VERSION_SINCE_ATTR) { raw.sinceBuild != null }
-      logUnexpectedElement(PluginXmlConst.IDEA_VERSION_UNTIL_ATTR) { raw.untilBuild != null }
+      if (raw.version != null) reporter(PluginXmlConst.VERSION_ELEM)
+      if (raw.sinceBuild != null) reporter(PluginXmlConst.IDEA_VERSION_SINCE_ATTR)
+      if (raw.untilBuild != null) reporter(PluginXmlConst.IDEA_VERSION_UNTIL_ATTR)
 
-      logUnexpectedElement(PluginXmlConst.VENDOR_ELEM) { raw.vendor != null }
-      logUnexpectedElement(PluginXmlConst.VENDOR_URL_ATTR) { raw.vendorUrl != null }
-      logUnexpectedElement(PluginXmlConst.VENDOR_EMAIL_ATTR) { raw.vendorEmail != null }
-      logUnexpectedElement(PluginXmlConst.PLUGIN_URL_ATTR) { raw.url != null }
+      if (raw.vendor != null) reporter(PluginXmlConst.VENDOR_ELEM)
+      if (raw.vendorUrl != null) reporter(PluginXmlConst.VENDOR_URL_ATTR)
+      if (raw.vendorEmail != null) reporter(PluginXmlConst.VENDOR_EMAIL_ATTR)
+      if (raw.url != null) reporter(PluginXmlConst.PLUGIN_URL_ATTR)
 
-      logUnexpectedElement(PluginXmlConst.PRODUCT_DESCRIPTOR_CODE_ATTR) { raw.productCode != null }
-      logUnexpectedElement(PluginXmlConst.PRODUCT_DESCRIPTOR_OPTIONAL_ATTR) { raw.isLicenseOptional }
-      logUnexpectedElement(PluginXmlConst.PRODUCT_DESCRIPTOR_RELEASE_DATE_ATTR) { raw.releaseDate != null }
-      logUnexpectedElement(PluginXmlConst.PRODUCT_DESCRIPTOR_RELEASE_VERSION_ATTR) { raw.releaseVersion != 0 }
+      if (raw.productCode != null) reporter(PluginXmlConst.PRODUCT_DESCRIPTOR_CODE_ATTR)
+      if (raw.isLicenseOptional) reporter(PluginXmlConst.PRODUCT_DESCRIPTOR_OPTIONAL_ATTR)
+      if (raw.releaseDate != null) reporter(PluginXmlConst.PRODUCT_DESCRIPTOR_RELEASE_DATE_ATTR)
+      if (raw.releaseVersion != 0) reporter(PluginXmlConst.PRODUCT_DESCRIPTOR_RELEASE_VERSION_ATTR)
 
-      logUnexpectedElement(PluginXmlConst.CHANGE_NOTES_ELEM) { raw.changeNotes != null }
-      logUnexpectedElement(PluginXmlConst.CATEGORY_ELEM) { raw.category != null }
-      logUnexpectedElement(PluginXmlConst.DESCRIPTION_ELEM) { raw.description != null }
+      if (raw.changeNotes != null) reporter(PluginXmlConst.CHANGE_NOTES_ELEM)
+      if (raw.category != null) reporter(PluginXmlConst.CATEGORY_ELEM)
+      if (raw.description != null) reporter(PluginXmlConst.DESCRIPTION_ELEM)
 
-      logUnexpectedElement(PluginXmlConst.CONTENT_ELEM) { raw.contentModules.isNotEmpty() }
+      if (raw.contentModules.isNotEmpty()) reporter(PluginXmlConst.CONTENT_ELEM)
     }
   }
 }
@@ -547,10 +543,7 @@ class DependsSubDescriptor(
     ") <- $parent"
 
   init {
-    logSubDescriptorUnexpectedElements(raw)
-    logUnexpectedElement(PluginXmlConst.PLUGIN_USE_IDEA_CLASSLOADER_ATTR) { raw.isUseIdeaClassLoader }
-    logUnexpectedElement("<dependencies><module>") { raw.dependencies.any { it is DependenciesElement.ModuleDependency } }
-    logUnexpectedElement("<dependencies><plugin>") { raw.dependencies.any { it is DependenciesElement.PluginDependency } }
+    reportDependsSubDescriptorUnexpectedElements(raw) { logUnexpectedElement(it) }
   }
 
   override fun getPluginId(): PluginId = parent.pluginId
@@ -579,6 +572,16 @@ class DependsSubDescriptor(
   @Deprecated("use main descriptor") override fun getReleaseVersion(): Int = parent.releaseVersion
   @Deprecated("use main descriptor") override fun isLicenseOptional(): Boolean = parent.isLicenseOptional
   // </editor-fold>
+
+  companion object {
+    @VisibleForTesting
+    fun reportDependsSubDescriptorUnexpectedElements(raw: RawPluginDescriptor, reporter: (elementName: String) -> Unit) {
+      reportSubDescriptorUnexpectedElements(raw, reporter)
+      if (raw.isUseIdeaClassLoader) reporter(PluginXmlConst.PLUGIN_USE_IDEA_CLASSLOADER_ATTR)
+      if (raw.dependencies.any { it is DependenciesElement.ModuleDependency }) reporter("<dependencies><module>")
+      if (raw.dependencies.any { it is DependenciesElement.PluginDependency }) reporter("<dependencies><plugin>")
+    }
+  }
 }
 
 
@@ -612,8 +615,7 @@ class ContentModuleDescriptor(
     ") <- $parent"
 
   init {
-    logSubDescriptorUnexpectedElements(raw)
-    logUnexpectedElement(PluginXmlConst.DEPENDS_ELEM) { raw.depends.isNotEmpty() }
+    reportContentModuleUnexpectedElements(raw) { logUnexpectedElement(it) }
   }
 
   override fun getPluginId(): PluginId = parent.pluginId
@@ -642,6 +644,14 @@ class ContentModuleDescriptor(
   @Deprecated("use main descriptor") override fun getReleaseVersion(): Int = parent.releaseVersion
   @Deprecated("use main descriptor") override fun isLicenseOptional(): Boolean = parent.isLicenseOptional
   // </editor-fold>
+
+  companion object {
+    @VisibleForTesting
+    fun reportContentModuleUnexpectedElements(raw: RawPluginDescriptor, reporter: (elementName: String) -> Unit) {
+      reportSubDescriptorUnexpectedElements(raw, reporter)
+      if (raw.depends.isNotEmpty()) reporter(PluginXmlConst.DEPENDS_ELEM)
+    }
+  }
 }
 
 @ApiStatus.Internal

@@ -504,14 +504,24 @@ class PluginModelValidator(
         }
       }
 
-      if (moduleDescriptor.contentModules.isNotEmpty()) {
-        registerError(
-          "Module cannot define content",
-          mapOf(
-            "referencedDescriptorFile" to moduleInfo.descriptorFile
-          )
+      checkContentModuleUnexpectedElements(moduleDescriptor, referencingModuleInfo.sourceModule, moduleInfo)
+    }
+  }
+
+  // TODO same for depends
+  private fun checkContentModuleUnexpectedElements(
+    moduleDescriptor: RawPluginDescriptor,
+    sourceModule: JpsModule,
+    moduleInfo: ModuleInfo,
+  ) {
+    ContentModuleDescriptor.reportContentModuleUnexpectedElements(moduleDescriptor) {
+      reportError(
+        "Element '$it' has no effect in a content module descriptor",
+        sourceModule,
+        mapOf(
+          "referencedDescriptorFile" to moduleInfo.descriptorFile
         )
-      }
+      )
     }
   }
 
