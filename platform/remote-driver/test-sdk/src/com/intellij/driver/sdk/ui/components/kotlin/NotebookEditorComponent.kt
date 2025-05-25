@@ -1,6 +1,6 @@
 package com.intellij.driver.sdk.ui.components.kotlin
 
-import com.intellij.driver.sdk.invokeAction
+import com.intellij.driver.sdk.invokeActionWithRetries
 import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
@@ -59,15 +59,15 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
       else -> super.editorComponent
     }
 
-  fun addCodeCell(): Unit = addCellBelow.click()
+  fun addEmptyCodeCell(): Unit = addCellBelow.click()
 
   fun addCodeCell(text: String) {
-    addCodeCell()
+    addEmptyCodeCell()
     driver.ui.pasteText(text)
   }
 
-  fun addMarkdownCell(content: String) = driver.run {
-    invokeAction("NotebookInsertMarkdownCellAction")
+  fun addMarkdownCell(content: String) {
+    driver.invokeActionWithRetries("NotebookInsertMarkdownCellAction")
     driver.ui.pasteText(content)
   }
 
