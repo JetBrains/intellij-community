@@ -3,6 +3,7 @@ package com.jetbrains.performancePlugin.utils
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.diagnostic.ThreadDumper
+import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.util.text.DateFormatUtil.formatTimeWithSeconds
@@ -27,10 +28,20 @@ class ThreadDumpService(
     interval: Duration,
   ) {
     threadDumpingJobs.getOrPut(activityId) {
-      val threadDumpsFolder = PathManager.getLogDir().resolve(folderName)
+      val threadDumpsFolder = getDumpFolder(folderName)
       coroutineScope.launch {
         dumpIdeThreadsPeriodically(threadDumpsFolder, fileNamePrefix, interval)
       }
+    }
+  }
+
+  fun dumpThreads(
+    folderName: String,
+    fileNamePrefix: String,
+  ) {
+    val threadDumpsFolder = getDumpFolder(folderName)
+    coroutineScope.launch {
+      dumpIdeThreads(threadDumpsFolder.getDumpFile(fileNamePrefix))
     }
   }
 
@@ -42,7 +53,6 @@ class ThreadDumpService(
   }
 }
 
-@OptIn(ExperimentalTime::class)
 suspend fun dumpIdeThreadsPeriodically(
   threadDumpsFolder: Path,
   threadDumpFilePrefix: String,
@@ -51,14 +61,18 @@ suspend fun dumpIdeThreadsPeriodically(
   var counter = 0
   while (true) {
     ++counter
-    val time = formatTimeWithSeconds(Clock.System.now().toEpochMilliseconds())
-    dumpIdeThreads(threadDumpsFolder.resolve("$threadDumpFilePrefix-$time-$counter.txt"))
+    dumpIdeThreads(threadDumpsFolder.getDumpFile(threadDumpFilePrefix, counter))
     delay(interval)
   }
 }
 
 suspend fun dumpIdeThreads(threadDumpFile: Path) {
-  val threadDump = ThreadDumper.dumpThreadsToString()
+  val threadDump = buildString {
+    appendLine(ThreadDumper.dumpThreadsToString())
+    appendLine()
+    appendLine("Coroutines dump:")
+    appendLine(dumpCoroutines())
+  }
   if (!Files.exists(threadDumpFile)) {
     withContext(Dispatchers.IO) {
       Files.createDirectories(threadDumpFile.parent)
@@ -69,4 +83,24 @@ suspend fun dumpIdeThreads(threadDumpFile: Path) {
   withContext(Dispatchers.IO) {
     Files.writeString(threadDumpFile, threadDump)
   }
+}
+
+private fun getDumpFolder(folderName: String): Path =
+  PathManager.getLogDir().resolve(folderName)
+
+@OptIn(ExperimentalTime::class)
+private fun Path.getDumpFile(
+  filePrefix: String,
+  counter: Int? = null,
+): Path {
+  val fileName = buildString {
+    append(filePrefix)
+    val time = formatTimeWithSeconds(Clock.System.now().toEpochMilliseconds())
+    append("-$time")
+    if (counter != null) {
+      append("-$counter")
+    }
+    append(".txt")
+  }
+  return resolve(fileName)
 }

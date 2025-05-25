@@ -4,6 +4,13 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import kotlin.time.Duration
 
+fun Driver.dumpThreads(
+  folderName: String,
+  fileNamePrefix: String,
+) {
+  service(ThreadDumpService::class).dumpThreads(folderName, fileNamePrefix)
+}
+
 fun Driver.withThreadDumps(
   folderName: String,
   fileNamePrefix: String,
@@ -36,5 +43,10 @@ interface ThreadDumpService {
 
   fun stopDumpingThreads(
     activityId: String,
+  )
+
+  fun dumpThreads(
+    folderName: String,
+    fileNamePrefix: String,
   )
 }
