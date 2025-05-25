@@ -59,7 +59,7 @@ public final class LanguageLevelProjectExtensionImpl extends LanguageLevelProjec
   }
 
   private static LanguageLevel readLanguageLevel(String level) {
-    for (LanguageLevel languageLevel : LanguageLevel.values()) {
+    for (LanguageLevel languageLevel : LanguageLevel.getEntries()) {
       if (level.equals(languageLevel.name())) {
         return languageLevel;
       }

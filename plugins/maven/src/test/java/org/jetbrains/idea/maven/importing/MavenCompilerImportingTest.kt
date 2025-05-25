@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.compiler.CompilerConfiguration
@@ -60,7 +60,10 @@ class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
     ideCompilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
     javacCompiler = ideCompilerConfiguration.defaultCompiler
     eclipseCompiler = ideCompilerConfiguration.registeredJavaCompilers.find { it is EclipseCompiler } as EclipseCompiler
-    AcceptedLanguageLevelsSettings.allowLevel(testRootDisposable, LanguageLevel.values()[LanguageLevel.HIGHEST.ordinal + 1])
+    AcceptedLanguageLevelsSettings.allowLevel(
+      testRootDisposable,
+      LanguageLevel.entries[LanguageLevel.HIGHEST.ordinal + 1]
+    )
   }
 
   @Test
@@ -287,7 +290,7 @@ class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
                    "  </plugins>" +
                    "</build>"))
     assertModules("project")
-    TestCase.assertEquals(LanguageLevel.values().get(LanguageLevel.HIGHEST.ordinal + 1), getLanguageLevelForModule())
+    assertEquals(LanguageLevel.entries[LanguageLevel.HIGHEST.ordinal + 1], getLanguageLevelForModule())
   }
 
   @Test
@@ -330,7 +333,7 @@ class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
                    "  </plugins>" +
                    "</build>"))
     assertModules("project")
-    TestCase.assertEquals(LanguageLevel.values().get(LanguageLevel.HIGHEST.ordinal + 1), getLanguageLevelForModule())
+    assertEquals(LanguageLevel.entries[LanguageLevel.HIGHEST.ordinal + 1], getLanguageLevelForModule())
   }
 
   @Test

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.openapi.Disposable
@@ -6,15 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.projectRoots.AdditionalDataConfigurable
-import com.intellij.openapi.projectRoots.JavaSdkType
-import com.intellij.openapi.projectRoots.JavaSdk
-import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.SdkAdditionalData
-import com.intellij.openapi.projectRoots.SdkType
-import com.intellij.openapi.projectRoots.SdkModel
-import com.intellij.openapi.projectRoots.SdkModificator
+import com.intellij.openapi.projectRoots.*
 import com.intellij.openapi.roots.ui.configuration.UnknownSdk
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
@@ -35,12 +27,13 @@ class JdkAutoTest : JavaCodeInsightFixtureTestCase() {
     super.setUp()
     indicator = EmptyProgressIndicator()
 
-    val values : Array<LanguageLevel> = LanguageLevel.values()
-    jdks = values.filterNot { it.isPreview }.map {
-      val javaVersion = it.toJavaVersion()
-      val sdk = registerMockJdk(javaVersion)
-      javaVersion.feature to sdk
-    }.toMap()
+    jdks = LanguageLevel.entries
+      .filterNot { it.isPreview }
+      .associate {
+        val javaVersion = it.toJavaVersion()
+        val sdk = registerMockJdk(javaVersion)
+        javaVersion.feature to sdk
+      }
 
     registerSdkType(AnotherJavaSdkType(), testRootDisposable)
   }

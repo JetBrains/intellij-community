@@ -179,7 +179,7 @@ public final class AcceptedLanguageLevelsSettings implements PersistentStateComp
    */
   public static @NotNull LanguageLevel getHighestAcceptedLevel() {
     LanguageLevel highest = JavaRelease.getHighest();
-    for (LanguageLevel level : LanguageLevel.values()) {
+    for (LanguageLevel level : LanguageLevel.getEntries()) {
       if (isLanguageLevelAccepted(level)) {
         highest = level;
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.ide.highlighter.ModuleFileType;
@@ -59,7 +59,10 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    AcceptedLanguageLevelsSettings.allowLevel(getTestRootDisposable(), LanguageLevel.values()[LanguageLevel.HIGHEST.ordinal() + 1]);
+    AcceptedLanguageLevelsSettings.allowLevel(
+      getTestRootDisposable(),
+      LanguageLevel.getEntries().get(LanguageLevel.HIGHEST.ordinal() + 1)
+    );
   }
 
   @Test
@@ -138,7 +141,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     assertModules("project", "project.main", "project.test");
     assertEquals(LanguageLevel.HIGHEST, getLanguageLevelForModule("project"));
     assertEquals(LanguageLevel.HIGHEST, getLanguageLevelForModule("project.main"));
-    LanguageLevel highestPreview = LanguageLevel.values()[LanguageLevel.HIGHEST.ordinal() + 1];
+    LanguageLevel highestPreview = LanguageLevel.getEntries().get(LanguageLevel.HIGHEST.ordinal() + 1);
     assertEquals(highestPreview, getLanguageLevelForModule("project.test"));
   }
 

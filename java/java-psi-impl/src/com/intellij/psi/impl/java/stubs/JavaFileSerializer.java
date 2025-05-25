@@ -27,7 +27,7 @@ public class JavaFileSerializer implements ObjectStubSerializer<PsiJavaFileStub,
     boolean compiled = dataStream.readBoolean();
     int level = dataStream.readByte();
     String packageName = dataStream.readNameString();
-    return new PsiJavaFileStubImpl(null, packageName, level >= 0 ? LanguageLevel.values()[level] : null, compiled);
+    return new PsiJavaFileStubImpl(null, packageName, level >= 0 ? LanguageLevel.getEntries().get(level) : null, compiled);
   }
 
   @Override
