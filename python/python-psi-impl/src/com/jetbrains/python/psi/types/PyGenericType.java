@@ -68,6 +68,10 @@ public class PyGenericType implements PyTypeVarType {
     if (bound != null) {
       return bound.resolveMember(name, location, direction, resolveContext);
     }
+    PyType defaultType = getDefaultTypePromotedToClassObjectTypesIfNeeded();
+    if (defaultType != null) {
+      return defaultType.resolveMember(name, location, direction, resolveContext);
+    }
     return null;
   }
 
@@ -77,17 +81,31 @@ public class PyGenericType implements PyTypeVarType {
     if (bound != null) {
       return bound.getCompletionVariants(completionPrefix, location, context);
     }
+
+    PyType defaultType = getDefaultTypePromotedToClassObjectTypesIfNeeded();
+    if (defaultType != null) {
+      return defaultType.getCompletionVariants(completionPrefix, location, context);
+    }
     return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
 
   private @Nullable PyType getBoundPromotedToClassObjectTypesIfNeeded() {
     PyType effectiveBound = myConstraints.isEmpty() ? myBound : PyUnionType.union(myConstraints);
+    return promoteToClassObjectIfNeeded(effectiveBound);
+  }
+
+  private @Nullable PyType getDefaultTypePromotedToClassObjectTypesIfNeeded() {
+    PyType defaultType = myDefaultType != null ? myDefaultType.get() : null;
+    return promoteToClassObjectIfNeeded(defaultType);
+  }
+
+  private @Nullable PyType promoteToClassObjectIfNeeded(PyType type) {
     if (myIsDefinition) {
-      return PyTypeUtil.toStream(effectiveBound)
+      return PyTypeUtil.toStream(type)
         .map(t -> t instanceof PyInstantiableType ? ((PyInstantiableType<?>)t).toClass() : t)
         .collect(PyTypeUtil.toUnion());
     }
-    return effectiveBound;
+    return type;
   }
 
   @Override

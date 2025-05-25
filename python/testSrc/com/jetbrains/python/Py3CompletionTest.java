@@ -800,6 +800,37 @@ public class Py3CompletionTest extends PyTestCase {
     });
   }
 
+  // PY-81420
+  public void testTypeVarDefaultType() {
+    final List<String> suggested =
+      doTestByText("""
+                     from typing import TypeVar, Generic
+                     T = TypeVar('T', default=str)
+                     class Test(Generic[T]):
+                        def foo(self, x: T):
+                            x.<caret>
+                     """);
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "find", "join");
+  }
+
+  // PY-81420
+  public void testTypeVarDefaultTypeNewSyntax() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON312,
+      () -> {
+        final List<String> suggestedNew =
+          doTestByText("""
+                     class Test[T = str]:
+                         def foo(self, x: T):
+                             x.<caret>
+                     """);
+        assertNotNull(suggestedNew);
+        assertContainsElements(suggestedNew, "find", "join");
+      }
+    );
+  }
+
   private void doTestVariants(String @NotNull ... expected) {
     final String testName = getTestName(true);
     myFixture.configureByFile(testName + ".py");
