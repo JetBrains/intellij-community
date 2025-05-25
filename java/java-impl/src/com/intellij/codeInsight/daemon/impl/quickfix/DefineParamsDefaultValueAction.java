@@ -84,16 +84,15 @@ public final class DefineParamsDefaultValueAction extends PsiBasedModCommandActi
   protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiElement element) {
     PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClass.class);
     PsiMethod method;
-    if (parent instanceof PsiMethod) {
-      method = (PsiMethod)parent;
+    if (parent instanceof PsiMethod m) {
+      method = m;
     }
     else if (parent instanceof PsiClass aClass && aClass.isRecord()) {
       method = JavaPsiRecordUtil.findCanonicalConstructor(aClass);
       assert method != null;
     }
     else throw new AssertionError();
-    PsiParameterList parameterList = method.getParameterList();
-    PsiParameter[] parameters = parameterList.getParameters();
+    PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length == 1) {
       return ModCommand.psiUpdate(method, (m, updater) -> {
         PsiMethod writableMethod = updater.getWritable(m);
@@ -201,12 +200,13 @@ public final class DefineParamsDefaultValueAction extends PsiBasedModCommandActi
                                 (PsiMethod)method.copy();
     final PsiCodeBlock body = prototype.getBody();
     final PsiCodeBlock emptyBody = JavaPsiFacade.getElementFactory(method.getProject()).createCodeBlock();
-    PsiModifierList modifierList = prototype.getModifierList();
+    final PsiModifierList modifierList = prototype.getModifierList();
+    modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
+    modifierList.setModifierProperty(PsiModifier.NATIVE, false);
     if (body != null) {
       body.replace(emptyBody);
     } else {
-      modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
-      prototype.addBefore(emptyBody, null);
+      prototype.add(emptyBody);
     }
 
     final PsiClass aClass = method.getContainingClass();
