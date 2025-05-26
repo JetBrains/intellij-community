@@ -6,8 +6,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
-import com.intellij.psi.search.LocalSearchScope
-import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.Nls
@@ -33,7 +31,6 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.renderer.ParameterNameRenderingPolicy
 import org.jetbrains.kotlin.resolve.source.getPsi
@@ -81,7 +78,7 @@ internal fun checkVisibilityInAbstractedMembers(
         val memberDescriptor = member.resolveToDescriptorWrapperAware(resolutionFacade)
         member.forEachDescendantOfType<KtSimpleNameExpression> {
             val target = it.mainReference.resolve() as? KtNamedDeclaration ?: return@forEachDescendantOfType
-            if (!willBeMoved(target, membersToMove)) return@forEachDescendantOfType
+            if (!target.willBeMoved(membersToMove)) return@forEachDescendantOfType
             if (target.hasModifier(KtTokens.PRIVATE_KEYWORD)) {
                 val targetDescriptor = target.resolveToDescriptorWrapperAware(resolutionFacade)
                 val memberText = memberDescriptor.renderForConflicts()
@@ -91,20 +88,6 @@ internal fun checkVisibilityInAbstractedMembers(
             }
         }
     }
-}
-
-internal fun willBeMoved(element: PsiElement, membersToMove: Collection<KtNamedDeclaration>) =
-    element.parentsWithSelf.any { it in membersToMove }
-
-internal fun willBeUsedInSourceClass(
-    member: PsiElement,
-    sourceClass: KtClassOrObject,
-    membersToMove: Collection<KtNamedDeclaration>
-): Boolean {
-    return !ReferencesSearch
-        .search(member, LocalSearchScope(sourceClass), false)
-        .asIterable()
-        .all { willBeMoved(it.element, membersToMove) }
 }
 
 private val CALLABLE_RENDERER = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.withOptions {
