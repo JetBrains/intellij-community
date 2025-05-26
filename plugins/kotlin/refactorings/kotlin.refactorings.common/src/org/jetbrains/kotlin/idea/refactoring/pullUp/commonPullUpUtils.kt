@@ -2,12 +2,16 @@
 package org.jetbrains.kotlin.idea.refactoring.pullUp
 
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
+import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.lightElementForMemberInfo
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -32,6 +36,12 @@ fun KtNamedDeclaration.canMoveMemberToJavaClass(targetClass: PsiClass): Boolean 
         is KtNamedFunction -> valueParameters.all { it.defaultValue == null }
         else -> false
     }
+}
+
+@ApiStatus.Internal
+fun PsiMember.toKtDeclarationWrapperAware(): KtNamedDeclaration? {
+    if (this is PsiClass && this !is KtLightClass) return KtPsiClassWrapper(this)
+    return namedUnwrappedElement as? KtNamedDeclaration
 }
 
 @ApiStatus.Internal

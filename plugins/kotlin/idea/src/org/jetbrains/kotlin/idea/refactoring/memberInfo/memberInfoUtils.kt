@@ -1,14 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.memberInfo
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiNamedElement
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -63,9 +60,4 @@ internal fun KtNamedDeclaration.resolveToDescriptorWrapperAware(resolutionFacade
             ?.let { return it }
     }
     return resolutionFacade?.resolveToDescriptor(this) ?: unsafeResolveToDescriptor()
-}
-
-internal fun PsiMember.toKtDeclarationWrapperAware(): KtNamedDeclaration? {
-    if (this is PsiClass && this !is KtLightClass) return KtPsiClassWrapper(this)
-    return namedUnwrappedElement as? KtNamedDeclaration
 }

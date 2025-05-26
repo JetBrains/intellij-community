@@ -453,12 +453,6 @@ private fun mapModalityToken(modalityToken: IElementType): Modality = when (moda
     else -> error("Unexpected modality keyword $modalityToken")
 }
 
-fun KtParameter.dropDefaultValue() {
-    val from = equalsToken ?: return
-    val to = defaultValue ?: from
-    deleteChildRange(from, to)
-}
-
 @Deprecated(
     "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils' instead",
     ReplaceWith("this.addTypeParameter(typeParameter)", "org.jetbrains.kotlin.idea.base.psi.addTypeParameter")
