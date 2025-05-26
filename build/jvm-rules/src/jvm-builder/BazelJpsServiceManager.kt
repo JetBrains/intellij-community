@@ -12,8 +12,6 @@ import org.jetbrains.jps.builders.java.JavaCompilingTool
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
 import org.jetbrains.jps.incremental.BuilderService
 import org.jetbrains.jps.incremental.ModuleLevelBuilder
-import org.jetbrains.jps.incremental.java.ExternalJavacOptionsProvider
-import org.jetbrains.jps.javac.ReferenceCollectorExternalJavacOptionsProvider
 import org.jetbrains.jps.model.JpsEncodingConfigurationService
 import org.jetbrains.jps.model.JpsEncodingProjectConfiguration
 import org.jetbrains.jps.model.JpsGlobal
@@ -42,7 +40,6 @@ internal class BazelJpsServiceManager : JpsServiceManager() {
     // org.jetbrains.kotlin.jps.build.KotlinResourcesRootProvider and KotlinSourceRootProvider are not needed
     extensions.put(AdditionalRootsProviderService::class.java, listOf())
     extensions.put(ExcludedJavaSourceRootProvider::class.java, listOf())
-    extensions.put(ExternalJavacOptionsProvider::class.java, listOf(ReferenceCollectorExternalJavacOptionsProvider()))
     // exclude CleanupTempDirectoryExtension
     extensions.put(JavaBuilderExtension::class.java, listOf(
       object : JavaBuilderExtension() {
