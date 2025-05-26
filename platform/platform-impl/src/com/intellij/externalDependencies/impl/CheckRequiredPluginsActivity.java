@@ -142,9 +142,13 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
       else {
         if (minVersion != null && VersionComparatorUtil.compare(pluginVersion, minVersion) < 0) {
           errorMessages.add(IdeBundle.message("error.project.requires.newer.plugin", projectName, pluginName, minVersion, pluginVersion));
+
+          hasVersionConflicts = true;
         }
         if (maxVersion != null && VersionComparatorUtil.compare(pluginVersion, maxVersion) > 0) {
           errorMessages.add(IdeBundle.message("error.project.requires.older.plugin", projectName, pluginName, maxVersion, pluginVersion));
+
+          hasVersionConflicts = true;
         }
       }
     }
