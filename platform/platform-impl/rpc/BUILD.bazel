@@ -17,6 +17,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/core-ui",
     "//platform/usageView",
+    "//fleet/rpc",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.rpc` end

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.project.module
 
+import com.intellij.ide.rpc.RpcCallUtil
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.ModuleManager
@@ -16,13 +17,12 @@ import kotlinx.coroutines.launch
 private val LOG = logger<ModulesStateService>()
 
 @Service(Service.Level.PROJECT)
-class ModulesStateService private constructor(val project: Project, val coroutineScope: CoroutineScope) {
+class ModulesStateService private constructor(private val project: Project, val coroutineScope: CoroutineScope) {
   private val state: ModulesState = ModulesState()
   private var initializationCompleted: Boolean = false
 
   init {
-    val initialJob = loadInitialModuleNames()
-    subscribeToModuleChanges(initialJob)
+    loadModuleNamesAndSubscribe()
   }
 
   fun getModuleNames(): Set<String> {
@@ -33,24 +33,22 @@ class ModulesStateService private constructor(val project: Project, val coroutin
     return state.moduleNames
   }
 
-  private fun loadInitialModuleNames(): Job {
-    return coroutineScope.childScope("ModulesStateService.loadInitialModuleNames").launch {
-      LOG.debug("Starting initial module names loading for project: ${project.name}\n")
-      val moduleNames = ModuleStateApi.getInstance().getCurrentModuleNames(project.projectId())
+  private fun loadModuleNamesAndSubscribe(): Job {
+    return coroutineScope.childScope("ModulesStateService.loadModuleNamesAndSubscribe").launch {
+      LOG.debug("Starting initial module names loading for project: ${project.name}")
+      val moduleNames = RpcCallUtil.invokeSafely { ModuleStateApi.getInstance().getCurrentModuleNames(project.projectId()) }
       state.moduleNames.addAll(moduleNames.toMutableSet())
       LOG.debug("Completed loading initial module names. Found ${moduleNames.size} modules")
       initializationCompleted = true
+      subscribeToModuleChanges()
     }
   }
 
-  private fun subscribeToModuleChanges(initialJob: Job) {
-    coroutineScope.childScope("ModulesStateService.subscribeToModuleChanges").launch {
-      initialJob.join()
-      LOG.debug("Starting subscription for module updates in project: ${project.name}")
-      ModuleStateApi.getInstance().getModulesUpdateEvents(project.projectId()).collect { update ->
-        LOG.debug("Received module update: $update")
-        state.applyModuleChange(update)
-      }
+  private suspend fun subscribeToModuleChanges() {
+    LOG.debug("Starting subscription for module updates in project: ${project.name}")
+    RpcCallUtil.invokeSafely { ModuleStateApi.getInstance().getModulesUpdateEvents(project.projectId()) }.collect { update ->
+      LOG.debug("Received module update: $update")
+      state.applyModuleChange(update)
     }
   }
 
@@ -68,11 +66,13 @@ private class ModulesState() {
   fun applyModuleChange(moduleUpdatedEvent: ModuleUpdatedEvent) {
     when (moduleUpdatedEvent.moduleUpdateType) {
       ModuleUpdateType.RENAME -> {
-        moduleNames.remove(moduleUpdatedEvent.moduleName)
-        moduleNames.add(moduleUpdatedEvent.newModuleName)
+        moduleUpdatedEvent.newToOldModuleNameMap.forEach { (newName, oldName) ->
+          moduleNames.remove(oldName)
+          moduleNames.add(newName)
+        }
       }
-      ModuleUpdateType.ADD -> moduleNames.add(moduleUpdatedEvent.moduleName)
-      ModuleUpdateType.REMOVE -> moduleNames.remove(moduleUpdatedEvent.moduleName)
+      ModuleUpdateType.ADD -> moduleNames.addAll(moduleUpdatedEvent.moduleNames)
+      ModuleUpdateType.REMOVE -> moduleNames.removeAll(moduleUpdatedEvent.moduleNames)
     }
   }
 }

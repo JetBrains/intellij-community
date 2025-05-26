@@ -3,6 +3,5 @@ f:com.intellij.platform.project.module.ModulesStateService
 - f:getCoroutineScope():kotlinx.coroutines.CoroutineScope
 - sf:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.project.module.ModulesStateService
 - f:getModuleNames():java.util.Set
-- f:getProject():com.intellij.openapi.project.Project
 f:com.intellij.platform.project.module.ModulesStateService$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.project.module.ModulesStateService

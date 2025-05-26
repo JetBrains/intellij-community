@@ -15,8 +15,9 @@ import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.util.Function
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 
@@ -24,32 +25,33 @@ internal class ModuleStateApiImpl : ModuleStateApi {
   @OptIn(ExperimentalCoroutinesApi::class)
   override suspend fun getModulesUpdateEvents(projectId: ProjectId): Flow<ModuleUpdatedEvent> {
     val project = projectId.findProjectOrNull() ?: return emptyFlow()
-    val flow = MutableSharedFlow<ModuleUpdatedEvent>()
-      val connection = project.messageBus.simpleConnect()
+    val connection = project.messageBus.simpleConnect()
+    val flow = channelFlow {
       val coroutineScope = ModulesStateService.getInstance(project).coroutineScope
       connection.subscribe(ModuleListener.TOPIC, object : ModuleListener {
         override fun modulesAdded(project: Project, modules: List<Module>) {
           coroutineScope.launch {
-          for (module in modules) {
-              flow.emit(ModuleUpdatedEvent(ModuleUpdateType.ADD, module.name))
-            }
+            send(ModuleUpdatedEvent(ModuleUpdateType.ADD, modules.map { it.name}))
           }
         }
 
         override fun moduleRemoved(project: Project, module: Module) {
           coroutineScope.launch {
-            flow.emit(ModuleUpdatedEvent(ModuleUpdateType.REMOVE, module.name))
+            send(ModuleUpdatedEvent(ModuleUpdateType.REMOVE, module.name))
           }
         }
 
         override fun modulesRenamed(project: Project, modules: List<Module>, oldNameProvider: Function<in Module, String>) {
           coroutineScope.launch {
-            modules.forEach { module ->
-              flow.emit(ModuleUpdatedEvent(ModuleUpdateType.RENAME, oldNameProvider.`fun`(module), module.name))
-            }
+            send(ModuleUpdatedEvent(ModuleUpdateType.RENAME, modules.associate { module ->
+             module.name to oldNameProvider.`fun`(module)
+            }))
           }
         }
       })
+
+      awaitClose { connection.disconnect() }
+    }
     return flow
   }
 

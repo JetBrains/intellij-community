@@ -39,5 +39,6 @@
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.usageView" />
+    <orderEntry type="module" module-name="fleet.rpc" />
   </component>
 </module>

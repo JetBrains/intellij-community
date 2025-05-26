@@ -52,7 +52,7 @@ internal class FindRemoteApiImpl : FindRemoteApi {
           return@coroutineScope
         }
         val filesToScanInitially = filesToScanInitially.mapNotNull { it.virtualFile() }.toSet()
-        //TODO there should be read action in case of the loading from a directory
+        //read action is necessary in case of the loading from a directory
         val scope = readAction {  FindInProjectUtil.getGlobalSearchScope(project, findModel) }
         FindInProjectUtil.findUsages(findModel, project, progressIndicator, presentation, filesToScanInitially) { usageInfo ->
           val virtualFile = usageInfo.virtualFile

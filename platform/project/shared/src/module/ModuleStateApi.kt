@@ -33,4 +33,9 @@ enum class ModuleUpdateType {
 
 @Internal
 @Serializable
-open class ModuleUpdatedEvent(val moduleUpdateType: ModuleUpdateType, val moduleName: String, val newModuleName: String = moduleName)
+class ModuleUpdatedEvent(val moduleUpdateType: ModuleUpdateType, val newToOldModuleNameMap: Map<String, String>){// val moduleName: String, val newModuleName: String = moduleName) {
+  constructor(moduleUpdateType: ModuleUpdateType, moduleNames: List<String>) : this(moduleUpdateType, moduleNames.associateWith { it })
+  constructor(moduleUpdateType: ModuleUpdateType, moduleName: String) : this(moduleUpdateType, mapOf(moduleName to moduleName))
+
+  val moduleNames: Set<String> = newToOldModuleNameMap.keys
+}
