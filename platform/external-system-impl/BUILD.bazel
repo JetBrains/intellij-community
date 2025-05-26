@@ -105,6 +105,8 @@ jvm_library(
     "//platform/backend/observation",
     "//platform/backend/observation:observation_test_lib",
     "//plugins/gradle",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
   ],
   runtime_deps = [":externalSystem-tests_test_resources"]
 )
