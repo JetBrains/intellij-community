@@ -3592,9 +3592,9 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
                 runTest("../../completion/testData/basic/common/InsideAnonymousClass.kt");
             }
 
-            @TestMetadata("InsideAnonymousObject.kt")
-            public void testInsideAnonymousObject() throws Exception {
-                runTest("../../completion/testData/basic/common/InsideAnonymousObject.kt");
+            @TestMetadata("InsideAnonymousObjectPrivate.kt")
+            public void testInsideAnonymousObjectPrivate() throws Exception {
+                runTest("../../completion/testData/basic/common/InsideAnonymousObjectPrivate.kt");
             }
 
             @TestMetadata("InterfaceNameBeforeRunBug.kt")
