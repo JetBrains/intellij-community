@@ -178,6 +178,16 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             public void testManyLinesFromFileBegin() throws Exception {
                 runTest("testData/formatter/fileAnnotations/manyLinesFromFileBegin.after.kt");
             }
+
+            @TestMetadata("spacesAfterColon.after.kt")
+            public void testSpacesAfterColon() throws Exception {
+                runTest("testData/formatter/fileAnnotations/spacesAfterColon.after.kt");
+            }
+
+            @TestMetadata("spacesBeforeColon.after.kt")
+            public void testSpacesBeforeColon() throws Exception {
+                runTest("testData/formatter/fileAnnotations/spacesBeforeColon.after.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)

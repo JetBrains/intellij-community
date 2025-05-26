@@ -442,6 +442,8 @@ fun createSpacingBuilder(settings: CodeStyleSettings, builderUtil: KotlinSpacing
         betweenInside(KtNodeTypes.LOOP_RANGE, KtTokens.RPAR, KtNodeTypes.FOR).spaces(0)
 
         afterInside(KtNodeTypes.ANNOTATION_ENTRY, KtNodeTypes.ANNOTATED_EXPRESSION).spaces(1)
+        afterInside(KtTokens.COLON, KtNodeTypes.ANNOTATION_ENTRY).spaces(0)
+        beforeInside(KtTokens.COLON, KtNodeTypes.ANNOTATION_ENTRY).spaces(0)
 
         before(KtTokens.SEMICOLON).spaces(0)
 
