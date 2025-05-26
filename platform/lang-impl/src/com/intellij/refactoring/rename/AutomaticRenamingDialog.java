@@ -3,6 +3,7 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidatorEx;
@@ -212,7 +213,9 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       SwingUtilities.invokeLater(() -> {
         if (myTableModel.getRowCount() != 0) {
-          myTable.getSelectionModel().addSelectionInterval(0, 0);
+          ReadAction.run(() -> {
+            myTable.getSelectionModel().addSelectionInterval(0, 0);
+          });
         }
       });
     }
