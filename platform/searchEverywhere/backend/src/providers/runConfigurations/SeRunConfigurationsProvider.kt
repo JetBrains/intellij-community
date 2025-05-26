@@ -29,7 +29,7 @@ class SeRunConfigurationsItem(val item: ChooseRunConfigurationPopup.ItemWrapper<
 }
 
 @ApiStatus.Internal
-class SeRunConfigurationsItemsProvider(private val contributorWrapper: SeAsyncContributorWrapper<Any>) : SeItemsProvider {
+class SeRunConfigurationsProvider(private val contributorWrapper: SeAsyncContributorWrapper<Any>) : SeItemsProvider {
   override val id: String get() = SeProviderIdUtils.RUN_CONFIGURATIONS_ID
   override val displayName: @Nls String get() = contributorWrapper.contributor.fullGroupName
 
@@ -40,7 +40,7 @@ class SeRunConfigurationsItemsProvider(private val contributorWrapper: SeAsyncCo
         (item as? ChooseRunConfigurationPopup.ItemWrapper<*>)?.let {
           val weight = contributorWrapper.contributor.getElementPriority(item, params.inputQuery)
           runBlockingCancellable { collector.put(SeRunConfigurationsItem(it, weight, getExtendedDescription(it))) }
-        } ?: false
+        } ?: true
       }
     }
   }
