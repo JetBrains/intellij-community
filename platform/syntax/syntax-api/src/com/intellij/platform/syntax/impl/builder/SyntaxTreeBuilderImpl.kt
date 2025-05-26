@@ -22,7 +22,7 @@ internal class SyntaxTreeBuilderImpl(
   private var myComments: SyntaxElementTypeSet,
   val startOffset: Int,
   private var myWhitespaceSkippedCallback: WhitespaceSkippedCallback?,
-  lexemes: TokenList,
+  override val tokens: TokenList,
   private var myDebugMode: Boolean,
   val language: String?,
   val logger: Logger,
@@ -30,9 +30,12 @@ internal class SyntaxTreeBuilderImpl(
   private val whitespaceOrCommentBindingPolicy: WhitespaceOrCommentBindingPolicy,
   private val opaquePolicy: OpaqueElementPolicy,
 ) : SyntaxTreeBuilder {
-  internal val myLexStarts: IntArray
-  private val myLexTypes: Array<SyntaxElementType>
-  val lexemeCount: Int
+
+  private val lexStartIndex = (tokens as? TokenListImpl)?.startIndex ?: 0
+  private val myLexStarts: IntArray? = (tokens as? TokenListImpl)?.lexStarts
+  private val myLexTypes: Array<SyntaxElementType>? = (tokens as? TokenListImpl)?.lexTypes
+
+  private val lexemeCount: Int = tokens.tokenCount
 
   internal val pool: MarkerPool = MarkerPool(this)
   internal val myOptionalData: MarkerOptionalData = MarkerOptionalData()
@@ -51,10 +54,6 @@ internal class SyntaxTreeBuilderImpl(
   private var myRemapper: SyntaxElementTypeRemapper? = null
 
   init {
-    val tokens = lexemes as TokenListImpl
-    myLexStarts = tokens.lexStarts
-    myLexTypes = tokens.lexTypes  // todo do we need to copy the array because of remapping (which modifies it)
-    lexemeCount = tokens.tokenCount
     DIAGNOSTICS?.registerPass(text.length, lexemeCount)
   }
 
@@ -96,14 +95,14 @@ internal class SyntaxTreeBuilderImpl(
     }
 
     myRemapper?.let { remapper ->
-      val source = myLexTypes[myCurrentLexeme]
-      val start = myLexStarts[myCurrentLexeme]
-      val end = myLexStarts[myCurrentLexeme + 1]
+      val source = lexType(myCurrentLexeme)
+      val start = lexStart(myCurrentLexeme)
+      val end = lexStart(myCurrentLexeme + 1)
       val type = remapper.remap(source, start, end, text)
       remapCurrentToken(type)
     }
 
-    return myLexTypes[myCurrentLexeme]
+    return lexType(myCurrentLexeme)
   }
 
   private fun calcTokenType(): SyntaxElementType? {
@@ -113,7 +112,7 @@ internal class SyntaxTreeBuilderImpl(
       //remaps current token, and following, which remaps to spaces and comments
       skipWhitespace()
     }
-    return myLexTypes[myCurrentLexeme]
+    return lexType(myCurrentLexeme)
   }
 
   override fun setTokenTypeRemapper(remapper: SyntaxElementTypeRemapper?) {
@@ -131,7 +130,7 @@ internal class SyntaxTreeBuilderImpl(
   }
 
   override fun remapCurrentToken(type: SyntaxElementType) {
-    myLexTypes[myCurrentLexeme] = type
+    remap(myCurrentLexeme, type)
     clearCachedTokenType()
   }
 
@@ -144,12 +143,12 @@ internal class SyntaxTreeBuilderImpl(
       steps--
     }
 
-    return if (cur < lexemeCount) myLexTypes[cur] else null
+    return if (cur < lexemeCount) lexType(cur) else null
   }
 
   private fun shiftOverWhitespaceForward(lexIndex: Int): Int {
     var lexIndex = lexIndex
-    while (lexIndex < lexemeCount && isWhitespaceOrComment(myLexTypes[lexIndex])) {
+    while (lexIndex < lexemeCount && isWhitespaceOrComment(lexType(lexIndex))) {
       lexIndex++
     }
     return lexIndex
@@ -157,14 +156,14 @@ internal class SyntaxTreeBuilderImpl(
 
   override fun rawLookup(steps: Int): SyntaxElementType? {
     val cur = myCurrentLexeme + steps
-    return if (cur < lexemeCount && cur >= 0) myLexTypes[cur] else null
+    return if (cur < lexemeCount && cur >= 0) lexType(cur) else null
   }
 
   override fun rawTokenTypeStart(steps: Int): Int {
     val cur = myCurrentLexeme + steps
     if (cur < 0) return -1
     if (cur >= lexemeCount) return text.length
-    return myLexStarts[cur]
+    return lexStart(cur)
   }
 
   override fun rawTokenIndex(): Int = myCurrentLexeme
@@ -197,11 +196,23 @@ internal class SyntaxTreeBuilderImpl(
     clearCachedTokenType()
   }
 
+  fun lexType(index: Int): SyntaxElementType {
+    return if (myLexTypes != null) myLexTypes[index + lexStartIndex] else tokens.getTokenType(index)!!
+  }
+
+  fun lexStart(index: Int): Int {
+    return if (myLexStarts != null) myLexStarts[index + lexStartIndex] else tokens.getTokenStart(index)
+  }
+
+  fun remap(index: Int, value: SyntaxElementType) {
+    if (myLexTypes != null) myLexTypes[index + lexStartIndex] = value else tokens.remap(index, value)
+  }
+
   private fun skipWhitespace() {
     while (myCurrentLexeme < lexemeCount && isWhitespaceOrComment(remapCurrentToken())) {
-      val type = myLexTypes[myCurrentLexeme]
-      val start = myLexStarts[myCurrentLexeme]
-      val end = if (myCurrentLexeme + 1 < lexemeCount) myLexStarts[myCurrentLexeme + 1] else text.length
+      val type = lexType(myCurrentLexeme)
+      val start = lexStart(myCurrentLexeme)
+      val end = if (myCurrentLexeme + 1 < lexemeCount) lexStart(myCurrentLexeme + 1) else text.length
       onSkip(type, start, end)
       myCurrentLexeme++
       clearCachedTokenType()
@@ -215,7 +226,7 @@ internal class SyntaxTreeBuilderImpl(
   override val currentOffset: Int
     get() {
       if (eof()) return text.length
-      return myLexStarts[myCurrentLexeme]
+      return lexStart(myCurrentLexeme)
     }
 
   override val tokenText: String?
@@ -228,7 +239,7 @@ internal class SyntaxTreeBuilderImpl(
         }
       }
 
-      return text.subSequence(myLexStarts[myCurrentLexeme], myLexStarts[myCurrentLexeme + 1]).toString()
+      return text.subSequence(lexStart(myCurrentLexeme), lexStart(myCurrentLexeme + 1)).toString()
     }
 
   override fun mark(): SyntaxTreeBuilder.Marker {
@@ -298,7 +309,7 @@ internal class SyntaxTreeBuilderImpl(
 
   private fun isEmpty(startIdx: Int, endIdx: Int): Boolean {
     return (startIdx..<endIdx).all { i ->
-      isWhitespaceOrComment(myLexTypes[i])
+      isWhitespaceOrComment(lexType(i))
     }
   }
 
@@ -335,7 +346,7 @@ internal class SyntaxTreeBuilderImpl(
     val result = ProductionResultImpl()
 
     if (myCurrentLexeme < lexemeCount) {
-      val missed = myLexTypes.asList().subList(myCurrentLexeme, lexemeCount)
+      val missed = (myCurrentLexeme until lexemeCount).map { lexType(it) }
       logger.error("Tokens $missed were not inserted into the tree. ${language ?: ""}",
                    Attachment("missedTokensFragment.txt", text.toString()))
     }
@@ -352,9 +363,6 @@ internal class SyntaxTreeBuilderImpl(
 
     return result
   }
-
-  override val tokens: TokenList
-    get() = TokenListImpl(myLexStarts, myLexTypes, lexemeCount, text)
 
   inner class ProductionResultImpl : ProductionResult {
     override val productionMarkers: ProductionMarkerList = object : ProductionMarkerList {
@@ -399,11 +407,25 @@ internal class SyntaxTreeBuilderImpl(
       get() = tokens
 
     override fun copyTokenStartsToArray(dest: IntArray, srcStart: Int, destStart: Int, length: Int) {
-      myLexStarts.copyInto(dest, destStart, srcStart, srcStart + length)
+      if (myLexStarts != null) {
+        myLexStarts.copyInto(dest, destStart, srcStart + lexStartIndex, srcStart + length)
+      }
+      else {
+        for (i in 0 until length) {
+          dest[destStart + i] = tokens.getTokenStart(srcStart + i)
+        }
+      }
     }
 
     override fun copyTokenTypesToArray(dest: Array<in SyntaxElementType>, srcStart: Int, destStart: Int, length: Int) {
-      myLexTypes.copyInto(dest, destStart, srcStart, srcStart + length)
+      if (myLexTypes != null) {
+        myLexTypes.copyInto(dest, destStart, srcStart + lexStartIndex, srcStart + length)
+      }
+      else {
+        for (i in 0 until length) {
+          dest[destStart + i] = tokens.getTokenType(srcStart + i)!!
+        }
+      }
     }
   }
 
@@ -439,7 +461,7 @@ internal class SyntaxTreeBuilderImpl(
         pool.get(abs(prevId)).getLexemeIndex(prevId < 0)
       }
       var wsStartIndex = max(lexemeIndex, lastIndex)
-      while (wsStartIndex > prevProductionLexIndex && isWhitespaceOrComment(myLexTypes[wsStartIndex - 1])) wsStartIndex--
+      while (wsStartIndex > prevProductionLexIndex && isWhitespaceOrComment(lexType(wsStartIndex - 1))) wsStartIndex--
 
       val wsEndIndex = shiftOverWhitespaceForward(lexemeIndex)
 
@@ -463,10 +485,10 @@ internal class SyntaxTreeBuilderImpl(
   }
 
   private fun prepareUnbalancedMarkerMessage(marker: ProductionMarker?): String {
-    val index = if (marker != null) marker.getStartTokenIndex() + 1 else myLexStarts.size
+    val index = if (marker != null) marker.getStartTokenIndex() + 1 else lexemeCount
 
-    val context = if (index < myLexStarts.size)
-      text.subSequence(max(0, (myLexStarts[index] - 1000)), myLexStarts[index])
+    val context = if (index < lexemeCount)
+      text.subSequence(max(0, (lexStart(index) - 1000)), lexStart(index))
     else
       "<none>"
 
@@ -488,7 +510,7 @@ internal class SyntaxTreeBuilderImpl(
     }
 
     override fun get(index: Int): SyntaxElementType {
-      return myLexTypes[myStart + index]
+      return lexType(myStart + index)
     }
   }
 
@@ -500,7 +522,7 @@ internal class SyntaxTreeBuilderImpl(
     }
 
     override fun get(i: Int): CharSequence {
-      return CharSequenceSubSequence(text, myLexStarts[myStart + i], myLexStarts[myStart + i + 1])
+      return CharSequenceSubSequence(text, lexStart(myStart + i), lexStart(myStart + i + 1))
     }
   }
 }

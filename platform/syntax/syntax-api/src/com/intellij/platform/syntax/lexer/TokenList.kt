@@ -21,7 +21,6 @@ import org.jetbrains.annotations.ApiStatus
  * @see tokenListLexer
  */
 @ApiStatus.Experimental
-@ApiStatus.NonExtendable
 interface TokenList {
   /**
    * @return the number of tokens inside
@@ -55,6 +54,10 @@ interface TokenList {
     if (index < 0 || index >= tokenCount) return null
     return tokenizedText.subSequence(getTokenStart(index), getTokenEnd(index))
   }
+
+  fun slice(start: Int, end: Int): TokenList
+
+  fun remap(index: Int, newValue: SyntaxElementType)
 }
 
 /**

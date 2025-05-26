@@ -37,7 +37,7 @@ internal class CompositeMarker(
   }
 
   override fun getEndOffset(): Int =
-    builder.myLexStarts[endIndex] + builder.startOffset
+    builder.lexStart(endIndex) + builder.startOffset
 
   override fun getEndTokenIndex(): Int = endIndex
 

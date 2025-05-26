@@ -18,6 +18,7 @@ internal class TokenListImpl(
   internal val lexTypes: Array<SyntaxElementType>,
   override val tokenCount: Int,
   override val tokenizedText: CharSequence,
+  val startIndex: Int = 0,
 ) : TokenList {
   init {
     require(tokenCount < lexStarts.size)
@@ -44,14 +45,33 @@ internal class TokenListImpl(
     return lexTypes[index]
   }
 
+  override fun slice(start: Int, end: Int): TokenList {
+    require(start >= 0)
+    require(end <= tokenCount)
+    require(start <= end)
+
+    if (start == 0 && end == tokenCount) return this
+    if (start == end) return emptyTokenList()
+
+    return TokenListImpl(lexStarts, lexTypes, end - start, tokenizedText, startIndex + start)
+  }
+
   override fun getTokenStart(index: Int): Int {
     return lexStarts[index]
+  }
+
+  override fun remap(index: Int, newValue: SyntaxElementType) {
+    lexTypes[index] = newValue
   }
 
   override fun getTokenEnd(index: Int): Int {
     return lexStarts[index + 1]
   }
 }
+
+private fun emptyTokenList(): TokenListImpl =
+  TokenListImpl(IntArray(0), emptyArray(), 0, "")
+
 
 /**
  * A simple lexer over [TokenList].

@@ -103,6 +103,8 @@
 - getTokenText(I):java.lang.CharSequence
 - a:getTokenType(I):com.intellij.platform.syntax.SyntaxElementType
 - a:getTokenizedText():java.lang.CharSequence
+- a:remap(I,com.intellij.platform.syntax.SyntaxElementType):V
+- a:slice(I,I):com.intellij.platform.syntax.lexer.TokenList
 *f:com.intellij.platform.syntax.lexer.TokenListUtil
 - sf:TokenList(I[],com.intellij.platform.syntax.SyntaxElementType[],I,java.lang.CharSequence):com.intellij.platform.syntax.lexer.TokenList
 - sf:backWhile(com.intellij.platform.syntax.lexer.TokenList,I,com.intellij.platform.syntax.SyntaxElementTypeSet):I

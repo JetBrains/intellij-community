@@ -136,7 +136,7 @@ private class BuilderImpl(
       myComments = comments.asSyntaxElementTypeSet(),
       startOffset = startOffset,
       myWhitespaceSkippedCallback = whitespaceSkippedCallback,
-      lexemes = tokenList,
+      tokens = tokenList,
       myDebugMode = debugMode,
       language = language,
       cancellationProvider = null,
