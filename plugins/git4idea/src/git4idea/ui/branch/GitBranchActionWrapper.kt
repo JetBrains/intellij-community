@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionWrapper
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DataSnapshotProvider
-import com.intellij.vcs.git.shared.actions.GitDataKeys
+import com.intellij.vcs.git.shared.actions.GitSingleRefActions
 import git4idea.GitBranch
 import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.actions.ref.GitSingleRefAction
@@ -18,7 +18,7 @@ internal class GitBranchActionWrapper(
   private val repositories: List<GitRepository>,
 ) : AnActionWrapper(action), DataSnapshotProvider {
   override fun dataSnapshot(sink: DataSink) {
-    sink[GitDataKeys.SELECTED_REF] = branch
+    sink[GitSingleRefActions.SELECTED_REF_DATA_KEY] = branch
     sink[GitBranchActionsDataKeys.AFFECTED_REPOSITORIES] = repositories
     sink[GitBranchActionsDataKeys.SELECTED_REPOSITORY] = selectedRepository
   }

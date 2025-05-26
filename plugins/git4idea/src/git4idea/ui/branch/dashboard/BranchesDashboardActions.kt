@@ -15,6 +15,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.vcs.git.shared.actions.GitSingleRefActions
 import com.intellij.vcs.git.shared.branch.GitInOutCountersInProject
 import com.intellij.vcs.log.VcsLogProperties
 import com.intellij.vcs.log.impl.VcsProjectLog
@@ -98,8 +99,7 @@ internal object BranchesDashboardActions {
       val selectedNodes = selection.selectedNodeDescriptors
 
       return when {
-        selectedNodes.size == 1 && (selectedRefs.size == 1 || headSelected) ->
-          ActionManager.getInstance().getAction(GIT_SINGLE_REF_ACTION_GROUP) as? ActionGroup
+        selectedNodes.size == 1 && (selectedRefs.size == 1 || headSelected) -> GitSingleRefActions.getSingleRefActionGroup()
         selectedNodes.size == 2 && selectedRefs.size == 1 && headSelected -> HeadAndBranchActions()
         selectedNodes.size == selectedRefs.size && selectedRefs.size > 1 -> MultipleLocalBranchActions()
         selectedNodes.isNotEmpty() && selectedRemotes.size == selectedNodes.size ->

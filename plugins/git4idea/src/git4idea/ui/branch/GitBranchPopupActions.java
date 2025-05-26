@@ -6,7 +6,10 @@ import com.intellij.dvcs.ui.BranchActionGroup;
 import com.intellij.dvcs.ui.NewBranchAction;
 import com.intellij.dvcs.ui.PopupElementWithAdditionalInfo;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -15,6 +18,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.vcs.git.shared.actions.GitSingleRefActions;
 import com.intellij.vcs.git.shared.ui.GitBranchPresentation;
 import git4idea.*;
 import git4idea.branch.GitBranchIncomingOutgoingManager;
@@ -36,7 +40,6 @@ import static com.intellij.util.containers.ContainerUtil.map2SetNotNull;
 import static git4idea.GitUtil.HEAD;
 import static git4idea.branch.GitBranchType.LOCAL;
 import static git4idea.branch.GitBranchType.REMOTE;
-import static git4idea.ui.branch.GitBranchActionsUtilKt.GIT_SINGLE_REF_ACTION_GROUP;
 import static git4idea.ui.branch.GitBranchActionsUtilKt.createOrCheckoutNewBranch;
 
 public final class GitBranchPopupActions {
@@ -348,7 +351,7 @@ public final class GitBranchPopupActions {
                                                              List<? extends GitRepository> repositories,
                                                              @NotNull GitRepository selectedRepository,
                                                              @Nullable AnActionEvent e) {
-    AnAction[] actions = ((ActionGroup) ActionManager.getInstance().getAction(GIT_SINGLE_REF_ACTION_GROUP)).getChildren(e);
+    AnAction[] actions = GitSingleRefActions.getSingleRefActionGroup().getChildren(e);
     return map2Array(actions,
                      AnAction.class,
                      action -> GitBranchActionWrapper.tryWrap(action, branch, selectedRepository, repositories));

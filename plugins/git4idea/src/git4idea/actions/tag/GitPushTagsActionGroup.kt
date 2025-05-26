@@ -2,7 +2,7 @@
 package git4idea.actions.tag
 
 import com.intellij.openapi.actionSystem.*
-import com.intellij.vcs.git.shared.actions.GitDataKeys
+import com.intellij.vcs.git.shared.actions.GitSingleRefActions
 import git4idea.GitTag
 import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.i18n.GitBundle
@@ -11,7 +11,7 @@ import git4idea.repo.GitRepository
 
 internal class GitPushTagsActionGroup : ActionGroup(GitBundle.messagePointer("action.Git.Push.Tag.text"), false) {
   override fun update(e: AnActionEvent) {
-    val tag = e.getData(GitDataKeys.SELECTED_REF) as? GitTag
+    val tag = e.getData(GitSingleRefActions.SELECTED_REF_DATA_KEY) as? GitTag
     val repositories = e.getData(GitBranchActionsDataKeys.AFFECTED_REPOSITORIES)
     if (tag == null || repositories == null) {
       e.presentation.isEnabledAndVisible = false

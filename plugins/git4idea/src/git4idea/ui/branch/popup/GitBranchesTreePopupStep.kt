@@ -3,7 +3,10 @@ package git4idea.ui.branch.popup
 
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.CustomizedDataContext
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.project.Project
@@ -14,14 +17,13 @@ import com.intellij.openapi.ui.popup.PopupStep.FINAL_CHOICE
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.vcs.git.shared.GitDisplayName
-import com.intellij.vcs.git.shared.actions.GitDataKeys
+import com.intellij.vcs.git.shared.actions.GitSingleRefActions
 import com.intellij.vcs.git.shared.ref.GitRefUtil
 import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
 import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetActions
 import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetKeys
 import git4idea.GitReference
 import git4idea.config.GitVcsSettings
-import git4idea.ui.branch.GIT_SINGLE_REF_ACTION_GROUP
 import git4idea.ui.branch.tree.*
 import javax.swing.JComponent
 
@@ -85,7 +87,7 @@ internal class GitBranchesTreePopupStep(
     val reference = selectedValue as? GitReference ?: refUnderRepository?.ref
 
     if (reference != null) {
-      val actionGroup = ActionManager.getInstance().getAction(GIT_SINGLE_REF_ACTION_GROUP) as? ActionGroup ?: DefaultActionGroup()
+      val actionGroup = GitSingleRefActions.getSingleRefActionGroup()
       val repo = refUnderRepository?.repository
       return createActionStep(actionGroup, project, selectedRepository, repo?.let(::listOf) ?: affectedRepositories, reference)
     }
@@ -157,7 +159,7 @@ internal class GitBranchesTreePopupStep(
     ): DataContext =
       CustomizedDataContext.withSnapshot(DataManager.getInstance().getDataContext(component)) { sink ->
         sink[CommonDataKeys.PROJECT] = project
-        sink[GitDataKeys.SELECTED_REF] = reference
+        sink[GitSingleRefActions.SELECTED_REF_DATA_KEY] = reference
         sink[GitBranchesWidgetKeys.SELECTED_REPOSITORY] = selectedRepository
         sink[GitBranchesWidgetKeys.AFFECTED_REPOSITORIES] = repositories
       }

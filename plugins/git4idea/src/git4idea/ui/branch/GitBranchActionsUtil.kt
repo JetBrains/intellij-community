@@ -25,12 +25,8 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.update.GitUpdateExecutionProcess
 import kotlinx.coroutines.launch
-import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
-
-@Language("devkit-action-id")
-const val GIT_SINGLE_REF_ACTION_GROUP = "Git.Branch"
 
 @JvmOverloads
 internal fun createOrCheckoutNewBranch(project: Project,

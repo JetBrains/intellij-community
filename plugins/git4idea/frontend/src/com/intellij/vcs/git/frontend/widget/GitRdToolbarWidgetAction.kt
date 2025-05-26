@@ -10,7 +10,7 @@ import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
-import com.intellij.vcs.git.shared.actions.GitDataKeys
+import com.intellij.vcs.git.shared.actions.GitSingleRefActions
 import com.intellij.vcs.git.shared.isRdBranchWidgetEnabled
 import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
 import com.intellij.vcs.git.shared.widget.GitToolbarWidgetActionBase
@@ -42,7 +42,7 @@ class GitRdToolbarWidgetAction: GitToolbarWidgetActionBase() {
           val place = ActionPlaces.getPopupPlace("GitBranchesPopup.TopLevel.Branch.Actions")
           val dataContext = CustomizedDataContext.withSnapshot(DataContext.EMPTY_CONTEXT) { sink ->
             sink[CommonDataKeys.PROJECT] = project
-            sink[GitDataKeys.SELECTED_REF] = selectedValue
+            sink[GitSingleRefActions.SELECTED_REF_DATA_KEY] = selectedValue
             sink[GitBranchesWidgetKeys.SELECTED_REPOSITORY] = repositories.firstOrNull()
             sink[GitBranchesWidgetKeys.AFFECTED_REPOSITORIES] = repositories
           }

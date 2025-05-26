@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
-import com.intellij.vcs.git.shared.actions.GitDataKeys
+import com.intellij.vcs.git.shared.actions.GitSingleRefActions
 import git4idea.GitLocalBranch
 import git4idea.GitReference
 import git4idea.GitTag
@@ -57,7 +57,7 @@ abstract class GitSingleRefAction<T : GitReference>(dynamicText: Supplier<@NlsAc
   protected open fun isEnabledForRef(ref: T, repositories: List<GitRepository>): Boolean = true
 
   private fun getRef(e: AnActionEvent, repositories: List<GitRepository>): T? {
-    val explicitRefFromCtx = e.getData(GitDataKeys.SELECTED_REF)
+    val explicitRefFromCtx = e.getData(GitSingleRefActions.SELECTED_REF_DATA_KEY)
     val ref = when {
       explicitRefFromCtx != null -> explicitRefFromCtx
       e.getData(GitBranchActionsDataKeys.USE_CURRENT_BRANCH) == true -> repositories.singleOrNull()?.currentBranch
