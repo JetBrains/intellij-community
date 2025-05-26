@@ -21,7 +21,7 @@ sealed class EntityAttribute<E : Entity, T : Any>(
    * Attribute may have a default value.
    * It is useful when defining [Mixin]s, as there is not explicit constructor for them.
    * */
-  val defaultValue: DefaultValue<*>?
+  val defaultValue: DefaultValue<*>?,
 ) : Entity, Presentable {
 
   /**
@@ -33,7 +33,7 @@ sealed class EntityAttribute<E : Entity, T : Any>(
     /**
      * Unique Ident of the attribute
      * */
-    val Ident = requiredValue("ident", String.serializer(), Indexing.UNIQUE)
+    val Ident: Required<String> = requiredValue("ident", String.serializer(), Indexing.UNIQUE)
   }
 
   override val eid: EID
@@ -133,14 +133,14 @@ fun <E : Entity, T : Any> entityOnNonUniqueAttribute(entityAttribute: EntityAttr
   "new API doesn't allow to call entity() on a attribute of a base class while expecting only a subtype to be returned",
   ReplaceWith("entities(entityAttribute, value).filterIsInstance<C>().singleOrNullOrThrow()", "fleet.util.singleOrNullOrThrow")
 )
-inline fun <E : Entity, T : Any, reified C: E> entityCasted(entityAttribute: EntityAttribute<E, T>, value: T): C? =
+inline fun <E : Entity, T : Any, reified C : E> entityCasted(entityAttribute: EntityAttribute<E, T>, value: T): C? =
   entities(entityAttribute, value).filterIsInstance<C>().singleOrNullOrThrow()
 
 @Deprecated(
   "new API doesn't allow to call entity() on a attribute of a base class while expecting only a subtype to be returned",
   ReplaceWith("entities(entityAttribute, value).filterIsInstance<C>()")
 )
-inline fun <E : Entity, T : Any, reified C: E> entitiesCasted(entityAttribute: EntityAttribute<E, T>, value: T): Set<C> =
+inline fun <E : Entity, T : Any, reified C : E> entitiesCasted(entityAttribute: EntityAttribute<E, T>, value: T): Set<C> =
   entities(entityAttribute, value).filterIsInstance<C>().toSet()
 
 /**
@@ -182,7 +182,7 @@ operator fun <E : Entity, V : Any> E.get(attribute: Attributes<E>.Required<V>): 
  * */
 fun <E : Entity, V : Any> DbContext<Q>.get(
   entity: E,
-  attribute: Attributes<E>.Required<V>
+  attribute: Attributes<E>.Required<V>,
 ): V =
   impl.get(entity, attribute)
 
@@ -191,7 +191,7 @@ fun <E : Entity, V : Any> DbContext<Q>.get(
  * */
 fun <E : Entity, V : Any> Q.get(
   entity: E,
-  attribute: Attributes<E>.Required<V>
+  attribute: Attributes<E>.Required<V>,
 ): V = run {
   val value = requireNotNull(queryIndex(IndexQuery.GetOne(entity.eid, attribute.attr, true))) {
     "required attribute ${displayAttribute(attribute.attr)} is absent in entity ${displayEntity(entity.eid)}"
@@ -212,7 +212,7 @@ operator fun <E : Entity, V : Any> E.get(attribute: Attributes<E>.Optional<V>): 
  * */
 fun <E : Entity, V : Any> DbContext<Q>.get(
   entity: E,
-  attribute: Attributes<E>.Optional<V>
+  attribute: Attributes<E>.Optional<V>,
 ): V? =
   impl.get(entity, attribute)
 
@@ -221,7 +221,7 @@ fun <E : Entity, V : Any> DbContext<Q>.get(
  * */
 fun <E : Entity, V : Any> Q.get(
   entity: E,
-  attribute: Attributes<E>.Optional<V>
+  attribute: Attributes<E>.Optional<V>,
 ): V? =
   queryIndex(IndexQuery.GetOne(entity.eid, attribute.attr, true))?.let { value ->
     fromIndexValue(attribute, value.x)
@@ -231,16 +231,17 @@ fun <E : Entity, V : Any> Q.get(
  * Gets all values of the multi-valued attribute of the given [Entity] from the thread-bound [DbContext]
  * */
 @JvmName("getMany")
-operator fun <E : Entity, V : Any> E.get(attribute: Attributes<E>.Many<V>): Set<V> = let { entity ->
-  DbContext.threadBound.get(entity, attribute)
-}
+operator fun <E : Entity, V : Any> E.get(attribute: Attributes<E>.Many<V>): Set<V> =
+  let { entity ->
+    DbContext.threadBound.get(entity, attribute)
+  }
 
 /**
  * Gets all values of the multi-valued attribute of the given [Entity] from the thread-bound [DbContext]
  * */
 fun <E : Entity, V : Any> DbContext<Q>.get(
   entity: E,
-  attribute: Attributes<E>.Many<V>
+  attribute: Attributes<E>.Many<V>,
 ): Set<V> =
   impl.get(entity, attribute)
 
@@ -249,7 +250,7 @@ fun <E : Entity, V : Any> DbContext<Q>.get(
  * */
 fun <E : Entity, V : Any> Q.get(
   entity: E,
-  attribute: Attributes<E>.Many<V>
+  attribute: Attributes<E>.Many<V>,
 ): Set<V> =
   queryIndex(IndexQuery.GetMany(entity.eid, attribute.attr))
     .mapTo(HashSet()) { (_, _, v) -> fromIndexValue(attribute, v) }
@@ -260,7 +261,7 @@ fun <E : Entity, V : Any> Q.get(
  * */
 fun <E : Entity, V : Any> DbContext<Q>.lookup(
   attribute: EntityAttribute<E, V>,
-  value: V
+  value: V,
 ): Set<E> = impl.lookup(attribute, value)
 
 /**
@@ -270,7 +271,7 @@ fun <E : Entity, V : Any> DbContext<Q>.lookup(
 @Suppress("UNCHECKED_CAST")
 fun <E : Entity, V : Any> Q.lookup(
   attribute: EntityAttribute<E, V>,
-  value: V
+  value: V,
 ): Set<E> =
   queryIndex(IndexQuery.LookupMany(attribute.attr as Attribute<Any>, attribute.toIndexValue(value)))
     .mapNotNullTo(HashSet()) { (eid) ->
@@ -345,7 +346,7 @@ fun <V : Any> DbContext<Q>.fromIndexValue(attribute: EntityAttribute<*, V>, valu
 @Suppress("UNCHECKED_CAST")
 fun <V : Any> Q.fromIndexValue(attribute: EntityAttribute<*, V>, value: Any): V =
   when (attribute.attr.schema.isRef) {
-    true -> entity(value as EID)
+    true -> checkNotNull(entity(value as EID)) { "There is no entity object associated with eid $value}" }
     false -> value
   } as V
 
