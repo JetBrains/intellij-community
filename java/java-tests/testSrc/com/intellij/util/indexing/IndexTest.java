@@ -582,7 +582,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
   private void assertIsIndexed(VirtualFile vFile) {
     ScanningRequestToken indexingRequest = getProject().getService(ProjectIndexingDependenciesService.class).getReadOnlyTokenForTest();
     assertTrue(
-      IndexingFlag.isFileIndexed(vFile, indexingRequest.getFileIndexingStamp(vFile)) || IndexingFlag.isIndexedFlagDisabled());
+      IndexingFlag.isFileIndexed(vFile, indexingRequest.getFileIndexingStamp(vFile)));
     assertThat(IndexingFlag.isFileChanged(vFile, indexingRequest.getFileIndexingStamp(vFile))).isEqualTo(IsFileChangedResult.NO);
   }
 

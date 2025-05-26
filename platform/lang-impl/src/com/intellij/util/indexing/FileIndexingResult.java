@@ -68,7 +68,7 @@ public final class FileIndexingResult {
 
     this.removeDataFromIndicesForFile = removeDataFromIndicesForFile;
     this.shouldMarkFileAsIndexed = shouldMarkFileAsIndexed;
-    this.fileStatusLockObject = shouldMarkFileAsIndexed && !IndexingFlag.isIndexedFlagDisabled()
+    this.fileStatusLockObject = shouldMarkFileAsIndexed
                                 ? IndexingFlag.getOrCreateHash(file)
                                 : IndexingFlag.getNonExistentHash();
 

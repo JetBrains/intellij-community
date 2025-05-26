@@ -11,7 +11,7 @@ import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.indexing.dependencies.ReadWriteFileIndexingStampImpl
-import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
@@ -51,7 +51,7 @@ class IndexingFlagTest {
 
     // should not throw exceptions, should be marked as indexed
     val indexed = IndexingFlag.isFileIndexed(vFile, fileIndexingStamp)
-    assertEquals("Should be indexed because explicitly marked as indexed earlier", !IndexingFlag.isIndexedFlagDisabled(), indexed)
+    assertTrue("Should be indexed because explicitly marked as indexed earlier", indexed)
     IndexingFlag.cleanProcessingFlag(vFile)
   }
 
@@ -76,8 +76,8 @@ class IndexingFlagTest {
 
     // should not throw exceptions, should be marked as indexed
     val indexed = IndexingFlag.isFileIndexed(vFileAfter, fileIndexingStamp)
-    assertEquals("Should be indexed because explicitly marked as indexed earlier",
-                 !IndexingFlag.isIndexedFlagDisabled(), indexed)
+    assertTrue("Should be indexed because explicitly marked as indexed earlier",
+                 indexed)
     IndexingFlag.cleanProcessingFlag(vFileAfter)
 
     // should not throw exceptions

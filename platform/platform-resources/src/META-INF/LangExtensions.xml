@@ -81,7 +81,7 @@
     <registryKey defaultValue="20" key="scanning.dumb.mode.threshold" restartRequired="true"
                  description="Dumb mode during scanning will be triggered as soon as IDE discovers this count of unindexed files."/>
     <registryKey defaultValue="true" key="scanning.trust.indexing.flag" restartRequired="true"
-                 description="Use previously stored 'indexed flag' while scanning. To store 'indexing flag' please set registry option 'indexing.disable.virtual.file.system.entry.is.file.indexed=false'."/>
+                 description="Use previously stored 'indexed flag' while scanning."/>
     <registryKey defaultValue="true" key="full.scanning.on.startup.can.be.skipped" restartRequired="false"
                  description="Full scanning on startup will be skipped when possible."/>
     <registryKey defaultValue="1000000" key="maximum.size.of.orphan.dirty.files.queue" restartRequired="false"
