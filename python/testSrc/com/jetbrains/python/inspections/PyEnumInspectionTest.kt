@@ -51,16 +51,72 @@ class PyEnumInspectionTest : PyInspectionTestCase() {
   fun testDeclaredEnumMemberType() {
     doTestByText(
       """
-        from enum import Enum, auto
+        from enum import Enum
         
         class Color(Enum):
           _value_: int
           RED = 1
           GREEN = <warning descr="Type 'str' is not assignable to declared type 'int'">"green"</warning>
-          BLUE = auto()
           
           R = RED
       """.trimIndent()
+    )
+  }
+
+  // PY-80565
+  fun testEnumMemberAssignedToAuto() {
+    doTestByText(
+      """
+        from enum import auto, Enum
+        
+        class MyIntEnum(Enum):
+            _value_: int
+            FOO = auto()
+        
+        class MyStrEnum(Enum):
+            _value_: str
+            FOO = <warning descr="Type 'int' is not assignable to declared type 'str'">auto()</warning>
+        """.trimIndent()
+    )
+  }
+
+  // PY-80565
+  fun testCustomGenerateNextValue() {
+    doTestByText(
+      """
+        from enum import auto, Enum
+        
+        class MyVal: ...
+
+        class MyEnumBase(Enum):
+            _value_: MyVal        
+
+            @staticmethod
+            def _generate_next_value_(name: str, start: int, count: int, last_values: list[MyVal]) -> MyVal: ...
+        
+        
+        class MyEnumDerived(MyEnumBase):
+            FOO = auto()
+            BAR = <warning descr="Type 'int' is not assignable to declared type 'MyVal'">2</warning>
+      """.trimIndent()
+    )
+  }
+
+  // PY-80565
+  fun testCustomGenerateNextValueMultiFile() {
+    doMultiFileTest()
+  }
+
+  // PY-80565
+  fun testStrEnumMemberAssignedToAuto() {
+    doTestByText(
+      """
+        from enum import auto, StrEnum
+        
+        class Example(StrEnum):
+            FOO = auto()
+            BAR = <warning descr="Type 'int' is not assignable to declared type 'str'">1</warning>
+        """.trimIndent()
     )
   }
 
