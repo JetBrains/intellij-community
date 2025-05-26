@@ -3,6 +3,7 @@
   <module value="com.intellij.modules.vcs"/>
 
   <dependencies>
+    <module name="intellij.platform.backend"/>
     <module name="intellij.libraries.microba"/>
     <module name="intellij.platform.vcs.impl.shared"/>
   </dependencies>
