@@ -33,51 +33,51 @@ private data class ContentReportList(
 
 @ApiStatus.Internal
 fun createContentCheckTests(projectHomePath: Path, productProperties: ProductProperties, platformContentYamlPath: String, testInfo: TestInfo): Iterator<DynamicTest> {
-    val packageResult by lazy {
-      lateinit var result: PackageResult
-      computePackageResult(productProperties, testInfo, {
-        result = it
-      }, projectHomePath)
-      result
-    }
+  val packageResult by lazy {
+    lateinit var result: PackageResult
+    computePackageResult(productProperties, testInfo, {
+      result = it
+    }, projectHomePath)
+    result
+  }
 
-    return sequence {
-      val projectHome = packageResult.projectHome
-      val contentList = packageResult.content
+  return sequence {
+    val projectHome = packageResult.projectHome
+    val contentList = packageResult.content
 
-      yield(DynamicTest.dynamicTest("${testInfo.spanName}(platform)") {
-        checkThatContentIsNotChanged(
-          actualFileEntries = contentList.platform,
-          expectedFile = projectHome.resolve(platformContentYamlPath),
-          projectHome = projectHome,
-          isBundled = true,
-        )
-      })
-
-      val project = packageResult.jpsProject
-      // a non-bundled plugin may duplicated bundled one
-      // - first check non-bundled: any valid mismatch will lead to test failure
-      // - then check bundled: may be a mismatch due to a difference between bundled and non-bundled one
-
-      val bundled = toMap(contentList.bundled)
-      val nonBundled = toMap(contentList.nonBundled)
-
-      checkPlugins(
-        fileEntries = bundled.values.asSequence(),
-        project = project,
+    yield(DynamicTest.dynamicTest("${testInfo.spanName}(platform)") {
+      checkThatContentIsNotChanged(
+        actualFileEntries = contentList.platform,
+        expectedFile = projectHome.resolve(platformContentYamlPath),
         projectHome = projectHome,
-        nonBundled = nonBundled,
-        testInfo = testInfo,
+        isBundled = true,
       )
+    })
 
-      checkPlugins(
-        fileEntries = nonBundled.values.asSequence().filter { !bundled.containsKey(getPluginContentKey(it)) },
-        project = project,
-        projectHome = projectHome,
-        nonBundled = null,
-        testInfo = testInfo,
-      )
-    }.iterator()
+    val project = packageResult.jpsProject
+    // a non-bundled plugin may duplicated bundled one
+    // - first check non-bundled: any valid mismatch will lead to test failure
+    // - then check bundled: may be a mismatch due to a difference between bundled and non-bundled one
+
+    val bundled = toMap(contentList.bundled)
+    val nonBundled = toMap(contentList.nonBundled)
+
+    checkPlugins(
+      fileEntries = bundled.values.asSequence(),
+      project = project,
+      projectHome = projectHome,
+      nonBundled = nonBundled,
+      testInfo = testInfo,
+    )
+
+    checkPlugins(
+      fileEntries = nonBundled.values.asSequence().filter { !bundled.containsKey(getPluginContentKey(it)) },
+      project = project,
+      projectHome = projectHome,
+      nonBundled = null,
+      testInfo = testInfo,
+    )
+  }.iterator()
 }
 
 private fun toMap(contentList: List<PluginContentReport>): Map<String, PluginContentReport> {
