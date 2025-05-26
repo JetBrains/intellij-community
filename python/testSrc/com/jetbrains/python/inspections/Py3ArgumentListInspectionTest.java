@@ -476,4 +476,16 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
                    c = MyClass(1)
                    """);
   }
+
+  public void testKeywordUnpack() {
+    doTestByText("""
+                   from collections.abc import Mapping
+                   
+                   class M(Mapping[str, str]): pass
+                   
+                   dict(**M())
+                   
+                   dict(<warning descr="Expected a mapping, got int">**1</warning>)
+                   """);
+  }
 }
