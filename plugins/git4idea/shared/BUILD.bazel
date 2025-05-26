@@ -28,6 +28,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "@lib//:caffeine",
     "//platform/analysis-api:analysis",
+    "//platform/util/text-matching",
   ],
   runtime_deps = [":shared_resources"]
 )

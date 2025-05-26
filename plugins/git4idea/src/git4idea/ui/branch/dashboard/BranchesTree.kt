@@ -33,13 +33,13 @@ import com.intellij.util.ui.update.UiNotifyConnector
 import com.intellij.vcs.branch.BranchData
 import com.intellij.vcs.branch.BranchPresentation
 import com.intellij.vcs.branch.LinkedBranchDataImpl
+import com.intellij.vcs.git.shared.branch.GitBranchesMatcherWrapper
 import com.intellij.vcs.git.shared.branch.calcTooltip
 import com.intellij.vcs.git.shared.ui.GitBranchesTreeIconProvider
 import com.intellij.vcsUtil.VcsImplUtil
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
-import git4idea.ui.branch.GitBranchesMatcherWrapper
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.BranchesTreeActionGroup
 import git4idea.ui.branch.popup.createIncomingLabel
 import git4idea.ui.branch.popup.createOutgoingLabel

@@ -9,11 +9,11 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.treeStructure.Tree
+import com.intellij.vcs.git.shared.branch.GitBranchesMatcherWrapper
 import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
 import git4idea.GitBranch
 import git4idea.GitReference
 import git4idea.branch.GitRefType
-import git4idea.ui.branch.GitBranchesMatcherWrapper
 import git4idea.ui.branch.getCommonText
 import git4idea.ui.branch.getInRepoText
 import git4idea.ui.branch.getText

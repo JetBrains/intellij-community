@@ -1,13 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.ui.branch
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.vcs.git.shared.branch
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.util.containers.FList
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Adds weight to matching degree returned by [delegate], preferring start strings starting with the pattern
  */
+@ApiStatus.Internal
 class GitBranchesMatcherWrapper(private val delegate: MinusculeMatcher) : MinusculeMatcher() {
   override fun getPattern(): String = delegate.pattern
 
