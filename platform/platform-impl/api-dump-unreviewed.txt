@@ -5456,14 +5456,6 @@ f:com.intellij.ide.wizard.RootNewProjectWizardStep
 - getKeywords():com.intellij.ide.wizard.NewProjectWizardStep$Keywords
 - getPropertyGraph():com.intellij.openapi.observable.properties.PropertyGraph
 - setKeywords(com.intellij.ide.wizard.NewProjectWizardStep$Keywords):V
-f:com.intellij.ide.wizard.UIWizardUtil
-- sf:chain(com.intellij.ide.wizard.NewProjectWizardStep,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.ide.wizard.NewProjectWizardStep
-- sf:chain(com.intellij.ide.wizard.NewProjectWizardStep,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.ide.wizard.NewProjectWizardStep
-- sf:getProjectOrDefault(com.intellij.ide.util.projectWizard.WizardContext):com.intellij.openapi.project.Project
-- sf:setMinimumWidthForAllRowLabels(com.intellij.openapi.ui.DialogPanel,I):V
-- sf:setupProjectFromBuilder(com.intellij.ide.wizard.NewProjectWizardStep,com.intellij.openapi.project.Project,com.intellij.ide.util.projectWizard.ProjectBuilder):com.intellij.openapi.module.Module
-- sf:withVisualPadding(com.intellij.openapi.ui.DialogPanel,Z):com.intellij.openapi.ui.DialogPanel
-- bs:withVisualPadding$default(com.intellij.openapi.ui.DialogPanel,Z,I,java.lang.Object):com.intellij.openapi.ui.DialogPanel
 a:com.intellij.ide.wizard.comment.CommentNewProjectWizardStep
 - com.intellij.ide.wizard.AbstractNewProjectWizardStep
 - <init>(com.intellij.ide.wizard.NewProjectWizardStep):V

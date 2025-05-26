@@ -30,8 +30,10 @@ import java.util.concurrent.CancellationException
 import javax.swing.JLabel
 
 
+@get:ApiStatus.Internal
 val WizardContext.projectOrDefault: Project get() = project ?: ProjectManager.getInstance().defaultProject
 
+@ApiStatus.Internal
 @ApiStatus.ScheduledForRemoval
 @Deprecated(
   message = "Use NewProjectWizardChainStep.nextStep instead",
@@ -46,6 +48,7 @@ fun <T1, T2, T3> T1.chain(f1: (T1) -> T2, f2: (T2) -> T3): NewProjectWizardStep
     .nextStep(f2)
 }
 
+@ApiStatus.Internal
 @ApiStatus.ScheduledForRemoval
 @Deprecated(
   message = "Use NewProjectWizardChainStep.nextStep instead",
@@ -61,6 +64,11 @@ fun <T1, T2, T3, T4> T1.chain(f1: (T1) -> T2, f2: (T2) -> T3, f3: (T3) -> T4): N
     .nextStep(f3)
 }
 
+/**
+ * A little bit hacky solution, looking forward to a better idea
+ */
+@ApiStatus.Experimental
+@ApiStatus.Internal
 fun DialogPanel.setMinimumWidthForAllRowLabels(width: Int) {
   UIUtil.uiTraverser(this).asSequence()
     .filterIsInstance<JLabel>()
@@ -133,6 +141,7 @@ fun NewProjectWizardStep.runAfterOpened(project: Project, callback: (Project) ->
  *
  * @param builder is a legacy abstraction for defining a new project wizard UI and project generator.
  */
+@ApiStatus.Internal
 @ApiStatus.Obsolete
 fun NewProjectWizardStep.setupProjectFromBuilder(project: Project, builder: ProjectBuilder): Module? {
   return commitByBuilder(builder, project).firstOrNull()

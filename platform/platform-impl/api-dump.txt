@@ -1,3 +1,6 @@
+f:com.intellij.ide.wizard.UIWizardUtil
+- sf:withVisualPadding(com.intellij.openapi.ui.DialogPanel,Z):com.intellij.openapi.ui.DialogPanel
+- bs:withVisualPadding$default(com.intellij.openapi.ui.DialogPanel,Z,I,java.lang.Object):com.intellij.openapi.ui.DialogPanel
 f:com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 - com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
 - sf:Companion:com.intellij.toolWindow.ToolWindowDefaultLayoutManager$Companion
