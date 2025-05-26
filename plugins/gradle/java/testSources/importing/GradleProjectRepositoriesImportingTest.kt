@@ -50,8 +50,8 @@ class GradleProjectRepositoriesImportingTest : GradleImportingTestCase() {
 
     importProject()
 
-    val repositories = ExternalSystemApiUtil.findAllRecursively(
-      ExternalSystemApiUtil.findProjectNode(project, GradleConstants.SYSTEM_ID, projectPath),
+    val repositories = ExternalSystemApiUtil.getChildren(
+      ExternalSystemApiUtil.findProjectNode(project, GradleConstants.SYSTEM_ID, projectPath)!!,
       ProjectRepositoryData.KEY
     )
       .map { it.data }
