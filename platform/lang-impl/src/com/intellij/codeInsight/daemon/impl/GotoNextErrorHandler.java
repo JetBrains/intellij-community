@@ -194,11 +194,11 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
 
   private static int getNavigationPositionFor(HighlightInfo info, Document document) {
     int start = info.getActualStartOffset();
-    if (start >= document.getTextLength()) return document.getTextLength();
-    char c = document.getCharsSequence().charAt(start);
-    int shift = info.isAfterEndOfLine() && c != '\n' ? 1 : info.navigationShift;
+    int textLength = document.getTextLength();
+    if (start >= textLength) return textLength;
+    int shift = info.isAfterEndOfLine() && document.getCharsSequence().charAt(start) != '\n' ? 1 : info.navigationShift;
 
-    int offset = info.getActualStartOffset() + shift;
-    return Math.min(offset, document.getTextLength());
+    int offset = start + shift;
+    return Math.min(offset, textLength);
   }
 }
