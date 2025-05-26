@@ -20,6 +20,7 @@
 - a:getOptionalModuleIds():java.util.Set
 *e:com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
 - java.lang.Enum
+- sf:EMBEDDED:com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
 - sf:ON_DEMAND:com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
 - sf:OPTIONAL:com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
 - sf:REQUIRED:com.intellij.platform.runtime.product.RuntimeModuleLoadingRule

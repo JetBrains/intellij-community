@@ -51,13 +51,15 @@ class ProductModulesLoaderTest {
     val repository = createRepository(tempDirectory.rootPath,
                                       RawRuntimeModuleDescriptor.create("util", emptyList(), emptyList()),
                                       RawRuntimeModuleDescriptor.create("root", emptyList(), emptyList()),
+                                      RawRuntimeModuleDescriptor.create("required", emptyList(), emptyList()),
                                       RawRuntimeModuleDescriptor.create("optional", emptyList(), listOf("root")),
     )
     val xml = directoryContent { 
       xml(FILE_NAME, """
         <product-modules>
           <main-root-modules>
-            <module loading="required">root</module>
+            <module loading="embedded">root</module>
+            <module loading="required">required</module>
             <module loading="optional">optional</module>
             <module loading="optional">unknown-optional</module>
           </main-root-modules>
@@ -66,10 +68,12 @@ class ProductModulesLoaderTest {
     }.generateInTempDir().resolve(FILE_NAME)
     val productModules = ProductModulesSerialization.loadProductModules(xml, ProductMode.MONOLITH, repository)
     val mainGroupModules = productModules.mainModuleGroup.includedModules.sortedBy { it.moduleDescriptor.moduleId.stringId }
-    assertEquals(2, mainGroupModules.size)
-    val (optional, root) = mainGroupModules
+    assertEquals(3, mainGroupModules.size)
+    val (optional, required, root) = mainGroupModules
     assertEquals("root", root.moduleDescriptor.moduleId.stringId)
-    assertEquals(RuntimeModuleLoadingRule.REQUIRED, root.loadingRule)
+    assertEquals(RuntimeModuleLoadingRule.EMBEDDED, root.loadingRule)
+    assertEquals("required", required.moduleDescriptor.moduleId.stringId)
+    assertEquals(RuntimeModuleLoadingRule.REQUIRED, required.loadingRule)
     assertEquals("optional", optional.moduleDescriptor.moduleId.stringId)
     assertEquals(RuntimeModuleLoadingRule.OPTIONAL, optional.loadingRule)
     assertEquals(setOf("optional", "unknown-optional"), productModules.mainModuleGroup.optionalModuleIds.mapTo(HashSet()) { it.stringId })
@@ -92,7 +96,7 @@ class ProductModulesLoaderTest {
     assertEquals(2, pluginModules.size)
     val (plugin, optional) = pluginModules
     assertEquals("plugin", plugin.moduleDescriptor.moduleId.stringId)
-    assertEquals(RuntimeModuleLoadingRule.REQUIRED, plugin.loadingRule)
+    assertEquals(RuntimeModuleLoadingRule.EMBEDDED, plugin.loadingRule)
     assertEquals("optional", optional.moduleDescriptor.moduleId.stringId)
     assertEquals(RuntimeModuleLoadingRule.OPTIONAL, optional.loadingRule)
     assertEquals(setOf("optional", "unknown"), pluginModuleGroup.optionalModuleIds.mapTo(HashSet()) { it.stringId })

@@ -61,7 +61,7 @@ public final class PluginModuleGroupImpl implements PluginModuleGroup {
       if (included != null && matcher.matches(included.getModuleDescriptor())) {
         includedModules.add(included);
       }
-      if (!rawModule.getLoadingRule().equals(RuntimeModuleLoadingRule.REQUIRED)) {
+      if (rawModule.getLoadingRule().equals(RuntimeModuleLoadingRule.OPTIONAL)) {
         optionalModuleIds.add(rawModule.getModuleId());
       }
     }

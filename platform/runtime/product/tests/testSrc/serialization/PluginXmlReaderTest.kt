@@ -35,7 +35,7 @@ class PluginXmlReaderTest {
                                           ResourceFileResolver.createDefault(repository))
     val main = pluginModules.single()
     assertEquals("plugin.main", main.moduleId.stringId)
-    assertEquals(RuntimeModuleLoadingRule.REQUIRED, main.loadingRule)
+    assertEquals(RuntimeModuleLoadingRule.EMBEDDED, main.loadingRule)
   }
   
   @Test
@@ -78,7 +78,7 @@ class PluginXmlReaderTest {
     val (main, optional, optionalExplicit, onDemand, required) = pluginModules
     val (embedded, unknown) = pluginModules.subList(5, 7)
     assertEquals("plugin.main", main.moduleId.stringId)
-    assertEquals(RuntimeModuleLoadingRule.REQUIRED, main.loadingRule)
+    assertEquals(RuntimeModuleLoadingRule.EMBEDDED, main.loadingRule)
     assertEquals("plugin.optional", optional.moduleId.stringId)
     assertEquals(RuntimeModuleLoadingRule.OPTIONAL, optional.loadingRule)
     assertEquals("plugin.optional.explicit", optionalExplicit.moduleId.stringId)
@@ -88,7 +88,7 @@ class PluginXmlReaderTest {
     assertEquals("plugin.required", required.moduleId.stringId)
     assertEquals(RuntimeModuleLoadingRule.REQUIRED, required.loadingRule)
     assertEquals("plugin.embedded", embedded.moduleId.stringId)
-    assertEquals(RuntimeModuleLoadingRule.REQUIRED, embedded.loadingRule)
+    assertEquals(RuntimeModuleLoadingRule.EMBEDDED, embedded.loadingRule)
     assertEquals("plugin.unknown", unknown.moduleId.stringId)
     assertEquals(RuntimeModuleLoadingRule.OPTIONAL, unknown.loadingRule)
   }
