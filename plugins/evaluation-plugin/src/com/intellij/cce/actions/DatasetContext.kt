@@ -5,9 +5,12 @@ import com.intellij.cce.workspace.storages.FileErrorsStorage
 import com.intellij.cce.workspace.storages.storage.ActionsStorage
 import com.intellij.cce.workspace.storages.storage.ActionsStorageFactory
 import com.intellij.cce.workspace.storages.storage.getActionsStorageTypeFromEnv
+import com.intellij.openapi.diagnostic.fileLogger
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+
+private val LOG = fileLogger()
 
 /**
  * Provides a context for working with datasets.
@@ -49,7 +52,9 @@ class DatasetContext(
 
   fun path(name: String): Path {
     Files.createDirectories(datasetDir)
-    return datasetDir.resolve(name)
+    return datasetDir.resolve(name).also {
+      LOG.info("Dataset path: $it")
+    }
   }
 
   fun path(ref: DatasetRef): Path = ref.resultPath(this)
