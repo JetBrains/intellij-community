@@ -8,10 +8,12 @@ import com.intellij.openapi.roots.ProjectRootManager
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.core.script.k2.NewScriptFileInfo
 import org.jetbrains.kotlin.idea.core.script.k2.kotlinScriptTemplateInfo
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import java.io.File
+import java.nio.file.Files
+import kotlin.io.path.Path
+import kotlin.io.path.writeText
 import kotlin.script.experimental.annotations.KotlinScript
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.host.ScriptingHostConfiguration
@@ -60,8 +62,6 @@ val Project.defaultDefinition: ScriptDefinition
         return BundledScriptDefinition(compilationConfiguration, evaluationConfiguration)
     }
 
-private const val BUNDLED_SCRIPT_DEFINITION_ID = "ideBundledScriptDefinition"
-
 class BundledScriptDefinition(
     compilationConfiguration: ScriptCompilationConfiguration,
     override val evaluationConfiguration: ScriptEvaluationConfiguration?
@@ -73,7 +73,7 @@ class BundledScriptDefinition(
     override val canDefinitionBeSwitchedOff: Boolean = false
     override val isDefault: Boolean = true
     override val definitionId: String
-        get() = BUNDLED_SCRIPT_DEFINITION_ID
+        get() = "ideBundledScriptDefinition"
 }
 
 @Suppress("unused")
@@ -81,9 +81,34 @@ class BundledScriptDefinition(
     displayName = "KotlinScratchScript",
     fileExtension = "kts",
     compilationConfiguration = KotlinScratchCompilationConfiguration::class,
-    hostConfiguration = KotlinScratchHostConfiguration::class
+    hostConfiguration = KotlinScratchHostConfiguration::class,
+    evaluationConfiguration = KotlinScratchEvaluationConfiguration::class,
 )
-abstract class KotlinScratchScript()
+abstract class KotlinScratchScript(vararg args: String)
+
+const val KOTLIN_SCRATCH_EXPLAIN_FILE: String = "kotlin.scratch.explain.file"
+
+private class KotlinScratchEvaluationConfiguration : ScriptEvaluationConfiguration(
+    {
+        refineConfigurationBeforeEvaluate { (_, config, _) ->
+            config.with {
+                val explainMap = mutableMapOf<String, Any?>()
+                constructorArgs(explainMap)
+                scriptExecutionWrapper<Any?> { action ->
+                    try {
+                        action()
+                    } finally {
+                        System.getProperty(KOTLIN_SCRATCH_EXPLAIN_FILE)?.let { location ->
+                            val path = Path(location)
+                            Files.createDirectories(path.parent)
+                            path.writeText(explainMap.entries.joinToString(separator = "\n") { entry -> "${entry.key}=${entry.value}" })
+                        }
+                    }
+                }
+            }.asSuccess()
+        }
+    }
+)
 
 private class KotlinScratchCompilationConfiguration() : ScriptCompilationConfiguration(
     {

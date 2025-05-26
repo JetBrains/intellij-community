@@ -66,7 +66,7 @@ private class K2ScratchFileEditorWithPreview(
 ) : KtScratchFileEditorWithPreview(kotlinScratchFile, sourceTextEditor, previewTextEditor) {
 
     init {
-        kotlinScratchFile.executor.addOutputHandler(commonPreviewOutputHandler)
+        kotlinScratchFile.executor.addOutputHandler(previewEditorScratchOutputHandler)
     }
 
     override fun dispose() {

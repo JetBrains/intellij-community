@@ -32,7 +32,7 @@ class PreviewEditorScratchOutputHandler(
     private val previewOutputBlocksManager: PreviewOutputBlocksManager,
     private val toolwindowHandler: ScratchOutputHandler,
     private val parentDisposable: Disposable
-) : ScratchOutputHandler {
+) : ScratchOutputHandlerAdapter() {
 
     override fun onStart(file: ScratchFile) {
         toolwindowHandler.onStart(file)
@@ -42,8 +42,12 @@ class PreviewEditorScratchOutputHandler(
         printToPreviewEditor(expression, output)
     }
 
-    override fun handle(file: ScratchFile, infos: List<ExplainInfo>, scope: CoroutineScope) {
-        previewOutputBlocksManager.addOutput(infos, scope)
+    override fun handle(file: ScratchFile, output: ScratchOutput) {
+        toolwindowHandler.handle(file, output)
+    }
+
+    override fun handle(file: ScratchFile, explanations: List<ExplainInfo>, scope: CoroutineScope) {
+        previewOutputBlocksManager.addOutput(explanations, scope)
     }
 
     override fun error(file: ScratchFile, message: String) {
@@ -137,7 +141,7 @@ class PreviewOutputBlocksManager(editor: Editor) {
                     if (intermediateValues.isEmpty())  {
                         "$variableName: ${lineResult.variableValue}"
                     } else {
-                        val formatted = intermediateValues.joinToString(separator = " → ", prefix = "(", postfix = ") ->") { it.toString() }
+                        val formatted = intermediateValues.joinToString(separator = " → ", prefix = "(", postfix = ") →") { it.toString() }
                         "${lineResult.variableName}: $formatted ${lineResult.variableValue}"
                     }
                 }

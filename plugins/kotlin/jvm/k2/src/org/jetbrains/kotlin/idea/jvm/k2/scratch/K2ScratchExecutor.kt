@@ -9,8 +9,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkVersion
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.toNioPathOrNull
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findDocument
 import com.intellij.platform.ide.progress.withBackgroundProgress
@@ -18,30 +17,34 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.PathUtil
 import com.intellij.util.io.awaitExit
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactNames
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
+import org.jetbrains.kotlin.idea.core.script.KOTLIN_SCRATCH_EXPLAIN_FILE
 import org.jetbrains.kotlin.idea.core.script.KotlinScratchScript
 import org.jetbrains.kotlin.idea.jvm.shared.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchExecutor
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ExplainInfo
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ScratchOutput
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ScratchOutputType
 import org.jetbrains.kotlin.idea.util.JavaParametersBuilder
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.projectStructure.version
 import java.io.File
-import java.net.URLClassLoader
 import java.nio.file.Path
-import java.util.*
 import kotlin.io.path.absolutePathString
-import kotlin.io.path.exists
+import kotlin.io.path.readLines
 
 class K2ScratchExecutor(override val file: K2KotlinScratchFile, val project: Project, val scope: CoroutineScope) : ScratchExecutor(file) {
-
-    val tempDir: Path by lazy {
-        FileUtil.createTempDirectory("kotlin", "scratches").toPath()
-    }
+    private data class CompilationResult(
+        val code: Int,
+        val stdout: String,
+        val stderr: String,
+    )
 
     override fun execute() {
         handler.onStart(file)
@@ -58,15 +61,33 @@ class K2ScratchExecutor(override val file: K2KotlinScratchFile, val project: Pro
                 }
             }
 
-            val result = withBackgroundProgress(project, title = KotlinJvmBundle.message("progress.title.compiling.kotlin.scratch")) {
-                getJavaCommandLine(file.file, module).createProcess().awaitExit()
+            val (code, stdout, stderr) = withBackgroundProgress(
+                project,
+                title = KotlinJvmBundle.message("progress.title.compiling.kotlin.scratch")
+            ) {
+                val process = getJavaCommandLine(file.file, module).createProcess()
+                process.awaitExit()
+                val stdout = withContext(Dispatchers.IO) {
+                    process.inputStream.bufferedReader().use { it.readText() }
+                }
+                val stderr = withContext(Dispatchers.IO) {
+                    process.errorStream.bufferedReader().use { it.readText() }
+                }
+
+                CompilationResult(process.exitValue(), stdout, stderr)
             }
 
-            if (result != 0) {
-                handler.error(file, "Compilation failed with code $result")
+            if (code != 0) {
+                handler.error(file, "Compilation failed: ${stderr}")
             } else {
+                if (stdout.isNotEmpty()) {
+                    handler.handle(file, ScratchOutput(stdout, ScratchOutputType.OUTPUT))
+                }
+
                 runCatching {
-                    val explanations = runCompiledScript(scriptFile, module).map { (key, value) ->
+                    val explanations = scriptFile.explainFilePath.readLines().associate {
+                        it.substringBefore('=', "") to it.substringAfter('=')
+                    }.filterKeys { it.isNotBlank() }.map { (key, value) ->
                         val leftBracketIndex = key.indexOf("(")
                         val rightBracketIndex = key.indexOf(")")
                         val commaIndex = key.indexOf(",")
@@ -91,9 +112,10 @@ class K2ScratchExecutor(override val file: K2KotlinScratchFile, val project: Pro
     }
 
     private fun getJavaCommandLine(scriptVirtualFile: VirtualFile, module: Module?): GeneralCommandLine {
-        val javaParameters =
-            JavaParametersBuilder(project).withSdkFrom(module ?: ModuleUtilCore.findModuleForFile(scriptVirtualFile, project), true)
-                .withMainClassName("org.jetbrains.kotlin.preloading.Preloader").build()
+        val javaParameters = JavaParametersBuilder(project)
+            .withSdkFrom(module ?: ModuleUtilCore.findModuleForFile(scriptVirtualFile, project), true)
+            .withMainClassName("org.jetbrains.kotlin.preloading.Preloader")
+            .build()
 
         javaParameters.charset = null
         with(javaParameters.vmParametersList) {
@@ -105,6 +127,7 @@ class K2ScratchExecutor(override val file: K2KotlinScratchFile, val project: Pro
                 add("--add-opens")
                 add("java.base/java.util=ALL-UNNAMED")
             }
+            add("-D$KOTLIN_SCRATCH_EXPLAIN_FILE=${scriptVirtualFile.explainFilePath}")
         }
 
         val ideScriptingClasses = PathUtil.getJarPathForClass(KotlinScratchScript::class.java)
@@ -144,12 +167,11 @@ class K2ScratchExecutor(override val file: K2KotlinScratchFile, val project: Pro
             classPath.joinToString(File.pathSeparator),
             "-kotlin-home",
             KotlinPluginLayout.kotlincIde.absolutePath,
+            "-script",
             scriptVirtualFile.path,
-            "-d",
-            getPathToScriptJar(scriptVirtualFile).absolutePathString(),
             "-Xplugin=${powerAssertLib.absolutePath}",
-            "-script-templates",
-            KotlinScratchScript::class.java.name,
+            "-P",
+            "plugin:kotlin.scripting:script-templates=${KotlinScratchScript::class.java.name}",
             "-Xuse-fir-lt=false",
             "-Xallow-any-scripts-in-source-roots",
             "-P",
@@ -157,41 +179,18 @@ class K2ScratchExecutor(override val file: K2KotlinScratchFile, val project: Pro
             "-P",
             "plugin:kotlin.scripting:disable-standard-script=true",
             "-P",
-            "plugin:kotlin.scripting:enable-script-explanation=true"
+            "plugin:kotlin.scripting:enable-script-explanation=true",
         )
 
         return javaParameters.toCommandLine()
     }
 
-    private fun runCompiledScript(scriptFile: VirtualFile, module: Module?): MutableMap<String, Any> {
-        val pathToJar = getPathToScriptJar(scriptFile)
-        val kotlinPluginJar = Path.of(PathUtil.getJarPathForClass(KotlinScratchScript::class.java))
-
-        val moduleClassPath = module?.let {
-            JavaParametersBuilder.getModuleDependencies(it)
-        }?.mapNotNull { it.toNioPathOrNull() }?.filter {
-            it.exists()
-        }?.toSet() ?: emptySet()
-
-        val urls = (moduleClassPath + listOf(
-            kotlinPluginJar,
-            pathToJar,
-        )).map { it.toUri().toURL() }.toTypedArray()
-
-        val classFileName = scriptFile.nameWithoutExtension.run {
-            replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
-        }
-        val classLoader = URLClassLoader.newInstance(urls)
-
-        val results: MutableMap<String, Any> = mutableMapOf()
-
-        val loadedClass = classLoader.loadClass(classFileName)
-        loadedClass.constructors.single().newInstance(results)
-
-        return results
+    private val explainScratchesDirectory: Path by lazy {
+        FileUtilRt.createTempDirectory("kotlin-scratches-explain", null, true).toPath()
     }
 
-    fun getPathToScriptJar(scriptFile: VirtualFile): Path = tempDir.resolve(scriptFile.name.replace(".kts", ".jar"))
+    private val VirtualFile.explainFilePath: Path
+        get() = explainScratchesDirectory.resolve(this.name.replace(".kts", ".txt"))
 
     override fun stop() {
         handler.onFinish(file)

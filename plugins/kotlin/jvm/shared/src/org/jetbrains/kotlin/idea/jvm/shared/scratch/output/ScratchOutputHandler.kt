@@ -9,7 +9,8 @@ import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
 interface ScratchOutputHandler {
     fun onStart(file: ScratchFile)
     fun handle(file: ScratchFile, expression: ScratchExpression, output: ScratchOutput)
-    fun handle(file: ScratchFile, infos: List<ExplainInfo>, scope: CoroutineScope) {}
+    fun handle(file: ScratchFile, output: ScratchOutput)
+    fun handle(file: ScratchFile, explanations: List<ExplainInfo>, scope: CoroutineScope)
     fun error(file: ScratchFile, message: String)
     fun onFinish(file: ScratchFile)
     fun clear(file: ScratchFile)
@@ -34,6 +35,8 @@ class ExplainInfo(
 open class ScratchOutputHandlerAdapter : ScratchOutputHandler {
     override fun onStart(file: ScratchFile) {}
     override fun handle(file: ScratchFile, expression: ScratchExpression, output: ScratchOutput) {}
+    override fun handle(file: ScratchFile, explanations: List<ExplainInfo>, scope: CoroutineScope) {}
+    override fun handle(file: ScratchFile, output: ScratchOutput) {}
     override fun error(file: ScratchFile, message: String) {}
     override fun onFinish(file: ScratchFile) {}
     override fun clear(file: ScratchFile) {}
