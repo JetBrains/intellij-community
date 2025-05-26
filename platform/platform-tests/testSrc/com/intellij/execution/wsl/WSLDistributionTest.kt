@@ -577,7 +577,7 @@ private class MockIjentExecApi(private val adapter: GeneralCommandLine, private 
 
   override suspend fun fetchLoginShellEnvVariables(): Map<String, String> = mapOf("SHELL" to TEST_SHELL)
   override suspend fun findExeFilesInPath(binaryName: String): List<EelPath> = listOf(EelPath.parse("/bin/$binaryName", descriptor))
-  override suspend fun createExternalCli(options: EelExecApi.ExternalCliOptions): EelResult<ExternalCliEntrypoint, EelFileSystemApi.CreateTemporaryEntryError> {
+  override suspend fun createExternalCli(options: EelExecApi.ExternalCliOptions): ExternalCliEntrypoint {
     throw UnsupportedOperationException()
   }
 }

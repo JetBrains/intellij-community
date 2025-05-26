@@ -25,7 +25,7 @@ internal class EelTestPosixApi(override val descriptor: EelTestDescriptor, fileS
       override suspend fun spawnProcess(generatedBuilder: EelExecApi.ExecuteProcessOptions) = TODO()
       override suspend fun fetchLoginShellEnvVariables(): Map<String, String> = emptyMap()
       override suspend fun findExeFilesInPath(binaryName: String) = TODO()
-      override suspend fun createExternalCli(options: EelExecApi.ExternalCliOptions): EelResult<EelExecApi.ExternalCliEntrypoint, EelFileSystemApi.CreateTemporaryEntryError> = TODO()
+      override suspend fun createExternalCli(options: EelExecApi.ExternalCliOptions): EelExecApi.ExternalCliEntrypoint = TODO()
     }
 
 }

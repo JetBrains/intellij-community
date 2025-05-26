@@ -4,8 +4,6 @@ package com.intellij.platform.eel
 import com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
-import com.intellij.platform.eel.fs.EelFileSystemApi
-import com.intellij.platform.eel.fs.EelFileSystemApi.DeleteError
 import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -140,8 +138,7 @@ sealed interface EelExecApi {
     /**
      * Stops listening and deletes the script file.
      */
-    @CheckReturnValue
-    suspend fun delete(): EelResult<Unit, DeleteError>
+    suspend fun delete()
 
     /**
      * Helper method, todo move to extension function?
@@ -203,7 +200,7 @@ sealed interface EelExecApi {
 
   // TODO Generate builder?
   @CheckReturnValue
-  suspend fun createExternalCli(options: ExternalCliOptions): EelResult<ExternalCliEntrypoint, EelFileSystemApi.CreateTemporaryEntryError>
+  suspend fun createExternalCli(options: ExternalCliOptions): ExternalCliEntrypoint
 
   @Deprecated("Use spawnProcess instead")
   interface ExecuteProcessError : EelError {
