@@ -29,7 +29,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="library" name="jcef" level="project" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />
-    <orderEntry type="module" module-name="intellij.platform.credentialStore" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.credentialStore" />
     <orderEntry type="module" module-name="intellij.platform.remote.core" exported="" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" exported="" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />

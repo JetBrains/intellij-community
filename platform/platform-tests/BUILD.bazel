@@ -18,6 +18,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["testGen/**/*.kt", "testGen/**/*.java", "testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
+    "//platform/credential-store",
     "//platform/editor-ui-api:editor-ui",
     "//platform/foldings",
     "//jps/model-api:model",

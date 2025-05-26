@@ -26,6 +26,7 @@ jvm_library(
     "@lib//:lucene-suggest",
     "@lib//:jsoup",
     "@lib//:jaxb-api",
+    "//platform/credential-store",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
     "//platform/core-impl",

@@ -28,6 +28,7 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
     "@lib//:jcef",
+    "//platform/credential-store",
     "//platform/util/jdom",
     "//platform/util:util-ui",
     "//platform/util",

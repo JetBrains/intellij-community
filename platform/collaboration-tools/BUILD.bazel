@@ -13,6 +13,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/credential-store",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
     "//platform/vcs-log/impl",
@@ -54,6 +55,7 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   associates = [":collaboration-tools"],
   deps = [
+    "//platform/credential-store",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
     "//platform/vcs-log/impl",

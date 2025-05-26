@@ -13,6 +13,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/credential-store",
     "//plugins/tasks/tasks-api:tasks",
     "//plugins/github/github-core:vcs-github",
     "//platform/platform-api:ide",

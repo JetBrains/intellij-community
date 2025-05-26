@@ -13,6 +13,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/credential-store",
     "//platform/editor-ui-api:editor-ui",
     "//jps/model-api:model",
     "//platform/vcs-api:vcs",
@@ -70,6 +71,7 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   associates = [":vcs-impl"],
   deps = [
+    "//platform/credential-store",
     "//platform/editor-ui-api:editor-ui",
     "//jps/model-api:model",
     "//platform/vcs-api:vcs",

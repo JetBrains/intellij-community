@@ -21,6 +21,7 @@
     <orderEntry type="library" name="lucene-suggest" level="project" />
     <orderEntry type="library" name="jsoup" level="project" />
     <orderEntry type="library" name="jaxb-api" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.credentialStore" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />

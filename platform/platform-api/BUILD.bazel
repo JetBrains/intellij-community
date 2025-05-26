@@ -61,7 +61,6 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/forms_rt:java-guiForms-rt",
     "//platform/projectModel-api:projectModel",
-    "//platform/credential-store",
     "//platform/remote-core",
     "//platform/ide-core",
     "//platform/progress/shared:ide-progress",

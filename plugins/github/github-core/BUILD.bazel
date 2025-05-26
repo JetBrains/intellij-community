@@ -25,6 +25,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/credential-store",
     "//platform/vcs-api:vcs",
     "//platform/external-process-auth-helper",
     "//plugins/git4idea:vcs-git",
@@ -84,6 +85,7 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   associates = [":vcs-github"],
   deps = [
+    "//platform/credential-store",
     "//platform/vcs-api:vcs",
     "//platform/external-process-auth-helper",
     "//platform/external-process-auth-helper:external-process-auth-helper_test_lib",
