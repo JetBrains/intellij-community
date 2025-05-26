@@ -124,7 +124,7 @@ object SlruIndexStorageCacheProvider : MapIndexStorageCacheProvider {
 
     val underlyingCache = if (hashingStrategy is InlineKeyDescriptor<Key>) {
       //use specialized cache for Int keys, if actual Key type is convertable to Int:
-      SlruCacheForIntKeys(valueReader, evictedValuesPersister, cacheSizeHint, hashingStrategy)
+      SlruCacheForIntKeys(valueReader, evictedValuesPersister, hashingStrategy, cacheSizeHint)
     }
     else {
       SlruCache(valueReader, evictedValuesPersister, hashingStrategy, cacheSizeHint)
@@ -183,17 +183,17 @@ object SlruIndexStorageCacheProvider : MapIndexStorageCacheProvider {
   private class SlruCacheForIntKeys<Key : Any, Value>(
     val valueReader: Function<Key, ChangeTrackingValueContainer<Value>>,
     val evictedValuesPersister: BiConsumer<Key, ChangeTrackingValueContainer<Value>>,
-    cacheSize: Int,
     val converter: InlineKeyDescriptor<Key>,
+    cacheSize: Int,
   ) : MapIndexStorageCache<Key, Value> {
     private val cache = SLRUIntObjectCache<ChangeTrackingValueContainer<Value>>(
       /* protectedQueueSize: */ cacheSize,
       /* probationQueueSize: */ cacheSize / 4,
-      { key: Int ->
+      /* valueFactory:       */ { key: Int ->
         totalUncachedReads.incrementAndGet()
         valueReader.apply(converter.fromInt(key))
       },
-      { key: Int, valueContainer: ChangeTrackingValueContainer<Value> ->
+      /* onEvict:            */ { key: Int, valueContainer: ChangeTrackingValueContainer<Value> ->
         totalEvicted.incrementAndGet()
         evictedValuesPersister.accept(converter.fromInt(key), valueContainer)
       }

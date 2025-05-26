@@ -29,18 +29,24 @@ public final class LinkedCustomIntObjectHashMap<V> {
   /** Threshold after which we rehash, = {@code tableSize * LOAD_FACTOR}. */
   private transient int rehashAfterEntriesCount;
 
-  private final @NotNull RemoveCallback<? super V> removeEldestEntryCallback;
+  private final @NotNull RemovalPolicy<? super V> eldestEntryRemovalPolicy;
 
-  LinkedCustomIntObjectHashMap(@NotNull RemoveCallback<? super V> removeEldestEntryCallback) {
-    this.removeEldestEntryCallback = removeEldestEntryCallback;
+  LinkedCustomIntObjectHashMap(@NotNull RemovalPolicy<? super V> eldestEntryRemovalPolicy) {
+    this.eldestEntryRemovalPolicy = eldestEntryRemovalPolicy;
 
     init();
   }
 
   @FunctionalInterface
   @ApiStatus.Internal
-  public interface RemoveCallback<V> {
-    boolean check(int currentEntriesCount, int key, V value);
+  public interface RemovalPolicy<V> {
+    /**
+     * Called each time {@link #put(int, Object)} operation inserts new entry in the map -- i.e. not called on updates
+     * of already existent entry.
+     * The eldestKey/eldestValue are of the oldest entry at the moment.
+     * @return true if the oldest entry should be removed, false if not, and map should be extended
+     */
+    boolean shouldRemoveEldest(int currentEntriesCount, int eldestKey, V eldestValue);
   }
 
   private void init() {
@@ -110,7 +116,7 @@ public final class LinkedCustomIntObjectHashMap<V> {
     }
     this.top = e;
     actualEntriesCount++;
-    if (removeEldestEntryCallback.check(actualEntriesCount, back.key, back.value)) {
+    if (eldestEntryRemovalPolicy.shouldRemoveEldest(actualEntriesCount, back.key, back.value)) {
       V removedValue = remove(back.key);
       if (removedValue == null) {
         throw new ConcurrentModificationException("LinkedIntHashMap.Entry was not removed. Likely concurrent modification? " + back.key);
