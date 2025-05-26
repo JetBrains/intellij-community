@@ -14,6 +14,7 @@ import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.tools.util.base.DiffViewerListener
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
 import com.intellij.diff.util.DiffUserDataKeysEx
+import com.intellij.diff.util.LineCol
 import com.intellij.diff.util.Side
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.ex.EditorEx
@@ -168,6 +169,15 @@ suspend fun <M, I> DiffViewerBase.showCodeReview(
   modelKey: Key<M>? = null,
   rendererFactory: RendererFactory<I, JComponent>,
 ): Nothing where I : CodeReviewInlayModel, M : CodeReviewEditorModel<I> {
+  showCodeReview({ locationToLine, lineToLocation, _ -> modelFactory(locationToLine, lineToLocation) }, modelKey, rendererFactory)
+}
+
+@ApiStatus.Experimental
+suspend fun <M, I> DiffViewerBase.showCodeReview(
+  modelFactory: CoroutineScope.(locationToLine: (DiffLineLocation) -> Int?, lineToLocation: (Int) -> DiffLineLocation?, lineToUnified: (Int) -> Pair<Int, Int>) -> M,
+  modelKey: Key<M>? = null,
+  rendererFactory: RendererFactory<I, JComponent>,
+): Nothing where I : CodeReviewInlayModel, M : CodeReviewEditorModel<I> {
   val viewer = this
   withContext(Dispatchers.EDT + CoroutineName("Code review diff UI")) {
     supervisorScope {
@@ -181,7 +191,8 @@ suspend fun <M, I> DiffViewerBase.showCodeReview(
             prevJob = launchNow {
               val model = modelFactory(
                 { loc -> loc.takeIf { it.first == viewer.side }?.second },
-                { lineIdx -> DiffLineLocation(viewer.side, lineIdx) }
+                { lineIdx -> DiffLineLocation(viewer.side, lineIdx) },
+                { line -> if (viewer.side == Side.LEFT) line to -1 else -1 to line }
               )
               viewer.editor.showCodeReview(model, modelKey, rendererFactory)
             }
@@ -193,6 +204,10 @@ suspend fun <M, I> DiffViewerBase.showCodeReview(
                 { lineIdx ->
                   val (indices, side) = viewer.transferLineFromOneside(lineIdx)
                   side.select(indices).takeIf { it >= 0 }?.let { side to it }
+                },
+                { line ->
+                  val (leftLine, rightLine) = viewer.transferLineFromOneside(line).first
+                  leftLine to rightLine
                 }
               )
               viewer.editor.showCodeReview(model, modelKey, rendererFactory)
@@ -203,14 +218,16 @@ suspend fun <M, I> DiffViewerBase.showCodeReview(
               launchNow {
                 val model = modelFactory(
                   { (side, lineIdx) -> lineIdx.takeIf { side == Side.LEFT } },
-                  { lineIdx -> DiffLineLocation(Side.LEFT, lineIdx) }
+                  { lineIdx -> DiffLineLocation(Side.LEFT, lineIdx) },
+                  { line -> line to viewer.transferPosition(Side.RIGHT, LineCol(line, 0)).line }
                 )
                 viewer.editor1.showCodeReview(model, modelKey, rendererFactory)
               }
               launchNow {
                 val model = modelFactory(
                   { (side, lineIdx) -> lineIdx.takeIf { side == Side.RIGHT } },
-                  { lineIdx -> DiffLineLocation(Side.RIGHT, lineIdx) }
+                  { lineIdx -> DiffLineLocation(Side.RIGHT, lineIdx) },
+                  { line -> viewer.transferPosition(Side.LEFT, LineCol(line, 0)).line to line }
                 )
                 viewer.editor2.showCodeReview(model, modelKey, rendererFactory)
               }

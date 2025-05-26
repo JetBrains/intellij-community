@@ -71,6 +71,8 @@ object CodeReviewCommentUIUtil {
   @ApiStatus.Internal
   fun createEditorInlayPanel(component: JComponent, tint: Color? = null): JPanel {
     val borderColor = JBColor.lazy {
+      if (component.hasFocus()) return@lazy JBUI.CurrentTheme.Focus.focusColor()
+
       val scheme = EditorColorsManager.getInstance().globalScheme
       scheme.getColor(EditorColors.TEARLINE_COLOR) ?: JBColor.border()
     }
