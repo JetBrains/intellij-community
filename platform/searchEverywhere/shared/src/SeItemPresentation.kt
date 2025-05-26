@@ -101,16 +101,16 @@ data class SeOptionActionItemPresentation(
 @ApiStatus.Internal
 @Serializable
 class SeTargetItemPresentation(
-  private val backgroundColorId: ColorId?,
-  private val iconId: IconId?,
+  private val backgroundColorId: ColorId? = null,
+  private val iconId: IconId? = null,
   val presentableText: @NlsSafe String,
-  val presentableTextMatchedRanges: List<SerializableRange>?,
-  private val presentableTextFgColorId: ColorId?,
-  val containerText: @NlsSafe String?,
-  val containerTextMatchedRanges: List<SerializableRange>?,
-  val locationText: @NlsSafe String?,
-  private val locationIconId: IconId?,
-  override val extendedDescription: @NlsSafe String?,
+  val presentableTextMatchedRanges: List<SerializableRange>? = null,
+  private val presentableTextFgColorId: ColorId? = null,
+  val containerText: @NlsSafe String? = null,
+  val containerTextMatchedRanges: List<SerializableRange>? = null,
+  val locationText: @NlsSafe String? = null,
+  private val locationIconId: IconId? = null,
+  override val extendedDescription: @NlsSafe String? = null,
 ) : SeItemPresentation {
   override val text: String get() = presentableText
 

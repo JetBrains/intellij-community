@@ -3,6 +3,7 @@
     <plugin id="com.intellij.modules.lang"/>
     <module name="intellij.json.backend"/>
     <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.searchEverywhere.backend"/>
     <module name="intellij.yaml"/>
   </dependencies>
   
@@ -132,6 +133,10 @@
 
   <extensions defaultExtensionNs="com.intellij.spellchecker">
     <support language="yaml" implementationClass="org.jetbrains.yaml.YAMLSpellcheckerStrategy"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+  <searchEverywhere.itemsProviderFactory implementation="org.jetbrains.yaml.searchEverywhere.SeYAMLKeysProviderFactory"/>
   </extensions>
 
   <extensionPoints>
