@@ -23,7 +23,10 @@ import com.intellij.util.containers.CollectionFactory.createCustomHashingStrateg
 import com.intellij.util.containers.CollectionFactory.createCustomHashingStrategySet
 import com.intellij.util.containers.HashingStrategy
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -81,9 +84,9 @@ private suspend fun <VM : EditorMapped> EditorEx.doRenderInlays(
     val inlaysCs = this
     val controllersByVmKey = createCustomHashingStrategyMap<VM, Job>(vmHashingStrategy)
     val positionKeeper = EditorScrollingPositionKeeper(editor)
-    vmsFlow.map {
-      createCustomHashingStrategySet(vmHashingStrategy).apply { addAll(it) }
-    }.collect {
+    vmsFlow.collect { list ->
+      val set = createCustomHashingStrategySet(vmHashingStrategy).apply { addAll(list) }
+
       writeIntentReadAction {
         positionKeeper.savePosition()
       }
@@ -92,14 +95,14 @@ private suspend fun <VM : EditorMapped> EditorEx.doRenderInlays(
       val iter = controllersByVmKey.iterator()
       while (iter.hasNext()) {
         val (key, job) = iter.next()
-        if (!it.contains(key)) {
+        if (!set.contains(key)) {
           iter.remove()
           job.cancelAndJoinSilently()
         }
       }
 
       //add new
-      for (vm in it) {
+      for (vm in list) {
         if (controllersByVmKey.containsKey(vm)) continue
         controllersByVmKey[vm] = inlaysCs.launchNow {
           controlInlay(vm, editor, rendererFactory)

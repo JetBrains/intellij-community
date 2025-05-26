@@ -55,7 +55,8 @@ internal class GHPRReviewFileEditorModel internal constructor(
     fileVm.threads.mapModelsToViewModels { ShiftedThread(it) },
     fileVm.newComments.mapModelsToViewModels { ShiftedNewComment(it) },
   ) { threads, new ->
-    threads + new
+    // very explicit ordering: if we order back to front, loading of editor appears smoother (most initial loading happens off-screen)
+    threads.sortedByDescending { it.line.value ?: -1 } + new
   }.stateInNow(cs, emptyList())
 
   override fun requestNewComment(lineIdx: Int) {
