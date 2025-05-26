@@ -45,6 +45,78 @@
   </problem>
 
   <problem>
+    <file>importsForTypeAlias.kt</file>
+    <line>3</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="importsForTypeAlias.kt" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+    <description>Unused import directive</description>
+  </problem>
+
+  <problem>
+    <file>importsForTypeAlias.kt</file>
+    <line>5</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="importsForTypeAlias.kt" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+    <description>Unused import directive</description>
+  </problem>
+
+  <problem>
+    <file>importsForTypeAlias.kt</file>
+    <line>8</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="importsForTypeAlias.kt" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+    <description>Unused import directive</description>
+  </problem>
+
+  <problem>
+    <file>importsForTypeAlias.kt</file>
+    <line>9</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="importsForTypeAlias.kt" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+    <description>Unused import directive</description>
+  </problem>
+
+  <problem>
+    <file>importsForTypeAliasOfInnerClass.kt</file>
+    <line>4</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="importsForTypeAliasOfInnerClass.kt" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+    <description>Unused import directive</description>
+  </problem>
+
+  <problem>
+    <file>importsForTypeAliasOfInnerClass.kt</file>
+    <line>12</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="importsForTypeAliasOfInnerClass.kt" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+    <description>Unused import directive</description>
+  </problem>
+
+  <problem>
+    <file>importsForTypeAliasOfInnerClass.kt</file>
+    <line>14</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="importsForTypeAliasOfInnerClass.kt" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+    <description>Unused import directive</description>
+  </problem>
+
+  <problem>
+    <file>importsForTypeAliasOfInnerClass_ambiguousConstructor.kt</file>
+    <line>4</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="importsForTypeAliasOfInnerClass_ambiguousConstructor.kt" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import directive</problem_class>
+    <description>Unused import directive</description>
+  </problem>
+
+  <problem>
     <file>unusedStarWhenExplicit.kt</file>
     <line>2</line>
     <module>light_idea_test_case</module>
