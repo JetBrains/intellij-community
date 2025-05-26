@@ -5,7 +5,7 @@ import com.intellij.platform.syntax.CancellationProvider
 import com.intellij.platform.syntax.Logger
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.asSyntaxElementTypeSet
-import com.intellij.platform.syntax.impl.builder.ParsingTreeBuilder
+import com.intellij.platform.syntax.impl.builder.SyntaxTreeBuilderImpl
 import com.intellij.platform.syntax.lexer.TokenList
 import com.intellij.platform.syntax.logger.noopLogger
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory.Builder
@@ -130,7 +130,7 @@ private class BuilderImpl(
   }
 
   override fun build(): SyntaxTreeBuilder {
-    val builder = ParsingTreeBuilder(
+    val builder = SyntaxTreeBuilderImpl(
       text = text,
       myWhitespaces = whitespaces.asSyntaxElementTypeSet(),
       myComments = comments.asSyntaxElementTypeSet(),

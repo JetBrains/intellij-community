@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NonNls
 import kotlin.math.abs
 import kotlin.math.max
 
-internal class ParsingTreeBuilder(
+internal class SyntaxTreeBuilderImpl(
   override val text: CharSequence,
   val myWhitespaces: SyntaxElementTypeSet,
   private var myComments: SyntaxElementTypeSet,

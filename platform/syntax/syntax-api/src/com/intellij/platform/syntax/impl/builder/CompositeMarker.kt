@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nls
 
 internal class CompositeMarker(
   markerId: Int,
-  builder: ParsingTreeBuilder,
+  builder: SyntaxTreeBuilderImpl,
 ) : ProductionMarker(markerId, builder), SyntaxTreeBuilder.Marker {
 
   lateinit var type: SyntaxElementType

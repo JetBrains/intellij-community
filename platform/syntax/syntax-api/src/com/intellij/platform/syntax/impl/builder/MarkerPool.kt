@@ -5,7 +5,7 @@ import com.intellij.platform.syntax.impl.fastutil.ints.IntArrayList
 import com.intellij.platform.syntax.impl.fastutil.ints.isEmpty
 
 internal open class MarkerPool(
-  private val builder: ParsingTreeBuilder,
+  private val builder: SyntaxTreeBuilderImpl,
 ) {
   private val freeStartMarkers = IntArrayList()
   private val freeErrorItems = IntArrayList()

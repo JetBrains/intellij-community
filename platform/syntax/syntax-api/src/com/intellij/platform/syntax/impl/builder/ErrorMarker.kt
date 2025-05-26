@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nls
 
 internal class ErrorMarker(
   markerId: Int,
-  builder: ParsingTreeBuilder,
+  builder: SyntaxTreeBuilderImpl,
 ) : ProductionMarker(markerId, builder) {
 
   private var errorMessage: @Nls String? = null

@@ -5,7 +5,7 @@ import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 
 internal abstract class ProductionMarker(
   val markerId: Int,
-  val builder: ParsingTreeBuilder,
+  val builder: SyntaxTreeBuilderImpl,
 ) : SyntaxTreeBuilder.Production {
 
   var startIndex: Int = -1

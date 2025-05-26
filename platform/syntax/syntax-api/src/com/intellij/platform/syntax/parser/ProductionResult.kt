@@ -4,7 +4,7 @@
 package com.intellij.platform.syntax.parser
 
 import com.intellij.platform.syntax.SyntaxElementType
-import com.intellij.platform.syntax.impl.builder.ParsingTreeBuilder
+import com.intellij.platform.syntax.impl.builder.SyntaxTreeBuilderImpl
 import com.intellij.platform.syntax.lexer.TokenList
 import org.jetbrains.annotations.ApiStatus
 
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Experimental
 fun prepareProduction(builder: SyntaxTreeBuilder): ProductionResult {
-  return (builder as ParsingTreeBuilder).prepareProduction()
+  return (builder as SyntaxTreeBuilderImpl).prepareProduction()
 }
 
 /**
