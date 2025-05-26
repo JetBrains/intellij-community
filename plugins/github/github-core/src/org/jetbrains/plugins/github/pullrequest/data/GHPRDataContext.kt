@@ -6,11 +6,8 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GHReactionContent
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
@@ -33,8 +30,6 @@ class GHPRDataContext internal constructor(
   internal val reactionIconsProvider: IconsProvider<GHReactionContent>,
   internal val interactionState: GHPRPersistentInteractionState,
 ) {
-  private val listenersDisposable = Disposer.newDisposable("GH PR context listeners disposable")
-
   init {
     scope.launchNow {
       listLoader.refreshOrReloadRequests.withInitial(Unit).collectScoped {
@@ -48,21 +43,9 @@ class GHPRDataContext internal constructor(
       }
     }
 
-    dataProviderRepository.addDetailsLoadedListener(listenersDisposable) { details: GHPullRequest ->
+    dataProviderRepository.addDetailsLoadedListener(scope) { details: GHPullRequest ->
       listLoader.updateData {
         if (it.id == details.id) details else null
-      }
-    }
-
-    // need immediate to dispose in time
-    scope.launch(Dispatchers.Main.immediate) {
-      try {
-        awaitCancellation()
-      }
-      finally {
-        Disposer.dispose(listenersDisposable)
-        Disposer.dispose(dataProviderRepository)
-        Disposer.dispose(listUpdatesChecker)
       }
     }
   }

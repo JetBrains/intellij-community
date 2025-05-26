@@ -10,6 +10,9 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.EventDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
@@ -21,6 +24,7 @@ import java.util.concurrent.TimeUnit
 
 
 internal class GHPRListETagUpdateChecker(
+  parentCs: CoroutineScope,
   private val progressManager: ProgressManager,
   private val requestExecutor: GithubApiRequestExecutor,
   private val serverPath: GithubServerPath,
@@ -37,6 +41,13 @@ internal class GHPRListETagUpdateChecker(
 
   private var scheduler: ScheduledFuture<*>? = null
   private var progressIndicator: ProgressIndicator? = null
+
+  init {
+    parentCs.launch(Dispatchers.Main.immediate) {
+      scheduler?.cancel(true)
+      progressIndicator?.cancel()
+    }
+  }
 
   @Volatile
   private var lastETag: String? = null
@@ -77,12 +88,6 @@ internal class GHPRListETagUpdateChecker(
     progressIndicator = NonReusableEmptyProgressIndicator()
     lastETag = null
   }
-
-  override fun dispose() {
-    scheduler?.cancel(true)
-    progressIndicator?.cancel()
-  }
-
 
   override fun addOutdatedStateChangeListener(disposable: Disposable, listener: () -> Unit) =
     SimpleEventListener.addDisposableListener(outdatedEventDispatcher, disposable, listener)

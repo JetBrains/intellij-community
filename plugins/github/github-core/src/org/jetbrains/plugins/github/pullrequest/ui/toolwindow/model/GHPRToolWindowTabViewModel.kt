@@ -1,12 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model
 
-import com.intellij.collaboration.async.cancelledWith
 import com.intellij.collaboration.ui.toolwindow.ReviewTabViewModel
-import com.intellij.openapi.Disposable
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -21,12 +18,12 @@ sealed interface GHPRToolWindowTabViewModel : ReviewTabViewModel {
   class PullRequest internal constructor(parentCs: CoroutineScope,
                                          projectVm: GHPRToolWindowProjectViewModel,
                                          id: GHPRIdentifier)
-    : GHPRToolWindowTabViewModel, Disposable {
-    private val cs = parentCs.childScope().cancelledWith(this)
+    : GHPRToolWindowTabViewModel {
+    private val cs = parentCs.childScope(javaClass.name)
 
     override val displayName: String = "#${id.number}"
 
-    val infoVm: GHPRInfoViewModel = projectVm.acquireInfoViewModel(id, this)
+    val infoVm: GHPRInfoViewModel = projectVm.acquireInfoViewModel(id, cs)
     private val _focusRequests = Channel<Unit>(1)
     internal val focusRequests: Flow<Unit> = _focusRequests.receiveAsFlow()
 
@@ -36,10 +33,6 @@ sealed interface GHPRToolWindowTabViewModel : ReviewTabViewModel {
 
     fun selectCommit(oid: String) {
       infoVm.detailsVm.value.result?.getOrNull()?.changesVm?.selectCommit(oid)
-    }
-
-    override fun dispose() {
-      cs.cancel()
     }
   }
 

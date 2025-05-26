@@ -5,7 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.util.*
 
-interface GHListLoader<T> : Disposable {
+interface GHListLoader<T> {
   @get:RequiresEdt
   val loading: Boolean
 

@@ -19,7 +19,7 @@ internal class GHPRTimelineFileEditor(parentCs: CoroutineScope,
     .childScope("GitHub Pull Request Timeline UI", Dispatchers.EDT)
     .cancelledWith(this)
 
-  private val timelineVm = projectVm.acquireTimelineViewModel(file.pullRequest, this)
+  private val timelineVm = projectVm.acquireTimelineViewModel(file.pullRequest, cs)
 
   override fun getName() = GithubBundle.message("pull.request.editor.timeline")
 

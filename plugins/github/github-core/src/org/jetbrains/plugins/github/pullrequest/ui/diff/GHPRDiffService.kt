@@ -18,7 +18,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diff.impl.GenericDataProvider
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.ui.PresentableChange
@@ -132,10 +131,7 @@ private fun findDiffVm(project: Project, repository: GHRepositoryCoordinates): F
   } ?: flowOf(null)
 
 private fun GHPRConnectedProjectViewModel.getDiffViewModelFlow(pullRequest: GHPRIdentifier): Flow<GHPRDiffViewModel> = channelFlow {
-  val acquisitionDisposable = Disposer.newDisposable()
-  val vm = acquireDiffViewModel(pullRequest, acquisitionDisposable)
+  val vm = acquireDiffViewModel(pullRequest, this)
   trySend(vm)
-  awaitClose {
-    Disposer.dispose(acquisitionDisposable)
-  }
+  awaitClose()
 }

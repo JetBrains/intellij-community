@@ -1,15 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
-import com.intellij.collaboration.async.cancelledWith
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.util.getOrNull
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.EventDispatcher
+import com.intellij.util.asDisposable
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.MessageBusFactory
@@ -29,7 +27,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineIt
 import org.jetbrains.plugins.github.pullrequest.data.provider.*
 import org.jetbrains.plugins.github.pullrequest.data.service.*
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel.Companion.getHeadRemoteDescriptor
-import org.jetbrains.plugins.github.util.DisposalCountingHolder
+import org.jetbrains.plugins.github.util.AcquirableScopedValueOwner
 import java.util.*
 
 internal class GHPRDataProviderRepositoryImpl(
@@ -41,48 +39,33 @@ internal class GHPRDataProviderRepositoryImpl(
   private val commentService: GHPRCommentService,
   private val changesService: GHPRChangesService,
   private val timelineLoaderFactory: (GHPRIdentifier) -> GHListLoader<GHPRTimelineItem>,
-)
-  : GHPRDataProviderRepository {
+) : GHPRDataProviderRepository {
   private val cs = parentCs.childScope(javaClass.name)
 
-  private var isDisposed = false
-
-  private val cache = mutableMapOf<GHPRIdentifier, DisposalCountingHolder<GHPRDataProvider>>()
+  private val cache = mutableMapOf<GHPRIdentifier, AcquirableScopedValueOwner<GHPRDataProvider>>()
   private val providerDetailsLoadedEventDispatcher = EventDispatcher.create(DetailsLoadedListener::class.java)
 
   @RequiresEdt
-  override fun getDataProvider(id: GHPRIdentifier, disposable: Disposable): GHPRDataProvider {
-    if (isDisposed) throw IllegalStateException("Already disposed")
-
-    return cache.getOrPut(id) {
-      DisposalCountingHolder {
-        createDataProvider(it, id)
-      }.also {
-        Disposer.register(it, Disposable { cache.remove(id) })
+  override fun getDataProvider(id: GHPRIdentifier, hostCs: CoroutineScope): GHPRDataProvider =
+    cache.getOrPut(id) {
+      AcquirableScopedValueOwner(cs) {
+        createDataProvider(id)
       }
-    }.acquireValue(disposable)
-  }
+    }.acquireValue(hostCs)
 
   @RequiresEdt
   override fun findDataProvider(id: GHPRIdentifier): GHPRDataProvider? = cache[id]?.value
 
-  override fun dispose() {
-    isDisposed = true
-    cache.values.toList().forEach(Disposer::dispose)
-  }
-
-  private fun createDataProvider(parentDisposable: CheckedDisposable, id: GHPRIdentifier): GHPRDataProvider {
-    val providerCs = cs.childScope(GHPRDataProviderImpl::class.java.name).apply {
-      cancelledWith(parentDisposable)
-    }
-    val messageBus = MessageBusFactory.newMessageBus(object : MessageBusOwner {
-      override fun isDisposed() = parentDisposable.isDisposed
+  private fun CoroutineScope.createDataProvider(id: GHPRIdentifier): GHPRDataProvider {
+    val cs = this
+    val messageBus = MessageBusFactory.newMessageBus (object : MessageBusOwner {
+      override fun isDisposed() = !cs.isActive
 
       override fun createListener(descriptor: PluginListenerDescriptor) =
         throw UnsupportedOperationException()
-    })
-    Disposer.register(parentDisposable, messageBus)
+    }).also { Disposer.register(cs.asDisposable(), it) }
 
+    val providerCs = cs.childScope(GHPRDataProviderImpl::class.java.name)
     val detailsData = GHPRDetailsDataProviderImpl(providerCs, detailsService, id, messageBus)
     providerCs.launchNow(Dispatchers.Main) {
       detailsData.detailsComputationFlow.mapNotNull { it.getOrNull() }.collect {
@@ -107,9 +90,10 @@ internal class GHPRDataProviderRepositoryImpl(
       }
     }
 
-    val timelineLoaderHolder = DisposalCountingHolder { timelineDisposable ->
+    val timelineLoaderHolder = AcquirableScopedValueOwner(providerCs) {
+      val cs = this
       timelineLoaderFactory(id).also { loader ->
-        messageBus.connect(timelineDisposable).subscribe(GHPRDataOperationsListener.TOPIC, object : GHPRDataOperationsListener {
+        messageBus.connect(cs).subscribe(GHPRDataOperationsListener.TOPIC, object : GHPRDataOperationsListener {
           override fun onMetadataChanged() = loader.loadMore(true)
 
           override fun onCommentAdded() = loader.loadMore(true)
@@ -134,10 +118,7 @@ internal class GHPRDataProviderRepositoryImpl(
             loader.loadMore(true)
           }
         })
-        Disposer.register(timelineDisposable, loader)
       }
-    }.also {
-      Disposer.register(parentDisposable, it)
     }
 
     messageBus.connect(providerCs.nestedDisposable()).subscribe(GHPRDataOperationsListener.TOPIC, object : GHPRDataOperationsListener {
@@ -153,12 +134,12 @@ internal class GHPRDataProviderRepositoryImpl(
     )
   }
 
-  override fun addDetailsLoadedListener(disposable: Disposable, listener: (GHPullRequest) -> Unit) {
+  override fun addDetailsLoadedListener(hostCs: CoroutineScope, listener: (GHPullRequest) -> Unit) {
     providerDetailsLoadedEventDispatcher.addListener(object : DetailsLoadedListener {
       override fun onDetailsLoaded(details: GHPullRequest) {
         listener(details)
       }
-    }, disposable)
+    }, hostCs.asDisposable())
   }
 
   private interface DetailsLoadedListener : EventListener {

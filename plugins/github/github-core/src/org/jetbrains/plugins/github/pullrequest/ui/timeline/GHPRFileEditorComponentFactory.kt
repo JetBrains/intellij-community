@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.async.mapState
-import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.ui.*
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
@@ -23,7 +22,6 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -33,6 +31,7 @@ import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.panels.ListLayout
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.util.asDisposable
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -61,9 +60,6 @@ internal class GHPRFileEditorComponentFactory(
   private val timelineVm: GHPRTimelineViewModel,
   private val initialDetails: GHPRDetailsFull,
 ) {
-
-  private val uiDisposable = cs.nestedDisposable()
-
   fun create(): JComponent {
     val mainPanel = Wrapper()
     val loadedDetails = timelineVm.detailsVm.details
@@ -106,7 +102,7 @@ internal class GHPRFileEditorComponentFactory(
 
       add(Wrapper().apply {
         val summaryComponent = combine(
-          projectVm.acquireAISummaryViewModel(loadedDetails.value.id, uiDisposable),
+          projectVm.acquireAISummaryViewModel(loadedDetails.value.id, cs),
           GHPRAISummaryExtension.singleFlow
         ) { summaryVm, extension ->
           summaryVm?.let { extension?.createTimelineComponent(project, it) }
@@ -151,14 +147,13 @@ internal class GHPRFileEditorComponentFactory(
 
     DataManager.registerDataProvider(mainPanel, DataProvider {
       when {
-        PlatformDataKeys.UI_DISPOSABLE.`is`(it) -> uiDisposable
         GHPRTimelineViewModel.DATA_KEY.`is`(it) -> timelineVm
         else -> null
       }
     })
 
     val actionManager = ActionManager.getInstance()
-    actionManager.getAction("Github.PullRequest.Timeline.Update").registerCustomShortcutSet(scrollPane, uiDisposable)
+    actionManager.getAction("Github.PullRequest.Timeline.Update").registerCustomShortcutSet(scrollPane, cs.asDisposable())
     val groupId = "Github.PullRequest.Timeline.Popup"
     PopupHandler.installPopupMenu(scrollPane, groupId, ActionPlaces.POPUP)
 

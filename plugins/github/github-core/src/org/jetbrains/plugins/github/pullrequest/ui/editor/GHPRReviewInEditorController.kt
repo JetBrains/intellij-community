@@ -4,7 +4,6 @@ package org.jetbrains.plugins.github.pullrequest.ui.editor
 import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapScoped
-import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.editor.*
 import com.intellij.collaboration.util.HashingUtil
@@ -51,7 +50,7 @@ internal class GHPRReviewInEditorController(private val project: Project, privat
         .flatMapLatest { projectVm ->
           projectVm?.prOnCurrentBranch?.mapScoped {
             val id = it?.getOrNull() ?: return@mapScoped null
-            projectVm.acquireEditorReviewViewModel(id, nestedDisposable())
+            projectVm.acquireEditorReviewViewModel(id, this)
           } ?: flowOf(null)
         }.collectLatest { reviewVm ->
           reviewVm?.getViewModelFor(file)?.collectScoped { fileVm ->

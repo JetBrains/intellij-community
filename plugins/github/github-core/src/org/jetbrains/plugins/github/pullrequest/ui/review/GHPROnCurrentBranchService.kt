@@ -11,9 +11,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.util.use
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.branch.GitBranchSyncStatus
 import git4idea.branch.GitBranchUtil
@@ -43,13 +41,11 @@ class GHPROnCurrentBranchService(private val project: Project, parentCs: Corouti
         ?.distinctUntilChanged()
         ?.transformLatest<GHPRIdentifier?, GHPRBranchWidgetViewModel?> { prOnCurrentBranch ->
           if (prOnCurrentBranch != null) {
-            Disposer.newDisposable().use {
-              val vm = projectVm.acquireBranchWidgetModel(prOnCurrentBranch, it)
-              supervisorScope {
-                vm.showUpdateErrorsIn(this)
-                emit(vm)
-                awaitCancellation()
-              }
+            supervisorScope {
+              val vm = projectVm.acquireBranchWidgetModel(prOnCurrentBranch, this)
+              vm.showUpdateErrorsIn(this)
+              emit(vm)
+              awaitCancellation()
             }
           }
           else {

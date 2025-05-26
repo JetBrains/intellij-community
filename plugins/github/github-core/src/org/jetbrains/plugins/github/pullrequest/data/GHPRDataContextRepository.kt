@@ -87,7 +87,7 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
         if (it is HttpStatusErrorException)
 
         // github.com is always expected to have a ghost user, but any enterprise server may not
-        if (account.server.isGithubDotCom) error("Couldn't load ghost user details")
+          if (account.server.isGithubDotCom) error("Couldn't load ghost user details")
 
         GHUser.FAKE_GHOST
       }
@@ -140,7 +140,7 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
       val reactionsService = GHReactionsServiceImpl(requestExecutor, apiRepositoryCoordinates)
 
       val listLoader = GHPRListLoader(cs, requestExecutor, apiRepositoryCoordinates)
-      val listUpdatesChecker = GHPRListETagUpdateChecker(ProgressManager.getInstance(), requestExecutor, account.server, apiRepositoryPath)
+      val listUpdatesChecker = GHPRListETagUpdateChecker(cs, ProgressManager.getInstance(), requestExecutor, account.server, apiRepositoryPath)
 
       val dataProviderRepository = GHPRDataProviderRepositoryImpl(cs,
                                                                   repoDataService,
@@ -149,12 +149,14 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
                                                                   filesService,
                                                                   commentService,
                                                                   changesService) { id ->
-        GHGQLPagedListLoader(ProgressManager.getInstance(),
-                             SimpleGHGQLPagesLoader(requestExecutor, { p ->
-                               GHGQLRequests.PullRequest.Timeline.items(account.server, apiRepositoryPath.owner,
-                                                                        apiRepositoryPath.repository,
-                                                                        id.number, p)
-                             }, true))
+        GHGQLPagedListLoader(
+          this,
+          ProgressManager.getInstance(),
+          SimpleGHGQLPagesLoader(requestExecutor, { p ->
+            GHGQLRequests.PullRequest.Timeline.items(account.server, apiRepositoryPath.owner,
+                                                     apiRepositoryPath.repository,
+                                                     id.number, p)
+          }, true))
       }
 
       val interactionState = project.service<GHPRPersistentInteractionState>()

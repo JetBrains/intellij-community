@@ -6,7 +6,6 @@ import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.computeEmitting
 import com.intellij.collaboration.util.onFailure
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -31,7 +30,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRBranchWidgetViewMo
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRInfoViewModel
-import org.jetbrains.plugins.github.util.DisposalCountingHolder
+import org.jetbrains.plugins.github.util.AcquirableScopedValueOwner
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 
 @ApiStatus.Internal
@@ -43,13 +42,13 @@ interface GHPRConnectedProjectViewModel {
 
   fun getCreateVmOrNull(): GHPRCreateViewModel?
 
-  fun acquireAIReviewViewModel(id: GHPRIdentifier, disposable: Disposable): StateFlow<GHPRAIReviewViewModel?>
-  fun acquireAISummaryViewModel(id: GHPRIdentifier, disposable: Disposable): StateFlow<GHPRAISummaryViewModel?>
-  fun acquireInfoViewModel(id: GHPRIdentifier, disposable: Disposable): GHPRInfoViewModel
-  fun acquireEditorReviewViewModel(id: GHPRIdentifier, disposable: Disposable): GHPRReviewInEditorViewModel
-  fun acquireBranchWidgetModel(id: GHPRIdentifier, disposable: Disposable): GHPRBranchWidgetViewModel
-  fun acquireDiffViewModel(id: GHPRIdentifier, disposable: Disposable): GHPRDiffViewModel
-  fun acquireTimelineViewModel(id: GHPRIdentifier, disposable: Disposable): GHPRTimelineViewModel
+  fun acquireAIReviewViewModel(id: GHPRIdentifier, hostCs: CoroutineScope): StateFlow<GHPRAIReviewViewModel?>
+  fun acquireAISummaryViewModel(id: GHPRIdentifier, hostCs: CoroutineScope): StateFlow<GHPRAISummaryViewModel?>
+  fun acquireInfoViewModel(id: GHPRIdentifier, hostCs: CoroutineScope): GHPRInfoViewModel
+  fun acquireEditorReviewViewModel(id: GHPRIdentifier, hostCs: CoroutineScope): GHPRReviewInEditorViewModel
+  fun acquireBranchWidgetModel(id: GHPRIdentifier, hostCs: CoroutineScope): GHPRBranchWidgetViewModel
+  fun acquireDiffViewModel(id: GHPRIdentifier, hostCs: CoroutineScope): GHPRDiffViewModel
+  fun acquireTimelineViewModel(id: GHPRIdentifier, hostCs: CoroutineScope): GHPRTimelineViewModel
 
   fun findDetails(id: GHPRIdentifier): GHPullRequestShort?
 
@@ -76,35 +75,37 @@ abstract class GHPRConnectedProjectViewModelBase(
   override val listVm: GHPRListViewModel = GHPRListViewModel(project, cs, connection.dataContext)
 
   private val repoManager: GHHostedRepositoriesManager = project.service<GHHostedRepositoriesManager>()
-  private val pullRequestsVms = Caffeine.newBuilder().build<GHPRIdentifier, DisposalCountingHolder<GHPRViewModelContainer>> { id ->
-    DisposalCountingHolder {
-      GHPRViewModelContainerImpl(project, cs, dataContext, id, it, ::viewPullRequest, ::viewPullRequest, ::openPullRequestDiff,
-                                 ::refreshPrOnCurrentBranch)
+  private val pullRequestsVms = Caffeine.newBuilder().build<GHPRIdentifier, AcquirableScopedValueOwner<GHPRViewModelContainer>> { id ->
+    AcquirableScopedValueOwner(cs) {
+      GHPRViewModelContainerImpl(
+        project, this, dataContext, id,
+        ::viewPullRequest, ::viewPullRequest, ::openPullRequestDiff, ::refreshPrOnCurrentBranch
+      )
     }
   }
 
   @ApiStatus.Internal
-  override fun acquireAIReviewViewModel(id: GHPRIdentifier, disposable: Disposable): StateFlow<GHPRAIReviewViewModel?> =
-    pullRequestsVms[id].acquireValue(disposable).aiReviewVm
+  override fun acquireAIReviewViewModel(id: GHPRIdentifier, hostCs: CoroutineScope): StateFlow<GHPRAIReviewViewModel?> =
+    pullRequestsVms[id].acquireValue(hostCs).aiReviewVm
 
-  override fun acquireAISummaryViewModel(id: GHPRIdentifier, disposable: Disposable): StateFlow<GHPRAISummaryViewModel?> =
-    pullRequestsVms[id].acquireValue(disposable).aiSummaryVm
+  override fun acquireAISummaryViewModel(id: GHPRIdentifier, hostCs: CoroutineScope): StateFlow<GHPRAISummaryViewModel?> =
+    pullRequestsVms[id].acquireValue(hostCs).aiSummaryVm
 
-  override fun acquireInfoViewModel(id: GHPRIdentifier, disposable: Disposable): GHPRInfoViewModel =
-    pullRequestsVms[id].acquireValue(disposable).infoVm
+  override fun acquireInfoViewModel(id: GHPRIdentifier, hostCs: CoroutineScope): GHPRInfoViewModel =
+    pullRequestsVms[id].acquireValue(hostCs).infoVm
 
-  override fun acquireEditorReviewViewModel(id: GHPRIdentifier, disposable: Disposable): GHPRReviewInEditorViewModel =
-    pullRequestsVms[id].acquireValue(disposable).editorVm
+  override fun acquireEditorReviewViewModel(id: GHPRIdentifier, hostCs: CoroutineScope): GHPRReviewInEditorViewModel =
+    pullRequestsVms[id].acquireValue(hostCs).editorVm
 
-  override fun acquireBranchWidgetModel(id: GHPRIdentifier, disposable: Disposable): GHPRBranchWidgetViewModel =
-    pullRequestsVms[id].acquireValue(disposable).branchWidgetVm
+  override fun acquireBranchWidgetModel(id: GHPRIdentifier, hostCs: CoroutineScope): GHPRBranchWidgetViewModel =
+    pullRequestsVms[id].acquireValue(hostCs).branchWidgetVm
 
   @ApiStatus.Internal
-  override fun acquireDiffViewModel(id: GHPRIdentifier, disposable: Disposable): GHPRDiffViewModel =
-    pullRequestsVms[id].acquireValue(disposable).diffVm
+  override fun acquireDiffViewModel(id: GHPRIdentifier, hostCs: CoroutineScope): GHPRDiffViewModel =
+    pullRequestsVms[id].acquireValue(hostCs).diffVm
 
-  override fun acquireTimelineViewModel(id: GHPRIdentifier, disposable: Disposable): GHPRTimelineViewModel =
-    pullRequestsVms[id].acquireValue(disposable).timelineVm
+  override fun acquireTimelineViewModel(id: GHPRIdentifier, hostCs: CoroutineScope): GHPRTimelineViewModel =
+    pullRequestsVms[id].acquireValue(hostCs).timelineVm
 
   override fun findDetails(id: GHPRIdentifier): GHPullRequestShort? =
     dataContext.listLoader.loadedData.value.find { it.id == id.id }

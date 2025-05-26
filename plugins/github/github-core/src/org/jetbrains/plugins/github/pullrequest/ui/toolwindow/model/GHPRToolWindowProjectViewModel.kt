@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model
 
-import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowProjectViewModel
 import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowTabs
 import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowTabsStateHolder
@@ -51,7 +50,7 @@ class GHPRToolWindowProjectViewModel internal constructor(
   override fun getCreateVmOrNull(): GHPRCreateViewModel? = lazyCreateVm.valueIfInitialized
 
   init {
-    dataContext.dataProviderRepository.addDetailsLoadedListener(cs.nestedDisposable()) {
+    dataContext.dataProviderRepository.addDetailsLoadedListener(cs) {
       filesManager.updateTimelineFilePresentation(it.prId)
     }
 

@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui
 
-import com.intellij.collaboration.async.cancelledWith
 import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapScoped
@@ -9,7 +8,6 @@ import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeLi
 import com.intellij.collaboration.ui.util.selectedItem
 import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.collaboration.util.getOrNull
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
@@ -54,15 +52,14 @@ internal class GHPRViewModelContainerImpl(
   parentCs: CoroutineScope,
   dataContext: GHPRDataContext,
   private val pullRequestId: GHPRIdentifier,
-  cancelWith: Disposable,
   private val viewPullRequest: (GHPRIdentifier) -> Unit,
   private val viewPullRequestOnCommit: (GHPRIdentifier, String) -> Unit,
   private val openPullRequestDiff: (GHPRIdentifier?, Boolean) -> Unit,
   private val refreshPrOnCurrentBranch: () -> Unit,
 ) : GHPRViewModelContainer {
-  private val cs = parentCs.childScope(javaClass.name).cancelledWith(cancelWith)
+  private val cs = parentCs.childScope(javaClass.name)
 
-  private val dataProvider: GHPRDataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequestId, cancelWith)
+  private val dataProvider: GHPRDataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequestId, cs)
 
   private val diffSelectionRequests = MutableSharedFlow<ChangesSelection>(1)
 
