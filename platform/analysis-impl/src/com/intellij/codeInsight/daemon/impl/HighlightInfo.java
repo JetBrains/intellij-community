@@ -677,6 +677,12 @@ public class HighlightInfo implements Segment {
 
     @NotNull Builder fileLevelAnnotation();
 
+    /**
+     * @param navigationShift the navigation shift relative to the reported error range start offset.
+     *                        When navigating to the error, the caret could be shifted automatically
+     *                        the specified number of characters to the right.
+     * @return this builder
+     */
     @NotNull Builder navigationShift(int navigationShift);
 
     @NotNull Builder group(int group);

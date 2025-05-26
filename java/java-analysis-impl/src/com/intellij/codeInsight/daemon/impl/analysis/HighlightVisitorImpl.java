@@ -157,6 +157,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
     TextRange range = error.range();
     info.range(range);
+    info.navigationShift(error.navigationShift());
     if (range.getLength() == 0) {
       int offset = range.getStartOffset();
       CharSequence sequence = holder.getContextFile().getFileDocument().getCharsSequence();

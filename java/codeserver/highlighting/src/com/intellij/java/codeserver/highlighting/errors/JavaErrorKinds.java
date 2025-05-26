@@ -1122,10 +1122,12 @@ public final class JavaErrorKinds {
         (list, inferenceResult) -> message("new.expression.diamond.inference.failure", inferenceResult.getErrorMessage()));
   public static final Simple<PsiConstructorCall> NEW_EXPRESSION_ARGUMENTS_TO_DEFAULT_CONSTRUCTOR_CALL =
     error(PsiConstructorCall.class, "new.expression.arguments.to.default.constructor.call")
-      .withAnchor(call -> call.getArgumentList());
+      .withAnchor(call -> call.getArgumentList())
+      .withNavigationShift(1);
   public static final Parameterized<PsiConstructorCall, UnresolvedConstructorContext> NEW_EXPRESSION_UNRESOLVED_CONSTRUCTOR =
     parameterized(PsiConstructorCall.class, UnresolvedConstructorContext.class, "new.expression.unresolved.constructor")
       .withAnchor(PsiCall::getArgumentList)
+      .withNavigationShift(1)
       .withDescription((call, ctx) -> message("new.expression.unresolved.constructor", 
                                           ctx.psiClass().getName() + formatArgumentTypes(call.getArgumentList(), true)));
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiTypeParameter> NEW_EXPRESSION_TYPE_PARAMETER =
@@ -1303,10 +1305,12 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiElement, JavaMismatchedCallContext> CALL_WRONG_ARGUMENTS =
     parameterized(PsiElement.class, JavaMismatchedCallContext.class, "call.wrong.arguments")
       .withTooltip((psi, ctx) -> ctx.createTooltip())
+      .withNavigationShift((psi, ctx) -> psi instanceof PsiExpressionList ? 1 : 0)
       .withDescription((psi, ctx) -> ctx.createDescription());
   public static final Parameterized<PsiMethodCallExpression, JavaResolveResult[]> CALL_UNRESOLVED =
     parameterized(PsiMethodCallExpression.class, JavaResolveResult[].class, "call.unresolved")
       .withAnchor(PsiMethodCallExpression::getArgumentList)
+      .withNavigationShift(1)
       .withDescription((call, results) -> message(
         "call.unresolved", call.getMethodExpression().getReferenceName() + formatArgumentTypes(call.getArgumentList(), true)));
   public static final Parameterized<PsiMethodCallExpression, JavaResolveResult[]> CALL_UNRESOLVED_NAME =
@@ -1318,6 +1322,7 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiMethodCallExpression, JavaAmbiguousCallContext> CALL_AMBIGUOUS =
     parameterized(PsiMethodCallExpression.class, JavaAmbiguousCallContext.class, "call.ambiguous")
       .withAnchor(PsiMethodCallExpression::getArgumentList)
+      .withNavigationShift((psi, ctx) -> 1)
       .withDescription((call, ctx) -> ctx.description())
       .withTooltip((call, ctx) -> ctx.tooltip());
   public static final Parameterized<PsiMethodCallExpression, JavaResolveResult[]> CALL_AMBIGUOUS_NO_MATCH =

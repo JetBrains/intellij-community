@@ -39,6 +39,15 @@ public record JavaCompilationError<Psi extends PsiElement, Context>(@NotNull Jav
   }
 
   /**
+   * @return navigation shift (non-negative) relative to the start of reported {@link #range()}.
+   * If navigation to an error is supported, this could be used to navigate to a specific offset withing the range,
+   * instead of its beginning.
+   */
+  public int navigationShift() {
+    return kind.navigationShift(psi, context);
+  }
+
+  /**
    * @return a desired highlighting type to display the error
    */
   public @NotNull JavaErrorHighlightType highlightType() {
