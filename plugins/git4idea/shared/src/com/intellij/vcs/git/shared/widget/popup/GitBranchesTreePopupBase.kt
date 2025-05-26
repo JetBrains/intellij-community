@@ -17,7 +17,6 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.TreePopup
 import com.intellij.openapi.util.*
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.project.projectId
 import com.intellij.ui.*
 import com.intellij.ui.components.TextComponentEmptyText
@@ -404,7 +403,9 @@ abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
     rowHeight = treeRowHeight
     isLargeModel = true
     expandsSelectedPaths = true
-    toggleClickCount = if (Registry.`is`("git.branches.tree.popup.expand.node.on.single.click")) 1 else 2
+    // There are no actions available for grouping nodes in the tree, so the only reason to click
+    // is to expand/collapse them.
+    toggleClickCount = 1
     SmartExpander.installOn(this)
   }
 
