@@ -33,7 +33,7 @@ open class FindInPathPopupUi(data: ComponentData): DialogUiComponent(data) {
 
   val matchesFoundLabel = x { contains(byAccessibleName("matches in")) }
   val fileMaskCheckBox = checkBox { byAccessibleName("File mask:") }
-  val fileMaskComboBox = x { byType("com.intellij.openapi.ui.DialogPanel") }.comboBox()
+  val fileMaskComboBox = x { byType("com.intellij.openapi.ui.DialogPanel") }.accessibleComboBox()
   val filterSearchResultsActionButton = actionButton { byAccessibleName("Filter Search Results") }
   val pinWindowButton = actionButton { byAccessibleName("Pin Window") }
 
@@ -55,7 +55,7 @@ open class FindInPathPopupUi(data: ComponentData): DialogUiComponent(data) {
   val browseButton = x { byTooltip(if (SystemInfoRt.isMac) "⇧⏎" else "Shift+Enter") }
   val searchRecursivelyActionButton = actionButton { byAccessibleName("Search recursively in subdirectories") }
 
-  val scopeChooserComboBox = x { byType("com.intellij.ide.util.scopeChooser.ScopeChooserCombo") }.comboBox()
+  val scopeChooserComboBox = x { byType("com.intellij.ide.util.scopeChooser.ScopeChooserCombo") }.accessibleComboBox()
 
   val openResultsInNewTabCheckBox = checkBox { byAccessibleName("Open results in new tab") }
   val openInFindWindowButton = x { byAccessibleName("Open in Find Window") }
