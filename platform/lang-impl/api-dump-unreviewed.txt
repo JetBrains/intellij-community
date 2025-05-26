@@ -5991,13 +5991,12 @@ c:com.intellij.codeInspection.ui.RefElementNode
 a:com.intellij.codeInspection.ui.actions.InspectionResultsExportActionProvider
 - com.intellij.codeInspection.ui.actions.InspectionViewActionBase
 - sf:Companion:com.intellij.codeInspection.ui.actions.InspectionResultsExportActionProvider$Companion
-- sf:LOCATION_KEY:java.lang.String
+- sf:LOCATION_PROPERTY_NAME:java.lang.String
 - <init>(java.util.function.Supplier,java.util.function.Supplier,javax.swing.Icon):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- additionalSettings():javax.swing.JPanel
+- additionalSettings(com.intellij.openapi.util.UserDataHolderEx):javax.swing.JPanel
 - a:getProgressTitle():java.lang.String
-- f:getPropertyGraph():com.intellij.openapi.observable.properties.PropertyGraph
-- onExportSuccessful():V
+- onExportSuccessful(com.intellij.openapi.util.UserDataHolderEx):V
 - a:writeResults(com.intellij.codeInspection.ui.InspectionTree,com.intellij.codeInspection.ex.InspectionProfileImpl,com.intellij.codeInspection.ex.GlobalInspectionContextImpl,com.intellij.openapi.project.Project,java.nio.file.Path):V
 f:com.intellij.codeInspection.ui.actions.InspectionResultsExportActionProvider$Companion
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName

@@ -9,6 +9,8 @@ import com.intellij.codeInspection.ui.InspectionTree
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -22,32 +24,30 @@ class ExportToHTMLAction : InspectionResultsExportActionProvider(Supplier { "HTM
                                                                  AllIcons.FileTypes.Html) {
   override val progressTitle: String = InspectionsBundle.message("inspection.generating.html.progress.title")
 
-  var open: Boolean = false
-  var outputPath: Path? = null
-
   override fun writeResults(tree: InspectionTree,
                             profile: InspectionProfileImpl,
                             globalInspectionContext: GlobalInspectionContextImpl,
                             project: Project,
                             outputPath: Path) {
-    this.outputPath = outputPath
     InspectionTreeHtmlWriter(tree, profile, globalInspectionContext.refManager, outputPath)
   }
 
-  override fun onExportSuccessful() {
-    if (open) {
-      val path = outputPath ?: return
-      BrowserUtil.browse(path.resolve("index.html"))
+  override fun onExportSuccessful(data: UserDataHolderEx) {
+    if (data.getUserData(openKey) == true) {
+      val path = data.getUserData(ExportDialog.LOCATION_KEY) ?: return
+      BrowserUtil.browse(Path.of(path, "index.html"))
     }
   }
 
-  override fun additionalSettings(): JPanel {
+  override fun additionalSettings(data: UserDataHolderEx): JPanel {
     return panel {
       row {
         checkBox(InspectionsBundle.message("inspection.export.open.option")).applyToComponent {
-          addChangeListener { open = isSelected }
+          addChangeListener { data.putUserData(openKey, isSelected) }
         }
       }
     }
   }
 }
+
+private val openKey: Key<Boolean> = Key.create("export.to.html.action.open")
