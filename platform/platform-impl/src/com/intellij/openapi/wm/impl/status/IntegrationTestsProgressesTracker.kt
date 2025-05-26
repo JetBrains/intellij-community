@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.status
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.progress.ProgressModel
+import com.intellij.openapi.util.text.StringUtil
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Future
 
@@ -11,6 +12,12 @@ internal object IntegrationTestsProgressesTracker {
   private val enabled = ApplicationManagerEx.isInIntegrationTest() && System.getProperty("idea.performanceReport.projectName") != null
   private val lock = Object()
   private val timestamps: MutableMap<ProgressModel, Long> = ConcurrentHashMap<ProgressModel, Long>()
+
+  // See com.intellij.openapi.wm.impl.status.ProgressComponent.updateProgressNow
+  private fun getTitle(indicatorModel: ProgressModel): String {
+    val text = indicatorModel.getText()
+    return if (!StringUtil.isEmpty(text)) text!! else indicatorModel.title
+  }
 
   fun progressStarted(indicatorModel: ProgressModel) {
     if (!enabled) return
@@ -42,7 +49,7 @@ internal object IntegrationTestsProgressesTracker {
            "v2\n" + "$action\n" +
            "longer than 3 seconds: $longer\n" +
            "time: $timeInMillis ms\n" +
-           "message: " + text
+           "message: " + text.ifBlank { "<empty>" }
   }
 
   private fun isUnnoticeableUnnamedProgress(text: String, was: Long?, now: Long): Boolean {
@@ -55,7 +62,7 @@ internal object IntegrationTestsProgressesTracker {
     synchronized(lock) {
       val now = System.currentTimeMillis()
       val was = timestamps.remove(indicatorModel)
-      val title = indicatorModel.title
+      val title = getTitle(indicatorModel)
       if (isUnnoticeableUnnamedProgress(title, was, now)) return
       sendMessage(createMessage(was, now, title, "stopped"))
     }
