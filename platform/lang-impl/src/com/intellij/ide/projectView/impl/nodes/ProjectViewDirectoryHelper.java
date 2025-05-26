@@ -271,7 +271,7 @@ public class ProjectViewDirectoryHelper {
   }
 
 
-  private boolean isFileUnderContentRoot(@Nullable VirtualFile file) {
+   boolean isFileUnderContentRoot(@Nullable VirtualFile file) {
     return file != null && file.isValid() && myFileIndex.getContentRootForFile(file, false) != null;
   }
 
