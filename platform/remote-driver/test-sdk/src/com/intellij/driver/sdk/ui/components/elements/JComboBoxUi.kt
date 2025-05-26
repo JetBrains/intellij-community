@@ -1,6 +1,9 @@
 package com.intellij.driver.sdk.ui.components.elements
 
 import com.intellij.driver.client.Remote
+import com.intellij.driver.client.impl.RefWrapper
+import com.intellij.driver.sdk.ui.AccessibleNameCellRendererReader
+import com.intellij.driver.sdk.ui.CellRendererReader
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.components.ComponentData
@@ -16,9 +19,21 @@ fun Finder.comboBox(@Language("xpath") xpath: String? = null) =
 
 fun Finder.comboBox(locator: QueryBuilder.() -> String) = x(JComboBoxUiComponent::class.java) { locator() }
 
+fun Finder.accessibleComboBox(locator: QueryBuilder.() -> String = { byType(JComboBox::class.java) }) =
+  comboBox(locator).apply {
+    replaceCellRendererReader {
+      driver.new(AccessibleNameCellRendererReader::class, rdTarget = (it as RefWrapper).getRef().rdTarget)
+    }
+  }
 
 class JComboBoxUiComponent(data: ComponentData) : UiComponent(data) {
-  private val fixture by lazy { driver.new(JComboBoxFixtureRef::class, robot, component) }
+  private var cellRendererReaderSupplier: ((JComboBoxFixtureRef) -> CellRendererReader)? = null
+  private val fixture by lazy {
+    driver.new(JComboBoxFixtureRef::class, robot, component).apply {
+      cellRendererReaderSupplier?.let { replaceCellRendererReader(it(this)) }
+    }
+  }
+
   fun selectItem(text: String) = fixture.select(text)
   fun selectItemContains(text: String) {
     if (fixture.listValues().singleOrNull { it.contains(text) } == null) {
@@ -30,6 +45,10 @@ class JComboBoxUiComponent(data: ComponentData) : UiComponent(data) {
   fun listValues() = fixture.listValues()
 
   fun getSelectedItem() = fixture.selectedText()
+
+  fun replaceCellRendererReader(readerSupplier: (JComboBoxFixtureRef) -> CellRendererReader) {
+    cellRendererReaderSupplier = readerSupplier
+  }
 }
 
 @Remote("com.jetbrains.performancePlugin.remotedriver.fixtures.JComboBoxTextFixture", plugin = REMOTE_ROBOT_MODULE_ID)
@@ -37,4 +56,5 @@ interface JComboBoxFixtureRef {
   fun selectedText(): String
   fun listValues(): List<String>
   fun select(text: String)
+  fun replaceCellRendererReader(reader: CellRendererReader)
 }
