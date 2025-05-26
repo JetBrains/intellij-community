@@ -3714,7 +3714,8 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-80436
   public void testEllipsis() {
-    doTest("ellipsis", "expr = ...");
+    doTest("EllipsisType", "expr = ...");
+    doTest("EllipsisType", "expr = Ellipsis");
   }
 
   private void doTest(final String expectedType, final String text) {

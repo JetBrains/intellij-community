@@ -44,6 +44,7 @@ import org.jetbrains.annotations.NonNls
  */
 class PyBuiltinCache private constructor(
   private val myBuiltinsFile: CachedFile? = null,
+  private val myTypesFile: CachedFile? = null,
   private val myTypeshedFile: CachedFile? = null,
   private val myExceptionsFile: CachedFile? = null,
 ) {
@@ -51,6 +52,7 @@ class PyBuiltinCache private constructor(
 
   constructor(project: Project, sdk: Sdk) : this(
     myBuiltinsFile = getBuiltinsForSdk(project, sdk).toCachedFile(),
+    myTypesFile = getFileForSdk(project, sdk, QualifiedName.fromDottedString(TYPES_MODULE)).toCachedFile(),
     myTypeshedFile = getFileForSdk(project, sdk, QualifiedName.fromDottedString(TYPESHED_MODULE)).toCachedFile(),
     myExceptionsFile = getExceptionsForSdk(project, sdk).toCachedFile(),
   )
@@ -171,10 +173,14 @@ class PyBuiltinCache private constructor(
     get() = getObjectType("slice")
 
   val noneType: PyClassType?
-    get() = myTypeshedFile?.getClassType("NoneType")
+    get() {
+      val file = myTypeshedFile ?: return null
+      // need to use `resolveNested` because `_typeshed` has `NoneType` as an import, not a class
+      return file.getClassType("NoneType", file::resolveNested)
+    }
 
   val ellipsisType: PyClassType?
-    get() = getObjectType("ellipsis")
+    get() = myTypesFile?.getClassType("EllipsisType")
 
   /**
    * @param target an element to check.
@@ -195,6 +201,7 @@ class PyBuiltinCache private constructor(
   companion object {
     const val BUILTIN_MODULE: String = "__builtin__"
     const val BUILTIN_MODULE_3K: String = "builtins"
+    const val TYPES_MODULE: String = "types"
     const val TYPESHED_MODULE: String = "_typeshed"
     private const val EXCEPTIONS_MODULE = "exceptions"
 
@@ -313,7 +320,7 @@ private class CachedFile(
    */
   private val myTypeCache: MutableMap<String, PyClassTypeImpl?> = mutableMapOf(),
 ) {
-  fun getClassType(name: @NonNls String, block: (@NonNls String) -> PyClassTypeImpl? = ::resolveNested): PyClassTypeImpl? {
+  fun getClassType(name: @NonNls String, typeResolver: (@NonNls String) -> PyClassTypeImpl? = ::resolveTopLevel): PyClassTypeImpl? {
     return synchronized(this) {
       if (myModificationStamp != file.modificationStamp) {
         myTypeCache.clear()
@@ -321,19 +328,23 @@ private class CachedFile(
       }
       myTypeCache[name]
         ?.also { it.assertValid(name) }
-    } ?: block(name)?.also {
+    } ?: typeResolver(name)?.also {
       synchronized(myTypeCache) {
         myTypeCache.put(name, it)
       }
     }
   }
 
-  private fun resolveNested(name: @NonNls String): PyClassTypeImpl? {
+  fun resolveNested(name: @NonNls String): PyClassTypeImpl? {
       val pyClass = ResolveImportUtil.resolveChildren(
         file, name, file, false, true, false, false
       ).getOrNull(0)?.element as? PyClass? ?: return null
       return PyClassTypeImpl(pyClass, false)
         .also { it.assertValid(name) }
+  }
+
+  fun resolveTopLevel(name: @NonNls String): PyClassTypeImpl? {
+    return PyClassTypeImpl((file.findTopLevelClass(name) ?: return null), false)
   }
 }
 

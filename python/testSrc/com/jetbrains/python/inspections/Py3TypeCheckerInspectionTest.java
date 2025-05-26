@@ -2859,4 +2859,14 @@ def foo(param: str | int) -> TypeGuard[str]:
                        v: tuple[int] = <warning>p</warning>
                    """);
   }
+
+  // PY-80436
+  public void testEllipsis() {
+    doTestByText("""
+                   from types import EllipsisType
+                   e: EllipsisType
+                   e = ...
+                   e = Ellipsis
+                   """);
+  }
 }

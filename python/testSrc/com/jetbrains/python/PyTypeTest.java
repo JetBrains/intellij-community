@@ -2884,7 +2884,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-80436
   public void testEllipsis() {
-    doTest("ellipsis", "expr = ...");
+    doTest("ellipsis", "expr = Ellipsis");
   }
 
   // PY-25751
