@@ -31,7 +31,6 @@ import com.intellij.vcs.log.util.containsAll
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import git4idea.GitUtil
 import git4idea.GitVcs
-import git4idea.branch.GitBranchUtil
 import git4idea.i18n.GitBundle
 import git4idea.log.GitRefManager
 import git4idea.repo.GitRepositoryManager
@@ -136,7 +135,7 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
 
     @NlsSafe
     val rightText = when (value) {
-      is VcsRef -> getTrackingRemoteBranchName(value)
+      is VcsRef -> GitSearchUtils.getTrackingRemoteBranchName(value, project)
       is VcsCommitMetadata -> value.id.toShortString()
       else -> null
     }
@@ -145,15 +144,6 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
         foreground = greyForeground
       }
     }
-  }
-
-  @NlsSafe
-  private fun getTrackingRemoteBranchName(vcsRef: VcsRef): String? {
-    if (vcsRef.type != GitRefManager.LOCAL_BRANCH) {
-      return null
-    }
-    val repository = GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(vcsRef.root) ?: return null
-    return GitBranchUtil.getTrackInfo(repository, vcsRef.name)?.remoteBranch?.name
   }
 
   override fun getElementsRenderer(): ListCellRenderer<in Any> = renderer

@@ -158,6 +158,14 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
     }
   }
 
+  suspend fun isShownInSeparateTab(
+    sessionRef: DurableRef<SeSessionEntity>,
+    dataContextId: DataContextId,
+    providerId: SeProviderId,
+  ): Boolean {
+    return getProvidersHolder(sessionRef, dataContextId)?.getLegacyContributor(providerId, false)?.isShownInSeparateTab ?: false
+  }
+
   companion object {
     @JvmStatic
     fun getInstance(project: Project): SeBackendService = project.service<SeBackendService>()

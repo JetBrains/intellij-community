@@ -145,6 +145,17 @@ class SeTabDelegate(
   }
 
   companion object {
+    suspend fun shouldShowLegacyContributorInSeparateTab(project: Project,
+                                                         providerId: SeProviderId,
+                                                         initEvent: AnActionEvent,
+                                                         sessionRef: DurableRef<SeSessionEntity>): Boolean {
+      val dataContextId = readAction {
+        initEvent.dataContext.rpcId()
+      }
+      return SeFrontendService.getInstance(project).localProvidersHolder?.getLegacyContributor(providerId, false)?.isShownInSeparateTab == true ||
+             SeRemoteApi.getInstance().isShownInSeparateTab(project.projectId(), sessionRef, dataContextId, providerId)
+    }
+
     private suspend fun initializeProviders(
       project: Project?,
       providerIds: List<SeProviderId>,

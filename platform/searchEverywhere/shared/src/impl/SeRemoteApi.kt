@@ -56,6 +56,11 @@ interface SeRemoteApi : RemoteApi<Unit> {
                                       providerIds: List<SeProviderId>,
                                       isAllTab: Boolean): Boolean
 
+  suspend fun isShownInSeparateTab(projectId: ProjectId,
+                                   sessionRef: DurableRef<SeSessionEntity>,
+                                   dataContextId: DataContextId,
+                                   providerId: SeProviderId): Boolean
+
   suspend fun getAvailableProviderIds(): List<SeProviderId>
 
   suspend fun getSearchScopesInfoForProviders(

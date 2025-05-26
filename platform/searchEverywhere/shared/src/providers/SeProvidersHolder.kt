@@ -19,6 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.let
 
 /**
  * We could have just one Map<SeProviderId, SeItemDataProvider>, but we can't, because in the previous Search Everywhere implementation
@@ -29,6 +30,8 @@ import kotlin.coroutines.cancellation.CancellationException
 class SeProvidersHolder(
   private val allTabProviders: Map<SeProviderId, SeLocalItemDataProvider>,
   private val separateTabProviders: Map<SeProviderId, SeLocalItemDataProvider>,
+  private val legacyAllTabContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
+  private val legacySeparateTabContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
 ) : Disposable {
   fun get(providerId: SeProviderId, isAllTab: Boolean): SeLocalItemDataProvider? =
     if (isAllTab) allTabProviders[providerId]
@@ -37,6 +40,13 @@ class SeProvidersHolder(
   override fun dispose() {
     allTabProviders.values.forEach { Disposer.dispose(it) }
     separateTabProviders.values.forEach { Disposer.dispose(it) }
+  }
+
+  fun getLegacyContributor(providerId: SeProviderId, isAllTab: Boolean): SearchEverywhereContributor<Any>? {
+    return when {
+      isAllTab -> legacyAllTabContributors[providerId]
+      else -> legacySeparateTabContributors[providerId] ?: legacyAllTabContributors[providerId]
+    }
   }
 
   companion object {
@@ -56,6 +66,9 @@ class SeProvidersHolder(
 
       val providers = mutableMapOf<SeProviderId, SeLocalItemDataProvider>()
       val separateTabProviders = mutableMapOf<SeProviderId, SeLocalItemDataProvider>()
+
+      val legacyContributors = mutableMapOf<SeProviderId, SearchEverywhereContributor<Any>>()
+      val separateTabLegacyContributors = mutableMapOf<SeProviderId, SearchEverywhereContributor<Any>>()
 
       SeItemsProviderFactory.EP_NAME.extensionList.filter {
         providerIds == null || SeProviderId(it.id) in providerIds
@@ -84,19 +97,28 @@ class SeProvidersHolder(
           }
         }
 
-        provider?.let {
-          providers[SeProviderId(it.id)] = SeLocalItemDataProvider(it, sessionRef, logLabel)
+        provider?.let { provider ->
+          providers[SeProviderId(provider.id)] = SeLocalItemDataProvider(provider, sessionRef, logLabel)
+          allContributors[providerFactoryId]?.let { contributor ->
+            legacyContributors[SeProviderId(provider.id)] = contributor
+          }
         }
 
-        separateTabProvider?.let {
-          separateTabProviders[SeProviderId(it.id)] = SeLocalItemDataProvider(it, sessionRef, logLabel)
+        separateTabProvider?.let { provider ->
+          separateTabProviders[SeProviderId(provider.id)] = SeLocalItemDataProvider(provider, sessionRef, logLabel)
+          separateTabContributors[providerFactoryId]?.let { contributor ->
+            separateTabLegacyContributors[SeProviderId(provider.id)] = contributor
+          }
         }
       }
 
       allContributors.disposeAndFilterOutUnnecessaryLegacyContributors(providers.keys)
       separateTabContributors.disposeAndFilterOutUnnecessaryLegacyContributors(separateTabProviders.keys)
 
-      return SeProvidersHolder(providers, separateTabProviders)
+      return SeProvidersHolder(providers,
+                               separateTabProviders,
+                               legacyContributors,
+                               separateTabLegacyContributors)
     }
 
     private fun MutableMap<String, SearchEverywhereContributor<Any>>.disposeAndFilterOutUnnecessaryLegacyContributors(providerIds: Set<SeProviderId>) {

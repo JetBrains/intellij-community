@@ -37,6 +37,11 @@ class SeRemoteApiImpl: SeRemoteApi {
     return SeBackendService.getInstance(project).canBeShownInFindResults(sessionRef, dataContextId, providerIds, isAllTab)
   }
 
+  override suspend fun isShownInSeparateTab(projectId: ProjectId, sessionRef: DurableRef<SeSessionEntity>, dataContextId: DataContextId, providerId: SeProviderId): Boolean {
+    val project = projectId.findProjectOrNull() ?: return false
+    return SeBackendService.getInstance(project).isShownInSeparateTab(sessionRef, dataContextId, providerId)
+  }
+
   override suspend fun getItems(
     projectId: ProjectId,
     sessionRef: DurableRef<SeSessionEntity>,
