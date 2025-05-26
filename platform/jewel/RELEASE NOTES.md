@@ -2,9 +2,9 @@
 
 ## v0.28 (2025-05-16)
 
-Supported IJP versions | Compose Multiplatform version
---- | ---
-2025.2 EAP1+, 2025.1.1+, 2024.3.6+ | 1.8.0-alpha04
+| Supported IJP versions             | Compose Multiplatform version |
+|------------------------------------|-------------------------------|
+| 2025.2 EAP1+, 2025.1.1+, 2024.3.6+ | 1.8.0-alpha04                 |
 
 > [!IMPORTANT]
 > Jewel 0.28 is the first Jewel version to be published since the migration into the IJP codebase.
@@ -21,6 +21,13 @@ Starting from Jewel 0.28, artefacts are published to Maven Central. It is no lon
 Artefact IDs are also changing, removing the `-[ijpVersion]` suffixes. Now, the target IJP version is included in the version number. The new version format is: `[jewelVersion]-[ijpBuild]`. The `jewelVersion` tells you that a certain set of features and APIs are available, and the `ijpBuild` tells you which IJP build this was derived from. For example, `0.28-243.15667` means that the artifact contains the Jewel `0.28` features and APIs, and was built from the IJP `243.15567` build. From the `ijpBuild` you can derive two pieces of information; the first is that this artefact is targeting IJP 243, and the second is that it is guaranteed to work for 243 builds with ID >= 15567.
 
 As mentioned in the Jewel readme, if you're building a purely non-IJP app with Jewel, it's always recommended to use the version with the highest `jewelVersion` and `ijpBuild`s, as to get the latest version of Jewel with all the features supported in standalone mode. If, however, you are using the standalone artefacts in conjunction with bridge artefacts, you must always use the same version of the standalone and bridge artefacts to avoid incompatibilities. An example use case is using standalone artefacts in UI unit tests to avoid having to spin up the entire IJ platform, which can cause flakiness and obscure issues in UI tests.
+
+> [!NOTE]
+> For standalone projects, until [JEWEL-821] is resolved, you'll need to add a custom repository to your build, in order to let Gradle find the custom-built `skiko-awt-runtime-all` dependency:
+> 
+> ```kotlin
+> maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
+> ```
 
 ### Binary and source compatibility
 Artefacts with the same `jewelVersion` number are generally binary and source compatible with each other across IJP versions, with the exception of deprecated and scheduled-for-removal APIs, which can be removed in newer versions.
