@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.backend.impl
 
+import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider
 import com.intellij.ide.rpc.DataContextId
 import com.intellij.ide.rpc.dataContext
 import com.intellij.openapi.actionSystem.ActionUiKind
@@ -49,6 +50,10 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
         requestedCountState.update { it + count }
       }
     }
+
+
+    val s = SEResultsEqualityProvider.EP_NAME.extensionList
+    println("ayay backend equalityProviders: ${s.joinToString("\n")}")
 
     return flow {
       val itemsFlow = provider.getItems(params)
