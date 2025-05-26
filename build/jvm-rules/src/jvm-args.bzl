@@ -11,6 +11,10 @@ def get_jvm_flags(flags):
         "-XX:NonProfiledCodeHeapSize=512m",
         "-XX:ProfiledCodeHeapSize=512m",
         "-XX:ReservedCodeCacheSize=2048m",
+        # Prevent JVM logging warnings and errors to stdout because it breaks the protocol between Bazel and the worker process
+        "-XX:+DisplayVMOutputToStderr",
+        "-Xlog:disable",
+        "-Xlog:all=warning:stderr:uptime,level,tags",
         # Headless
         "-Djava.awt.headless=true",
         "-Dapple.awt.UIElement=true",
