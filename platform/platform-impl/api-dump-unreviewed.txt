@@ -9923,10 +9923,6 @@ f:com.intellij.openapi.vfs.newvfs.impl.FsRoot
 f:com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 - <init>():V
 - s:allowRootAccess(com.intellij.openapi.Disposable,java.lang.String[]):V
-c:com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess$VfsRootAccessNotAllowedError
-- java.lang.AssertionError
-- com.intellij.openapi.diagnostic.ControlFlowException
-- <init>(com.intellij.openapi.vfs.VirtualFile,java.util.ArrayList):V
 c:com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl
 - com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 - addChild(com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry):V

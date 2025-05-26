@@ -7,7 +7,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -31,6 +30,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -148,7 +148,8 @@ public final class VfsRootAccess {
         allowed.add(FileUtil.toSystemIndependentName(output));
       }
     }
-    catch (URISyntaxException | IllegalArgumentException ignored) { }
+    catch (URISyntaxException | IllegalArgumentException ignored) {
+    }
 
     try {
       allowed.add(FileUtil.toSystemIndependentName(getJavaHome()));
@@ -229,8 +230,8 @@ public final class VfsRootAccess {
       allowed.addAll(ourAdditionalRoots);
     }
 
-    assert !allowed.contains("/"): "Allowed roots should not contain '/'. " +
-                                   "You can disable roots access check explicitly if you don't need it.";
+    assert !allowed.contains("/") : "Allowed roots should not contain '/'. " +
+                                    "You can disable roots access check explicitly if you don't need it.";
     return allowed;
   }
 
@@ -295,7 +296,8 @@ public final class VfsRootAccess {
     }
   }
 
-  public static class VfsRootAccessNotAllowedError extends AssertionError implements ControlFlowException {
+  @ApiStatus.Internal
+  public static class VfsRootAccessNotAllowedError extends AssertionError {
     public VfsRootAccessNotAllowedError(@NotNull VirtualFile child, @NotNull ArrayList<String> allowed) {
       super("File accessed outside allowed roots: " + child + ";\nAllowed roots: " + new ArrayList<>(allowed));
     }
