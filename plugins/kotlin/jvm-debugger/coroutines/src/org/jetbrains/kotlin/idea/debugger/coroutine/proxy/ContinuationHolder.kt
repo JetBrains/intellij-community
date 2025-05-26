@@ -79,9 +79,10 @@ private fun parseResultFromHelper(array: Value, context: DefaultExecutionContext
 }
 
 private fun fallbackToOldFetchContinuationStack(
-    continuation: ObjectReference,
+    continuation: ObjectReference?,
     context: DefaultExecutionContext
 ): Pair<List<CoroutineStackFrameItem>, List<StackTraceElement>?>? {
+    if (continuation == null) return null
     val continuationStack = DebugMetadata.instance(context)?.fetchContinuationStack(continuation, context) ?: return null
     val lastRestoredFrame = continuationStack.lastOrNull()
     val coroutineOwner = lastRestoredFrame?.baseContinuationImpl?.coroutineOwner
