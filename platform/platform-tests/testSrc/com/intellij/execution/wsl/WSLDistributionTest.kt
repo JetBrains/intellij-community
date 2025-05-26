@@ -442,7 +442,7 @@ class WSLDistributionTest {
     WslTestStrategy.Legacy ->
       mapOf(
         *entries,
-        "WSLENV" to entries.sortedBy { (name, _) -> name }.joinToString(":") { (name, _) -> "$name/u" },
+        "WSLENV" to entries.sortedBy { (name, _) -> name }.joinToString(":") { (name, _) -> "$name/ul" },
       )
 
     WslTestStrategy.Ijent -> mapOf(*entries)
