@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
+import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.util.OperatorNameConventions.COMPARE_TO
 import org.jetbrains.kotlin.util.OperatorNameConventions.CONTAINS
 import org.jetbrains.kotlin.util.OperatorNameConventions.EQUALS
@@ -30,6 +31,9 @@ object OperatorNameCompletion {
         EQUALS to "== !=",
         INVOKE to "(...)"
     )
+
+    // Includes the provideDelegate operator name, which is not part of `OperatorConventions.CONVENTION_NAMES`
+    private val allOperatorNames = OperatorConventions.CONVENTION_NAMES + OperatorNameConventions.PROVIDE_DELEGATE
 
     fun isPositionApplicable(
         nameExpression: KtElement?,
@@ -58,7 +62,7 @@ object OperatorNameCompletion {
     }
 
     fun getApplicableOperators(descriptorNameFilter: (String) -> Boolean): List<Name> {
-        return OperatorConventions.CONVENTION_NAMES
+        return allOperatorNames
             .filter { descriptorNameFilter(it.asString()) }
     }
 }

@@ -34,3 +34,4 @@ operator fun Some.<caret>() {
 // EXIST: {"lookupString":"timesAssign","typeText":"*="}
 // EXIST: {"lookupString":"unaryMinus","typeText":"-"}
 // EXIST: {"lookupString":"unaryPlus","typeText":"+"}
+// EXIST: {"lookupString":"provideDelegate"}

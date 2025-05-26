@@ -30,3 +30,4 @@ operator fun <caret>() {
 // ABSENT: iterator
 // ABSENT: getValue
 // ABSENT: hasNext
+// ABSENT: provideDelegate
