@@ -3597,6 +3597,36 @@ public abstract class K2JvmBasicCompletionTestGenerated extends AbstractK2JvmBas
                 runTest("../../completion/testData/basic/common/InsideAnonymousObjectPrivate.kt");
             }
 
+            @TestMetadata("InsideAnonymousObjectProtected.kt")
+            public void testInsideAnonymousObjectProtected() throws Exception {
+                runTest("../../completion/testData/basic/common/InsideAnonymousObjectProtected.kt");
+            }
+
+            @TestMetadata("InsideAnonymousObjectPublic.kt")
+            public void testInsideAnonymousObjectPublic() throws Exception {
+                runTest("../../completion/testData/basic/common/InsideAnonymousObjectPublic.kt");
+            }
+
+            @TestMetadata("InsideLocalClassAndAnonymousObject.kt")
+            public void testInsideLocalClassAndAnonymousObject() throws Exception {
+                runTest("../../completion/testData/basic/common/InsideLocalClassAndAnonymousObject.kt");
+            }
+
+            @TestMetadata("InsideLocalClassPrivate.kt")
+            public void testInsideLocalClassPrivate() throws Exception {
+                runTest("../../completion/testData/basic/common/InsideLocalClassPrivate.kt");
+            }
+
+            @TestMetadata("InsideLocalClassProtected.kt")
+            public void testInsideLocalClassProtected() throws Exception {
+                runTest("../../completion/testData/basic/common/InsideLocalClassProtected.kt");
+            }
+
+            @TestMetadata("InsideLocalClassPublic.kt")
+            public void testInsideLocalClassPublic() throws Exception {
+                runTest("../../completion/testData/basic/common/InsideLocalClassPublic.kt");
+            }
+
             @TestMetadata("InterfaceNameBeforeRunBug.kt")
             public void testInterfaceNameBeforeRunBug() throws Exception {
                 runTest("../../completion/testData/basic/common/InterfaceNameBeforeRunBug.kt");
