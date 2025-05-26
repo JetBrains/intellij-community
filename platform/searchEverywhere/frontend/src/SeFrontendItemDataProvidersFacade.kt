@@ -18,48 +18,52 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 
 @Internal
-class SeFrontendItemDataProvider(private val projectId: ProjectId,
-                                 override val id: SeProviderId,
-                                 override val displayName: @Nls String,
-                                 private val sessionRef: DurableRef<SeSessionEntity>,
-                                 private val dataContextId: DataContextId): SeItemDataProvider {
-  override fun getItems(params: SeParams): Flow<SeItemData> {
+class SeFrontendItemDataProvidersFacade(private val projectId: ProjectId,
+                                        val idsWithDisplayNames: Map<SeProviderId, @Nls String>,
+                                        private val sessionRef: DurableRef<SeSessionEntity>,
+                                        private val dataContextId: DataContextId) {
+
+  private val providerIds: List<SeProviderId> = idsWithDisplayNames.keys.toList()
+
+  fun hasId(providerId: SeProviderId): Boolean = idsWithDisplayNames.containsKey(providerId)
+
+  fun getItems(params: SeParams, disabledProviders: List<SeProviderId>): Flow<SeItemData> {
+    val ids = providerIds.filter { !disabledProviders.contains(it)}
+
     return channelFlow {
       val channel = Channel<Int>(capacity = 1, onBufferOverflow = BufferOverflow.SUSPEND)
 
       channel.send(DEFAULT_CHUNK_SIZE)
       var pendingCount = DEFAULT_CHUNK_SIZE
 
-      SeRemoteApi.getInstance().getItems(projectId, sessionRef, listOf(id), params, dataContextId, channel).collect {
+      SeRemoteApi.getInstance().getItems(projectId, sessionRef, ids, params, dataContextId, channel).collect {
         pendingCount--
         if (pendingCount == 0) {
           pendingCount += DEFAULT_CHUNK_SIZE
           channel.send(DEFAULT_CHUNK_SIZE)
         }
 
-        SeLog.log(ITEM_EMIT) { "Frontend provider for ${id.value} receives: ${it.presentation.text}" }
+        SeLog.log(ITEM_EMIT) { "Frontend provider for ${it.providerId.value} receives: ${it.presentation.text}" }
         send(it)
       }
     }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND)
   }
 
-  override suspend fun itemSelected(itemData: SeItemData,
+  suspend fun itemSelected(itemData: SeItemData,
                                     modifiers: Int,
                                     searchText: String): Boolean {
     return SeRemoteApi.getInstance().itemSelected(projectId, sessionRef, itemData, modifiers, searchText)
   }
 
-  override suspend fun getSearchScopesInfo(): SeSearchScopesInfo? =
-    SeRemoteApi.getInstance().getSearchScopesInfoForProvider(projectId, providerId = id, sessionRef = sessionRef, dataContextId = dataContextId)
+  suspend fun getSearchScopesInfos(): Map<SeProviderId, SeSearchScopesInfo> =
+    SeRemoteApi.getInstance().getSearchScopesInfoForProviders(projectId, providerIds = providerIds, sessionRef = sessionRef, dataContextId = dataContextId)
 
-  override suspend fun getTypeVisibilityStates(): List<SeTypeVisibilityStatePresentation>? =
-    SeRemoteApi.getInstance().getTypeVisibilityStatesForProvider(projectId, providerId = id, sessionRef = sessionRef, dataContextId = dataContextId)
+  suspend fun getTypeVisibilityStates(): List<SeTypeVisibilityStatePresentation>? =
+    SeRemoteApi.getInstance().getTypeVisibilityStatesForProviders(projectId, providerIds = providerIds, sessionRef = sessionRef, dataContextId = dataContextId)
 
-  override suspend fun canBeShownInFindResults(): Boolean {
-    return SeRemoteApi.getInstance().canBeShownInFindResults(projectId, providerId = id, sessionRef = sessionRef, dataContextId = dataContextId)
+  suspend fun canBeShownInFindResults(): Boolean {
+    return SeRemoteApi.getInstance().canBeShownInFindResults(projectId, providerIds = providerIds, sessionRef = sessionRef, dataContextId = dataContextId)
   }
-
-  override fun dispose() {}
 
   companion object {
     private const val DEFAULT_CHUNK_SIZE: Int = 50

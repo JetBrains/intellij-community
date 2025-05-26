@@ -62,16 +62,13 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
   }
 
   private fun getItems(
-    provider: SeItemDataProvider,
+    provider: SeLocalItemDataProvider,
     params: SeParams,
     equalityChecker: SeEqualityChecker,
     requestedCountState: MutableStateFlow<Int>
   ): Flow<SeItemData> {
     return flow {
-      val itemsFlow = (provider as? SeLocalItemDataProvider)?.getItems(params, equalityChecker)
-                      ?: provider.getItems(params)
-
-      itemsFlow.collect { item ->
+      provider.getItems(params, equalityChecker).collect { item ->
         requestedCountState.first { it > 0 }
         requestedCountState.update { it - 1 }
 
@@ -135,22 +132,28 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
     return provider.itemSelected(itemData, modifiers, searchText)
   }
 
-  suspend fun getSearchScopesInfoForProvider(
+  suspend fun getSearchScopesInfoForProviders(
     sessionRef: DurableRef<SeSessionEntity>,
     dataContextId: DataContextId,
-    providerId: SeProviderId,
-  ): SeSearchScopesInfo? {
-    val provider = getProvidersHolder(sessionRef, dataContextId)?.get(providerId, false)
-    return provider?.getSearchScopesInfo()
+    providerIds: List<SeProviderId>,
+  ): Map<SeProviderId, SeSearchScopesInfo> {
+    return providerIds.mapNotNull { providerId ->
+      val provider = getProvidersHolder(sessionRef, dataContextId)?.get(providerId, false)
+      provider?.getSearchScopesInfo()?.let {
+        providerId to it
+      }
+    }.toMap()
   }
 
-  suspend fun getTypeVisibilityStatesForProvider(
+  suspend fun getTypeVisibilityStatesForProviders(
     sessionRef: DurableRef<SeSessionEntity>,
     dataContextId: DataContextId,
-    providerId: SeProviderId,
-  ): List<SeTypeVisibilityStatePresentation>? {
-    val provider = getProvidersHolder(sessionRef, dataContextId)?.get(providerId, false)
-    return provider?.getTypeVisibilityStates()
+    providerIds: List<SeProviderId>,
+  ): List<SeTypeVisibilityStatePresentation> {
+    return providerIds.mapNotNull { providerId ->
+      val provider = getProvidersHolder(sessionRef, dataContextId)?.get(providerId, false)
+      provider?.getTypeVisibilityStates()
+    }.flatten()
   }
 
   suspend fun getDisplayNameForProvider(
@@ -169,10 +172,12 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
   suspend fun canBeShownInFindResults(
     sessionRef: DurableRef<SeSessionEntity>,
     dataContextId: DataContextId,
-    providerId: SeProviderId,
+    providerIds: List<SeProviderId>
   ): Boolean {
-    val provider = getProvidersHolder(sessionRef, dataContextId)?.get(providerId, false) ?: return false
-    return provider.canBeShownInFindResults()
+    return providerIds.any { providerId ->
+      val provider = getProvidersHolder(sessionRef, dataContextId)?.get(providerId, false)
+      provider?.canBeShownInFindResults() ?: false
+    }
   }
 
   companion object {

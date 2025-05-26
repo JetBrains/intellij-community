@@ -14,7 +14,7 @@ data class SeItemData(
   val providerId: SeProviderId,
   val weight: Int,
   val presentation: SeItemPresentation,
-  val uuidToReplace: List<String>,
+  val uuidsToReplace: List<String>,
   private val itemRef: DurableRef<SeItemEntity>
 ) {
 

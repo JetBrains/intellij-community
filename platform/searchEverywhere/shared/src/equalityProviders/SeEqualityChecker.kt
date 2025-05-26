@@ -25,18 +25,20 @@ class SeEqualityChecker {
       val newItemInfo = SearchEverywhereFoundElementInfo(newItemUuid, itemObject, priority, contributor)
       val result = equalityProvider.compareItems(newItemInfo, alreadyFoundItems.values.toList())
 
-      if (result is SEResultsEqualityProvider.SEEqualElementsActionType.Replace) {
-        val toRemove = result.toBeReplaced.mapNotNull { it.uuid }
-        toRemove.forEach { alreadyFoundItems.remove(it) }
+      when (result) {
+        is SEResultsEqualityProvider.SEEqualElementsActionType.Replace -> {
+          val toRemove = result.toBeReplaced.mapNotNull { it.uuid }
+          toRemove.forEach { alreadyFoundItems.remove(it) }
 
-        return Replace(toRemove)
-      }
-      else if (result is SEResultsEqualityProvider.SEEqualElementsActionType.Skip) {
-        return Skip
-      }
-      else {
-        alreadyFoundItems[newItemUuid] = newItemInfo
-        return Add
+          return Replace(toRemove)
+        }
+        is SEResultsEqualityProvider.SEEqualElementsActionType.Skip -> {
+          return Skip
+        }
+        else -> {
+          alreadyFoundItems[newItemUuid] = newItemInfo
+          return Add
+        }
       }
     }
   }

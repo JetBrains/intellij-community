@@ -51,23 +51,23 @@ interface SeRemoteApi : RemoteApi<Unit> {
   suspend fun canBeShownInFindResults(projectId: ProjectId,
                                       sessionRef: DurableRef<SeSessionEntity>,
                                       dataContextId: DataContextId,
-                                      providerId: SeProviderId): Boolean
+                                      providerIds: List<SeProviderId>): Boolean
 
   suspend fun getAvailableProviderIds(): List<SeProviderId>
 
-  suspend fun getSearchScopesInfoForProvider(
+  suspend fun getSearchScopesInfoForProviders(
     projectId: ProjectId,
     sessionRef: DurableRef<SeSessionEntity>,
     dataContextId: DataContextId,
-    providerId: SeProviderId,
-  ): SeSearchScopesInfo?
+    providerIds: List<SeProviderId>,
+  ): Map<SeProviderId, SeSearchScopesInfo>
 
-  suspend fun getTypeVisibilityStatesForProvider(
+  suspend fun getTypeVisibilityStatesForProviders(
     projectId: ProjectId,
     sessionRef: DurableRef<SeSessionEntity>,
     dataContextId: DataContextId,
-    providerId: SeProviderId,
-  ): List<SeTypeVisibilityStatePresentation>?
+    providerIds: List<SeProviderId>,
+  ): List<SeTypeVisibilityStatePresentation>
 
   suspend fun getDisplayNameForProviders(
     projectId: ProjectId,

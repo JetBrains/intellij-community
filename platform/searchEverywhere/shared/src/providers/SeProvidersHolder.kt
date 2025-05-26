@@ -12,7 +12,10 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SeItemsProvider
+import com.intellij.platform.searchEverywhere.SeItemsProviderFactory
+import com.intellij.platform.searchEverywhere.SeProviderId
+import com.intellij.platform.searchEverywhere.SeSessionEntity
 import com.intellij.platform.searchEverywhere.providers.SeProvidersHolder.Companion.initialize
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.Dispatchers
@@ -27,10 +30,10 @@ import kotlin.coroutines.cancellation.CancellationException
  */
 @ApiStatus.Internal
 class SeProvidersHolder(
-  private val allTabProviders: Map<SeProviderId, SeItemDataProvider>,
-  private val separateTabProviders: Map<SeProviderId, SeItemDataProvider>,
+  private val allTabProviders: Map<SeProviderId, SeLocalItemDataProvider>,
+  private val separateTabProviders: Map<SeProviderId, SeLocalItemDataProvider>,
 ) : Disposable {
-  fun get(providerId: SeProviderId, isSeparateTab: Boolean): SeItemDataProvider? =
+  fun get(providerId: SeProviderId, isSeparateTab: Boolean): SeLocalItemDataProvider? =
     if (isSeparateTab) separateTabProviders[providerId] ?: allTabProviders[providerId]
     else allTabProviders[providerId]
 
@@ -54,8 +57,8 @@ class SeProvidersHolder(
 
       val dataContext = initEvent.dataContext
 
-      val providers = mutableMapOf<SeProviderId, SeItemDataProvider>()
-      val separateTabProviders = mutableMapOf<SeProviderId, SeItemDataProvider>()
+      val providers = mutableMapOf<SeProviderId, SeLocalItemDataProvider>()
+      val separateTabProviders = mutableMapOf<SeProviderId, SeLocalItemDataProvider>()
 
       SeItemsProviderFactory.EP_NAME.extensionList.filter {
         providerIds == null || SeProviderId(it.id) in providerIds
