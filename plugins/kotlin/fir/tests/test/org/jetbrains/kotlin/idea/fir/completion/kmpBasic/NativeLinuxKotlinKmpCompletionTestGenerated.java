@@ -1803,11 +1803,6 @@ public abstract class NativeLinuxKotlinKmpCompletionTestGenerated extends Abstra
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("KTIJ-32210.kt")
-        public void testKTIJ_32210() throws Exception {
-            runTest("../../completion/testData/basic/common/lambdaSignature/KTIJ-32210.kt");
-        }
-
         @TestMetadata("ParameterName1.kt")
         public void testParameterName1() throws Exception {
             runTest("../../completion/testData/basic/common/lambdaSignature/ParameterName1.kt");
@@ -1856,6 +1851,11 @@ public abstract class NativeLinuxKotlinKmpCompletionTestGenerated extends Abstra
         @TestMetadata("ParameterType5.kt")
         public void testParameterType5() throws Exception {
             runTest("../../completion/testData/basic/common/lambdaSignature/ParameterType5.kt");
+        }
+
+        @TestMetadata("ParameterTypeWithOuterTypeQualifier.kt")
+        public void testParameterTypeWithOuterTypeQualifier() throws Exception {
+            runTest("../../completion/testData/basic/common/lambdaSignature/ParameterTypeWithOuterTypeQualifier.kt");
         }
     }
 
