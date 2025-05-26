@@ -483,6 +483,7 @@ internal class BazelBuildFileGenerator(
     if (moduleDescriptor.testSources.isNotEmpty()) {
       load("@rules_jvm//:jvm.bzl", "jvm_test")
       load("@rules_jvm//:jvm.bzl", "jvm_library")
+      load("@community//build:tests-options.bzl", "jps_test")
 
       val testLibTargetName = "${moduleDescriptor.targetName}$TEST_LIB_NAME_SUFFIX"
       target("jvm_library") {
@@ -497,7 +498,7 @@ internal class BazelBuildFileGenerator(
         renderDeps(deps = moduleList.testDeps.get(moduleDescriptor), target = this, resourceDependencies = resourceTargets, forTests = true)
       }
 
-      target("jvm_test") {
+      target("jps_test") {
         option("name", "${moduleDescriptor.targetName}_test")
         option("runtime_deps", arrayOf(":$testLibTargetName"))
       }

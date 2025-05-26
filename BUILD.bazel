@@ -76,6 +76,10 @@ java_binary(
   ]
 )
 
+## used to determine community root path in the test
+## see community/build/tests-options.bzl
+exports_files(["intellij.idea.community.main.iml"])
+
 ### auto-generated section `build intellij.idea.community.main` start
 load("@rules_java//java:defs.bzl", "java_library")
 
