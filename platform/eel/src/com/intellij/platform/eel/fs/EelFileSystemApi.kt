@@ -481,8 +481,8 @@ interface EelFileSystemApi {
   }
 
   /**
-   * Sets the currently watched paths from the specified set of file paths and provides a flow of change events.
-   * NOTE: Any previously watched paths are dropped, no more watch events will be received for them.
+   * Adds the watched paths from the specified set of file paths and provides a flow of change events.
+   * A path is watched till [unwatch] method is explicitly called for it.
    *
    * Use [WatchOptionsBuilder] to construct the watch configuration. Example:
    * ```
@@ -500,6 +500,19 @@ interface EelFileSystemApi {
    */
   @Throws(UnsupportedOperationException::class)
   suspend fun watchChanges(@GeneratedBuilder watchOptions: WatchOptions): Flow<PathChange> {
+    throw UnsupportedOperationException()
+  }
+
+  /**
+   * Unregisters a previously watched path.
+   *
+   * @param unwatchOptions The options specifying the path to be unwatched. See [UnwatchOptions].
+   * @return True if the operation was successful. False if the path hadn't been previously watched or unwatch failed.
+   *
+   * @throws UnsupportedOperationException if the method isn't implemented for the file system.
+   */
+  @Throws(UnsupportedOperationException::class)
+  suspend fun unwatch(@GeneratedBuilder unwatchOptions: UnwatchOptions): Boolean {
     throw UnsupportedOperationException()
   }
 
@@ -528,6 +541,13 @@ interface EelFileSystemApi {
   }
 
 
+  /**
+   * Represents a file system path being monitored for changes.
+   *
+   * @property path The file system path being watched.
+   * @property recursive Whether the file system changes should be monitored recursively within the specified path.
+   * @see [watchChanges]
+   */
   interface WatchedPath {
     val path: EelPath
     val recursive: Boolean
@@ -540,6 +560,16 @@ interface EelFileSystemApi {
     companion object {
       fun Builder(path: EelPath): Builder = WatchedPathBuilder(path)
     }
+  }
+
+  /**
+   * Represents the options required to unregister a previously watched path in the file system.
+   *
+   * @property path The file system path to unwatch. Must be specified as an instance of [EelPath].
+   * @see [unwatch]
+   */
+  interface UnwatchOptions {
+    val path: EelPath
   }
 
   /**
