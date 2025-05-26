@@ -83,7 +83,7 @@ public final class SaveAsTemplateAction extends AnAction {
       for (RangeMarker m1 : rangeToText.keySet()) {
         boolean nested = false;
         for (RangeMarker m2 : rangeToText.keySet()) {
-          if (m1 != m2 && m2.getStartOffset() <= m1.getStartOffset() && m1.getEndOffset() <= m2.getEndOffset()) {
+          if (m1 != m2 && m2.getTextRange().contains(m1.getTextRange())) {
             nested = true;
             break;
           }

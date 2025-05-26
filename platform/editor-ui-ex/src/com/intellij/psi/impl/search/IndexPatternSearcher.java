@@ -234,7 +234,7 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
         int start = fitToRange(matcher.start(), commentPrefixLength, suffixStartOffset) + commentStart - commentPrefixLength;
         int end = fitToRange(matcher.end(), commentPrefixLength, suffixStartOffset) + commentStart - commentPrefixLength;
         if (start != end) {
-          if ((range == null || range.getStartOffset() <= start && end <= range.getEndOffset()) && !matches.contains(start)) {
+          if ((range == null || range.containsRange(start, end)) && !matches.contains(start)) {
             List<TextRange> additionalRanges = multiLine ? findContinuation(start, chars, allIndexPatterns, commentRanges, commentNum)
                                                          : Collections.emptyList();
             if (range != null && !additionalRanges.isEmpty() &&

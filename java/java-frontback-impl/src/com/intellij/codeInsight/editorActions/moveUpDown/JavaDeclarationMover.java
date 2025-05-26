@@ -93,7 +93,7 @@ final class JavaDeclarationMover extends LineMover {
   }
 
   private static boolean contains(RangeMarker rangeMarker, int index) {
-    return rangeMarker.getStartOffset() <= index && rangeMarker.getEndOffset() >= index;
+    return rangeMarker.getTextRange().containsInclusive(index);
   }
 
   @Override

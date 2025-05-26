@@ -185,7 +185,7 @@ final class MoverWrapper {
   private static FoldRegion findTopLevelRegionInRange(Editor editor, RangeMarker range) {
     FoldRegion result = null;
     for (FoldRegion foldRegion : editor.getFoldingModel().getAllFoldRegions()) {
-      if (foldRegion.isValid() && contains(range, foldRegion) && !contains(result, foldRegion)) {
+      if (foldRegion.isValid() && contains(range, foldRegion) && (result==null||!contains(result, foldRegion))) {
         result = foldRegion;
       }
     }
@@ -201,21 +201,7 @@ final class MoverWrapper {
    *                      of the given fold region; {@code false} otherwise
    */
   private static boolean contains(@NotNull RangeMarker rangeMarker, @NotNull FoldRegion foldRegion) {
-    return rangeMarker.getStartOffset() <= foldRegion.getStartOffset() && rangeMarker.getEndOffset() >= foldRegion.getEndOffset();
-  }
-
-  /**
-   * Allows to check if given {@code 'region2'} is nested to {@code 'region1'}
-   *
-   * @param region1   'outer' region candidate
-   * @param region2   'inner' region candidate
-   * @return          {@code true} if 'region2' is nested to 'region1'; {@code false} otherwise
-   */
-  private static boolean contains(@Nullable FoldRegion region1, @NotNull FoldRegion region2) {
-    if (region1 == null) {
-      return false;
-    }
-    return region1.getStartOffset() <= region2.getStartOffset() && region1.getEndOffset() >= region2.getEndOffset();
+    return rangeMarker.getTextRange().contains(foldRegion.getTextRange());
   }
 
   private static void indentLinesIn(final Editor editor, final PsiFile file, final Document document, final Project project, RangeMarker range) {

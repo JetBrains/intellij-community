@@ -171,7 +171,7 @@ class IdentifierHighlightingManagerImpl(private val myProject: Project) : Identi
 
   // true if this Result is valid when the caret is at offset
   private fun containsTargetOffset(result: IdentifierHighlightingResult, offset: Int): Boolean {
-    return result.targets.any { t -> t.getStartOffset() <= offset && offset <= t.getEndOffset() }
+    return result.targets.any { t -> t.containsInclusive(offset) }
   }
 
   companion object {

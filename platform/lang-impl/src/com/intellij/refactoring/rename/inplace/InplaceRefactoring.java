@@ -978,7 +978,7 @@ public abstract class InplaceRefactoring {
         range = myRenameOffset.getTextRange();
       }
       myBeforeRevert =
-        range != null && range.getEndOffset() >= currentOffset && range.getStartOffset() <= currentOffset
+        range != null && range.containsInclusive(currentOffset)
         ? myEditor.getDocument().createRangeMarker(range.getStartOffset(), currentOffset)
         : null;
       if (myBeforeRevert != null) {

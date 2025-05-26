@@ -852,7 +852,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
           for (UsageInfo info : adapter.getMergedInfos()) {
             Segment range = doIfNotNull(info.getPsiFileRange(), it -> ReadAction.compute(it::getRange));
-            if (range != null && range.getStartOffset() <= offset && offset <= range.getEndOffset()) {
+            if (range != null && range.containsInclusive(offset)) {
               return true;
             }
           }

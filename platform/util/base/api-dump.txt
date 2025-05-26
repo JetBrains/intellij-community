@@ -20,6 +20,8 @@ c:com.intellij.openapi.progress.ProcessCanceledException
 com.intellij.openapi.util.Segment
 - sf:BY_START_OFFSET_THEN_END_OFFSET:java.util.Comparator
 - sf:EMPTY_ARRAY:com.intellij.openapi.util.Segment[]
+- contains(I):Z
+- containsInclusive(I):Z
 - a:getEndOffset():I
 - a:getStartOffset():I
 c:com.intellij.openapi.util.TextRange

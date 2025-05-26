@@ -419,7 +419,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         val editor = myFixture.editor
         //DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor)
         for (highlight in highlightInfos) {
-            if (highlight.startOffset <= caretOffset && caretOffset <= highlight.endOffset) {
+            if (highlight.containsInclusive(caretOffset)) {
                 val group = highlight.problemGroup
                 if (group is SuppressableProblemGroup) {
                     val at = file.findElementAt(highlight.actualStartOffset) ?: continue

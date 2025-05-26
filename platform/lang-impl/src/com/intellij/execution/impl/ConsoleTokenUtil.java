@@ -116,7 +116,9 @@ public final class ConsoleTokenUtil {
     RangeMarker[] marker = new RangeMarker[1];
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(editor.getDocument(), project, true);
     model.processRangeHighlightersOverlappingWith(offset, offset, m->{
-      if (getTokenType(m) == null || m.getStartOffset() > offset || offset + 1 > m.getEndOffset()) return true;
+      if (getTokenType(m) == null || !m.getTextRange().contains(offset)) {
+        return true;
+      }
       marker[0] = m;
       return false;
     });

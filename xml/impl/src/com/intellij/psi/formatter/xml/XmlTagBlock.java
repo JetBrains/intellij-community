@@ -247,8 +247,7 @@ public class XmlTagBlock extends AbstractXmlBlock {
           result.add(reg);
           i++;
         }
-        else if (injRange.getStartOffset() <= regRange.getStartOffset()
-                 && regRange.getEndOffset() <= injRange.getEndOffset()) {
+        else if (injRange.contains(regRange)) {
           // Regular block completely within injected - skip
           i++;
         }

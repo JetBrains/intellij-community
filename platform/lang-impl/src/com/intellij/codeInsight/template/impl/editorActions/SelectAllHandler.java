@@ -41,7 +41,7 @@ public class SelectAllHandler extends EditorActionHandler {
     if (templateState != null && !templateState.isFinished()) {
       final TextRange range = templateState.getCurrentVariableRange();
       final int caretOffset = editor.getCaretModel().getOffset();
-      if (range != null && range.getStartOffset() <= caretOffset && caretOffset <= range.getEndOffset()) {
+      if (range != null && range.containsInclusive(caretOffset)) {
         editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
         return;
       }
