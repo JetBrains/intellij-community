@@ -4,7 +4,7 @@ def get_jvm_flags(flags):
         # "-XX:+UseZGC",
         # "-XX:+ZGenerational",
         "-Xms2g",
-        "-Xmx16g",
+        "-Xmx20g",
         # IJ PSI cache
         "-XX:SoftRefLRUPolicyMSPerMB=50",
         # Code Cache
