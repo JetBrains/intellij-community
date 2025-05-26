@@ -147,7 +147,12 @@ public final class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRout
 
   @Override
   protected @NotNull FileSystem getDelegate(@NotNull String root) {
-    return MultiRoutingFileSystemProvider.ourForceDefaultFs ? myLocalFS : getBackend(root);
+    if (MultiRoutingFileSystemProvider.ourForceDefaultFs) {
+      return myLocalFS;
+    }
+    FileSystem result = getBackend(root);
+    myProvider.myPathSpy.accept(root, result != myLocalFS);
+    return result;
   }
 
   @Override

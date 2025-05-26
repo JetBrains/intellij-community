@@ -6,5 +6,7 @@
                         serviceImplementation="com.intellij.platform.eel.impl.local.LocalWindowsEelApiImpl"/>
     <applicationService serviceInterface="com.intellij.platform.eel.provider.LocalPosixEelApi"
                         serviceImplementation="com.intellij.platform.eel.impl.local.LocalPosixEelApiImpl"/>
+
+    <applicationActivity implementation="com.intellij.platform.eel.impl.fs.EelEarlyAccessApplicationActivity"/>
   </extensions>
 </idea-plugin>
