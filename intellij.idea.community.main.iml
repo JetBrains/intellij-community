@@ -251,5 +251,6 @@
     <orderEntry type="module" module-name="intellij.vcs.git.commit.modal" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.pyproject" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.indexing.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.monorepo" scope="TEST" />
   </component>
 </module>

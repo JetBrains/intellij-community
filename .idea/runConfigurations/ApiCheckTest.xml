@@ -1,0 +1,13 @@
+<component name="ProjectRunConfigurationManager">
+<configuration default="false" name="ApiCheckTest" type="JUnit" factoryName="JUnit" nameIsGenerated="true">
+  <module name="intellij.platform.testFramework.monorepo" />
+  <shortenClasspath name="ARGS_FILE" />
+  <option name="PACKAGE_NAME" value="com.intellij.platform.testFramework.monorepo.api" />
+  <option name="MAIN_CLASS_NAME" value="com.intellij.platform.testFramework.monorepo.api.ApiCheckTest" />
+  <option name="METHOD_NAME" value="" />
+  <option name="TEST_OBJECT" value="class" />
+  <method v="2">
+    <option name="MakeProject" enabled="true" />
+  </method>
+</configuration>
+</component>
