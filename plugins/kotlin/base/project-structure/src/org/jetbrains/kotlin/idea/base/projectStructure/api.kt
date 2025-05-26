@@ -21,10 +21,10 @@ import com.intellij.openapi.projectRoots.Sdk as OpenapiSdk
 import com.intellij.openapi.roots.libraries.Library as OpenapiLibrary
 
 /**
- * Represents kind of [KaSourceModule]
+ * Represents the kind of [KaSourceModule].
  *
- * For each module, there may be from 0 to 2 [KaSourceModule] based on the corresponding source sets (production, test)
- * Each [KaSourceModule] should be one of the provided kinds.
+ * For each module, there may be zero to two non-empty [KaSourceModule]s based on the corresponding source sets (production, test). Each
+ * [KaSourceModule] should correspond to exactly one of the kinds.
  */
 enum class KaSourceModuleKind {
     /** Production (main) source module. */
@@ -32,6 +32,13 @@ enum class KaSourceModuleKind {
 
     /** Test source module. */
     TEST;
+}
+
+/**
+ * A [KaSourceModule] with a [KaSourceModuleKind].
+ */
+interface KaSourceModuleWithKind : KaSourceModule {
+    val kind: KaSourceModuleKind
 }
 
 /**

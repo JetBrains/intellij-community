@@ -7,18 +7,17 @@ import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.workspaceModel.ide.legacyBridge.findModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.facet.stableName
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.KaEntityBasedModule
 import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
+import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleWithKind
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.ModuleSourcesScope
 import org.jetbrains.kotlin.idea.project.ModulePlatformCache
 import org.jetbrains.kotlin.platform.TargetPlatform
 
-internal abstract class KaSourceModuleBase() : KaEntityBasedModule<ModuleEntity, ModuleId>(), KaSourceModule {
-    abstract val kind: KaSourceModuleKind
+internal abstract class KaSourceModuleBase() : KaEntityBasedModule<ModuleEntity, ModuleId>(), KaSourceModuleWithKind {
     override val name: String get() = entityId.name
 
     internal val module: Module
@@ -68,4 +67,3 @@ internal abstract class KaSourceModuleBase() : KaEntityBasedModule<ModuleEntity,
         return super.toString() + ", kind=${kind}"
     }
 }
-

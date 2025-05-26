@@ -70,5 +70,6 @@
     <orderEntry type="module" module-name="kotlin.base.psi" />
     <orderEntry type="module" module-name="kotlin.searching.k2" />
     <orderEntry type="module" module-name="intellij.java.psi.impl" />
+    <orderEntry type="module" module-name="kotlin.base.fir.project-structure" scope="TEST" />
   </component>
 </module>
