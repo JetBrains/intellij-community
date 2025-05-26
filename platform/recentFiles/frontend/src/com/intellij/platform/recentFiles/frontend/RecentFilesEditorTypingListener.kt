@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
 import com.intellij.platform.recentFiles.frontend.model.FrontendRecentFilesModel
+import com.intellij.platform.recentFiles.shared.FileChangeKind
 import com.intellij.platform.recentFiles.shared.RecentFileKind
 import com.intellij.platform.recentFiles.shared.RecentFilesApplicationCoroutineScopeProvider
 import kotlinx.coroutines.FlowPreview
@@ -28,7 +29,7 @@ private class RecentFilesEditorTypingListener : AnActionListener {
       recentlyChangedFiles.debounce(1.seconds)
         .collect { (file, project) ->
           LOG.debug("Adding file to the frontend recent files model after typing: ${file.name}")
-          FrontendRecentFilesModel.getInstanceAsync(project).applyFrontendChanges(RecentFileKind.RECENTLY_EDITED, listOf(file), true)
+          FrontendRecentFilesModel.getInstanceAsync(project).applyFrontendChanges(RecentFileKind.RECENTLY_EDITED, listOf(file), FileChangeKind.ADDED)
         }
     }
   }

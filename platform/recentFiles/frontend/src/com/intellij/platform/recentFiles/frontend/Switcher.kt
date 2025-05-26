@@ -40,6 +40,7 @@ import com.intellij.platform.recentFiles.frontend.SwitcherLogger.NAVIGATED_ORIGI
 import com.intellij.platform.recentFiles.frontend.SwitcherLogger.SHOWN_TIME_ACTIVITY
 import com.intellij.platform.recentFiles.frontend.SwitcherSpeedSearch.Companion.installOn
 import com.intellij.platform.recentFiles.frontend.model.FrontendRecentFilesModel
+import com.intellij.platform.recentFiles.shared.FileChangeKind
 import com.intellij.platform.recentFiles.shared.FileSwitcherApi
 import com.intellij.platform.recentFiles.shared.RecentFileKind
 import com.intellij.platform.recentFiles.shared.RecentFilesBackendRequest
@@ -476,7 +477,7 @@ object Switcher : BaseSwitcherAction(null), ActionRemoteBehaviorSpecification.Fr
         else -> RecentFileKind.RECENTLY_OPENED
       }
       if (filesToHide.isNotEmpty()) {
-        frontendModel.applyFrontendChanges(currentlyShownFileType, filesToHide.mapNotNull { it.virtualFile }, false)
+        frontendModel.applyFrontendChanges(currentlyShownFileType, filesToHide.mapNotNull { it.virtualFile }, FileChangeKind.REMOVED)
       }
     }
 
