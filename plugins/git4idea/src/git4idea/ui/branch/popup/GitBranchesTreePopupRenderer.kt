@@ -7,23 +7,20 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
-import com.intellij.util.ui.UIUtil.ComponentStyle
 import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.git.shared.branch.GitInOutCountersInProject
 import com.intellij.vcs.git.shared.branch.GitInOutStateHolder
-import com.intellij.vcs.git.shared.branch.GitIncomingOutgoingColors
 import com.intellij.vcs.git.shared.branch.calcTooltip
 import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
+import com.intellij.vcs.git.shared.ui.GitIncomingOutgoingUi
 import git4idea.GitRemoteBranch
 import git4idea.GitStandardLocalBranch
 import git4idea.ui.branch.tree.GitBranchesTreeModel
 import git4idea.ui.branch.tree.GitBranchesTreeRenderer
-import icons.DvcsImplIcons
 import java.awt.Container
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
@@ -41,11 +38,11 @@ internal class GitBranchesTreePopupRenderer(treePopupStep: GitBranchesTreePopupS
   private val arrowLabel = JLabel().apply {
     border = JBUI.Borders.emptyLeft(4) // 6 px in spec, but label width is differed
   }
-  private val incomingLabel = createIncomingLabel().apply {
+  private val incomingLabel = GitIncomingOutgoingUi.createIncomingLabel().apply {
     border = JBUI.Borders.empty(1, 10, 0, 1)
   }
 
-  private val outgoingLabel = createOutgoingLabel().apply {
+  private val outgoingLabel = GitIncomingOutgoingUi.createOutgoingLabel().apply {
     border = JBUI.Borders.empty(1, 2, 0, 10)
   }
 
@@ -179,23 +176,6 @@ internal class GitBranchesTreePopupRenderer(treePopupStep: GitBranchesTreePopupS
     }
   }
 }
-
-internal fun createIncomingLabel(): JLabel = JBLabel().apply {
-  icon = DvcsImplIcons.Incoming
-  iconTextGap = ICON_TEXT_GAP
-  componentStyle = ComponentStyle.SMALL
-  foreground = GitIncomingOutgoingColors.INCOMING_FOREGROUND
-}
-
-internal fun createOutgoingLabel(): JLabel = JBLabel().apply {
-  icon = DvcsImplIcons.Outgoing
-  iconTextGap = ICON_TEXT_GAP
-  componentStyle = ComponentStyle.SMALL
-  foreground = GitIncomingOutgoingColors.OUTGOING_FOREGROUND
-}
-
-private val ICON_TEXT_GAP
-  get() = JBUI.scale(1)
 
 internal fun updateIncomingCommitLabel(label: JLabel, incomingOutgoingState: GitInOutCountersInProject) {
   val isEmpty = incomingOutgoingState == GitInOutCountersInProject.EMPTY

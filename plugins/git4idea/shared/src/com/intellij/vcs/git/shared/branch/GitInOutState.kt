@@ -5,8 +5,6 @@ import com.intellij.dvcs.DvcsImplIconsExt
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
-import com.intellij.ui.ColorUtil
-import com.intellij.ui.JBColor
 import git4idea.i18n.GitBundle.message
 import icons.DvcsImplIcons
 import kotlinx.serialization.Serializable
@@ -102,11 +100,3 @@ fun GitInOutCountersInProject.calcTooltip(): @NlsContexts.Tooltip String? {
   return html.toString()
 }
 
-@ApiStatus.Internal
-object GitIncomingOutgoingColors {
-  val INCOMING_FOREGROUND: JBColor
-    get() = JBColor(ColorUtil.fromHex("#3574F0"), ColorUtil.fromHex("#548AF7"))
-
-  val OUTGOING_FOREGROUND: JBColor
-    get() = JBColor(ColorUtil.fromHex("#369650"), ColorUtil.fromHex("#57965C"))
-}

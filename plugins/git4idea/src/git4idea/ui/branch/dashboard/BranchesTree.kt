@@ -36,13 +36,12 @@ import com.intellij.vcs.branch.LinkedBranchDataImpl
 import com.intellij.vcs.git.shared.branch.GitBranchesMatcherWrapper
 import com.intellij.vcs.git.shared.branch.calcTooltip
 import com.intellij.vcs.git.shared.ui.GitBranchesTreeIconProvider
+import com.intellij.vcs.git.shared.ui.GitIncomingOutgoingUi
 import com.intellij.vcsUtil.VcsImplUtil
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.BranchesTreeActionGroup
-import git4idea.ui.branch.popup.createIncomingLabel
-import git4idea.ui.branch.popup.createOutgoingLabel
 import git4idea.ui.branch.popup.updateIncomingCommitLabel
 import git4idea.ui.branch.popup.updateOutgoingCommitLabel
 import git4idea.ui.branch.tree.GitBranchesTreeUtil
@@ -84,8 +83,8 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
     private val repositoryManager = GitRepositoryManager.getInstance(project)
     private val branchManager = project.service<GitBranchManager>()
 
-    private val incomingLabel = createIncomingLabel()
-    private val outgoingLabel = createOutgoingLabel()
+    private val incomingLabel = GitIncomingOutgoingUi.createIncomingLabel()
+    private val outgoingLabel = GitIncomingOutgoingUi.createOutgoingLabel()
 
     override fun customizeCellRenderer(
       tree: JTree,
