@@ -7,10 +7,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 
-/**
- * See `FirOrderedWorkspaceModelChangeListener` for why this workspace model listener exists.
- */
-internal class Fe10OrderedWorkspaceModelChangeListener(private val project: Project) : WorkspaceModelChangeListener {
+internal class Fe10WorkspaceModelChangeListener(private val project: Project) : WorkspaceModelChangeListener {
     override fun beforeChanged(event: VersionedStorageChange) {
         project.serviceIfCreated<LibraryInfoCache>()?.beforeWorkspaceModelChanged(event)
     }

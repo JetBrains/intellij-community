@@ -107,14 +107,13 @@ abstract class IdeKotlinModuleDependentsProvider(protected val project: Project)
     /**
      * Caching transitive dependents is crucial. [getTransitiveDependents] will frequently be called by session invalidation when typing in
      * a Kotlin file. Large projects might have core modules with over a hundred or even a thousand transitive dependents. At the same time,
-     * we can keep the size of this cache small, because transitive dependents will usually only be requested for a single module (e.g. the
+     * we can keep the size of this cache small because transitive dependents will usually only be requested for a single module (e.g., the
      * module to be invalidated after an out-of-block modification).
      *
      * The timing of invalidation is important, since the [IdeKotlinModuleDependentsProvider] may be used in workspace model listeners when
      * project structure changes. Using a *before change* workspace model listener is not an option, because we'd have to guarantee that
-     * this listener is placed after all other listeners which might use `IdeKotlinModuleDependentsProvider`. It's not entirely impossible
-     * due to the existence of `Fe10/FirOrderedWorkspaceModelChangeListener`, but a simpler solution such as the project root modification
-     * tracker, which is incremented after *before change* events have been handled, seems preferable.
+     * this listener is placed after all other listeners which might use `IdeKotlinModuleDependentsProvider`. So a simpler solution such as
+     * the project root modification tracker, which is incremented after *before change* events have been handled, seems preferable.
      */
     private val transitiveDependentsCache: CachedValue<Cache<KaModule, Set<KaModule>>> =
         CachedValuesManager.getManager(project).createCachedValue {
