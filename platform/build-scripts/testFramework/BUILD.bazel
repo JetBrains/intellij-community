@@ -50,6 +50,7 @@ jvm_library(
     "//platform/util/xmlDom",
     "@lib//:tc_service_messages",
     "//platform/buildData",
+    "//platform/util/zip",
   ]
 )
 ### auto-generated section `build intellij.platform.buildScripts.testFramework` end
