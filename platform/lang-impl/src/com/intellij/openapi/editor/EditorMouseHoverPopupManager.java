@@ -219,6 +219,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
     }
     myAlarm.addRequest(() -> {
       ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+        if (editor.isDisposed()) return;
         // errors are stored in the top level editor markup model, not the injected one
         @NotNull Editor topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
 
@@ -227,6 +228,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
           if (!forceShowing && progress != myCurrentProgress) {
             return;
           }
+          if (topLevelEditor.isDisposed()) return;
 
           myCurrentProgress = null;
           if (info == null ||
