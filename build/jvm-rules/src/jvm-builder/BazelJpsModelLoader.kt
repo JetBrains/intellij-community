@@ -159,7 +159,7 @@ private fun configureJavac(project: JpsProject, args: ArgMap<JvmBuilderFlags>) {
     .filter { !it.isBlank() }
     .joinToString(separator = " ") {
       "--add-exports $it"
-    } + " -encoding utf-8"
+    }
   configuration.setCompilerOptions("Javac", compilerOptions)
 }
 
