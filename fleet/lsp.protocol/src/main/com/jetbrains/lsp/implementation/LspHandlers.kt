@@ -8,7 +8,6 @@ import com.jetbrains.lsp.protocol.ProgressParams
 import com.jetbrains.lsp.protocol.WorkDoneProgress
 import com.jetbrains.lsp.protocol.WorkDoneProgressParams
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.serialization.KSerializer
 
 interface LspHandlers {
     fun requestHandler(
@@ -18,6 +17,11 @@ interface LspHandlers {
     fun notificationHandler(
         notificationTypeName: String,
     ): LspNotificationHandler<*>?
+
+    object EMPTY : LspHandlers {
+        override fun requestHandler(requestTypeName: String): LspRequestHandler<*, *, *>? = null
+        override fun notificationHandler(notificationTypeName: String): LspNotificationHandler<*>? = null
+    }
 }
 
 interface LspHandlersBuilder {
