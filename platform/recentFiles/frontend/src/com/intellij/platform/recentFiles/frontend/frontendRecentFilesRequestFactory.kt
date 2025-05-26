@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.projectId
 import com.intellij.platform.recentFiles.shared.RecentFileKind
 import com.intellij.platform.recentFiles.shared.RecentFilesBackendRequest
+import org.jetbrains.annotations.ApiStatus
 
 internal fun createFilesSearchRequestRequest(recentFileKind: RecentFileKind, project: Project): RecentFilesBackendRequest.FetchFiles {
   val filesFromFrontendEditorSelectionHistory = if (recentFileKind == RecentFileKind.RECENTLY_OPENED_UNPINNED) collectFilesFromFrontendEditorSelectionHistory(project) else emptyList()
@@ -21,6 +22,14 @@ internal fun createHideFilesRequest(recentFileKind: RecentFileKind, filesToHide:
   return RecentFilesBackendRequest.HideFiles(
     filesKind = recentFileKind,
     filesToHide = filesToHide.map { it.rpcId() },
+    projectId = project.projectId()
+  )
+}
+
+internal fun createFilesUpdateRequest(recentFileKind: RecentFileKind, frontendRecentFiles: List<VirtualFile>, project: Project): RecentFilesBackendRequest.FetchMetadata {
+  return RecentFilesBackendRequest.FetchMetadata(
+    filesKind = recentFileKind,
+    frontendRecentFiles = frontendRecentFiles.map { it.rpcId() },
     projectId = project.projectId()
   )
 }

@@ -30,4 +30,11 @@ internal object BackendRecentFileEventsController {
       }
     }
   }
+
+  fun updateAllExistingFilesInModel(project: Project) {
+    for (filesKind in RecentFileKind.entries) {
+      val knownFilesByKind = BackendRecentFilesModel.getInstance(project).getFilesByKind(filesKind).takeIf { it.isNotEmpty() } ?: continue
+      BackendRecentFileEventsModel.getInstance(project).scheduleApplyBackendChanges(filesKind, FileChangeKind.UPDATED, knownFilesByKind)
+    }
+  }
 }

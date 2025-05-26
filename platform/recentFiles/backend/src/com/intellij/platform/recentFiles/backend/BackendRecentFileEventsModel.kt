@@ -101,42 +101,37 @@ internal class BackendRecentFileEventsModel(private val project: Project, privat
   }
 
   fun scheduleApplyBackendChangesToAllFileKinds(changeKind: FileChangeKind, files: List<VirtualFile>) {
-    val reasonablyLimitedFilesList = files.take(bufferSize)
     for (fileKind in RecentFileKind.entries) {
-      scheduleApplyBackendChanges(fileKind, changeKind, reasonablyLimitedFilesList)
-    }
-  }
-
-  fun emitUncertainChange() {
-    for (fileKind in RecentFileKind.entries) {
-      chooseTargetFlow(fileKind).tryEmit(RecentFilesEvent.UncertainChangeOccurred())
+      scheduleApplyBackendChanges(fileKind, changeKind, files)
     }
   }
 
   fun scheduleApplyBackendChanges(fileKind: RecentFileKind, changeKind: FileChangeKind, files: List<VirtualFile>) {
+    val reasonablyLimitedFilesList = files.take(bufferSize).takeIf { it.isNotEmpty() } ?: return
+
     coroutineScope.launch {
-      LOG.debug("Switcher emit file update initiated by backend, file: $files, change kind: ${changeKind}, project: $project")
+      LOG.debug("Switcher emit file update initiated by backend, file: $reasonablyLimitedFilesList, change kind: ${changeKind}, project: $project")
       val fileEvent = when (changeKind) {
         FileChangeKind.ADDED -> {
           val models = readAction {
-            files.map { createRecentFileViewModel(it, project) }
+            reasonablyLimitedFilesList.map { createRecentFileViewModel(it, project) }
           }
           RecentFilesEvent.ItemsAdded(models)
         }
         FileChangeKind.UPDATED -> {
           val models = readAction {
-            files.map { createRecentFileViewModel(it, project) }
+            reasonablyLimitedFilesList.map { createRecentFileViewModel(it, project) }
           }
           RecentFilesEvent.ItemsUpdated(models, false)
         }
         FileChangeKind.UPDATED_AND_PUT_ON_TOP -> {
           val models = readAction {
-            files.map { createRecentFileViewModel(it, project) }
+            reasonablyLimitedFilesList.map { createRecentFileViewModel(it, project) }
           }
           RecentFilesEvent.ItemsUpdated(models, true)
         }
         FileChangeKind.REMOVED -> {
-          RecentFilesEvent.ItemsRemoved(files.map { it.rpcId() })
+          RecentFilesEvent.ItemsRemoved(reasonablyLimitedFilesList.map { it.rpcId() })
         }
       }
 

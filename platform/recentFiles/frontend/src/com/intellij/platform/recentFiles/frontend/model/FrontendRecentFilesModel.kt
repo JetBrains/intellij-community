@@ -12,7 +12,6 @@ import com.intellij.platform.recentFiles.frontend.*
 import com.intellij.platform.recentFiles.shared.FileSwitcherApi
 import com.intellij.platform.recentFiles.shared.RecentFileKind
 import com.intellij.platform.recentFiles.shared.RecentFilesCoroutineScopeProvider
-import com.intellij.platform.recentFiles.shared.createFilesUpdateRequest
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -52,6 +51,8 @@ class FrontendRecentFilesModel(private val project: Project) {
   }
 
   fun applyFrontendChanges(filesKind: RecentFileKind, files: List<VirtualFile>, isAdded: Boolean) {
+    if (files.isEmpty()) return
+
     modelUpdateScope.launch {
       val frontendStateToUpdate = modelState.chooseStateToWriteTo(filesKind)
       val fileModels = files.map { convertVirtualFileToViewModel(it, project) }

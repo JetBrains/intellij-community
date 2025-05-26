@@ -15,6 +15,6 @@ internal class RecentFilesVcsStatusListener(private val project: Project) : File
   }
 
   override fun fileStatusesChanged() {
-    BackendRecentFileEventsModel.getInstance(project).emitUncertainChange()
+    BackendRecentFileEventsController.updateAllExistingFilesInModel(project)
   }
 }

@@ -83,9 +83,6 @@ sealed interface RecentFilesEvent {
 
   @Serializable
   class AllItemsRemoved : RecentFilesEvent
-
-  @Serializable
-  class UncertainChangeOccurred: RecentFilesEvent
 }
 
 @ApiStatus.Internal

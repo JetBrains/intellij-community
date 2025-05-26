@@ -5,11 +5,9 @@ import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.recentFiles.shared.FileSwitcherApi
 import com.intellij.platform.recentFiles.shared.RecentFileKind
 import com.intellij.platform.recentFiles.shared.RecentFilesEvent
 import com.intellij.platform.recentFiles.shared.SwitcherRpcDto
-import com.intellij.platform.recentFiles.shared.createFilesUpdateRequest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import org.jetbrains.annotations.ApiStatus
@@ -73,12 +71,6 @@ abstract class RecentFilesMutableState<T>(protected val project: Project) {
         LOG.debug("Removing all items from $targetFilesKind frontend model")
         targetModel.update { RecentFilesState(listOf()) }
       }
-      is RecentFilesEvent.UncertainChangeOccurred -> {
-        LOG.debug("Updating all items in $targetFilesKind frontend model because of undetermined backend IDE state change")
-        val targetState = chooseStateToWriteTo(targetFilesKind).value.entries.mapNotNull(::convertModelToVirtualFile)
-        FileSwitcherApi.getInstance().updateRecentFilesBackendState(createFilesUpdateRequest(targetFilesKind, targetState, project))
-      }
     }
   }
-
 }
