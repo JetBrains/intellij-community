@@ -248,48 +248,66 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
     }
   }
 
-  private static @NotNull EnumAttributeInfo getEnumAttributeInfo(@NotNull PyClass enumClass, @Nullable PyType type, @NotNull TypeEvalContext context) {
-    if (type == null) {
-      return new EnumAttributeInfo(null, EnumAttributeKind.MEMBER);
+  private static @NotNull EnumAttributeInfo getEnumAttributeInfo(@NotNull PyClass enumClass,
+                                                                 @Nullable PyType type,
+                                                                 @NotNull TypeEvalContext context) {
+    Boolean isMember = null;
+    if (type instanceof PyCollectionType genericType) {
+      if (PyNames.TYPE_ENUM_MEMBER.equals(genericType.getClassQName())) {
+        type = ContainerUtil.getOnlyItem(genericType.getElementTypes());
+        isMember = true;
+      }
+      if (PyNames.TYPE_ENUM_NONMEMBER.equals(genericType.getClassQName())) {
+        type = ContainerUtil.getOnlyItem(genericType.getElementTypes());
+        isMember = false;
+      }
     }
-    PyQualifiedNameOwner typeDeclarationElement = type.getDeclarationElement();
-    if (typeDeclarationElement != null) {
-      String typeDeclarationQName = typeDeclarationElement.getQualifiedName();
-      if (type instanceof PyCollectionType genericType) {
-        PyType genericParameterType = ContainerUtil.getOnlyItem(genericType.getElementTypes());
-        if (genericParameterType != null) {
-          if (PyNames.TYPE_ENUM_MEMBER.equals(typeDeclarationQName)) {
-            return EnumAttributeInfo.memberOrAlias(enumClass, genericParameterType);
-          }
-          if (PyNames.TYPE_ENUM_NONMEMBER.equals(typeDeclarationQName)) {
-            return EnumAttributeInfo.nonMember(genericParameterType);
+    if (type instanceof PyClassType classType && PyNames.TYPE_ENUM_AUTO.equals(classType.getClassQName())) {
+      type = getEnumAutoValueType(enumClass, context);
+    }
+
+    if (isMember == null) {
+      isMember = true;
+      if (type != null) {
+        if (type.getDeclarationElement() instanceof PyCallable) {
+          isMember = false;
+        }
+        else {
+          boolean isDescriptor = !ContainerUtil.isEmpty(
+            type.resolveMember(PyNames.DUNDER_GET, null, AccessDirection.READ, PyResolveContext.defaultContext(context)));
+          if (isDescriptor) {
+            isMember = false;
           }
         }
       }
     }
-    if (typeDeclarationElement instanceof PyCallable) {
-      return EnumAttributeInfo.nonMember(type);
+
+    EnumAttributeKind attributeKind;
+    if (isMember) {
+      attributeKind = type instanceof PyLiteralType literalType && literalType.getPyClass().equals(enumClass)
+                                        ? EnumAttributeKind.MEMBER_ALIAS
+                                        : EnumAttributeKind.MEMBER;
     }
-    boolean isDescriptor = !ContainerUtil.isEmpty(
-      type.resolveMember(PyNames.DUNDER_GET, null, AccessDirection.READ, PyResolveContext.defaultContext(context)));
-    if (isDescriptor) {
-      return EnumAttributeInfo.nonMember(type);
+    else {
+      attributeKind = EnumAttributeKind.NONMEMBER;
     }
-    return EnumAttributeInfo.memberOrAlias(enumClass, type);
+    return new EnumAttributeInfo(type, attributeKind);
+  }
+
+  private static @Nullable PyType getEnumAutoValueType(@NotNull PyClass enumClass, @NotNull TypeEvalContext context) {
+    PyFunction generateNextValueMethod = enumClass.findMethodByName("_generate_next_value_", true, context);
+    if (generateNextValueMethod != null) {
+      // Ignore 'Enum._generate_next_value_' as its declared return type is 'Any' in the typeshed stubs.
+      PyClass containingClass = generateNextValueMethod.getContainingClass();
+      if (containingClass != null && !PyNames.TYPE_ENUM.equals(containingClass.getQualifiedName())) {
+        return context.getReturnType(generateNextValueMethod);
+      }
+    }
+    return PyBuiltinCache.getInstance(enumClass).getIntType();
   }
 
   @ApiStatus.Internal
   public record EnumAttributeInfo(@Nullable PyType assignedValueType, @NotNull EnumAttributeKind attributeKind) {
-    private static @NotNull EnumAttributeInfo memberOrAlias(@NotNull PyClass enumClass, @Nullable PyType type) {
-      EnumAttributeKind attributeKind = type instanceof PyLiteralType literalType && literalType.getPyClass().equals(enumClass)
-                                        ? EnumAttributeKind.MEMBER_ALIAS
-                                        : EnumAttributeKind.MEMBER;
-      return new EnumAttributeInfo(type, attributeKind);
-    }
-
-    private static @NotNull EnumAttributeInfo nonMember(@Nullable PyType type) {
-      return new EnumAttributeInfo(type, EnumAttributeKind.NONMEMBER);
-    }
   }
 
   @ApiStatus.Internal
