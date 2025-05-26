@@ -82,7 +82,7 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
    *
    * @return first not-null value returned by [processor], or `null` if processor didn't return any non-null value.
    */
-  fun <R> computeSafeIfAny(processor: Function<T, out R>): R? {
+  fun <R : Any> computeSafeIfAny(processor: Function<T, out R?>): R? {
     return computeSafeIfAny(processor = processor::apply, sequence = getPointImpl(null).asSequence())
   }
 
