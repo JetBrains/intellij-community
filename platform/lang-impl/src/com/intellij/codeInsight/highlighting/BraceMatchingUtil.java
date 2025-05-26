@@ -85,9 +85,9 @@ public final class BraceMatchingUtil {
     HighlighterIterator preOffsetIterator = offset > 0 && !isInsideBrace ? highlighter.createIterator(offset - 1) : null;
     FileType preOffsetFileType = preOffsetIterator == null ? null : ReadAction.compute(() -> psiFile.isValid() ? getFileType(psiFile, preOffsetIterator.getStart()) : null);
 
-    boolean isAfterLeftBrace = preOffsetIterator != null &&
+    boolean isAfterLeftBrace = preOffsetIterator != null && preOffsetFileType != null &&
                                isLBraceToken(preOffsetIterator, text, preOffsetFileType);
-    boolean isAfterRightBrace = !isAfterLeftBrace && preOffsetIterator != null &&
+    boolean isAfterRightBrace = !isAfterLeftBrace && preOffsetIterator != null && preOffsetFileType != null &&
                                 isRBraceToken(preOffsetIterator, text, preOffsetFileType);
 
     int offsetTokenStart = iterator.atEnd() ? -1 : iterator.getStart();
