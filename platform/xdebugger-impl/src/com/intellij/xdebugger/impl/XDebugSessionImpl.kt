@@ -449,6 +449,9 @@ class XDebugSessionImpl @JvmOverloads constructor(
     return myDebugProcess is XMixedModeCombinedDebugProcess
   }
 
+  /**
+   * TODO When we move to RD-first approach, @RequiresEdt requirements in [XDebuggerManager] can be removed
+   */
   private fun initSessionTab(contentToReuse: RunContentDescriptor?, shouldShowTab: Boolean) {
     val forceNewDebuggerUi = debugProcess.forceShowNewDebuggerUi()
     val withFramesCustomization = debugProcess.allowFramesViewCustomization()
