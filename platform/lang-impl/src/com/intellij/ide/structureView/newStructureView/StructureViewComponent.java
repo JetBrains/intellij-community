@@ -807,6 +807,11 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     return myTreeModel;
   }
 
+  @ApiStatus.Internal
+  public @NotNull AsyncTreeModel getAsyncTreeModel() {
+    return myAsyncTreeModel;
+  }
+
   @Override
   public boolean navigateToSelectedElement(boolean requestFocus) {
     select(myTreeModel.getCurrentEditorElement(), requestFocus);
