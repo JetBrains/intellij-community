@@ -199,9 +199,10 @@ class CurrentThreadCoroutineScopeTest {
     job.join()
   }
 
-  @Test
+  @RepeatedTest(1000)
   fun `fixCurrentThreadScope should propagate parent job cancellation`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     val parentJob = Job(coroutineContext.job)
+    val coroutineSpawned = Job(coroutineContext.job)
 
     val latch = Job(coroutineContext.job)
     val wasCancelled = AtomicBoolean(false)
@@ -210,7 +211,9 @@ class CurrentThreadCoroutineScopeTest {
       val (_, job) = withCurrentThreadCoroutineScopeBlocking {
         currentThreadCoroutineScope().launch {
           try {
-            suspendCancellableCoroutine { }
+            suspendCancellableCoroutine {
+              coroutineSpawned.complete()
+            }
           }
           catch (e: CancellationException) {
             wasCancelled.set(true)
@@ -218,6 +221,8 @@ class CurrentThreadCoroutineScopeTest {
           }
         }
       }
+
+      coroutineSpawned.asCompletableFuture().join()
 
       // Cancel the parent job
       parentJob.cancel()
