@@ -3,6 +3,7 @@ package com.intellij.platform.recentFiles.backend
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.recentFiles.shared.FileChangeKind
 import com.intellij.problems.ProblemListener
 
 internal class RecentFilesProblemsListener(private val project: Project) : ProblemListener {

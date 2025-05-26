@@ -22,6 +22,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FileStatusListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.findProjectOrNull
+import com.intellij.platform.recentFiles.shared.FileChangeKind
 import com.intellij.platform.recentFiles.shared.RecentFileKind
 import com.intellij.platform.recentFiles.shared.RecentFilesBackendRequest
 import com.intellij.platform.recentFiles.shared.RecentFilesEvent
@@ -196,8 +197,4 @@ internal class BackendRecentFileEventsModel(private val project: Project, privat
       return project.serviceAsync<BackendRecentFileEventsModel>()
     }
   }
-}
-
-internal enum class FileChangeKind {
-  REMOVED, ADDED, UPDATED, UPDATED_AND_PUT_ON_TOP
 }

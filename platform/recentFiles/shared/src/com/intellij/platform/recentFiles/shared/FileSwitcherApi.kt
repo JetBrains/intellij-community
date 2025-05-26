@@ -54,6 +54,12 @@ enum class RecentFileKind {
 
 @ApiStatus.Internal
 @Serializable
+enum class FileChangeKind {
+  REMOVED, ADDED, UPDATED, UPDATED_AND_PUT_ON_TOP
+}
+
+@ApiStatus.Internal
+@Serializable
 sealed interface SwitcherRpcDto {
 
   @Serializable

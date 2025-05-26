@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
+import com.intellij.platform.recentFiles.shared.FileChangeKind
 
 internal class RecentFilesDaemonAnalyserListener(private val project: Project) : DaemonListener {
   override fun daemonFinished(fileEditors: Collection<FileEditor>) {

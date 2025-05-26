@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
 import com.intellij.openapi.vfs.newvfs.events.*
+import com.intellij.platform.recentFiles.shared.FileChangeKind
 
 internal class RecentFilesVfsListener : AsyncFileListener {
   override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
