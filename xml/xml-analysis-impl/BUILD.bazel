@@ -23,6 +23,9 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/lang-impl",
+    "@lib//:xerces",
+    "//platform/util/nanoxml",
+    "//platform/indexing-impl",
   ],
   exports = ["//xml/xml-analysis-api:analysis"],
   runtime_deps = [":analysis-impl_resources"]

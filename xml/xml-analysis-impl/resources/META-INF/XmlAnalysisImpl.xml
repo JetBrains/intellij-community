@@ -10,6 +10,8 @@
     <extensionPoint name="xml.undefinedElementFixProvider"
                     interface="com.intellij.xml.XmlUndefinedElementFixProvider"
                     dynamic="true"/>
+
+    <extensionPoint name="xml.validateHandler" interface="com.intellij.xml.actions.validate.ValidateXmlHandler" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <highlightingPassFactory order="last" implementation="com.intellij.xml.XmlCustomTagHighlightingPassFactory" />
@@ -122,5 +124,27 @@
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix</className>
     </intentionAction>
+
+    <applicationService serviceImplementation="com.intellij.xml.index.XmlSchemaHelperImpl"
+                        serviceInterface="com.intellij.xml.impl.schema.XmlSchemaHelper"/>
+    <applicationService serviceImplementation="com.intellij.xml.impl.ExternalDocumentValidatorHelperImpl"
+                        serviceInterface="com.intellij.xml.impl.ExternalDocumentValidatorHelper"/>
+
+    <idIndexer filetype="XML" implementationClass="com.intellij.psi.impl.cache.impl.idCache.XmlIdIndexer"/>
+    <idIndexer filetype="DTD" implementationClass="com.intellij.psi.impl.cache.impl.idCache.XmlIdIndexer"/>
+    <idIndexer filetype="HTML" implementationClass="com.intellij.psi.impl.cache.impl.idCache.HtmlIdIndexer"/>
+    <idIndexer filetype="XHTML" implementationClass="com.intellij.psi.impl.cache.impl.idCache.XHtmlIdIndexer"/>
+
+    <todoIndexer filetype="XML" implementationClass="com.intellij.psi.impl.cache.impl.idCache.XmlTodoIndexer"/>
+    <todoIndexer filetype="DTD" implementationClass="com.intellij.psi.impl.cache.impl.idCache.XmlTodoIndexer"/>
+    <todoIndexer filetype="HTML" implementationClass="com.intellij.psi.impl.cache.impl.idCache.HtmlTodoIndexer"/>
+    <todoIndexer filetype="XHTML" implementationClass="com.intellij.psi.impl.cache.impl.idCache.XHtmlTodoIndexer"/>
+
+    <indexPatternBuilder implementation="com.intellij.psi.impl.cache.impl.idCache.HtmlIndexPatternBuilder" order="after xml"/>
+    <indexPatternBuilder implementation="com.intellij.psi.impl.cache.impl.idCache.XmlIndexPatternBuilder" id="xml"/>
+
+    <fileBasedIndex implementation="com.intellij.xml.index.XmlTagNamesIndex"/>
+    <fileBasedIndex implementation="com.intellij.xml.index.XmlNamespaceIndex"/>
+    <fileBasedIndex implementation="com.intellij.xml.index.SchemaTypeInheritanceIndex"/>
   </extensions>
 </idea-plugin>

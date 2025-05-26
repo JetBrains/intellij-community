@@ -43,6 +43,7 @@ jvm_library(
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/platform-util-io-impl:ide-util-io-impl",
     "//platform/util/xmlDom",
+    "//platform/util/jdom",
     "@lib//:aalto-xml",
   ],
   exports = [

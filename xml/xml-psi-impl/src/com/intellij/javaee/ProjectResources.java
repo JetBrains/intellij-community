@@ -11,7 +11,7 @@ import java.util.Map;
  * @author Dmitry Avdeev
  */
 @State(name = "ProjectResources")
-final class ProjectResources extends ExternalResourceManagerExImpl {
+final class ProjectResources extends ExternalResourceManagerExBase {
   @Override
   public @NotNull Map<@NotNull String, @NotNull Map<@NotNull String, @NotNull ExternalResource>> computeStdResources$intellij_xml_psi_impl() {
     return Collections.emptyMap();

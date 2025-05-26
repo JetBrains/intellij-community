@@ -92,8 +92,6 @@
       <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable"/>
     </extensionPoint>
 
-    <extensionPoint name="xml.validateHandler" interface="com.intellij.xml.actions.validate.ValidateXmlHandler" dynamic="true"/>
-
     <extensionPoint name="xml.namedReferenceProvider"
                     dynamic="true"
                     beanClass="com.intellij.xml.XmlNamedReferenceProviderBean">
@@ -180,15 +178,12 @@
 
     <standardResourceProvider implementation="com.intellij.javaee.InternalResourceProvider"/>
 
-    <projectService serviceInterface="com.intellij.javaee.ExternalResourceManagerExImpl"
+    <projectService serviceInterface="com.intellij.javaee.ExternalResourceManagerExBase"
                     serviceImplementation="com.intellij.javaee.ProjectResources"/>
 
     <roots.watchedRootsProvider implementation="com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction$MyWatchedRootsProvider"/>
 
-    <fileBasedIndex implementation="com.intellij.xml.index.XmlTagNamesIndex"/>
-    <fileBasedIndex implementation="com.intellij.xml.index.XmlNamespaceIndex"/>
     <fileBasedIndex implementation="com.intellij.html.index.Html5CustomAttributesIndex"/>
-    <fileBasedIndex implementation="com.intellij.xml.index.SchemaTypeInheritanceIndex"/>
     <include.provider implementation="com.intellij.xml.util.XIncludeProvider"/>
     <indexedRootsProvider implementation="com.intellij.javaee.ExternalResourcesRootsProvider"/>
 
@@ -491,19 +486,6 @@
     <defaultLiveTemplates file="liveTemplates/zen_html.xml"/>
     <defaultLiveTemplates file="liveTemplates/zen_xsl.xml"/>
     <productivityFeaturesProvider implementation="com.intellij.featureStatistics.XmlProductivityFeatureProvider"/>
-
-    <idIndexer filetype="XML" implementationClass="com.intellij.psi.impl.cache.impl.idCache.XmlIdIndexer"/>
-    <idIndexer filetype="DTD" implementationClass="com.intellij.psi.impl.cache.impl.idCache.XmlIdIndexer"/>
-    <idIndexer filetype="HTML" implementationClass="com.intellij.psi.impl.cache.impl.idCache.HtmlIdIndexer"/>
-    <idIndexer filetype="XHTML" implementationClass="com.intellij.psi.impl.cache.impl.idCache.XHtmlIdIndexer"/>
-
-    <todoIndexer filetype="XML" implementationClass="com.intellij.psi.impl.cache.impl.idCache.XmlTodoIndexer"/>
-    <todoIndexer filetype="DTD" implementationClass="com.intellij.psi.impl.cache.impl.idCache.XmlTodoIndexer"/>
-    <todoIndexer filetype="HTML" implementationClass="com.intellij.psi.impl.cache.impl.idCache.HtmlTodoIndexer"/>
-    <todoIndexer filetype="XHTML" implementationClass="com.intellij.psi.impl.cache.impl.idCache.XHtmlTodoIndexer"/>
-
-    <indexPatternBuilder implementation="com.intellij.psi.impl.cache.impl.idCache.HtmlIndexPatternBuilder" order="after xml"/>
-    <indexPatternBuilder implementation="com.intellij.psi.impl.cache.impl.idCache.XmlIndexPatternBuilder" id="xml"/>
 
     <elementSignatureProvider implementation="com.intellij.codeInsight.folding.impl.XmlElementSignatureProvider"/>
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.javaee
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.ArrayList
 import java.util.HashMap
@@ -9,7 +10,8 @@ class ResourceRegistrarImpl : ResourceRegistrar {
   private val resources = HashMap<String, MutableMap<String, ExternalResource>>()
   private val ignored = ArrayList<String>()
 
-  internal fun getIgnoredResources(): List<String> = ignored
+  @ApiStatus.Internal
+  fun getIgnoredResources(): List<String> = ignored
 
   override fun addStdResource(resource: @NonNls String, fileName: @NonNls String, aClass: Class<*>?) {
     addStdResource(resource = resource, version = null, fileName = fileName, aClass = aClass)
@@ -22,7 +24,7 @@ class ResourceRegistrarImpl : ResourceRegistrar {
     aClass: Class<*>?,
     classLoader: ClassLoader?
   ) {
-    ExternalResourceManagerExImpl.getOrCreateMap(resources, version)
+    ExternalResourceManagerExBase.getOrCreateMap(resources, version)
       .put(resource, ExternalResource(file = fileName, aClass = aClass, classLoader = classLoader))
   }
 
@@ -54,12 +56,13 @@ class ResourceRegistrarImpl : ResourceRegistrar {
   }
 
   fun addInternalResource(resource: @NonNls String, version: @NonNls String?, fileName: @NonNls String?, classLoader: ClassLoader) {
-    ExternalResourceManagerExImpl.getOrCreateMap(resources, version = version).put(resource, ExternalResource(
+    ExternalResourceManagerExBase.getOrCreateMap(resources, version = version).put(resource, ExternalResource(
       file = ExternalResourceManagerEx.STANDARD_SCHEMAS.trimStart('/') + fileName,
       aClass = null,
       classLoader = classLoader,
     ))
   }
 
-  internal fun getResources(): Map<String, MutableMap<String, ExternalResource>> = resources
+  @ApiStatus.Internal
+  fun getResources(): Map<String, MutableMap<String, ExternalResource>> = resources
 }

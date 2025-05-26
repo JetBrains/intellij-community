@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.javaee
@@ -19,11 +19,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -31,9 +28,9 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.URLUtil
 import com.intellij.xml.Html5SchemaProvider
 import com.intellij.xml.XmlSchemaProvider
-import com.intellij.xml.index.XmlNamespaceIndex
 import com.intellij.xml.util.XmlUtil
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.io.File
@@ -43,13 +40,13 @@ import java.util.HashSet
 import java.util.LinkedList
 import java.util.TreeSet
 
-private val LOG = logger<ExternalResourceManagerExImpl>()
+private val LOG = logger<ExternalResourceManagerExBase>()
 private const val DEFAULT_VERSION = ""
 
 private const val CATALOG_PROPERTIES_ELEMENT = "CATALOG_PROPERTIES"
 private val XSD_1_1 = ExternalResource(
   file = "/standardSchemas/XMLSchema-1_1/XMLSchema.xsd",
-  aClass = ExternalResourceManagerExImpl::class.java,
+  aClass = ExternalResourceManagerExBase::class.java,
   classLoader = null,
 ).getResourceUrl()
 
@@ -63,27 +60,14 @@ private const val HTML_DEFAULT_DOCTYPE_ELEMENT: @NonNls String = "default-html-d
 private const val XML_SCHEMA_VERSION: @NonNls String = "xml-schema-version"
 
 @State(name = "ExternalResourceManagerImpl", storages = [Storage("javaeeExternalResources.xml")], category = SettingsCategory.CODE)
-open class ExternalResourceManagerExImpl : ExternalResourceManagerEx(), PersistentStateComponent<Element?> {
+open class ExternalResourceManagerExBase : ExternalResourceManagerEx(), PersistentStateComponent<Element?> {
   private val resources = HashMap<String, MutableMap<String, String>>()
   private val resourceLocations = HashSet<String>()
 
-  private val ignoredResources = Collections.synchronizedSet<String>(TreeSet<String>())
-  private val standardIgnoredResources = Collections.synchronizedSet<String>(TreeSet<String>())
+  private val ignoredResources = Collections.synchronizedSet(TreeSet<String>())
+  private val standardIgnoredResources = Collections.synchronizedSet(TreeSet<String>())
 
-  private val standardResources = SynchronizedClearableLazy { computeStdResources() }
-
-  private val urlByNamespaceProvider = CachedValueProvider {
-    val result = MultiMap<String, String>()
-    for (map in standardResources.value.values) {
-      for (entry in map.entries) {
-        val url = entry.value.getResourceUrl() ?: continue
-        val file = VfsUtilCore.findRelativeFile(url, null) ?: continue
-        val namespace = XmlNamespaceIndex.computeNamespace(file) ?: continue
-        result.putValue(namespace, entry.key)
-      }
-    }
-    CachedValueProvider.Result.create(result, this)
-  }
+  protected val standardResources: SynchronizedClearableLazy<Map<String, MutableMap<String, ExternalResource>>> = SynchronizedClearableLazy { computeStdResources() }
 
   private var defaultHtmlDoctype: String? = HTML5_DOCTYPE_ELEMENT
   private var xmlSchemaVersion = XMLSchemaVersion.XMLSchema_1_0
@@ -489,7 +473,7 @@ open class ExternalResourceManagerExImpl : ExternalResourceManagerEx(), Persiste
   }
 
   override fun getUrlsByNamespace(project: Project): MultiMap<String, String>? {
-    return CachedValuesManager.getManager(project).getCachedValue(project, urlByNamespaceProvider)
+    return MultiMap()
   }
 
   private fun getCatalogManager(): XMLCatalogManager? {
@@ -512,7 +496,8 @@ open class ExternalResourceManagerExImpl : ExternalResourceManagerEx(), Persiste
   }
 }
 
-internal class ExternalResource(file: String, aClass: Class<*>?, classLoader: ClassLoader?) {
+@ApiStatus.Internal
+class ExternalResource(file: String, aClass: Class<*>?, classLoader: ClassLoader?) {
   private val file = file
   private val classLoader = classLoader
   private val aClass: Class<*>? = aClass
@@ -566,7 +551,7 @@ internal class ExternalResource(file: String, aClass: Class<*>?, classLoader: Cl
 }
 
 private fun <T> getMap(resources: Map<String, MutableMap<String, T>>, version: String?): MutableMap<String, T>? {
-  var version = version ?: DEFAULT_VERSION
+  val version = version ?: DEFAULT_VERSION
   val map = resources.get(version)
   return if (map == null && version != DEFAULT_VERSION) resources.get(DEFAULT_VERSION) else map
 }
@@ -590,4 +575,4 @@ private fun isImplicitNamespaceDescriptor(url: String): Boolean {
   return false
 }
 
-private fun getProjectResources(project: Project): ExternalResourceManagerExImpl = project.service<ExternalResourceManagerExImpl>()
+private fun getProjectResources(project: Project): ExternalResourceManagerExBase = project.service<ExternalResourceManagerExBase>()

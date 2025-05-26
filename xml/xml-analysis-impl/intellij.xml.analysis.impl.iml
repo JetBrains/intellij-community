@@ -18,5 +18,8 @@
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="library" name="Xerces" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.nanoxml" />
+    <orderEntry type="module" module-name="intellij.platform.indexing.impl" />
   </component>
 </module>
