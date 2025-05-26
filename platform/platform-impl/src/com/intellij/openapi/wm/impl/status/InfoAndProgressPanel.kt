@@ -965,7 +965,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
       progressIcon.setBorder(JBUI.CurrentTheme.StatusBar.Widget.border())
       progressIcon.setToolTipText(ActionsBundle.message("action.ShowProcessWindow.double.click"))
 
-      counterIcon = CounterIcon.createRoundIcon(1, JBColor.WHITE, JBUI.CurrentTheme.ProgressBar.PROGRESS)
+      counterIcon = CounterIcon.createRoundIcon(1, JBColor.WHITE, JBUI.CurrentTheme.StatusBar.Progresses.COUNTER)
       val label = JBLabel("", counterIcon, SwingConstants.RIGHT)
       label.addMouseListener(object : MouseAdapter() {
         override fun mouseClicked(e: MouseEvent) {

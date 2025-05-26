@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.icons.AllIcons;
@@ -1052,6 +1052,10 @@ public final class JBUI {
         static @NotNull String navBarInsetsKey() {
           return "StatusBar.Breadcrumbs.navBarInsets";
         }
+      }
+
+      public interface Progresses {
+        Color COUNTER = JBColor.namedColor("ProgressBar.counterColor", new JBColor(0x3574F0, 0x3574F0));
       }
     }
 
