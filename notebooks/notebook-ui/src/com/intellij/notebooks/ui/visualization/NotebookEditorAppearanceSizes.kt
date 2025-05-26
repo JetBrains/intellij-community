@@ -19,24 +19,20 @@ interface NotebookEditorAppearanceSizes {
   val cellOutputToolbarInlayPriority: Int
     get() = 5
 
+  val codeCellLeftLinePadding: Int
+  val lineNumbersMargin: Int
+  val commandModeCellLeftLineWidth: Int
+  val editModeCellLeftLineWidth: Int
+  val codeAndCodeTopGrayHeight: Int
+  val codeAndCodeBottomGrayHeight: Int
+  val innerCellToolbarHeight: Int
+  val spacerHeight: Int
+  val executionTimeHeight: Int
+  val spaceBelowCellToolbar: Int
+  val cellToolbarTotalHeight: Int
+  val progressStatusHeight: Int
 
-  val CODE_CELL_LEFT_LINE_PADDING: Int
-  val LINE_NUMBERS_MARGIN: Int
-
-  // TODO Do the pixel constants need JBUI.scale?
-  val COMMAND_MODE_CELL_LEFT_LINE_WIDTH: Int
-  val EDIT_MODE_CELL_LEFT_LINE_WIDTH: Int
-  val CODE_AND_CODE_TOP_GRAY_HEIGHT: Int
-  val CODE_AND_CODE_BOTTOM_GRAY_HEIGHT: Int
-  val INNER_CELL_TOOLBAR_HEIGHT: Int
-  val SPACER_HEIGHT: Int
-  val EXECUTION_TIME_HEIGHT: Int
-  val SPACE_BELOW_CELL_TOOLBAR: Int
-  val CELL_TOOLBAR_TOTAL_HEIGHT: Int
-  val PROGRESS_STATUS_HEIGHT: Int
-
-
-  val EXTRA_PADDING_EXECUTION_COUNT: Int
+  val extraPaddingExecutionCount: Int
   val cellBorderHeight: Int
   val aboveFirstCellDelimiterHeight: Int
   val distanceBetweenCells: Int

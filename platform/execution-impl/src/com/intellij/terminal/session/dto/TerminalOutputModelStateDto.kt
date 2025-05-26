@@ -9,8 +9,9 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 data class TerminalOutputModelStateDto(
   val text: String,
-  val trimmedLinesCount: Int,
-  val trimmedCharsCount: Int,
+  val trimmedLinesCount: Long,
+  val trimmedCharsCount: Long,
+  val firstLineTrimmedCharsCount: Int,
   val cursorOffset: Int,
   val highlightings: List<StyleRangeDto>,
 )
@@ -21,6 +22,7 @@ fun TerminalOutputModelState.toDto(): TerminalOutputModelStateDto {
     text = text,
     trimmedLinesCount = trimmedLinesCount,
     trimmedCharsCount = trimmedCharsCount,
+    firstLineTrimmedCharsCount = firstLineTrimmedCharsCount,
     cursorOffset = cursorOffset,
     highlightings = highlightings.map { it.toDto() }
   )
@@ -32,6 +34,7 @@ fun TerminalOutputModelStateDto.toState(): TerminalOutputModelState {
     text = text,
     trimmedLinesCount = trimmedLinesCount,
     trimmedCharsCount = trimmedCharsCount,
+    firstLineTrimmedCharsCount = firstLineTrimmedCharsCount,
     cursorOffset = cursorOffset,
     highlightings = highlightings.map { it.toStyleRange() }
   )

@@ -11,7 +11,6 @@ import com.intellij.terminal.session.TerminalSessionTerminatedEvent
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import com.jediterm.core.typeahead.TerminalTypeAheadManager
-import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TerminalExecutorServiceManager
 import com.jediterm.terminal.TerminalStarter
 import com.jediterm.terminal.TtyBasedArrayDataStream
@@ -27,7 +26,6 @@ import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.util.STOP_EMULATOR_TIMEOUT
 import org.jetbrains.plugins.terminal.util.waitFor
-import java.util.concurrent.CancellationException
 
 internal fun startTerminalProcess(
   project: Project,
@@ -42,29 +40,31 @@ internal fun startTerminalProcess(
 }
 
 /**
- * Returns a pair of started terminal session and final options used for session start.
+ * The created session lifecycle is bound to the [coroutineScope].
+ * If it cancels, then the process will be terminated.
+ * And if the process is terminated on its own, for example, if user executes `exit` or press Ctrl+D,
+ * then the [coroutineScope] will be canceled as well.
  */
 @OptIn(AwaitCancellationAndInvoke::class)
 internal fun createTerminalSession(
   project: Project,
   ttyConnector: TtyConnector,
-  initialSize: TermSize,
+  options: ShellStartupOptions,
   settings: JBTerminalSystemSettingsProviderBase,
   coroutineScope: CoroutineScope,
 ): TerminalSession {
+  val observableTtyConnector = ttyConnector as? ObservableTtyConnector ?: ObservableTtyConnector(ttyConnector)
+
   val maxHistoryLinesCount = AdvancedSettings.getInt("terminal.buffer.max.lines.count")
-  val services: JediTermServices = createJediTermServices(ttyConnector, initialSize, maxHistoryLinesCount, settings)
+  val services: JediTermServices = createJediTermServices(observableTtyConnector, options, maxHistoryLinesCount, settings)
 
   val outputScope = coroutineScope.childScope("Terminal output forwarding")
   val shellIntegrationController = TerminalShellIntegrationController(services.controller)
   shellIntegrationController.addListener(TerminalShellIntegrationStatisticsListener(project))
   val outputFlow = createTerminalOutputFlow(
-    services.textBuffer,
-    services.terminalDisplay,
-    services.controller,
+    services,
     shellIntegrationController,
     outputScope,
-    ensureEmulationActive = { ensureEmulationActive(services.terminalStarter) }
   )
 
   val inputScope = coroutineScope.childScope("Terminal input handling")
@@ -76,8 +76,12 @@ internal fun createTerminalSession(
     }
     finally {
       coroutineScope.launch {
-        outputFlow.emit(listOf(TerminalSessionTerminatedEvent))
-        coroutineScope.cancel()
+        try {
+          outputFlow.emit(listOf(TerminalSessionTerminatedEvent))
+        }
+        finally {
+          coroutineScope.cancel()
+        }
       }
     }
   }
@@ -95,18 +99,19 @@ internal fun createTerminalSession(
 }
 
 private fun createJediTermServices(
-  connector: TtyConnector,
-  termSize: TermSize,
+  connector: ObservableTtyConnector,
+  options: ShellStartupOptions,
   maxHistoryLinesCount: Int,
   settings: JBTerminalSystemSettingsProviderBase,
 ): JediTermServices {
   val styleState = StyleState()
-  val textBuffer = TerminalTextBuffer(termSize.columns, termSize.rows, styleState, maxHistoryLinesCount)
+  val initialSize = options.initialTermSize ?: error("Initial term size must be set")
+  val textBuffer = TerminalTextBuffer(initialSize.columns, initialSize.rows, styleState, maxHistoryLinesCount)
   val terminalDisplay = TerminalDisplayImpl(settings)
   val controller = ObservableJediTerminal(terminalDisplay, textBuffer, styleState)
   val typeAheadManager = TerminalTypeAheadManager(JediTermTypeAheadModel(controller, textBuffer, settings))
   val executorService = TerminalExecutorServiceManagerImpl()
-  val terminalStarter = StopAwareTerminalStarter(
+  val terminalStarter = TerminalStarterEx(
     controller,
     connector,
     TtyBasedArrayDataStream(connector),
@@ -114,7 +119,7 @@ private fun createJediTermServices(
     executorService
   )
 
-  return JediTermServices(textBuffer, terminalDisplay, controller, executorService, terminalStarter)
+  return JediTermServices(textBuffer, terminalDisplay, controller, executorService, terminalStarter, connector, options)
 }
 
 private fun startTerminalEmulation(terminalStarter: TerminalStarter) {
@@ -134,16 +139,12 @@ private fun startTerminalEmulation(terminalStarter: TerminalStarter) {
   }
 }
 
-private fun ensureEmulationActive(starter: StopAwareTerminalStarter) {
-  if (Thread.interrupted() || starter.isStopped) {
-    throw CancellationException("Terminal emulation was stopped")
-  }
-}
-
 internal class JediTermServices(
   val textBuffer: TerminalTextBuffer,
   val terminalDisplay: TerminalDisplayImpl,
   val controller: ObservableJediTerminal,
   val executorService: TerminalExecutorServiceManager,
-  val terminalStarter: StopAwareTerminalStarter,
+  val terminalStarter: TerminalStarterEx,
+  val ttyConnector: ObservableTtyConnector,
+  val startupOptions: ShellStartupOptions,
 )

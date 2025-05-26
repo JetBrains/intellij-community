@@ -1,10 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal
 
-import com.intellij.application.options.EditorFontsConstants
+import com.intellij.application.options.colors.ColorAndFontOptions
 import com.intellij.codeWithMe.ClientId
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton
-import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.client.ClientKind
@@ -15,6 +15,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.options.colors.pages.ANSIColoredConsoleColorsPage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
@@ -24,6 +25,7 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.FontComboBox
 import com.intellij.ui.FontInfoRenderer
 import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
 import com.intellij.ui.dsl.builder.*
@@ -31,6 +33,7 @@ import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.selectedValueIs
+import com.intellij.ui.layout.selectedValueMatches
 import com.intellij.util.execution.ParametersListUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalBundle.message
@@ -39,7 +42,7 @@ import org.jetbrains.plugins.terminal.block.feedback.askForFeedbackIfReworkedTer
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
 import java.awt.Color
-import java.util.*
+import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.JTextField
 import javax.swing.UIManager
@@ -75,9 +78,6 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
 
           val renderer = listCellRenderer<TerminalEngine?> {
             text(value?.presentableName ?: "")
-            if (value == TerminalEngine.REWORKED) {
-              icon(AllIcons.General.Beta)
-            }
           }
 
           terminalEngineComboBox = comboBox(values, renderer)
@@ -139,7 +139,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
       }
 
       group(message("settings.terminal.font.settings")) {
-        var fontSettings = TerminalFontOptions.getInstance().getSettings()
+        var fontSettings = TerminalFontSettingsService.getInstance().getSettings()
         row(message("settings.font.name")) {
           cell(fontComboBox())
             .bind(
@@ -150,6 +150,16 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
                 setter = { fontSettings = fontSettings.copy(fontFamily = it) },
               ).toNullableProperty()
             )
+          cell(fontComboBox())
+            .label(message("settings.fallback.font.name"))
+            .bind(
+              componentGet = { comboBox -> comboBox.fontName },
+              componentSet = {comboBox, value -> comboBox.fontName = value },
+              MutableProperty(
+                getter = { fontSettings.fallbackFontFamily },
+                setter = { fontSettings = fontSettings.copy(fallbackFontFamily = it) },
+              ).toNullableProperty()
+            )
         }
 
         row {
@@ -157,27 +167,45 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
             .label(message("settings.font.size"))
             .columns(4)
             .bindText(
-              getter = { fontSettings.fontSize.fontSizeToString() },
-              setter = { fontSettings = fontSettings.copy(fontSize = it.parseFontSize()) },
+              getter = { fontSettings.fontSize.toFormattedString() },
+              setter = { fontSettings = fontSettings.copy(fontSize = TerminalFontSize.parse(it)) },
             )
           textField()
             .label(message("settings.line.height"))
             .columns(4)
             .bindText(
-              getter = { fontSettings.lineSpacing.spacingToString() },
-              setter = { fontSettings = fontSettings.copy(lineSpacing = it.parseSpacing()) },
+              getter = { fontSettings.lineSpacing.toFormattedString() },
+              setter = { fontSettings = fontSettings.copy(lineSpacing = TerminalLineSpacing.parse(it)) },
             )
           textField()
             .label(message("settings.column.width"))
             .columns(4)
             .bindText(
-              getter = { fontSettings.columnSpacing.spacingToString() },
-              setter = { fontSettings = fontSettings.copy(columnSpacing = it.parseSpacing()) },
+              getter = { fontSettings.columnSpacing.toFormattedString() },
+              setter = { fontSettings = fontSettings.copy(columnSpacing = TerminalColumnSpacing.parse(it)) },
             )
         }
 
+        row {
+          cell(ActionLink(message("settings.colors")) { actionEvent ->
+            ColorAndFontOptions.selectOrEditColor(
+              DataManager.getInstance().getDataContext(actionEvent.source as? Component?),
+              if (terminalEngineComboBox.selectedItem == TerminalEngine.REWORKED) {
+                ANSIColoredConsoleColorsPage.getSearchableReworkedTerminalName()
+              }
+              else {
+                ANSIColoredConsoleColorsPage.getSearchableClassicTerminalName()
+              },
+              ANSIColoredConsoleColorsPage.getSearchableName(),
+            )
+          })
+        }.visibleIf(terminalEngineComboBox.selectedValueMatches {
+          it == TerminalEngine.REWORKED ||
+          it == TerminalEngine.CLASSIC
+        })
+
         onApply {
-          TerminalFontOptions.getInstance().setSettings(fontSettings)
+          TerminalFontSettingsService.getInstance().setSettings(fontSettings)
         }
       }
 
@@ -341,30 +369,6 @@ private fun fontComboBox(): FontComboBox = FontComboBox().apply {
   }
   isMonospacedOnly = true
 }
-
-private fun Float.fontSizeToString(): String = formatWithOneDecimalDigit()
-
-private fun String.parseFontSize(): Float =
-  try {
-    toFloat().coerceIn(EditorFontsConstants.getMinEditorFontSize().toFloat()..EditorFontsConstants.getMaxEditorFontSize().toFloat())
-  }
-  catch (_: Exception) {
-    EditorFontsConstants.getDefaultEditorFontSize().toFloat()
-  }
-
-private fun Float.spacingToString(): String = formatWithOneDecimalDigit()
-
-private fun Float.formatWithOneDecimalDigit(): String = String.format(Locale.ROOT, "%.1f", this)
-
-// We only have getMin/MaxEditorLineSpacing(), and nothing for column spacing,
-// but using the same values for column spacing seems reasonable.
-private fun String.parseSpacing(): Float =
-  try {
-    toFloat().coerceIn(EditorFontsConstants.getMinEditorLineSpacing()..EditorFontsConstants.getMaxEditorLineSpacing())
-  }
-  catch (_: Exception) {
-    1.0f
-  }
 
 /**
  * [TerminalOptionsConfigurable] is created on backend under local [ClientId].

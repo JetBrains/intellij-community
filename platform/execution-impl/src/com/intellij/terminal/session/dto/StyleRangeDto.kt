@@ -8,8 +8,8 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Serializable
 data class StyleRangeDto(
-  val startOffset: Int,
-  val endOffset: Int,
+  val startOffset: Long,
+  val endOffset: Long,
   val style: TextStyleDto,
 )
 

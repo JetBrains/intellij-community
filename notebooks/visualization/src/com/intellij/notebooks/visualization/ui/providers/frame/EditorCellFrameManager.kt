@@ -5,6 +5,7 @@ import com.intellij.notebooks.ui.afterDistinctChange
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.NotebookCellLines.CellType
 import com.intellij.notebooks.visualization.ui.EditorCell
+import com.intellij.notebooks.visualization.ui.notebookEditor
 import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeHandler
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.AtomicProperty
@@ -22,7 +23,6 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
     get() = editorCell.view
 
 
-
   private val isSelected
     get() = editorCell.isSelected.get()
   private val isHovered
@@ -36,6 +36,7 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
     editorCell.isSelected.afterDistinctChange(this) {
       updateCellFrameShow()
     }
+
     editorCell.isHovered.afterDistinctChange(this) {
       updateCellFrameShow()
     }
@@ -43,7 +44,6 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
     editorCell.isUnfolded.afterDistinctChange(this) {
       updateCellFrameShow()
     }
-
 
     editor.notebookAppearance.cellFrameSelectedColor.afterChange(this) {
       updateCellFrameShow()
@@ -115,7 +115,7 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
   }
 
   private fun updateCellFrameShowMarkdown() {
-    if (editorCell.isUnderDiff.get()) {
+    if (editor.notebookEditor.singleFileDiffMode.get()) {
       // under diff, it is necessary to make the selected cell more visible with blue frame for md cells
       updateCellFrameShowCode()
       return
@@ -142,7 +142,6 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
       state.set(CellFrameState(false))
     }
   }
-
 
   companion object {
     fun create(editorCell: EditorCell): EditorCellFrameManager? =

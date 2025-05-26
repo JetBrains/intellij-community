@@ -15,7 +15,7 @@ internal class TerminalShellIntegrationStatisticsListener(private val project: P
     ReworkedTerminalUsageCollector.logCommandStarted(project, command)
   }
 
-  override fun commandFinished(command: String, exitCode: Int) {
+  override fun commandFinished(command: String, exitCode: Int, currentDirectory: String) {
     val now = System.currentTimeMillis()
     var duration = 0L
     // All this defensive coding is likely unnecessary, as this thing is probably invoked in a single thread,

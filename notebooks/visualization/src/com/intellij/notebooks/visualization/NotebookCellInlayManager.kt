@@ -136,10 +136,39 @@ class NotebookCellInlayManager private constructor(
   }
 
   fun getCellByPoint(point: Point): EditorCell? {
-    val visualLine = editor.xyToLogicalPosition(point)
-    val cur = cells.firstOrNull { it.interval.lines.contains(visualLine.line) }
-    return cur
+    val index = cells.binarySearch { comparePointWithCell(point, it) }
+    return cells.getOrNull(index)
+  }
 
+  private fun comparePointWithCell(point: Point, cell: EditorCell): Int {
+    val cellView = cell.view
+    return if (cellView == null) {
+      comparePointWithCellByLogicalLine(point, cell)
+    }
+    else {
+      comparePointWithCellByCellView(point, cellView)
+    }
+  }
+
+  private fun comparePointWithCellByCellView(point: Point, cell: EditorCellView): Int {
+    val bounds = cell.calculateBounds()
+    if (bounds.contains(point))
+      return 0
+    if (bounds.y >= point.y)
+      return 1
+    else
+      return -1
+  }
+
+
+  private fun comparePointWithCellByLogicalLine(point: Point, cell: EditorCell): Int {
+    val line = editor.xyToLogicalPosition(point).line
+
+    return when {
+      line < cell.interval.lines.first -> 1
+      line >= cell.interval.lines.last + 1 -> -1
+      else -> return 0
+    }
   }
 
   private fun updateUI(events: List<EditorCellEvent>) {

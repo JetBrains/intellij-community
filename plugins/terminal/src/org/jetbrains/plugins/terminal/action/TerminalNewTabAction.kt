@@ -9,6 +9,8 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
+import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
+import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 
 open class TerminalNewTabAction : TerminalPromotedDumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
 
@@ -29,7 +31,8 @@ open class TerminalNewTabAction : TerminalPromotedDumbAwareAction(), ActionRemot
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    TerminalToolWindowManager.getInstance(project).createNewSession()
+    val startupFusInfo = TerminalStartupFusInfo(TerminalOpeningWay.OPEN_NEW_TAB)
+    TerminalToolWindowManager.getInstance(project).createNewSession(startupFusInfo)
   }
 
   companion object {

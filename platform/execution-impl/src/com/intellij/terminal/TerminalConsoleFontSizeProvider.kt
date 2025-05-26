@@ -6,12 +6,8 @@ import com.intellij.openapi.Disposable
 internal class TerminalConsoleFontSizeProvider : TerminalFontSizeProvider {
   private val uiSettingsManager = TerminalUiSettingsManager.getInstance()
 
-  override fun getFontSize(): Int {
+  override fun getFontSize(): Float {
     return uiSettingsManager.getFontSize()
-  }
-
-  override fun getFontSize2D(): Float {
-    return uiSettingsManager.getFontSize2D()
   }
 
   override fun setFontSize(newSize: Float) {
@@ -25,7 +21,7 @@ internal class TerminalConsoleFontSizeProvider : TerminalFontSizeProvider {
   override fun addListener(parentDisposable: Disposable, listener: TerminalFontSizeProvider.Listener) {
     uiSettingsManager.addListener(parentDisposable, object : TerminalUiSettingsListener {
       override fun fontChanged() {
-        listener.fontChanged()
+        listener.fontChanged(false) // the argument doesn't matter, it's only used in the terminal plugin, not here
       }
     })
   }

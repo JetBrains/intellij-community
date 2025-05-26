@@ -27,10 +27,6 @@ class EditorCellView(val cell: EditorCell) : EditorCellViewComponent() {
   private val isHovered
     get() = cell.isHovered.get()
 
-  var isUnderDiff: Boolean
-    get() = cell.isUnderDiff.get()
-    set(value) = cell.isUnderDiff.set(value)
-
   val controllers: List<SelfManagedCellController> by lazy {
     SelfManagedControllerFactory.createControllers(this)
   }
