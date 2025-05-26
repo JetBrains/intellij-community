@@ -28,7 +28,7 @@ internal object TestJpsBuildWorker {
   @OptIn(ExperimentalPathApi::class)
   @JvmStatic
   fun main(startupArgs: Array<String>) {
-    val testModule = TestModules.TEST_AM_B
+    val testModule = TestModules.PLATFORM_IMPL
 
     val testPaths: TestWorkerPaths
 
