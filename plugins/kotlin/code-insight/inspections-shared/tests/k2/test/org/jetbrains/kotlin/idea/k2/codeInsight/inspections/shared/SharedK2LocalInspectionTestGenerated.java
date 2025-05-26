@@ -1283,6 +1283,80 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
                 runTest("../testData/inspectionsLocal/coroutines/ambiguousCoroutineScope/selectExpression_onTimeout.kt");
             }
         }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/inspectionsLocal/coroutines/mapAwaitOnCollectionOfDeferred")
+        public static class MapAwaitOnCollectionOfDeferred extends AbstractSharedK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("arrayReceiver.kt")
+            public void testArrayReceiver() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/mapAwaitOnCollectionOfDeferred/arrayReceiver.kt");
+            }
+
+            @TestMetadata("basicCall.kt")
+            public void testBasicCall() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/mapAwaitOnCollectionOfDeferred/basicCall.kt");
+            }
+
+            @TestMetadata("basicCall_caretInsideLambda.kt")
+            public void testBasicCall_caretInsideLambda() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/mapAwaitOnCollectionOfDeferred/basicCall_caretInsideLambda.kt");
+            }
+
+            @TestMetadata("basicCall_withStarImport.kt")
+            public void testBasicCall_withStarImport() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/mapAwaitOnCollectionOfDeferred/basicCall_withStarImport.kt");
+            }
+
+            @TestMetadata("customParameterName.kt")
+            public void testCustomParameterName() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/mapAwaitOnCollectionOfDeferred/customParameterName.kt");
+            }
+
+            @TestMetadata("explicitReturn.kt")
+            public void testExplicitReturn() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/mapAwaitOnCollectionOfDeferred/explicitReturn.kt");
+            }
+
+            @TestMetadata("flowReceiver.kt")
+            public void testFlowReceiver() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/mapAwaitOnCollectionOfDeferred/flowReceiver.kt");
+            }
+
+            @TestMetadata("implicitReceiver.kt")
+            public void testImplicitReceiver() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/mapAwaitOnCollectionOfDeferred/implicitReceiver.kt");
+            }
+
+            @TestMetadata("multipleStatementsInLambda.kt")
+            public void testMultipleStatementsInLambda() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/mapAwaitOnCollectionOfDeferred/multipleStatementsInLambda.kt");
+            }
+
+            @TestMetadata("nonAwaitLambda.kt")
+            public void testNonAwaitLambda() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/mapAwaitOnCollectionOfDeferred/nonAwaitLambda.kt");
+            }
+
+            @TestMetadata("nonLocalReturn.kt")
+            public void testNonLocalReturn() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/mapAwaitOnCollectionOfDeferred/nonLocalReturn.kt");
+            }
+
+            @TestMetadata("wrongAwaitReceiver.kt")
+            public void testWrongAwaitReceiver() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/mapAwaitOnCollectionOfDeferred/wrongAwaitReceiver.kt");
+            }
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
