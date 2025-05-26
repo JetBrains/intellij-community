@@ -8,7 +8,6 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -17,7 +16,9 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.appendSemicolonBeforeLambdaContainingElement
+import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.util.OperatorNameConventions
@@ -30,7 +31,7 @@ class ReplaceContainsInspection :
         element: KtDotQualifiedExpression,
         context: Unit
     ): @InspectionMessage String =
-        KotlinBundle.message("replace.contains.call.with.in.operator")
+        KotlinBundle.message("replace.contains.call.with.in.operator.description")
 
     override fun buildVisitor(
         holder: ProblemsHolder,
@@ -41,11 +42,8 @@ class ReplaceContainsInspection :
         }
     }
 
-    override fun getApplicableRanges(element: KtDotQualifiedExpression): List<TextRange> {
-        val selectorExpression = element.selectorExpression as? KtCallExpression ?: return emptyList()
-        val calleeExpression = selectorExpression.calleeExpression ?: return emptyList()
-        return listOf(calleeExpression.textRange.shiftLeft(element.startOffset))
-    }
+    override fun getApplicableRanges(element: KtDotQualifiedExpression): List<TextRange> =
+        ApplicabilityRange.single(element) { it.callExpression?.calleeExpression }
 
     override fun isApplicableByPsi(element: KtDotQualifiedExpression): Boolean {
         val selectorExpression = element.selectorExpression as? KtCallExpression ?: return false
@@ -70,7 +68,6 @@ class ReplaceContainsInspection :
         // Check if the receiver expression has a value
         return (element.receiverExpression.expressionType != null).asUnit
     }
-
 
     override fun createQuickFix(
         element: KtDotQualifiedExpression,
