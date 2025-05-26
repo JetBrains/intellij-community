@@ -1,4 +1,4 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="ru.adelf.idea.dotenv">
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="ru.adelf.idea.dotenv" allow-bundled-update="true">
     <id>ru.adelf.idea.dotenv</id>
     <name>.env files</name>
     <vendor>JetBrains</vendor>
