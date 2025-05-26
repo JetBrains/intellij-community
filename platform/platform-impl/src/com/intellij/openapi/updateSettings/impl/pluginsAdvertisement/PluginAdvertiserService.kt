@@ -354,7 +354,7 @@ open class PluginAdvertiserServiceImpl(
     node.changeNotes = descriptor.changeNotes
     node.version = descriptor.version
     node.vendor = descriptor.vendor
-    node.organization = descriptor.organization
+    node.setVendorDetails(descriptor.organization)
     node.dependencies = descriptor.dependencies
     node.isConverted = true
 

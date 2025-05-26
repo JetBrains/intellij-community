@@ -3713,9 +3713,9 @@ f:com.intellij.ide.plugins.PluginNode
 - getUntilBuild():java.lang.String
 - getUrl():java.lang.String
 - getVendor():java.lang.String
+- getVendorDetails():com.intellij.ide.plugins.PluginNodeVendorDetails
 - getVendorEmail():java.lang.String
 - getVendorUrl():java.lang.String
-- getVerifiedName():java.lang.String
 - getVersion():java.lang.String
 - hashCode():I
 - isConverted():Z
@@ -3723,8 +3723,6 @@ f:com.intellij.ide.plugins.PluginNode
 - isIncomplete():Z
 - isLicenseOptional():Z
 - isLoaded():Z
-- isTrader():Z
-- isVerified():Z
 - setBugtrackerUrl(java.lang.String):V
 - setCategory(java.lang.String):V
 - setChangeNotes(java.lang.String):V
@@ -3752,7 +3750,6 @@ f:com.intellij.ide.plugins.PluginNode
 - setLicenseUrl(java.lang.String):V
 - setLoaded(Z):V
 - setName(java.lang.String):V
-- setOrganization(java.lang.String):V
 - setProductCode(java.lang.String):V
 - setRating(java.lang.String):V
 - setReleaseDate(java.util.Date):V
@@ -3767,15 +3764,15 @@ f:com.intellij.ide.plugins.PluginNode
 - setSuggestedCommercialIde(java.lang.String):V
 - setSuggestedFeatures(java.util.Collection):V
 - setTags(java.util.List):V
-- setTrader(Z):V
 - setTrialPeriod(java.lang.Integer):V
 - setUntilBuild(java.lang.String):V
 - setUrl(java.lang.String):V
 - setVendor(java.lang.String):V
+- setVendorDetails(com.intellij.ide.plugins.PluginNodeVendorDetails):V
+- setVendorDetails(java.lang.String):V
+- setVendorDetails(java.lang.String,java.lang.String,java.lang.Boolean,java.lang.Boolean):V
 - setVendorEmail(java.lang.String):V
 - setVendorUrl(java.lang.String):V
-- setVerified(Z):V
-- setVerifiedName(java.lang.String):V
 - setVersion(java.lang.String):V
 e:com.intellij.ide.plugins.PluginNode$Status
 - java.lang.Enum
@@ -3785,6 +3782,19 @@ e:com.intellij.ide.plugins.PluginNode$Status
 - sf:UNKNOWN:com.intellij.ide.plugins.PluginNode$Status
 - s:valueOf(java.lang.String):com.intellij.ide.plugins.PluginNode$Status
 - s:values():com.intellij.ide.plugins.PluginNode$Status[]
+f:com.intellij.ide.plugins.PluginNodeVendorDetails
+- <init>(java.lang.String,java.lang.String,java.lang.Boolean,java.lang.Boolean):V
+- b:<init>(java.lang.String,java.lang.String,java.lang.Boolean,java.lang.Boolean,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:copy(java.lang.String,java.lang.String,java.lang.Boolean,java.lang.Boolean):com.intellij.ide.plugins.PluginNodeVendorDetails
+- bs:copy$default(com.intellij.ide.plugins.PluginNodeVendorDetails,java.lang.String,java.lang.String,java.lang.Boolean,java.lang.Boolean,I,java.lang.Object):com.intellij.ide.plugins.PluginNodeVendorDetails
+- equals(java.lang.Object):Z
+- f:getName():java.lang.String
+- f:getUrl():java.lang.String
+- hashCode():I
+- f:isTrader():Z
+- f:isVerified():Z
 com.intellij.ide.plugins.PluginStateListener
 - a:install(com.intellij.ide.plugins.IdeaPluginDescriptor):V
 - uninstall(com.intellij.ide.plugins.IdeaPluginDescriptor):V

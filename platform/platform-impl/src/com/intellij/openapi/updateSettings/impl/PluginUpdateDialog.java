@@ -121,7 +121,7 @@ final class PluginUpdateDialog extends DialogWrapper {
           node.setChangeNotes(descriptor.getChangeNotes());
           node.setVersion(descriptor.getVersion());
           node.setVendor(descriptor.getVendor());
-          node.setOrganization(descriptor.getOrganization());
+          node.setVendorDetails(descriptor.getOrganization());
           node.setDependencies(descriptor.getDependencies());
           descriptor = node;
         }
