@@ -36,6 +36,7 @@ jvm_library(
     "//platform/kernel/shared:kernel",
     "//platform/lang-impl",
     "//platform/platform-frontend:frontend",
+    "//platform/util",
   ],
   runtime_deps = [":frontend_resources"]
 )

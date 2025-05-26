@@ -57,5 +57,6 @@
     <orderEntry type="module" module-name="intellij.platform.kernel" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.frontend" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
   </component>
 </module>

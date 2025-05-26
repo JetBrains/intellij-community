@@ -5,6 +5,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.projectId
@@ -38,13 +39,12 @@ class FrontendRecentFilesModel(private val project: Project) {
       }
       excluder == null
     }
-    if (LOG.isDebugEnabled) {
-      LOG.debug(buildString {
-        append("Return requested $fileKind list: ${capturedModelState.joinToString { it.virtualFile?.name ?: "null" }}")
-        if (filteredModel.size != capturedModelState.size) {
-          append("\nAfter filtering: ${filteredModel.joinToString { it.virtualFile?.name ?: "null" }}")
-        }
-      })
+    LOG.trace {
+      val modelData = if (filteredModel.size != capturedModelState.size)
+        "After filtering: ${filteredModel.joinToString { it.virtualFile?.name ?: "null" }}"
+      else
+        ""
+      "Return requested $fileKind list: ${capturedModelState.joinToString { it.virtualFile?.name ?: "null" }} $modelData"
     }
 
     return filteredModel
@@ -52,7 +52,7 @@ class FrontendRecentFilesModel(private val project: Project) {
 
   fun applyFrontendChanges(filesKind: RecentFileKind, files: List<VirtualFile>, isAdded: Boolean) {
     if (files.isEmpty()) return
-
+    LOG.trace { "Applying frontend changes for kind: $filesKind, isAdded: $isAdded, files: ${files.joinToString { it.name }}" }
     modelUpdateScope.launch {
       val frontendStateToUpdate = modelState.chooseStateToWriteTo(filesKind)
       val fileModels = files.map { convertVirtualFileToViewModel(it, project) }
