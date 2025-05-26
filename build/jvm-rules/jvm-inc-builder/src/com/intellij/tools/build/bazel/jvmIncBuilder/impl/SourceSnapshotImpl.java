@@ -28,7 +28,7 @@ public class SourceSnapshotImpl implements NodeSourceSnapshot {
       String digest = in.readUTF();
       sources.put(sourceReader.load(in), digest);
     }
-    mySources = Map.copyOf(sources);
+    mySources = Collections.unmodifiableMap(sources);
   }
 
   @Override
