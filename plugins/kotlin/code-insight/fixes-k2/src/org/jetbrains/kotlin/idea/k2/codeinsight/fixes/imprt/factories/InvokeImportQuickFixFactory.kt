@@ -2,7 +2,9 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories
 
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
@@ -33,6 +35,7 @@ internal object InvokeImportQuickFixFactory : AbstractImportQuickFixFactory() {
         val invokeCall = invokeCallReceiver.getCallExpressionForCallee() ?: return null
         val qualifiedInvokeCall = invokeCall.getQualifiedExpressionForSelectorOrThis()
 
+        @OptIn(KaExperimentalApi::class)
         val invokeReceiverType = when (diagnostic) {
             is KaFirDiagnostic.FunctionExpected -> {
                 diagnostic.type
@@ -52,7 +55,12 @@ internal object InvokeImportQuickFixFactory : AbstractImportQuickFixFactory() {
                 */
 
                 val invokeCallReceiverCopy = qualifiedInvokeCall.copyQualifiedCalleeExpression() ?: return null
-                invokeCallReceiverCopy.expressionType
+
+                val invokeCallReceiverTypePointer = analyze(invokeCallReceiverCopy) {
+                    invokeCallReceiverCopy.expressionType?.createPointer()
+                }
+                
+                invokeCallReceiverTypePointer?.restore()
             }
 
             is KaFirDiagnostic.UnresolvedReferenceWrongReceiver -> {
