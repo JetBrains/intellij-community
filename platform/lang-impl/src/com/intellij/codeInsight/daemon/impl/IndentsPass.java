@@ -148,7 +148,9 @@ public final class IndentsPass extends TextEditorHighlightingPass implements Dum
   }
 
   private List<IndentGuideDescriptor> buildDescriptors() {
-    if (!myEditor.getSettings().isIndentGuidesShown()) return Collections.emptyList();
+    if (!myEditor.getSettings().isIndentGuidesShown() || myEditor.getDocument().getTextLength() == 0) {
+      return Collections.emptyList();
+    }
 
     IndentsCalculator calculator = new IndentsCalculator();
     calculator.calculate();
