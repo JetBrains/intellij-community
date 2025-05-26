@@ -62,10 +62,26 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
     }
   }
 
+  /**
+   * Iterates over registered extensions and calls [predicate] for each of them.
+   * Stops when [predicate] returns true and returns the corresponding extension.
+   * If any of the extensions throws an exception, it is logged and execution continues.
+   *
+   * @return first extension matching [predicate], or `null` if there is no such extension.
+   */
   fun findFirstSafe(predicate: Predicate<in T>): T? {
     return findFirstSafe(predicate = predicate, sequence = getPointImpl(null).asSequence())
   }
 
+  /**
+   * Iterates over registered extensions and calls [processor] for each of them.
+   * Stops when [processor] returns not-null value and returns it.
+   * If any of the extensions throws an exception, it is logged and execution continues.
+   *
+   * @param processor function to process extensions
+   *
+   * @return first not-null value returned by [processor], or `null` if processor didn't return any non-null value.
+   */
   fun <R> computeSafeIfAny(processor: Function<T, out R>): R? {
     return computeSafeIfAny(processor = processor::apply, sequence = getPointImpl(null).asSequence())
   }
