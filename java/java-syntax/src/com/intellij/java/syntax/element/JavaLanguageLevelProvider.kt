@@ -1,0 +1,25 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.syntax.element
+
+import com.intellij.platform.syntax.LazyParsingContext
+import com.intellij.platform.syntax.extensions.ExtensionPointKey
+import com.intellij.platform.syntax.extensions.ExtensionSupport
+import com.intellij.platform.syntax.tree.SyntaxTree
+import com.intellij.pom.java.LanguageLevel
+import org.jetbrains.annotations.ApiStatus
+
+/**
+ * Implement this extension point to provide the custom language level for Java lazy parsers.
+ */
+@ApiStatus.OverrideOnly
+interface JavaLanguageLevelProvider {
+  fun getLanguageLevel(syntaxTree: SyntaxTree): LanguageLevel
+}
+
+internal fun getLanguageLevel(parsingContext: LazyParsingContext): LanguageLevel {
+  val languageLevelProvider = ExtensionSupport().getExtensions(languageLevelExtensionPoint).firstOrNull()
+  val languageLevel = languageLevelProvider?.getLanguageLevel(parsingContext.tree) ?: LanguageLevel.HIGHEST
+  return languageLevel
+}
+
+private val languageLevelExtensionPoint: ExtensionPointKey<JavaLanguageLevelProvider> = ExtensionPointKey("com.intellij.java.syntax.languageLevelProvider")

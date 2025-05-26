@@ -8,6 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.concurrent.atomics.fetchAndIncrement
+import kotlin.jvm.JvmOverloads
 
 /**
  * A class defining a token or node type.
@@ -17,9 +18,18 @@ import kotlin.concurrent.atomics.fetchAndIncrement
 @ApiStatus.Experimental
 class SyntaxElementType internal constructor(
   private val debugName: String,
+  internal val lazyParser: LazyParser?,
   @Suppress("unused") unusedParam: Any?, // this parameter is necessary for disambiguation with the factory function
 ) {
   val index: Int = counter.fetchAndIncrement()
+
+  /**
+   * Checks if this element type is lazy-parseable.
+   * For performing reparse, use [parseLazyNode] and [tryReparseLazyNode] functions.
+   *
+   * @return `true` if this element type is lazy-parseable.
+   */
+  fun isLazyParseable(): Boolean = lazyParser != null
 
   override fun toString(): String = debugName
 
@@ -29,9 +39,11 @@ class SyntaxElementType internal constructor(
 }
 
 @ApiStatus.Experimental
+@JvmOverloads
 fun SyntaxElementType(
   debugName: String,
+  lazyParser: LazyParser? = null,
 ): SyntaxElementType =
-  SyntaxElementType(debugName, null as Any?)
+  SyntaxElementType(debugName, lazyParser, null as Any?)
 
 private val counter = AtomicInt(0)

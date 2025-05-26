@@ -31,6 +31,7 @@ jvm_library(
     "//platform/util/base/multiplatform",
     "//platform/util/multiplatform",
     "//platform/syntax/syntax-util:util",
+    "//platform/syntax/syntax-extensions:extensions",
   ],
   exports = [
     "//platform/syntax/syntax-api:syntax",

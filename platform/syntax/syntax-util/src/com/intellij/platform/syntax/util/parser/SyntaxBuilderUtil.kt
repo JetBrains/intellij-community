@@ -5,6 +5,7 @@ import com.intellij.platform.syntax.CancellationProvider
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.lexer.Lexer
+import com.intellij.platform.syntax.lexer.TokenList
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.parser.WhitespacesBinders
 import com.intellij.util.text.CharSequenceSubSequence
@@ -19,6 +20,7 @@ object SyntaxBuilderUtil {
    * @param this PSI builder to operate on.
    * @param count number of tokens to skip.
    */
+  @JvmStatic
   fun SyntaxTreeBuilder.advance(count: Int) {
     repeat(count) {
       if (eof()) return
@@ -34,6 +36,7 @@ object SyntaxBuilderUtil {
    * @param expectedType expected token.
    * @return true if token matches, false otherwise.
    */
+  @JvmStatic
   fun SyntaxTreeBuilder.expect(expectedType: SyntaxElementType?): Boolean {
     if (tokenType === expectedType) {
       advanceLexer()
@@ -49,6 +52,7 @@ object SyntaxBuilderUtil {
    * @param expectedTypes expected token types.
    * @return true if token matches, false otherwise.
    */
+  @JvmStatic
   fun SyntaxTreeBuilder.expect(expectedTypes: SyntaxElementTypeSet): Boolean {
     if (tokenType in expectedTypes) {
       advanceLexer()
@@ -62,12 +66,14 @@ object SyntaxBuilderUtil {
    *
    * @param markers markers to drop.
    */
+  @JvmStatic
   fun drop(vararg markers: SyntaxTreeBuilder.Marker?) {
     for (marker in markers) {
       marker?.drop()
     }
   }
 
+  @JvmStatic
   fun SyntaxTreeBuilder.rawTokenText(index: Int): CharSequence {
     return CharSequenceSubSequence(
       baseSequence = text,
@@ -80,6 +86,7 @@ object SyntaxBuilderUtil {
    * tries to parse a code block with corresponding left and right braces.
    * @return collapsed marker of the block or `null` if there is no code block at all.
    */
+  @JvmStatic
   fun SyntaxTreeBuilder.parseBlockLazy(
     leftBrace: SyntaxElementType,
     rightBrace: SyntaxElementType,
@@ -114,8 +121,8 @@ object SyntaxBuilderUtil {
   }
 
   /**
-   * Checks if `text` looks like a proper block.
-   * In particular it
+   * Checks if [text] looks like a proper block.
+   * In particular, it
    * (1) checks brace balance
    * (2) verifies that the block's closing brace is the last token
    *
@@ -135,15 +142,59 @@ object SyntaxBuilderUtil {
     cancellationProvider: CancellationProvider?,
   ): Boolean {
     lexer.start(text)
+    return checkBraceBalance(
+      leftBrace = leftBrace,
+      rightBrace = rightBrace,
+      cancellationProvider = cancellationProvider,
+      advance = lexer::advance,
+      curType = lexer::getTokenType
+    )
+  }
 
-    if (lexer.getTokenType() !== leftBrace) return false
+  /**
+   * Checks if [tokenList] looks like a proper block.
+   * In particular, it
+   * (1) checks brace balance
+   * (2) verifies that the block's closing brace is the last token
+   *
+   * @param tokenList - tokens to check
+   * @param leftBrace - left brace element type
+   * @param rightBrace - right brace element type
+   * @param cancellationProvider - a hook to stop operation if it's not necessary anymore
+   * @return true if `text` passes the checks
+   */
+  @JvmStatic
+  fun hasProperBraceBalance(
+    tokenList: TokenList,
+    leftBrace: SyntaxElementType,
+    rightBrace: SyntaxElementType,
+    cancellationProvider: CancellationProvider?,
+  ): Boolean {
+    var i = 0
+    return checkBraceBalance(
+      leftBrace = leftBrace,
+      rightBrace = rightBrace,
+      cancellationProvider = cancellationProvider,
+      advance = { i++ },
+      curType = { tokenList.getTokenType(i) }
+    )
+  }
 
-    lexer.advance()
+  private inline fun checkBraceBalance(
+    leftBrace: SyntaxElementType,
+    rightBrace: SyntaxElementType,
+    cancellationProvider: CancellationProvider?,
+    advance: () -> Unit,
+    curType: () -> SyntaxElementType?,
+  ): Boolean {
+    if (curType() !== leftBrace) return false
+    advance()
+
     var balance = 1
 
     while (true) {
       cancellationProvider?.checkCancelled()
-      val type = lexer.getTokenType()
+      val type = curType()
 
       if (type == null) {
         //eof: checking balance
@@ -162,7 +213,7 @@ object SyntaxBuilderUtil {
         balance--
       }
 
-      lexer.advance()
+      advance()
     }
   }
 }

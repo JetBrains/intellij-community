@@ -119,7 +119,7 @@ object JavaSyntaxElementType {
   @JvmField val DEFAULT_CASE_LABEL_ELEMENT: SyntaxElementType = SyntaxElementType("DEFAULT_CASE_LABEL_ELEMENT")
   @JvmField val CASE_LABEL_ELEMENT_LIST: SyntaxElementType = SyntaxElementType("CASE_LABEL_ELEMENT_LIST")
 
-  @JvmField val CODE_BLOCK: SyntaxElementType = SyntaxElementType("CODE_BLOCK")
+  @JvmField val CODE_BLOCK: SyntaxElementType = SyntaxElementType("CODE_BLOCK", lazyParser = JavaCodeBlockParser())
 
   @JvmField val MEMBERS: SyntaxElementType = SyntaxElementType("MEMBERS")
 

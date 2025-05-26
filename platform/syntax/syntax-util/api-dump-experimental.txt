@@ -109,13 +109,14 @@
 - *sf:logger(java.lang.String):com.intellij.platform.syntax.Logger
 *f:com.intellij.platform.syntax.util.parser.SyntaxBuilderUtil
 - sf:INSTANCE:com.intellij.platform.syntax.util.parser.SyntaxBuilderUtil
-- f:advance(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,I):V
-- f:drop(com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker[]):V
-- f:expect(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.platform.syntax.SyntaxElementType):Z
-- f:expect(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.platform.syntax.SyntaxElementTypeSet):Z
+- sf:advance(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,I):V
+- sf:drop(com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker[]):V
+- sf:expect(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.platform.syntax.SyntaxElementType):Z
+- sf:expect(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.platform.syntax.SyntaxElementTypeSet):Z
+- sf:hasProperBraceBalance(com.intellij.platform.syntax.lexer.TokenList,com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.CancellationProvider):Z
 - sf:hasProperBraceBalance(java.lang.CharSequence,com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.CancellationProvider):Z
-- f:parseBlockLazy(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.SyntaxElementType):com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker
-- f:rawTokenText(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,I):java.lang.CharSequence
+- sf:parseBlockLazy(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.SyntaxElementType):com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker
+- sf:rawTokenText(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,I):java.lang.CharSequence
 *c:com.intellij.platform.syntax.util.parser.SyntaxTreeBuilderAdapter
 - com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 - <init>(com.intellij.platform.syntax.parser.SyntaxTreeBuilder):V

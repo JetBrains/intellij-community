@@ -7,12 +7,16 @@ import com.intellij.java.syntax.lexer.JavaDocLexer
 import com.intellij.java.syntax.lexer.JavaLexer
 import com.intellij.java.syntax.lexer.JavaTypeEscapeLexer
 import com.intellij.platform.syntax.SyntaxElementTypeSet
+import com.intellij.platform.syntax.element.SyntaxTokenTypes
+import com.intellij.platform.syntax.extensions.SyntaxLanguage
 import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.syntaxElementTypeSetOf
 import com.intellij.pom.java.LanguageLevel
 import kotlin.jvm.JvmStatic
 
 object JavaSyntaxDefinition {
+  val language: SyntaxLanguage = SyntaxLanguage("com.intellij.java")
+
   @JvmStatic
   fun createLexer(languageLevel: LanguageLevel): Lexer = JavaLexer(languageLevel)
 
@@ -27,4 +31,6 @@ object JavaSyntaxDefinition {
     JavaSyntaxTokenType.C_STYLE_COMMENT,
     JavaDocSyntaxElementType.DOC_COMMENT
   )
+
+  val whitespaces: SyntaxElementTypeSet = syntaxElementTypeSetOf(SyntaxTokenTypes.WHITE_SPACE)
 }

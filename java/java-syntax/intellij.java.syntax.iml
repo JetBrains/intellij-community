@@ -32,5 +32,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.base.multiplatform" />
     <orderEntry type="module" module-name="intellij.platform.util.multiplatform" />
     <orderEntry type="module" module-name="intellij.platform.syntax.util" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.syntax.extensions" />
   </component>
 </module>
