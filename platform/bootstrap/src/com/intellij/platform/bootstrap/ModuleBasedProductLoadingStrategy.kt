@@ -57,9 +57,19 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     get() = currentMode.id
 
   override fun addMainModuleGroupToClassPath(bootstrapClassLoader: ClassLoader) {
-    val mainGroupClassPath = productModules.mainModuleGroup.includedModules.flatMapTo(LinkedHashSet()) {
-      it.moduleDescriptor.resourceRootPaths
+    fun collectDependencies(module: RuntimeModuleDescriptor, result: MutableSet<RuntimeModuleDescriptor>) {
+      if (result.add(module)) {
+        module.dependencies.forEach { collectDependencies(it, result) }
+      }
     }
+    
+    val embeddedModulesWithDependencies = LinkedHashSet<RuntimeModuleDescriptor>()
+    for (module in productModules.mainModuleGroup.includedModules) {
+      if (module.loadingRule == RuntimeModuleLoadingRule.EMBEDDED) {
+        collectDependencies(module.moduleDescriptor, embeddedModulesWithDependencies)
+      }
+    }
+    val mainGroupClassPath = embeddedModulesWithDependencies.flatMapTo(LinkedHashSet()) { it.resourceRootPaths }
     val classPath = (bootstrapClassLoader as PathClassLoader).classPath
     logger<ModuleBasedProductLoadingStrategy>().info("New classpath roots:\n${(mainGroupClassPath - classPath.baseUrls.toSet()).joinToString("\n")}")
     classPath.addFiles(mainGroupClassPath)
