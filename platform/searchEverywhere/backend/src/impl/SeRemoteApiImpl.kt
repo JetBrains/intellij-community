@@ -38,14 +38,14 @@ class SeRemoteApiImpl: SeRemoteApi {
   override suspend fun getItems(
     projectId: ProjectId,
     sessionRef: DurableRef<SeSessionEntity>,
-    providerId: SeProviderId,
+    providerIds: List<SeProviderId>,
     params: SeParams,
     dataContextId: DataContextId?,
     requestedCountChannel: ReceiveChannel<Int>,
   ): Flow<SeItemData> {
     val project = projectId.findProjectOrNull() ?: return emptyFlow()
     return SeBackendService.getInstance(project)
-      .getItems(sessionRef, providerId, params, dataContextId, requestedCountChannel)
+      .getItems(sessionRef, providerIds, params, dataContextId, requestedCountChannel)
   }
 
   override suspend fun getAvailableProviderIds(): List<SeProviderId> {

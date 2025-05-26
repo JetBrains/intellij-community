@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.backend.impl
 
-import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider
 import com.intellij.ide.rpc.DataContextId
 import com.intellij.ide.rpc.dataContext
 import com.intellij.openapi.actionSystem.ActionUiKind
@@ -14,6 +13,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.backend.impl.SeBackendItemDataProvidersHolderEntity.Companion.ProvidersHolder
 import com.intellij.platform.searchEverywhere.backend.impl.SeBackendItemDataProvidersHolderEntity.Companion.Session
+import com.intellij.platform.searchEverywhere.equalityProviders.SeEqualityChecker
+import com.intellij.platform.searchEverywhere.providers.SeLocalItemDataProvider
 import com.intellij.platform.searchEverywhere.providers.SeProvidersHolder
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import com.jetbrains.rhizomedb.entities
@@ -22,28 +23,25 @@ import fleet.kernel.DurableRef
 import fleet.kernel.change
 import fleet.kernel.onDispose
 import fleet.kernel.rete.Rete
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class SeBackendService(val project: Project, private val coroutineScope: CoroutineScope) {
-
-  suspend fun getItems(sessionRef: DurableRef<SeSessionEntity>,
-                       providerId: SeProviderId,
-                       params: SeParams,
-                       dataContextId: DataContextId?,
-                       requestedCountChannel: ReceiveChannel<Int>
+  @OptIn(ExperimentalCoroutinesApi::class)
+  suspend fun getItems(
+    sessionRef: DurableRef<SeSessionEntity>,
+    providerIds: List<SeProviderId>,
+    params: SeParams,
+    dataContextId: DataContextId?,
+    requestedCountChannel: ReceiveChannel<Int>,
   ): Flow<SeItemData> {
-    val provider = getProvidersHolder(sessionRef, dataContextId)?.get(providerId, false) ?: return emptyFlow()
-
     val requestedCountState = MutableStateFlow(0)
     val receivingJob = coroutineScope.launch {
       requestedCountChannel.consumeEach { count ->
@@ -51,12 +49,27 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
       }
     }
 
+    val equalityChecker = SeEqualityChecker()
+    val itemsFlows = providerIds.mapNotNull {
+      getProvidersHolder(sessionRef, dataContextId)?.get(it, false)
+    }.map {
+      getItems(it, params, equalityChecker, requestedCountState)
+    }
 
-    val s = SEResultsEqualityProvider.EP_NAME.extensionList
-    println("ayay backend equalityProviders: ${s.joinToString("\n")}")
+    return itemsFlows.merge().buffer(capacity = 0, onBufferOverflow = BufferOverflow.SUSPEND).onCompletion {
+      receivingJob.cancel()
+    }
+  }
 
+  private fun getItems(
+    provider: SeItemDataProvider,
+    params: SeParams,
+    equalityChecker: SeEqualityChecker,
+    requestedCountState: MutableStateFlow<Int>
+  ): Flow<SeItemData> {
     return flow {
-      val itemsFlow = provider.getItems(params)
+      val itemsFlow = (provider as? SeLocalItemDataProvider)?.getItems(params, equalityChecker)
+                      ?: provider.getItems(params)
 
       itemsFlow.collect { item ->
         requestedCountState.first { it > 0 }
@@ -64,8 +77,6 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
 
         emit(item)
       }
-    }.onCompletion {
-      receivingJob.cancel()
     }
   }
 

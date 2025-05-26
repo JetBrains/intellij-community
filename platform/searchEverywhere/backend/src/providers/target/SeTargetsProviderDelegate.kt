@@ -5,6 +5,7 @@ import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper.ItemWithPresentation
 import com.intellij.ide.actions.searcheverywhere.ScopeChooserAction
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.ide.util.PsiElementListCellRenderer.ItemMatchers
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
@@ -13,11 +14,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.platform.searchEverywhere.*
-import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
-import com.intellij.platform.searchEverywhere.providers.SeAsyncWeightedContributorWrapper
-import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter
-import com.intellij.platform.searchEverywhere.providers.SeTypeVisibilityStateProviderDelegate
-import com.intellij.platform.searchEverywhere.providers.getExtendedDescription
+import com.intellij.platform.searchEverywhere.providers.*
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetsFilter
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
@@ -32,9 +29,14 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 
 @Internal
-class SeTargetItem(val legacyItem: ItemWithPresentation<*>, private val matchers: ItemMatchers?, private val weight: Int, val extendedDescription: String?) : SeItem {
+class SeTargetItem(val legacyItem: ItemWithPresentation<*>,
+                   private val matchers: ItemMatchers?,
+                   private val weight: Int,
+                   override val contributor: SearchEverywhereContributor<*>,
+                   val extendedDescription: String?) : SeLegacyItem {
   override fun weight(): Int = weight
   override suspend fun presentation(): SeItemPresentation = SeTargetItemPresentation.create(legacyItem.presentation, matchers, extendedDescription)
+  override val rawObject: Any get() = legacyItem
 }
 
 @OptIn(ExperimentalAtomicApi::class)
@@ -72,7 +74,7 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncWeightedC
           val matchers = (contributorWrapper.contributor as? PSIPresentationBgRendererWrapper)
             ?.getNonComponentItemMatchers({ _ -> defaultMatchers }, t.item)
 
-          return collector.put(SeTargetItem(legacyItem, matchers, weight, getExtendedDescription(legacyItem)))
+          return collector.put(SeTargetItem(legacyItem, matchers, weight, contributorWrapper.contributor, getExtendedDescription(legacyItem)))
         }
       })
     }

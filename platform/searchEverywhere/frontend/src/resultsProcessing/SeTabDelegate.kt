@@ -11,12 +11,12 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.project.projectId
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendItemDataProvider
-import com.intellij.platform.searchEverywhere.utils.initAsync
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
 import com.intellij.platform.searchEverywhere.providers.SeProvidersHolder
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
+import com.intellij.platform.searchEverywhere.utils.initAsync
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -37,7 +37,9 @@ class SeTabDelegate(
   private val initEvent: AnActionEvent,
   val scope: CoroutineScope
 ) : Disposable {
-  private val providers = initAsync(scope) { initializeProviders(project, providerIds, initEvent, sessionRef, logLabel, this) }
+  private val providers = initAsync(scope) {
+    initializeProviders(project, providerIds, initEvent, sessionRef, logLabel, this)
+  }
   private val providersAndLimits = providerIds.associateWith { Int.MAX_VALUE }
 
   suspend fun getProvidersIdToName(): Map<SeProviderId, @Nls String> = providers.getValue().mapValues { it.value.displayName }
@@ -48,6 +50,16 @@ class SeTabDelegate(
     return flow {
       val providers = providers.getValue()
       val enabledProviders = (disabledProviders?.let { providers.filterKeys { it !in disabledProviders } } ?: providers).values
+
+      val frontend = mutableListOf<SeFrontendItemDataProvider>()
+      val others = mutableListOf<SeItemDataProvider>()
+
+      enabledProviders.forEach { provider ->
+        when (provider) {
+          is SeFrontendItemDataProvider -> frontend.add(provider)
+          else -> others.add(provider)
+        }
+      }
 
       enabledProviders.asFlow().flatMapMerge { provider ->
         provider.getItems(params).mapNotNull {
@@ -92,6 +104,10 @@ class SeTabDelegate(
   }
 
   override fun dispose() {}
+
+  private class Providers(val frontend: Map<SeProviderId, SeFrontendItemDataProvider>, val others: Map<SeProviderId, SeItemDataProvider>) {
+    val all = frontend + others
+  }
 
   companion object {
     private suspend fun initializeProviders(

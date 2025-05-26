@@ -30,7 +30,7 @@ class SeFrontendItemDataProvider(private val projectId: ProjectId,
       channel.send(DEFAULT_CHUNK_SIZE)
       var pendingCount = DEFAULT_CHUNK_SIZE
 
-      SeRemoteApi.getInstance().getItems(projectId, sessionRef, id, params, dataContextId, channel).collect {
+      SeRemoteApi.getInstance().getItems(projectId, sessionRef, listOf(id), params, dataContextId, channel).collect {
         pendingCount--
         if (pendingCount == 0) {
           pendingCount += DEFAULT_CHUNK_SIZE

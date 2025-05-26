@@ -10,9 +10,11 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 @ApiStatus.Internal
 data class SeItemData(
+  val uuid: String,
   val providerId: SeProviderId,
   val weight: Int,
   val presentation: SeItemPresentation,
+  val uuidToReplace: List<String>,
   private val itemRef: DurableRef<SeItemEntity>
 ) {
 
@@ -24,14 +26,16 @@ data class SeItemData(
   companion object {
     suspend fun createItemData(
       sessionRef: DurableRef<SeSessionEntity>,
+      uuid: String,
       item: SeItem,
       providerId: SeProviderId,
       weight: Int,
       presentation: SeItemPresentation,
+      uuidToReplace: List<String>,
     ): SeItemData? {
       val entityRef = SeItemEntity.createWith(sessionRef, item) ?: return null
 
-      return SeItemData(providerId, weight, presentation, entityRef)
+      return SeItemData(uuid, providerId, weight, presentation, uuidToReplace, entityRef)
     }
   }
 }

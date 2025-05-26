@@ -31,7 +31,7 @@ interface SeRemoteApi : RemoteApi<Unit> {
   suspend fun getItems(
     projectId: ProjectId,
     sessionRef: DurableRef<SeSessionEntity>,
-    providerId: SeProviderId,
+    providerIds: List<SeProviderId>,
     params: SeParams,
     dataContextId: DataContextId?,
     requestedCountChannel: ReceiveChannel<Int>,

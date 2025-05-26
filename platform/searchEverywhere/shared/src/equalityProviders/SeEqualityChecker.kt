@@ -13,16 +13,16 @@ import kotlin.concurrent.withLock
 class SeEqualityChecker {
   sealed interface Action
   object Add: Action
-  class Replace(itemsIds: List<String>): Action
+  class Replace(val itemsIds: List<String>): Action
   object Skip: Action
 
   private val equalityProvider: SEResultsEqualityProvider = SEResultsEqualityProvider.composite(SEResultsEqualityProvider.EP_NAME.extensionList)
   private val alreadyFoundItems = mutableMapOf<String, SearchEverywhereFoundElementInfo>()
   private val lock = ReentrantLock()
 
-  fun getAction(itemObject: Object, uuid: String, priority: Int, contributor: SearchEverywhereContributor<*>): Action {
+  fun getAction(itemObject: Any, newItemUuid: String, priority: Int, contributor: SearchEverywhereContributor<*>): Action {
     lock.withLock {
-      val newItemInfo = SearchEverywhereFoundElementInfo(uuid, itemObject, priority, contributor)
+      val newItemInfo = SearchEverywhereFoundElementInfo(newItemUuid, itemObject, priority, contributor)
       val result = equalityProvider.compareItems(newItemInfo, alreadyFoundItems.values.toList())
 
       if (result is SEResultsEqualityProvider.SEEqualElementsActionType.Replace) {
@@ -35,7 +35,7 @@ class SeEqualityChecker {
         return Skip
       }
       else {
-        alreadyFoundItems[uuid] = newItemInfo
+        alreadyFoundItems[newItemUuid] = newItemInfo
         return Add
       }
     }
