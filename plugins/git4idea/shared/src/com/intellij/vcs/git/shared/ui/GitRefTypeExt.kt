@@ -1,13 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.ui.branch
+package com.intellij.vcs.git.shared.ui
 
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitRefType
 import git4idea.branch.GitTagType
 import git4idea.i18n.GitBundle
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
-internal fun GitRefType.getText(): @Nls String = when (this) {
+@ApiStatus.Internal
+fun GitRefType.getText(): @Nls String = when (this) {
   GitBranchType.LOCAL -> GitBundle.message("group.Git.Local.Branch.title")
   GitBranchType.REMOTE -> GitBundle.message("group.Git.Remote.Branch.title")
   GitBranchType.RECENT -> GitBundle.message("group.Git.Recent.Branch.title")

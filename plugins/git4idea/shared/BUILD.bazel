@@ -29,6 +29,9 @@ jvm_library(
     "@lib//:caffeine",
     "//platform/analysis-api:analysis",
     "//platform/util/text-matching",
+    "//platform/platform-impl/ui",
+    "//platform/diagnostic/telemetry",
+    "@lib//:opentelemetry",
   ],
   runtime_deps = [":shared_resources"]
 )

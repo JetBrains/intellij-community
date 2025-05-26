@@ -10,6 +10,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ThreeState
 import com.intellij.vcs.git.shared.branch.GitInOutCountersInProject
+import com.intellij.vcs.git.shared.ui.getText
 import git4idea.*
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitRefType
@@ -18,7 +19,6 @@ import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchManager
-import git4idea.ui.branch.getText
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting

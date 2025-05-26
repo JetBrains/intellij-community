@@ -89,7 +89,7 @@ internal class BranchesDashboardTreeController(
      * Note that at the moment [GitBranchActionsDataKeys] are used only for single ref actions.
      * In other actions [GIT_BRANCHES_TREE_SELECTION] is used
      *
-     * Also see [git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.createDataContext]
+     * Also see [com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopupStep.Companion.createDataContext]
      */
     @VisibleForTesting
     internal fun snapshotSelectionActionsKeys(sink: DataSink, selectionPaths: Array<TreePath>?) {

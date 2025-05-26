@@ -13,15 +13,15 @@ import com.intellij.ui.SeparatorWithText
 import com.intellij.ui.tree.TreeTestUtil
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
+import com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopupRenderer
+import com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopupStepBase
+import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeRenderer
 import git4idea.GitUtil
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
 import git4idea.test.*
 import git4idea.ui.branch.GitBranchManager
-import git4idea.ui.branch.popup.GitBranchesTreePopup
-import git4idea.ui.branch.popup.GitBranchesTreePopupRenderer
-import git4idea.ui.branch.popup.GitBranchesTreePopupStepBase
-import git4idea.ui.branch.tree.GitBranchesTreeRenderer
+import git4idea.ui.branch.popup.GitBranchesTreePopupOnBackend
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 
@@ -251,7 +251,7 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
     return invokeAndWaitIfNeeded {
       //TODO replace with the actual tree from GitBranchesTreePopupBase
       val tree = Tree()
-      popupStep = GitBranchesTreePopup.createBranchesTreePopupStep(project, repo)
+      popupStep = GitBranchesTreePopupOnBackend.createBranchesTreePopupStep(project, repo)
       tree.cellRenderer = GitBranchesTreePopupRenderer(popupStep)
       tree.model = popupStep.treeModel
       popupStep.updateTreeModelIfNeeded(tree, filter)

@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.ui.branch.tree
+package com.intellij.vcs.git.shared.widget.tree
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -20,12 +20,13 @@ import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.git.shared.branch.GitBranchesClippedNamesCache
 import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
 import com.intellij.vcs.git.shared.ui.GitBranchesTreeIconProvider
+import com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopupBase
+import com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopupStepBase
+import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeModel.RefUnderRepository
+import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeUtil.canHighlight
 import git4idea.GitBranch
 import git4idea.GitReference
-import git4idea.ui.branch.popup.GitBranchesTreePopupBase
-import git4idea.ui.branch.popup.GitBranchesTreePopupStepBase
-import git4idea.ui.branch.tree.GitBranchesTreeModel.RefUnderRepository
-import git4idea.ui.branch.tree.GitBranchesTreeUtil.canHighlight
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Graphics2D
 import javax.swing.Icon
@@ -34,7 +35,8 @@ import javax.swing.JTree
 import javax.swing.tree.TreeCellRenderer
 import javax.swing.tree.TreePath
 
-internal abstract class GitBranchesTreeRenderer(
+@ApiStatus.Internal
+abstract class GitBranchesTreeRenderer(
   protected val treePopupStep: GitBranchesTreePopupStepBase,
   private val favoriteToggleOnClickSupported: Boolean = true,
 ) : TreeCellRenderer {

@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.ui.branch.tree
+package com.intellij.vcs.git.shared.widget.tree
 
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SeparatorWithText
@@ -7,6 +7,7 @@ import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.git.shared.widget.actions.GitBranchesTreePopupFilterByAction
 import com.intellij.vcs.git.shared.widget.actions.GitBranchesTreePopupFilterByRepository
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JTree
@@ -14,7 +15,8 @@ import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
 
 object GitBranchesTreeUtil {
-  internal const val FILTER_DEBOUNCE_MS: Long = 100L
+  @ApiStatus.Internal
+  const val FILTER_DEBOUNCE_MS: Long = 100L
 
   fun JTree.overrideBuiltInAction(actionKey: String, override: (ActionEvent) -> Boolean) {
     val originalAction = actionMap[actionKey]

@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.ui.branch.popup
+package com.intellij.vcs.git.shared.widget.popup
 
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.ide.DataManager
@@ -22,12 +22,14 @@ import com.intellij.vcs.git.shared.ref.GitRefUtil
 import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
 import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetActions
 import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetKeys
+import com.intellij.vcs.git.shared.widget.tree.*
 import git4idea.GitReference
 import git4idea.config.GitVcsSettings
-import git4idea.ui.branch.tree.*
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
-internal class GitBranchesTreePopupStep(
+@ApiStatus.Internal
+class GitBranchesTreePopupStep(
   project: Project,
   selectedRepository: GitRepositoryFrontendModel?,
   repositories: List<GitRepositoryFrontendModel>,

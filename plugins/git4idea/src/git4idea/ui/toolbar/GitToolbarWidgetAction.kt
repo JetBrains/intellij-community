@@ -17,7 +17,7 @@ import com.intellij.vcs.git.shared.widget.GitToolbarWidgetActionBase
 import git4idea.branch.GitBranchUtil
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepositoryManager
-import git4idea.ui.branch.popup.GitBranchesTreePopup
+import git4idea.ui.branch.popup.GitBranchesTreePopupOnBackend
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
@@ -28,7 +28,7 @@ import javax.swing.JComponent
 class GitToolbarWidgetAction : GitToolbarWidgetActionBase() {
   override fun getPopupForRepo(project: Project, repositoryId: RepositoryId): JBPopup? {
     val repo = GitRepositoryManager.getInstance(project).repositories.find { it.rpcId == repositoryId } ?: return null
-    return GitBranchesTreePopup.create(project, repo)
+    return GitBranchesTreePopupOnBackend.create(project, repo)
   }
 
   override fun getPopupForUnknownGitRepo(project: Project, event: AnActionEvent): JBPopup? {
@@ -39,7 +39,7 @@ class GitToolbarWidgetAction : GitToolbarWidgetActionBase() {
       }
     }
 
-    return if (repo != null) GitBranchesTreePopup.create(project, repo) else null
+    return if (repo != null) GitBranchesTreePopupOnBackend.create(project, repo) else null
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {

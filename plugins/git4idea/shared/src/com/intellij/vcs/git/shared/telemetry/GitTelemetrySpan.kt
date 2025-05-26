@@ -6,3 +6,9 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface GitTelemetrySpan : VcsTelemetrySpan
+
+internal enum class GitBranchesPopupSpan : GitTelemetrySpan {
+  BuildingTree {
+    override fun getName() = "git-branches-popup-building-tree"
+  }
+}

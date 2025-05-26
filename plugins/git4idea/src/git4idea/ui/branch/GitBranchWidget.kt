@@ -33,7 +33,7 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.BranchIconUtil.Companion.getBranchIcon
-import git4idea.ui.branch.popup.GitBranchesTreePopup
+import git4idea.ui.branch.popup.GitBranchesTreePopupOnBackend
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
@@ -67,7 +67,7 @@ open class GitBranchWidget(project: Project) : DvcsStatusWidget<GitRepository>(p
 
   override fun getWidgetPopup(project: Project, repository: GitRepository): JBPopup {
     branchWidgetClicked()
-    return GitBranchesTreePopup.create(project, repository)
+    return GitBranchesTreePopupOnBackend.create(project, repository)
   }
 
   override fun rememberRecentRoot(path: String) {

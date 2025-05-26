@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.dvcs.branch.DvcsBranchUtil;
@@ -14,7 +14,7 @@ import git4idea.branch.GitBranchUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.ui.branch.BranchIconUtil;
-import git4idea.ui.branch.popup.GitBranchesTreePopup;
+import git4idea.ui.branch.popup.GitBranchesTreePopupOnBackend;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +61,7 @@ final class GitBranchesComboBoxAction extends ComboBoxAction implements DumbAwar
     Project project = Objects.requireNonNull(context.getData(CommonDataKeys.PROJECT));
     GitRepository repo = Objects.requireNonNull(GitBranchUtil.guessWidgetRepository(project, context));
 
-    JBPopup popup = GitBranchesTreePopup.create(project, repo);
+    JBPopup popup = GitBranchesTreePopupOnBackend.create(project, repo);
     popup.addListener(new JBPopupListener() {
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {

@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.ui.branch.tree
+package com.intellij.vcs.git.shared.widget.tree
 
 import com.intellij.openapi.project.Project
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
 import com.intellij.psi.codeStyle.MinusculeMatcher
@@ -13,6 +13,7 @@ import com.intellij.util.containers.headTail
 import com.intellij.util.containers.init
 import com.intellij.vcs.git.shared.ref.GitRefUtil
 import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
+import com.intellij.vcs.git.shared.telemetry.GitBranchesPopupSpan
 import com.intellij.vcs.git.shared.widget.actions.GitBranchesTreePopupFilterByAction
 import com.intellij.vcs.git.shared.widget.actions.GitBranchesTreePopupFilterByRepository
 import git4idea.*
@@ -20,7 +21,7 @@ import git4idea.branch.GitBranchType
 import git4idea.branch.GitRefType
 import git4idea.branch.GitTagType
 import git4idea.config.GitVcsSettings
-import git4idea.telemetry.GitBackendTelemetrySpan
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.TreePath
 
 private typealias PathAndRef = Pair<List<String>, GitReference>
@@ -54,7 +55,8 @@ private fun Map<String, Any>.mapToNodes(branchType: GitRefType, path: List<Strin
   }
 }
 
-internal fun createTreePathFor(model: GitBranchesTreeModel, value: Any): TreePath? {
+@ApiStatus.Internal
+fun createTreePathFor(model: GitBranchesTreeModel, value: Any): TreePath? {
   val root = model.root
   val action = value as? PopupFactoryImpl.ActionItem
   if (action != null) {
@@ -200,13 +202,15 @@ internal open class LazyRepositoryHolder(
   nodeNameSupplier = { it.repository.shortName },
   needFilter = { GitBranchesTreePopupFilterByRepository.isSelected(project) })
 
-internal class LazyActionsHolder(project: Project, actions: List<Any>, matcher: MinusculeMatcher?) :
+@ApiStatus.Internal
+class LazyActionsHolder(project: Project, actions: List<Any>, matcher: MinusculeMatcher?) :
   LazyHolder<Any>(actions, matcher,
                   exceptFilter = { it is SeparatorWithText },
                   nodeNameSupplier = { (it as? PopupFactoryImpl.ActionItem)?.text ?: it.toString() },
                   needFilter = { GitBranchesTreePopupFilterByAction.isSelected(project) })
 
-internal open class LazyHolder<N>(nodes: List<N>,
+@ApiStatus.Internal
+open class LazyHolder<N>(nodes: List<N>,
                                   matcher: MinusculeMatcher?,
                                   exceptFilter: (N) -> Boolean = { false },
                                   nodeNameSupplier: (N) -> String = { it.toString() },
@@ -228,7 +232,8 @@ internal open class LazyHolder<N>(nodes: List<N>,
   fun isEmpty() = initiallyEmpty || !needFilter() || match.isEmpty()
 }
 
-internal class LazyRefsSubtreeHolder<out T : GitReference>(
+@ApiStatus.Internal
+class LazyRefsSubtreeHolder<out T : GitReference>(
   unsortedRefs: Collection<T>,
   matcher: MinusculeMatcher?,
   isPrefixGrouping: () -> Boolean,
@@ -247,7 +252,7 @@ internal class LazyRefsSubtreeHolder<out T : GitReference>(
 
   val tree: Map<String, Any> by lazy {
     val infoList = matchingResult.matchedNodes
-    getInstance().getTracer(VcsScope).spanBuilder(GitBackendTelemetrySpan.GitBranchesPopup.BuildingTree.getName()).use { span ->
+    TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(GitBranchesPopupSpan.BuildingTree.getName()).use { span ->
       buildSubTree(infoList.map { (if (isPrefixGrouping()) it.name.split('/') else listOf(it.name)) to it })
     }
   }

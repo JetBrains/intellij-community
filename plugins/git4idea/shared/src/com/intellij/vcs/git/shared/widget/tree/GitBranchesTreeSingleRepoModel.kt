@@ -1,19 +1,21 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.ui.branch.tree
+package com.intellij.vcs.git.shared.widget.tree
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
+import com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopupBase
 import git4idea.GitReference
 import git4idea.GitRemoteBranch
 import git4idea.GitStandardLocalBranch
 import git4idea.GitTag
 import git4idea.branch.GitRefType
 import git4idea.config.GitVcsSettings
-import git4idea.ui.branch.popup.GitBranchesTreePopupBase
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.TreePath
 
-internal open class GitBranchesTreeSingleRepoModel(
+@ApiStatus.Internal
+open class GitBranchesTreeSingleRepoModel(
   project: Project,
   val repository: GitRepositoryFrontendModel,
   topLevelActions: List<Any>,

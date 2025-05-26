@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.ui.branch.tree
+package com.intellij.vcs.git.shared.widget.tree
 
 import com.intellij.dvcs.branch.GroupingKey.GROUPING_BY_DIRECTORY
 import com.intellij.ide.util.treeView.PathElementIdProvider
@@ -9,7 +9,6 @@ import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.util.ui.tree.AbstractTreeModel
 import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
-import com.intellij.vcsUtil.Delegates.equalVetoingObservable
 import git4idea.GitReference
 import git4idea.GitRemoteBranch
 import git4idea.GitStandardLocalBranch
@@ -20,8 +19,9 @@ import git4idea.branch.GitTagType
 import git4idea.config.GitVcsSettings
 import javax.swing.Icon
 import javax.swing.tree.TreePath
+import kotlin.properties.Delegates.observable
 
-internal abstract class GitBranchesTreeModel(
+abstract class GitBranchesTreeModel(
   protected val project: Project,
   private val actions: List<Any>,
   protected val repositories: List<GitRepositoryFrontendModel>,
@@ -37,8 +37,10 @@ internal abstract class GitBranchesTreeModel(
   protected var nameMatcher: MinusculeMatcher? = null
     private set
 
-  var isPrefixGrouping: Boolean by equalVetoingObservable(GitVcsSettings.getInstance(project).branchSettings.isGroupingEnabled(GROUPING_BY_DIRECTORY)) {
-    applyFilterAndRebuild(null)
+  var isPrefixGrouping: Boolean by observable(GitVcsSettings.getInstance(project).branchSettings.isGroupingEnabled(GROUPING_BY_DIRECTORY)) { _, oldValue, newValue ->
+    if (oldValue != newValue) {
+      applyFilterAndRebuild(null)
+    }
   }
 
   fun init() {

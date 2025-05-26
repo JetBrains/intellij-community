@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.ui.branch.popup
+package com.intellij.vcs.git.shared.widget.popup
 
-import com.intellij.collaboration.async.cancelledWith
 import com.intellij.dvcs.branch.BranchType
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.navigation.ItemPresentation
@@ -12,7 +11,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
-import com.intellij.openapi.concurrency.waitForPromise
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
@@ -45,30 +43,31 @@ import com.intellij.vcs.git.shared.widget.GitWidgetUpdate
 import com.intellij.vcs.git.shared.widget.GitWidgetUpdatesNotifier
 import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetActions
 import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetKeys
-import com.intellij.vcs.git.shared.widget.popup.GitBranchesWidgetPopup
+import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeModel.*
+import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeRenderer
+import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeSingleRepoModel
+import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeUtil
+import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeUtil.overrideBuiltInAction
+import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeUtil.selectFirst
+import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeUtil.selectLast
+import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeUtil.selectNext
+import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeUtil.selectPrev
 import git4idea.GitBranch
 import git4idea.GitDisposable
 import git4idea.GitReference
 import git4idea.branch.GitBranchType
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
-import git4idea.ui.branch.tree.GitBranchesTreeModel.*
-import git4idea.ui.branch.tree.GitBranchesTreeRenderer
-import git4idea.ui.branch.tree.GitBranchesTreeSingleRepoModel
-import git4idea.ui.branch.tree.GitBranchesTreeUtil
-import git4idea.ui.branch.tree.GitBranchesTreeUtil.overrideBuiltInAction
-import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectFirst
-import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectLast
-import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectNext
-import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectPrev
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.concurrency.Promise
 import java.awt.Cursor
 import java.awt.Dimension
 import java.awt.Point
@@ -83,10 +82,10 @@ import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
 import kotlin.math.min
 import kotlin.reflect.KClass
-import kotlin.time.Duration
 
 @OptIn(FlowPreview::class)
-internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
+@ApiStatus.Internal
+abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
   project: Project,
   step: T,
   parent: JBPopup? = null,
@@ -132,23 +131,24 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
       sink[GitBranchesWidgetKeys.SELECTED_REPOSITORY] = treeStep.selectedRepository
     }
 
-    GitDisposable.getInstance(project).childScope("Git Branches Tree Popup").cancelledWith(this).also { scope ->
-      scope.launch {
-        searchPatternStateFlow.drop(1).debounce(GitBranchesTreeUtil.FILTER_DEBOUNCE_MS).collectLatest { pattern ->
-          withContext(Dispatchers.EDT) {
-            applySearchPattern(pattern)
-          }
+    val widgetScope = GitDisposable.getInstance(project).childScope("Git Branches Tree Popup")
+    Disposer.register(this) { widgetScope.cancel() }
+
+    widgetScope.launch {
+      searchPatternStateFlow.drop(1).debounce(GitBranchesTreeUtil.FILTER_DEBOUNCE_MS).collectLatest { pattern ->
+        withContext(Dispatchers.EDT) {
+          applySearchPattern(pattern)
         }
       }
-
-      if (!isNestedPopup()) {
-        scope.launch {
-          GitUiSettingsApi.getInstance().initBranchSyncPolicyIfNotInitialized(project.projectId())
-        }
-      }
-
-      subscribeOnUpdates(scope, project, step)
     }
+
+    if (!isNestedPopup()) {
+      widgetScope.launch {
+        GitUiSettingsApi.getInstance().initBranchSyncPolicyIfNotInitialized(project.projectId())
+      }
+    }
+
+    subscribeOnUpdates(widgetScope, project, step)
   }
 
   protected abstract fun getSearchFiledEmptyText(): @Nls String
@@ -156,7 +156,7 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
   protected abstract fun getTreeEmptyText(searchPattern: String?): @Nls String
 
   @VisibleForTesting
-  internal abstract fun createRenderer(): GitBranchesTreeRenderer
+  abstract fun createRenderer(): GitBranchesTreeRenderer
 
   protected open fun createNextStepPopup(nextStep: PopupStep<*>?, parentValue: Any): WizardPopup =
     createPopup(this, nextStep, parentValue)
@@ -753,8 +753,8 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
   }
 
   @TestOnly
-  fun waitTreeExpand(timeout: Duration) {
-    TreeUtil.promiseExpandAll(tree).waitForPromise(timeout)
+  fun promiseExpandTree(): Promise<*> {
+    return TreeUtil.promiseExpandAll(tree)
   }
 
   @TestOnly

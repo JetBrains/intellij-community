@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.ui.branch.popup
+package com.intellij.vcs.git.shared.widget.popup
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionManager
@@ -17,10 +17,11 @@ import com.intellij.vcs.git.shared.branch.GitInOutStateHolder
 import com.intellij.vcs.git.shared.branch.calcTooltip
 import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
 import com.intellij.vcs.git.shared.ui.GitIncomingOutgoingUi
+import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeModel
+import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeRenderer
 import git4idea.GitRemoteBranch
 import git4idea.GitStandardLocalBranch
-import git4idea.ui.branch.tree.GitBranchesTreeModel
-import git4idea.ui.branch.tree.GitBranchesTreeRenderer
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Container
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
@@ -30,7 +31,8 @@ import javax.swing.JPanel
 import javax.swing.JTree
 import javax.swing.SwingConstants
 
-internal class GitBranchesTreePopupRenderer(treePopupStep: GitBranchesTreePopupStepBase) : GitBranchesTreeRenderer(treePopupStep) {
+@ApiStatus.Internal
+class GitBranchesTreePopupRenderer(treePopupStep: GitBranchesTreePopupStepBase) : GitBranchesTreeRenderer(treePopupStep) {
   private val secondaryLabel = JLabel().apply {
     border = JBUI.Borders.emptyLeft(10)
     horizontalAlignment = SwingConstants.RIGHT
@@ -61,8 +63,8 @@ internal class GitBranchesTreePopupRenderer(treePopupStep: GitBranchesTreePopupS
     val incomingOutgoingState = getIncomingOutgoingState(userObject)
 
     if (incomingOutgoingState != GitInOutCountersInProject.EMPTY) {
-      updateIncomingCommitLabel(incomingLabel, incomingOutgoingState)
-      updateOutgoingCommitLabel(outgoingLabel, incomingOutgoingState)
+      GitIncomingOutgoingUi.updateIncomingCommitLabel(incomingLabel, incomingOutgoingState)
+      GitIncomingOutgoingUi.updateOutgoingCommitLabel(outgoingLabel, incomingOutgoingState)
       tree.toolTipText = incomingOutgoingState.calcTooltip()
     }
     else {
@@ -175,30 +177,4 @@ internal class GitBranchesTreePopupRenderer(treePopupStep: GitBranchesTreePopupS
       return accessibleContext
     }
   }
-}
-
-internal fun updateIncomingCommitLabel(label: JLabel, incomingOutgoingState: GitInOutCountersInProject) {
-  val isEmpty = incomingOutgoingState == GitInOutCountersInProject.EMPTY
-  val totalIncoming = incomingOutgoingState.totalIncoming()
-
-  label.isVisible = !isEmpty && (totalIncoming > 0 || incomingOutgoingState.hasUnfetched())
-  if (!label.isVisible) return
-
-  label.text = if (totalIncoming > 0) shrinkTo99(totalIncoming) else ""
-}
-
-internal fun updateOutgoingCommitLabel(label: JLabel, state: GitInOutCountersInProject) {
-  val isEmpty = state == GitInOutCountersInProject.EMPTY
-  val totalOutgoing = state.totalOutgoing()
-
-  label.isVisible = !isEmpty && totalOutgoing > 0
-  if (!label.isVisible) return
-
-  label.text = if (totalOutgoing > 0) shrinkTo99(totalOutgoing) else ""
-}
-
-
-private fun shrinkTo99(commits: Int): @NlsSafe String {
-  if (commits > 99) return "99+"
-  return commits.toString()
 }

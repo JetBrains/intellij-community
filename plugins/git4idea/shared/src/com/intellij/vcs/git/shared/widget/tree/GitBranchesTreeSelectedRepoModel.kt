@@ -1,10 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.ui.branch.tree
+package com.intellij.vcs.git.shared.widget.tree
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
-import git4idea.ui.branch.popup.GitBranchesTreePopupBase
+import com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopupBase
 import javax.swing.tree.TreePath
 
 /**

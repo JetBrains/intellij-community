@@ -37,14 +37,12 @@ import com.intellij.vcs.git.shared.branch.GitBranchesMatcherWrapper
 import com.intellij.vcs.git.shared.branch.calcTooltip
 import com.intellij.vcs.git.shared.ui.GitBranchesTreeIconProvider
 import com.intellij.vcs.git.shared.ui.GitIncomingOutgoingUi
+import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeUtil
 import com.intellij.vcsUtil.VcsImplUtil
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.BranchesTreeActionGroup
-import git4idea.ui.branch.popup.updateIncomingCommitLabel
-import git4idea.ui.branch.popup.updateOutgoingCommitLabel
-import git4idea.ui.branch.tree.GitBranchesTreeUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -127,8 +125,8 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
           else null
 
         val incomingOutgoingState = refInfo.incomingOutgoingState
-        updateIncomingCommitLabel(incomingLabel, incomingOutgoingState)
-        updateOutgoingCommitLabel(outgoingLabel, incomingOutgoingState)
+        GitIncomingOutgoingUi.updateIncomingCommitLabel(incomingLabel, incomingOutgoingState)
+        GitIncomingOutgoingUi.updateOutgoingCommitLabel(outgoingLabel, incomingOutgoingState)
 
         val fontMetrics = incomingLabel.getFontMetrics(incomingLabel.font)
         incomingLabel.size = Dimension(fontMetrics.stringWidth(incomingLabel.text) + JBUI.scale(1) + incomingLabel.icon.iconWidth, fontMetrics.height)
