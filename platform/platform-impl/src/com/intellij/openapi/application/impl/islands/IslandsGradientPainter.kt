@@ -4,6 +4,7 @@ package com.intellij.openapi.application.impl.islands
 import com.intellij.ide.ProjectWidgetGradientLocationService
 import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.ui.GradientTextureCache
+import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.AbstractPainter
 import com.intellij.openapi.wm.IdeFrame
@@ -74,9 +75,11 @@ internal class IslandsGradientPainter(private val frame: IdeFrame, private val m
     g.paint = rightGradientTexture
     g.fillRect(leftWidth, 0, rightWidth, height)
 
-    alignTxToInt(g, null, false, true, PaintUtil.RoundingMode.FLOOR)
+    if (ClientSystemInfo.isMac()) {
+      alignTxToInt(g, null, false, true, PaintUtil.RoundingMode.FLOOR)
 
-    g.paint = GradientPaint(0f, 0f, Gray.TRANSPARENT, 0f, height.toFloat(), mainColor)
-    g.fillRect(0, 0, totalWidth, height)
+      g.paint = GradientPaint(0f, 0f, Gray.TRANSPARENT, 0f, height.toFloat(), mainColor)
+      g.fillRect(0, 0, totalWidth, height)
+    }
   }
 }
