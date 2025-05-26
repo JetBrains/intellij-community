@@ -37,9 +37,11 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
@@ -48,8 +50,10 @@ import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.util.match
@@ -73,6 +77,14 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
 
     companion object {
         private val STRING_LITERALS_REGEXP: Regex = "\"([^\"]*)\"".toRegex()
+
+        private val replaceWithClassId = ClassId(
+            StandardClassIds.BASE_KOTLIN_PACKAGE,
+            StandardNames.FqNames.replaceWith.shortName()
+        )
+
+        private const val EXPRESSION_PARAMETER_NAME: String = "expression"
+
     }
 
     private data class KotlinCachedInjection(val modificationCount: Long, val baseInjection: BaseInjection)
@@ -188,6 +200,7 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
             ?: injectWithVariableUsage(place, originalHost)
             ?: injectWithMutation(place)
             ?: injectWithInfixCallOrOperator(place)
+            ?: injectImplicitKotlinBuildIns(place)
     }
 
     private val stringMutationOperators: List<KtSingleValueToken> = listOf(KtTokens.EQ, KtTokens.PLUSEQ)
@@ -371,6 +384,27 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
         }
 
         return null
+    }
+
+    private fun injectImplicitKotlinBuildIns(host: KtElement): InjectionInfo? {
+        val stringExpression = host as? KtStringTemplateExpression ?: return null
+        val valueArgument = stringExpression.parent as? KtValueArgument ?: return null
+        val callExpression = PsiTreeUtil.getParentOfType(
+            /* element = */ valueArgument,
+            /* aClass = */ KtCallExpression::class.java,
+            /* strict = */ false,
+            /* ...stopAt = */ KtBlockExpression::class.java, KtDeclaration::class.java
+        ) ?: return null
+        val foundImplicitInjection = analyze(callExpression) {
+            val constructorCall = callExpression.resolveToCall()?.singleConstructorCallOrNull() ?: return null
+            constructorCall.symbol.containingClassId == replaceWithClassId &&
+                constructorCall.argumentMapping[host]?.symbol?.name?.identifier == EXPRESSION_PARAMETER_NAME
+        }
+        return if (foundImplicitInjection){
+            InjectionInfo(KotlinLanguage.INSTANCE.id, "", "")
+        } else {
+            null
+        }
     }
 
     private fun KtElement.deparenthesized(): KtElement {

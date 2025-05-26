@@ -50,7 +50,7 @@ class KtLightAnnotationTest : KotlinLightCodeInsightFixtureTestCase() {
             typealias DL = DeprecationLevel
 
             class A {
-                @Deprecated("", ReplaceWith("a"), HIDDEN)
+                @Deprecated("", ReplaceWith("<error descr="Expecting a top level declaration">a</error>"), HIDDEN)
                 fun a() {}
 
                 @Deprecated(message = "", level = HIDDEN)
