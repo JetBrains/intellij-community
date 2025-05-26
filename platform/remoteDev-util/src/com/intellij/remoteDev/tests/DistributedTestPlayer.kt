@@ -11,5 +11,5 @@ import java.util.*
  */
 @ApiStatus.Internal
 interface DistributedTestPlayer {
-  fun initAgent(agent: RdAgentInfo, method: Method): Pair<Map<String, Queue<AgentAction>>, Map<String, Queue<AgentActionGetComponentData>>>
+  fun initAgent(agent: RdAgentInfo, method: Method): Map<String, Queue<AgentAction>>
 }

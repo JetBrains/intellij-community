@@ -171,7 +171,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           val testMethod = testClass.getMethod(testMethodNonParameterizedName)
 
           // Tell test we are running it inside an agent
-          val (actionsMap, getComponentDataRequests) = testClassObject.initAgent(session.rdAgentInfo, testMethod)
+          val actionsMap = testClassObject.initAgent(session.rdAgentInfo, testMethod)
 
           // Play test method
           testMethod.invoke(testClassObject)
@@ -228,19 +228,6 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
             return@setSuspend runNext(actionTitle, agentAction.timeout, agentAction.coroutineContextGetter, agentAction.requestFocusBeforeStart) {
               agentAction.action.invoke(this, parameters.parameters)
-            }
-          }
-
-
-          session.runNextActionGetComponentData.setSuspend(sessionBgtDispatcher) { _, parameters ->
-            val actionTitle = parameters.title
-            val queue = getComponentDataRequests[actionTitle]
-                        ?: error("There is no Action with name '$actionTitle', something went terribly wrong")
-            val agentActionGetComponentData = queue.remove()
-
-            return@setSuspend runNext(actionTitle, agentActionGetComponentData.timeout,
-                                      agentActionGetComponentData.coroutineContextGetter, agentActionGetComponentData.requestFocusBeforeStart) {
-              agentActionGetComponentData.action(this, parameters.parameters)
             }
           }
         }
