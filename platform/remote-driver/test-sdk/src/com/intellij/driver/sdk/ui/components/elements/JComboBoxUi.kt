@@ -9,9 +9,11 @@ import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
+import com.intellij.driver.sdk.ui.should
 import com.intellij.driver.sdk.ui.xQuery
 import org.intellij.lang.annotations.Language
 import javax.swing.JComboBox
+import kotlin.time.Duration.Companion.seconds
 
 
 fun Finder.comboBox(@Language("xpath") xpath: String? = null) =
@@ -34,7 +36,13 @@ class JComboBoxUiComponent(data: ComponentData) : UiComponent(data) {
     }
   }
 
-  fun selectItem(text: String) = fixture.select(text)
+  fun selectItem(text: String) {
+    should("'$text' item found", 5.seconds, { "'$text' item not found, available items: ${fixture.listValues()}" }) {
+      listValues().singleOrNull { it == text } != null
+    }
+    fixture.select(text)
+  }
+
   fun selectItemContains(text: String) {
     if (fixture.listValues().singleOrNull { it.contains(text) } == null) {
       click()
