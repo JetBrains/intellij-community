@@ -284,7 +284,7 @@ public final class RedundantCastUtil {
           PsiExpression newQualifier = deparenthesizeExpression(newCall.getMethodExpression().getQualifierExpression());
           LOG.assertTrue(newQualifier != null);
           PsiElement oldReference = newQualifier.getCopyableUserData(RecaptureTypeMapper.SELF_REFERENCE);
-          PsiElement replace = newQualifier.replace(getInnerMostOperand(newQualifier));
+          PsiElement replace = removeCastInQualifier(newQualifier);
           replace.putCopyableUserData(RecaptureTypeMapper.SELF_REFERENCE, oldReference);
 
           final JavaResolveResult newResult = newCall.getMethodExpression().advancedResolve(false);
@@ -314,15 +314,40 @@ public final class RedundantCastUtil {
             (PsiReferenceExpression)elementFactory.createExpressionFromText(refExpression.getText(), refExpression);
           final PsiExpression newQualifier = newExpression.getQualifierExpression();
           LOG.assertTrue(newQualifier != null);
-          newQualifier.replace(getInnerMostOperand(newQualifier));
+          removeCastInQualifier(newQualifier);
 
           JavaResolveResult newResult = newExpression.advancedResolve(false);
-          return newResult.isValidResult() && oldMember.equals(newResult.getElement());
+          if (!newResult.isValidResult() || !oldMember.equals(newResult.getElement())) return false;
+          if (parent instanceof PsiReferenceExpression parentRef && !newResult.getSubstitutor().equals(resolveResult.getSubstitutor())) {
+            return isCastInReferenceQualifierRedundant(parentRef);
+          }
+          return true;
         }
       }
       catch (IncorrectOperationException ignore) {
         return false;
       }
+    }
+
+    private static PsiElement removeCastInQualifier(PsiExpression qualifier) {
+      qualifier = deparenthesizeExpression(qualifier);
+      if (qualifier instanceof PsiTypeCastExpression typeCastExpression) {
+        while (true) {
+          PsiExpression operand = deparenthesizeExpression(typeCastExpression.getOperand());
+          if (operand instanceof PsiTypeCastExpression nestedCast) {
+            typeCastExpression = nestedCast;
+            continue;
+          }
+          return operand == null ? qualifier : qualifier.replace(operand);
+        }
+      }
+      if (qualifier instanceof PsiReferenceExpression ref) {
+        PsiExpression refQualifier = ref.getQualifierExpression();
+        if (refQualifier != null) {
+          removeCastInQualifier(refQualifier);
+        }
+      }
+      return qualifier;
     }
 
     private void processCall(PsiCall expression){
