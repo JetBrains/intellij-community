@@ -16,7 +16,7 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.application
 import com.intellij.util.ui.VcsExecutablePathSelector
-import git4idea.GitVcs
+import com.intellij.vcs.git.shared.GitDisplayName
 import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.CalledInAny
 
@@ -33,7 +33,7 @@ internal class GitExecutableSelectorPanel(val project: Project, val disposable: 
   private val applicationSettings get() = GitVcsApplicationSettings.getInstance()
   private val projectSettings get() = GitVcsSettings.getInstance(project)
 
-  private val pathSelector = VcsExecutablePathSelector(GitVcs.DISPLAY_NAME.get(), disposable, GitExecutableHandler())
+  private val pathSelector = VcsExecutablePathSelector(GitDisplayName.NAME, disposable, GitExecutableHandler())
 
   @Volatile
   private var versionCheckRequested = false

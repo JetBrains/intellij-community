@@ -20,10 +20,10 @@ import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetSettings
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.messages.MessageBusConnection
+import com.intellij.vcs.git.shared.GitDisplayName
 import com.intellij.vcs.git.shared.branch.calcTooltip
 import git4idea.GitBranchesUsageCollector.branchWidgetClicked
 import git4idea.GitUtil
-import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchIncomingOutgoingManager.GitIncomingOutgoingListener
 import git4idea.branch.GitBranchUtil
@@ -43,7 +43,7 @@ private const val ID: @NonNls String = "git"
  * A status bar widget which displays the current branch for a file currently open in the editor.
  */
 // used externally
-open class GitBranchWidget(project: Project) : DvcsStatusWidget<GitRepository>(project, GitVcs.DISPLAY_NAME.get()) {
+open class GitBranchWidget(project: Project) : DvcsStatusWidget<GitRepository>(project, GitDisplayName.NAME) {
   override fun registerCustomListeners(connection: MessageBusConnection) {
     super.registerCustomListeners(connection)
 

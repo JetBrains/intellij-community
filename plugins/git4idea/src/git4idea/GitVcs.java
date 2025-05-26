@@ -24,6 +24,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.VcsSynchronousProgressWrapper;
 import com.intellij.vcs.AnnotationProviderEx;
 import com.intellij.vcs.commit.CommitMode;
+import com.intellij.vcs.git.shared.GitDisplayName;
 import com.intellij.vcs.log.VcsUserRegistry;
 import git4idea.annotate.GitAdvancedSettingsListener;
 import git4idea.annotate.GitAnnotationProvider;
@@ -58,7 +59,6 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Supplier;
 
 import static com.intellij.util.concurrency.AppJavaExecutorUtil.executeOnPooledIoThread;
 
@@ -66,7 +66,6 @@ import static com.intellij.util.concurrency.AppJavaExecutorUtil.executeOnPooledI
  * Git VCS implementation
  */
 public final class GitVcs extends AbstractVcs {
-  public static final Supplier<@Nls String> DISPLAY_NAME = GitBundle.messagePointer("git4idea.vcs.name");
   public static final @NonNls String NAME = "Git";
   public static final @NonNls String ID = "git";
 
@@ -139,7 +138,7 @@ public final class GitVcs extends AbstractVcs {
 
   @Override
   public @NotNull String getDisplayName() {
-    return DISPLAY_NAME.get();
+    return GitDisplayName.NAME;
   }
 
   @Override

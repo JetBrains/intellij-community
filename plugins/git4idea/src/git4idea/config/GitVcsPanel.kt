@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config
 
 import com.intellij.application.options.editor.CheckboxDescriptor
@@ -39,6 +39,7 @@ import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.ui.layout.not
 import com.intellij.util.Function
 import com.intellij.util.execution.ParametersListUtil
+import com.intellij.vcs.git.shared.GitDisplayName
 import com.intellij.vcs.log.VcsLogFilterCollection.STRUCTURE_FILTER
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.ui.VcsLogColorManagerFactory
@@ -259,7 +260,7 @@ internal class GitVcsPanel(private val project: Project) :
       row {
         checkBox(cdSyncBranches(project))
           .gap(RightGap.SMALL)
-        contextHelp(DvcsBundle.message("sync.setting.description", GitVcs.DISPLAY_NAME.get()))
+        contextHelp(DvcsBundle.message("sync.setting.description", GitDisplayName.NAME))
       }
     }
     branchUpdateInfoRow()

@@ -10,11 +10,11 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.messages.Topic
+import com.intellij.vcs.git.shared.GitDisplayName
 import com.intellij.vcs.git.shared.branch.calcTooltip
 import com.intellij.vcs.git.shared.ui.GitBranchPresentation
 import git4idea.GitTag
 import git4idea.GitUtil
-import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchSyncStatus
 import git4idea.branch.GitBranchUtil
@@ -105,7 +105,7 @@ private fun GitRepository.calcTooltip(): @NlsContexts.Tooltip String? {
     repoInfo.state == Repository.State.REBASING -> GitBundle.message("git.status.bar.widget.tooltip.rebasing")
     repoInfo.currentBranch != null -> {
       val htmlBuilder = HtmlBuilder()
-      var message = DvcsBundle.message("tooltip.branch.widget.vcs.branch.name.text", GitVcs.DISPLAY_NAME.get(), repoInfo.currentBranch.name)
+      var message = DvcsBundle.message("tooltip.branch.widget.vcs.branch.name.text", GitDisplayName.NAME, repoInfo.currentBranch.name)
       htmlBuilder.append(message)
       if (!GitUtil.justOneGitRepository(project)) {
         htmlBuilder.br()

@@ -1,11 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.checkout;
 
 import com.intellij.dvcs.DvcsRememberedInputs;
 import com.intellij.dvcs.ui.CloneDvcsDialog;
 import com.intellij.openapi.project.Project;
+import com.intellij.vcs.git.shared.GitDisplayName;
 import git4idea.GitUtil;
-import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.remote.GitRememberedInputs;
@@ -27,7 +27,7 @@ public class GitCloneDialog extends CloneDvcsDialog {
   }
 
   public GitCloneDialog(@NotNull Project project, @Nullable String defaultUrl) {
-    super(project, GitVcs.DISPLAY_NAME.get(), GitUtil.DOT_GIT, defaultUrl);
+    super(project, GitDisplayName.NAME, GitUtil.DOT_GIT, defaultUrl);
     myGit = Git.getInstance();
   }
 

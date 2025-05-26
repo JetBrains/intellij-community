@@ -17,11 +17,11 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.popup.ActionPopupOptions
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
+import com.intellij.vcs.git.shared.GitDisplayName
 import com.intellij.vcs.git.shared.actions.GitDataKeys
 import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
 import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetKeys
 import git4idea.GitReference
-import git4idea.GitVcs
 import git4idea.config.GitVcsSettings
 import git4idea.ui.branch.GIT_SINGLE_REF_ACTION_GROUP
 import git4idea.ui.branch.GitBranchPopupActions.EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP
@@ -119,9 +119,9 @@ internal class GitBranchesTreePopupStep(
     when {
       ExperimentalUI.isNewUI() -> null
       !isFirstStep -> null
-      repositories.size > 1 -> DvcsBundle.message("branch.popup.vcs.name.branches", GitVcs.DISPLAY_NAME.get())
+      repositories.size > 1 -> DvcsBundle.message("branch.popup.vcs.name.branches", GitDisplayName.NAME)
       else -> repositories.single().let {
-        DvcsBundle.message("branch.popup.vcs.name.branches.in.repo", GitVcs.DISPLAY_NAME.get(), it.shortName)
+        DvcsBundle.message("branch.popup.vcs.name.branches.in.repo", GitDisplayName.NAME, it.shortName)
       }
     }
 
