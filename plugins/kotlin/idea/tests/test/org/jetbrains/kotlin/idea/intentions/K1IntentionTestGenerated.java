@@ -15078,6 +15078,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/movePropertyToConstructor/local.kt");
         }
 
+        @TestMetadata("localClass.kt")
+        public void testLocalClass() throws Exception {
+            runTest("testData/intentions/movePropertyToConstructor/localClass.kt");
+        }
+
         @TestMetadata("map.kt")
         public void testMap() throws Exception {
             runTest("testData/intentions/movePropertyToConstructor/map.kt");
