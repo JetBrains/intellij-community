@@ -1,9 +1,9 @@
 {
-  "name": "One Island Darkest",
+  "name": "One Island Dark",
   "dark": true,
   "author": "JetBrains",
   "parentTheme": "ExperimentalDark",
-  "editorScheme": "One Island Darkest",
+  "editorScheme": "Island Dark",
   "colors": {
     "Gray3": "#393B40",
     "Gray2.5": "#323438",
@@ -17,26 +17,28 @@
     "Gray0.25": "#151517",
     "Gray0": "#000000",
 
-    "BackgroundDark": "Gray0.5",
-    "BackgroundMid": "Gray1.25",
-    "BackgroundLight": "Gray2",
+    "BackgroundDark": "Gray0.75",
+    "BackgroundMid": "Gray1.5",
+    "BackgroundLight": "Gray2.5",
     "BackgroundLightest": "Gray3",
 
     "BorderDark": "Gray0.25",
-    "BorderLight": "Gray2.5",
+    "BorderLight": "Gray3",
     "BorderTransparent": "#00000000",
 
-    "PanelBackground": "Gray1.25",
-    "InputBackground": "Gray1.25",
-    "ComboboxBackground": "Gray2",
+    "PanelBackground": "Gray1.5",
+    "InputBackground": "Gray1.5",
+    "ComboboxBackground": "Gray2.5",
     "ComponentBorder": "Gray5",
 
-    "PopupBackground": "Gray1.25",
-    "PopupBackgroundLight": "Gray2",
-    "PopupBorder": "Gray2.5",
+    "PopupBackground": "Gray1.5",
+    "PopupBackgroundLight": "Gray2.5",
+    "PopupBorder": "Gray3",
 
-    "TooltipBackground": "Gray2.5",
-    "TooltipBorder": "Gray2.5",
+    "TooltipBackground": "Gray3",
+    "TooltipBorder": "Gray3",
+
+
 
     "HoverBackgroundMid": "Gray3",
     "HoverBackgroundLight": "Gray4",
@@ -90,7 +92,7 @@
       "Stripe": {
         "background": "BackgroundLight",
         "borderColor": "BorderTransparent",
-        "separatorColor": "Gray4"
+        "separatorColor": "Gray5"
       }
     },
 
@@ -107,11 +109,15 @@
       "tabContentActionsRightInsets": "0,4,0,2"
     },
 
-    "Editor.SearchField.background": "BackgroundMid",
-    "Editor.ToolTip": {
-      "background": "BackgroundLight",
-      "border": "BorderLight"
+    "Editor": {
+      "SearchField.background": "BackgroundMid",
+      "Toolbar.borderColor": "BorderDark",
+      "ToolTip": {
+        "background": "BackgroundLight",
+        "border": "BorderLight"
+      }
     },
+
 
     "Code.Block": {
       "borderColor": "BorderLight",
@@ -293,7 +299,7 @@
 
     "Review": {
       "Branch": {
-        "Background": "BackgroundLightest",
+        "Background": "TooltipBackground",
         "Background.Hover": "Gray4"
       },
       "State": {

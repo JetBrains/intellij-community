@@ -1,4 +1,4 @@
-<scheme name="One Island Darkest" version="142" parent_scheme="Darcula">
+<scheme name="Island Dark" version="142" parent_scheme="Darcula">
     <metaInfo>
         <property name="ide">idea</property>
         <property name="ideVersion">2025.2.0.0</property>
@@ -39,7 +39,7 @@
         <option name="IGNORED_ADDED_LINES_BORDER_COLOR" value="549159" />
         <option name="IGNORED_DELETED_LINES_BORDER_COLOR" value="868A91" />
         <option name="IGNORED_MODIFIED_LINES_BORDER_COLOR" value="375FAD" />
-        <option name="INDENT_GUIDE" value="26282B" />
+        <option name="INDENT_GUIDE" value="323438" />
         <option name="INFORMATION_HINT" value="2B2D30" />
         <option name="INLINE_REFACTORING_SETTINGS_DEFAULT" value="393B40" />
         <option name="INLINE_REFACTORING_SETTINGS_FOCUSED" value="393B40" />
@@ -54,7 +54,7 @@
         <option name="PROMOTION_PANE" value="25324D" />
         <option name="QUESTION_HINT" value="25324D" />
         <option name="RECENT_LOCATIONS_SELECTION" value="2B2D30" />
-        <option name="RIGHT_MARGIN_COLOR" value="26282B" />
+        <option name="RIGHT_MARGIN_COLOR" value="323438" />
         <option name="SELECTED_INDENT_GUIDE" value="4E5157" />
         <option name="ScrollBar.Mac.hoverThumbColor" value="FFFFFF4D" />
         <option name="ScrollBar.Mac.thumbColor" value="FFFFFF26" />
@@ -734,7 +734,7 @@
         <option name="TEXT">
             <value>
                 <option name="FOREGROUND" value="bcbec4" />
-                <option name="BACKGROUND" value="17181A" />
+                <option name="BACKGROUND" value="191A1C" />
             </value>
         </option>
         <option name="TEXT_SEARCH_RESULT_ATTRIBUTES">

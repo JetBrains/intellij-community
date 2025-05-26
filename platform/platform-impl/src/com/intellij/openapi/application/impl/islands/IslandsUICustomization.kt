@@ -74,12 +74,12 @@ internal class IslandsUICustomization : InternalUICustomization() {
       val editorScheme: String
       var newTheme = when (type) {
         "island" -> {
-          editorScheme = if (isLight) "Light" else "One Island Darker"
-          uiThemeManager.findThemeById(if (isLight) "One Island Light" else "One Island Darker")
+          editorScheme = if (isLight) "Light" else "Island Dark"
+          uiThemeManager.findThemeById(if (isLight) "One Island Light" else "One Island Dark")
         }
         "islands" -> {
-          editorScheme = if (isLight) "Light" else "One Island Darker"
-          uiThemeManager.findThemeById(if (isLight) "Many Islands Light" else "Many Islands Darker")
+          editorScheme = if (isLight) "Light" else "Island Dark"
+          uiThemeManager.findThemeById(if (isLight) "Many Islands Light" else "Many Islands Dark")
         }
         else -> {
           editorScheme = if (isLight) "Light" else "Dark"
