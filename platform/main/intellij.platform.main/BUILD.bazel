@@ -16,6 +16,7 @@ java_library(
     "//platform/bookmarks",
     "//platform/todo",
     "//platform/find",
+    "//platform/settings-local",
     "//platform/xdebugger-impl/shared",
     "//platform/xdebugger-impl/rpc",
   ]

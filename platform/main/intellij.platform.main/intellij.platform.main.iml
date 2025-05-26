@@ -16,6 +16,7 @@
     <orderEntry type="module" module-name="intellij.platform.bookmarks" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.todo" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.find" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.settings.local" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.shared" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.rpc" />
   </component>

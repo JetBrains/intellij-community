@@ -158,7 +158,6 @@ jvm_library(
     "@lib//:protobuf",
     "@lib//:jgoodies-common",
     "@lib//:jgoodies-forms",
-    "//platform/settings-local",
     "@lib//:bouncy-castle-provider",
     "//platform/platform-resources:resources",
     "//platform/platform-resources-en:resources-en",
