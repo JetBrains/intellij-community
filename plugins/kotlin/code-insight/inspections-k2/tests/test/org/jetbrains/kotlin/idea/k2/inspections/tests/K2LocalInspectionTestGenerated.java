@@ -13860,6 +13860,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withTake/replaceWithTake.kt");
             }
 
+            @TestMetadata("replaceWithTakeChainCall.kt")
+            public void testReplaceWithTakeChainCall() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withTake/replaceWithTakeChainCall.kt");
+            }
+
+            @TestMetadata("replaceWithTakeNotAvailable.kt")
+            public void testReplaceWithTakeNotAvailable() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withTake/replaceWithTakeNotAvailable.kt");
+            }
+
             @TestMetadata("semicolon.kt")
             public void testSemicolon() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withTake/semicolon.kt");

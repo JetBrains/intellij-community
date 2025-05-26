@@ -6,12 +6,19 @@ import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.KaCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations.isPure
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespace
 
 internal class ReplaceSubstringWithTakeInspection : ReplaceSubstringInspection() {
     override fun buildVisitor(
@@ -29,10 +36,21 @@ internal class ReplaceSubstringWithTakeInspection : ReplaceSubstringInspection()
     override fun KaSession.prepareContext(element: KtDotQualifiedExpression): Unit? {
         if (!resolvesToMethod(element, "kotlin.text.substring")) return null
         if (!isFirstArgumentZero(element)) return null
-
         if (!element.receiverExpression.isPure()) return null
-
+        if (isNextCallHasCharSequenceReceiver(element) == false) return null
         return Unit
+    }
+
+    private fun KaSession.isNextCallHasCharSequenceReceiver(element: KtDotQualifiedExpression): Boolean? {
+        // take() consumes `CharSequence` and returns `CharSequence` as well;
+        // we should not break the call chain if the following call receiver is not `CharSequence`
+        val next =
+            element.getNextSiblingIgnoringWhitespace()?.takeIf { it.elementType == KtTokens.DOT } ?: return null
+        val nextNext = next.getNextSiblingIgnoringWhitespace() as? KtCallExpression ?: return null
+        val call =
+            nextNext.resolveToCall()?.successfulCallOrNull<KaCall>() as? KaCallableMemberCall<*, *>
+        val receiverParameterType = call?.symbol?.receiverParameter?.returnType
+        return receiverParameterType?.isCharSequenceType
     }
 
     override fun getProblemDescription(

@@ -14720,6 +14720,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/replaceSubstring/withTake/replaceWithTake.kt");
             }
 
+            @TestMetadata("replaceWithTakeChainCall.kt")
+            public void testReplaceWithTakeChainCall() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSubstring/withTake/replaceWithTakeChainCall.kt");
+            }
+
+            @TestMetadata("replaceWithTakeNotAvailable.kt")
+            public void testReplaceWithTakeNotAvailable() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSubstring/withTake/replaceWithTakeNotAvailable.kt");
+            }
+
             @TestMetadata("semicolon.kt")
             public void testSemicolon() throws Exception {
                 runTest("testData/inspectionsLocal/replaceSubstring/withTake/semicolon.kt");
