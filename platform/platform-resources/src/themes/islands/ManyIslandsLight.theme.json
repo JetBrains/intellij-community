@@ -132,14 +132,17 @@
 
     "HelpBrowser.UserMessage.background": "#DFE1E5CC",
 
-    "RecentProject.Color1.MainToolbarGradientStart": "#f5ece9",
-    "RecentProject.Color2.MainToolbarGradientStart": "#edebe1",
-    "RecentProject.Color3.MainToolbarGradientStart": "#e3e8dc",
-    "RecentProject.Color4.MainToolbarGradientStart": "#e4e9ed",
-    "RecentProject.Color5.MainToolbarGradientStart": "#e7e6f0",
-    "RecentProject.Color6.MainToolbarGradientStart": "#f3edf5",
-    "RecentProject.Color7.MainToolbarGradientStart": "#f0ebf5",
-    "RecentProject.Color8.MainToolbarGradientStart": "#e1ebe9",
-    "RecentProject.Color9.MainToolbarGradientStart": "#e1ebe3"
+    "RecentProject.Color1.MainToolbarGradientStart": "#f7d7cb",
+    "RecentProject.Color2.MainToolbarGradientStart": "#f5e6b8",
+    "RecentProject.Color3.MainToolbarGradientStart": "#e2f2c9",
+    "RecentProject.Color4.MainToolbarGradientStart": "#cbe4f7",
+    "RecentProject.Color5.MainToolbarGradientStart": "#d4d2fc",
+    "RecentProject.Color6.MainToolbarGradientStart": "#ecd3f5",
+    "RecentProject.Color7.MainToolbarGradientStart": "#e4d3f5",
+    "RecentProject.Color8.MainToolbarGradientStart": "#cef0e9",
+    "RecentProject.Color9.MainToolbarGradientStart": "#ceedd4",
+
+    "RecentProject.MainToolbarGradient.width": 600,
+    "RecentProject.MainToolbarGradient.height": 300
   }
 }

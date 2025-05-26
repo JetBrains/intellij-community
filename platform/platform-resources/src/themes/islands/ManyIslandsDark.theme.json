@@ -230,16 +230,18 @@
       }
     },
 
-    "RecentProject.Color1.MainToolbarGradientStart": "#332d29",
-    "RecentProject.Color2.MainToolbarGradientStart": "#2e2b22",
-    "RecentProject.Color3.MainToolbarGradientStart": "#272b23",
-    "RecentProject.Color4.MainToolbarGradientStart": "#212c30",
-    "RecentProject.Color5.MainToolbarGradientStart": "#262b38",
-    "RecentProject.Color6.MainToolbarGradientStart": "#2e292e",
-    "RecentProject.Color7.MainToolbarGradientStart": "#2d2833",
-    "RecentProject.Color8.MainToolbarGradientStart": "#1e2929",
-    "RecentProject.Color9.MainToolbarGradientStart": "#242b25",
+    "RecentProject.Color1.MainToolbarGradientStart": "#664832",
+    "RecentProject.Color2.MainToolbarGradientStart": "#5e4724",
+    "RecentProject.Color3.MainToolbarGradientStart": "#45522f",
+    "RecentProject.Color4.MainToolbarGradientStart": "#335661",
+    "RecentProject.Color5.MainToolbarGradientStart": "#394773",
+    "RecentProject.Color6.MainToolbarGradientStart": "#613861",
+    "RecentProject.Color7.MainToolbarGradientStart": "#503d70",
+    "RecentProject.Color8.MainToolbarGradientStart": "#325959",
+    "RecentProject.Color9.MainToolbarGradientStart": "#365439",
 
+    "RecentProject.MainToolbarGradient.width": 600,
+    "RecentProject.MainToolbarGradient.height": 300,
 
 
     "TrialWidget": {
