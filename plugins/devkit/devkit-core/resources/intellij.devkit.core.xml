@@ -513,6 +513,13 @@
                      implementationClass="org.jetbrains.idea.devkit.inspections.CanBeDumbAwareInspection"
                      key="inspection.can.be.dumb.aware.name"/>
 
+    <localInspection language="XML" applyToDialects="false"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.remotedev.MissingFrontendOrBackendRuntimeDependencyInspection"
+                     key="inspection.remote.dev.missing.runtime.dependency.name"/>
+
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
 
