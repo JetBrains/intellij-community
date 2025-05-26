@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.popup
 
-import com.intellij.dvcs.getCommonName
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
@@ -19,6 +18,7 @@ import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.vcs.git.shared.GitDisplayName
 import com.intellij.vcs.git.shared.actions.GitDataKeys
+import com.intellij.vcs.git.shared.ref.GitRefUtil
 import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
 import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetKeys
 import git4idea.GitReference
@@ -129,7 +129,7 @@ internal class GitBranchesTreePopupStep(
 
   fun isBranchesDiverged(): Boolean {
     return repositories.size > 1
-           && getCommonName(repositories) { it.state.currentBranch?.name ?: return@getCommonName null } == null
+           && GitRefUtil.getCommonCurrentBranch(repositories) == null
            && GitVcsSettings.getInstance(project).shouldExecuteOperationsOnAllRoots()
   }
 
