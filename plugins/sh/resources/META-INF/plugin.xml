@@ -5,6 +5,7 @@
   <category>Languages</category>
 
   <content>
+    <module name="intellij.sh.core" loading="embedded"/>
     <module name="intellij.sh.terminal"/>
     <module name="intellij.sh.copyright"/>
     <module name="intellij.sh.markdown"/>
@@ -25,5 +26,4 @@
     </li></ul>
   ]]></description>
 
-  <xi:include href="/META-INF/sh.xml"/>
 </idea-plugin>
