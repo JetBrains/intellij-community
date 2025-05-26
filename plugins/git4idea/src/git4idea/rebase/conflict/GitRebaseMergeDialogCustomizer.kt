@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase.conflict
 
 import com.intellij.diff.DiffEditorTitleCustomizer
@@ -95,7 +95,9 @@ private class GitRebaseMergeDialogCustomizer(
     }
   }
 
-  override fun getMultipleFileMergeDescription(files: MutableCollection<VirtualFile>) = getDescriptionForRebase(rebasingBranch, baseBranch, baseHash)
+  override fun getMultipleFileMergeDescription(files: MutableCollection<VirtualFile>) = getDescriptionForRebase(
+    repository, rebasingBranch, baseBranch, baseHash
+  )
 
   override fun getLeftPanelTitle(file: VirtualFile) = getDefaultLeftPanelTitleForBranch(rebasingBranch)
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.merge
 
 import com.intellij.diff.DiffEditorTitleCustomizer
@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -25,6 +26,7 @@ open class MergeDialogCustomizer {
    *
    * @param files the files that have conflicted changes and are shown in the dialog.
    */
+  @RequiresBackgroundThread
   open fun getMultipleFileMergeDescription(files: MutableCollection<VirtualFile>): @NlsContexts.Label String = ""
 
   /**

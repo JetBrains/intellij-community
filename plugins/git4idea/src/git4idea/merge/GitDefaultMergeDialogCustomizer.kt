@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.merge
 
 import com.intellij.diff.DiffEditorTitleCustomizer
@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.HtmlChunk.br
 import com.intellij.openapi.util.text.HtmlChunk.text
 import com.intellij.openapi.util.text.StringUtil
@@ -67,7 +68,13 @@ internal open class GitDefaultMergeDialogCustomizer(
     if (rebaseOntoBranches.isNotEmpty()) {
       val singleCurrentBranch = getSingleCurrentBranchName(repos)
       val singleOntoBranch = rebaseOntoBranches.toSet().singleOrNull()
-      return getDescriptionForRebase(singleCurrentBranch, singleOntoBranch?.branchName, singleOntoBranch?.hash)
+      val singleRepo = repos.singleOrNull()
+      return getDescriptionForRebase(
+        singleRepo,
+        singleCurrentBranch,
+        singleOntoBranch?.branchName,
+        singleOntoBranch?.hash,
+      )
     }
 
     val cherryPickCommitDetails = repos.mapNotNull { loadCherryPickCommitDetails(it) }
@@ -78,7 +85,7 @@ internal open class GitDefaultMergeDialogCustomizer(
         cherryPickCommitDetails.size, text(cherryPickCommitDetails.single().shortHash).code(),
         (singleCherryPick != null).toInt(),
         text(singleCherryPick?.authorName ?: ""),
-        HtmlBuilder().append(br()).append(text(singleCherryPick?.commitMessage ?: "").code())
+        HtmlBuilder().append(br()).append(CommitMessagePreview.asHtmlChunk (singleCherryPick?.commitMessage ?: ""))
       )
     }
 
@@ -178,36 +185,55 @@ internal open class GitDefaultMergeDialogCustomizer(
   }
 
   private fun loadCherryPickCommitDetails(repository: GitRepository): CherryPickDetails? {
-    val cherryPickHead = tryResolveRef(repository, CHERRY_PICK_HEAD) ?: return null
-
-    val shortDetails = GitLogUtil.collectMetadata(project, repository.root, listOf(cherryPickHead.asString()))
-
-    val result = shortDetails.singleOrNull() ?: return null
-    return CherryPickDetails(cherryPickHead.toShortString(), result.author.name, result.subject)
+    val result = GitLogUtil.collectMetadata(project, repository.root, listOf(CHERRY_PICK_HEAD)).singleOrNull() ?: return null
+    return CherryPickDetails(result.id.toShortString(), result.author.name, result.fullMessage)
   }
 
   private data class CherryPickDetails(@NlsSafe val shortHash: String, @NlsSafe val authorName: String, @NlsSafe val commitMessage: String)
 }
 
 @NlsContexts.Label
-internal fun getDescriptionForRebase(@NlsSafe rebasingBranch: String?, @NlsSafe baseBranch: String?, baseHash: Hash?): String =
-  when {
-    baseBranch != null -> html(
+internal fun getDescriptionForRebase(repository: GitRepository?, @NlsSafe rebasingBranch: String?, @NlsSafe baseBranch: String?, baseHash: Hash?): String {
+  val description = when {
+    baseBranch != null -> GitBundle.message(
       "merge.dialog.description.rebase.with.onto.branch.label.text",
       (rebasingBranch != null).toInt(), text(rebasingBranch ?: "").bold(),
       text(baseBranch).bold(),
       (baseHash != null).toInt(), baseHash?.toShortString() ?: ""
     )
-    baseHash != null -> html(
+    baseHash != null -> GitBundle.message(
       "merge.dialog.description.rebase.with.hash.label.text",
       (rebasingBranch != null).toInt(), text(rebasingBranch ?: "").bold(),
       text(baseHash.toShortString()).bold()
     )
-    else -> html(
+    else -> GitBundle.message(
       "merge.dialog.description.rebase.without.onto.info.label.text",
       (rebasingBranch != null).toInt(), text(rebasingBranch ?: "").bold()
     )
   }
+
+  val conflictOnCommit =
+    if (repository != null) GitLogUtil.collectMetadata(repository.project, repository.root, listOf(REBASE_HEAD)).singleOrNull()
+    else null
+
+  return if (conflictOnCommit == null) HtmlChunk.raw(description).toString()
+  else appendCommitMessageToRebaseConflictDescription(description, conflictOnCommit)
+}
+
+private fun appendCommitMessageToRebaseConflictDescription(description: @Nls String, conflictOnCommit: VcsCommitMetadata): @NlsSafe String {
+  val currentCommitDetails = GitBundle.message(
+    "merge.dialog.description.rebase.conflict.current.commit",
+    text(conflictOnCommit.id.toShortString()).code(),
+    conflictOnCommit.author.name
+  )
+
+  return HtmlBuilder()
+    .append(HtmlChunk.raw("$description. $currentCommitDetails"))
+    .br()
+    .append(CommitMessagePreview.asHtmlChunk(conflictOnCommit.fullMessage))
+    .wrapWith(HtmlChunk.html())
+    .toString()
+}
 
 internal fun getDefaultLeftPanelTitleForBranch(@NlsSafe branchName: String): String =
   html("merge.dialog.diff.left.title.default.branch.label.text", text(branchName).bold())
@@ -388,4 +414,22 @@ private class MergeConflictMultipleCommitInfoDialog(
 private data class RefInfo(val hash: Hash, @NlsSafe val branchName: String?) {
   @NlsSafe
   val presentable: String = branchName ?: hash.toShortString()
+}
+
+private object CommitMessagePreview {
+  private const val MAX_LINES = 3
+
+  fun asHtmlChunk(commitMessage: @NlsSafe String): HtmlChunk.Element =
+    HtmlChunk.text(trimAndEscape(commitMessage)).wrapWith("pre")
+
+  private fun trimAndEscape(commitMessage: @NlsSafe String): @NlsSafe String {
+    val lines = commitMessage.lines()
+    val trimmedMessage = if (lines.size <= MAX_LINES) {
+      commitMessage
+    } else {
+      lines.take(MAX_LINES).dropLastWhile { it.isBlank() }.joinToString("\n") + StringUtil.ELLIPSIS
+    }
+
+    return StringUtil.escapeXmlEntities(trimmedMessage)
+  }
 }
