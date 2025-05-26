@@ -3,6 +3,7 @@
   - name: intellij.sh
   contentModules:
   - name: intellij.sh.core
+  - name: intellij.sh.backend
   - name: intellij.sh.terminal
   - name: intellij.sh.copyright
   - name: intellij.sh.markdown
