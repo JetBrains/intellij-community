@@ -189,7 +189,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
 
       boolean disabled = descriptors.isEmpty() ||
                          exists(descriptors, PluginUiModel::isBundled) ||
-                         exists(descriptors, myPluginModelFacade::isUninstalled);
+                         exists(descriptors, it -> myPluginModelFacade.isUninstalled(it.getPluginId()));
       e.getPresentation().setEnabledAndVisible(!disabled);
 
       setShortcutSet(SHORTCUT_SET, myShowShortcut);

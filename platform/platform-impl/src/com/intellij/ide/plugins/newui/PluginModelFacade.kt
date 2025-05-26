@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.PluginEnableDisableAction
 import com.intellij.ide.plugins.PluginEnabledState
 import javax.swing.JComponent
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import org.jetbrains.annotations.ApiStatus
@@ -40,8 +41,8 @@ class PluginModelFacade(private val pluginModel: MyPluginModel) {
     pluginModel.installOrUpdatePlugin(component, model, updateDescriptor, modalityState)
   }
 
-  fun addUninstalled(model: PluginUiModel) {
-    pluginModel.addUninstalled(model.getDescriptor())
+  fun addUninstalled(pluginId: PluginId) {
+    pluginModel.addUninstalled(pluginId)
   }
 
   fun getIcon(model: PluginUiModel, big: Boolean, error: Boolean, disabled: Boolean): javax.swing.Icon {
@@ -56,8 +57,8 @@ class PluginModelFacade(private val pluginModel: MyPluginModel) {
     pluginModel.enableRequiredPlugins(model.getDescriptor())
   }
 
-  fun isUninstalled(model: PluginUiModel): Boolean {
-    return pluginModel.isUninstalled(model.getDescriptor())
+  fun isUninstalled(pluginId: PluginId): Boolean {
+    return pluginModel.isUninstalled(pluginId)
   }
 
   fun isEnabled(model: PluginUiModel): Boolean {

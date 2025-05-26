@@ -79,7 +79,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
   private Consumer<PluginUiModel> myCancelInstallCallback;
 
   private final Map<PluginId, Boolean> myRequiredPluginsForProject = new HashMap<>();
-  private final Set<IdeaPluginDescriptor> myUninstalled = new HashSet<>();
+  private final Set<PluginId> myUninstalled = new HashSet<>();
 
   private @Nullable FUSEventSource myInstallSource;
 
@@ -741,12 +741,12 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
                                                          id.getIdString()::equals));
   }
 
-  boolean isUninstalled(@NotNull IdeaPluginDescriptor descriptor) {
-    return myUninstalled.contains(descriptor);
+  boolean isUninstalled(@NotNull PluginId pluginId) {
+    return myUninstalled.contains(pluginId);
   }
 
-  void addUninstalled(@NotNull IdeaPluginDescriptor descriptor) {
-    myUninstalled.add(descriptor);
+  void addUninstalled(@NotNull PluginId pluginId) {
+    myUninstalled.add(pluginId);
   }
 
   @Override

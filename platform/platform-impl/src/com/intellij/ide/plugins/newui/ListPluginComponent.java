@@ -275,7 +275,7 @@ public final class ListPluginComponent extends JPanel {
           else {
             myLayout.addButtonComponent(myRestartButton = new RestartButton(myModelFacade));
 
-            myModelFacade.addUninstalled(myInstalledDescriptorForMarketplace);
+            myModelFacade.addUninstalled(myInstalledDescriptorForMarketplace.getPluginId());
           }
         }
         else {
@@ -299,7 +299,7 @@ public final class ListPluginComponent extends JPanel {
         else {
           myLayout.addButtonComponent(myRestartButton = new RestartButton(myModelFacade));
 
-          myModelFacade.addUninstalled(myPlugin);
+          myModelFacade.addUninstalled(myPlugin.getPluginId());
         }
       }
       else {
@@ -627,7 +627,8 @@ public final class ListPluginComponent extends JPanel {
 
     if (calcColor && (!myMarketplace || myInstalledDescriptorForMarketplace != null)) {
       PluginUiModel plugin = getDescriptorForActions();
-      boolean disabled = myModelFacade.isUninstalled(plugin) || !myModelFacade.isPluginInstallingOrUpdating(myPlugin) && !isEnabledState();
+      boolean disabled =
+        myModelFacade.isUninstalled(plugin.getPluginId()) || !myModelFacade.isPluginInstallingOrUpdating(myPlugin) && !isEnabledState();
       if (disabled) {
         nameForeground = otherForeground = DisabledColor;
       }
@@ -654,7 +655,8 @@ public final class ListPluginComponent extends JPanel {
     PluginUiModel plugin = getDescriptorForActions();
     List<? extends HtmlChunk> errors = myOnlyUpdateMode ? List.of() : myModelFacade.getErrors(plugin);
     boolean hasErrors = !errors.isEmpty() && !myIsNotFreeInFreeMode;
-    updateIcon(hasErrors, myModelFacade.isUninstalled(plugin) || !isEnabledState() || !myIsAvailable || myIsNotFreeInFreeMode);
+    updateIcon(hasErrors,
+               myModelFacade.isUninstalled(plugin.getPluginId()) || !isEnabledState() || !myIsAvailable || myIsNotFreeInFreeMode);
     updateNameComponentIcon();
 
     if (myAlignButton != null) {
@@ -848,7 +850,7 @@ public final class ListPluginComponent extends JPanel {
   }
 
   private void doUpdateEnabledState() {
-    if (!myModelFacade.isUninstalled(getDescriptorForActions())) {
+    if (!myModelFacade.isUninstalled(getDescriptorForActions().getPluginId())) {
       updateEnabledStateUI();
     }
     updateErrors();
@@ -865,7 +867,7 @@ public final class ListPluginComponent extends JPanel {
   }
 
   public void updateAfterUninstall(boolean needRestartForUninstall) {
-    myModelFacade.addUninstalled(getDescriptorForActions());
+    myModelFacade.addUninstalled(getDescriptorForActions().getPluginId());
     updateColors(mySelection);
     removeButtons(needRestartForUninstall);
 
@@ -1152,7 +1154,7 @@ public final class ListPluginComponent extends JPanel {
     return myPlugin.getDescriptor();
   }
 
-  public PluginUiModel getPluginModel(){
+  public PluginUiModel getPluginModel() {
     return myPlugin;
   }
 
@@ -1160,7 +1162,7 @@ public final class ListPluginComponent extends JPanel {
     return myInstalledDescriptorForMarketplace;
   }
 
-  public PluginUiModel getUpdatePluginDescriptor(){
+  public PluginUiModel getUpdatePluginDescriptor() {
     return myUpdateDescriptor != null ? myUpdateDescriptor : null;
   }
 

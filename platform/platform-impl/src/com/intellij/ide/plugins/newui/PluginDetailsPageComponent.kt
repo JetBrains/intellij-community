@@ -378,7 +378,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     val plugin = plugin
     if (plugin != null && !sentFeedbackPlugins.contains(plugin.pluginId)) {
       val foundPlugin = UiPluginManager.getInstance().findPlugin(plugin.pluginId)
-      if (foundPlugin != null && pluginModel.isUninstalled(foundPlugin)) {
+      if (foundPlugin != null && pluginModel.isUninstalled(foundPlugin.pluginId)) {
         rootPanel.add(uninstallFeedbackNotification!!, BorderLayout.NORTH)
       }
       else if (pluginModel.isDisabledInDiff(plugin)) {
@@ -1326,7 +1326,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       return
     }
 
-    if (!pluginModel.isUninstalled(descriptorForActions!!)) {
+    if (!pluginModel.isUninstalled(descriptorForActions!!.pluginId)) {
       if (enableDisableController != null) {
         enableDisableController!!.update()
       }
