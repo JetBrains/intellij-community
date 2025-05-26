@@ -5,11 +5,11 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.ui.AnimatedIcon
+import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetActions
 import git4idea.actions.GitFetch
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.fetch.GitFetchSupport
 import git4idea.i18n.GitBundle
-import git4idea.ui.branch.popup.GitBranchesTreePopupBase
 
 internal class GitBranchPopupFetchAction : GitFetch() {
   init {
@@ -18,7 +18,7 @@ internal class GitBranchPopupFetchAction : GitFetch() {
 
   override fun update(e: AnActionEvent) {
     val presentation = e.presentation
-    if (e.place != GitBranchesTreePopupBase.TOP_LEVEL_ACTION_PLACE) {
+    if (e.place != GitBranchesWidgetActions.MAIN_POPUP_ACTION_PLACE) {
       presentation.isEnabledAndVisible = false
       return
     }

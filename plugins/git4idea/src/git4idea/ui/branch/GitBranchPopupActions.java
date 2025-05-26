@@ -23,9 +23,7 @@ import git4idea.config.GitSharedSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.remote.hosting.GitRemoteBranchesUtil;
 import git4idea.repo.GitRepository;
-import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,10 +40,6 @@ import static git4idea.ui.branch.GitBranchActionsUtilKt.GIT_SINGLE_REF_ACTION_GR
 import static git4idea.ui.branch.GitBranchActionsUtilKt.createOrCheckoutNewBranch;
 
 public final class GitBranchPopupActions {
-
-  @Language("devkit-action-id")
-  public static final @NonNls String EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP = "Git.Experimental.Branch.Popup.Actions";
-
   private static final int MAX_BRANCH_NAME_LENGTH = 40;
 
   private GitBranchPopupActions() { }

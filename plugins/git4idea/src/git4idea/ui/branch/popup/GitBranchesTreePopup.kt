@@ -16,11 +16,11 @@ import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
 import com.intellij.vcs.git.shared.rpc.GitRepositoryApi
 import com.intellij.vcs.git.shared.widget.actions.GitBranchesTreePopupFilterByAction
 import com.intellij.vcs.git.shared.widget.actions.GitBranchesTreePopupFilterByRepository
+import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetActions
 import git4idea.GitReference
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
-import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.SINGLE_REPOSITORY_ACTION_PLACE
 import git4idea.ui.branch.tree.GitBranchesTreeModel.RefUnderRepository
 import git4idea.ui.branch.tree.GitBranchesTreeRenderer
 import org.intellij.lang.annotations.Language
@@ -101,7 +101,7 @@ internal class GitBranchesTreePopup(
     val settingsGroup = am.getAction(GitBranchesTreePopupActions.HEADER_SETTINGS_GROUP)
     val fetchAction = am.getAction(GitBranchesTreePopupActions.FETCH)
     val toolbarGroup = DefaultActionGroup(fetchAction, settingsGroup)
-    return am.createActionToolbar(TOP_LEVEL_ACTION_PLACE, toolbarGroup, true)
+    return am.createActionToolbar(GitBranchesWidgetActions.MAIN_POPUP_ACTION_PLACE, toolbarGroup, true)
       .apply {
         targetComponent = content
         setReservePlaceAutoPopupIcon(false)
@@ -121,7 +121,7 @@ internal class GitBranchesTreePopup(
     return DvcsBranchesDivergedBanner.create("reference.VersionControl.Git.SynchronousBranchControl", text)
   }
 
-  override fun getShortcutActionPlace(): String = if (isNestedPopup()) SINGLE_REPOSITORY_ACTION_PLACE else TOP_LEVEL_ACTION_PLACE
+  override fun getShortcutActionPlace(): String = if (isNestedPopup()) GitBranchesWidgetActions.NESTED_POPUP_ACTION_PLACE else GitBranchesWidgetActions.MAIN_POPUP_ACTION_PLACE
 
   companion object {
     private const val DIMENSION_SERVICE_KEY = "Git.Branch.Popup"

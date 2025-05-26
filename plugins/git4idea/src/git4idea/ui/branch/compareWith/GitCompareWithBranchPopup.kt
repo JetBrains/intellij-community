@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.util.ui.JBDimension
 import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
+import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetActions
 import git4idea.GitReference
 import git4idea.GitStandardLocalBranch
 import git4idea.config.GitVcsSettings
@@ -96,7 +97,7 @@ internal class GitCompareWithBranchPopup(
 
   override fun getHeaderToolbar(): ActionToolbar {
     val settingsGroup = am.getAction(HEADER_SETTINGS_ACTION_GROUP)
-    return am.createActionToolbar(TOP_LEVEL_ACTION_PLACE, DefaultActionGroup(settingsGroup), true)
+    return am.createActionToolbar(GitBranchesWidgetActions.MAIN_POPUP_ACTION_PLACE, DefaultActionGroup(settingsGroup), true)
       .apply {
         targetComponent = content
         setReservePlaceAutoPopupIcon(false)

@@ -5,7 +5,10 @@ import com.intellij.collaboration.async.cancelledWith
 import com.intellij.dvcs.branch.BranchType
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.navigation.ItemPresentation
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
@@ -40,6 +43,7 @@ import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.git.shared.rpc.GitUiSettingsApi
 import com.intellij.vcs.git.shared.widget.GitWidgetUpdate
 import com.intellij.vcs.git.shared.widget.GitWidgetUpdatesNotifier
+import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetActions
 import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetKeys
 import com.intellij.vcs.git.shared.widget.popup.GitBranchesWidgetPopup
 import git4idea.GitBranch
@@ -372,7 +376,7 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
     }
   }
 
-  protected open fun getShortcutActionPlace(): String = TOP_LEVEL_ACTION_PLACE
+  protected open fun getShortcutActionPlace(): String = GitBranchesWidgetActions.MAIN_POPUP_ACTION_PLACE
 
   private fun configureTreePresentation(tree: JTree) = with(tree) {
     val topBorder = if (step.title.isNullOrEmpty()) JBUIScale.scale(5) else 0
@@ -731,8 +735,6 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
   }
 
   companion object {
-    internal val TOP_LEVEL_ACTION_PLACE = ActionPlaces.getPopupPlace("GitBranchesPopup.TopLevel.Branch.Actions")
-
     private const val SPEED_SEARCH_DEFAULT_ACTIONS_GROUP = "Git.Branches.Popup.SpeedSearch"
 
     private inline val isNewUI
