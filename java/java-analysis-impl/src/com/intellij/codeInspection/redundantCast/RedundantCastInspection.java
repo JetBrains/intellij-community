@@ -125,7 +125,7 @@ public final class RedundantCastInspection extends AbstractBaseJavaLocalInspecti
 
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement castTypeElement, @NotNull ModPsiUpdater updater) {
-      if (castTypeElement.getParent() instanceof PsiTypeCastExpression cast) {
+      if (castTypeElement.getParent() instanceof PsiTypeCastExpression cast && RedundantCastUtil.isCastRedundant(cast)) {
         RemoveRedundantCastUtil.removeCast(cast);
       }
     }
