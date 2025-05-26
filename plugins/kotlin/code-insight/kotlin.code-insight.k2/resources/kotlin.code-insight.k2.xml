@@ -143,8 +143,8 @@
                  defaultValue="true"
                  restartRequired="true"/>
 
-    <registryKey key="kotlin.k2.auto.import.from.subclass.objects.enabled" 
-                 defaultValue="true" 
+    <registryKey key="kotlin.k2.auto.import.from.subclass.objects.enabled"
+                 defaultValue="true"
                  description="Enable auto-import of declarations inherited by objects in K2 Mode of Kotlin Plugin"/>
 
     <registryKey key="kotlin.k2.auto.import.mismatched.arguments.factory.enabled"
@@ -253,6 +253,15 @@
               descriptionKey="inlay.kotlin.parameters.hints.compiled"/>
     </codeInsight.declarativeInlayProvider>
 
+    <codeInsight.declarativeInlayProviderCustomSettingsProvider
+            language="kotlin"
+            providerId="kotlin.parameters.hints"
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.hints.KtParameterHintsCustomSettingsProvider"/>
+
+    <codeInsight.parameterHintsExcludeListConfigProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.hints.KtParameterHintsExcludeListConfigProvider"/>
+
     <codeInsight.declarativeInlayProvider
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.hints.KtCallChainHintsProvider"
@@ -328,6 +337,11 @@
               class="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinGenerateToStringAction"/>
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </group>
+
+    <action id="KtAddToExcludeListAction"
+            class="org.jetbrains.kotlin.idea.k2.codeinsight.hints.KtAddToExcludeListAction">
+      <add-to-group group-id="InlayMenu"/>
+    </action>
   </actions>
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <codeinsight.quickfix.registrar implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFromUsageQuickFixesRegistrar"/>

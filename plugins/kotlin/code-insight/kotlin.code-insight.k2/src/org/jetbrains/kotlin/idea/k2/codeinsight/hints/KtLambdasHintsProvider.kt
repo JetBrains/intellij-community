@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_IMPLICIT_RECEIVERS_AND_PARAMS
 import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_RETURN_EXPRESSIONS
 import org.jetbrains.kotlin.idea.codeInsight.hints.isFollowedByNewLine
@@ -181,3 +182,11 @@ class KtLambdasHintsProvider : AbstractKtInlayHintsProvider() {
         }
     }
 }
+
+context(KaSession)
+internal fun KaFunctionSymbol.isExcludeListed(excludeListMatchers: List<Matcher>): Boolean {
+    val callableFqName = callableId?.asSingleFqName()?.asString() ?: return false
+    val parameterNames = valueParameters.map { it.name.asString() }
+    return excludeListMatchers.any { it.isMatching(callableFqName, parameterNames) }
+}
+
