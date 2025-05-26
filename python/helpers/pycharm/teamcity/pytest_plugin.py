@@ -392,7 +392,7 @@ class EchoTeamCityMessages(object):
 
                 for cu in units:
                     try:
-                        analysis = self.coverage._analyze(cu)
+                        analysis = self.coverage._analyze(cu.filename)
                         nums = analysis.numbers
                         total += nums
                     except KeyboardInterrupt:
@@ -406,7 +406,7 @@ class EchoTeamCityMessages(object):
                         if typ is NotPython and not cu.should_be_python():
                             continue
 
-                        test_id = cu.name
+                        test_id = cu.relname
                         details = convert_error_to_string(err)
 
                         self.messages.testStarted(test_id, flowId=test_id)

@@ -65,7 +65,7 @@ class TeamcityServiceMessages(object):
 
     def encode(self, value):
         if self.encoding and isinstance(value, text_type):
-            value = value.encode(self.encoding)
+            value = value.encode(self.encoding, errors='backslashreplace')
         return value
 
     def decode(self, value):
