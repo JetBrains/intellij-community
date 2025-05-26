@@ -40,7 +40,7 @@ class ReplaceReadLineWithReadlnInspection : KotlinApplicableInspectionBase.Simpl
         element: KtExpression,
         context: Context
     ): @InspectionMessage String =
-        KotlinBundle.message("replace.0.with.1", readLineFqName.shortName().asString(), context.newFunctionName)
+        KotlinBundle.message("inspection.replace.readline.with.readln.display.name")
 
     override fun registerProblem(
         ranges: List<TextRange>,
@@ -80,9 +80,9 @@ class ReplaceReadLineWithReadlnInspection : KotlinApplicableInspectionBase.Simpl
         private val targetExpression: SmartPsiElementPointer<KtExpression>,
         private val functionName: String
     ) : KotlinModCommandQuickFix<KtExpression>() {
-        override fun getName() = KotlinBundle.message("replace.with.0", functionName)
+        override fun getName(): String = KotlinBundle.message("replace.with.0", functionName)
 
-        override fun getFamilyName() = name
+        override fun getFamilyName(): String = KotlinBundle.message("inspection.replace.readline.with.readln.display.name")
 
         override fun applyFix(
             project: Project,
