@@ -2253,6 +2253,11 @@ public abstract class NativeLinuxKotlinKmpCompletionTestGenerated extends Abstra
             runTest("../../completion/testData/basic/common/override/PreferImplementToOverride.kt");
         }
 
+        @TestMetadata("PreferImplementToOverrideK2.kt")
+        public void testPreferImplementToOverrideK2() throws Exception {
+            runTest("../../completion/testData/basic/common/override/PreferImplementToOverrideK2.kt");
+        }
+
         @TestMetadata("SecondConstructorParameter.kt")
         public void testSecondConstructorParameter() throws Exception {
             runTest("../../completion/testData/basic/common/override/SecondConstructorParameter.kt");

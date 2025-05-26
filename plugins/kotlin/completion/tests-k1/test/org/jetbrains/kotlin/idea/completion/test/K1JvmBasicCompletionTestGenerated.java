@@ -2119,6 +2119,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/override/PreferImplementToOverride.kt");
             }
 
+            @TestMetadata("PreferImplementToOverrideK2.kt")
+            public void testPreferImplementToOverrideK2() throws Exception {
+                runTest("../testData/basic/common/override/PreferImplementToOverrideK2.kt");
+            }
+
             @TestMetadata("SecondConstructorParameter.kt")
             public void testSecondConstructorParameter() throws Exception {
                 runTest("../testData/basic/common/override/SecondConstructorParameter.kt");

@@ -13,6 +13,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.ui.RowIcon
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.completion.handlers.indexOfSkippingSpace
 import org.jetbrains.kotlin.idea.core.moveCaret
@@ -29,7 +30,8 @@ class OverridesCompletionLookupElementDecorator(
     private val declaration: KtCallableDeclaration?,
     private val text: String,
     private val tailText: String?,
-    private val isImplement: Boolean,
+    @ApiStatus.Internal
+    val isImplemented: Boolean,
     private val icon: RowIcon,
     private val baseClassName: String?,
     private val baseClassIcon: Icon?,
@@ -47,7 +49,7 @@ class OverridesCompletionLookupElementDecorator(
         super.renderElement(presentation)
 
         presentation.itemText = text
-        presentation.isItemTextBold = isImplement
+        presentation.isItemTextBold = isImplemented
         presentation.icon = icon
         presentation.clearTail()
         presentation.setTailText(tailText, true)

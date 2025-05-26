@@ -145,7 +145,7 @@ internal class OverrideKeywordHandler(
             tailText = memberSymbol.contextReceivers
                 .takeUnless { it.isEmpty() }
                 ?.joinToString(prefix = " for ") { it.type.renderVerbose() }, // TODO could be a different DeclarationRenderer rendering only tail text information
-            isImplement = isImplement,
+            isImplemented = isImplement,
             icon = icon,
             baseClassName = containingSymbol?.name?.asString(),
             baseClassIcon = member.memberInfo.containingSymbolIcon,
