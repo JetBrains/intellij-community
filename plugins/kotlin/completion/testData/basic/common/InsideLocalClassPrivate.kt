@@ -1,4 +1,3 @@
-// IGNORE_K2
 fun test() {
     class Local {
         fun foo() {

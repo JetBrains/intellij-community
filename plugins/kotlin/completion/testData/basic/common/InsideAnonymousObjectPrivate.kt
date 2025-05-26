@@ -1,5 +1,3 @@
-// IGNORE_K2
-
 interface Foo {
 
     fun foo() {}
