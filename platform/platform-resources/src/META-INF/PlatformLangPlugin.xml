@@ -182,9 +182,6 @@
   <xi:include href="/META-INF/duplicates-analysis.xml">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/tasks.xml">
-    <xi:fallback/>
-  </xi:include>
 
   <xi:include href="/META-INF/ExternalProcessAuthHelper.xml">
     <xi:fallback/>

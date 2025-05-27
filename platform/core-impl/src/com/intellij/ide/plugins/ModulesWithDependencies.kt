@@ -176,7 +176,8 @@ private val knownNotFullyMigratedPluginIds: Set<String> = hashSetOf(
  * To avoid breaking compatibility, dependencies on these modules are automatically added to plugins which define dependency on the platform using 
  * `<depends>com.intellij.modules.platform</depends` or `<depends>com.intellij.modules.lang</depends` tags.
  */
-private val contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins = listOf<String>(
+private val contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins = listOf(
+  "intellij.platform.tasks.impl",
 )
 
 private fun collectDirectDependenciesInOldFormat(rootDescriptor: IdeaPluginDescriptorImpl,
