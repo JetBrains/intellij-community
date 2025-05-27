@@ -2,6 +2,7 @@
 package com.intellij.openapi.application
 
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.TestOnly
@@ -257,6 +258,31 @@ interface ThreadingSupport {
    * [action] is guaranteed to run. It may run immediately on the current thread or after some time on an unspecified thread.
    */
   fun runWhenWriteActionIsCompleted(action: () -> Unit)
+
+  /**
+   * Executes [action] with [blockingExecutor], and transfers write access to [action].
+   * This function requires the acquired write lock.
+   *
+   * [blockingExecutor] must block the running thread until [action] finishes.
+   * [blockingExecutor] can treat the passed runnable in a special way, so we wrap the runnable with [RunnableWithTransferredWriteAction]
+   *
+   * A typical example of [blockingExecutor] is [javax.swing.SwingUtilities.invokeAndWait]
+   */
+  @RequiresWriteLock
+  fun transferWriteActionAndBlock(blockingExecutor: (RunnableWithTransferredWriteAction) -> Unit, action: Runnable)
+
+  /**
+   * A marker class that helps others to identify that the runnable needs to run quickly
+   */
+  abstract class RunnableWithTransferredWriteAction : Runnable {
+    companion object {
+      const val NAME: String = "RunnableWithTransferredWriteAction"
+    }
+
+    override fun toString(): String {
+      return NAME
+    }
+  }
 }
 
 typealias CleanupAction = () -> Unit

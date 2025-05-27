@@ -207,7 +207,9 @@ class PlatformUtilitiesTest {
         (application as ApplicationImpl).invokeAndWaitWithTransferredWriteAction {
           assertThat(EDT.isCurrentThreadEdt()).isTrue
           assertThat(application.isWriteAccessAllowed).isTrue
-          runWriteAction {}
+          assertThat(application.isReadAccessAllowed).isTrue
+            runWriteAction {}
+            runReadAction { }
           assertThat(TransactionGuard.getInstance().isWritingAllowed).isTrue
         }
       }
@@ -223,7 +225,9 @@ class PlatformUtilitiesTest {
       (application as ApplicationImpl).invokeAndWaitWithTransferredWriteAction {
         assertThat(EDT.isCurrentThreadEdt()).isTrue
         assertThat(application.isWriteAccessAllowed).isTrue
+        assertThat(application.isReadAccessAllowed).isTrue
         runWriteAction {}
+        runReadAction { }
         assertThat(TransactionGuard.getInstance().isWritingAllowed).isTrue
       }
     }

@@ -9,6 +9,7 @@ import com.intellij.ide.actions.RevealFileAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ThreadingSupport
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.impl.fus.FreezeUiUsageCollector
 import com.intellij.openapi.progress.util.ui.NiceOverlayUi
@@ -17,6 +18,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import com.intellij.ui.KeyStrokeAdapter
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.application
 import com.intellij.util.ui.AsyncProcessIcon
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -72,7 +74,10 @@ object SuvorovProgress {
 
     FreezeUiUsageCollector.reportUiFreezePopupVisible()
 
-    val value = if (!LoadingState.COMPONENTS_LOADED.isOccurred || !JBUIScale.isInitialized()) {
+    // in tests, there is no UI scale, but we still want to run SuvorovProgress
+    val isScaleInitialized = (application.isUnitTestMode || JBUIScale.isInitialized())
+
+    val value = if (!LoadingState.COMPONENTS_LOADED.isOccurred || !isScaleInitialized) {
       "None"
     }
     else {
@@ -245,21 +250,6 @@ object SuvorovProgress {
   private fun sleep() {
     Thread.sleep(0, 100_000)
   }
-
-  abstract class ForcedWriteActionRunnable : Runnable {
-
-    companion object {
-      private const val NAME = "ForcedWriteActionRunnable"
-
-      fun isMarkedRunnable(event: InvocationEvent): Boolean {
-        return event.toString().contains(NAME)
-      }
-    }
-
-    override fun toString(): String {
-      return NAME
-    }
-  }
 }
 
 /**
@@ -278,7 +268,7 @@ private class EternalEventStealer(disposable: Disposable) {
   init {
     IdeEventQueue.getInstance().addPostEventListener(
       { event ->
-        if (enabled && event.toString().contains(",runnable=ForcedWriteActionRunnable")) {
+        if (enabled && event.toString().contains(",runnable=${ThreadingSupport.RunnableWithTransferredWriteAction.NAME}")) {
           val specialDispatchEvent = SpecialDispatchEvent(event)
           specialEvents.add(specialDispatchEvent)
           IdeEventQueue.getInstance().doPostEvent(specialDispatchEvent, true)

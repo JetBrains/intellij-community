@@ -29,7 +29,6 @@ import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher
 import com.intellij.openapi.keymap.impl.KeyState
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.util.SuvorovProgress
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
@@ -493,8 +492,9 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
   }
 
+  // todo: remove when listeners would not acquire WI
   private fun shouldSkipListeners(e: AWTEvent): Boolean {
-    return e is InvocationEvent && SuvorovProgress.ForcedWriteActionRunnable.isMarkedRunnable(e)
+    return e is InvocationEvent && e.toString().contains(ThreadingSupport.RunnableWithTransferredWriteAction.NAME)
   }
 
   private fun isUserActivityEvent(e: AWTEvent): Boolean =
