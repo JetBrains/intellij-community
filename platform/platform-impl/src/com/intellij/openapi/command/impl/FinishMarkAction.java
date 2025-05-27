@@ -10,16 +10,20 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class FinishMarkAction extends BasicUndoableAction {
-  private final @NotNull StartMarkAction myStartAction;
+  private final @Nullable StartMarkAction myStartAction;
   private boolean myGlobal = false;
   private @NlsContexts.Command String myCommandName;
   private final DocumentReference myReference;
 
-  private FinishMarkAction(DocumentReference reference, @NotNull StartMarkAction action) {
+  FinishMarkAction(DocumentReference reference, boolean isGlobal) {
+    this(reference, null);
+    setGlobal(isGlobal);
+  }
+
+  private FinishMarkAction(DocumentReference reference, @Nullable StartMarkAction action) {
     super(reference);
     myReference = reference;
     myStartAction = action;
@@ -39,12 +43,16 @@ public final class FinishMarkAction extends BasicUndoableAction {
   }
 
   public void setGlobal(boolean isGlobal) {
-    myStartAction.setGlobal(isGlobal);
+    if (myStartAction != null) {
+      myStartAction.setGlobal(isGlobal);
+    }
     myGlobal = isGlobal;
   }
 
   public void setCommandName(@NlsContexts.Command String commandName) {
-    myStartAction.setCommandName(commandName);
+    if (myStartAction != null) {
+      myStartAction.setCommandName(commandName);
+    }
     myCommandName = commandName;
   }
 
