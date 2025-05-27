@@ -28,6 +28,9 @@ class TerminalDialogUI(data: ComponentData) : UiComponent(data) {
     waitFound()
   }
 
+  val rdPortForwardingPanelWidget: RdPortForwardingPanelWidget
+    get() = x(RdPortForwardingPanelWidget::class.java) { byJavaClass("com.jetbrains.thinclient.portForwarding.ThinClientPortForwardingPanelWidget") }
+
   fun execute(command: String, finishFlag: String = "") {
     this.click()
     keyboard {
@@ -35,4 +38,12 @@ class TerminalDialogUI(data: ComponentData) : UiComponent(data) {
       if (finishFlag.isNotEmpty()) waitFor { hasSubtext(finishFlag) }
     }
   }
+}
+
+class RdPortForwardingPanelWidget(data: ComponentData) : UiComponent(data) {
+  val forwardedPortSuggestionDropDown: UiComponent
+    get() = x { byJavaClass("com.jetbrains.thinclient.portForwarding.ui.ForwardedPortSuggestionDropDown") }
+
+  val forwardedPortDropDown: UiComponent
+    get() = x { byJavaClass("com.jetbrains.thinclient.portForwarding.ui.ForwardedPortDropDownLink") }
 }
