@@ -15,82 +15,84 @@
  */
 package org.jetbrains.plugins.gradle.service.execution.helper
 
-import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.common.mock.notImplemented
-import org.gradle.process.internal.JvmOptions
-import org.gradle.tooling.LongRunningOperation
-import org.gradle.tooling.model.BuildIdentifier
-import org.gradle.tooling.model.build.BuildEnvironment
-import org.gradle.tooling.model.build.JavaEnvironment
-import org.junit.jupiter.api.io.TempDir
-import java.io.File
-import java.nio.file.Path
+import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
+import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec
+import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.util.execution.ParametersListUtil
+import org.intellij.lang.annotations.Language
+import org.jetbrains.plugins.gradle.service.execution.toGroovyStringLiteral
+import org.jetbrains.plugins.gradle.service.task.GradleTaskManager.INIT_SCRIPT_KEY
+import org.jetbrains.plugins.gradle.service.task.GradleTaskManager.INIT_SCRIPT_PREFIX_KEY
+import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
+import org.jetbrains.plugins.gradle.util.GradleConstants
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.readLines
 
-@TestApplication
-abstract class GradleExecutionHelperJvmArgumentsTestCase {
+abstract class GradleExecutionHelperJvmArgumentsTestCase : GradleExecutionTestCase() {
 
-  @TempDir
-  protected lateinit var tempDirectory: Path
-
-  fun createBuildEnvironment(workingDirectory: Path): MockBuildEnvironment {
-    val buildIdentifier = MockBuildIdentifier(workingDirectory)
-    val javaEnvironment = MockJavaEnvironment()
-    return MockBuildEnvironment(buildIdentifier, javaEnvironment)
-  }
-
-  fun createOperation(): MockLongRunningOperation {
-    return MockLongRunningOperation()
-  }
-
-  private class MockBuildIdentifier(
-    private val workingDirectory: Path,
-  ) : BuildIdentifier {
-    override fun getRootDir(): File = workingDirectory.toFile()
-  }
-
-  class MockBuildEnvironment(
-    private val buildIdentifier: BuildIdentifier,
-    private val javaEnvironment: MockJavaEnvironment,
-  ) : BuildEnvironment by notImplemented<BuildEnvironment>() {
-    override fun getBuildIdentifier(): BuildIdentifier = buildIdentifier
-    override fun getJava(): MockJavaEnvironment = javaEnvironment
-  }
-
-  class MockJavaEnvironment : JavaEnvironment {
-
-    @get:JvmName("_jvmArguments")
-    var jvmArguments: List<String> = emptyList()
-
-    override fun getJvmArguments(): List<String> = jvmArguments
-
-    override fun getJavaHome() = throw UnsupportedOperationException()
-  }
-
-  class MockLongRunningOperation : LongRunningOperation by notImplemented<LongRunningOperation>() {
-
-    var jvmArguments: MutableList<String> = ArrayList()
-      private set
-
-    override fun setJvmArguments(vararg jvmArguments: String) = apply {
-      this.jvmArguments = jvmArguments.toMutableList()
+  fun executeTaskAndCollectDaemonOptions(customVmOptions: List<String>): List<String> {
+    val jvmArgumentsPath = createFile("jvmArguments.txt").toNioPath()
+    val jvmPropertiesPath = createFile("jvmProperties.txt").toNioPath()
+    try {
+      waitForAnyGradleTaskExecution {
+        ExternalSystemUtil.runTask(
+          TaskExecutionSpec.create()
+            .withProject(project)
+            .withSystemId(GradleConstants.SYSTEM_ID)
+            .withSettings(ExternalSystemTaskExecutionSettings().also {
+              it.externalSystemIdString = GradleConstants.SYSTEM_ID.id
+              it.externalProjectPath = projectPath
+              it.vmOptions = ParametersListUtil.join(customVmOptions)
+              it.taskNames = listOf("help")
+            })
+            .withUserData(UserDataHolderBase().also {
+              it.putUserData(INIT_SCRIPT_PREFIX_KEY, "ijJvmArgumentsCollector")
+              it.putUserData(INIT_SCRIPT_KEY, INIT_SCRIPT
+                .replace("JVM_ARGUMENTS_PATH", jvmArgumentsPath.toString().toGroovyStringLiteral())
+                .replace("JVM_PROPERTIES_PATH", jvmPropertiesPath.toString().toGroovyStringLiteral())
+              )
+            })
+            .build()
+        )
+      }
+      return jvmArgumentsPath.readLines() + jvmPropertiesPath.readLines()
     }
-
-    override fun setJvmArguments(jvmArguments: Iterable<String>?) = apply {
-      this.jvmArguments = jvmArguments?.toMutableList() ?: ArrayList()
-    }
-
-    override fun addJvmArguments(vararg jvmArguments: String) = apply {
-      this.jvmArguments.addAll(jvmArguments)
-    }
-
-    override fun addJvmArguments(jvmArguments: Iterable<String>) = apply {
-      this.jvmArguments.addAll(jvmArguments)
+    finally {
+      jvmArgumentsPath.deleteIfExists()
+      jvmPropertiesPath.deleteIfExists()
     }
   }
 
   companion object {
 
-    val IMMUTABLE_JVM_ARGUMENTS: Array<String> =
-      JvmOptions(null).allImmutableJvmArgs.toTypedArray()
+    @Language("Groovy")
+    private val INIT_SCRIPT = """
+        |import java.lang.management.ManagementFactory
+        |import java.lang.management.RuntimeMXBean
+        |import java.nio.file.Files
+        |import java.nio.file.Path
+        |import java.nio.file.Paths
+        |
+        |interface Properties {
+        |  @SuppressWarnings('GroovyAssignabilityCheck')
+        |  public static final Path jvmArgumentsPath = Paths.get(JVM_ARGUMENTS_PATH)
+        |  @SuppressWarnings('GroovyAssignabilityCheck')
+        |  public static final Path jvmPropertiesPath = Paths.get(JVM_PROPERTIES_PATH)
+        |}
+        |
+        |RuntimeMXBean runtimeMxBean = ManagementFactory.getRuntimeMXBean()
+        |StringJoiner jvmArguments = new StringJoiner("\n")
+        |for (String argument : runtimeMxBean.getInputArguments()) {
+        |    jvmArguments.add(argument)
+        |}
+        |Files.write(Properties.jvmArgumentsPath, jvmArguments.toString().bytes)
+        |
+        |StringJoiner jvmProperties = new StringJoiner("\n")
+        |for (Map.Entry<Object, Object> property: System.properties) {
+        |  jvmProperties.add("-D" + property.key.toString() + "=" +property.value.toString())
+        |}
+        |Files.write(Properties.jvmPropertiesPath, jvmProperties.toString().bytes)
+      """.trimMargin()
   }
 }

@@ -123,6 +123,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/external-system-api/dependency-updater",
     "//platform/observable",
+    "//platform/platform-util-io:ide-util-io",
     "//plugins/gradle/java",
     "//java/openapi:java",
     "//jps/model-api:model",
