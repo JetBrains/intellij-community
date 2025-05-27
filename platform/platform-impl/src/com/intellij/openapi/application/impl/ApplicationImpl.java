@@ -56,6 +56,7 @@ import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EDT;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Scope;
+import kotlin.Unit;
 import kotlin.coroutines.CoroutineContext;
 import kotlin.jvm.functions.Function0;
 import kotlinx.coroutines.CoroutineScope;
@@ -1369,6 +1370,12 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     getThreadingSupport().setLockAcquisitionListener(app.myLockDispatcherListener);
     getThreadingSupport().setWriteLockReacquisitionListener(app.myLockDispatcherListener);
     getThreadingSupport().setLegacyIndicatorProvider(myLegacyIndicatorProvider);
+    SwingUtilities.invokeLater(() -> {
+      getThreadingSupport().setLockAcquisitionInterceptor((deferred) -> {
+        SuvorovProgress.dispatchEventsUntilComputationCompletes(deferred);
+        return Unit.INSTANCE;
+      });
+    });
 
     app.addApplicationListener(new ApplicationListener() {
       @Override
