@@ -37,8 +37,9 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
     pluginModel.disable(models.map { it.getDescriptor() })
   }
 
-  fun installOrUpdatePlugin(component: JComponent, model: PluginUiModel, updateDescriptor: PluginUiModel?, modalityState: ModalityState) {
-    pluginModel.installOrUpdatePlugin(component, model, updateDescriptor, modalityState)
+  @JvmOverloads
+  fun installOrUpdatePlugin(component: JComponent, model: PluginUiModel, updateDescriptor: PluginUiModel?, modalityState: ModalityState, controller: UiPluginManagerController = UiPluginManager.getInstance().getController()) {
+    pluginModel.installOrUpdatePlugin(component, model, updateDescriptor, modalityState, controller)
   }
 
   fun addUninstalled(pluginId: PluginId) {

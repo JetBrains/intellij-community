@@ -234,9 +234,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
   void installOrUpdatePlugin(@Nullable JComponent parentComponent,
                              @NotNull PluginUiModel descriptor,
                              @Nullable PluginUiModel updateDescriptor,
-                             @NotNull ModalityState modalityState) {
+                             @NotNull ModalityState modalityState,
+                             @NotNull UiPluginManagerController controller) {
     boolean isUpdate = updateDescriptor != null;
-    UiPluginManager uiPluginManager = UiPluginManager.getInstance();
     PluginUiModel actionDescriptor = isUpdate ? updateDescriptor : descriptor;
     if (!PluginManagerMain.checkThirdPartyPluginsAllowed(List.of(actionDescriptor.getDescriptor()))) {
       return;
@@ -262,16 +262,16 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     Ref<Boolean> allowInstallWithoutRestart = Ref.create(true);
     if (isUpdate) {
       if (descriptor.isBundled()) {
-        allowInstallWithoutRestart.set(uiPluginManager.tryUnloadPluginIfAllowed(parentComponent, descriptor.getPluginId(), true));
+        allowInstallWithoutRestart.set(controller.tryUnloadPluginIfAllowed(parentComponent, descriptor.getPluginId(), true));
       }
-      else if (!uiPluginManager.allowLoadUnloadWithoutRestart(descriptor.getPluginId())) {
+      else if (!controller.allowLoadUnloadWithoutRestart(descriptor.getPluginId())) {
         allowInstallWithoutRestart.set(false);
       }
       else if (!descriptor.isEnabled()) {
-        uiPluginManager.deletePluginFiles(descriptor.getPluginId());
+        controller.deletePluginFiles(descriptor.getPluginId());
       }
-      else if (uiPluginManager.allowLoadUnloadSynchronously(descriptor.getPluginId())) {
-        allowInstallWithoutRestart.set(uiPluginManager.uninstallDynamicPlugin(parentComponent,
+      else if (controller.allowLoadUnloadSynchronously(descriptor.getPluginId())) {
+        allowInstallWithoutRestart.set(controller.uninstallDynamicPlugin(parentComponent,
                                                                               descriptor.getPluginId(),
                                                                               true));
       }
@@ -311,7 +311,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
                                                                                FINISH_DYNAMIC_INSTALLATION_WITHOUT_UI,
                                                                                needRestart);
 
-          uiPluginManager.performInstallOperation(installPluginRequest,
+          controller.performInstallOperation(installPluginRequest,
                                                   parentComponent,
                                                   modalityState,
                                                   indicator,
