@@ -368,6 +368,10 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
             model("basic/stdlibWithCommon", isRecursive = false, pattern = KT_WITHOUT_FIR_PREFIX)
         }
 
+        testClass<AbstractK2SmartCompletionTest> {
+            model("smart/frontendAgnostic", pattern = KT_WITHOUT_FIR_PREFIX)
+        }
+
         // Smart completion does not work in K2, see KTIJ-26166
         testClass<AbstractK2CompletionIncrementalResolveTest> {
             model("incrementalResolve", excludedDirectories = listOf("smart"))

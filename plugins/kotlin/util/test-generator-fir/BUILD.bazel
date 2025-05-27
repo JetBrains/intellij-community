@@ -85,6 +85,7 @@ jvm_library(
     "//plugins/kotlin/base/fir/project-structure:project-structure_test_lib",
     "//plugins/kotlin/jvm-debugger/test/parcelize:kotlin-jvm-debugger-test-parcelize-k2_test_lib",
     "//plugins/kotlin/gradle/code-insight-groovy/tests.k2:tests.k2_test_lib",
+    "//plugins/kotlin/completion/tests-shared:kotlin-completion-tests-shared_test_lib",
   ]
 )
 

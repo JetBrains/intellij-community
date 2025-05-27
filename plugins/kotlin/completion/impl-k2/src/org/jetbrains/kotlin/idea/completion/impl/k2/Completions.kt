@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2
 
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.psi.PsiErrorElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -16,6 +17,8 @@ import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.findValueArgument
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.*
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.getAnnotationLiteralExpectedType
+import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.getEqualityExpectedType
 import org.jetbrains.kotlin.idea.util.positionContext.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -32,9 +35,35 @@ internal object Completions {
         try {
             if (!before()) return@analyze
 
+            val weighingContext = when (positionContext) {
+                is KotlinNameReferencePositionContext -> {
+                    val nameExpression = positionContext.nameExpression
+                    val expectedType = when {
+                        // during the sorting of completion suggestions expected type from position and actual types of suggestions are compared;
+                        // see `org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher`;
+                        // currently in case of callable references actual types are calculated incorrectly, which is why we don't use information
+                        // about expected type at all
+                        // TODO: calculate actual types for callable references correctly and use information about expected type
+                        positionContext is KotlinCallableReferencePositionContext -> null
+                        nameExpression.expectedType != null -> nameExpression.expectedType
+                        nameExpression.parent is KtBinaryExpression -> getEqualityExpectedType(nameExpression)
+                        nameExpression.parent is KtCollectionLiteralExpression -> getAnnotationLiteralExpectedType(nameExpression)
+                        else -> null
+                    }
+                    if (parameters.completionType == CompletionType.SMART
+                        && expectedType == null
+                    ) return@analyze // todo move out
+
+                    WeighingContext.create(parameters, positionContext, expectedType)
+                }
+
+                else -> WeighingContext.create(parameters, elementInCompletionFile = positionContext.position)
+            }
+
             complete(
                 positionContext = positionContext,
                 sink = LookupElementSink(resultSet, parameters),
+                weighingContext = weighingContext,
             )
         } finally {
             after()
@@ -45,12 +74,8 @@ internal object Completions {
     private fun complete(
         positionContext: KotlinRawPositionContext,
         sink: LookupElementSink,
+        weighingContext: WeighingContext,
     ) {
-        val weighingContext = when (positionContext) {
-            is KotlinNameReferencePositionContext -> WeighingContext.create(sink.parameters, positionContext)
-            else -> WeighingContext.create(sink.parameters, elementInCompletionFile = positionContext.position)
-        }
-
         when (positionContext) {
             is KotlinExpressionNameReferencePositionContext -> {
                 if (positionContext.isAfterRangeOperator()) return
