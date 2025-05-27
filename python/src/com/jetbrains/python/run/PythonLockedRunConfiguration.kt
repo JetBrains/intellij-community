@@ -21,6 +21,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PyBundle
 import org.jdom.Element
 import org.jetbrains.annotations.Nls
@@ -132,8 +133,10 @@ private open class PythonLockedRunConfigurationTypeBase(val theId: String, @Nls 
   private val factory: ConfigurationFactory = PythonLockedRunConfigurationFactory(this)
 
   init {
-    // Do not enable "lock" configs if Python plugin enabled
-    if (PluginManager.getInstance().findEnabledPlugin(PluginId.getId("Pythonid")) != null) {
+    // Do not enable "lock" configs for non PyCharm or Idea (as it's capable of running the Python plugin) IDEs or if the Python plugin is enabled.
+    if ((!PlatformUtils.isPyCharm() && !PlatformUtils.isIntelliJ()) ||
+        PluginManager.getInstance().findEnabledPlugin(PluginId.getId("Pythonid")) != null)
+    {
       throw ExtensionNotApplicableException.create()
     }
   }
