@@ -19,7 +19,7 @@ gradle.taskGraph.addTaskExecutionListener(new TaskExecutionAdapter() {
 gradle.addBuildListener(new BuildAdapter() {
   void buildFinished(BuildResult result) {
     effectiveTasks.each { Task task ->
-      task.outputs.files.files.each { Properties.outputFile.append(it.path + '\\n') }
+      task.outputs.files.files.each { Properties.outputFile.append(it.path + '\n') }
     }
   }
 })
