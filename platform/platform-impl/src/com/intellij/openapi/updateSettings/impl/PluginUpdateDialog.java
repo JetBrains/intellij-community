@@ -121,7 +121,7 @@ final class PluginUpdateDialog extends DialogWrapper {
           node.setChangeNotes(model.getChangeNotes());
           node.setVersion(model.getVersion());
           node.setVendor(model.getVendor());
-          node.setVendorDetails(descriptor.getOrganization())
+          node.setVendorDetails(model.getOrganization());
           List<PluginDependencyImpl> dependencies =
             ContainerUtil.map(model.getDependencies(), it -> new PluginDependencyImpl(it.getPluginId(), null, it.isOptional()));
           node.setDependencies(dependencies);

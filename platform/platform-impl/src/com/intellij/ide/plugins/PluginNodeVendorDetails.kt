@@ -2,10 +2,12 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.util.NlsSafe
+import kotlinx.serialization.Serializable
 
 /**
  * Marketplace vendor details.
  */
+@Serializable
 data class PluginNodeVendorDetails(
   @NlsSafe val name: String,
   val url: String? = null,

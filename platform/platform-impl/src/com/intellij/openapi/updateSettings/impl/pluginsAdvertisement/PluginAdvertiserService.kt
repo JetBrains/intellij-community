@@ -332,7 +332,7 @@ open class PluginAdvertiserServiceImpl(
           .map { getSuggestionReason(it) }
 
         if (suggestedFeatures.isNotEmpty()) {
-          (descriptor as PluginNode).suggestedFeatures = suggestedFeatures
+          (descriptor.getDescriptor() as? PluginNode)?.suggestedFeatures = suggestedFeatures
         }
       }
     }
@@ -365,7 +365,6 @@ open class PluginAdvertiserServiceImpl(
     .setVersion(descriptor.version)
     .setVendor(descriptor.vendor)
     .setVendorDetails(descriptor.organization)
-    .setDependencies(descriptor.dependencies)
     .setIsConverted(true)
 
     descriptor.dependencies.forEach { builder.addDependency(it.pluginId.idString, it.isOptional) }

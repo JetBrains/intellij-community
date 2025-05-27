@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.PluginManagementPolicy
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerCore.getUnfulfilledOsRequirement
 import com.intellij.ide.plugins.PluginNode
+import com.intellij.ide.plugins.PluginNodeVendorDetails
 import com.intellij.ide.plugins.api.ReviewsPageContainer
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.openapi.extensions.PluginId
@@ -122,28 +123,14 @@ class PluginUiModelAdapter(
         pluginDescriptor.reportPluginUrl = value
       }
     }
-  override var verifiedName: String?
-    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.verifiedName else null
+  override var vendorDetails: PluginNodeVendorDetails?
+    get() = if(pluginDescriptor is PluginNode) pluginDescriptor.vendorDetails else null
     set(value) {
       if (pluginDescriptor is PluginNode) {
-        pluginDescriptor.verifiedName = value
-      }
-    }
-  override var isVerified: Boolean
-    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.isVerified else false
-    set(value) {
-      if (pluginDescriptor is PluginNode) {
-        pluginDescriptor.isVerified = value
+        pluginDescriptor.vendorDetails = value
       }
     }
 
-  override var isTrader: Boolean
-    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.isTrader else false
-    set(value) {
-      if (pluginDescriptor is PluginNode) {
-        pluginDescriptor.isTrader = value
-      }
-    }
   override var screenShots: List<String>?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.screenShots else null
     set(value) {

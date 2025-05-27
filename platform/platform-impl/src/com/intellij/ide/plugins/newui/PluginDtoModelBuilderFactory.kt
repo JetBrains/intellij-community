@@ -1,16 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui
 
-import com.intellij.ide.plugins.PluginDependency
+import com.intellij.ide.plugins.PluginNodeVendorDetails
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus
 import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 
 @ApiStatus.Internal
-class PluginDtoModelBuilder(pluginId: PluginId): PluginUiModelBuilder {
+class PluginDtoModelBuilder(pluginId: PluginId) : PluginUiModelBuilder {
   private val resultDto = PluginDto(null, pluginId)
 
   override fun setId(id: String): PluginDtoModelBuilder {
@@ -103,7 +102,8 @@ class PluginDtoModelBuilder(pluginId: PluginId): PluginUiModelBuilder {
     try {
       val format = SimpleDateFormat("yyyy-MM-dd", Locale.US)
       resultDto.date = format.parse(date).time
-    } catch (e: Exception) {
+    }
+    catch (e: Exception) {
       // If date parsing fails, leave date as 0
     }
     return this
@@ -129,11 +129,6 @@ class PluginDtoModelBuilder(pluginId: PluginId): PluginUiModelBuilder {
 
   override fun setIncomplete(incomplete: Boolean): PluginUiModelBuilder {
     // PluginDto doesn't have direct incomplete field
-    return this
-  }
-
-  override fun setOrganization(string: String?): PluginUiModelBuilder {
-    resultDto.organization = string
     return this
   }
 
@@ -174,6 +169,13 @@ class PluginDtoModelBuilder(pluginId: PluginId): PluginUiModelBuilder {
 
   override fun setRepositoryName(repositoryName: String): PluginUiModelBuilder {
     resultDto.repositoryName = repositoryName
+    return this
+  }
+
+  override fun setVendorDetails(organization: String?): PluginUiModelBuilder {
+    if (organization != null) {
+      resultDto.vendorDetails = PluginNodeVendorDetails(organization)
+    }
     return this
   }
 

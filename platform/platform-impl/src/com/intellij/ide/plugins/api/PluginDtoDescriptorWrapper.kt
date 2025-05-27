@@ -1,24 +1,18 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.api
 
-import com.intellij.ide.plugins.ContainerDescriptor
-import com.intellij.ide.plugins.ContentModule
-import com.intellij.ide.plugins.IdeaPluginDescriptorEx
-import com.intellij.ide.plugins.ModuleDependencies
-import com.intellij.ide.plugins.ModuleLoadingRule
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginDependencyImpl
 import com.intellij.ide.plugins.PluginDependency
-import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.plugins.parser.impl.elements.ActionElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
 import java.util.Date
 
 @ApiStatus.Internal
-class PluginDtoDescriptorWrapper(private val pluginDto: PluginDto) : IdeaPluginDescriptorEx {
+class PluginDtoDescriptorWrapper(private val pluginDto: PluginDto) : IdeaPluginDescriptor {
 
   private val dependenciesList: List<PluginDependency> by lazy {
     pluginDto.dependencies.map {
@@ -102,70 +96,11 @@ class PluginDtoDescriptorWrapper(private val pluginDto: PluginDto) : IdeaPluginD
     throw UnsupportedOperationException("No direct mapping for pluginClassLoader in PluginDto")
   }
 
-  override val moduleName: String?
-    get() = throw UnsupportedOperationException("No direct mapping for moduleName in PluginDto")
-
-  override val moduleLoadingRule: ModuleLoadingRule
-    get() = throw UnsupportedOperationException("No direct mapping for moduleLoadingRule in PluginDto")
-
-  override val incompatiblePlugins: List<PluginId>
-    get() = throw UnsupportedOperationException("No direct mapping for incompatiblePlugins in PluginDto")
-
-  override val pluginAliases: List<PluginId>
-    get() = throw UnsupportedOperationException("No direct mapping for pluginAliases in PluginDto")
-
-  override val moduleDependencies: ModuleDependencies
-    get() = throw UnsupportedOperationException("No direct mapping for moduleDependencies in PluginDto")
-
-  override val packagePrefix: String?
-    get() = throw UnsupportedOperationException("No direct mapping for packagePrefix in PluginDto")
-
-  override val contentModules: List<ContentModule>
-    get() = throw UnsupportedOperationException("No direct mapping for contentModules in PluginDto")
-
-  override val appContainerDescriptor: ContainerDescriptor
-    get() = throw UnsupportedOperationException("No direct mapping for appContainerDescriptor in PluginDto")
-
-  override val projectContainerDescriptor: ContainerDescriptor
-    get() = throw UnsupportedOperationException("No direct mapping for projectContainerDescriptor in PluginDto")
-
-  override val moduleContainerDescriptor: ContainerDescriptor
-    get() = throw UnsupportedOperationException("No direct mapping for moduleContainerDescriptor in PluginDto")
-
-  override val extensions: Map<String, List<ExtensionDescriptor>>
-    get() = throw UnsupportedOperationException("No direct mapping for extensions in PluginDto")
-
-  override val actions: List<ActionElement>
-    get() = throw UnsupportedOperationException("No direct mapping for actions in PluginDto")
-
-  override val isUseIdeaClassLoader: Boolean
-    get() = throw UnsupportedOperationException("No direct mapping for isUseIdeaClassLoader in PluginDto")
-
-  override val isIndependentFromCoreClassLoader: Boolean
-    get() = throw UnsupportedOperationException("No direct mapping for isIndependentFromCoreClassLoader in PluginDto")
-
-  override val useCoreClassLoader: Boolean
-    get() = throw UnsupportedOperationException("No direct mapping for useCoreClassLoader in PluginDto")
-
-  override var isMarkedForLoading: Boolean = pluginDto.isEnabled
-
   @Deprecated("Deprecated in Java")
   override fun isEnabled(): Boolean = pluginDto.isEnabled
 
-  @Deprecated("Deprecated in Java")
   override fun setEnabled(enabled: Boolean) {
-    // Cannot modify the PluginDto directly here
-    isMarkedForLoading = enabled
+    throw UnsupportedOperationException("Write operations are not allowed here")
   }
 
-  override fun toString(): String =
-    "PluginDtoDescriptorWrapper(name=${getName()}, id=${getPluginId()}, version=${getVersion()}, isBundled=${isBundled()})"
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other !is IdeaPluginDescriptorEx) return false
-    return getPluginId() == other.pluginId
-  }
-
-  override fun hashCode(): Int = getPluginId().hashCode()
 }

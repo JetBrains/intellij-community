@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerConfigurable
+import com.intellij.ide.plugins.PluginNodeVendorDetails
 import com.intellij.ide.plugins.api.ReviewsPageContainer
 import com.intellij.ide.plugins.getTags
 import com.intellij.openapi.extensions.PluginId
@@ -80,15 +81,10 @@ interface PluginUiModel {
 
   @get:NlsSafe
   var reportPluginUrl: String?
-  @get:NlsSafe
-  var verifiedName: String?
-
-  var isVerified: Boolean
-  var isTrader: Boolean
   var reviewComments: ReviewsPageContainer?
   var screenShots: List<String>?
-
   var externalPluginIdForScreenShots: String?
+  var vendorDetails: PluginNodeVendorDetails?
 
   @get:NlsSafe
   var downloadUrl: String?

@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.api
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginNodeVendorDetails
 import com.intellij.ide.plugins.newui.PluginDependencyModel
 import com.intellij.ide.plugins.newui.PluginSource
 import com.intellij.ide.plugins.newui.PluginUiModel
@@ -44,6 +45,7 @@ class PluginDto(
 
   override var releaseVersion: Int = 0
   override var displayCategory: String? = null
+  override var vendorDetails: PluginNodeVendorDetails? = null
   override var reviewComments: ReviewsPageContainer? = null
 
   // Mutable properties
@@ -53,9 +55,6 @@ class PluginDto(
   override var documentationUrl: String? = null
   override var sourceCodeUrl: String? = null
   override var reportPluginUrl: String? = null
-  override var verifiedName: String? = null
-  override var isVerified: Boolean = false
-  override var isTrader: Boolean = false
   override var screenShots: List<String>? = null
   override var externalPluginIdForScreenShots: String? = null
   override var externalPluginId: String? = null
@@ -121,9 +120,7 @@ class PluginDto(
         documentationUrl = model.documentationUrl
         sourceCodeUrl = model.sourceCodeUrl
         reportPluginUrl = model.reportPluginUrl
-        verifiedName = model.verifiedName
-        isVerified = model.isVerified
-        isTrader = model.isTrader
+        vendorDetails = model.vendorDetails
         reviewComments = model.reviewComments
         screenShots = model.screenShots?.toList()
         externalPluginIdForScreenShots = model.externalPluginIdForScreenShots

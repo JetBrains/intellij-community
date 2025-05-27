@@ -197,7 +197,6 @@ bf:com.intellij.openapi.extensions.PluginId$$serializer
 - f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.openapi.extensions.PluginId
 - f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
 - f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.openapi.extensions.PluginId):V
-- typeParametersSerializers():kotlinx.serialization.KSerializer[]
 f:com.intellij.openapi.extensions.PluginId$Companion
 - f:findId(java.lang.String):com.intellij.openapi.extensions.PluginId
 - f:findId(java.lang.String[]):com.intellij.openapi.extensions.PluginId

@@ -4,6 +4,7 @@ package com.intellij.ide.plugins.marketplace
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.intellij.ide.plugins.PluginNode
+import com.intellij.ide.plugins.PluginNodeVendorDetails
 import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.newui.PluginUiModel
@@ -30,7 +31,7 @@ data class IdeCompatibleUpdate(
   val externalPluginId: String = "",
   @get:JsonProperty("pluginXmlId")
   val pluginId: String = "",
-  val version: String = ""
+  val version: String = "",
 )
 
 /**
@@ -55,7 +56,7 @@ data class IntellijUpdateMetadata(
   val until: String? = null,
   val productCode: String? = null,
   val url: String? = null,
-  val size: Int = 0
+  val size: Int = 0,
 ) {
   fun toUiModel(): PluginUiModel {
     val pluginId = PluginId.getId(id)
@@ -107,7 +108,7 @@ class MarketplaceSearchPluginData(
   val externalPluginId: String? = null,
   val downloads: String = "",
   @get:JsonProperty("nearestUpdate")
-  val nearestUpdate: NearestUpdate? = null
+  val nearestUpdate: NearestUpdate? = null,
 ) {
   fun toPluginNode(): PluginNode {
     val pluginNode = PluginNode(PluginId.getId(id))
@@ -130,7 +131,7 @@ class MarketplaceSearchPluginData(
     builder.setName(name)
     builder.setRating("%.2f".format(Locale.US, rating))
     builder.setDownloads(downloads)
-    builder.setOrganization(organization)
+    builder.setVendorDetails(organization)
     builder.setExternalPluginId(externalPluginId)
     builder.setExternalUpdateId(externalUpdateId ?: nearestUpdate?.id)
     builder.setIsPaid(isPaid)
@@ -159,7 +160,7 @@ class NearestUpdate(
   @get:JsonProperty("updateCompatibility")
   val updateCompatibility: Map<String, Long> = emptyMap(),
   @get:JsonProperty("isCompatible")
-  val compatible: Boolean = true
+  val compatible: Boolean = true,
 )
 
 /**
@@ -205,7 +206,7 @@ internal class MarketplaceBrokenPlugin(
   val since: String? = null,
   val until: String? = null,
   val originalSince: String? = null,
-  val originalUntil: String? = null
+  val originalUntil: String? = null,
 )
 
 @Serializable
@@ -217,7 +218,7 @@ data class PluginReviewComment(
   val comment: @Nls String = "",
   val rating: Int = 0,
   val author: ReviewCommentAuthor = ReviewCommentAuthor(),
-  val plugin: ReviewCommentPlugin = ReviewCommentPlugin()
+  val plugin: ReviewCommentPlugin = ReviewCommentPlugin(),
 ) {
   fun getDate(): Long = parseLong(cdate, 0)
 }
@@ -226,14 +227,14 @@ data class PluginReviewComment(
 @ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class ReviewCommentAuthor(
-  val name: @Nls String = ""
+  val name: @Nls String = "",
 )
 
 @Serializable
 @ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class ReviewCommentPlugin(
-  val link: @Nls String = ""
+  val link: @Nls String = "",
 )
 
 @Serializable
@@ -241,7 +242,7 @@ data class ReviewCommentPlugin(
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class SalesMetadata(
   val trialPeriod: Int? = null,
-  val customTrialPeriods: List<CustomTrialPeriod>? = null
+  val customTrialPeriods: List<CustomTrialPeriod>? = null,
 )
 
 @Serializable
@@ -249,7 +250,7 @@ data class SalesMetadata(
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class CustomTrialPeriod(
   @JsonProperty("productCode") val productCode: String,
-  @JsonProperty("trialPeriod") val trialPeriod: Int
+  @JsonProperty("trialPeriod") val trialPeriod: Int,
 )
 
 @Serializable
@@ -264,7 +265,7 @@ data class IntellijPluginMetadata(
   val documentationUrl: String? = null,
   val sourceCodeUrl: String? = null,
   val reportPluginUrl: String? = null,
-  val salesInfo: SalesMetadata? = null
+  val salesInfo: SalesMetadata? = null,
 ) {
 
   fun toPluginNode(pluginNode: PluginNode) {
@@ -283,32 +284,31 @@ data class IntellijPluginMetadata(
     pluginNode.sourceCodeUrl = sourceCodeUrl
     pluginNode.reportPluginUrl = reportPluginUrl
     pluginNode.defaultTrialPeriod = salesInfo?.trialPeriod
-    pluginNode.setCustomTrialPeriodMap(salesInfo?.customTrialPeriods?.associate {
-      p -> p.productCode to p.trialPeriod
+    pluginNode.setCustomTrialPeriodMap(salesInfo?.customTrialPeriods?.associate { p ->
+      p.productCode to p.trialPeriod
     })
   }
-  
+
 
   @ApiStatus.Internal
   fun toPluginUiModel(model: PluginUiModel) {
     if (vendor != null) {
-      model.verifiedName = vendor.name
-      model.isVerified = vendor.verified
-      model.isTrader = vendor.trader
+      val details = PluginNodeVendorDetails(vendor.name, vendor.url, vendor.trader, vendor.verified)
+      model.vendorDetails = details
     }
-    
+
     model.forumUrl = forumUrl
     model.licenseUrl = licenseUrl
     model.bugtrackerUrl = bugtrackerUrl
     model.documentationUrl = documentationUrl
     model.sourceCodeUrl = sourceCodeUrl
     model.reportPluginUrl = reportPluginUrl
-    
+
     screenshots?.let { model.screenShots = it }
-    
+
     model.defaultTrialPeriod = salesInfo?.trialPeriod
-    model.customTrialPeriods = salesInfo?.customTrialPeriods?.associate {
-      p -> p.productCode to p.trialPeriod
+    model.customTrialPeriods = salesInfo?.customTrialPeriods?.associate { p ->
+      p.productCode to p.trialPeriod
     }
   }
 }
@@ -322,5 +322,5 @@ data class PluginVendorMetadata(
   @get:JsonProperty("isTrader")
   val trader: Boolean = false,
   @get:JsonProperty("isVerified")
-  val verified: Boolean = false
+  val verified: Boolean = false,
 )

@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui
 
-import com.intellij.ide.plugins.PluginDependency
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
@@ -34,7 +33,6 @@ interface PluginUiModelBuilder {
   fun addDependency(id: String, optional: Boolean): PluginUiModelBuilder
   fun addTag(tag: String): PluginUiModelBuilder
   fun setIncomplete(incomplete: Boolean): PluginUiModelBuilder
-  fun setOrganization(string: String?): PluginUiModelBuilder
   fun setIsConverted(converted: Boolean): PluginUiModelBuilder
   fun setIsPaid(isPaid: Boolean): PluginUiModelBuilder
   fun setIsFromMarketPlace(isFromMarketPlace: Boolean): PluginUiModelBuilder
@@ -43,6 +41,7 @@ interface PluginUiModelBuilder {
   fun setTags(tags: List<String>?): PluginUiModelBuilder
   fun setDate(date: Long): PluginUiModelBuilder
   fun setRepositoryName(repositoryName: String): PluginUiModelBuilder
+  fun setVendorDetails(organization: String?): PluginUiModelBuilder
 
   fun build(): PluginUiModel
 }

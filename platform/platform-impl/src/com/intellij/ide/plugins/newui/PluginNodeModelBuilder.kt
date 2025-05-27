@@ -79,6 +79,11 @@ class PluginNodeModelBuilder(private val pluginId: PluginId) : PluginUiModelBuil
     return this
   }
 
+  override fun setVendorDetails(organization: String?): PluginUiModelBuilder {
+    pluginNode.setVendorDetails(organization)
+    return this
+  }
+
   override fun setSize(size: String?): PluginUiModelBuilder {
     if (size != null) pluginNode.size = size
     return this
@@ -127,11 +132,6 @@ class PluginNodeModelBuilder(private val pluginId: PluginId) : PluginUiModelBuil
   
   override fun setIncomplete(incomplete: Boolean): PluginUiModelBuilder {
     pluginNode.setIncomplete(incomplete)
-    return this
-  }
-
-  override fun setOrganization(string: String?): PluginUiModelBuilder {
-    pluginNode.organization = string
     return this
   }
 

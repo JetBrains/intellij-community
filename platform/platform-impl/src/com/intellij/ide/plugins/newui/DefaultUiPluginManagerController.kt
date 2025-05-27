@@ -402,7 +402,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     for (pluginId in requiredPluginIds) {
       var result: IdeaPluginDescriptor? = plugins.find { pluginId == it.pluginId }
       if (result == null && looksLikePlatformPluginAlias(pluginId)) {
-        result = plugins.find { it is IdeaPluginDescriptorEx && it.pluginAliases.contains(pluginId) }
+        result = plugins.find { it is IdeaPluginDescriptorImpl && it.pluginAliases.contains(pluginId) }
         if (result != null) {
           session.pluginStates[pluginId] = PluginEnabledState.ENABLED
           pluginsToEnable.add(pluginId)
