@@ -73,23 +73,23 @@ public class CreateWithTemplatesDialogPanel extends NewItemWithTemplatesPopupPan
   }
 
   public void setTemplateSelectorMatcher(BiFunction<? super String, ? super TemplatePresentation, Boolean> templateMatcher) {
-    selectTemplate(templateMatcher);
+    selectTemplate(templateMatcher, "");
     myTemplatesList.addListSelectionListener(ListSelectionEvent -> {
       templateExplicitlySelected = true;
     });
     myTextField.addKeyListener(new KeyAdapter() {
       @Override
       public void keyTyped(KeyEvent e) {
-        selectTemplate(templateMatcher);
+        selectTemplate(templateMatcher, "" + e.getKeyChar());
       }
     });
   }
 
-  private void selectTemplate(BiFunction<? super String, ? super TemplatePresentation, Boolean> templateMatcher) {
+  private void selectTemplate(BiFunction<? super String, ? super TemplatePresentation, Boolean> templateMatcher, String aChar) {
     if (templateExplicitlySelected) {
       return;
     }
-    String newElementName = getEnteredName();
+    String newElementName = getEnteredName() + aChar;
     JList<TemplatePresentation> list = myTemplatesList;
     TemplatePresentation matchedElement = null;
     for (int i = 0; i < list.getModel().getSize(); i++) {

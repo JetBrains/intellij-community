@@ -123,7 +123,7 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
   }
 
   @SuppressWarnings("TestOnlyProblems")
-  private static CreateFileFromTemplateDialog.Builder createDialogBuilder(Project project, DataContext dataContext) {
+  protected CreateFileFromTemplateDialog.Builder createDialogBuilder(Project project, DataContext dataContext) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       TestDialogBuilder.TestAnswers answers = dataContext.getData(TestDialogBuilder.TestAnswers.KEY);
       if (answers != null) {
