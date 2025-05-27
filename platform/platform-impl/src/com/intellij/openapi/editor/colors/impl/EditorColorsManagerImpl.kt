@@ -759,7 +759,8 @@ fun readEditorSchemeNameFromXml(parser: XMLStreamReader): String? {
   return null
 }
 
-private val BUNDLED_EP_NAME = ExtensionPointName<BundledSchemeEP>("com.intellij.bundledColorScheme")
+@ApiStatus.Internal
+val BundledColorSchemeEPName: ExtensionPointName<BundledSchemeEP> = ExtensionPointName("com.intellij.bundledColorScheme")
 
 @VisibleForTesting
 fun createLoadBundledSchemeRequests(
@@ -768,7 +769,7 @@ fun createLoadBundledSchemeRequests(
   nameResolver: ((String) -> EditorColorsScheme?)?
 ) : Sequence<SchemeManager.LoadBundleSchemeRequest<EditorColorsScheme>> {
   return sequence {
-    for (item in BUNDLED_EP_NAME.filterableLazySequence()) {
+    for (item in BundledColorSchemeEPName.filterableLazySequence()) {
       val pluginDescriptor = item.pluginDescriptor
       val bean = item.instance ?: continue
       val resourcePath = (bean.path ?: continue).removePrefix("/").let { if (it.endsWith(".xml")) it else "$it.xml" }

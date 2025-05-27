@@ -43,6 +43,7 @@ import com.intellij.openapi.application.impl.inModalContext
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.colors.impl.BundledColorSchemeEPName
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -399,9 +400,32 @@ object DynamicPlugins {
   }
 
   /**
+   * Checks if a given plugin affects only the UI representation of the IDE.
+   *
+   * Acts as an allowlist condition to enable some features for "UI-only" plugins.
+   */
+  // TODO should we demand their "statelessness"?
+  fun isUIOnlyDynamicPlugin(plugin: PluginMainDescriptor): Boolean {
+    return plugin.contentModules.isEmpty() &&
+           !plugin.isRequireRestart &&
+           plugin.actions.isEmpty() &&
+           checkNoComponentsOrServiceOverrides(plugin) == null &&
+           plugin.extensions.all { isUIOnlyExtension(it.key) }
+  }
+
+  // TODO imprecise naming
+  internal fun isUIOnlyExtension(extensionFqn: String): Boolean {
+    return extensionFqn == UIThemeProvider.EP_NAME.name ||
+           extensionFqn == BundledKeymapBean.EP_NAME.name ||
+           extensionFqn == LanguageBundleEP.EP_NAME.name ||
+           extensionFqn == BundledColorSchemeEPName.name
+  }
+
+  /**
    * Checks if the plugin can be loaded/unloaded immediately when the corresponding action is invoked in the
    * plugins settings, without pressing the Apply button.
    */
+  // TODO migrate to isUIOnlyDynamicPlugin
   @JvmStatic
   fun allowLoadUnloadSynchronously(module: IdeaPluginDescriptorImpl): Boolean {
     val extensions = module.extensions.takeIf { it.isNotEmpty() } ?: emptyMap()
