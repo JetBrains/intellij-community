@@ -9,6 +9,9 @@ import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 
+/**
+ * Provides information about layout of plugins for [PluginDependenciesValidator].
+ */
 interface PluginLayoutProvider {
   fun loadCorePluginLayout(): PluginLayoutDescription
   fun loadMainModulesOfBundledPlugins(): List<String>

@@ -79,6 +79,9 @@ fun validatePluginModel(projectPath: Path, validationOptions: PluginValidationOp
   return validatePluginModel(project, projectPath, validationOptions)
 }
 
+/**
+ * Runs [PluginModelValidator] on the specified [project] and returns the result.
+ */
 fun validatePluginModel(project: JpsProject, projectHomePath: Path,
                         validationOptions: PluginValidationOptions = PluginValidationOptions()): PluginValidationResult {
   return PluginModelValidator(project, projectHomePath, validationOptions).validate()
@@ -123,6 +126,12 @@ class PluginValidationResult internal constructor(
   }
 }
 
+/**
+ * Performs checks of plugin and module descriptors in the source code of [project].
+ * The checks don't depend on the layout of plugins and don't require all modules to be compiled.
+ * There is [com.intellij.platform.buildScripts.testFramework.pluginModel.PluginDependenciesValidator] which checks dependencies of plugin
+ * modules.
+ */
 class PluginModelValidator(
   private val project: JpsProject,
   private val projectHomePath: Path,

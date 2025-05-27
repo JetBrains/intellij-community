@@ -39,6 +39,10 @@ import kotlin.io.path.inputStream
 import kotlin.io.path.name
 import kotlin.io.path.pathString
 
+/**
+ * Checks that dependencies declared in JPS modules have corresponding dependencies between classloaders at runtime.
+ * Other checks which don't depend on layout of the plugins and don't involve loading the plugin descriptors can be done in [com.intellij.ide.plugins.PluginModelValidator].
+ */
 class PluginDependenciesValidator private constructor(
   private val tempDir: Path,
   project: JpsProject,
