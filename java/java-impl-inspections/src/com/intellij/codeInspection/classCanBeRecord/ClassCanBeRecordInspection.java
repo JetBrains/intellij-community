@@ -135,7 +135,7 @@ public final class ClassCanBeRecordInspection extends BaseInspection implements 
       super.visitClass(aClass);
       PsiIdentifier classIdentifier = aClass.getNameIdentifier();
       if (classIdentifier == null) return;
-      RecordCandidate recordCandidate = ConvertToRecordFix.getClassDefinition(aClass, mySuggestAccessorsRenaming, myIgnoredAnnotations);
+      RecordCandidate recordCandidate = ConvertToRecordFix.tryCreateRecordCandidate(aClass, mySuggestAccessorsRenaming, myIgnoredAnnotations);
       if (recordCandidate == null) return;
 
       boolean suggestQuickFix = true;

@@ -6,7 +6,7 @@ class Point2<caret> {
   private final double y;
 
   Point2(double first, double second) {
-    this.x = first;
     this.y = Math.abs(second) + Math.sqrt(first);
+    this.x = first;
   }
 }

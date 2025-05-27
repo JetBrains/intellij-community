@@ -5,6 +5,7 @@ import com.intellij.codeInspection.RedundantRecordConstructorInspection;
 import com.intellij.codeInspection.RedundantRecordConstructorInspection.ConstructorSimplifier;
 import com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.FieldAccessorCandidate;
 import com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.RecordCandidate;
+import com.intellij.java.JavaBundle;
 import com.intellij.java.library.JavaLibraryUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,6 +21,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -32,7 +34,10 @@ import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
-import com.intellij.util.*;
+import com.intellij.util.JavaPsiConstructorUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.SmartHashSet;
@@ -80,7 +85,7 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
 
       @Override
       public String getProcessedElementsHeader() {
-        return JavaRefactoringBundle.message("convert.to.record.title");
+        return JavaBundle.message("class.can.be.record.quick.fix");
       }
     };
   }
@@ -190,7 +195,7 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
     }
     RecordConstructorCandidate canonicalCtorCandidate = recordCandidate.getCanonicalConstructorCandidate();
     if (canonicalCtorCandidate != null) {
-      PsiMethod canonicalCtor = canonicalCtorCandidate.getConstructorMethod();
+      PsiMethod canonicalCtor = canonicalCtorCandidate.constructor();
       if (firstHasWeakerAccess(recordCandidate.getPsiClass(), canonicalCtor)) {
         result.add(new BrokenEncapsulationUsageInfo(canonicalCtor, JavaRefactoringBundle
           .message("convert.to.record.ctor.more.accessible",
@@ -247,6 +252,7 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
 
     final PsiClass psiClass = myRecordCandidate.getPsiClass();
     final RecordConstructorCandidate canonicalCtorCandidate = myRecordCandidate.getCanonicalConstructorCandidate();
+    final Map<PsiMethod, RecordConstructorCandidate> methodsToConstructorCandidates = myRecordCandidate.getMethodsToConstructorCandidates();
     final Map<PsiField, FieldAccessorCandidate> fieldToAccessorCandidateMap = myRecordCandidate.getFieldsToAccessorCandidates();
     RecordBuilder recordBuilder = new RecordBuilder(psiClass);
     PsiIdentifier classIdentifier = null;
@@ -278,8 +284,20 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
         recordBuilder.addPsiElement(nextElement);
       }
       else if (nextElement instanceof PsiMethod psiMethod) {
-        if (canonicalCtorCandidate != null && psiMethod == canonicalCtorCandidate.getConstructorMethod()) {
-          recordBuilder.addCanonicalCtor(canonicalCtorCandidate.getConstructorMethod());
+        if (methodsToConstructorCandidates.containsKey(psiMethod)) {
+          RecordConstructorCandidate constructorCandidate = methodsToConstructorCandidates.get(psiMethod);
+          switch (constructorCandidate.kind()) {
+            case CANONICAL -> recordBuilder.addCanonicalCtor(psiMethod);
+            case DELEGATING -> recordBuilder.addCtor(psiMethod);
+            case CUSTOM -> {
+              if (canonicalCtorCandidate != null) {
+                recordBuilder.addDelegatingCtor(canonicalCtorCandidate.constructor(),
+                                                psiMethod,
+                                                constructorCandidate.fieldNamesToInitializers(),
+                                                constructorCandidate.otherStatements());
+              }
+            }
+          }
         }
         else {
           FieldAccessorCandidate fieldAccessorCandidate = getFieldAccessorCandidate(fieldToAccessorCandidateMap, psiMethod);
@@ -345,14 +363,15 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
                     place, null, null);
   }
 
+  /// This is needed because canonical constructor parameter names must match record component names.
   private void renameConstructorParameters() {
     RecordConstructorCandidate ctorCandidate = myRecordCandidate.getCanonicalConstructorCandidate();
     if (ctorCandidate == null) return;
 
     Map<PsiElement, String> ctorParamRenames = new LinkedHashMap<>();
     List<UsageInfo> usagesToRename = new ArrayList<>();
-    ctorCandidate.getCtorParamsToFields().forEach((ctorParam, field) -> {
-      if (!ctorParam.getName().equals(field.getName())) {
+    ctorCandidate.paramsToFields().forEach((ctorParam, field) -> {
+      if (field != null && !ctorParam.getName().equals(field.getName())) {
         UsageInfo[] usages = RenameUtil.findUsages(ctorParam, field.getName(), false, false, ctorParamRenames);
         usagesToRename.addAll(Arrays.asList(usages));
         ctorParamRenames.put(ctorParam, field.getName());
@@ -498,15 +517,14 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
 
   private static void tryToCompactCanonicalCtor(@NotNull PsiClass record) {
     if (!record.isRecord()) throw new IllegalArgumentException("Not a record: " + record);
-
-    PsiMethod canonicalCtor = ArrayUtil.getFirstElement(record.getConstructors());
+    PsiMethod canonicalCtor = ContainerUtil.find(record.getConstructors(), JavaPsiRecordUtil::isCanonicalConstructor);
     if (canonicalCtor != null) {
       PsiCodeBlock ctorBody = canonicalCtor.getBody();
       if (ctorBody != null) {
         StreamEx.of(ctorBody.getStatements()).select(PsiExpressionStatement.class)
           .filter(st -> JavaPsiConstructorUtil.isSuperConstructorCall(st.getExpression()))
           .findFirst()
-          .ifPresent(st -> st.delete());
+          .ifPresent(PsiElement::delete);
       }
       ConstructorSimplifier ctorSimplifier = RedundantRecordConstructorInspection.createCtorSimplifier(canonicalCtor);
       if (ctorSimplifier != null) {
@@ -516,7 +534,8 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
   }
 
   private static void removeRedundantObjectMethods(@NotNull PsiClass record, @NotNull CallMatcher redundantObjectMethods) {
-    ContainerUtil.filter(record.getMethods(), redundantObjectMethods::methodMatches)
+    ContainerUtil
+      .filter(record.getMethods(), redundantObjectMethods::methodMatches)
       .forEach(PsiMethod::delete);
   }
 

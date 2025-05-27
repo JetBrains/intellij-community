@@ -977,6 +977,7 @@ public class PsiTreeUtil {
    * @param element root element to process
    * @param processor processor to consume elements
    * @return {@code true} if processing was not canceled ({@code Processor.execute()} method returned {@code true} for all elements).
+   * @see PsiElementProcessor#execute 
    */
   @Contract("null, _ -> true")
   public static boolean processElements(@Nullable PsiElement element, @NotNull PsiElementProcessor<? super PsiElement> processor) {

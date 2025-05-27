@@ -21,15 +21,18 @@ package com.intellij.psi;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * a JavaElementVisitor which also visits all children elements
- * in a tree pre-order, see <a href="https://en.wikipedia.org/wiki/Tree_traversal#Pre-order">Tree traversal:Pre-order</a> for details.
- * <p>
- * <b>Note</b>: This visitor handles all containing elements without consuming stack space, so it can be used even for very deep trees.
- * <b>Note 2</b>: This visitor works for source-based PSI only. Any elements implementing {@link PsiCompiledElement} will be rejected.
- */
+/// A variant of [JavaElementVisitor] which also visits all children elements in the
+/// [pre-order fashion](https://en.wikipedia.org/wiki/Tree_traversal#Pre-order).
+///
+/// It handles all containing elements without consuming stack space, so it can be used
+/// even for very deep trees without getting a [StackOverflowError].
+///
+/// ### Note
+///
+/// This visitor works for source-based PSI only.
+/// Any elements implementing [PsiCompiledElement] are rejected, and an error is logged.
 public abstract class JavaRecursiveElementWalkingVisitor extends JavaElementVisitor implements PsiRecursiveVisitor {
-  private final PsiWalkingState myWalkingState = new PsiWalkingState(this){
+  private final PsiWalkingState myWalkingState = new PsiWalkingState(this) {
     @Override
     public void elementFinished(@NotNull PsiElement element) {
       JavaRecursiveElementWalkingVisitor.this.elementFinished(element);

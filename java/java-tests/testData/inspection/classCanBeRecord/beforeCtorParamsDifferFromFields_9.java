@@ -1,4 +1,5 @@
-// "Convert to record class" "true-preview"
+// "Convert to record class" "false"
+// Reason: not implemented
 
 class Point2<caret> {
   private final double x;
