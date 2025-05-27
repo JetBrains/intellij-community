@@ -590,6 +590,41 @@ internal class PluginDependenciesTest {
   }
 
   @Test
+  fun `dependencies on specific content modules extracted in core plugin are added automatically`() {
+    PluginBuilder()
+      .id(PluginManagerCore.CORE_PLUGIN_ID)
+      .pluginAlias("com.intellij.modules.platform")
+      .pluginAlias("com.intellij.modules.lang")
+      .pluginAlias("com.intellij.modules.vcs")
+      .module("intellij.platform.tasks.impl", PluginBuilder().packagePrefix("com.intellij.tasks.impl"))
+      .build(pluginDirPath.resolve("core"))
+    PluginBuilder()
+      .id("with-depends")
+      .depends("com.intellij.modules.platform")
+      .build(pluginDirPath.resolve("with-depends"))
+    PluginBuilder()
+      .id("with-depends-on-lang")
+      .depends("com.intellij.modules.lang")
+      .build(pluginDirPath.resolve("with-depends-on-lang"))
+    PluginBuilder()
+      .id("with-dependencies")
+      .pluginDependency("com.intellij.modules.platform")
+      .build(pluginDirPath.resolve("with-dependencies"))
+    PluginBuilder()
+      .id("with-depends-on-vcs")
+      .depends("com.intellij.modules.vcs")
+      .build(pluginDirPath.resolve("with-depends-on-vcs"))
+    val pluginSet = buildPluginSet()
+    val (withDepends, withDependsOnLang, withDependencies, withDependsOnVcs) = 
+      pluginSet.getEnabledPlugins("with-depends", "with-depends-on-lang", "with-dependencies", "with-depends-on-vcs")
+    val tasks = pluginSet.getEnabledModule("intellij.platform.tasks.impl")
+    assertThat(withDepends).hasDirectParentClassloaders(tasks)
+    assertThat(withDependsOnLang).hasDirectParentClassloaders(tasks)
+    assertThat(withDependencies).hasDirectParentClassloaders()
+    assertThat(withDependsOnVcs).hasDirectParentClassloaders()
+  } 
+  
+  @Test
   fun `optional depends descriptor may have module dependency, but it's disregarded`() {
     foo()
     `baz with an optional module which has a package prefix`()
