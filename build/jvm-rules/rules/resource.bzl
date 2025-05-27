@@ -29,7 +29,6 @@ def _jvm_resources_impl(ctx):
             "supports-multiplex-sandboxing": "1",
         },
         env = {
-            # for Java source files
             "LC_CTYPE": "en_US.UTF-8",
         },
     )
