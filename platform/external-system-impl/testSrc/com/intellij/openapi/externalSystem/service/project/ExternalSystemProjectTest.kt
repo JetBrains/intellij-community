@@ -445,6 +445,25 @@ class ExternalSystemProjectTest : ExternalSystemProjectTestCase() {
   }
 
   @Test
+  fun `test no content root in a module without content roots during a subsequent refresh`() {
+    val contentRoot = "$projectPath/some/root"
+    applyProjectModel(
+      project {
+        module {
+          contentRoot(contentRoot)
+        }
+      }
+    )
+    assertContentRoots("module", contentRoot)
+    applyProjectModel(
+      project {
+        module { }
+      }
+    )
+    assertContentRoots("module")
+  }
+
+  @Test
   fun `test project SDK configuration import`() {
     val myJdkName = "My JDK"
     val myJdkHome = IdeaTestUtil.requireRealJdkHome()
@@ -527,6 +546,13 @@ class ExternalSystemProjectTest : ExternalSystemProjectTestCase() {
       }
     }
     return null
+  }
+
+  private fun assertContentRoots(moduleName: String, vararg expectedContentRoots: String) {
+    val module = getModule(moduleName)
+    val rootManger = ModuleRootManager.getInstance(module)
+    val actualContentRoots = rootManger.contentEntries.map { contentEntry -> VfsUtilCore.urlToPath(contentEntry.url)  }
+    assertSameElements("The content roots are not equal", actualContentRoots, expectedContentRoots.toList())
   }
 
   private fun urlToPath(url: String): String {
