@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.fir.testGenerator
 
 import org.jetbrains.kotlin.idea.k2.refactoring.bindToElement.AbstractK2BindToElementTest
@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.inline.AbstractKotlinFirInlineTe
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.*
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.AbstractK2IntroduceVariableTest
 import org.jetbrains.kotlin.idea.k2.refactoring.move.*
+import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.AbstractK2PullUpTest
 import org.jetbrains.kotlin.idea.k2.refactoring.pushDown.AbstractK2PushDownTest
 import org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.AbstractFirMultiModuleSafeDeleteTest
 import org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.AbstractK2SafeDeleteTest
@@ -138,6 +139,10 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
         }
         testClass<AbstractK2PsiUnifierTest> {
             model("unifier")
+        }
+        testClass<AbstractK2PullUpTest> {
+            model("refactoring/pullUp/k2k", pattern = KT, flatten = true, testClassName = "K2K", testMethodName = "doKotlinTest")
+            model("refactoring/pullUp/k2j", pattern = KT, flatten = true, testClassName = "K2J", testMethodName = "doKotlinTest")
         }
         testClass<AbstractK2PushDownTest> {
             model("refactoring/pushDown/k2k", pattern = KT, flatten = true, testClassName = "K2K", testMethodName = "doKotlinTest")

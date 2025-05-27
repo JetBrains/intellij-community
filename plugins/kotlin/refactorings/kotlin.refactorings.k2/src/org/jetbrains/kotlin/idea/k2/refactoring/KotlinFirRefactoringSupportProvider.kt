@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider
@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.introduceConstant.KotlinIntroduc
 import org.jetbrains.kotlin.idea.k2.refactoring.introduceParameter.KotlinFirIntroduceLambdaParameterHandler
 import org.jetbrains.kotlin.idea.k2.refactoring.introduceParameter.KotlinFirIntroduceParameterHandler
 import org.jetbrains.kotlin.idea.k2.refactoring.introduceProperty.KotlinIntroducePropertyHandler
+import org.jetbrains.kotlin.idea.refactoring.pullUp.KotlinPullUpHandler
 import org.jetbrains.kotlin.idea.refactoring.pushDown.KotlinPushDownHandler
 
 class KotlinFirRefactoringSupportProvider : RefactoringSupportProvider() {
@@ -42,4 +43,6 @@ class KotlinFirRefactoringSupportProvider : RefactoringSupportProvider() {
     fun getIntroducePropertyHandler(): RefactoringActionHandler = KotlinIntroducePropertyHandler()
 
     override fun getPushDownHandler(): RefactoringActionHandler = KotlinPushDownHandler()
+
+    override fun getPullUpHandler(): RefactoringActionHandler = KotlinPullUpHandler()
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.pullUp
 
 import com.intellij.openapi.actionSystem.DataContext
@@ -12,6 +12,8 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.refactoring.AbstractPullPushMembersHandler
 import org.jetbrains.kotlin.idea.refactoring.canRefactorElement
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
@@ -50,6 +52,7 @@ class KotlinPullUpHandler : AbstractPullPushMembersHandler(
         CommonRefactoringUtil.showErrorHint(project, editor, message, PULL_MEMBERS_UP, HelpID.MEMBERS_PULL_UP)
     }
 
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun invoke(
         project: Project,
         editor: Editor?,
@@ -82,7 +85,7 @@ class KotlinPullUpHandler : AbstractPullPushMembersHandler(
         }
 
         val memberInfoStorage = KotlinMemberInfoStorage(classOrObject)
-        val members = memberInfoStorage.getClassMemberInfos(classOrObject)
+        val members = allowAnalysisOnEdt { memberInfoStorage.getClassMemberInfos(classOrObject) }
 
         if (isUnitTestMode()) {
             val helper = requireNotNull(dataContext?.getData(PULL_UP_TEST_HELPER_KEY))

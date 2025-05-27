@@ -11,6 +11,7 @@ import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.toMultiMap
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -60,7 +61,8 @@ private fun MoveRenameUsageInfo.isVisibleBeforeMove(): Boolean {
     }
 }
 
-private fun PsiNamedElement.isVisibleTo(usage: PsiElement): Boolean {
+@ApiStatus.Internal
+fun PsiNamedElement.isVisibleTo(usage: PsiElement): Boolean {
     return if (usage is KtElement) {
         analyze(usage) { isVisibleTo(usage) }
     } else {

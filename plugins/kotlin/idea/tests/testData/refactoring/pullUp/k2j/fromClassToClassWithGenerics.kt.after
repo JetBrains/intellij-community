@@ -1,3 +1,5 @@
+// IGNORE_K2
+// TODO: Implement JavaToKotlinPostconversionPullUpHelper
 // WITH_STDLIB
 interface I
 

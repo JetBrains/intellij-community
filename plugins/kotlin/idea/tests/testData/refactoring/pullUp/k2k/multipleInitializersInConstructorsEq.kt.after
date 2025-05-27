@@ -1,3 +1,6 @@
+// IGNORE_K2
+// The test fails because `K2SemanticMatcher.isSemanticMatch(KaSession, KtElement, KtElement)` returns `false` for
+// `n = a + 1` and `n = a plus 1`. This is probably acceptable, since the code is red (INFIX_MODIFIER_REQUIRED).
 open class A(a: Int) {
     // INFO: {"checked": "true"}
     var n: Int
