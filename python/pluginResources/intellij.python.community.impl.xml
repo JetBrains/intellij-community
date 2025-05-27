@@ -642,7 +642,6 @@
                  description="Automatically set up multi-module uv projects"/>
 
     <feedback.idleFeedbackSurvey implementation="com.jetbrains.python.statistics.feedback.PythonJobSurvey"/>
-    <feedback.idleFeedbackSurvey implementation="com.jetbrains.python.statistics.feedback.PythonUvSupportSurvey"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.statistics.feedback.PythonJobStatisticsCollector"/>
     <backgroundPostStartupActivity implementation="com.jetbrains.python.statistics.feedback.PythonFirstLaunchChecker"/>
 
@@ -1040,8 +1039,6 @@
               text="Set PropertiesComponent Value" description="Set value in application-level PropertiesComponent"/>
       <action id="PyShowJobSurvey" internal="true" class="com.jetbrains.python.statistics.feedback.PythonShowJobSurveyAction"
               text="Show Python Job Survey"/>
-      <action id="PyUvSupportSurvey" internal="true" class="com.jetbrains.python.statistics.feedback.PythonShowUvSupportAction"
-              text="Show uv Support Survey"/>
 
       <add-to-group group-id="Internal"/>
     </group>
