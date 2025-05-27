@@ -53,7 +53,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.testFramework.common.TestApplicationKt;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
@@ -88,9 +87,9 @@ import java.util.Set;
  * <p/>
  * NOTE: Because of the performance difference, we recommend plugin developers to write light tests whenever possible.
  * <p/>
- * Please see <a href="https://plugins.jetbrains.com/docs/intellij/testing-plugins.html">Testing Plugins</a> in IntelliJ Platform SDK DevGuide.
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/testing-plugins.html">Testing Plugins (IntelliJ Platform Docs)</a>
  */
-@SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public abstract class HeavyPlatformTestCase extends UsefulTestCase implements DataProvider {
   protected Project myProject;
   protected Module myModule;
@@ -136,7 +135,10 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     return result;
   }
 
-  public static @NotNull VirtualFile createTestProjectStructure(@Nullable Module module, @Nullable String rootPath, boolean addProjectRoots, @NotNull TemporaryDirectory temporaryDirectory) {
+  public static @NotNull VirtualFile createTestProjectStructure(@Nullable Module module,
+                                                                @Nullable String rootPath,
+                                                                boolean addProjectRoots,
+                                                                @NotNull TemporaryDirectory temporaryDirectory) {
     Path dir = temporaryDirectory.newPath();
     try {
       Files.createDirectories(dir);
@@ -147,7 +149,10 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     return HeavyTestHelper.createTestProjectStructure(module, rootPath, dir, addProjectRoots);
   }
 
-  protected @NotNull VirtualFile createTestProjectStructure(@NotNull Project project, @Nullable Module module, @Nullable String rootPath, boolean addProjectRoots) {
+  protected @NotNull VirtualFile createTestProjectStructure(@NotNull Project project,
+                                                            @Nullable Module module,
+                                                            @Nullable String rootPath,
+                                                            boolean addProjectRoots) {
     VirtualFile file = createTestProjectStructure(module, rootPath, addProjectRoots, getTempDir());
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     return file;
@@ -267,10 +272,10 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     myProject = doCreateAndOpenProject();
 
     WriteAction.runAndWait(() ->
-      ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
-        setUpModule();
-        setUpJdk();
-      })
+                             ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
+                               setUpModule();
+                               setUpJdk();
+                             })
     );
 
     LightPlatformTestCase.clearUncommittedDocuments(getProject());
@@ -377,7 +382,10 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
     var undoManager = (UndoManagerImpl)UndoManager.getGlobalInstance();
     if (undoManager != null) {
-      app.runWriteIntentReadAction(() -> { undoManager.dropHistoryInTests(); return null; });
+      app.runWriteIntentReadAction(() -> {
+        undoManager.dropHistoryInTests();
+        return null;
+      });
     }
 
     var docRefManager = (DocumentReferenceManagerImpl)DocumentReferenceManager.getInstance();
@@ -547,7 +555,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       if (existingSdk == jdk) return;
     }
 
-    WriteAction.runAndWait(()-> jdkTable.addJdk(jdk, myProject));
+    WriteAction.runAndWait(() -> jdkTable.addJdk(jdk, myProject));
   }
 
   protected void setUpJdk() {
@@ -774,7 +782,9 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     }
   }
 
-  protected static @NotNull VirtualFile copy(final @NotNull VirtualFile file, final @NotNull VirtualFile newParent, final @NotNull String copyName) {
+  protected static @NotNull VirtualFile copy(final @NotNull VirtualFile file,
+                                             final @NotNull VirtualFile newParent,
+                                             final @NotNull String copyName) {
     final VirtualFile[] copy = new VirtualFile[1];
 
     try {
@@ -801,7 +811,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
   public static void setFileText(final @NotNull VirtualFile file, final @NotNull String text) {
     try {
-      WriteAction.runAndWait(() -> LoadTextUtil.write(null, file, file,text, -1));
+      WriteAction.runAndWait(() -> LoadTextUtil.write(null, file, file, text, -1));
     }
     catch (IOException e) {
       throw new RuntimeException(e);
