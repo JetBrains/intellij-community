@@ -514,7 +514,7 @@ public class GitExecutableDetector {
     return PathEnvironmentVariableUtil.getPathVariableValue();
   }
 
-  static @Nullable String patchExecutablePath(@NotNull String path, @NotNull Project project) {
+  static @Nullable String patchExecutablePath(@NotNull Project project, @NotNull String path) {
     Boolean isWindows = null;
     Path file = null;
 
@@ -544,7 +544,7 @@ public class GitExecutableDetector {
     return null;
   }
 
-  public static @Nullable String getBashExecutablePath(@NotNull String gitExecutable, @Nullable Project project) {
+  public static @Nullable String getBashExecutablePath(@Nullable Project project, @NotNull String gitExecutable) {
     Boolean isWindows = null;
     Path gitFile = null;
 
@@ -576,11 +576,11 @@ public class GitExecutableDetector {
   }
 
   /**
-   * @deprecated use {@link #getBashExecutablePath(String, Project)} instead
+   * @deprecated use {@link #getBashExecutablePath(Project, String)} instead
    */
   @Deprecated
   public static @Nullable String getBashExecutablePath(@NotNull String gitExecutable) {
-    return getBashExecutablePath(gitExecutable, null);
+    return getBashExecutablePath(null, gitExecutable);
   }
 
   static @NotNull List<String> getDependencyPaths(@NotNull Path executablePath, @NotNull Boolean isMac) {

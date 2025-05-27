@@ -164,7 +164,7 @@ internal class GitExecutableSelectorPanel(val project: Project, val disposable: 
 
   private inner class GitExecutableHandler : VcsExecutablePathSelector.ExecutableHandler {
     override fun patchExecutable(executable: String): String? {
-      return GitExecutableDetector.patchExecutablePath(executable, project)
+      return GitExecutableDetector.patchExecutablePath(project, executable)
     }
 
     override fun testExecutable(executable: String) {

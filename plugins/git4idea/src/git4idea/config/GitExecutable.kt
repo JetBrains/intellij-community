@@ -136,7 +136,7 @@ sealed class GitExecutable {
 
     internal fun doCreateBundledCommandLine(project: Project, isWindows: Boolean, vararg command: String): GeneralCommandLine {
       if (isWindows) {
-        val bashPath = GitExecutableDetector.getBashExecutablePath(exePath, project)
+        val bashPath = GitExecutableDetector.getBashExecutablePath(project, exePath)
                        ?: throw ExecutionException(GitBundle.message("git.executable.error.bash.not.found"))
 
         return GeneralCommandLine()
