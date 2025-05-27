@@ -129,7 +129,7 @@ internal data class RemoteFileRef(private val url: String) : DatasetRef {
 
     val path = Path(SystemProperties.getUserHome(), ".ai-assistant-evaluation-huggingface-token")
     if (path.exists()) {
-      return path.readText()
+      return path.readText().trim(' ', '\n')
     }
 
     return null
