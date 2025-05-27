@@ -479,6 +479,7 @@ class RecentProjectFilteringTree(
           projectProgressBar.isVisible = true
           projectProgressBar.isEnabled = true
           projectProgressBar.isIndeterminate = true
+          updateIndeterminateProgressBarAnimation(projectProgressBar)
         }
 
         return this
@@ -670,10 +671,7 @@ class RecentProjectFilteringTree(
           val fraction = progressIndicator.fraction
           if (fraction <= 0.0 || progressIndicator.isIndeterminate) {
             isIndeterminate = true
-            val progressBarUI = projectProgressBar.ui
-            if (progressBarUI is DarculaProgressBarUI) {
-              progressBarUI.updateIndeterminateAnimationIndex(START_MILLIS)
-            }
+            updateIndeterminateProgressBarAnimation(this)
           }
           else {
             isIndeterminate = false
@@ -713,6 +711,13 @@ class RecentProjectFilteringTree(
         )
 
         return this
+      }
+    }
+
+    private fun updateIndeterminateProgressBarAnimation(projectProgressBar: JProgressBar) {
+      val progressBarUI = projectProgressBar.ui
+      if (progressBarUI is DarculaProgressBarUI) {
+        progressBarUI.updateIndeterminateAnimationIndex(START_MILLIS)
       }
     }
 

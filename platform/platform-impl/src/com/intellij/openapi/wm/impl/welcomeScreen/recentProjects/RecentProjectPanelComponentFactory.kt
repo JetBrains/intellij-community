@@ -18,8 +18,8 @@ import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.tree.TreeNode
 import java.awt.Color
+import javax.swing.tree.TreeNode
 
 @ApiStatus.Internal
 object RecentProjectPanelComponentFactory {
@@ -84,15 +84,18 @@ object RecentProjectPanelComponentFactory {
   }
 
   private fun repaintProgressBars(updateQueue: MergingUpdateQueue, filteringTree: RecentProjectFilteringTree) {
-    val cloneableProjectsService = CloneableProjectsService.getInstance()
-    if (cloneableProjectsService.isCloneActive()) {
-      val model = filteringTree.searchModel
-      JBTreeTraverser.from<TreeNode> { node -> TreeUtil.nodeChildren(node) }
-        .withRoot(model.root)
-        .traverse()
-        .filter { node -> TreeUtil.getUserObject(CloneableProjectItem::class.java, node) != null }
-        .forEach { node -> model.nodeChanged(node) }
-    }
+    val isCloneActive = CloneableProjectsService.getInstance().isCloneActive()
+
+    val model = filteringTree.searchModel
+    JBTreeTraverser.from<TreeNode> { node -> TreeUtil.nodeChildren(node) }
+      .withRoot(model.root)
+      .traverse()
+      .filter { node ->
+        val userObject = TreeUtil.getUserObject(node)
+        return@filter userObject is CloneableProjectItem && isCloneActive ||
+                      userObject is ProviderRecentProjectItem && userObject.isProjectOpening
+      }
+      .forEach { node -> model.nodeChanged(node) }
 
     updateQueue.queue(Update.create(filteringTree, Runnable { repaintProgressBars(updateQueue, filteringTree) }))
   }
