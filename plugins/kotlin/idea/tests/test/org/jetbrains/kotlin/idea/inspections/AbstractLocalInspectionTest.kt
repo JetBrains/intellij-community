@@ -39,6 +39,7 @@ import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.test.utils.withExtension
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -452,8 +453,12 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         }
     }
 
-    protected fun loadInspectionSettings(testFile: File): Element? =
-        File(testFile.parentFile, "settings.xml")
-            .takeIf { it.exists() }
+    protected fun loadInspectionSettings(testFile: File): Element? {
+        val customSettings = testFile.withExtension("settings.xml")
+        val commonSettings = testFile.resolveSibling("settings.xml")
+
+        return listOf(customSettings, commonSettings)
+            .firstOrNull { it.exists() }
             ?.let { JDOMUtil.load(it) }
+    }
 }
