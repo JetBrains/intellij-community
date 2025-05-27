@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.EelPlatform;
 import com.intellij.platform.eel.provider.EelProviderUtil;
-import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.platform.eel.provider.utils.EelUtilsKt;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.util.EnvironmentRestorer;
@@ -34,7 +33,10 @@ import org.jetbrains.plugins.terminal.util.TerminalEnvironment;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.terminal.LocalTerminalDirectRunner.isDirectory;
@@ -50,7 +52,7 @@ public final class LocalOptionsConfigurer {
     String workingDir = getWorkingDirectory(baseOptions.getWorkingDirectory(), project);
     Map<String, String> envs = getTerminalEnvironment(baseOptions.getEnvVariables(), workingDir, project, eelDescriptor);
 
-    List<String> initialCommand = getInitialCommand(baseOptions, project, eelDescriptor);
+    List<String> initialCommand = getInitialCommand(baseOptions, project);
     TerminalWidget widget = baseOptions.getWidget();
     if (widget != null) {
       widget.setShellCommand(initialCommand);
@@ -153,11 +155,7 @@ public final class LocalOptionsConfigurer {
     return envs;
   }
 
-  private static @NotNull List<String> getInitialCommand(@NotNull ShellStartupOptions options, @NotNull Project project, @Nullable EelDescriptor eelDescriptor) {
-    if (eelDescriptor != null && eelDescriptor != LocalEelDescriptor.INSTANCE) {
-      return LocalTerminalStartCommandBuilder.convertShellPathToCommand(Optional.of(fetchLoginShellEnvVariables(eelDescriptor)).map(e -> e.get("SHELL")).orElse("/bin/sh"));
-    }
-
+  private static @NotNull List<String> getInitialCommand(@NotNull ShellStartupOptions options, @NotNull Project project) {
     List<String> shellCommand = options.getShellCommand();
     return shellCommand != null ? shellCommand : LocalTerminalStartCommandBuilder.convertShellPathToCommand(getShellPath(project));
   }
