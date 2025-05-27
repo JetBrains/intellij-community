@@ -32,9 +32,11 @@ public final class JavaTypeNullabilityUtil {
     PsiElement context = type.getPsiContext();
     if (context != null) {
       NullableNotNullManager manager = NullableNotNullManager.getInstance(context.getProject());
-      NullabilityAnnotationInfo typeUseNullability = manager.findDefaultTypeUseNullability(context);
-      if (typeUseNullability != null) {
-        return typeUseNullability.toTypeNullability();
+      if (manager != null) {
+        NullabilityAnnotationInfo typeUseNullability = manager.findDefaultTypeUseNullability(context);
+        if (typeUseNullability != null) {
+          return typeUseNullability.toTypeNullability();
+        }
       }
     }
     PsiClass target = type.resolve();

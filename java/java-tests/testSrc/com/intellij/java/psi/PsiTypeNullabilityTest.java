@@ -4,12 +4,11 @@ package com.intellij.java.psi;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilitySource;
 import com.intellij.codeInsight.TypeNullability;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypes;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNull;
 
 public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTestCase {
   public void testPrimitive() {
@@ -29,9 +28,17 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
     assertEquals(NullabilitySource.Standard.NONE, voidTypeNullability.source());
   }
 
-  private PsiType configureAndGetFieldType(@Language("JAVA") String text) {
+  private @NotNull PsiType configureAndGetFieldType(@Language("JAVA") String text) {
     PsiFile file = myFixture.configureByText("Test.java", text);
     return ((PsiJavaFile)file).getClasses()[0].getFields()[0].getType();
+  }
+
+  private @NotNull PsiType configureAndGetExpressionType(@Language("JAVA") String code) {
+    PsiFile file = myFixture.configureByText("Test.java", code);
+    PsiExpression expression = PsiTreeUtil.getParentOfType(file.findElementAt(myFixture.getCaretOffset()), PsiExpression.class);
+    PsiType type = expression.getType();
+    assertNotNull(type);
+    return type;
   }
 
   public void testSimpleUnknown() {
@@ -139,5 +146,37 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
       """);
     assertEquals("NULLABLE (@Nullable)", type.getNullability().toString());
     assertEquals("NOT_NULL (@NotNull)", type.getDeepComponentType().getNullability().toString());
+  }
+  
+  public void testSubstitutorSimple() {
+    PsiType type = configureAndGetExpressionType("""
+      import org.jetbrains.annotations.NotNull;
+      
+      class X<T> {
+        native T foo();
+      
+        static void test(X<@NotNull String> x) {
+          x.foo(<caret>);
+        }
+      }
+      """);
+    assertEquals("java.lang.String", type.getCanonicalText());
+    assertEquals("NOT_NULL (@NotNull)", type.getNullability().toString());
+  }
+
+  public void testSubstitutorOuter() {
+    PsiType type = configureAndGetExpressionType("""
+      import org.jetbrains.annotations.NotNull;
+      
+      class X<T> {
+        native @NotNull X<T> foo();
+      
+        static void test(X<@NotNull String> x) {
+          x.foo(<caret>);
+        }
+      }
+      """);
+    assertEquals("X<java.lang.String>", type.getCanonicalText());
+    assertEquals("NOT_NULL (@NotNull)", type.getNullability().toString());
   }
 }
