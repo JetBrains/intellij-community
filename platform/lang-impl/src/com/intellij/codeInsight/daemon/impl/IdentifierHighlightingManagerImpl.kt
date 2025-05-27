@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ProperTextRange
 import com.intellij.openapi.util.Segment
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.psi.*
 import com.intellij.psi.impl.PsiDocumentManagerBase
@@ -70,8 +71,8 @@ class IdentifierHighlightingManagerImpl(private val myProject: Project) : Identi
 
   private fun clearCache(document: Document) {
     val markers: MutableList<RangeMarker> = ArrayList()
-    (document as DocumentEx).processRangeMarkers(Processor { marker: RangeMarker? ->
-      val data = marker!!.getUserData(IDENT_MARKUP)
+    (document as DocumentEx).processRangeMarkers(Processor { marker: RangeMarker ->
+      val data = marker.getUserData(IDENT_MARKUP)
       if (data != null) {
         markers.add(marker)
       }
@@ -132,19 +133,17 @@ class IdentifierHighlightingManagerImpl(private val myProject: Project) : Identi
           }
           val hostDocument = PsiDocumentManagerBase.getTopLevelDocument(document)
           val occurrenceRangeMarkers = ArrayList<RangeMarker>(hostRes.occurrences.size)
+          val cache = mutableMapOf<TextRange, RangeMarker>()
           val rangeMarkerOccurrences = hostRes.occurrences.map { o: IdentifierOccurrence ->
-            val marker = createMarker(hostDocument, o.range)
+            val marker = createMarker(hostDocument, o.range, cache)
             occurrenceRangeMarkers.add(marker)
             IdentifierOccurrence(marker, o.highlightInfoType)
           }
           val rangeMarkerTargets = hostRes.targets.map { r ->
-            createMarker(hostDocument, r)
+            createMarker(hostDocument, r, cache)
           }
           val rangeMarkerResult = IdentifierHighlightingResult(rangeMarkerOccurrences, rangeMarkerTargets)
-          for (marker in occurrenceRangeMarkers) {
-            marker.putUserData(IDENT_MARKUP, rangeMarkerResult)
-          }
-          for (marker in rangeMarkerTargets) {
+          for (marker in cache.values) {
             marker.putUserData(IDENT_MARKUP, rangeMarkerResult)
           }
           val editorResults = ConcurrencyUtil.computeIfAbsent(editor, EDITOR_IDENT_RESULTS) {
@@ -161,17 +160,18 @@ class IdentifierHighlightingManagerImpl(private val myProject: Project) : Identi
   private fun createMarker(
     document: Document,
     r: Segment,
+    cache: MutableMap<TextRange, RangeMarker>,
   ): RangeMarker {
-    val restricted = TextRangeScalarUtil.coerceRange(r.startOffset, r.endOffset, 0, document.textLength)
-    return document.createRangeMarker(TextRangeScalarUtil.create(restricted))
+    val restricted = TextRangeScalarUtil.create(TextRangeScalarUtil.coerceRange(r.startOffset, r.endOffset, 0, document.textLength))
+    var marker = cache[restricted]
+    if (marker == null) {
+      marker = document.createRangeMarker(restricted)
+      cache[restricted] = marker
+    }
+    return marker
   }
 
   override fun dispose() {
-  }
-
-  // true if this Result is valid when the caret is at offset
-  private fun containsTargetOffset(result: IdentifierHighlightingResult, offset: Int): Boolean {
-    return result.targets.any { t -> t.containsInclusive(offset) }
   }
 
   companion object {
@@ -179,5 +179,11 @@ class IdentifierHighlightingManagerImpl(private val myProject: Project) : Identi
     private val IDENT_MARKUP = Key.create<IdentifierHighlightingResult>("IDENT_MARKUP")
     // stored in Editor to be able to hard-retain range markers from IdentifierHighlightingResult
     private val EDITOR_IDENT_RESULTS: Key<MutableCollection<IdentifierHighlightingResult>> = Key.create("EDITOR_IDENT_RESULTS")
+
+    // true if this Result is valid when the caret is at offset
+    @ApiStatus.Internal
+    fun containsTargetOffset(result: IdentifierHighlightingResult, offset: Int): Boolean {
+      return result.targets.any { t -> t.contains(offset) || t.startOffset == offset }
+    }
   }
 }

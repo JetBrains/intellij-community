@@ -111,10 +111,19 @@ class IdentifierHighlightingComputer (
         // We can't show a warning because this usage search is triggered automatically and user does not control it.
       }
     }
+    if (!myTargets.any { it.contains(myCaretOffset) }) {
+      // no target contains our real caret offset, because there's nothing interesting at that offset;
+      // instead, computed targets are slightly off, typically at the previous/next caret offset, e.g. when we are standing at the space char, and the previous char is ')'
+      // in this case, we should not store these adjusted targets for this offset, because
+      // the next time whenever caret happened to be inside one of those targets it would not mean we should use this result computed for this offset because it would be incorrect
+      myTargets.clear()
+      myTargets.add(TextRange(myCaretOffset, myCaretOffset))
+    }
     val result = IdentifierHighlightingResult(myInfos, myTargets)
     if (LOG.isDebugEnabled) {
       LOG.debug("IdentifierHighlightingComputer.computeRanges($myPsiFile, $myCaretOffset) = $result")
     }
+    assert(IdentifierHighlightingManagerImpl.containsTargetOffset(result, myCaretOffset)) { "$result, caret offset:$myCaretOffset" }
     return result
   }
 

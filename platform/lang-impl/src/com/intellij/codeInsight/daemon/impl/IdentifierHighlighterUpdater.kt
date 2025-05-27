@@ -43,8 +43,6 @@ class IdentifierHighlighterUpdater (
     return IdentifierHighlightingManager.getInstance(project).getMarkupData(myEditor, visibleRange)
   }
 
-  private fun isCaretOverCollapsedFoldRegion(): Boolean = myEditor.getFoldingModel().getCollapsedRegionAtOffset(myEditor.getCaretModel().offset) != null
-
   /**
    * Does additional work on code block markers highlighting:
    *  * Draws vertical line covering the scope on the gutter by [com.intellij.codeInsight.highlighting.BraceHighlightingHandler.Companion.lineMarkFragment]
@@ -74,7 +72,7 @@ class IdentifierHighlighterUpdater (
   }
 
   internal fun createHighlightInfos(markupInfos: IdentifierHighlightingResult): List<HighlightInfo> {
-    if (myEditor.isDisposed || EditorUtil.isCaretInVirtualSpace(myEditor) || isCaretOverCollapsedFoldRegion() || markupInfos.occurrences.isEmpty()) {
+    if (!shouldShowIdentifierHighlightingResult(markupInfos, myEditor)) {
       return listOf()
     }
     val existingMarkupTooltips: MutableSet<Pair<String, Segment>> = HashSet()
@@ -154,6 +152,15 @@ class IdentifierHighlighterUpdater (
         }
       }
       return resultId
+    }
+
+    @ApiStatus.Internal
+    fun shouldShowIdentifierHighlightingResult(markupInfos: IdentifierHighlightingResult, editor: Editor): Boolean {
+      return !editor.isDisposed && !EditorUtil.isCaretInVirtualSpace(editor) && !isCaretOverCollapsedFoldRegion(editor) && !markupInfos.occurrences.isEmpty()
+    }
+
+    private fun isCaretOverCollapsedFoldRegion(myEditor: Editor): Boolean {
+      return myEditor.getFoldingModel().getCollapsedRegionAtOffset(myEditor.getCaretModel().offset) != null
     }
   }
 }
