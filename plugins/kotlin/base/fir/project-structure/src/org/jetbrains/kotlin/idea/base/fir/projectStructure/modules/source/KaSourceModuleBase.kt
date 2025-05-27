@@ -46,6 +46,7 @@ internal abstract class KaSourceModuleBase() : KaEntityBasedModule<ModuleEntity,
         KaSourceModuleDependenciesProvider.getInstance(project).getDirectFriendDependencies(this)
     }
 
+    // When changing the type of the base content scope, please update `K2IdeKotlinModuleInformationProvider.isEmpty`.
     override val baseContentScope: GlobalSearchScope
         get() = when (kind) {
             KaSourceModuleKind.PRODUCTION -> {
