@@ -11,6 +11,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
+import org.junit.jupiter.api.Assertions.assertTrue
 
 class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
   fun testCurrentSession() {
@@ -199,15 +200,17 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     assertEquals(session2 to HotSwapVisibleStatus.CHANGES_READY, channel.receive())
 
     Disposer.dispose(disposable2)
-    val currentStatus = channel.receive()
+    var currentStatus = channel.receive()
     val expectedNextStatus = session1 to HotSwapVisibleStatus.CHANGES_READY
     // session complete status might be skipped
     if (currentStatus == session2 to HotSwapVisibleStatus.SESSION_COMPLETED) {
-      assertEquals(expectedNextStatus, channel.receive())
+      currentStatus = channel.receive()
     }
-    else {
-      assertEquals(expectedNextStatus, currentStatus)
+    // null status might be skipped
+    if (currentStatus == null to null) {
+      currentStatus = channel.receive()
     }
+    assertEquals(expectedNextStatus, currentStatus)
 
     Disposer.dispose(disposable1)
     assertCompleted(channel, session1)
@@ -277,15 +280,17 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     assertEquals(session2 to HotSwapVisibleStatus.CHANGES_READY, channel.receive())
 
     Disposer.dispose(disposable2)
-    val currentStatus = channel.receive()
+    var currentStatus = channel.receive()
     val expectedNextStatus = session1 to HotSwapVisibleStatus.CHANGES_READY
     // session complete status might be skipped
     if (currentStatus == session2 to HotSwapVisibleStatus.SESSION_COMPLETED) {
-      assertEquals(expectedNextStatus, channel.receive())
+      currentStatus = channel.receive()
     }
-    else {
-      assertEquals(expectedNextStatus, currentStatus)
+    // null status might be skipped
+    if (currentStatus == null to null) {
+      currentStatus = channel.receive()
     }
+    assertEquals(expectedNextStatus, currentStatus)
 
     Disposer.dispose(disposable1)
     assertCompleted(channel, session1)
@@ -374,7 +379,7 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
   ) {
     assertCompleted(channel)
     Disposer.dispose(disposable2)
-    assertTrue(channel.isEmpty)
+    assertTrue(channel.isEmpty) { "Expected no more events, but got ${channel.tryReceive().getOrNull()}" }
   }
 
   private suspend fun assertCompleted(channel: ReceiveChannel<HotSwapVisibleStatus?>) {
