@@ -9,32 +9,37 @@ import com.intellij.openapi.vfs.impl.http.HttpVirtualFile
 import com.jetbrains.jsonSchema.fus.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.util.concurrent.CancellationException
 
 internal fun logSchemaDownloadFailureDiagnostics(schemaFile: HttpVirtualFile, project: Project) {
   val schemaPath = schemaFile.getPath()
-  val nioSchemaFile = schemaFile.toNioPath().toFile()
-  val nioFileExists = nioSchemaFile.exists()
-  val isFile = nioSchemaFile.isFile
-  val nioFileLength = nioSchemaFile.length()
-  val canRead = nioSchemaFile.canRead()
+  val nioSchemaFile = runCatching { schemaFile.toNioPath().toFile() }
+  if (nioSchemaFile.isFailure && nioSchemaFile.exceptionOrNull() is CancellationException) {
+    nioSchemaFile.getOrThrow()
+  }
+  val nioFileExists = nioSchemaFile.getOrNull()?.exists() ?: false
+  val isFile = nioSchemaFile.getOrNull()?.isFile ?: false
+  val nioFileLength = nioSchemaFile.getOrNull()?.length() ?: -2
+  val canRead = nioSchemaFile.getOrNull()?.canRead() ?: false
   val fileInfo = schemaFile.getFileInfo()
-  val errorMessageOrNull = fileInfo?.getErrorMessage()
+  val errorMessage = listOfNotNull(fileInfo?.getErrorMessage(), nioSchemaFile.exceptionOrNull()?.message)
+    .ifEmpty { listOf("none") }.joinToString(", ")
   val stateOrNull = fileInfo?.getState()
   val instantData = "Schema loading failure report. SchemaPath: $schemaPath, " +
                     "File exists: $nioFileExists, isFile: $isFile, File length: $nioFileLength bytes, " +
-                    "Can read: $canRead, Error message: ${errorMessageOrNull ?: "none"}, State: ${stateOrNull ?: "unknown"}"
+                    "Can read: $canRead, Error message: ${errorMessage}, State: ${stateOrNull ?: "unknown"}"
 
   DiagnosticsScopeProvider.getInstance(project).coroutineScope.launch {
-    val anotherFileLookupAttempt = VfsUtil.findFile(schemaFile.toNioPath(), true)
-    val isNull = anotherFileLookupAttempt == null
-    val isValid = anotherFileLookupAttempt?.isValid
+    val anotherFileLookupAttempt = runCatching { VfsUtil.findFile(schemaFile.toNioPath(), true) }
+    val isNull = anotherFileLookupAttempt.getOrNull() == null
+    val isValid = anotherFileLookupAttempt.getOrNull()?.isValid ?: false
     JsonHttpFileLoadingUsageCollector.jsonSchemaHighlightingSessionData.log(
       JsonHttpFileNioFile.with(nioFileExists),
       JsonHttpFileNioFileCanBeRead.with(canRead),
       JsonHttpFileNioFileLength.with(nioFileLength),
       JsonHttpFileVfsFile.with(schemaFile.fileInfo?.localFile != null),
-      JsonHttpFileSyncRefreshVfsFile.with(anotherFileLookupAttempt != null),
-      JsonHttpFileVfsFileValidity.with(isValid ?: false),
+      JsonHttpFileSyncRefreshVfsFile.with(anotherFileLookupAttempt.getOrNull() != null),
+      JsonHttpFileVfsFileValidity.with(isValid),
       JsonHttpFileDownloadState.with(JsonRemoteSchemaDownloadState.fromRemoteFileState(stateOrNull))
     )
     Logger.getInstance(schemaFile.javaClass).error("$instantData, syncRefreshFileIsNull: $isNull, syncRefreshFileIsValid: $isValid")
