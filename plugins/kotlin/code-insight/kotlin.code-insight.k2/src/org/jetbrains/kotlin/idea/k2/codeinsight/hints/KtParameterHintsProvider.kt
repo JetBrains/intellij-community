@@ -17,18 +17,17 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_COMPILED_PARAMETERS
+import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_EXCLUDED_PARAMETERS
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.ArgumentNameCommentInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExpectedArgumentNameComment
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtCallElement
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtNameReferenceExpression
-import org.jetbrains.kotlin.psi.KtValueArgument
-import org.jetbrains.kotlin.psi.KtValueArgumentList
-import org.jetbrains.kotlin.psi.psiUtil.siblings
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
@@ -131,37 +130,63 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         val valueParameters: List<KaValueParameterSymbol> = functionSymbol.valueParameters
 
         val excludeListed = functionSymbol.isExcludeListed(excludeListMatchers)
-        // TODO: IDEA-347315 has to be fixed
-        //sink.whenOptionEnabled(SHOW_BLACKLISTED_PARAMETERS.name) {
-        //    if (blackListed) {
-        //        functionSymbol.collectFromParameters(valueParameters, arguments, sink)
-        //    }
-        //}
+
+        sink.whenOptionEnabled(SHOW_EXCLUDED_PARAMETERS.name) {
+            if (excludeListed) {
+                val valueParametersWithNames =
+                    calculateValueParametersWithNames(functionSymbol, callElement, valueParameters) ?: return@whenOptionEnabled
+
+                collectFromParameters(functionCall.argumentMapping, valueParametersWithNames, sink)
+            }
+        }
 
         if (excludeListed) return
 
-        val valueParametersWithNames = if ((functionSymbol as? KaNamedFunctionSymbol)?.isBuiltinFunctionInvoke == true) {
-            val expressionType = callElement.calleeExpression?.expressionType as? KaFunctionType
-                ?: callElement.siblings(false).firstIsInstanceOrNull<KtNameReferenceExpression>()?.expressionType as? KaFunctionType
-                ?: return
+        val valueParametersWithNames = calculateValueParametersWithNames(functionSymbol, callElement, valueParameters) ?: return
 
-            /**
-             * Context receivers and receivers of extension functions in function references are not included in [KaFunctionType.parameters],
-             * even though they are required as arguments during the invocation.
-             * However, [valueParameters] include all the parameters required for the invocation, including all the receivers.
-             * That's why we have to calculate the number of receiver parameters we should skip from [valueParameters] to properly map them to names from [KaFunctionType.parameters].
-             */
-            val receiverNumber = expressionType.contextReceivers.size + if (expressionType.hasReceiver) 1 else 0
-            expressionType.parameters.mapIndexed { index, parameter ->
-                val name = parameter.name
-                val parameterSymbol = valueParameters[receiverNumber + index]
-                parameterSymbol to name
-            }
-        } else {
-            valueParameters.map { it to it.name }
+        val compiledSource = valueParametersWithNames.any { pair ->
+            val psi = pair.first.takeIf { it.origin == KaSymbolOrigin.JAVA_LIBRARY }?.psi ?: return@any false
+            // not very nice way to detect true origin of the parameter
+            psi == psi.navigationElement
         }
 
-        collectFromParameters(functionCall.argumentMapping, valueParametersWithNames, sink)
+        if (compiledSource) {
+            sink.whenOptionEnabled(SHOW_COMPILED_PARAMETERS.name) {
+                collectFromParameters(functionCall.argumentMapping, valueParametersWithNames, sink)
+            }
+        } else {
+            collectFromParameters(functionCall.argumentMapping, valueParametersWithNames, sink)
+        }
+    }
+
+    @OptIn(KaExperimentalApi::class)
+    private fun KaSession.calculateValueParametersWithNames(
+        functionSymbol: KaFunctionSymbol,
+        callElement: KtCallElement,
+        valueParameters: List<KaValueParameterSymbol>
+    ): List<Pair<KaValueParameterSymbol, Name?>>? {
+        val valueParametersWithNames =
+            if ((functionSymbol as? KaNamedFunctionSymbol)?.isBuiltinFunctionInvoke == true) {
+                val expressionType = callElement.calleeExpression?.expressionType as? KaFunctionType
+                    ?: callElement.siblings(false).firstIsInstanceOrNull<KtNameReferenceExpression>()?.expressionType as? KaFunctionType
+                    ?: return null
+
+                /**
+                 * Context receivers and receivers of extension functions in function references are not included in [KaFunctionType.parameters],
+                 * even though they are required as arguments during the invocation.
+                 * However, [valueParameters] include all the parameters required for the invocation, including all the receivers.
+                 * That's why we have to calculate the number of receiver parameters we should skip from [valueParameters] to properly map them to names from [KaFunctionType.parameters].
+                 */
+                val receiverNumber = expressionType.contextReceivers.size + if (expressionType.hasReceiver) 1 else 0
+                expressionType.parameters.mapIndexed { index, parameter ->
+                    val name = parameter.name
+                    val parameterSymbol = valueParameters[receiverNumber + index]
+                    parameterSymbol to name
+                }
+            } else {
+                valueParameters.map { it to it.name }
+            }
+        return valueParametersWithNames
     }
 
     context(KaSession)

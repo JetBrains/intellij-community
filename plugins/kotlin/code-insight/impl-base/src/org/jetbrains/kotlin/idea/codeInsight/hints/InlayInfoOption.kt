@@ -18,4 +18,5 @@ val SHOW_IMPLICIT_RECEIVERS_AND_PARAMS: NamedInlayInfoOption = NamedInlayInfoOpt
 val SHOW_RANGES: NamedInlayInfoOption = NamedInlayInfoOption("hints.value.ranges")
 val SHOW_KOTLIN_TIME: NamedInlayInfoOption = NamedInlayInfoOption("hints.value.kotlin.time")
 
-val SHOW_BLACKLISTED_PARAMETERS: NamedInlayInfoOption = NamedInlayInfoOption("hints.parameters.blacklisted")
+val SHOW_EXCLUDED_PARAMETERS: NamedInlayInfoOption = NamedInlayInfoOption("hints.parameters.excluded")
+val SHOW_COMPILED_PARAMETERS: NamedInlayInfoOption = NamedInlayInfoOption("hints.parameters.compiled")
