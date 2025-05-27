@@ -19,8 +19,7 @@ import org.junit.Rule
 import org.junit.Test
 
 public class ProvideDataTest {
-    @JvmField @Rule
-    public val rule: ComposeContentTestRule = createComposeRule()
+    @JvmField @Rule public val rule: ComposeContentTestRule = createComposeRule()
 
     @Test
     public fun `one component`() {

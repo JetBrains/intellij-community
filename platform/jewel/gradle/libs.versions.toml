@@ -4,11 +4,11 @@ composeDesktop = "1.8.0-alpha04"
 detekt = "1.23.6"
 dokka = "2.0.0"
 filepicker = "3.1.0"
-idea = "251.23774.318"
-intelliJPlatformBuild = "251.23774.318-EAP-SNAPSHOT"
-ideaPlugin = "2.4.0"
+idea = "252.16512.17"
+intelliJPlatformBuild = "252.16512.17-EAP-SNAPSHOT"
+ideaPlugin = "2.6.0"
 jna = "5.17.0"
-kotlin = "2.1.10"
+kotlin = "2.1.20"
 kotlinSarif = "0.6.0"
 kotlinpoet = "2.1.0"
 kotlinterGradlePlugin = "5.0.1"
@@ -49,7 +49,6 @@ detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 ideaPlugin = { id = "org.jetbrains.intellij.platform", version.ref = "ideaPlugin" }
 ideaPluginBase = { id = "org.jetbrains.intellij.platform.base", version.ref = "ideaPlugin" }
-ideaPluginModule = { id = "org.jetbrains.intellij.platform.module", version.ref = "ideaPlugin" }
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlinx-binaryCompatValidator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "kotlinxBinaryCompat" }
 kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

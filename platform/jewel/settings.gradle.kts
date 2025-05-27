@@ -6,13 +6,10 @@ rootProject.name = "jewel"
 
 pluginManagement {
     repositories {
-        maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev/")
-        maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
         maven("https://oss.sonatype.org/content/repositories/snapshots/")
         gradlePluginPortal()
         mavenCentral()
     }
-    plugins { kotlin("jvm") version "2.1.0" }
 }
 
 dependencyResolutionManagement {
@@ -36,7 +33,7 @@ include(
     ":decorated-window",
     ":foundation",
     ":ide-laf-bridge",
-    ":ide-laf-bridge-tests",
+    ":ide-laf-bridge:ide-laf-bridge-tests",
     ":int-ui:int-ui-decorated-window",
     ":int-ui:int-ui-standalone",
     ":detekt-plugin",
