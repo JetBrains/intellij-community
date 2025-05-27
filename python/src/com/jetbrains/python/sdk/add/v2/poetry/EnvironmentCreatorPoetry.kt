@@ -15,7 +15,6 @@ import com.intellij.util.text.nullize
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.errorProcessing.asPythonResult
 import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.CustomNewEnvironmentCreator
@@ -109,7 +108,7 @@ internal class EnvironmentCreatorPoetry(model: PythonMutableTargetAddInterpreter
 
   override suspend fun setupEnvSdk(project: Project, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): PyResult<Sdk> {
     module?.let { service<PoetryConfigService>().setInProjectEnv(it) }
-    return setupPoetrySdkUnderProgress(project, module, baseSdks, projectPath, homePath, installPackages).asPythonResult()
+    return setupPoetrySdkUnderProgress(project, module, baseSdks, projectPath, homePath, installPackages)
   }
 
   override suspend fun detectExecutable() {

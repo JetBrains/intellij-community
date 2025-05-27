@@ -2,6 +2,7 @@
 package com.intellij.python.community.junit5Tests.framework.conda
 
 import com.intellij.execution.processTools.getResultStdoutStr
+import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand

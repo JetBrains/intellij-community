@@ -3,6 +3,7 @@ package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridge
 import com.jetbrains.python.packaging.common.*
 import kotlinx.coroutines.CoroutineScope
@@ -19,42 +20,42 @@ class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManage
   override val repositoryManager: PythonRepositoryManager
     get() = TestPythonRepositoryManager(project).withPackageNames(packageNames).withPackageDetails(packageDetails)
 
-  override suspend fun loadOutdatedPackagesCommand(): Result<List<PythonOutdatedPackage>> {
-    return Result.success(emptyList())
+  override suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>> {
+    return PyResult.success(emptyList())
   }
 
-  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): Result<Unit> {
+  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
     if (installRequest !is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications) {
-      return Result.failure(Exception("Test Manager supports only simple repository package specification"))
+      return PyResult.localizedError("Test Manager supports only simple repository package specification")
     }
 
     val specification = installRequest.specifications.single()
     return if (repositoryManager.allPackages().contains(specification.name)) {
       val version = specification.versionSpec?.version.orEmpty()
       installedPackages += PythonPackage(specification.name, version, false)
-      Result.success(Unit)
+      PyResult.success(Unit)
     }
     else {
-      Result.failure(Exception(PACKAGE_INSTALL_FAILURE_MESSAGE))
+      PyResult.localizedError(PACKAGE_INSTALL_FAILURE_MESSAGE)
     }
   }
 
-  override suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): Result<Unit> {
-    return Result.success(Unit)
+  override suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): PyResult<Unit> {
+    return PyResult.success(Unit)
   }
 
-  override suspend fun uninstallPackageCommand(vararg pythonPackages: String): Result<Unit> {
+  override suspend fun uninstallPackageCommand(vararg pythonPackages: String): PyResult<Unit> {
     pythonPackages.forEach { pyPackage ->
       val packageToRemove = findPackageByName(pyPackage)
-                            ?: return Result.failure(Exception(PACKAGE_UNINSTALL_FAILURE_MESSAGE))
+                            ?: return PyResult.localizedError(PACKAGE_UNINSTALL_FAILURE_MESSAGE)
       installedPackages -= packageToRemove
     }
 
-    return Result.success(Unit)
+    return PyResult.success(Unit)
   }
 
-  override suspend fun loadPackagesCommand(): Result<List<PythonPackage>> {
-    return Result.success(installedPackages)
+  override suspend fun loadPackagesCommand(): PyResult<List<PythonPackage>> {
+    return PyResult.success(installedPackages)
   }
 
   private fun findPackageByName(name: String): PythonPackage? {

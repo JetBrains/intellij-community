@@ -3,7 +3,6 @@ package com.jetbrains.python.poetry.packaging
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.errorProcessing.asPythonResult
 import com.jetbrains.python.packaging.management.PythonPackageManagerAction
 import com.jetbrains.python.packaging.management.getPythonPackageManager
 import com.jetbrains.python.sdk.poetry.PoetryPackageManager
@@ -26,6 +25,5 @@ internal class PoetryUpdateAction() : PoetryPackageManagerAction() {
 }
 
 private suspend fun runPoetryWithManager(manager: PoetryPackageManager, args: List<String>): PyResult<String> {
-  val result = runPoetryWithSdk(manager.sdk, *args.toTypedArray())
-  return result.asPythonResult()
+  return runPoetryWithSdk(manager.sdk, *args.toTypedArray())
 }

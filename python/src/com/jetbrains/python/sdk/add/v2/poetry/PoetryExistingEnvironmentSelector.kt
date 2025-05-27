@@ -8,7 +8,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.errorProcessing.asPythonResult
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.CustomExistingEnvironmentSelector
 import com.jetbrains.python.sdk.add.v2.DetectedSelectableInterpreter
@@ -36,7 +35,7 @@ internal class PoetryExistingEnvironmentSelector(model: PythonMutableTargetAddIn
       else -> null
     }
 
-    return setupPoetrySdkUnderProgress(moduleOrProject.project, module, ProjectJdkTable.getInstance().allJdks.toList(), null, selectedInterpreter?.homePath, true).asPythonResult()
+    return setupPoetrySdkUnderProgress(moduleOrProject.project, module, ProjectJdkTable.getInstance().allJdks.toList(), null, selectedInterpreter?.homePath, true)
   }
 
   override suspend fun detectEnvironments(modulePath: Path) {

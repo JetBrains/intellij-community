@@ -9,6 +9,8 @@ import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.testFramework.ProjectRule
 import com.jetbrains.getPythonVersion
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.errorProcessing.asKotlinResult
+import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.add.v1.PyAddCondaPanelModel
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
@@ -100,7 +102,7 @@ class PyAddCondaPanelModelTest {
 
     // Create env
     PyCondaEnv.createEnv(condaRule.condaCommand,
-                         NewCondaEnvRequest.EmptyNamedEnv(LanguageLevel.PYTHON38, name)).map { it.getResultStdoutStr() }.getOrThrow()
+                         NewCondaEnvRequest.EmptyNamedEnv(LanguageLevel.PYTHON38, name)).asKotlinResult().map { it.getResultStdoutStr() }.getOrThrow()
 
     val model = PyAddCondaPanelModel(null, emptyList(), projectRule.project)
 

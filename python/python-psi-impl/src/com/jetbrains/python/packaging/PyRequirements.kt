@@ -4,7 +4,6 @@ package com.jetbrains.python.packaging
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.errorProcessing.failure
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 
@@ -55,7 +54,7 @@ fun pyRequirement(name: String, relation: PyRequirementRelation, version: String
 fun pyRequirementVersionSpec(relationWithVersion: @NlsSafe String): PyResult<PyRequirementVersionSpec> {
   val value = relationWithVersion.trim()
   val relation = PyRequirementRelation.entries.lastOrNull { value.startsWith(it.presentableText) }
-                 ?: return failure("Could not parse relation from: $value")
+                 ?: return PyResult.localizedError("Could not parse relation from: $value")
 
   val version = value.removePrefix(relation.presentableText)
   return PyResult.success(pyRequirementVersionSpec(relation, version))

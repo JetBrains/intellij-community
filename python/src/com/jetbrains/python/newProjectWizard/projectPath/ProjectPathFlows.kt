@@ -8,7 +8,7 @@ import com.intellij.util.SystemProperties
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
-import com.jetbrains.python.errorProcessing.failure
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows.Companion.create
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -65,16 +65,16 @@ class ProjectPathFlows private constructor(val projectPath: Flow<Path?>) {
         Paths.get(pathAsString)
       }
       catch (e: InvalidPathException) {
-        return failure(e.reason)
+        return PyResult.localizedError(e.reason)
       }
 
       if (!path.isAbsolute) {
-        return failure(PyBundle.message("python.sdk.new.error.no.absolute"))
+        return PyResult.localizedError(PyBundle.message("python.sdk.new.error.no.absolute"))
       }
 
       for (validator in arrayOf(CHECK_NON_EMPTY, CHECK_NO_RESERVED_WORDS)) {
         validator.curry { pathAsString }.validate()?.let {
-          return failure(it.message)
+          return PyResult.localizedError(it.message)
         }
       }
       return Result.Success(path)

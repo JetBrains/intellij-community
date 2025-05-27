@@ -27,7 +27,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.errorProcessing.failure
 import com.jetbrains.python.mapResult
 import com.jetbrains.python.projectCreation.createVenvAndSdk
 import kotlinx.coroutines.*
@@ -162,7 +161,7 @@ private suspend fun createProjectDir(projectPath: Path): Result<VirtualFile, Mes
   }
   catch (e: IOException) {
     thisLogger().warn("Couldn't create $projectPath", e)
-    return@withContext failure(
+    return@withContext PyResult.localizedError(
       PyCharmCommunityCustomizationBundle.message("misc.project.error.create.dir", projectPath, e.localizedMessage))
   }
   val projectPathVfs = VfsUtil.findFile(projectPath, true)

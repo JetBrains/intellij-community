@@ -12,7 +12,6 @@ import com.intellij.util.io.HttpRequests
 import com.intellij.util.xmlb.annotations.Transient
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.errorProcessing.failure
 import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.PyPackageVersionComparator
 import com.jetbrains.python.packaging.cache.PythonSimpleRepositoryCache
@@ -42,7 +41,7 @@ internal fun PyPackageRepository.buildPackageDetailsBySimpleDetailsProtocol(pack
     GSON.fromJson(rawInfo, PyPIPackageUtil.PackageDetails::class.java)
   }.getOrElse { throwable ->
     when (throwable) {
-      is JsonSyntaxException, is PyPIPackageUtil.NotSimpleRepositoryApiUrlException, is IOException -> return failure(throwable.localizedMessage)
+      is JsonSyntaxException, is PyPIPackageUtil.NotSimpleRepositoryApiUrlException, is IOException -> return PyResult.localizedError(throwable.localizedMessage)
       else -> throw throwable
     }
   }

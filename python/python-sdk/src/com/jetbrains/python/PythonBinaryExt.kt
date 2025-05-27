@@ -10,7 +10,7 @@ import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PySdkBundle.message
-import com.jetbrains.python.Result.Companion.failure
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor.PYTHON_VERSION_ARG
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor.getLanguageLevelFromVersionStringStaticSafe
@@ -30,10 +30,10 @@ import kotlin.time.Duration.Companion.seconds
  * As we need workable pythons, we validate it by executing
  */
 @ApiStatus.Internal
-suspend fun PythonBinary.validatePythonAndGetVersion(): Result<LanguageLevel, @NlsSafe String> = withContext(Dispatchers.IO) {
+suspend fun PythonBinary.validatePythonAndGetVersion(): PyResult<LanguageLevel> = withContext(Dispatchers.IO) {
   val smokeTestOutput = executeWithResult("-c", "print(1)").getOr { return@withContext it }.stdoutString.trim()
   if (smokeTestOutput != "1") {
-    return@withContext failure(message("python.get.version.error", pathString, smokeTestOutput))
+    return@withContext PyResult.localizedError(message("python.get.version.error", pathString, smokeTestOutput))
   }
 
   val versionOutput = executeWithResult(PYTHON_VERSION_ARG).getOr { return@withContext it }
@@ -41,7 +41,7 @@ suspend fun PythonBinary.validatePythonAndGetVersion(): Result<LanguageLevel, @N
   val versionString = versionOutput.stdoutString.let { it.ifBlank { versionOutput.stderrString } }
   val languageLevel = getLanguageLevelFromVersionStringStaticSafe(versionString.trim())
   if (languageLevel == null) {
-    return@withContext failure(message("python.get.version.wrong.version", pathString, versionOutput))
+    return@withContext PyResult.localizedError(message("python.get.version.wrong.version", pathString, versionOutput))
   }
   return@withContext Result.success(languageLevel)
 }
@@ -49,17 +49,17 @@ suspend fun PythonBinary.validatePythonAndGetVersion(): Result<LanguageLevel, @N
 /**
  * Executes [this] with [args], returns either output or error (if execution failed or exit code != 0)
  */
-private suspend fun PythonBinary.executeWithResult(vararg args: String): Result<@NlsSafe EelProcessExecutionResult, @NlsSafe String> {
+private suspend fun PythonBinary.executeWithResult(vararg args: String): PyResult<@NlsSafe EelProcessExecutionResult> {
   try {
     val output = exec(*args, timeout = 5.seconds)
     return if (output.exitCode != 0) {
-      failure(message("python.get.version.error", pathString, "code ${output.exitCode}, ${output.stderrString}"))
+      PyResult.localizedError(message("python.get.version.error", pathString, "code ${output.exitCode}, ${output.stderrString}"))
     }
     else {
       Result.success(output)
     }
   } catch (e : ExecuteProcessException) {
-    return failure(e.message)
+    return PyResult.localizedError(e.message)
   }
 }
 

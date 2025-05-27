@@ -34,9 +34,7 @@ suspend fun HatchVirtualEnvironment.createSdk(workingDirectoryPath: Path, module
     associatedProjectPath = module?.project?.basePath,
     suggestedSdkName = existingPythonEnvironment.suggestHatchSdkName(),
     sdkAdditionalData = hatchSdkAdditionalData
-  ).getOrElse { exception ->
-    return Result.failure(EnvironmentCreationHatchError(exception.localizedMessage))
-  }
+  ).getOr { return it }
 
   withContext(Dispatchers.EDT) {
     sdk.persist()

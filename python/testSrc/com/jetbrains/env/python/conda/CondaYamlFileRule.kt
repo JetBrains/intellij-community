@@ -7,6 +7,7 @@ import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.util.io.delete
+import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
@@ -30,7 +31,10 @@ internal class CondaYamlFileRule(private val condaRule: LocalCondaRule,
     val fullPathOnTarget = condaRule.condaPathOnTarget
     val command = PyCondaCommand(fullPathOnTarget, null, null)
     val condaEnvRequest = NewCondaEnvRequest.EmptyNamedEnv(languageLevel, envName)
-    runBlocking { PyCondaEnv.createEnv(command, condaEnvRequest).mapFlat { it.getResultStdoutStr() }.getOrThrow() }
+    runBlocking {
+      val process = PyCondaEnv.createEnv(command, condaEnvRequest).getOrThrow()
+      Result.success(process).mapFlat { it.getResultStdoutStr() }.getOrThrow()
+    }
     val targetReq = LocalTargetEnvironmentRequest()
     val builder = TargetedCommandLineBuilder(targetReq).apply {
       setExePath(fullPathOnTarget)

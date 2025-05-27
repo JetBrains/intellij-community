@@ -5,6 +5,7 @@ import com.intellij.execution.target.*
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.pathValidation.PlatformAndRoot.Companion.getPlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateExecutableFile
@@ -23,22 +24,22 @@ class PyCondaCommand(
 ) {
 
   @RequiresBackgroundThread
-  private fun createRequest(): Result<TargetEnvironmentRequest> {
+  private fun createRequest(): PyResult<TargetEnvironmentRequest> {
     validateExecutableFile(ValidationRequest(fullCondaPathOnTarget, platformAndRoot = targetConfig.getPlatformAndRoot()))?.let {
-      return Result.failure(Exception(it.message))
+      return PyResult.localizedError(it.message)
     }
-    return Result.success(targetConfig?.createEnvironmentRequest(project) ?: LocalTargetEnvironmentRequest())
+    return PyResult.success(targetConfig?.createEnvironmentRequest(project) ?: LocalTargetEnvironmentRequest())
   }
 
   @RequiresBackgroundThread
-  fun createRequestEnvAndCommandLine(): Result<Triple<TargetEnvironmentRequest, TargetEnvironment, TargetedCommandLineBuilder>> {
-    val request = createRequest().getOrElse { return Result.failure(it) }
+  fun createRequestEnvAndCommandLine(): PyResult<Triple<TargetEnvironmentRequest, TargetEnvironment, TargetedCommandLineBuilder>> {
+    val request = createRequest().getOr { return it }
 
     val env = request.prepareEnvironment(indicator)
     val commandLineBuilder = TargetedCommandLineBuilder(request).apply {
       setExePath(fullCondaPathOnTarget)
       fixCondaPathEnvIfNeeded(fullCondaPathOnTarget)
     }
-    return Result.success(Triple(request, env, commandLineBuilder))
+    return PyResult.success(Triple(request, env, commandLineBuilder))
   }
 }

@@ -14,9 +14,8 @@ import com.jetbrains.python.sdk.poetry.runPoetryWithSdk
 internal class PoetryPackageRequiresExtractor(private val sdk: Sdk) : PythonPackageRequiresExtractor {
 
   override suspend fun extract(pkg: PythonPackage, module: Module): List<NormalizedPythonPackageName> {
-    val output = runPoetryWithSdk(sdk, "show", pkg.name)
-    val data = output.getOrElse {
-      thisLogger().info("extracting requires for package ${pkg.name}: error. Output: \n${it.stackTraceToString()}")
+    val data = runPoetryWithSdk(sdk, "show", pkg.name).getOr {
+      thisLogger().info("extracting requires for package ${pkg.name}: error. Output: \n${it.error}")
       return emptyList()
     }
     return parsePackageData(data.lines())
@@ -30,7 +29,7 @@ internal class PoetryPackageRequiresExtractor(private val sdk: Sdk) : PythonPack
       val name = depLine.split(" ", limit = 2).let { parts ->
         parts.getOrNull(0)?.trim()
       }
-      return name?.let { NormalizedPythonPackageName.Companion.from(name) }
+      return name?.let { NormalizedPythonPackageName.from(name) }
     }
 
     var inDependenciesSection = false

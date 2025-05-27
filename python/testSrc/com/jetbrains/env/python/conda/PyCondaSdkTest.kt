@@ -13,6 +13,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.ProjectRule
 import com.jetbrains.getPythonBinaryPath
 import com.jetbrains.getPythonVersion
+import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonScriptExecution
 import com.jetbrains.python.run.buildTargetedCommandLine

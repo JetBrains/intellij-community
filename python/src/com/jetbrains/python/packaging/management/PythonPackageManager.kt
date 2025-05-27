@@ -16,6 +16,9 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.messages.Topic
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.getOrNull
+import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PythonDependenciesExtractor
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
@@ -32,6 +35,7 @@ import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.annotations.Nls
 
 
@@ -83,7 +87,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
   }
 
   @ApiStatus.Internal
-  suspend fun installPackage(installRequest: PythonPackageInstallRequest, options: List<String> = emptyList()): Result<List<PythonPackage>> {
+  suspend fun installPackage(installRequest: PythonPackageInstallRequest, options: List<String> = emptyList()): PyResult<List<PythonPackage>> {
     val progressTitle = when (installRequest) {
       is PythonPackageInstallRequest.AllRequirements -> PyBundle.message("python.packaging.installing.requirements")
       is PythonPackageInstallRequest.ByLocation -> PyBundle.message("python.packaging.installing.package", installRequest.title)
@@ -98,16 +102,14 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
     executeCommand(progressTitle) {
       waitForInit()
       installPackageCommand(installRequest, options)
-    }.onFailure {
-      return Result.failure(it)
-    }
+    }.getOr { return it }
 
 
     return reloadPackages()
   }
 
   @ApiStatus.Internal
-  suspend fun updatePackages(vararg packages: PythonRepositoryPackageSpecification): Result<List<PythonPackage>> {
+  suspend fun updatePackages(vararg packages: PythonRepositoryPackageSpecification): PyResult<List<PythonPackage>> {
     val progressTitle = if (packages.size > 1) {
       PyBundle.message("python.packaging.updating.packages")
     }
@@ -118,17 +120,15 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
     executeCommand(progressTitle) {
       waitForInit()
       updatePackageCommand(*packages)
-    }.onFailure {
-      return Result.failure(it)
-    }
+    }.getOr { return it }
 
     return reloadPackages()
   }
 
   @ApiStatus.Internal
-  suspend fun uninstallPackage(vararg packages: String): Result<List<PythonPackage>> {
+  suspend fun uninstallPackage(vararg packages: String): PyResult<List<PythonPackage>> {
     if (packages.isEmpty()) {
-      return Result.success(installedPackages)
+      return PyResult.success(installedPackages)
     }
 
     val progressTitle = if (packages.size > 1) {
@@ -141,25 +141,23 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
     executeCommand(progressTitle) {
       waitForInit()
       uninstallPackageCommand(*packages)
-    }.onFailure {
-      return Result.failure(it)
-    }
+    }.getOr { return it }
 
     return reloadPackages()
   }
 
   @ApiStatus.Internal
-  open suspend fun reloadPackages(): Result<List<PythonPackage>> {
+  open suspend fun reloadPackages(): PyResult<List<PythonPackage>> {
     val progressTitle = PyBundle.message("python.toolwindow.packages.update.packages")
     val packages = executeCommand(progressTitle) {
       loadPackagesCommand()
-    }.getOrElse {
+    }.getOr {
       outdatedPackages = emptyMap()
       installedPackages = emptyList()
-      return Result.failure(it)
+      return it
     }
     if (packages == installedPackages)
-      return Result.success(packages)
+      return PyResult.success(packages)
 
     installedPackages = packages
 
@@ -174,7 +172,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
     }
 
     refreshPaths()
-    return Result.success(packages)
+    return PyResult.success(packages)
   }
 
   private suspend fun reloadOutdatedPackages() {
@@ -182,10 +180,9 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
       outdatedPackages = emptyMap()
       return
     }
-    val loadedPackages = loadOutdatedPackagesCommand().getOrElse {
-      thisLogger().warn("Failed to load outdated packages", it)
-      emptyList()
-    }
+    val loadedPackages = loadOutdatedPackagesCommand().onFailure {
+     thisLogger().warn("Failed to load outdated packages $it")
+    }.getOrNull() ?: emptyList()
 
     val packageMap = loadedPackages.associateBy { it.name }
     if (outdatedPackages == packageMap)
@@ -211,8 +208,8 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
 
   private suspend fun <T> executeCommand(
     progressTitle: @Nls String,
-    operation: suspend (() -> Result<T>),
-  ): Result<T> = PythonPackageManagerUIHelpers.runPackagingOperationBackground(project, progressTitle) {
+    operation: suspend (() -> PyResult<T>),
+  ): PyResult<T> = PythonPackageManagerUIHelpers.runPackagingOperationBackground(project, progressTitle) {
     operation()
   }
 
@@ -223,19 +220,22 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
 
 
   @ApiStatus.Internal
-  protected abstract suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): Result<Unit>
+  @CheckReturnValue
+  protected abstract suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit>
 
   @ApiStatus.Internal
-  protected abstract suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): Result<Unit>
+  @CheckReturnValue
+  protected abstract suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): PyResult<Unit>
 
   @ApiStatus.Internal
-  protected abstract suspend fun uninstallPackageCommand(vararg pythonPackages: String): Result<Unit>
+  @CheckReturnValue
+  protected abstract suspend fun uninstallPackageCommand(vararg pythonPackages: String): PyResult<Unit>
 
   @ApiStatus.Internal
-  protected abstract suspend fun loadPackagesCommand(): Result<List<PythonPackage>>
+  protected abstract suspend fun loadPackagesCommand(): PyResult<List<PythonPackage>>
 
   @ApiStatus.Internal
-  protected abstract suspend fun loadOutdatedPackagesCommand(): Result<List<PythonOutdatedPackage>>
+  protected abstract suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>>
 
   @ApiStatus.Internal
   suspend fun reloadDependencies(): List<PythonPackage> {

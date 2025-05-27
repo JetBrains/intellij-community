@@ -8,6 +8,7 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PythonHelpersLocator.Companion.findPathInHelpers
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
@@ -26,20 +27,20 @@ open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageMa
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager(project)
   private val engine = PipPackageManagerEngine(project, sdk)
 
-  override suspend fun loadOutdatedPackagesCommand(): Result<List<PythonOutdatedPackage>> = engine.loadOutdatedPackagesCommand()
+  override suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>> = engine.loadOutdatedPackagesCommand()
 
   override suspend fun installPackageCommand(
     installRequest: PythonPackageInstallRequest,
     options: List<String>,
-  ): Result<Unit> = engine.installPackageCommand(installRequest, options)
+  ): PyResult<Unit> = engine.installPackageCommand(installRequest, options)
 
   override suspend fun updatePackageCommand(
     vararg specifications: PythonRepositoryPackageSpecification,
-  ): Result<Unit> = engine.updatePackageCommand(*specifications)
+  ): PyResult<Unit> = engine.updatePackageCommand(*specifications)
 
-  override suspend fun uninstallPackageCommand(vararg pythonPackages: String): Result<Unit> = engine.uninstallPackageCommand(*pythonPackages)
+  override suspend fun uninstallPackageCommand(vararg pythonPackages: String): PyResult<Unit> = engine.uninstallPackageCommand(*pythonPackages)
 
-  override suspend fun loadPackagesCommand(): Result<List<PythonPackage>> = engine.loadPackagesCommand()
+  override suspend fun loadPackagesCommand(): PyResult<List<PythonPackage>> = engine.loadPackagesCommand()
 }
 
 @ApiStatus.Internal

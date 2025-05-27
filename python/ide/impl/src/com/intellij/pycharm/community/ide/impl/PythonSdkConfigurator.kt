@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.DirectoryProjectConfigurator
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
+import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setReadyToUseSdk
@@ -134,10 +135,7 @@ fun configureSdk(
     LOGGER.debug("Looking for a virtual environment related to the project")
     guardIndicator(indicator) { detectAssociatedEnvironments(module, existingSdks, context).firstOrNull() }?.let {
       LOGGER.debug { "Detected virtual environment related to the project: $it" }
-      val newSdk = it.setupAssociated(existingSdks, module.basePath, true).getOrElse { err->
-        LOGGER.error(err)
-        return
-      }
+      val newSdk = it.setupAssociated(existingSdks, module.basePath, true).orLogException(LOGGER) ?: return
 
       LOGGER.debug { "Created virtual environment related to the project: $newSdk" }
 

@@ -9,7 +9,6 @@ import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.errorProcessing.asPythonResult
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
@@ -78,5 +77,5 @@ suspend fun setupExistingEnvAndSdk(
     suggestedSdkName(projectDir),
     UvSdkAdditionalData(envWorkingDir, usePip))
 
-  return sdk.asPythonResult()
+  return sdk
 }

@@ -23,6 +23,9 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.getOrLogException
+import com.jetbrains.python.onFailure
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
@@ -34,7 +37,6 @@ import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
-import java.io.FileNotFoundException
 import java.nio.file.Path
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -57,11 +59,11 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
   private suspend fun createAndAddSDk(module: Module, source: Source): Sdk? {
     val pipEnvExecutable = askForEnvData(module, source) ?: return null
     PropertiesComponent.getInstance().pipEnvPath = pipEnvExecutable.pipEnvPath.pathString
-    return createPipEnv(module).getOrNull()
+    return createPipEnv(module).getOrLogException(LOGGER)
   }
 
   private suspend fun askForEnvData(module: Module, source: Source): PyAddNewPipEnvFromFilePanel.Data? {
-    val pipEnvExecutable = getPipEnvExecutable().getOrNull()
+    val pipEnvExecutable = getPipEnvExecutable().getOrLogException(LOGGER)
 
     if (source == Source.INSPECTION && pipEnvExecutable?.isExecutable() == true) {
       return PyAddNewPipEnvFromFilePanel.Data(pipEnvExecutable)
@@ -88,26 +90,24 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
     return if (permitted) envData else null
   }
 
-  private suspend fun createPipEnv(module: Module): Result<Sdk> {
+  private suspend fun createPipEnv(module: Module): PyResult<Sdk> {
     LOGGER.debug("Creating pipenv environment")
     return withBackgroundProgress(module.project, PyBundle.message("python.sdk.setting.up.pipenv.sentence")) {
-      val basePath = module.basePath ?: return@withBackgroundProgress Result.failure(FileNotFoundException("Can't find module base path"))
-      val pipEnv = setupPipEnv(Path.of(basePath), null, true).getOrElse {
+      val basePath = module.basePath ?: return@withBackgroundProgress PyResult.localizedError("Can't find module base path")
+      val pipEnv = setupPipEnv(Path.of(basePath), null, true).onFailure {
         PySdkConfigurationCollector.logPipEnv(module.project, PipEnvResult.CREATION_FAILURE)
-        LOGGER.warn("Exception during creating pipenv environment", it)
-        return@withBackgroundProgress Result.failure(it)
+      }.getOr {
+        return@withBackgroundProgress it
       }
 
       val path = withContext(Dispatchers.IO) { VirtualEnvReader.Instance.findPythonInPythonRoot(Path.of(pipEnv)) }
       if (path == null) {
-        LOGGER.warn("Python executable is not found: $pipEnv")
-        return@withBackgroundProgress Result.failure(FileNotFoundException("Python executable is not found: $pipEnv"))
+        return@withBackgroundProgress PyResult.localizedError("Python executable is not found: $pipEnv")
       }
 
       val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.toString())
       if (file == null) {
-        LOGGER.warn("Python executable file is not found: $path")
-        return@withBackgroundProgress Result.failure(FileNotFoundException("Python executable file is not found: $path"))
+        return@withBackgroundProgress PyResult.localizedError("Python executable file is not found: $path")
       }
 
       PySdkConfigurationCollector.logPipEnv(module.project, PipEnvResult.CREATED)
@@ -127,7 +127,7 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
         SdkConfigurationUtil.addSdk(sdk)
       }
 
-      Result.success(sdk)
+      PyResult.success(sdk)
     }
   }
 

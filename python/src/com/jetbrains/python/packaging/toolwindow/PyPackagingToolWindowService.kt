@@ -21,7 +21,11 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.getOrThrow
+import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.getOrNull
+import com.jetbrains.python.onFailure
+import com.jetbrains.python.onSuccess
 import com.jetbrains.python.packaging.*
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
@@ -39,6 +43,7 @@ import com.jetbrains.python.packaging.toolwindow.model.*
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.statistics.modules
+import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
 
@@ -50,6 +55,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   internal var currentSdk: Sdk? = null
   private var searchJob: Job? = null
   private var currentQuery: String = ""
+  private val errorSink: ErrorSink = ShowingMessageErrorSync
 
   private val invalidRepositories: List<PyInvalidRepositoryViewData>
     get() = service<PyPackageRepositories>().invalidRepositories.map(::PyInvalidRepositoryViewData)
@@ -70,14 +76,13 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
       is InstalledPackage -> manager.findPackageSpecification(selectedPackage.name)
       is InstallablePackage -> selectedPackage.repository.findPackageSpecification(selectedPackage.name)
       is ExpandResultNode -> selectedPackage.repository.findPackageSpecification(selectedPackage.name)
-      else -> error("Invalidate package spec ${selectedPackage::class.java.name}")
     }
 
     if (spec == null) {
       return@withContext null
     }
 
-    spec.let { manager.repositoryManager.getPackageDetails(it).getOrThrow() } ?: error("Invalid package specification")
+    manager.repositoryManager.getPackageDetails(spec).onFailure { errorSink.emit(it) }.getOrNull()
   }
 
 
@@ -121,32 +126,26 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   suspend fun installPackage(installRequest: PythonPackageInstallRequest, options: List<String> = emptyList()) {
     PythonPackagesToolwindowStatisticsCollector.installPackageEvent.log(project)
     val result = manager.installPackage(installRequest, options)
-
-    if (result.isSuccess) {
-      handleActionCompleted(message("python.packaging.notification.installed", installRequest.title))
-    }
+    result.handleActionCompleted(message("python.packaging.notification.installed", installRequest.title))
   }
 
   suspend fun deletePackage(vararg selectedPackages: InstalledPackage) {
     PythonPackagesToolwindowStatisticsCollector.uninstallPackageEvent.log(project)
     val result = manager.uninstallPackage(*selectedPackages.map { it.instance.name }.toTypedArray())
-    if (result.isSuccess) {
-      handleActionCompleted(message("python.packaging.notification.deleted", selectedPackages.joinToString(", ") { it.name }))
-    }
+    result.handleActionCompleted(message("python.packaging.notification.deleted", selectedPackages.joinToString(", ") { it.name }))
   }
 
   suspend fun updatePackage(vararg specifications: PythonRepositoryPackageSpecification) {
     val result = manager.updatePackages(*specifications)
 
-    if (!result.isSuccess) return
     val singlePackage = specifications.singleOrNull()
-    if (singlePackage != null) {
+    val title = if (singlePackage != null) {
       val version = singlePackage.versionSpec?.version
-      handleActionCompleted(message("python.packaging.notification.updated", singlePackage.name, version))
+      message("python.packaging.notification.updated", singlePackage.name, version)
     }
-    else {
-      handleActionCompleted(message("python.packaging.notification.all.updated"))
-    }
+    else message("python.packaging.notification.all.updated")
+
+    result.handleActionCompleted(title)
   }
 
   internal suspend fun initForSdk(sdk: Sdk?) {
@@ -232,10 +231,14 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     }
   }
 
-  private suspend fun handleActionCompleted(text: @Nls String) {
-    VirtualFileManager.getInstance().asyncRefresh()
-    showPackagingNotification(text)
-  }
+  private suspend fun PyResult<*>.handleActionCompleted(text: @Nls String) = this
+    .onSuccess {
+      VirtualFileManager.getInstance().asyncRefresh()
+      showPackagingNotification(text)
+    }
+    .onFailure {
+      errorSink.emit(it)
+    }
 
   private suspend fun showPackagingNotification(text: @Nls String) {
     val notification = NotificationGroupManager.getInstance()

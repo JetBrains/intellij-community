@@ -5,6 +5,7 @@ import com.intellij.codeInspection.util.IntentionName
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
@@ -24,6 +25,8 @@ import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.JBUI
+import com.intellij.webcore.packaging.PackageManagementService
+import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.pathValidation.PlatformAndRoot
@@ -141,11 +144,17 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
       val newCondaEnvInfo = NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile(Path.of(environmentYml))
       PyCondaCommand(condaExecutable, null)
         .createCondaSdkAlongWithNewEnv(newCondaEnvInfo, Dispatchers.EDT, existingSdks.toList(), project)
-    }.getOrElse { e ->
-      if (e !is ExecutionException) throw e
+    }.getOr {
       PySdkConfigurationCollector.logCondaEnv(project, CondaEnvResult.CREATION_FAILURE)
-      LOGGER.warn("Exception during creating conda environment", e)
-      showSdkExecutionException(null, e, PyCharmCommunityCustomizationBundle.message("sdk.create.condaenv.exception.dialog.title"))
+      LOGGER.warn("Exception during creating conda environment $it")
+      PackageManagementService.ErrorDescription.fromMessage(it.error.message)?.let { description ->
+        runInEdt {
+          PackagesNotificationPanel.showError(
+            PyCharmCommunityCustomizationBundle.message("sdk.create.condaenv.exception.dialog.title"),
+            description
+          )
+        }
+      }
       return null
     }
 

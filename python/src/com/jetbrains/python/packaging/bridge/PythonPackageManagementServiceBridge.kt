@@ -14,6 +14,7 @@ import com.intellij.webcore.packaging.InstalledPackage
 import com.intellij.webcore.packaging.PackageVersionComparator
 import com.intellij.webcore.packaging.RepoPackage
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.errorProcessing.asKotlinResult
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.packaging.PyPackagingSettings
 import com.jetbrains.python.packaging.common.PythonPackageDetails
@@ -94,7 +95,7 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
         val specification = specForPackage(repoPackage.name, version, repository)
         runningUnderOldUI = true
         listener.operationStarted(specification.name)
-        val result = manager.installPackage(specification.toInstallRequest(), emptyList())
+        val result = manager.installPackage(specification.toInstallRequest(), emptyList()).asKotlinResult()
         val exception = if (result.isFailure) mutableListOf(result.exceptionOrNull() as ExecutionException) else null
         listener.operationFinished(specification.name,
                                    toErrorDescription(exception, mySdk, specification.name))

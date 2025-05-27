@@ -17,7 +17,10 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.ui.dsl.builder.*
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.getOrNull
 import com.jetbrains.python.icons.PythonIcons
+import com.jetbrains.python.onFailure
+import com.jetbrains.python.onSuccess
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.extendWithTargetSpecificFields
 import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction
 import com.jetbrains.python.sdk.add.PyAddSdkStateListener
@@ -64,7 +67,7 @@ internal class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : Py
             model.onLoadEnvsClicked(Dispatchers.EDT, reporter)
           }
         }.onFailure {
-          showError(PyBundle.message("python.sdk.conda.getting.list.envs"), it.localizedMessage)
+          showError(PyBundle.message("python.sdk.conda.getting.list.envs"), it.message)
         }
       }.enabledIf(model.showCondaPathSetOkButtonRoProp)
 
@@ -130,10 +133,10 @@ internal class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : Py
         targetPanelExtension?.applyToTargetConfiguration()
         model.onCondaCreateSdkClicked((Dispatchers.EDT + ModalityState.any().asContextElement()), reporter,
                                       model.targetConfiguration).onFailure {
-          logger<PyAddCondaPanelModel>().warn(it)
+          logger<PyAddCondaPanelModel>().warn(it.message)
           showError(
             PyBundle.message("python.sdk.conda.cant.create.title"),
-            PyBundle.message("python.sdk.conda.cant.create.body", it.localizedMessage))
+            PyBundle.message("python.sdk.conda.cant.create.body", it.message))
         }.onSuccess { sdk ->
           with(sdk.sdkModificator) {
             writeAction {

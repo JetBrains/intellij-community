@@ -8,7 +8,6 @@ import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.RequestBuilder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.errorProcessing.failure
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.PyPackageVersionComparator
@@ -59,13 +58,13 @@ object PyPIPackageRepository : PyPackageRepository("PyPI", PyPIPackageUtil.PYPI_
       return PyResult.success(it)
     }
 
-    val repositoryUrl = repositoryUrl ?: return failure(PyBundle.message("python.packaging.error.no.repository.url", name))
+    val repositoryUrl = repositoryUrl ?: return PyResult.localizedError(PyBundle.message("python.packaging.error.no.repository.url", name))
 
     val versions = runCatching {
       PyPIPackageUtil.parsePackageVersionsFromRepository(repositoryUrl, packageName)
     }.getOrElse { throwable ->
       when (throwable) {
-        is PyPIPackageUtil.NotSimpleRepositoryApiUrlException, is IOException -> return failure(throwable.localizedMessage)
+        is PyPIPackageUtil.NotSimpleRepositoryApiUrlException, is IOException -> return PyResult.localizedError(throwable.localizedMessage)
         else -> throw throwable
       }
     }

@@ -17,12 +17,12 @@ import com.intellij.python.community.services.systemPython.impl.Cache
 import com.intellij.python.community.services.systemPython.impl.CoreSystemPythonProvider
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.installer.installBinary
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.Nls
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import kotlin.io.path.pathString
@@ -59,7 +59,7 @@ internal class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonServ
     }
   }
 
-  override suspend fun registerSystemPython(pythonPath: PythonBinary): Result<SystemPython, @Nls String> {
+  override suspend fun registerSystemPython(pythonPath: PythonBinary): PyResult<SystemPython> {
     val pythonWithLangLevel = PythonWithLanguageLevelImpl.createByPythonBinary(pythonPath).getOr { return it }
     val systemPython = SystemPython(pythonWithLangLevel, null)
     state.userProvidedPythons.add(pythonPath.pathString)

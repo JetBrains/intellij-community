@@ -17,7 +17,6 @@ import com.intellij.ui.layout.predicate
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.errorProcessing.asPythonResult
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.*
@@ -110,7 +109,7 @@ internal class CondaExistingEnvironmentSelector(model: PythonAddInterpreterModel
   }
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> =
-    model.selectCondaEnvironment(base = false).asPythonResult()
+    model.selectCondaEnvironment(base = false)
 
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {
     //val statisticsTarget = if (presenter.projectLocationContext is WslContext) InterpreterTarget.TARGET_WSL else target.toStatisticsField()

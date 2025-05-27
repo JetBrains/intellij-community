@@ -19,6 +19,8 @@ import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiPackageUtil
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibUtil
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.inspections.quickfix.InstallPackageQuickFix
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -111,10 +113,10 @@ object PyPackageInstallUtils {
     return true
   }
 
-  suspend fun upgradePackage(project: Project, sdk: Sdk, packageName: String, version: String? = null): Result<List<PythonPackage>> {
+  suspend fun upgradePackage(project: Project, sdk: Sdk, packageName: String, version: String? = null): PyResult<List<PythonPackage>> {
     val pythonPackageManager = getPackageManagerOrNull(project, sdk)
     val packageSpecification = pythonPackageManager?.repositoryManager?.repositories?.firstOrNull()?.findPackageSpecification(packageName, version)
-                               ?: return Result.failure(Exception("Could not find any repositories"))
+                               ?: return PyResult.localizedError("Could not find any repositories")
 
     return pythonPackageManager.updatePackages(packageSpecification)
   }
@@ -125,22 +127,13 @@ object PyPackageInstallUtils {
     packageName: String,
     versionSpec: PyRequirementVersionSpec? = null,
     options: List<String> = emptyList(),
-  ): Result<List<PythonPackage>> {
-    return try {
-      val pythonPackageManager = runCatching {
-        PythonPackageManager.forSdk(project, sdk)
-      }.getOrElse {
-        return Result.failure(it)
-      }
+  ): PyResult<List<PythonPackage>> {
+    val pythonPackageManager = PythonPackageManager.forSdk(project, sdk)
 
-      val spec = pythonPackageManager.findPackageSpecificationWithVersionSpec(packageName, versionSpec)
-                 ?: return Result.failure(Exception("Package $packageName not found in any repository"))
+    val spec = pythonPackageManager.findPackageSpecificationWithVersionSpec(packageName, versionSpec)
+               ?: return PyResult.localizedError("Package $packageName not found in any repository")
 
-      return pythonPackageManager.installPackage(spec.toInstallRequest(), options)
-    }
-    catch (t: Throwable) {
-      Result.failure(t)
-    }
+    return pythonPackageManager.installPackage(spec.toInstallRequest(), options)
   }
 
 
@@ -187,7 +180,7 @@ object PyPackageInstallUtils {
         showBalloon(point, PyBundle.message("python.new.project.install.failed.title", packageName), BalloonStyle.ERROR)
         throw t
       }
-      Result.success(Unit)
+      PyResult.success(Unit)
     }
   }
 

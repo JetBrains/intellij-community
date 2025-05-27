@@ -90,7 +90,7 @@ class PyPoetryPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
     if (alwaysRefresh || packages == null) {
       val allPackages = runBlockingCancellable {
         poetryListPackages(sdk)
-      }.getOrElse {
+      }.getOr {
         packages = emptyList()
         return emptyList()
       }

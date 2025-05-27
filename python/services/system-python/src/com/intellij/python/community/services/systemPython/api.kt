@@ -8,6 +8,7 @@ import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.services.shared.PythonWithLanguageLevel
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.PyResult
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
@@ -27,7 +28,7 @@ sealed interface SystemPythonService {
    * When user provides a path to the python binary, use this method to the [SystemPython].
    * @return either [SystemPython] or an error if python is broken.
    */
-  suspend fun registerSystemPython(pythonPath: PythonBinary): Result<SystemPython, @Nls String>
+  suspend fun registerSystemPython(pythonPath: PythonBinary): PyResult<SystemPython>
 
   /**
    * @return tool to install python on OS If [eelApi] supports python installation

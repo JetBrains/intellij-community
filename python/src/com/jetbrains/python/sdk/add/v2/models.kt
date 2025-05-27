@@ -12,7 +12,6 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.python.community.services.internal.impl.PythonWithLanguageLevelImpl
 import com.intellij.python.community.services.shared.PythonWithLanguageLevel
@@ -26,10 +25,10 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.isFailure
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
+import com.jetbrains.python.onFailure
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.v2.conda.toExecutor
@@ -108,7 +107,7 @@ abstract class PythonAddInterpreterModel(
 
     condaEnvironmentsLoading.value = true
     detectCondaExecutable()
-    detectCondaEnvironments()
+    detectCondaEnvironments().getOrNull()
     condaEnvironmentsLoading.value = false
 
     interpreterLoading.value = false
@@ -130,19 +129,18 @@ abstract class PythonAddInterpreterModel(
   /**
    * Returns error or `null` if no error
    */
-  suspend fun detectCondaEnvironments(): @NlsSafe String? = withContext(Dispatchers.IO) {
+  suspend fun detectCondaEnvironments(): PyResult<Unit> = withContext(Dispatchers.IO) {
     val commandExecutor = targetEnvironmentConfiguration.toExecutor()
     val fullCondaPathOnTarget = state.condaExecutable.get()
-    if (fullCondaPathOnTarget.isBlank()) return@withContext message("python.sdk.conda.no.exec")
-    val environments = PyCondaEnv.getEnvs(commandExecutor, fullCondaPathOnTarget)
-      .getOrElse { return@withContext it.localizedMessage }
+    if (fullCondaPathOnTarget.isBlank()) return@withContext PyResult.localizedError(message("python.sdk.conda.no.exec"))
+    val environments = PyCondaEnv.getEnvs(commandExecutor, fullCondaPathOnTarget).getOr { return@withContext it }
     val baseConda = environments.find { env -> env.envIdentity.let { it is PyCondaEnvIdentity.UnnamedEnv && it.isBase } }
 
     withContext(uiContext) {
       condaEnvironments.value = environments
       state.baseCondaEnv.set(baseConda)
     }
-    return@withContext null
+    return@withContext PyResult.success(Unit)
   }
 
   suspend fun detectHatchEnvironments(
@@ -262,7 +260,7 @@ abstract class PythonAddInterpreterModel(
       }
     }
     catch (e: InvalidPathException) {
-      com.jetbrains.python.errorProcessing.failure(e.localizedMessage)
+      PyResult.localizedError(e.localizedMessage)
     }
 
     return when (result) {
@@ -475,15 +473,15 @@ internal fun PythonAddInterpreterModel.findInterpreter(path: String): PythonSele
 }
 
 internal suspend fun PythonAddInterpreterModel.detectCondaEnvironmentsOrError(errorSink: ErrorSink) {
-  detectCondaEnvironments()?.let {
+  detectCondaEnvironments().onFailure {
     errorSink.emit(it)
   }
 }
 
-internal suspend fun PythonAddInterpreterModel.getBaseCondaOrError(): Result<PyCondaEnv> {
+internal suspend fun PythonAddInterpreterModel.getBaseCondaOrError(): PyResult<PyCondaEnv> {
   var baseConda = state.baseCondaEnv.get()
-  if (baseConda != null) return Result.success(baseConda)
-  detectCondaEnvironments()?.let { return com.jetbrains.python.failure(it) }
+  if (baseConda != null) return PyResult.success(baseConda)
+  detectCondaEnvironments().getOr { return it }
   baseConda = state.baseCondaEnv.get()
-  return if (baseConda != null) Result.success(baseConda) else com.jetbrains.python.failure(message("python.sdk.conda.no.base.env.error"))
+  return if (baseConda != null) PyResult.success(baseConda) else PyResult.localizedError(message("python.sdk.conda.no.base.env.error"))
 }

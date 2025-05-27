@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v1
 
-import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
@@ -13,6 +12,7 @@ import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.icons.PythonIcons
+import com.jetbrains.python.orLogException
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.sdk.PyDetectedSdk
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
@@ -32,7 +32,7 @@ internal open class PyAddExistingCondaEnvPanel(
   override val icon: Icon = PythonIcons.Python.Anaconda
   protected val sdkComboBox = PySdkPathChoosingComboBox()
   private val condaPathField = TextFieldWithBrowseButton().apply {
-    val path = PyCondaPackageService.Companion.getCondaExecutable(null)
+    val path = PyCondaPackageService.getCondaExecutable(null)
     if (path != null) {
       text = path
     }
@@ -45,12 +45,12 @@ internal open class PyAddExistingCondaEnvPanel(
   init {
     sdkComboBox.childComponent.addItemListener {
       if (it.stateChange == ItemEvent.SELECTED) {
-        val respectiveCondaExecutable = PyCondaPackageService.Companion.getCondaExecutable(sdkComboBox.selectedSdk.homePath)
+        val respectiveCondaExecutable = PyCondaPackageService.getCondaExecutable(sdkComboBox.selectedSdk.homePath)
         condaPathField.text = respectiveCondaExecutable.orEmpty()
       }
     }
 
-    if (PyCondaSdkCustomizer.Companion.instance.sharedEnvironmentsByDefault) {
+    if (PyCondaSdkCustomizer.instance.sharedEnvironmentsByDefault) {
       makeSharedField.isSelected = true
     }
 
@@ -76,10 +76,10 @@ internal open class PyAddExistingCondaEnvPanel(
 
   override fun getOrCreateSdk(): Sdk? {
     val sdk = sdkComboBox.selectedSdk
-    PyCondaPackageService.Companion.onCondaEnvCreated(condaPathField.text)
+    PyCondaPackageService.onCondaEnvCreated(condaPathField.text)
     return when (sdk) {
       is PyDetectedSdk -> sdk.setupAssociated(existingSdks, newProjectPath ?: project?.basePath, !makeSharedField.isSelected)
-        .getOrLogException(thisLogger())
+        .orLogException(thisLogger())
       else -> sdk
     }
   }

@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v1
 
-import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -13,6 +12,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.icons.PythonIcons
+import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import com.jetbrains.python.sdk.add.addInterpretersAsync
@@ -54,7 +54,7 @@ open class PyAddExistingVirtualEnvPanel(
   override fun getOrCreateSdk(): Sdk? {
     return when (val sdk = sdkComboBox.selectedSdk) {
       is PyDetectedSdk -> sdk.setupAssociated(existingSdks, newProjectPath ?: project?.basePath, !makeSharedField.isSelected)
-        .getOrLogException(LOGGER)
+        .orLogException(LOGGER)
       else -> sdk
     }
   }

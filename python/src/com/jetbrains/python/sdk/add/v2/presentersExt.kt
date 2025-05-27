@@ -46,7 +46,7 @@ suspend fun PythonMutableTargetAddInterpreterModel.setupVirtualenv(venvPath: Pat
       VfsUtil.findFile(venvPython, true)
     }
   if (homeFile == null) {
-    return com.jetbrains.python.errorProcessing.failure(message("commandLine.directoryCantBeAccessed", venvPython))
+    return PyResult.localizedError(message("commandLine.directoryCantBeAccessed", venvPython))
   }
 
   val newSdk = createSdk(homeFile, projectPath, existingSdks.toTypedArray())
@@ -70,7 +70,7 @@ suspend fun PythonMutableTargetAddInterpreterModel.setupVirtualenv(venvPath: Pat
     }
   }
 
-  return com.jetbrains.python.Result.success(newSdk)
+  return PyResult.success(newSdk)
 }
 
 
@@ -78,18 +78,17 @@ suspend fun PythonMutableTargetAddInterpreterModel.setupVirtualenv(venvPath: Pat
 /**
  * [base] or selected
  */
-suspend fun PythonAddInterpreterModel.selectCondaEnvironment(base: Boolean): Result<Sdk> {
+suspend fun PythonAddInterpreterModel.selectCondaEnvironment(base: Boolean): PyResult<Sdk> {
   val identity = if (base) {
     getBaseCondaOrError()
   }
   else {
-    state.selectedCondaEnv.get()?.let { Result.success(it) }
-    ?: com.jetbrains.python.failure(message("python.sdk.conda.no.env.selected.error"))
+    state.selectedCondaEnv.get()?.let { PyResult.success(it) } ?: PyResult.localizedError(message("python.sdk.conda.no.env.selected.error"))
   }
-    .getOrElse { return Result.failure(it) }
+    .getOr { return it }
     .envIdentity
   val existingSdk = ProjectJdkTable.getInstance().findJdk(identity.userReadableName)
-  if (existingSdk != null && existingSdk.isConda()) return Result.success(existingSdk)
+  if (existingSdk != null && existingSdk.isConda()) return PyResult.success(existingSdk)
 
   val sdk = withModalProgress(ModalTaskOwner.guess(),
                               message("sdk.create.custom.conda.create.progress"),
@@ -102,7 +101,7 @@ suspend fun PythonAddInterpreterModel.selectCondaEnvironment(base: Boolean): Res
 
   (sdk.sdkType as PythonSdkType).setupSdkPaths(sdk)
   sdk.persist()
-  return Result.success(sdk)
+  return PyResult.success(sdk)
 }
 
 

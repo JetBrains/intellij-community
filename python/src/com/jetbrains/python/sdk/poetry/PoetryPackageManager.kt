@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk.poetry
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
@@ -17,49 +18,47 @@ import org.jetbrains.annotations.TestOnly
 class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager(project)
 
-  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): Result<Unit> {
+  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
     if (installRequest !is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications) {
-      return Result.failure(UnsupportedOperationException("Poetry supports installing only  packages from repositories"))
+      return PyResult.localizedError("Poetry supports installing only  packages from repositories")
     }
 
     val packageSpecifications = installRequest.specifications
     return addPackages(packageSpecifications, options)
   }
 
-  override suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): Result<Unit> {
+  override suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): PyResult<Unit> {
     return addPackages(specifications.map { it.copy(versionSpec = null) }, emptyList())
   }
 
-  override suspend fun uninstallPackageCommand(vararg pythonPackages: String): Result<Unit> {
-    return poetryUninstallPackage(sdk, *pythonPackages).map { }
+  override suspend fun uninstallPackageCommand(vararg pythonPackages: String): PyResult<Unit> {
+    return poetryUninstallPackage(sdk, *pythonPackages).mapSuccess { }
   }
 
 
-  override suspend fun loadPackagesCommand(): Result<List<PythonPackage>> {
-    val (installed, _) = poetryListPackages(sdk).getOrElse {
-      return Result.failure(it)
-    }
+  override suspend fun loadPackagesCommand(): PyResult<List<PythonPackage>> {
+    val (installed, _) = poetryListPackages(sdk).getOr { return it }
 
     val packages = installed.map {
       PythonPackage(it.name, it.version, false)
     }
 
-    return Result.success(packages)
+    return PyResult.success(packages)
   }
 
-  override suspend fun loadOutdatedPackagesCommand(): Result<List<PythonOutdatedPackage>> = poetryShowOutdated(sdk).map {
+  override suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>> = poetryShowOutdated(sdk).mapSuccess {
     it.values.toList()
   }
 
   private suspend fun addPackages(
     packageSpecifications: List<PythonRepositoryPackageSpecification>,
     options: List<String>,
-  ): Result<Unit> {
+  ): PyResult<Unit> {
     val specifications = packageSpecifications.map {
       it.getPackageWithVersionInPoetryFormat()
     }
 
-    return poetryInstallPackage(sdk, specifications, options).map { }
+    return poetryInstallPackage(sdk, specifications, options).mapSuccess { }
   }
 
 

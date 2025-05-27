@@ -7,7 +7,6 @@ import com.intellij.execution.ExecutionException
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.Module
@@ -43,7 +42,6 @@ import com.jetbrains.python.sdk.configuration.createVirtualEnvAndSdkSynchronousl
 import com.jetbrains.python.sdk.isTargetBased
 import com.jetbrains.python.sdk.showSdkExecutionException
 import java.awt.BorderLayout
-import java.awt.Insets
 import java.nio.file.Paths
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -53,21 +51,18 @@ private val LOGGER = fileLogger()
 
 class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExtension {
   @RequiresBackgroundThread
-  override fun createAndAddSdkForConfigurator(module: Module): Sdk? = createAndAddSdk(module, Source.CONFIGURATOR).getOrLogException(LOGGER)
+  override fun createAndAddSdkForConfigurator(module: Module): Sdk? = createAndAddSdk(module, Source.CONFIGURATOR)
 
   override fun getIntention(module: Module): @IntentionName String? =
     getRequirementsTxtOrSetupPy(module)?.let { PyCharmCommunityCustomizationBundle.message("sdk.create.venv.suggestion", it.name) }
 
   @RequiresBackgroundThread
-  override fun createAndAddSdkForInspection(module: Module): Sdk? = createAndAddSdk(module, Source.INSPECTION).getOrLogException(LOGGER)
+  override fun createAndAddSdkForInspection(module: Module): Sdk? = createAndAddSdk(module, Source.INSPECTION)
 
-  private fun createAndAddSdk(module: Module, source: Source): Result<Sdk> {
+  private fun createAndAddSdk(module: Module, source: Source): Sdk? {
     val existingSdks = ProjectJdkTable.getInstance().allJdks.asList()
 
-    val data = askForEnvData(module, existingSdks, source)
-    if (data == null) {
-      return com.jetbrains.python.failure("askForEnvData is null")
-    }
+    val data = askForEnvData(module, existingSdks, source) ?: return null
 
     val (location, chosenBaseSdk, requirementsTxtOrSetupPy) = data
     val systemIndependentLocation = Path(location)
@@ -92,7 +87,7 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
       if (requirementsTxtOrSetupPyFile == null) {
         PySdkConfigurationCollector.logVirtualEnv(module.project, VirtualEnvResult.DEPS_NOT_FOUND)
         thisLogger().warn("File with dependencies is not found: $requirementsTxtOrSetupPy")
-        return Result.success(sdk)
+        return sdk
       }
 
       thisLogger().debug("Installing packages")
@@ -111,13 +106,13 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
         packageManager.install(emptyList(), command)
       }
 
-      return Result.success(sdk)
+      return sdk
     }
     catch (e: ExecutionException) {
       PySdkConfigurationCollector.logVirtualEnv(module.project, VirtualEnvResult.INSTALLATION_FAILURE)
       showSdkExecutionException(chosenBaseSdk, e, PyBundle.message("python.packaging.failed.to.install.packages.title"))
-
-      return Result.failure(e)
+      LOGGER.warn("Exception during creating virtual environment", e)
+      return null
     }
   }
 

@@ -304,8 +304,9 @@ public final class PyPackageManagerUI {
       );
 
       // FIXME: use packaging tool window service for managing error dialog
-      if (result != null) {
-        exceptions.add(result);
+      var error = result.getErrorOrNull();
+      if (error != null) {
+        exceptions.add(new ExecutionException(error.getMessage()));
       }
 
       return exceptions;
@@ -355,8 +356,10 @@ public final class PyPackageManagerUI {
         indicator
       );
 
-      if (result != null) {
-        exceptions.add(result);
+      // FIXME: use packaging tool window service for managing error dialog
+      var error = result.getErrorOrNull();
+      if (error != null) {
+        exceptions.add(new ExecutionException(error.getMessage()));
       }
 
       return exceptions;

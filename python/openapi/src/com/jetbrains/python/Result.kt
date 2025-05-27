@@ -4,6 +4,8 @@ package com.jetbrains.python
 import com.intellij.openapi.diagnostic.Logger
 import com.jetbrains.python.Result.Failure
 import com.jetbrains.python.Result.Success
+import com.jetbrains.python.errorProcessing.MessageError
+import org.jetbrains.annotations.Nls
 
 /**
  * TL;TR: This class is kinda low-level. Use [com.jetbrains.python.errorProcessing.PyResult] in upper-level signatures,
@@ -90,6 +92,7 @@ sealed class Result<out SUCC, out ERR> {
     }
 
   val successOrNull: SUCC? get() = if (this is Success) result else null
+  val errorOrNull: ERR? get() = if (this is Failure) error else null
 
 
   /**
@@ -106,6 +109,7 @@ sealed class Result<out SUCC, out ERR> {
   companion object {
     fun <S> success(value: S): Success<S> = Success(value)
     fun <E> failure(error: E): Failure<E> = Failure(error)
+    fun localizedError(message: @Nls String): Failure<MessageError> = failure(MessageError(message))
   }
 }
 
@@ -172,9 +176,9 @@ inline fun <S, E, E2> Result<S, E>.mapError(code: (E) -> E2): Result<S, E2> =
   }
 
 // aliases to drop-in replace for kotlin Result
+fun <S, E> Result<S, E>.getOrLogException(logger: Logger): S? = this.orLogException(logger)
 fun <S, E> Result<S, E>.getOrNull(): S? = this.successOrNull
 val <S, E> Result<S, E>.isFailure: Boolean get() = this is Failure
 val <S, E> Result<S, E>.isSuccess: Boolean get() = this is Success
-fun <S, E> Result<S, E>.exceptionOrNull(): S = this.orThrow()
 fun <S, E> Result<S, E>.getOrThrow(): S = orThrow()
 

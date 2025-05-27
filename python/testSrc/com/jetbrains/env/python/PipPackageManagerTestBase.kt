@@ -2,8 +2,9 @@
 package com.jetbrains.env.python
 
 import com.intellij.testFramework.ProjectRule
-import com.jetbrains.python.packaging.management.runPackagingTool
+import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.packaging.pip.PipPythonPackageManager
+import com.jetbrains.python.packaging.pip.runPackagingTool
 import kotlinx.coroutines.test.runTest
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.empty
@@ -26,9 +27,10 @@ abstract class PipPackageManagerTestBase {
 
   @Test
   fun testList(): Unit = runTest(timeout = 5.minutes) {
+    val pipListStdout = runPackagingTool(projectRule.project, sdkRule.sdk, "list", emptyList(), "").getOrThrow()
     PipPythonPackageManager(projectRule.project, sdkRule.sdk).apply {
       assertThat("No packages return", reloadPackages().getOrThrow(), not(empty()))
-      assertTrue("Output shouldn't be empty", runPackagingTool("list", emptyList(), "").isNotBlank())
+      assertTrue("Output shouldn't be empty", pipListStdout.isNotBlank())
     }
   }
 }

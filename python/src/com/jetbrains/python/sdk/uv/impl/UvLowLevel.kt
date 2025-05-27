@@ -69,7 +69,7 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
 
     val path = VirtualEnvReader.Instance.findPythonInPythonRoot(cwd.resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME))
     if (path == null) {
-      return failure("failed to initialize uv environment")
+      return PyResult.localizedError("failed to initialize uv environment")
     }
 
     return PyResult.success(path)
@@ -81,7 +81,7 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
 
     val uvDir = tryResolvePath(out)
     if (uvDir == null) {
-      return failure("failed to detect uv python directory")
+      return PyResult.localizedError("failed to detect uv python directory")
     }
 
     // TODO: ask for json output format
@@ -123,7 +123,7 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
       return PyExecResult.success(packages)
     }
     catch (e: Exception) {
-      return failure(e.message ?: "")
+      return PyResult.localizedError(e.message ?: "")
     }
   }
 

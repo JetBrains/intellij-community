@@ -10,7 +10,7 @@ import com.intellij.python.hatch.HatchVirtualEnvironment
 import com.intellij.python.hatch.cli.HatchEnvironment
 import com.intellij.python.hatch.getHatchService
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.jetbrains.python.getOrNull
+import com.jetbrains.python.getOrLogException
 import com.jetbrains.python.hatch.sdk.createSdk
 import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
@@ -27,7 +27,7 @@ internal class PyHatchSdkConfiguration : PyProjectSdkConfigurationExtension {
       msg = PyCharmCommunityCustomizationBundle.message("sdk.set.up.hatch.project.analysis")
     ) {
       val hatchService = module.getHatchService().getOr { return@runWithModalBlockingOrInBackground false }
-      hatchService.isHatchManagedProject().getOrNull() == true
+      hatchService.isHatchManagedProject().getOrLogException(LOGGER) == true
     }
 
     val intention = when {

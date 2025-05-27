@@ -16,7 +16,6 @@ import com.intellij.util.ui.showingScope
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.errorProcessing.failure
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows.Companion.validatePath
@@ -162,7 +161,7 @@ class EnvironmentCreatorVenv(model: PythonMutableTargetAddInterpreterModel) : Py
       model.setupVirtualenv(venvPath, model.myProjectPathFlows.projectPathWithDefault.first(), moduleOrProject)
     }
     catch (e: InvalidPathException) {
-      failure(e.localizedMessage)
+      PyResult.localizedError(e.localizedMessage)
     }
 
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {

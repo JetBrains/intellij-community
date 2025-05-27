@@ -26,7 +26,6 @@ import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.errorProcessing.asPythonResult
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
@@ -221,7 +220,7 @@ internal class PythonAddNewEnvironmentPanel(
         // todo just keep venv path, all the rest is in the model
         model.setupVirtualenv(projectPath.resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME), projectPath, moduleOrProject)
       }
-      BASE_CONDA -> model.selectCondaEnvironment(base = true).asPythonResult()
+      BASE_CONDA -> model.selectCondaEnvironment(base = true)
       CUSTOM -> custom.currentSdkManager.getOrCreateSdk(moduleOrProject)
     }.getOr { return it }
     val statistics = withContext(Dispatchers.EDT) { createStatisticsInfo() }

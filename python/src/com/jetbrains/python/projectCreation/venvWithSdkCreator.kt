@@ -18,7 +18,6 @@ import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.jetbrains.python.*
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.errorProcessing.failure
 import com.jetbrains.python.sdk.configurePythonSdk
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -125,15 +124,14 @@ private suspend fun getSystemPython(
   if (systemPythonBinary == null) {
     // Install it
     val installer = pythonService.getInstaller()
-                    ?: return failure(PyBundle.message("project.error.install.not.supported"))
+                    ?: return PyResult.localizedError(PyBundle.message("project.error.install.not.supported"))
     if (confirmInstallation()) {
       // Install
       when (val r = installer.installLatestPython()) {
         is Result.Failure -> {
           val error = r.error
           logger.warn("Python installation failed $error")
-          return failure(
-            PyBundle.message("project.error.install.python", error))
+          return PyResult.localizedError(PyBundle.message("project.error.install.python", error))
         }
         is Result.Success -> {
           // Find the latest python again, after installation
@@ -144,7 +142,7 @@ private suspend fun getSystemPython(
   }
 
   return if (systemPythonBinary == null) {
-    return failure(PyBundle.message("project.error.all.pythons.bad"))
+    return PyResult.localizedError(PyBundle.message("project.error.all.pythons.bad"))
   }
   else {
     Result.Success(systemPythonBinary.pythonBinary)

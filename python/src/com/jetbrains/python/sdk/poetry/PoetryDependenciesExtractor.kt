@@ -14,9 +14,9 @@ import kotlinx.coroutines.withContext
  */
 internal class PoetryDependenciesExtractor(private val sdk: Sdk) : PythonDependenciesExtractor {
   override suspend fun extract(module: Module): List<PythonPackage> {
-    val output = runPoetryWithSdk(sdk, "show", "--top-level")
-      val data = output.getOrNull()?.ifEmpty { return emptyList() } ?: return emptyList()
-      return parsePackageData(data.lines())
+    val output = runPoetryWithSdk(sdk, "show", "--top-level").getOr { return emptyList() }
+    if (output.isBlank()) return emptyList()
+    return parsePackageData(output.lines())
   }
 
   private suspend fun parsePackageData(lines: List<String>): List<PythonPackage> = withContext(Dispatchers.Default) {
@@ -33,7 +33,7 @@ internal class PoetryDependenciesExtractor(private val sdk: Sdk) : PythonDepende
   }
 }
 
-private class PoetryDependenciesExtractorProvider: PythonDependenciesExtractorProvider {
+private class PoetryDependenciesExtractorProvider : PythonDependenciesExtractorProvider {
   override fun createExtractor(sdk: Sdk): PythonDependenciesExtractor? {
     if (!sdk.isPoetry) return null
     return PoetryDependenciesExtractor(sdk)

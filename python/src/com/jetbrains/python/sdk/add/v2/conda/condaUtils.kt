@@ -11,6 +11,8 @@ import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.onSuccess
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.add.v2.PythonAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.convertToPathOnTarget
@@ -28,22 +30,24 @@ internal fun PythonAddInterpreterModel.createCondaCommand(): PyCondaCommand =
   PyCondaCommand(state.condaExecutable.get().convertToPathOnTarget(targetEnvironmentConfiguration),
                  targetConfig = targetEnvironmentConfiguration)
 
-internal suspend fun PythonAddInterpreterModel.createCondaEnvironment(request: NewCondaEnvRequest): Result<Sdk> {
+internal suspend fun PythonAddInterpreterModel.createCondaEnvironment(request: NewCondaEnvRequest): PyResult<Sdk> {
   val project = ProjectManager.getInstance().defaultProject
 
-  val sdk = withModalProgress(ModalTaskOwner.guess(),
-                              PyBundle.message("sdk.create.custom.conda.create.progress"),
-                              TaskCancellation.nonCancellable()) {
-    createCondaCommand()
-      .createCondaSdkAlongWithNewEnv(request,
-                                     Dispatchers.EDT,
-                                     existingSdks,
-                                     project)
-  }.getOrElse { return Result.failure(it) }
+  val result = withModalProgress(ModalTaskOwner.guess(),
+                                 PyBundle.message("sdk.create.custom.conda.create.progress"),
+                                 TaskCancellation.nonCancellable()) {
+    createCondaCommand().createCondaSdkAlongWithNewEnv(
+      newCondaEnvInfo = request,
+      uiContext = Dispatchers.EDT,
+      existingSdks = existingSdks,
+      project = project
+    )
+  }.onSuccess { sdk ->
+    (sdk.sdkType as PythonSdkType).setupSdkPaths(sdk)
+    sdk.persist()
+  }
 
-  (sdk.sdkType as PythonSdkType).setupSdkPaths(sdk)
-  sdk.persist()
-  return Result.success(sdk)
+  return result
 }
 
 internal fun TargetEnvironmentConfiguration?.toExecutor(): TargetCommandExecutor {

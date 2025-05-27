@@ -10,7 +10,6 @@ import com.intellij.python.community.execService.WhatToExec
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.errorProcessing.failure
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.validatePythonAndGetVersion
@@ -44,14 +43,14 @@ suspend fun createVenv(
     }
     add(venvDir.pathString)
   }
-  val version = python.validatePythonAndGetVersion().getOr { return failure(it.error) }
+  val version = python.validatePythonAndGetVersion().getOr { return it }
   val helper = if (version.isPy3K) VIRTUALENV_ZIPAPP_NAME else PY_2_VIRTUALENV_ZIPAPP_NAME
   execService.execGetStdout(WhatToExec.Helper(python, helper = helper), args, ExecOptions(timeout = 3.minutes)).getOr { return it }
 
 
   val venvPython = withContext(Dispatchers.IO) {
     envReader.findPythonInPythonRoot(venvDir)
-  } ?: return failure(PyVenvBundle.message("py.venv.error.after.creation", venvDir))
+  } ?: return PyResult.localizedError(PyVenvBundle.message("py.venv.error.after.creation", venvDir))
   fileLogger().info("Venv created: $venvPython")
 
   withContext(Dispatchers.EDT) {

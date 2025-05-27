@@ -4,7 +4,7 @@ package com.jetbrains.python.sdk.uv
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.errorProcessing.PyExecResult
-import com.jetbrains.python.errorProcessing.asKotlinResult
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
@@ -20,52 +20,40 @@ import java.nio.file.Path
 internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLowLevel) : PythonPackageManager(project, sdk) {
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager(project)
 
-  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): Result<Unit> {
+  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
     val result = if (sdk.uvUsePackageManagement) {
       uv.installPackage(installRequest, emptyList())
     }
     else {
       uv.addDependency(installRequest, emptyList())
-    }.asKotlinResult()
-
-    result.getOrElse {
-      return Result.failure(it)
     }
-
-    return Result.success(Unit)
+    return result
   }
 
-  override suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): Result<Unit> {
+  override suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): PyResult<Unit> {
     val specsWithoutVersion = specifications.map { it.copy(versionSpec = null) }
     val request = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(specsWithoutVersion)
-    installPackageCommand(request, emptyList()).getOrElse {
-      return Result.failure(it)
-    }
+    val result = installPackageCommand(request, emptyList())
 
-    return Result.success(Unit)
+    return result
   }
 
-  override suspend fun uninstallPackageCommand(vararg pythonPackages: String): Result<Unit> {
+  override suspend fun uninstallPackageCommand(vararg pythonPackages: String): PyResult<Unit> {
     val result = if (sdk.uvUsePackageManagement) {
       uv.uninstallPackages(pythonPackages)
     }
     else {
       uv.removeDependencies(pythonPackages)
-    }.asKotlinResult()
-
-    result.getOrElse {
-      return Result.failure(it)
     }
-
-    return Result.success(Unit)
+    return result
   }
 
-  override suspend fun loadPackagesCommand(): Result<List<PythonPackage>> {
-    return uv.listPackages().asKotlinResult()
+  override suspend fun loadPackagesCommand(): PyResult<List<PythonPackage>> {
+    return uv.listPackages()
   }
 
-  override suspend fun loadOutdatedPackagesCommand(): Result<List<PythonOutdatedPackage>> {
-    return uv.listOutdatedPackages().asKotlinResult()
+  override suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>> {
+    return uv.listOutdatedPackages()
   }
 
   suspend fun sync(): PyExecResult<String> {

@@ -24,6 +24,7 @@ import com.intellij.ui.layout.not
 import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
+import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.pathValidation.PlatformAndRoot.Companion.getPlatformAndRoot
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
@@ -89,7 +90,7 @@ internal class PyAddVirtualEnvPanel(
     set(value) {
       field = value
       if (isUnderLocalTarget) {
-        locationField.text = FileUtil.toSystemDependentName(PySdkSettings.Companion.instance.getPreferredVirtualEnvBasePath(projectBasePath))
+        locationField.text = FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(projectBasePath))
       }
     }
 
@@ -99,14 +100,14 @@ internal class PyAddVirtualEnvPanel(
     locationField = TextFieldWithBrowseButton().apply {
       val targetEnvironmentConfiguration = targetEnvironmentConfiguration
       if (targetEnvironmentConfiguration == null) {
-        text = FileUtil.toSystemDependentName(PySdkSettings.Companion.instance.getPreferredVirtualEnvBasePath(projectBasePath))
+        text = FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(projectBasePath))
       }
       else {
         val projectBasePath = projectBasePath
         text = when {
           projectBasePath.isNullOrEmpty() -> config.userHome
           // TODO [run.targets] ideally we want to use '/' or '\' file separators based on the target's OS (which is not available yet)
-          else -> joinTargetPaths(config.userHome, VirtualEnvReader.Companion.DEFAULT_VIRTUALENVS_DIR,
+          else -> joinTargetPaths(config.userHome, VirtualEnvReader.DEFAULT_VIRTUALENVS_DIR,
                                   PathUtil.getFileName(projectBasePath), fileSeparator = '/')
         }
       }
@@ -128,7 +129,7 @@ internal class PyAddVirtualEnvPanel(
         }.bind(getter = { isCreateNewVirtualenv }, setter = { isCreateNewVirtualenv = it })
       }
       else {
-        newEnvironmentModeSelected = ComponentPredicate.Companion.FALSE
+        newEnvironmentModeSelected = ComponentPredicate.FALSE
       }
 
       row(PyBundle.message("sdk.create.venv.dialog.interpreter.label")) {
@@ -215,7 +216,7 @@ internal class PyAddVirtualEnvPanel(
       sdkAdditionalData.targetEnvironmentConfiguration = targetEnvironmentConfiguration
       val homePath = baseSelectedSdk.homePath!!
       // suggesting the proper name for the base SDK fixes the problem with clashing caching key of Python package manager
-      val customSdkSuggestedName = PythonInterpreterTargetEnvironmentFactory.Companion.findDefaultSdkName(project, sdkAdditionalData, version = null)
+      val customSdkSuggestedName = PythonInterpreterTargetEnvironmentFactory.findDefaultSdkName(project, sdkAdditionalData, version = null)
       sdkAdditionalData.interpreterPath = homePath
       SdkConfigurationUtil.createSdk(existingSdks, homePath, PythonSdkType.getInstance(), sdkAdditionalData, customSdkSuggestedName)
     }

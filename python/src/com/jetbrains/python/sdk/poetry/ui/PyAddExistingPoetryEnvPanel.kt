@@ -8,6 +8,8 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
+import com.jetbrains.python.getOrNull
+import com.jetbrains.python.onSuccess
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
