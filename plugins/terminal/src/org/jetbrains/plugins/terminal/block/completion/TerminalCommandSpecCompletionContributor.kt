@@ -24,9 +24,12 @@ import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.ge
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.availableCommandsGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.fileSuggestionsGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorImpl
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorReworkedImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellEnvBasedGenerators.aliasesGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextProviderImpl
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextProviderReworkedImpl
 import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isSuppressCompletion
@@ -100,23 +103,31 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
   }
 
   private fun fillCompletionVariantsReworked(parameters: CompletionParameters, result: CompletionResultSet) {
-    val document = parameters.editor.document
-    val caretOffset = parameters.editor.caretModel.offset
+    val sessionModel = parameters.editor.getUserData(TerminalSessionModel.KEY) ?: return
+    val runtimeContextProvider = ShellRuntimeContextProviderReworkedImpl(parameters.editor.project!!, sessionModel)
+    val generatorsExecutor = ShellDataGeneratorsExecutorReworkedImpl()
     val blocksModel = parameters.editor.getUserData(TerminalBlocksModel.KEY) ?: return
     val lastBlock = blocksModel.blocks.lastOrNull() ?: return
 
-    val command = document.getText(TextRange.create(lastBlock.commandStartOffset, caretOffset))
-    val commands = listOf("git1", "git2", "git-lala", command + "op", "$command-end", "rm", "ls")
+    if (parameters.completionType != CompletionType.BASIC) {
+      return
+    }
 
-    commands.forEachIndexed { index, command ->
-      val priority = 100.0 - index * 5
-      val lookupElement = PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create(command),
-        priority
-      )
-      result.addElement(lookupElement)
+    if (parameters.isAutoPopup && !Registry.`is`(BLOCK_TERMINAL_AUTOCOMPLETION)) {
+      result.stopHere()
+      return
+    }
+
+    if (parameters.editor.isSuppressCompletion) {
+      result.stopHere()
+      return
     }
     val shellSupport = TerminalShellSupport.findByShellType(ShellType.ZSH) ?: return
+    val context = TerminalCompletionContext(runtimeContextProvider, generatorsExecutor, shellSupport, parameters, ShellType.ZSH)
+
+    val document = parameters.editor.document
+    val caretOffset = parameters.editor.caretModel.offset
+    val command = document.getText(TextRange.create(lastBlock.commandStartOffset, caretOffset))
     val tokens = shellSupport.getCommandTokens(parameters.editor.project!!, command) ?: return
     val allTokens = if (caretOffset != 0 && document.getText(TextRange.create(caretOffset - 1, caretOffset)) == " ") {
       tokens + ""  // user inserted space after the last token, so add empty incomplete token as last
@@ -129,8 +140,12 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
       return
     }
     tracer.spanBuilder("terminal-completion-all").use {
+      val suggestions = runBlockingCancellable {
+        val expandedTokens = expandAliases(context, allTokens)
+        computeSuggestions(expandedTokens, context)
+      }
       tracer.spanBuilder("terminal-completion-submit-suggestions-to-lookup").use {
-        submitSuggestions(emptyList(), allTokens, result, ShellType.ZSH)
+        submitSuggestions(suggestions, allTokens, result, ShellType.ZSH)
       }
     }
   }

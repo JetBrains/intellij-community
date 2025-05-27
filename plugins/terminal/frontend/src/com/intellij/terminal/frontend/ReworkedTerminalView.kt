@@ -146,6 +146,7 @@ internal class ReworkedTerminalView(
       withTopAndBottomInsets = true,
     )
 
+    outputEditor.putUserData(TerminalSessionModel.KEY, sessionModel)
     terminalSearchController = TerminalSearchController(project)
 
     blocksModel = TerminalBlocksModelImpl(outputEditor.document)
