@@ -20,24 +20,31 @@ import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.highlighting.dsl.DslStyleUtils
 import org.jetbrains.kotlin.idea.highlighter.HighlightingFactory
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtExpression
 
 internal class KotlinDslSemanticAnalyzer(holder: HighlightInfoHolder, session: KaSession) : KotlinSemanticAnalyzer(holder, session) {
+    override fun visitBinaryExpression(expression: KtBinaryExpression) {
+        val referenceExpression = expression.operationReference
+        holder.add(highlightExpression(referenceExpression)?.create())
+    }
+
     override fun visitCallExpression(expression: KtCallExpression) {
-        holder.add(highlightCall(expression)?.create())
+        val calleeExpression = expression.calleeExpression ?: return
+        holder.add(highlightExpression(calleeExpression)?.create())
     }
 
     /**
-     * Highlights the call expression in case it's a DSL function (it has a single lambda argument)
+     * Highlights the expression in case it's a DSL function (it has a single lambda argument),
      * and its receiver is a DSL class. The receiver is considered to be a DSL class if:
      * 1) Its type specifier is marked with an annotation, that is marked by a dsl annotation
      * 2) The class or its superclasses' definition is marked by a dsl annotation
      */
-    private fun highlightCall(element: KtCallExpression): HighlightInfo.Builder? {
-        val calleeExpression = element.calleeExpression ?: return null
+    private fun highlightExpression(expression: KtExpression): HighlightInfo.Builder? {
         val dslAnnotation = with(session) {
-            val functionCall = calleeExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
+            val functionCall = expression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
             // function declaration argument has a dsl marker
 
             // to check function declaration arguments type, rather call site
@@ -63,7 +70,7 @@ internal class KotlinDslSemanticAnalyzer(holder: HighlightInfoHolder, session: K
 
         val dslStyleId = DslStyleUtils.styleIdByFQName(dslAnnotation.asSingleFqName())
         return HighlightingFactory.highlightName(
-            calleeExpression,
+            expression,
             DslStyleUtils.typeById(dslStyleId)
         )
     }

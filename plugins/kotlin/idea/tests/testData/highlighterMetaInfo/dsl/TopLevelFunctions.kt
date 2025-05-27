@@ -27,10 +27,18 @@ class Tag(val name: String) {
 }
 
 @HtmlDsl
+infix fun String.forwardTo(target: String) = "$this -> $target"
+
+@HtmlDsl
 fun html(init: Tag.() -> Unit): Tag {
     val tag = Tag("html")
     tag.init()
     return tag
+}
+
+fun testInfix() {
+    "A" forwardTo "B"
+    "A".forwardTo("B")
 }
 
 fun testHtml() {
