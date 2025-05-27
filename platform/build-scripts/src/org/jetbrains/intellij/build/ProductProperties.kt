@@ -444,7 +444,6 @@ abstract class ProductProperties {
         if (result.plugin.pluginVersion == null) {
           add(PropertyNotSpecified("version"))
         }
-        // workarounds for MP-7501
         val id = result.plugin.pluginId
         if (id == null) {
           add(PropertyNotSpecified("id"))
