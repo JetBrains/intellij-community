@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.refactoring.memberInfo
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -13,8 +12,8 @@ import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaClassDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.javaResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.allChildren
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 fun PsiNamedElement.getClassDescriptorIfAny(resolutionFacade: ResolutionFacade? = null): ClassDescriptor? {
@@ -36,22 +35,6 @@ fun PsiNamedElement.getClassDescriptorIfAny(resolutionFacade: ResolutionFacade? 
 )
 @NlsSafe
 fun PsiNamedElement.qualifiedClassNameForRenderingOld(): String = qualifiedClassNameForRendering()
-
-fun KotlinMemberInfo.getChildrenToAnalyze(): List<PsiElement> {
-    val member = member
-    val childrenToCheck = member.allChildren.toMutableList()
-    if (isToAbstract && member is KtCallableDeclaration) {
-        when (member) {
-            is KtNamedFunction -> childrenToCheck.remove(member.bodyExpression as PsiElement?)
-            is KtProperty -> {
-                childrenToCheck.remove(member.initializer as PsiElement?)
-                childrenToCheck.remove(member.delegateExpression as PsiElement?)
-                childrenToCheck.removeAll(member.accessors)
-            }
-        }
-    }
-    return childrenToCheck
-}
 
 internal fun KtNamedDeclaration.resolveToDescriptorWrapperAware(resolutionFacade: ResolutionFacade? = null): DeclarationDescriptor {
     if (this is KtPsiClassWrapper) {

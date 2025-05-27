@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.memberInfo
 
 import com.intellij.openapi.util.NlsSafe
@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
@@ -79,4 +80,20 @@ fun PsiNamedElement.qualifiedClassNameForRendering(): String {
         else -> throw AssertionError("Not a class: ${getElementTextWithContext()}")
     }
     return fqName ?: name ?: KotlinBundle.message("text.anonymous")
+}
+
+fun KotlinMemberInfo.getChildrenToAnalyze(): List<PsiElement> {
+    val member = member
+    val childrenToCheck = member.allChildren.toMutableList()
+    if (isToAbstract && member is KtCallableDeclaration) {
+        when (member) {
+            is KtNamedFunction -> childrenToCheck.remove(member.bodyExpression as PsiElement?)
+            is KtProperty -> {
+                childrenToCheck.remove(member.initializer as PsiElement?)
+                childrenToCheck.remove(member.delegateExpression as PsiElement?)
+                childrenToCheck.removeAll(member.accessors)
+            }
+        }
+    }
+    return childrenToCheck
 }
