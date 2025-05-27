@@ -5,25 +5,35 @@ import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManager.RecentProjectsChange
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.TaskInfo
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneProjectListener
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.WelcomeScreenCloneCollector
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.util.Alarm
 import com.intellij.util.containers.JBTreeTraverser
 import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Color
 import javax.swing.tree.TreeNode
 
 @ApiStatus.Internal
 object RecentProjectPanelComponentFactory {
-  private const val UPDATE_INTERVAL = 50 // 50ms -- 20 frames per second
+  private const val UPDATE_INTERVAL = 50L // 50ms -- 20 frames per second
 
   @JvmStatic
   fun createComponent(parentDisposable: Disposable, collectors: List<() -> List<RecentProjectTreeItem>>,
@@ -37,66 +47,95 @@ object RecentProjectPanelComponentFactory {
       expandGroups()
     }
 
+    val modelUpdatedFlow = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    fun updateTreeModel() {
+      filteringTree.updateTree()
+      modelUpdatedFlow.tryEmit(Unit)
+    }
+
     val connection = ApplicationManager.getApplication().messageBus.connect(parentDisposable)
     connection.subscribe(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC, object : RecentProjectsChange {
       override fun change() {
-        filteringTree.updateTree()
+        updateTreeModel()
       }
     })
     connection.subscribe(CloneableProjectsService.TOPIC, object : CloneProjectListener {
       override fun onCloneAdded(progressIndicator: ProgressIndicatorEx, taskInfo: TaskInfo) {
-        filteringTree.updateTree()
+        updateTreeModel()
         WelcomeScreenCloneCollector.cloneAdded(CloneableProjectsService.getInstance().cloneCount())
       }
 
       override fun onCloneRemoved() {
-        filteringTree.updateTree()
+        updateTreeModel()
       }
 
       override fun onCloneSuccess() {
-        filteringTree.updateTree()
+        updateTreeModel()
         WelcomeScreenCloneCollector.cloneSuccess()
       }
 
       override fun onCloneFailed() {
-        filteringTree.updateTree()
+        updateTreeModel()
         WelcomeScreenCloneCollector.cloneFailed()
       }
 
       override fun onCloneCanceled() {
-        filteringTree.updateTree()
+        updateTreeModel()
         WelcomeScreenCloneCollector.cloneCanceled()
       }
     })
 
-    val updateQueue = MergingUpdateQueue(
-      name = "Welcome screen UI updater",
-      mergingTimeSpan = UPDATE_INTERVAL,
-      isActive = true,
-      modalityStateComponent = null,
-      parent = parentDisposable,
-      activationComponent = tree,
-      thread = Alarm.ThreadToUse.SWING_THREAD,
-    )
-    updateQueue.queue(Update.create(filteringTree, Runnable { repaintProgressBars(updateQueue, filteringTree) }))
+    val job = service<RecentProjectPanelComponentFactoryCoroutineScopeHolder>().coroutineScope.launch {
+      repaintProgressBars(filteringTree, modelUpdatedFlow)
+    }
+    Disposer.register(parentDisposable) { job.cancel() }
 
     return filteringTree
   }
 
-  private fun repaintProgressBars(updateQueue: MergingUpdateQueue, filteringTree: RecentProjectFilteringTree) {
-    val isCloneActive = CloneableProjectsService.getInstance().isCloneActive()
+  private suspend fun repaintProgressBars(
+    filteringTree: RecentProjectFilteringTree,
+    modelUpdatedFlow: Flow<Unit>,
+  ) {
+    withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
+      val hasProgressBar = { collectNodesWithProgressBars(filteringTree).isNotEmpty() }
+      val hasProgressBarFlow = MutableStateFlow(hasProgressBar())
+      launch {
+        modelUpdatedFlow.collectLatest {
+          hasProgressBarFlow.emit(hasProgressBar())
+        }
+      }
 
+      launch {
+        hasProgressBarFlow.collectLatest { hasProgressBars ->
+          if (hasProgressBars) {
+            while (isActive) {
+              delay(UPDATE_INTERVAL)
+              val treeModel = filteringTree.searchModel
+              for (it in collectNodesWithProgressBars(filteringTree)) {
+                treeModel.nodeChanged(it)
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private fun collectNodesWithProgressBars(filteringTree: RecentProjectFilteringTree): List<TreeNode> {
+    val isCloneActive = CloneableProjectsService.getInstance().isCloneActive()
     val model = filteringTree.searchModel
-    JBTreeTraverser.from<TreeNode> { node -> TreeUtil.nodeChildren(node) }
+    return JBTreeTraverser.from<TreeNode> { node -> TreeUtil.nodeChildren(node) }
       .withRoot(model.root)
       .traverse()
       .filter { node ->
         val userObject = TreeUtil.getUserObject(node)
         return@filter userObject is CloneableProjectItem && isCloneActive ||
                       userObject is ProviderRecentProjectItem && userObject.isProjectOpening
-      }
-      .forEach { node -> model.nodeChanged(node) }
-
-    updateQueue.queue(Update.create(filteringTree, Runnable { repaintProgressBars(updateQueue, filteringTree) }))
+      }.toList()
   }
 }
+
+@Internal
+@Service(Service.Level.APP)
+private class RecentProjectPanelComponentFactoryCoroutineScopeHolder(@JvmField val coroutineScope: CoroutineScope)
