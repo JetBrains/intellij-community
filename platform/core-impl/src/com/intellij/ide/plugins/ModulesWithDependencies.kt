@@ -170,12 +170,22 @@ private val knownNotFullyMigratedPluginIds: Set<String> = hashSetOf(
   "com.jetbrains.pycharm.ds.customization",
 )
 
+/**
+ * Specifies the list of content modules which was recently extracted from the main module of the core plugin and may have external usages.
+ * Since such modules were loaded by the core classloader before, it wasn't necessary to specify any dependencies to use classes from them.
+ * To avoid breaking compatibility, dependencies on these modules are automatically added to plugins which define dependency on the platform using 
+ * `<depends>com.intellij.modules.platform</depends` or `<depends>com.intellij.modules.lang</depends` tags.
+ */
+private val contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins = listOf<String>(
+)
+
 private fun collectDirectDependenciesInOldFormat(rootDescriptor: IdeaPluginDescriptorImpl,
                                                  idMap: Map<String, PluginModuleDescriptor>,
                                                  dependenciesCollector: MutableSet<PluginModuleDescriptor>) {
   for (dependency in rootDescriptor.dependencies) {
     // check for missing optional dependency
-    val dep = idMap.get(dependency.pluginId.idString) ?: continue
+    val dependencyPluginId = dependency.pluginId.idString
+    val dep = idMap.get(dependencyPluginId) ?: continue
     if (dep.pluginId != PluginManagerCore.CORE_ID || dep is ContentModuleDescriptor) {
       // ultimate plugin it is combined plugin, where some included XML can define dependency on ultimate explicitly and for now not clear,
       // can be such requirements removed or not
@@ -189,6 +199,13 @@ private fun collectDirectDependenciesInOldFormat(rootDescriptor: IdeaPluginDescr
         dependenciesCollector.addAll(dep.contentModules)
 
         dependenciesCollector.add(dep)
+      }
+    }
+    if (dependencyPluginId == "com.intellij.modules.platform" || dependencyPluginId == "com.intellij.modules.lang") {
+      for (contentModuleName in contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins) {
+        idMap.get(contentModuleName)?.let {
+          dependenciesCollector.add(it)
+        }
       }
     }
 
