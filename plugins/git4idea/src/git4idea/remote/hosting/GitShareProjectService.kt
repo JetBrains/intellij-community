@@ -8,6 +8,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
@@ -33,10 +34,7 @@ import git4idea.remote.hosting.ui.ShareProjectExistingRemotesDialog
 import git4idea.remote.hosting.ui.ShareProjectUntrackedFilesDialog
 import git4idea.repo.GitRepository
 import git4idea.util.GitFileUtils
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.net.UnknownHostException
@@ -92,7 +90,7 @@ class GitShareProjectService(
     extractRepoRemoteUrl: (RepoResult) -> String,
   ) {
     cs.launch(Dispatchers.Default) {
-      withBackgroundProgress(project, GitBundle.message("share.process", hostServiceName), false) {
+      withBackgroundProgress(project, GitBundle.message("share.process", hostServiceName), cancellable = true) {
         try {
           reportSequentialProgress(size = 7) { reporter ->
             // create GitHub repo (network)
@@ -105,7 +103,7 @@ class GitShareProjectService(
 
             // creating empty git repo if git is not initialized
             val repository = reporter.itemStep(GitBundle.message("share.process.creating.git.repository")) {
-              ensureGitRepositoryExistsAndGet(gitRepository, root)
+              coroutineToIndicator { ensureGitRepositoryExistsAndGet(gitRepository, root) }
             }
             if (repository == null) return@withBackgroundProgress
 
@@ -117,7 +115,7 @@ class GitShareProjectService(
             // git remote add origin git@github.com:login/name.git
             reporter.itemStep(GitBundle.message("share.process.adding.gh.as.remote.host", hostServiceName)) {
               LOG.info("Adding GitHub as a remote host")
-              addGitRemote(repository, remoteName, remoteUrl)
+              coroutineToIndicator { addGitRemote(repository, remoteName, remoteUrl) }
             }
 
             // create sample commit for binding project
@@ -129,7 +127,9 @@ class GitShareProjectService(
             if (!reporter.itemStep(
                 GitBundle.message("share.process.pushing.to.host.master", hostServiceName, repository.currentBranch?.name ?: "")) {
                 LOG.info("Pushing to github master")
-                pushCurrentBranch(hostServiceName, repository, remoteName, remoteUrl, repositoryName, url)
+                coroutineToIndicator {
+                  pushCurrentBranch(hostServiceName, repository, remoteName, remoteUrl, repositoryName, url)
+                }
               }
             ) {
               return@withBackgroundProgress
@@ -262,7 +262,6 @@ class GitShareProjectService(
           }
         }
 
-
         if (data == null) {
           VcsNotifier.getInstance(project).notifyImportantInfo(
             VcsNotificationIdsHolder.SHARE_EMPTY_REPO_CREATED,
@@ -279,10 +278,12 @@ class GitShareProjectService(
         val modified = HashSet(trackedFiles)
         modified.addAll(files2commit)
 
-        GitFileUtils.addFiles(project, root, files2add)
-        GitFileUtils.deleteFilesFromCache(project, root, files2rm)
+        coroutineToIndicator {
+          GitFileUtils.addFiles(project, root, files2add)
+          GitFileUtils.deleteFilesFromCache(project, root, files2rm)
 
-        modified to commitMessage
+          modified to commitMessage
+        }
       }
       if (addFilesStepResult == null) return false
       val (modified, commitMessage) = addFilesStepResult
@@ -293,9 +294,11 @@ class GitShareProjectService(
         handler.setStdoutSuppressed(false)
         handler.addParameters("-m", commitMessage)
         handler.endOptions()
-        Git.getInstance().runCommand(handler).throwOnError()
 
-        VcsFileUtil.markFilesDirty(project, modified)
+        coroutineToIndicator {
+          Git.getInstance().runCommand(handler).throwOnError()
+          VcsFileUtil.markFilesDirty(project, modified)
+        }
       }
     }
     catch (e: VcsException) {
