@@ -53,8 +53,8 @@ final class UndoableGroup implements Dumpable {
   private final int myCommandTimestamp;
   private final boolean myTransparent;
   private final List<? extends UndoableAction> myActions;
-  private EditorAndState myStateBefore;
-  private EditorAndState myStateAfter;
+  private @Nullable EditorAndState myStateBefore;
+  private @Nullable EditorAndState myStateAfter;
   private UndoableGroupOriginalContext myGroupOriginalContext;
   private final Project myProject;
   private final UndoConfirmationPolicy myConfirmationPolicy;
@@ -65,8 +65,8 @@ final class UndoableGroup implements Dumpable {
   UndoableGroup(@NlsContexts.Command String commandName,
                 boolean isGlobal,
                 int commandTimestamp,
-                EditorAndState stateBefore,
-                EditorAndState stateAfter,
+                @Nullable EditorAndState stateBefore,
+                @Nullable EditorAndState stateAfter,
                 @NotNull List<? extends UndoableAction> actions,
                 @NotNull UndoRedoStacksHolder stacksHolder,
                 @Nullable Project project,
@@ -321,19 +321,19 @@ final class UndoableGroup implements Dumpable {
     return result;
   }
 
-  EditorAndState getStateBefore() {
+  @Nullable EditorAndState getStateBefore() {
     return myStateBefore;
   }
 
-  EditorAndState getStateAfter() {
+  @Nullable EditorAndState getStateAfter() {
     return myStateAfter;
   }
 
-  void setStateBefore(EditorAndState stateBefore) {
+  void setStateBefore(@NotNull EditorAndState stateBefore) {
     myStateBefore = stateBefore;
   }
 
-  void setStateAfter(EditorAndState stateAfter) {
+  void setStateAfter(@NotNull EditorAndState stateAfter) {
     myStateAfter = stateAfter;
   }
 
@@ -418,34 +418,12 @@ final class UndoableGroup implements Dumpable {
   }
 
   @NotNull String dumpState0() {
-    return UndoUnit.fromGroup(this).toString();
+    return UndoDumpUnit.fromGroup(this).toString();
   }
 
-  boolean isSpeculativeUndoAllowed() {
-    return SpeculativeUndoableAction.isUndoable(
-      getCommandName(),
-      isGlobal(),
-      isTransparent(),
-      getConfirmationPolicy(),
-      getActions()
-    );
-  }
-
-  static final class UndoableGroupOriginalContext {
-    private final UndoableGroup myOriginalGroup;
-    private final UndoableGroup myCurrentStackGroup;
-
-    UndoableGroupOriginalContext(@NotNull UndoableGroup originalGroup, @NotNull UndoableGroup currentStackGroup) {
-      myOriginalGroup = originalGroup;
-      myCurrentStackGroup = currentStackGroup;
-    }
-
-    UndoableGroup getOriginalGroup() {
-      return myOriginalGroup;
-    }
-
-    UndoableGroup getCurrentStackGroup(){
-      return myCurrentStackGroup;
-    }
+  record UndoableGroupOriginalContext(
+    @NotNull UndoableGroup originalGroup,
+    @NotNull UndoableGroup currentStackGroup
+  ) {
   }
 }

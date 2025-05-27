@@ -60,7 +60,7 @@ final class Redo extends UndoRedo {
   }
 
   @Override
-  protected void setBeforeState(EditorAndState state) {
+  protected void setBeforeState(@NotNull EditorAndState state) {
     undoableGroup.setStateBefore(state);
   }
 }

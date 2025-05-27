@@ -11,11 +11,11 @@ import java.util.Collection;
 import java.util.function.Predicate;
 
 
-final class UndoReport {
+final class UndoProblemReport {
   private final @Nullable Project project;
   private final boolean isUndo;
 
-  UndoReport(@Nullable Project project, boolean isUndo) {
+  UndoProblemReport(@Nullable Project project, boolean isUndo) {
     this.project = project;
     this.isUndo = isUndo;
   }

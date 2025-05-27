@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-final class EditorChangeAction extends BasicUndoableAction implements AdjustableUndoableAction, SpeculativeUndoableAction {
+final class EditorChangeAction extends BasicUndoableAction implements AdjustableUndoableAction {
   private final int myMoveOffset;
   private final Object myOldString;
   private final Object myNewString;

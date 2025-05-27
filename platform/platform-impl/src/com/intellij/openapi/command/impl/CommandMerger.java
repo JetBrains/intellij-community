@@ -287,17 +287,7 @@ public final class CommandMerger {
   }
 
   @NotNull String dumpState() {
-    return UndoUnit.fromMerger(this).toString();
-  }
-
-  boolean isSpeculativeUndoAllowed() {
-    return SpeculativeUndoableAction.isUndoable(
-      getCommandName(),
-      isGlobal(),
-      isTransparent(),
-      getUndoConfirmationPolicy(),
-      getCurrentActions()
-    );
+    return UndoDumpUnit.fromMerger(this).toString();
   }
 
   private void merge(@NotNull CommandMerger nextCommandToMerge) {

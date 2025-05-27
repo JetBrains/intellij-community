@@ -2,7 +2,6 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.command.undo.DocumentReference;
-import com.intellij.openapi.command.undo.SpeculativeUndoableAction;
 import com.intellij.openapi.command.undo.UndoableAction;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,7 +11,7 @@ import java.util.Arrays;
  * Used to make Undo/Redo action available for some Document, even if it was not modified.
  * Undo action can be available even if this Document is ReadOnly.
  */
-final class MentionOnlyUndoableAction implements UndoableAction, SpeculativeUndoableAction {
+final class MentionOnlyUndoableAction implements UndoableAction {
   private long myPerformedTimestamp = -1L;
   private final DocumentReference[] myRefs;
 

@@ -36,12 +36,10 @@ open class UndoDumpAction : DumbAwareAction(), ActionRemoteBehaviorSpecification
     val dataContext: DataContext = event.dataContext
     val editor: FileEditor? = PlatformCoreDataKeys.FILE_EDITOR.getData(dataContext)
     val undoManager = UndoRedoAction.getUndoManager(editor, dataContext, false, false)
-    LOG.warn("__________________________________________________________________________")
     LOG.warn("${undoManager ?: "null undo manager"}")
     if (undoManager is UndoManagerImpl) {
       LOG.warn(undoManager.dumpState(editor))
     }
-    LOG.warn("__________________________________________________________________________")
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {

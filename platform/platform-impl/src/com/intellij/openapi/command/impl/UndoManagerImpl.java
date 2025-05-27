@@ -52,9 +52,9 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   private final @Nullable Project myProject;
-  private final @NotNull SharedAdjustableUndoableActionsHolder myAdjustableUndoableActionsHolder = new SharedAdjustableUndoableActionsHolder();
-  private final @NotNull SharedUndoRedoStacksHolder mySharedUndoStacksHolder = new SharedUndoRedoStacksHolder(true, myAdjustableUndoableActionsHolder);
-  private final @NotNull SharedUndoRedoStacksHolder mySharedRedoStacksHolder = new SharedUndoRedoStacksHolder(false, myAdjustableUndoableActionsHolder);
+  private final @NotNull SharedAdjustableUndoableActionsHolder myAdjustableUndoableActionsHolder;
+  private final @NotNull SharedUndoRedoStacksHolder mySharedUndoStacksHolder;
+  private final @NotNull SharedUndoRedoStacksHolder mySharedRedoStacksHolder;
 
   private @Nullable CurrentEditorProvider myOverriddenEditorProvider;
 
@@ -72,6 +72,9 @@ public class UndoManagerImpl extends UndoManager {
   @NonInjectable
   protected UndoManagerImpl(@Nullable ComponentManager componentManager) {
     myProject = componentManager instanceof Project project ? project : null;
+    myAdjustableUndoableActionsHolder = new SharedAdjustableUndoableActionsHolder();
+    mySharedUndoStacksHolder = new SharedUndoRedoStacksHolder(true, myAdjustableUndoableActionsHolder);
+    mySharedRedoStacksHolder = new SharedUndoRedoStacksHolder(false, myAdjustableUndoableActionsHolder);
   }
 
   @Override
@@ -247,7 +250,14 @@ public class UndoManagerImpl extends UndoManager {
     } else {
       stacks = state.dump(docRefs);
     }
-    return  "\n" + undoStatus + "\n" + redoStatus + "\n" + stacks;
+    return """
+
+      _____________________________________________________________________________________________________________________
+      %s
+      %s
+      %s
+      _____________________________________________________________________________________________________________________
+      """.formatted(undoStatus, redoStatus, stacks);
   }
 
   @ApiStatus.Internal
@@ -269,9 +279,23 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   @ApiStatus.Internal
-  protected boolean isSpeculativeUndoAllowed(@Nullable FileEditor editor, boolean isUndo) {
-    UndoClientState clientState = getClientState(editor);
-    return clientState != null && clientState.isSpeculativeUndoAllowed(editor, isUndo);
+  protected @NotNull UndoSpy getUndoSpy() {
+    return UndoSpy.BLIND;
+  }
+
+  @ApiStatus.Internal
+  protected boolean isCompactSupported() {
+    return true;
+  }
+
+  @ApiStatus.Internal
+  protected boolean isGlobalSplitSupported() {
+    return true;
+  }
+
+  @ApiStatus.Internal
+  protected boolean isConfirmationSupported() {
+    return true;
   }
 
   void trimSharedStacks(@NotNull DocumentReference docRef) {

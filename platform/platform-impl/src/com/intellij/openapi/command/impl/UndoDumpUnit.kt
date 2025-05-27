@@ -6,7 +6,7 @@ import com.intellij.openapi.command.undo.DocumentReference
 import com.intellij.openapi.command.undo.UndoableAction
 
 
-internal class UndoUnit(
+internal class UndoDumpUnit(
   private val command: String,
   private val actions: Collection<UndoableAction>,
   private val isGlobal: Boolean,
@@ -21,8 +21,8 @@ internal class UndoUnit(
   companion object {
 
     @JvmStatic
-    fun fromGroup(group: UndoableGroup): UndoUnit {
-      return UndoUnit(
+    fun fromGroup(group: UndoableGroup): UndoDumpUnit {
+      return UndoDumpUnit(
         command(group.commandName),
         ArrayList(group.actions),
         group.isGlobal,
@@ -36,8 +36,8 @@ internal class UndoUnit(
     }
 
     @JvmStatic
-    fun fromMerger(merger: CommandMerger): UndoUnit {
-      return UndoUnit(
+    fun fromMerger(merger: CommandMerger): UndoDumpUnit {
+      return UndoDumpUnit(
         command(merger.commandName),
         ArrayList(merger.currentActions),
         merger.isGlobal,

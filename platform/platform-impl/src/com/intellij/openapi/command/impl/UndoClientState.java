@@ -43,6 +43,11 @@ final class UndoClientState implements Disposable {
   private final @NotNull UndoRedoStacksHolder undoStacksHolder;
   private final @NotNull UndoRedoStacksHolder redoStacksHolder;
 
+  private final @NotNull UndoSpy undoSpy;
+  private final boolean isCompactSupported;
+  private final boolean isGlobalSplitSupported;
+  private final boolean isConfirmationSupported;
+
   // yet it is not a client state but shared one defined by undo manager
   private final @NotNull SharedAdjustableUndoableActionsHolder adjustableUndoableActionsHolder;
   private final @NotNull SharedUndoRedoStacksHolder sharedUndoStacksHolder;
@@ -67,6 +72,10 @@ final class UndoClientState implements Disposable {
 
   private UndoClientState(@NotNull UndoManagerImpl undoManager, @NotNull ClientId clientId) {
     this.project = undoManager.getProject();
+    this.undoSpy = undoManager.getUndoSpy();
+    this.isCompactSupported = undoManager.isCompactSupported();
+    this.isGlobalSplitSupported = undoManager.isGlobalSplitSupported();
+    this.isConfirmationSupported = undoManager.isConfirmationSupported();
     this.clientId = clientId;
     this.adjustableUndoableActionsHolder = undoManager.getAdjustableUndoableActionsHolder();
     this.sharedUndoStacksHolder = undoManager.getSharedUndoStacksHolder();
@@ -136,12 +145,12 @@ final class UndoClientState implements Disposable {
   }
 
   long getNextNanoTime(@NotNull FileEditor editor, boolean isUndo) {
-    UndoableGroup lastAction = getLastAction(editor, isUndo, true);
+    UndoableGroup lastAction = getLastAction(editor, isUndo);
     return lastAction == null ? -1 : lastAction.getGroupStartPerformedTimestamp();
   }
 
   boolean isNextAskConfirmation(@NotNull FileEditor editor, boolean isUndo) {
-    UndoableGroup lastAction = getLastAction(editor, isUndo, true);
+    UndoableGroup lastAction = getLastAction(editor, isUndo);
     return lastAction != null && lastAction.shouldAskConfirmation( /*redo=*/ !isUndo);
   }
 
@@ -164,6 +173,7 @@ final class UndoClientState implements Disposable {
     @NotNull UndoConfirmationPolicy undoConfirmationPolicy,
     boolean recordOriginalReference
   ) {
+    undoSpy.commandStarted(commandProject, undoConfirmationPolicy);
     if (!isInsideCommand()) {
       boolean isTransparent = CommandProcessor.getInstance().isUndoTransparentActionInProgress();
       currentCommandMerger = new CommandMerger(project, isTransparent);
@@ -207,11 +217,13 @@ final class UndoClientState implements Disposable {
     if (!currentCommandMerger.isTransparent() && currentCommandMerger.hasActions()) {
       clearRedoStacks(currentCommandMerger);
     }
-    if (!commandMerger.shouldMerge(groupId, currentCommandMerger)) {
+    boolean shouldMerge = commandMerger.shouldMerge(groupId, currentCommandMerger);
+    if (!shouldMerge) {
       flushCurrentCommand();
       compactIfNeeded();
     }
     commandMerger.commandFinished(commandName, groupId, currentCommandMerger);
+    undoSpy.commandFinished(currentProject, commandName, groupId, currentCommandMerger.isTransparent());
     currentProject = DummyProject.getInstance();
     this.currentCommandMerger = null;
   }
@@ -306,17 +318,6 @@ final class UndoClientState implements Disposable {
 
   boolean isRedoInProgress() {
     return currentOperation == OperationInProgress.REDO;
-  }
-
-  boolean isSpeculativeUndoAllowed(@Nullable FileEditor editor, boolean isUndo) {
-    if (isUndo && commandMerger.hasActions()) {
-      return commandMerger.isSpeculativeUndoAllowed();
-    }
-    if (editor != null) {
-      UndoableGroup action = getLastAction(editor, isUndo, false);
-      return action != null && action.isSpeculativeUndoAllowed();
-    }
-    return false;
   }
 
   void clearUndoRedoQueue(@NotNull DocumentReference docRef) {
@@ -423,7 +424,7 @@ final class UndoClientState implements Disposable {
   }
 
   private void compactIfNeeded() {
-    if (!isUndoOrRedoInProgress() && commandTimestamp % COMMAND_TO_RUN_COMPACT == 0) {
+    if (isCompactSupported && !isUndoOrRedoInProgress() && commandTimestamp % COMMAND_TO_RUN_COMPACT == 0) {
       Set<DocumentReference> docsOnStacks = collectReferencesWithoutMergers();
       docsOnStacks.removeIf(doc -> UndoDocumentUtil.isDocumentOpened(project, doc));
       if (docsOnStacks.size() > FREE_QUEUES_LIMIT) {
@@ -451,13 +452,13 @@ final class UndoClientState implements Disposable {
     UndoRedo undoRedo;
     while ((undoRedo = createUndoOrRedo(editor, true)) != null) {
       if (!undoRedo.isTemporary()) break;
-      if (!undoRedo.execute(true, false)) return;
+      if (!undoRedo.execute(true, !isConfirmationSupported)) return;
       if (!undoRedo.hasMoreActions()) break;
     }
 
     while ((undoRedo = createUndoOrRedo(editor, isUndo)) != null) {
       if (!undoRedo.isTransparent()) break;
-      if (!undoRedo.execute(false, false)) return;
+      if (!undoRedo.execute(false, !isConfirmationSupported)) return;
       if (!undoRedo.hasMoreActions()) break;
     }
 
@@ -473,7 +474,7 @@ final class UndoClientState implements Disposable {
         }
 
         // if undo is block by other global command, trying to split global command and undo only local change in editor
-        if (isUndo && undoRedo.isGlobal() && Registry.is("ide.undo.fallback")) {
+        if (isUndo && undoRedo.isGlobal() && isGlobalSplitEnabled()) {
           if (undoRedo.splitGlobalCommand()) {
             var splittedUndo = createUndoOrRedo(editor, true);
             if (splittedUndo != null) {
@@ -482,11 +483,11 @@ final class UndoClientState implements Disposable {
           }
         }
       }
-      if (!undoRedo.execute(false, isInsideStartFinishGroup)) {
+      if (!undoRedo.execute(false, !isConfirmationSupported || isInsideStartFinishGroup)) {
         return;
       }
 
-      if (editor != null && !isUndo && Registry.is("ide.undo.fallback")){
+      if (editor != null && !isUndo && isGlobalSplitEnabled()){
         undoRedo.gatherGlobalCommand();
       }
 
@@ -511,12 +512,21 @@ final class UndoClientState implements Disposable {
   }
 
   private void addUndoableAction(@NotNull UndoableAction action) {
+    // StartMarkAction
+    // FinishMarkAction
+    // MentionOnlyUndoableAction
+    // EditorChangeAction
+    // OtherAction
     addActionToSharedStack(action);
     currentCommandMerger.addAction(action);
   }
 
   private void clearRedoStacks(@NotNull CommandMerger nextMerger) {
     redoStacksHolder.clearStacks(nextMerger.isGlobal(), nextMerger.getAllAffectedDocuments());
+  }
+
+  private boolean isGlobalSplitEnabled() {
+    return isGlobalSplitSupported && Registry.is("ide.undo.fallback");
   }
 
   private @NotNull String dumpStack(@NotNull DocumentReference doc, boolean isUndo) {
@@ -536,12 +546,12 @@ final class UndoClientState implements Disposable {
     return String.join("\n", reversed);
   }
 
-  private @Nullable UndoableGroup getLastAction(@NotNull FileEditor editor, boolean isUndo, boolean isFlush) {
+  private @Nullable UndoableGroup getLastAction(@NotNull FileEditor editor, boolean isUndo) {
     Collection<DocumentReference> refs = UndoDocumentUtil.getDocRefs(editor);
     if (refs == null) {
       return null;
     }
-    if (isUndo && isFlush) {
+    if (isUndo) {
       flushCurrentCommand();
     }
     UndoRedoStacksHolder stack = isUndo ? undoStacksHolder : redoStacksHolder;

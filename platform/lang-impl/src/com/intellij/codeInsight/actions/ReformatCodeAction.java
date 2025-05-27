@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.CodeStyleBundle;
@@ -11,6 +11,7 @@ import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,6 +30,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -41,8 +43,7 @@ import java.util.regex.PatternSyntaxException;
 
 import static com.intellij.openapi.vfs.FilePermissionsKt.getProjectFilesWrite;
 
-public class ReformatCodeAction extends AnAction implements DumbAware, LightEditCompatible, RequiresPermissions,
-                                                            ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+public class ReformatCodeAction extends AnAction implements DumbAware, LightEditCompatible, RequiresPermissions, ActionRemoteBehaviorSpecification {
   private static final Logger LOG = Logger.getInstance(ReformatCodeAction.class);
 
   private static ReformatFilesOptions myTestOptions;
@@ -50,6 +51,14 @@ public class ReformatCodeAction extends AnAction implements DumbAware, LightEdit
   public ReformatCodeAction() {
     setInjectedContext(true);
     setEnabledInModalContext(true);
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @NotNull ActionRemoteBehavior getBehavior() {
+    // TODO: cannot be on the FE side until IJPL-185748 and IJPL-189393 resolved
+    //return ActionRemoteBehavior.FrontendOtherwiseBackend;
+    return ActionRemoteBehavior.BackendOnly;
   }
 
   @Override

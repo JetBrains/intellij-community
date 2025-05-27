@@ -27,7 +27,7 @@ abstract class UndoRedo {
   private final @NotNull UndoRedoStacksHolder stacksHolderReversed;
   private final @NotNull SharedUndoRedoStacksHolder sharedStacksHolder;
   private final @NotNull SharedUndoRedoStacksHolder sharedStacksHolderReversed;
-  private final @NotNull UndoReport undoReport;
+  private final @NotNull UndoProblemReport undoProblemReport;
   protected final @NotNull UndoableGroup undoableGroup;
   private final boolean isRedo;
 
@@ -47,7 +47,7 @@ abstract class UndoRedo {
     this.sharedStacksHolder = sharedStacksHolder;
     this.sharedStacksHolderReversed = sharedStacksHolderReversed;
     this.isRedo = isRedo;
-    this.undoReport = new UndoReport(project, isRedo);
+    this.undoProblemReport = new UndoProblemReport(project, isRedo);
     this.undoableGroup = stacksHolder.getLastAction(getDocRefs());
   }
 
@@ -55,13 +55,13 @@ abstract class UndoRedo {
 
   protected abstract @DialogMessage String getActionName(String commandName);
 
-  protected abstract EditorAndState getBeforeState();
+  protected abstract @Nullable EditorAndState getBeforeState();
 
-  protected abstract EditorAndState getAfterState();
+  protected abstract @Nullable EditorAndState getAfterState();
 
   protected abstract void performAction() throws UnexpectedUndoException;
 
-  protected abstract void setBeforeState(EditorAndState state);
+  protected abstract void setBeforeState(@NotNull EditorAndState state);
 
   boolean isGlobal() {
     return undoableGroup.isGlobal();
@@ -81,13 +81,13 @@ abstract class UndoRedo {
 
   boolean execute(boolean drop, boolean disableConfirmation) {
     if (!undoableGroup.isUndoable()) {
-      undoReport.reportNonUndoable(undoableGroup.getAffectedDocuments());
+      undoProblemReport.reportNonUndoable(undoableGroup.getAffectedDocuments());
       return false;
     }
 
     Set<DocumentReference> clashing = stacksHolder.collectClashingActions(undoableGroup);
     if (!clashing.isEmpty()) {
-      undoReport.reportClashingDocuments(clashing);
+      undoProblemReport.reportClashingDocuments(clashing);
       return false;
     }
 
@@ -96,7 +96,7 @@ abstract class UndoRedo {
     for (Map.Entry<DocumentReference, Map<Integer, MutableActionChangeRange>> entry : reference2Ranges.entrySet()) {
       MovementAvailability availability = sharedStacksHolder.canMoveToStackTop(entry.getKey(), entry.getValue());
       if (availability == MovementAvailability.CANNOT_MOVE) {
-        undoReport.reportCannotAdjust(Collections.singleton(entry.getKey()));
+        undoProblemReport.reportCannotAdjust(Collections.singleton(entry.getKey()));
         return false;
       }
       if (availability == MovementAvailability.CAN_MOVE) {
@@ -171,7 +171,7 @@ abstract class UndoRedo {
     try {
       performAction();
     } catch (UnexpectedUndoException e) {
-      undoReport.reportException(e);
+      undoProblemReport.reportException(e);
       return false;
     }
 
@@ -266,27 +266,29 @@ abstract class UndoRedo {
     if (undoStack.getLast() != undoableGroup) {
       return;
     }
-    boolean shouldGatherGroup = undoStacksHolder.replaceOnStacks(context.getCurrentStackGroup(), context.getOriginalGroup());
+    boolean shouldGatherGroup = undoStacksHolder.replaceOnStacks(context.currentStackGroup(), context.originalGroup());
     if (!shouldGatherGroup) {
       return;
     }
     undoStack.removeLast();
-    undoStack.add(context.getOriginalGroup());
+    undoStack.add(context.originalGroup());
   }
 
   boolean isSameUndoableGroup(@NotNull UndoRedo otherUndoRedo) {
     return undoableGroup == otherUndoRedo.undoableGroup;
   }
 
-  boolean confirmSwitchTo(UndoRedo other) {
-    String message = IdeBundle.message("undo.conflicting.change.confirmation") + "\n" +
-                     getActionName(other.undoableGroup.getCommandName()) + "?";
-    return Messages.OK == Messages.showOkCancelDialog(project, message, getActionName(), Messages.getQuestionIcon());
+  boolean confirmSwitchTo(@NotNull UndoRedo other) {
+    String message = IdeBundle.message("undo.conflicting.change.confirmation") + "\n" + getActionName(other.undoableGroup.getCommandName()) + "?";
+    return showDialog(message);
   }
 
   private boolean askUser() {
-    String actionText = getActionName(undoableGroup.getCommandName()) + "?";
-    return Messages.OK == Messages.showOkCancelDialog(project, actionText, getActionName(), Messages.getQuestionIcon());
+    return showDialog(getActionName(undoableGroup.getCommandName()) + "?");
+  }
+
+  private boolean showDialog(@DialogMessage @NotNull String message) {
+    return Messages.OK == Messages.showOkCancelDialog(project, message, getActionName(), Messages.getQuestionIcon());
   }
 
   private static boolean isNeverAskUser() {
@@ -294,7 +296,7 @@ abstract class UndoRedo {
     return UndoManagerImpl.ourNeverAskUser;
   }
 
-  private boolean restore(EditorAndState pair, boolean onlyIfDiffers) {
+  private boolean restore(@Nullable EditorAndState pair, boolean onlyIfDiffers) {
     // editor can be invalid if underlying file is deleted during undo (e.g. after undoing scratch file creation)
     if (pair == null || editor == null || !editor.isValid() || !pair.canBeAppliedTo(editor)) {
       return false;

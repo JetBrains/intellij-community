@@ -50,17 +50,17 @@ final class Undo extends UndoRedo {
   }
 
   @Override
-  protected EditorAndState getBeforeState() {
+  protected @Nullable EditorAndState getBeforeState() {
     return undoableGroup.getStateAfter();
   }
 
   @Override
-  protected EditorAndState getAfterState() {
+  protected @Nullable EditorAndState getAfterState() {
     return undoableGroup.getStateBefore();
   }
 
   @Override
-  protected void setBeforeState(EditorAndState state) {
+  protected void setBeforeState(@NotNull EditorAndState state) {
     undoableGroup.setStateAfter(state);
   }
 }
