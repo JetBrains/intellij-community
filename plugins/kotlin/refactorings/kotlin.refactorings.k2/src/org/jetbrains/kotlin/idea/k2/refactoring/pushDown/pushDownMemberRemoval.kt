@@ -6,15 +6,14 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
-import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.computeAndRenderReturnType
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.makeAbstract
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.types.Variance
 
 @OptIn(KaExperimentalApi::class)
 internal fun KaSession.createRemoveOriginalMemberAction(
@@ -34,33 +33,22 @@ private fun KaSession.createRemoveCallableMemberAction(
     substitutor: KaSubstitutor,
 ): RemovalAction? {
     val member = memberInfo.member as KtCallableDeclaration
-    val memberSymbol = member.symbol
+    val memberSymbol = member.symbol as? KaCallableSymbol ?: return null
 
     if (memberSymbol.modality != KaSymbolModality.ABSTRACT && memberInfo.isToAbstract) {
-        val (needToSetType, type) = if (member.typeReference == null) {
-            var type = (memberSymbol as KaCallableSymbol).returnType
-            if (type is KaErrorType) {
-                type = builtinTypes.nullableAny
-            } else {
-                type = substitutor.substitute(type)
-            }
-            (member is KtProperty || !type.isUnitType) to type
-        } else {
-            false to null
-        }
-
-        val renderedType = type?.render(position = Variance.INVARIANT)
+        val renderedType = computeAndRenderReturnType(memberSymbol, member, substitutor)
 
         return RemovalAction {
             if (member.hasModifier(KtTokens.PRIVATE_KEYWORD)) {
                 member.addModifier(KtTokens.PROTECTED_KEYWORD)
             }
-            if (needToSetType) {
-                member.typeReference = KtPsiFactory(member.project).createType(renderedType!!)
-                shortenReferences(member.typeReference!!)
+            if (renderedType != null) {
+                member.typeReference = KtPsiFactory(member.project).createType(renderedType)
             }
             makeAbstract(member, sourceClass)
-            member.typeReference
+            member.typeReference?.let { typeReference ->
+                shortenReferences(typeReference)
+            }
         }
     }
 
