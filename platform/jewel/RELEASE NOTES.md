@@ -28,6 +28,15 @@ As mentioned in the Jewel readme, if you're building a purely non-IJP app with J
 > ```kotlin
 > maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
 > ```
+>
+> You will also need to add the required transitive dependencies that have erroneously marked as _runtime_ in the POMs. For example, for `int-ui-standalone`, you need to add:
+> 
+> ```toml
+> jewel-ui = { module = "org.jetbrains.jewel:jewel-ui", version.ref = "jewel" }
+> jewel-foundation = { module = "org.jetbrains.jewel:jewel-foundation", version.ref = "jewel" }
+> kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
+> skiko-awt = { module = "org.jetbrains.skiko:skiko-awt", version = "0.9.2" }
+> ```
 
 ### Binary and source compatibility
 Artefacts with the same `jewelVersion` number are generally binary and source compatible with each other across IJP versions, with the exception of deprecated and scheduled-for-removal APIs, which can be removed in newer versions.
