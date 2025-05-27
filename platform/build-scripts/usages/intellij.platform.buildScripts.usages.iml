@@ -18,6 +18,7 @@
     <orderEntry type="library" name="hash4j" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" />
   </component>
 </module>

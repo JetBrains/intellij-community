@@ -32,6 +32,7 @@ jvm_library(
     "@lib//:oro_matcher",
     "@lib//:velocity",
     "//platform/platform-impl:ide-impl",
+    "//platform/lvcs-api:lvcs",
     "//platform/usageView",
     "@lib//:cli-parser",
     "//platform/indexing-api:indexing",

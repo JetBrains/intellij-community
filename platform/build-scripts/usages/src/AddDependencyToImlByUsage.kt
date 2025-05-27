@@ -81,7 +81,7 @@ internal class AddDependencyToImlByUsage {
         "intellij.platform.credentialStore",
         "intellij.platform.credentialStore.impl",
         //"intellij.platform.macro",
-        //"intellij.platform.lvcs",
+        "intellij.platform.lvcs",
         "intellij.platform.lvcs.impl",
         //"intellij.c",
         //"intellij.cidr.core",

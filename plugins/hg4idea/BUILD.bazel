@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "//platform/credential-store",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/lvcs-api:lvcs",
     "//platform/vcs-api:vcs",
     "//platform/platform-api:ide",
     "//platform/vcs-impl",
@@ -44,6 +45,7 @@ jvm_library(
   deps = [
     "//platform/credential-store",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/lvcs-api:lvcs",
     "//platform/vcs-api:vcs",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

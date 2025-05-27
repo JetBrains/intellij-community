@@ -15,6 +15,7 @@ jvm_library(
     "//platform/core-impl",
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
+    "//platform/lvcs-api:lvcs",
     "//platform/refactoring",
     "//platform/statistics",
     "//java/openapi:java",

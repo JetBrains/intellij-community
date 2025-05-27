@@ -10,6 +10,7 @@ jvm_library(
     "//java/compiler/openapi:java-compiler",
     "//platform/editor-ui-api:editor-ui",
     "//jps/model-api:model",
+    "//platform/lvcs-api:lvcs",
     "//platform/refactoring",
     "//platform/util/jdom",
     "//platform/util",

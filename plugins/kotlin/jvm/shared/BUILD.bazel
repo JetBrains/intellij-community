@@ -26,6 +26,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//jps/model-api:model",
+    "//platform/lvcs-api:lvcs",
     "//platform/util/jdom",
     "@lib//:gson",
     "@lib//:kotlinc-kotlin-compiler-common",

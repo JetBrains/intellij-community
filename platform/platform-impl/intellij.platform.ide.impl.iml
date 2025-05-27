@@ -44,6 +44,7 @@
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="library" name="miglayout-swing" level="project" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
+    <orderEntry type="module" module-name="intellij.platform.lvcs" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
     <orderEntry type="library" name="commons-imaging" level="project" />

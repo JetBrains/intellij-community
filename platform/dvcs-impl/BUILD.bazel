@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/lvcs-api:lvcs",
     "//platform/vcs-impl",
     "//platform/project/shared:project",
     "//platform/vcs-impl/shared",
@@ -51,6 +52,7 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/lvcs-api:lvcs",
     "//platform/vcs-impl",
     "//platform/vcs-impl:vcs-impl_test_lib",
     "//platform/project/shared:project",
