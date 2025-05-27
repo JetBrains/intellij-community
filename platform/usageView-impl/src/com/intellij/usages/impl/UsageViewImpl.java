@@ -100,6 +100,7 @@ public class UsageViewImpl implements UsageViewEx {
   private final UsageViewPresentation myPresentation;
   private final UsageTarget[] myTargets;
   private UsageGroupingRule[] myGroupingRules;
+  private UsageFilteringRule[] myFilteringRules;
   private final UsageFilteringRuleState myFilteringRulesState = UsageFilteringRuleStateService.createFilteringRuleState();
   private final Supplier<? extends UsageSearcher> myUsageSearcherFactory;
   private final @NotNull Project myProject;
@@ -134,6 +135,13 @@ public class UsageViewImpl implements UsageViewEx {
   @ApiStatus.Internal
   public int getFilteredOutNodeCount() {
     return myBuilder.getFilteredUsagesCount();
+  }
+
+  @ApiStatus.Internal
+  public void setFilteringRules(UsageFilteringRule @NotNull [] rules) {
+    myFilteringRules = rules;
+    myBuilder.setFilteringRules(rules);
+    rulesChanged();
   }
 
   private static int compareByFileAndOffset(@NotNull Usage o1, @NotNull Usage o2) {
@@ -642,7 +650,8 @@ public class UsageViewImpl implements UsageViewEx {
       tabbedPane.setTabComponentInsets(null);
 
       UsageContextPanel.Provider[] extensions = UsageContextPanel.Provider.EP_NAME.getExtensions(myProject);
-      List<UsageContextPanel.Provider> myUsageContextPanelProviders = ContainerUtil.filter(extensions, provider -> ReadAction.compute(() -> provider.isAvailableFor(this)));
+      List<UsageContextPanel.Provider> myUsageContextPanelProviders =
+        ContainerUtil.filter(extensions, provider -> ReadAction.compute(() -> provider.isAvailableFor(this)));
       Map<@NlsContexts.TabTitle String, JComponent> components = new LinkedHashMap<>();
       for (UsageContextPanel.Provider provider : myUsageContextPanelProviders) {
         JComponent component;
@@ -722,6 +731,9 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   protected UsageFilteringRule @NotNull [] getActiveFilteringRules(Project project) {
+    if (myFilteringRules != null) {
+      return myFilteringRules;
+    }
     List<UsageFilteringRuleProvider> providers = UsageFilteringRuleProvider.EP_NAME.getExtensionList();
     List<UsageFilteringRule> list = new ArrayList<>(providers.size());
     for (UsageFilteringRule rule : UsageFilteringRules.usageFilteringRules(project)) {

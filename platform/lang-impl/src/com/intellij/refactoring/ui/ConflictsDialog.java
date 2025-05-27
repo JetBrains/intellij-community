@@ -34,6 +34,7 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.usages.impl.UsageViewImpl;
+import com.intellij.usages.rules.UsageFilteringRule;
 import com.intellij.usages.rules.UsageGroupingRuleProvider;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
@@ -170,6 +171,8 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
       presentation.setNonCodeUsageAvailable(false);
       UsageViewImpl usageView = (UsageViewImpl)UsageViewManager.getInstance(myProject)
         .createUsageView(UsageTarget.EMPTY_ARRAY, createUsages(), presentation, null);
+      usageView.setFilteringRules(UsageFilteringRule.EMPTY_ARRAY);
+      usageView.expandAll();
       Disposer.register(getDisposable(), usageView);
       myTree = usageView.getTree();
       myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
