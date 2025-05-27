@@ -83,6 +83,7 @@ private const val PROC_FULL_OPTION = "-proc:full"
 private const val PROC_NONE_OPTION = "-proc:none"
 private const val RELEASE_OPTION = "--release"
 private const val TARGET_OPTION = "-target"
+private const val ENCODING_OPTION = "-encoding"
 
 @Suppress("SpellCheckingInspection")
 private const val PROCESSORPATH_OPTION = "-processorpath"
@@ -505,6 +506,8 @@ private fun getCompilationOptions(
     @Suppress("SpellCheckingInspection")
     compilationOptions.add("-nowarn")
   }
+  compilationOptions.add(ENCODING_OPTION)
+  compilationOptions.add("utf-8")
 
   val customArgs = compilerOptions.ADDITIONAL_OPTIONS_STRING
   require(compilerOptions.ADDITIONAL_OPTIONS_OVERRIDE.isEmpty())
