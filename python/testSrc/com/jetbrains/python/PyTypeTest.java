@@ -4172,7 +4172,7 @@ public class PyTypeTest extends PyTestCase {
                                               expr = MyEnum['ONE'].value""");
     assertNotNull(expr);
     TypeEvalContext codeAnalysisContext = TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile());
-    assertType("Any", expr, codeAnalysisContext);
+    assertType("int", expr, codeAnalysisContext);
     assertProjectFilesNotParsed(codeAnalysisContext);
 
     TypeEvalContext userInitiatedContext = TypeEvalContext.userInitiated(expr.getProject(), expr.getContainingFile());

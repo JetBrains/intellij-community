@@ -117,10 +117,10 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
           if (enumType != null) {
             PyClass enumClass = enumType.getPyClass();
             PyTargetExpression firstEnumItem = ContainerUtil.getFirstItem(enumClass.getClassAttributes());
-            if (firstEnumItem != null && context.maySwitchToAST(firstEnumItem)) {
-              final PyExpression value = firstEnumItem.findAssignedValue();
-              if (value != null) {
-                return Ref.create(context.getType(value));
+            if (firstEnumItem != null) {
+              EnumAttributeInfo attributeInfo = getEnumAttributeInfo(enumClass, firstEnumItem, context);
+              if (attributeInfo != null) {
+                return Ref.create(attributeInfo.assignedValueType);
               }
             }
             else {
@@ -222,7 +222,7 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
     else {
       if (!targetExpression.hasAssignedValue()) return null;
 
-      // Handle enum.auto(), enum.member(), enum.nonmember()
+      // Handle enum.member(), enum.nonmember()
       PyTargetExpressionStub stub = targetExpression.getStub();
       PyEnumAttributeStub attributeStub = stub != null
                                           ? stub.getCustomStub(PyEnumAttributeStub.class)
@@ -231,6 +231,18 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
         PyLiteralKind literalKind = attributeStub.getLiteralKind();
         PyType type = literalKind != null ? PyUtil.convertToType(literalKind, PyBuiltinCache.getInstance(targetExpression)) : null;
         return new EnumAttributeInfo(type, attributeStub.isMember() ? EnumAttributeKind.MEMBER : EnumAttributeKind.NONMEMBER);
+      }
+
+      // Handle enum.auto()
+      QualifiedName calleeName = targetExpression.getCalleeName();
+      if (calleeName != null) {
+        PsiElement resolved = ContainerUtil.getFirstItem(PyResolveUtil.resolveQualifiedNameInScope(calleeName, enumClass, context));
+        if (resolved instanceof PyTypedElement) {
+          PyType resolvedType = context.getType((PyTypedElement)resolved);
+          if (resolvedType instanceof PyClassType && PyNames.TYPE_ENUM_AUTO.equals(((PyClassType)resolvedType).getClassQName())) {
+            return getEnumAttributeInfo(enumClass, resolvedType, context);
+          }
+        }
       }
 
       QualifiedName assignedQName = targetExpression.getAssignedQName();
