@@ -21,7 +21,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.platform.diagnostic.telemetry.OtlpConfiguration.getTraceEndpointURI
 import com.intellij.platform.diagnostic.telemetry.impl.agent.AgentConfiguration.Companion.forService
-import com.intellij.platform.diagnostic.telemetry.impl.agent.AgentConfiguration.Settings.Companion.withoutMetrics
+import com.intellij.platform.diagnostic.telemetry.impl.agent.AgentConfiguration.Settings
 import com.intellij.platform.diagnostic.telemetry.impl.agent.TelemetryAgentProvider.getJvmArgs
 import com.intellij.platform.diagnostic.telemetry.impl.agent.TelemetryAgentResolver.getAgentLocation
 import com.intellij.platform.diagnostic.telemetry.rt.context.TelemetryContext
@@ -317,7 +317,7 @@ open class MavenServerCMDState(
         TelemetryContext.current(),
         traceEndpoint,
         agentLocation,
-        withoutMetrics()
+        Settings.builder().build()
       )
       val args = getJvmArgs(configuration)
       val parametersList = params.vmParametersList

@@ -25,7 +25,7 @@ class GradleTelemetryAgentProvidingExecutionHelperExtension : GradleExecutionHel
       context = TelemetryContext.current(),
       traceEndpoint = traceEndpoint,
       agentLocation = agentLocation,
-      settings = AgentConfiguration.Settings.withoutMetrics()
+      settings = AgentConfiguration.Settings.builder().build()
     )
     val jvmArgs = TelemetryAgentProvider.getJvmArgs(configuration)
     settings.withVmOptions(jvmArgs)
