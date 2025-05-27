@@ -11,7 +11,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.openapi.wm.IconWidgetPresentation
@@ -36,7 +36,7 @@ internal class ToggleReadOnlyAttributePanel(private val dataContext: WidgetPrese
   init {
     val disposable = Disposer.newDisposable()
     val connection = dataContext.project.messageBus.connect(disposable)
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+    connection.subscribe(VirtualFileManager.VFS_CHANGES_BG, object : BulkFileListenerBackgroundable {
       override fun after(events: List<VFileEvent>) {
         for (event in events) {
           if (event is VFilePropertyChangeEvent && VirtualFile.PROP_WRITABLE == event.propertyName) {
