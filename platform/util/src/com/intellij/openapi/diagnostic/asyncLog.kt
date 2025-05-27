@@ -5,13 +5,14 @@ import com.intellij.openapi.util.coroutines.runSuspend
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.Async
 import org.jetbrains.annotations.TestOnly
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 
 private sealed interface LogQueueItem
 
-internal data class LogEvent(
+internal data class LogEvent @Async.Schedule constructor(
   val julLogger: java.util.logging.Logger,
   val level: LogLevel,
   val message: String?,
@@ -27,12 +28,13 @@ internal fun LogEvent.log() {
     asyncLog.log(this)
   }
   else {
-    logNow()
+    logNow(this)
   }
 }
 
-private fun LogEvent.logNow() {
-  val (julLogger, level, message, throwable) = this
+// It should not be an extension function, it's a workaround for IDEA-373525.
+private fun logNow(@Async.Execute event: LogEvent) {
+  val (julLogger, level, message, throwable) = event
   if (throwable != null) {
     julLogger.log(level.level, message, throwable)
   }
@@ -79,7 +81,7 @@ private class AsyncLog {
       for (event in queue) {
         when (event) {
           is LogEvent -> try {
-            event.logNow()
+            logNow(event)
           }
           catch (t: Throwable) {
             System.err.println("Logger failure while trying to log $event")
