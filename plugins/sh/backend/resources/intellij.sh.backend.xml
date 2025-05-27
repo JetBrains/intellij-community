@@ -5,8 +5,6 @@
     <module name="intellij.platform.backend"/>
   </dependencies>
 
-  <resource-bundle>messages.ShBundle</resource-bundle>
-
   <extensions defaultExtensionNs="com.intellij">
   </extensions>
 
