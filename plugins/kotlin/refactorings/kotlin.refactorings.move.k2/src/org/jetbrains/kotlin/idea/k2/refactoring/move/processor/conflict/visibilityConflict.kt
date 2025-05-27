@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict
 
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -128,6 +128,7 @@ internal fun checkVisibilityConflictForNonMovedUsages(
     targetDir: PsiDirectory,
     target: K2MoveTargetDescriptor.Declaration<*>? = null
 ): MultiMap<PsiElement, String> {
+    val declarationToContainers = HashMap<KtNamedDeclaration, MutableSet<PsiElement>>()
     return usages
         .filter { usageInfo -> usageInfo.willNotBeMoved(allDeclarationsToMove) && usageInfo.isVisibleBeforeMove() }
         .mapNotNull { usageInfo ->
@@ -148,7 +149,8 @@ internal fun checkVisibilityConflictForNonMovedUsages(
 
                         else -> true
                     }
-                    if (!isVisible) usageElement.createVisibilityConflict(referencedDeclaration) else null
+                    val reported = declarationToContainers.computeIfAbsent(referencedDeclaration, { HashSet() })
+                    if (reported.add(usageElement.getContainer()) && !isVisible) usageElement.createVisibilityConflict(referencedDeclaration) else null
                 }
             }
         }
