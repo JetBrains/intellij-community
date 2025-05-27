@@ -1,15 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.project.module
 
-import com.intellij.ide.rpc.RpcCallUtil
+import com.intellij.ide.rpc.performRpcWithRetries
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
-import fleet.util.logging.logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -36,7 +36,7 @@ class ModulesStateService private constructor(private val project: Project, val 
   private fun loadModuleNamesAndSubscribe(): Job {
     return coroutineScope.childScope("ModulesStateService.loadModuleNamesAndSubscribe").launch {
       LOG.debug("Starting initial module names loading for project: ${project.name}")
-      val moduleNames = RpcCallUtil.invokeSafely { ModuleStateApi.getInstance().getCurrentModuleNames(project.projectId()) }
+      val moduleNames = LOG.performRpcWithRetries { ModuleStateApi.getInstance().getCurrentModuleNames(project.projectId()) }
       state.moduleNames.addAll(moduleNames.toMutableSet())
       LOG.debug("Completed loading initial module names. Found ${moduleNames.size} modules")
       initializationCompleted = true
@@ -46,7 +46,7 @@ class ModulesStateService private constructor(private val project: Project, val 
 
   private suspend fun subscribeToModuleChanges() {
     LOG.debug("Starting subscription for module updates in project: ${project.name}")
-    RpcCallUtil.invokeSafely { ModuleStateApi.getInstance().getModulesUpdateEvents(project.projectId()) }.collect { update ->
+    LOG.performRpcWithRetries { ModuleStateApi.getInstance().getModulesUpdateEvents(project.projectId()) }.collect { update ->
       LOG.debug("Received module update: $update")
       state.applyModuleChange(update)
     }
