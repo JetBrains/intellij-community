@@ -49,7 +49,7 @@ internal class BridgeTaskSupport(private val coroutineScope: CoroutineScope) {
       val cancellation = if (info.isCancellable) TaskCancellation.cancellable() else TaskCancellation.nonCancellable()
       @Suppress("DEPRECATION") val taskSuspender = BridgeTaskSuspender(indicator)
 
-      withBackgroundProgress(project, info.title, cancellation, taskSuspender) {
+      withBackgroundProgress(project, info.title, cancellation, taskSuspender, visibleInStatusBar = info !is InvisibleInStatusBarTask) {
         launch {
           reportRawProgress { reporter ->
             indicator.addStateDelegate(reporter.toBridgeIndicator())
