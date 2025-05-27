@@ -3,6 +3,7 @@ package com.intellij.platform.buildScripts.testFramework.pluginModel
 
 import com.intellij.platform.buildScripts.testFramework.distributionContent.FileEntry
 import com.intellij.platform.buildScripts.testFramework.distributionContent.deserializeContentData
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Path
@@ -60,12 +61,21 @@ private class YamlFileBasedPluginLayoutProvider(
 
   override fun loadPluginLayout(mainModule: JpsModule): PluginLayoutDescription? {
     val contentRootUrl = mainModule.contentRootsList.urls.firstOrNull() ?: return null
-    val contentDataPath = JpsPathUtil.urlToNioPath(contentRootUrl).resolve("plugin-content.yaml")
+    val pluginContentPath = "plugin-content.yaml"
+    val contentDataPath = JpsPathUtil.urlToNioPath(contentRootUrl).resolve(pluginContentPath)
     if (!contentDataPath.exists()) return null
+    val pluginDescriptorPath = "META-INF/plugin.xml"
+    if (JpsJavaExtensionService.getInstance().findSourceFileInProductionRoots(mainModule, pluginDescriptorPath) == null) {
+      throw PluginModuleConfigurationError(mainModule.name, """
+        '$pluginDescriptorPath' file is not found in source and resource roots of module '"${mainModule.name}', but '$pluginContentPath' is present in it.
+        If '${mainModule.name}' is not the main module of a plugin anymore, delete '$pluginContentPath' to avoid confusion. 
+      """.trimIndent())
+    }
+    
     val contentData = deserializeContentData(contentDataPath.readText())
     return contentData.toPluginLayoutDescription(
       mainModuleName = mainModule.name,
-      pluginDescriptorPath = "META-INF/plugin.xml",
+      pluginDescriptorPath = pluginDescriptorPath,
       mainLibDir = "lib",
       jarsToIgnore = emptySet()
     )
