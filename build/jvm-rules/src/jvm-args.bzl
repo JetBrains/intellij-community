@@ -32,4 +32,6 @@ def get_jvm_flags(flags):
         "-Dio.netty.tryReflectionSetAccessible=true",
         # see TargetConfigurationDigestProperty.KOTLIN_VERSION - we invalidate cache if kotlinc version changed
         "-Dkotlin.jps.skip.cache.version.check=true",
+        # Set UTF-8 by default as per https://openjdk.org/jeps/400
+        "-Dfile.encoding=UTF-8",
     ] + flags
