@@ -1,12 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.util.NullUtils;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -101,6 +103,12 @@ public final class PsiIntersectionType extends PsiType.Stub {
   @Override
   public @NotNull String getInternalCanonicalText() {
     return StringUtil.join(myConjuncts, psiType -> psiType.getInternalCanonicalText(), " & ");
+  }
+
+  @Override
+  public @NotNull TypeNullability getNullability() {
+    List<TypeNullability> nullabilities = ContainerUtil.map(myConjuncts, PsiType::getNullability);
+    return TypeNullability.intersect(nullabilities);
   }
 
   @Override

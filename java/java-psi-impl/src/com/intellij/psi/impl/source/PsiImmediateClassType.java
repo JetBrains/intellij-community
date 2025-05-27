@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source;
 
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -30,6 +31,7 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
   private final PsiSubstitutor mySubstitutor;
   private final PsiManager myManager;
   private final @Nullable PsiElement myPsiContext;
+  private final @NotNull TypeNullability myNullability;
   private String myCanonicalText;
   private String myCanonicalTextAnnotated;
   private String myPresentableText;
@@ -111,11 +113,21 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
                                @Nullable LanguageLevel level,
                                @NotNull TypeAnnotationProvider provider,
                                @Nullable PsiElement context) {
+    this(aClass, substitutor, level, provider, context, TypeNullability.UNKNOWN);
+  }
+
+  public PsiImmediateClassType(@NotNull PsiClass aClass,
+                               @NotNull PsiSubstitutor substitutor,
+                               @Nullable LanguageLevel level,
+                               @NotNull TypeAnnotationProvider provider,
+                               @Nullable PsiElement context,
+                               @NotNull TypeNullability nullability) {
     super(level, provider);
     myClass = aClass;
     myManager = aClass.getManager();
     mySubstitutor = substitutor;
     myPsiContext = context;
+    myNullability = nullability;
     substitutor.ensureValid();
   }
 
@@ -132,6 +144,11 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
   @Override
   public @Nullable PsiElement getPsiContext() {
     return myPsiContext;
+  }
+
+  @Override
+  public @NotNull TypeNullability getNullability() {
+    return myNullability;
   }
 
   @Override

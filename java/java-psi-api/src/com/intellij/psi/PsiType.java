@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.lang.jvm.types.JvmType;
 import com.intellij.openapi.project.Project;
@@ -168,6 +169,13 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
    * @return true if the string is equivalent to the type, false otherwise
    */
   public abstract boolean equalsToText(@NotNull @NonNls String text);
+
+  /**
+   * @return nullability of this type
+   */
+  public @NotNull TypeNullability getNullability() {
+    return TypeNullability.UNKNOWN;
+  }
 
   /**
    * Returns the class type for qualified class name.

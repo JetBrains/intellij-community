@@ -3,6 +3,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiModifierListOwner;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,6 +74,20 @@ public class NullabilityAnnotationInfo {
 
   @NotNull NullabilityAnnotationInfo withInheritedFrom(@Nullable PsiModifierListOwner owner) {
     return new NullabilityAnnotationInfo(myAnnotation, myNullability, owner, myContainer);
+  }
+
+  /**
+   * Converts this object to {@link TypeNullability}. Inheritance information is lost, as it's not applicable to type nullability. 
+   */
+  @ApiStatus.Experimental
+  public @NotNull TypeNullability toTypeNullability() {
+    NullabilitySource source;
+    if (myContainer) {
+      source = new NullabilitySource.ContainerAnnotation(myAnnotation);
+    } else {
+      source = new NullabilitySource.ExplicitAnnotation(myAnnotation);
+    }
+    return new TypeNullability(myNullability, source);
   }
 
   @Override

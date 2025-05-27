@@ -1,8 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.lang.jvm.types.JvmArrayType;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.JavaTypeNullabilityUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -108,6 +110,11 @@ public class PsiArrayType extends PsiType.Stub implements JvmArrayType {
   @Contract(pure = true)
   public @NotNull PsiType getComponentType() {
     return myComponentType;
+  }
+
+  @Override
+  public @NotNull TypeNullability getNullability() {
+    return JavaTypeNullabilityUtil.getNullabilityFromAnnotations(getAnnotations());
   }
 
   @Override
