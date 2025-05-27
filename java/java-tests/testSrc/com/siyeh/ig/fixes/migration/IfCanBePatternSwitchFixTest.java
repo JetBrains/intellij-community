@@ -42,6 +42,7 @@ public class IfCanBePatternSwitchFixTest extends IGQuickFixesTestCase {
   public void testPatternToVariable() { doTest(); }
   public void testPatternToSwitchExpression() { doTest(); }
   public void testUnconditionalPattern(){ doTest(); }
+  public void testUnconditionalReturn() { doTest(); }
   public void testStringConstantsWithNull() { doTest(); }
   public void testCastsReplacedWithPattern() { doTest(); }
   public void testMultipleCastedVariables() { doTest(); }

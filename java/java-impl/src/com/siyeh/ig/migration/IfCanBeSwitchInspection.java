@@ -796,9 +796,11 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
   }
 
   private static boolean hasUnconditionalPatternCheck(PsiType type, PsiExpression check) {
-    final PsiCaseLabelElement pattern = SwitchUtils.createPatternFromExpression(check);
-    if (pattern == null) return false;
-    return JavaPsiPatternUtil.isUnconditionalForType(pattern, type);
+    if (!(check instanceof PsiInstanceOfExpression instanceOfExpression)) return false;
+    if (!(instanceOfExpression.getPattern() instanceof PsiTypeTestPattern pattern)) return false;
+    PsiTypeElement checkType = pattern.getCheckType();
+    if (checkType == null) return false;
+    return JavaPsiPatternUtil.isUnconditionallyExactForType(check, type, checkType.getType());
   }
 
   private static Nullability getNullability(PsiExpression expression) {
