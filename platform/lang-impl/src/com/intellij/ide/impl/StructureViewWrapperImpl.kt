@@ -129,6 +129,7 @@ class StructureViewWrapperImpl(
       override fun stateChanged(toolWindowManager: ToolWindowManager, toolWindow: ToolWindow, changeType: ToolWindowManagerEventType) {
         if (toolWindow !== myToolWindow) return
         when (changeType) {
+          ToolWindowManagerEventType.ActivateToolWindow,
           ToolWindowManagerEventType.ShowToolWindow -> loggedRun("update file") { checkUpdate() }
           ToolWindowManagerEventType.HideToolWindow -> if (!project.isDisposed) {
             myFile = null
