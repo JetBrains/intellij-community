@@ -23,6 +23,7 @@ import com.intellij.openapi.util.DimensionService
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.ex.NoProjectStateHandler
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
 import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
@@ -198,6 +199,12 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor, DisposableWi
     fun showIfNoProjectOpened(lifecyclePublisher: AppLifecycleListener? = null) {
       val app = ApplicationManager.getApplication()
       if (app.isUnitTestMode) {
+        return
+      }
+
+      val customHandler = NoProjectStateHandler.EP_NAME.lazySequence().firstOrNull { it.canHandle() }
+      if (customHandler != null) {
+        customHandler.handle()
         return
       }
 
