@@ -1,6 +1,6 @@
 [versions]
 commonmark = "0.24.0"
-composeDesktop = "1.8.0-alpha04"
+composeDesktop = "1.8.1"
 detekt = "1.23.6"
 dokka = "2.0.0"
 filepicker = "3.1.0"
