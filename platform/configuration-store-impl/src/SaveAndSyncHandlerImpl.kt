@@ -1,8 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
-import com.intellij.codeWithMe.ClientId
-import com.intellij.codeWithMe.asContextElement
 import com.intellij.conversion.ConversionService
 import com.intellij.ide.*
 import com.intellij.openapi.application.*
@@ -262,7 +260,7 @@ private class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope)
   }
 
   private suspend fun executeOnIdle() {
-    withContext(Dispatchers.EDT + ClientId.ownerId.asContextElement()) {
+    withContext(Dispatchers.EDT) {
       val fileDocumentManager = serviceAsync<FileDocumentManager>() as FileDocumentManagerImpl
       writeIntentReadAction {
         fileDocumentManager.saveAllDocuments(false)
