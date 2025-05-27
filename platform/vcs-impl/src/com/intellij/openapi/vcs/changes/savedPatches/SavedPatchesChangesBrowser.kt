@@ -164,7 +164,8 @@ class SavedPatchesChangesBrowser(project: Project, internal val isShowDiffWithLo
     sink[SavedPatchesUi.SAVED_PATCH_CHANGES] = getSavedPatchChanges()
   }
 
-  internal fun getSavedPatchChanges(): Iterable<SavedPatchesProvider.ChangeObject> = VcsTreeModelData.all(myViewer)
+  @ApiStatus.Internal
+  fun getSavedPatchChanges(): Iterable<SavedPatchesProvider.ChangeObject> = VcsTreeModelData.all(myViewer)
     .iterateUserObjects(SavedPatchesProvider.ChangeObject::class.java)
 
   override fun dispose() {
