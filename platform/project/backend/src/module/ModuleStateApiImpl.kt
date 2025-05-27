@@ -8,9 +8,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.project.module.ModuleStateApi
-import com.intellij.platform.project.module.ModuleUpdateType
 import com.intellij.platform.project.module.ModuleUpdatedEvent
-import com.intellij.platform.project.module.ModulesStateService
+import com.intellij.platform.project.module.ModuleUpdatedEvent.*
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.util.Function
 import fleet.rpc.remoteApiDescriptor
@@ -27,24 +26,23 @@ internal class ModuleStateApiImpl : ModuleStateApi {
     val project = projectId.findProjectOrNull() ?: return emptyFlow()
     val connection = project.messageBus.simpleConnect()
     val flow = channelFlow {
-      val coroutineScope = ModulesStateService.getInstance(project).coroutineScope
       connection.subscribe(ModuleListener.TOPIC, object : ModuleListener {
         override fun modulesAdded(project: Project, modules: List<Module>) {
-          coroutineScope.launch {
-            send(ModuleUpdatedEvent(ModuleUpdateType.ADD, modules.map { it.name}))
+          launch {
+            send(ModulesAddedEvent(modules.map { it.name }))
           }
         }
 
         override fun moduleRemoved(project: Project, module: Module) {
-          coroutineScope.launch {
-            send(ModuleUpdatedEvent(ModuleUpdateType.REMOVE, module.name))
+          launch {
+            send(ModuleRemovedEvent(module.name))
           }
         }
 
         override fun modulesRenamed(project: Project, modules: List<Module>, oldNameProvider: Function<in Module, String>) {
-          coroutineScope.launch {
-            send(ModuleUpdatedEvent(ModuleUpdateType.RENAME, modules.associate { module ->
-             module.name to oldNameProvider.`fun`(module)
+          launch {
+            send(ModulesRenamedEvent(modules.associate { module ->
+              module.name to oldNameProvider.`fun`(module)
             }))
           }
         }

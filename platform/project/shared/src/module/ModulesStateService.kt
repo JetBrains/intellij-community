@@ -8,16 +8,19 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.platform.project.module.ModuleUpdatedEvent.*
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 
 private val LOG = logger<ModulesStateService>()
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-class ModulesStateService private constructor(private val project: Project, val coroutineScope: CoroutineScope) {
+class ModulesStateService private constructor(private val project: Project, private val coroutineScope: CoroutineScope) {
   private val state: ModulesState = ModulesState()
   private var initializationCompleted: Boolean = false
 
@@ -64,15 +67,16 @@ private class ModulesState() {
   val moduleNames: MutableSet<String> = mutableSetOf()
 
   fun applyModuleChange(moduleUpdatedEvent: ModuleUpdatedEvent) {
-    when (moduleUpdatedEvent.moduleUpdateType) {
-      ModuleUpdateType.RENAME -> {
+    when (moduleUpdatedEvent) {
+      is ModulesRenamedEvent -> {
         moduleUpdatedEvent.newToOldModuleNameMap.forEach { (newName, oldName) ->
           moduleNames.remove(oldName)
           moduleNames.add(newName)
         }
       }
-      ModuleUpdateType.ADD -> moduleNames.addAll(moduleUpdatedEvent.moduleNames)
-      ModuleUpdateType.REMOVE -> moduleNames.removeAll(moduleUpdatedEvent.moduleNames)
+      is ModulesAddedEvent -> moduleNames.addAll(moduleUpdatedEvent.moduleNames)
+      is ModuleRemovedEvent -> moduleNames.remove(moduleUpdatedEvent.moduleName)
+      else -> LOG.error("Unknown module update event: $moduleUpdatedEvent")
     }
   }
 }
