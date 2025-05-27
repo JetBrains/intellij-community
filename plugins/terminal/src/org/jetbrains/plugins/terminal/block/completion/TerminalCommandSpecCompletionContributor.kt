@@ -43,40 +43,14 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
 
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     if (parameters.editor.isReworkedTerminalEditor) {
-      val document = parameters.editor.document
-      val caretOffset = parameters.editor.caretModel.offset
-      val blocksModel = parameters.editor.getUserData(TerminalBlocksModel.KEY) ?: return
-      val lastBlock = blocksModel.blocks.lastOrNull() ?: return
-
-      val command = document.getText(TextRange.create(lastBlock.commandStartOffset, caretOffset))
-      val commands = listOf("git1", "git2", "git-lala", command + "op", "$command-end", "rm", "ls")
-
-      commands.forEachIndexed { index, command ->
-        val priority = 100.0 - index * 5
-        val lookupElement = PrioritizedLookupElement.withPriority(
-          LookupElementBuilder.create(command),
-          priority
-        )
-        result.addElement(lookupElement)
-      }
-      val shellSupport = TerminalShellSupport.findByShellType(ShellType.ZSH) ?: return
-      val tokens = shellSupport.getCommandTokens(parameters.editor.project!!, command) ?: return
-      val allTokens = if (caretOffset != 0 && document.getText(TextRange.create(caretOffset - 1, caretOffset)) == " ") {
-        tokens + ""  // user inserted space after the last token, so add empty incomplete token as last
-      }
-      else {
-        tokens
-      }
-
-      if (allTokens.isEmpty()) {
-        return
-      }
-      tracer.spanBuilder("terminal-completion-all").use {
-        tracer.spanBuilder("terminal-completion-submit-suggestions-to-lookup").use {
-          submitSuggestions(emptyList(), allTokens, result, ShellType.ZSH)
-        }
-      }
+      fillCompletionVariantsReworked(parameters, result)
     }
+    else {
+      fillCompletionVariantsDeprecated(parameters, result)
+    }
+  }
+
+  private fun fillCompletionVariantsDeprecated(parameters: CompletionParameters, result: CompletionResultSet) {
     val session = parameters.editor.getUserData(BlockTerminalSession.KEY) ?: return
     val runtimeContextProvider = parameters.editor.getUserData(ShellRuntimeContextProviderImpl.KEY) ?: return
     val generatorsExecutor = parameters.editor.getUserData(ShellDataGeneratorsExecutorImpl.KEY) ?: return
@@ -121,6 +95,42 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
       }
       tracer.spanBuilder("terminal-completion-submit-suggestions-to-lookup").use {
         submitSuggestions(suggestions, allTokens, result, session.shellIntegration.shellType)
+      }
+    }
+  }
+
+  private fun fillCompletionVariantsReworked(parameters: CompletionParameters, result: CompletionResultSet) {
+    val document = parameters.editor.document
+    val caretOffset = parameters.editor.caretModel.offset
+    val blocksModel = parameters.editor.getUserData(TerminalBlocksModel.KEY) ?: return
+    val lastBlock = blocksModel.blocks.lastOrNull() ?: return
+
+    val command = document.getText(TextRange.create(lastBlock.commandStartOffset, caretOffset))
+    val commands = listOf("git1", "git2", "git-lala", command + "op", "$command-end", "rm", "ls")
+
+    commands.forEachIndexed { index, command ->
+      val priority = 100.0 - index * 5
+      val lookupElement = PrioritizedLookupElement.withPriority(
+        LookupElementBuilder.create(command),
+        priority
+      )
+      result.addElement(lookupElement)
+    }
+    val shellSupport = TerminalShellSupport.findByShellType(ShellType.ZSH) ?: return
+    val tokens = shellSupport.getCommandTokens(parameters.editor.project!!, command) ?: return
+    val allTokens = if (caretOffset != 0 && document.getText(TextRange.create(caretOffset - 1, caretOffset)) == " ") {
+      tokens + ""  // user inserted space after the last token, so add empty incomplete token as last
+    }
+    else {
+      tokens
+    }
+
+    if (allTokens.isEmpty()) {
+      return
+    }
+    tracer.spanBuilder("terminal-completion-all").use {
+      tracer.spanBuilder("terminal-completion-submit-suggestions-to-lookup").use {
+        submitSuggestions(emptyList(), allTokens, result, ShellType.ZSH)
       }
     }
   }
