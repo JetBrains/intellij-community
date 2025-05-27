@@ -106,6 +106,13 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
 
   protected @Nullable RunContentDescriptor createContentDescriptor(@NotNull RunProfileState state,
                                                                    @NotNull ExecutionEnvironment environment) throws ExecutionException {
+    if (state instanceof RemoteConnectionCreator) {
+      RemoteConnection connection = ((RemoteConnectionCreator)state).createRemoteConnection(environment);
+      boolean isPollConnection = ((RemoteConnectionCreator)state).isPollConnection();
+      if (connection != null) {
+        return attachVirtualMachine(state, environment, connection, isPollConnection);
+      }
+    }
     if (state instanceof JavaCommandLine) {
       JavaParameters parameters = ((JavaCommandLine)state).getJavaParameters();
       boolean isPollConnection = true;
