@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -64,6 +65,17 @@ class VfsRefreshTest {
     assertThat(map).isEmpty()
   }
 
+  @Test
+  @RegistryKey("vfs.refresh.use.background.write.action", "true")
+  fun `suspending refresh calls async listeners on background threads`(): Unit = asyncFileListenerTestStub(false) { virtualFile ->
+    RefreshQueue.getInstance().refresh(false, listOf(virtualFile))
+  }
+
+  @Test
+  fun `regular synchronous refresh calls async listeners on EDT`(): Unit = asyncFileListenerTestStub(true) { virtualFile ->
+    RefreshQueue.getInstance().refresh(false, false, null, listOf(virtualFile))
+  }
+
 
   fun refreshTestStub(createListeners: (Disposable, AtomicInteger) -> Unit, refreshFunction: suspend (VirtualFile) -> Unit, check: (AtomicInteger) -> Unit): Unit = timeoutRunBlocking {
     val disposable = Disposer.newDisposable()
@@ -112,6 +124,42 @@ class VfsRefreshTest {
           counter.incrementAndGet()
         }
       })
+    }, refresh, { counter ->
+      assertThat(counter.get()).isEqualTo(4)
+    })
+
+
+  fun asyncFileListenerTestStub(bgListenersShouldRunOnEdt: Boolean, refresh: suspend (VirtualFile) -> Unit) = refreshTestStub(
+    { disposable, counter ->
+      VirtualFileManager.getInstance().addAsyncFileListener(
+        {
+          object : AsyncFileListener.ChangeApplier {
+            override fun beforeVfsChange() {
+              assertThat(EDT.isCurrentThreadEdt()).isTrue
+              counter.incrementAndGet()
+            }
+
+            override fun afterVfsChange() {
+              assertThat(EDT.isCurrentThreadEdt()).isTrue
+              counter.incrementAndGet()
+            }
+          }
+        }, disposable)
+      VirtualFileManager.getInstance().addAsyncFileListener(
+        {
+          object : AsyncFileListener.ChangeApplierBackgroundable {
+            override fun beforeVfsChange() {
+              assertThat(EDT.isCurrentThreadEdt()).isEqualTo(bgListenersShouldRunOnEdt)
+              counter.incrementAndGet()
+            }
+
+            override fun afterVfsChange() {
+              assertThat(EDT.isCurrentThreadEdt()).isEqualTo(bgListenersShouldRunOnEdt)
+              counter.incrementAndGet()
+            }
+          }
+        }, disposable)
+
     }, refresh, { counter ->
       assertThat(counter.get()).isEqualTo(4)
     })

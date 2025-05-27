@@ -3,6 +3,9 @@ package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.AppImplKt;
+import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.application.impl.InternalThreading;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -19,11 +22,13 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 @ApiStatus.Internal
 public final class AsyncEventSupport {
@@ -53,7 +58,8 @@ public final class AsyncEventSupport {
         }
         List<AsyncFileListener.ChangeApplier> appliers = runAsyncListeners(events);
         AsyncEventSupport.appliers.put(events, appliers);
-        beforeVfsChange(appliers);
+        ApplierPartition partition = partitionAppliers(appliers);
+        beforeVfsChange(partition);
       }
 
       @Override
@@ -62,7 +68,11 @@ public final class AsyncEventSupport {
           return;
         }
         List<AsyncFileListener.ChangeApplier> appliers = AsyncEventSupport.appliers.remove(events);
-        if (appliers != null && !appliers.isEmpty()) afterVfsChange(appliers);
+        if (appliers == null || appliers.isEmpty()) {
+          return;
+        }
+        ApplierPartition partition = partitionAppliers(appliers);
+        afterVfsChange(partition);
       }
     });
   }
@@ -114,11 +124,33 @@ public final class AsyncEventSupport {
     LOG.assertTrue(asyncProcessedEvents.remove(events));
   }
 
-  private static void beforeVfsChange(@NotNull List<AsyncFileListener.ChangeApplier> appliers) {
+  private static void beforeVfsChange(@NotNull ApplierPartition appliers) {
+    executeAppliersInPartition(appliers, AsyncFileListener.ChangeApplier::beforeVfsChange);
+  }
+
+  private static void executeAppliersInPartition(@NotNull ApplierPartition appliers,
+                                                 @NotNull Consumer<AsyncFileListener.ChangeApplier> consumer) {
+    invokeAppliers(appliers.applyOnCurrentThread(), consumer);
+    if (appliers.forcefullyApplyOnEdt().isEmpty()) return;
+    try {
+      InternalThreading.invokeAndWaitWithTransferredWriteAction(() -> {
+        invokeAppliers(appliers.forcefullyApplyOnEdt(), consumer);
+      });
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      // all runtime exceptions should be caught already, but let's log to not lose some error
+      LOG.error(e);
+    }
+  }
+
+  private static void invokeAppliers(List<AsyncFileListener.ChangeApplier> appliers, Consumer<AsyncFileListener.ChangeApplier> consumer) {
     for (AsyncFileListener.ChangeApplier applier : appliers) {
       PingProgress.interactWithEdtProgress();
       try {
-        applier.beforeVfsChange();
+        consumer.accept(applier);
       }
       catch (ProcessCanceledException e) {
         throw e;
@@ -129,26 +161,40 @@ public final class AsyncEventSupport {
     }
   }
 
-  private static void afterVfsChange(@NotNull List<AsyncFileListener.ChangeApplier> appliers) {
-    for (AsyncFileListener.ChangeApplier applier : appliers) {
-      PingProgress.interactWithEdtProgress();
-      try {
-        applier.afterVfsChange();
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
+  private record ApplierPartition(
+    @NotNull List<AsyncFileListener.ChangeApplier> applyOnCurrentThread,
+    @NotNull List<AsyncFileListener.ChangeApplier> forcefullyApplyOnEdt) {
+  }
+
+  private static ApplierPartition partitionAppliers(@NotNull List<AsyncFileListener.ChangeApplier> appliers) {
+    if (EDT.isCurrentThreadEdt()) {
+      return new ApplierPartition(appliers, Collections.emptyList());
     }
+    else {
+      List<AsyncFileListener.ChangeApplier> backgroundApplier = new ArrayList<>();
+      List<AsyncFileListener.ChangeApplier> edtApplier = new ArrayList<>(appliers.size());
+      for (AsyncFileListener.ChangeApplier applier : appliers) {
+        if (applier instanceof AsyncFileListener.ChangeApplierBackgroundable) {
+          backgroundApplier.add(applier);
+        }
+        else {
+          edtApplier.add(applier);
+        }
+      }
+      return new ApplierPartition(backgroundApplier, edtApplier);
+    }
+  }
+
+  private static void afterVfsChange(@NotNull ApplierPartition appliers) {
+    executeAppliersInPartition(appliers, AsyncFileListener.ChangeApplier::afterVfsChange);
   }
 
   @RequiresWriteLock
   static void processEventsFromRefresh(@NotNull List<CompoundVFileEvent> events,
                                        @NotNull List<AsyncFileListener.ChangeApplier> appliers,
                                        boolean asyncProcessing) {
-    beforeVfsChange(appliers);
+    ApplierPartition partition = partitionAppliers(appliers);
+    beforeVfsChange(partition);
     try {
       ((PersistentFSImpl)PersistentFS.getInstance()).processEventsImpl(events, asyncProcessing);
     }
@@ -156,7 +202,7 @@ public final class AsyncEventSupport {
       LOG.error(e);
     }
     finally {
-      afterVfsChange(appliers);
+      afterVfsChange(partition);
     }
   }
 }
