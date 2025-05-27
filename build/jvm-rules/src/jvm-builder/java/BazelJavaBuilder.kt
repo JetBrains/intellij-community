@@ -6,7 +6,6 @@ package org.jetbrains.bazel.jvm.worker.java
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.currentJavaVersion
-import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.lang.JavaVersion
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -54,18 +53,14 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.JpsJavaSdkType
 import org.jetbrains.jps.model.java.LanguageLevel
 import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration
-import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
 import org.jetbrains.jps.model.library.sdk.JpsSdk
 import org.jetbrains.jps.model.module.JpsModule
-import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
-import org.jetbrains.jps.model.serialization.PathMacroUtil
 import org.jetbrains.jps.service.JpsServiceManager
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import java.util.function.BiConsumer
 import java.util.function.Function
 import javax.tools.Diagnostic
 import javax.tools.JavaFileObject
@@ -91,16 +86,6 @@ private const val ENABLE_PREVIEW_OPTION = "--enable-preview"
 private const val PROCESSOR_MODULE_PATH_OPTION = "--processor-module-path"
 private const val SOURCE_OPTION = "-source"
 private const val SYSTEM_OPTION = "--system"
-
-@Suppress("RemoveRedundantQualifierName")
-private val FILTERED_OPTIONS = java.util.Set.of(TARGET_OPTION, RELEASE_OPTION, "-d")
-
-@Suppress("RemoveRedundantQualifierName", "SpellCheckingInspection")
-private val FILTERED_SINGLE_OPTIONS: MutableSet<String?> = java.util.Set.of(
-  "-g", "-deprecation", "-nowarn", "-verbose", PROC_NONE_OPTION, PROC_ONLY_OPTION, PROC_FULL_OPTION, "-proceedOnError"
-)
-
-private val USER_DEFINED_BYTECODE_TARGET = Key.create<String>("_user_defined_bytecode_target_")
 
 private val moduleInfoFileSuffix = File.separatorChar + "module-info.java"
 
@@ -171,7 +156,8 @@ internal class BazelJavaBuilder(
       mappingsCallback = if (isIncremental) JavaBuilderUtil.getDependenciesRegistrar(context) else null,
     )
 
-    val classpath = module.container.getChild(BazelConfigurationHolder.KIND).classPath
+    val bazelConfigurationHolder = module.container.getChild(BazelConfigurationHolder.KIND)
+    val classpath = bazelConfigurationHolder.classPath
     var filesWithErrors: Collection<File>? = null
     try {
       val diagnosticSink = JavaDiagnosticSink(context = context, registrars = refRegistrars, out = out)
@@ -193,6 +179,7 @@ internal class BazelJavaBuilder(
               originalClassPath = classpath,
               diagnosticSink = diagnosticSink,
               jpsJavaFileProvider = jpsJavaFileProvider,
+              javaExports = bazelConfigurationHolder.javaExports,
               span = it,
             )
           }
@@ -234,6 +221,7 @@ internal class BazelJavaBuilder(
     originalClassPath: Array<Path>,
     diagnosticSink: DiagnosticOutputConsumer,
     jpsJavaFileProvider: BazelJpsJavacFileProvider,
+    javaExports: List<String>,
   ): Boolean {
     val javaExtensionService = JpsJavaExtensionService.getInstance()
     val targetLanguageLevel = javaExtensionService.getModuleExtension(module)!!.languageLevel!!.feature()
@@ -253,6 +241,7 @@ internal class BazelJavaBuilder(
       module = module,
       profile = javaExtensionService.getCompilerConfiguration(context.projectDescriptor.project).getAnnotationProcessingProfile(module),
       compilingTool = compilingTool,
+      javaExports = javaExports,
     )
     val options = vmCompilerOptions.second
     var moduleInfoFile: Path? = null
@@ -312,6 +301,7 @@ internal class BazelJavaBuilder(
         compilingTool = compilingTool,
         options = options,
         files = files,
+        javaExports = javaExports,
         outSink = {
           throw IllegalStateException("should not be called")
         },
@@ -341,6 +331,7 @@ internal class BazelJavaBuilder(
       compilingTool = compilingTool,
       options = options,
       files = files,
+      javaExports = javaExports,
       outSink = {
         throw IllegalStateException("should not be called")
       },
@@ -433,6 +424,7 @@ private fun invokeJavac(
   compilingTool: JavaCompilingTool,
   options: Iterable<String>,
   files: Sequence<Path>,
+  javaExports: List<String>,
   outSink: (OutputFileObject) -> Unit,
   javacCall: (options: Iterable<String>, files: Iterable<File>, outSink: OutputFileConsumer) -> Boolean,
 ): Boolean {
@@ -456,6 +448,7 @@ private fun invokeJavac(
       module = module,
       profile = null,
       compilingTool = compilingTool,
+      javaExports = javaExports,
     ).second
     return javacCall(compileOnlyOptions, (files.map { it.toFile() } + generated).asIterable(), outSink)
   }
@@ -484,8 +477,8 @@ private fun getCompilationOptions(
   module: JpsModule,
   profile: ProcessorConfigProfile?,
   compilingTool: JavaCompilingTool,
+  javaExports: List<String>,
 ): Pair<Iterable<String>, Iterable<String>> {
-  val compilationOptions = ArrayList<String>()
   val vmOptions = ArrayList<String>()
   if (!JavacMain.TRACK_AP_GENERATED_DEPENDENCIES) {
     vmOptions.add("-D" + JavacMain.TRACK_AP_GENERATED_DEPENDENCIES_PROPERTY + "=false")
@@ -496,58 +489,17 @@ private fun getCompilationOptions(
   }
   val project = context.projectDescriptor.project
   val compilerOptions = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project).currentCompilerOptions
-  if (compilerOptions.DEBUGGING_INFO) {
-    compilationOptions.add("-g")
-  }
-  if (compilerOptions.DEPRECATION) {
-    compilationOptions.add("-deprecation")
-  }
-  if (compilerOptions.GENERATE_NO_WARNINGS) {
-    @Suppress("SpellCheckingInspection")
-    compilationOptions.add("-nowarn")
-  }
-  compilationOptions.add(ENCODING_OPTION)
-  compilationOptions.add("utf-8")
-
-  val customArgs = compilerOptions.ADDITIONAL_OPTIONS_STRING
   require(compilerOptions.ADDITIONAL_OPTIONS_OVERRIDE.isEmpty())
 
-  if (customArgs != null && !customArgs.isEmpty()) {
-    var appender = BiConsumer { obj: MutableList<String>, e: String -> obj.add(e) }
-    val baseDirectory = JpsModelSerializationDataService.getBaseDirectory(module)
-    if (baseDirectory != null) {
-      //this is a temporary workaround to allow passing per-module compiler options for Eclipse compiler in form
-      // `-properties $MODULE_DIR$/.settings/org.eclipse.jdt.core.prefs`
-      val moduleDirPath = baseDirectory.toPath().toAbsolutePath().normalize().toString()
-      appender = BiConsumer { strings, option -> strings.add(option.replace(PathMacroUtil.DEPRECATED_MODULE_DIR, moduleDirPath)) }
-    }
-
-    var skip = false
-    var targetOptionFound = false
-    for (userOption in ParametersListUtil.parse(customArgs)) {
-      if (FILTERED_OPTIONS.contains(userOption)) {
-        skip = true
-        targetOptionFound = TARGET_OPTION == userOption
-        continue
-      }
-      if (skip) {
-        skip = false
-        if (targetOptionFound) {
-          targetOptionFound = false
-          USER_DEFINED_BYTECODE_TARGET.set(context, userOption)
-        }
-      }
-      else {
-        if (!FILTERED_SINGLE_OPTIONS.contains(userOption)) {
-          if (userOption.startsWith("-J-")) {
-            vmOptions.add(userOption.substring("-J".length))
-          }
-          else {
-            appender.accept(compilationOptions, userOption)
-          }
-        }
-      }
-    }
+  val compilationOptions = ArrayList<String>()
+  compilationOptions.add("-g")
+  @Suppress("SpellCheckingInspection")
+  compilationOptions.add("-nowarn")
+  compilationOptions.add(ENCODING_OPTION)
+  compilationOptions.add("utf-8")
+  for (export in javaExports) {
+    compilationOptions.add("--add-exports")
+    compilationOptions.add(export)
   }
 
   for (extension in JpsServiceManager.getInstance().getExtensions(ExternalJavacOptionsProvider::class.java)) {
@@ -555,7 +507,7 @@ private fun getCompilationOptions(
   }
 
   addCompilationOptions(
-    compilerOptions = compilerOptions,
+    hasAddExports = javaExports.isNotEmpty(),
     compilerSdkVersion = compilerSdkVersion,
     options = compilationOptions,
     module = module,
@@ -570,9 +522,9 @@ private fun addCompilationOptions(
   options: MutableList<String>,
   module: JpsModule,
   profile: ProcessorConfigProfile?,
-  compilerOptions: JpsJavaCompilerOptions,
+  hasAddExports: Boolean,
 ) {
-  addCrossCompilationOptions(compilerSdkVersion, options, module, compilerOptions)
+  addCrossCompilationOptions(compilerSdkVersion, options, module, hasAddExports)
 
   if (!options.contains(ENABLE_PREVIEW_OPTION)) {
     val level = JpsJavaExtensionService.getInstance().getLanguageLevel(module)
@@ -629,7 +581,7 @@ private fun addAnnotationProcessingOptions(options: MutableList<String>, profile
   return true
 }
 
-private fun addCrossCompilationOptions(compilerSdkVersion: Int, options: MutableList<String>, module: JpsModule, compilerOptions: JpsJavaCompilerOptions) {
+private fun addCrossCompilationOptions(compilerSdkVersion: Int, options: MutableList<String>, module: JpsModule, hasAddExports: Boolean) {
   val level = requireNotNull(JpsJavaExtensionService.getInstance().getLanguageLevel(module)) {
     "Language level must be set for module ${module.name}"
   }
@@ -643,7 +595,7 @@ private fun addCrossCompilationOptions(compilerSdkVersion: Int, options: Mutable
   require(bytecodeTarget > 0)
 
   // release cannot be used if add-exports specified
-  if (compilerOptions.ADDITIONAL_OPTIONS_STRING == null && shouldUseReleaseOption(compilerSdkVersion, bytecodeTarget, bytecodeTarget)) {
+  if (!hasAddExports && shouldUseReleaseOption(compilerSdkVersion, bytecodeTarget, bytecodeTarget)) {
     options.add(RELEASE_OPTION)
     options.add(complianceOption(bytecodeTarget))
     return

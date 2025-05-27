@@ -23,7 +23,6 @@ import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsElementReference
 import org.jetbrains.jps.model.JpsModel
-import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.JpsReferenceableElement
 import org.jetbrains.jps.model.ex.JpsNamedCompositeElementBase
 import org.jetbrains.jps.model.impl.JpsElementCollectionImpl
@@ -34,7 +33,6 @@ import org.jetbrains.jps.model.java.JpsJavaLibraryType
 import org.jetbrains.jps.model.java.JpsJavaModuleType
 import org.jetbrains.jps.model.java.JpsJavaSdkType
 import org.jetbrains.jps.model.java.LanguageLevel
-import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsLibraryReference
 import org.jetbrains.jps.model.library.JpsLibraryRoot
@@ -127,14 +125,13 @@ internal fun loadJpsModel(
     classPathFiles = classPathFiles,
     sources = sources,
   )
-  configHash.putUnorderedIterable(args.optionalList(JvmBuilderFlags.ADD_EXPORT), HashFunnel.forString(), Hashing.xxh3_64())
+  val javaExports = args.optionalList(JvmBuilderFlags.ADD_EXPORT)
+  configHash.putUnorderedIterable(javaExports, HashFunnel.forString(), Hashing.xxh3_64())
   digests.set(TargetConfigurationDigestProperty.COMPILER, configHash.asLong)
 
   val project = model.project
   project.addModule(module)
   project.container.setChild(JpsProjectSerializationDataExtensionImpl.ROLE, JpsProjectSerializationDataExtensionImpl(classPathRootDir.parent))
-
-  configureJavac(project, args)
 
   module.container.setChild(BazelConfigurationHolder.KIND, BazelConfigurationHolder(
     classPath = classPathFiles,
@@ -143,24 +140,10 @@ internal fun loadJpsModel(
     kotlinArgs = kotlinArgs,
     classPathRootDir = classPathRootDir,
     sources = sources,
+    javaExports = javaExports,
   ))
 
   return model to digests
-}
-
-private fun configureJavac(project: JpsProject, args: ArgMap<JvmBuilderFlags>) {
-  val configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project)
-  val compilerOptions = JpsJavaCompilerOptions()
-  compilerOptions.PREFER_TARGET_JDK_COMPILER = false
-  compilerOptions.DEPRECATION = false
-  compilerOptions.GENERATE_NO_WARNINGS = true
-  compilerOptions.MAXIMUM_HEAP_SIZE = 512
-  compilerOptions.ADDITIONAL_OPTIONS_STRING = args.optionalList(JvmBuilderFlags.ADD_EXPORT).asSequence()
-    .filter { !it.isBlank() }
-    .joinToString(separator = " ") {
-      "--add-exports $it"
-    }
-  configuration.setCompilerOptions("Javac", compilerOptions)
 }
 
 private fun configureKotlinCompiler(

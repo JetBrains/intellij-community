@@ -16,6 +16,7 @@ class BazelConfigurationHolder(
   @JvmField val classPathRootDir: Path,
   @JvmField val sources: List<Path>,
   @JvmField val trackableDependencyFiles: ObjectList<Path>,
+  @JvmField val javaExports: List<String>,
 ) : JpsElementBase<BazelConfigurationHolder>() {
   companion object {
     @JvmField val KIND: JpsElementChildRoleBase<BazelConfigurationHolder> = JpsElementChildRoleBase.create("kotlin facet extension")
