@@ -21,18 +21,18 @@ import javax.swing.JPanel
 @ApiStatus.Internal
 class ShareProjectExistingRemotesDialog(
   project: Project,
-  hostServiceName: @NlsContexts.ConfigurableName String,
+  private val hostServiceName: @NlsContexts.ConfigurableName String,
   private val remotes: List<String>
 ) : DialogWrapper(project) {
   init {
-    title = GitBundle.message("share.error.project.is.on.github", hostServiceName)
+    title = GitBundle.message("share.error.project.is.on.host", hostServiceName)
     setOKButtonText(GitBundle.message("share.anyway.button"))
     init()
   }
 
   override fun createCenterPanel(): JComponent {
-    val mainText = JBLabel(if (remotes.size == 1) GitBundle.message("share.action.remote.is.on.github")
-                           else GitBundle.message("share.action.remotes.are.on.github"))
+    val mainText = JBLabel(if (remotes.size == 1) GitBundle.message("share.action.remote.is.on.host", hostServiceName)
+                           else GitBundle.message("share.action.remotes.are.on.host", hostServiceName))
 
     val remotesPanel = JPanel().apply {
       layout = BoxLayout(this, BoxLayout.Y_AXIS)

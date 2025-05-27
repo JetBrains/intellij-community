@@ -127,7 +127,7 @@ class GitShareProjectService(
 
             // git push origin master
             if (!reporter.itemStep(
-                GitBundle.message("share.process.pushing.to.github.master", hostServiceName, repository.currentBranch?.name ?: "")) {
+                GitBundle.message("share.process.pushing.to.host.master", hostServiceName, repository.currentBranch?.name ?: "")) {
                 LOG.info("Pushing to github master")
                 pushCurrentBranch(hostServiceName, repository, remoteName, remoteUrl, repositoryName, url)
               }
