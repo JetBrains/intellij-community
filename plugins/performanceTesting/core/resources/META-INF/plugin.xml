@@ -1,4 +1,4 @@
-<idea-plugin package="com.jetbrains.performancePlugin">
+<idea-plugin package="com.jetbrains.performancePlugin" allow-bundled-update="true">
   <id>com.jetbrains.performancePlugin</id>
   <name>Performance Testing</name>
   <vendor>JetBrains</vendor>
