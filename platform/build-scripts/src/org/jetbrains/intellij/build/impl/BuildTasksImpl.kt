@@ -373,7 +373,8 @@ private suspend fun createDistributionState(context: BuildContext): Distribution
     val builtinModuleData = spanBuilder("build provided module list").use {
       Files.deleteIfExists(providedModuleFile)
       // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
-      context.createProductRunner().runProduct(listOf("listBundledPlugins", providedModuleFile.toString()))
+      // it's necessary to use the dev build to get correct paths in 'layout' data 
+      context.createProductRunner(forceUseDevBuild = true).runProduct(listOf("listBundledPlugins", providedModuleFile.toString()))
 
       context.productProperties.customizeBuiltinModules(context = context, builtinModulesFile = providedModuleFile)
       try {

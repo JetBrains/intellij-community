@@ -11,6 +11,7 @@ import org.jetbrains.intellij.build.checkForNoDiskSpace
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.buildProduct
 import org.jetbrains.intellij.build.dev.getIdeSystemProperties
+import org.jetbrains.intellij.build.impl.MODULE_DESCRIPTORS_JAR_PATH
 import java.nio.file.Path
 import kotlin.time.Duration
 
@@ -33,6 +34,7 @@ internal suspend fun createDevModeProductRunner(context: BuildContext, additiona
         projectDir = homeDir,
         devRootDir = context.paths.tempDir.resolve("dev-run"),
         jarCacheDir = homeDir.resolve("out/dev-run/jar-cache"),
+        generateRuntimeModuleRepository = context.useModularLoader,
         productionClassOutput = context.classesOutputDirectory.resolve("production"),
         platformClassPathConsumer = { _, classPath, _ ->
           newClassPath = classPath
@@ -59,13 +61,21 @@ private class DevModeProductRunner(
     else {
       listOf()
     }
+    val vmPropertiesForLoader = if (context.useModularLoader) {
+      VmProperties(mapOf(
+        "intellij.platform.runtime.repository.path" to "$homePath/$MODULE_DESCRIPTORS_JAR_PATH",
+        "intellij.platform.root.module" to context.productProperties.rootModuleForModularLoader!!,
+        "intellij.platform.product.mode" to context.productProperties.productMode.id,
+      ))
+    }
+    else VmProperties(emptyMap())
     runApplicationStarter(
       context = context,
       classpath = classPath,
       args = args,
       timeout = timeout,
       homePath = homePath,
-      vmProperties = additionalVmProperties + getIdeSystemProperties(homePath),
+      vmProperties = additionalVmProperties + vmPropertiesForLoader + getIdeSystemProperties(homePath),
       isFinalClassPath = true,
       vmOptions = multiRoutingFsBootClassPath,
     )

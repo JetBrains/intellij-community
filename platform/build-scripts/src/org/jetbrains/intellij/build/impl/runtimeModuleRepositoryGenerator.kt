@@ -338,7 +338,6 @@ private fun DistributionFileEntry.getRuntimeModuleId(): RuntimeModuleId? {
 }
 
 private const val MODULES_DIR_NAME = "modules"
-@VisibleForTesting
 const val MODULE_DESCRIPTORS_JAR_PATH: String = "$MODULES_DIR_NAME/$JAR_REPOSITORY_FILE_NAME" 
 
 private val dependenciesToSkip = mapOf(

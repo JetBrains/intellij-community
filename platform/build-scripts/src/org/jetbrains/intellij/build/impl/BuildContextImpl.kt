@@ -414,9 +414,9 @@ class BuildContextImpl internal constructor(
     createDevModeProductRunner(this@BuildContextImpl)
   }
 
-  override suspend fun createProductRunner(additionalPluginModules: List<String>): IntellijProductRunner {
+  override suspend fun createProductRunner(additionalPluginModules: List<String>, forceUseDevBuild: Boolean): IntellijProductRunner {
     when {
-      useModularLoader -> return ModuleBasedProductRunner(productProperties.rootModuleForModularLoader!!, this)
+      useModularLoader && !forceUseDevBuild -> return ModuleBasedProductRunner(productProperties.rootModuleForModularLoader!!, this)
       additionalPluginModules.isEmpty() -> return devModeProductRunner.await()
       else -> return createDevModeProductRunner(additionalPluginModules = additionalPluginModules, context = this)
     }
