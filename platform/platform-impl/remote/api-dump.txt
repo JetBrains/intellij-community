@@ -1,0 +1,7 @@
+com.intellij.remote.RemoteConnector
+- getAdditionalData():java.lang.String
+- a:getConnectorKey():java.lang.Object
+- a:getId():java.lang.String
+- a:getName():java.lang.String
+- a:getType():com.intellij.remote.RemoteConnectionType
+- a:produceRemoteCredentials(com.intellij.util.Consumer):V

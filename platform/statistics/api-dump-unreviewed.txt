@@ -137,8 +137,6 @@ f:com.intellij.internal.statistic.eventLog.StatisticsEventLogFileWriter
 - getLogFilesProvider():com.intellij.internal.statistic.eventLog.EventLogFilesProvider
 - log(com.jetbrains.fus.reporting.model.lion3.LogEvent):V
 - rollOver():V
-com.intellij.internal.statistic.eventLog.StatisticsEventLogListener
-- a:onLogEvent(com.jetbrains.fus.reporting.model.lion3.LogEvent,java.lang.String,java.util.Map):V
 f:com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
 - sf:INSTANCE:com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
 - sf:forceLoggingAlwaysEnabled():Z
@@ -151,15 +149,6 @@ com.intellij.internal.statistic.eventLog.StatisticsEventLogWriter
 - a:getActiveFile():com.intellij.internal.statistic.eventLog.EventLogFile
 - a:getLogFilesProvider():com.intellij.internal.statistic.eventLog.EventLogFilesProvider
 - a:log(com.jetbrains.fus.reporting.model.lion3.LogEvent):V
-- a:rollOver():V
-com.intellij.internal.statistic.eventLog.StatisticsEventLogger
-- a:cleanup():V
-- a:computeAsync(kotlin.jvm.functions.Function1):V
-- a:getActiveLogFile():com.intellij.internal.statistic.eventLog.EventLogFile
-- a:getLogFilesProvider():com.intellij.internal.statistic.eventLog.EventLogFilesProvider
-- a:logAsync(com.intellij.internal.statistic.eventLog.EventLogGroup,java.lang.String,java.util.Map,Z):java.util.concurrent.CompletableFuture
-- a:logAsync(com.intellij.internal.statistic.eventLog.EventLogGroup,java.lang.String,kotlin.jvm.functions.Function0,Z):java.util.concurrent.CompletableFuture
-- logAsync(com.intellij.internal.statistic.eventLog.EventLogGroup,java.lang.String,Z):java.util.concurrent.CompletableFuture
 - a:rollOver():V
 a:com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
 - sf:Companion:com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider$Companion

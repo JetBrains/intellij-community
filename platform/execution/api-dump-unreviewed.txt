@@ -1,10 +1,3 @@
-com.intellij.build.BuildContentManager
-- sf:TOOL_WINDOW_ID:java.lang.String
-- a:addContent(com.intellij.ui.content.Content):V
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.build.BuildContentManager
-- a:getOrCreateToolWindow():com.intellij.openapi.wm.ToolWindow
-- a:removeContent(com.intellij.ui.content.Content):V
-- a:setSelectedContent(com.intellij.ui.content.Content,Z,Z,Z,java.lang.Runnable):V
 a:com.intellij.diagnostic.logging.AdditionalTabComponent
 - javax.swing.JPanel
 - com.intellij.openapi.ui.ComponentContainer
@@ -19,9 +12,6 @@ a:com.intellij.diagnostic.logging.IndependentLogFilter
 - p:<init>(java.lang.String):V
 - a:isSelected():Z
 - a:selectFilter():V
-com.intellij.diagnostic.logging.LogConsole
-- a:getFilterModel():com.intellij.diagnostic.logging.LogFilterModel
-- a:setFilterModel(com.intellij.diagnostic.logging.LogFilterModel):V
 com.intellij.diagnostic.logging.LogConsoleListener
 - a:loggingWillBeStopped():V
 f:com.intellij.diagnostic.logging.LogConsolePreferences
@@ -66,9 +56,6 @@ c:com.intellij.diagnostic.logging.LogFilter
 - readExternal(org.jdom.Element):V
 - setIcon(javax.swing.Icon):V
 - writeExternal(org.jdom.Element):V
-com.intellij.diagnostic.logging.LogFilterListener
-- a:onFilterStateChange(com.intellij.diagnostic.logging.LogFilter):V
-- a:onTextFilterChange():V
 a:com.intellij.diagnostic.logging.LogFilterModel
 - <init>():V
 - a:addFilterListener(com.intellij.diagnostic.logging.LogFilterListener):V
@@ -93,9 +80,6 @@ a:com.intellij.diagnostic.logging.LogFilterRegistrar
 - a:isFilterSelected(com.intellij.diagnostic.logging.LogFilter):Z
 - a:registerFilter(com.intellij.diagnostic.logging.LogFilter):V
 - a:setFilterSelected(com.intellij.diagnostic.logging.LogFilter,Z):V
-com.intellij.diagnostic.logging.LogFormatter
-- a:formatMessage(java.lang.String):java.lang.String
-- a:formatPrefix(java.lang.String):java.lang.String
 c:com.intellij.diagnostic.logging.LogFragment
 - <init>(java.lang.String,com.intellij.openapi.util.Key):V
 - getOutputType():com.intellij.openapi.util.Key
@@ -173,18 +157,6 @@ f:com.intellij.execution.ExecutionBundle
 - sf:PATH_TO_BUNDLE:java.lang.String
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 - s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
-com.intellij.execution.ExecutionListener
-- java.util.EventListener
-- processNotStarted(java.lang.String,com.intellij.execution.runners.ExecutionEnvironment):V
-- processNotStarted(java.lang.String,com.intellij.execution.runners.ExecutionEnvironment,java.lang.Throwable):V
-- processStartScheduled(java.lang.String,com.intellij.execution.runners.ExecutionEnvironment):V
-- processStarted(java.lang.String,com.intellij.execution.runners.ExecutionEnvironment,com.intellij.execution.process.ProcessHandler):V
-- processStarting(java.lang.String,com.intellij.execution.runners.ExecutionEnvironment):V
-- processStarting(java.lang.String,com.intellij.execution.runners.ExecutionEnvironment,com.intellij.execution.process.ProcessHandler):V
-- processTerminated(com.intellij.execution.configurations.RunProfile,com.intellij.execution.process.ProcessHandler):V
-- processTerminated(java.lang.String,com.intellij.execution.runners.ExecutionEnvironment,com.intellij.execution.process.ProcessHandler,I):V
-- processTerminating(com.intellij.execution.configurations.RunProfile,com.intellij.execution.process.ProcessHandler):V
-- processTerminating(java.lang.String,com.intellij.execution.runners.ExecutionEnvironment,com.intellij.execution.process.ProcessHandler):V
 a:com.intellij.execution.ExecutionManager
 - sf:Companion:com.intellij.execution.ExecutionManager$Companion
 - sf:EXECUTION_SESSION_ID_KEY:com.intellij.openapi.util.Key
@@ -203,10 +175,6 @@ a:com.intellij.execution.ExecutionManager
 - a:startRunProfile(com.intellij.execution.RunProfileStarter,com.intellij.execution.runners.ExecutionEnvironment):V
 f:com.intellij.execution.ExecutionManager$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.execution.ExecutionManager
-com.intellij.execution.ExecutionResult
-- a:getActions():com.intellij.openapi.actionSystem.AnAction[]
-- a:getExecutionConsole():com.intellij.execution.ui.ExecutionConsole
-- a:getProcessHandler():com.intellij.execution.process.ProcessHandler
 a:com.intellij.execution.ExecutionTarget
 - <init>():V
 - canRun(com.intellij.execution.configurations.RunConfiguration):Z
@@ -219,8 +187,6 @@ a:com.intellij.execution.ExecutionTarget
 - hashCode():I
 - isExternallyManaged():Z
 - isReady():Z
-com.intellij.execution.ExecutionTargetListener
-- a:activeTargetChanged(com.intellij.execution.ExecutionTarget):V
 a:com.intellij.execution.ExecutionTargetManager
 - sf:TOPIC:com.intellij.util.messages.Topic
 - <init>():V
@@ -343,40 +309,6 @@ f:com.intellij.execution.RunManager$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.execution.RunManager
 - f:getInstanceIfCreated(com.intellij.openapi.project.Project):com.intellij.execution.RunManager
 - f:suggestUniqueName(java.lang.String,java.util.Collection):java.lang.String
-com.intellij.execution.RunnerAndConfigurationSettings
-- checkSettings():V
-- a:checkSettings(com.intellij.execution.Executor):V
-- a:createFactory():com.intellij.openapi.util.Factory
-- a:getConfiguration():com.intellij.execution.configurations.RunConfiguration
-- a:getConfigurationSettings(com.intellij.execution.runners.ProgramRunner):com.intellij.execution.configurations.ConfigurationPerRunnerSettings
-- a:getFactory():com.intellij.execution.configurations.ConfigurationFactory
-- a:getFolderName():java.lang.String
-- a:getName():java.lang.String
-- a:getPathIfStoredInArbitraryFileInProject():java.lang.String
-- a:getRunnerSettings(com.intellij.execution.runners.ProgramRunner):com.intellij.execution.configurations.RunnerSettings
-- a:getType():com.intellij.execution.configurations.ConfigurationType
-- a:getUniqueID():java.lang.String
-- a:isActivateToolWindowBeforeRun():Z
-- a:isEditBeforeRun():Z
-- a:isFocusToolWindowBeforeRun():Z
-- isShared():Z
-- isSingleton():Z
-- a:isStoredInArbitraryFileInProject():Z
-- a:isStoredInDotIdeaFolder():Z
-- a:isStoredInLocalWorkspace():Z
-- a:isTemplate():Z
-- a:isTemporary():Z
-- a:setActivateToolWindowBeforeRun(Z):V
-- a:setEditBeforeRun(Z):V
-- a:setFocusToolWindowBeforeRun(Z):V
-- a:setFolderName(java.lang.String):V
-- a:setName(java.lang.String):V
-- setSingleton(Z):V
-- a:setTemporary(Z):V
-- a:storeInArbitraryFileInProject(java.lang.String):V
-- a:storeInDotIdeaFolder():V
-- a:storeInLocalWorkspace():V
-- a:toString():java.lang.String
 com.intellij.execution.RunnerIconProvider
 - a:getExecutorIcon(com.intellij.execution.configurations.RunConfiguration,com.intellij.execution.Executor):javax.swing.Icon
 a:com.intellij.execution.configuration.AbstractRunConfiguration
@@ -422,9 +354,6 @@ c:com.intellij.execution.configuration.RunConfigurationExtensionsManager
 - f:readExternal(com.intellij.execution.configurations.RunConfigurationBase,org.jdom.Element):V
 - f:validateConfiguration(com.intellij.execution.configurations.RunConfigurationBase,Z):V
 - f:writeExternal(com.intellij.execution.configurations.RunConfigurationBase,org.jdom.Element):V
-com.intellij.execution.configurations.AdditionalTabComponentManager
-- a:addAdditionalTabComponent(com.intellij.diagnostic.logging.AdditionalTabComponent,java.lang.String):V
-- a:removeAdditionalTabComponent(com.intellij.diagnostic.logging.AdditionalTabComponent):V
 a:com.intellij.execution.configurations.CommandLineState
 - com.intellij.execution.configurations.RunProfileState
 - p:<init>(com.intellij.execution.runners.ExecutionEnvironment):V
@@ -461,24 +390,6 @@ a:com.intellij.execution.configurations.ConfigurationFactory
 - isApplicable(com.intellij.openapi.project.Project):Z
 - isConfigurationSingletonByDefault():Z
 - isEditableInDumbMode():Z
-com.intellij.execution.configurations.ConfigurationInfoProvider
-- a:getConfiguration():com.intellij.execution.configurations.RunConfiguration
-- a:getConfigurationSettings():com.intellij.execution.configurations.ConfigurationPerRunnerSettings
-- a:getRunner():com.intellij.execution.runners.ProgramRunner
-- a:getRunnerSettings():com.intellij.execution.configurations.RunnerSettings
-com.intellij.execution.configurations.ConfigurationPerRunnerSettings
-- com.intellij.openapi.util.JDOMExternalizable
-com.intellij.execution.configurations.ConfigurationType
-- com.intellij.openapi.project.PossiblyDumbAware
-- sf:CONFIGURATION_TYPE_EP:com.intellij.openapi.extensions.ExtensionPointName
-- a:getConfigurationFactories():com.intellij.execution.configurations.ConfigurationFactory[]
-- a:getConfigurationTypeDescription():java.lang.String
-- a:getDisplayName():java.lang.String
-- getHelpTopic():java.lang.String
-- a:getIcon():javax.swing.Icon
-- a:getId():java.lang.String
-- getTag():java.lang.String
-- isManaged():Z
 a:com.intellij.execution.configurations.ConfigurationTypeBase
 - com.intellij.execution.configurations.ConfigurationType
 - p:<init>(java.lang.String,java.lang.String,java.lang.String,com.intellij.openapi.util.NotNullLazyValue):V
@@ -497,10 +408,6 @@ f:com.intellij.execution.configurations.ConfigurationTypeUtil
 - sf:isEditableInDumbMode(com.intellij.execution.RunnerAndConfigurationSettings):Z
 - sf:isEditableInDumbMode(com.intellij.execution.configurations.ConfigurationType):Z
 - sf:isEditableInDumbMode(com.intellij.execution.configurations.RunConfiguration):Z
-com.intellij.execution.configurations.LocatableConfiguration
-- com.intellij.execution.configurations.RunConfiguration
-- a:isGeneratedName():Z
-- suggestedName():java.lang.String
 a:com.intellij.execution.configurations.LocatableConfigurationBase
 - com.intellij.execution.configurations.RunConfigurationBase
 - com.intellij.execution.configurations.LocatableConfiguration
@@ -593,13 +500,6 @@ f:com.intellij.execution.configurations.ModuleBasedConfigurationOptions$Classpat
 - f:getPath():java.lang.String
 - f:setExclude(Z):V
 - f:setPath(java.lang.String):V
-com.intellij.execution.configurations.ModuleRunConfiguration
-- com.intellij.execution.configurations.ModuleRunProfile
-- com.intellij.execution.configurations.RunConfiguration
-com.intellij.execution.configurations.ModuleRunProfile
-- com.intellij.execution.configurations.RunProfileWithCompileBeforeLaunchOption
-- com.intellij.execution.configurations.SearchScopeProvidingRunProfile
-- getSearchScope():com.intellij.psi.search.GlobalSearchScope
 f:com.intellij.execution.configurations.PredefinedLogFile
 - com.intellij.openapi.components.BaseState
 - <init>():V
@@ -608,34 +508,6 @@ f:com.intellij.execution.configurations.PredefinedLogFile
 - f:isEnabled():Z
 - f:setEnabled(Z):V
 - f:setId(java.lang.String):V
-com.intellij.execution.configurations.RefactoringListenerProvider
-- a:getRefactoringElementListener(com.intellij.psi.PsiElement):com.intellij.refactoring.listeners.RefactoringElementListener
-com.intellij.execution.configurations.RemoteRunProfile
-- com.intellij.execution.configurations.RunProfile
-com.intellij.execution.configurations.RunConfiguration
-- com.intellij.execution.configurations.RunProfile
-- java.lang.Cloneable
-- sf:DATA_KEY:com.intellij.openapi.actionSystem.DataKey
-- checkConfiguration():V
-- a:clone():com.intellij.execution.configurations.RunConfiguration
-- createRunnerSettings(com.intellij.execution.configurations.ConfigurationInfoProvider):com.intellij.execution.configurations.ConfigurationPerRunnerSettings
-- getBeforeRunTasks():java.util.List
-- a:getConfigurationEditor():com.intellij.openapi.options.SettingsEditor
-- a:getFactory():com.intellij.execution.configurations.ConfigurationFactory
-- getId():java.lang.String
-- getPresentableType():java.lang.String
-- a:getProject():com.intellij.openapi.project.Project
-- getRunnerSettingsEditor(com.intellij.execution.runners.ProgramRunner):com.intellij.openapi.options.SettingsEditor
-- getType():com.intellij.execution.configurations.ConfigurationType
-- getUniqueID():I
-- hideDisabledExecutorButtons():Z
-- isAllowRunningInParallel():Z
-- readExternal(org.jdom.Element):V
-- restartSingleton(com.intellij.execution.runners.ExecutionEnvironment):com.intellij.execution.configurations.RunConfiguration$RestartSingletonResult
-- setAllowRunningInParallel(Z):V
-- setBeforeRunTasks(java.util.List):V
-- a:setName(java.lang.String):V
-- writeExternal(org.jdom.Element):V
 e:com.intellij.execution.configurations.RunConfiguration$RestartSingletonResult
 - java.lang.Enum
 - sf:ASK_AND_RESTART:com.intellij.execution.configurations.RunConfiguration$RestartSingletonResult
@@ -767,27 +639,6 @@ e:com.intellij.execution.configurations.RunConfigurationSingletonPolicy
 - f:isPolicyConfigurable():Z
 - s:valueOf(java.lang.String):com.intellij.execution.configurations.RunConfigurationSingletonPolicy
 - s:values():com.intellij.execution.configurations.RunConfigurationSingletonPolicy[]
-com.intellij.execution.configurations.RunConfigurationWithRunnerSettings
-- com.intellij.execution.configurations.RunConfiguration
-- a:isSettingsNeeded():Z
-com.intellij.execution.configurations.RunConfigurationWithSuppressedDefaultDebugAction
-com.intellij.execution.configurations.RunConfigurationsSettings
-- sf:EXTENSION_POINT:com.intellij.openapi.extensions.ProjectExtensionPointName
-- a:createConfigurable():com.intellij.openapi.options.UnnamedConfigurable
-com.intellij.execution.configurations.RunProfile
-- a:getIcon():javax.swing.Icon
-- a:getName():java.lang.String
-- a:getState(com.intellij.execution.Executor,com.intellij.execution.runners.ExecutionEnvironment):com.intellij.execution.configurations.RunProfileState
-com.intellij.execution.configurations.RunProfileState
-- a:execute(com.intellij.execution.Executor,com.intellij.execution.runners.ProgramRunner):com.intellij.execution.ExecutionResult
-com.intellij.execution.configurations.RunProfileWithCompileBeforeLaunchOption
-- com.intellij.execution.configurations.RunProfile
-- getModules():com.intellij.openapi.module.Module[]
-- isBuildBeforeLaunchAddedByDefault():Z
-- isBuildProjectOnEmptyModuleList():Z
-- isExcludeCompileBeforeLaunchOption():Z
-com.intellij.execution.configurations.RunnerSettings
-- com.intellij.openapi.util.JDOMExternalizable
 c:com.intellij.execution.configurations.RuntimeConfigurationError
 - com.intellij.execution.configurations.RuntimeConfigurationException
 - <init>(java.lang.String):V
@@ -807,9 +658,6 @@ c:com.intellij.execution.configurations.RuntimeConfigurationWarning
 f:com.intellij.execution.configurations.SearchScopeProvider
 - <init>():V
 - s:createSearchScope(com.intellij.openapi.project.Project,com.intellij.execution.configurations.RunProfile):com.intellij.psi.search.GlobalSearchScope
-com.intellij.execution.configurations.SearchScopeProvidingRunProfile
-- com.intellij.execution.configurations.RunProfile
-- a:getSearchScope():com.intellij.psi.search.GlobalSearchScope
 a:com.intellij.execution.configurations.SimpleConfigurationType
 - com.intellij.execution.configurations.ConfigurationFactory
 - com.intellij.execution.configurations.ConfigurationType
@@ -839,9 +687,6 @@ a:com.intellij.execution.configurations.SyntheticRunConfigurationBase
 - com.intellij.execution.configurations.RunConfigurationBase
 - p:<init>(com.intellij.openapi.project.Project,com.intellij.execution.configurations.ConfigurationFactory,java.lang.String):V
 - f:getConfigurationEditor():com.intellij.openapi.options.SettingsEditor
-com.intellij.execution.configurations.TargetAwareRunProfile
-- com.intellij.execution.configurations.RunProfile
-- a:canRunOn(com.intellij.execution.ExecutionTarget):Z
 f:com.intellij.execution.configurations.UnknownConfigurationType
 - com.intellij.execution.configurations.SimpleConfigurationType
 - createTemplateConfiguration(com.intellij.openapi.project.Project):com.intellij.execution.configurations.RunConfiguration
@@ -866,26 +711,8 @@ f:com.intellij.execution.configurations.UnknownRunConfiguration
 - setDoNotStore(Z):V
 - setName(java.lang.String):V
 - writeExternal(org.jdom.Element):V
-com.intellij.execution.configurations.VirtualConfigurationType
-com.intellij.execution.configurations.WithoutOwnBeforeRunSteps
-com.intellij.execution.configurations.WrappingRunConfiguration
-- com.intellij.execution.configurations.WithoutOwnBeforeRunSteps
-- a:getPeer():com.intellij.execution.configurations.RunConfiguration
-- s:unwrapRunProfile(com.intellij.execution.configurations.RunProfile):com.intellij.execution.configurations.RunProfile
 com.intellij.execution.dashboard.RunDashboardListener
 - a:configurationChanged(com.intellij.execution.configurations.RunConfiguration,Z):V
-com.intellij.execution.dashboard.RunDashboardManager
-- sf:DASHBOARD_TOPIC:com.intellij.util.messages.Topic
-- a:getDashboardContentManager():com.intellij.ui.content.ContentManager
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.execution.dashboard.RunDashboardManager
-- a:getReuseCondition():java.util.function.Predicate
-- a:getRunConfigurations():java.util.List
-- a:getToolWindowIcon():javax.swing.Icon
-- a:getToolWindowId():java.lang.String
-- a:getTypes():java.util.Set
-- a:isShowInDashboard(com.intellij.execution.configurations.RunConfiguration):Z
-- a:setTypes(java.util.Set):V
-- a:updateDashboard(Z):V
 com.intellij.execution.dashboard.RunDashboardManager$RunDashboardService
 - a:getContent():com.intellij.ui.content.Content
 - a:getDescriptor():com.intellij.execution.ui.RunContentDescriptor
@@ -922,17 +749,6 @@ a:com.intellij.execution.executors.ExecutorGroup
 - pf:unregisterSettings(com.intellij.execution.executors.RunExecutorSettings):V
 f:com.intellij.execution.executors.ExecutorGroup$Companion
 - f:getGroupIfProxy(com.intellij.execution.Executor):com.intellij.execution.executors.ExecutorGroup
-com.intellij.execution.executors.RunExecutorSettings
-- a:canRun(com.intellij.execution.configurations.RunProfile):Z
-- a:getActionName():java.lang.String
-- a:getIcon():javax.swing.Icon
-- a:getStartActionText():java.lang.String
-- getStartActionText(java.lang.String):java.lang.String
-- a:isApplicable(com.intellij.openapi.project.Project):Z
-com.intellij.execution.filters.Filter
-- com.intellij.openapi.project.PossiblyDumbAware
-- sf:EMPTY_ARRAY:com.intellij.execution.filters.Filter[]
-- a:applyFilter(java.lang.String,I):com.intellij.execution.filters.Filter$Result
 e:com.intellij.execution.filters.Filter$NextAction
 - java.lang.Enum
 - sf:CONTINUE_FILTERING:com.intellij.execution.filters.Filter$NextAction
@@ -1168,30 +984,6 @@ f:com.intellij.execution.runners.IndicatorIcon
 - getIconHeight():I
 - getIconWidth():I
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
-com.intellij.execution.runners.ProcessProxy
-- a:attach(com.intellij.execution.process.ProcessHandler):V
-- canSendBreak():Z
-- canSendStop():Z
-- destroy():V
-- a:sendBreak():V
-- a:sendStop():V
-com.intellij.execution.runners.ProgramRunner
-- sf:PROGRAM_RUNNER_EP:com.intellij.openapi.extensions.ExtensionPointName
-- a:canRun(java.lang.String,com.intellij.execution.configurations.RunProfile):Z
-- checkConfiguration(com.intellij.execution.configurations.RunnerSettings,com.intellij.execution.configurations.ConfigurationPerRunnerSettings):V
-- createConfigurationData(com.intellij.execution.configurations.ConfigurationInfoProvider):com.intellij.execution.configurations.RunnerSettings
-- a:execute(com.intellij.execution.runners.ExecutionEnvironment):V
-- execute(com.intellij.execution.runners.ExecutionEnvironment,com.intellij.execution.runners.ProgramRunner$Callback):V
-- s:findRunnerById(java.lang.String):com.intellij.execution.runners.ProgramRunner
-- s:getRunner(java.lang.String,com.intellij.execution.configurations.RunProfile):com.intellij.execution.runners.ProgramRunner
-- a:getRunnerId():java.lang.String
-- getSettingsEditor(com.intellij.execution.Executor,com.intellij.execution.configurations.RunConfiguration):com.intellij.openapi.options.SettingsEditor
-- getStartActionText(com.intellij.execution.Executor,com.intellij.execution.configurations.RunConfiguration):java.lang.String
-- onProcessStarted(com.intellij.execution.configurations.RunnerSettings,com.intellij.execution.ExecutionResult):V
-com.intellij.execution.runners.ProgramRunner$Callback
-- processNotStarted():V
-- processNotStarted(java.lang.Throwable):V
-- a:processStarted(com.intellij.execution.ui.RunContentDescriptor):V
 a:com.intellij.execution.target.BaseTargetEnvironmentRequest
 - com.intellij.execution.target.TargetEnvironmentRequest
 - <init>():V
@@ -1209,9 +1001,6 @@ a:com.intellij.execution.target.BaseTargetEnvironmentRequest
 - getUploadVolumes():java.util.Set
 - onEnvironmentPrepared(kotlin.jvm.functions.Function2):V
 - setProjectPathOnTarget(java.lang.String):V
-com.intellij.execution.target.BrowsableTargetEnvironmentType
-- createBrowser(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.ui.TextComponentAccessor,java.awt.Component,java.util.function.Supplier):java.awt.event.ActionListener
-- createBrowser(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.ui.TextComponentAccessor,java.awt.Component,java.util.function.Supplier,com.intellij.execution.target.TargetBrowserHints):java.awt.event.ActionListener
 com.intellij.execution.target.BrowsableTargetEnvironmentType$ConfigurableCurrentConfigurationProvider
 - a:getCurrentConfiguration():com.intellij.execution.target.TargetEnvironmentConfiguration
 a:com.intellij.execution.target.ContributedConfigurationBase
@@ -1335,9 +1124,6 @@ a:com.intellij.execution.target.LanguageRuntimeType$Introspectable
 - promiseExecuteScript(java.lang.String):java.util.concurrent.CompletableFuture
 - promiseExecuteScript(java.util.List):java.util.concurrent.CompletableFuture
 - shutdown():V
-com.intellij.execution.target.LanguageRuntimeType$Introspector
-- sf:Companion:com.intellij.execution.target.LanguageRuntimeType$Introspector$Companion
-- a:introspect(com.intellij.execution.target.LanguageRuntimeType$Introspectable):java.util.concurrent.CompletableFuture
 f:com.intellij.execution.target.LanguageRuntimeType$Introspector$Companion
 - f:getDONE():java.util.concurrent.CompletableFuture
 f:com.intellij.execution.target.LanguageRuntimeType$VolumeDescriptor
@@ -1385,9 +1171,6 @@ com.intellij.execution.target.PersistentTargetEnvironmentConfiguration
 - a:isPersistent():Z
 f:com.intellij.execution.target.PersistentTargetEnvironmentConfigurationKt
 - sf:isPersistent(com.intellij.execution.target.TargetEnvironmentConfiguration):Z
-com.intellij.execution.target.PtyOptions
-- a:getInitialColumns():I
-- a:getInitialRows():I
 f:com.intellij.execution.target.ResolvedPortBinding
 - <init>(com.intellij.execution.target.HostPort,com.intellij.execution.target.HostPort):V
 - f:component1():com.intellij.execution.target.HostPort
@@ -1432,14 +1215,6 @@ a:com.intellij.execution.target.TargetConfigurationWithId
 com.intellij.execution.target.TargetConfigurationWithLocalFsAccess
 - a:getAsTargetConfig():com.intellij.execution.target.TargetEnvironmentConfiguration
 - a:getTargetPathIfLocalPathIsOnTarget(java.nio.file.Path):java.lang.String
-com.intellij.execution.target.TargetEnvironmentAwareRunProfile
-- com.intellij.execution.configurations.RunProfile
-- a:canRunOn(com.intellij.execution.target.TargetEnvironmentConfiguration):Z
-- a:getDefaultLanguageRuntimeType():com.intellij.execution.target.LanguageRuntimeType
-- a:getDefaultTargetName():java.lang.String
-- needPrepareTarget():Z
-- a:setDefaultTargetName(java.lang.String):V
-- validateRunTarget(com.intellij.openapi.project.Project):V
 a:com.intellij.execution.target.TargetEnvironmentConfiguration
 - com.intellij.execution.target.ContributedConfigurationBase
 - <init>(java.lang.String):V
@@ -1494,12 +1269,6 @@ a:com.intellij.execution.target.TargetEnvironmentType
 f:com.intellij.execution.target.TargetEnvironmentType$Companion
 - f:duplicateTargetConfiguration(com.intellij.execution.target.TargetEnvironmentType,com.intellij.execution.target.TargetEnvironmentConfiguration):com.intellij.execution.target.TargetEnvironmentConfiguration
 - f:findInstance(java.lang.Class):com.intellij.execution.target.TargetEnvironmentType
-com.intellij.execution.target.TargetEnvironmentType$TargetSpecificVolumeContributionUI
-- a:createComponent():javax.swing.JComponent
-- a:getConfiguredValue():com.intellij.execution.target.TargetEnvironmentType$TargetSpecificVolumeData
-- a:resetFrom(java.util.Map):V
-com.intellij.execution.target.TargetEnvironmentType$TargetSpecificVolumeData
-- a:toStorableMap():java.util.Map
 f:com.intellij.execution.target.TargetEnvironmentUtil
 - <init>():V
 - s:reuploadRootFile(java.io.File,com.intellij.execution.target.TargetEnvironmentRequest,com.intellij.execution.target.TargetEnvironment,com.intellij.execution.target.TargetProgressIndicator,java.lang.Runnable):Z
@@ -1555,14 +1324,6 @@ c:com.intellij.execution.target.TargetPlatform
 - <init>():V
 - <init>(com.intellij.execution.Platform):V
 - getPlatform():com.intellij.execution.Platform
-com.intellij.execution.target.TargetProgressIndicator
-- sf:EMPTY:com.intellij.execution.target.TargetProgressIndicator
-- addSystemLine(java.lang.String):V
-- a:addText(java.lang.String,com.intellij.openapi.util.Key):V
-- a:isCanceled():Z
-- a:isStopped():Z
-- a:stop():V
-- stopWithErrorMessage(java.lang.String):V
 f:com.intellij.execution.target.TargetProgressIndicatorAdapter
 - com.intellij.execution.target.TargetProgressIndicator
 - <init>(com.intellij.openapi.progress.ProgressIndicator):V
@@ -1661,8 +1422,6 @@ f:com.intellij.execution.target.java.JavaLanguageRuntimeTypeConstants
 - sf:getAGENTS_VOLUME():com.intellij.execution.target.LanguageRuntimeType$VolumeDescriptor
 - sf:getCLASS_PATH_VOLUME():com.intellij.execution.target.LanguageRuntimeType$VolumeDescriptor
 - sf:getTYPE_ID():java.lang.String
-com.intellij.execution.target.java.JavaLanguageRuntimeUIFactory
-- a:create(com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration,com.intellij.execution.target.TargetEnvironmentType,java.util.function.Supplier,com.intellij.openapi.project.Project):com.intellij.openapi.options.Configurable
 c:com.intellij.execution.target.local.LocalTargetEnvironment
 - com.intellij.execution.target.TargetEnvironment
 - <init>(com.intellij.execution.target.local.LocalTargetEnvironmentRequest):V
@@ -1729,52 +1488,9 @@ f:com.intellij.execution.target.value.TargetEnvironmentFunctions
 - sf:plus(java.util.function.Function,java.util.function.Function):java.util.function.Function
 - sf:toLinkedSetFunction(java.lang.Iterable):java.util.function.Function
 - sf:tryMapToSynchronizedVolume(java.util.List,java.nio.file.Path,com.intellij.execution.target.TargetPlatform):java.lang.String
-com.intellij.execution.target.value.TargetValue
-- sf:EMPTY_VALUE:com.intellij.execution.target.value.TargetValue
-- s:composite(java.util.Collection,com.intellij.util.Function):com.intellij.execution.target.value.TargetValue
-- s:create(java.lang.Object,org.jetbrains.concurrency.Promise):com.intellij.execution.target.value.TargetValue
-- s:empty():com.intellij.execution.target.value.TargetValue
-- s:fixed(java.lang.Object):com.intellij.execution.target.value.TargetValue
-- a:getLocalValue():org.jetbrains.concurrency.Promise
-- a:getTargetValue():org.jetbrains.concurrency.Promise
-- s:map(com.intellij.execution.target.value.TargetValue,com.intellij.util.Function):com.intellij.execution.target.value.TargetValue
-com.intellij.execution.ui.ConsoleView
-- com.intellij.execution.ui.ExecutionConsole
-- a:addMessageFilter(com.intellij.execution.filters.Filter):V
-- a:allowHeavyFilters():V
-- a:attachToProcess(com.intellij.execution.process.ProcessHandler):V
-- a:canPause():Z
-- a:clear():V
-- a:createConsoleActions():com.intellij.openapi.actionSystem.AnAction[]
-- a:getContentSize():I
-- getPlace():com.intellij.execution.ui.ConsoleViewPlace
-- a:hasDeferredOutput():Z
-- a:isOutputPaused():Z
-- a:performWhenNoDeferredOutput(java.lang.Runnable):V
-- a:print(java.lang.String,com.intellij.execution.ui.ConsoleViewContentType):V
-- a:printHyperlink(java.lang.String,com.intellij.execution.filters.HyperlinkInfo):V
-- requestScrollingToEnd():V
-- a:scrollTo(I):V
-- a:setHelpId(java.lang.String):V
-- a:setOutputPaused(Z):V
 c:com.intellij.execution.ui.ConsoleViewPlace
 - sf:UNKNOWN:com.intellij.execution.ui.ConsoleViewPlace
 - <init>(java.lang.String):V
-com.intellij.execution.ui.ConsoleViewWithDelegate
-- a:getDelegate():com.intellij.execution.ui.ConsoleView
-com.intellij.execution.ui.ExecutionConsole
-- com.intellij.openapi.ui.ComponentContainer
-- sf:CONSOLE_CONTENT_ID:java.lang.String
-com.intellij.execution.ui.ExecutionConsoleEx
-- com.intellij.execution.ui.ExecutionConsole
-- a:buildUi(com.intellij.execution.ui.RunnerLayoutUi):V
-- a:getExecutionConsoleId():java.lang.String
-com.intellij.execution.ui.NoStackTraceFoldingPanel
-com.intellij.execution.ui.ObservableConsoleView
-- a:addChangeListener(com.intellij.execution.ui.ObservableConsoleView$ChangeListener,com.intellij.openapi.Disposable):V
-com.intellij.execution.ui.ObservableConsoleView$ChangeListener
-- contentAdded(java.util.Collection):V
-- textAdded(java.lang.String,com.intellij.execution.ui.ConsoleViewContentType):V
 c:com.intellij.execution.ui.RunContentDescriptor
 - com.intellij.openapi.Disposable
 - sf:CONTENT_TOOL_WINDOW_ID_KEY:com.intellij.openapi.util.Key
@@ -1819,49 +1535,6 @@ a:com.intellij.execution.ui.RunContentDescriptorReusePolicy
 - sf:DEFAULT:com.intellij.execution.ui.RunContentDescriptorReusePolicy
 - <init>():V
 - a:canBeReusedBy(com.intellij.execution.ui.RunContentDescriptor):Z
-com.intellij.execution.ui.RunContentManager
-- sf:TOPIC:com.intellij.util.messages.Topic
-- a:findContentDescriptor(com.intellij.execution.Executor,com.intellij.execution.process.ProcessHandler):com.intellij.execution.ui.RunContentDescriptor
-- a:getAllDescriptors():java.util.List
-- a:getContentDescriptorToolWindowId(com.intellij.execution.configurations.RunConfiguration):java.lang.String
-- getContentDescriptorToolWindowId(com.intellij.execution.runners.ExecutionEnvironment):java.lang.String
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.execution.ui.RunContentManager
-- s:getInstanceIfCreated(com.intellij.openapi.project.Project):com.intellij.execution.ui.RunContentManager
-- a:getReuseContent(com.intellij.execution.runners.ExecutionEnvironment):com.intellij.execution.ui.RunContentDescriptor
-- a:getSelectedContent():com.intellij.execution.ui.RunContentDescriptor
-- a:getToolWindowByDescriptor(com.intellij.execution.ui.RunContentDescriptor):com.intellij.openapi.wm.ToolWindow
-- a:getToolWindowIdByEnvironment(com.intellij.execution.runners.ExecutionEnvironment):java.lang.String
-- a:hideRunContent(com.intellij.execution.Executor,com.intellij.execution.ui.RunContentDescriptor):V
-- a:removeRunContent(com.intellij.execution.Executor,com.intellij.execution.ui.RunContentDescriptor):Z
-- a:selectRunContent(com.intellij.execution.ui.RunContentDescriptor):V
-- a:showRunContent(com.intellij.execution.Executor,com.intellij.execution.ui.RunContentDescriptor):V
-- a:showRunContent(com.intellij.execution.Executor,com.intellij.execution.ui.RunContentDescriptor,com.intellij.execution.ui.RunContentDescriptor):V
-- a:toFrontRunContent(com.intellij.execution.Executor,com.intellij.execution.process.ProcessHandler):V
-- a:toFrontRunContent(com.intellij.execution.Executor,com.intellij.execution.ui.RunContentDescriptor):V
-com.intellij.execution.ui.RunContentWithExecutorListener
-- contentRemoved(com.intellij.execution.ui.RunContentDescriptor,com.intellij.execution.Executor):V
-- contentSelected(com.intellij.execution.ui.RunContentDescriptor,com.intellij.execution.Executor):V
-com.intellij.execution.ui.RunnerLayoutUi
-- a:addContent(com.intellij.ui.content.Content):com.intellij.ui.content.Content
-- a:addContent(com.intellij.ui.content.Content,I,com.intellij.execution.ui.layout.PlaceInGrid,Z):com.intellij.ui.content.Content
-- a:addListener(com.intellij.ui.content.ContentManagerListener,com.intellij.openapi.Disposable):com.intellij.execution.ui.RunnerLayoutUi
-- a:attractBy(java.lang.String):V
-- a:clearAttractionBy(java.lang.String):V
-- a:createContent(java.lang.String,com.intellij.openapi.ui.ComponentWithActions,java.lang.String,javax.swing.Icon,javax.swing.JComponent):com.intellij.ui.content.Content
-- a:createContent(java.lang.String,javax.swing.JComponent,java.lang.String,javax.swing.Icon,javax.swing.JComponent):com.intellij.ui.content.Content
-- a:findContent(java.lang.String):com.intellij.ui.content.Content
-- a:getComponent():javax.swing.JComponent
-- a:getContentManager():com.intellij.ui.content.ContentManager
-- a:getContents():com.intellij.ui.content.Content[]
-- a:getDefaults():com.intellij.execution.ui.layout.LayoutStateDefaults
-- a:getOptions():com.intellij.execution.ui.layout.LayoutViewOptions
-- a:isDisposed():Z
-- a:removeContent(com.intellij.ui.content.Content,Z):Z
-- a:removeListener(com.intellij.ui.content.ContentManagerListener):V
-- a:selectAndFocus(com.intellij.ui.content.Content,Z,Z):com.intellij.openapi.util.ActionCallback
-- a:selectAndFocus(com.intellij.ui.content.Content,Z,Z,Z):com.intellij.openapi.util.ActionCallback
-- a:setBouncing(com.intellij.ui.content.Content,Z):V
-- a:updateActionsNow():V
 a:com.intellij.execution.ui.RunnerLayoutUi$Factory
 - p:<init>():V
 - a:create(java.lang.String,java.lang.String,java.lang.String,com.intellij.openapi.Disposable):com.intellij.execution.ui.RunnerLayoutUi
@@ -1886,29 +1559,6 @@ c:com.intellij.execution.ui.layout.LayoutAttractionPolicy$FocusOnce
 - <init>(Z):V
 - attract(com.intellij.ui.content.Content,com.intellij.execution.ui.RunnerLayoutUi):V
 - clearAttraction(com.intellij.ui.content.Content,com.intellij.execution.ui.RunnerLayoutUi):V
-com.intellij.execution.ui.layout.LayoutStateDefaults
-- a:cancelContentAttraction(java.lang.String):com.intellij.execution.ui.layout.LayoutStateDefaults
-- initContentAttraction(java.lang.String,java.lang.String):com.intellij.execution.ui.layout.LayoutStateDefaults
-- a:initContentAttraction(java.lang.String,java.lang.String,com.intellij.execution.ui.layout.LayoutAttractionPolicy):com.intellij.execution.ui.layout.LayoutStateDefaults
-- a:initTabDefaults(I,java.lang.String,javax.swing.Icon):com.intellij.execution.ui.layout.LayoutStateDefaults
-com.intellij.execution.ui.layout.LayoutViewOptions
-- sf:STARTUP:java.lang.String
-- a:getLayoutActions():com.intellij.openapi.actionSystem.AnAction
-- a:getLayoutActionsList():com.intellij.openapi.actionSystem.AnAction[]
-- a:getSettingsActions():com.intellij.openapi.actionSystem.AnAction
-- a:getSettingsActionsList():com.intellij.openapi.actionSystem.AnAction[]
-- a:isToFocus(com.intellij.ui.content.Content,java.lang.String):Z
-- a:setAdditionalFocusActions(com.intellij.openapi.actionSystem.ActionGroup):com.intellij.execution.ui.layout.LayoutViewOptions
-- a:setAttractionPolicy(java.lang.String,com.intellij.execution.ui.layout.LayoutAttractionPolicy):com.intellij.execution.ui.layout.LayoutViewOptions
-- a:setConditionAttractionPolicy(java.lang.String,com.intellij.execution.ui.layout.LayoutAttractionPolicy):com.intellij.execution.ui.layout.LayoutViewOptions
-- a:setLeftToolbar(com.intellij.openapi.actionSystem.ActionGroup,java.lang.String):com.intellij.execution.ui.layout.LayoutViewOptions
-- a:setMinimizeActionEnabled(Z):com.intellij.execution.ui.layout.LayoutViewOptions
-- a:setMoveToGridActionEnabled(Z):com.intellij.execution.ui.layout.LayoutViewOptions
-- a:setTabPopupActions(com.intellij.openapi.actionSystem.ActionGroup):com.intellij.execution.ui.layout.LayoutViewOptions
-- a:setToFocus(com.intellij.ui.content.Content,java.lang.String):com.intellij.execution.ui.layout.LayoutViewOptions
-- a:setTopLeftToolbar(com.intellij.openapi.actionSystem.ActionGroup,java.lang.String):com.intellij.execution.ui.layout.LayoutViewOptions
-- a:setTopMiddleToolbar(com.intellij.openapi.actionSystem.ActionGroup,java.lang.String):com.intellij.execution.ui.layout.LayoutViewOptions
-- a:setTopRightToolbar(com.intellij.openapi.actionSystem.ActionGroup,java.lang.String):com.intellij.execution.ui.layout.LayoutViewOptions
 e:com.intellij.execution.ui.layout.PlaceInGrid
 - java.lang.Enum
 - sf:bottom:com.intellij.execution.ui.layout.PlaceInGrid
@@ -1917,10 +1567,6 @@ e:com.intellij.execution.ui.layout.PlaceInGrid
 - sf:right:com.intellij.execution.ui.layout.PlaceInGrid
 - s:valueOf(java.lang.String):com.intellij.execution.ui.layout.PlaceInGrid
 - s:values():com.intellij.execution.ui.layout.PlaceInGrid[]
-com.intellij.execution.wsl.AbstractWslDistribution
-- a:getMsId():java.lang.String
-- a:getWslPath(java.nio.file.Path):java.lang.String
-- a:patchCommandLine(com.intellij.execution.configurations.GeneralCommandLine,com.intellij.openapi.project.Project,com.intellij.execution.wsl.WSLCommandLineOptions):com.intellij.execution.configurations.GeneralCommandLine
 f:com.intellij.execution.wsl.AbstractWslDistributionKt
 - sf:getToolLinuxPath(com.intellij.execution.wsl.AbstractWslDistribution,java.lang.String):java.lang.String
 - sf:getWslPathSafe(com.intellij.execution.wsl.AbstractWslDistribution,java.nio.file.Path):java.lang.String
@@ -1949,11 +1595,6 @@ f:com.intellij.execution.wsl.WSLCommandLineOptions
 f:com.intellij.openapi.actionSystem.ExecutionDataKeys
 - sf:EXECUTION_ENVIRONMENT:com.intellij.openapi.actionSystem.DataKey
 - <init>():V
-com.intellij.openapi.projectRoots.JavaSdkType
-- a:getBinPath(com.intellij.openapi.projectRoots.Sdk):java.lang.String
-- a:getToolsPath(com.intellij.openapi.projectRoots.Sdk):java.lang.String
-- a:getVMExecutablePath(com.intellij.openapi.projectRoots.Sdk):java.lang.String
-- isDependent():Z
 f:com.intellij.openapi.projectRoots.ex.PathUtilEx
 - <init>():V
 - s:getAnyJdk(com.intellij.openapi.project.Project):com.intellij.openapi.projectRoots.Sdk

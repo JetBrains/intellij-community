@@ -57,10 +57,6 @@ f:com.intellij.util.LazyKt
 - bs:recursionSafeLazy$default(java.lang.Object,kotlin.jvm.functions.Function0,I,java.lang.Object):kotlin.Lazy
 - sf:suspendingLazy(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2):com.intellij.util.SuspendingLazy
 - bs:suspendingLazy$default(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,I,java.lang.Object):com.intellij.util.SuspendingLazy
-com.intellij.util.ResettableLazy
-- a:getValue():java.lang.Object
-- a:getValue(java.lang.Object,kotlin.reflect.KProperty):java.lang.Object
-- a:reset():V
 f:com.intellij.util.ResettableLazyKt
 - sf:resettableLazy(kotlin.jvm.functions.Function0):com.intellij.util.ResettableLazy
 f:com.intellij.util.ResourceUtil

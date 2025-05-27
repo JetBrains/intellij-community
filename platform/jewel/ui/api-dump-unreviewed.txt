@@ -1,10 +1,3 @@
-org.jetbrains.jewel.ui.ComponentStyling
-- sf:Companion:org.jetbrains.jewel.ui.ComponentStyling$Companion
-- provide(kotlin.jvm.functions.Function2):org.jetbrains.jewel.ui.ComponentStyling
-- provide(androidx.compose.runtime.ProvidedValue[]):org.jetbrains.jewel.ui.ComponentStyling
-- a:styles(androidx.compose.runtime.Composer,I):androidx.compose.runtime.ProvidedValue[]
-- with(kotlin.jvm.functions.Function2):org.jetbrains.jewel.ui.ComponentStyling
-- with(org.jetbrains.jewel.ui.ComponentStyling):org.jetbrains.jewel.ui.ComponentStyling
 f:org.jetbrains.jewel.ui.ComponentStyling$Companion
 - org.jetbrains.jewel.ui.ComponentStyling
 - styles(androidx.compose.runtime.Composer,I):androidx.compose.runtime.ProvidedValue[]
@@ -490,12 +483,6 @@ f:org.jetbrains.jewel.ui.component.MenuManager
 - f:submenuManager(kotlin.jvm.functions.Function1):org.jetbrains.jewel.ui.component.MenuManager
 f:org.jetbrains.jewel.ui.component.MenuManagerKt
 - sf:getLocalMenuManager():androidx.compose.runtime.ProvidableCompositionLocal
-org.jetbrains.jewel.ui.component.MenuScope
-- a:passiveItem(kotlin.jvm.functions.Function2):V
-- a:selectableItem(Z,org.jetbrains.jewel.ui.icon.IconKey,java.util.Set,kotlin.jvm.functions.Function0,Z,kotlin.jvm.functions.Function2):V
-- bs:selectableItem$default(org.jetbrains.jewel.ui.component.MenuScope,Z,org.jetbrains.jewel.ui.icon.IconKey,java.util.Set,kotlin.jvm.functions.Function0,Z,kotlin.jvm.functions.Function2,I,java.lang.Object):V
-- a:submenu(Z,org.jetbrains.jewel.ui.icon.IconKey,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):V
-- bs:submenu$default(org.jetbrains.jewel.ui.component.MenuScope,Z,org.jetbrains.jewel.ui.icon.IconKey,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):V
 f:org.jetbrains.jewel.ui.component.PopupContainerKt
 - sf:PopupContainer(kotlin.jvm.functions.Function0,androidx.compose.ui.Alignment$Horizontal,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.PopupContainerStyle,androidx.compose.ui.window.PopupProperties,androidx.compose.ui.window.PopupPositionProvider,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.ui.component.PopupManager
@@ -709,8 +696,6 @@ f:org.jetbrains.jewel.ui.component.SplitLayoutState
 - f:getLayoutCoordinates():androidx.compose.ui.layout.LayoutCoordinates
 - f:setDividerPosition(F):V
 - f:setLayoutCoordinates(androidx.compose.ui.layout.LayoutCoordinates):V
-org.jetbrains.jewel.ui.component.TabContentScope
-- tabContentAlpha-A_ZS63w(androidx.compose.ui.Modifier,J,androidx.compose.runtime.Composer,I):androidx.compose.ui.Modifier
 a:org.jetbrains.jewel.ui.component.TabData
 - sf:$stable:I
 - a:getClosable():Z
@@ -1671,15 +1656,6 @@ f:org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
 f:org.jetbrains.jewel.ui.component.styling.ScrollbarStyle$Companion
 f:org.jetbrains.jewel.ui.component.styling.ScrollbarStylingKt
 - sf:getLocalScrollbarStyle():androidx.compose.runtime.ProvidableCompositionLocal
-org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
-- a:getExpandAnimationDuration-UwyO8pc():J
-- a:getLingerDuration-UwyO8pc():J
-- a:getThumbColorAnimationDuration-UwyO8pc():J
-- a:getTrackColorAnimationDuration-UwyO8pc():J
-- a:getTrackPadding():androidx.compose.foundation.layout.PaddingValues
-- a:getTrackPaddingWithBorder():androidx.compose.foundation.layout.PaddingValues
-- a:getTrackThickness-D9Ej5fM():F
-- a:getTrackThicknessExpanded-D9Ej5fM():F
 f:org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$AlwaysVisible
 - org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
 - sf:$stable:I
@@ -2136,9 +2112,6 @@ e:org.jetbrains.jewel.ui.component.styling.TrackClickBehavior
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):org.jetbrains.jewel.ui.component.styling.TrackClickBehavior
 - s:values():org.jetbrains.jewel.ui.component.styling.TrackClickBehavior[]
-org.jetbrains.jewel.ui.icon.IconKey
-- a:getIconClass():java.lang.Class
-- a:path(Z):java.lang.String
 f:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - org.jetbrains.jewel.ui.icon.IconKey
 - sf:$stable:I
@@ -2151,8 +2124,6 @@ f:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - hashCode():I
 - path(Z):java.lang.String
 f:org.jetbrains.jewel.ui.icon.IntelliJIconKey$Companion
-org.jetbrains.jewel.ui.icon.NewUiChecker
-- a:isNewUi():Z
 f:org.jetbrains.jewel.ui.icon.NewUiCheckerKt
 - sf:getLocalNewUiChecker():androidx.compose.runtime.ProvidableCompositionLocal
 - sf:getNewUiChecker(org.jetbrains.jewel.foundation.theme.JewelTheme$Companion,androidx.compose.runtime.Composer,I):org.jetbrains.jewel.ui.icon.NewUiChecker
@@ -3626,9 +3597,6 @@ c:org.jetbrains.jewel.ui.painter.DelegatePainter
 - pf:setAlpha(F):V
 - pf:setFilter(androidx.compose.ui.graphics.ColorFilter):V
 - pf:setLayoutDirection(androidx.compose.ui.unit.LayoutDirection):V
-org.jetbrains.jewel.ui.painter.PainterHint
-- sf:None:org.jetbrains.jewel.ui.painter.PainterHint$None
-- canApply(org.jetbrains.jewel.ui.painter.PainterProviderScope):Z
 f:org.jetbrains.jewel.ui.painter.PainterHint$None
 - org.jetbrains.jewel.ui.painter.PainterHint
 - canApply(org.jetbrains.jewel.ui.painter.PainterProviderScope):Z
@@ -3637,9 +3605,6 @@ org.jetbrains.jewel.ui.painter.PainterHintsProvider
 - priorityHints(java.lang.String,androidx.compose.runtime.Composer,I):java.util.List
 f:org.jetbrains.jewel.ui.painter.PainterHintsProviderKt
 - sf:getLocalPainterHintsProvider():androidx.compose.runtime.ProvidableCompositionLocal
-org.jetbrains.jewel.ui.painter.PainterPathHint
-- org.jetbrains.jewel.ui.painter.PainterHint
-- a:patch(org.jetbrains.jewel.ui.painter.PainterProviderScope):java.lang.String
 a:org.jetbrains.jewel.ui.painter.PainterPrefixHint
 - org.jetbrains.jewel.ui.painter.PainterPathHint
 - sf:$stable:I
@@ -3648,11 +3613,6 @@ a:org.jetbrains.jewel.ui.painter.PainterPrefixHint
 - a:prefix(org.jetbrains.jewel.ui.painter.PainterProviderScope):java.lang.String
 org.jetbrains.jewel.ui.painter.PainterProvider
 - a:getPainter(org.jetbrains.jewel.ui.painter.PainterHint[],androidx.compose.runtime.Composer,I):androidx.compose.runtime.State
-org.jetbrains.jewel.ui.painter.PainterProviderScope
-- androidx.compose.ui.unit.Density
-- a:getAcceptedHints():java.util.List
-- a:getPath():java.lang.String
-- a:getRawPath():java.lang.String
 a:org.jetbrains.jewel.ui.painter.PainterSuffixHint
 - org.jetbrains.jewel.ui.painter.PainterPathHint
 - sf:$stable:I
@@ -3693,9 +3653,6 @@ f:org.jetbrains.jewel.ui.painter.ResourcePainterProvider
 f:org.jetbrains.jewel.ui.painter.ResourcePainterProviderKt
 - sf:rememberResourcePainterProvider(java.lang.String,java.lang.Class,androidx.compose.runtime.Composer,I):org.jetbrains.jewel.ui.painter.PainterProvider
 - sf:rememberResourcePainterProvider(org.jetbrains.jewel.ui.icon.IconKey,java.lang.Class,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.painter.PainterProvider
-org.jetbrains.jewel.ui.painter.ResourcePainterProviderScope
-- org.jetbrains.jewel.ui.painter.PainterProviderScope
-- a:getClassLoaders():java.util.Set
 org.jetbrains.jewel.ui.painter.SvgPainterHint
 - org.jetbrains.jewel.ui.painter.PainterHint
 - canApply(org.jetbrains.jewel.ui.painter.PainterProviderScope):Z

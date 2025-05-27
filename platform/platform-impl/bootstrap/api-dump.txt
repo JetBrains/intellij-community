@@ -1,0 +1,5 @@
+com.intellij.platform.ide.bootstrap.AppStarter
+- beforeImportConfigs():V
+- importFinished(java.nio.file.Path):V
+- prepareStart(java.util.List):V
+- a:start(com.intellij.ide.bootstrap.InitAppContext,kotlin.coroutines.Continuation):java.lang.Object

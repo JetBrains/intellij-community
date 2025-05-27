@@ -114,9 +114,6 @@ pc:com.intellij.ui.jcef.JBCefBrowserBase$DefaultCefContextMenuHandler
 - <init>(com.intellij.ui.jcef.JBCefBrowserBase,Z):V
 - onBeforeContextMenu(org.cef.browser.CefBrowser,org.cef.browser.CefFrame,org.cef.callback.CefContextMenuParams,org.cef.callback.CefMenuModel):V
 - onContextMenuCommand(org.cef.browser.CefBrowser,org.cef.browser.CefFrame,org.cef.callback.CefContextMenuParams,I,I):Z
-com.intellij.ui.jcef.JBCefBrowserBase$ErrorPage
-- sf:DEFAULT:com.intellij.ui.jcef.JBCefBrowserBase$ErrorPage
-- a:create(org.cef.handler.CefLoadHandler$ErrorCode,java.lang.String,java.lang.String):java.lang.String
 c:com.intellij.ui.jcef.JBCefBrowserBase$Properties
 - sf:NO_CONTEXT_MENU:java.lang.String
 - sf:NO_DEFAULT_AUTH_CREDENTIALS:java.lang.String
@@ -235,12 +232,6 @@ c:com.intellij.ui.jcef.JBCefJSQuery$Response
 f:com.intellij.ui.jcef.JBCefNotifications
 - <init>():V
 - s:createEditorNotificationPanel(com.intellij.openapi.editor.Editor,com.intellij.ui.jcef.JBCefHealthMonitor$Status):com.intellij.ui.EditorNotificationPanel
-com.intellij.ui.jcef.JBCefOSRHandlerFactory
-- sf:DEFAULT:com.intellij.ui.jcef.JBCefOSRHandlerFactory
-- createCefRenderHandler(javax.swing.JComponent):org.cef.handler.CefRenderHandler
-- createComponent(Z):javax.swing.JComponent
-- createScreenBoundsProvider():com.intellij.util.Function
-- s:getInstance():com.intellij.ui.jcef.JBCefOSRHandlerFactory
 a:com.intellij.ui.jcef.JBCefOsrHandlerBrowser
 - com.intellij.ui.jcef.JBCefBrowserBase
 - p:<init>(com.intellij.ui.jcef.JBCefClient,java.lang.String,org.cef.handler.CefRenderHandler,Z):V

@@ -24,53 +24,15 @@ c:com.intellij.xdebugger.attach.WslAttachHost
 - getProcessList():java.util.List
 - getWsl():com.intellij.execution.wsl.WSLDistribution
 - hashCode():I
-com.intellij.xdebugger.attach.XAttachDebugger
-- a:attachDebugSession(com.intellij.openapi.project.Project,com.intellij.xdebugger.attach.XAttachHost,com.intellij.execution.process.ProcessInfo):V
-- a:getDebuggerDisplayName():java.lang.String
-- getDebuggerSelectedTitle():java.lang.String
-com.intellij.xdebugger.attach.XAttachDebuggerProvider
-- sf:DEFAULT_PRESENTATION_GROUP:com.intellij.xdebugger.attach.XAttachProcessPresentationGroup
-- sf:EP:com.intellij.openapi.extensions.ExtensionPointName
-- a:getAvailableDebuggers(com.intellij.openapi.project.Project,com.intellij.xdebugger.attach.XAttachHost,com.intellij.execution.process.ProcessInfo,com.intellij.openapi.util.UserDataHolder):java.util.List
-- getPresentationGroup():com.intellij.xdebugger.attach.XAttachPresentationGroup
-- a:isAttachHostApplicable(com.intellij.xdebugger.attach.XAttachHost):Z
-com.intellij.xdebugger.attach.XAttachHost
-- a:getProcessList():java.util.List
-- getProcessListAsync(kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.xdebugger.attach.XAttachHost$Async
 - com.intellij.xdebugger.attach.XAttachHost
 - getProcessList():java.util.List
 - a:getProcessListAsync(kotlin.coroutines.Continuation):java.lang.Object
-com.intellij.xdebugger.attach.XAttachHostPresentationGroup
-- com.intellij.xdebugger.attach.XAttachPresentationGroup
-com.intellij.xdebugger.attach.XAttachHostProvider
-- sf:Companion:com.intellij.xdebugger.attach.XAttachHostProvider$Companion
-- sf:EP:com.intellij.openapi.extensions.ExtensionPointName
-- a:getAvailableHosts(com.intellij.openapi.project.Project):java.util.List
-- getAvailableHostsAsync(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
-- a:getPresentationGroup():com.intellij.xdebugger.attach.XAttachPresentationGroup
 com.intellij.xdebugger.attach.XAttachHostProvider$Async
 - com.intellij.xdebugger.attach.XAttachHostProvider
 - getAvailableHosts(com.intellij.openapi.project.Project):java.util.List
 - a:getAvailableHostsAsync(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.xdebugger.attach.XAttachHostProvider$Companion
-com.intellij.xdebugger.attach.XAttachPresentationGroup
-- java.util.Comparator
-- a:getGroupName():java.lang.String
-- getItemDescription(com.intellij.openapi.project.Project,java.lang.Object,com.intellij.openapi.util.UserDataHolder):java.lang.String
-- getItemDisplayText(com.intellij.openapi.project.Project,java.lang.Object,com.intellij.openapi.util.UserDataHolder):java.lang.String
-- getItemIcon(com.intellij.openapi.project.Project,java.lang.Object,com.intellij.openapi.util.UserDataHolder):javax.swing.Icon
-- a:getOrder():I
-- getProcessDisplayText(com.intellij.openapi.project.Project,java.lang.Object,com.intellij.openapi.util.UserDataHolder):java.lang.String
-- getProcessIcon(com.intellij.openapi.project.Project,java.lang.Object,com.intellij.openapi.util.UserDataHolder):javax.swing.Icon
-com.intellij.xdebugger.attach.XAttachProcessPresentationGroup
-- com.intellij.xdebugger.attach.XAttachPresentationGroup
-- compare(com.intellij.execution.process.ProcessInfo,com.intellij.execution.process.ProcessInfo):I
-com.intellij.xdebugger.attach.XLocalAttachDebugger
-- com.intellij.xdebugger.attach.XAttachDebugger
-- a:attachDebugSession(com.intellij.openapi.project.Project,com.intellij.execution.process.ProcessInfo):V
-- attachDebugSession(com.intellij.openapi.project.Project,com.intellij.xdebugger.attach.XAttachHost,com.intellij.execution.process.ProcessInfo):V
-- a:getDebuggerDisplayName():java.lang.String
 f:com.intellij.xdebugger.attach.fs.LazyAttachVirtualFS
 - com.intellij.openapi.vfs.VirtualFileSystem
 - <init>():V
@@ -407,8 +369,6 @@ c:com.intellij.xdebugger.impl.evaluate.XExpressionDialog
 - p:getDimensionServiceKey():java.lang.String
 - f:getExpression():com.intellij.xdebugger.XExpression
 - getPreferredFocusedComponent():javax.swing.JComponent
-com.intellij.xdebugger.impl.evaluate.XValueCompactPresentation
-- a:renderValue(com.intellij.xdebugger.frame.presentation.XValuePresentation$XValueTextRenderer,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):V
 c:com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator
 - com.intellij.xdebugger.impl.evaluate.quick.common.DebuggerTreeCreator
 - <init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.impl.frame.XValueMarkers):V
@@ -534,8 +494,6 @@ c:com.intellij.xdebugger.impl.frame.XDebuggerFramesList$CopyStackAction
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-com.intellij.xdebugger.impl.frame.XDebuggerFramesList$ItemWithCustomBackgroundColor
-- a:getBackgroundColor():java.awt.Color
 com.intellij.xdebugger.impl.frame.XDebuggerFramesList$ItemWithSeparatorAbove
 - a:getCaptionAboveOf():java.lang.String
 - a:hasSeparatorAbove():Z
@@ -555,9 +513,6 @@ f:com.intellij.xdebugger.impl.frame.XDebuggerThreadsList
 f:com.intellij.xdebugger.impl.frame.XDebuggerThreadsList$Companion
 - f:createDefault(Z):com.intellij.xdebugger.impl.frame.XDebuggerThreadsList
 - f:getTHREADS_LIST():com.intellij.openapi.actionSystem.DataKey
-com.intellij.xdebugger.impl.frame.XStackFrameContainerEx
-- com.intellij.xdebugger.frame.XExecutionStack$XStackFrameContainer
-- a:addStackFrames(java.util.List,com.intellij.xdebugger.frame.XStackFrame,Z):V
 c:com.intellij.xdebugger.impl.frame.XStandaloneVariablesView
 - com.intellij.xdebugger.impl.frame.XVariablesViewBase
 - <init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,com.intellij.xdebugger.frame.XStackFrame):V
@@ -584,11 +539,6 @@ a:com.intellij.xdebugger.impl.frame.XVariablesViewBase
 - getPanel():javax.swing.JComponent
 - f:getTree():com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 - onReady():java.util.concurrent.CompletableFuture
-com.intellij.xdebugger.impl.frame.XWatchesView
-- sf:DATA_KEY:com.intellij.openapi.actionSystem.DataKey
-- a:addWatchExpression(com.intellij.xdebugger.XExpression,I,Z):V
-- a:removeAllWatches():V
-- a:removeWatches(java.util.List):V
 c:com.intellij.xdebugger.impl.frame.actions.XCopyWatchAction
 - com.intellij.xdebugger.impl.frame.actions.XWatchesTreeActionBase
 - <init>():V
@@ -821,8 +771,6 @@ c:com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter
 - show(com.intellij.xdebugger.XSourcePosition,Z,com.intellij.openapi.editor.markup.GutterIconRenderer,Z):V
 - update(Z):V
 - updateGutterIcon(com.intellij.openapi.editor.markup.GutterIconRenderer):V
-com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter$HighlighterProvider
-- a:getHighlightRange():com.intellij.openapi.util.TextRange
 com.intellij.xdebugger.impl.ui.SessionTabComponentProvider
 - a:createBottomLocalsComponent():javax.swing.JComponent
 f:com.intellij.xdebugger.impl.ui.TextViewer
@@ -946,8 +894,6 @@ f:com.intellij.xdebugger.impl.ui.XDebuggerUIConstants
 - s:getCollectingDataMessage():java.lang.String
 - s:getEvaluatingExpressionMessage():java.lang.String
 - s:getModifyingValueMessage():java.lang.String
-com.intellij.xdebugger.impl.ui.XValueTextProvider
-- a:getValueText():java.lang.String
 f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogCollectItemsUtilKt
 - sf:collectAttachProcessItemsGroupByProcessInfo(com.intellij.openapi.project.Project,com.intellij.xdebugger.attach.XAttachHost,java.util.List,kotlin.coroutines.Continuation):java.lang.Object
 a:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType
@@ -986,11 +932,6 @@ f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState
 f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState$Companion
 - f:getCOLUMN_MINIMUM_WIDTH():I
 - f:getDEFAULT_ROW_HEIGHT():I
-com.intellij.xdebugger.impl.ui.attach.dialog.AttachHostItem
-- a:getHost():com.intellij.xdebugger.attach.XAttachHost
-- a:getIcon():javax.swing.Icon
-- a:getId():java.lang.String
-- a:getPresentation():java.lang.String
 f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachItemsInfo
 - sf:Companion:com.intellij.xdebugger.impl.ui.attach.dialog.AttachItemsInfo$Companion
 - <init>(java.util.List,java.util.List,com.intellij.openapi.util.UserDataHolder):V
@@ -1304,11 +1245,6 @@ com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode
 - a:getRawValue():java.lang.String
 - a:isComputed():Z
 - a:markChanged():V
-com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode
-- com.intellij.xdebugger.Obsolescent
-- javax.swing.tree.TreeNode
-- a:getExpression():com.intellij.xdebugger.XExpression
-- a:setObsolete():V
 c:com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl
 - com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 - com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode
@@ -1657,8 +1593,6 @@ a:com.intellij.xdebugger.memory.utils.AbstractTableColumnDescriptor
 - p:<init>(java.lang.String,java.lang.Class):V
 - getColumnClass():java.lang.Class
 - getName():java.lang.String
-com.intellij.xdebugger.memory.utils.InstancesProvider
-- a:getInstances(I):java.util.List
 c:com.intellij.xdebugger.memory.utils.SingleAlarmWithMutableDelay
 - <init>(com.intellij.xdebugger.memory.utils.SingleAlarmWithMutableDelay$Task,com.intellij.openapi.Disposable):V
 - cancelAllRequests():V

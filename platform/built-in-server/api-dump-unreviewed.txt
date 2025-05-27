@@ -42,9 +42,6 @@ f:org.jetbrains.builtInWebServer.BuiltInWebServerKt
 f:org.jetbrains.builtInWebServer.ConsoleManager
 - <init>():V
 - getConsole(org.jetbrains.builtInWebServer.NetService):com.intellij.execution.ui.ConsoleView
-org.jetbrains.builtInWebServer.FileResolver
-- a:resolve(java.lang.String,com.intellij.openapi.vfs.VirtualFile,java.lang.String,Z,org.jetbrains.builtInWebServer.PathQuery):org.jetbrains.builtInWebServer.PathInfo
-- bs:resolve$default(org.jetbrains.builtInWebServer.FileResolver,java.lang.String,com.intellij.openapi.vfs.VirtualFile,java.lang.String,Z,org.jetbrains.builtInWebServer.PathQuery,I,java.lang.Object):org.jetbrains.builtInWebServer.PathInfo
 f:org.jetbrains.builtInWebServer.LastResortWebServerRootsProvider
 - org.jetbrains.builtInWebServer.WebServerRootsProvider
 - <init>():V
@@ -365,8 +362,6 @@ f:org.jetbrains.io.jsonRpc.JsonRpcServer
 - f:sendWithRawPart(org.jetbrains.io.jsonRpc.Client,java.lang.String,java.lang.String,io.netty.buffer.ByteBuf,java.lang.Object[]):Z
 org.jetbrains.io.jsonRpc.JsonServiceInvocator
 - a:invoke(java.lang.String,org.jetbrains.io.jsonRpc.Client,org.jetbrains.io.JsonReaderEx,I,java.lang.CharSequence):V
-org.jetbrains.io.jsonRpc.MessageServer
-- a:messageReceived(org.jetbrains.io.jsonRpc.Client,java.lang.CharSequence):V
 f:org.jetbrains.io.jsonRpc.socket.RpcBinaryRequestHandler
 - org.jetbrains.ide.BinaryRequestHandler
 - org.jetbrains.io.jsonRpc.ClientListener

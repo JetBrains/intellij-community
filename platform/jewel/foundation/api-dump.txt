@@ -1,0 +1,18 @@
+org.jetbrains.jewel.foundation.actionSystem.DataProviderContext
+- a:lazy(java.lang.String,kotlin.jvm.functions.Function0):V
+- a:set(java.lang.String,java.lang.Object):V
+org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighter
+- a:highlight-zTGadEY(java.lang.String,java.lang.String):kotlinx.coroutines.flow.Flow
+org.jetbrains.jewel.foundation.lazy.SelectableLazyItemScope
+- androidx.compose.foundation.lazy.LazyItemScope
+- a:isActive():Z
+- a:isSelected():Z
+org.jetbrains.jewel.foundation.lazy.SelectableLazyListScope
+- a:item(java.lang.Object,java.lang.Object,Z,kotlin.jvm.functions.Function3):V
+- bs:item$default(org.jetbrains.jewel.foundation.lazy.SelectableLazyListScope,java.lang.Object,java.lang.Object,Z,kotlin.jvm.functions.Function3,I,java.lang.Object):V
+- a:items(I,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function4):V
+- bs:items$default(org.jetbrains.jewel.foundation.lazy.SelectableLazyListScope,I,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function4,I,java.lang.Object):V
+- a:stickyHeader(java.lang.Object,java.lang.Object,Z,kotlin.jvm.functions.Function3):V
+- bs:stickyHeader$default(org.jetbrains.jewel.foundation.lazy.SelectableLazyListScope,java.lang.Object,java.lang.Object,Z,kotlin.jvm.functions.Function3,I,java.lang.Object):V
+org.jetbrains.jewel.foundation.theme.JewelTheme
+- sf:Companion:org.jetbrains.jewel.foundation.theme.JewelTheme$Companion

@@ -1,0 +1,43 @@
+org.jetbrains.jewel.ui.ComponentStyling
+- sf:Companion:org.jetbrains.jewel.ui.ComponentStyling$Companion
+- provide(kotlin.jvm.functions.Function2):org.jetbrains.jewel.ui.ComponentStyling
+- provide(androidx.compose.runtime.ProvidedValue[]):org.jetbrains.jewel.ui.ComponentStyling
+- a:styles(androidx.compose.runtime.Composer,I):androidx.compose.runtime.ProvidedValue[]
+- with(kotlin.jvm.functions.Function2):org.jetbrains.jewel.ui.ComponentStyling
+- with(org.jetbrains.jewel.ui.ComponentStyling):org.jetbrains.jewel.ui.ComponentStyling
+org.jetbrains.jewel.ui.component.MenuScope
+- a:passiveItem(kotlin.jvm.functions.Function2):V
+- a:selectableItem(Z,org.jetbrains.jewel.ui.icon.IconKey,java.util.Set,kotlin.jvm.functions.Function0,Z,kotlin.jvm.functions.Function2):V
+- bs:selectableItem$default(org.jetbrains.jewel.ui.component.MenuScope,Z,org.jetbrains.jewel.ui.icon.IconKey,java.util.Set,kotlin.jvm.functions.Function0,Z,kotlin.jvm.functions.Function2,I,java.lang.Object):V
+- a:submenu(Z,org.jetbrains.jewel.ui.icon.IconKey,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):V
+- bs:submenu$default(org.jetbrains.jewel.ui.component.MenuScope,Z,org.jetbrains.jewel.ui.icon.IconKey,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):V
+org.jetbrains.jewel.ui.component.TabContentScope
+- tabContentAlpha-A_ZS63w(androidx.compose.ui.Modifier,J,androidx.compose.runtime.Composer,I):androidx.compose.ui.Modifier
+org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
+- a:getExpandAnimationDuration-UwyO8pc():J
+- a:getLingerDuration-UwyO8pc():J
+- a:getThumbColorAnimationDuration-UwyO8pc():J
+- a:getTrackColorAnimationDuration-UwyO8pc():J
+- a:getTrackPadding():androidx.compose.foundation.layout.PaddingValues
+- a:getTrackPaddingWithBorder():androidx.compose.foundation.layout.PaddingValues
+- a:getTrackThickness-D9Ej5fM():F
+- a:getTrackThicknessExpanded-D9Ej5fM():F
+org.jetbrains.jewel.ui.icon.IconKey
+- a:getIconClass():java.lang.Class
+- a:path(Z):java.lang.String
+org.jetbrains.jewel.ui.icon.NewUiChecker
+- a:isNewUi():Z
+org.jetbrains.jewel.ui.painter.PainterHint
+- sf:None:org.jetbrains.jewel.ui.painter.PainterHint$None
+- canApply(org.jetbrains.jewel.ui.painter.PainterProviderScope):Z
+org.jetbrains.jewel.ui.painter.PainterPathHint
+- org.jetbrains.jewel.ui.painter.PainterHint
+- a:patch(org.jetbrains.jewel.ui.painter.PainterProviderScope):java.lang.String
+org.jetbrains.jewel.ui.painter.PainterProviderScope
+- androidx.compose.ui.unit.Density
+- a:getAcceptedHints():java.util.List
+- a:getPath():java.lang.String
+- a:getRawPath():java.lang.String
+org.jetbrains.jewel.ui.painter.ResourcePainterProviderScope
+- org.jetbrains.jewel.ui.painter.PainterProviderScope
+- a:getClassLoaders():java.util.Set

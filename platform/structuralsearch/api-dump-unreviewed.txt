@@ -72,12 +72,6 @@ a:com.intellij.structuralsearch.MatchResult
 - a:isScopeMatch():Z
 - a:isTarget():Z
 - a:size():I
-com.intellij.structuralsearch.MatchResultSink
-- a:getProgressIndicator():com.intellij.openapi.progress.ProgressIndicator
-- a:matchingFinished():V
-- a:newMatch(com.intellij.structuralsearch.MatchResult):V
-- a:processFile(com.intellij.psi.PsiFile):V
-- a:setMatchingProcess(com.intellij.structuralsearch.MatchingProcess):V
 f:com.intellij.structuralsearch.MatchUtil
 - <init>():V
 - s:containsRegExpMetaChar(java.lang.String):Z

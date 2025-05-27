@@ -93,12 +93,6 @@ a:com.intellij.tasks.Task
 f:com.intellij.tasks.TaskApiBundle
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 - s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
-com.intellij.tasks.TaskListener
-- java.util.EventListener
-- a:taskActivated(com.intellij.tasks.LocalTask):V
-- a:taskAdded(com.intellij.tasks.LocalTask):V
-- a:taskDeactivated(com.intellij.tasks.LocalTask):V
-- a:taskRemoved(com.intellij.tasks.LocalTask):V
 c:com.intellij.tasks.TaskListenerAdapter
 - com.intellij.tasks.TaskListener
 - <init>():V

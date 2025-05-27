@@ -1,0 +1,5 @@
+org.jetbrains.builtInWebServer.FileResolver
+- a:resolve(java.lang.String,com.intellij.openapi.vfs.VirtualFile,java.lang.String,Z,org.jetbrains.builtInWebServer.PathQuery):org.jetbrains.builtInWebServer.PathInfo
+- bs:resolve$default(org.jetbrains.builtInWebServer.FileResolver,java.lang.String,com.intellij.openapi.vfs.VirtualFile,java.lang.String,Z,org.jetbrains.builtInWebServer.PathQuery,I,java.lang.Object):org.jetbrains.builtInWebServer.PathInfo
+org.jetbrains.io.jsonRpc.MessageServer
+- a:messageReceived(org.jetbrains.io.jsonRpc.Client,java.lang.CharSequence):V

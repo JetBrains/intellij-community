@@ -3,6 +3,3 @@ com.intellij.ide.plugins.PluginInfoProvider
 - a:loadCachedPlugins():java.util.Set
 - loadPlugins():java.util.concurrent.Future
 - a:loadPlugins(com.intellij.openapi.progress.ProgressIndicator):java.util.concurrent.Future
-com.intellij.ide.plugins.PluginManagerConfigurableService
-- s:getInstance():com.intellij.ide.plugins.PluginManagerConfigurableService
-- a:showPluginConfigurableAndEnable(com.intellij.openapi.project.Project,java.lang.String[]):V
