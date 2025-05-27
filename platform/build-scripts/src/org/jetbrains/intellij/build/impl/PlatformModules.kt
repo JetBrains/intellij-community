@@ -76,7 +76,6 @@ private val PLATFORM_IMPLEMENTATION_MODULES = java.util.List.of(
   "intellij.platform.rd.community",
   "intellij.remoteDev.util",
   "intellij.platform.feedback",
-  "intellij.platform.warmup",
   "intellij.platform.usageView.impl",
   "intellij.platform.buildScripts.downloader",
   "intellij.platform.ml.impl",

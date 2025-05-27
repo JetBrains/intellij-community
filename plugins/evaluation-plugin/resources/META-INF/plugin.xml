@@ -38,6 +38,7 @@
     <plugin id="com.intellij.completion.ml.ranking"/>
     <plugin id="com.intellij.stats.completion"/>
     <module name="intellij.libraries.kotlinx.io"/>
+    <module name="intellij.platform.warmup"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -27,6 +27,9 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "//platform/backend/observation",
   ],
-  runtime_deps = [":warmup_resources"]
+  runtime_deps = [
+    ":warmup_resources",
+    "//platform/backend",
+  ]
 )
 ### auto-generated section `build intellij.platform.warmup` end
