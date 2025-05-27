@@ -25,11 +25,14 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.EnumComboBoxModel
+import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
+import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.ValidationInfoBuilder
+import com.intellij.ui.layout.selectedValueMatches
 import com.intellij.util.application
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.*
@@ -40,8 +43,11 @@ import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
 import javax.swing.DefaultComboBoxModel
+import javax.swing.JComboBox
 import kotlin.io.path.isDirectory
 import kotlin.io.path.notExists
+
+private fun <T> JComboBox<T>.selectedValueIsNot(value: T): ComponentPredicate = selectedValueMatches { it != value }
 
 internal class MarkdownSettingsConfigurable(private val project: Project): BoundSearchableConfigurable(
   MarkdownBundle.message("markdown.settings.name"),
@@ -91,6 +97,16 @@ internal class MarkdownSettingsConfigurable(private val project: Project): Bound
             model = DefaultComboBoxModel(arrayOf(false, true)),
             renderer = textListCellRenderer("", ::presentSplitLayout)
           ).bindItem(settings::isVerticalSplit.toNullableProperty()).widthGroup(comboBoxWidthGroup)
+        }
+        row(MarkdownBundle.message("markdown.settings.style.menu.label")) {
+          val comboBox = comboBox(
+            model = DefaultComboBoxModel(arrayOf(MarkdownStyle.JETBRAINS, MarkdownStyle.GITHUB,
+                                                 MarkdownStyle.GITHUB_LIGHT, MarkdownStyle.GITHUB_DARK)),
+            renderer = SimpleListCellRenderer.create("", ::styleLayout)
+          ).bindItem(settings::style.toNullableProperty()).widthGroup(comboBoxWidthGroup)
+          checkBox(MarkdownBundle.message("markdown.settings.style.checkbox.syntax.coloring"))
+            .bindSelected(settings::useGitHubSyntaxColors)
+            .enabledIf(comboBox.component.selectedValueIsNot(MarkdownStyle.JETBRAINS))
         }.bottomGap(BottomGap.SMALL)
         row(label = MarkdownBundle.message("markdown.settings.preview.font.size")) {
           previewFontSizeField()
@@ -373,10 +389,20 @@ internal class MarkdownSettingsConfigurable(private val project: Project): Bound
     const val ID = "Settings.Markdown"
     private const val comboBoxWidthGroup = "Markdown.ComboBoxWidthGroup"
 
-    private fun presentSplitLayout(splitLayout: Boolean): @Nls String {
+    private fun presentSplitLayout(splitLayout: Boolean?): @Nls String {
       return when (splitLayout) {
         false -> MarkdownBundle.message("markdown.settings.preview.layout.horizontal")
         true -> MarkdownBundle.message("markdown.settings.preview.layout.vertical")
+        null -> ""
+      }
+    }
+
+    private fun styleLayout(styleChoice: MarkdownStyle?): @Nls String {
+      return when (styleChoice) {
+        MarkdownStyle.GITHUB -> MarkdownBundle.message("markdown.settings.style.menu.option.github")
+        MarkdownStyle.GITHUB_LIGHT -> MarkdownBundle.message("markdown.settings.style.menu.option.github.light")
+        MarkdownStyle.GITHUB_DARK -> MarkdownBundle.message("markdown.settings.style.menu.option.github.dark")
+        else -> MarkdownBundle.message("markdown.settings.style.menu.option.jetbrains")
       }
     }
 

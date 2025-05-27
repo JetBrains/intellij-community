@@ -44,5 +44,8 @@
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ui.jcef" exported="" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.tests" />
+    <orderEntry type="module" module-name="intellij.grazie.core" />
+    <orderEntry type="module" module-name="intellij.java.coverage" />
   </component>
 </module>
