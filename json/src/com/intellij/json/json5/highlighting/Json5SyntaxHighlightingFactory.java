@@ -2,18 +2,14 @@
 package com.intellij.json.json5.highlighting;
 
 import com.intellij.json.highlighting.JsonSyntaxHighlighterFactory;
-import com.intellij.json.json5.Json5Language;
-import com.intellij.json.syntax.json5.Json5SyntaxLexer;
 import com.intellij.lexer.Lexer;
-import com.intellij.platform.syntax.psi.lexer.LexerAdapter;
+import com.intellij.json.json5.Json5Lexer;
 import org.jetbrains.annotations.NotNull;
-
-import static com.intellij.platform.syntax.psi.ElementTypeConverters.getConverter;
 
 public final class Json5SyntaxHighlightingFactory extends JsonSyntaxHighlighterFactory {
   @Override
   protected @NotNull Lexer getLexer() {
-    return new LexerAdapter(new Json5SyntaxLexer(), getConverter(Json5Language.INSTANCE));
+    return new Json5Lexer();
   }
 
   @Override

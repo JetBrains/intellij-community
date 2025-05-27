@@ -2,55 +2,30 @@
 package com.intellij.json
 
 import com.intellij.json.psi.impl.JsonFileImpl
-import com.intellij.json.syntax.JsonSyntaxLexer
-import com.intellij.json.syntax.JsonSyntaxParser
 import com.intellij.lang.ASTNode
 import com.intellij.lang.ParserDefinition
 import com.intellij.lang.PsiParser
 import com.intellij.lexer.Lexer
 import com.intellij.openapi.project.Project
-import com.intellij.platform.syntax.SyntaxElementType
-import com.intellij.platform.syntax.psi.ElementTypeConverters.getConverter
-import com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory.Companion.getInstance
-import com.intellij.platform.syntax.psi.impl.getSyntaxParserRuntimeFactory
-import com.intellij.platform.syntax.psi.lexer.LexerAdapter
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
 
-@JvmField
-val SYNTAX_FILE: SyntaxElementType = SyntaxElementType("FILE")
-@JvmField
-val FILE: IFileElementType = object : IFileElementType(JsonLanguage.INSTANCE) {
-  override fun doParseContents(chameleon: ASTNode, psi: PsiElement): ASTNode? {
-    val builderFactory = getInstance()
-    val elementType = chameleon.getElementType()
-    val lexer = JsonSyntaxLexer()
-    val syntaxBuilder = builderFactory.createBuilder(chameleon,
-                                                     lexer,
-                                                     language,
-                                                     chameleon.getChars())
-    val runtimeParserRuntime =
-      getSyntaxParserRuntimeFactory(language).buildParserRuntime(syntaxBuilder.getSyntaxTreeBuilder())
-    val convertedElement = getConverter(language).convert(elementType)
-    assert(convertedElement != null)
-    JsonSyntaxParser().parse(convertedElement!!, runtimeParserRuntime)
-    return syntaxBuilder.getTreeBuilt().getFirstChildNode()
-  }
-}
+
 
 open class JsonParserDefinition : ParserDefinition {
+  internal constructor()
 
   override fun createLexer(project: Project?): Lexer {
-    return LexerAdapter(JsonSyntaxLexer(), getConverter(JsonLanguage.INSTANCE))
+    return JsonLexer()
   }
 
   override fun createParser(project: Project?): PsiParser {throw UnsupportedOperationException("Should not be called directly")}
 
   override fun getFileNodeType(): IFileElementType {
-    return FILE
+    return JSON_FILE
   }
 
   override fun getCommentTokens(): TokenSet {

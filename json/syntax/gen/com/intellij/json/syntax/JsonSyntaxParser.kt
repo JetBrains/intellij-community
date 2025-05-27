@@ -11,7 +11,7 @@ import com.intellij.platform.syntax.util.runtime.Modifiers.Companion._NONE_
 import com.intellij.platform.syntax.util.runtime.Modifiers.Companion._NOT_
 
 @Suppress("unused", "FunctionName", "JoinDeclarationAndAssignment")
-open class JsonSyntaxParser {
+class JsonSyntaxParser {
 
   fun parse(t: SyntaxElementType, s: SyntaxGeneratedParserRuntime) {
     var r: Boolean

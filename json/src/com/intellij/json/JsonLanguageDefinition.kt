@@ -14,11 +14,15 @@ class JsonLanguageDefinition : LanguageSyntaxDefinition {
     return JsonSyntaxLexer()
   }
 
-  override fun getCommentTokens(): SyntaxElementTypeSet = syntaxElementTypeSetOf(JsonSyntaxElementTypes.LINE_COMMENT,
-                                                                                 JsonSyntaxElementTypes.BLOCK_COMMENT)
+  private val jsonComments = syntaxElementTypeSetOf(JsonSyntaxElementTypes.LINE_COMMENT,
+                                                    JsonSyntaxElementTypes.BLOCK_COMMENT)
 
-  override fun getPairedBraces(): Collection<SyntaxGeneratedParserRuntime.BracePair> = listOf(
+  override fun getCommentTokens(): SyntaxElementTypeSet = jsonComments
+
+  private val jsonPairedBraces = listOf(
     SyntaxGeneratedParserRuntime.BracePair(JsonSyntaxElementTypes.L_CURLY, JsonSyntaxElementTypes.R_CURLY, true),
     SyntaxGeneratedParserRuntime.BracePair(JsonSyntaxElementTypes.L_BRACKET, JsonSyntaxElementTypes.R_BRACKET, true),
   )
+
+  override fun getPairedBraces(): Collection<SyntaxGeneratedParserRuntime.BracePair> = jsonPairedBraces
 }

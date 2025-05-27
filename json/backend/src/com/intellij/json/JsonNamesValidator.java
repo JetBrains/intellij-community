@@ -12,14 +12,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.syntax.SyntaxElementType;
 import com.intellij.platform.syntax.lexer.Lexer;
-import com.intellij.platform.syntax.psi.lexer.LexerAdapter;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.json.JsonTokenSets.JSON_KEYWORDS;
 
 public final class JsonNamesValidator implements NamesValidator {
 
-  LexerAdapter myFlexLexer; 
   private final Lexer myLexer = new JsonSyntaxLexer();
 
   @Override

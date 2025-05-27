@@ -14,6 +14,9 @@ import org.jetbrains.annotations.ApiStatus;
 
 @SuppressWarnings({"SimplifiableIfStatement", "UnusedAssignment"})
 @ApiStatus.Obsolete
+/**
+ * This class is marked obsolete due to migration to a new KMP-compatible API 
+ */
 public class JsonParser implements PsiParser, LightPsiParser {
 
   public ASTNode parse(IElementType t, PsiBuilder b) {
