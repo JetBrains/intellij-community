@@ -23,6 +23,7 @@ private const val UNIX_CONDA_BIN_DIR_NAME = "bin"
 private const val PYTHON_EXE_NAME = "python.exe"
 private const val PYTHON_UNIX_BINARY_NAME = "python"
 private const val WIN_CONTINUUM_DIR_PATH = "AppData\\Local\\Continuum\\"
+private const val WIN_LOCAL_APP_DATA_PATH = "AppData\\Local\\"
 private const val WIN_PROGRAM_DATA_PATH = "C:\\ProgramData\\"
 private const val WIN_C_ROOT_PATH = "C:\\"
 private const val UNIX_OPT_PATH = "/opt/"
@@ -89,6 +90,10 @@ private fun getCondaExecutableByName(condaName: String): Path? {
     if (executableFile != null) return executableFile
 
     if (SystemInfo.isWindows) {
+      condaFolder = userHome / WIN_LOCAL_APP_DATA_PATH / root
+      executableFile = findExecutable(condaName, condaFolder)
+      if (executableFile != null) return executableFile
+      
       condaFolder = userHome / WIN_CONTINUUM_DIR_PATH / root
       executableFile = findExecutable(condaName, condaFolder)
       if (executableFile != null) return executableFile
