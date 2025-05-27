@@ -25,6 +25,7 @@ def _jvm_resources_impl(ctx):
             "supports-workers": "1",
             "supports-multiplex-workers": "1",
             "supports-worker-cancellation": "1",
+            "supports-path-mapping": "1",
         },
         env = {
             # for Java source files
