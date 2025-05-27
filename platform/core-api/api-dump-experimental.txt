@@ -306,7 +306,7 @@ a:com.intellij.openapi.progress.Task
 - com.intellij.openapi.progress.TaskInfo
 - *:getId():java.lang.Object
 a:com.intellij.openapi.project.DumbService
-- *a:suspendIndexingAndRun(java.lang.String,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+- *a:suspendIndexingAndRun(java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.openapi.project.IncompleteDependenciesService
 - a:enterIncompleteState(java.lang.Object):com.intellij.openapi.project.IncompleteDependenciesService$IncompleteDependenciesAccessToken
 - a:getState():com.intellij.openapi.project.IncompleteDependenciesService$DependenciesState

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
 import com.intellij.ide.lightEdit.LightEditCompatible
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.messages.Topic
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.*
 import org.jetbrains.annotations.ApiStatus.Experimental
@@ -471,7 +472,7 @@ abstract class DumbService {
    * @param activityName the text (a noun phrase) to display as a reason for the indexing being paused
    */
   @Experimental
-  abstract suspend fun suspendIndexingAndRun(activityName: @NlsContexts.ProgressText String, activity: suspend () -> Unit)
+  abstract suspend fun suspendIndexingAndRun(activityName: @NlsContexts.ProgressText String, activity: suspend CoroutineScope.() -> Unit)
 
   @ApiStatus.Internal
   abstract fun runWithWaitForSmartModeDisabled(): AccessToken

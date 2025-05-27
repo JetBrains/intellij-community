@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.google.common.util.concurrent.SettableFuture
@@ -393,10 +393,13 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
     }
   }
 
-  override suspend fun suspendScanningAndIndexingThenExecute(activityName: @ProgressText String, runnable: suspend () -> Unit) {
+  override suspend fun suspendScanningAndIndexingThenExecute(
+    activityName: @ProgressText String,
+    activity: suspend CoroutineScope.() -> Unit,
+  ) {
     pauseReason.update { it.add(activityName) }
     try {
-      project.serviceAsync<DumbService>().suspendIndexingAndRun(activityName, runnable)
+      project.serviceAsync<DumbService>().suspendIndexingAndRun(activityName, activity)
     }
     finally {
       pauseReason.update { it.remove(activityName) }

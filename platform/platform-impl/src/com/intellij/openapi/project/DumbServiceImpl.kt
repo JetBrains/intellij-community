@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
 import com.intellij.icons.AllIcons
@@ -211,7 +211,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     guiDumbTaskRunner.suspendAndRun(activityName, activity)
   }
 
-  override suspend fun suspendIndexingAndRun(activityName: @NlsContexts.ProgressText String, activity: suspend () -> Unit) {
+  override suspend fun suspendIndexingAndRun(activityName: @NlsContexts.ProgressText String, activity: suspend CoroutineScope.() -> Unit) {
     guiDumbTaskRunner.guiSuspender().suspendAndRun(activityName, activity)
   }
 
