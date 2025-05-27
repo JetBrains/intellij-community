@@ -1,7 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.testIntegration.framework
 
+import com.intellij.codeInsight.MetaAnnotationUtil
 import com.intellij.java.library.JavaLibraryUtil
+import com.intellij.psi.PsiClass
 import com.intellij.util.Processor
 import com.intellij.util.ThreeState
 import com.intellij.util.ThreeState.*
@@ -124,6 +126,14 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
             val shortName = annotationEntry.shortName ?: continue
             val fqName = annotationEntry.typeReference?.text
             if (fqName in fqNames || checkNameMatch(file, fqNames, shortName.asString())) {
+                return annotationEntry
+            }
+        }
+
+        for (annotationEntry in annotationEntries) {
+            val constructorRef = annotationEntry.calleeExpression?.constructorReferenceExpression as? KtNameReferenceExpression ?: continue
+            val resolvedAnnotationClass = constructorRef.reference?.resolve() as? PsiClass ?: continue
+            if (MetaAnnotationUtil.isMetaAnnotated(resolvedAnnotationClass, fqNames)) {
                 return annotationEntry
             }
         }
