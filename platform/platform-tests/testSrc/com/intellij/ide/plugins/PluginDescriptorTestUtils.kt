@@ -9,7 +9,7 @@ import org.assertj.core.api.ObjectAssert
 fun ObjectAssert<out IdeaPluginDescriptorImpl>.hasDirectParentClassloaders(vararg parentDescriptors: IdeaPluginDescriptorImpl) = apply {
   extracting { (it.classLoader as PluginClassLoader)._getParents() }
     .asInstanceOf(InstanceOfAssertFactories.LIST)
-    .contains(*parentDescriptors)
+    .containsExactlyInAnyOrder(*parentDescriptors)
 }
 
 fun ObjectAssert<out IdeaPluginDescriptorImpl>.doesNotHaveDirectParentClassloaders(vararg parentDescriptors: IdeaPluginDescriptorImpl) = apply {
