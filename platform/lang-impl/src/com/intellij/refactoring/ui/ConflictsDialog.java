@@ -277,14 +277,12 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
 
   private List<AnAction> createGroupingActions(UsageView usageView, JComponent component) {
     List<AnAction> list = new ArrayList<>();
+    list.add(new Separator(UsageViewBundle.message("action.group.by.title")));
     ActionManager actionManager = ActionManager.getInstance();
-    AnAction groupByUsageTypeAction = actionManager.getAction("UsageGrouping.UsageType");
     for (UsageGroupingRuleProvider provider : UsageGroupingRuleProvider.EP_NAME.getExtensionList()) {
       for (@NotNull AnAction action : provider.createGroupingActions(usageView)) {
-        if (action != groupByUsageTypeAction) {
-          action.registerCustomShortcutSet(component, getDisposable());
-          list.add(action);
-        }
+        action.registerCustomShortcutSet(component, getDisposable());
+        list.add(action);
       }
     }
     AnAction groupByModuleAction = ActionManager.getInstance().getAction("UsageGrouping.Module");
