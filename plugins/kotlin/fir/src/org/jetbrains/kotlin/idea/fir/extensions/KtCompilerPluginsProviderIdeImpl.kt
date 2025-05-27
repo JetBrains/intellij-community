@@ -169,7 +169,6 @@ internal class KtCompilerPluginsProviderIdeImpl(
         val extensionStorage = registrarForModule.computeIfAbsent(cacheKey) {
             Optional.ofNullable(computeExtensionStorage(this))
         }.orNull() ?: return emptyList()
-
         val registrars = extensionStorage.registeredExtensions[extensionType] ?: return emptyList()
         @Suppress("UNCHECKED_CAST")
         return registrars as List<T>

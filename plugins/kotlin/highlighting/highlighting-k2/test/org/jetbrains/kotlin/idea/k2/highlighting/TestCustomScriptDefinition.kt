@@ -8,9 +8,9 @@ import kotlin.script.experimental.host.ScriptingHostConfiguration
 
 /**
  * Is used to prioritize custom [ScriptCompilationConfiguration] in the test scenario.
- * @see [TestScriptConfigurationRefiner]
+ * @see [AbstractK2BundledCompilerPluginsInScriptHighlightingMetaInfoTest]
  */
-class TestCustomScriptDefinition(
+internal class TestCustomScriptDefinition(
     compilationConfiguration: ScriptCompilationConfiguration,
     override val evaluationConfiguration: ScriptEvaluationConfiguration?
 ) : ScriptDefinition.FromConfigurations(

@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.ex.PathUtilEx
 import com.intellij.openapi.roots.ProjectRootManager
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
@@ -36,7 +37,8 @@ fun Project.javaHomePath(): File? {
     return (sdk ?: anyJdk)?.homePath?.let { File(it) }
 }
 
-internal val Project.defaultDefinition: ScriptDefinition
+@get:ApiStatus.Internal
+val Project.defaultDefinition: ScriptDefinition
     get() {
         val project = this
         val (compilationConfiguration, evaluationConfiguration) = createScriptDefinitionFromTemplate(
