@@ -1,10 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.testIntegration.framework
 
+import com.intellij.codeInsight.MetaAnnotationUtil
 import com.intellij.java.library.JavaLibraryUtil
+import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.Processor
 import com.intellij.util.ThreeState
 import com.intellij.util.ThreeState.*
+import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
@@ -80,28 +84,51 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
                 || isAnnotated(declaration, disabledTestAnnotation)) && isTestMethod(declaration)
     }
 
-    protected fun checkNameMatch(file: KtFile, fqNames: Set<String>, shortName: String): Boolean {
-        if (shortName in fqNames || "${file.packageFqName}.$shortName" in fqNames) return true
+    protected fun checkNameMatch(file: KtFile, fqNames: Set<String>, shortName: String): Boolean =
+        fqNames.intersect(findFqNameCandidates(file, shortName)).isNotEmpty()
 
+    private fun findFqNameCandidates(file: KtFile, shortName: String): Set<String> {
+        val outer = shortName.substringBefore('.')
+        val inner = shortName.substringAfter('.', "")
+        fun append(innerPart: String?) = if (innerPart.isNullOrEmpty()) "" else ".$innerPart"
+
+        // direct import
         for (importDirective in file.importDirectives) {
-            if (!importDirective.isValidImport) {
-                continue
-            }
-
+            if (!importDirective.isValidImport) continue
             val importedFqName = importDirective.importedFqName?.asString() ?: continue
 
-            if (!importDirective.isAllUnder) {
-                if (importDirective.aliasName == shortName && importedFqName in fqNames) {
-                    return true
-                } else if (importedFqName in fqNames && importedFqName.endsWith(".$shortName")) {
-                    return true
-                }
-            } else if ("$importedFqName.$shortName" in fqNames) {
-                return true
+            when {
+                importDirective.aliasName == shortName -> return setOf(importedFqName)
+                importedFqName.endsWith(".$shortName") -> return setOf(importedFqName)
+                importDirective.aliasName == outer -> return setOf(importedFqName + append(inner))
+                importedFqName.endsWith(".$outer") -> return setOf(importedFqName + append(inner))
             }
         }
 
-        return false
+        val candidates = mutableSetOf<String>()
+
+        // in the current file
+        PsiTreeUtil.findChildrenOfType(file, KtClassOrObject::class.java)
+            .firstOrNull { it.name == outer }
+            ?.fqName?.asString()
+            ?.let { candidates.add(it + append(inner)) }
+
+        // same package
+        if (file.packageFqName.isRoot) {
+            candidates.add(shortName)
+        } else {
+            candidates.add("${file.packageFqName}.$shortName")
+        }
+
+        // demand imports
+        for (importDirective in file.importDirectives) {
+            if (!importDirective.isValidImport) continue
+            if (!importDirective.isAllUnder) continue
+            val importedFqName = importDirective.importedFqName?.asString() ?: continue
+            candidates.add("$importedFqName.$shortName")
+        }
+
+        return candidates
     }
 
     protected fun isAnnotated(element: KtAnnotated, fqName: String): Boolean {
@@ -128,6 +155,24 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
             }
         }
 
+        for (annotationEntry in annotationEntries) {
+            val shortName = annotationEntry.shortName ?: continue
+            val fqName = annotationEntry.typeReference?.text ?: shortName.asString()
+
+            val clazz = PsiTreeUtil.findChildrenOfType(file, KtClassOrObject::class.java)
+                .firstOrNull { it.fqName?.asString()?.endsWith(".${fqName}") == true || it.fqName?.asString() == fqName }
+                ?.toLightClass()
+            if (clazz != null && MetaAnnotationUtil.isMetaAnnotated(clazz, fqNames)) return annotationEntry
+
+            for (fq in findFqNameCandidates(file, fqName)) {
+                val classes = JavaFullClassNameIndex.getInstance().getClasses(fq, element.project, element.resolveScope)
+                for (cls in classes) {
+                    if (MetaAnnotationUtil.isMetaAnnotated(cls, fqNames)) {
+                        return annotationEntry
+                    }
+                }
+            }
+        }
         return null
     }
 
