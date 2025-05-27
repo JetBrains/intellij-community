@@ -34,7 +34,7 @@ sealed interface RecentFilesBackendRequest {
   val projectId: ProjectId
 
   @Serializable
-  data class FetchMetadata(val filesKind: RecentFileKind, val frontendRecentFiles: List<VirtualFileId>, override val projectId: ProjectId) : RecentFilesBackendRequest
+  data class FetchMetadata(val filesKind: RecentFileKind, val frontendRecentFiles: List<VirtualFileId>, val forceAddToModel: Boolean, override val projectId: ProjectId) : RecentFilesBackendRequest
 
   @Serializable
   data class FetchFiles(val filesKind: RecentFileKind, val frontendEditorSelectionHistory: List<VirtualFileId>, override val projectId: ProjectId) : RecentFilesBackendRequest

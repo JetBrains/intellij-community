@@ -35,11 +35,12 @@ internal fun createHideFilesRequest(recentFileKind: RecentFileKind, filesToHide:
   )
 }
 
-internal fun createFilesUpdateRequest(recentFileKind: RecentFileKind, frontendRecentFiles: List<VirtualFile>, project: Project): RecentFilesBackendRequest.FetchMetadata {
+internal fun createFilesUpdateRequest(recentFileKind: RecentFileKind, frontendRecentFiles: List<VirtualFile>, forceAddToModel: Boolean, project: Project): RecentFilesBackendRequest.FetchMetadata {
   LOG.trace { "Frontend files to update: ${frontendRecentFiles.joinToString { it.name }}" }
   return RecentFilesBackendRequest.FetchMetadata(
     filesKind = recentFileKind,
     frontendRecentFiles = frontendRecentFiles.map { it.rpcId() },
+    forceAddToModel = forceAddToModel,
     projectId = project.projectId()
   )
 }

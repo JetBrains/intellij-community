@@ -87,7 +87,13 @@ internal class BackendRecentFileEventsModel(private val project: Project, privat
         .filter { virtualFile -> virtualFile.isValid }
         .map { frontendFile -> createRecentFileViewModel(frontendFile, project) }
     }
-    targetFlow.emit(RecentFilesEvent.ItemsUpdated(metadata, false))
+
+    val event = if (metadataRequest.forceAddToModel)
+      RecentFilesEvent.ItemsAdded(metadata)
+    else
+      RecentFilesEvent.ItemsUpdated(metadata, false)
+
+    targetFlow.emit(event)
   }
 
   suspend fun emitRecentFiles(searchRequest: RecentFilesBackendRequest.FetchFiles) {

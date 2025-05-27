@@ -68,6 +68,9 @@ class FrontendRecentFilesModel(private val project: Project) {
           FileChangeKind.REMOVED -> {
             RecentFilesState(oldList.entries - fileModels.toSet())
           }
+          FileChangeKind.UPDATED_AND_PUT_ON_TOP -> {
+            RecentFilesState(fileModels + oldList.entries - fileModels.toSet())
+          }
           else -> {
             oldList
           }
@@ -79,7 +82,7 @@ class FrontendRecentFilesModel(private val project: Project) {
           FileSwitcherApi.getInstance().updateRecentFilesBackendState(createHideFilesRequest(filesKind, files, project))
         }
         else -> {
-          FileSwitcherApi.getInstance().updateRecentFilesBackendState(createFilesUpdateRequest(filesKind, files, project))
+          FileSwitcherApi.getInstance().updateRecentFilesBackendState(createFilesUpdateRequest(filesKind, files, true, project))
         }
       }
     }
