@@ -49,6 +49,7 @@ jvm_library(
     "//platform/vcs-impl/shared",
     "//platform/lang-api:lang",
     "//platform/lvcs-api:lvcs",
+    "//platform/lvcs-impl",
     "//platform/platform-api:ide",
     "@lib//:guava",
     "//platform/lang-impl",
@@ -111,7 +112,6 @@ jvm_library(
   runtime_deps = [
     ":vcs-git_resources",
     ":vcs-git_resources_1",
-    "//platform/lvcs-impl",
   ]
 )
 
@@ -143,6 +143,8 @@ jvm_library(
     "//platform/lang-api:lang",
     "@lib//:junit4",
     "//platform/lvcs-api:lvcs",
+    "//platform/lvcs-impl",
+    "//platform/lvcs-impl:lvcs-impl_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/platform-api:ide",
