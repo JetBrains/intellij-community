@@ -202,8 +202,10 @@ public final class DaemonListeners implements Disposable {
         boolean showing = ComponentUtil.isShowing(editor.getContentComponent(), true);
         boolean worthBothering = worthBothering(document, editorProject);
         if (!showing || !worthBothering) {
-          LOG.debug("Not worth bothering about editor created for: " + editor.getVirtualFile() + " because editor isShowing(): " +
-                    showing + "; project is open and file is mine: " + worthBothering);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Not worth bothering about editor created for: " + editor.getVirtualFile() + " because editor isShowing(): " +
+                      showing + "; project is open and file is mine: " + worthBothering);
+          }
           return;
         }
 

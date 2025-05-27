@@ -490,7 +490,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
           }
         }
         catch (ProcessCanceledException e) {
-          LOG.debug("Canceled: " + progress);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Canceled: " + progress);
+          }
           throw e;
         }
       }
@@ -635,7 +637,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       }
       catch (Throwable e) {
         Throwable unwrapped = ExceptionUtilRt.unwrapException(e, ExecutionException.class);
-        LOG.debug("doRunPasses() thrown " + ExceptionUtil.getThrowableText(unwrapped));
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("doRunPasses() thrown " + ExceptionUtil.getThrowableText(unwrapped));
+        }
         if (unwrapped instanceof ProcessCanceledException) {
           Throwable savedException = ((DaemonProgressIndicator)progress).getCancellationTrace();
           if (savedException != null) {
@@ -1353,7 +1357,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       // restart when everything committed
       documentManager.performLaterWhenAllCommitted(() -> {
         synchronized (this) {
-          LOG.debug("Rescheduled after commit");
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Rescheduled after commit");
+          }
           scheduleIfNotRunning();
         }
       });
