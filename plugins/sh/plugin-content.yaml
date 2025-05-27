@@ -1,6 +1,9 @@
 - name: lib/modules/intellij.sh.backend.jar
   contentModules:
   - name: intellij.sh.backend
+- name: lib/modules/intellij.sh.frontend.jar
+  contentModules:
+  - name: intellij.sh.frontend
 - name: lib/modules/intellij.sh.frontend.split.jar
   contentModules:
   - name: intellij.sh.frontend.split
