@@ -8,6 +8,8 @@
               topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
     <listener class="com.intellij.debugger.ui.HotSwapUIImpl$HotSwapDebuggerManagerListener"
               topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
+    <listener class="com.intellij.debugger.impl.ConsolePrintingDebuggerListener"
+              topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
   </projectListeners>
 
   <extensionPoints>
@@ -177,6 +179,8 @@
     <feedback.idleFeedbackSurvey implementation="com.intellij.debugger.feedback.KotlinDebuggerFeedbackSurvey"/>
     <debugger.steppingListener implementation="com.intellij.debugger.engine.CancelingSteppingListener"/>
 
+    <consoleFilterProvider implementation="com.intellij.debugger.impl.ConsolePrintingFilterProvider"/>
+
     <registryKey key="debugger.evaluate.method.helper" defaultValue="[off|auto*|always]"
                  description="Use helper to invoke methods avoiding the immediate return value collection"/>
     <registryKey key="debugger.jdwp.include.virtual.threads" defaultValue="false"
@@ -193,6 +197,8 @@
                  description="Provide evaluatable context on Pause"/>
     <registryKey key="debugger.evaluate.on.pause.timeout.ms" defaultValue="500"
                  description="Maximum duration (in ms) of obtaining an evaluatable context for a Pause"/>
+    <registryKey key="debugger.navigation.from.console.prototype" defaultValue="false"
+                 description="Alpha version of navigation from the printed lines in console to the printing source code"/>
     <registryKey key="debugger.collectible.value.retries.error" defaultValue="true"
                  description="Drop an error if there were too many debugger collectible value retries"/>
     <registryKey key="debugger.compiling.evaluator" defaultValue="true"

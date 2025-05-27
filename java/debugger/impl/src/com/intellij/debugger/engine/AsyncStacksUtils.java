@@ -74,7 +74,7 @@ public final class AsyncStacksUtils {
     return DebuggerSettings.getInstance().INSTRUMENTING_AGENT;
   }
 
-  public static @Nullable List<StackFrameItem> getAgentRelatedStack(@NotNull StackFrameProxyImpl frame, @NotNull SuspendContextImpl suspendContext) {
+  public static @Nullable List<@Nullable StackFrameItem> getAgentRelatedStack(@NotNull StackFrameProxyImpl frame, @NotNull SuspendContextImpl suspendContext) {
     if (!isAgentEnabled() || !frame.threadProxy().equals(suspendContext.getThread())) { // only for the current thread for now
       return null;
     }
