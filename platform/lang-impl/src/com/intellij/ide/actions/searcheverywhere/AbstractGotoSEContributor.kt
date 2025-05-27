@@ -41,6 +41,7 @@ import com.intellij.platform.backend.navigation.impl.RawNavigationRequest
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -56,6 +57,7 @@ import com.intellij.util.containers.toArray
 import com.intellij.util.indexing.FindSymbolParameters
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -76,6 +78,12 @@ private val ourPatternToDetectLinesAndColumns: Pattern = Pattern.compile(
 )
 
 internal val patternToDetectAnonymousClasses: Pattern = Pattern.compile("([.\\w]+)((\\$\\d+)*(\\$)?)")
+
+// NavigationService is designed to process one navigation request at a time.
+// However, the current implementation of AbstractGotoSEContributor can potentially generate multiple concurrent navigation requests.
+// The semaphore ensures these requests are processed sequentially, maintaining the NavigationService's single-request-at-a-time contract.
+// See IJPL-188436
+private val semaphore: OverflowSemaphore = OverflowSemaphore(permits = 1, overflow = BufferOverflow.SUSPEND)
 
 abstract class AbstractGotoSEContributor protected constructor(event: AnActionEvent)
   : WeightedSearchEverywhereContributor<Any>, ScopeSupporting, SearchEverywhereExtendedInfoProvider {
@@ -500,20 +508,26 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
             // navigated through the Navigatable API.
             // This fallback is for items like that.
             val navRequest = RawNavigationRequest(navigatable, true)
-            project.serviceAsync<NavigationService>().navigate(navRequest, navigationOptions)
+            semaphore.withPermit {
+              project.serviceAsync<NavigationService>().navigate(navRequest, navigationOptions, null)
+            }
           } else {
             LOG.warn("Cannot navigate to invalid PsiElement (psiElement=$psiElement, selected=$selected)")
           }
         }
         else {
           createSourceNavigationRequest(element = psiElement, file = file, searchText = searchText)?.let {
-            project.serviceAsync<NavigationService>().navigate(it, navigationOptions)
+            semaphore.withPermit {
+              project.serviceAsync<NavigationService>().navigate(it, navigationOptions, null)
+            }
           }
         }
       }
       else {
-        project.serviceAsync<NavigationService>().navigate(extendedNavigatable, navigationOptions)
-        triggerLineOrColumnFeatureUsed(extendedNavigatable)
+        semaphore.withPermit {
+          project.serviceAsync<NavigationService>().navigate(extendedNavigatable, navigationOptions)
+          triggerLineOrColumnFeatureUsed(extendedNavigatable)
+        }
       }
     }
   }
