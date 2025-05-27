@@ -109,7 +109,7 @@ internal open class PreCachedDataContext : AsyncDataContext, UserDataHolder, Inj
             sink.keys = null
             sink.uiSnapshot = initial?.uiSnapshot?.builder()
             cachedData = cacheComponentsData(sink, isDisplayable, components)
-            if (initial?.uiComputed?.isNotEmpty() == true) {
+            if (components.isEmpty() && initial?.uiComputed?.isNotEmpty() == true) {
               cachedData.uiComputed.putAll(initial.uiComputed)
             }
             else {
