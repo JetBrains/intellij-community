@@ -32,6 +32,7 @@ import org.cef.handler.CefAppHandlerAdapter;
 import org.cef.handler.CefRenderHandler;
 import org.cef.misc.BoolRef;
 import org.cef.misc.CefLog;
+import org.cef.misc.Utils;
 import org.jdom.IllegalDataException;
 import org.jetbrains.annotations.*;
 
@@ -205,20 +206,24 @@ public final class JBCefApp {
 
       if (IS_REMOTE_ENABLED) {
         StartupTest.checkBrowserCreation(myCefApp, () -> restartJCEF(true, true));
-        //noinspection UnresolvedPluginConfigReference
-        ActionManagerEx.getInstanceEx().registerAction("RestartJCEFActionId", new AnAction(JcefBundle.message("action.RestartJCEFActionId.text")) {
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e) {
-            restartJCEF(false, true);
-          }
-        });
-        //noinspection UnresolvedPluginConfigReference
-        ActionManagerEx.getInstanceEx().registerAction("RestartJCEFWithDebugActionId", new AnAction(JcefBundle.message("action.RestartJCEFWithDebugActionId.text")) {
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e) {
-            restartJCEF(true, true);
-          }
-        });
+        if (ApplicationManager.getApplication().isInternal()) {
+          //noinspection UnresolvedPluginConfigReference
+          ActionManagerEx.getInstanceEx()
+            .registerAction("RestartJCEFActionId", new AnAction(JcefBundle.message("action.RestartJCEFActionId.text")) {
+              @Override
+              public void actionPerformed(@NotNull AnActionEvent e) {
+                restartJCEF(false, true);
+              }
+            });
+          //noinspection UnresolvedPluginConfigReference
+          ActionManagerEx.getInstanceEx()
+            .registerAction("RestartJCEFWithDebugActionId", new AnAction(JcefBundle.message("action.RestartJCEFWithDebugActionId.text")) {
+              @Override
+              public void actionPerformed(@NotNull AnActionEvent e) {
+                restartJCEF(true, true);
+              }
+            });
+        }
       }
     }
 
@@ -412,7 +417,15 @@ public final class JBCefApp {
       altCefPath = System.getenv("ALT_CEF_FRAMEWORK_DIR");
     }
 
-    final boolean skipModuleCheck = (altCefPath != null && !altCefPath.isEmpty()) || SKIP_MODULE_CHECK;
+
+    final String altFramework = Utils.getString("ALT_CEF_FRAMEWORK_DIR");
+    final String altPipe = Utils.getString("ALT_CEF_SERVER_PIPE");
+    final String altPort = Utils.getString("ALT_CEF_SERVER_PORT");
+    final boolean isAltCefPathUsed = (altFramework != null && !altFramework.isEmpty())
+                                     || (altPipe != null && !altPipe.isEmpty())
+                                     || (altPort != null && !altPort.isEmpty());
+
+    final boolean skipModuleCheck = isAltCefPathUsed || SKIP_MODULE_CHECK;
     if (!skipModuleCheck) {
       URL url = JCefAppConfig.class.getResource("JCefAppConfig.class");
       if (url == null) {
