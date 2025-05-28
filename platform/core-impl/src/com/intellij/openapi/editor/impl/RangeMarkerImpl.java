@@ -205,15 +205,6 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     return node != null && node.isStickingToRight();
   }
 
-  /**
-   * @deprecated do not use because it can mess internal offsets
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public final void documentChanged(@NotNull DocumentEvent e) {
-    doChangeUpdate(e);
-  }
-
   final void onDocumentChanged(@NotNull DocumentEvent e) {
     int oldStart = intervalStart();
     int oldEnd = intervalEnd();

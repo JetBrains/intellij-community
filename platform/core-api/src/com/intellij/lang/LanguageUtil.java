@@ -14,7 +14,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.JBIterable;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -90,18 +89,6 @@ public final class LanguageUtil {
     }
 
     return ParserDefinition.SpaceRequirements.MAY;
-  }
-
-  /**
-   * @deprecated see {@link Language#getTransitiveDialects()}
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static @NotNull @Unmodifiable Set<Language> getAllDerivedLanguages(@NotNull Language base) {
-    Set<Language> result = new HashSet<>();
-    result.add(base);
-    result.addAll(base.getTransitiveDialects());
-    return result;
   }
 
   public static boolean isInTemplateLanguageFile(@NotNull PsiElement element) {
