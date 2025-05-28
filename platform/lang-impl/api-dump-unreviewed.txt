@@ -7651,6 +7651,7 @@ a:com.intellij.ide.actions.CreateFromTemplateAction
 - f:actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - p:adjustDirectory(com.intellij.psi.PsiDirectory):com.intellij.psi.PsiDirectory
 - pa:buildDialog(com.intellij.openapi.project.Project,com.intellij.psi.PsiDirectory,com.intellij.ide.actions.CreateFileFromTemplateDialog$Builder):V
+- p:createDialogBuilder(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.DataContext):com.intellij.ide.actions.CreateFileFromTemplateDialog$Builder
 - pa:createFile(java.lang.String,java.lang.String,com.intellij.psi.PsiDirectory):com.intellij.psi.PsiElement
 - pa:getActionName(com.intellij.psi.PsiDirectory,java.lang.String,java.lang.String):java.lang.String
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
