@@ -133,12 +133,6 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
     };
   }
 
-  @SuppressWarnings("deprecation")
-  @Override
-  public @Nullable SearchForTestsTask createSearchingForTestsTask() {
-    return createSearchingForTestsTask(new LocalTargetEnvironment(new LocalTargetEnvironmentRequest()));
-  }
-
   protected void writeClassesPerModule(Map<PsiClass, Map<PsiMethod, List<String>>> classes) {
     if (forkPerModule()) {
       final Map<Module, List<String>> perModule = new TreeMap<>((o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), true));

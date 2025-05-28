@@ -7,8 +7,6 @@ import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.TestObject;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.TargetEnvironment;
-import com.intellij.execution.target.local.LocalTargetEnvironment;
-import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.testDiscovery.TestDiscoverySearchHelper;
 import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.SourceScope;
@@ -61,12 +59,6 @@ public abstract class JUnitTestDiscoveryRunnableState extends TestObject {
       }
     }
     return null;
-  }
-
-  @SuppressWarnings("deprecation")
-  @Override
-  public @Nullable SearchForTestsTask createSearchingForTestsTask() {
-    return createSearchingForTestsTask(new LocalTargetEnvironment(new LocalTargetEnvironmentRequest()));
   }
 
   @Override
