@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.addTypeParameter
 import org.jetbrains.kotlin.idea.base.psi.appendDeclaration
-import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
 import org.jetbrains.kotlin.idea.base.psi.moveInsideParenthesesAndReplaceWith
 import org.jetbrains.kotlin.idea.base.psi.predictImplicitModality
 import org.jetbrains.kotlin.idea.base.psi.setDefaultValue
@@ -233,13 +232,6 @@ private fun deleteElementWithDelimiters(element: PsiElement) {
 
     parent.deleteChildRange(from, to)
 }
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated(
-    "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils' instead",
-    ReplaceWith("this.getOrCreateCompanionObject()", "org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject")
-)
-fun KtClass.getOrCreateCompanionObject(): KtObjectDeclaration = getOrCreateCompanionObject()
 
 @Deprecated(
     "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils' instead",

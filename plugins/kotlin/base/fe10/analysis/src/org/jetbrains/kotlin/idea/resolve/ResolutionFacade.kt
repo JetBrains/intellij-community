@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.resolve
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.analyzer.ResolverForProject
@@ -48,11 +47,6 @@ interface ResolutionFacade {
 
     @FrontendInternals
     fun <T : Any> tryGetFrontendService(element: PsiElement, serviceClass: Class<T>): T?
-
-    @Deprecated("DO NOT USE IT AS IT IS A ROOT CAUSE OF KTIJ-17649")
-    @ApiStatus.ScheduledForRemoval
-    @FrontendInternals
-    fun <T : Any> getFrontendService(moduleDescriptor: ModuleDescriptor, serviceClass: Class<T>): T
 
     fun getResolverForProject(): ResolverForProject<out ModuleInfo>
 }
