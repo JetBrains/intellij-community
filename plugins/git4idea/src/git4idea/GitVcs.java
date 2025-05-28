@@ -33,7 +33,6 @@ import git4idea.changes.GitCommittedChangeListProvider;
 import git4idea.changes.GitOutgoingChangesProvider;
 import git4idea.checkin.GitCheckinEnvironment;
 import git4idea.checkin.GitCommitAndPushExecutor;
-import git4idea.checkout.GitCheckoutProvider;
 import git4idea.commit.GitStagingAreaCommitMode;
 import git4idea.config.*;
 import git4idea.diff.GitDiffProvider;
@@ -309,11 +308,6 @@ public final class GitVcs extends AbstractVcs {
         new GitIntegrationEnabler(GitVcs.this, targetDirectory).detectAndEnable();
       }
     }.queue();
-  }
-
-  @Override
-  public CheckoutProvider getCheckoutProvider() {
-    return new GitCheckoutProvider();
   }
 
   @Override

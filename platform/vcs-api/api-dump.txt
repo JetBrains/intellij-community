@@ -47,7 +47,6 @@ a:com.intellij.openapi.vcs.AbstractVcs
 - f:getCachingCommittedChangesProvider():com.intellij.openapi.vcs.CachingCommittedChangesProvider
 - getChangeProvider():com.intellij.openapi.vcs.changes.ChangeProvider
 - getCheckinEnvironment():com.intellij.openapi.vcs.checkin.CheckinEnvironment
-- getCheckoutProvider():com.intellij.openapi.vcs.CheckoutProvider
 - getCommitExecutors():java.util.List
 - getCommittedChangesProvider():com.intellij.openapi.vcs.CommittedChangesProvider
 - getCompareWithTheSameVersionActionName():java.lang.String

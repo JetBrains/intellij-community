@@ -348,11 +348,6 @@ public final class HgVcs extends AbstractVcs {
     }.queue();
   }
 
-  @Override
-  public CheckoutProvider getCheckoutProvider() {
-    return new HgCheckoutProvider();
-  }
-
   /**
    * Checks Hg version and updates the myVersion variable.
    * In the case of nullable or unsupported version reports the problem.

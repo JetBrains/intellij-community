@@ -715,14 +715,6 @@ public final class SvnVcs extends AbstractVcs {
     return true;
   }
 
-  @Override
-  public CheckoutProvider getCheckoutProvider() {
-    if (myCheckoutProvider == null) {
-      myCheckoutProvider = new SvnCheckoutProvider();
-    }
-    return myCheckoutProvider;
-  }
-
   /**
    * Detects appropriate client factory based on project root directory working copy format.
    * <p>

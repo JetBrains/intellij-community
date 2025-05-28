@@ -738,14 +738,6 @@ public abstract class AbstractVcs extends StartedActivated {
     return false;
   }
 
-  /**
-   * @deprecated dead code
-   */
-  @Deprecated(forRemoval = true)
-  public CheckoutProvider getCheckoutProvider() {
-    return null;
-  }
-
   @Override
   public String toString() {
     return getName();
