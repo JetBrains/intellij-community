@@ -185,8 +185,12 @@ val KaLibraryModule.symbolicId: LibraryId
     get() = project.ideProjectStructureProvider.getKaLibraryModuleSymbolicId(this)
 
 val KaSourceModule.sourceModuleKind: KaSourceModuleKind
-    get() = project.ideProjectStructureProvider.getKaSourceModuleKind(this)
-
+    get() {
+        require(this is KaSourceModuleWithKind) {
+            "Expected `${KaSourceModuleWithKind::class.simpleName}`, but got `${this::class.simpleName}` instead."
+        }
+        return kind
+    }
 
 val KaSourceModule.openapiModule: Module
     get() = project.ideProjectStructureProvider.getOpenapiModule(this)

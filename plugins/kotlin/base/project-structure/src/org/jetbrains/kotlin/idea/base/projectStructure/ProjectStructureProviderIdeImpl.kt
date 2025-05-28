@@ -246,12 +246,6 @@ class ProjectStructureProviderIdeImpl(private val project: Project) : IDEProject
         return getKaSourceModule(openapiModule, kind)
     }
 
-    override fun getKaSourceModuleKind(module: KaSourceModule): KaSourceModuleKind {
-        require(module is KtSourceModuleByModuleInfo)
-        val moduleInfo = module.moduleInfo as ModuleSourceInfo
-        return moduleInfo.sourceModuleKind
-    }
-
     override fun getKaSourceModuleSymbolId(module: KaSourceModule): ModuleId {
         require(module is KtSourceModuleByModuleInfo)
         return module.moduleId

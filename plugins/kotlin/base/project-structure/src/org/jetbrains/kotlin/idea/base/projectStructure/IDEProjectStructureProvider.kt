@@ -35,8 +35,6 @@ abstract class IDEProjectStructureProvider : KotlinProjectStructureProviderBase(
 
     abstract fun getKaSourceModules(moduleEntity: ModuleEntity): List<KaSourceModule>
 
-    abstract fun getKaSourceModuleKind(module: KaSourceModule): KaSourceModuleKind
-
     abstract fun getKaSourceModuleSymbolId(module: KaSourceModule): ModuleId
 
     abstract fun getKaSourceModule(openapiModule: OpenapiModule, type: KaSourceModuleKind): KaSourceModule?

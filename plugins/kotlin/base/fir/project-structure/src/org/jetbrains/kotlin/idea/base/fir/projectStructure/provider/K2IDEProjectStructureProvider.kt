@@ -185,13 +185,6 @@ class K2IDEProjectStructureProvider(private val project: Project) : IDEProjectSt
         return getKaSourceModules(moduleEntity)
     }
 
-    override fun getKaSourceModuleKind(module: KaSourceModule): KaSourceModuleKind {
-        require(module is KaSourceModuleBase) {
-            "Expected ${KaSourceModuleBase::class}, but got ${module::class} instead"
-        }
-        return module.kind
-    }
-
     override fun getKaSourceModuleSymbolId(module: KaSourceModule): ModuleId {
         require(module is KaSourceModuleBase) {
             "Expected ${KaSourceModuleBase::class}, but got ${module::class} instead"
