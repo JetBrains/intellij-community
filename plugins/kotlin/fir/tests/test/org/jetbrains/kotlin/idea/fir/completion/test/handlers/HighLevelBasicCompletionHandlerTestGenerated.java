@@ -106,6 +106,50 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../completion/testData/handlers/basic/bracketOperators")
+        public static class BracketOperators extends AbstractHighLevelBasicCompletionHandlerTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("GetOperator.kt")
+            public void testGetOperator() throws Exception {
+                runTest("../../completion/testData/handlers/basic/bracketOperators/GetOperator.kt");
+            }
+
+            @TestMetadata("InvokeOperator.kt")
+            public void testInvokeOperator() throws Exception {
+                runTest("../../completion/testData/handlers/basic/bracketOperators/InvokeOperator.kt");
+            }
+
+            @TestMetadata("Newline.kt")
+            public void testNewline() throws Exception {
+                runTest("../../completion/testData/handlers/basic/bracketOperators/Newline.kt");
+            }
+
+            @TestMetadata("SpacesAfter.kt")
+            public void testSpacesAfter() throws Exception {
+                runTest("../../completion/testData/handlers/basic/bracketOperators/SpacesAfter.kt");
+            }
+
+            @TestMetadata("SpacesBefore.kt")
+            public void testSpacesBefore() throws Exception {
+                runTest("../../completion/testData/handlers/basic/bracketOperators/SpacesBefore.kt");
+            }
+
+            @TestMetadata("SpacesMixed.kt")
+            public void testSpacesMixed() throws Exception {
+                runTest("../../completion/testData/handlers/basic/bracketOperators/SpacesMixed.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/handlers/basic/callableReference")
         public static class CallableReference extends AbstractHighLevelBasicCompletionHandlerTest {
             @java.lang.Override
@@ -1695,11 +1739,6 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             @TestMetadata("GenericFunctionWithTab2.kt")
             public void testGenericFunctionWithTab2() throws Exception {
                 runTest("../../completion/testData/handlers/basic/GenericFunctionWithTab2.kt");
-            }
-
-            @TestMetadata("GetOperator.kt")
-            public void testGetOperator() throws Exception {
-                runTest("../../completion/testData/handlers/basic/GetOperator.kt");
             }
 
             @TestMetadata("InsertImportedWithObjectName.kt")

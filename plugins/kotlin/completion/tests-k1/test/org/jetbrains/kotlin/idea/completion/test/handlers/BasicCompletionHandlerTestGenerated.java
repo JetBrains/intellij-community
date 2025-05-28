@@ -104,6 +104,50 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/handlers/basic/bracketOperators")
+    public static class BracketOperators extends AbstractBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("GetOperator.kt")
+        public void testGetOperator() throws Exception {
+            runTest("../testData/handlers/basic/bracketOperators/GetOperator.kt");
+        }
+
+        @TestMetadata("InvokeOperator.kt")
+        public void testInvokeOperator() throws Exception {
+            runTest("../testData/handlers/basic/bracketOperators/InvokeOperator.kt");
+        }
+
+        @TestMetadata("Newline.kt")
+        public void testNewline() throws Exception {
+            runTest("../testData/handlers/basic/bracketOperators/Newline.kt");
+        }
+
+        @TestMetadata("SpacesAfter.kt")
+        public void testSpacesAfter() throws Exception {
+            runTest("../testData/handlers/basic/bracketOperators/SpacesAfter.kt");
+        }
+
+        @TestMetadata("SpacesBefore.kt")
+        public void testSpacesBefore() throws Exception {
+            runTest("../testData/handlers/basic/bracketOperators/SpacesBefore.kt");
+        }
+
+        @TestMetadata("SpacesMixed.kt")
+        public void testSpacesMixed() throws Exception {
+            runTest("../testData/handlers/basic/bracketOperators/SpacesMixed.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/callableReference")
     public static class CallableReference extends AbstractBasicCompletionHandlerTest {
         @java.lang.Override
@@ -1693,11 +1737,6 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
         @TestMetadata("GenericFunctionWithTab2.kt")
         public void testGenericFunctionWithTab2() throws Exception {
             runTest("../testData/handlers/basic/GenericFunctionWithTab2.kt");
-        }
-
-        @TestMetadata("GetOperator.kt")
-        public void testGetOperator() throws Exception {
-            runTest("../testData/handlers/basic/GetOperator.kt");
         }
 
         @TestMetadata("InsertImportedWithObjectName.kt")

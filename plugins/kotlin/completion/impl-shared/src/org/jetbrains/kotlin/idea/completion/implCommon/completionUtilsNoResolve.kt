@@ -74,7 +74,7 @@ fun Name?.labelNameToTail(): String = if (this != null) "@" + render() else ""
 enum class ItemPriority {
     SUPER_METHOD_WITH_ARGUMENTS,
     FROM_UNRESOLVED_NAME_SUGGESTION,
-    GET_OPERATOR,
+    BRACKET_OPERATOR,
     DEFAULT,
     IMPLEMENT,
     OVERRIDE,

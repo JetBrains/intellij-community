@@ -78,7 +78,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
         { name -> !name.isSpecial && prefixMatcher.prefixMatches(name.identifier) }
 
     // Prefix matcher that only matches if the completion item starts with the prefix.
-    private val startOnlyMatcher by lazy {  BetterPrefixMatcher(prefixMatcher, Int.MIN_VALUE) }
+    private val startOnlyMatcher by lazy { BetterPrefixMatcher(prefixMatcher, Int.MIN_VALUE) }
     private val startOnlyNameFilter: (Name) -> Boolean =
         { name -> !name.isSpecial && startOnlyMatcher.prefixMatches(name.identifier) }
 
@@ -95,6 +95,28 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
         } else {
             startOnlyNameFilter
         }
+    }
+
+    context(KaSession)
+    protected fun createOperatorLookupElements(
+        context: WeighingContext,
+        signature: KaFunctionSignature<*>,
+        options: CallableInsertionOptions,
+        namedSymbol: KaNamedFunctionSymbol,
+    ): Sequence<LookupElementBuilder> = sequence {
+        if (!namedSymbol.isOperator) return@sequence
+
+        val operatorString = when (namedSymbol.name) {
+            OperatorNameConventions.GET, OperatorNameConventions.SET -> "[]"
+            OperatorNameConventions.INVOKE -> "()"
+            else -> return@sequence
+        }
+        KotlinFirLookupElementFactory.createBracketOperatorLookupElement(
+            operatorName = Name.identifier(operatorString),
+            signature = signature,
+            options = options,
+            expectedType = context.expectedType
+        ).let { yield(it) }
     }
 
     context(KaSession)
@@ -133,16 +155,11 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
             }
 
             if (namedSymbol is KaNamedFunctionSymbol &&
-                namedSymbol.isOperator &&
-                namedSymbol.name == OperatorNameConventions.GET &&
-                // Only offer the get operator after dot, not for safe access or implicit receivers
+                signature is KaFunctionSignature<*> &&
+                // Only offer bracket operators after dot, not for safe access or implicit receivers
                 parameters.position.parent?.parent is KtDotQualifiedExpression
             ) {
-                KotlinFirLookupElementFactory.createGetOperatorLookupElement(
-                    signature = signature,
-                    options = options,
-                    expectedType = context.expectedType
-                ).let { yield(it) }
+                yieldAll(createOperatorLookupElements(context, signature, options, namedSymbol))
             }
         }.map { builder ->
             if (presentableText == null) builder

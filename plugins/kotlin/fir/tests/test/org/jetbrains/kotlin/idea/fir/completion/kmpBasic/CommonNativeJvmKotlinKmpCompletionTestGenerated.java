@@ -543,6 +543,60 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../completion/testData/basic/common/bracketOperators")
+    public static class BracketOperators extends AbstractKotlinKmpCompletionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        @java.lang.Override
+        public KMPTestPlatform getTestPlatform() {
+            return KMPTestPlatform.CommonNativeJvm;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ExtensionGet.kt")
+        public void testExtensionGet() throws Exception {
+            runTest("../../completion/testData/basic/common/bracketOperators/ExtensionGet.kt");
+        }
+
+        @TestMetadata("ExtensionInvoke.kt")
+        public void testExtensionInvoke() throws Exception {
+            runTest("../../completion/testData/basic/common/bracketOperators/ExtensionInvoke.kt");
+        }
+
+        @TestMetadata("NotForImplicitReceiver.kt")
+        public void testNotForImplicitReceiver() throws Exception {
+            runTest("../../completion/testData/basic/common/bracketOperators/NotForImplicitReceiver.kt");
+        }
+
+        @TestMetadata("NotForSafeCall.kt")
+        public void testNotForSafeCall() throws Exception {
+            runTest("../../completion/testData/basic/common/bracketOperators/NotForSafeCall.kt");
+        }
+
+        @TestMetadata("SimpleGet.kt")
+        public void testSimpleGet() throws Exception {
+            runTest("../../completion/testData/basic/common/bracketOperators/SimpleGet.kt");
+        }
+
+        @TestMetadata("SimpleInvoke.kt")
+        public void testSimpleInvoke() throws Exception {
+            runTest("../../completion/testData/basic/common/bracketOperators/SimpleInvoke.kt");
+        }
+
+        @TestMetadata("SimpleSet.kt")
+        public void testSimpleSet() throws Exception {
+            runTest("../../completion/testData/basic/common/bracketOperators/SimpleSet.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/basic/common/callableReference")
     public static class CallableReference extends AbstractKotlinKmpCompletionTest {
         @java.lang.Override
@@ -1479,45 +1533,6 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
         @TestMetadata("TopLevelObject.kt")
         public void testTopLevelObject() throws Exception {
             runTest("../../completion/testData/basic/common/fromUnresolvedNames/TopLevelObject.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../completion/testData/basic/common/getOperator")
-    public static class GetOperator extends AbstractKotlinKmpCompletionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
-        @java.lang.Override
-        public KMPTestPlatform getTestPlatform() {
-            return KMPTestPlatform.CommonNativeJvm;
-        }
-
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("Extension.kt")
-        public void testExtension() throws Exception {
-            runTest("../../completion/testData/basic/common/getOperator/Extension.kt");
-        }
-
-        @TestMetadata("NotForImplicitReceiver.kt")
-        public void testNotForImplicitReceiver() throws Exception {
-            runTest("../../completion/testData/basic/common/getOperator/NotForImplicitReceiver.kt");
-        }
-
-        @TestMetadata("NotForSafeCall.kt")
-        public void testNotForSafeCall() throws Exception {
-            runTest("../../completion/testData/basic/common/getOperator/NotForSafeCall.kt");
-        }
-
-        @TestMetadata("Simple.kt")
-        public void testSimple() throws Exception {
-            runTest("../../completion/testData/basic/common/getOperator/Simple.kt");
         }
     }
 
