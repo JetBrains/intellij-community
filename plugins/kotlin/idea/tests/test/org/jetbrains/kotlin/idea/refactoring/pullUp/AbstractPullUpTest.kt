@@ -15,6 +15,10 @@ import com.intellij.refactoring.util.DocCommentPolicy
 import com.intellij.refactoring.util.RefactoringHierarchyUtil
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode.K2
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests.DIRECTIVES.IGNORE_K1
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests.DIRECTIVES.IGNORE_K2
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.core.getPackage
 import org.jetbrains.kotlin.idea.refactoring.AbstractMemberPullPushTest
@@ -26,20 +30,22 @@ abstract class AbstractPullUpTest : AbstractMemberPullPushTest() {
     private fun getTargetClassName(file: PsiFile) = InTextDirectivesUtils.findStringWithPrefixes(file.text, "// TARGET_CLASS: ")
 
     protected fun doKotlinTest(path: String) {
-        doTest(path) { file ->
-            val targetClassName = getTargetClassName(file)
-            val helper = object : KotlinPullUpHandler.TestHelper {
-                override fun adjustMembers(members: List<KotlinMemberInfo>) = chooseMembers(members)
+        IgnoreTests.runTestIfNotDisabledByFileDirective(dataFilePath(), if (pluginMode === K2) IGNORE_K2 else IGNORE_K1) {
+            doTest(path) { file ->
+                val targetClassName = getTargetClassName(file)
+                val helper = object : KotlinPullUpHandler.TestHelper {
+                    override fun adjustMembers(members: List<KotlinMemberInfo>) = chooseMembers(members)
 
-                override fun chooseSuperClass(superClasses: List<PsiNamedElement>): PsiNamedElement {
-                    if (targetClassName != null) {
-                        return superClasses.single { it.qualifiedClassNameForRendering() == targetClassName }
+                    override fun chooseSuperClass(superClasses: List<PsiNamedElement>): PsiNamedElement {
+                        if (targetClassName != null) {
+                            return superClasses.single { it.qualifiedClassNameForRendering() == targetClassName }
+                        }
+                        return superClasses.first()
                     }
-                    return superClasses.first()
                 }
+                val dataContext = SimpleDataContext.getSimpleContext(KotlinPullUpHandler.PULL_UP_TEST_HELPER_KEY, helper)
+                KotlinPullUpHandler().invoke(project, editor, file, dataContext)
             }
-            val dataContext = SimpleDataContext.getSimpleContext(KotlinPullUpHandler.PULL_UP_TEST_HELPER_KEY, helper)
-            KotlinPullUpHandler().invoke(project, editor, file, dataContext) 
         }
     }
 
