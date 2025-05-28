@@ -26,5 +26,5 @@ private class ComposePanelProvider : MarkdownHtmlPanelProvider() {
     return AvailabilityInfo.UNAVAILABLE
   }
 
-  override fun getProviderInfo() = ProviderInfo("Compose-based", ComposePanelProvider::class.java.name)
+  override fun getProviderInfo() = ProviderInfo("Compose (experimental)", ComposePanelProvider::class.java.name)
 }
