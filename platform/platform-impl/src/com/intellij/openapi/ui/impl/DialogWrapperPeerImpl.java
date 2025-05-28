@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.application.impl.AppImplKt;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
@@ -468,7 +469,13 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       AccessToken ignore2 = lockCleanup;
       AccessToken ignore3 = lockContextCleanup
     ) {
-      myDialog.show();
+      if (!isProgressDialog()) {
+        WriteIntentReadAction.run((Runnable) () -> {
+          myDialog.show();
+        });
+      } else {
+        myDialog.show();
+      }
     }
     finally {
       if (changeModalityState) {
