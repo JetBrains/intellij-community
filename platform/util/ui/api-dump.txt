@@ -505,6 +505,7 @@ f:com.intellij.icons.AllIcons$General
 - sf:GearPlain:javax.swing.Icon
 - sf:GreenCheckmark:javax.swing.Icon
 - sf:Groups:javax.swing.Icon
+- sf:Hashtag:javax.swing.Icon
 - sf:HideToolWindow:javax.swing.Icon
 - sf:History:javax.swing.Icon
 - sf:ImplementingMethod:javax.swing.Icon
