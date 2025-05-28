@@ -50,7 +50,6 @@ import java.util.stream.Stream;
 
 public class FileSystemTreeImpl implements FileSystemTree {
   private final Tree myTree;
-  private final FileTreeStructure myTreeStructure;
   private final Project myProject;
   private final ArrayList<Runnable> myOkActions = new ArrayList<>(2);
   private final FileChooserDescriptor myDescriptor;
@@ -72,14 +71,15 @@ public class FileSystemTreeImpl implements FileSystemTree {
                             final @Nullable Runnable onInitialized,
                             final @Nullable Convertor<? super TreePath, String> speedSearchConverter) {
     myProject = project;
+    FileTreeStructure treeStructure;
     if (renderer == null) {
       renderer = new FileRenderer().forTree();
       myFileTreeModel = createFileTreeModel(descriptor, tree);
-      myTreeStructure = null;
+      treeStructure = null;
     }
     else {
-      myTreeStructure = new FileTreeStructure(project, descriptor);
-      myFileTreeModel = new StructureTreeModel<>(myTreeStructure, getFileComparator(), this);
+      treeStructure = new FileTreeStructure(project, descriptor);
+      myFileTreeModel = new StructureTreeModel<>(treeStructure, getFileComparator(), this);
     }
     myDescriptor = descriptor;
     myTree = tree;

@@ -160,9 +160,7 @@ public final class PathRelativizerService {
     }
 
     String mavenRepositoryPath = MavenPathRelativizer.getNormalizedMavenRepositoryPath();
-    if (mavenRepositoryPath != null) {
-      result.add(new MavenPathRelativizer(mavenRepositoryPath));
-    }
+    result.add(new MavenPathRelativizer(mavenRepositoryPath));
 
     String gradleRepositoryPath = GradlePathRelativizer.initializeGradleRepositoryPath();
     if (gradleRepositoryPath != null) {

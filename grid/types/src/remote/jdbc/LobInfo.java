@@ -5,7 +5,6 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.sql.Blob;
@@ -22,12 +21,7 @@ public abstract class LobInfo<T extends LobInfo<?>> implements Comparable<T>, Se
 
   private boolean isFullyReloaded;
 
-  private static final ThreadLocal<byte[]> BUFFER = new ThreadLocal<byte[]>() {
-    @Override
-    protected byte[] initialValue() {
-      return new byte[8192];
-    }
-  };
+  private static final ThreadLocal<byte[]> BUFFER = ThreadLocal.withInitial(() -> new byte[8192]);
 
   public LobInfo(long length) {
     this.length = length;
@@ -121,11 +115,11 @@ public abstract class LobInfo<T extends LobInfo<?>> implements Comparable<T>, Se
     return maxLength < 0 ? Integer.MAX_VALUE : maxLength;
   }
 
-  public static @Nullable Object fromInputStream(InputStream o, int maxLength) throws IOException {
+  public static @NotNull Object fromInputStream(InputStream o, int maxLength) throws IOException {
     return fromByteArray(loadBytes(o, realMaxLength(maxLength)), maxLength);
   }
 
-  public static @Nullable Object fromReader(Reader o, int maxLength) throws IOException {
+  public static @NotNull Object fromReader(Reader o, int maxLength) throws IOException {
     return fromString(String.valueOf(FileUtilRt.loadText(o, realMaxLength(maxLength))), maxLength);
   }
 
@@ -147,7 +141,7 @@ public abstract class LobInfo<T extends LobInfo<?>> implements Comparable<T>, Se
 
   @Override
   public int hashCode() {
-    return (int)(length ^ (length >>> 32));
+    return Long.hashCode(length);
   }
 
   public static class ClobInfo extends LobInfo<ClobInfo> {
@@ -217,7 +211,7 @@ public abstract class LobInfo<T extends LobInfo<?>> implements Comparable<T>, Se
       return Comparing.compare(data, o.data);
     }
 
-    public int compareTo(@NotNull byte[] bytes) {
+    public int compareTo(byte @NotNull [] bytes) {
       final int lenVal = Long.compare(length, bytes.length);
       if (lenVal != 0 || length == 0) return lenVal;
       return Comparing.compare(data, bytes);

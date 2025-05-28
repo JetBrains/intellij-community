@@ -135,6 +135,7 @@ public class TextRange implements Segment, Serializable {
    * @return true if the given offset is within the range, false otherwise
    * @see #containsOffset(int) 
    */
+  @Override
   @Contract(pure = true)
   public boolean contains(int offset) {
     return myStartOffset <= offset && offset < myEndOffset;

@@ -36,7 +36,7 @@ final class EditorConfigStatusListener implements CodeStyleSettingsListener {
                              @NotNull VirtualFile virtualFile,
                              @NotNull Set<String> encodings) {
     myProject = project;
-    myEnabledStatus = Utils.INSTANCE.isEnabled(project);
+    myEnabledStatus = Utils.isEnabled(project);
     myVirtualFile = virtualFile;
     myEncodings = encodings;
   }
@@ -49,7 +49,7 @@ final class EditorConfigStatusListener implements CodeStyleSettingsListener {
       return;
     }
 
-    boolean newEnabledStatus = Utils.INSTANCE.isEnabled(myProject);
+    boolean newEnabledStatus = Utils.isEnabled(myProject);
     if (myEnabledStatus != newEnabledStatus) {
       myEnabledStatus = newEnabledStatus;
       onEditorConfigEnabled(newEnabledStatus);

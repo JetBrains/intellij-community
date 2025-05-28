@@ -47,7 +47,6 @@ import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.*;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.jetbrains.python.PyBundle;
@@ -581,7 +580,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   public void setUnitTestDebuggingMode() {
-    ExecutionEnvironment environment = ((XDebugSessionImpl)getSession()).getExecutionEnvironment();
+    ExecutionEnvironment environment = getSession().getExecutionEnvironment();
     if (environment == null) return;
     RunProfile runProfile = environment.getRunProfile();
     if (runProfile instanceof AbstractPythonTestRunConfiguration
@@ -851,7 +850,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   public @Nullable XValueChildrenList loadFrame(final @Nullable XStackFrame contextFrame) throws PyDebuggerException {
     final PyStackFrame frame = contextFrame == null ? currentFrame() : (PyStackFrame)contextFrame;
     synchronized (myFrameCacheObject) {
-      // Do not reload frame every time it is needed, because due to a bug in pdb, reloading frame clears all variable changes.
+      // Do not reload the frame every time it is needed, because due to a bug in pdb, reloading frame clears all variable changes.
       if (!myStackFrameCache.containsKey(frame.getThreadFrameId())) {
         XValueChildrenList values = myDebugger.loadFrame(frame.getThreadId(), frame.getFrameId(), ProcessDebugger.GROUP_TYPE.DEFAULT);
         // Could be null when the current function is called for a thread that is already dead.
@@ -1204,7 +1203,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
             }
           }
           else {
-            ((XDebugSessionImpl)getSession()).positionReached(suspendContext, isFailedTestStop(threadInfo));
+            getSession().positionReached(suspendContext, isFailedTestStop(threadInfo));
           }
         }
         else {
