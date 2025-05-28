@@ -5,7 +5,6 @@ import com.intellij.codeInsight.inline.completion.session.InlineCompletionSessio
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
-import com.intellij.injected.editor.EditorWindow
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.runReadAction
@@ -228,15 +227,7 @@ interface InlineCompletionEvent {
     @ApiStatus.Experimental
     override val editor: Editor,
     override val event: LookupEvent
-  ) : InlineLookupEvent, Builtin {
-
-    @Deprecated("It should not be created outside of the platform.")
-    @ApiStatus.ScheduledForRemoval
-    constructor(event: LookupEvent) : this(
-      runReadAction { event.lookup!!.editor },
-      event
-    )
-  }
+  ) : InlineLookupEvent, Builtin
 
   sealed interface InlineLookupEvent : InlineCompletionEvent, Builtin {
 

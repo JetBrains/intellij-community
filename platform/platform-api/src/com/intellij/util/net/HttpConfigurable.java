@@ -87,9 +87,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   /** @deprecated without replacement */
   @Deprecated(forRemoval = true) public transient String LAST_ERROR;
 
-  /** @deprecated belongs to UI, for removal without a replacement */
-  @Deprecated(forRemoval = true) public transient String CHECK_CONNECTION_URL = "http://";
-
   /** @deprecated use {@link ProxyAuthentication#isPromptedAuthenticationCancelled(String, int)} with StaticProxy configuration
    * from {@link ProxySettings#getProxyConfiguration()} */
   @Deprecated(forRemoval = true) public transient volatile boolean AUTHENTICATION_CANCELLED;

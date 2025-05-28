@@ -34,7 +34,6 @@ f:com.intellij.codeInsight.inline.completion.InlineCompletionEvent$DocumentChang
 f:com.intellij.codeInsight.inline.completion.InlineCompletionEvent$LookupCancelled
 - com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 - com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InlineLookupEvent
-- <init>(com.intellij.codeInsight.lookup.LookupEvent):V
 - getEvent():com.intellij.codeInsight.lookup.LookupEvent
 f:com.intellij.codeInsight.inline.completion.InlineCompletionEvent$LookupChange
 - com.intellij.codeInsight.inline.completion.InlineCompletionEvent

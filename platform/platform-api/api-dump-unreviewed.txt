@@ -921,7 +921,6 @@ a:com.intellij.ide.ui.LafManager
 - a:resetPreferredEditorColorScheme():V
 - a:setAutodetect(Z):V
 - a:setCurrentLookAndFeel(com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo,Z):V
-- setCurrentLookAndFeel(javax.swing.UIManager$LookAndFeelInfo):V
 - setCurrentUIThemeLookAndFeel(com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo):V
 - a:setPreferredDarkLaf(com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo):V
 - a:setPreferredLightLaf(com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo):V
@@ -1434,7 +1433,6 @@ f:com.intellij.openapi.actionSystem.EmptyAction
 - s:createEmptyAction(java.lang.String,javax.swing.Icon,Z):com.intellij.openapi.actionSystem.AnAction
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - s:registerWithShortcutSet(java.lang.String,com.intellij.openapi.actionSystem.ShortcutSet,javax.swing.JComponent):com.intellij.openapi.actionSystem.AnAction
-- s:setupAction(com.intellij.openapi.actionSystem.AnAction,java.lang.String,javax.swing.JComponent):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 - s:wrap(com.intellij.openapi.actionSystem.AnAction):com.intellij.openapi.actionSystem.AnAction
 c:com.intellij.openapi.actionSystem.EmptyAction$MyDelegatingAction
@@ -1713,9 +1711,6 @@ c:com.intellij.openapi.actionSystem.ex.TooltipLinkProvider$TooltipLink
 - f:tooltip:java.lang.String
 - <init>(java.lang.String,java.lang.Runnable):V
 f:com.intellij.openapi.actionSystem.remoting.PermissionsKt
-a:com.intellij.openapi.application.ApplicationStarterEx
-- com.intellij.openapi.application.ApplicationStarter
-- <init>():V
 a:com.intellij.openapi.command.CommandAdapter
 - com.intellij.openapi.command.CommandListener
 - <init>():V
@@ -3479,11 +3474,9 @@ Fc:com.intellij.openapi.ui.Messages
 - sf:CANCEL:I
 - sf:CANCEL_BUTTON:java.lang.String
 - sf:NO:I
-- sf:NO_BUTTON:java.lang.String
 - sf:OK:I
 - sf:OK_BUTTON:java.lang.String
 - sf:YES:I
-- sf:YES_BUTTON:java.lang.String
 - <init>():V
 - s:canShowMacSheetPanel():Z
 - s:configureMessagePaneUi(javax.swing.JTextPane,java.lang.String):javax.swing.JTextPane
@@ -3793,7 +3786,6 @@ c:com.intellij.openapi.ui.TextFieldWithBrowseButton$NoPathCompletion
 c:com.intellij.openapi.ui.ThreeComponentsSplitter
 - javax.swing.JPanel
 - <init>():V
-- <init>(com.intellij.openapi.Disposable):V
 - <init>(Z):V
 - <init>(Z,Z):V
 - b:<init>(Z,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
@@ -5383,7 +5375,6 @@ f:com.intellij.ui.GuiUtils
 - s:removePotentiallyLeakingReferences(java.awt.Container):V
 - s:replaceJSplitPaneWithIDEASplitter(javax.swing.JComponent):V
 - s:replaceJSplitPaneWithIDEASplitter(javax.swing.JComponent,Z):V
-- s:runOrInvokeAndWait(java.lang.Runnable):V
 - s:showComponents(Z,java.awt.Component[]):V
 c:com.intellij.ui.HighlightableCellRenderer
 - com.intellij.ui.HighlightableComponent
@@ -8795,7 +8786,6 @@ a:com.intellij.ui.treeStructure.SimpleNode
 - p:<init>(com.intellij.openapi.project.Project):V
 - p:<init>(com.intellij.openapi.project.Project,com.intellij.ide.util.treeView.NodeDescriptor):V
 - p:<init>(com.intellij.ui.treeStructure.SimpleNode):V
-- f:addColoredFragment(java.lang.String,com.intellij.ui.SimpleTextAttributes):V
 - p:doUpdate(com.intellij.ide.projectView.PresentationData):V
 - f:equals(java.lang.Object):Z
 - getChildAt(I):com.intellij.ui.treeStructure.SimpleNode
@@ -9353,7 +9343,6 @@ c:com.intellij.util.net.HttpConfigurable
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.components.PersistentStateComponent
 - AUTHENTICATION_CANCELLED:Z
-- CHECK_CONNECTION_URL:java.lang.String
 - KEEP_PROXY_PASSWORD:Z
 - LAST_ERROR:java.lang.String
 - PAC_URL:java.lang.String
@@ -9641,7 +9630,6 @@ f:com.intellij.util.net.ssl.UntrustedCertificateStrategyWithReason
 - hashCode():I
 f:com.intellij.util.text.DateFormatUtil
 - sf:DAY:J
-- sf:DAY_FACTOR:J
 - sf:HOUR:J
 - sf:MINUTE:J
 - sf:MONTH:J

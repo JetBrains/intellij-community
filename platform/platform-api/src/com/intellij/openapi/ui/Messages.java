@@ -114,14 +114,6 @@ public class Messages {
   @SuppressWarnings("HardCodedStringLiteral") @Deprecated
   public static final String OK_BUTTON = "OK";
 
-  /** @deprecated Use {@link #getYesButton()} instead */
-  @SuppressWarnings("HardCodedStringLiteral") @Deprecated(forRemoval = true)
-  public static final String YES_BUTTON = "&Yes";
-
-  /** @deprecated Use {@link #getNoButton()} instead */
-  @SuppressWarnings("HardCodedStringLiteral") @Deprecated(forRemoval = true)
-  public static final String NO_BUTTON = "&No";
-
   /** @deprecated Use {@link #getCancelButton()} instead */
   @SuppressWarnings("HardCodedStringLiteral") @Deprecated
   public static final String CANCEL_BUTTON = "Cancel";

@@ -253,7 +253,6 @@ open class JBTabsImpl internal constructor(
 
   @JvmField
   internal val separatorWidth: Int = JBUI.scale(1)
-  private var dataProvider: DataProvider? = null
   private val deferredToRemove = WeakHashMap<Component, Component>()
 
   final override val tabsPosition: JBTabsPosition
@@ -3118,7 +3117,6 @@ open class JBTabsImpl internal constructor(
   }
 
   override fun uiDataSnapshot(sink: DataSink) {
-    DataSink.uiDataSnapshot(sink, dataProvider)
     sink[QuickActionProvider.KEY] = this@JBTabsImpl
     sink[MorePopupAware.KEY] = this@JBTabsImpl
     sink[JBTabsEx.NAVIGATION_ACTIONS_KEY] = this@JBTabsImpl
@@ -3130,15 +3128,6 @@ open class JBTabsImpl internal constructor(
 
   val navigationActions: ActionGroup
     get() = myNavigationActions
-
-  @Suppress("removal", "OVERRIDE_DEPRECATION")
-  override fun getDataProvider(): DataProvider? = dataProvider
-
-  @Suppress("removal", "OVERRIDE_DEPRECATION")
-  override fun setDataProvider(dataProvider: DataProvider): JBTabsImpl {
-    this.dataProvider = dataProvider
-    return this
-  }
 
   private class DefaultDecorator : UiDecorator {
     override fun getDecoration(): UiDecoration {

@@ -243,7 +243,6 @@ c:com.intellij.execution.process.KillableProcessHandler
 - com.intellij.execution.process.OSProcessHandler
 - com.intellij.execution.KillableProcess
 - <init>(com.intellij.execution.configurations.GeneralCommandLine):V
-- <init>(com.intellij.execution.configurations.GeneralCommandLine,Z):V
 - p:<init>(java.lang.Process,com.intellij.execution.configurations.GeneralCommandLine):V
 - <init>(java.lang.Process,java.lang.String):V
 - <init>(java.lang.Process,java.lang.String,java.nio.charset.Charset):V

@@ -920,7 +920,6 @@ com.intellij.ui.tabs.JBTabs
 - a:findInfo(java.awt.event.MouseEvent):com.intellij.ui.tabs.TabInfo
 - a:findInfo(java.lang.Object):com.intellij.ui.tabs.TabInfo
 - a:getComponent():javax.swing.JComponent
-- a:getDataProvider():com.intellij.openapi.actionSystem.DataProvider
 - getDropArea():java.awt.Rectangle
 - a:getIndexOf(com.intellij.ui.tabs.TabInfo):I
 - a:getPresentation():com.intellij.ui.tabs.JBTabsPresentation
@@ -936,7 +935,6 @@ com.intellij.ui.tabs.JBTabs
 - a:requestFocus():V
 - a:resetDropOver(com.intellij.ui.tabs.TabInfo):V
 - a:select(com.intellij.ui.tabs.TabInfo,Z):com.intellij.openapi.util.ActionCallback
-- a:setDataProvider(com.intellij.openapi.actionSystem.DataProvider):com.intellij.ui.tabs.JBTabs
 - a:setNavigationActionBinding(java.lang.String,java.lang.String):V
 - a:setPopupGroup(com.intellij.openapi.actionSystem.ActionGroup,java.lang.String,Z):com.intellij.ui.tabs.JBTabs
 - a:setPopupGroup(java.util.function.Supplier,java.lang.String,Z):com.intellij.ui.tabs.JBTabs

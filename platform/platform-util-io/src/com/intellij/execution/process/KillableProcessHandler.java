@@ -44,13 +44,6 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
     super(process, commandLine.getCommandLineString(), commandLine.getCharset());
   }
 
-  /** @deprecated the mediator is retired; use {@link #KillableProcessHandler(GeneralCommandLine)} instead */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("unused")
-  public KillableProcessHandler(@NotNull GeneralCommandLine commandLine, boolean withMediator) throws ExecutionException {
-    this(commandLine);
-  }
-
   /**
    * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
    */

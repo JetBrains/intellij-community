@@ -760,15 +760,6 @@ fun Project.executeOnPooledThread(coroutineScope: CoroutineScope, task: Runnable
   coroutineScope.launch { blockingContext { task.run() } }
 }
 
-@Suppress("DeprecatedCallableAddReplaceWith")
-@Internal
-@ScheduledForRemoval
-@Deprecated(message = "temporary solution for old code in java", level = DeprecationLevel.ERROR)
-fun Project.executeOnPooledIoThread(task: Runnable) {
-  @Suppress("DEPRECATION")
-  (this as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.IO) { blockingContext { task.run() } }
-}
-
 private fun getActiveWindow(): Window? {
   val window = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow
   if (window is DisposableWindow && window.isWindowDisposed) return null

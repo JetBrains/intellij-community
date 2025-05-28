@@ -27,7 +27,6 @@ import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
-import java.lang.reflect.InvocationTargetException;
 import java.util.function.Consumer;
 
 public final class GuiUtils {
@@ -205,15 +204,6 @@ public final class GuiUtils {
 
   public static String colorToHex(final Color color) {
     return UIUtil.colorToHex(color);
-  }
-
-  /**
-   * @deprecated Use {@link Application#invokeAndWait}
-   */
-  @SuppressWarnings("RedundantThrows")
-  @Deprecated(forRemoval = true)
-  public static void runOrInvokeAndWait(@NotNull Runnable runnable) throws InvocationTargetException, InterruptedException {
-    ApplicationManager.getApplication().invokeAndWait(runnable);
   }
 
   /**

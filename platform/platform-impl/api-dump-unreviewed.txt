@@ -2192,9 +2192,7 @@ c:com.intellij.ide.actions.ToggleDistractionFreeModeAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- s:getStandardTabPlacement():I
 - s:isDistractionFreeModeEnabled():Z
-- s:shouldMinimizeCustomHeader():Z
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.ide.actions.TogglePresentationModeAction
 - com.intellij.openapi.actionSystem.AnAction
@@ -3115,13 +3113,6 @@ c:com.intellij.ide.navigationToolbar.DefaultNavBarExtension
 - getParent(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - getPresentableText(java.lang.Object):java.lang.String
 - processChildren(java.lang.Object,java.lang.Object,com.intellij.util.Processor):Z
-f:com.intellij.ide.navigationToolbar.NavBarRootPaneExtension
-- <init>():V
-a:com.intellij.ide.navigationToolbar.NavBarRootPaneExtension$NavBarWrapperPanel
-- javax.swing.JPanel
-- com.intellij.ide.ui.UISettingsListener
-- <init>(java.awt.LayoutManager):V
-- p:getComponentGraphics(java.awt.Graphics):java.awt.Graphics
 f:com.intellij.ide.passwordSafe.impl.providers.EncryptionUtil
 - sf:SECRET_KEY_SIZE_BYTES:I
 - s:decryptText(B[],B[]):com.intellij.credentialStore.OneTimeString
@@ -10046,7 +10037,6 @@ a:com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 - s:isWritable(I):Z
 - a:listPersisted(com.intellij.openapi.vfs.VirtualFile):java.lang.String[]
 - a:mayHaveChildren(I):Z
-- processEvents(java.util.List):V
 - a:releaseContent(I):V
 - a:storeUnlinkedContent(B[]):I
 @:com.intellij.openapi.vfs.newvfs.persistent.PersistentFS$Attributes
@@ -15152,18 +15142,6 @@ f:com.intellij.util.IJSwingUtilities
 - s:hasFocus2(java.awt.Component):Z
 - s:moveMousePointerOn(java.awt.Component):V
 - s:updateComponentTreeUI(java.awt.Component):V
-f:com.intellij.util.JdkBundle
-- s:createBoot():com.intellij.util.JdkBundle
-- s:createBundle(java.io.File):com.intellij.util.JdkBundle
-- s:createBundled():com.intellij.util.JdkBundle
-- getBundleVersion():com.intellij.util.lang.JavaVersion
-- getHome():java.io.File
-- getLocation():java.io.File
-- getVMExecutable():java.io.File
-- isBoot():Z
-- isBundled():Z
-- isJdk():Z
-- isOperational():Z
 f:com.intellij.util.PopupUtilsKt
 - sf:getBestBalloonPosition(com.intellij.openapi.actionSystem.DataContext):com.intellij.ui.awt.RelativePoint
 - sf:getBestPopupPosition(com.intellij.openapi.actionSystem.DataContext):com.intellij.ui.awt.RelativePoint

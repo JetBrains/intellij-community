@@ -14,7 +14,6 @@ f:com.intellij.CommonBundle
 - s:getYesForAllButtonText():java.lang.String
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 - s:message(java.util.ResourceBundle,java.lang.String,java.lang.Object[]):java.lang.String
-- s:messageOfNull(java.util.ResourceBundle,java.lang.String,java.lang.Object[]):java.lang.String
 - s:messageOrDefault(java.util.ResourceBundle,java.lang.String,java.lang.String,java.lang.Object[]):java.lang.String
 - s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 - s:settingsAction():java.lang.String
@@ -558,7 +557,6 @@ f:com.intellij.notification.NotificationGroup
 - <init>(java.lang.String,com.intellij.notification.NotificationDisplayType,Z,java.lang.String,javax.swing.Icon,java.lang.String,com.intellij.openapi.extensions.PluginId):V
 - b:<init>(java.lang.String,com.intellij.notification.NotificationDisplayType,Z,java.lang.String,javax.swing.Icon,java.lang.String,com.intellij.openapi.extensions.PluginId,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - sf:balloonGroup(java.lang.String):com.intellij.notification.NotificationGroup
-- sf:balloonGroup(java.lang.String,com.intellij.openapi.extensions.PluginId):com.intellij.notification.NotificationGroup
 - sf:balloonGroup(java.lang.String,java.lang.String):com.intellij.notification.NotificationGroup
 - sf:createIdWithTitle(java.lang.String,java.lang.String):java.lang.String
 - f:createNotification():com.intellij.notification.Notification
@@ -594,7 +592,6 @@ f:com.intellij.notification.NotificationGroup
 - sf:toolWindowGroup(java.lang.String,java.lang.String,Z,com.intellij.openapi.extensions.PluginId):com.intellij.notification.NotificationGroup
 f:com.intellij.notification.NotificationGroup$Companion
 - f:balloonGroup(java.lang.String):com.intellij.notification.NotificationGroup
-- f:balloonGroup(java.lang.String,com.intellij.openapi.extensions.PluginId):com.intellij.notification.NotificationGroup
 - f:balloonGroup(java.lang.String,java.lang.String):com.intellij.notification.NotificationGroup
 - f:createIdWithTitle(java.lang.String,java.lang.String):java.lang.String
 - f:findRegisteredGroup(java.lang.String):com.intellij.notification.NotificationGroup
