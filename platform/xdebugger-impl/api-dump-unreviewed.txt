@@ -344,7 +344,6 @@ f:com.intellij.xdebugger.impl.evaluate.ValueLookupManagerControllerEntityTypePro
 - f:getEntityTypes():java.util.List
 c:com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog
 - com.intellij.openapi.ui.DialogWrapper
-- sf:ADD_WATCH_KEYSTROKE:javax.swing.KeyStroke
 - sf:KEY:com.intellij.openapi.actionSystem.DataKey
 - <init>(com.intellij.xdebugger.XDebugSession,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,com.intellij.xdebugger.XExpression,com.intellij.xdebugger.XSourcePosition,Z):V
 - <init>(com.intellij.xdebugger.evaluation.XDebuggerEvaluator,com.intellij.openapi.project.Project,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,com.intellij.xdebugger.XExpression,com.intellij.xdebugger.XSourcePosition,Z):V
