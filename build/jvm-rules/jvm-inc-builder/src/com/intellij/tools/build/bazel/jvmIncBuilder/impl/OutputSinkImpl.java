@@ -13,7 +13,6 @@ import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputSink;
 import kotlin.metadata.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.dependency.Node;
 import org.jetbrains.jps.dependency.NodeSource;
 import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.java.*;
@@ -42,16 +41,6 @@ public class OutputSinkImpl implements OutputSink {
   private final @NotNull InstrumentationClassFinder myClassFinder;
 
 
-  public static class NodeWithSources {
-    public final Node<?, ?> node;
-    public final Iterable<NodeSource> sources;
-
-    public NodeWithSources(Node<?, ?> node, Iterable<NodeSource> sources) {
-      this.node = node;
-      this.sources = sources;
-    }
-  }
-  
   public OutputSinkImpl(DiagnosticSink diagnostic, StorageManager sm, List<BytecodeInstrumenter> instrumenters) throws IOException {
     myDiagnostic = diagnostic;
     myOutBuilder = sm.getOutputBuilder();
@@ -180,7 +169,8 @@ public class OutputSinkImpl implements OutputSink {
     myNodes.add(new NodeWithSources(node, sources));
   }
 
-  public List<NodeWithSources> getNodes() {
+  @Override
+  public Iterable<NodeWithSources> getNodes() {
 
     if (!myPerSourceAdditionalUsages.isEmpty()) {
       for (Map.Entry<NodeSource, Set<Usage>> entry : myPerSourceAdditionalUsages.entrySet()) {

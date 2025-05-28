@@ -1,5 +1,6 @@
 package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
 
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.forms.FormBinding;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.BytecodeInstrumenter;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.CompilerRunner;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.Runner;
@@ -17,8 +18,8 @@ public final class RunnerRegistry {
   private static final List<Entry<?>> ourRunners = List.of(
     new Entry<>(KotlinCompilerRunner.class, KotlinCompilerRunner::new, true, p -> p.getFileName().toString().endsWith(".kt")),
     new Entry<>(JavaCompilerRunner.class, JavaCompilerRunner::new, true, p -> p.getFileName().toString().endsWith(".java")),
-    new Entry<>(NotNullInstrumenter.class, NotNullInstrumenter::new),
-    new Entry<>(FormsInstrumenter.class, FormsInstrumenter::new)
+    new Entry<>(FormsCompiler.class, FormsCompiler::new, true, p -> p.getFileName().toString().endsWith(FormBinding.FORM_EXTENSION)),
+    new Entry<>(NotNullInstrumenter.class, NotNullInstrumenter::new)
   );
 
   public static Iterable<RunnerFactory<? extends CompilerRunner>> getCompilers() {

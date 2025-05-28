@@ -5,6 +5,7 @@ import com.intellij.tools.build.bazel.jvmIncBuilder.impl.AbiJarBuilder;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.CompositeZipOutputBuilder;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.Utils;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.ZipOutputBuilderImpl;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.forms.FormBinding;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.PersistentMVStoreMapletFactory;
 import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.InstrumentationClassFinder;
 import com.sun.nio.file.ExtendedOpenOption;
@@ -33,6 +34,8 @@ public class StorageManager implements CloseableExt {
   private AbiJarBuilder myAbiOutputBuilder;
   private CompositeZipOutputBuilder myComposite;
   private InstrumentationClassFinder myInstrumentationClassFinder;
+  private FormBinding myFormBinding;
+
   private final MVStore myDataSwapStore;
 
   public StorageManager(BuildContext context) {
@@ -90,6 +93,14 @@ public class StorageManager implements CloseableExt {
     return myDataSwapStore.openMap(name);
   }
 
+  public FormBinding getFormsBinding() throws Exception {
+    FormBinding binding = myFormBinding;
+    if (binding == null) {
+      myFormBinding = binding = FormBinding.create(myContext);
+    }
+    return binding;
+  }
+
   @NotNull
   public GraphConfiguration getGraphConfiguration() throws IOException {
     GraphConfiguration config = myGraphConfig;
@@ -137,9 +148,9 @@ public class StorageManager implements CloseableExt {
   public @NotNull InstrumentationClassFinder getInstrumentationClassFinder() throws MalformedURLException {
     InstrumentationClassFinder finder = myInstrumentationClassFinder;
     if (finder == null) {
-      myInstrumentationClassFinder = finder = createInstrumentationClassFinder(path -> {
+      myInstrumentationClassFinder = finder = createInstrumentationClassFinder(jvmClassName -> {
         try {
-          return getOutputBuilder().getContent(path);
+          return getOutputBuilder().getContent(jvmClassName + ".class");
         }
         catch (IOException e) {
           throw new RuntimeException(e);
@@ -155,7 +166,7 @@ public class StorageManager implements CloseableExt {
 
   @Override
   public final void close() {
-    close(true);
+    close(!myContext.hasErrors());
   }
 
   @Override
@@ -209,6 +220,18 @@ public class StorageManager implements CloseableExt {
     List<URL> platformCp = jrt != null? List.of(jrt) : List.of();
     final List<URL> urls = new ArrayList<>();
     for (Path path : map(myContext.getBinaryDependencies().getElements(), myContext.getPathMapper()::toPath)) {
+      
+      // try to substitute ".abi.jar" dependency with the corresponding output dependency, so that instrumenters can resolve against real bytecode
+      // this is necessary for the forms instrumenter that needs to load classes from classpath
+      String fName = path.getFileName().toString();
+      if (fName.endsWith(DataPaths.ABI_JAR_SUFFIX)) {
+        String outputJarName = fName.substring(0, fName.length() - DataPaths.ABI_JAR_SUFFIX.length()) + ".jar";
+        Path libOutputPath = path.resolveSibling(outputJarName);
+        if (Files.exists(libOutputPath)) {
+          path = libOutputPath;
+        }
+      }
+
       urls.add(path.toUri().toURL());
     }
     return new InstrumentationClassFinder(platformCp.toArray(URL[]::new), urls.toArray(URL[]::new)) {

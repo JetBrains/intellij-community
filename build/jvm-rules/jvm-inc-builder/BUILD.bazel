@@ -33,6 +33,8 @@ kt_jvm_library(
     "patched-kotlin-compiler-for-bazel",
     "//:kotlin-compose-compiler-plugin",
     "//:kotlin-serialization-compiler-plugin",
+    ":forms-1_1-preview_http_import",   # forms compilation support
+    ":jaxen-1_2_0_http_import",         # forms compilation support
   ]
 )
 
@@ -146,5 +148,16 @@ jvm_import(
 #  name = "annotations-23_0_0_http_import",
 #  jar = "@annotations-23_0_0_http//file"
 #)
+
+jvm_import(
+    name = "forms-1_1-preview_http_import",
+    jar = "@forms-1_1-preview_http//file",
+)
+
+jvm_import(
+    name = "jaxen-1_2_0_http_import",
+    jar = "@jaxen-1_2_0_http//file",
+)
+
 
 ### skip generation section `build intellij.tools.build.bazel.jvmIncBuilder`

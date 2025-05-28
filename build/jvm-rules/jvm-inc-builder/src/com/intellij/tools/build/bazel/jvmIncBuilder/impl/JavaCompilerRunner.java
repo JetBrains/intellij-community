@@ -97,7 +97,7 @@ public class JavaCompilerRunner implements CompilerRunner {
   // todo: implement JavaCompilerToolExtension to listen to javac constants and registering them into outputConsumer
   // todo: install javac ast listener and consume data like in JpsReferenceDependenciesRegistrar
   @Override
-  public ExitCode compile(Iterable<NodeSource> sources, Iterable<NodeSource> deletedSources, DiagnosticSink diagnosticSink, OutputSink outSink) {
+  public ExitCode compile(Iterable<NodeSource> sources, Iterable<NodeSource> deletedSources, DiagnosticSink diagnosticSink, OutputSink outSink) throws Exception {
     NodeSourcePathMapper pathMapper = myContext.getPathMapper();
     SourcesFilteringOutputSink srcFilteringSink = new SourcesFilteringOutputSink(outSink);
     OutputCollector outCollector = new OutputCollector(this, pathMapper, diagnosticSink, srcFilteringSink);
@@ -420,6 +420,11 @@ public class JavaCompilerRunner implements CompilerRunner {
     @Override
     public void registerUsage(NodeSource source, Usage usage) {
       myDelegate.registerUsage(source, usage);
+    }
+
+    @Override
+    public Iterable<NodeWithSources> getNodes() {
+      return myDelegate.getNodes();
     }
   }
 }

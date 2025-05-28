@@ -2,6 +2,7 @@
 package com.intellij.tools.build.bazel.jvmIncBuilder;
 
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.*;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.forms.FormBinding;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.DeltaView;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.LibraryGraphLoader;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.BytecodeInstrumenter;
@@ -36,207 +37,234 @@ public class BazelIncBuilder {
 
     try (StorageManager storageManager = new StorageManager(context)) {
 
-      GraphUpdater graphUpdater = new GraphUpdater(context.getTargetName());
+      try {
+        GraphUpdater graphUpdater = new GraphUpdater(context.getTargetName());
 
-      if (context.isRebuild() || !storageManager.getOutputBuilder().isInputZipExist()) {
-        // either rebuild is explicitly requested, or there is no previous data, need to compile whole target
-        srcSnapshotDelta = new SnapshotDeltaImpl(context.getSources());
-        srcSnapshotDelta.markRecompileAll(); // force rebuild
-      }
-      else {
-        ConfigurationState pastState = ConfigurationState.loadSavedState(context);
-        ConfigurationState presentState = new ConfigurationState(context.getPathMapper(), context.getSources(), context.getBinaryDependencies());
-
-        srcSnapshotDelta = new SnapshotDeltaImpl(pastState.getSources(), context.getSources());
-        if (shouldRecompileAll(srcSnapshotDelta) || pastState.getClasspathStructureDigest() != presentState.getClasspathStructureDigest()) {
-          srcSnapshotDelta.markRecompileAll();
+        if (context.isRebuild() || !storageManager.getOutputBuilder().isInputZipExist()) {
+          // either rebuild is explicitly requested, or there is no previous data, need to compile whole target
+          srcSnapshotDelta = new SnapshotDeltaImpl(context.getSources());
+          srcSnapshotDelta.markRecompileAll(); // force rebuild
         }
         else {
-          Predicate<NodeSource> isLibTracked = ns -> DataPaths.isLibraryTracked(ns.toString());
-          ElementSnapshotDeltaImpl<NodeSource> libsSnapshotDelta = new ElementSnapshotDeltaImpl<>(
-            ElementSnapshot.derive(pastState.getLibraries(), isLibTracked),
-            ElementSnapshot.derive(context.getBinaryDependencies(), isLibTracked)
-          );
-          modifiedLibraries = libsSnapshotDelta.getModified();
-          deletedLibraries = libsSnapshotDelta.getDeleted();
+          ConfigurationState pastState = ConfigurationState.loadSavedState(context);
+          ConfigurationState presentState = new ConfigurationState(context.getPathMapper(), context.getSources(), context.getBinaryDependencies());
 
-          if (!isEmpty(modifiedLibraries)) {
-            // differentiate library deps
-            List<Graph> pastLibGraphs = new ArrayList<>();
-            List<Graph> presentLibGraphs = new ArrayList<>();
-            Set<NodeSource> changedLibNodeSources = new HashSet<>();
-            Set<NodeSource> deletedLibNodeSources = new HashSet<>();
-            for (NodeSource presentLib : modifiedLibraries) {
-              Path presentLibPath = context.getPathMapper().toPath(presentLib);
-              Path pastLibPath = DataPaths.getJarBackupStoreFile(context, presentLibPath);
-              try {
-                Pair<NodeSourceSnapshot, Graph> presentGraph = LibraryGraphLoader.getLibraryGraph(presentLib, presentState.getLibraries().getDigest(presentLib), presentLibPath);
-                Pair<NodeSourceSnapshot, Graph> pastGraph = LibraryGraphLoader.getLibraryGraph(presentLib, pastState.getLibraries().getDigest(presentLib), pastLibPath);
-                NodeSourceSnapshotDelta delta = new SnapshotDeltaImpl(pastGraph.first, presentGraph.first);
-                if (!isEmpty(delta.getModified()) || !isEmpty(delta.getDeleted())) {
-                  collect(delta.getModified(), changedLibNodeSources);
-                  collect(delta.getDeleted(), deletedLibNodeSources);
-                  pastLibGraphs.add(pastGraph.second); // all nodes of the past state should be available for analysis
-                  presentLibGraphs.add(presentGraph.second);
-                }
-              }
-              catch (Exception e) { // problems loading library graphs
-                srcSnapshotDelta.markRecompileAll();
-                context.report(Message.create(null, Message.Kind.WARNING, e));
-                break;
-              }
-            }
-
-            if (!changedLibNodeSources.isEmpty() || !deletedLibNodeSources.isEmpty()) {
-              try {
-                Delta libDelta = new DeltaView(changedLibNodeSources, deletedLibNodeSources, CompositeGraph.create(presentLibGraphs));
-                srcSnapshotDelta = graphUpdater.updateBeforeCompilation(storageManager.getGraph(), srcSnapshotDelta, libDelta, pastLibGraphs);
-                if (shouldRecompileAll(srcSnapshotDelta)) {
-                  srcSnapshotDelta.markRecompileAll();
-                }
-              }
-              catch (IOException e) {
-                srcSnapshotDelta.markRecompileAll();
-                context.report(Message.create(null, Message.Kind.WARNING, e));
-              }
-            }
-          }
-
-          // expand compile scope
-          if (!srcSnapshotDelta.isRecompileAll()) {
-            DependencyGraph graph = storageManager.getGraph();
-            Delta sourceOnlyDelta = graph.createDelta(srcSnapshotDelta.getModified(), srcSnapshotDelta.getDeleted(), true);
-            srcSnapshotDelta = graphUpdater.updateBeforeCompilation(graph, srcSnapshotDelta, sourceOnlyDelta, List.of());
-            if (shouldRecompileAll(srcSnapshotDelta)) {
-              srcSnapshotDelta.markRecompileAll();
-            }
-          }
-        }
-      }
-
-      List<CompilerRunner> compilers = collect(map(RunnerRegistry.getCompilers(), f -> f.create(context, storageManager)), new ArrayList<>());
-      List<CompilerRunner> roundCompilers = collect(map(RunnerRegistry.getRoundCompilers(), f -> f.create(context, storageManager)), new ArrayList<>());
-      List<BytecodeInstrumenter> instrumenters = collect(map(RunnerRegistry.getIntrumenters(), f -> f.create(context, storageManager)), new ArrayList<>());
-
-      boolean isInitialRound = true;
-
-      do {
-
-        if (srcSnapshotDelta.isRecompileAll()) {
-          storageManager.cleanBuildState();
-          modifiedLibraries = ElementSnapshot.derive(context.getBinaryDependencies(), ns -> DataPaths.isLibraryTracked(ns.toString())).getElements();
-          deletedLibraries = Set.of();
-        }
-        else {
-          if (isInitialRound) {
-            storageManager.cleanTrashDir();
-          }
-        }
-
-        diagnostic = isInitialRound? new PostponedDiagnosticSink() : context; // for initial round postpone error reporting
-        OutputSinkImpl outSink = new OutputSinkImpl(diagnostic, storageManager, instrumenters);
-
-        if (isInitialRound) {
-          if (!srcSnapshotDelta.isRecompileAll()) {
-            List<String> deletedPaths = new ArrayList<>();
-            for (NodeSource source : filter(flat(srcSnapshotDelta.getDeleted(), srcSnapshotDelta.getModified()), s -> find(compilers, compiler -> compiler.canCompile(s)) != null)) {
-              // source paths are assumed to be relative to source roots, so under the output root the directory structure is the same
-              String path = source.toString();
-              if (storageManager.getOutputBuilder().deleteEntry(path)) {
-                deletedPaths.add(path);
-              }
-            }
-            logDeletedPaths(context, deletedPaths);
-          }
-
-          for (CompilerRunner runner : compilers) {
-            List<NodeSource> toCompile = collect(filter(srcSnapshotDelta.getModified(), runner::canCompile), new ArrayList<>());
-            if (toCompile.isEmpty()) {
-              continue;
-            }
-
-            runner.compile(toCompile, filter(srcSnapshotDelta.getDeleted(), runner::canCompile), diagnostic, outSink);
-
-            if (diagnostic.hasErrors()) {
-              break;
-            }
-          }
-        }
-
-        if (!diagnostic.hasErrors()) {
-          if (!srcSnapshotDelta.isRecompileAll()) {
-            // delete outputs corresponding to deleted or recompiled sources
-            for (CompilerRunner compiler : roundCompilers) {
-              cleanOutputsForCompiledFiles(context, srcSnapshotDelta, storageManager.getGraph(), compiler, outSink);
-            }
-          }
-
-          for (CompilerRunner runner : roundCompilers) {
-            List<NodeSource> toCompile = collect(filter(srcSnapshotDelta.getModified(), runner::canCompile), new ArrayList<>());
-            if (toCompile.isEmpty()) {
-              continue;
-            }
-            ExitCode code = runner.compile(toCompile, filter(srcSnapshotDelta.getDeleted(), runner::canCompile), diagnostic, outSink);
-            if (code == ExitCode.CANCEL) {
-              return code;
-            }
-            if (code == ExitCode.ERROR && !diagnostic.hasErrors()) {
-              // ensure we have some error message
-              diagnostic.report(Message.error(runner, runner.getName() + " completed with errors"));
-            }
-            if (diagnostic.hasErrors()) {
-              break;
-            }
-          }
-        }
-
-        NodeSourceSnapshotDelta nextSnapshotDelta = graphUpdater.updateAfterCompilation(
-          storageManager.getGraph(), srcSnapshotDelta, createGraphDelta(storageManager.getGraph(), srcSnapshotDelta, outSink), diagnostic.hasErrors()
-        );
-
-        if (!diagnostic.hasErrors()) {
-          srcSnapshotDelta = nextSnapshotDelta;
-        }
-        else {
-          if (srcSnapshotDelta.isRecompileAll() || !nextSnapshotDelta.hasChanges()) {
-            return ExitCode.ERROR;
-          }
-          // keep previous snapshot delta, just augment it with the newly found sources for recompilation
-          if (nextSnapshotDelta.isRecompileAll()) {
+          srcSnapshotDelta = new SnapshotDeltaImpl(pastState.getSources(), context.getSources());
+          if (shouldRecompileAll(srcSnapshotDelta) || pastState.getClasspathStructureDigest() != presentState.getClasspathStructureDigest()) {
             srcSnapshotDelta.markRecompileAll();
           }
           else {
-            for (NodeSource source : nextSnapshotDelta.getModified()) {
-              srcSnapshotDelta.markRecompile(source);
+            Predicate<NodeSource> isLibTracked = ns -> DataPaths.isLibraryTracked(ns.toString());
+            ElementSnapshotDeltaImpl<NodeSource> libsSnapshotDelta = new ElementSnapshotDeltaImpl<>(
+              ElementSnapshot.derive(pastState.getLibraries(), isLibTracked),
+              ElementSnapshot.derive(context.getBinaryDependencies(), isLibTracked)
+            );
+            modifiedLibraries = libsSnapshotDelta.getModified();
+            deletedLibraries = libsSnapshotDelta.getDeleted();
+
+            if (!isEmpty(modifiedLibraries)) {
+              // differentiate library deps
+              List<Graph> pastLibGraphs = new ArrayList<>();
+              List<Graph> presentLibGraphs = new ArrayList<>();
+              Set<NodeSource> changedLibNodeSources = new HashSet<>();
+              Set<NodeSource> deletedLibNodeSources = new HashSet<>();
+              for (NodeSource presentLib : modifiedLibraries) {
+                Path presentLibPath = context.getPathMapper().toPath(presentLib);
+                Path pastLibPath = DataPaths.getJarBackupStoreFile(context, presentLibPath);
+                try {
+                  Pair<NodeSourceSnapshot, Graph> presentGraph = LibraryGraphLoader.getLibraryGraph(presentLib, presentState.getLibraries().getDigest(presentLib), presentLibPath);
+                  Pair<NodeSourceSnapshot, Graph> pastGraph = LibraryGraphLoader.getLibraryGraph(presentLib, pastState.getLibraries().getDigest(presentLib), pastLibPath);
+                  NodeSourceSnapshotDelta delta = new SnapshotDeltaImpl(pastGraph.first, presentGraph.first);
+                  if (!isEmpty(delta.getModified()) || !isEmpty(delta.getDeleted())) {
+                    collect(delta.getModified(), changedLibNodeSources);
+                    collect(delta.getDeleted(), deletedLibNodeSources);
+                    pastLibGraphs.add(pastGraph.second); // all nodes of the past state should be available for analysis
+                    presentLibGraphs.add(presentGraph.second);
+                  }
+                }
+                catch (Exception e) { // problems loading library graphs
+                  srcSnapshotDelta.markRecompileAll();
+                  context.report(Message.create(null, Message.Kind.WARNING, e));
+                  break;
+                }
+              }
+
+              if (!changedLibNodeSources.isEmpty() || !deletedLibNodeSources.isEmpty()) {
+                try {
+                  Delta libDelta = new DeltaView(changedLibNodeSources, deletedLibNodeSources, CompositeGraph.create(presentLibGraphs));
+                  srcSnapshotDelta = graphUpdater.updateBeforeCompilation(storageManager.getGraph(), srcSnapshotDelta, libDelta, pastLibGraphs);
+                  if (shouldRecompileAll(srcSnapshotDelta)) {
+                    srcSnapshotDelta.markRecompileAll();
+                  }
+                }
+                catch (IOException e) {
+                  srcSnapshotDelta.markRecompileAll();
+                  context.report(Message.create(null, Message.Kind.WARNING, e));
+                }
+              }
+            }
+
+            // for all modified forms ensure sources bound to forms are marked for recompilation
+            if (!srcSnapshotDelta.isRecompileAll()) {
+              for (NodeSource source : FormsCompiler.findBoundSources(storageManager, filter(srcSnapshotDelta.getModified(), FormBinding::isForm))) {
+                srcSnapshotDelta.markRecompile(source);
+              }
+            }
+
+            // expand compile scope
+            if (!srcSnapshotDelta.isRecompileAll()) {
+              DependencyGraph graph = storageManager.getGraph();
+              Delta sourceOnlyDelta = graph.createDelta(srcSnapshotDelta.getModified(), srcSnapshotDelta.getDeleted(), true);
+              srcSnapshotDelta = graphUpdater.updateBeforeCompilation(graph, srcSnapshotDelta, sourceOnlyDelta, List.of());
+              if (shouldRecompileAll(srcSnapshotDelta)) {
+                srcSnapshotDelta.markRecompileAll();
+              }
             }
           }
-          if (!isInitialRound) {
-            return ExitCode.ERROR;
-          }
-          // for initial round, partial compilation and when analysis has expanded the scope, attempt automatic error recovery by repeating the compilation with the expanded scope
         }
 
-        isInitialRound = false;
+        List<CompilerRunner> compilers = collect(map(RunnerRegistry.getCompilers(), f -> f.create(context, storageManager)), new ArrayList<>());
+        List<CompilerRunner> roundCompilers = collect(map(RunnerRegistry.getRoundCompilers(), f -> f.create(context, storageManager)), new ArrayList<>());
+        List<BytecodeInstrumenter> instrumenters = collect(map(RunnerRegistry.getIntrumenters(), f -> f.create(context, storageManager)), new ArrayList<>());
+
+        boolean isInitialRound = true;
+
+        do { // build rounds loop
+
+          if (srcSnapshotDelta.isRecompileAll()) {
+            storageManager.cleanBuildState();
+            modifiedLibraries = ElementSnapshot.derive(context.getBinaryDependencies(), ns -> DataPaths.isLibraryTracked(ns.toString())).getElements();
+            deletedLibraries = Set.of();
+          }
+          else {
+            if (isInitialRound) {
+              storageManager.cleanTrashDir();
+            }
+          }
+
+          diagnostic = isInitialRound? new PostponedDiagnosticSink() : context; // for initial round postpone error reporting
+          OutputSinkImpl outSink = new OutputSinkImpl(diagnostic, storageManager, instrumenters);
+
+          if (isInitialRound) {
+            if (!srcSnapshotDelta.isRecompileAll()) {
+              List<String> deletedPaths = new ArrayList<>();
+              for (NodeSource source : filter(flat(srcSnapshotDelta.getDeleted(), srcSnapshotDelta.getModified()), s -> find(compilers, compiler -> compiler.canCompile(s)) != null)) {
+                // source paths are assumed to be relative to source roots, so under the output root the directory structure is the same
+                String path = source.toString();
+                if (storageManager.getOutputBuilder().deleteEntry(path)) {
+                  deletedPaths.add(path);
+                }
+              }
+              logDeletedPaths(context, deletedPaths);
+            }
+
+            for (CompilerRunner runner : compilers) {
+              List<NodeSource> toCompile = collect(filter(srcSnapshotDelta.getModified(), runner::canCompile), new ArrayList<>());
+              if (toCompile.isEmpty()) {
+                continue;
+              }
+
+              runner.compile(toCompile, filter(srcSnapshotDelta.getDeleted(), runner::canCompile), diagnostic, outSink);
+
+              if (diagnostic.hasErrors()) {
+                break;
+              }
+            }
+          }
+
+          if (!diagnostic.hasErrors()) {
+            if (!srcSnapshotDelta.isRecompileAll()) {
+              // delete outputs corresponding to deleted or recompiled sources
+              for (CompilerRunner compiler : roundCompilers) {
+                cleanOutputsForCompiledFiles(context, srcSnapshotDelta, storageManager.getGraph(), compiler, outSink);
+              }
+            }
+
+            for (CompilerRunner runner : roundCompilers) {
+              List<NodeSource> toCompile = collect(filter(srcSnapshotDelta.getModified(), runner::canCompile), new ArrayList<>());
+              if (toCompile.isEmpty()) {
+                continue;
+              }
+              ExitCode code = runner.compile(toCompile, filter(srcSnapshotDelta.getDeleted(), runner::canCompile), diagnostic, outSink);
+              if (code == ExitCode.CANCEL) {
+                return code;
+              }
+              if (code == ExitCode.ERROR && !diagnostic.hasErrors()) {
+                // ensure we have some error message
+                diagnostic.report(Message.error(runner, runner.getName() + " completed with errors"));
+              }
+              if (diagnostic.hasErrors()) {
+                break;
+              }
+            }
+          }
+
+          NodeSourceSnapshotDelta nextSnapshotDelta = graphUpdater.updateAfterCompilation(
+            storageManager.getGraph(), srcSnapshotDelta, createGraphDelta(storageManager.getGraph(), srcSnapshotDelta, outSink), diagnostic.hasErrors()
+          );
+
+          if (!diagnostic.hasErrors()) {
+            srcSnapshotDelta = nextSnapshotDelta;
+          }
+          else {
+            if (srcSnapshotDelta.isRecompileAll() || !nextSnapshotDelta.hasChanges()) {
+              return ExitCode.ERROR;
+            }
+            // keep previous snapshot delta, just augment it with the newly found sources for recompilation
+            if (nextSnapshotDelta.isRecompileAll()) {
+              srcSnapshotDelta.markRecompileAll();
+            }
+            else {
+              for (NodeSource source : nextSnapshotDelta.getModified()) {
+                srcSnapshotDelta.markRecompile(source);
+              }
+            }
+            if (!isInitialRound) {
+              return ExitCode.ERROR;
+            }
+            // for initial round, partial compilation and when analysis has expanded the scope, attempt automatic error recovery by repeating the compilation with the expanded scope
+          }
+
+          isInitialRound = false;
+        }
+        while (srcSnapshotDelta.hasChanges());
+        
       }
-      while (srcSnapshotDelta.hasChanges());
+      catch (Throwable e) {
+        // catch and report all errors before the sotrage manager is closed
+        diagnostic.report(Message.create(null, e));
+        return ExitCode.ERROR;
+      }
+      finally {
+        if (diagnostic instanceof PostponedDiagnosticSink) {
+          // report postponed errors, if necessary; ensure all errors are reported before storages are closed
+          ((PostponedDiagnosticSink)diagnostic).drainTo(context);
+        }
+      }
 
       return ExitCode.OK;
     }
-    catch (Throwable e) {
-      diagnostic.report(Message.create(null, e));
-      return ExitCode.ERROR;
-    }
     finally {
-      if (diagnostic instanceof PostponedDiagnosticSink) {
-        // report postponed errors, if necessary
-        ((PostponedDiagnosticSink)diagnostic).drainTo(context);
-      }
+      saveBuildState(context, srcSnapshotDelta, modifiedLibraries, deletedLibraries);
+    }
+  }
 
-      if (srcSnapshotDelta != null) {
+  public void saveBuildState(
+    BuildContext context, NodeSourceSnapshotDelta srcSnapshotDelta, Iterable<NodeSource> modifiedLibraries, Iterable<NodeSource> deletedLibraries
+  ) {
+
+    if (srcSnapshotDelta != null) {
+      if (context.hasErrors()) {
+        ConfigurationState pastState = ConfigurationState.loadSavedState(context);
+        new ConfigurationState(context.getPathMapper(), srcSnapshotDelta.asSnapshot(), pastState.getLibraries()).save(context);
+      }
+      else {
         new ConfigurationState(context.getPathMapper(), srcSnapshotDelta.asSnapshot(), context.getBinaryDependencies()).save(context);
       }
+    }
 
-      try { // backup current deps content
+    if (!context.hasErrors()) {
+      try { // backup current deps content if the build was successful
         Set<Path> presentPaths = collect(filter(map(modifiedLibraries, context.getPathMapper()::toPath), Files::exists), new HashSet<>());
         Set<Path> deletedPaths = collect(map(deletedLibraries, context.getPathMapper()::toPath), new HashSet<>());
         Path outputZip = context.getOutputZip();

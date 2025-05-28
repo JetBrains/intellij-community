@@ -130,6 +130,21 @@ http_file(
 )
 
 #-----------------------------------------------------
+#JGoodies forms for the form compiler
+
+http_file(
+  name = "forms-1_1-preview_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jgoodies/forms/1.1-preview/forms-1.1-preview.jar",
+  sha256 = "26b0fc745ea051b57462be22a150c7600dbac6716b24cc60a5ecc0e8085c41a0",
+  downloaded_file_path = "forms-1.1-preview.jar"
+)
+
+http_file(
+  name = "jaxen-1_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/jaxen/jaxen/1.2.0/jaxen-1.2.0.jar",
+  sha256 = "70feef9dd75ad064def05a3ce8975aeba515ee7d1be146d12199c8828a64174c",
+  downloaded_file_path = "jaxen-1.2.0.jar"
+)
 
 ### auto-generated section `libraries` start
 http_file(

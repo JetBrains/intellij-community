@@ -2,6 +2,7 @@
 package com.intellij.tools.build.bazel.jvmIncBuilder;
 
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.Runner;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -36,6 +37,11 @@ public interface Message {
   }
 
   static Message create(Runner reporter, Kind messageKind, String text) {
+    return create(reporter, messageKind, text, null);
+  }
+
+  static Message create(Runner reporter, Kind messageKind, String text, @Nullable String srcPath) {
+    String message = srcPath == null? text : text + "\n\t" + srcPath;
     return new Message() {
       @Override
       public Kind getKind() {
@@ -44,7 +50,7 @@ public interface Message {
 
       @Override
       public String getText() {
-        return text;
+        return message;
       }
 
       @Override

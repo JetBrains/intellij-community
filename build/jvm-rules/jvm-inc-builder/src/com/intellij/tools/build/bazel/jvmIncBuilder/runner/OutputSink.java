@@ -2,9 +2,22 @@
 package com.intellij.tools.build.bazel.jvmIncBuilder.runner;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.dependency.Node;
 import org.jetbrains.jps.dependency.NodeSource;
 
 public interface OutputSink extends OutputExplorer, CompilerDataSink{
+
+  class NodeWithSources {
+    public final Node<?, ?> node;
+    public final Iterable<NodeSource> sources;
+
+    public NodeWithSources(Node<?, ?> node, Iterable<NodeSource> sources) {
+      this.node = node;
+      this.sources = sources;
+    }
+  }
+
+  Iterable<NodeWithSources> getNodes();
 
   interface OutputFile {
 

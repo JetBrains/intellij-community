@@ -17,7 +17,8 @@ import static org.jetbrains.jps.util.Iterators.map;
 public interface CompilerRunner extends Runner{
   boolean canCompile(NodeSource src);
 
-  ExitCode compile(Iterable<NodeSource> sources, Iterable<NodeSource> deletedSources, DiagnosticSink diagnostic, OutputSink out);
+  ExitCode compile(Iterable<NodeSource> sources, Iterable<NodeSource> deletedSources, DiagnosticSink diagnostic, OutputSink out)
+    throws Exception;
 
   default Iterable<String> getOutputPathsToDelete() {
     return List.of();
