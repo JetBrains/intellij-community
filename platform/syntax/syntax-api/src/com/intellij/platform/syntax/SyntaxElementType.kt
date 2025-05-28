@@ -25,7 +25,7 @@ class SyntaxElementType internal constructor(
 
   /**
    * Checks if this element type is lazy-parseable.
-   * For performing reparse, use [parseLazyNode] and [tryReparseLazyNode] functions.
+   * For performing reparse, use [parseLazyNode] and [canLazyNodeBeReparsedIncrementally] functions.
    *
    * @return `true` if this element type is lazy-parseable.
    */

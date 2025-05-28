@@ -4,7 +4,7 @@ package com.intellij.java.syntax.element
 import com.intellij.platform.syntax.LazyParsingContext
 import com.intellij.platform.syntax.extensions.ExtensionPointKey
 import com.intellij.platform.syntax.extensions.ExtensionSupport
-import com.intellij.platform.syntax.tree.SyntaxTree
+import com.intellij.platform.syntax.tree.SyntaxNode
 import com.intellij.pom.java.LanguageLevel
 import org.jetbrains.annotations.ApiStatus
 
@@ -13,12 +13,12 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.OverrideOnly
 interface JavaLanguageLevelProvider {
-  fun getLanguageLevel(syntaxTree: SyntaxTree): LanguageLevel
+  fun getLanguageLevel(node: SyntaxNode): LanguageLevel
 }
 
 internal fun getLanguageLevel(parsingContext: LazyParsingContext): LanguageLevel {
   val languageLevelProvider = ExtensionSupport().getExtensions(languageLevelExtensionPoint).firstOrNull()
-  val languageLevel = languageLevelProvider?.getLanguageLevel(parsingContext.tree) ?: LanguageLevel.HIGHEST
+  val languageLevel = languageLevelProvider?.getLanguageLevel(parsingContext.node) ?: LanguageLevel.HIGHEST
   return languageLevel
 }
 
