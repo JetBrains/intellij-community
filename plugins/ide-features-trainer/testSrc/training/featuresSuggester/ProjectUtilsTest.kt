@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.featuresSuggester
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -41,9 +42,10 @@ class ProjectUtilsTest {
       val goodFiles = arrayOf(
         protectedFile,
         root.resolve("venv").createDirectory(),
+        root.resolve(Project.DIRECTORY_STORE_FOLDER).resolve("modules.xml").createDirectories(),
         root.resolve(".git").resolve("file").createParentDirectories().createFile())
 
-      LangManager.Companion.getInstance().setLearningProjectPath(lang, root.pathString)
+      LangManager.getInstance().setLearningProjectPath(lang, root.pathString)
       ProjectUtils.restoreProject(lang, ProjectManager.getInstance().defaultProject)
       Assertions.assertFalse(badFile.exists(), "$badFile should have been deleted")
       for (goodFile in goodFiles) {
