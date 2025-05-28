@@ -733,26 +733,6 @@ public final class ExternalSystemUtil {
     return createFailureResult(exception, externalSystemId, project, notificationManager, notificationData);
   }
 
-  /**
-   * @deprecated use {@link #createFailureResult(String, Throwable, ProjectSystemId, Project, String, DataContext)} instead
-   */
-  @Deprecated(forRemoval = true)
-  @ApiStatus.Internal
-  public static @NotNull FailureResultImpl createFailureResult(
-    @NotNull @Nls(capitalization = Sentence) String title,
-    @NotNull Throwable exception,
-    @NotNull ProjectSystemId externalSystemId,
-    @NotNull Project project,
-    @NotNull DataContext dataContext
-  ) {
-    var notificationManager = ExternalSystemNotificationManager.getInstance(project);
-    var notificationData = notificationManager.createNotification(title, exception, externalSystemId, project, dataContext);
-    if (notificationData == null) {
-      return new FailureResultImpl();
-    }
-    return createFailureResult(exception, externalSystemId, project, notificationManager, notificationData);
-  }
-
   private static @NotNull FailureResultImpl createFailureResult(
     @NotNull Throwable exception,
     @NotNull ProjectSystemId externalSystemId,

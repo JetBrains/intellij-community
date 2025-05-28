@@ -841,7 +841,6 @@ com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationLis
 - onTaskOutput(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.lang.String,Z):V
 a:com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
 - com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
-- sf:NULL_OBJECT:com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 - <init>():V
 - <init>(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener):V
 - beforeCancel(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
