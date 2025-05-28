@@ -8,7 +8,10 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
 import com.intellij.platform.runtime.product.ProductMode
-import com.intellij.platform.testFramework.PluginBuilder
+import com.intellij.platform.testFramework.plugins.buildDir
+import com.intellij.platform.testFramework.plugins.content
+import com.intellij.platform.testFramework.plugins.module
+import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsExtension
 import com.intellij.util.io.directoryStreamIfExists
@@ -128,21 +131,19 @@ internal class ClassLoaderConfiguratorTest {
   }
 
   private fun loadPlugins(modulePackage: String?): PluginLoadingResult {
-    val dependencyId = "p_dependency"
-    PluginBuilder()
-      .id(dependencyId)
-      .packagePrefix("com.bar")
-      .extensionPoints("""<extensionPoint qualifiedName="bar.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true"/>""")
-      .build(rootDir.resolve(dependencyId))
-
-    val dependentPluginId = "p_dependent"
-    PluginBuilder()
-      .id(dependentPluginId)
-      .packagePrefix("com.example")
-      .module("com.example.sub",
-              PluginBuilder().packagePrefix(modulePackage)
-                .extensionPoints("""<extensionPoint qualifiedName="bar.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true"/>"""))
-      .build(rootDir.resolve(dependentPluginId))
+    plugin("p_dependency") {
+      packagePrefix = "com.bar"
+      extensionPoints = """<extensionPoint qualifiedName="bar.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true"/>"""
+    }.buildDir(rootDir.resolve("p_dependency"))
+    plugin("p_dependent") {
+      packagePrefix = "com.example"
+      content {
+        module("com.example.sub") {
+          packagePrefix = modulePackage
+          extensionPoints = """<extensionPoint qualifiedName="bar.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true"/>"""
+        }
+      }
+    }.buildDir(rootDir.resolve("p_dependent"))
 
     val loadResult = runBlocking { loadDescriptors(rootDir) }
     val plugins = loadResult.enabledPlugins
