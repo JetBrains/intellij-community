@@ -24,7 +24,6 @@ jvm_library(
     "//platform/backend/workspace",
     "//platform/util/xmlDom",
   ],
-  exports = ["//platform/core-api:core"],
   runtime_deps = [":projectModel_resources"]
 )
 ### auto-generated section `build intellij.platform.projectModel` end

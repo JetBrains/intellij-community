@@ -21,6 +21,7 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/util-class-loader:util-classLoader",
     "//platform/util",
+    "//platform/core-api:core",
     "//platform/util/concurrency",
     "//platform/code-style-api:codeStyle",
     "//platform/util:util-ui",

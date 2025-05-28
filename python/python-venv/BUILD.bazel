@@ -27,6 +27,7 @@ jvm_library(
     "//python/python-sdk:sdk",
     "//platform/projectModel-api:projectModel",
     "//platform/util",
+    "//platform/core-api:core",
   ],
   runtime_deps = [":community-impl-venv_resources"]
 )
@@ -55,6 +56,7 @@ jvm_library(
     "@lib//:junit5",
     "//platform/ide-core-impl",
     "//platform/execution",
+    "//platform/core-api:core",
   ],
   runtime_deps = [
     ":community-impl-venv_resources",

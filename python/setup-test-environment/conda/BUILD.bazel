@@ -20,6 +20,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/execution",
     "//platform/util",
+    "@lib//:kotlinx-coroutines-core",
   ],
   runtime_deps = [":conda_resources"]
 )

@@ -9,6 +9,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/kotlin/base/frontend-agnostic",
+    "//platform/core-api:core",
     "//platform/analysis-api:analysis",
     "//platform/projectModel-impl",
   ]

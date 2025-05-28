@@ -13,6 +13,7 @@ jvm_library(
     "//platform/util",
     "//plugins/kotlin/base/frontend-agnostic",
     "//platform/util/jdom",
+    "//platform/core-api:core",
     "//platform/projectModel-impl",
   ]
 )
