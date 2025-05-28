@@ -39,7 +39,7 @@ internal class VcsLogContentProvider(private val project: Project) : ChangesView
   }
 
   private class ContentMainUiHolder(private val content: Content) : IdeVcsProjectLog.MainUiHolder {
-    override fun installMainUi(manager: VcsProjectLogManager, ui: MainVcsLogUi) {
+    override fun installMainUi(manager: IdeVcsLogManager, ui: MainVcsLogUi) {
       content.displayName = VcsLogTabsUtil.generateDisplayName(ui)
       ui.onDisplayNameChange {
         content.displayName = VcsLogTabsUtil.generateDisplayName(ui)

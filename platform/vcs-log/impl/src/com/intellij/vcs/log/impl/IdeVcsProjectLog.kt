@@ -27,8 +27,6 @@ import com.intellij.vcs.log.ui.VcsLogUiImpl
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.guava.await
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.util.concurrent.CancellationException
 
 private val LOG: Logger = logger<IdeVcsProjectLog>()
@@ -36,14 +34,15 @@ private val LOG: Logger = logger<IdeVcsProjectLog>()
 internal class IdeVcsProjectLog(
   project: Project,
   coroutineScope: CoroutineScope,
-) : VcsProjectLogBase<VcsProjectLogManager>(project, coroutineScope) {
+) : VcsProjectLogBase<IdeVcsLogManager>(project, coroutineScope) {
 
   private val mainUiHolderState = MutableStateFlow<MainUiHolder?>(null)
+  @Deprecated("Use VcsProjectLog.runInMainLog or get the ui from DataContext via VcsLogDataKeys.VCS_LOG_UI. As a last resort - VcsProjectLog.mainUi")
   override val mainLogUi: VcsLogUiImpl? = logManager?.mainUi as? VcsLogUiImpl
 
-  override suspend fun createLogManager(logProviders: Map<VirtualFile, VcsLogProvider>): VcsProjectLogManager {
+  override suspend fun createLogManager(logProviders: Map<VirtualFile, VcsLogProvider>): IdeVcsLogManager {
     val uiProperties = project.serviceAsync<VcsLogProjectTabsProperties>()
-    return VcsProjectLogManager(project, coroutineScope, mainUiHolderState, uiProperties, logProviders) { s, t ->
+    return IdeVcsLogManager(project, coroutineScope, mainUiHolderState, uiProperties, logProviders) { s, t ->
       errorHandler.recreateOnError(s, t)
     }.apply {
       withContext(Dispatchers.EDT) {
@@ -74,13 +73,13 @@ internal class IdeVcsProjectLog(
       }
     }
 
-  private suspend fun VcsProjectLogManager.showCommit(hash: Hash, root: VirtualFile, requestFocus: Boolean): Boolean =
+  private suspend fun IdeVcsLogManager.showCommit(hash: Hash, root: VirtualFile, requestFocus: Boolean): Boolean =
     withContext(Dispatchers.EDT) {
       if (isDisposed) return@withContext false
       showCommitInLogTab(hash, root, requestFocus) { true } != null
     }
 
-  private suspend fun VcsProjectLogManager.showCommit(hash: Hash, root: VirtualFile, filePath: FilePath, requestFocus: Boolean): Boolean =
+  private suspend fun IdeVcsLogManager.showCommit(hash: Hash, root: VirtualFile, filePath: FilePath, requestFocus: Boolean): Boolean =
     withContext(Dispatchers.EDT) {
       if (isDisposed) return@withContext false
       val logUi = showCommitInLogTab(hash, root, false) { logUi ->
@@ -130,7 +129,7 @@ internal class IdeVcsProjectLog(
   }
 
   interface MainUiHolder {
-    fun installMainUi(manager: VcsProjectLogManager, ui: MainVcsLogUi)
+    fun installMainUi(manager: IdeVcsLogManager, ui: MainVcsLogUi)
   }
 
   class InitLogStartupActivity : ProjectActivity {

@@ -196,7 +196,9 @@ private fun createLogManager(project: Project,
   val properties = ApplicationManager.getApplication().getService(GitExternalLogTabsProperties::class.java)
   val logProviders = VcsLogManager.findLogProviders(roots.map { VcsRoot(vcs, it) }, project)
   val name = "Vcs Log for " + VcsLogUtil.getProvidersMapText(logProviders)
-  val manager = VcsLogManager(project, properties, logProviders, name, true, false, null)
+  val manager = VcsLogManager(project, properties, logProviders, name, false, null).apply {
+    initialize()
+  }
   Disposer.register(disposable, Disposable { manager.dispose { roots.forEach { repositoryManager.removeExternalRepository(it) } } })
   return manager
 }

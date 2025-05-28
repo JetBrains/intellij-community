@@ -17,6 +17,8 @@ import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.impl.VcsProjectLog.Companion.isAvailable
+import com.intellij.vcs.log.impl.VcsProjectLog.Companion.showRevisionInMainLog
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogUiImpl
 import kotlinx.coroutines.Deferred
@@ -25,6 +27,7 @@ import org.jetbrains.annotations.ApiStatus.NonExtendable
 
 /**
  * An entry point for interacting with the VCS Log.
+ * The main log is the non-closeable log UI intended to always be available.
  */
 @NonExtendable
 abstract class VcsProjectLog internal constructor() { // not an interface due to external deps
@@ -32,12 +35,25 @@ abstract class VcsProjectLog internal constructor() { // not an interface due to
 
   open val logManager: VcsLogManager? = null
 
-  /** The instance of the [MainVcsLogUi] or null if the log was not initialized yet. */
+  @Deprecated("Use VcsProjectLog.runInMainLog or get the ui from DataContext via VcsLogDataKeys.VCS_LOG_UI. As a last resort - VcsProjectLog.mainUi")
   open val mainLogUi: VcsLogUiImpl? = null
 
+  /**
+   * The main log UI or null if it was not initialized.
+   * @see VcsProjectLog.runInMainLog
+   */
+  val mainUi: MainVcsLogUi? get() = mainLogUi
+
+  /**
+   * Open a new log tab with the given filters applied.
+   */
   @RequiresEdt
   open fun openLogTab(filters: VcsLogFilterCollection): MainVcsLogUi? = null
 
+  /**
+   * Show the [hash] under [root] in any log that is capable of showing it.
+   * Also select the [filePath] in the changes if possible.
+   */
   @Internal
   abstract fun showRevisionAsync(root: VirtualFile, hash: Hash, filePath: FilePath?): Deferred<Boolean>
 
@@ -45,15 +61,30 @@ abstract class VcsProjectLog internal constructor() { // not an interface due to
 
   abstract fun showRevisionInMainLog(hash: Hash)
 
+  /**
+   * Executes the given action if the VcsProjectLog has been initialized. If not, then schedules the log initialization,
+   * waits for it in a background task, and executes the action after the log is ready.
+   */
   @Internal
   protected abstract fun runWhenLogIsReady(action: (VcsLogManager) -> Unit)
 
+  /**
+   * Executes the given action if and when the main log has been initialized.
+   */
   @Internal
-  protected abstract fun runInMainUi(consumer: (MainVcsLogUi) -> Unit)
+  protected abstract fun runInMainUi(@RequiresEdt consumer: (MainVcsLogUi) -> Unit)
 
+  /**
+   * Creates and initializes the [logManager] if [isAvailable]
+   *
+   * @param force if the index corruption should be ignored
+   */
   @Internal
   abstract suspend fun init(force: Boolean): VcsLogManager?
 
+  /**
+   * Disposes the [logManager] if it is initialized, runs [beforeCreateLog], and then recreates the [logManager].
+   */
   @Internal
   abstract suspend fun reinit(beforeCreateLog: (suspend () -> Unit)? = null): VcsLogManager?
 
@@ -89,8 +120,7 @@ abstract class VcsProjectLog internal constructor() { // not an interface due to
     fun getInstance(project: Project): VcsProjectLog = project.service<VcsProjectLog>()
 
     /**
-     * Executes the given action if the VcsProjectLog has been initialized. If not, then schedules the log initialization,
-     * waits for it in a background task, and executes the action after the log is ready.
+     * @see VcsProjectLog.runWhenLogIsReady
      */
     @RequiresEdt
     fun runWhenLogIsReady(project: Project, action: (VcsLogManager) -> Unit) {
@@ -98,11 +128,11 @@ abstract class VcsProjectLog internal constructor() { // not an interface due to
     }
 
     /**
-     * Executes the given action if and when the main UI has been initialized.
+     * @see VcsProjectLog.runInMainUi
      */
     @JvmStatic
     @RequiresEdt
-    fun runInMainLog(project: Project, consumer: (MainVcsLogUi) -> Unit) {
+    fun runInMainLog(project: Project, @RequiresEdt consumer: (MainVcsLogUi) -> Unit) {
       if (!isAvailable(project)) {
         VcsLogContentUtil.showLogIsNotAvailableMessage(project)
         return

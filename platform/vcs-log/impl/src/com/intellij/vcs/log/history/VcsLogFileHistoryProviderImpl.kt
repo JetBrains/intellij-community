@@ -64,7 +64,7 @@ private object VcsLogDirectoryHistoryProvider : FileHistoryLogUiProvider {
   override fun canShowFileHistory(project: Project, paths: Collection<FilePath>, revisionNumber: String?): Boolean {
     if (paths.isEmpty()) return false
     val projectLog = VcsProjectLog.getInstance(project)
-    if (projectLog.logManager !is VcsProjectLogManager) return false
+    if (projectLog.logManager !is IdeVcsLogManager) return false
     val dataManager = projectLog.dataManager ?: return false
     return FileHistoryUtil.createLogPathsFilter(project, dataManager.logProviders, paths) != null
   }
@@ -75,7 +75,7 @@ private object VcsLogDirectoryHistoryProvider : FileHistoryLogUiProvider {
 
     triggerFileHistoryUsage(project, paths, hash)
 
-    val logManager = VcsProjectLog.getInstance(project).logManager as? VcsProjectLogManager ?: return null
+    val logManager = VcsProjectLog.getInstance(project).logManager as? IdeVcsLogManager ?: return null
 
     val pathsFilter = FileHistoryUtil.createLogPathsFilter(project, logManager.dataManager.logProviders, paths)!!
     val hashFilter = createHashFilter(hash, root)

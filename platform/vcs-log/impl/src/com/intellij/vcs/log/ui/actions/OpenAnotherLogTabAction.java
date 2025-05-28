@@ -47,12 +47,12 @@ public abstract class OpenAnotherLogTabAction extends DumbAwareAction {
     e.getPresentation().setDescription(getDescription(vcsName));
   }
 
-  private static @Nullable VcsProjectLogManager getMainLogManager(@NotNull AnActionEvent e) {
+  private static @Nullable IdeVcsLogManager getMainLogManager(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return null;
     VcsProjectLog projectLog = VcsProjectLog.getInstance(project);
     VcsLogManager mainLogManager = projectLog.getLogManager();
-    if (!(mainLogManager instanceof VcsProjectLogManager actualManager)) return null;
+    if (!(mainLogManager instanceof IdeVcsLogManager actualManager)) return null;
     // only for main log (it is a question, how and where we want to open tabs for external logs)
     VcsLogManager dataLogManager = e.getData(VcsLogInternalDataKeys.LOG_MANAGER);
     if (dataLogManager != null && dataLogManager != actualManager) return null;
@@ -73,7 +73,7 @@ public abstract class OpenAnotherLogTabAction extends DumbAwareAction {
 
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
-    VcsProjectLogManager logManager = getMainLogManager(e);
+    IdeVcsLogManager logManager = getMainLogManager(e);
     if (logManager == null) return;
 
     VcsLogFilterCollection filters;

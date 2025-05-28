@@ -86,7 +86,7 @@ public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
     if (projectLog == null) return Collections.emptySet();
     VcsLogManager logManager = projectLog.getLogManager();
     if (logManager == null) return Collections.emptySet();
-    if(!(logManager instanceof VcsProjectLogManager actualManager)) return Collections.emptySet();
+    if(!(logManager instanceof IdeVcsLogManager actualManager)) return Collections.emptySet();
 
     MainVcsLogUi mainUi = actualManager.getMainUi();
     List<? extends MainVcsLogUi> additionalToolWindowUis = actualManager.getLogUis(VcsLogTabLocation.TOOL_WINDOW);

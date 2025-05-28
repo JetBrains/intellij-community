@@ -514,7 +514,7 @@ com.intellij.vcs.log.impl.VcsLogIndexer$CompressedDetails
 - a:getRenamedPaths(I):it.unimi.dsi.fastutil.ints.Int2IntMap
 com.intellij.vcs.log.impl.VcsLogIndexer$PathsEncoder
 - a:encode(com.intellij.openapi.vfs.VirtualFile,java.lang.String,Z):I
-c:com.intellij.vcs.log.impl.VcsLogManager
+Fc:com.intellij.vcs.log.impl.VcsLogManager
 - com.intellij.openapi.Disposable
 - sf:Companion:com.intellij.vcs.log.impl.VcsLogManager$Companion
 - sf:findLogProviders(java.util.Collection,com.intellij.openapi.project.Project):java.util.Map
@@ -606,6 +606,7 @@ Fa:com.intellij.vcs.log.impl.VcsProjectLog
 - getLogManager():com.intellij.vcs.log.impl.VcsLogManager
 - sf:getLogProviders(com.intellij.openapi.project.Project):java.util.Map
 - getMainLogUi():com.intellij.vcs.log.ui.VcsLogUiImpl
+- f:getMainUi():com.intellij.vcs.log.ui.MainVcsLogUi
 - sf:getSupportedVcs(com.intellij.openapi.project.Project):java.util.Set
 - sf:isAvailable(com.intellij.openapi.project.Project):Z
 - openLogTab(com.intellij.vcs.log.VcsLogFilterCollection):com.intellij.vcs.log.ui.MainVcsLogUi

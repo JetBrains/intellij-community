@@ -14,7 +14,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ShutDownTracker
@@ -279,28 +278,25 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
   }
 }
 
+/**
+ * @param force run the initialization ignoring the invalid caches and the possible init delay in the manager
+ */
 private suspend fun VcsLogManager.initialize(force: Boolean) {
   if (force) {
-    blockingContext {
-      scheduleInitialization()
-    }
+    initialize()
     return
   }
 
   if (VcsLogManager.keepUpToDate()) {
     val invalidator = CachesInvalidator.EP_NAME.findExtensionOrFail(VcsLogCachesInvalidator::class.java)
     if (invalidator.isValid) {
-      blockingContext {
-        scheduleInitialization()
-      }
+      initialize()
       return
     }
   }
 
   withContext(Dispatchers.EDT) {
-    blockingContext {
-      scheduleInitialization(false)
-    }
+    initializeIfNeeded()
   }
 }
 

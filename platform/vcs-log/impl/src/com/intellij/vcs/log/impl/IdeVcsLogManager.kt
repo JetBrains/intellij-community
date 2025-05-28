@@ -27,14 +27,14 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.function.BiConsumer
 
-internal class VcsProjectLogManager(
+internal class IdeVcsLogManager(
   project: Project,
   private val parentCs: CoroutineScope,
   private val mainUiHolderState: StateFlow<IdeVcsProjectLog.MainUiHolder?>,
   uiProperties: VcsLogProjectTabsProperties,
   logProviders: Map<VirtualFile, VcsLogProvider>,
   recreateHandler: BiConsumer<in VcsLogErrorHandler.Source, in Throwable>,
-) : VcsLogManager(project, uiProperties, logProviders, getProjectLogName(logProviders), false,
+) : VcsLogManager(project, uiProperties, logProviders, getProjectLogName(logProviders),
                   VcsLogSharedSettings.isIndexSwitchedOn(project), recreateHandler) {
   private val tabsManager = VcsLogTabsManager(project, uiProperties, this)
 
@@ -52,7 +52,7 @@ internal class VcsProjectLogManager(
       mainUiHolderState.collect { holder ->
         if (holder != null) {
           val ui = createLogUi(getMainLogUiFactory(MAIN_LOG_ID, null))
-          holder.installMainUi(this@VcsProjectLogManager, ui)
+          holder.installMainUi(this@IdeVcsLogManager, ui)
           mainUiState.value = ui
         }
         else {
@@ -66,6 +66,7 @@ internal class VcsProjectLogManager(
     tabsManager.createTabs()
   }
 
+  @RequiresEdt
   fun runInMainUi(consumer: (MainVcsLogUi) -> Unit) {
     val toolWindow = VcsLogContentUtil.getToolWindow(project)
     if (toolWindow == null) {

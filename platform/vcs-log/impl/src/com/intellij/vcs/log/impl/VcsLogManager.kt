@@ -36,8 +36,7 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import it.unimi.dsi.fastutil.ints.IntSets
 import kotlinx.coroutines.suspendCancellableCoroutine
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus.*
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -47,12 +46,12 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.BiConsumer
 
+@NonExtendable
 open class VcsLogManager @Internal constructor(
   @Internal protected val project: Project,
   val uiProperties: VcsLogTabsProperties,
   logProviders: Map<VirtualFile, VcsLogProvider>,
   @Internal val name: String,
-  scheduleRefreshImmediately: Boolean,
   isIndexEnabled: Boolean,
   private val recreateMainLogHandler: BiConsumer<in VcsLogErrorHandler.Source, in Throwable>?,
 ) : Disposable {
@@ -71,9 +70,6 @@ open class VcsLogManager @Internal constructor(
 
   init {
     refreshLogOnVcsEvents(dataManager, logProviders, postponableRefresher)
-    if (scheduleRefreshImmediately) {
-      scheduleInitialization()
-    }
   }
 
   private val isLogVisible: Boolean
@@ -88,19 +84,25 @@ open class VcsLogManager @Internal constructor(
 
   @Internal
   @CalledInAny
-  fun scheduleInitialization(force: Boolean = true) {
-    if (force || isLogVisible) {
+  fun initialize() {
+    dataManager.initialize()
+  }
+
+  @Internal
+  @CalledInAny
+  fun initializeIfNeeded() {
+    if (isLogVisible) {
       dataManager.initialize()
     }
   }
 
   /**
-   * Schedules Log initialization and update even when none on the log tabs is visible and a power save mode is enabled.
+   * Schedules Log initialization and update even when none of the log tabs is visible and a power save mode is enabled.
    */
   @Internal
   @RequiresEdt
   fun scheduleUpdate() {
-    scheduleInitialization()
+    initialize()
     postponableRefresher.refreshPostponedRoots()
   }
 
@@ -292,7 +294,7 @@ open class VcsLogManager @Internal constructor(
     }
   }
 
-  @ApiStatus.Experimental
+  @Experimental
   fun interface VcsLogUiFactory<T : VcsLogUiEx> {
     fun createLogUi(project: Project, logData: VcsLogData): T
   }

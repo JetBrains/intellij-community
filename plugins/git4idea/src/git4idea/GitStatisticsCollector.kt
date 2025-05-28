@@ -27,7 +27,7 @@ import com.intellij.vcs.log.impl.VcsLogApplicationSettings
 import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsProjectLog
-import com.intellij.vcs.log.ui.VcsLogUiImpl
+import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.branch.GitBranchUtil
 import git4idea.config.*
@@ -189,7 +189,7 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
 
   private fun addGitLogMetrics(project: Project, metrics: MutableSet<MetricEvent>) {
     val projectLog = project.serviceIfCreated<VcsProjectLog>() ?: return
-    val ui = projectLog.mainLogUi ?: return
+    val ui = projectLog.mainUi ?: return
 
     addPropertyMetricIfDiffers(metrics, ui, SHOW_GIT_BRANCHES_LOG_PROPERTY, SHOW_GIT_BRANCHES_IN_LOG)
     addPropertyMetricIfDiffers(metrics, ui, CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY, UPDATE_BRANCH_FILTERS_ON_SELECTION)
@@ -197,7 +197,7 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
 
   private fun addPropertyMetricIfDiffers(
     metrics: MutableSet<MetricEvent>,
-    ui: VcsLogUiImpl,
+    ui: MainVcsLogUi,
     property: VcsLogUiProperties.VcsLogUiProperty<Boolean>,
     eventId: VarargEventId,
   ) {
