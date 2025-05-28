@@ -310,8 +310,6 @@ private class ScriptDefinitionsManagerUnderTest(val project: Project) : ScriptDe
 
     override fun applyDefinitionsUpdate() {}
 
-    override fun tryGetScriptDefinitionFast(locationId: String): ScriptDefinition? = null
-
     override fun isScratchFile(script: SourceCode): Boolean = false
 
     override fun executeUnderReadLock(block: () -> Unit) = block()

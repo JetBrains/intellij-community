@@ -97,10 +97,6 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
      * input by the moment of the method call it's triggered proactively.
      */
     override fun findDefinition(script: SourceCode): ScriptDefinition? {
-        val locationId = script.locationId ?: return null
-
-        tryGetScriptDefinitionFast(locationId)?.let { fastPath -> return fastPath }
-
         getOrLoadDefinitions()
 
         val definition =
@@ -283,11 +279,6 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
     }
 
     protected open fun getKotlinScriptingSettings(): KotlinScriptingSettings = KotlinScriptingSettings.getInstance(project)
-
-    protected open fun tryGetScriptDefinitionFast(locationId: String): ScriptDefinition? {
-        return ScriptConfigurationManager.compositeScriptConfigurationManager(project)
-            .tryGetScriptDefinitionFast(locationId)
-    }
 
     protected open fun applyDefinitionsUpdate() {
         associateFileExtensionsIfNeeded()

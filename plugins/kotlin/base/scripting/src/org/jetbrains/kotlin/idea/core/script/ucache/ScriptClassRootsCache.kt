@@ -13,9 +13,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.NonClasspathDirectoriesScope.compose
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.ScriptClassRootsStorage
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptClassPathUtil
-import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
-import java.lang.ref.Reference
 import java.lang.ref.SoftReference
 
 class ScriptClassRootsCache(
@@ -51,24 +49,6 @@ class ScriptClassRootsCache(
             builder.withClasspathVfsHint(classpathVfsHint ?: mutableMapOf())
         }
     }
-
-    abstract class LightScriptInfo(val definition: ScriptDefinition?) {
-        @Volatile
-        var heavyCache: Reference<HeavyScriptInfo>? = null
-
-        abstract fun buildConfiguration(): ScriptCompilationConfigurationWrapper?
-    }
-
-    class DirectScriptInfo(val result: ScriptCompilationConfigurationWrapper) : LightScriptInfo(null) {
-        override fun buildConfiguration(): ScriptCompilationConfigurationWrapper = result
-    }
-
-    class HeavyScriptInfo(
-        val scriptConfiguration: ScriptCompilationConfigurationWrapper,
-        val classFiles: List<VirtualFile>,
-        val classFilesScope: GlobalSearchScope,
-        val sdk: Sdk?
-    )
 
     fun scriptsPaths(): Set<String> = scripts.keys
 

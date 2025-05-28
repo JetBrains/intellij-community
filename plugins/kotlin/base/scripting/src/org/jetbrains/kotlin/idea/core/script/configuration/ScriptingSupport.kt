@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.core.script.configuration
 
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangeListener
@@ -15,8 +14,8 @@ import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrap
  * Extension point for overriding default Kotlin scripting support.
  *
  * Implementation should store script configuration internally (in memory and/or fs),
- * and provide it inside [collectConfigurations] using the [ScriptClassRootsCache.LightScriptInfo].
- * Custom data can be attached to [ScriptClassRootsCache.LightScriptInfo] and retrieved
+ * and provide it inside [collectConfigurations] using the [LightScriptInfo].
+ * Custom data can be attached to [LightScriptInfo] and retrieved
  * by calling [ScriptClassRootsCache.getLightScriptInfo].
  *
  * [ScriptChangeListener] can be used to listen script changes.

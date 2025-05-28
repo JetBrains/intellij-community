@@ -14,7 +14,7 @@ class ScriptClassRootsBuilder(
     val project: Project,
     private val classes: MutableSet<String> = mutableSetOf(),
     private val sources: MutableSet<String> = mutableSetOf(),
-    private val scripts: MutableMap<String, ScriptClassRootsCache.LightScriptInfo> = mutableMapOf()
+    private val scripts: MutableMap<String, LightScriptInfo> = mutableMapOf()
 ) {
     val sdks: ScriptSdksBuilder = ScriptSdksBuilder(project)
 
@@ -76,7 +76,7 @@ class ScriptClassRootsBuilder(
             sources.add(absolutePath)
         }
 
-        scripts[vFile.path] = ScriptClassRootsCache.DirectScriptInfo(configuration)
+        scripts[vFile.path] = DirectScriptInfo(configuration)
 
         useCustomScriptDefinition()
     }
@@ -85,7 +85,7 @@ class ScriptClassRootsBuilder(
         path: String,
         scriptClassesRoots: Collection<String>,
         sourceSourcesRoots: Collection<String>,
-        info: ScriptClassRootsCache.LightScriptInfo
+        info: LightScriptInfo
     ) {
         classes.addAll(scriptClassesRoots)
         sources.addAll(sourceSourcesRoots)

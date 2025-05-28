@@ -26,11 +26,11 @@ import org.jetbrains.kotlin.idea.core.script.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangesNotifier
 import org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangesNotifierK1
 import org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangesNotifierK2
+import org.jetbrains.kotlin.idea.core.script.ucache.LightScriptInfo
 import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsBuilder
 import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsCache
 import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsUpdater
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
 import java.nio.file.Path
 
@@ -82,10 +82,6 @@ class CompositeScriptConfigurationManager(val project: Project, val scope: Corou
         notifier.updateScriptDependenciesIfNeeded(file)
     }
 
-    fun tryGetScriptDefinitionFast(locationId: String): ScriptDefinition? {
-        return classpathRoots.getLightScriptInfo(locationId)?.definition
-    }
-
     private fun getOrLoadConfiguration(
         virtualFile: VirtualFile,
         preloadedKtFile: KtFile? = null
@@ -117,7 +113,7 @@ class CompositeScriptConfigurationManager(val project: Project, val scope: Corou
         plugins.firstOrNull { it.isApplicable(file.alwaysVirtualFile) }?.isConfigurationLoadingInProgress(file)
             ?: default.isConfigurationLoadingInProgress(file)
 
-    fun getLightScriptInfo(file: String): ScriptClassRootsCache.LightScriptInfo? =
+    fun getLightScriptInfo(file: String): LightScriptInfo? =
         updater.classpathRoots.getLightScriptInfo(file)
 
     override fun updateScriptDefinitionReferences() {

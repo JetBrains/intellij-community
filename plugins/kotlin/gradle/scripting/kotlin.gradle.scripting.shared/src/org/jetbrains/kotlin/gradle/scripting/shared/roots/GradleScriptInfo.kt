@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.gradle.scripting.shared.importing.KotlinDslScriptModel
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.getKtFile
-import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsCache
+import org.jetbrains.kotlin.idea.core.script.ucache.LightScriptInfo
 import org.jetbrains.kotlin.scripting.definitions.KotlinScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
@@ -23,10 +23,10 @@ import kotlin.script.experimental.jvm.jvm
 
 class GradleScriptInfo(
     val buildRoot: Imported,
-    scriptDefinition: ScriptDefinition?,
+    val definition: ScriptDefinition?,
     val model: KotlinDslScriptModel,
     val project: Project?
-) : ScriptClassRootsCache.LightScriptInfo(scriptDefinition) {
+) : LightScriptInfo() {
 
     override fun buildConfiguration(): ScriptCompilationConfigurationWrapper? {
         val scriptFile = File(model.file)
