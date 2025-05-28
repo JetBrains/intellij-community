@@ -293,7 +293,6 @@ a:com.intellij.coverage.view.CoverageViewExtension
 - canSelectInCoverageView(java.lang.Object):Z
 - a:createColumnInfos():com.intellij.util.ui.ColumnInfo[]
 - a:createRootNode():com.intellij.ide.util.treeView.AbstractTreeNode
-- createTopLevelNodes():java.util.List
 - a:getChildrenNodes(com.intellij.ide.util.treeView.AbstractTreeNode):java.util.List
 - getElementsCapitalisedName():java.lang.String
 - getElementsName():java.lang.String

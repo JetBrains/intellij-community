@@ -115,15 +115,6 @@ public abstract class CoverageViewExtension {
 
   /**
    * @deprecated This method is not used in CoverageView.
-   * The root node should return a correct list of children instead.
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull List<AbstractTreeNode<?>> createTopLevelNodes() {
-    return Collections.emptyList();
-  }
-
-  /**
-   * @deprecated This method is not used in CoverageView.
    */
   @Deprecated
   public @Nullable String getSummaryForNode(@NotNull AbstractTreeNode<?> ignoredNode) {
