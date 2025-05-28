@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin allow-bundled-update="true">
   <id>HtmlTools</id>
   <name>HTML Tools</name>
 
