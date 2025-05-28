@@ -44,7 +44,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
 import com.intellij.platform.testFramework.*
-import com.intellij.platform.testFramework.plugins.PluginTestHandle
+import com.intellij.platform.testFramework.plugins.*
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.ProjectRule
@@ -422,23 +422,21 @@ class DynamicPluginsTest {
     }
   }
 
-  // FIXME in-memory fs does not work, ZipFile wants .toFile()
+  // FIXME in-memory fs does not work, NonShareableJavaZipFilePool wants .toFile()
   @Test
   fun `optional plugin dependency loading`() {
     val fooJar = tempDir.root.toPath().resolve("foo.jar")
     val barJar = tempDir.root.toPath().resolve("bar.jar")
-    PluginBuilder().id("foo")
-      .depends("bar", PluginBuilder().extensions("""
-        <applicationService serviceImplementation="${FooBarService::class.qualifiedName}" />"
-      """.trimIndent()))
-      .includePackageClassFiles<FooBarService>()
-      .buildMainJar(fooJar)
-    PluginBuilder().id("bar")
-      .extensions("""
-        <applicationService serviceImplementation="${BarService::class.qualifiedName}" />"
-      """.trimIndent())
-      .includePackageClassFiles<BarService>()
-      .buildMainJar(barJar)
+    plugin("foo") {
+      depends("bar", "bar.xml") {
+        appService<FooBarService>()
+      }
+      includePackageClassFiles<FooBarService>()
+    }.buildMainJar(fooJar)
+    plugin("bar") {
+      appService<BarService>()
+      includePackageClassFiles<BarService>()
+    }.buildMainJar(barJar)
 
     val filteredCore = ExclusionClassLoader(this::class.java.classLoader) {
       !it.startsWith(BarService::class.java.`package`.name) && !it.startsWith(FooBarService::class.java.`package`.name)
