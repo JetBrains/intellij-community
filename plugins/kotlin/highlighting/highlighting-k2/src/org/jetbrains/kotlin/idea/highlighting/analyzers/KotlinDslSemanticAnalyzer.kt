@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.highlighting.analyzers
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -18,22 +18,31 @@ import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.highlighting.dsl.DslStyleUtils
-import org.jetbrains.kotlin.idea.highlighter.HighlightingFactory
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtExpression
 
-internal class KotlinDslSemanticAnalyzer(holder: HighlightInfoHolder, session: KaSession) : KotlinSemanticAnalyzer(holder, session) {
+internal class KotlinDslSemanticAnalyzer(holder: HighlightInfoHolder, session: KaSession) : KotlinFunctionCallSemanticAnalyzer(holder, session) {
     override fun visitBinaryExpression(expression: KtBinaryExpression) {
         val referenceExpression = expression.operationReference
-        holder.add(highlightExpression(referenceExpression)?.create())
+        val dslExpressionHighlightType = expressionHighlightType(referenceExpression)
+        if (dslExpressionHighlightType != null) {
+            highlightElement(referenceExpression, dslExpressionHighlightType)
+        } else {
+            super.visitBinaryExpression(expression)
+        }
     }
 
     override fun visitCallExpression(expression: KtCallExpression) {
         val calleeExpression = expression.calleeExpression ?: return
-        holder.add(highlightExpression(calleeExpression)?.create())
+        val dslExpressionHighlightType = expressionHighlightType(calleeExpression)
+        if (dslExpressionHighlightType != null) {
+            highlightElement(calleeExpression, dslExpressionHighlightType)
+        } else {
+            super.visitCallExpression(expression)
+        }
     }
 
     /**
@@ -42,7 +51,7 @@ internal class KotlinDslSemanticAnalyzer(holder: HighlightInfoHolder, session: K
      * 1) Its type specifier is marked with an annotation, that is marked by a dsl annotation
      * 2) The class or its superclasses' definition is marked by a dsl annotation
      */
-    private fun highlightExpression(expression: KtExpression): HighlightInfo.Builder? {
+    private fun expressionHighlightType(expression: KtExpression): HighlightInfoType? {
         val dslAnnotation = with(session) {
             val functionCall = expression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
             // function declaration argument has a dsl marker
@@ -69,10 +78,8 @@ internal class KotlinDslSemanticAnalyzer(holder: HighlightInfoHolder, session: K
         } ?: return null
 
         val dslStyleId = DslStyleUtils.styleIdByFQName(dslAnnotation.asSingleFqName())
-        return HighlightingFactory.highlightName(
-            expression,
-            DslStyleUtils.typeById(dslStyleId)
-        )
+        val highlightInfoType = DslStyleUtils.typeById(dslStyleId)
+        return highlightInfoType
     }
 }
 
