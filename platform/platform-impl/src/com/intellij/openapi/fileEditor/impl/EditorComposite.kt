@@ -180,6 +180,8 @@ open class EditorComposite internal constructor(
     fileEditorWithProviders.firstOrNull { it !== INITIAL_EMPTY }
   }
 
+  internal fun isAvailable(): Boolean = fileEditorWithProviders.value !== INITIAL_EMPTY
+
   @Internal
   protected open suspend fun beforeFileOpen(scope: CoroutineScope, model: EditorCompositeModel) {}
   @Internal

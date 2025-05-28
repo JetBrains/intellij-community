@@ -16,6 +16,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.event.CaretEvent
@@ -368,6 +369,8 @@ open class IdeDocumentHistoryImpl(
     }
 
     val info = backPlaces.removeLast()
+    LOG.trace { "Back to (${info.file.name}, ${info.caretPosition})" }
+    LOG.trace { "Rest of stack is ${backPlaces.map { "(${info.file.name}, ${info.caretPosition}) " }}" }
     project.getMessageBus().syncPublisher(RecentPlacesListener.TOPIC).recentPlaceRemoved(info, false)
 
     val current = getCurrentPlaceInfo()
