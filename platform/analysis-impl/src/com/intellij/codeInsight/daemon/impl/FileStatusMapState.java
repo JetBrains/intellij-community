@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.openapi.editor.Document;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +15,7 @@ import java.util.Collection;
  * {@link ClassicFileStatusMapState} does not store contexts
  * {@link MultiverseFileStatusMapState} has separate {@link FileStatus} for different contexts
  */
+@ApiStatus.Internal
 sealed interface FileStatusMapState permits ClassicFileStatusMapState, MultiverseFileStatusMapState {
   @NotNull FileStatus getOrCreateStatus(@NotNull Document document, @NotNull CodeInsightContext context);
 

@@ -399,11 +399,12 @@ public class FileStatusMapTest extends DaemonAnalyzerTestCase {
 
     document.set(getDocument(file));
     psiFile.set(PsiDocumentManager.getInstance(myProject).getPsiFile(document.get()));
-    for (int pass = 0; pass<=Pass.LAST_PASS; pass++) {
+    for (int pass = 1; pass<=Pass.LAST_PASS; pass++) {
       fileStatusMap.markFileUpToDate(document.get(), FileViewProviderUtil.getCodeInsightContext(psiFile.get()), pass, new DaemonProgressIndicator());
     }
-    assertNull(fileStatusMap.getFileDirtyScope(document.get(), psiFile.get(), Pass.EXTERNAL_TOOLS));
-    assertTrue(fileStatusMap.allDirtyScopesAreNull(document.get(), FileViewProviderUtil.getCodeInsightContext(psiFile.get())));
+    for (int pass=1; pass<=Pass.LAST_PASS; pass++) {
+      fileStatusMap.assertFileStatusScopeIsNull(document.get(), FileViewProviderUtil.getCodeInsightContext(psiFile.get()), pass);
+    }
     TextRange range = new TextRange(1, 2);
     AppExecutorUtil.getAppExecutorService().submit(() -> ReadAction.run(()->fileStatusMap.markScopeDirty(document.get(), range, getTestName(false)))).get();
     assertEquals(range, fileStatusMap.getFileDirtyScope(document.get(), psiFile.get(), Pass.EXTERNAL_TOOLS));

@@ -126,6 +126,16 @@ public final class FileStatusMap implements Disposable {
     }
   }
 
+  @ApiStatus.Internal
+  @TestOnly
+  public void assertFileStatusScopeIsNull(Document document, @NotNull CodeInsightContext context, int passId) {
+    synchronized(myDocumentToStatusMap) {
+      FileStatus status = myDocumentToStatusMap.getStatusOrNull(document, context);
+      assert status != null && status.getDirtyScope(passId) == null : status;
+    }
+  }
+
+
   private void assertAllowModifications() {
     if (!myAllowDirt) {
       myAllowDirt = true; //give next test a chance
@@ -134,7 +144,6 @@ public final class FileStatusMap implements Disposable {
   }
 
   // used in plugins
-  @SuppressWarnings("unused")
   public void markFileUpToDate(@NotNull Document document, int passId) {
     markFileUpToDate(document, CodeInsightContexts.anyContext(), passId, null);
   }
