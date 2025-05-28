@@ -10,6 +10,7 @@ import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.UrlClassLoader
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.Tracer
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -108,7 +109,9 @@ data class BuildRequest(
 
   @JvmField val buildOptionsTemplate: BuildOptions? = null,
 
-  @JvmField val tracer: Tracer? = null
+  @JvmField val tracer: Tracer? = null,
+
+  @JvmField val os: OsFamily = OsFamily.currentOs
 ) {
   override fun toString(): String =
     "BuildRequest(platformPrefix='$platformPrefix', " +
@@ -160,6 +163,10 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
 
   val runDir = buildDir
   val context = createBuildContext(createProductProperties, request, runDir, request.jarCacheDir, buildDir)
+  if (request.os != OsFamily.currentOs) {
+    context.options.targetOs = persistentListOf(request.os)
+    context.options.targetArch = JvmArchitecture.currentJvmArch
+  }
   compileIfNeeded(context)
 
   coroutineScope {
@@ -179,7 +186,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
         val binDir = Files.createDirectories(runDir.resolve("bin"))
         val oldFiles = Files.newDirectoryStream(binDir).use { it.toCollection(HashSet()) }
 
-        val osDistributionBuilder = getOsDistributionBuilder(OsFamily.currentOs, context)
+        val osDistributionBuilder = getOsDistributionBuilder(request.os, context)
         if (osDistributionBuilder != null) {
           oldFiles.remove(osDistributionBuilder.writeVmOptions(binDir))
           // the file cannot be placed right into the distribution as it throws off home dir detection in `PathManager#getHomeDirFor`
@@ -289,7 +296,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
       spanBuilder("scramble platform").use{
         request.scrambleTool?.scramble(platformLayout.await(), context)
       }
-      copyDistFiles(context = context, newDir = runDir, os = OsFamily.currentOs, arch = JvmArchitecture.currentJvmArch)
+      copyDistFiles(context = context, newDir = runDir, os = request.os, arch = JvmArchitecture.currentJvmArch)
     }
   }.invokeOnCompletion {
     // close debug logging to prevent locking of the output directory on Windows
