@@ -4,10 +4,12 @@ package org.jetbrains.intellij.build.impl
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CustomAssetShimSource
 import org.jetbrains.intellij.build.UnpackedZipSource
+import org.jetbrains.intellij.build.FileSource
 import org.jetbrains.intellij.build.dependencies.extractFileToCacheLocation
 import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.io.copyDir
+import org.jetbrains.intellij.build.io.copyFile
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Path
@@ -90,6 +92,11 @@ internal suspend fun handleCustomPlatformSpecificAssets(
             if (!isDevMode) {
               distEntries.addAll(source.task(pluginDir, context))
             }
+          }
+
+          is FileSource -> {
+            copyFile(source.file, rootDir.resolve(source.relativePath))
+            distEntries.add(CustomAssetEntry(path = source.file, hash = lazySource.precomputedHash, relativeOutputFile = customAsset.relativePath))
           }
 
           else -> throw UnsupportedOperationException("Not supported source for custom plugin platform-specific assets, got $source for $customAsset")
