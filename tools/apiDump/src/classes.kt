@@ -4,6 +4,9 @@ package com.intellij.tools.apiDump
 import org.objectweb.asm.Type
 
 data class ApiClass(
+  /**
+   * Qualified name in bytecode format, with '/' as the separator
+   */
   val className: String,
   val flags: ApiFlags,
   val supers: List<String>,
