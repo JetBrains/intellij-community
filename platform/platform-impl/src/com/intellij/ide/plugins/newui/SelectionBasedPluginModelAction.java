@@ -374,36 +374,4 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
       myCurrentAction.actionPerformed(AnActionEvent.createFromDataContext("", null, DataContext.EMPTY_CONTEXT));
     }
   }
-
-  private static final class OptionButton extends JBOptionButton {
-    private final JButton myBaseline = new JButton();
-
-    OptionButton() {
-      super(null, null);
-
-      setAddSeparator(false);
-      setSelectFirstItem(false);
-      setPopupBackgroundColor(UIUtil.getListBackground());
-      setShowPopupYOffset(-2);
-
-      setPopupHandler(popup -> {
-        Dimension size = new Dimension(popup.getSize());
-        Insets insets = getInsets();
-        int oldWidth = size.width;
-        int newWidth = getWidth() - insets.left - insets.right;
-        if (oldWidth <= newWidth || newWidth / (double)oldWidth > 0.85) {
-          size.width = newWidth;
-        }
-        popup.setSize(size);
-        return null;
-      });
-    }
-
-    @Override
-    public int getBaseline(int width, int height) {
-      myBaseline.setText(getText());
-      myBaseline.setSize(getSize());
-      return myBaseline.getBaseline(width, height);
-    }
-  }
 }
