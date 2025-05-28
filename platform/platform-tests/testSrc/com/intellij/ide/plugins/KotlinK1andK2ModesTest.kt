@@ -1,6 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.platform.testFramework.plugins.buildDir
+import com.intellij.platform.testFramework.plugins.depends
+import com.intellij.platform.testFramework.plugins.extensions
+import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
 import kotlinx.coroutines.runBlocking
@@ -21,107 +25,59 @@ class KotlinK1andK2ModesTest {
 
   @Test
   fun `plugin depending on kotlin disabled by default in K2 mode`() = withKotlinPluginMode(isK2 = true) {
-    plugin(rootDir, """
-    <idea-plugin>
-      <id>foo</id>
-      <depends>org.jetbrains.kotlin</depends>
-    </idea-plugin>
-    """)
-
+    plugin("foo") {
+      depends("org.jetbrains.kotlin")
+    }.buildDir(rootDir.resolve("foo"))
     assertThat(getSinglePlugin(rootDir).isEnabled).isFalse()
   }
 
   @Test
   fun `explicitly incompatible plugin depending on kotlin disabled in K2 Mode`() = withKotlinPluginMode(isK2 = true) {
-    plugin(rootDir, """
-    <idea-plugin>
-      <id>foo</id>
-      <depends>org.jetbrains.kotlin</depends>
-      
-     <extensions defaultExtensionNs="org.jetbrains.kotlin">
-        <supportsKotlinPluginMode supportsK2="false"/>
-      </extensions>
-    </idea-plugin>
-    """)
-
+    plugin("foo") {
+      depends("org.jetbrains.kotlin")
+      extensions("""<supportsKotlinPluginMode supportsK2="false"/>""", ns = "org.jetbrains.kotlin")
+    }.buildDir(rootDir.resolve("foo"))
     assertThat(getSinglePlugin(rootDir).isEnabled).isFalse()
   }
 
   @Test
   fun `explicitly incompatible plugin depending on kotlin disabled in K1 Mode`() = withKotlinPluginMode(isK2 = false) {
-    plugin(rootDir, """
-    <idea-plugin>
-      <id>foo</id>
-      <depends>org.jetbrains.kotlin</depends>
-      
-     <extensions defaultExtensionNs="org.jetbrains.kotlin">
-        <supportsKotlinPluginMode supportsK1="false"/>
-      </extensions>
-    </idea-plugin>
-    """)
-
+    plugin("foo") {
+      depends("org.jetbrains.kotlin")
+      extensions("""<supportsKotlinPluginMode supportsK1="false"/>""", ns = "org.jetbrains.kotlin")
+    }.buildDir(rootDir.resolve("foo"))
     assertThat(getSinglePlugin(rootDir).isEnabled).isFalse()
   }
 
   @Test
   fun `plugin depending on kotlin is enabled when with supportsK2`() = withKotlinPluginMode(isK2 = true) {
-    plugin(rootDir, """
-    <idea-plugin>
-      <id>foo</id>
-      <depends>org.jetbrains.kotlin</depends>
-      
-      <extensions defaultExtensionNs="org.jetbrains.kotlin">
-        <supportsKotlinPluginMode supportsK2="true"/>
-      </extensions>
-
-    </idea-plugin>
-    """)
-
+    plugin("foo") {
+      depends("org.jetbrains.kotlin")
+      extensions("""<supportsKotlinPluginMode supportsK2="true"/>""", ns = "org.jetbrains.kotlin")
+    }.buildDir(rootDir.resolve("foo"))
     assertThat(getSinglePlugin(rootDir).isEnabled).isTrue()
   }
 
 
   @Test
   fun `plugin optionally depending on kotlin plugin is not disabled by default in K2 mode and optional dependency is disabled`() = withKotlinPluginMode(isK2 = true) {
-    plugin(rootDir, """
-    <idea-plugin>
-      <id>foo</id>
-     <depends config-file="kt.xml" optional="true">org.jetbrains.kotlin</depends>
-    </idea-plugin>
-    """)
-
-    dependencyXml(rootDir, "foo", "kt.xml", """
-      <idea-plugin>
-      </idea-plugin>
-      """)
-
+    plugin("foo") {
+      depends("org.jetbrains.kotlin", configFile = "kt.xml") { }
+    }.buildDir(rootDir.resolve("foo"))
     val plugin = getSinglePlugin(rootDir)
     assertThat(plugin.isEnabled).isTrue()
-
     val dependency = plugin.dependencies.single()
     assertThat(dependency.subDescriptor).isNull()
   }
 
   @Test
   fun `plugin optionally depending on kotlin plugin is not disabled by default in K2 mode and optional dependency is not disabled`() = withKotlinPluginMode(isK2 = true) {
-    plugin(rootDir, """
-    <idea-plugin>
-      <id>foo</id>
-       <extensions defaultExtensionNs="org.jetbrains.kotlin">
-        <supportsKotlinPluginMode supportsK2="true"/>
-      </extensions>
-     <depends config-file="kt.xml" optional="true">org.jetbrains.kotlin</depends>
-    </idea-plugin>
-    """)
-
-    dependencyXml(rootDir, "foo", "kt.xml", """
-      <idea-plugin>
-      </idea-plugin>
-      """)
-
+    plugin("foo") {
+      depends("org.jetbrains.kotlin", configFile = "kt.xml") { }
+      extensions("""<supportsKotlinPluginMode supportsK2="true"/>""", ns = "org.jetbrains.kotlin")
+    }.buildDir(rootDir.resolve("foo"))
     val plugin = getSinglePlugin(rootDir)
     assertThat(plugin.isEnabled).isTrue()
-
     val dependency = plugin.dependencies.single()
     assertThat(dependency.subDescriptor).isNotNull()
   }

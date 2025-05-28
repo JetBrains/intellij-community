@@ -13,6 +13,7 @@ import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamCo
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorReaderContext
 import com.intellij.platform.plugins.parser.impl.XIncludeLoader.LoadedXIncludeReference
 import com.intellij.platform.plugins.parser.impl.consume
+import com.intellij.platform.plugins.parser.impl.elements.OS
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.testFramework.loadAndInitDescriptorInTest
 import com.intellij.testFramework.PlatformTestUtil
@@ -20,9 +21,11 @@ import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.TriConsumer
+import com.intellij.util.xml.dom.NoOpXmlInterner
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.assertj.core.api.Assertions
+import org.jetbrains.annotations.TestOnly
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
@@ -464,5 +467,20 @@ class PluginManagerTest {
       }
       writer.writeEndElement()
     }
+  }
+}
+
+private fun readModuleDescriptorForTest(input: ByteArray): PluginDescriptorBuilder {
+  return PluginDescriptorFromXmlStreamConsumer(readContext = object : PluginDescriptorReaderContext {
+    override val interner = NoOpXmlInterner
+    override val isMissingIncludeIgnored = false
+    override val elementOsFilter: (OS) -> Boolean
+      get() = { it.convert().isSuitableForOs() }
+  }, xIncludeLoader = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER.toXIncludeLoader(object : DataLoader {
+    override fun load(path: String, pluginDescriptorSourceOnly: Boolean) = throw UnsupportedOperationException()
+    override fun toString() = ""
+  })).let {
+    it.consume(input, null)
+    it.getBuilder()
   }
 }
