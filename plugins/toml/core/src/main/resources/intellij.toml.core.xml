@@ -11,18 +11,16 @@
         <lang.commenter language="TOML" implementationClass="org.toml.ide.TomlCommenter"/>
         <lang.braceMatcher language="TOML" implementationClass="org.toml.ide.TomlBraceMatcher"/>
         <lang.quoteHandler language="TOML" implementationClass="org.toml.ide.TomlQuoteHandler"/>
-        <lang.elementManipulator forClass="org.toml.lang.psi.TomlLiteral"
-                                 implementationClass="org.toml.lang.psi.TomlStringLiteralManipulator"/>
+        <lang.elementManipulator forClass="org.toml.lang.psi.TomlLiteral" implementationClass="org.toml.lang.psi.TomlStringLiteralManipulator"/>
 
         <!-- Formatting -->
         <lang.formatter language="TOML" implementationClass="org.toml.ide.formatter.TomlFormattingModelBuilder"/>
-        <langCodeStyleSettingsProvider
-            implementation="org.toml.ide.formatter.settings.TomlLanguageCodeStyleSettingsProvider"/>
+        <langCodeStyleSettingsProvider implementation="org.toml.ide.formatter.settings.TomlLanguageCodeStyleSettingsProvider"/>
 
 
         <virtualFileCustomDataProvider implementation="org.toml.ide.formatter.settings.TomlCodeStyleSettingsSynchronizer"/>
 
         <registryKey key="org.toml.json.schema" defaultValue="true" description="JSON schemas support for TOML"/>
-        <editor.rd.localSupport filetype="TOML"/>
+        <!--<editor.rd.localSupport filetype="TOML"/> IJPL-189393 -->
     </extensions>
 </idea-plugin>
