@@ -15,7 +15,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.psi.*;
@@ -28,12 +27,6 @@ import java.util.List;
 import java.util.function.Supplier;
 
 public final class YAMLUtil {
-  /**
-   * @deprecated Use {@link YAMLFileBasedIndexUtil#getYamlInputFilter()}
-   */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("unused") // keep compatibility with external plugins
-  public static final FileBasedIndex.InputFilter YAML_INPUT_FILTER = YAMLFileBasedIndexUtil.getYamlInputFilter();
 
   private static final TokenSet BLANK_LINE_ELEMENTS = TokenSet.andNot(YAMLElementTypes.BLANK_ELEMENTS, YAMLElementTypes.EOL_ELEMENTS);
 
