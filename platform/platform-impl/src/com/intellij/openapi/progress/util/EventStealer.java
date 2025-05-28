@@ -44,10 +44,6 @@ class EventStealer {
     }, parent);
   }
 
-  final boolean foo() {
-    return true;
-  }
-
 
   static boolean isUrgentInvocationEvent(AWTEvent event) {
     // LWCToolkit does 'invokeAndWait', which blocks native event processing until finished. The OS considers that blockage to be
