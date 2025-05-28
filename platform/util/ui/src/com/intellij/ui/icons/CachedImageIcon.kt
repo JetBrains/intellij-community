@@ -61,15 +61,14 @@ internal val pathTransform: AtomicReference<IconTransform> = AtomicReference(
 @Internal
 @ApiStatus.NonExtendable
 open class CachedImageIcon private constructor(
-  // make not-null as soon as deprecated IconLoader.CachedImageIcon will be removed
   @Volatile
   @JvmField
-  internal var loader: ImageDataLoader?,
+  internal var loader: ImageDataLoader,
   @Internal val localFilterSupplier: RgbImageFilterSupplier? = null,
   private val colorPatcher: ColorPatcherStrategy = GlobalColorPatcherStrategy,
   private val toolTip: Supplier<String?>? = null,
   private val scaleContext: ScaleContext? = null,
-  @Internal val originalLoader: ImageDataLoader? = loader,
+  @Internal val originalLoader: ImageDataLoader = loader,
   // Do not use it directly for rendering - use `getEffectiveAttributes`
   // isDark is not defined in most cases, and we use a global state at the call moment.
   private val attributes: IconAttributes = IconAttributes(),
@@ -79,10 +78,10 @@ open class CachedImageIcon private constructor(
   private var loaderModCount = -1
 
   override val originalPath: String?
-    get() = originalLoader?.path
+    get() = originalLoader.path
 
   override val expUIPath: String?
-    get() = originalLoader?.expUIPath
+    get() = originalLoader.expUIPath
 
   @TestOnly
   internal constructor(file: Path, scaleContext: ScaleContext)
@@ -95,7 +94,7 @@ open class CachedImageIcon private constructor(
 
     // if url is explicitly specified, it means that path should be not transformed
     pathTransformModCount = pathTransformGlobalModCount.get()
-    loaderModCount = originalLoader?.modificationCount ?: -1
+    loaderModCount = originalLoader.modificationCount
   }
 
   @Internal
@@ -104,7 +103,7 @@ open class CachedImageIcon private constructor(
   internal constructor(loader: ImageDataLoader, toolTip: Supplier<String?>?) :
     this(loader = loader, originalLoader = loader, toolTip = toolTip)
 
-  internal constructor(loader: ImageDataLoader, toolTip: Supplier<String?>?, originalLoader: ImageDataLoader?) :
+  internal constructor(loader: ImageDataLoader, toolTip: Supplier<String?>?, originalLoader: ImageDataLoader) :
     this(loader = loader, originalLoader = originalLoader, toolTip = toolTip, scaleContext = null)
 
   private fun getEffectiveAttributes(): IconAttributes {
@@ -112,7 +111,7 @@ open class CachedImageIcon private constructor(
   }
 
   @ApiStatus.Experimental
-  fun getCoords(): Pair<String, ClassLoader>? = loader?.getCoords()
+  fun getCoords(): Pair<String, ClassLoader>? = loader.getCoords()
 
   override fun getToolTip(composite: Boolean): String? = toolTip?.get()
 
@@ -205,20 +204,25 @@ open class CachedImageIcon private constructor(
       pathTransformModCount = pathTransformGlobalModCount.get()
       iconCache.clear()
       if (originalPath != null) {
-        loader?.patch(transform = pathTransform.get())?.let {
+        loader.patch(transform = pathTransform.get())?.let {
           this.loader = it
         }
       }
     }
 
-    val currentLoaderModCount = originalLoader?.modificationCount ?: -1
+    val currentLoaderModCount = originalLoader.modificationCount
     if (loaderModCount != currentLoaderModCount) {
       loaderModCount = currentLoaderModCount
       iconCache.clear()
     }
   }
 
-  override fun toString(): String = loader?.toString() ?: (originalPath ?: "unknown path")
+  override fun toString(): String {
+    if (loader is EmptyImageDataLoader) {
+      return originalPath ?: "unknown path"
+    }
+    return loader.toString()
+  }
 
   override fun scale(scale: Float): CachedImageIcon {
     return when {
@@ -348,12 +352,13 @@ open class CachedImageIcon private constructor(
   val url: URL?
     get() = synchronized(iconCache) {
       checkPathTransform()
-      this.loader?.url
+      this.loader.url
     }
 
   internal fun loadImage(scaleContext: ScaleContext, attributes: IconAttributes): Image? {
     val start = StartUpMeasurer.getCurrentTimeIfEnabled()
-    val loader = loader ?: return null
+    val loader = loader
+    if (loader is EmptyImageDataLoader) return null
 
     val image = loader.loadImage(parameters = LoadIconParameters(filters = getFilters(),
                                                                  isDark = attributes.isDark,
@@ -367,25 +372,25 @@ open class CachedImageIcon private constructor(
   }
 
   internal fun detachClassLoader(classLoader: ClassLoader): Boolean {
-    if (loader == null) {
+    if (loader is EmptyImageDataLoader) {
       return true
     }
 
     synchronized(iconCache) {
-      val loader = loader ?: return true
+      val loader = loader
       val originalLoader = originalLoader
-      if (!loader.isMyClassLoader(classLoader) && !(originalLoader != null && originalLoader.isMyClassLoader(classLoader))) {
+      if (!loader.isMyClassLoader(classLoader) && !(originalLoader.isMyClassLoader(classLoader))) {
         return false
       }
 
-      this.loader = null
+      this.loader = EmptyImageDataLoader
       iconCache.clear()
       return true
     }
   }
 
   fun encodeToByteArray(): ByteArray {
-    var descriptor = originalLoader?.serializeToByteArray()
+    var descriptor = originalLoader.serializeToByteArray()
     if (descriptor == null) {
       descriptor = UrlDataLoaderDescriptor(url!!.toExternalForm())
     }
@@ -393,7 +398,7 @@ open class CachedImageIcon private constructor(
   }
 
   val imageFlags: Int
-    get() = loader?.flags ?: 0
+    get() = loader.flags
 
   override fun equals(other: Any?): Boolean = when {
     this === other -> true

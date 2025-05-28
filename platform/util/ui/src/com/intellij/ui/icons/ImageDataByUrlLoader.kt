@@ -191,3 +191,12 @@ private interface PatchedImageDataLoader : ImageDataLoader {
 
   override fun isMyClassLoader(classLoader: ClassLoader): Boolean = false
 }
+
+internal object EmptyImageDataLoader : ImageDataLoader {
+  override val path: String? get() = null
+  override val url: URL? get() = null
+
+  override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image? = null
+  override fun patch(transform: IconTransform): ImageDataLoader? = null
+  override fun isMyClassLoader(classLoader: ClassLoader): Boolean = false
+}
