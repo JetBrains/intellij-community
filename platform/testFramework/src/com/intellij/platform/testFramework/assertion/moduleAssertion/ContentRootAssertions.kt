@@ -6,12 +6,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import org.junit.jupiter.api.Assertions
 import java.nio.file.Path
 
 object ContentRootAssertions {
@@ -33,10 +31,10 @@ object ContentRootAssertions {
 
   @JvmStatic
   fun assertContentRoots(project: Project, moduleName: String, expectedRoots: List<Path>) {
-    val workspaceModel = project.workspaceModel
-    val storage = workspaceModel.currentSnapshot
-    val virtualFileUrlManager = workspaceModel.getVirtualFileUrlManager()
-    assertContentRoots(virtualFileUrlManager, storage, moduleName, expectedRoots)
+    val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
+    ModuleAssertions.assertModuleEntity(project, moduleName) { module ->
+      assertContentRoots(virtualFileUrlManager, module, expectedRoots)
+    }
   }
 
   @JvmStatic
@@ -46,12 +44,9 @@ object ContentRootAssertions {
 
   @JvmStatic
   fun assertContentRoots(virtualFileUrlManager: VirtualFileUrlManager, storage: EntityStorage, moduleName: String, expectedRoots: List<Path>) {
-    val moduleId = ModuleId(moduleName)
-    val moduleEntity = storage.resolve(moduleId)
-    Assertions.assertNotNull(moduleEntity) {
-      "The module '$moduleName' doesn't exist"
+    ModuleAssertions.assertModuleEntity(storage, moduleName) { module ->
+      assertContentRoots(virtualFileUrlManager, module, expectedRoots)
     }
-    assertContentRoots(virtualFileUrlManager, moduleEntity!!, expectedRoots)
   }
 
   @JvmStatic
