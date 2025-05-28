@@ -104,7 +104,7 @@ internal constructor(indexDir: String) {
       indexer.closeIndex()
       //Store the list of generated files for the search to work
       Path.of(dirToStore, "rlist")
-        .writeLines(Path.of(dirToStore).walk().map { it.name })
+        .writeLines(Path.of(dirToStore).toFile().walk().map { it.name })
     }
 
     @Throws(IOException::class)
