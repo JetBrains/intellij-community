@@ -11,10 +11,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.CollectionFactory;
-import com.jetbrains.python.psi.AccessDirection;
-import com.jetbrains.python.psi.PyCallable;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyTypedElement;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -216,6 +213,9 @@ public sealed class TypeEvalContext {
   }
 
   protected @Nullable PyType getKnownType(final @NotNull PyTypedElement element) {
+    if (element instanceof PyNoneLiteralExpression) {
+      return element.getType(this, Key.INSTANCE);
+    }
     final PyType cachedType = myEvaluated.get(element);
     if (cachedType != null) {
       assertValid(cachedType, element);
