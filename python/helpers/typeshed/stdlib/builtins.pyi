@@ -1927,8 +1927,6 @@ else:
 
     Ellipsis: ellipsis
 
-Ellipsis: ellipsis
-
 class BaseException:
     args: tuple[Any, ...]
     __cause__: BaseException | None
