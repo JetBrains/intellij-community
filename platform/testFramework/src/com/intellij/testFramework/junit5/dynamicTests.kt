@@ -2,7 +2,6 @@
 @file:JvmName("DynamicTests")
 package com.intellij.testFramework.junit5
 
-import org.jetbrains.annotations.ApiStatus
 import org.junit.AssumptionViolatedException
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.assertAll
@@ -38,16 +37,8 @@ fun <T : Throwable> Collection<T>.groupFailures(naming: (T) -> String): List<Nam
  */
 @JvmOverloads
 fun List<NamedFailure>.asDynamicTests(problemMessage: String, threshold: Int = 50): List<DynamicTest> {
-  @Suppress("DEPRECATION")
-  return asDynamicTests("no $problemMessage", "too many $problemMessage", threshold)
-}
-
-@Deprecated("Use a simplified version 'asDynamicTests(String, Int)' instead")
-@ApiStatus.ScheduledForRemoval
-@JvmOverloads
-fun List<NamedFailure>.asDynamicTests(testNameForSuccess: String, testNameForManyFailures: String, threshold: Int = 50): List<DynamicTest> {
   if (isEmpty()) {
-    return listOf(DynamicTest.dynamicTest(testNameForSuccess) {})
+    return listOf(DynamicTest.dynamicTest("no $problemMessage") {})
   }
   else if (size <= threshold) {
     return map {
@@ -56,9 +47,9 @@ fun List<NamedFailure>.asDynamicTests(testNameForSuccess: String, testNameForMan
   }
   else {
     //this may indicate a problem in the testing code, so it's better to report one failed test with all the errors inside
-    return listOf(DynamicTest.dynamicTest(testNameForManyFailures) {
+    return listOf(DynamicTest.dynamicTest("too many $problemMessage") {
       if (all { it.error is AssumptionViolatedException || it.error is IncompleteExecutionException }) {
-        val aborted = TestAbortedException("$testNameForManyFailures:\n${joinToString("\n") { it.error.toString() }}")
+        val aborted = TestAbortedException("too many $problemMessage:\n${joinToString("\n") { it.error.toString() }}")
         forEach { 
           aborted.addSuppressed(it.error)
         }

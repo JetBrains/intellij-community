@@ -5,21 +5,11 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.io.findOrCreateDirectory
 import com.intellij.openapi.util.io.findOrCreateFile
 import com.intellij.openapi.util.io.getResolvedPath
-import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.DirectoryStream
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.exists
-import kotlin.io.path.listDirectoryEntries
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated(
-  message = "Use stdlib function",
-  replaceWith = ReplaceWith("listDirectoryEntries()", "kotlin.io.path.listDirectoryEntries"),
-  level = DeprecationLevel.ERROR,
-)
-fun Path.getChildren(): List<Path> = listDirectoryEntries()
 
 fun Path.createFile(): Path {
   if (exists()) {
