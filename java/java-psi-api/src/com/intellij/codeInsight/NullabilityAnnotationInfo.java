@@ -7,6 +7,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 /**
  * Represents a particular nullability annotation instance
  */
@@ -88,6 +90,26 @@ public class NullabilityAnnotationInfo {
       source = new NullabilitySource.ExplicitAnnotation(myAnnotation);
     }
     return new TypeNullability(myNullability, source);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) return false;
+
+    NullabilityAnnotationInfo info = (NullabilityAnnotationInfo)o;
+    return myContainer == info.myContainer &&
+           myAnnotation.equals(info.myAnnotation) &&
+           myNullability == info.myNullability &&
+           Objects.equals(myInheritedFrom, info.myInheritedFrom);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myAnnotation.hashCode();
+    result = 31 * result + myNullability.hashCode();
+    result = 31 * result + Objects.hashCode(myInheritedFrom);
+    result = 31 * result + Boolean.hashCode(myContainer);
+    return result;
   }
 
   @Override
