@@ -489,37 +489,6 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
 
 
   /**
-   * @deprecated use {@link OverrideImplementUtil#showJavaOverrideImplementChooser(Editor, PsiElement, boolean, Collection, Collection, java.util.function.Consumer)}
-   */
-  @Deprecated(forRemoval = true)
-  public static @Nullable MemberChooser<PsiMethodMember> showOverrideImplementChooser(@NotNull Editor editor,
-                                                                            @NotNull PsiElement aClass,
-                                                                            final boolean toImplement,
-                                                                            @NotNull Collection<CandidateInfo> candidates,
-                                                                            @NotNull Collection<CandidateInfo> secondary) {
-    return showJavaOverrideImplementChooser(editor, aClass, toImplement, candidates, secondary);
-  }
-
-  /**
-   * Can be called on EDT thread.
-   * It is used only for backward compatibility.
-   * @deprecated use {@link OverrideImplementUtil#showJavaOverrideImplementChooser(Editor, PsiElement, boolean, Collection, Collection, java.util.function.Consumer)}
-   */
-  @Deprecated(forRemoval = true)
-  public static @Nullable JavaOverrideImplementMemberChooser showJavaOverrideImplementChooser(@NotNull Editor editor,
-                                                                                    @NotNull PsiElement aClass,
-                                                                                    final boolean toImplement,
-                                                                                    @NotNull Collection<CandidateInfo> candidates,
-                                                                                    @NotNull Collection<CandidateInfo> secondary) {
-    final JavaOverrideImplementMemberChooserContainer container =
-      prepareJavaOverrideImplementChooser(aClass, toImplement, candidates, secondary);
-    if (container == null) {
-      return null;
-    }
-    return showJavaOverrideImplementChooser(container, editor, aClass);
-  }
-
-  /**
    * Must be call on a background thread
    * @param candidates, secondary should allow modifications
    */

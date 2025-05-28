@@ -6,14 +6,12 @@ import com.intellij.codeInsight.lookup.DefaultLookupItemRenderer;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.beanProperties.BeanPropertyElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.siyeh.ig.psiutils.JavaDeprecationUtils;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -52,13 +50,5 @@ public final class JavaElementLookupRenderer implements ElementLookupRenderer {
     }
     PsiElement element = item.getPsiElement();
     return element != null && JavaDeprecationUtils.isDeprecated(element, null);
-  }
-
-  /**
-   * @deprecated use {@link JavaDeprecationUtils#isDeprecated(PsiElement, PsiElement)}
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean isDeprecated(@Nullable PsiElement element) {
-    return element instanceof PsiDocCommentOwner && ((PsiDocCommentOwner)element).isDeprecated();
   }
 }

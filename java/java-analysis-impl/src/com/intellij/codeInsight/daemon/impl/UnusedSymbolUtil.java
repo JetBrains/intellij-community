@@ -79,16 +79,6 @@ public final class UnusedSymbolUtil {
     return EntryPointsManager.getInstance(project).isImplicitWrite(element);
   }
 
-  /**
-   * @deprecated use {@link #createUnusedSymbolInfoBuilder(PsiElement, String, HighlightInfoType, String)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static @Nullable HighlightInfo createUnusedSymbolInfo(@NotNull PsiElement element,
-                                                     @NotNull @NlsContexts.DetailedDescription String message,
-                                                     final @NotNull HighlightInfoType highlightInfoType,
-                                                     @Nullable String shortName) {
-    return createUnusedSymbolInfoBuilder(element, message, highlightInfoType, shortName).create();
-  }
   public static @NotNull HighlightInfo.Builder createUnusedSymbolInfoBuilder(@NotNull PsiElement element,
                                                                              @NotNull @NlsContexts.DetailedDescription String message,
                                                                              final @NotNull HighlightInfoType highlightInfoType,

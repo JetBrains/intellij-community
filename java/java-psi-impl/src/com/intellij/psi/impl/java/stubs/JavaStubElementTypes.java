@@ -3,12 +3,9 @@ package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.tree.java.*;
-import com.intellij.psi.tree.IFileElementType;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public interface JavaStubElementTypes {
@@ -156,10 +153,4 @@ public interface JavaStubElementTypes {
         return new ImportModuleStatementElement();
       }
     };
-
-  /**
-   * @deprecated use {@link JavaParserDefinition#JAVA_FILE}
-   */
-  @Deprecated @ApiStatus.ScheduledForRemoval
-  IFileElementType JAVA_FILE = JavaParserDefinition.JAVA_FILE;
 }
