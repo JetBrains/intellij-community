@@ -199,8 +199,8 @@ internal class IdeVcsLogManager(
   }
 
   @RequiresBackgroundThread
-  override fun dispose() {
-    super.dispose()
+  override fun disposeData() {
+    super.disposeData()
 
     val storageImpl = dataManager.storage as? VcsLogStorageImpl ?: return
     if (!storageImpl.isDisposed) {

@@ -515,7 +515,6 @@ com.intellij.vcs.log.impl.VcsLogIndexer$CompressedDetails
 com.intellij.vcs.log.impl.VcsLogIndexer$PathsEncoder
 - a:encode(com.intellij.openapi.vfs.VirtualFile,java.lang.String,Z):I
 Fc:com.intellij.vcs.log.impl.VcsLogManager
-- com.intellij.openapi.Disposable
 - sf:Companion:com.intellij.vcs.log.impl.VcsLogManager$Companion
 - sf:findLogProviders(java.util.Collection,com.intellij.openapi.project.Project):java.util.Map
 - f:getColorManager():com.intellij.vcs.log.ui.VcsLogColorManager

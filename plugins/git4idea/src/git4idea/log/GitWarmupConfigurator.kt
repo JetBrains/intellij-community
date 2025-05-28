@@ -47,11 +47,7 @@ class GitWarmupConfigurator : WarmupConfigurator {
 
     assertVcsIndexed(manager)
 
-    withContext(Dispatchers.EDT) {
-      blockingContextScope {
-        manager.dispose(null)
-      }
-    }
+    manager.dispose()
 
     logger?.reportMessage(1, "Git log indexing has finished")
     return false

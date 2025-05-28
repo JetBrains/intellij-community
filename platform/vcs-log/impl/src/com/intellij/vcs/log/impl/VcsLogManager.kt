@@ -4,7 +4,9 @@ package com.intellij.vcs.log.impl
 import com.intellij.ide.PowerSaveMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
@@ -35,7 +37,9 @@ import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.collection
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import it.unimi.dsi.fastutil.ints.IntSets
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.*
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.Nls
@@ -54,8 +58,9 @@ open class VcsLogManager @Internal constructor(
   @Internal val name: String,
   isIndexEnabled: Boolean,
   private val recreateMainLogHandler: BiConsumer<in VcsLogErrorHandler.Source, in Throwable>?,
-) : Disposable {
-  val dataManager: VcsLogData = VcsLogData(project, logProviders, MyErrorHandler(), isIndexEnabled, this)
+) {
+  private val dataDisposable = Disposer.newDisposable("Vcs Log Data Disposable for $name")
+  val dataManager: VcsLogData = VcsLogData(project, logProviders, MyErrorHandler(), isIndexEnabled, dataDisposable)
   private val postponableRefresher = PostponableLogRefresher(dataManager)
 
   private val managedUis = mutableMapOf<String, VcsLogUiEx>()
@@ -64,9 +69,8 @@ open class VcsLogManager @Internal constructor(
   val colorManager: VcsLogColorManager = VcsLogColorManagerFactory.create(logProviders.keys)
   private val statusBarProgress = VcsLogStatusBarProgress(project, logProviders, dataManager.index.indexingRoots, dataManager.progress)
 
-  @get:RequiresEdt
-  var isDisposed: Boolean = false
-    private set
+  private val disposed = AtomicBoolean(false)
+  val isDisposed: Boolean get() = disposed.get()
 
   init {
     refreshLogOnVcsEvents(dataManager, logProviders, postponableRefresher)
@@ -210,9 +214,9 @@ open class VcsLogManager @Internal constructor(
       ui.toString() + isVisible + isDisposed
   }
 
+  @Internal
   @RequiresEdt
-  internal open fun disposeUi() {
-    isDisposed = true
+  protected open fun disposeUi() {
     ThreadingAssertions.assertEventDispatchThread()
     managedUis.values.toList().forEach { Disposer.dispose(it) }
     Disposer.dispose(statusBarProgress)
@@ -220,27 +224,52 @@ open class VcsLogManager @Internal constructor(
 
   /**
    * Dispose VcsLogManager and execute some activity after it.
+   * Obsolete in favor of suspending [dispose].
    *
    * @param callback activity to run after log is disposed. Is executed in background thread. null means execution of additional activity after disposing is not required.
    */
+  @Obsolete
   @Internal
   @RequiresEdt
   fun dispose(callback: Runnable?) {
+    if (!startDisposing()) return
     disposeUi()
     ApplicationManager.getApplication().executeOnPooledThread {
-      Disposer.dispose(this)
+      disposeData()
       callback?.run()
     }
   }
 
   @Internal
   @RequiresBackgroundThread
-  override fun dispose() {
+  protected open fun disposeData() {
     // since disposing log triggers flushing indexes on disk we do not want to do it in EDT
     // disposing of VcsLogManager is done by manually executing dispose(@Nullable Runnable callback)
     // the above method first disposes ui in EDT, then disposes everything else in a background
-    ApplicationManager.getApplication().assertIsNonDispatchThread()
-    LOG.debug("Disposed " + name)
+    ThreadingAssertions.assertBackgroundThread()
+    Disposer.dispose(dataDisposable)
+    LOG.debug("Disposed $name")
+  }
+
+  private fun startDisposing(): Boolean {
+    val wasNotStartedBefore = disposed.compareAndSet(false, true)
+    if (!wasNotStartedBefore) {
+      LOG.warn("$name is already disposed. Ignoring dispose request", Throwable("Dispose trace for $name"))
+      return false
+    }
+    return true
+  }
+
+  @Internal
+  suspend fun dispose(useRawSwingDispatcher: Boolean = false) {
+    if (!startDisposing()) return
+    val uiDispatcher = if (useRawSwingDispatcher) RawSwingDispatcher else Dispatchers.EDT
+    withContext(uiDispatcher) {
+      disposeUi()
+    }
+    withContext(Dispatchers.Default) {
+      disposeData()
+    }
   }
 
   private fun refreshLogOnVcsEvents(

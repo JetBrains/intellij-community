@@ -7,7 +7,6 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
@@ -27,7 +26,6 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.PlatformUtils
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.data.VcsLogData
@@ -55,8 +53,8 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
 
   private val logManagerState = MutableStateFlow<M?>(null)
 
-  private val disposeStarted = AtomicBoolean(false)
-  val isDisposing: Boolean get() = disposeStarted.get()
+  private val shutDownStarted = AtomicBoolean(false)
+  val isDisposing: Boolean get() = shutDownStarted.get()
 
   // not-reentrant - invoking [lock] even from the same thread/coroutine that currently holds the lock still suspends the invoker
   private val mutex = Mutex()
@@ -94,7 +92,7 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
     @Suppress("SSBasedInspection")
     val shutdownTask = object : Runnable {
       override fun run() {
-        if (disposeStarted.get()) {
+        if (shutDownStarted.get()) {
           LOG.warn("unregisterShutdownTask should be called")
           return
         }
@@ -113,14 +111,17 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
   }
 
   private suspend fun shutDown(useRawSwingDispatcher: Boolean) {
-    if (!disposeStarted.compareAndSet(false, true)) return
+    if (!shutDownStarted.compareAndSet(false, true)) return
 
     Disposer.dispose(listenersDisposable)
 
     try {
       withTimeout(CLOSE_LOG_TIMEOUT) {
         mutex.withLock {
-          disposeLogInternal(useRawSwingDispatcher, notify = false)
+          logManagerState.getAndUpdate { null }?.let {
+            LOG.debug { "Disposing ${it.name}" }
+            it.dispose(useRawSwingDispatcher)
+          }
         }
       }
     }
@@ -160,10 +161,10 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
       }
     }
 
-  private fun disposeAsync(useRawSwingDispatcher: Boolean = false) =
+  private fun disposeAsync() =
     coroutineScope.launchWithAnyModality {
       mutex.withLock {
-        disposeLogInternal(useRawSwingDispatcher, notify = true)
+        disposeLogManager()
       }
     }
 
@@ -172,7 +173,7 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
   private fun reinitAsync(beforeCreateLog: (suspend () -> Unit)? = null) =
     coroutineScope.asyncWithAnyModality {
       mutex.withLock {
-        disposeLogInternal(useRawSwingDispatcher = false, notify = true)
+        disposeLogManager()
 
         try {
           beforeCreateLog?.invoke()
@@ -185,11 +186,14 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
       }
     }
 
-  private suspend fun disposeLogInternal(useRawSwingDispatcher: Boolean, notify: Boolean) {
-    val logManager = withContext(if (useRawSwingDispatcher) RawSwingDispatcher else Dispatchers.EDT) {
-      dropLogManager(notify)?.also { it.disposeUi() }
+  private suspend fun disposeLogManager() {
+    logManagerState.getAndUpdate { null }?.let {
+      LOG.debug { "Disposing ${it.name}" }
+      withContext(Dispatchers.EDT) {
+        notifyLogDisposed(it)
+      }
+      it.dispose()
     }
-    if (logManager != null) Disposer.dispose(logManager)
   }
 
   private suspend fun getOrCreateLogManager(forceInit: Boolean): M? {
@@ -214,25 +218,22 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
     LOG.debug { "Creating ${getProjectLogName(logProviders)}" }
     return createLogManager(logProviders).also { manager ->
       logManagerState.value = manager
-      val publisher = project.messageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED)
       withContext(Dispatchers.EDT) {
-        publisher.logCreated(manager)
+        notifyLogCreated(manager)
       }
     }
   }
 
   protected abstract suspend fun createLogManager(logProviders: Map<VirtualFile, VcsLogProvider>): M
 
-  @RequiresEdt
-  private fun dropLogManager(notify: Boolean): M? {
+  private fun notifyLogCreated(oldManager: M) {
     ThreadingAssertions.assertEventDispatchThread()
-    val oldValue = logManagerState.getAndUpdate { null } ?: return null
+    project.messageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logCreated(oldManager)
+  }
 
-    LOG.debug { "Disposing ${oldValue.name}" }
-    if (notify) {
-      project.messageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed(oldValue)
-    }
-    return oldValue
+  private fun notifyLogDisposed(oldManager: M) {
+    ThreadingAssertions.assertEventDispatchThread()
+    project.messageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed(oldManager)
   }
 
   private inner class MyDynamicPluginUnloader : DynamicPluginListener {
