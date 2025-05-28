@@ -38,7 +38,9 @@ sealed class DirectorySpecBase(override val originalFile: Path?) : DirectoryCont
     if (name in children) {
       val existing = children[name]
       if (spec is DirectorySpecBase && existing is DirectorySpecBase) {
-        existing.children += spec.children
+        for (child in spec.children) {
+          existing.addChild(child.key, child.value)
+        }
         return
       }
       throw IllegalArgumentException("'$name' already exists")
