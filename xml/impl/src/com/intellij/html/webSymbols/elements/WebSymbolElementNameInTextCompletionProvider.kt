@@ -21,12 +21,14 @@ internal class WebSymbolElementNameInTextCompletionProvider : WebSymbolsCompleti
     position.parent.asSafely<XmlElement>()
       ?.takeIf { it is XmlDocument || it is XmlText }
 
-  override fun addCompletions(parameters: CompletionParameters,
-                              result: CompletionResultSet,
-                              position: Int,
-                              name: String,
-                              queryExecutor: WebSymbolsQueryExecutor,
-                              context: XmlElement) {
+  override fun addCompletions(
+    parameters: CompletionParameters,
+    result: CompletionResultSet,
+    position: Int,
+    name: String,
+    queryExecutor: WebSymbolsQueryExecutor,
+    context: XmlElement
+  ) {
     if (!canProvideHtmlElementInTextCompletion(parameters)) return
 
     val patchedResultSet = patchResultSetForHtmlElementInTextCompletion(

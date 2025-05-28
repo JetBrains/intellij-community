@@ -19,8 +19,10 @@ class WebSymbolHtmlAttributeValueCompletionProvider : WebSymbolsCompletionProvid
   override fun getContext(position: PsiElement): XmlAttributeValue? =
     PsiTreeUtil.getParentOfType(position, XmlAttributeValue::class.java, false)
 
-  override fun addCompletions(parameters: CompletionParameters, result: CompletionResultSet, position: Int,
-                              name: String, queryExecutor: WebSymbolsQueryExecutor, context: XmlAttributeValue) {
+  override fun addCompletions(
+    parameters: CompletionParameters, result: CompletionResultSet, position: Int,
+    name: String, queryExecutor: WebSymbolsQueryExecutor, context: XmlAttributeValue
+  ) {
     val patchedResultSet = result.withPrefixMatcher(result.prefixMatcher.cloneWithPrefix(name))
 
     val attribute = context.parent as? XmlAttribute ?: return

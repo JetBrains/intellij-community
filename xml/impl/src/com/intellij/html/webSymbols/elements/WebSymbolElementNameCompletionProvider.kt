@@ -20,12 +20,14 @@ class WebSymbolElementNameCompletionProvider : WebSymbolsCompletionProviderBase<
   override fun getContext(position: PsiElement): HtmlTag? =
     PsiTreeUtil.getParentOfType(position, HtmlTag::class.java, false)
 
-  override fun addCompletions(parameters: CompletionParameters,
-                              result: CompletionResultSet,
-                              position: Int,
-                              name: String,
-                              queryExecutor: WebSymbolsQueryExecutor,
-                              context: HtmlTag) {
+  override fun addCompletions(
+    parameters: CompletionParameters,
+    result: CompletionResultSet,
+    position: Int,
+    name: String,
+    queryExecutor: WebSymbolsQueryExecutor,
+    context: HtmlTag
+  ) {
     var endTag = false
     LegacyCompletionContributor.processReferences(parameters, result) { reference, _ ->
       if (reference is TagNameReference && !reference.isStartTagFlag) endTag = true
@@ -42,7 +44,7 @@ class WebSymbolElementNameCompletionProvider : WebSymbolsCompletionProviderBase<
 
   companion object {
 
-    fun filterStandardHtmlSymbols(item: WebSymbolCodeCompletionItem) =
+    fun filterStandardHtmlSymbols(item: WebSymbolCodeCompletionItem): Boolean =
       item.symbol !is WebSymbolsHtmlQueryConfigurator.StandardHtmlSymbol
       || item.offset != 0
       || item.symbol?.name != item.name

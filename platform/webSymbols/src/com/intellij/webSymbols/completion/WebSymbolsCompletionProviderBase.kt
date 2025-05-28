@@ -2,6 +2,7 @@
 package com.intellij.webSymbols.completion
 
 import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionProcess
 import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.injected.editor.DocumentWindow
@@ -11,6 +12,7 @@ import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.startOffset
 import com.intellij.util.ProcessingContext
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.webSymbols.FrameworkId
 import com.intellij.webSymbols.WebSymbolQualifiedKind
 import com.intellij.webSymbols.WebSymbolsScope
@@ -49,22 +51,39 @@ abstract class WebSymbolsCompletionProviderBase<T : PsiElement> : CompletionProv
 
   protected abstract fun getContext(position: PsiElement): T?
 
-  protected abstract fun addCompletions(parameters: CompletionParameters, result: CompletionResultSet,
-                                        position: Int, name: String, queryExecutor: WebSymbolsQueryExecutor, context: T)
+  protected abstract fun addCompletions(
+    parameters: CompletionParameters, result: CompletionResultSet,
+    position: Int, name: String, queryExecutor: WebSymbolsQueryExecutor, context: T,
+  )
 
   companion object {
 
+    private val exclusiveKindMap: MutableMap<CompletionProcess, Set<WebSymbolQualifiedKind>> = ContainerUtil.createConcurrentWeakMap()
+
+
     @JvmStatic
-    fun processCompletionQueryResults(queryExecutor: WebSymbolsQueryExecutor,
-                                      result: CompletionResultSet,
-                                      qualifiedKind: WebSymbolQualifiedKind,
-                                      name: String,
-                                      position: Int,
-                                      location: PsiElement,
-                                      queryContext: List<WebSymbolsScope> = emptyList(),
-                                      providedNames: MutableSet<String>? = null,
-                                      filter: ((WebSymbolCodeCompletionItem) -> Boolean)? = null,
-                                      consumer: (WebSymbolCodeCompletionItem) -> Unit) {
+    fun preventFurtherCodeCompletionsFor(parameters: CompletionParameters, qualifiedKind: WebSymbolQualifiedKind) {
+      exclusiveKindMap.merge(parameters.process, setOf(qualifiedKind)) { s1, s2 -> s1 + s2 }
+    }
+
+    @JvmStatic
+    fun noMoreCodeCompletionsFor(parameters: CompletionParameters, vararg qualifiedKind: WebSymbolQualifiedKind): Boolean =
+      exclusiveKindMap[parameters.process]?.let { exclusive -> qualifiedKind.any { exclusive.contains(it) } } == true
+
+
+    @JvmStatic
+    fun processCompletionQueryResults(
+      queryExecutor: WebSymbolsQueryExecutor,
+      result: CompletionResultSet,
+      qualifiedKind: WebSymbolQualifiedKind,
+      name: String,
+      position: Int,
+      location: PsiElement,
+      queryContext: List<WebSymbolsScope> = emptyList(),
+      providedNames: MutableSet<String>? = null,
+      filter: ((WebSymbolCodeCompletionItem) -> Boolean)? = null,
+      consumer: (WebSymbolCodeCompletionItem) -> Unit,
+    ) {
       processWebSymbolCodeCompletionItems(
         queryExecutor.runCodeCompletionQuery(qualifiedKind, name, position, additionalScope = queryContext),
         result, qualifiedKind, name, queryExecutor.framework, location, providedNames, filter, consumer
@@ -72,15 +91,17 @@ abstract class WebSymbolsCompletionProviderBase<T : PsiElement> : CompletionProv
     }
 
     @JvmStatic
-    fun processWebSymbolCodeCompletionItems(symbols: List<WebSymbolCodeCompletionItem>,
-                                            result: CompletionResultSet,
-                                            qualifiedKind: WebSymbolQualifiedKind,
-                                            name: String,
-                                            framework: FrameworkId?,
-                                            location: PsiElement,
-                                            providedNames: MutableSet<String>? = null,
-                                            filter: ((WebSymbolCodeCompletionItem) -> Boolean)? = null,
-                                            consumer: (WebSymbolCodeCompletionItem) -> Unit) {
+    fun processWebSymbolCodeCompletionItems(
+      symbols: List<WebSymbolCodeCompletionItem>,
+      result: CompletionResultSet,
+      qualifiedKind: WebSymbolQualifiedKind,
+      name: String,
+      framework: FrameworkId?,
+      location: PsiElement,
+      providedNames: MutableSet<String>? = null,
+      filter: ((WebSymbolCodeCompletionItem) -> Boolean)? = null,
+      consumer: (WebSymbolCodeCompletionItem) -> Unit,
+    ) {
       val prefixLength = name.length
       val prefixes = mutableSetOf<String>()
       symbols

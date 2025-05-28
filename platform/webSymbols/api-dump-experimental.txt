@@ -122,6 +122,7 @@
 - f:getHTML_ELEMENTS():com.intellij.webSymbols.WebSymbolQualifiedKind
 - f:getHTML_SLOTS():com.intellij.webSymbols.WebSymbolQualifiedKind
 - f:getJS_EVENTS():com.intellij.webSymbols.WebSymbolQualifiedKind
+- f:getJS_KEYWORDS():com.intellij.webSymbols.WebSymbolQualifiedKind
 - f:getJS_PROPERTIES():com.intellij.webSymbols.WebSymbolQualifiedKind
 - f:getJS_STRING_LITERALS():com.intellij.webSymbols.WebSymbolQualifiedKind
 - f:getJS_SYMBOLS():com.intellij.webSymbols.WebSymbolQualifiedKind
@@ -409,9 +410,13 @@
 - pa:addCompletions(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.CompletionResultSet,I,java.lang.String,com.intellij.webSymbols.query.WebSymbolsQueryExecutor,com.intellij.psi.PsiElement):V
 - pf:addCompletions(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.util.ProcessingContext,com.intellij.codeInsight.completion.CompletionResultSet):V
 - pa:getContext(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- sf:noMoreCodeCompletionsFor(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.webSymbols.WebSymbolQualifiedKind[]):Z
+- sf:preventFurtherCodeCompletionsFor(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.webSymbols.WebSymbolQualifiedKind):V
 - sf:processCompletionQueryResults(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,com.intellij.codeInsight.completion.CompletionResultSet,com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String,I,com.intellij.psi.PsiElement,java.util.List,java.util.Set,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):V
 - sf:processWebSymbolCodeCompletionItems(java.util.List,com.intellij.codeInsight.completion.CompletionResultSet,com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String,java.lang.String,com.intellij.psi.PsiElement,java.util.Set,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):V
 *f:com.intellij.webSymbols.completion.WebSymbolsCompletionProviderBase$Companion
+- f:noMoreCodeCompletionsFor(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.webSymbols.WebSymbolQualifiedKind[]):Z
+- f:preventFurtherCodeCompletionsFor(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.webSymbols.WebSymbolQualifiedKind):V
 - f:processCompletionQueryResults(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,com.intellij.codeInsight.completion.CompletionResultSet,com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String,I,com.intellij.psi.PsiElement,java.util.List,java.util.Set,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):V
 - bs:processCompletionQueryResults$default(com.intellij.webSymbols.completion.WebSymbolsCompletionProviderBase$Companion,com.intellij.webSymbols.query.WebSymbolsQueryExecutor,com.intellij.codeInsight.completion.CompletionResultSet,com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String,I,com.intellij.psi.PsiElement,java.util.List,java.util.Set,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 - f:processWebSymbolCodeCompletionItems(java.util.List,com.intellij.codeInsight.completion.CompletionResultSet,com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String,java.lang.String,com.intellij.psi.PsiElement,java.util.Set,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):V

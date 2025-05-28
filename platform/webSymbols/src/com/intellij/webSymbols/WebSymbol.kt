@@ -380,6 +380,7 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol, WebSymbolsPrio
 
     val JS_EVENTS: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_JS, KIND_JS_EVENTS)
     val JS_PROPERTIES: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_JS, KIND_JS_PROPERTIES)
+    val JS_KEYWORDS: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_JS, "keywords")
     val JS_SYMBOLS: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_JS, KIND_JS_SYMBOLS)
     val JS_STRING_LITERALS: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_JS, KIND_JS_STRING_LITERALS)
 
