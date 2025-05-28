@@ -201,23 +201,6 @@ public final class GitBranchPopupActions {
       }
       return GitBundle.message("branches.there.are.outgoing.commits");
     }
-
-    /**
-     * @deprecated use {@link GitBrancher}
-     */
-    @Deprecated(forRemoval = true)
-    public static final class CheckoutAction {
-      /**
-       * @deprecated use {@link GitBrancher#checkout(String, boolean, List, Runnable))}
-       */
-      @Deprecated(forRemoval = true)
-      public static void checkoutBranch(@NotNull Project project,
-                                        @NotNull List<? extends GitRepository> repositories,
-                                        @NotNull String branchName) {
-        GitBrancher brancher = GitBrancher.getInstance(project);
-        brancher.checkout(branchName, false, repositories, null);
-      }
-    }
   }
 
   /**

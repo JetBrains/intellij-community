@@ -285,15 +285,6 @@ public final class GitVcs extends AbstractVcs {
     return Collections.singletonList(myProject.getService(GitCommitAndPushExecutor.class));
   }
 
-
-  /**
-   * @deprecated Use {@link GitExecutableManager#identifyVersion(String)} and {@link GitExecutableProblemsNotifier}.
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull GitExecutableValidator getExecutableValidator() {
-    return new GitExecutableValidator(myProject);
-  }
-
   @Override
   public boolean fileListenerIsSynchronous() {
     return false;
