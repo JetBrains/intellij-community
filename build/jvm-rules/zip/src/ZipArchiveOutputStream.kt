@@ -357,26 +357,31 @@ class ZipArchiveOutputStream(
       writeZipLocalFileHeader(path = path, size = size, crc32 = crc, buffer = buffer)
       zipIndexWriter.writeCentralFileHeader(path = path, size = size, crc = crc, headerOffset = headerOffset)
 
-      val writableBytes = buffer.writableBytes()
-      if (writableBytes >= size) {
+      val freeCapacity = buffer.writableBytes()
+      if (freeCapacity >= size) {
         buffer.writeBytes(data)
       }
       else {
         // write partial data to buffer, flush it, then handle remaining data
-        val sourceOffset = writableBytes
-        if (writableBytes > 0) {
-          buffer.writeBytes(data, 0, writableBytes)
-          writeBuffer(buffer)
-          buffer.clear()
-        }
-
-        val rest = size - sourceOffset
-        // directly write large data to avoid unnecessary buffer resizing
-        if (rest >= buffer.writableBytes()) {
-          writeBuffer(ByteBuffer.wrap(data, sourceOffset, rest))
+        if (freeCapacity > 0) {
+          buffer.writeBytes(data, 0, freeCapacity)
         }
         else {
-          buffer.writeBytes(data, sourceOffset, rest)
+          check(freeCapacity == 0) {
+            "No writable bytes are expected, but the buffer still has free capacity: $freeCapacity"
+          }
+        }
+        writeBuffer(buffer)
+        buffer.clear()
+
+        val restOffset = freeCapacity
+        val restSize = size - freeCapacity
+        // directly write large data to avoid unnecessary buffer resizing
+        if (restSize >= buffer.writableBytes()) {
+          writeBuffer(ByteBuffer.wrap(data, restOffset, restSize))
+        }
+        else {
+          buffer.writeBytes(data, restOffset, restSize)
         }
       }
     }

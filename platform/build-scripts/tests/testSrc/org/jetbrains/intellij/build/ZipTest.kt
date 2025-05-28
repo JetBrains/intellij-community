@@ -593,6 +593,34 @@ class ZipTest {
       assertThat(zipFile.getRawEntry("dir/subDir")).isNotNull
     }
   }
+
+  @Test  // Note(k15tfu): https://youtrack.jetbrains.com/issue/IJI-2760
+  fun `ensure internal buffer flush order if no writable bytes`(@TempDir tempDir: Path) {
+    val archiveFile = tempDir.resolve("archive.zip")
+    val list = ArrayList<TestEntryItem>(2)
+
+    zipWriter(archiveFile, null).use {
+      val localFileHeaderSizeWithoutFileName = 30
+      val item1 = TestEntryItem(name = "1.data", size = ZipArchiveOutputStream.INITIAL_BUFFER_CAPACITY - localFileHeaderSizeWithoutFileName - "1.data".toByteArray().size - localFileHeaderSizeWithoutFileName - "2.data".toByteArray().size)
+      list.add(item1)
+      it.uncompressedData(item1.name.toByteArray(), ByteArray(item1.size) { 0xFF.toByte() }, null)
+
+      val item2 = TestEntryItem(name = "2.data", size = localFileHeaderSizeWithoutFileName)
+      list.add(item2)
+      it.uncompressedData(item2.name.toByteArray(), ByteArray(item2.size) { 0xFF.toByte() }, null)
+    }
+
+    checkZip(archiveFile) { zipFile ->
+      for (item in list) {
+        val entry = zipFile.getResource(item.name)
+        assertThat(entry).isNotNull()
+        assertThat(entry!!.path).isEqualTo(item.name)
+        assertThat(entry.uncompressedSize).isEqualTo(item.size)
+        assertThat(entry.data.size).isEqualTo(item.size)
+        assertThat(entry.data.all { it == 0xFF.toByte() }).isTrue()
+      }
+    }
+  }
 }
 
 // check both IKV- and non-IKV variants of an immutable zip file
