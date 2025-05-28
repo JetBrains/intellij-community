@@ -93,6 +93,10 @@ com.intellij.openapi.editor.ex.util.DataStorage
 com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType
 - com.intellij.openapi.fileTypes.FileType
 - a:getSyntaxTable():com.intellij.ide.highlighter.custom.SyntaxTable
+f:com.intellij.openapi.vfs.DeduplicatingVirtualFileFilter
+- com.intellij.openapi.vfs.VirtualFileFilter
+- <init>(com.intellij.openapi.vfs.VirtualFileFilter):V
+- accept(com.intellij.openapi.vfs.VirtualFile):Z
 com.intellij.openapi.vfs.impl.http.FileDownloadingListener
 - a:downloadingCancelled():V
 - a:downloadingStarted():V
