@@ -15,14 +15,14 @@ fun plugin(id: String? = autoId(), body: PluginSpecBuilder.() -> Unit): PluginSp
   return builder.build()
 }
 
-fun PluginSpecBuilder.depends(pluginId: String) {
-  pluginDependencies += DependsSpec(pluginId, null, null)
+fun PluginSpecBuilder.depends(pluginId: String, optional: Boolean = false) {
+  pluginDependencies += DependsSpec(pluginId, optional, null, null)
 }
 
-fun PluginSpecBuilder.depends(pluginId: String, configFile: String, configBody: PluginSpecBuilder.() -> Unit) {
+fun PluginSpecBuilder.depends(pluginId: String, configFile: String, optional: Boolean = true, configBody: PluginSpecBuilder.() -> Unit) {
   val dependsDesc = PluginSpecBuilder()
   dependsDesc.configBody()
-  pluginDependencies += DependsSpec(pluginId, configFile, dependsDesc.build())
+  pluginDependencies += DependsSpec(pluginId, optional, configFile, dependsDesc.build())
 }
 
 class DependenciesScope(internal val plugin: PluginSpecBuilder)

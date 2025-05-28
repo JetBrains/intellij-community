@@ -47,10 +47,11 @@ fun PluginSpec.buildXml(config: PluginPackagingConfig = PluginPackagingConfig())
     if (vendor != null) appendLine("<vendor>$vendor</vendor>")
     if (description != null) appendLine("<description>$description</description>")
     for (depends in pluginDependencies) {
+      val optionalTag = if (depends.optional) " optional=\"true\"" else ""
       if (depends.configFile == null) {
-        appendLine("""<depends>${depends.pluginId}</depends>""")
+        appendLine("""<depends$optionalTag>${depends.pluginId}</depends>""")
       } else {
-        appendLine("""<depends optional="true" config-file="${depends.configFile}">${depends.pluginId}</depends>""")
+        appendLine("""<depends$optionalTag config-file="${depends.configFile}">${depends.pluginId}</depends>""")
       }
     }
     if (moduleDependencies.isNotEmpty() || pluginMainModuleDependencies.isNotEmpty()) {

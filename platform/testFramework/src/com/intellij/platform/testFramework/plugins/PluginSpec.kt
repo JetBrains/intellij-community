@@ -91,7 +91,7 @@ class ContentModuleSpec internal constructor(
   val spec: PluginSpec,
 )
 
-class DependsSpec internal constructor(val pluginId: String, val configFile: String?, val spec: PluginSpec?) {
+class DependsSpec internal constructor(val pluginId: String, val optional: Boolean, val configFile: String?, val spec: PluginSpec?) {
   init { require((configFile != null) == (spec != null)) }
 }
 
