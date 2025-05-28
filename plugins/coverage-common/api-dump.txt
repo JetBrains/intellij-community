@@ -129,10 +129,9 @@ com.intellij.coverage.CoverageLoadErrorReporter
 - bs:reportWarning$default(com.intellij.coverage.CoverageLoadErrorReporter,java.lang.String,java.lang.Exception,I,java.lang.Object):V
 a:com.intellij.coverage.CoverageLoadingResult
 - f:getProjectData():com.intellij.rt.coverage.data.ProjectData
-a:com.intellij.coverage.CoverageOptions
+com.intellij.coverage.CoverageOptions
 - com.intellij.openapi.options.UnnamedConfigurable
 - sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
-- <init>():V
 a:com.intellij.coverage.CoverageRunner
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V

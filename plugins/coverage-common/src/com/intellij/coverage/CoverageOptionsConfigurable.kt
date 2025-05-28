@@ -1,161 +1,62 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.coverage;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.coverage
 
-import com.intellij.openapi.extensions.BaseExtensionPointName;
-import com.intellij.openapi.options.CompositeConfigurable;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.project.Project;
-import com.intellij.ui.components.JBBox;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import com.intellij.openapi.extensions.BaseExtensionPointName
+import com.intellij.openapi.options.BoundCompositeSearchableConfigurable
+import com.intellij.openapi.options.Configurable.WithEpDependencies
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.dsl.builder.bind
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
+import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-public final class CoverageOptionsConfigurable extends CompositeConfigurable<CoverageOptions>implements SearchableConfigurable,
-                                                                                                  Configurable.WithEpDependencies {
-  private CoverageOptionsPanel myPanel;
-  private final CoverageOptionsProvider myManager;
-  private final Project myProject;
+class CoverageOptionsConfigurable(private val project: Project) : BoundCompositeSearchableConfigurable<CoverageOptions>(
+  CoverageBundle.message("configurable.CoverageOptionsConfigurable.display.name"),
+  "reference.project.settings.coverage",
+  "coverage"), WithEpDependencies {
 
-  public CoverageOptionsConfigurable(Project project) {
-    myManager = CoverageOptionsProvider.getInstance(project);
-    myProject = project;
+  override fun createConfigurables(): List<CoverageOptions> {
+    return CoverageOptions.EP_NAME.getExtensions(project)
   }
 
-  @Override
-  public @NotNull String getId() {
-    return "coverage";
-  }
+  override fun createPanel(): DialogPanel {
+    val manager = CoverageOptionsProvider.getInstance(project)
+    return panel {
+      group(CoverageBundle.message("settings.coverage.when.new.coverage.is.gathered")) {
+        buttonsGroup {
+          row {
+            radioButton(CoverageBundle.message("settings.coverage.show.options.before.applying.coverage.to.the.editor"), CoverageOptionsProvider.ASK_ON_NEW_SUITE)
+          }
+          row {
+            radioButton(CoverageBundle.message("settings.coverage.do.not.apply.collected.coverage"), CoverageOptionsProvider.IGNORE_SUITE)
+          }
+          row {
+            radioButton(CoverageBundle.message("settings.coverage.replace.active.suites.with.the.new.one"), CoverageOptionsProvider.REPLACE_SUITE)
+          }
+          row {
+            radioButton(CoverageBundle.message("settings.coverage.add.to.the.active.suites"), CoverageOptionsProvider.ADD_SUITE)
+          }
+        }.bind(manager::getOptionToReplace, manager::setOptionsToReplace)
 
-  @Override
-  public @Nls String getDisplayName() {
-    return CoverageBundle.message("configurable.CoverageOptionsConfigurable.display.name");
-  }
+        row {
+          checkBox(CoverageBundle.message("settings.coverage.activate.coverage.view"))
+            .bindSelected(manager::activateViewOnRun, manager::setActivateViewOnRun)
+        }
+        row {
+          checkBox(CoverageBundle.message("settings.coverage.show.in.project.view"))
+            .bindSelected(manager::showInProjectView, manager::setShowInProjectView)
+        }
+      }
 
-  @Override
-  public String getHelpTopic() {
-    return "reference.project.settings.coverage";
-  }
-
-  @Override
-  public JComponent createComponent() {
-    myPanel = new CoverageOptionsPanel();
-
-    List<JComponent> extensionPanels = collectExtensionOptionsComponents();
-
-    if (!extensionPanels.isEmpty()) {
-      return createCompositePanel(extensionPanels);
+      for (configurable in configurables) {
+        appendDslConfigurable(configurable)
+      }
     }
-    else {
-      return myPanel.myWholePanel;
-    }
   }
 
-  private List<JComponent> collectExtensionOptionsComponents() {
-    List<JComponent> additionalPanels = new ArrayList<>();
-    for (CoverageOptions coverageOptions : getConfigurables()) {
-      additionalPanels.add(coverageOptions.createComponent());
-    }
-    return additionalPanels;
-  }
-
-  private JComponent createCompositePanel(List<JComponent> additionalPanels) {
-    final JPanel panel = new JPanel(new GridBagLayout());
-    final GridBagConstraints c = new GridBagConstraints();
-    c.anchor = GridBagConstraints.NORTHWEST;
-    c.gridx = 0;
-    c.gridy = GridBagConstraints.RELATIVE;
-    c.weightx = 1;
-    c.fill = GridBagConstraints.HORIZONTAL;
-    panel.add(myPanel.myWholePanel, c);
-    for (JComponent p : additionalPanels) {
-      panel.add(p, c);
-    }
-    c.fill = GridBagConstraints.BOTH;
-    c.weightx = 1;
-    c.weighty = 1;
-    panel.add(JBBox.createVerticalBox(), c);
-    return panel;
-  }
-
-  @Override
-  protected @NotNull List<CoverageOptions> createConfigurables() {
-    return CoverageOptions.EP_NAME.getExtensions(myProject);
-  }
-
-  @Override
-  public boolean isModified() {
-    return myManager.getOptionToReplace() != getSelectedValue()
-           || myManager.activateViewOnRun() != myPanel.myActivateCoverageViewCB.isSelected()
-           || myManager.showInProjectView() != myPanel.myShowInProjectViewCB.isSelected()
-           || super.isModified();
-  }
-
-  @Override
-  public void apply() throws ConfigurationException {
-    myManager.setOptionsToReplace(getSelectedValue());
-    myManager.setActivateViewOnRun(myPanel.myActivateCoverageViewCB.isSelected());
-    myManager.setShowInProjectView(myPanel.myShowInProjectViewCB.isSelected());
-    super.apply();
-  }
-
-  private int getSelectedValue() {
-    if (myPanel.myReplaceRB.isSelected()) {
-      return CoverageOptionsProvider.REPLACE_SUITE;
-    }
-    else if (myPanel.myAddRB.isSelected()) {
-      return CoverageOptionsProvider.ADD_SUITE;
-    }
-    else if (myPanel.myDoNotApplyRB.isSelected()) {
-      return CoverageOptionsProvider.IGNORE_SUITE;
-    }
-    return CoverageOptionsProvider.ASK_ON_NEW_SUITE;
-  }
-
-  @Override
-  public void reset() {
-    final int addOrReplace = myManager.getOptionToReplace();
-    final JRadioButton radioButton = switch (addOrReplace) {
-      case CoverageOptionsProvider.REPLACE_SUITE -> myPanel.myReplaceRB;
-      case CoverageOptionsProvider.ADD_SUITE -> myPanel.myAddRB;
-      case CoverageOptionsProvider.IGNORE_SUITE -> myPanel.myDoNotApplyRB;
-      default -> myPanel.myShowOptionsRB;
-    };
-    radioButton.setSelected(true);
-
-    myPanel.myActivateCoverageViewCB.setSelected(myManager.activateViewOnRun());
-    myPanel.myShowInProjectViewCB.setSelected(myManager.showInProjectView());
-    super.reset();
-  }
-
-  @Override
-  public void disposeUIResources() {
-    myPanel = null;
-    super.disposeUIResources();
-  }
-
-  @Override
-  public @NotNull Collection<BaseExtensionPointName<?>> getDependencies() {
-    return Collections.singletonList(CoverageOptions.EP_NAME);
-  }
-
-  private static class CoverageOptionsPanel {
-    private JRadioButton myShowOptionsRB;
-    private JRadioButton myReplaceRB;
-    private JRadioButton myAddRB;
-    private JRadioButton myDoNotApplyRB;
-
-    private JPanel myWholePanel;
-    private JCheckBox myActivateCoverageViewCB;
-    private JCheckBox myShowInProjectViewCB;
+  override fun getDependencies(): Collection<BaseExtensionPointName<*>?> {
+    return listOf(CoverageOptions.EP_NAME)
   }
 }
