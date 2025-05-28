@@ -58,9 +58,9 @@ class EventStealer {
     // and it then just sits in the queue blocking the whole UI until the progress is finished.
     String eventString = event.toString();
     return eventString.contains(",runnable=sun.lwawt.macosx.LWCToolkit") || // [tav] todo: remove in 2022.2
-           (event.getClass().getName().equals("sun.awt.AWTThreading$TrackedInvocationEvent") || // see JBR-4208
-            eventString.contains(",runnable=ForcedWriteActionRunnable") ||
-            eventString.contains(",runnable=DispatchTerminationEvent")
+           eventString.contains(",runnable=ForcedWriteActionRunnable") ||
+           eventString.contains(",runnable=DispatchTerminationEvent") ||
+           (event.getClass().getName().equals("sun.awt.AWTThreading$TrackedInvocationEvent") // see JBR-4208
             // see IDEA-291469 Menu on macOS is invoked inside checkCanceled (PotemkinProgress)
             && !(eventString.contains(",runnable=com.intellij.openapi.actionSystem.impl.ActionMenu$$Lambda") ||
                  eventString.contains(",runnable=com.intellij.platform.ide.menu.MacNativeActionMenuKt$$Lambda")));
