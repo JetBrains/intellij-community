@@ -44,6 +44,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/liftOut/tryToReturn")
             model("${idea}/inspectionsLocal/liftOut/whenToReturn")
             model("${idea}/inspectionsLocal/inconsistentCommentForJavaParameter")
+            model("${idea}/inspectionsLocal/scopeFunctions")
             model("${idea}/inspectionsLocal/whenWithOnlyElse")
             model("${idea}/inspectionsLocal/redundantRequireNotNullCall")
             model("${idea}/inspectionsLocal/suspiciousCascadingIf")
