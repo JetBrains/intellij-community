@@ -549,6 +549,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
           val newArray = currentPendingWaArray + AtomicInteger(0)
         }
         while (!myWriteActionPending.compareAndSet(currentPendingWaArray, newArray))
+        drainWriteActionFollowups()
 
         return ComputationStateContextElement(newComputationState) to {
           var isWriteActionPendingOnCurrentLevel: Boolean

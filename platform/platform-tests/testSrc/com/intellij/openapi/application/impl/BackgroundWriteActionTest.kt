@@ -681,4 +681,34 @@ class BackgroundWriteActionTest {
     }
   }
 
+  @Test
+  fun `runWhenWriteActionIsCompleted is executed when lock is parallelized`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val executed = AtomicBoolean(false)
+    val job = Job(coroutineContext.job)
+    launch(Dispatchers.Default) {
+      readAction {
+        job.asCompletableFuture().join()
+      }
+    }
+    Thread.sleep(50)
+    val waJob = launch(Dispatchers.Default) {
+      backgroundWriteAction {
+      }
+    }
+    Thread.sleep(50)
+    getGlobalThreadingSupport().runWhenWriteActionIsCompleted {
+      executed.set(true)
+    }
+    assertThat(executed.get()).isFalse
+    val clenanup = getGlobalThreadingSupport().getPermitAsContextElement(currentThreadContext(), true).second
+    try {
+      assertThat(executed.get()).isTrue
+    } finally {
+      clenanup()
+    }
+    job.complete()
+    waJob.join()
+  }
+
+
 }
