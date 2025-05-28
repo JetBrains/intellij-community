@@ -16,6 +16,7 @@ class VcsNotificationIdsHolder : NotificationIdsHolder {
       COMMIT_CANCELED,
       COMMIT_FAILED,
       COMMIT_FINISHED,
+      COMMIT_FINISHED_INITIAL,
       COMMIT_FINISHED_WITH_WARNINGS,
       COMMIT_CHECKS_FAILED,
       POST_COMMIT_CHECKS_FAILED,
@@ -66,6 +67,7 @@ class VcsNotificationIdsHolder : NotificationIdsHolder {
     const val COMMIT_CANCELED = "vcs.commit.canceled"
     const val COMMIT_FAILED = "vcs.commit.failed"
     const val COMMIT_FINISHED = "vcs.commit.finished"
+    const val COMMIT_FINISHED_INITIAL = "vcs.commit.finished.initial"
     const val COMMIT_FINISHED_WITH_WARNINGS = "vcs.commit.finished.with.warnings"
     const val COMMIT_CHECKS_FAILED = "vcs.commit.checks.failed"
     const val POST_COMMIT_CHECKS_FAILED = "vcs.post.commit.checks.failed"

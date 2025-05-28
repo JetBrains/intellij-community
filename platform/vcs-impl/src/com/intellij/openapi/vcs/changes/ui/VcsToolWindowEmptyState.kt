@@ -15,10 +15,8 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
@@ -42,6 +40,8 @@ interface ShareProjectActionProvider {
 
   val hostServiceName: @Nls String
   val action: AnAction
+
+  fun isApplicableForRoot(project: Project, root: VirtualFile): Boolean
 }
 
 internal fun setChangesViewEmptyState(statusText: StatusText, project: Project) {

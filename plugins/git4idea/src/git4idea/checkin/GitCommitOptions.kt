@@ -17,6 +17,7 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.containers.nullize
 import com.intellij.util.ui.JBUI
 import com.intellij.vcs.commit.*
 import com.intellij.vcs.log.VcsUser
@@ -162,6 +163,9 @@ class GitCommitOptionsUi(
     if (commitPanel.isNonModalCommit) updateRenamesCheckboxState()
     val author = getAuthor()
 
+    commitContext.freshRoots = commitPanel.roots
+      .filter { getRepositoryManager(project).getRepositoryForRootQuick(it)?.isFresh == true }
+      .nullize()?.toSet()
     commitContext.commitAuthor = author
     commitContext.commitAuthorDate = authorDate
     commitContext.isSignOffCommit = signOffCommit.isSelected

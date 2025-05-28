@@ -19,6 +19,8 @@ class GitLabShareProjectAction : AnAction() {
     val project = e.getData(CommonDataKeys.PROJECT) ?: return
     val file = e.getData(CommonDataKeys.VIRTUAL_FILE)
 
+    if (project.isDisposed) return
+
     GitLabShareProjectUtil.shareProjectOnGitLab(project, file)
   }
 }

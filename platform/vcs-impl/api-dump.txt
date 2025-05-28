@@ -4951,7 +4951,9 @@ c:com.intellij.vcs.commit.LocalChangesCommitter
 - f:isSuccess():Z
 f:com.intellij.vcs.commit.LocalChangesCommitterKt
 - sf:getCommitWithoutChangesRoots(com.intellij.openapi.vcs.changes.CommitContext):java.util.Collection
+- sf:getFreshRoots(com.intellij.openapi.vcs.changes.CommitContext):java.util.Set
 - sf:setCommitWithoutChangesRoots(com.intellij.openapi.vcs.changes.CommitContext,java.util.Collection):V
+- sf:setFreshRoots(com.intellij.openapi.vcs.changes.CommitContext,java.util.Set):V
 f:com.intellij.vcs.commit.NonModalAmendCommitHandler
 - com.intellij.vcs.commit.AmendCommitHandler
 - <init>(com.intellij.vcs.commit.NonModalCommitWorkflowHandler):V
