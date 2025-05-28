@@ -4,6 +4,8 @@
 package com.intellij.platform.syntax.extensions
 
 import com.intellij.platform.syntax.SyntaxLanguage
+import com.intellij.platform.syntax.extensions.impl.buildExtensionSupportImpl
+import com.intellij.platform.syntax.extensions.impl.performWithExtensionSupportImpl
 import com.intellij.platform.syntax.extensions.impl.registry
 import org.jetbrains.annotations.ApiStatus
 
@@ -50,3 +52,23 @@ interface ExtensionRegistry : ExtensionSupport {
   fun <T : Any> registerLanguageExtension(extensionPoint: ExtensionPointKey<T>, extension: T, language: SyntaxLanguage)
   fun <T : Any> unregisterLanguageExtension(extensionPoint: ExtensionPointKey<T>, language: SyntaxLanguage)
 }
+
+/**
+ * Marker interface for extension support that does not support dynamic substitution
+ */
+@ApiStatus.Experimental
+interface StaticExtensionSupport
+
+/**
+ * Runs [action] with [support] installed as the current instance of [ExtensionSupport].
+ * The previous instance is restored on method exit.
+ */
+fun <T> performWithExtensionSupport(support: ExtensionSupport, action: (ExtensionSupport) -> T): T =
+  performWithExtensionSupportImpl(support, action)
+
+/**
+ * Builds [ExtensionSupport] instance.
+ * It is not installed as the current instance of [ExtensionSupport].
+ */
+fun buildExtensionSupport(block: ExtensionRegistry.() -> Unit): ExtensionSupport =
+  buildExtensionSupportImpl(block)

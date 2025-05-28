@@ -5,4 +5,4 @@ import com.intellij.platform.syntax.extensions.ExtensionSupport
 import fleet.util.multiplatform.Actual
 
 @Actual("instantiateExtensionRegistry")
-internal fun instantiateExtensionRegistryWasmJs(): ExtensionSupport = ExtensionRegistryImpl
+internal fun instantiateExtensionRegistryWasmJs(): ExtensionSupport = ExtensionRegistryImpl()

@@ -16,3 +16,6 @@
 *f:com.intellij.platform.syntax.extensions.ExtensionSupportKt
 - *sf:ExtensionRegistry():com.intellij.platform.syntax.extensions.ExtensionRegistry
 - *sf:ExtensionSupport():com.intellij.platform.syntax.extensions.ExtensionSupport
+- sf:buildExtensionSupport(kotlin.jvm.functions.Function1):com.intellij.platform.syntax.extensions.ExtensionSupport
+- sf:performWithExtensionSupport(com.intellij.platform.syntax.extensions.ExtensionSupport,kotlin.jvm.functions.Function1):java.lang.Object
+*:com.intellij.platform.syntax.extensions.StaticExtensionSupport

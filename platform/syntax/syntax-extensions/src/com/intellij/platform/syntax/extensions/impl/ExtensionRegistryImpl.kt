@@ -9,7 +9,7 @@ import com.intellij.platform.syntax.extensions.ExtensionRegistry
  * Simple [ExtensionSupport] backend that is used outside IntelliJ runtime.
  * Threadsafe.
  */
-internal object ExtensionRegistryImpl : ExtensionRegistry {
+internal class ExtensionRegistryImpl : ExtensionRegistry {
   private val ourExtensions: ConcurrentMultiMap<ExtensionPointKey<*>, Any> = newConcurrentMultiMap()
   private val ourLanguageExtensions: ConcurrentMap<ExtensionPointKey<*>, ConcurrentMultiMap<SyntaxLanguage, Any>> = newConcurrentMap()
 

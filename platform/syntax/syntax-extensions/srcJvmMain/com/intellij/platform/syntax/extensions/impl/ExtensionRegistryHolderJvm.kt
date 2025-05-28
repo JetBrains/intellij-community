@@ -19,6 +19,6 @@ internal fun instantiateExtensionRegistryJvm(): ExtensionSupport {
     return instance as ExtensionSupport
   }
   catch (_: Throwable) {
-    return ExtensionRegistryImpl
+    return ExtensionRegistryImpl()
   }
 }
