@@ -16,7 +16,6 @@ import com.intellij.psi.tree.TokenSet
 
 
 open class JsonParserDefinition : ParserDefinition {
-  internal constructor()
 
   override fun createLexer(project: Project?): Lexer {
     return JsonLexer()
