@@ -319,7 +319,6 @@ e:com.intellij.codeInsight.completion.CompletionType
 - s:valueOf(java.lang.String):com.intellij.codeInsight.completion.CompletionType
 - s:values():com.intellij.codeInsight.completion.CompletionType[]
 a:com.intellij.codeInsight.completion.CompletionWeigher
-- com.intellij.psi.Weigher
 - <init>():V
 - a:weigh(com.intellij.codeInsight.lookup.LookupElement,com.intellij.codeInsight.completion.CompletionLocation):java.lang.Comparable
 c:com.intellij.codeInsight.completion.InsertionContext

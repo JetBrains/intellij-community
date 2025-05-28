@@ -4,6 +4,8 @@ com.intellij.codeInsight.completion.BatchConsumer
 - startBatch():V
 com.intellij.codeInsight.completion.CompletionProcess
 - a:isAutopopupCompletion():Z
+a:com.intellij.codeInsight.completion.CompletionWeigher
+- com.intellij.psi.Weigher
 com.intellij.codeInsight.completion.InsertHandler
 - a:handleInsert(com.intellij.codeInsight.completion.InsertionContext,com.intellij.codeInsight.lookup.LookupElement):V
 com.intellij.codeInsight.completion.LookupElementListPresenter
