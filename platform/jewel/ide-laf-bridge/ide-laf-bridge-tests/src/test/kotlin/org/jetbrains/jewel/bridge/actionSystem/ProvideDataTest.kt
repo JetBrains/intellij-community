@@ -19,8 +19,7 @@ import org.junit.Rule
 import org.junit.Test
 
 public class ProvideDataTest {
-    @JvmField @Rule
-    public val rule: ComposeContentTestRule = createComposeRule()
+    @JvmField @Rule public val rule: ComposeContentTestRule = createComposeRule()
 
     @Test
     public fun `one component`() {
@@ -89,7 +88,7 @@ public class ProvideDataTest {
             assertEquals("notOk", sink.get("data"))
             assertNull(sink.get("one"))
 
-            focusManager!!.moveFocus(FocusDirection.Next)
+            focusManager.moveFocus(FocusDirection.Next)
             rule.awaitIdle()
             sink.clear()
 
@@ -102,7 +101,7 @@ public class ProvideDataTest {
             assertEquals("notOk", sink.get("data"))
             assertNull(sink.get("one"))
 
-            focusManager!!.moveFocus(FocusDirection.Next)
+            focusManager.moveFocus(FocusDirection.Next)
             rule.awaitIdle()
             sink.clear()
 
