@@ -162,7 +162,7 @@ fun PluginSpec.buildZip(path: Path, config: PluginPackagingConfig = PluginPackag
 
 private fun PluginSpec.buildMainDir(dir: DirectoryContentBuilder, config: PluginPackagingConfig) = with(config) {
   dir.dirsFile("META-INF/plugin.xml", buildXml(config))
-  for (dep in pluginDependencies) {
+  for (dep in sequencePluginDependenciesRecursive()) {
     if (dep.configFile != null) {
       dir.dirsFile("META-INF/${dep.configFile}", dep.spec!!.buildXml(config))
     }
@@ -222,6 +222,17 @@ private tailrec fun DirectoryContentBuilder.dirs(path: String, body: DirectoryCo
     dirs(path.take(slash)) {
       dir(path.substring(slash + 1)) {
         body()
+      }
+    }
+  }
+}
+
+private fun PluginSpec.sequencePluginDependenciesRecursive(): Sequence<DependsSpec> {
+  return sequence {
+    for (dep in pluginDependencies) {
+      yield(dep)
+      if (dep.spec != null) {
+        yieldAll(dep.spec.sequencePluginDependenciesRecursive())
       }
     }
   }
