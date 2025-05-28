@@ -26,7 +26,9 @@ import com.intellij.notebook.editor.BackedVirtualFileProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.AppImplKt;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.openapi.application.impl.TestOnlyThreading;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -79,6 +81,7 @@ import com.intellij.util.gist.GistManagerImpl;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.EDT;
 import io.opentelemetry.context.Context;
+import kotlin.Unit;
 import kotlinx.coroutines.CoroutineScope;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
@@ -541,7 +544,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     boolean isDebugMode = !ApplicationManagerEx.isInStressTest();
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
     do {
-      EDT.dispatchAllInvocationEvents();
+      TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
+        EDT.dispatchAllInvocationEvents();
+        return Unit.INSTANCE;
+      });
       // refresh will fire write actions interfering with highlighting
       // heavy ops are bad, but VFS refresh is ok
     }
