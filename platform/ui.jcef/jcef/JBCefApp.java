@@ -25,15 +25,17 @@ import org.cef.CefApp;
 import org.cef.CefClient;
 import org.cef.CefSettings;
 import org.cef.browser.CefMessageRouter;
+import org.cef.browser.CefRendering;
 import org.cef.callback.CefSchemeHandlerFactory;
 import org.cef.callback.CefSchemeRegistrar;
 import org.cef.handler.CefAppHandlerAdapter;
+import org.cef.handler.CefRenderHandler;
 import org.cef.misc.BoolRef;
 import org.cef.misc.CefLog;
 import org.jdom.IllegalDataException;
 import org.jetbrains.annotations.*;
 
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import java.awt.GraphicsEnvironment;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -47,6 +49,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
@@ -126,6 +129,32 @@ public final class JBCefApp {
     }
 
     IS_REMOTE_ENABLED = CefApp.isRemoteEnabled();
+
+    if (IS_REMOTE_ENABLED) {
+      final Supplier<CefRendering> defaultRenderingFactory = () -> {
+        JBCefOSRHandlerFactory osrHandlerFactory = JBCefOSRHandlerFactory.getInstance();
+        JComponent component = osrHandlerFactory.createComponent(true);
+        CefRenderHandler handler = osrHandlerFactory.createCefRenderHandler(component);
+        return new CefRendering.CefRenderingWithHandler(handler, component);
+      };
+
+      // Temporary use reflection to avoid jcef-version increment
+      // TODO: use setDefaultRenderingFactory directly
+      try {
+        Class<?> cefAppClass = Class.forName("org.cef.CefApp");
+        Class<?> supplierClass = Class.forName("java.util.function.Supplier");
+        Method setDefaultRenderingFactoryMethod = cefAppClass.getMethod("setDefaultRenderingFactory", supplierClass);
+        setDefaultRenderingFactoryMethod.invoke(cefAppClass, defaultRenderingFactory);
+      }
+      catch (NoSuchMethodException | ClassNotFoundException ignored) {
+      }
+      catch (IllegalAccessException | InvocationTargetException ex) {
+        LOG.debug(ex);
+      }
+      catch (Throwable e) {
+        LOG.warn(e);
+      }
+    }
   }
 
   private JBCefApp(@NotNull JCefAppConfig config) throws IllegalStateException {
