@@ -5,6 +5,7 @@ package com.intellij.ui.icons
 
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.scale.ScaleType
 import com.intellij.ui.svg.SvgCacheClassifier
 import org.jetbrains.annotations.ApiStatus.Internal
 
@@ -108,12 +109,53 @@ private fun addFileNameVariant(isRetina: Boolean,
   }
 }
 
+/**
+ * See [com.intellij.ui.icons.CustomIconUtilKt] and [loadIconCustomVersion] / [scaleIconOrLoadCustomVersion].
+ */
 @Internal
-fun getImageDescriptors(path: String, isDark: Boolean, isStroke: Boolean, scaleContext: ScaleContext): List<ImageDescriptor> {
-  return createImageDescriptorList(path = path,
-                                   isDark = isDark,
-                                   isStroke = isStroke,
-                                   pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat())
+fun createImageDescriptorTransformListWithSizeSpecialization(
+  path: String, isDark: Boolean, isStroke: Boolean, scaleContext: ScaleContext,
+  originalWidth: Int, originalHeight: Int,
+): List<ImageDescriptor> {
+  val pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
+  val isSvg = path.endsWith(".svg")
+
+  val sizeSpecializedDescriptors = ArrayList<ImageDescriptor>(2)
+  if (isSvg) {
+    val objScale = scaleContext.getScale(ScaleType.OBJ_SCALE).toFloat()
+    val scaledWidth = (originalWidth * objScale).toInt()
+    val scaledHeight = (originalHeight * objScale).toInt()
+
+    if (isDark) {
+      sizeSpecializedDescriptors += ImageDescriptor(SuffixPathTransform("@${scaledWidth}x${scaledHeight}_dark"), scale = pixScale / objScale, isSvg = true, isDark = true)
+    }
+    sizeSpecializedDescriptors += ImageDescriptor(SuffixPathTransform("@${scaledWidth}x${scaledHeight}"), scale = pixScale / objScale, isSvg = true, isDark = false)
+  }
+
+  val defaultDescriptors = createImageDescriptorList(path = path, isDark = isDark, isStroke = isStroke, pixScale = pixScale)
+  return sizeSpecializedDescriptors + defaultDescriptors
+}
+
+@Internal
+fun createCommonImagePathTransforms(
+  path: String,
+): List<(String, String) -> String> {
+  val transforms = mutableListOf(
+    SuffixPathTransform(""),
+    SuffixPathTransform("_stroke"),
+    SuffixPathTransform("@2x_dark"),
+    SuffixPathTransform("_dark@2x"),
+    SuffixPathTransform("_dark"),
+    SuffixPathTransform("@2x"),
+  )
+
+  // todo: check available for the image?
+  for (customSize in listOf(20)) {
+    transforms += SuffixPathTransform("@${customSize}x${customSize}_dark")
+    transforms += SuffixPathTransform("@${customSize}x${customSize}")
+  }
+
+  return transforms
 }
 
 internal class SuffixPathTransform(val suffix: String) : (String, String) -> String {

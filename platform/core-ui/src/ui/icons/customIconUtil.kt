@@ -42,7 +42,7 @@ private fun loadIconCustomVersion(icon: CachedImageIcon, width: Int, height: Int
     return null
   }
 
-  val modifiedPath = "${path.substring(0, path.length - 4)}@${width}x$height.svg"
+  val modifiedPath = "${path.substring(0, path.length - 4)}@${width}x${height}.svg"
   val foundIcon = findIconUsingNewImplementation(path = modifiedPath, classLoader = coords.second) ?: return null
   if (foundIcon is CachedImageIcon &&
       foundIcon.getIconWidth() == JBUIScale.scale(width) &&
