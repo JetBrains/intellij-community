@@ -27,7 +27,7 @@ class PluginSpec internal constructor(
   val incompatibleWith: List<String>,
   val content: List<ContentModuleSpec>,
 
-  val resourceBundleBaseName: String?,
+  val resourceBundle: String?,
   val actions: String?,
   val applicationListeners: String?,
   val extensionPoints: String?,
@@ -61,7 +61,7 @@ class PluginSpecBuilder(
   var incompatibleWith: List<String> = emptyList(),
   internal var content: List<ContentModuleSpec> = emptyList(),
 
-  var resourceBundleBaseName: String? = null,
+  var resourceBundle: String? = null,
   @Language("XML") var actions: String? = null,
   @Language("XML") var applicationListeners: String? = null,
   @Language("XML") var extensionPoints: String? = null,
@@ -77,7 +77,7 @@ class PluginSpecBuilder(
     rootTagAttributes = rootTagAttributes, untilBuild = untilBuild, sinceBuild = sinceBuild, version = version,
     vendor = vendor, description = description, pluginDependencies = pluginDependencies, moduleDependencies = moduleDependencies,
     pluginMainModuleDependencies = pluginMainModuleDependencies, pluginAliases = pluginAliases, incompatibleWith = incompatibleWith,
-    content = content, resourceBundleBaseName = resourceBundleBaseName, actions = actions, applicationListeners = applicationListeners,
+    content = content, resourceBundle = resourceBundle, actions = actions, applicationListeners = applicationListeners,
     extensionPoints = extensionPoints, extensions = extensions, body = body, classFiles = classFiles, packageClassFiles = packageClassFiles
   )
 }

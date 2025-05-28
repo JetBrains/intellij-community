@@ -87,7 +87,7 @@ fun PluginSpec.buildXml(config: PluginPackagingConfig = PluginPackagingConfig())
       }
       appendLine("</content>")
     }
-    if (resourceBundleBaseName != null) appendLine("""<resource-bundle>$resourceBundleBaseName</resource-bundle>""")
+    if (resourceBundle != null) appendLine("""<resource-bundle>$resourceBundle</resource-bundle>""")
     if (actions != null) appendLine("<actions>\n$actions\n</actions>")
     if (applicationListeners != null) appendLine("<applicationListeners>\n$applicationListeners\n</applicationListeners>")
     if (extensionPoints != null) appendLine("<extensionPoints>\n$extensionPoints\n</extensionPoints>")
