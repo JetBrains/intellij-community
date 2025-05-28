@@ -35,7 +35,7 @@ fun createImageDescriptorList(path: String, isDark: Boolean, isStroke: Boolean, 
   if (!path.startsWith(FILE_SCHEME_PREFIX) && path.contains("://")) {
     val qI = path.lastIndexOf('?')
     val isSvg = (if (qI == -1) path else path.substring(0, qI)).endsWith(".svg", ignoreCase = true)
-    return listOf(ImageDescriptor(pathTransform = { p, e -> "$p.$e" }, scale = 1f, isSvg = isSvg, isDark = isDark, isStroke = false))
+    return listOf(ImageDescriptor(SuffixPathTransform(""), scale = 1f, isSvg = isSvg, isDark = isDark, isStroke = false))
   }
 
   val isSvg = path.endsWith(".svg")
@@ -74,13 +74,13 @@ private fun addFileNameVariant(isRetina: Boolean,
   val nonRetinaScale = if (isSvg) scale else 1f
   if (isStroke) {
     val strokeScale = if (isRetina) retinaScale else nonRetinaScale
-    val d = ImageDescriptor(pathTransform = { p, e -> "${p}_stroke.$e" }, scale = strokeScale, isSvg = isSvg, isDark = isDark, isStroke = true)
+    val d = ImageDescriptor(SuffixPathTransform("_stroke"), scale = strokeScale, isSvg = isSvg, isDark = isDark, isStroke = true)
     list.add(d)
   }
   else if (isDark) {
-    val d1 = ImageDescriptor(pathTransform = { p, e -> "${p}@2x_dark.$e" }, scale = retinaScale, isSvg = isSvg, isDark = true)
-    val d2 = ImageDescriptor(pathTransform = { p, e -> "${p}_dark@2x.$e" }, scale = retinaScale, isSvg = isSvg, isDark = true)
-    val d3 = ImageDescriptor(pathTransform = { p, e -> "${p}_dark.$e" }, scale = nonRetinaScale, isSvg = isSvg, isDark = true)
+    val d1 = ImageDescriptor(SuffixPathTransform("@2x_dark"), scale = retinaScale, isSvg = isSvg, isDark = true)
+    val d2 = ImageDescriptor(SuffixPathTransform("_dark@2x"), scale = retinaScale, isSvg = isSvg, isDark = true)
+    val d3 = ImageDescriptor(SuffixPathTransform("_dark"), scale = nonRetinaScale, isSvg = isSvg, isDark = true)
 
     if (isRetina) {
       list.add(d1)
@@ -94,8 +94,8 @@ private fun addFileNameVariant(isRetina: Boolean,
     }
   }
   else {
-    val d1 = ImageDescriptor(pathTransform = { p, e -> "${p}@2x.$e" }, scale = retinaScale, isSvg = isSvg)
-    val d2 = ImageDescriptor(pathTransform = { p, e -> "${p}.$e" }, scale = nonRetinaScale, isSvg = isSvg)
+    val d1 = ImageDescriptor(SuffixPathTransform("@2x"), scale = retinaScale, isSvg = isSvg)
+    val d2 = ImageDescriptor(SuffixPathTransform(""), scale = nonRetinaScale, isSvg = isSvg)
 
     if (isRetina) {
       list.add(d1)
@@ -114,4 +114,8 @@ fun getImageDescriptors(path: String, isDark: Boolean, isStroke: Boolean, scaleC
                                    isDark = isDark,
                                    isStroke = isStroke,
                                    pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat())
+}
+
+internal class SuffixPathTransform(val suffix: String) : (String, String) -> String {
+  override fun invoke(p: String, e: String): String = "${p}${suffix}.${e}"
 }

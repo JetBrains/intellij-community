@@ -192,7 +192,7 @@ fun loadPngFromClassResource(path: String, classLoader: ClassLoader?, resourceCl
 }
 
 @Internal
-internal fun getResourceData(path: String, resourceClass: Class<*>?, classLoader: ClassLoader?): ByteArray? {
+fun getResourceData(path: String, resourceClass: Class<*>?, classLoader: ClassLoader?): ByteArray? {
   assert(resourceClass != null || classLoader != null || path.startsWith(FILE_SCHEME_PREFIX))
   if (classLoader != null) {
     val isAbsolute = path.startsWith('/')
@@ -244,7 +244,7 @@ internal fun loadCustomIcon(url: URL): Image? {
   val scaleContext = ScaleContext.create()
   // probably, need it implements naming conventions: filename ends with @2x => HiDPI (scale=2)
   val scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
-  val imageDescriptor = ImageDescriptor(pathTransform = { p, e -> "$p.$e" }, scale = scale,
+  val imageDescriptor = ImageDescriptor(pathTransform = SuffixPathTransform(""), scale = scale,
                                         isSvg = path.endsWith(".svg", ignoreCase = true),
                                         isDark = path.contains("_dark."),
                                         isStroke = path.contains("_stroke."))
