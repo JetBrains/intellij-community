@@ -5,7 +5,7 @@ import com.intellij.platform.syntax.SyntaxElementType
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * this policy allows overriding the text of an element type
+ * This policy allows overriding the text of an element type
  *
  * @link [com.intellij.lang.TokenWrapper] class
  */

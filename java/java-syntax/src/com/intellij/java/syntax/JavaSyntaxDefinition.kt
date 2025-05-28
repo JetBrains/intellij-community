@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.syntax
 
+import com.intellij.java.syntax.element.JavaWhitespaceOrCommentBindingPolicy
 import com.intellij.java.syntax.element.JavaDocSyntaxElementType
 import com.intellij.java.syntax.element.JavaSyntaxTokenType
 import com.intellij.java.syntax.lexer.JavaDocLexer
@@ -11,6 +12,7 @@ import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.SyntaxLanguage
 import com.intellij.platform.syntax.element.SyntaxTokenTypes
 import com.intellij.platform.syntax.lexer.Lexer
+import com.intellij.platform.syntax.parser.WhitespaceOrCommentBindingPolicy
 import com.intellij.platform.syntax.syntaxElementTypeSetOf
 import com.intellij.pom.java.LanguageLevel
 import kotlin.jvm.JvmStatic
@@ -40,4 +42,6 @@ object JavaSyntaxDefinition : LanguageSyntaxDefinition {
   override fun getCommentTokens(): SyntaxElementTypeSet = commentSet
 
   override fun getWhitespaceTokens(): SyntaxElementTypeSet = whitespaces
+
+  override fun getWhitespaceOrCommentBindingPolicy(): WhitespaceOrCommentBindingPolicy = JavaWhitespaceOrCommentBindingPolicy
 }

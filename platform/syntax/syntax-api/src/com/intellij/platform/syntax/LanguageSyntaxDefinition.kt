@@ -3,6 +3,8 @@ package com.intellij.platform.syntax
 
 import com.intellij.platform.syntax.element.SyntaxTokenTypes
 import com.intellij.platform.syntax.lexer.Lexer
+import com.intellij.platform.syntax.parser.OpaqueElementPolicy
+import com.intellij.platform.syntax.parser.WhitespaceOrCommentBindingPolicy
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -28,4 +30,16 @@ interface LanguageSyntaxDefinition {
    * The set of comment token types of the language
    */
   fun getCommentTokens(): SyntaxElementTypeSet
+
+  /**
+   * Controls whitespace balancing behavior of [com.intellij.platform.syntax.parser.SyntaxTreeBuilder].
+   * For more details see [com.intellij.platform.syntax.parser.WhitespaceOrCommentBindingPolicy]
+   */
+  fun getWhitespaceOrCommentBindingPolicy(): WhitespaceOrCommentBindingPolicy? = null
+
+  /**
+   * The policy for handling opaque elements in the syntax tree.
+   * For more details see [com.intellij.platform.syntax.parser.OpaqueElementPolicy]
+   */
+  fun getOpaqueElementPolicy(): OpaqueElementPolicy? = null
 }

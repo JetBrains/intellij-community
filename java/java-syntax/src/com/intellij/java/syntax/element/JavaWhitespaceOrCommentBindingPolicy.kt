@@ -6,7 +6,7 @@ import com.intellij.platform.syntax.element.SyntaxTokenTypes
 import com.intellij.platform.syntax.parser.WhitespaceOrCommentBindingPolicy
 import com.intellij.platform.syntax.syntaxElementTypeSetOf
 
-internal object JavaBindingPolicy : WhitespaceOrCommentBindingPolicy {
+internal object JavaWhitespaceOrCommentBindingPolicy : WhitespaceOrCommentBindingPolicy {
   private val leftBoundTokens = syntaxElementTypeSetOf(
     SyntaxTokenTypes.ERROR_ELEMENT, // todo move somewhere?
     JavaSyntaxElementType.TYPE_PARAMETER_LIST,
