@@ -58,6 +58,7 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.EDT;
+import static com.intellij.platform.locking.impl.IntelliJLockingUtil.getGlobalThreadingSupport;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -141,7 +142,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
   private static void invokeLater(@NotNull Runnable runnable) {
     Application app = ApplicationManager.getApplication();
-    IntelliJLockingUtil.getGlobalThreadingSupport().runWhenWriteActionIsCompleted(() -> {
+    getGlobalThreadingSupport().runWhenWriteActionIsCompleted(() -> {
       SideEffectGuard.computeWithAllowedSideEffectsBlocking(EnumSet.of(SideEffectGuard.EffectType.INVOKE_LATER), () -> {
         app.invokeLaterOnWriteThread(runnable, ModalityState.any(), app.getDisposed());
         return Unit.INSTANCE;
@@ -800,7 +801,10 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     ThreadingAssertions.assertEventDispatchThread();
     assert ApplicationManager.getApplication()==null || !ApplicationManager.getApplication().isWriteAccessAllowed();
     for (Submission<?> task : ourTasks) {
-      waitForTask(task);
+      TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
+        waitForTask(task);
+        return Unit.INSTANCE;
+      });
     }
   }
 
