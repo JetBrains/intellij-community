@@ -96,16 +96,16 @@ public final class CommandMerger {
       }
       stacksHolder.addToStacks(
         new UndoableGroup(
+          project,
           commandName,
-          isGlobal(),
-          commandTimestamp,
+          currentActions,
+          undoConfirmationPolicy,
+          stacksHolder,
           editorStateBefore,
           editorStateAfter,
-          currentActions,
-          stacksHolder,
-          project,
-          undoConfirmationPolicy,
+          commandTimestamp,
           isTransparent(),
+          isGlobal(),
           isValid
         )
       );

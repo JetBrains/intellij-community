@@ -216,25 +216,35 @@ abstract class UndoRedo {
         return false;
       }
       stack.removeLast();
-      UndoableGroup replacingGroup = UndoableGroup.copyWith(
-        undoableGroup,
+      UndoableGroup replacingGroup = new UndoableGroup(
+        project,
         IdeBundle.message("undo.command.local.name") + undoableGroup.getCommandName(),
-        false,
         localActions, // only action that changes file locally
+        undoableGroup.getConfirmationPolicy(),
         stacksHolder,
-        project
+        undoableGroup.getStateBefore(),
+        undoableGroup.getStateAfter(),
+        undoableGroup.getCommandTimestamp(),
+        undoableGroup.isTransparent(),
+        false,
+        undoableGroup.isValid()
       );
       stack.add(replacingGroup);
-      UndoableGroup groupWithoutLocalChanges = UndoableGroup.copyWith(
-        undoableGroup,
+      UndoableGroup groupWithoutLocalChanges = new UndoableGroup(
+        project,
         undoableGroup.getCommandName(),
-        undoableGroup.isGlobal(),
         nonLocalActions, // all action except local
+        undoableGroup.getConfirmationPolicy(),
         stacksHolder,
-        project
+        undoableGroup.getStateBefore(),
+        undoableGroup.getStateAfter(),
+        undoableGroup.getCommandTimestamp(),
+        undoableGroup.isTransparent(),
+        undoableGroup.isGlobal(),
+        undoableGroup.isValid()
       );
       if (stacksHolder.replaceOnStacks(undoableGroup, groupWithoutLocalChanges)) {
-        replacingGroup.setOriginalContext(new UndoableGroup.UndoableGroupOriginalContext(
+        replacingGroup.setOriginalContext(new UndoableGroupOriginalContext(
           undoableGroup,
           groupWithoutLocalChanges
         ));
@@ -252,7 +262,7 @@ abstract class UndoRedo {
     if (!isRedo) {
       throw new IllegalStateException("gatherGlobalCommand is allowed only for Redo but current operation is Undo");
     }
-    UndoableGroup.UndoableGroupOriginalContext context = undoableGroup.getGroupOriginalContext();
+    UndoableGroupOriginalContext context = undoableGroup.getOriginalContext();
     if (context == null) {
       return;
     }
