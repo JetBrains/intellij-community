@@ -10,10 +10,10 @@ import com.intellij.codeInspection.InspectionEP
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.ide.actions.ContextHelpAction
 import com.intellij.ide.plugins.cl.PluginClassLoader
-import com.intellij.ide.plugins.testPluginSrc.ExclusionClassLoader
 import com.intellij.ide.plugins.testPluginSrc.DynamicPluginTestHandle
-import com.intellij.ide.plugins.testPluginSrc.optionalPluginDepLoading.bar.BarService
-import com.intellij.ide.plugins.testPluginSrc.optionalPluginDepLoading.foo.FooBarService
+import com.intellij.ide.plugins.testPluginSrc.ExclusionClassLoader
+import com.intellij.ide.plugins.testPluginSrc.bar.BarService
+import com.intellij.ide.plugins.testPluginSrc.foo.bar.FooBarService
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
