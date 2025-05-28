@@ -64,18 +64,6 @@ public final class MavenRunnerParameters implements Cloneable {
     this(isPomExecution, workingDirPath, pomFileName, goals, explicitProfiles.getEnabledProfiles(), explicitProfiles.getDisabledProfiles());
   }
 
-  /**
-   * @deprecated use {@link MavenRunnerParameters#MavenRunnerParameters(boolean, String, String, List, Collection, Collection)}
-   */
-  @Deprecated(forRemoval = true)
-  public MavenRunnerParameters(boolean isPomExecution,
-                               @NotNull String workingDirPath,
-                               @Nullable List<String> goals,
-                               @Nullable Collection<String> explicitEnabledProfiles,
-                               @Nullable Collection<String> explicitDisabledProfiles) {
-    this(isPomExecution, workingDirPath, null, goals, explicitEnabledProfiles, explicitDisabledProfiles);
-  }
-
   public MavenRunnerParameters(boolean isPomExecution,
                                @NotNull String workingDirPath,
                                @Nullable String pomFileName,

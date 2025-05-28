@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Property;
@@ -18,19 +17,15 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.config.MavenConfig;
 import org.jetbrains.idea.maven.config.MavenConfigParser;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
-import org.jetbrains.idea.maven.utils.MavenEelUtil;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNullElse;
 import static org.jetbrains.idea.maven.config.MavenConfigSettings.*;
 import static org.jetbrains.idea.maven.project.MavenHomeKt.resolveMavenHomeType;
-import static org.jetbrains.idea.maven.project.MavenHomeKt.staticOrBundled;
 
 public class MavenGeneralSettings implements Cloneable {
   private static final MavenHomeType DEFAULT_MAVEN = BundledMaven3.INSTANCE;
@@ -188,13 +183,6 @@ public class MavenGeneralSettings implements Cloneable {
 
   public void setMavenHomeType(final @NotNull MavenHomeType mavenHome) {
     setMavenHome(mavenHome, true);
-  }
-
-  @TestOnly
-  @Deprecated(forRemoval = true)
-  public void setMavenHomeNoFire(final @NotNull String mavenHome) {
-    //noinspection HardCodedStringLiteral
-    setMavenHome(resolveMavenHomeType(mavenHome), false);
   }
 
   @TestOnly

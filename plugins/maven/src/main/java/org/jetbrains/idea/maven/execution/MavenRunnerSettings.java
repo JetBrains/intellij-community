@@ -41,11 +41,6 @@ public class MavenRunnerSettings implements Cloneable {
   }
 
   @Deprecated(forRemoval = true)
-  public boolean isRunMavenInBackground() {
-    return true;
-  }
-
-  @Deprecated(forRemoval = true)
   public void setRunMavenInBackground(boolean ignored) {
   }
 

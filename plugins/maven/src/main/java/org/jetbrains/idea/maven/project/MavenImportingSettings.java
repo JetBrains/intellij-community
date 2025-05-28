@@ -133,21 +133,6 @@ public class MavenImportingSettings implements Cloneable {
     return myDependencyTypesAsSet;
   }
 
- /**
-   * @deprecated source folders are always kept
-   */
-  @Deprecated(forRemoval = true)
-  public boolean isKeepSourceFolders() {
-    return true;
-  }
-
-  /**
-   * @deprecated source folders are always kept
-   */
-  @Deprecated(forRemoval = true)
-  public void setKeepSourceFolders(boolean keepSourceFolders) {
-  }
-
   public boolean isExcludeTargetFolder() {
     return excludeTargetFolder;
   }
