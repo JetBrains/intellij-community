@@ -16,6 +16,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
     "//plugins/gradle",
+    "//platform/external-system-impl:externalSystem-impl",
     "//platform/workspace/storage",
     "//platform/workspace/jps",
     "//platform/analysis-api:analysis",

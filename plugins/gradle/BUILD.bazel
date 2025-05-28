@@ -66,7 +66,6 @@ jvm_library(
   ],
   exports = [
     "//platform/external-system-api:externalSystem",
-    "//platform/external-system-impl:externalSystem-impl",
     "//plugins/gradle/tooling-extension-api:toolingExtension",
     "@lib//:slf4j-api",
     "@lib//:slf4j-jdk14",
@@ -122,6 +121,7 @@ jvm_library(
     "//platform/backend/workspace",
     "//platform/editor-ui-api:editor-ui",
     "//platform/external-system-api/dependency-updater",
+    "//platform/external-system-impl:externalSystem-impl",
     "//platform/observable",
     "//platform/platform-util-io:ide-util-io",
     "//plugins/gradle/java",
