@@ -289,6 +289,7 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
   private val FILTER_BY_REPOSITORY_IN_POPUP = GROUP.registerVarargEvent("filterByRepositoryInPopup", EventFields.Enabled)
 
   private val ALL_IDE_CONFIG_NAMES = listOf(
+    ".air",
     ".fleet",
     ".idea",
     ".project",
