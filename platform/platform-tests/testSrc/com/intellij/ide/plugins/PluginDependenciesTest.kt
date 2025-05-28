@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.plugins.testFramework.PluginSetTestBuilder
 import com.intellij.platform.testFramework.PluginBuilder
+import com.intellij.platform.testFramework.plugins.*
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsExtension
@@ -94,11 +95,13 @@ internal class PluginDependenciesTest {
   @Test
   fun `v2 plugin dependency brings only the implicit main module in classloader parents`() {
     `foo plugin-dependency bar`()
-    PluginBuilder().id("bar")
-      .module("bar.optional", PluginBuilder().packagePrefix("bar.optional"), loadingRule = ModuleLoadingRule.OPTIONAL)
-      .module("bar.required", PluginBuilder().packagePrefix("bar.required"), loadingRule = ModuleLoadingRule.REQUIRED)
-      .module("bar.embedded", PluginBuilder().packagePrefix("bar.embedded"), loadingRule = ModuleLoadingRule.EMBEDDED)
-      .build(pluginDirPath.resolve("bar"))
+    plugin("bar") {
+      content {
+        module("bar.optional", ModuleLoadingRule.OPTIONAL) { packagePrefix = "bar.optional" }
+        module("bar.required", ModuleLoadingRule.REQUIRED) { packagePrefix = "bar.required" }
+        module("bar.embedded", ModuleLoadingRule.EMBEDDED) { packagePrefix = "bar.embedded" }
+      }
+    }.buildDir(pluginDirPath.resolve("bar"))
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
     val (foo, bar) = pluginSet.getEnabledPlugins("foo", "bar")
@@ -111,7 +114,7 @@ internal class PluginDependenciesTest {
   @Test
   fun `plugin is not loaded if it has a depends dependency on v2 module`() {
     `bar with optional module`()
-    PluginBuilder().id("foo").depends("bar.module").build(pluginDirPath.resolve("foo"))
+    plugin("foo") { depends("bar.module") }.buildDir(pluginDirPath.resolve("foo"))
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("bar")
   }
@@ -119,7 +122,7 @@ internal class PluginDependenciesTest {
   @Test
   fun `plugin is not loaded if it has a plugin dependency on v2 module`() {
     `bar with optional module`()
-    PluginBuilder().id("foo").pluginDependency("bar.module").build(pluginDirPath.resolve("foo"))
+    plugin("foo") { dependencies { plugin("bar.module") } }.buildDir(pluginDirPath.resolve("foo"))
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("bar")
   }
@@ -127,7 +130,7 @@ internal class PluginDependenciesTest {
   @Test
   fun `plugin is loaded if it has a module dependency on v2 module`() {
     `bar with optional module`()
-    PluginBuilder().id("foo").dependency("bar.module").build(pluginDirPath.resolve("foo"))
+    plugin("foo") { dependencies { module("bar.module") } }.buildDir(pluginDirPath.resolve("foo"))
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
   }
@@ -135,10 +138,16 @@ internal class PluginDependenciesTest {
   @Test
   fun `plugin is not loaded if required module is not available`() {
     PluginManagerCore.getAndClearPluginLoadingErrors() //clear errors which may be registered by other tests
-    PluginBuilder()
-      .id("sample.plugin")
-      .module("required.module", PluginBuilder().packagePrefix("required").dependency("unknown"), loadingRule = ModuleLoadingRule.REQUIRED)
-      .build(pluginDirPath.resolve("sample-plugin"))
+    plugin("sample.plugin") {
+      content {
+        module("required.module", ModuleLoadingRule.REQUIRED) {
+          packagePrefix = "required"
+          dependencies {
+            module("unknown")
+          }
+        }
+      }
+    }.buildDir(pluginDirPath.resolve("sample-plugin"))
     val result = buildPluginSet()
     assertThat(result).doesNotHaveEnabledPlugins()
     val errors = PluginManagerCore.getAndClearPluginLoadingErrors()
