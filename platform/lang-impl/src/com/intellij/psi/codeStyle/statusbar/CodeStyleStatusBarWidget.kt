@@ -59,13 +59,13 @@ class CodeStyleStatusBarWidget(project: Project) : EditorBasedStatusBarPopup(pro
       for (modifier in CodeStyleSettingsModifier.EP_NAME.extensionList) {
         val activatingAction = modifier.getActivatingAction(uiContributor, psiFile)
         if (activatingAction != null) {
-          actions.add(activatingAction);
+          actions.add(activatingAction)
         }
       }
       for (provider in FileIndentOptionsProvider.EP_NAME.extensionList) {
         val activatingAction = provider.getActivatingAction(uiContributor, psiFile)
         if (activatingAction != null) {
-          actions.add(activatingAction);
+          actions.add(activatingAction)
         }
       }
 
