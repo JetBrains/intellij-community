@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.UnprotectedUserDataHolder
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.syntax.LanguageSyntaxDefinition
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.lexer.TokenList
 import com.intellij.platform.syntax.parser.*

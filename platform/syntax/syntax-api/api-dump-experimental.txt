@@ -1,5 +1,9 @@
 *:com.intellij.platform.syntax.CancellationProvider
 - a:checkCancelled():V
+*:com.intellij.platform.syntax.LanguageSyntaxDefinition
+- a:getCommentTokens():com.intellij.platform.syntax.SyntaxElementTypeSet
+- a:getLexer():com.intellij.platform.syntax.lexer.Lexer
+- getWhitespaceTokens():com.intellij.platform.syntax.SyntaxElementTypeSet
 *f:com.intellij.platform.syntax.LazyLexingContext
 - <init>(com.intellij.platform.syntax.tree.SyntaxNode,com.intellij.platform.syntax.CancellationProvider):V
 - f:getCancellationProvider():com.intellij.platform.syntax.CancellationProvider

@@ -12,6 +12,7 @@ import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.lang.java.syntax.JavaElementTypeConverterExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl;
+import com.intellij.platform.syntax.LanguageSyntaxDefinition;
 import com.intellij.platform.syntax.SyntaxElementType;
 import com.intellij.platform.syntax.SyntaxElementTypeKt;
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder;

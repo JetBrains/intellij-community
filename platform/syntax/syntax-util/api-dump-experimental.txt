@@ -143,6 +143,9 @@
 - setDebugMode(Z):V
 - setTokenTypeRemapper(com.intellij.platform.syntax.parser.SyntaxElementTypeRemapper):V
 - setWhitespaceSkippedCallback(com.intellij.platform.syntax.parser.WhitespaceSkippedCallback):V
+*:com.intellij.platform.syntax.util.runtime.GrammarKitLanguageDefinition
+- com.intellij.platform.syntax.LanguageSyntaxDefinition
+- getPairedBraces():java.util.Collection
 *f:com.intellij.platform.syntax.util.runtime.Modifiers
 - *sf:Companion:com.intellij.platform.syntax.util.runtime.Modifiers$Companion
 - sf:and-thSIBIw(I,I):I

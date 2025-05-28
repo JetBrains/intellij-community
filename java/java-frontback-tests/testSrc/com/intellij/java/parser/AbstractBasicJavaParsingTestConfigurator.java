@@ -3,7 +3,7 @@ package com.intellij.java.parser;
 
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.java.parser.BasicJavaParserUtil;
-import com.intellij.platform.syntax.psi.LanguageSyntaxDefinition;
+import com.intellij.platform.syntax.LanguageSyntaxDefinition;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;

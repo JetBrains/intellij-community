@@ -4,7 +4,7 @@
       <with attribute="implementationClass" implements="com.intellij.platform.syntax.psi.ElementTypeConverterFactory"/>
     </extensionPoint>
     <extensionPoint name="syntax.syntaxDefinition" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.platform.syntax.psi.LanguageSyntaxDefinition"/>
+      <with attribute="implementationClass" implements="com.intellij.platform.syntax.LanguageSyntaxDefinition"/>
     </extensionPoint>
     <extensionPoint name="syntax.cancellationProviderExtension"
                     interface="com.intellij.platform.syntax.util.cancellation.CancellationProviderExtension"

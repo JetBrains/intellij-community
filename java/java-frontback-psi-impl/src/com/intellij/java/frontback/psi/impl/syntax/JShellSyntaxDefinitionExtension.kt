@@ -4,7 +4,7 @@ package com.intellij.java.frontback.psi.impl.syntax
 import com.intellij.java.syntax.JavaSyntaxDefinition
 import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.lexer.Lexer
-import com.intellij.platform.syntax.psi.LanguageSyntaxDefinition
+import com.intellij.platform.syntax.LanguageSyntaxDefinition
 import com.intellij.pom.java.LanguageLevel
 
 internal class JShellSyntaxDefinitionExtension : LanguageSyntaxDefinition {

@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions
 import com.intellij.platform.syntax.psi.asSyntaxLogger
+import com.intellij.platform.syntax.util.runtime.GrammarKitLanguageDefinition
 import com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime
 import com.intellij.platform.syntax.util.runtime.SyntaxParserRuntimeFactory
 
@@ -14,6 +15,9 @@ internal class PsiSyntaxParserRuntimeFactoryImpl(private val language: Language)
 
   override fun buildParserRuntime(builder: SyntaxTreeBuilder, extendedState: SyntaxGeneratedParserRuntime.ParserUserState?): SyntaxGeneratedParserRuntime {
     val languageInformer = LanguageSyntaxDefinitions.INSTANCE.forLanguage(language)
+    if (languageInformer !is GrammarKitLanguageDefinition) {
+      error("Language $language is not supported by GrammarKit")
+    }
     return SyntaxGeneratedParserRuntime(
       syntaxBuilder = builder,
       isCaseSensitive = language.isCaseSensitive,
