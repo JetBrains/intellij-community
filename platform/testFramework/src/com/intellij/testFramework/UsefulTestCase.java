@@ -1220,7 +1220,7 @@ Most likely there was an uncaught exception in asynchronous execution that resul
         UIUtil.dispatchAllInvocationEvents();
         TestApplicationKt.waitForAppLeakingThreads(app, timeout, timeUnit);
       }
-    });
+    }, false);
   }
 
   protected final class TestDisposable implements Disposable {
