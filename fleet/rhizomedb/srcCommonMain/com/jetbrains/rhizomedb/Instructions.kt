@@ -25,6 +25,9 @@ data class CreateEntity(val eid: EID,
       }
 
       attributes.forEach { (attr, value) ->
+        if (attr.schema.isRef) {
+          impl.assertEntityExists(value as EID, null, attr)
+        }
         add(Op.Assert(eid, attr, value))
       }
     }
@@ -72,6 +75,9 @@ data class Add<V : Any>(val eid: EID,
                         override val seed: Long) : Instruction {
   override fun DbContext<Q>.expand(): InstructionExpansion = run {
     impl.assertEntityExists(eid, attribute, null)
+    if (attribute.schema.isRef) {
+      impl.assertEntityExists(value as EID, null, attribute)
+    }
     InstructionExpansion(listOf(Op.Assert(eid, attribute, value)))
   }
 }

@@ -15,8 +15,8 @@ data class DB(
         index = Index.withPartitions(Array(MAX_PART + 1) { Index.Partition.empty() }),
         queryCache = QueryCache.empty()
       ).change {
-        register(EntityType)
         registerMixin(Entity)
+        register(EntityType)
         register(EntityAttribute)
       }.dbAfter
     }

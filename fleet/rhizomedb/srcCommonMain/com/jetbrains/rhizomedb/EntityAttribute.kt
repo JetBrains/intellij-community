@@ -346,7 +346,7 @@ fun <V : Any> DbContext<Q>.fromIndexValue(attribute: EntityAttribute<*, V>, valu
 @Suppress("UNCHECKED_CAST")
 fun <V : Any> Q.fromIndexValue(attribute: EntityAttribute<*, V>, value: Any): V =
   when (attribute.attr.schema.isRef) {
-    true -> checkNotNull(entity(value as EID)) { "There is no entity object associated with eid $value}" }
+    true -> checkNotNull(entity(value as EID)) { "There is no entity object associated with eid $value" }
     false -> value
   } as V
 
