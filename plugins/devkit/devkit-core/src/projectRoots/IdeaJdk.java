@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.projectRoots;
 
 import com.intellij.icons.AllIcons;
@@ -161,8 +161,11 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
       final JarFileSystem jfs = JarFileSystem.getInstance();
       for (String productModuleJarPath : productInfo.getProductModuleJarPaths()) {
         VirtualFile vf = jfs.findFileByPath(home + File.separator + productModuleJarPath + JarFileSystem.JAR_SEPARATOR);
-        LOG.assertTrue(vf != null, productModuleJarPath + " not found in " + home);
-        result.add(vf);
+        if (vf != null) {
+          result.add(vf);
+        } else {
+          LOG.error(productModuleJarPath + " not found in " + home);
+        }
       }
     }
 
