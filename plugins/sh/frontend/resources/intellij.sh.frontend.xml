@@ -1,7 +1,12 @@
 <idea-plugin>
   <dependencies>
     <module name="intellij.sh.core"/>
-    <module name="intellij.platform.frontend"/>
+    <!--
+    Commenting out the following line due to the injected languages problem (IJPL-188693).
+    For now, the frontend functionalities are located in the frontend, but frontend will operate as common.
+    All the functionalities will be moved to frontend once the problem is resolved.
+    -->
+    <!--<module name="intellij.platform.frontend"/>-->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
