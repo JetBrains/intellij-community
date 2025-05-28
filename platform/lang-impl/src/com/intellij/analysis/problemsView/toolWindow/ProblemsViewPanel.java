@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow;
 
 import com.intellij.codeInsight.daemon.impl.IntentionsUI;
@@ -69,7 +69,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, U
   protected final DescriptorPreview myPreview;
   private final JPanel myPanel;
   protected final ActionToolbar myToolbar;
-  private final @NotNull JScrollPane myScrollPane;
+  protected final @NotNull JScrollPane myScrollPane;
   private final Insets myToolbarInsets = JBUI.insetsRight(1);
   private final Tree myTree;
   private final TreeExpander myTreeExpander;

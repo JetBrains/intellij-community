@@ -31,6 +31,8 @@ com.intellij.analysis.problemsView.ProblemsProvider
 - com.intellij.openapi.Disposable
 - dispose():V
 - a:getProject():com.intellij.openapi.project.Project
+c:com.intellij.analysis.problemsView.toolWindow.ProblemsViewPanel
+- pf:myScrollPane:javax.swing.JScrollPane
 com.intellij.analysis.problemsView.toolWindow.ProblemsViewPanelProvider
 - sf:Companion:com.intellij.analysis.problemsView.toolWindow.ProblemsViewPanelProvider$Companion
 - a:create():com.intellij.analysis.problemsView.toolWindow.ProblemsViewTab
