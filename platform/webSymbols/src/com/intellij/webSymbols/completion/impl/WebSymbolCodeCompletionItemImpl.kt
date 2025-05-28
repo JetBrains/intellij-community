@@ -104,8 +104,12 @@ internal data class WebSymbolCodeCompletionItemImpl(
 
   private fun wrapSymbolForDocumentation(symbol: WebSymbol?, location: PsiElement) =
     when (symbol) {
-      is PsiSourcedWebSymbol -> PsiSourcedCodeCompletionWebSymbolWithDocumentation(symbol, location)
-      is WebSymbol -> CodeCompletionWebSymbolWithDocumentation(symbol, location)
+      is PsiSourcedWebSymbol -> symbol.getDocumentationTarget(location)?.let {
+        PsiSourcedCodeCompletionWebSymbolWithDocumentation(symbol, it)
+      }
+      is WebSymbol -> symbol.getDocumentationTarget(location)?.let {
+        CodeCompletionWebSymbolWithDocumentation(symbol, it)
+      }
       else -> null
     }
 

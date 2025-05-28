@@ -51,6 +51,7 @@
 - sf:PROP_INJECT_LANGUAGE:java.lang.String
 - sf:PROP_JS_SYMBOL_KIND:java.lang.String
 - sf:PROP_KIND:java.lang.String
+- sf:PROP_NO_DOC:java.lang.String
 - sf:PROP_READ_ONLY:java.lang.String
 - adjustNameForRefactoring(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,java.lang.String,java.lang.String):java.lang.String
 - createDocumentation(com.intellij.psi.PsiElement):com.intellij.webSymbols.documentation.WebSymbolDocumentation
@@ -110,6 +111,7 @@
 - sf:PROP_INJECT_LANGUAGE:java.lang.String
 - sf:PROP_JS_SYMBOL_KIND:java.lang.String
 - sf:PROP_KIND:java.lang.String
+- sf:PROP_NO_DOC:java.lang.String
 - sf:PROP_READ_ONLY:java.lang.String
 - f:getCSS_CLASSES():com.intellij.webSymbols.WebSymbolQualifiedKind
 - f:getCSS_FUNCTIONS():com.intellij.webSymbols.WebSymbolQualifiedKind

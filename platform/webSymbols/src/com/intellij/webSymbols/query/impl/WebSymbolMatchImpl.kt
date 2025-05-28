@@ -123,7 +123,7 @@ internal open class WebSymbolMatchImpl private constructor(
         .toList()
     else emptyList()
 
-  override fun getDocumentationTarget(location: PsiElement?): DocumentationTarget =
+  override fun getDocumentationTarget(location: PsiElement?): DocumentationTarget? =
     reversedSegments()
       .flatMap { it.symbols.asSequence() }
       .map {
