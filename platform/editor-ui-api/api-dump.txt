@@ -1801,7 +1801,6 @@ com.intellij.openapi.editor.FoldingModel
 - a:isOffsetCollapsed(I):Z
 - a:removeFoldRegion(com.intellij.openapi.editor.FoldRegion):V
 - runBatchFoldingOperation(java.lang.Runnable):V
-- a:runBatchFoldingOperation(java.lang.Runnable,Z):V
 - a:runBatchFoldingOperation(java.lang.Runnable,Z,Z):V
 - runBatchFoldingOperationDoNotCollapseCaret(java.lang.Runnable):V
 com.intellij.openapi.editor.GutterMarkPreprocessor

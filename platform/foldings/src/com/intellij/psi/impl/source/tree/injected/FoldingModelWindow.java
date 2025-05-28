@@ -109,12 +109,6 @@ public final class FoldingModelWindow implements FoldingModelEx, ModificationTra
   }
 
   @Override
-  public void runBatchFoldingOperation(@NotNull Runnable operation, boolean moveCaretFromCollapsedRegion) {
-    //noinspection deprecation
-    myDelegate.runBatchFoldingOperation(operation, moveCaretFromCollapsedRegion);
-  }
-
-  @Override
   public int getLastCollapsedRegionBefore(int offset) {
     return -1; //todo implement
   }

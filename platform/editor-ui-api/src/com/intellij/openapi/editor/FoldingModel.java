@@ -96,13 +96,6 @@ public interface FoldingModel {
     runBatchFoldingOperation(operation, true, true);
   }
 
-  /**
-   * @deprecated Passing {@code false} for {@code moveCaretFromCollapsedRegion} might leave caret in an inconsistent state
-   * after the operation. Use {@link #runBatchFoldingOperation(Runnable)} instead.
-   */
-  @Deprecated(forRemoval = true)
-  void runBatchFoldingOperation(@NotNull Runnable operation, boolean moveCaretFromCollapsedRegion);
-
   default void runBatchFoldingOperationDoNotCollapseCaret(@NotNull Runnable operation) {
     runBatchFoldingOperation(operation, false, true);
   }

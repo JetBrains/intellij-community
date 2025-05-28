@@ -6853,7 +6853,6 @@ f:com.intellij.openapi.editor.impl.FoldingModelImpl
 - onUpdated(com.intellij.openapi.editor.Inlay,I):V
 - rebuild():V
 - removeFoldRegion(com.intellij.openapi.editor.FoldRegion):V
-- runBatchFoldingOperation(java.lang.Runnable,Z):V
 - runBatchFoldingOperation(java.lang.Runnable,Z,Z):V
 - setFoldingEnabled(Z):V
 f:com.intellij.openapi.editor.impl.FoldingPopupManager

@@ -259,12 +259,6 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     return myFoldTextAttributes;
   }
 
-  @SuppressWarnings("removal")
-  @Override
-  public void runBatchFoldingOperation(@NotNull Runnable operation, boolean moveCaret) {
-    runBatchFoldingOperation(operation, false, moveCaret, true);
-  }
-
   @Override
   public void runBatchFoldingOperation(@NotNull Runnable operation, boolean allowMovingCaret, boolean keepRelativeCaretPosition) {
     runBatchFoldingOperation(operation, !allowMovingCaret, true, keepRelativeCaretPosition);
