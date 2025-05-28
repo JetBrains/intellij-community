@@ -79,18 +79,13 @@ class ProjectRepositoriesModelBuilder : ModelBuilderService {
   private fun getRepositories(project: Project): List<Repository> {
     return project.repositories
       .map {
-        if (it is UrlArtifactRepository) {
-          val type = when (it) {
-            is MavenArtifactRepository -> UrlRepositoryType.MAVEN
-            is IvyArtifactRepository -> UrlRepositoryType.IVY
-            else -> UrlRepositoryType.OTHER
-          }
-          return@map UrlRepository(it.name, it.url.toString(), type)
+        return@map when (it) {
+          is MavenArtifactRepository -> UrlRepository(it.name, it.url.toString(), UrlRepositoryType.MAVEN)
+          is IvyArtifactRepository -> UrlRepository(it.name, it.url.toString(), UrlRepositoryType.IVY)
+          is UrlArtifactRepository -> UrlRepository(it.name, it.url.toString(), UrlRepositoryType.OTHER)
+          is FlatDirectoryArtifactRepository -> FileRepository(it.name, it.dirs.map { file -> file.path })
+          else -> DeclaredRepositoryImpl(it.name)
         }
-        if (it is FlatDirectoryArtifactRepository) {
-          return@map FileRepository(it.name, it.dirs.map { file -> file.path })
-        }
-        return@map DeclaredRepositoryImpl(it.name)
       }
       .toList()
   }
