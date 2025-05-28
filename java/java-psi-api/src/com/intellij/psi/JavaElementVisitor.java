@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.psi.javadoc.*;
@@ -251,6 +251,10 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
 
   public void visitMarkdownCodeBlock(@NotNull PsiMarkdownCodeBlock block) {
     visitElement(block);
+  }
+
+  public void visitMarkdownReferenceLabel(@NotNull PsiMarkdownReferenceLabel label) {
+    visitElement(label);
   }
 
   public void visitMarkdownReferenceLink(@NotNull PsiMarkdownReferenceLink referenceLink) {

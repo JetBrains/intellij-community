@@ -289,6 +289,7 @@ class JavaElementTypeConverterExtension : ElementTypeConverterFactory {
     JavaDocSyntaxElementType.DOC_COMMENT to JavaDocElementType.DOC_COMMENT,
     JavaDocSyntaxElementType.DOC_MARKDOWN_CODE_BLOCK to JavaDocElementType.DOC_MARKDOWN_CODE_BLOCK,
     JavaDocSyntaxElementType.DOC_MARKDOWN_REFERENCE_LINK to JavaDocElementType.DOC_MARKDOWN_REFERENCE_LINK,
+    JavaDocSyntaxElementType.DOC_MARKDOWN_REFERENCE_LABEL to JavaDocElementType.DOC_MARKDOWN_REFERENCE_LABEL,
 
     JavaDocSyntaxTokenType.DOC_COMMENT_START to JavaDocTokenType.DOC_COMMENT_START,
     JavaDocSyntaxTokenType.DOC_COMMENT_END to JavaDocTokenType.DOC_COMMENT_END,

@@ -297,4 +297,5 @@ val BasicJavaElementTypeConverter: ElementTypeConverter = elementTypeConverterOf
 
   JavaDocSyntaxElementType.DOC_MARKDOWN_CODE_BLOCK to BasicJavaDocElementType.BASIC_DOC_MARKDOWN_CODE_BLOCK,
   JavaDocSyntaxElementType.DOC_MARKDOWN_REFERENCE_LINK to BasicJavaDocElementType.BASIC_DOC_MARKDOWN_REFERENCE_LINK,
+  JavaDocSyntaxElementType.DOC_MARKDOWN_REFERENCE_LABEL to BasicJavaDocElementType.BASIC_DOC_MARKDOWN_REFERENCE_LABEL,
 )

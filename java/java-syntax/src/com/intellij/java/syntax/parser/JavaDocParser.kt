@@ -267,15 +267,22 @@ class JavaDocParser(
     tag.rollbackTo()
     tag = builder.mark()
     if (hasLabel) {
+      builder.advanceLexer()
+      val label = builder.mark()
       // Label range already known, mark it as comment data
       while (!builder.eof()) {
-        builder.advanceLexer()
+        if (builder.tokenType === JavaDocSyntaxTokenType.DOC_INLINE_CODE_FENCE) {
+          parseInlineCodeBlock()
+          continue
+        }
         if (builder.currentOffset < endLabelOffset) {
           builder.remapCurrentToken(JavaDocSyntaxTokenType.DOC_COMMENT_DATA)
+          builder.advanceLexer()
           continue
         }
         break
       }
+      label.done(JavaDocSyntaxElementType.DOC_MARKDOWN_REFERENCE_LABEL)
       builder.advanceLexer()
     }
 

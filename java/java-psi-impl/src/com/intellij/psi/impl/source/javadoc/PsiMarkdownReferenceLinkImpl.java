@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.psi.JavaElementVisitor;
@@ -32,7 +32,9 @@ public class PsiMarkdownReferenceLinkImpl extends CompositePsiElement implements
 
   @Override
   public @Nullable PsiElement getLabel() {
-    if (getChildren().length >= 1) return getChildren()[1];
+    if (getChildren().length >= 1) {
+      return getChildren()[1];
+    }
     // malformed/incomplete link
     return null;
   }

@@ -2,7 +2,6 @@
 package com.intellij.java.syntax.element
 
 import com.intellij.platform.syntax.SyntaxElementType
-import kotlin.jvm.JvmField
 
 /**
  * @see com.intellij.psi.impl.source.tree.JavaDocElementType
@@ -27,4 +26,5 @@ object JavaDocSyntaxElementType {
   @JvmField val DOC_COMMENT: SyntaxElementType = SyntaxElementType("DOC_COMMENT")
   @JvmField val DOC_MARKDOWN_CODE_BLOCK: SyntaxElementType = SyntaxElementType("DOC_CODE_BLOCK")
   @JvmField val DOC_MARKDOWN_REFERENCE_LINK: SyntaxElementType = SyntaxElementType("DOC_REFERENCE_LINK")
+  @JvmField val DOC_MARKDOWN_REFERENCE_LABEL: SyntaxElementType = SyntaxElementType("DOC_REFERENCE_LABEL")
 }
