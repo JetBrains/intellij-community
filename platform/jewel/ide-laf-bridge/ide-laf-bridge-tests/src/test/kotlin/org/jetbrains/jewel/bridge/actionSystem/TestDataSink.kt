@@ -1,7 +1,13 @@
 package org.jetbrains.jewel.bridge.actionSystem
 
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DataMap
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.DataSnapshotProvider
+import com.intellij.openapi.actionSystem.UiDataProvider
 
+@Suppress("NonExtendableApiUsage", "OverrideOnly")
 internal class TestDataSink : DataSink {
     val allData = mutableMapOf<String, Any>()
 
@@ -20,7 +26,7 @@ internal class TestDataSink : DataSink {
     }
 
     override fun uiDataSnapshot(provider: DataProvider) {
-        // NOT needed in current tests
+        error("Not used in tests")
     }
 
     override fun uiDataSnapshot(provider: UiDataProvider) {
@@ -46,5 +52,6 @@ internal class TestDataSink : DataSink {
     }
 
     override fun <T : Any> lazyValue(key: DataKey<T>, data: (DataMap) -> T?) {
+        error("Not used in tests")
     }
 }
