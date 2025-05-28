@@ -55,9 +55,9 @@ sealed class DirectorySpecBase(override val originalFile: Path?) : DirectoryCont
   }
 
   override fun generateInTempDir(): Path {
-    val target = FileUtil.createTempDirectory("directory-by-spec", null, true)
+    val target = FileUtil.createTempDirectory("directory-by-spec", null, true).toPath()
     generate(target)
-    return target.toPath()
+    return target
   }
 
   fun getChildren() : Map<String, DirectoryContentSpecImpl> = Collections.unmodifiableMap(children)
@@ -102,9 +102,9 @@ sealed class ZipSpecBase(private val extension: String) : DirectorySpecBase(null
   abstract fun compress(contentDir: File, target: Path)
 
   override fun generateInTempDir(): Path {
-    val target = FileUtil.createTempFile("$extension-by-spec", ".$extension", true)
+    val target = FileUtil.createTempFile("$extension-by-spec", ".$extension", true).toPath()
     generate(target)
-    return target.toPath()
+    return target
   }
 }
 
@@ -134,9 +134,9 @@ class FileSpec(val content: ByteArray?, override val originalFile: Path? = null)
   }
 
   override fun generateInTempDir(): Path {
-    val target = FileUtil.createTempFile("file-by-spec", null, true)
+    val target = FileUtil.createTempFile("file-by-spec", null, true).toPath()
     generate(target)
-    return target.toPath()
+    return target
   }
 
   override fun mergeWith(other: DirectoryContentSpec): DirectoryContentSpecImpl {

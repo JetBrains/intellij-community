@@ -246,7 +246,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
   fun testMoveModuleWithSystemScopedDependency() = runBlocking {
     zipFile {
       file("a.txt")
-    }.generate(projectPath.resolve("lib.jar").toFile())
+    }.generate(projectPath.resolve("lib.jar"))
     updateModulePom("m1", generatePomWithSystemDependency("../lib.jar"))
     importProjectAsync()
 

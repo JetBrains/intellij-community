@@ -191,6 +191,6 @@ fun DirectoryContentSpec.generateInVirtualTempDir(): VirtualFile {
  * Generates files, directories and archives accordingly to this specification in [target] directory and refresh them in VFS
  */
 fun DirectoryContentSpec.generate(target: VirtualFile) {
-  generate(VfsUtil.virtualToIoFile(target))
+  generate(target.toNioPath())
   VfsUtil.markDirtyAndRefresh(false, true, true, target)
 }

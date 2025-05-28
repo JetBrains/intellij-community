@@ -172,7 +172,7 @@ class SvnCommittedViewTest : SvnTestCase() {
           file("f2.txt")
         }
       }
-    }.generate(path.toFile())
+    }.generate(path)
 
     return path.resolve("trunk")
   }

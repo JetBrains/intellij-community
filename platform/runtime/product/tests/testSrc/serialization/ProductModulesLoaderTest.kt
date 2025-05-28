@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.product.serialization
 
-import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.createRepository
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
@@ -144,7 +144,7 @@ class ProductModulesLoaderTest {
     writePluginXmlWithModules(tempDirectory.rootPath.resolve("common.plugin"), "common")
     writePluginXmlWithModules(tempDirectory.rootPath.resolve("plugin"), "plugin")
     val rootProductModulesPath = tempDirectory.rootPath.resolve("root/META-INF/root")
-    productModulesWithPlugins(plugins = listOf("common.plugin")).generate(rootProductModulesPath.toFile())
+    productModulesWithPlugins(plugins = listOf("common.plugin")).generate(rootProductModulesPath)
 
     val xmlPath = directoryContent {
       xml(FILE_NAME, """
@@ -183,7 +183,7 @@ class ProductModulesLoaderTest {
     productModulesWithPlugins(
       mainModules = listOf("root", "additional"),
       plugins = listOf("plugin", "plugin2")
-    ).generate(rootProductModulesPath.toFile())
+    ).generate(rootProductModulesPath)
 
     val xmlPath = directoryContent {
       xml(FILE_NAME, """
