@@ -29,6 +29,7 @@ jvm_library(
     "//platform/util/progress",
     "//platform/collaboration-tools",
     "//platform/dvcs-impl:vcs-dvcs-impl",
+    "//platform/vcs-impl",
     "//platform/editor-ui-api:editor-ui",
     "//plugins/git4idea:vcs-git",
     "//plugins/git4idea/shared",

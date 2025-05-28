@@ -17,5 +17,8 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <github.ghShareProjectCompatibilityExtension implementation="com.intellij.vcs.github.git.share.GHShareProjectUtilCompatExtension"/>
+    <openapi.vcs.changes.ui.shareProjectAction
+      implementation="com.intellij.vcs.github.git.share.GithubShareActionProvider"
+      order="first"/>
   </extensions>
 </idea-plugin>

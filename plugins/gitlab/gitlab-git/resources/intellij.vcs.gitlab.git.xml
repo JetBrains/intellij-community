@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.plugins.gitlab.git">
+<idea-plugin>
   <resource-bundle>messages.GitLabBundle</resource-bundle>
 
   <dependencies>
@@ -11,4 +11,8 @@
       <add-to-group group-id="GitLab.Main.Group"/>
     </action>
   </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <openapi.vcs.changes.ui.shareProjectAction implementation="com.intellij.vcs.gitlab.git.GitLabShareProjectActionProvider"/>
+  </extensions>
 </idea-plugin>

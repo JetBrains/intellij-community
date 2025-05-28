@@ -12,8 +12,12 @@ import com.intellij.openapi.actionSystem.IdeActions.ACTION_CONTEXT_HELP
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.HELP_ID
 import com.intellij.openapi.actionSystem.ex.ActionUtil.invokeAction
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
@@ -24,22 +28,55 @@ import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.util.ui.StatusText
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.awt.event.InputEvent
 
 private const val ACTION_LOCAL_HISTORY = "LocalHistory.ShowHistory"
+
+@ApiStatus.Internal
+interface ShareProjectActionProvider {
+  companion object {
+    val EP_NAME: ExtensionPointName<ShareProjectActionProvider> = ExtensionPointName.create<ShareProjectActionProvider>("com.intellij.openapi.vcs.changes.ui.shareProjectAction")
+  }
+
+  val hostServiceName: @Nls String
+  val action: AnAction
+}
 
 internal fun setChangesViewEmptyState(statusText: StatusText, project: Project) {
   fun invokeAction(source: Any?, actionId: String) = invokeAction(project, source, actionId, ActionPlaces.CHANGES_VIEW_EMPTY_STATE)
   fun invokeAction(source: Any?, action: AnAction) = invokeAction(project, source, action, ActionPlaces.CHANGES_VIEW_EMPTY_STATE)
 
+  statusText.isCenterAlignText = false
   statusText.appendLine(message("status.text.vcs.toolwindow"))
-  findCreateRepositoryAction()?.let { action ->
-    statusText.appendLine(message("status.text.vcs.toolwindow.create.repository"), LINK_PLAIN_ATTRIBUTES) {
-      invokeAction(it.source, action)
+  ShareProjectActionProvider.EP_NAME.extensionList.let { eps ->
+    if (eps.isNotEmpty()) {
+      val head = eps.first()
+      statusText.appendLine(message("status.text.vcs.toolwindow.emptyPrefix") + " " + message("status.text.vcs.toolwindow.shareProject") + " ").apply {
+        appendText(head.hostServiceName, LINK_PLAIN_ATTRIBUTES) {
+          invokeAction(it.source, head.action)
+        }
+        eps.drop(1).forEach { ep ->
+          appendText(" " + message("status.text.vcs.toolwindow.shareProject.orOn") + " ")
+          appendText(ep.hostServiceName, LINK_PLAIN_ATTRIBUTES) {
+            invokeAction(it.source, ep.action)
+          }
+        }
+      }
     }
   }
-  statusText.appendLine(message("status.text.vcs.toolwindow.local.history"), LINK_PLAIN_ATTRIBUTES) {
-    invokeAction(it.source, ACTION_LOCAL_HISTORY)
+  findCreateRepositoryAction()?.let { action ->
+    statusText.appendLine(message("status.text.vcs.toolwindow.emptyPrefix") + " ").apply {
+      statusText.appendText(message("status.text.vcs.toolwindow.create.repository"), LINK_PLAIN_ATTRIBUTES) {
+        invokeAction(it.source, action)
+      }
+    }
+  }
+  statusText.appendLine(message("status.text.vcs.toolwindow.emptyPrefix") + " ").apply {
+    statusText.appendText(message("status.text.vcs.toolwindow.local.history"), LINK_PLAIN_ATTRIBUTES) {
+      invokeAction(it.source, ACTION_LOCAL_HISTORY)
+    }
   }
   statusText.appendLine("")
   statusText.appendLine(AllIcons.General.ContextHelp, message("status.text.vcs.toolwindow.help"), LINK_PLAIN_ATTRIBUTES) {
