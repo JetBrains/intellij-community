@@ -37,17 +37,6 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
     myFileList = new VirtualFileList(project, selectableFiles, deletableFiles, files);
   }
 
-  @Deprecated(forRemoval = true)
-  public static @NotNull SelectFilesDialog init(Project project,
-                                                @NotNull List<? extends VirtualFile> originalFiles,
-                                                @Nullable @NlsContexts.Label String prompt,
-                                                @Nullable VcsShowConfirmationOption confirmationOption,
-                                                boolean selectableFiles,
-                                                boolean showDoNotAskOption,
-                                                boolean deletableFiles) {
-    return init(project, originalFiles, prompt, showDoNotAskOption ? confirmationOption : null, selectableFiles, deletableFiles);
-  }
-
   public static @NotNull SelectFilesDialog init(Project project,
                                                 @NotNull List<? extends VirtualFile> originalFiles,
                                                 @Nullable @NlsContexts.Label String prompt,

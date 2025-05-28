@@ -1305,11 +1305,9 @@ f:com.intellij.openapi.vcs.changes.TextRevisionNumber
 com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener
 - a:invalidateAnnotationsFor(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.VcsKey):V
 - a:registerAnnotation(com.intellij.openapi.vcs.annotate.FileAnnotation):V
-- registerAnnotation(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.annotate.FileAnnotation):V
 - a:reloadAnnotations():V
 - a:reloadAnnotationsForVcs(com.intellij.openapi.vcs.VcsKey):V
 - a:unregisterAnnotation(com.intellij.openapi.vcs.annotate.FileAnnotation):V
-- unregisterAnnotation(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.annotate.FileAnnotation):V
 a:com.intellij.openapi.vcs.changes.VcsDirtyScope
 - <init>():V
 - a:belongsTo(com.intellij.openapi.vcs.FilePath):Z

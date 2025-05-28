@@ -549,11 +549,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     return myProject;
   }
 
-  @Deprecated(forRemoval = true)
-  public @NotNull String getCommitMessage() {
-    return myCommitMessageArea.getText();
-  }
-
   // Used in plugins
   @SuppressWarnings("unused")
   public @NotNull List<RefreshableOnComponent> getAdditionalComponents() {

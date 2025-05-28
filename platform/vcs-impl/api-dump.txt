@@ -246,7 +246,6 @@ c:com.intellij.openapi.vcs.VcsNotifier
 - logInfo(java.lang.String,java.lang.String,java.lang.String):com.intellij.notification.Notification
 - notify(com.intellij.notification.Notification):com.intellij.notification.Notification
 - notifyError(java.lang.String,java.lang.String):com.intellij.notification.Notification
-- notifyError(java.lang.String,java.lang.String,com.intellij.notification.NotificationListener):com.intellij.notification.Notification
 - notifyError(java.lang.String,java.lang.String,java.lang.String):com.intellij.notification.Notification
 - notifyError(java.lang.String,java.lang.String,java.lang.String,com.intellij.notification.NotificationListener):com.intellij.notification.Notification
 - notifyError(java.lang.String,java.lang.String,java.lang.String,java.util.Collection):com.intellij.notification.Notification
@@ -255,7 +254,6 @@ c:com.intellij.openapi.vcs.VcsNotifier
 - notifyImportantInfo(java.lang.String,java.lang.String,com.intellij.notification.NotificationListener):com.intellij.notification.Notification
 - notifyImportantInfo(java.lang.String,java.lang.String,java.lang.String):com.intellij.notification.Notification
 - notifyImportantInfo(java.lang.String,java.lang.String,java.lang.String,com.intellij.notification.NotificationListener):com.intellij.notification.Notification
-- notifyImportantWarning(java.lang.String,java.lang.String,com.intellij.notification.NotificationListener):com.intellij.notification.Notification
 - notifyImportantWarning(java.lang.String,java.lang.String,java.lang.String):com.intellij.notification.Notification
 - notifyImportantWarning(java.lang.String,java.lang.String,java.lang.String,com.intellij.notification.NotificationListener):com.intellij.notification.Notification
 - notifyImportantWarning(java.lang.String,java.lang.String,java.lang.String,java.util.Collection):com.intellij.notification.Notification
@@ -269,9 +267,7 @@ c:com.intellij.openapi.vcs.VcsNotifier
 - notifyMinorWarning(java.lang.String,java.lang.String,java.lang.String):com.intellij.notification.Notification
 - notifyMinorWarning(java.lang.String,java.lang.String,java.lang.String,com.intellij.notification.NotificationListener):com.intellij.notification.Notification
 - notifyMinorWarning(java.lang.String,java.lang.String,java.lang.String,com.intellij.notification.NotificationAction[]):com.intellij.notification.Notification
-- notifySuccess(java.lang.String):com.intellij.notification.Notification
 - notifySuccess(java.lang.String,java.lang.String):com.intellij.notification.Notification
-- notifySuccess(java.lang.String,java.lang.String,com.intellij.notification.NotificationListener):com.intellij.notification.Notification
 - notifySuccess(java.lang.String,java.lang.String,java.lang.String):com.intellij.notification.Notification
 - notifySuccess(java.lang.String,java.lang.String,java.lang.String,com.intellij.notification.NotificationListener):com.intellij.notification.Notification
 - notifyWarning(java.lang.String,java.lang.String):com.intellij.notification.Notification
@@ -293,7 +289,6 @@ a:com.intellij.openapi.vcs.VcsVFSListener
 - pf:myProject:com.intellij.openapi.project.Project
 - pf:myRemoveOption:com.intellij.openapi.vcs.VcsShowConfirmationOption
 - pf:myVcs:com.intellij.openapi.vcs.AbstractVcs
-- p:<init>(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.AbstractVcs):V
 - p:<init>(com.intellij.openapi.vcs.AbstractVcs,kotlinx.coroutines.CoroutineScope):V
 - p:beforeContentsChange(java.util.List):V
 - dispose():V
@@ -2954,7 +2949,6 @@ a:com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 - getAdditionalComponents():java.util.List
 - a:getBrowser():com.intellij.openapi.vcs.changes.ui.CommitDialogChangesBrowser
 - getChangeList():com.intellij.openapi.vcs.changes.LocalChangeList
-- getCommitMessage():java.lang.String
 - getCommitMessageUi():com.intellij.vcs.commit.CommitMessageUi
 - getCommitOptionsUi():com.intellij.vcs.commit.CommitOptionsUi
 - getComponent():javax.swing.JComponent
@@ -3149,7 +3143,6 @@ c:com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
 - getSelectedFiles():java.util.Collection
 - s:init(com.intellij.openapi.project.Project,java.util.List,java.lang.String,com.intellij.openapi.vcs.VcsShowConfirmationOption,Z,Z):com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
 - s:init(com.intellij.openapi.project.Project,java.util.List,java.lang.String,com.intellij.openapi.vcs.VcsShowConfirmationOption,Z,Z,java.lang.String,java.lang.String):com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
-- s:init(com.intellij.openapi.project.Project,java.util.List,java.lang.String,com.intellij.openapi.vcs.VcsShowConfirmationOption,Z,Z,Z):com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
 - setSelectedFiles(java.util.Collection):V
 c:com.intellij.openapi.vcs.changes.ui.SelectFilesDialog$VirtualFileList
 - com.intellij.openapi.vcs.changes.ui.AsyncChangesTreeImpl$VirtualFiles

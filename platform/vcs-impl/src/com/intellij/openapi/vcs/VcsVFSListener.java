@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
-import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -33,7 +32,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.vcsUtil.VcsUtil;
 import kotlin.Unit;
-import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.CoroutineScopeKt;
 import org.jetbrains.annotations.NotNull;
@@ -418,17 +416,6 @@ public abstract class VcsVFSListener implements Disposable {
     myIgnoreFilesProcessor = createIgnoreFilesProcessor();
 
     awaitCancellationAndDispose(coroutineScope, this);
-  }
-
-  /**
-   * @deprecated Use {@link #VcsVFSListener(AbstractVcs, CoroutineScope)} followed by {@link #installListeners()}
-   */
-  @Deprecated(forRemoval = true)
-  protected VcsVFSListener(@NotNull Project project, @NotNull AbstractVcs vcs) {
-    //noinspection UsagesOfObsoleteApi
-    this(vcs, childScope(((ComponentManagerEx)project).getCoroutineScope(), "VcsVFSListener", EmptyCoroutineContext.INSTANCE, true));
-    installListeners();
-    myShouldCancelScope = true;
   }
 
   protected void installListeners() {
