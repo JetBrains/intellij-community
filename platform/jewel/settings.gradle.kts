@@ -36,7 +36,6 @@ include(
     ":decorated-window",
     ":foundation",
     ":ide-laf-bridge",
-    ":ide-laf-bridge-tests",
     ":int-ui:int-ui-decorated-window",
     ":int-ui:int-ui-standalone",
     ":detekt-plugin",
