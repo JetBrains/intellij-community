@@ -7,16 +7,16 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
-import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.k2.refactoring.findCallableMemberBySignature
+import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.createSuperTypeEntryForAddition
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
 import org.jetbrains.kotlin.idea.refactoring.pullUp.addMemberToTarget
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.types.Variance
 
 internal data class MemberContext(
     val member: KtCallableDeclaration,
@@ -147,19 +147,14 @@ private fun KaSession.createPushDownActionForClassLikeMember(
             memberInfo.member.symbol as KaClassSymbol,
         ) ?: return null
 
-        val referencedType = superTypeListEntry.typeReference?.type!!
-        val referencedClass = referencedType.expandedSymbol ?: return null
+        val newSpecifier = createSuperTypeEntryForAddition(
+            superTypeListEntry,
+            targetClass,
+            substitutor,
+        ) ?: return null
 
-        val targetClassSymbol = targetClass.symbol as KaClassSymbol
-        if (targetClass.symbol == referencedClass || targetClassSymbol.isDirectSubClassOf(referencedClass)) return null
-
-        val typeInTargetClass = substitutor.substitute(referencedType)
-        if (typeInTargetClass is KaErrorType) return null
-
-        val renderedType = typeInTargetClass.render(position = Variance.INVARIANT)
-        val newSpecifier = KtPsiFactory(targetClass.project).createSuperTypeEntry(renderedType)
         PushDownAction {
-            targetClass.addSuperTypeListEntry(newSpecifier)
+            shortenReferences(targetClass.addSuperTypeListEntry(newSpecifier))
             null
         }
     } else {

@@ -4,14 +4,31 @@ package org.jetbrains.kotlin.idea.k2.refactoring.pullUp
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.types.Variance
+
+@OptIn(KaExperimentalApi::class)
+internal fun KaSession.createSuperTypeEntryForAddition(
+    delegator: KtSuperTypeListEntry,
+    targetClass: KtClassOrObject,
+    substitutor: KaSubstitutor,
+): KtSuperTypeListEntry? {
+    val referencedType = delegator.typeReference?.type ?: return null
+    val referencedClass = referencedType.expandedSymbol ?: return null
+
+    val targetClassSymbol = targetClass.symbol as? KaClassSymbol ?: return null
+    if (targetClassSymbol == referencedClass || targetClassSymbol.isDirectSubClassOf(referencedClass)) return null
+
+    val typeInTargetClass = substitutor.substitute(referencedType)
+    if (typeInTargetClass is KaErrorType) return null
+
+    val renderedType = typeInTargetClass.render(position = Variance.INVARIANT)
+    return KtPsiFactory(targetClass.project).createSuperTypeEntry(renderedType)
+}
 
 @OptIn(KaExperimentalApi::class)
 internal fun KaSession.computeAndRenderReturnType(
