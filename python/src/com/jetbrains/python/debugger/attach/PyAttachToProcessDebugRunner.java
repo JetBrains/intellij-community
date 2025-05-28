@@ -14,7 +14,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyLocalPositionConverter;
 import com.jetbrains.python.debugger.PyRemoteDebugProcess;
-import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,17 +39,6 @@ public class PyAttachToProcessDebugRunner extends PyDebugRunner {
     else {
       mySdkPath = null;
     }
-  }
-
-  /**
-   * @deprecated Use {@link #PyAttachToProcessDebugRunner(Project, int, Sdk)}
-   */
-  @Deprecated(forRemoval = true)
-  public PyAttachToProcessDebugRunner(@NotNull Project project, int pid, @Nullable String sdkPath) {
-    myProject = project;
-    myPid = pid;
-    mySdkPath = sdkPath;
-    mySdk = PythonSdkUtil.findSdkByPath(mySdkPath);
   }
 
   public XDebugSession launch() throws ExecutionException {
