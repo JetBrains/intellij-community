@@ -7,8 +7,8 @@ import com.intellij.java.syntax.lexer.JavaDocLexer
 import com.intellij.java.syntax.lexer.JavaLexer
 import com.intellij.java.syntax.lexer.JavaTypeEscapeLexer
 import com.intellij.platform.syntax.SyntaxElementTypeSet
+import com.intellij.platform.syntax.SyntaxLanguage
 import com.intellij.platform.syntax.element.SyntaxTokenTypes
-import com.intellij.platform.syntax.extensions.SyntaxLanguage
 import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.syntaxElementTypeSetOf
 import com.intellij.pom.java.LanguageLevel

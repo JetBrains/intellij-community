@@ -2,6 +2,7 @@
 package com.intellij.platform.syntax.tree
 
 import com.intellij.platform.syntax.SyntaxElementType
+import com.intellij.platform.syntax.SyntaxLanguage
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -27,5 +28,5 @@ interface SyntaxNode {
 
   val errorMessage: String?
 
-  val language: Any?
+  val language: SyntaxLanguage?
 }

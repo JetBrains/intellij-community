@@ -4,7 +4,7 @@
 package com.intellij.platform.syntax.psi.extensions
 
 import com.intellij.lang.Language
-import com.intellij.platform.syntax.extensions.SyntaxLanguage
+import com.intellij.platform.syntax.SyntaxLanguage
 import org.jetbrains.annotations.ApiStatus
 
 fun SyntaxLanguage.asIntelliJLanguage(): Language =

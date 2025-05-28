@@ -72,6 +72,12 @@
 - *sf:emptySyntaxElementTypeSet():com.intellij.platform.syntax.SyntaxElementTypeSet
 - sf:flattenSyntaxElementTypeSets(com.intellij.platform.syntax.SyntaxElementTypeSet[]):com.intellij.platform.syntax.SyntaxElementTypeSet
 - *sf:syntaxElementTypeSetOf(com.intellij.platform.syntax.SyntaxElementType[]):com.intellij.platform.syntax.SyntaxElementTypeSet
+*f:com.intellij.platform.syntax.SyntaxLanguage
+- equals(java.lang.Object):Z
+- f:getId():java.lang.String
+- hashCode():I
+*f:com.intellij.platform.syntax.SyntaxLanguageKt
+- sf:SyntaxLanguage(java.lang.String):com.intellij.platform.syntax.SyntaxLanguage
 *f:com.intellij.platform.syntax.element.SyntaxTokenTypes
 - sf:INSTANCE:com.intellij.platform.syntax.element.SyntaxTokenTypes
 - sf:getBAD_CHARACTER():com.intellij.platform.syntax.SyntaxElementType
@@ -216,7 +222,7 @@
 - a:getEndOffset():I
 - a:getErrorMessage():java.lang.String
 - a:getFirstChild():com.intellij.platform.syntax.tree.SyntaxNode
-- a:getLanguage():java.lang.Object
+- a:getLanguage():com.intellij.platform.syntax.SyntaxLanguage
 - a:getLastChild():com.intellij.platform.syntax.tree.SyntaxNode
 - a:getNextSibling():com.intellij.platform.syntax.tree.SyntaxNode
 - a:getParent():com.intellij.platform.syntax.tree.SyntaxNode

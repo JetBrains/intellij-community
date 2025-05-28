@@ -3,6 +3,7 @@
 
 package com.intellij.platform.syntax.extensions
 
+import com.intellij.platform.syntax.SyntaxLanguage
 import com.intellij.platform.syntax.extensions.impl.registry
 import org.jetbrains.annotations.ApiStatus
 
@@ -28,7 +29,7 @@ fun ExtensionRegistry(): ExtensionRegistry? = registry as? ExtensionRegistry
  * When working outside of IJ environment, extensions must be registered explicitly.
  *
  * @See ExtensionKey
- * @see SyntaxLanguage
+ * @see com.intellij.platform.syntax.SyntaxLanguage
  * @see ExtensionRegistry
  */
 @ApiStatus.Experimental

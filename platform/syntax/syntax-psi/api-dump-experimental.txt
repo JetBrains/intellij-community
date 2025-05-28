@@ -52,7 +52,7 @@
 *f:com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory$Companion
 - f:getInstance():com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory
 *f:com.intellij.platform.syntax.psi.extensions.IntelliJSyntaxLanguageSupportKt
-- sf:asIntelliJLanguage(com.intellij.platform.syntax.extensions.SyntaxLanguage):com.intellij.lang.Language
+- sf:asIntelliJLanguage(com.intellij.platform.syntax.SyntaxLanguage):com.intellij.lang.Language
 *f:com.intellij.platform.syntax.psi.impl.PsiSyntaxParserRuntimeFactoryImplKt
 - sf:getSyntaxParserRuntimeFactory(com.intellij.lang.Language):com.intellij.platform.syntax.util.runtime.SyntaxParserRuntimeFactory
 *c:com.intellij.platform.syntax.psi.lexer.LexerAdapter
