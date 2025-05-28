@@ -164,6 +164,74 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
     assertEquals("NOT_NULL (@NotNull)", type.getNullability().toString());
   }
 
+  public void testSubstitutorOnTypeParameter() {
+    PsiType type = configureAndGetExpressionType("""
+      import org.jetbrains.annotations.NotNull;
+      import org.jetbrains.annotations.Nullable;
+      
+      class X<T> {
+        native @NotNull T foo();
+      
+        static void test(X<@Nullable String> x) {
+          x.foo(<caret>);
+        }
+      }
+      """);
+    assertEquals("java.lang.String", type.getCanonicalText());
+    assertEquals("NOT_NULL (@NotNull)", type.getNullability().toString());
+  }
+
+  public void testSubstitutorOnTypeParameterArray() {
+    PsiType type = configureAndGetExpressionType("""
+      import org.jetbrains.annotations.NotNull;
+      import org.jetbrains.annotations.Nullable;
+      
+      class X<T> {
+        native @NotNull T foo();
+      
+        static void test(X<@Nullable String[]> x) {
+          x.foo(<caret>);
+        }
+      }
+      """);
+    assertEquals("java.lang.String[]", type.getCanonicalText());
+    assertEquals("NOT_NULL (@NotNull)", type.getNullability().toString());
+  }
+
+  public void testWildcard() {
+    PsiType type = configureAndGetExpressionType("""
+      import org.jetbrains.annotations.NotNull;
+      import org.jetbrains.annotations.Nullable;
+      
+      class X<T> {
+        native X<@NotNull T> foo();
+      
+        static void test(X<? extends @Nullable CharSequence> x) {
+          <caret>x;
+        }
+      }
+      """);
+    assertEquals("X<? extends java.lang.CharSequence>", type.getCanonicalText());
+    assertEquals("NULLABLE (@Nullable)", ((PsiClassType)type).getParameters()[0].getNullability().toString());
+  }
+  
+  public void testSubstitutorOnTypeParameterUnknown() {
+    PsiType type = configureAndGetExpressionType("""
+      import org.jetbrains.annotations.UnknownNullability;
+      import org.jetbrains.annotations.Nullable;
+      
+      class X<T> {
+        native @UnknownNullability T foo();
+      
+        static void test(X<@Nullable String> x) {
+          x.foo(<caret>);
+        }
+      }
+      """);
+    assertEquals("java.lang.String", type.getCanonicalText());
+    assertEquals("UNKNOWN (@UnknownNullability)", type.getNullability().toString());
+  }
+
   public void testSubstitutorOuter() {
     PsiType type = configureAndGetExpressionType("""
       import org.jetbrains.annotations.NotNull;

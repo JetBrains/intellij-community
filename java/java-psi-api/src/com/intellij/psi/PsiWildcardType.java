@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.lang.jvm.types.JvmType;
 import com.intellij.lang.jvm.types.JvmWildcardType;
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,6 +45,23 @@ public final class PsiWildcardType extends PsiType.Stub implements JvmWildcardTy
   public static @NotNull PsiWildcardType createSuper(@NotNull PsiManager manager, @NotNull PsiType bound) {
     LOG.assertTrue(!(bound instanceof PsiWildcardType) && bound != PsiTypes.nullType(), bound);
     return new PsiWildcardType(manager, false, bound);
+  }
+
+  @Override
+  public @NotNull TypeNullability getNullability() {
+    if (myBound != null && isExtends()) {
+      return myBound.getNullability();
+    }
+    return super.getNullability();
+  }
+
+  @Override
+  public @NotNull PsiWildcardType withNullability(@NotNull TypeNullability nullability) {
+    if (myBound != null && isExtends()) {
+      PsiType newBound = myBound.withNullability(nullability);
+      return newBound == myBound ? this : createExtends(getManager(), newBound);
+    }
+    return this;
   }
 
   @Override

@@ -152,6 +152,11 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
   }
 
   @Override
+  public @NotNull PsiClassType withNullability(@NotNull TypeNullability nullability) {
+    return new PsiImmediateClassType(myClass, mySubstitutor, myLanguageLevel, getAnnotationProvider(), myPsiContext, nullability);
+  }
+
+  @Override
   public int getParameterCount() {
     PsiTypeParameterList list = myClass.getTypeParameterList();
     if (list == null) return 0;

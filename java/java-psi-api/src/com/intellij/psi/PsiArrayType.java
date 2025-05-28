@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PsiArrayType extends PsiType.Stub implements JvmArrayType {
   private final PsiType myComponentType;
+  private final TypeNullability myNullability;
 
   public PsiArrayType(@NotNull PsiType componentType) {
     this(componentType, TypeAnnotationProvider.EMPTY);
@@ -23,11 +24,17 @@ public class PsiArrayType extends PsiType.Stub implements JvmArrayType {
   public PsiArrayType(@NotNull PsiType componentType, PsiAnnotation @NotNull [] annotations) {
     super(annotations);
     myComponentType = componentType;
+    myNullability = JavaTypeNullabilityUtil.getNullabilityFromAnnotations(annotations);
   }
 
   public PsiArrayType(@NotNull PsiType componentType, @NotNull TypeAnnotationProvider provider) {
+    this(componentType, provider, JavaTypeNullabilityUtil.getNullabilityFromAnnotations(provider.getAnnotations()));
+  }
+
+  private PsiArrayType(@NotNull PsiType componentType, @NotNull TypeAnnotationProvider provider, @NotNull TypeNullability nullability) {
     super(provider);
     myComponentType = componentType;
+    myNullability = nullability;
   }
 
   @Override
@@ -114,7 +121,17 @@ public class PsiArrayType extends PsiType.Stub implements JvmArrayType {
 
   @Override
   public @NotNull TypeNullability getNullability() {
-    return JavaTypeNullabilityUtil.getNullabilityFromAnnotations(getAnnotations());
+    return myNullability;
+  }
+
+  /**
+   * Creates a new array type with the given nullability.
+   * @param nullability wanted nullability.
+   * @return new array type instance.
+   */
+  @Override
+  public @NotNull PsiArrayType withNullability(@NotNull TypeNullability nullability) {
+    return new PsiArrayType(getComponentType(), getAnnotationProvider(), nullability);
   }
 
   @Override

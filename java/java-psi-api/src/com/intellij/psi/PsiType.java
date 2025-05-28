@@ -94,6 +94,17 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
   }
 
   /**
+   * Returns a type with the specified nullability. May return the original type if nullability update
+   * cannot be performed (e.g., for primitive type)
+   * 
+   * @param nullability wanted nullability
+   * @return the type with the specified nullability, or the original type if nullability cannot be updated.
+   */
+  public @NotNull PsiType withNullability(@NotNull TypeNullability nullability) {
+    return this;
+  }
+
+  /**
    * Creates array type with this type as a component.
    */
   public @NotNull PsiArrayType createArrayType() {

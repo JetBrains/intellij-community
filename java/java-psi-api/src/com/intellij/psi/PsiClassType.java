@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.lang.jvm.JvmTypeDeclaration;
 import com.intellij.lang.jvm.types.JvmReferenceType;
 import com.intellij.lang.jvm.types.JvmSubstitutor;
@@ -47,6 +48,11 @@ public abstract class PsiClassType extends PsiType implements JvmReferenceType {
   @Override
   public @NotNull PsiClassType annotate(@NotNull TypeAnnotationProvider provider) {
     return (PsiClassType)super.annotate(provider);
+  }
+
+  @Override
+  public @NotNull PsiClassType withNullability(@NotNull TypeNullability nullability) {
+    return this;
   }
 
   /**

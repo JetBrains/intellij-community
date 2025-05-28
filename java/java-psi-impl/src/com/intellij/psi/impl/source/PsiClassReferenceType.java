@@ -113,6 +113,15 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
   }
 
   @Override
+  public @NotNull PsiClassType withNullability(@NotNull TypeNullability nullability) {
+    ClassResolveResult result = resolveGenerics();
+    PsiClass psiClass = result.getElement();
+    if (psiClass == null) return this;
+    return new PsiImmediateClassType(
+      psiClass, result.getSubstitutor(), myLanguageLevel, getAnnotationProvider(), getPsiContext(), nullability);
+  }
+
+  @Override
   public @NotNull LanguageLevel getLanguageLevel() {
     if (myLanguageLevel != null) return myLanguageLevel;
     return PsiUtil.getLanguageLevel(getReference());
