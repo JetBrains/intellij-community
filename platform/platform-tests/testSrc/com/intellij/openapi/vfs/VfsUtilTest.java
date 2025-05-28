@@ -473,7 +473,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
       else {
         assertThat(log).containsExactly("modal finished", "non-modal finished");
       }
-    });
+    }, false);
   }
 
   @Test

@@ -983,7 +983,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
       assertNotNull(pointer.getFile());
 
       assertEquals("[before:false, after:true]", listener.log.toString());
-    });
+    }, false);
   }
 
   @Test
