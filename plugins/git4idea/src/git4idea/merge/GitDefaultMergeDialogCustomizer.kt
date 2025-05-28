@@ -420,16 +420,11 @@ private object CommitMessagePreview {
   private const val MAX_LINES = 3
 
   fun asHtmlChunk(commitMessage: @NlsSafe String): HtmlChunk.Element =
-    HtmlChunk.text(trimAndEscape(commitMessage)).wrapWith("pre")
+    HtmlChunk.text(trimMessage(commitMessage)).code()
 
-  private fun trimAndEscape(commitMessage: @NlsSafe String): @NlsSafe String {
+  private fun trimMessage(commitMessage: @NlsSafe String): @NlsSafe String {
     val lines = commitMessage.lines()
-    val trimmedMessage = if (lines.size <= MAX_LINES) {
-      commitMessage
-    } else {
-      lines.take(MAX_LINES).dropLastWhile { it.isBlank() }.joinToString("\n") + StringUtil.ELLIPSIS
-    }
-
-    return StringUtil.escapeXmlEntities(trimmedMessage)
+    return if (lines.size <= MAX_LINES) commitMessage
+    else lines.take(MAX_LINES).dropLastWhile { it.isBlank() }.joinToString("\n") + StringUtil.THREE_DOTS
   }
 }
