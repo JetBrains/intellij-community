@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sourceToSink
 
 import com.intellij.codeInsight.AnnotationTargetUtil
@@ -165,13 +165,7 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
     }
     val toUElement = owner.toUElement()
     if (info == TaintValue.UNKNOWN && toUElement is UVariable) {
-      val uAnnotations =
-        if (toUElement is UField) {
-          toUElement.sourceAnnotations ?: toUElement.uAnnotations
-        } else {
-          toUElement.uAnnotations
-        }
-      return uAnnotations
+      return toUElement.sourceAnnotations()
                .mapNotNull { fromUAnnotation(it) }
                .firstOrNull { it != TaintValue.UNKNOWN } ?: info
     }

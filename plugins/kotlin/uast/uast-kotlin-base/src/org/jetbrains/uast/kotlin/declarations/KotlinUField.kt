@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
@@ -7,12 +7,7 @@ import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.uast.UAnnotation
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UField
-import org.jetbrains.uast.UFieldEx
-import org.jetbrains.uast.UastLazyPart
-import org.jetbrains.uast.getOrBuild
+import org.jetbrains.uast.*
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.visitor.UastVisitor
 
@@ -72,25 +67,19 @@ open class KotlinUField(
 
     private val sourceAnnotationsPart = UastLazyPart<List<UAnnotation>?>()
 
-    override val sourceAnnotations: List<UAnnotation>?
+    override val sourceAnnotations: List<UAnnotation>
         get() = sourceAnnotationsPart.getOrBuild {
-            val entries =
-                when (val origin = sourcePsi) {
+            val entries = when (val origin = sourcePsi) {
                     is KtParameter -> origin.annotationEntries
                     is KtProperty -> origin.annotationEntries
                     else -> return@getOrBuild null
-                }
+            }
             sourceAnnotations(entries)
-        }
+        } ?: emptyList()
 
     private fun sourceAnnotations(entries: List<KtAnnotationEntry>): List<UAnnotation> = buildList {
         for (ktAnnotation in entries) {
-            add(
-                baseResolveProviderService.baseKotlinConverter.convertAnnotation(
-                    ktAnnotation,
-                    this@KotlinUField
-                )
-            )
+            add(baseResolveProviderService.baseKotlinConverter.convertAnnotation(ktAnnotation, this@KotlinUField))
         }
     }
 }

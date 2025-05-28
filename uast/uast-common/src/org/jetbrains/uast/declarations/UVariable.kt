@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast
 
 import com.intellij.psi.*
@@ -96,20 +96,21 @@ interface UField : UVariable, PsiField {
   override val psi: PsiField
 
   /**
-   * Annotations on source PSI.
-   *
-   * If annotations are annotated with no specific use-site, it follows default rules
-   * according to https://kotlinlang.org/docs/annotations.html#annotation-use-site-targets
-   * where `param`, `property`, and `field` are considered in order. Therefore, it is likely
-   * that the annotation is applied to property (before field) and belongs to $annotations
-   * in JVM bytecode. This might not be a user's intention, and some static analyses and/or
-   * inspections still depend on annotation without a use-site on property.
-   * To make [UVariable]'s annotation modeling accurate (i.e., conform to those in JVM bytecode)
-   * while mitigating existing analyses' behavior, this returns annotations on source PSI.
+   * Returns all annotations as defined on the [sourcePsi], in some cases this can differ with [uAnnotations] where only annotations that
+   * are strictly applied to the field are returned. Consider the following example:
+   * ```Java
+   * public @interface Foo { }
+   * ```
+   * ```Kotlin
+   * @Foo
+   * val foo = 0
+   * ```
+   * According to the [Kotlin docs](https://kotlinlang.org/docs/annotations.html#annotation-use-site-targets), if no `@Target` is specified,
+   * the first applicable target will be taken from the following order: param, property, field. Therefore `Foo` will only be applied to the
+   * property and won't be returned in [uAnnotations], to get annotations that are applied to the property, use [sourceAnnotations].
    */
-  @get:ApiStatus.Experimental
-  val sourceAnnotations: List<UAnnotation>?
-    get() = null
+  val sourceAnnotations: List<UAnnotation>
+    @ApiStatus.Experimental get() = uAnnotations
 
   override fun asLogString(): String = log("name = $name")
 
@@ -120,6 +121,24 @@ interface UField : UVariable, PsiField {
   }
 
   override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitField(this, data)
+}
+
+/**
+ * Returns all annotations as defined on the [UElement.sourcePsi].
+ * @see UField.sourceAnnotations
+ */
+@ApiStatus.Experimental
+fun UAnnotated.sourceAnnotations(): List<UAnnotation> {
+  return if (this is UField) sourceAnnotations else uAnnotations
+}
+
+/**
+ * Returns the first source annotation matching [fqName].
+ * @see sourceAnnotations
+ */
+@ApiStatus.Experimental
+fun UAnnotated.findSourceAnnotation(fqName: String): UAnnotation? {
+  return sourceAnnotations().firstOrNull { it.qualifiedName == fqName }
 }
 
 interface UFieldEx : UField, UDeclarationEx {
