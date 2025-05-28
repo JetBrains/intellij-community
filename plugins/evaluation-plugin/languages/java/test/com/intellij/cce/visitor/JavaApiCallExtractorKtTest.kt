@@ -6,6 +6,8 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture
+
 
 class JavaApiCallExtractorKtTest : BasePlatformTestCase() {
   fun `test extract internal API methods within project`() {
@@ -20,7 +22,7 @@ class JavaApiCallExtractorKtTest : BasePlatformTestCase() {
                 }
             }
         """.trimIndent()
-    val psiFile = createPsiFile(code)
+    val psiFile = myFixture.createPsiFile(code)
     val internalMethods = extractCalledInternalApiMethods(psiFile)
 
     assertSize(1, internalMethods)
@@ -35,7 +37,7 @@ class JavaApiCallExtractorKtTest : BasePlatformTestCase() {
                 }
             }
         """.trimIndent()
-    val psiFile = createPsiFile(code)
+    val psiFile = myFixture.createPsiFile(code)
     val internalMethods = extractCalledInternalApiMethods(psiFile)
 
     assertEmpty(internalMethods)
@@ -64,24 +66,23 @@ class JavaApiCallExtractorKtTest : BasePlatformTestCase() {
                 }
             }
         """.trimIndent()
-    val psiFile = createPsiFile(code)
+    val psiFile = myFixture.createPsiFile(code)
     val internalMethods = extractCalledInternalApiMethods(psiFile)
 
     assertSize(1, internalMethods)
     assertEquals("foo", internalMethods[0].name)
   }
+}
 
+internal fun CodeInsightTestFixture.createPsiFile(code: String): PsiFile {
+  val project = this.project
+  val virtualFile = this.tempDirFixture.createFile("MyClass.java", code)
 
-  private fun createPsiFile(code: String): PsiFile {
-    val project = myFixture.project
-    val virtualFile = myFixture.tempDirFixture.createFile("MyClass.java", code)
-
-    lateinit var psiFile: PsiFile
-    ApplicationManager.getApplication().invokeAndWait {
-      WriteCommandAction.runWriteCommandAction(project) {
-        psiFile = PsiManager.getInstance(project).findFile(virtualFile)!!
-      }
+  lateinit var psiFile: PsiFile
+  ApplicationManager.getApplication().invokeAndWait {
+    WriteCommandAction.runWriteCommandAction(project) {
+      psiFile = PsiManager.getInstance(project).findFile(virtualFile)!!
     }
-    return psiFile
   }
+  return psiFile
 }
