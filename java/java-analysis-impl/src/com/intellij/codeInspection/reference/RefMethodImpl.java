@@ -32,6 +32,7 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
   private static final int IS_ONLY_CALLS_SUPER_MASK   = 0b100000_00000000_00000000; // 22nd bit
   private static final int IS_RETURN_VALUE_USED_MASK  = 0b1000000_00000000_00000000; // 23rd bit
   private static final int IS_RECORD_ACCESSOR_MASK    = 0b10000000_00000000_00000000; // 24th bit
+  private static final int HAS_BODY_MASK              = 0b1_00000000_00000000_00000000; // 25th bit
 
   private static final int IS_CALLED_ON_SUBCLASS_MASK = 0b1000_00000000_00000000_00000000; // 28th bit
 
@@ -229,13 +230,7 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
 
   @Override
   public boolean hasBody() {
-    if (!isAbstract()) {
-      RefClass ownerClass = getOwnerClass();
-      if (ownerClass == null || !ownerClass.isInterface()) {
-        return true;
-      }
-    }
-    return !isBodyEmpty();
+    return checkFlag(HAS_BODY_MASK);
   }
 
   private void initializeSuperMethods(PsiMethod method) {
@@ -300,7 +295,14 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
     checkForSuperCall(method);
     setOnlyCallsSuper(refUtil.isMethodOnlyCallsSuper(method));
 
-    setBodyEmpty(isOnlyCallsSuper() || !isExternalOverride() && isEmptyExpression(method.getUastBody()));
+    boolean isBodyEmpty = isOnlyCallsSuper() || !isExternalOverride() && isEmptyExpression(method.getUastBody());
+    setBodyEmpty(isBodyEmpty);
+    if (!isAbstract() && (ownerClass == null || !ownerClass.isInterface())) {
+      setHasBody(method.getUastBody() != null);
+    } else {
+      setHasBody(!isBodyEmpty);
+    }
+
     refUtil.addTypeReference(method, method.getReturnType(), getRefManager(), this);
   }
 
@@ -615,6 +617,10 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
 
   public void setBodyEmpty(boolean bodyEmpty) {
     setFlag(bodyEmpty, IS_BODY_EMPTY_MASK);
+  }
+
+  public void setHasBody(boolean hasBody) {
+    setFlag(hasBody, HAS_BODY_MASK);
   }
 
   private void setOnlyCallsSuper(boolean onlyCallsSuper) {
