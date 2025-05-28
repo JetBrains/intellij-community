@@ -650,6 +650,3 @@ a:com.intellij.openapi.diff.impl.settings.DiffPreviewProvider
 @:org.jetbrains.annotations.CalledInAwt
 - java.lang.annotation.Annotation
 - a:instrument():Z
-@:org.jetbrains.annotations.CalledInBackground
-- java.lang.annotation.Annotation
-- a:instrument():Z
