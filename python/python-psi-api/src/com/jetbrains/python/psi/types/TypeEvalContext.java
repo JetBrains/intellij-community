@@ -171,6 +171,10 @@ public final class TypeEvalContext {
   }
 
   public @Nullable PyType getType(final @NotNull PyTypedElement element) {
+    if (element instanceof PyNoneLiteralExpression) {
+      return element.getType(this, Key.INSTANCE);
+    }
+
     return RecursionManager.doPreventingRecursion(
       Pair.create(element, this),
       false,
