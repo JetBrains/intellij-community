@@ -9,7 +9,6 @@ import com.intellij.codeWithMe.asContextElement
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -208,8 +207,7 @@ open class EditorComposite internal constructor(
       }
       val beforePublisher = project.messageBus.syncAndPreloadPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER)
 
-      // There is no selected editor on the backend: they should be managed by `GuestFileEditorManager`
-      val selectedFileEditor = if (!AppMode.isRemoteDevHost()) getSelectedEditor(fileEditorWithProviders, model.state) else null
+      val selectedFileEditor = getSelectedEditor(fileEditorWithProviders, model.state)
 
       // read not in EDT
       val states = fileEditorWithProviders.map { (_, provider) ->

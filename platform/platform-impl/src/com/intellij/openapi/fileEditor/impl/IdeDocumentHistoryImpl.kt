@@ -75,8 +75,12 @@ open class IdeDocumentHistoryImpl(
 
   private val backPlaces = ArrayDeque<PlaceInfo>()
   private val forwardPlaces = ArrayDeque<PlaceInfo>()
-  private var backInProgress = false
-  private var forwardInProgress = false
+  @ApiStatus.Internal // TODO[khb]: Workaround for IJPL-189399 until IJPL-181928 is fixed
+  var backInProgress: Boolean = false
+    private set
+  @ApiStatus.Internal
+  var forwardInProgress = false
+    private set
   // weak reference here is to avoid leaking Document when it's used as a group id
   private var currentCommandGroupId: Reference<Any>? = null
   // weak reference to avoid memory leaks when clients pass some exotic objects as commandId
