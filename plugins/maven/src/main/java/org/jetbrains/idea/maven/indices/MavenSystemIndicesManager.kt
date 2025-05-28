@@ -279,7 +279,10 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
 
         }
         catch (e: Throwable) {
-          MavenLog.LOG.error(e)
+          try {
+            MavenLog.LOG.error(e)
+          } catch (_: AssertionError) {
+          }
           luceneUpdateStatusMap[idx.repository.url] = MavenIndexUpdateState(
             idx.repository.url, null, null,
             MavenIndexUpdateState.State.FAILED)
