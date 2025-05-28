@@ -8,7 +8,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.use
 import com.intellij.platform.backend.workspace.workspaceModel
-import com.intellij.platform.testFramework.assertion.dependencyAssertion.DependencyAssertions
+import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ContentRootAssertions
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions
 import org.jetbrains.plugins.gradle.importing.syncAction.GradlePhasedSyncTestCase
@@ -113,10 +113,14 @@ class GradleDeclarativeSyncTest : GradlePhasedSyncTestCase() {
           ContentRootAssertions.assertContentRoots(virtualFileUrlManager, storage, "project.main", projectRoot.resolve("src/main"))
           ContentRootAssertions.assertContentRoots(virtualFileUrlManager, storage, "project.test", projectRoot.resolve("src/test"))
 
-          DependencyAssertions.assertModuleLibDep(storage, "project.main", "Gradle: com.google.guava:guava:32.1.3-jre")
-          DependencyAssertions.assertModuleModuleDeps(storage, "project.test", "project.main")
-          DependencyAssertions.assertModuleLibDep(storage, "project.test", "Gradle: com.google.guava:guava:32.1.3-jre")
-          DependencyAssertions.assertModuleLibDep(storage, "project.test", "Gradle: org.junit.jupiter:junit-jupiter:5.10.2")
+          ModuleAssertions.assertModuleEntity(storage, "project.main") { module ->
+            DependencyAssertions.assertLibraryDependency(module, "Gradle: com.google.guava:guava:32.1.3-jre")
+          }
+          ModuleAssertions.assertModuleEntity(storage, "project.test") { module ->
+            DependencyAssertions.assertModuleDependency(module, "project.main")
+            DependencyAssertions.assertLibraryDependency(module, "Gradle: com.google.guava:guava:32.1.3-jre")
+            DependencyAssertions.assertLibraryDependency(module, "Gradle: org.junit.jupiter:junit-jupiter:5.10.2")
+          }
         }
       }
 
@@ -286,7 +290,9 @@ class GradleDeclarativeSyncTest : GradlePhasedSyncTestCase() {
           ContentRootAssertions.assertContentRoots(virtualFileUrlManager, storage, "project.list.main", projectRoot.resolve("list/src/main"))
           ContentRootAssertions.assertContentRoots(virtualFileUrlManager, storage, "project.list.test", projectRoot.resolve("list/src/test"))
 
-          DependencyAssertions.assertModuleLibDep(storage, "project.app.main", "Gradle: org.apache.commons:commons-text:1.11.0")
+          ModuleAssertions.assertModuleEntity(storage, "project.app.main") { module ->
+            DependencyAssertions.assertLibraryDependency(module, "Gradle: org.apache.commons:commons-text:1.11.0")
+          }
 
           // TODO add transitive module dependencies
           //  (if app depends on utilities and utilities depends on list then app should also depend on list)
@@ -295,13 +301,23 @@ class GradleDeclarativeSyncTest : GradlePhasedSyncTestCase() {
           //DependencyAssertions.assertModuleModuleDeps(storage, "project.app.test",
           // "project.app.main", "project.utilities.main", "project.list.main")
 
-          DependencyAssertions.assertModuleLibDep(storage, "project.app.main", "Gradle: org.apache.commons:commons-text:1.11.0")
-          DependencyAssertions.assertModuleLibDep(storage, "project.app.test", "Gradle: org.junit.jupiter:junit-jupiter:5.10.2")
+          ModuleAssertions.assertModuleEntity(storage, "project.app.main") { module ->
+            DependencyAssertions.assertLibraryDependency(module, "Gradle: org.apache.commons:commons-text:1.11.0")
+          }
+          ModuleAssertions.assertModuleEntity(storage, "project.app.test") { module ->
+            DependencyAssertions.assertLibraryDependency(module, "Gradle: org.junit.jupiter:junit-jupiter:5.10.2")
+          }
 
-          DependencyAssertions.assertModuleModuleDeps(storage, "project.utilities.main", "project.list.main")
-          DependencyAssertions.assertModuleModuleDeps(storage, "project.utilities.test", "project.utilities.main", "project.list.main")
+          ModuleAssertions.assertModuleEntity(storage, "project.utilities.main") { module ->
+            DependencyAssertions.assertModuleDependencies(module, "project.list.main")
+          }
+          ModuleAssertions.assertModuleEntity(storage, "project.utilities.test") { module ->
+            DependencyAssertions.assertModuleDependencies(module, "project.utilities.main", "project.list.main")
+          }
 
-          DependencyAssertions.assertModuleModuleDeps(storage, "project.list.test", "project.list.main")
+          ModuleAssertions.assertModuleEntity(storage, "project.list.test") { module ->
+            DependencyAssertions.assertModuleDependency(module, "project.list.main")
+          }
         }
       }
 

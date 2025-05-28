@@ -57,6 +57,7 @@ jvm_library(
     "//android/gradle-dsl",
     "//platform/workspace/storage",
     "//android/gradle-dsl-declarative",
+    "//platform/workspace/jps",
   ]
 )
 

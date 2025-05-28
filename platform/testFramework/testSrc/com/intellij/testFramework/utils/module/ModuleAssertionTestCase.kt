@@ -4,7 +4,14 @@ package com.intellij.testFramework.utils.module
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.DependencyScope.COMPILE
+import com.intellij.platform.workspace.jps.entities.LibraryDependency
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.entities.ModuleDependency
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootTypeId
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -49,5 +56,17 @@ abstract class ModuleAssertionTestCase {
     val sourceRootPath = projectRoot.resolve(relativePath).normalize()
     val sourceRoot = sourceRootPath.toVirtualFileUrl(virtualFileUrlManager)
     sourceRoots += SourceRootEntity(sourceRoot, typeId, NonPersistentEntitySource)
+  }
+
+  fun MutableEntityStorage.addLibraryEntity(libraryName: String) {
+    addEntity(LibraryEntity(libraryName, LibraryTableId.ProjectLibraryTableId, emptyList(), NonPersistentEntitySource))
+  }
+
+  fun ModuleEntity.Builder.addLibraryDependency(libraryName: String) {
+    dependencies += LibraryDependency(LibraryId(libraryName, LibraryTableId.ProjectLibraryTableId), exported = false, COMPILE)
+  }
+
+  fun ModuleEntity.Builder.addModuleDependency(moduleName: String) {
+    dependencies += ModuleDependency(ModuleId(moduleName), exported = false, COMPILE, productionOnTest = false)
   }
 }
