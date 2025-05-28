@@ -474,18 +474,6 @@ public final class ContainerUtil {
   }
 
   /**
-   * @return unmodifiable list (mutation methods throw UnsupportedOperationException) which contains {@code element}.
-   * This collection doesn't contain {@code modCount} field, unlike the {@link Collections#singletonList(Object)}, so it might be useful in extremely space-conscious places.
-   * @deprecated prefer {@link Collections#singletonList(Object)} or {@link List#of(Object)}.
-   */
-  @Contract(pure = true)
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static @Unmodifiable @NotNull <E> ImmutableList<E> immutableSingletonList(E element) {
-    return ImmutableList.singleton(element);
-  }
-
-  /**
    * @deprecated use {@link List#copyOf(Collection)} or {@link Collections#unmodifiableList(List)}
    * @return unmodifiable list (mutation methods throw UnsupportedOperationException) which contains {@code list} elements.
    * When contents of {@code list} changes (e.g. via {@code list.set(0, null)}), this collection contents changes accordingly.

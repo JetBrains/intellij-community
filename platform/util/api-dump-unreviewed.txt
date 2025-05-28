@@ -416,7 +416,6 @@ Fa:com.intellij.openapi.util.AtomicNullableLazyValue
 - isComputed():Z
 f:com.intellij.openapi.util.ClassLoaderUtil
 - s:computeWithClassLoader(java.lang.ClassLoader,com.intellij.openapi.util.ThrowableComputable):java.lang.Object
-- s:runWithClassLoader(java.lang.ClassLoader,com.intellij.openapi.util.Computable):java.lang.Object
 - s:runWithClassLoader(java.lang.ClassLoader,com.intellij.util.ThrowableRunnable):V
 a:com.intellij.openapi.util.ClearableLazyValue
 - java.util.function.Supplier
@@ -2388,15 +2387,6 @@ f:com.intellij.util.concurrency.BoundedTaskExecutor
 - isTerminated():Z
 - shutdown():V
 - shutdownNow():java.util.List
-c:com.intellij.util.concurrency.FixedFuture
-- java.util.concurrent.Future
-- <init>(java.lang.Object):V
-- cancel(Z):Z
-- s:completeExceptionally(java.lang.Throwable):com.intellij.util.concurrency.FixedFuture
-- get():java.lang.Object
-- get(J,java.util.concurrent.TimeUnit):java.lang.Object
-- isCancelled():Z
-- isDone():Z
 f:com.intellij.util.concurrency.Semaphore
 - <init>():V
 - <init>(I):V
@@ -2644,7 +2634,6 @@ f:com.intellij.util.containers.ContainerUtil
 - s:immutableList(java.lang.Object[]):com.intellij.util.containers.ImmutableList
 - s:immutableMapBuilder():com.intellij.util.containers.ContainerUtil$ImmutableMapBuilder
 - s:immutableSet(java.lang.Object[]):java.util.Set
-- s:immutableSingletonList(java.lang.Object):com.intellij.util.containers.ImmutableList
 - s:indexOf(java.util.List,com.intellij.openapi.util.Condition):I
 - s:indexOf(java.lang.Object[],com.intellij.openapi.util.Condition):I
 - s:indexOfIdentity(java.util.List,java.lang.Object):I
@@ -3009,11 +2998,6 @@ f:com.intellij.util.containers.IntArrayList
 - toArray(I,I):I[]
 - toArray(I[]):I[]
 - trimToSize():V
-f:com.intellij.util.containers.IntIntHashMap
-- it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
-- <init>():V
-- <init>(I):V
-- <init>(I,I):V
 c:com.intellij.util.containers.IntStack
 - java.lang.Cloneable
 - <init>():V

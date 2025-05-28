@@ -5296,7 +5296,6 @@ f:com.intellij.util.ui.UIUtil
 - s:getListViewportPadding():java.awt.Insets
 - s:getListViewportPadding(Z):java.awt.Insets
 - s:getLocationOnScreen(javax.swing.JComponent):java.awt.Point
-- s:getMenuFont():java.awt.Font
 - s:getMenuItemDisabledForeground():java.awt.Color
 - s:getMenuItemDisabledForegroundObject():java.lang.Object
 - s:getMultiClickInterval():I

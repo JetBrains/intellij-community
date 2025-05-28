@@ -874,15 +874,6 @@ public final class UIUtil {
   }
 
   /**
-   * @deprecated Use {@link FontUtil#getMenuFont()}
-   */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("unused")
-  public static Font getMenuFont() {
-    return FontUtil.getMenuFont();
-  }
-
-  /**
    * @deprecated use {@link JBUI.CurrentTheme.CustomFrameDecorations#separatorForeground()}
    */
   @Deprecated(forRemoval = true)

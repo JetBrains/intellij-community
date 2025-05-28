@@ -342,7 +342,6 @@ com.intellij.util.ThrowableRunnable
 f:com.intellij.util.containers.ContainerUtilRt
 - <init>():V
 - s:emptyList():java.util.List
-- s:newArrayList():java.util.ArrayList
 - s:newArrayList(java.lang.Object[]):java.util.ArrayList
 - s:newLinkedHashSet(java.lang.Object[]):java.util.LinkedHashSet
 c:com.intellij.util.containers.Stack

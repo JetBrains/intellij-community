@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -245,34 +244,6 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
     @Override
     public int size() {
       return size;
-    }
-  }
-
-  /**
-   * @see ContainerUtil#immutableSingletonList(Object) for explanation
-   */
-  @Contract("_ -> new")
-  static @NotNull <T> ImmutableList<T> singleton(T element) {
-    return new Singleton<>(element);
-  }
-  private static final class Singleton<E> extends ImmutableList<E> {
-    private final E element;
-
-    Singleton(E e) {
-      element = e;
-    }
-
-    @Override
-    public int size() {
-      return 1;
-    }
-
-    @Override
-    public E get(int index) {
-      if (index != 0) {
-        throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size());
-      }
-      return element;
     }
   }
 }
