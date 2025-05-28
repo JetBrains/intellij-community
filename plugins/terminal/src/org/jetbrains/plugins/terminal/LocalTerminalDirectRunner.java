@@ -208,20 +208,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return TerminalProjectOptionsProvider.getInstance(myProject).getShellPath();
   }
 
-  /** @deprecated to be removed */
-  @ApiStatus.Internal
-  @Deprecated(forRemoval = true)
-  public @NotNull List<String> getCommand(@NotNull String shellPath,
-                                                 @NotNull Map<String, String> envs,
-                                                 boolean shellIntegration) {
-    List<String> command = LocalTerminalStartCommandBuilder.convertShellPathToCommand(shellPath);
-    if (shellIntegration) {
-      ShellStartupOptions options = injectShellIntegration(command, envs);
-      return Objects.requireNonNull(options.getShellCommand());
-    }
-    return command;
-  }
-
   @ApiStatus.Internal
   @VisibleForTesting
   public @NotNull ShellStartupOptions injectShellIntegration(@NotNull List<String> shellCommand,
