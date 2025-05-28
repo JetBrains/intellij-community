@@ -795,7 +795,9 @@ class XDebugSessionImpl @JvmOverloads constructor(
       myDispatcher.getMulticaster().stackFrameChanged()
     }
 
-    activateSession(frameChanged)
+    if (myDebuggerManager.currentSession == this) {
+      activateSession(frameChanged)
+    }
   }
 
   fun activateSession(forceUpdateExecutionPosition: Boolean) {
