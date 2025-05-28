@@ -2083,7 +2083,6 @@ f:com.intellij.codeInsight.daemon.impl.ConfigureHighlightingLevelKt
 - sf:getConfigureHighlightingLevelPopup(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.ui.popup.JBPopup
 f:com.intellij.codeInsight.daemon.impl.DaemonListeners
 - com.intellij.openapi.Disposable
-- s:canChangeFileSilently(com.intellij.psi.PsiFileSystemItem):Z
 - s:canChangeFileSilently(com.intellij.psi.PsiFileSystemItem,Z):Z
 - s:canChangeFileSilently(com.intellij.psi.PsiFileSystemItem,Z,com.intellij.util.ThreeState):Z
 - dispose():V
@@ -6799,7 +6798,6 @@ c:com.intellij.find.SearchTextArea
 - com.intellij.ui.components.JBPanel
 - java.beans.PropertyChangeListener
 - sf:JUST_CLEARED_KEY:java.lang.String
-- sf:NEW_LINE_KEYSTROKE:javax.swing.KeyStroke
 - <init>(javax.swing.JTextArea,Z):V
 - <init>(javax.swing.JTextArea,Z,Z):V
 - getMinimumSize():java.awt.Dimension
@@ -7834,7 +7832,6 @@ a:com.intellij.ide.actions.SearchEverywhereBaseAction
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.ide.actions.SearchEverywhereClassifier$EP_Manager
 - s:getListCellRendererComponent(javax.swing.JList,java.lang.Object,I,Z,Z):java.awt.Component
-- s:getProjectScope(com.intellij.openapi.project.Project):com.intellij.psi.search.GlobalSearchScope
 - s:getVirtualFile(java.lang.Object):com.intellij.openapi.vfs.VirtualFile
 - s:isClass(java.lang.Object):Z
 - s:isSymbol(java.lang.Object):Z
@@ -13086,7 +13083,6 @@ c:com.intellij.openapi.roots.ui.configuration.SdkListPresenter
 - <init>(com.intellij.util.Producer):V
 - s:create(com.intellij.openapi.ui.ComboBox,java.util.function.Supplier,java.util.function.Function):javax.swing.ListCellRenderer
 - p:customizeCellRenderer(javax.swing.JList,com.intellij.openapi.roots.ui.configuration.SdkListItem,I,Z,Z):V
-- forType(java.util.function.Function):javax.swing.ListCellRenderer
 - getAccessibleContext():javax.accessibility.AccessibleContext
 - getListCellRendererComponent(javax.swing.JList,com.intellij.openapi.roots.ui.configuration.SdkListItem,I,Z,Z):java.awt.Component
 - s:presentDetectedSdkPath(java.lang.String):java.lang.String
@@ -16626,7 +16622,6 @@ a:com.intellij.tools.BaseToolManager
 - getGroups():java.util.List
 - getTools():java.util.List
 - getTools(java.lang.String):java.util.List
-- pf:registerActions(com.intellij.openapi.actionSystem.ActionManager):V
 - pf:registerActions(com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar):V
 - setTools(java.util.List):V
 - p:unregisterActions(com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar):V

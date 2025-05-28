@@ -539,15 +539,6 @@ public final class DaemonListeners implements Disposable {
     return HighlightingSessionImpl.canChangeFileSilently(file, isInContent, extensionsAllowToChangeFileSilently);
   }
 
-  /**
-   * @deprecated use {@link #canChangeFileSilently(PsiFileSystemItem, boolean, ThreeState)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file) {
-    PluginException.reportDeprecatedUsage("this method", "");
-    return canChangeFileSilently(file, true, ThreeState.UNSURE);
-  }
-
   @Deprecated
   public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file, boolean isInContent) {
     PluginException.reportDeprecatedUsage("this method", "");

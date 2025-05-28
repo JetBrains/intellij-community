@@ -81,14 +81,6 @@ public abstract class BaseToolManager<T extends Tool> implements Disposable {
     CustomActionsSchema.getInstance().initActionIcons();
   }
 
-  /** @deprecated Use {@link #registerActions(ActionRuntimeRegistrar)} */
-  @Deprecated(forRemoval = true)
-  protected final void registerActions(@Nullable ActionManager actionManager) {
-    if (actionManager instanceof ActionManagerEx managerEx) {
-      registerActions(managerEx.asActionRuntimeRegistrar());
-    }
-  }
-
   protected final void registerActions(@NotNull ActionRuntimeRegistrar actionRegistrar) {
     unregisterActions(actionRegistrar);
 

@@ -59,13 +59,6 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
   private static final JBColor BACKGROUND_COLOR = JBColor.namedColor("Editor.SearchField.background", UIUtil.getTextFieldBackground());
   public static final String JUST_CLEARED_KEY = "JUST_CLEARED";
 
-  /**
-   * @deprecated Use {@link #getNewLineKeystroke()} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static final KeyStroke NEW_LINE_KEYSTROKE
-    = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, (SystemInfo.isMac ? META_DOWN_MASK : CTRL_DOWN_MASK) | SHIFT_DOWN_MASK);
-
   private static final ActionButtonLook FIELD_INPLACE_LOOK = new FieldInplaceActionButtonLook();
 
   private static final Border EMPTY_SCROLL_BORDER = JBUI.Borders.empty(2, 0, 2, 2);
