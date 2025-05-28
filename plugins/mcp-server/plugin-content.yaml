@@ -1,0 +1,8 @@
+- name: lib/io.ktor.utils.jar
+  library: io.ktor.utils
+  files:
+  - name: $MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/3/ktor-utils-jvm-3.jar
+  reason: <- intellij.mcpserver
+- name: lib/mcpserver.jar
+  modules:
+  - name: intellij.mcpserver

@@ -31,18 +31,18 @@
 
     <extensionPoints>
         <extensionPoint name="mcpTool"
-                        interface="org.jetbrains.mcpserverplugin.McpTool"
+                        interface="com.intellij.mcpserver.McpTool"
                         dynamic="true"/>
     </extensionPoints>
 
     <extensions defaultExtensionNs="com.intellij">
-        <httpRequestHandler implementation="org.jetbrains.ide.mcp.MCPService"/>
+        <httpRequestHandler implementation="com.intellij.mcpserver.MCPService"/>
         <notificationGroup id="MCPServerPlugin" displayType="BALLOON"/>
-        <postStartupActivity implementation="org.jetbrains.mcpserverplugin.MCPServerStartupValidator"/>
-        <applicationService serviceImplementation="org.jetbrains.mcpserverplugin.settings.PluginSettings"/>
+        <postStartupActivity implementation="com.intellij.mcpserver.MCPServerStartupValidator"/>
+        <applicationService serviceImplementation="com.intellij.mcpserver.settings.PluginSettings"/>
         <applicationConfigurable 
-            instance="org.jetbrains.mcpserverplugin.settings.PluginSettingsConfigurable"
-            id="org.jetbrains.mcpserverplugin.settings"
+            instance="com.intellij.mcpserver.settings.PluginSettingsConfigurable"
+            id="com.intellij.mcpserver.settings"
             displayName="MCP Plugin"
             dynamic="true"
             parentId="tools"/>

@@ -1,0 +1,58 @@
+### auto-generated section `build intellij.mcpserver` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "mcpserver_resources",
+  files = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_library(
+  name = "mcpserver",
+  module_name = "intellij.mcpserver",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/platform-util-io-impl:ide-util-io-impl",
+    "//platform/util",
+    "//platform/ide-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/platform-api:ide",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/built-in-server:builtInServer-impl",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-serialization-core",
+    "//platform/platform-util-netty:ide-util-netty",
+    "@lib//:kotlin-reflect",
+    "@lib//:io-ktor-utils",
+    "//platform/analysis-api:analysis",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/xdebugger-api:debugger",
+    "//platform/refactoring",
+    "//platform/lang-impl",
+    "//platform/usageView",
+    "//platform/core-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/vcs-api:vcs",
+    "//plugins/git4idea:vcs-git",
+    "//platform/dvcs-impl:vcs-dvcs-impl",
+    "//platform/vcs-log/api:vcs-log",
+    "//platform/vcs-log/impl",
+    "@lib//:gson",
+    "//platform/execution-impl",
+    "//plugins/terminal",
+    "@lib//:jediterm-ui",
+    "@lib//:jediterm-core",
+    "//platform/indexing-api:indexing",
+    "@lib//:ktor-client-core",
+    "@lib//:netty-codec-http",
+    "@lib//:netty-buffer",
+  ],
+  exports = ["@lib//:jetbrains-annotations"],
+  runtime_deps = [":mcpserver_resources"]
+)
+### auto-generated section `build intellij.mcpserver` end
