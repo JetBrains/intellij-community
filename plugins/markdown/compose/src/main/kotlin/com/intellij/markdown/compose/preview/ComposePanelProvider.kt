@@ -20,7 +20,7 @@ private class ComposePanelProvider : MarkdownHtmlPanelProvider() {
   }
 
   override fun isAvailable(): AvailabilityInfo {
-    if (Registry.`is`("markdown.experimental.use.compose.for.preview", false) && !AppMode.isRemoteDevHost()) {
+    if (Registry.`is`("enable.markdown.compose.preview.renderer.choice", false) && !AppMode.isRemoteDevHost()) {
       return AvailabilityInfo.AVAILABLE
     }
     return AvailabilityInfo.UNAVAILABLE
