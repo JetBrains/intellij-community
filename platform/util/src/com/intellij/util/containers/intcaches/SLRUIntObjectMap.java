@@ -18,7 +18,7 @@ public final class SLRUIntObjectMap<V> {
   private final LinkedCustomIntObjectHashMap<V> protectedQueue;
   private final LinkedCustomIntObjectHashMap<V> probationalQueue;
 
-  private final SLRUIntObjectMap.@NotNull EvictionCallback<? super V> evictionCallback;
+  private final @NotNull EvictionCallback<? super V> evictionCallback;
 
   private final int protectedQueueSize;
   private final int probationalQueueSize;
