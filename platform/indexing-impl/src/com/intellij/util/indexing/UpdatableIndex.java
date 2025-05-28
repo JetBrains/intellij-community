@@ -28,32 +28,12 @@ public interface UpdatableIndex<Key, Value, Input, FileIndexMetaData> extends In
    */
   @Nullable FileIndexMetaData getFileIndexMetaData(@NotNull IndexedFile file);
 
-  /**
-   * @deprecated use {@linkplain #setIndexedStateForFileOnFileIndexMetaData(int, Object, boolean)}
-   */
-  @SuppressWarnings("unused")
-  @Deprecated(forRemoval = true)
-  default void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable FileIndexMetaData data) {
-    throw new IllegalStateException("Please override setIndexedStateForFileOnFileIndexMetaData(int, FileIndexMetaData, boolean)");
-  }
-
   default void setIndexedStateForFileOnFileIndexMetaData(int fileId,
                                                          @Nullable FileIndexMetaData fileIndexMetaData,
                                                          boolean isProvidedByInfrastructureExtension) {
-    setIndexedStateForFileOnFileIndexMetaData(fileId, fileIndexMetaData);
-  }
-
-  /**
-   * @deprecated use {@linkplain #setIndexedStateForFile(int, IndexedFile, boolean)}
-   */
-  @SuppressWarnings("unused")
-  @Deprecated(forRemoval = true)
-  default void setIndexedStateForFile(int fileId, @NotNull IndexedFile file) {
-    throw new IllegalStateException("Please override setIndexedStateForFile(int, IndexedFile, boolean)");
   }
 
   default void setIndexedStateForFile(int fileId, @NotNull IndexedFile file, boolean isProvidedByInfrastructureExtension) {
-    setIndexedStateForFile(fileId, file);
   }
 
   void invalidateIndexedStateForFile(int fileId);

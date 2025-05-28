@@ -112,17 +112,6 @@ public final class InjectorUtils {
   public record InjectionInfo(@NotNull PsiLanguageInjectionHost host, @NotNull InjectedLanguage language, @NotNull TextRange range) {
   }
 
-  /**
-   * @deprecated use {@link #registerInjection(Language, PsiFile, List, MultiHostRegistrar)}
-   */
-  @Deprecated(forRemoval = true)
-  public static void registerInjection(@Nullable Language language,
-                                       @NotNull List<? extends Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
-                                       @NotNull PsiFile containingFile,
-                                       @NotNull MultiHostRegistrar registrar) {
-    registerInjection(language, containingFile,
-                      ContainerUtil.map(list, trinity -> new InjectionInfo(trinity.first, trinity.second, trinity.third)), registrar);
-  }
   public static void registerInjection(@Nullable Language language,
                                        @NotNull PsiFile containingFile,
                                        @NotNull List<InjectionInfo> list,

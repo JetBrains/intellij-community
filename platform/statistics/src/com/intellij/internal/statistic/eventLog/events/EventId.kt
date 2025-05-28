@@ -14,10 +14,7 @@ import kotlin.collections.plus
 import kotlin.collections.toList
 
 abstract class BaseEventId(val eventId: String, val recorder: String, val description: String?) {
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Recorder ID should be explicitly provided", replaceWith = ReplaceWith("BaseEventId(eventId, recorder)"))
-  constructor(eventId: String) : this(eventId, "FUS", null)
-
+  
   internal fun getLogger(): StatisticsEventLogger = StatisticsEventLogProviderUtil.getEventLogProvider(recorder).logger
 
   abstract fun getFields(): List<EventField<*>>

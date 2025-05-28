@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeInsight.daemon.GutterMark;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInsight.multiverse.*;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.AccessToken;
@@ -473,24 +472,6 @@ public final class UpdateHighlightersUtil {
       // in theory, rogue plugin might register a listener on range marker 'dispose', which can do nasty things, including throwing exceptions,
       // but in highlighting, range highlighters must be removed no matter what, to avoid sticky highlighters, so ignore these exceptions
       LOG.warn(e);
-    }
-  }
-
-  /**
-   * @deprecated Do not use. This method might break highlighting, left for binary compatibility only
-   */
-  @Deprecated(forRemoval = true)
-  @ApiStatus.Internal
-  public static void removeHighlightersWithExactRange(@NotNull Document document, @NotNull Project project, @NotNull Segment range) {
-    if (IntentionPreviewUtils.isIntentionPreviewActive()) return;
-    ThreadingAssertions.assertEventDispatchThread();
-    MarkupModel model = DocumentMarkupModel.forDocument(document, project, false);
-    if (model == null) return;
-
-    for (RangeHighlighter highlighter : model.getAllHighlighters()) {
-      if (TextRange.areSegmentsEqual(range, highlighter)) {
-        model.removeHighlighter(highlighter);
-      }
     }
   }
 }

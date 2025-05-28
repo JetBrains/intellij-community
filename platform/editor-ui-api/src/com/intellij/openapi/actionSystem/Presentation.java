@@ -669,12 +669,6 @@ public final class Presentation implements Cloneable {
 
   /** @deprecated The feature is dropped. See {@link com.intellij.ide.actions.WeighingActionGroup} */
   @Deprecated(forRemoval = true)
-  public double getWeight() {
-    return 0;
-  }
-
-  /** @deprecated The feature is dropped. See {@link com.intellij.ide.actions.WeighingActionGroup} */
-  @Deprecated(forRemoval = true)
   public void setWeight(double ignore) {
   }
 

@@ -1332,7 +1332,6 @@ f:com.intellij.openapi.actionSystem.Presentation
 - getTextWithMnemonic():java.lang.String
 - getTextWithMnemonic(java.util.function.Supplier,Z):java.util.function.Supplier
 - getTextWithPossibleMnemonic():java.util.function.Supplier
-- getWeight():D
 - isApplicationScope():Z
 - isDisableGroupIfEmpty():Z
 - isEnabled():Z

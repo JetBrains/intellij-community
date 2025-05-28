@@ -168,8 +168,6 @@ a:com.intellij.openapi.module.ConfigurationErrorType
 - getFeatureType():java.lang.String
 f:com.intellij.openapi.module.impl.ModuleGroupersKt
 - sf:splitStringByDotsJoiningIncorrectIdentifiers(java.lang.String):kotlin.Pair
-f:com.intellij.openapi.module.impl.ModulePathKt
-- sf:getModuleNameByFilePath(java.lang.String):java.lang.String
 a:com.intellij.openapi.options.BaseSchemeProcessor
 - com.intellij.openapi.options.NonLazySchemeProcessor
 - <init>():V

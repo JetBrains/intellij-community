@@ -1454,20 +1454,6 @@ f:com.intellij.codeInspection.ProblemDescriptorUtil
 com.intellij.codeInspection.ProblemDescriptorUtil$ProblemPresentation
 - a:getDescription():java.lang.String
 - a:getTooltip():java.lang.String
-c:com.intellij.codeInspection.SetInspectionOptionFix
-- com.intellij.codeInspection.IntentionAndQuickFixAction
-- com.intellij.codeInsight.intention.LowPriorityAction
-- com.intellij.openapi.util.Iconable
-- <init>(com.intellij.codeInspection.LocalInspectionTool,java.lang.String,java.lang.String,I):V
-- <init>(com.intellij.codeInspection.LocalInspectionTool,java.lang.String,java.lang.String,Z):V
-- applyFix(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
-- availableInBatchMode():Z
-- generatePreview(com.intellij.openapi.project.Project,com.intellij.codeInspection.ProblemDescriptor):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
-- generatePreview(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
-- getFamilyName():java.lang.String
-- getIcon(I):javax.swing.Icon
-- getName():java.lang.String
-- startInWriteAction():Z
 f:com.intellij.codeInspection.SuppressIntentionActionFromFix
 - com.intellij.codeInspection.SuppressIntentionAction
 - java.lang.Comparable
