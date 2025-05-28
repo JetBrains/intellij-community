@@ -84,3 +84,5 @@ inline fun <reified T> PluginSpecBuilder.includePackageClassFiles(): Unit = incl
 fun PluginSpecBuilder.includePackageClassFiles(packageFqn: String) {
   packageClassFiles += packageFqn
 }
+
+fun PluginSpecBuilder.dependsIntellijModulesLang(): Unit = depends("com.intellij.modules.lang")
