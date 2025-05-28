@@ -771,7 +771,6 @@ f:org.jetbrains.jewel.ui.component.TabState$Companion
 - f:of-59c8LF8(Z,Z,Z,Z,Z):J
 - bs:of-59c8LF8$default(org.jetbrains.jewel.ui.component.TabState$Companion,Z,Z,Z,Z,Z,I,java.lang.Object):J
 f:org.jetbrains.jewel.ui.component.TabStripKt
-- sf:TabStrip(java.util.List,org.jetbrains.jewel.ui.component.styling.TabStyle,androidx.compose.ui.Modifier,Z,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.ui.component.TabStripState
 - org.jetbrains.jewel.foundation.state.FocusableComponentState
 - sf:Companion:org.jetbrains.jewel.ui.component.TabStripState$Companion
