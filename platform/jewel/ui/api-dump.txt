@@ -244,3 +244,17 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$General
 - sf:ZoomIn:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ZoomOut:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - <init>():V
+org.jetbrains.jewel.ui.painter.PainterHint
+- sf:None:org.jetbrains.jewel.ui.painter.PainterHint$None
+- canApply(org.jetbrains.jewel.ui.painter.PainterProviderScope):Z
+org.jetbrains.jewel.ui.painter.PainterPathHint
+- org.jetbrains.jewel.ui.painter.PainterHint
+- a:patch(org.jetbrains.jewel.ui.painter.PainterProviderScope):java.lang.String
+org.jetbrains.jewel.ui.painter.PainterProviderScope
+- androidx.compose.ui.unit.Density
+- a:getAcceptedHints():java.util.List
+- a:getPath():java.lang.String
+- a:getRawPath():java.lang.String
+org.jetbrains.jewel.ui.painter.ResourcePainterProviderScope
+- org.jetbrains.jewel.ui.painter.PainterProviderScope
+- a:getClassLoaders():java.util.Set
