@@ -258,7 +258,6 @@ a:com.intellij.execution.actions.BaseRunConfigurationAction
 - p:isEnabledFor(com.intellij.execution.configurations.RunConfiguration):Z
 - p:isEnabledFor(com.intellij.execution.configurations.RunConfiguration,com.intellij.execution.actions.ConfigurationContext):Z
 - p:perform(com.intellij.execution.RunnerAndConfigurationSettings,com.intellij.execution.actions.ConfigurationContext):V
-- p:perform(com.intellij.execution.actions.ConfigurationContext):V
 - s:suggestRunActionName(com.intellij.execution.configurations.LocatableConfiguration):java.lang.String
 - s:suggestRunActionName(com.intellij.execution.configurations.RunConfiguration):java.lang.String
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V

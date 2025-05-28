@@ -298,7 +298,6 @@ a:com.intellij.execution.RunManager
 - a:removeConfiguration(com.intellij.execution.RunnerAndConfigurationSettings):V
 - a:setSelectedConfiguration(com.intellij.execution.RunnerAndConfigurationSettings):V
 - a:setTemporaryConfiguration(com.intellij.execution.RunnerAndConfigurationSettings):V
-- f:setUniqueNameIfNeed(com.intellij.execution.RunnerAndConfigurationSettings):Z
 - f:setUniqueNameIfNeeded(com.intellij.execution.RunnerAndConfigurationSettings):Z
 - f:setUniqueNameIfNeeded(com.intellij.execution.configurations.RunConfiguration):Z
 - a:shouldSetRunConfigurationFromContext():Z
