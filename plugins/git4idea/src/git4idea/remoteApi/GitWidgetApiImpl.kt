@@ -11,7 +11,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsMappingListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.project.findProject
+import com.intellij.platform.project.findProjectOrNull
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
 import com.intellij.vcs.git.shared.rpc.GitWidgetApi
@@ -30,10 +30,11 @@ import git4idea.repo.GitRepositoryIdCache
 import git4idea.repo.GitRepositoryStateChangeListener
 import git4idea.ui.branch.GitCurrentBranchPresenter
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 
 internal class GitWidgetApiImpl : GitWidgetApi {
   override suspend fun getWidgetState(projectId: ProjectId, selectedFile: VirtualFileId?): Flow<GitWidgetState> {
-    val project = projectId.findProject()
+    val project = projectId.findProjectOrNull() ?: return emptyFlow()
     val file = selectedFile?.virtualFile()
     val scope = GitDisposable.getInstance(project).childScope("Git widget update scope")
 

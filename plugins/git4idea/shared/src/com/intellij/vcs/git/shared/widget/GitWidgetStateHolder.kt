@@ -8,7 +8,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.project.projectId
+import com.intellij.platform.project.projectIdOrNull
 import com.intellij.vcs.git.shared.rpc.GitWidgetApi
 import com.intellij.vcs.git.shared.rpc.GitWidgetState
 import kotlinx.coroutines.CoroutineScope
@@ -36,7 +36,8 @@ internal class GitWidgetStateHolder(private val project: Project, private val cs
     synchronized(this) {
       stateUpdateJob?.cancel()
       stateUpdateJob = cs.launch {
-        GitWidgetApi.getInstance().getWidgetState(project.projectId(), selectedFile?.rpcId()).collect {
+        val projectId = project.projectIdOrNull() ?: return@launch
+        GitWidgetApi.getInstance().getWidgetState(projectId, selectedFile?.rpcId()).collect {
           currentState = it
         }
       }
