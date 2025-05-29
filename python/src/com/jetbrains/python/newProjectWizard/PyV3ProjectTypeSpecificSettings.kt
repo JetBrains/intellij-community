@@ -4,7 +4,7 @@ package com.jetbrains.python.newProjectWizard
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
-import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.PyResult
 
 /**
  * Implementation must have fields and generate project-specific (like Django) things using them i.e:
@@ -21,5 +21,5 @@ fun interface PyV3ProjectTypeSpecificSettings {
    * Generate project-specific things in [baseDir].
    * You might need to [installPackages] on [sdk].
    */
-  suspend fun generateProject(module: Module, baseDir: VirtualFile, sdk: Sdk, errorSink: ErrorSink)
+  suspend fun generateProject(module: Module, baseDir: VirtualFile, sdk: Sdk): PyResult<Unit>
 }

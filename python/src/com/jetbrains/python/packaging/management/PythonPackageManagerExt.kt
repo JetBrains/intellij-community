@@ -3,6 +3,8 @@
 
 package com.jetbrains.python.packaging.management
 
+import com.jetbrains.python.PyBundle
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.normalizePackageName
@@ -10,6 +12,17 @@ import com.jetbrains.python.packaging.pyRequirementVersionSpec
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import org.jetbrains.annotations.ApiStatus
+
+
+@ApiStatus.Internal
+suspend fun PythonPackageManager.installPackages(vararg packages: String): PyResult<List<PythonPackage>> {
+  waitForInit()
+  val specifications = packages.map {
+    findPackageSpecification(normalizePackageName(it))
+    ?: return PyResult.localizedError(PyBundle.message("python.packaging.installing.error.failed.to.find.specification", it))
+  }
+  return installPackage(PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(specifications))
+}
 
 
 @ApiStatus.Internal
