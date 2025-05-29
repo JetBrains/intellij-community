@@ -108,10 +108,6 @@ class SePopupVm(
     }
   }
 
-  private fun addTab() {
-
-  }
-
   fun selectNextTab() {
     val oldIndex = currentTabIndex.value
     currentTabIndex.value = (currentTabIndex.value + 1) % tabVms.size
