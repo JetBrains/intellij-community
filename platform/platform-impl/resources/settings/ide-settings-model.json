@@ -4463,7 +4463,7 @@
       "name": "WebTypesNpmLoader",
       "scope": "app",
       "pluginId": "JavaScript",
-      "classFqn": "com.intellij.javascript.webSymbols.nodejs.WebTypesNpmLoader",
+      "classFqn": "com.intellij.javascript.polySymbols.nodejs.WebTypesNpmLoader",
       "storage": "web-types-npm-loader.xml",
       "properties": [
         {

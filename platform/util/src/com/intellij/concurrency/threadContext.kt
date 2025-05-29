@@ -152,7 +152,7 @@ private val VIOLATORS : List<String> = listOf(
   "com.intellij.ide.ui.popup",
   "com.intellij.ui",
   "org.jetbrains.io",
-  "com.intellij.javascript.webSymbols.nodejs.WebTypesNpmLoader",
+  "com.intellij.javascript.polySymbols.nodejs.WebTypesNpmLoader",
   "com.intellij.tasks",
   "com.intellij.util.concurrency.Invoker",
   /**

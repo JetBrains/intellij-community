@@ -1176,7 +1176,7 @@
             {
               "key": "class",
               "type": "string",
-              "value": "com.intellij.javascript.webSymbols.nodejs.PackageJsonPolySymbolsRegistryManagerStartup"
+              "value": "com.intellij.javascript.polySymbols.nodejs.PackageJsonPolySymbolsRegistryManagerStartup"
             }
           ]
         },

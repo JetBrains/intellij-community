@@ -334,8 +334,8 @@ fun PsiFile.findOffsetBySignature(signature: String): Int {
 
 fun CodeInsightTestFixture.polySymbolAtCaret(): PolySymbol? =
   injectionThenHost(file, caretOffset) { file, offset ->
-    file.webSymbolDeclarationsAt(offset).takeIf { it.isNotEmpty() }
-    ?: if (offset > 0) file.webSymbolDeclarationsAt(offset - 1).takeIf { it.isNotEmpty() } else null
+    file.polySymbolDeclarationsAt(offset).takeIf { it.isNotEmpty() }
+    ?: if (offset > 0) file.polySymbolDeclarationsAt(offset - 1).takeIf { it.isNotEmpty() } else null
   }
     ?.takeIf { it.isNotEmpty() }
     ?.also { if (it.size > 1) throw AssertionError("Multiple PolySymbolDeclarations found at caret position: $it") }
@@ -402,7 +402,7 @@ private fun Collection<PsiSymbolReference>.resolveToPolySymbols(): List<PolySymb
     }
     .toList()
 
-private fun PsiFile.webSymbolDeclarationsAt(offset: Int): Collection<PolySymbolDeclaration> {
+private fun PsiFile.polySymbolDeclarationsAt(offset: Int): Collection<PolySymbolDeclaration> {
   for ((element, offsetInElement) in elementsAtOffsetUp(offset)) {
     val declarations = PolySymbolDeclarationProvider.getAllDeclarations(element, offsetInElement)
     if (declarations.isNotEmpty()) {
@@ -426,9 +426,9 @@ private fun <T> injectionThenHost(file: PsiFile, offset: Int, computation: (PsiF
 }
 
 fun CodeInsightTestFixture.resolveToPolySymbolSource(signature: String): PsiElement {
-  val webSymbol = resolvePolySymbolReference(signature)
-  val result = assertInstanceOf<PsiSourcedPolySymbol>(webSymbol).source
-  assertNotNull("PolySymbol $webSymbol source is null", result)
+  val polySymbol = resolvePolySymbolReference(signature)
+  val result = assertInstanceOf<PsiSourcedPolySymbol>(polySymbol).source
+  assertNotNull("PolySymbol $polySymbol source is null", result)
   return result!!
 }
 

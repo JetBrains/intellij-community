@@ -302,7 +302,7 @@ internal open class PolySymbolMatchImpl private constructor(
   }
 
   private class PolySymbolMatchPointer<T : PolySymbolMatch>(
-    webSymbolMatch: PolySymbolMatchImpl,
+    polySymbolMatch: PolySymbolMatchImpl,
     private val newInstanceProvider: (
       matchedName: String,
       nameSegments: List<PolySymbolNameSegment>,
@@ -315,15 +315,15 @@ internal open class PolySymbolMatchImpl private constructor(
     ) -> T,
   ) : Pointer<T> {
 
-    private val matchedName = webSymbolMatch.matchedName
-    private val nameSegments = webSymbolMatch.nameSegments
+    private val matchedName = polySymbolMatch.matchedName
+    private val nameSegments = polySymbolMatch.nameSegments
       .map { it.createPointer() }
-    private val namespace = webSymbolMatch.namespace
-    private val kind = webSymbolMatch.kind
-    private val origin = webSymbolMatch.origin
-    private val explicitPriority = webSymbolMatch.explicitPriority
-    private val explicitProximity = webSymbolMatch.explicitProximity
-    private val additionalProperties = webSymbolMatch.additionalProperties
+    private val namespace = polySymbolMatch.namespace
+    private val kind = polySymbolMatch.kind
+    private val origin = polySymbolMatch.origin
+    private val explicitPriority = polySymbolMatch.explicitPriority
+    private val explicitProximity = polySymbolMatch.explicitProximity
+    private val additionalProperties = polySymbolMatch.additionalProperties
       .createPointers()
 
     override fun dereference(): T? =
