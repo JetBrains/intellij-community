@@ -13,11 +13,11 @@ object PsiWebSymbolReferenceProviders {
   /**
    * Given language of a host element returns list of providers that could provide references from this language.
    */
-  internal fun byLanguage(language: Language): WebSymbolLanguageReferenceProviders {
+  internal fun byLanguage(language: Language): PolySymbolLanguageReferenceProviders {
     return EP_NAME.computeIfAbsent(language, PsiWebSymbolReferenceProviders::class.java) { byLanguageInner(it) }
   }
 
-  private fun byLanguageInner(language: Language): WebSymbolLanguageReferenceProviders {
+  private fun byLanguageInner(language: Language): PolySymbolLanguageReferenceProviders {
     val result = mutableListOf<PsiWebSymbolReferenceProviderBean>()
     for (bean in EP_NAME.extensionList) {
       val hostLanguage = bean.getHostLanguage()
@@ -29,6 +29,6 @@ object PsiWebSymbolReferenceProviders {
         result.add(bean)
       }
     }
-    return WebSymbolLanguageReferenceProviders(result)
+    return PolySymbolLanguageReferenceProviders(result)
   }
 }

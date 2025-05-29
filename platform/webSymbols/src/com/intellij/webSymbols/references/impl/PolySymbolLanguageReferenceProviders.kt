@@ -5,7 +5,7 @@ import com.intellij.model.psi.PsiExternalReferenceHost
 import com.intellij.util.SmartList
 import java.util.concurrent.ConcurrentHashMap
 
-internal class WebSymbolLanguageReferenceProviders(private val myBeans: MutableList<PsiWebSymbolReferenceProviderBean>) {
+internal class PolySymbolLanguageReferenceProviders(private val myBeans: MutableList<PsiWebSymbolReferenceProviderBean>) {
   private val myBeansByHostClass = ConcurrentHashMap<Class<*>, List<PsiWebSymbolReferenceProviderBean>>()
 
   fun byHostClass(aClass: Class<out PsiExternalReferenceHost>): List<PsiWebSymbolReferenceProviderBean> {
