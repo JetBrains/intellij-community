@@ -33,6 +33,7 @@ import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection.Ltr
 import androidx.compose.ui.unit.dp
@@ -57,6 +58,8 @@ import org.jetbrains.jewel.markdown.MarkdownBlock.Paragraph
 import org.jetbrains.jewel.markdown.MarkdownBlock.ThematicBreak
 import org.jetbrains.jewel.markdown.WithInlineMarkdown
 import org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension
+import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered.NumberFormatStyles
+import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Unordered.BulletCharStyles
 import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.component.Divider
 import org.jetbrains.jewel.ui.component.HorizontallyScrollableContainer
@@ -287,8 +290,11 @@ public open class DefaultMarkdownBlockRenderer(
             for ((index, item) in block.children.withIndex()) {
                 Row {
                     val number = block.startFrom + index
+                    val numberFormat = styling.numberFormatStyles.formatFor(item.level)
+                    val formattedNumber = numberFormat.formatNumber(number)
+
                     Text(
-                        text = "$number${block.delimiter}",
+                        text = "$formattedNumber${block.delimiter}",
                         style = styling.numberStyle,
                         color = styling.numberStyle.color.takeOrElse { LocalContentColor.current },
                         modifier =
@@ -305,6 +311,13 @@ public open class DefaultMarkdownBlockRenderer(
             }
         }
     }
+
+    private fun NumberFormatStyles.formatFor(level: Int) =
+        when (level) {
+            0 -> firstLevel
+            1 -> secondLevel
+            else -> thirdLevel
+        }
 
     @Composable
     override fun render(
@@ -325,13 +338,17 @@ public open class DefaultMarkdownBlockRenderer(
         Column(modifier = modifier.padding(styling.padding), verticalArrangement = Arrangement.spacedBy(itemSpacing)) {
             for (item in block.children) {
                 Row {
+                    val charMarkerStyle = styling.bulletCharStyles?.formatFor(item.level) ?: styling.bullet
+
                     Text(
-                        text = styling.bullet.toString(),
+                        text = charMarkerStyle.toString(),
                         style = styling.bulletStyle,
                         color = styling.bulletStyle.color.takeOrElse { LocalContentColor.current },
                         modifier =
                             Modifier.focusProperties { canFocus = false }
+                                .widthIn(min = styling.markerMinWidth)
                                 .pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
+                        textAlign = TextAlign.Center,
                     )
 
                     Spacer(Modifier.width(styling.bulletContentGap))
@@ -342,6 +359,13 @@ public open class DefaultMarkdownBlockRenderer(
         }
     }
 
+    private fun BulletCharStyles.formatFor(level: Int) =
+        when (level) {
+            0 -> firstLevel
+            1 -> secondLevel
+            else -> thirdLevel
+        }
+
     @Composable
     override fun render(
         block: ListItem,
@@ -350,8 +374,10 @@ public open class DefaultMarkdownBlockRenderer(
         onTextClick: () -> Unit,
         modifier: Modifier,
     ) {
-        Column(modifier, verticalArrangement = Arrangement.spacedBy(rootStyling.blockVerticalSpacing)) {
-            render(block.children, enabled, onUrlClick, onTextClick, Modifier)
+        Column(modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            for (childBlock in block.children) {
+                render(childBlock, enabled, onUrlClick, onTextClick, Modifier)
+            }
         }
     }
 

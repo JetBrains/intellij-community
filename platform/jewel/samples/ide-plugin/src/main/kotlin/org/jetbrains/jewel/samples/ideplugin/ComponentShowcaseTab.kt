@@ -420,6 +420,8 @@ private fun MarkdownExample(project: Project) {
                 | * Images
                 | * Tables
                 | * And more — I am running out of random things to say 😆
+                |    * But I'm not!
+                |       * Have fun indenting your lists as your heart pleases!
                 |
                 |```kotlin
                 |fun hello() = "World"
