@@ -33,7 +33,7 @@ import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolNameSegment
 import com.intellij.webSymbols.PolySymbolNameSegment.MatchProblem
 import com.intellij.webSymbols.PolySymbolQualifiedKind
-import com.intellij.webSymbols.WebSymbolsBundle
+import com.intellij.webSymbols.PolySymbolsBundle
 import com.intellij.webSymbols.declarations.WebSymbolDeclarationProvider
 import com.intellij.webSymbols.highlighting.WebSymbolHighlightingCustomizer
 import com.intellij.webSymbols.highlighting.newSilentAnnotationWithDebugInfo
@@ -282,19 +282,19 @@ private val ProblemKind.defaultSeverity: HighlightSeverity
 
 @InspectionMessage
 internal fun getDefaultProblemMessage(kind: ProblemKind, symbolKindName: String?): String {
-  @PropertyKey(resourceBundle = WebSymbolsBundle.BUNDLE)
+  @PropertyKey(resourceBundle = PolySymbolsBundle.BUNDLE)
   val key = when (kind) {
-    ProblemKind.DeprecatedSymbol -> return WebSymbolsBundle.message("web.inspection.message.deprecated.symbol.message") +
+    ProblemKind.DeprecatedSymbol -> return PolySymbolsBundle.message("web.inspection.message.deprecated.symbol.message") +
                                            " " +
-                                           WebSymbolsBundle.message("web.inspection.message.deprecated.symbol.explanation")
-    ProblemKind.ObsoleteSymbol -> return WebSymbolsBundle.message("web.inspection.message.obsolete.symbol.message") +
+                                           PolySymbolsBundle.message("web.inspection.message.deprecated.symbol.explanation")
+    ProblemKind.ObsoleteSymbol -> return PolySymbolsBundle.message("web.inspection.message.obsolete.symbol.message") +
                                          " " +
-                                         WebSymbolsBundle.message("web.inspection.message.deprecated.symbol.explanation")
+                                         PolySymbolsBundle.message("web.inspection.message.deprecated.symbol.explanation")
     ProblemKind.UnknownSymbol -> "web.inspection.message.segment.unrecognized-identifier"
     ProblemKind.MissingRequiredPart -> "web.inspection.message.segment.missing"
     ProblemKind.DuplicatedPart -> "web.inspection.message.segment.duplicated"
   }
-  return WebSymbolsBundle.message(key, symbolKindName ?: WebSymbolsBundle.message("web.inspection.message.segment.default-subject"))
+  return PolySymbolsBundle.message(key, symbolKindName ?: PolySymbolsBundle.message("web.inspection.message.segment.default-subject"))
 }
 
 private class InspectionToolInfo(

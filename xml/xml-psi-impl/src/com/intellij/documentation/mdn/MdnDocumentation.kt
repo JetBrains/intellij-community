@@ -25,7 +25,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.*
 import com.intellij.util.asSafely
 import com.intellij.webSymbols.PolySymbolApiStatus
-import com.intellij.webSymbols.WebSymbolsBundle
+import com.intellij.webSymbols.PolySymbolsBundle
 import com.intellij.xml.frontback.impl.icons.XmlFrontbackImplIcons
 import com.intellij.xml.util.HtmlUtil
 import org.jetbrains.annotations.ApiStatus
@@ -246,7 +246,7 @@ class MdnSymbolDocumentationAdapter(
       }
       doc.status?.asSequence()
         ?.filter { it != MdnApiStatus.StandardTrack }
-        ?.map { Pair(WebSymbolsBundle.message("mdn.documentation.section.status." + it.name), "") }
+        ?.map { Pair(PolySymbolsBundle.message("mdn.documentation.section.status." + it.name), "") }
         ?.toMap(result)
       return result.map { (key, value) -> Pair(key.fixUrls(), value.fixUrls()) }.toMap()
     }

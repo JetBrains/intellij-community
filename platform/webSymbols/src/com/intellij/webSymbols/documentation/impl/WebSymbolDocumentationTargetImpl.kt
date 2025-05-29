@@ -15,7 +15,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolApiStatus
 import com.intellij.webSymbols.PolySymbolOrigin
-import com.intellij.webSymbols.WebSymbolsBundle
+import com.intellij.webSymbols.PolySymbolsBundle
 import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 import com.intellij.webSymbols.documentation.WebSymbolDocumentationTarget
 import com.intellij.webSymbols.impl.scaleToHeight
@@ -112,28 +112,28 @@ internal class WebSymbolDocumentationTargetImpl(
 
     private fun buildSections(doc: WebSymbolDocumentation): Map<String, String> =
       LinkedHashMap(doc.descriptionSections).also { sections ->
-        if (doc.required) sections[WebSymbolsBundle.message("mdn.documentation.section.isRequired")] = ""
+        if (doc.required) sections[PolySymbolsBundle.message("mdn.documentation.section.isRequired")] = ""
         doc.apiStatus?.let { status ->
           when (status) {
             is PolySymbolApiStatus.Deprecated -> {
-              sections[WebSymbolsBundle.message("mdn.documentation.section.status.Deprecated")] = status.message ?: ""
-              status.since?.let { sections[WebSymbolsBundle.message("mdn.documentation.section.status.DeprecatedSince")] = it }
+              sections[PolySymbolsBundle.message("mdn.documentation.section.status.Deprecated")] = status.message ?: ""
+              status.since?.let { sections[PolySymbolsBundle.message("mdn.documentation.section.status.DeprecatedSince")] = it }
             }
             is PolySymbolApiStatus.Obsolete -> {
-              sections[WebSymbolsBundle.message("mdn.documentation.section.status.Obsolete")] = status.message ?: ""
-              status.since?.let { sections[WebSymbolsBundle.message("mdn.documentation.section.status.ObsoleteSince")] = it }
+              sections[PolySymbolsBundle.message("mdn.documentation.section.status.Obsolete")] = status.message ?: ""
+              status.since?.let { sections[PolySymbolsBundle.message("mdn.documentation.section.status.ObsoleteSince")] = it }
             }
             is PolySymbolApiStatus.Experimental -> {
-              sections[WebSymbolsBundle.message("mdn.documentation.section.status.Experimental")] = status.message ?: ""
-              status.since?.let { sections[WebSymbolsBundle.message("mdn.documentation.section.status.Since")] = it }
+              sections[PolySymbolsBundle.message("mdn.documentation.section.status.Experimental")] = status.message ?: ""
+              status.since?.let { sections[PolySymbolsBundle.message("mdn.documentation.section.status.Since")] = it }
             }
             is PolySymbolApiStatus.Stable -> {
-              status.since?.let { sections[WebSymbolsBundle.message("mdn.documentation.section.status.Since")] = it }
+              status.since?.let { sections[PolySymbolsBundle.message("mdn.documentation.section.status.Since")] = it }
             }
           }
         }
-        doc.defaultValue?.let { sections[WebSymbolsBundle.message("mdn.documentation.section.defaultValue")] = "<p><code>$it</code>" }
-        doc.library?.let { sections[WebSymbolsBundle.message("mdn.documentation.section.library")] = "<p>$it" }
+        doc.defaultValue?.let { sections[PolySymbolsBundle.message("mdn.documentation.section.defaultValue")] = "<p><code>$it</code>" }
+        doc.library?.let { sections[PolySymbolsBundle.message("mdn.documentation.section.library")] = "<p>$it" }
       }
 
     private fun StringBuilder.appendIcon(icon: Icon, url2ImageMap: MutableMap<String, Image>): StringBuilder {

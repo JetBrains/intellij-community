@@ -23,7 +23,7 @@ import com.intellij.webSymbols.PolySymbolApiStatus
 import com.intellij.webSymbols.PolySymbolApiStatus.Companion.getMessage
 import com.intellij.webSymbols.PolySymbolApiStatus.Companion.isDeprecatedOrObsolete
 import com.intellij.webSymbols.PolySymbolNameSegment
-import com.intellij.webSymbols.WebSymbolsBundle
+import com.intellij.webSymbols.PolySymbolsBundle
 import com.intellij.webSymbols.highlighting.impl.getDefaultProblemMessage
 import com.intellij.webSymbols.impl.removeZeroLengthSegmentsRecursively
 import com.intellij.webSymbols.inspections.WebSymbolsProblemQuickFixProvider
@@ -206,7 +206,7 @@ private class NameSegmentReferenceWithProblem(
       val cause = apiStatus?.getMessage()
                     ?.takeIf { it.isNotBlank() }
                     ?.sanitizeHtmlOutputForProblemMessage()
-                  ?: WebSymbolsBundle.message("web.inspection.message.deprecated.symbol.explanation")
+                  ?: PolySymbolsBundle.message("web.inspection.message.deprecated.symbol.explanation")
 
       @Suppress("HardCodedStringLiteral")
       val prefix = toolMapping
@@ -216,10 +216,10 @@ private class NameSegmentReferenceWithProblem(
                      ?.let { if (!it.endsWith(",")) "$it," else it }
                    ?: apiStatus?.since
                      ?.let {
-                       WebSymbolsBundle.message(if (isDeprecated) "web.inspection.message.deprecated.symbol.since"
+                       PolySymbolsBundle.message(if (isDeprecated) "web.inspection.message.deprecated.symbol.since"
                                                 else "web.inspection.message.obsolete.symbol.since", it)
                      }
-                   ?: WebSymbolsBundle.message(if (isDeprecated) "web.inspection.message.deprecated.symbol.message"
+                   ?: PolySymbolsBundle.message(if (isDeprecated) "web.inspection.message.deprecated.symbol.message"
                                                else "web.inspection.message.obsolete.symbol.message")
 
       WebSymbolReferenceProblem.create(

@@ -10,7 +10,7 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.function.Supplier;
 
 public final class PolySymbolsBundle {
-  public static final @NonNls String BUNDLE = "messages.WebSymbolsBundle";
+  public static final @NonNls String BUNDLE = "messages.PolySymbolsBundle";
   private static final DynamicBundle INSTANCE = new DynamicBundle(PolySymbolsBundle.class, BUNDLE);
 
   private PolySymbolsBundle() { }

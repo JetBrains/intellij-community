@@ -15,7 +15,7 @@ import com.intellij.psi.xml.XmlTag
 import com.intellij.util.ArrayUtil
 import com.intellij.webSymbols.PsiSourcedPolySymbol
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolsBundle
+import com.intellij.webSymbols.PolySymbolsBundle
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.utils.unwrapMatchedSymbols
 import com.intellij.xml.impl.BasicXmlAttributeDescriptor
@@ -53,11 +53,11 @@ open class WebSymbolAttributeDescriptor private constructor(val tag: XmlTag?,
   override fun validateValue(context: XmlElement?, value: String?): String? =
     when {
       value == null -> null
-      !acceptsValue -> WebSymbolsBundle.message("web.inspection.message.attribute.does.not.accept.value", name)
+      !acceptsValue -> PolySymbolsBundle.message("web.inspection.message.attribute.does.not.accept.value", name)
       supportsEnums && strictEnumValues -> {
         val match = matchEnum(value)
         if (match.isEmpty()) {
-          WebSymbolsBundle.message(
+          PolySymbolsBundle.message(
             "web.inspection.message.attribute.value.no.valid",
             value, name, StringUtil.shortenTextWithEllipsis(NlsMessages.formatOrList(enumValues!!.map { it.name }), 500, 50))
         }

@@ -7,7 +7,7 @@ import com.intellij.openapi.extensions.*
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.webSymbols.SymbolNamespace
-import com.intellij.webSymbols.WebSymbolsBundle
+import com.intellij.webSymbols.PolySymbolsBundle
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem
 import org.jetbrains.annotations.Nls
 
@@ -59,7 +59,7 @@ internal class WebSymbolsInspectionToolMappingEP : PluginAware {
   @InspectionMessage
   fun getProblemMessage(symbolKindName: String?): String? {
     return getLocalizedString(messageKey ?: return null,
-                              symbolKindName ?: WebSymbolsBundle.message("web.inspection.message.segment.default-subject"))
+                              symbolKindName ?: PolySymbolsBundle.message("web.inspection.message.segment.default-subject"))
   }
 
   @Nls

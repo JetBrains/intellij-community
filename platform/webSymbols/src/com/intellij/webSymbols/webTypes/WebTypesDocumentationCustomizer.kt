@@ -3,7 +3,7 @@ package com.intellij.webSymbols.webTypes
 
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolsBundle
+import com.intellij.webSymbols.PolySymbolsBundle
 import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 import com.intellij.webSymbols.documentation.WebSymbolDocumentationCustomizer
 import com.intellij.webSymbols.patterns.impl.RegExpPattern
@@ -16,7 +16,7 @@ class WebTypesDocumentationCustomizer : WebSymbolDocumentationCustomizer {
     val pattern = symbol.pattern as? RegExpPattern
     return if (pattern != null && symbol.properties[PolySymbol.PROP_DOC_HIDE_PATTERN] != true) {
       @NonNls val patternString: String = pattern.toString()
-      documentation.withDescriptionSection(WebSymbolsBundle.message("mdn.documentation.section.pattern"), patternString)
+      documentation.withDescriptionSection(PolySymbolsBundle.message("mdn.documentation.section.pattern"), patternString)
     }
     else documentation
   }
