@@ -8,7 +8,7 @@ import com.intellij.refactoring.rename.api.*
 import com.intellij.util.Query
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutorFactory
 import com.intellij.webSymbols.search.WebSymbolUsageQueries
 
 internal class WebSymbolsRenameUsageSearcher : RenameUsageSearcher {
@@ -21,8 +21,8 @@ internal class WebSymbolsRenameUsageSearcher : RenameUsageSearcher {
           .map { query ->
             query.mapping {
               WebSymbolPsiModifiableRenameUsage(
-                WebSymbolsQueryExecutorFactory.create(PsiTreeUtil.findElementOfClassAtRange(it.file, it.range.startOffset, it.range.endOffset, PsiElement::class.java)
-                                                      ?: it.file), symbol,
+                PolySymbolsQueryExecutorFactory.create(PsiTreeUtil.findElementOfClassAtRange(it.file, it.range.startOffset, it.range.endOffset, PsiElement::class.java)
+                                                       ?: it.file), symbol,
                 PsiRenameUsage.defaultPsiRenameUsage(it))
             }
           }

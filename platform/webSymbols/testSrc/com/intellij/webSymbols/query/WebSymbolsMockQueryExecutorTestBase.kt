@@ -12,7 +12,7 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.webSymbols.context.PolyContext.Companion.KIND_FRAMEWORK
 import com.intellij.webSymbols.context.impl.PolyContextProviderExtensionPoint
 import com.intellij.webSymbols.query.impl.CustomElementsManifestMockScopeImpl
-import com.intellij.webSymbols.query.impl.WebSymbolsMockQueryExecutorFactory
+import com.intellij.webSymbols.query.impl.PolySymbolsMockQueryExecutorFactory
 import com.intellij.webSymbols.query.impl.WebTypesMockScopeImpl
 import com.intellij.webSymbols.webTypes.filters.WebSymbolsMatchPrefixFilter
 import com.intellij.webSymbols.webTypes.impl.WebSymbolsFilterEP
@@ -22,12 +22,12 @@ abstract class WebSymbolsMockQueryExecutorTestBase : UsefulTestCase() {
 
   abstract val testPath: String
 
-  val webSymbolsQueryExecutorFactory: WebSymbolsQueryExecutorFactory get() = service()
+  val polySymbolsQueryExecutorFactory: PolySymbolsQueryExecutorFactory get() = service()
 
   override fun setUp() {
     super.setUp()
     val application = MockApplication.setUp(testRootDisposable)
-    application.registerService(WebSymbolsQueryExecutorFactory::class.java, WebSymbolsMockQueryExecutorFactory())
+    application.registerService(PolySymbolsQueryExecutorFactory::class.java, PolySymbolsMockQueryExecutorFactory())
     application.registerService(ClientDocumentationSettings::class.java, LocalDocumentationSettings())
     application.extensionArea.registerExtensionPoint(
       "com.intellij.webSymbols.webTypes.filter",
@@ -61,9 +61,9 @@ abstract class WebSymbolsMockQueryExecutorTestBase : UsefulTestCase() {
   }
 
   fun registerFiles(framework: String?, webTypes: List<String>, customElementManifests: List<String>) {
-    framework?.let { (webSymbolsQueryExecutorFactory as WebSymbolsMockQueryExecutorFactory).context[KIND_FRAMEWORK] = it }
+    framework?.let { (polySymbolsQueryExecutorFactory as PolySymbolsMockQueryExecutorFactory).context[KIND_FRAMEWORK] = it }
     if (webTypes.isNotEmpty()) {
-      webSymbolsQueryExecutorFactory.addScope(WebTypesMockScopeImpl(testRootDisposable).also { scope ->
+      polySymbolsQueryExecutorFactory.addScope(WebTypesMockScopeImpl(testRootDisposable).also { scope ->
         webTypes.forEach { file ->
           scope.registerFile(File(testPath, "../$file.web-types.json").takeIf { it.exists() }
                              ?: File(testPath, "../../common/$file.web-types.json"))
@@ -71,7 +71,7 @@ abstract class WebSymbolsMockQueryExecutorTestBase : UsefulTestCase() {
       }, null, testRootDisposable)
     }
     if (customElementManifests.isNotEmpty()) {
-      webSymbolsQueryExecutorFactory.addScope(CustomElementsManifestMockScopeImpl(testRootDisposable).also { scope ->
+      polySymbolsQueryExecutorFactory.addScope(CustomElementsManifestMockScopeImpl(testRootDisposable).also { scope ->
         customElementManifests.forEach { file ->
           scope.registerFile(File(testPath, "../$file.custom-elements-manifest.json").takeIf { it.exists() }
                              ?: File(testPath, "../../common/$file.custom-elements-manifest.json"))

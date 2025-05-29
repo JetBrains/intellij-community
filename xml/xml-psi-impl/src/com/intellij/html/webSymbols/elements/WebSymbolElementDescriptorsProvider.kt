@@ -9,7 +9,7 @@ import com.intellij.psi.impl.source.xml.XmlElementDescriptorProvider
 import com.intellij.psi.xml.XmlTag
 import com.intellij.webSymbols.PolySymbol.Companion.KIND_HTML_ELEMENTS
 import com.intellij.webSymbols.PolySymbol.Companion.NAMESPACE_HTML
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutorFactory
 import com.intellij.webSymbols.utils.hasOnlyExtensions
 import com.intellij.xml.XmlElementDescriptor
 
@@ -19,7 +19,7 @@ class WebSymbolElementDescriptorsProvider : XmlElementDescriptorProvider {
     if (tag == null || DumbService.isDumb(tag.project) || tag.containingFile !is HtmlCompatibleFile)
       null
     else {
-      val queryExecutor = WebSymbolsQueryExecutorFactory.create(tag)
+      val queryExecutor = PolySymbolsQueryExecutorFactory.create(tag)
       queryExecutor
         .runNameMatchQuery(NAMESPACE_HTML, KIND_HTML_ELEMENTS, tag.name)
         .takeIf {

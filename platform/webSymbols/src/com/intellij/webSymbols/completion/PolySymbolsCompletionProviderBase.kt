@@ -18,12 +18,12 @@ import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItemCustomizer.Companion.customizeItems
 import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutorFactory
 
 abstract class PolySymbolsCompletionProviderBase<T : PsiElement> : CompletionProvider<CompletionParameters>() {
   final override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
     val psiContext = getContext(parameters.position.originalElement) ?: return
-    val queryExecutor = WebSymbolsQueryExecutorFactory.create(psiContext)
+    val queryExecutor = PolySymbolsQueryExecutorFactory.create(psiContext)
 
     val elementOffset = parameters.position.startOffset
     val position: Int

@@ -1,7 +1,7 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceInterface="com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory"
-                    serviceImplementation="com.intellij.webSymbols.query.impl.WebSymbolsQueryExecutorFactoryImpl"/>
+    <projectService serviceInterface="com.intellij.webSymbols.query.PolySymbolsQueryExecutorFactory"
+                    serviceImplementation="com.intellij.webSymbols.query.impl.PolySymbolsQueryExecutorFactoryImpl"/>
 
     <metaLanguage implementation="com.intellij.webSymbols.PolySymbolsEnabledLanguage"/>
     <annotator language="PolySymbolsEnabledLanguage"

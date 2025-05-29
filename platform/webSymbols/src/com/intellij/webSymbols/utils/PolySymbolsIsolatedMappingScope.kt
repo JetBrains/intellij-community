@@ -98,7 +98,7 @@ abstract class PolySymbolsIsolatedMappingScope<T : PsiElement>(
     val manager = CachedValuesManager.getManager(location.project)
     val cachedValueKey = manager.getKeyForClass<Pair<PolySymbolsQueryExecutor, List<PolySymbolsScope>>>(builder.javaClass)
     return manager.getCachedValue(location, cachedValueKey, {
-      val executor = WebSymbolsQueryExecutorFactory.create(location)
+      val executor = PolySymbolsQueryExecutorFactory.create(location)
       val scope = builder(executor, location)
       CachedValueProvider.Result.create(Pair(executor, scope.toList()), PsiModificationTracker.MODIFICATION_COUNT)
     }, false)

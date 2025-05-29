@@ -48,8 +48,8 @@ import com.intellij.webSymbols.context.PolyContextKindRules.EnablementRules
 import com.intellij.webSymbols.context.PolyContextSourceProximityProvider
 import com.intellij.webSymbols.context.PolyContextSourceProximityProvider.Companion.mergeProximity
 import com.intellij.webSymbols.context.PolyContextSourceProximityProvider.SourceKind
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
-import com.intellij.webSymbols.query.impl.WebSymbolsQueryExecutorFactoryImpl
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutorFactory
+import com.intellij.webSymbols.query.impl.PolySymbolsQueryExecutorFactoryImpl
 import com.intellij.webSymbols.utils.findOriginalFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -234,7 +234,7 @@ private fun calcProximityPerContextFromRules(project: Project,
 }
 
 private fun loadContextRulesConfiguration(project: Project, directory: VirtualFile): ContextRulesConfigInDir {
-  val queryExecutorFactory = WebSymbolsQueryExecutorFactory.getInstance(project) as WebSymbolsQueryExecutorFactoryImpl
+  val queryExecutorFactory = PolySymbolsQueryExecutorFactory.getInstance(project) as PolySymbolsQueryExecutorFactoryImpl
   val (rules, tracker) = queryExecutorFactory.getContextRules(project, directory)
 
   val flatRules = rules.keySet().associateBy({ it }, { kind ->

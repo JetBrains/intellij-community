@@ -9,11 +9,11 @@ import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.context.PolyContext
 import com.intellij.webSymbols.context.PolyContext.Companion.KIND_FRAMEWORK
 import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutorFactory
 import com.intellij.webSymbols.query.WebSymbolsQueryResultsCustomizerFactory
 import com.intellij.webSymbols.utils.createModificationTracker
 
-class WebSymbolsMockQueryExecutorFactory : WebSymbolsQueryExecutorFactory {
+class PolySymbolsMockQueryExecutorFactory : PolySymbolsQueryExecutorFactory {
 
   private val scopeList = mutableListOf<PolySymbolsScope>()
 

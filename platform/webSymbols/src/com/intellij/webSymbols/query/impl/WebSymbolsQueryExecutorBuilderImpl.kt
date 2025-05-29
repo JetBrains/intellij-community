@@ -9,7 +9,7 @@ import com.intellij.webSymbols.context.PolyContext.Companion.KIND_FRAMEWORK
 import com.intellij.webSymbols.context.impl.PolyContextImpl
 import com.intellij.webSymbols.query.WebSymbolNameConversionRules
 import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory.WebSymbolsQueryExecutorBuilder
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutorFactory.WebSymbolsQueryExecutorBuilder
 import com.intellij.webSymbols.query.WebSymbolsQueryResultsCustomizer
 
 class WebSymbolsQueryExecutorBuilderImpl() : WebSymbolsQueryExecutorBuilder {

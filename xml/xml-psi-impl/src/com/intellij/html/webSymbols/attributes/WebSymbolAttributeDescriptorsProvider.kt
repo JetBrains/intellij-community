@@ -15,7 +15,7 @@ import com.intellij.webSymbols.PolySymbol.Companion.HTML_ATTRIBUTES
 import com.intellij.webSymbols.PolySymbol.Companion.KIND_HTML_ATTRIBUTES
 import com.intellij.webSymbols.PolySymbol.Companion.NAMESPACE_HTML
 import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutorFactory
 import com.intellij.webSymbols.utils.asSingleSymbol
 import com.intellij.webSymbols.utils.hasOnlyExtensions
 import com.intellij.xml.XmlAttributeDescriptor
@@ -27,7 +27,7 @@ class WebSymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
     if (context == null || DumbService.isDumb(context.project) || context.containingFile !is HtmlCompatibleFile)
       XmlAttributeDescriptor.EMPTY
     else {
-      val queryExecutor = WebSymbolsQueryExecutorFactory.create(context)
+      val queryExecutor = PolySymbolsQueryExecutorFactory.create(context)
       val additionalScope = listOf(PolySymbolsHtmlQueryConfigurator.HtmlContextualPolySymbolsScope(context.firstChild))
       queryExecutor
         .runListSymbolsQuery(HTML_ATTRIBUTES, expandPatterns = true, additionalScope = additionalScope, virtualSymbols = false)
@@ -43,7 +43,7 @@ class WebSymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
       null
     else {
       val attribute = context.getAttribute(attributeName)
-      val queryExecutor = WebSymbolsQueryExecutorFactory.create(attribute ?: context)
+      val queryExecutor = PolySymbolsQueryExecutorFactory.create(attribute ?: context)
       val elementDescriptor = context.descriptor
       val additionalScope = if (attribute != null)
         emptyList()

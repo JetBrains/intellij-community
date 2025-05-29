@@ -25,7 +25,7 @@ import com.intellij.webSymbols.PsiSourcedPolySymbol
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.declarations.PolySymbolDeclarationProvider
 import com.intellij.webSymbols.query.WebSymbolNamesProvider
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutorFactory
 import com.intellij.webSymbols.references.WebSymbolReference
 import com.intellij.webSymbols.utils.qualifiedName
 import java.util.*
@@ -44,7 +44,7 @@ object WebSymbolUsageQueries {
 
   fun buildWebSymbolUsagesQueries(symbol: PolySymbol, project: Project, searchScope: SearchScope): List<Query<out PsiUsage>> =
     (symbol.psiContext
-       ?.let { WebSymbolsQueryExecutorFactory.create(it, true) }
+       ?.let { PolySymbolsQueryExecutorFactory.create(it, true) }
        ?.namesProvider
        ?.getNames(symbol.qualifiedName, WebSymbolNamesProvider.Target.NAMES_QUERY)?.asSequence()
      ?: sequenceOf(symbol.name))

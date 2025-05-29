@@ -387,7 +387,7 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
   }
 
   fun testNestedPattern1() {
-    webSymbolsQueryExecutorFactory.addScope(
+    polySymbolsQueryExecutorFactory.addScope(
       object : PolySymbolsScope {
         override fun getMatchingSymbols(qualifiedName: PolySymbolQualifiedName,
                                         params: WebSymbolsNameMatchQueryParams,
@@ -434,7 +434,7 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
              customElementsManifests: List<String> = emptyList()) {
     doTest(testPath) {
       registerFiles(framework, webTypes, customElementsManifests)
-      val matches = webSymbolsQueryExecutorFactory.create(null)
+      val matches = polySymbolsQueryExecutorFactory.create(null)
         .runNameMatchQuery(parseWebTypesPath(path, null), includeVirtual, false)
       printMatches(matches)
     }

@@ -230,7 +230,7 @@ class WebSymbolsCompletionQueryTest : WebSymbolsMockQueryExecutorTestBase() {
   }
 
   fun testNestedPattern1() {
-    webSymbolsQueryExecutorFactory.addScope(
+    polySymbolsQueryExecutorFactory.addScope(
       object : PolySymbolsScope {
         override fun createPointer(): Pointer<out PolySymbolsScope> = Pointer.hardPointer(this)
 
@@ -345,7 +345,7 @@ class WebSymbolsCompletionQueryTest : WebSymbolsMockQueryExecutorTestBase() {
                      customElementsManifests: List<String> = emptyList()) {
     doTest(testPath) {
       registerFiles(framework, webTypes, customElementsManifests)
-      val matches = webSymbolsQueryExecutorFactory.create(null)
+      val matches = polySymbolsQueryExecutorFactory.create(null)
         .runCodeCompletionQuery(parseWebTypesPath(path, null), position)
       printCodeCompletionItems(matches)
     }

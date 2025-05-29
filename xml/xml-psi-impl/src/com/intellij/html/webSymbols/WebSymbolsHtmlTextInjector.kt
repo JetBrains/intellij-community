@@ -20,7 +20,7 @@ import com.intellij.psi.xml.XmlText
 import com.intellij.util.asSafely
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolQualifiedName
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutorFactory
 import com.intellij.webSymbols.utils.asSingleSymbol
 import java.util.*
 
@@ -32,7 +32,7 @@ class WebSymbolsHtmlTextInjector : MultiHostInjector {
         ?.parent?.asSafely<HtmlTag>()
         ?.let { tag ->
           CachedValuesManager.getCachedValue(tag) {
-            val queryExecutor = WebSymbolsQueryExecutorFactory.create(tag, false)
+            val queryExecutor = PolySymbolsQueryExecutorFactory.create(tag, false)
             CachedValueProvider.Result.create(
               queryExecutor.runNameMatchQuery(PolySymbol.NAMESPACE_HTML, PolySymbol.KIND_HTML_ELEMENTS, tag.name)
                 .getLanguageToInject(),
@@ -46,7 +46,7 @@ class WebSymbolsHtmlTextInjector : MultiHostInjector {
         ?.let { attr ->
           CachedValuesManager.getCachedValue(attr) {
             val tag = attr.parent as HtmlTag
-            val queryExecutor = WebSymbolsQueryExecutorFactory.create(tag, false)
+            val queryExecutor = PolySymbolsQueryExecutorFactory.create(tag, false)
             CachedValueProvider.Result.create(
               queryExecutor.runNameMatchQuery(listOf(
                 PolySymbolQualifiedName(PolySymbol.NAMESPACE_HTML, PolySymbol.KIND_HTML_ELEMENTS, tag.name),

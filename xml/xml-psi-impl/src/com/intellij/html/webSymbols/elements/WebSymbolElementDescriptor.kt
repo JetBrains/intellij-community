@@ -18,7 +18,7 @@ import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.PolySymbolQualifiedName
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutorFactory
 import com.intellij.webSymbols.utils.nameSegments
 import com.intellij.xml.*
 import com.intellij.xml.impl.XmlElementDescriptorEx
@@ -40,7 +40,7 @@ open class WebSymbolElementDescriptor private constructor(private val tag: XmlTa
                         virtualSymbols: Boolean = true,
                         abstractSymbols: Boolean = false,
                         strictScope: Boolean = false): List<PolySymbol> =
-    WebSymbolsQueryExecutorFactory.create(tag)
+    PolySymbolsQueryExecutorFactory.create(tag)
       .runNameMatchQuery(listOf(qualifiedName), virtualSymbols, abstractSymbols, strictScope, listOf(symbol))
 
   fun runListSymbolsQuery(qualifiedKind: PolySymbolQualifiedKind,
@@ -48,7 +48,7 @@ open class WebSymbolElementDescriptor private constructor(private val tag: XmlTa
                           virtualSymbols: Boolean = true,
                           abstractSymbols: Boolean = false,
                           strictScope: Boolean = false): List<PolySymbol> =
-    WebSymbolsQueryExecutorFactory.create(tag)
+    PolySymbolsQueryExecutorFactory.create(tag)
       .runListSymbolsQuery(qualifiedKind, expandPatterns, virtualSymbols, abstractSymbols, strictScope, listOf(symbol))
 
   fun runCodeCompletionQuery(qualifiedKind: PolySymbolQualifiedKind,
@@ -56,7 +56,7 @@ open class WebSymbolElementDescriptor private constructor(private val tag: XmlTa
                              /** Position to complete at in the last segment of the path **/
                              position: Int,
                              virtualSymbols: Boolean = true): List<PolySymbolCodeCompletionItem> =
-    WebSymbolsQueryExecutorFactory.create(tag)
+    PolySymbolsQueryExecutorFactory.create(tag)
       .runCodeCompletionQuery(qualifiedKind, name, position, virtualSymbols, listOf(symbol))
 
   override fun getQualifiedName(): String {

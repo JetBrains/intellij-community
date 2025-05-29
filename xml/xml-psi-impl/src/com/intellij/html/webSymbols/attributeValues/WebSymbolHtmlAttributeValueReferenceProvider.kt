@@ -9,7 +9,7 @@ import com.intellij.util.asSafely
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.webSymbols.html.PolySymbolHtmlAttributeValue.Type
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutorFactory
 import com.intellij.webSymbols.references.PsiWebSymbolReferenceProvider
 import com.intellij.webSymbols.utils.asSingleSymbol
 import com.intellij.webSymbols.utils.hasOnlyExtensions
@@ -26,7 +26,7 @@ class WebSymbolHtmlAttributeValueReferenceProvider : PsiWebSymbolReferenceProvid
                  ?.type?.takeIf { it == Type.ENUM || it == Type.SYMBOL }
                ?: return null
     val name = psiElement.value.takeIf { it.isNotEmpty() } ?: return null
-    val queryExecutor = WebSymbolsQueryExecutorFactory.create(psiElement)
+    val queryExecutor = PolySymbolsQueryExecutorFactory.create(psiElement)
 
     return if (type == Type.ENUM)
       if (queryExecutor.runCodeCompletionQuery(PolySymbol.HTML_ATTRIBUTE_VALUES, "", 0)

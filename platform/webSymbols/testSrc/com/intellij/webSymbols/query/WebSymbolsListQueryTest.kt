@@ -200,7 +200,7 @@ class WebSymbolsListQueryTest : WebSymbolsMockQueryExecutorTestBase() {
              customElementsManifests: List<String> = emptyList()) {
     registerFiles(framework, webTypes, customElementsManifests)
     val parsedPath = parseWebTypesPath(path, null)
-    val queryExecutor = webSymbolsQueryExecutorFactory.create(null)
+    val queryExecutor = polySymbolsQueryExecutorFactory.create(null)
     val last = parsedPath.last()
 
     if (compareWithCompletionResults) {

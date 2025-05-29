@@ -17,7 +17,7 @@ import com.intellij.webSymbols.PolySymbol.Companion.NAMESPACE_HTML
 import com.intellij.webSymbols.completion.AsteriskAwarePrefixMatcher
 import com.intellij.webSymbols.completion.PolySymbolsCompletionProviderBase
 import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutorFactory
 import com.intellij.webSymbols.utils.asSingleSymbol
 
 class PolySymbolAttributeNameCompletionProvider : PolySymbolsCompletionProviderBase<XmlAttribute>() {
@@ -70,8 +70,8 @@ class PolySymbolAttributeNameCompletionProvider : PolySymbolsCompletionProviderB
           { insertionContext, lookupItem ->
             // At this instant the file is already modified by LookupElement, so every PsiElement inside WebSymbolsRegistry is invalid
             // We need freshly constructed registry to avoid PsiInvalidElementAccessException when calling runNameMatchQuery
-            val freshRegistry = WebSymbolsQueryExecutorFactory.create(context,
-                                                                      queryExecutor.allowResolve) // TODO Fix pointer dereference and use it here
+            val freshRegistry = PolySymbolsQueryExecutorFactory.create(context,
+                                                                       queryExecutor.allowResolve) // TODO Fix pointer dereference and use it here
 
             val fullName = name.substring(0, item.offset) + item.name
             val info = XmlTagInsertHandler.runWithTimeoutOrNull {

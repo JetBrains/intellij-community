@@ -25,7 +25,7 @@ import com.intellij.webSymbols.query.*
 import com.intellij.webSymbols.utils.createModificationTracker
 import com.intellij.webSymbols.utils.findOriginalFile
 
-class WebSymbolsQueryExecutorFactoryImpl(private val project: Project) : WebSymbolsQueryExecutorFactory, Disposable {
+class PolySymbolsQueryExecutorFactoryImpl(private val project: Project) : PolySymbolsQueryExecutorFactory, Disposable {
 
   private val customScope = MultiMap<VirtualFile?, PolySymbolsScope>()
   private var modificationCount = 0L
@@ -50,11 +50,11 @@ class WebSymbolsQueryExecutorFactoryImpl(private val project: Project) : WebSymb
           if (internalMode && Math.random() < 0.2) {
             val newScope = queryConfigurator.getScope(project, originalLocation, context, allowResolve)
             if (newScope != it) {
-              logger<WebSymbolsQueryExecutorFactory>().error(
+              logger<PolySymbolsQueryExecutorFactory>().error(
                 "Query configurator $queryConfigurator should provide scope, which is the same (by equals()), when called with the same arguments: $it != $newScope")
             }
             if (newScope.hashCode() != it.hashCode()) {
-              logger<WebSymbolsQueryExecutorFactory>().error(
+              logger<PolySymbolsQueryExecutorFactory>().error(
                 "Query configurator $queryConfigurator should provide scope, which has the same hashCode(), when called with the same arguments: $it != $newScope")
             }
           }

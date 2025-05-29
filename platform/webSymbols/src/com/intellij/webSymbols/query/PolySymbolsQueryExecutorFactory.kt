@@ -15,7 +15,7 @@ import org.jetbrains.annotations.TestOnly
 /**
  * Use the factory to create [PolySymbolsQueryExecutor] for a particular location in the source code.
  */
-interface WebSymbolsQueryExecutorFactory : Disposable {
+interface PolySymbolsQueryExecutorFactory : Disposable {
 
   fun create(location: PsiElement?, allowResolve: Boolean = true): PolySymbolsQueryExecutor
 
@@ -43,7 +43,7 @@ interface WebSymbolsQueryExecutorFactory : Disposable {
   companion object {
 
     @JvmStatic
-    fun getInstance(project: Project): WebSymbolsQueryExecutorFactory = project.service()
+    fun getInstance(project: Project): PolySymbolsQueryExecutorFactory = project.service()
 
     fun create(location: PsiElement, allowResolve: Boolean = true): PolySymbolsQueryExecutor =
       getInstance(location.project).create(location, allowResolve)
