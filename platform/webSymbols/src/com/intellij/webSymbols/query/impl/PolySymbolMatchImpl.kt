@@ -12,7 +12,7 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.PolySymbol.Priority
 import com.intellij.webSymbols.documentation.PolySymbolDocumentation
-import com.intellij.webSymbols.documentation.WebSymbolDocumentationTarget
+import com.intellij.webSymbols.documentation.PolySymbolDocumentationTarget
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.query.PolySymbolMatch
 import com.intellij.webSymbols.query.WebSymbolMatchBuilder
@@ -130,7 +130,7 @@ internal open class PolySymbolMatchImpl private constructor(
         if (it === this) super<PolySymbolMatch>.getDocumentationTarget(location)
         else it.getDocumentationTarget(location)
       }
-      .filter { it !is WebSymbolDocumentationTarget || it.symbol.createDocumentation(location)?.isNotEmpty() == true }
+      .filter { it !is PolySymbolDocumentationTarget || it.symbol.createDocumentation(location)?.isNotEmpty() == true }
       .firstOrNull()
     ?: super<PolySymbolMatch>.getDocumentationTarget(location)
 

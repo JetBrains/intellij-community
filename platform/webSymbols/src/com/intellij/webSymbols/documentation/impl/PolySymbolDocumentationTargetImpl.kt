@@ -17,23 +17,23 @@ import com.intellij.webSymbols.PolySymbolApiStatus
 import com.intellij.webSymbols.PolySymbolOrigin
 import com.intellij.webSymbols.PolySymbolsBundle
 import com.intellij.webSymbols.documentation.PolySymbolDocumentation
-import com.intellij.webSymbols.documentation.WebSymbolDocumentationTarget
+import com.intellij.webSymbols.documentation.PolySymbolDocumentationTarget
 import com.intellij.webSymbols.impl.scaleToHeight
 import java.awt.Image
 import java.awt.image.BufferedImage
 import javax.swing.Icon
 
-internal class WebSymbolDocumentationTargetImpl(
+internal class PolySymbolDocumentationTargetImpl(
   override val symbol: PolySymbol,
   override val location: PsiElement?,
 )
-  : WebSymbolDocumentationTarget {
+  : PolySymbolDocumentationTarget {
 
   override fun createPointer(): Pointer<out DocumentationTarget> {
     val pointer = symbol.createPointer()
     val locationPtr = location?.createSmartPointer()
     return Pointer<DocumentationTarget> {
-      pointer.dereference()?.let { WebSymbolDocumentationTargetImpl(it, locationPtr?.dereference()) }
+      pointer.dereference()?.let { PolySymbolDocumentationTargetImpl(it, locationPtr?.dereference()) }
     }
   }
 

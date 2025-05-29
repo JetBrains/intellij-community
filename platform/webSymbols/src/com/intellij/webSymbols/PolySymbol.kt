@@ -20,7 +20,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.webSymbols.context.PolyContext
 import com.intellij.webSymbols.documentation.PolySymbolDocumentation
 import com.intellij.webSymbols.documentation.PolySymbolDocumentationCustomizer
-import com.intellij.webSymbols.documentation.impl.WebSymbolDocumentationTargetImpl
+import com.intellij.webSymbols.documentation.impl.PolySymbolDocumentationTargetImpl
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.js.WebSymbolJsKind
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
@@ -287,7 +287,7 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsP
    */
   fun getDocumentationTarget(location: PsiElement?): DocumentationTarget? =
     if (properties[PROP_NO_DOC] != true)
-      WebSymbolDocumentationTargetImpl(this, location)
+      PolySymbolDocumentationTargetImpl(this, location)
     else
       null
 

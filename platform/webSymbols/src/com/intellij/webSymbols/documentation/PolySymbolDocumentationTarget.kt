@@ -6,9 +6,9 @@ import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.documentation.impl.WebSymbolDocumentationTargetImpl
+import com.intellij.webSymbols.documentation.impl.PolySymbolDocumentationTargetImpl
 
-interface WebSymbolDocumentationTarget : DocumentationTarget {
+interface PolySymbolDocumentationTarget : DocumentationTarget {
 
   val symbol: PolySymbol
 
@@ -23,5 +23,5 @@ interface WebSymbolDocumentationTarget : DocumentationTarget {
   override fun computeDocumentation(): DocumentationResult? =
     symbol.createDocumentation(location)
       ?.takeIf { it.isNotEmpty() }
-      ?.let { doc -> WebSymbolDocumentationTargetImpl.buildDocumentation(symbol.origin, doc) }
+      ?.let { doc -> PolySymbolDocumentationTargetImpl.buildDocumentation(symbol.origin, doc) }
 }
