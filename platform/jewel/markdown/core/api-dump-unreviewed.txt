@@ -159,8 +159,6 @@ f:org.jetbrains.jewel.markdown.MarkdownBlock$ListItem
 - org.jetbrains.jewel.markdown.MarkdownBlock
 - org.jetbrains.jewel.markdown.WithChildBlocks
 - sf:$stable:I
-- <init>(java.util.List):V
-- <init>(org.jetbrains.jewel.markdown.MarkdownBlock[]):V
 - equals(java.lang.Object):Z
 - getChildren():java.util.List
 - hashCode():I
