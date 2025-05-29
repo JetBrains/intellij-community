@@ -53,6 +53,7 @@ internal data class ModuleDescriptor(
 internal data class ResourceDescriptor(
   @JvmField val baseDirectory: String,
   @JvmField val files: List<String>,
+  @JvmField val relativeOutputPath: String,
 )
 
 internal data class SourceDirDescriptor(
