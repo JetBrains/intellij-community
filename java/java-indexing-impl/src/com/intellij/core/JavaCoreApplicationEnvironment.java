@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.core;
 
 import com.intellij.codeInsight.ContainerProvider;
@@ -9,10 +9,12 @@ import com.intellij.codeInsight.folding.impl.JavaFoldingBuilderBase;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.java.frontback.psi.impl.syntax.JavaSyntaxDefinitionExtension;
 import com.intellij.lang.LanguageASTFactory;
 import com.intellij.lang.folding.LanguageFolding;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.JavaParserDefinition;
+import com.intellij.lang.java.syntax.JavaElementTypeConverterExtension;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
@@ -20,6 +22,9 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.fileTypes.PlainTextParserDefinition;
 import com.intellij.openapi.projectRoots.JavaVersionService;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.platform.syntax.psi.ElementTypeConverters;
+import com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions;
 import com.intellij.psi.*;
 import com.intellij.psi.compiled.ClassFileDecompilers;
 import com.intellij.psi.impl.LanguageConstantExpressionEvaluator;
@@ -51,6 +56,7 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
     registerFileType(JavaClassFileType.INSTANCE, "class");
     registerFileType(JavaFileType.INSTANCE, "java");
     registerFileType(ArchiveFileType.INSTANCE, "jar;zip");
+    Registry.get("java.highest.language.level").setValue("24");
     registerFileType(PlainTextFileType.INSTANCE, "txt;sh;bat;cmd;policy;log;cgi;MF;jad;jam;htaccess");
 
     addExplicitExtension(LanguageASTFactory.INSTANCE, PlainTextLanguage.INSTANCE, new PlainTextASTFactory());
@@ -61,6 +67,8 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
     addExplicitExtension(BinaryFileStubBuilders.INSTANCE, JavaClassFileType.INSTANCE, new ClassFileStubBuilder());
 
     addExplicitExtension(LanguageASTFactory.INSTANCE, JavaLanguage.INSTANCE, new JavaASTFactory());
+    addExplicitExtension(LanguageSyntaxDefinitions.getINSTANCE(), JavaLanguage.INSTANCE, new JavaSyntaxDefinitionExtension());
+    addExplicitExtension(ElementTypeConverters.getInstance(), JavaLanguage.INSTANCE, new JavaElementTypeConverterExtension());
     registerParserDefinition(new JavaParserDefinition());
     addExplicitExtension(LanguageConstantExpressionEvaluator.INSTANCE, JavaLanguage.INSTANCE, new PsiExpressionEvaluator());
 

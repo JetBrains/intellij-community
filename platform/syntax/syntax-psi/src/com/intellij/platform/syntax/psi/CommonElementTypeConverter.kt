@@ -6,7 +6,7 @@ import com.intellij.platform.syntax.util.runtime.DUMMY_BLOCK
 import com.intellij.psi.DummyBlockType
 import com.intellij.psi.TokenType
 
-internal class CommonElementTypeConverterFactory : ElementTypeConverterFactory {
+class CommonElementTypeConverterFactory : ElementTypeConverterFactory {
   override fun getElementTypeConverter(): ElementTypeConverter = commonConverter
 
   private val commonConverter: ElementTypeConverter = elementTypeConverterOf(
