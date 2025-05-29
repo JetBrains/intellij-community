@@ -124,11 +124,6 @@ public class GitExecutableDetector {
     return getExecutable(detectors);
   }
 
-  @VisibleForTesting
-  @NotNull String detect() {
-    return detect(null, null);
-  }
-
   private @NotNull String detect(@Nullable Project project, @Nullable Path gitDirectory) {
     List<Detector> detectors = collectDetectors(project, gitDirectory);
 
