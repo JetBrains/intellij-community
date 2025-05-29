@@ -10,11 +10,11 @@ import com.intellij.webSymbols.context.impl.PolyContextImpl
 import com.intellij.webSymbols.query.WebSymbolNameConversionRules
 import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 import com.intellij.webSymbols.query.PolySymbolsQueryExecutorFactory.WebSymbolsQueryExecutorBuilder
-import com.intellij.webSymbols.query.WebSymbolsQueryResultsCustomizer
+import com.intellij.webSymbols.query.PolySymbolsQueryResultsCustomizer
 
 class WebSymbolsQueryExecutorBuilderImpl() : WebSymbolsQueryExecutorBuilder {
   private val rootScopes = mutableListOf<PolySymbolsScope>()
-  private val customizers = mutableListOf<WebSymbolsQueryResultsCustomizer>()
+  private val customizers = mutableListOf<PolySymbolsQueryResultsCustomizer>()
   private val nameConversionRules = mutableListOf<WebSymbolNameConversionRules>()
   private val context = mutableMapOf<ContextKind, ContextName>()
   private var allowResolve = true
@@ -27,7 +27,7 @@ class WebSymbolsQueryExecutorBuilderImpl() : WebSymbolsQueryExecutorBuilder {
     rootScopes.addAll(scope)
   }
 
-  override fun addCustomizer(customizer: WebSymbolsQueryResultsCustomizer): WebSymbolsQueryExecutorBuilder = apply {
+  override fun addCustomizer(customizer: PolySymbolsQueryResultsCustomizer): WebSymbolsQueryExecutorBuilder = apply {
     customizers.add(customizer)
   }
 
@@ -55,7 +55,7 @@ class WebSymbolsQueryExecutorBuilderImpl() : WebSymbolsQueryExecutorBuilder {
       null,
       rootScopes,
       WebSymbolNamesProviderImpl(context[KIND_FRAMEWORK], nameConversionRules, ModificationTracker.NEVER_CHANGED),
-      WebSymbolsCompoundQueryResultsCustomizer(customizers),
+      PolySymbolsCompoundQueryResultsCustomizer(customizers),
       PolyContextImpl(context),
       allowResolve
     )

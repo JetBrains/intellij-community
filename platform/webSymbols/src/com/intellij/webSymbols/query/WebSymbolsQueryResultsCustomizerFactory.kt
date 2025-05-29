@@ -6,11 +6,11 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.context.PolyContext
-import com.intellij.webSymbols.query.impl.WebSymbolsCompoundQueryResultsCustomizer
+import com.intellij.webSymbols.query.impl.PolySymbolsCompoundQueryResultsCustomizer
 
 interface WebSymbolsQueryResultsCustomizerFactory {
 
-  fun create(location: PsiElement, context: PolyContext): WebSymbolsQueryResultsCustomizer?
+  fun create(location: PsiElement, context: PolyContext): PolySymbolsQueryResultsCustomizer?
 
   companion object {
     private val EP_NAME = ExtensionPointName.create<WebSymbolsQueryResultsCustomizerFactory>(
@@ -18,13 +18,13 @@ interface WebSymbolsQueryResultsCustomizerFactory {
 
     @JvmStatic
     fun getQueryResultsCustomizer(location: PsiElement?,
-                                  context: PolyContext): WebSymbolsQueryResultsCustomizer =
+                                  context: PolyContext): PolySymbolsQueryResultsCustomizer =
       if (location == null) {
-        WebSymbolsCompoundQueryResultsCustomizer(emptyList())
+        PolySymbolsCompoundQueryResultsCustomizer(emptyList())
       }
       else {
         val internalMode = ApplicationManager.getApplication().isInternal
-        WebSymbolsCompoundQueryResultsCustomizer(EP_NAME.extensionList.mapNotNull { factory ->
+        PolySymbolsCompoundQueryResultsCustomizer(EP_NAME.extensionList.mapNotNull { factory ->
           factory.create(location, context)
             ?.also { scope ->
               if (internalMode && Math.random() < 0.2) {

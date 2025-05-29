@@ -27,7 +27,7 @@ interface PolySymbolsQueryExecutorFactory : Disposable {
 
     fun addRootScopes(scope: List<PolySymbolsScope>): WebSymbolsQueryExecutorBuilder
 
-    fun addCustomizer(customizer: WebSymbolsQueryResultsCustomizer): WebSymbolsQueryExecutorBuilder
+    fun addCustomizer(customizer: PolySymbolsQueryResultsCustomizer): WebSymbolsQueryExecutorBuilder
 
     fun addNameConversionRules(rules: WebSymbolNameConversionRules): WebSymbolsQueryExecutorBuilder
 

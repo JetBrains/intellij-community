@@ -32,7 +32,7 @@ interface PolySymbolsQueryExecutor : ModificationTracker {
 
   val namesProvider: WebSymbolNamesProvider
 
-  val resultsCustomizer: WebSymbolsQueryResultsCustomizer
+  val resultsCustomizer: PolySymbolsQueryResultsCustomizer
 
   var keepUnresolvedTopLevelReferences: Boolean
 

@@ -32,7 +32,7 @@ class PolySymbolsQueryExecutorImpl(
   override val location: PsiElement?,
   rootScope: List<PolySymbolsScope>,
   override val namesProvider: WebSymbolNamesProvider,
-  override val resultsCustomizer: WebSymbolsQueryResultsCustomizer,
+  override val resultsCustomizer: PolySymbolsQueryResultsCustomizer,
   override val context: PolyContext,
   override val allowResolve: Boolean,
 ) : PolySymbolsQueryExecutor {
