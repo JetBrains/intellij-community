@@ -5,7 +5,7 @@ import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolNameSegment
 import com.intellij.webSymbols.PolySymbolsScope
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver
 import com.intellij.webSymbols.utils.hideFromCompletion
@@ -38,7 +38,7 @@ internal class CompletionAutoPopupPattern(val isSticky: Boolean) : WebSymbolsPat
       CompletionResults(emptyList(), true)
     }
     else {
-      CompletionResults(WebSymbolCodeCompletionItem.create("", start, true, displayName = "…"))
+      CompletionResults(PolySymbolCodeCompletionItem.create("", start, true, displayName = "…"))
     }
 
   override fun toString(): String {

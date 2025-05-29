@@ -11,7 +11,7 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.Stack
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.query.*
 import com.intellij.webSymbols.query.impl.SearchMap
 import com.intellij.webSymbols.utils.qualifiedKind
@@ -135,7 +135,7 @@ abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
 
   override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName,
                                   params: WebSymbolsCodeCompletionQueryParams,
-                                  scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> =
+                                  scope: Stack<PolySymbolsScope>): List<PolySymbolCodeCompletionItem> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)
         && (framework == null || params.framework == framework)
         && provides(qualifiedName.qualifiedKind)) {

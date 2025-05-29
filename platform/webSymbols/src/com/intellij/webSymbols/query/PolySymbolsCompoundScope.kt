@@ -7,7 +7,7 @@ import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.PolySymbolQualifiedName
 import com.intellij.webSymbols.PolySymbolsScope
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 
 /**
  * A special purpose scope, which provides other scopes, possibly calling a [WebSymbolsQueryExecutor] to retrieve them.
@@ -49,7 +49,7 @@ abstract class PolySymbolsCompoundScope : PolySymbolsScope {
 
   final override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName,
                                         params: WebSymbolsCodeCompletionQueryParams,
-                                        scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> =
+                                        scope: Stack<PolySymbolsScope>): List<PolySymbolCodeCompletionItem> =
     throw UnsupportedOperationException("WebSymbolsCompoundScope must be queried through WebSymbolQueryExecutor.")
 
   final override fun isExclusiveFor(qualifiedKind: PolySymbolQualifiedKind): Boolean =

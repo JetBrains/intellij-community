@@ -6,7 +6,7 @@ import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolNameSegment
 import com.intellij.webSymbols.PolySymbolQualifiedName
 import com.intellij.webSymbols.PolySymbolsScope
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver
 import com.intellij.webSymbols.query.WebSymbolNamesProvider
@@ -56,7 +56,7 @@ class SingleSymbolReferencePattern(private val path: List<PolySymbolQualifiedNam
         && params.queryExecutor.runNameMatchQuery(path, virtualSymbols, abstractSymbols, false, scopeStack.toList()).isNotEmpty()) {
       CompletionResults(params.queryExecutor.namesProvider
                           .getNames(owner.qualifiedName, WebSymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
-                          .map { WebSymbolCodeCompletionItem.create(it, 0, symbol = owner) })
+                          .map { PolySymbolCodeCompletionItem.create(it, 0, symbol = owner) })
     }
     else {
       CompletionResults(emptyList())

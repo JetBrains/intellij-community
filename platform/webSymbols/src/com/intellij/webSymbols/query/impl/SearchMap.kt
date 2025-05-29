@@ -6,7 +6,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.Stack
 import com.intellij.util.text.CharSequenceSubSequence
 import com.intellij.webSymbols.*
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.impl.filterByQueryParams
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.query.*
@@ -65,7 +65,7 @@ internal abstract class SearchMap<T> internal constructor(
 
   internal fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName,
                                   params: WebSymbolsCodeCompletionQueryParams,
-                                  scope: Stack<PolySymbolsScope>): Sequence<WebSymbolCodeCompletionItem> =
+                                  scope: Stack<PolySymbolsScope>): Sequence<PolySymbolCodeCompletionItem> =
     collectStaticCompletionResults(qualifiedName, params, scope)
       .asSequence()
       .plus(collectPatternCompletionResults(qualifiedName, params, scope))
@@ -73,7 +73,7 @@ internal abstract class SearchMap<T> internal constructor(
 
   private fun collectStaticCompletionResults(qualifiedName: PolySymbolQualifiedName,
                                              params: WebSymbolsCodeCompletionQueryParams,
-                                             scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> =
+                                             scope: Stack<PolySymbolsScope>): List<PolySymbolCodeCompletionItem> =
     statics.subMap(SearchMapEntry(qualifiedName.qualifiedKind), SearchMapEntry(qualifiedName.qualifiedKind, kindExclusive = true))
       .values
       .asSequence()
@@ -84,7 +84,7 @@ internal abstract class SearchMap<T> internal constructor(
 
   private fun collectPatternCompletionResults(qualifiedName: PolySymbolQualifiedName,
                                               params: WebSymbolsCodeCompletionQueryParams,
-                                              scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> =
+                                              scope: Stack<PolySymbolsScope>): List<PolySymbolCodeCompletionItem> =
     patterns.subMap(SearchMapEntry(qualifiedName.qualifiedKind), SearchMapEntry(qualifiedName.qualifiedKind, kindExclusive = true))
       .values.asSequence()
       .flatMap { it.asSequence() }

@@ -5,7 +5,7 @@ import com.intellij.model.Pointer
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.query.*
@@ -48,7 +48,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
 
   final override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName,
                                         params: WebSymbolsCodeCompletionQueryParams,
-                                        scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> =
+                                        scope: Stack<PolySymbolsScope>): List<PolySymbolCodeCompletionItem> =
     getMaps(params).flatMap {
       it.getCodeCompletions(qualifiedName, params, Stack(scope))
     }.toList()
@@ -74,7 +74,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
                                   origin: Origin,
                                   qualifiedName: PolySymbolQualifiedName,
                                   params: WebSymbolsCodeCompletionQueryParams,
-                                  scopeStack: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> =
+                                  scopeStack: Stack<PolySymbolsScope>): List<PolySymbolCodeCompletionItem> =
     getMap(params.queryExecutor, contribution, origin)
       .getCodeCompletions(qualifiedName, params, scopeStack)
       .toList()

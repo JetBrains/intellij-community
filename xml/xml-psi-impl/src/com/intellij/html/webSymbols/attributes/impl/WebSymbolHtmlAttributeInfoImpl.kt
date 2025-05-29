@@ -6,7 +6,7 @@ import com.intellij.html.webSymbols.attributes.PolySymbolHtmlAttributeValueTypeS
 import com.intellij.psi.PsiElement
 import com.intellij.util.ThreeState
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import javax.swing.Icon
@@ -16,7 +16,7 @@ internal data class WebSymbolHtmlAttributeInfoImpl(
   override val symbol: PolySymbol,
   override val acceptsNoValue: Boolean,
   override val acceptsValue: Boolean,
-  override val enumValues: List<WebSymbolCodeCompletionItem>?,
+  override val enumValues: List<PolySymbolCodeCompletionItem>?,
   override val strictEnumValues: Boolean,
   override val type: Any?,
   override val icon: Icon?,
@@ -37,7 +37,7 @@ internal data class WebSymbolHtmlAttributeInfoImpl(
   override fun withAcceptsValue(acceptsValue: Boolean): WebSymbolHtmlAttributeInfo =
     copy(acceptsValue = acceptsValue)
 
-  override fun withEnumValues(enumValues: List<WebSymbolCodeCompletionItem>?): WebSymbolHtmlAttributeInfo =
+  override fun withEnumValues(enumValues: List<PolySymbolCodeCompletionItem>?): WebSymbolHtmlAttributeInfo =
     copy(enumValues = enumValues)
 
   override fun withStrictEnumValues(strictEnumValues: Boolean): WebSymbolHtmlAttributeInfo =
@@ -62,7 +62,7 @@ internal data class WebSymbolHtmlAttributeInfoImpl(
                     symbol: PolySymbol,
                     acceptsNoValue: Boolean,
                     acceptsValue: Boolean,
-                    enumValues: List<WebSymbolCodeCompletionItem>?,
+                    enumValues: List<PolySymbolCodeCompletionItem>?,
                     strictEnumValues: Boolean,
                     type: Any?,
                     icon: Icon?,
@@ -126,7 +126,7 @@ internal data class WebSymbolHtmlAttributeInfoImpl(
 
       val enumValues =
         if (isHtmlBoolean == ThreeState.YES) {
-          listOf(WebSymbolCodeCompletionItem.create(name))
+          listOf(PolySymbolCodeCompletionItem.create(name))
         }
         else if (kind == WebSymbolHtmlAttributeValue.Kind.PLAIN) {
           when (type) {

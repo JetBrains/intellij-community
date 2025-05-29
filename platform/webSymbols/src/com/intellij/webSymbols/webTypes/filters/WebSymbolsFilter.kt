@@ -3,16 +3,16 @@ package com.intellij.webSymbols.webTypes.filters
 
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolsScope
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.webTypes.impl.WebSymbolsFilterEP
 
 interface WebSymbolsFilter {
 
-  fun filterCodeCompletions(codeCompletions: List<WebSymbolCodeCompletionItem>,
+  fun filterCodeCompletions(codeCompletions: List<PolySymbolCodeCompletionItem>,
                             queryExecutor: WebSymbolsQueryExecutor,
                             scope: List<PolySymbolsScope>,
-                            properties: Map<String, Any>): List<WebSymbolCodeCompletionItem>
+                            properties: Map<String, Any>): List<PolySymbolCodeCompletionItem>
 
   fun filterNameMatches(matches: List<PolySymbol>,
                         queryExecutor: WebSymbolsQueryExecutor,

@@ -4,7 +4,7 @@ package com.intellij.webSymbols
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.containers.Stack
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
 import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
@@ -73,7 +73,7 @@ interface PolySymbolsScope : ModificationTracker {
    */
   fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName,
                          params: WebSymbolsCodeCompletionQueryParams,
-                         scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> =
+                         scope: Stack<PolySymbolsScope>): List<PolySymbolCodeCompletionItem> =
     getDefaultCodeCompletions(qualifiedName, params, scope)
 
   /**

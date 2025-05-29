@@ -3,7 +3,7 @@ package com.intellij.webSymbols.testFramework.query
 
 import com.intellij.webSymbols.testFramework.DebugOutputPrinter
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.PlatformTestUtil
@@ -26,11 +26,11 @@ fun UsefulTestCase.doTest(testPath: String, test: () -> String) {
   }
 }
 
-fun printCodeCompletionItems(items: List<WebSymbolCodeCompletionItem>,
+fun printCodeCompletionItems(items: List<PolySymbolCodeCompletionItem>,
                              printer: DebugOutputPrinter = WebSymbolsDebugOutputPrinter()): String =
   printer.printValue(
     items.sortedWith(Comparator
-                       .comparing<WebSymbolCodeCompletionItem, PolySymbol.Priority> {
+                       .comparing<PolySymbolCodeCompletionItem, PolySymbol.Priority> {
                          it.priority ?: PolySymbol.Priority.NORMAL
                        }
                        .thenComparing(Function { it.name })

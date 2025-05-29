@@ -7,7 +7,7 @@ import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.PolySymbolQualifiedName
 import com.intellij.webSymbols.PolySymbolsScope
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.customElements.CustomElementsJsonOrigin
 import com.intellij.webSymbols.customElements.CustomElementsManifestScopeBase
 import com.intellij.webSymbols.customElements.json.CustomElementsContribution
@@ -39,7 +39,7 @@ abstract class CustomElementsContainerSymbolBase<Container : CustomElementsContr
 
   override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName,
                                   params: WebSymbolsCodeCompletionQueryParams,
-                                  scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> =
+                                  scope: Stack<PolySymbolsScope>): List<PolySymbolCodeCompletionItem> =
     rootScope
       .getCodeCompletions(contribution, this.origin, qualifiedName, params, scope)
       .toList()

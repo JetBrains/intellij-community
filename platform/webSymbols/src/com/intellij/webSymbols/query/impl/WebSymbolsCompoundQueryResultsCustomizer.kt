@@ -5,7 +5,7 @@ import com.intellij.model.Pointer
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.PolySymbolQualifiedName
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.query.WebSymbolsQueryResultsCustomizer
 
 internal class WebSymbolsCompoundQueryResultsCustomizer(private val customizers: List<WebSymbolsQueryResultsCustomizer>) : WebSymbolsQueryResultsCustomizer {
@@ -16,9 +16,9 @@ internal class WebSymbolsCompoundQueryResultsCustomizer(private val customizers:
       scope.apply(list, strict, qualifiedName)
     }
 
-  override fun apply(item: WebSymbolCodeCompletionItem,
-                     qualifiedKind: PolySymbolQualifiedKind): WebSymbolCodeCompletionItem? =
-    customizers.foldRight(item as WebSymbolCodeCompletionItem?) { scope, i ->
+  override fun apply(item: PolySymbolCodeCompletionItem,
+                     qualifiedKind: PolySymbolQualifiedKind): PolySymbolCodeCompletionItem? =
+    customizers.foldRight(item as PolySymbolCodeCompletionItem?) { scope, i ->
       i?.let { scope.apply(it, qualifiedKind) }
     }
 

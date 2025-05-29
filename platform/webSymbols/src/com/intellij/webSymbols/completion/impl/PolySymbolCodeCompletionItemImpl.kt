@@ -12,7 +12,7 @@ import com.intellij.webSymbols.PsiSourcedPolySymbol
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolApiStatus
 import com.intellij.webSymbols.PolySymbolApiStatus.Companion.isDeprecatedOrObsolete
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItemBuilder
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItemInsertHandler
 import com.intellij.webSymbols.impl.scaleToHeight
@@ -20,7 +20,7 @@ import com.intellij.webSymbols.query.WebSymbolDefaultIconProvider
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
-internal data class WebSymbolCodeCompletionItemImpl(
+internal data class PolySymbolCodeCompletionItemImpl(
   override val name: String,
   override val offset: Int = 0,
   override val completeAfterInsert: Boolean = false,
@@ -38,7 +38,7 @@ internal data class WebSymbolCodeCompletionItemImpl(
   override val insertHandler: WebSymbolCodeCompletionItemInsertHandler? = null,
   @get:ApiStatus.Internal
   val stopSequencePatternEvaluation: Boolean = false,
-) : WebSymbolCodeCompletionItem {
+) : PolySymbolCodeCompletionItem {
 
   override val typeText: String? get() = typeTextProvider?.invoke() ?: typeTextStatic
 
@@ -113,10 +113,10 @@ internal data class WebSymbolCodeCompletionItemImpl(
       else -> null
     }
 
-  override fun withName(name: String): WebSymbolCodeCompletionItem =
+  override fun withName(name: String): PolySymbolCodeCompletionItem =
     copy(name = name)
 
-  override fun withPrefix(prefix: String): WebSymbolCodeCompletionItem =
+  override fun withPrefix(prefix: String): PolySymbolCodeCompletionItem =
     if (prefix.isEmpty())
       this
     else
@@ -127,64 +127,64 @@ internal data class WebSymbolCodeCompletionItemImpl(
         aliases = aliases.asSequence().map { prefix + it }.toSet()
       )
 
-  override fun withOffset(offset: Int): WebSymbolCodeCompletionItem =
+  override fun withOffset(offset: Int): PolySymbolCodeCompletionItem =
     copy(offset = offset)
 
-  override fun withCompleteAfterInsert(completeAfterInsert: Boolean): WebSymbolCodeCompletionItem =
+  override fun withCompleteAfterInsert(completeAfterInsert: Boolean): PolySymbolCodeCompletionItem =
     copy(completeAfterInsert = completeAfterInsert)
 
-  override fun withDisplayName(displayName: String?): WebSymbolCodeCompletionItem =
+  override fun withDisplayName(displayName: String?): PolySymbolCodeCompletionItem =
     copy(displayName = displayName)
 
-  override fun withSymbol(symbol: PolySymbol?): WebSymbolCodeCompletionItem =
+  override fun withSymbol(symbol: PolySymbol?): PolySymbolCodeCompletionItem =
     copy(symbol = symbol)
 
-  override fun withPriority(priority: PolySymbol.Priority?): WebSymbolCodeCompletionItem =
+  override fun withPriority(priority: PolySymbol.Priority?): PolySymbolCodeCompletionItem =
     copy(priority = priority)
 
-  override fun withProximity(proximity: Int): WebSymbolCodeCompletionItem =
+  override fun withProximity(proximity: Int): PolySymbolCodeCompletionItem =
     copy(proximity = proximity)
 
-  override fun withApiStatus(apiStatus: PolySymbolApiStatus): WebSymbolCodeCompletionItem =
+  override fun withApiStatus(apiStatus: PolySymbolApiStatus): PolySymbolCodeCompletionItem =
     copy(apiStatus = apiStatus)
 
-  override fun withAliasesReplaced(aliases: Set<String>): WebSymbolCodeCompletionItem =
+  override fun withAliasesReplaced(aliases: Set<String>): PolySymbolCodeCompletionItem =
     copy(aliases = aliases)
 
-  override fun withAliasesAdded(aliases: Set<String>): WebSymbolCodeCompletionItem =
+  override fun withAliasesAdded(aliases: Set<String>): PolySymbolCodeCompletionItem =
     copy(aliases = this.aliases + aliases)
 
-  override fun withAliasAdded(alias: String): WebSymbolCodeCompletionItem =
+  override fun withAliasAdded(alias: String): PolySymbolCodeCompletionItem =
     copy(aliases = this.aliases + alias)
 
-  override fun withIcon(icon: Icon?): WebSymbolCodeCompletionItem =
+  override fun withIcon(icon: Icon?): PolySymbolCodeCompletionItem =
     copy(icon = icon)
 
-  override fun withTypeText(typeText: String?): WebSymbolCodeCompletionItem =
+  override fun withTypeText(typeText: String?): PolySymbolCodeCompletionItem =
     copy(typeTextStatic = typeText)
 
-  override fun withTypeText(typeTextProvider: () -> String?): WebSymbolCodeCompletionItem =
+  override fun withTypeText(typeTextProvider: () -> String?): PolySymbolCodeCompletionItem =
     copy(typeTextProvider = typeTextProvider)
 
-  override fun withTailText(tailText: String?): WebSymbolCodeCompletionItem =
+  override fun withTailText(tailText: String?): PolySymbolCodeCompletionItem =
     copy(tailText = tailText)
 
-  override fun withCompleteAfterChar(char: Char): WebSymbolCodeCompletionItem =
+  override fun withCompleteAfterChar(char: Char): PolySymbolCodeCompletionItem =
     copy(completeAfterChars = if (!completeAfterInsert) completeAfterChars + char else emptySet())
 
-  override fun withCompleteAfterCharsAdded(chars: List<Char>): WebSymbolCodeCompletionItem =
+  override fun withCompleteAfterCharsAdded(chars: List<Char>): PolySymbolCodeCompletionItem =
     copy(completeAfterChars = if (!completeAfterInsert) completeAfterChars + chars else emptySet())
 
-  override fun withInsertHandlerReplaced(insertHandler: WebSymbolCodeCompletionItemInsertHandler?): WebSymbolCodeCompletionItem =
+  override fun withInsertHandlerReplaced(insertHandler: WebSymbolCodeCompletionItemInsertHandler?): PolySymbolCodeCompletionItem =
     copy(insertHandler = insertHandler)
 
   override fun withInsertHandlerAdded(
     insertHandler: InsertHandler<LookupElement>,
     priority: PolySymbol.Priority,
-  ): WebSymbolCodeCompletionItem =
+  ): PolySymbolCodeCompletionItem =
     withInsertHandlerAdded(WebSymbolCodeCompletionItemInsertHandler.adapt(insertHandler, priority))
 
-  override fun withInsertHandlerAdded(insertHandler: WebSymbolCodeCompletionItemInsertHandler): WebSymbolCodeCompletionItem =
+  override fun withInsertHandlerAdded(insertHandler: WebSymbolCodeCompletionItemInsertHandler): PolySymbolCodeCompletionItem =
     copy(insertHandler = CompoundInsertHandler.merge(this.insertHandler, insertHandler))
 
   override fun with(
@@ -200,7 +200,7 @@ internal data class WebSymbolCodeCompletionItemImpl(
     icon: Icon?,
     typeText: String?,
     tailText: String?,
-  ): WebSymbolCodeCompletionItem =
+  ): PolySymbolCodeCompletionItem =
     copy(name = name, offset = offset, completeAfterInsert = completeAfterInsert,
          completeAfterChars = if (!completeAfterInsert) completeAfterChars else emptySet(),
          displayName = displayName, symbol = symbol, priority = priority, proximity = proximity,
@@ -231,7 +231,7 @@ internal data class WebSymbolCodeCompletionItemImpl(
     private var insertHandler: WebSymbolCodeCompletionItemInsertHandler? = null
     private var stopSequencePatternEvaluation: Boolean = false
 
-    fun build(): WebSymbolCodeCompletionItem = WebSymbolCodeCompletionItemImpl(
+    fun build(): PolySymbolCodeCompletionItem = PolySymbolCodeCompletionItemImpl(
       name, offset, completeAfterInsert, completeAfterChars, displayName, symbol, priority, proximity,
       apiStatus, aliases, icon, typeTextStatic, typeTextProvider, tailText, insertHandler, stopSequencePatternEvaluation)
 

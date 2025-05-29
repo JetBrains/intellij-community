@@ -5,7 +5,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.ThreeState
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolTypeSupport
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 
 interface PolySymbolHtmlAttributeValueTypeSupport : PolySymbolTypeSupport {
 
@@ -22,9 +22,9 @@ interface PolySymbolHtmlAttributeValueTypeSupport : PolySymbolTypeSupport {
 
   fun createNumberType(symbol: PolySymbol): Any?
 
-  fun createEnumType(symbol: PolySymbol, values: List<WebSymbolCodeCompletionItem>): Any?
+  fun createEnumType(symbol: PolySymbol, values: List<PolySymbolCodeCompletionItem>): Any?
 
-  fun getEnumValues(symbol: PolySymbol, type: Any?): List<WebSymbolCodeCompletionItem>?
+  fun getEnumValues(symbol: PolySymbol, type: Any?): List<PolySymbolCodeCompletionItem>?
 
   fun strictEnumValues(symbol: PolySymbol, type: Any?): Boolean
 

@@ -18,7 +18,7 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.util.asSafely
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.impl.PolySymbolNameSegmentImpl
 import com.intellij.webSymbols.impl.sortSymbolsByPriority
@@ -178,7 +178,7 @@ fun PolySymbol.toCodeCompletionItems(
   name: String,
   params: WebSymbolsCodeCompletionQueryParams,
   context: Stack<PolySymbolsScope>,
-): List<WebSymbolCodeCompletionItem> =
+): List<PolySymbolCodeCompletionItem> =
   pattern?.let { pattern ->
     context.push(this)
     try {
@@ -191,7 +191,7 @@ fun PolySymbol.toCodeCompletionItems(
   }
   ?: params.queryExecutor.namesProvider
     .getNames(PolySymbolQualifiedName(namespace, kind, this.name), WebSymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
-    .map { WebSymbolCodeCompletionItem.create(it, 0, symbol = this) }
+    .map { PolySymbolCodeCompletionItem.create(it, 0, symbol = this) }
 
 fun PolySymbol.nameMatches(name: String, queryExecutor: WebSymbolsQueryExecutor): Boolean {
   val queryNames = queryExecutor.namesProvider.getNames(
@@ -391,7 +391,7 @@ fun PolySymbolsScope.getDefaultCodeCompletions(
   qualifiedName: PolySymbolQualifiedName,
   params: WebSymbolsCodeCompletionQueryParams,
   scope: Stack<PolySymbolsScope>,
-): List<WebSymbolCodeCompletionItem> =
+): List<PolySymbolCodeCompletionItem> =
   getSymbols(qualifiedName.qualifiedKind,
              WebSymbolsListSymbolsQueryParams.create(
                params.queryExecutor,

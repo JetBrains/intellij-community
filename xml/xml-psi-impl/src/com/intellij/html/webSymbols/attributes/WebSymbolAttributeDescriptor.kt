@@ -16,7 +16,7 @@ import com.intellij.util.ArrayUtil
 import com.intellij.webSymbols.PsiSourcedPolySymbol
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolsBundle
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.utils.unwrapMatchedSymbols
 import com.intellij.xml.impl.BasicXmlAttributeDescriptor
 import com.intellij.xml.impl.XmlAttributeDescriptorEx
@@ -27,7 +27,7 @@ open class WebSymbolAttributeDescriptor private constructor(val tag: XmlTag?,
                                                             val symbol: PolySymbol,
                                                             private val acceptsNoValue: Boolean,
                                                             private val acceptsValue: Boolean,
-                                                            private val enumValues: List<WebSymbolCodeCompletionItem>?,
+                                                            private val enumValues: List<PolySymbolCodeCompletionItem>?,
                                                             private val strictEnumValues: Boolean,
                                                             val type: Any?,
                                                             private val icon: Icon?,
@@ -127,7 +127,7 @@ open class WebSymbolAttributeDescriptor private constructor(val tag: XmlTag?,
       .filterIsInstance<WebSymbolsHtmlQueryConfigurator.HtmlAttributeDescriptorBasedSymbol>()
       .any { it.descriptor.hasIdRefType() }
 
-  private fun matchEnum(value: String): List<WebSymbolCodeCompletionItem> =
+  private fun matchEnum(value: String): List<PolySymbolCodeCompletionItem> =
     enumValues!!.filter { it.name == value }
 
   companion object {

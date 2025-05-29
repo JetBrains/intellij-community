@@ -19,7 +19,7 @@ import com.intellij.util.asSafely
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.PolySymbol.Companion.HTML_ATTRIBUTE_VALUES
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItemCustomizer
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
@@ -91,10 +91,10 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
   }
 
   class HtmlSymbolsCodeCompletionItemCustomizer : WebSymbolCodeCompletionItemCustomizer {
-    override fun customize(item: WebSymbolCodeCompletionItem,
+    override fun customize(item: PolySymbolCodeCompletionItem,
                            framework: FrameworkId?,
                            qualifiedKind: PolySymbolQualifiedKind,
-                           location: PsiElement): WebSymbolCodeCompletionItem =
+                           location: PsiElement): PolySymbolCodeCompletionItem =
       when (qualifiedKind) {
         PolySymbol.HTML_ELEMENTS -> item.withTypeText(item.symbol?.origin?.library)
         PolySymbol.HTML_ATTRIBUTES -> item // TODO - we can figure out the actual type with full match provided

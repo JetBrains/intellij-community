@@ -24,7 +24,7 @@ import com.intellij.webSymbols.PolySymbol.Companion.PROP_DOC_HIDE_PATTERN
 import com.intellij.webSymbols.PolySymbol.Companion.PROP_HIDE_FROM_COMPLETION
 import com.intellij.webSymbols.PolySymbol.Companion.PROP_KIND
 import com.intellij.webSymbols.PolySymbol.Companion.PROP_READ_ONLY
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.context.WebSymbolsContext.Companion.PKG_MANAGER_RUBY_GEMS
 import com.intellij.webSymbols.context.WebSymbolsContext.Companion.PKG_MANAGER_NODE_PACKAGES
@@ -261,7 +261,7 @@ internal fun Reference.codeCompletion(name: String,
                                       scope: List<PolySymbolsScope>,
                                       queryExecutor: WebSymbolsQueryExecutor,
                                       position: Int = 0,
-                                      virtualSymbols: Boolean = true): List<WebSymbolCodeCompletionItem> {
+                                      virtualSymbols: Boolean = true): List<PolySymbolCodeCompletionItem> {
   return when (val reference = this.value) {
     is String -> queryExecutor.runCodeCompletionQuery(
       parseWebTypesPath("$reference", scope.lastPolySymbol).withLastSegmentName(name), position,

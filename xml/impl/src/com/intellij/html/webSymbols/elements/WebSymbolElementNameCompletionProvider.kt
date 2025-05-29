@@ -11,7 +11,7 @@ import com.intellij.psi.html.HtmlTag
 import com.intellij.psi.impl.source.xml.TagNameReference
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.webSymbols.PolySymbol.Companion.HTML_ELEMENTS
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.completion.WebSymbolsCompletionProviderBase
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 
@@ -44,7 +44,7 @@ class WebSymbolElementNameCompletionProvider : WebSymbolsCompletionProviderBase<
 
   companion object {
 
-    fun filterStandardHtmlSymbols(item: WebSymbolCodeCompletionItem): Boolean =
+    fun filterStandardHtmlSymbols(item: PolySymbolCodeCompletionItem): Boolean =
       item.symbol !is WebSymbolsHtmlQueryConfigurator.StandardHtmlSymbol
       || item.offset != 0
       || item.symbol?.name != item.name

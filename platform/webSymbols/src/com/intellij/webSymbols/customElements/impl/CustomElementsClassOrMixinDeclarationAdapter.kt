@@ -6,7 +6,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.customElements.CustomElementsJsonOrigin
 import com.intellij.webSymbols.customElements.CustomElementsManifestScopeBase
 import com.intellij.webSymbols.customElements.CustomElementsSymbol
@@ -125,7 +125,7 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
 
     override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName,
                                     params: WebSymbolsCodeCompletionQueryParams,
-                                    scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> =
+                                    scope: Stack<PolySymbolsScope>): List<PolySymbolCodeCompletionItem> =
       base.rootScope
         .getCodeCompletions(base.declaration, this.origin, qualifiedName, params, scope)
         .toList()

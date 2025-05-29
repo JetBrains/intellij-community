@@ -3,17 +3,17 @@ package com.intellij.webSymbols.webTypes.filters
 
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolsScope
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class WebSymbolsMatchPrefixFilter : WebSymbolsFilter {
 
-  override fun filterCodeCompletions(codeCompletions: List<WebSymbolCodeCompletionItem>,
+  override fun filterCodeCompletions(codeCompletions: List<PolySymbolCodeCompletionItem>,
                                      queryExecutor: WebSymbolsQueryExecutor,
                                      scope: List<PolySymbolsScope>,
-                                     properties: Map<String, Any>): List<WebSymbolCodeCompletionItem> {
+                                     properties: Map<String, Any>): List<PolySymbolCodeCompletionItem> {
     val prefix = properties["prefix"] as? String ?: return codeCompletions
     return codeCompletions.filter { it.name.startsWith(prefix) }
   }

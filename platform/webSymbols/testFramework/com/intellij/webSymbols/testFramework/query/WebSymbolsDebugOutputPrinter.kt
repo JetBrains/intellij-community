@@ -7,7 +7,7 @@ import com.intellij.webSymbols.PsiSourcedPolySymbol
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolApiStatus
 import com.intellij.webSymbols.PolySymbolNameSegment
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.utils.completeMatch
 import com.intellij.webSymbols.utils.nameSegments
@@ -20,7 +20,7 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
 
   override fun printValueImpl(builder: StringBuilder, level: Int, value: Any?): StringBuilder =
     when (value) {
-      is WebSymbolCodeCompletionItem -> builder.printCodeCompletionItem(level, value)
+      is PolySymbolCodeCompletionItem -> builder.printCodeCompletionItem(level, value)
       is PolySymbol -> builder.printSymbol(level, value)
       is WebSymbolHtmlAttributeValue -> builder.printAttributeValue(level, value)
       is PolySymbolNameSegment -> builder.printSegment(level, value)
@@ -35,7 +35,7 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
     else
       super.printRecursiveValue(builder, level, value)
 
-  private fun StringBuilder.printCodeCompletionItem(topLevel: Int, item: WebSymbolCodeCompletionItem): StringBuilder =
+  private fun StringBuilder.printCodeCompletionItem(topLevel: Int, item: PolySymbolCodeCompletionItem): StringBuilder =
     printObject(topLevel) { level ->
       printProperty(level, "name", item.name)
       printProperty(level, "priority", item.priority ?: PolySymbol.Priority.NORMAL)

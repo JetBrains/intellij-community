@@ -7,17 +7,17 @@ import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolApiStatus
 import com.intellij.webSymbols.PolySymbolNameSegment
 import com.intellij.webSymbols.PolySymbolsScope
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
-import com.intellij.webSymbols.completion.impl.WebSymbolCodeCompletionItemImpl
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.impl.PolySymbolCodeCompletionItemImpl
 import com.intellij.webSymbols.impl.copy
 
-internal fun WebSymbolCodeCompletionItem.withStopSequencePatternEvaluation(stop: Boolean): WebSymbolCodeCompletionItem =
-  if ((this as WebSymbolCodeCompletionItemImpl).stopSequencePatternEvaluation != stop)
+internal fun PolySymbolCodeCompletionItem.withStopSequencePatternEvaluation(stop: Boolean): PolySymbolCodeCompletionItem =
+  if ((this as PolySymbolCodeCompletionItemImpl).stopSequencePatternEvaluation != stop)
     this.copy(stopSequencePatternEvaluation = stop)
   else this
 
-internal val WebSymbolCodeCompletionItem.stopSequencePatternEvaluation
-  get() = (this as WebSymbolCodeCompletionItemImpl).stopSequencePatternEvaluation
+internal val PolySymbolCodeCompletionItem.stopSequencePatternEvaluation
+  get() = (this as PolySymbolCodeCompletionItemImpl).stopSequencePatternEvaluation
 
 internal fun <T : MatchResult> T.addOwner(owner: PolySymbol): T {
   val newSegments = mutableListOf<PolySymbolNameSegment>()
@@ -57,7 +57,7 @@ internal fun <T : MatchResult> T.copy(segments: List<PolySymbolNameSegment>): T 
     else -> MatchResult(segments)
   } as T
 
-internal fun List<WebSymbolCodeCompletionItem>.applyIcons(symbol: PolySymbol) =
+internal fun List<PolySymbolCodeCompletionItem>.applyIcons(symbol: PolySymbol) =
   if (symbol.icon != null) {
     map { item -> if (item.icon == null) item.withIcon(symbol.icon) else item }
   }

@@ -6,7 +6,7 @@ import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolApiStatus.Companion.isDeprecatedOrObsolete
 import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.PolySymbolsScope
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.impl.canUnwrapSymbols
 import com.intellij.webSymbols.patterns.ComplexPatternOptions
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
@@ -114,7 +114,7 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
     override fun codeCompletion(name: String,
                                 position: Int,
                                 scopeStack: Stack<PolySymbolsScope>,
-                                queryExecutor: WebSymbolsQueryExecutor): List<WebSymbolCodeCompletionItem> =
+                                queryExecutor: WebSymbolsQueryExecutor): List<PolySymbolCodeCompletionItem> =
       delegate.pattern
         ?.complete(delegate, scopeStack,
                    this, CompletionParameters(name, queryExecutor, position), 0, name.length)
@@ -174,7 +174,7 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
     override fun codeCompletion(name: String,
                                 position: Int,
                                 scopeStack: Stack<PolySymbolsScope>,
-                                queryExecutor: WebSymbolsQueryExecutor): List<WebSymbolCodeCompletionItem> =
+                                queryExecutor: WebSymbolsQueryExecutor): List<PolySymbolCodeCompletionItem> =
       items.flatMap { it.codeCompletion(name, scopeStack, queryExecutor, position) }
 
     override fun listSymbols(scopeStack: Stack<PolySymbolsScope>,

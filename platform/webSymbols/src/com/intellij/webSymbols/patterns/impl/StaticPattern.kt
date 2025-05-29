@@ -5,7 +5,7 @@ import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolNameSegment
 import com.intellij.webSymbols.PolySymbolsScope
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver
 
@@ -34,7 +34,7 @@ internal class StaticPattern(val content: String) : WebSymbolsPattern() {
                         params: CompletionParameters,
                         start: Int,
                         end: Int): CompletionResults =
-    CompletionResults(WebSymbolCodeCompletionItem.create(content, start))
+    CompletionResults(PolySymbolCodeCompletionItem.create(content, start))
 
   override fun toString(): String =
     "\"${content}\""

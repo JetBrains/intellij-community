@@ -6,7 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolsScope
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.webTypes.filters.WebSymbolsFilter
 
@@ -21,11 +21,11 @@ class WebSymbolsFilterEP() : CustomLoadingExtensionPointBean<WebSymbolsFilter>()
 
     private val NOOP_FILTER = object : WebSymbolsFilter {
       override fun filterCodeCompletions(
-        codeCompletions: List<WebSymbolCodeCompletionItem>,
+        codeCompletions: List<PolySymbolCodeCompletionItem>,
         queryExecutor: WebSymbolsQueryExecutor,
         scope: List<PolySymbolsScope>,
         properties: Map<String, Any>,
-      ): List<WebSymbolCodeCompletionItem> =
+      ): List<PolySymbolCodeCompletionItem> =
         codeCompletions
 
       override fun filterNameMatches(

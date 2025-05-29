@@ -5,7 +5,7 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.*
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.context.WebSymbolsContext.Companion.KIND_FRAMEWORK
 
@@ -82,7 +82,7 @@ interface WebSymbolsQueryExecutor : ModificationTracker {
                              /** Position to complete at in the last segment of the path **/
                              position: Int,
                              virtualSymbols: Boolean = true,
-                             additionalScope: List<PolySymbolsScope> = emptyList()): List<WebSymbolCodeCompletionItem> =
+                             additionalScope: List<PolySymbolsScope> = emptyList()): List<PolySymbolCodeCompletionItem> =
     runCodeCompletionQuery(listOf(PolySymbolQualifiedName(namespace, kind, name)), position, virtualSymbols, additionalScope)
 
   fun runCodeCompletionQuery(qualifiedKind: PolySymbolQualifiedKind,
@@ -90,14 +90,14 @@ interface WebSymbolsQueryExecutor : ModificationTracker {
                              /** Position to complete at in the last segment of the path **/
                              position: Int,
                              virtualSymbols: Boolean = true,
-                             additionalScope: List<PolySymbolsScope> = emptyList()): List<WebSymbolCodeCompletionItem> =
+                             additionalScope: List<PolySymbolsScope> = emptyList()): List<PolySymbolCodeCompletionItem> =
     runCodeCompletionQuery(listOf(qualifiedKind.withName(name)), position, virtualSymbols, additionalScope)
 
   fun runCodeCompletionQuery(path: List<PolySymbolQualifiedName>,
                              /** Position to complete at in the last segment of the path **/
                              position: Int,
                              virtualSymbols: Boolean = true,
-                             additionalScope: List<PolySymbolsScope> = emptyList()): List<WebSymbolCodeCompletionItem>
+                             additionalScope: List<PolySymbolsScope> = emptyList()): List<PolySymbolCodeCompletionItem>
 
   fun withNameConversionRules(rules: List<WebSymbolNameConversionRules>): WebSymbolsQueryExecutor
 

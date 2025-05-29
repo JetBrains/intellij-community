@@ -6,7 +6,7 @@ import com.intellij.util.text.CharSequenceSubSequence
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolNameSegment
 import com.intellij.webSymbols.PolySymbolsScope
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver
 import java.util.regex.Pattern
@@ -54,9 +54,9 @@ internal class RegExpPattern(private val regex: String, private val caseSensitiv
     getPatternCompletablePrefix(regex)
       .takeIf { it.isNotBlank() }
       ?.let {
-        CompletionResults(WebSymbolCodeCompletionItem.create(it, start, true, displayName = "$it…", symbol = owner))
+        CompletionResults(PolySymbolCodeCompletionItem.create(it, start, true, displayName = "$it…", symbol = owner))
       }
-    ?: CompletionResults(WebSymbolCodeCompletionItem.create("", start, true, displayName = "…", symbol = owner))
+    ?: CompletionResults(PolySymbolCodeCompletionItem.create("", start, true, displayName = "…", symbol = owner))
 
 
   override fun toString(): String =

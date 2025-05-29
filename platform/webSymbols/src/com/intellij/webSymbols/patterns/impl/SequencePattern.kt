@@ -8,7 +8,7 @@ import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolNameSegment
 import com.intellij.webSymbols.PolySymbolOrigin
 import com.intellij.webSymbols.PolySymbolsScope
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.completion.impl.CompoundInsertHandler
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver
@@ -81,7 +81,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
                         params: CompletionParameters,
                         start: Int,
                         end: Int): CompletionResults {
-    val results: MutableList<WebSymbolCodeCompletionItem> = mutableListOf()
+    val results: MutableList<PolySymbolCodeCompletionItem> = mutableListOf()
     var stop = false
     process(
       listOf(SequenceCompletionResult(
@@ -130,9 +130,9 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
     return CompletionResults(results.map { it.withStopSequencePatternEvaluation(stop) }, true)
   }
 
-  private fun WebSymbolCodeCompletionItem?.asRequiredOnlyCompletionResult(matchResult: MatchResult?,
-                                                                          params: CompletionParameters,
-                                                                          lastMatched: MatchResult) =
+  private fun PolySymbolCodeCompletionItem?.asRequiredOnlyCompletionResult(matchResult: MatchResult?,
+                                                                           params: CompletionParameters,
+                                                                           lastMatched: MatchResult) =
     SequenceCompletionResult(
       matchResult,
       matchResult?.takeIf { params.position >= it.end } ?: lastMatched,
@@ -170,17 +170,17 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
                                        matchStart: Int,
                                        completionResults: CompletionResults,
                                        params: CompletionParameters,
-                                       requiredPart: WebSymbolCodeCompletionItem?,
+                                       requiredPart: PolySymbolCodeCompletionItem?,
                                        end: Int,
                                        prevStop: Boolean,
                                        completeAfterChars: List<Char>,
                                        lastMatched: MatchResult,
-                                       finalResults: MutableList<WebSymbolCodeCompletionItem>): Pair<Boolean, List<SequenceCompletionResult>> {
+                                       finalResults: MutableList<PolySymbolCodeCompletionItem>): Pair<Boolean, List<SequenceCompletionResult>> {
     val completionPos = params.position
-    var requiredPartResult: List<WebSymbolCodeCompletionItem>? = requiredPart?.let { listOf(it) }
+    var requiredPartResult: List<PolySymbolCodeCompletionItem>? = requiredPart?.let { listOf(it) }
     val results = mutableListOf<SequenceCompletionResult>()
 
-    fun WebSymbolCodeCompletionItem?.asRequiredOnlyCompletionResult() =
+    fun PolySymbolCodeCompletionItem?.asRequiredOnlyCompletionResult() =
       this.asRequiredOnlyCompletionResult(matchResult, params, lastMatched)
 
     if (!completionResults.required) {
@@ -223,7 +223,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
           requiredPart
         else {
           val name = params.name.substring(lastMatched.start, matchStart)
-          WebSymbolCodeCompletionItem.create(
+          PolySymbolCodeCompletionItem.create(
             name,
             offset = lastMatched.start,
             symbol = PolySymbolMatch.create(
@@ -233,8 +233,8 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
               PolySymbolOrigin.empty()
             ))
         }
-        val result = mutableListOf<WebSymbolCodeCompletionItem>()
-        val itemsToJoin = mutableListOf<WebSymbolCodeCompletionItem>()
+        val result = mutableListOf<PolySymbolCodeCompletionItem>()
+        val itemsToJoin = mutableListOf<PolySymbolCodeCompletionItem>()
         val hasCompleteAfterInsert = actualRequiredPart.completeAfterInsert
         var actualRequiredPartAdded = false
         completionResults.items.forEach { item ->
@@ -314,7 +314,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
                 offset >= 0 && it.name.length > offset
                 && StringUtil.equals(CharSequenceSubSequence(it.name, offset, it.name.length), matchedName)
               }) {
-          completionResults.copy(items = completionResults.items + WebSymbolCodeCompletionItem.create(
+          completionResults.copy(items = completionResults.items + PolySymbolCodeCompletionItem.create(
             matchedName.toString(), lastMatchedSegment.start, false,
             symbol = lastMatchedSegment.symbols.asSingleSymbol()
           ))
@@ -322,15 +322,15 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
         else completionResults
       }
 
-  private fun explodeJoin(requiredPart: WebSymbolCodeCompletionItem,
-                          newContributions: List<WebSymbolCodeCompletionItem>,
-                          completeAfterChar: List<Char>): List<WebSymbolCodeCompletionItem> =
+  private fun explodeJoin(requiredPart: PolySymbolCodeCompletionItem,
+                          newContributions: List<PolySymbolCodeCompletionItem>,
+                          completeAfterChar: List<Char>): List<PolySymbolCodeCompletionItem> =
     newContributions.map { new ->
       join(requiredPart, new, completeAfterChar)
     }
 
-  private fun join(required: WebSymbolCodeCompletionItem, new: WebSymbolCodeCompletionItem,
-                   completeAfterChars: List<Char>): WebSymbolCodeCompletionItem {
+  private fun join(required: PolySymbolCodeCompletionItem, new: PolySymbolCodeCompletionItem,
+                   completeAfterChars: List<Char>): PolySymbolCodeCompletionItem {
     val displayName = if (required.completeAfterInsert || required.displayName != null || new.displayName != null)
       (required.displayName ?: required.name) + (new.displayName ?: new.name)
     else
@@ -358,7 +358,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
       minOf(required.priority!!, new.priority!!)
 
     return if (required.completeAfterInsert)
-      WebSymbolCodeCompletionItem.create(
+      PolySymbolCodeCompletionItem.create(
         name = name,
         displayName = displayName,
         offset = required.offset,
@@ -370,7 +370,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
         icon = new.icon ?: required.icon
       )
     else
-      WebSymbolCodeCompletionItem.create(
+      PolySymbolCodeCompletionItem.create(
         name = name,
         displayName = displayName,
         offset = required.offset,
@@ -451,7 +451,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
 
   private data class SequenceCompletionResult(val prevResult: MatchResult?,
                                               val lastMatched: MatchResult,
-                                              val requiredCompletionChain: WebSymbolCodeCompletionItem?,
+                                              val requiredCompletionChain: PolySymbolCodeCompletionItem?,
                                               val onlyRequired: Boolean = false)
 
 }

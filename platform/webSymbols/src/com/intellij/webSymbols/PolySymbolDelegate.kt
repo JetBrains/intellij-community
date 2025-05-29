@@ -9,7 +9,7 @@ import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.util.containers.Stack
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
@@ -95,7 +95,7 @@ abstract class PolySymbolDelegate<T : PolySymbol>(val delegate: T) : PolySymbol 
 
   override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName,
                                   params: WebSymbolsCodeCompletionQueryParams,
-                                  scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> =
+                                  scope: Stack<PolySymbolsScope>): List<PolySymbolCodeCompletionItem> =
     delegate.getCodeCompletions(qualifiedName, params, scope)
 
   override fun isExclusiveFor(qualifiedKind: PolySymbolQualifiedKind): Boolean =

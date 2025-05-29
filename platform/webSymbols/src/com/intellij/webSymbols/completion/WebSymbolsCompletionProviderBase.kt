@@ -81,8 +81,8 @@ abstract class WebSymbolsCompletionProviderBase<T : PsiElement> : CompletionProv
       location: PsiElement,
       queryContext: List<PolySymbolsScope> = emptyList(),
       providedNames: MutableSet<String>? = null,
-      filter: ((WebSymbolCodeCompletionItem) -> Boolean)? = null,
-      consumer: (WebSymbolCodeCompletionItem) -> Unit,
+      filter: ((PolySymbolCodeCompletionItem) -> Boolean)? = null,
+      consumer: (PolySymbolCodeCompletionItem) -> Unit,
     ) {
       processWebSymbolCodeCompletionItems(
         queryExecutor.runCodeCompletionQuery(qualifiedKind, name, position, additionalScope = queryContext),
@@ -92,15 +92,15 @@ abstract class WebSymbolsCompletionProviderBase<T : PsiElement> : CompletionProv
 
     @JvmStatic
     fun processWebSymbolCodeCompletionItems(
-      symbols: List<WebSymbolCodeCompletionItem>,
+      symbols: List<PolySymbolCodeCompletionItem>,
       result: CompletionResultSet,
       qualifiedKind: PolySymbolQualifiedKind,
       name: String,
       framework: FrameworkId?,
       location: PsiElement,
       providedNames: MutableSet<String>? = null,
-      filter: ((WebSymbolCodeCompletionItem) -> Boolean)? = null,
-      consumer: (WebSymbolCodeCompletionItem) -> Unit,
+      filter: ((PolySymbolCodeCompletionItem) -> Boolean)? = null,
+      consumer: (PolySymbolCodeCompletionItem) -> Unit,
     ) {
       val prefixLength = name.length
       val prefixes = mutableSetOf<String>()

@@ -4,7 +4,7 @@ package com.intellij.webSymbols.query
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.webSymbols.*
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 
 interface WebSymbolsQueryResultsCustomizer : ModificationTracker {
 
@@ -14,7 +14,7 @@ interface WebSymbolsQueryResultsCustomizer : ModificationTracker {
             strict: Boolean,
             qualifiedName: PolySymbolQualifiedName): List<PolySymbol>
 
-  fun apply(item: WebSymbolCodeCompletionItem,
-            qualifiedKind: PolySymbolQualifiedKind): WebSymbolCodeCompletionItem?
+  fun apply(item: PolySymbolCodeCompletionItem,
+            qualifiedKind: PolySymbolQualifiedKind): PolySymbolCodeCompletionItem?
 
 }

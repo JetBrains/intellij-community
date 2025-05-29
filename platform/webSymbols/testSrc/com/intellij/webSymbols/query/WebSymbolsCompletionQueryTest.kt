@@ -8,7 +8,7 @@ import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolQualifiedName
 import com.intellij.webSymbols.PolySymbolsScope
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.testFramework.query.doTest
 import com.intellij.webSymbols.testFramework.query.printCodeCompletionItems
 import com.intellij.webSymbols.webSymbolsTestsDataPath
@@ -236,9 +236,9 @@ class WebSymbolsCompletionQueryTest : WebSymbolsMockQueryExecutorTestBase() {
 
         override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName,
                                         params: WebSymbolsCodeCompletionQueryParams,
-                                        scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> {
+                                        scope: Stack<PolySymbolsScope>): List<PolySymbolCodeCompletionItem> {
           return if (qualifiedName.kind == PolySymbol.KIND_HTML_ATTRIBUTES) {
-            listOf(WebSymbolCodeCompletionItem.create("bar"))
+            listOf(PolySymbolCodeCompletionItem.create("bar"))
           }
           else emptyList()
         }

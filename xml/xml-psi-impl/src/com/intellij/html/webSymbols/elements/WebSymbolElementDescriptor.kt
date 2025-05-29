@@ -17,7 +17,7 @@ import com.intellij.util.asSafely
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.PolySymbolQualifiedName
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.utils.nameSegments
 import com.intellij.xml.*
@@ -55,7 +55,7 @@ open class WebSymbolElementDescriptor private constructor(private val tag: XmlTa
                              name: String,
                              /** Position to complete at in the last segment of the path **/
                              position: Int,
-                             virtualSymbols: Boolean = true): List<WebSymbolCodeCompletionItem> =
+                             virtualSymbols: Boolean = true): List<PolySymbolCodeCompletionItem> =
     WebSymbolsQueryExecutorFactory.create(tag)
       .runCodeCompletionQuery(qualifiedKind, name, position, virtualSymbols, listOf(symbol))
 

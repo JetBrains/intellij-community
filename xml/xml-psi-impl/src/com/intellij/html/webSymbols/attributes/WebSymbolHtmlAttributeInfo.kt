@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.PsiSourcedPolySymbol
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolOrigin
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
@@ -27,7 +27,7 @@ interface WebSymbolHtmlAttributeInfo {
   @get:JvmName("acceptsValue")
   val acceptsValue: Boolean
 
-  val enumValues: List<WebSymbolCodeCompletionItem>?
+  val enumValues: List<PolySymbolCodeCompletionItem>?
 
   @get:JvmName("strictEnumValues")
   val strictEnumValues: Boolean
@@ -51,7 +51,7 @@ interface WebSymbolHtmlAttributeInfo {
 
   fun withAcceptsValue(acceptsValue: Boolean): WebSymbolHtmlAttributeInfo
 
-  fun withEnumValues(enumValues: List<WebSymbolCodeCompletionItem>?): WebSymbolHtmlAttributeInfo
+  fun withEnumValues(enumValues: List<PolySymbolCodeCompletionItem>?): WebSymbolHtmlAttributeInfo
 
   fun withStrictEnumValues(strictEnumValues: Boolean): WebSymbolHtmlAttributeInfo
 
@@ -69,7 +69,7 @@ interface WebSymbolHtmlAttributeInfo {
            symbol: PolySymbol = this.symbol,
            acceptsNoValue: Boolean = this.acceptsNoValue,
            acceptsValue: Boolean = this.acceptsValue,
-           enumValues: List<WebSymbolCodeCompletionItem>? = this.enumValues,
+           enumValues: List<PolySymbolCodeCompletionItem>? = this.enumValues,
            strictEnumValues: Boolean = this.strictEnumValues,
            type: Any? = this.type,
            icon: Icon? = this.icon,
@@ -98,7 +98,7 @@ interface WebSymbolHtmlAttributeInfo {
       symbol: PolySymbol,
       acceptsNoValue: Boolean = false,
       acceptsValue: Boolean = true,
-      enumValues: List<WebSymbolCodeCompletionItem>? = null,
+      enumValues: List<PolySymbolCodeCompletionItem>? = null,
       strictEnumValues: Boolean = false,
       type: Any? = null,
       icon: Icon? = null,

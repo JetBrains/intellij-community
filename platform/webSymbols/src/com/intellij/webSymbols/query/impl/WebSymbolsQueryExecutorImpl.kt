@@ -16,7 +16,7 @@ import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.PolySymbolQualifiedName
 import com.intellij.webSymbols.PolySymbolsScope
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.impl.filterByQueryParams
 import com.intellij.webSymbols.impl.selectBest
@@ -104,7 +104,7 @@ class WebSymbolsQueryExecutorImpl(
     position: Int,
     virtualSymbols: Boolean,
     additionalScope: List<PolySymbolsScope>,
-  ): List<WebSymbolCodeCompletionItem> =
+  ): List<PolySymbolCodeCompletionItem> =
     runCodeCompletionQuery(path, WebSymbolsCodeCompletionQueryParams.create(this, position, virtualSymbols), additionalScope)
 
   override fun withNameConversionRules(rules: List<WebSymbolNameConversionRules>): WebSymbolsQueryExecutor =
@@ -236,7 +236,7 @@ class WebSymbolsQueryExecutorImpl(
   private fun runCodeCompletionQuery(
     path: List<PolySymbolQualifiedName>, queryParams: WebSymbolsCodeCompletionQueryParams,
     additionalScope: List<PolySymbolsScope>,
-  ): List<WebSymbolCodeCompletionItem> =
+  ): List<PolySymbolCodeCompletionItem> =
     runQuery(path, queryParams, additionalScope) {
         finalContext: Collection<PolySymbolsScope>,
         pathSection: PolySymbolQualifiedName,
@@ -348,7 +348,7 @@ class WebSymbolsQueryExecutorImpl(
         list.subList(max(0, list.indexOfLast { it.isExclusiveFor(qualifiedKind) }), list.size)
       }
 
-  private fun List<WebSymbolCodeCompletionItem>.sortAndDeduplicate(): List<WebSymbolCodeCompletionItem> =
+  private fun List<PolySymbolCodeCompletionItem>.sortAndDeduplicate(): List<PolySymbolCodeCompletionItem> =
     groupBy { Triple(it.name, it.displayName, it.offset) }
       .mapNotNull { (_, items) ->
         if (items.size == 1) {
@@ -356,13 +356,13 @@ class WebSymbolsQueryExecutorImpl(
         }
         else {
           items
-            .sortedWith(Comparator.comparing { it: WebSymbolCodeCompletionItem -> -(it.priority ?: PolySymbol.Priority.NORMAL).ordinal }
+            .sortedWith(Comparator.comparing { it: PolySymbolCodeCompletionItem -> -(it.priority ?: PolySymbol.Priority.NORMAL).ordinal }
                           .thenComparingInt { -(it.proximity ?: 0) })
             .firstOrNull()
         }
       }
 
-  private fun Sequence<WebSymbolCodeCompletionItem>.mapWithSymbolPriority() =
+  private fun Sequence<PolySymbolCodeCompletionItem>.mapWithSymbolPriority() =
     map { item ->
       item.symbol
         ?.priority

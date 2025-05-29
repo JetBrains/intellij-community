@@ -12,7 +12,7 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.applyIf
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.query.*
 import java.util.*
 
@@ -33,11 +33,11 @@ abstract class PolySymbolsIsolatedMappingScope<T : PsiElement>(
 
   protected abstract val subScopeBuilder: (WebSymbolsQueryExecutor, T) -> List<PolySymbolsScope>
 
-  override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName, params: WebSymbolsCodeCompletionQueryParams, scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> {
+  override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName, params: WebSymbolsCodeCompletionQueryParams, scope: Stack<PolySymbolsScope>): List<PolySymbolCodeCompletionItem> {
     if (!params.queryExecutor.allowResolve || (framework != null && params.framework != framework))
       return emptyList()
     val sourceKind = mappings[qualifiedName.qualifiedKind] ?: return emptyList()
-    var result: List<WebSymbolCodeCompletionItem> = emptyList()
+    var result: List<PolySymbolCodeCompletionItem> = emptyList()
     RecursionManager.runInNewContext {
       result = subQuery.runCodeCompletionQuery(sourceKind, qualifiedName.name, params.position, params.virtualSymbols, additionalScope)
         .filter { it.symbol?.let { acceptSymbol(it) } != false }

@@ -6,7 +6,7 @@ import com.intellij.model.Symbol
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
@@ -90,7 +90,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
 
   final override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName,
                                         params: WebSymbolsCodeCompletionQueryParams,
-                                        scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> =
+                                        scope: Stack<PolySymbolsScope>): List<PolySymbolCodeCompletionItem> =
     base.rootScope
       .getCodeCompletions(base.contributionForQuery, base.jsonOrigin, qualifiedName, params, scope)
       .toList()

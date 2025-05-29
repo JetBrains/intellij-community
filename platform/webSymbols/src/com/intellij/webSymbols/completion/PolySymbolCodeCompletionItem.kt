@@ -10,7 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.PsiSourcedPolySymbol
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolApiStatus
-import com.intellij.webSymbols.completion.impl.WebSymbolCodeCompletionItemImpl
+import com.intellij.webSymbols.completion.impl.PolySymbolCodeCompletionItemImpl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import javax.swing.Icon
@@ -20,7 +20,7 @@ import javax.swing.Icon
  **/
 @Suppress("INAPPLICABLE_JVM_NAME")
 @NonExtendable
-interface WebSymbolCodeCompletionItem {
+interface PolySymbolCodeCompletionItem {
   val name: String
   val displayName: String?
   val offset: Int
@@ -39,7 +39,7 @@ interface WebSymbolCodeCompletionItem {
   val symbol: PolySymbol?
   val insertHandler: WebSymbolCodeCompletionItemInsertHandler?
 
-  fun withPrefix(prefix: String): WebSymbolCodeCompletionItem
+  fun withPrefix(prefix: String): PolySymbolCodeCompletionItem
 
   fun addToResult(
     parameters: CompletionParameters,
@@ -47,48 +47,48 @@ interface WebSymbolCodeCompletionItem {
     baselinePriorityValue: Double = PolySymbol.Priority.NORMAL.value,
   )
 
-  fun withName(name: String): WebSymbolCodeCompletionItem
+  fun withName(name: String): PolySymbolCodeCompletionItem
 
-  fun withOffset(offset: Int): WebSymbolCodeCompletionItem
+  fun withOffset(offset: Int): PolySymbolCodeCompletionItem
 
-  fun withCompleteAfterInsert(completeAfterInsert: Boolean): WebSymbolCodeCompletionItem
+  fun withCompleteAfterInsert(completeAfterInsert: Boolean): PolySymbolCodeCompletionItem
 
-  fun withDisplayName(displayName: String?): WebSymbolCodeCompletionItem
+  fun withDisplayName(displayName: String?): PolySymbolCodeCompletionItem
 
-  fun withSymbol(symbol: PolySymbol?): WebSymbolCodeCompletionItem
+  fun withSymbol(symbol: PolySymbol?): PolySymbolCodeCompletionItem
 
-  fun withPriority(priority: PolySymbol.Priority?): WebSymbolCodeCompletionItem
+  fun withPriority(priority: PolySymbol.Priority?): PolySymbolCodeCompletionItem
 
-  fun withProximity(proximity: Int): WebSymbolCodeCompletionItem
+  fun withProximity(proximity: Int): PolySymbolCodeCompletionItem
 
-  fun withApiStatus(apiStatus: PolySymbolApiStatus): WebSymbolCodeCompletionItem
+  fun withApiStatus(apiStatus: PolySymbolApiStatus): PolySymbolCodeCompletionItem
 
-  fun withAliasesReplaced(aliases: Set<String>): WebSymbolCodeCompletionItem
+  fun withAliasesReplaced(aliases: Set<String>): PolySymbolCodeCompletionItem
 
-  fun withAliasesAdded(aliases: Set<String>): WebSymbolCodeCompletionItem
+  fun withAliasesAdded(aliases: Set<String>): PolySymbolCodeCompletionItem
 
-  fun withAliasAdded(alias: String): WebSymbolCodeCompletionItem
+  fun withAliasAdded(alias: String): PolySymbolCodeCompletionItem
 
-  fun withIcon(icon: Icon?): WebSymbolCodeCompletionItem
+  fun withIcon(icon: Icon?): PolySymbolCodeCompletionItem
 
-  fun withTypeText(typeText: String?): WebSymbolCodeCompletionItem
+  fun withTypeText(typeText: String?): PolySymbolCodeCompletionItem
 
-  fun withTypeText(typeTextProvider: () -> String?): WebSymbolCodeCompletionItem
+  fun withTypeText(typeTextProvider: () -> String?): PolySymbolCodeCompletionItem
 
-  fun withTailText(tailText: String?): WebSymbolCodeCompletionItem
+  fun withTailText(tailText: String?): PolySymbolCodeCompletionItem
 
-  fun withCompleteAfterChar(char: Char): WebSymbolCodeCompletionItem
+  fun withCompleteAfterChar(char: Char): PolySymbolCodeCompletionItem
 
-  fun withCompleteAfterCharsAdded(chars: List<Char>): WebSymbolCodeCompletionItem
+  fun withCompleteAfterCharsAdded(chars: List<Char>): PolySymbolCodeCompletionItem
 
-  fun withInsertHandlerReplaced(insertHandler: WebSymbolCodeCompletionItemInsertHandler?): WebSymbolCodeCompletionItem
+  fun withInsertHandlerReplaced(insertHandler: WebSymbolCodeCompletionItemInsertHandler?): PolySymbolCodeCompletionItem
 
   fun withInsertHandlerAdded(
     insertHandler: InsertHandler<LookupElement>,
     priority: PolySymbol.Priority = PolySymbol.Priority.NORMAL,
-  ): WebSymbolCodeCompletionItem
+  ): PolySymbolCodeCompletionItem
 
-  fun withInsertHandlerAdded(insertHandler: WebSymbolCodeCompletionItemInsertHandler): WebSymbolCodeCompletionItem
+  fun withInsertHandlerAdded(insertHandler: WebSymbolCodeCompletionItemInsertHandler): PolySymbolCodeCompletionItem
 
   fun with(
     name: String = this.name,
@@ -103,7 +103,7 @@ interface WebSymbolCodeCompletionItem {
     icon: Icon? = this.icon,
     typeText: String? = null,
     tailText: String? = this.tailText,
-  ): WebSymbolCodeCompletionItem
+  ): PolySymbolCodeCompletionItem
 
   companion object {
 
@@ -123,7 +123,7 @@ interface WebSymbolCodeCompletionItem {
       typeText: String? = null,
       tailText: String? = null,
       insertHandler: WebSymbolCodeCompletionItemInsertHandler? = null,
-    ): WebSymbolCodeCompletionItem =
+    ): PolySymbolCodeCompletionItem =
       create(name, offset, symbol) {
         completeAfterInsert(completeAfterInsert)
         completeAfterChars?.let { completeAfterChars(it) }
@@ -144,8 +144,8 @@ interface WebSymbolCodeCompletionItem {
       offset: Int = 0,
       symbol: PolySymbol? = null,
       builder: (WebSymbolCodeCompletionItemBuilder.() -> Unit)? = null,
-    ): WebSymbolCodeCompletionItem =
-      WebSymbolCodeCompletionItemImpl.BuilderImpl(name, offset, symbol)
+    ): PolySymbolCodeCompletionItem =
+      PolySymbolCodeCompletionItemImpl.BuilderImpl(name, offset, symbol)
         .also { builder?.invoke(it) }
         .build()
 

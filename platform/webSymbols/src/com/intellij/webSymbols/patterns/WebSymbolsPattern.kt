@@ -4,7 +4,7 @@ package com.intellij.webSymbols.patterns
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolsScope
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.patterns.impl.*
 import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
 import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
@@ -34,7 +34,7 @@ abstract class WebSymbolsPattern internal constructor() {
   internal fun complete(owner: PolySymbol?,
                         scope: Stack<PolySymbolsScope>,
                         name: String,
-                        params: WebSymbolsCodeCompletionQueryParams): List<WebSymbolCodeCompletionItem> =
+                        params: WebSymbolsCodeCompletionQueryParams): List<PolySymbolCodeCompletionItem> =
     complete(owner, Stack(scope), null,
              CompletionParameters(name, params), 0, name.length).items
 
