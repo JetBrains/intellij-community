@@ -188,8 +188,8 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
 
     override val name: String = descriptor.name
 
-    override val origin: WebSymbolOrigin
-      get() = WebSymbolOrigin.empty()
+    override val origin: PolySymbolOrigin
+      get() = PolySymbolOrigin.empty()
 
     override val priority: PolySymbol.Priority
       get() = PolySymbol.Priority.LOW
@@ -240,8 +240,8 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
 
     override val name: String = descriptor.name
 
-    override val origin: WebSymbolOrigin
-      get() = WebSymbolOrigin.empty()
+    override val origin: PolySymbolOrigin
+      get() = PolySymbolOrigin.empty()
 
     override val priority: PolySymbol.Priority
       get() = PolySymbol.Priority.LOW
@@ -316,8 +316,8 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
 
     override val name: String = descriptor.name.substring(2)
 
-    override val origin: WebSymbolOrigin
-      get() = WebSymbolOrigin.empty()
+    override val origin: PolySymbolOrigin
+      get() = PolySymbolOrigin.empty()
 
     override val priority: PolySymbol.Priority
       get() = PolySymbol.Priority.LOW
@@ -331,8 +331,8 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
   }
 
   private class HtmlAttributeValueSymbol(override val name: @NlsSafe String) : PolySymbol {
-    override val origin: WebSymbolOrigin
-      get() = WebSymbolOrigin.empty()
+    override val origin: PolySymbolOrigin
+      get() = PolySymbolOrigin.empty()
 
     override val namespace: @NlsSafe SymbolNamespace
       get() = PolySymbol.NAMESPACE_HTML

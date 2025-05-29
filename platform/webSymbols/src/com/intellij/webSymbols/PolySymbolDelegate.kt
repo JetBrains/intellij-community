@@ -26,7 +26,7 @@ abstract class PolySymbolDelegate<T : PolySymbol>(val delegate: T) : PolySymbol 
 
   override val psiContext: PsiElement?
     get() = delegate.psiContext
-  override val origin: WebSymbolOrigin
+  override val origin: PolySymbolOrigin
     get() = delegate.origin
   override val namespace: SymbolNamespace
     get() = delegate.namespace

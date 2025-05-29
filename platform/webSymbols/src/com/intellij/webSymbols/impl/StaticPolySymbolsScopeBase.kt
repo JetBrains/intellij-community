@@ -14,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentHashMap
 
 @Internal
-abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin : WebSymbolOrigin> : StaticPolySymbolsScope {
+abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin : PolySymbolOrigin> : StaticPolySymbolsScope {
 
   private val namesProviderCache: MutableMap<WebSymbolNamesProvider, NameProvidersCache> = ContainerUtil.createConcurrentSoftKeySoftValueMap()
   private var namesProviderCacheMisses = 0

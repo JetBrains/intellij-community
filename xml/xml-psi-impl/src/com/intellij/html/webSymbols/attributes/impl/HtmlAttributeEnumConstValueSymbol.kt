@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 import com.intellij.webSymbols.*
 
-internal class HtmlAttributeEnumConstValueSymbol(override val origin: WebSymbolOrigin,
+internal class HtmlAttributeEnumConstValueSymbol(override val origin: PolySymbolOrigin,
                                                  override val name: String,
                                                  override val source: PsiElement?) : PsiSourcedPolySymbol {
   override val kind: SymbolKind

@@ -6,7 +6,7 @@ import com.intellij.util.containers.Stack
 import com.intellij.util.text.CharSequenceSubSequence
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolNameSegment
-import com.intellij.webSymbols.WebSymbolOrigin
+import com.intellij.webSymbols.PolySymbolOrigin
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.completion.impl.CompoundInsertHandler
@@ -230,7 +230,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
               name,
               lastMatched.segments.filter { it.start < it.end }.withOffset(-lastMatched.start),
               PolySymbol.NAMESPACE_HTML, SPECIAL_MATCHED_CONTRIB,
-              WebSymbolOrigin.empty()
+              PolySymbolOrigin.empty()
             ))
         }
         val result = mutableListOf<WebSymbolCodeCompletionItem>()

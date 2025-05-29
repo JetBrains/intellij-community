@@ -394,8 +394,8 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
                                         scope: Stack<PolySymbolsScope>): List<PolySymbol> {
           return if (qualifiedName.kind == PolySymbol.KIND_HTML_ATTRIBUTES) {
             listOf(object : PolySymbol {
-              override val origin: WebSymbolOrigin
-                get() = object : WebSymbolOrigin {
+              override val origin: PolySymbolOrigin
+                get() = object : PolySymbolOrigin {
                   override val framework: FrameworkId get() = "vue"
                 }
               override val namespace: SymbolNamespace

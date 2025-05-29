@@ -57,7 +57,7 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, WebSymbolsPr
    * framework, library, version or default icon, it also provides an interface to
    * load symbol types and icons.
    **/
-  val origin: WebSymbolOrigin
+  val origin: PolySymbolOrigin
 
   /**
    * Describes which language or concept the symbol belongs to.

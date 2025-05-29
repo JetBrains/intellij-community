@@ -19,7 +19,7 @@ import java.util.*
 abstract class PolySymbolsIsolatedMappingScope<T : PsiElement>(
   protected val mappings: Map<PolySymbolQualifiedKind, PolySymbolQualifiedKind>,
   /**
-   * Allows to optimize for symbols with a particular [WebSymbolOrigin.framework].
+   * Allows to optimize for symbols with a particular [PolySymbolOrigin.framework].
    * If `null` all symbols will be accepted and scope will be queried in all contexts.
    */
   protected val framework: FrameworkId?,

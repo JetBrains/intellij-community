@@ -17,7 +17,7 @@ class ReferencingPolySymbol private constructor(
   override val namespace: SymbolNamespace,
   override val kind: SymbolKind,
   override val name: String,
-  override val origin: WebSymbolOrigin,
+  override val origin: PolySymbolOrigin,
   vararg references: PolySymbolQualifiedKind,
   override val priority: PolySymbol.Priority?,
   private val location: List<PolySymbolQualifiedName> = emptyList(),
@@ -29,7 +29,7 @@ class ReferencingPolySymbol private constructor(
     fun create(
       qualifiedKind: PolySymbolQualifiedKind,
       name: String,
-      origin: WebSymbolOrigin,
+      origin: PolySymbolOrigin,
       vararg qualifiedKinds: PolySymbolQualifiedKind,
       priority: PolySymbol.Priority? = null,
       location: List<PolySymbolQualifiedName> = emptyList(),

@@ -14,7 +14,7 @@ import com.intellij.util.IconUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolApiStatus
-import com.intellij.webSymbols.WebSymbolOrigin
+import com.intellij.webSymbols.PolySymbolOrigin
 import com.intellij.webSymbols.WebSymbolsBundle
 import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 import com.intellij.webSymbols.documentation.WebSymbolDocumentationTarget
@@ -39,7 +39,7 @@ internal class WebSymbolDocumentationTargetImpl(
 
   companion object {
 
-    fun buildDocumentation(origin: WebSymbolOrigin, doc: WebSymbolDocumentation): DocumentationResult {
+    fun buildDocumentation(origin: PolySymbolOrigin, doc: WebSymbolDocumentation): DocumentationResult {
       val url2ImageMap = mutableMapOf<String, Image>()
 
       @Suppress("HardCodedStringLiteral")
@@ -160,7 +160,7 @@ internal class WebSymbolDocumentationTargetImpl(
 
     private val imgSrcRegex = Regex("<img [^>]*src\\s*=\\s*['\"]([^'\"]+)['\"]")
 
-    private fun String.loadLocalImages(origin: WebSymbolOrigin, url2ImageMap: MutableMap<String, Image>): String {
+    private fun String.loadLocalImages(origin: PolySymbolOrigin, url2ImageMap: MutableMap<String, Image>): String {
       val replaces = imgSrcRegex.findAll(this)
         .mapNotNull { it.groups[1] }
         .filter { !it.value.contains(':') }

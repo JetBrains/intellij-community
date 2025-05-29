@@ -98,7 +98,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
   final override val kind: SymbolKind
     get() = base.kind
 
-  final override val origin: WebSymbolOrigin
+  final override val origin: PolySymbolOrigin
     get() = base.jsonOrigin
 
   final override val namespace: SymbolNamespace

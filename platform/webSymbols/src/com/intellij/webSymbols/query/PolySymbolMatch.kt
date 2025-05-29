@@ -23,7 +23,7 @@ interface PolySymbolMatch : CompositePolySymbol {
       nameSegments: List<WebSymbolNameSegment>,
       namespace: SymbolNamespace,
       kind: SymbolKind,
-      origin: WebSymbolOrigin,
+      origin: PolySymbolOrigin,
       explicitPriority: PolySymbol.Priority? = null,
       explicitProximity: Int? = null,
     ): PolySymbolMatch =
@@ -39,7 +39,7 @@ interface PolySymbolMatch : CompositePolySymbol {
     fun create(
       matchedName: String,
       qualifiedKind: PolySymbolQualifiedKind,
-      origin: WebSymbolOrigin,
+      origin: PolySymbolOrigin,
       builder: (WebSymbolMatchBuilder.() -> Unit),
     ): PolySymbolMatch =
       PolySymbolMatchImpl.BuilderImpl(matchedName, qualifiedKind, origin)
@@ -50,7 +50,7 @@ interface PolySymbolMatch : CompositePolySymbol {
     fun create(
       matchedName: String,
       qualifiedKind: PolySymbolQualifiedKind,
-      origin: WebSymbolOrigin,
+      origin: PolySymbolOrigin,
       vararg nameSegments: WebSymbolNameSegment,
     ): PolySymbolMatch =
       PolySymbolMatchImpl.BuilderImpl(matchedName, qualifiedKind, origin)

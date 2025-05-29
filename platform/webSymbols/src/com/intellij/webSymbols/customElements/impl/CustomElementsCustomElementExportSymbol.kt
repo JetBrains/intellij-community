@@ -15,7 +15,7 @@ import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 
 class CustomElementsCustomElementExportSymbol private constructor(
   override val name: String,
-  override val origin: WebSymbolOrigin,
+  override val origin: PolySymbolOrigin,
   override val pattern: WebSymbolsPattern,
   override val apiStatus: PolySymbolApiStatus,
 ) : CustomElementsSymbol, StaticPolySymbolsScopeBase.StaticSymbolContributionAdapter {

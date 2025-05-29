@@ -27,7 +27,7 @@ internal open class PolySymbolMatchImpl private constructor(
   override val nameSegments: List<WebSymbolNameSegment>,
   override val namespace: SymbolNamespace,
   override val kind: SymbolKind,
-  override val origin: WebSymbolOrigin,
+  override val origin: PolySymbolOrigin,
   private val explicitPriority: Priority?,
   private val explicitProximity: Int?,
   private val additionalProperties: Map<String, Any>,
@@ -194,7 +194,7 @@ internal open class PolySymbolMatchImpl private constructor(
       nameSegments: List<WebSymbolNameSegment>,
       namespace: SymbolNamespace,
       kind: SymbolKind,
-      origin: WebSymbolOrigin,
+      origin: PolySymbolOrigin,
       explicitPriority: Priority?,
       explicitProximity: Int?,
       additionalProperties: Map<String, Any>,
@@ -235,7 +235,7 @@ internal open class PolySymbolMatchImpl private constructor(
     nameSegments: List<WebSymbolNameSegment>,
     namespace: SymbolNamespace,
     kind: SymbolKind,
-    origin: WebSymbolOrigin,
+    origin: PolySymbolOrigin,
     explicitPriority: Priority?,
     explicitProximity: Int?,
     additionalProperties: Map<String, Any>,
@@ -264,7 +264,7 @@ internal open class PolySymbolMatchImpl private constructor(
   class BuilderImpl(
     private var matchedName: String,
     private var qualifiedKind: PolySymbolQualifiedKind,
-    private var origin: WebSymbolOrigin,
+    private var origin: PolySymbolOrigin,
   ) : WebSymbolMatchBuilder {
 
     private var nameSegments = mutableListOf<WebSymbolNameSegment>()
@@ -308,7 +308,7 @@ internal open class PolySymbolMatchImpl private constructor(
       nameSegments: List<WebSymbolNameSegment>,
       namespace: SymbolNamespace,
       kind: SymbolKind,
-      origin: WebSymbolOrigin,
+      origin: PolySymbolOrigin,
       explicitPriority: Priority?,
       explicitProximity: Int?,
       additionalProperties: Map<String, Any>,

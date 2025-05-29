@@ -2,13 +2,13 @@
 package com.intellij.webSymbols
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.webSymbols.impl.WebSymbolOriginImpl
+import com.intellij.webSymbols.impl.PolySymbolOriginImpl
 import javax.swing.Icon
 
 /*
  * INAPPLICABLE_JVM_NAME -> https://youtrack.jetbrains.com/issue/KT-31420
  **/
-interface WebSymbolOrigin {
+interface PolySymbolOrigin {
   val framework: @NlsSafe FrameworkId?
     get() = null
 
@@ -32,12 +32,12 @@ interface WebSymbolOrigin {
                library: String? = null,
                version: String? = null,
                defaultIcon: Icon? = null,
-               typeSupport: WebSymbolTypeSupport? = null): WebSymbolOrigin =
-      WebSymbolOriginImpl(framework, library, version, defaultIcon, typeSupport)
+               typeSupport: WebSymbolTypeSupport? = null): PolySymbolOrigin =
+      PolySymbolOriginImpl(framework, library, version, defaultIcon, typeSupport)
 
     @JvmStatic
-    fun empty(): WebSymbolOrigin =
-      WebSymbolOriginImpl.empty
+    fun empty(): PolySymbolOrigin =
+      PolySymbolOriginImpl.empty
   }
 
 }

@@ -6,7 +6,7 @@ import com.intellij.html.webSymbols.attributes.impl.WebSymbolHtmlAttributeInfoIm
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.PsiSourcedPolySymbol
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolOrigin
+import com.intellij.webSymbols.PolySymbolOrigin
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import org.jetbrains.annotations.ApiStatus
@@ -80,7 +80,7 @@ interface WebSymbolHtmlAttributeInfo {
   companion object {
 
     @JvmStatic
-    fun createEnumConstValueSymbol(origin: WebSymbolOrigin,
+    fun createEnumConstValueSymbol(origin: PolySymbolOrigin,
                                    matchedName: String,
                                    source: PsiElement?): PsiSourcedPolySymbol =
       HtmlAttributeEnumConstValueSymbol(origin, matchedName, source)

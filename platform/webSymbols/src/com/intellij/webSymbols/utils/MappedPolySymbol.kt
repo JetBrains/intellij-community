@@ -19,7 +19,7 @@ class MappedPolySymbol private constructor(
   override val namespace: SymbolNamespace,
   override val kind: SymbolKind,
   override val name: String,
-  override val origin: WebSymbolOrigin,
+  override val origin: PolySymbolOrigin,
   vararg mappingPath: PolySymbolQualifiedName,
   override val priority: PolySymbol.Priority? = null,
 ) : PolySymbol {
@@ -30,7 +30,7 @@ class MappedPolySymbol private constructor(
     fun create(
       qualifiedKind: PolySymbolQualifiedKind,
       name: String,
-      origin: WebSymbolOrigin,
+      origin: PolySymbolOrigin,
       vararg mappingPath: PolySymbolQualifiedName,
       priority: PolySymbol.Priority? = null
     ): MappedPolySymbol =
