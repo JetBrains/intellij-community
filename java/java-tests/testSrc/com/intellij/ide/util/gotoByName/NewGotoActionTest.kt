@@ -9,7 +9,6 @@ import com.intellij.platform.searchEverywhere.SeFilterState
 import com.intellij.platform.searchEverywhere.SeItem
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeParams
-import com.intellij.platform.searchEverywhere.frontend.providers.actions.SeActionsProvider
 import com.intellij.platform.searchEverywhere.providers.mocks.SeItemsProviderMock
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import kotlinx.coroutines.runBlocking
@@ -19,17 +18,17 @@ class NewGotoActionTest: LightJavaCodeInsightFixtureTestCase() {
 
   fun `test empty`() {}
 
-  @Suppress("unused")
-  fun `mock test simple search`() {
-    runBlocking {
-      val params = SeParams("apply patch", SeFilterState.Empty)
-
-      SeActionsProvider(project, null, null).collectItems(params, Collector { item ->
-        println(item.presentation().text)
-        true
-      })
-    }
-  }
+  //@Suppress("unused")
+  //fun `mock test simple search`() {
+  //  runBlocking {
+  //    val params = SeParams("apply patch", SeFilterState.Empty)
+  //
+  //    SeActionsProvider(project, null, null).collectItems(params, Collector { item ->
+  //      println(item.presentation().text)
+  //      true
+  //    })
+  //  }
+  //}
 
   @Suppress("unused")
   fun `mock test mocked provider`() {

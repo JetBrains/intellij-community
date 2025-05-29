@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.project.projectId
 import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.equalityProviders.SeEqualityChecker
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendItemDataProvidersFacade
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
 import com.intellij.platform.searchEverywhere.providers.SeLocalItemDataProvider
@@ -99,13 +100,14 @@ class SeTabDelegate(
     }
 
     fun getItems(params: SeParams, disabledProviders: List<SeProviderId>, mapToResultEvent: suspend (SeItemData) -> SeResultEvent?): Flow<SeResultEvent> {
-
       return channelFlow {
+
         launch {
+          val equalityChecker = SeEqualityChecker()
           val localProviders = localProviders.filterKeys { !disabledProviders.contains(it) }.values
 
           localProviders.asFlow().flatMapMerge { provider ->
-            provider.getItems(params, null).mapNotNull {
+            provider.getItems(params, equalityChecker).mapNotNull {
               mapToResultEvent(it)
             }
           }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND).collect {
