@@ -66,7 +66,7 @@ class PolySymbolsQueryExecutorFactoryImpl(private val project: Project) : PolySy
     return PolySymbolsQueryExecutorImpl(location,
                                         scopeList,
                                         createNamesProvider(project, originalLocation, context),
-                                        WebSymbolsQueryResultsCustomizerFactory.getQueryResultsCustomizer(location, context),
+                                        PolySymbolsQueryResultsCustomizerFactory.getQueryResultsCustomizer(location, context),
                                         context,
                                         allowResolve)
   }

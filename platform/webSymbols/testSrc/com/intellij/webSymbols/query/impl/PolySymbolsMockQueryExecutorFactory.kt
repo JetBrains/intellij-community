@@ -10,7 +10,7 @@ import com.intellij.webSymbols.context.PolyContext
 import com.intellij.webSymbols.context.PolyContext.Companion.KIND_FRAMEWORK
 import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 import com.intellij.webSymbols.query.PolySymbolsQueryExecutorFactory
-import com.intellij.webSymbols.query.WebSymbolsQueryResultsCustomizerFactory
+import com.intellij.webSymbols.query.PolySymbolsQueryResultsCustomizerFactory
 import com.intellij.webSymbols.utils.createModificationTracker
 
 class PolySymbolsMockQueryExecutorFactory : PolySymbolsQueryExecutorFactory {
@@ -30,7 +30,7 @@ class PolySymbolsMockQueryExecutorFactory : PolySymbolsQueryExecutorFactory {
                                   } ?: emptyList(),
                                   createModificationTracker(
                                     scopeList.filterIsInstance<WebTypesMockScopeImpl>().map { it.createPointer() })),
-                                 WebSymbolsQueryResultsCustomizerFactory.getQueryResultsCustomizer(location, PolyContext.create(context)),
+                                 PolySymbolsQueryResultsCustomizerFactory.getQueryResultsCustomizer(location, PolyContext.create(context)),
                                  PolyContext.create(context),
                                  allowResolve)
 

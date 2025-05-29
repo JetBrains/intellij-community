@@ -8,12 +8,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.context.PolyContext
 import com.intellij.webSymbols.query.impl.PolySymbolsCompoundQueryResultsCustomizer
 
-interface WebSymbolsQueryResultsCustomizerFactory {
+interface PolySymbolsQueryResultsCustomizerFactory {
 
   fun create(location: PsiElement, context: PolyContext): PolySymbolsQueryResultsCustomizer?
 
   companion object {
-    private val EP_NAME = ExtensionPointName.create<WebSymbolsQueryResultsCustomizerFactory>(
+    private val EP_NAME = ExtensionPointName.create<PolySymbolsQueryResultsCustomizerFactory>(
       "com.intellij.webSymbols.queryResultsCustomizerFactory")
 
     @JvmStatic
@@ -30,11 +30,11 @@ interface WebSymbolsQueryResultsCustomizerFactory {
               if (internalMode && Math.random() < 0.2) {
                 val newScope = factory.create(location, context)
                 if (newScope != scope) {
-                  logger<WebSymbolsQueryResultsCustomizerFactory>().error(
+                  logger<PolySymbolsQueryResultsCustomizerFactory>().error(
                     "Factory $factory should provide customizer, which is the same (by equals()), when called with the same arguments: $scope != $newScope")
                 }
                 if (newScope.hashCode() != scope.hashCode()) {
-                  logger<WebSymbolsQueryResultsCustomizerFactory>().error(
+                  logger<PolySymbolsQueryResultsCustomizerFactory>().error(
                     "Factory $factory should provide customizer, which has the same hashCode(), when called with the same arguments: $scope != $newScope")
                 }
               }

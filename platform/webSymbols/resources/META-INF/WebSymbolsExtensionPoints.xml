@@ -46,7 +46,7 @@
                     interface="com.intellij.webSymbols.query.WebSymbolDefaultIconProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webSymbols.queryResultsCustomizerFactory"
-                    interface="com.intellij.webSymbols.query.WebSymbolsQueryResultsCustomizerFactory"
+                    interface="com.intellij.webSymbols.query.PolySymbolsQueryResultsCustomizerFactory"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webSymbols.declarationProvider"
                     interface="com.intellij.webSymbols.declarations.PolySymbolDeclarationProvider"
