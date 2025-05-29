@@ -39,7 +39,7 @@ import com.intellij.webSymbols.highlighting.PolySymbolHighlightingCustomizer
 import com.intellij.webSymbols.highlighting.newSilentAnnotationWithDebugInfo
 import com.intellij.webSymbols.impl.PolySymbolNameSegmentImpl
 import com.intellij.webSymbols.impl.highlightingEnd
-import com.intellij.webSymbols.inspections.impl.WebSymbolsInspectionToolMappingEP
+import com.intellij.webSymbols.inspections.impl.PolySymbolsInspectionToolMappingEP
 import com.intellij.webSymbols.references.WebSymbolReference
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
@@ -243,7 +243,7 @@ class PolySymbolsHighlightingAnnotator : Annotator {
   ): List<InspectionToolInfo> =
     symbolKinds
       .mapNotNull { symbolType ->
-        WebSymbolsInspectionToolMappingEP.Companion.get(symbolType.namespace, symbolType.kind, problemKind)?.toolShortName
+        PolySymbolsInspectionToolMappingEP.Companion.get(symbolType.namespace, symbolType.kind, problemKind)?.toolShortName
       }.map {
         map.computeIfAbsent(it) { createToolInfo(it, holder.currentAnnotationSession.file) }
       }

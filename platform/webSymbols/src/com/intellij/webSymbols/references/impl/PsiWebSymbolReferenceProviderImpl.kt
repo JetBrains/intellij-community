@@ -27,7 +27,7 @@ import com.intellij.webSymbols.PolySymbolsBundle
 import com.intellij.webSymbols.highlighting.impl.getDefaultProblemMessage
 import com.intellij.webSymbols.impl.removeZeroLengthSegmentsRecursively
 import com.intellij.webSymbols.inspections.PolySymbolsProblemQuickFixProvider
-import com.intellij.webSymbols.inspections.impl.WebSymbolsInspectionToolMappingEP
+import com.intellij.webSymbols.inspections.impl.PolySymbolsInspectionToolMappingEP
 import com.intellij.webSymbols.references.PsiWebSymbolReferenceProvider
 import com.intellij.webSymbols.references.WebSymbolReference
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem
@@ -179,7 +179,7 @@ private class NameSegmentReferenceWithProblem(
       .mapNotNull { segment ->
         val problemKind = segment.getProblemKind() ?: return@mapNotNull null
         val toolMapping = segment.symbolKinds.map {
-          WebSymbolsInspectionToolMappingEP.get(it.namespace, it.kind, problemKind)
+          PolySymbolsInspectionToolMappingEP.get(it.namespace, it.kind, problemKind)
         }.firstOrNull()
         WebSymbolReferenceProblem.create(
           segment.symbolKinds,
@@ -198,9 +198,9 @@ private class NameSegmentReferenceWithProblem(
       val symbolTypes = nameSegments.flatMapTo(LinkedHashSet()) { it.symbolKinds }
       val toolMapping = symbolTypes.map {
         if (apiStatus is PolySymbolApiStatus.Obsolete)
-          WebSymbolsInspectionToolMappingEP.get(it.namespace, it.kind, ProblemKind.ObsoleteSymbol)
+          PolySymbolsInspectionToolMappingEP.get(it.namespace, it.kind, ProblemKind.ObsoleteSymbol)
             ?.let { mapping -> return@map mapping }
-        WebSymbolsInspectionToolMappingEP.get(it.namespace, it.kind, ProblemKind.DeprecatedSymbol)
+        PolySymbolsInspectionToolMappingEP.get(it.namespace, it.kind, ProblemKind.DeprecatedSymbol)
       }.firstOrNull()
 
       val cause = apiStatus?.getMessage()

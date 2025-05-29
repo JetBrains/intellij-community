@@ -11,13 +11,13 @@ import com.intellij.webSymbols.PolySymbolsBundle
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem
 import org.jetbrains.annotations.Nls
 
-internal class WebSymbolsInspectionToolMappingEP : PluginAware {
+internal class PolySymbolsInspectionToolMappingEP : PluginAware {
 
   companion object {
 
     fun get(symbolNamespace: SymbolNamespace,
             symbolKind: String,
-            problemKind: WebSymbolReferenceProblem.ProblemKind): WebSymbolsInspectionToolMappingEP? =
+            problemKind: WebSymbolReferenceProblem.ProblemKind): PolySymbolsInspectionToolMappingEP? =
       map.value[ExtensionKey(symbolNamespace, symbolKind, problemKind)]
 
   }
@@ -79,9 +79,9 @@ private data class ExtensionKey(
   var problemKind: WebSymbolReferenceProblem.ProblemKind,
 )
 
-private val EP_NAME = ExtensionPointName<WebSymbolsInspectionToolMappingEP>("com.intellij.webSymbols.inspectionToolMapping")
+private val EP_NAME = ExtensionPointName<PolySymbolsInspectionToolMappingEP>("com.intellij.webSymbols.inspectionToolMapping")
 
-private val map: ClearableLazyValue<Map<ExtensionKey, WebSymbolsInspectionToolMappingEP>> = ExtensionPointUtil.dropLazyValueOnChange(
+private val map: ClearableLazyValue<Map<ExtensionKey, PolySymbolsInspectionToolMappingEP>> = ExtensionPointUtil.dropLazyValueOnChange(
   ClearableLazyValue.create {
     EP_NAME.extensionList.associateBy { ext ->
       ExtensionKey(
