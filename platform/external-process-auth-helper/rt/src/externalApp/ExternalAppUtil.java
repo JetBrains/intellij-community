@@ -19,6 +19,7 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
 import java.time.Duration;
+import java.util.Map;
 
 public final class ExternalAppUtil {
 
@@ -65,6 +66,7 @@ public final class ExternalAppUtil {
     }
   }
 
+  @Deprecated(since = "2025.2", forRemoval = true)
   public static @NotNull String getEnv(@NotNull String env) {
     String value = System.getenv(env);
     if (value == null) {
@@ -73,8 +75,21 @@ public final class ExternalAppUtil {
     return value;
   }
 
+  public static @NotNull String getEnv(@NotNull String env, @NotNull Map<String, String> environment) {
+    String value = environment.get(env);
+    if (value == null) {
+      throw new IllegalStateException(env + " environment variable is not defined!");
+    }
+    return value;
+  }
+
+  @Deprecated(since = "2025.2", forRemoval = true)
   public static int getEnvInt(@NotNull String env) {
     return Integer.parseInt(getEnv(env));
+  }
+
+  public static int getEnvInt(@NotNull String env, @NotNull Map<String, String> environment) {
+    return Integer.parseInt(getEnv(env, environment));
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
