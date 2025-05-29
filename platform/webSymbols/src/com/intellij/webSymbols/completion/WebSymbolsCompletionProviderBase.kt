@@ -16,7 +16,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.webSymbols.FrameworkId
 import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.PolySymbolsScope
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItemCustomizer.Companion.customizeItems
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItemCustomizer.Companion.customizeItems
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 

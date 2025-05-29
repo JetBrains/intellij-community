@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.FrameworkId
 import com.intellij.webSymbols.PolySymbolQualifiedKind
 
-interface WebSymbolCodeCompletionItemCustomizer {
+interface PolySymbolCodeCompletionItemCustomizer {
 
   fun customize(item: PolySymbolCodeCompletionItem,
                 framework: FrameworkId?,
@@ -14,7 +14,7 @@ interface WebSymbolCodeCompletionItemCustomizer {
                 location: PsiElement): PolySymbolCodeCompletionItem?
 
   companion object {
-    private val EP_NAME = ExtensionPointName.create<WebSymbolCodeCompletionItemCustomizer>(
+    private val EP_NAME = ExtensionPointName.create<PolySymbolCodeCompletionItemCustomizer>(
       "com.intellij.webSymbols.codeCompletionItemCustomizer")
 
     internal fun Sequence<PolySymbolCodeCompletionItem>.customizeItems(

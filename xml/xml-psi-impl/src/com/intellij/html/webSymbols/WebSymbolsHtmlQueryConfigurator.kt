@@ -20,7 +20,7 @@ import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.PolySymbol.Companion.HTML_ATTRIBUTE_VALUES
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItemCustomizer
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItemCustomizer
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.query.*
@@ -90,7 +90,7 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
       location.hashCode()
   }
 
-  class HtmlSymbolsCodeCompletionItemCustomizer : WebSymbolCodeCompletionItemCustomizer {
+  class HtmlSymbolsCodeCompletionItemCustomizer : PolySymbolCodeCompletionItemCustomizer {
     override fun customize(item: PolySymbolCodeCompletionItem,
                            framework: FrameworkId?,
                            qualifiedKind: PolySymbolQualifiedKind,
