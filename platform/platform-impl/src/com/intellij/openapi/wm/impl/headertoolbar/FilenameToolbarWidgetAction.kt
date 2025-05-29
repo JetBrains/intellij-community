@@ -29,6 +29,7 @@ import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.openapi.wm.impl.*
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.UIUtil
@@ -58,7 +59,7 @@ class FilenameToolbarWidgetAction : ExpandableComboAction(), DumbAware, ActionRe
     var fg: Color?
 
     var icon = IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, project)
-    if (JBColor.isBright() && isDarkHeader()) {
+    if (JBColor.isBright() && isDarkToolbar()) {
       icon = IconLoader.getDarkIcon(icon, true)
       fg = EditorColorsManager.getInstance().getScheme("Dark")?.getColor(status.colorKey)
     }
@@ -81,6 +82,9 @@ class FilenameToolbarWidgetAction : ExpandableComboAction(), DumbAware, ActionRe
     presentation.description = path
     presentation.icon = icon
   }
+
+  @Suppress("UseJBColor")
+  private fun isDarkToolbar() = ColorUtil.isDark(JBColor.namedColor("MainToolbar.background", Color.WHITE))
 
   override fun createPopup(event: AnActionEvent): JBPopup? {
     val project = event.project ?: return null

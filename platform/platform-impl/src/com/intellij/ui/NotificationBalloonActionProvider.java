@@ -18,7 +18,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarKt;
 import com.intellij.ui.icons.CachedImageIcon;
 import com.intellij.ui.icons.CustomIconUtilKt;
 import com.intellij.ui.scale.JBUIScale;
@@ -112,7 +111,7 @@ public final class NotificationBalloonActionProvider implements BalloonImpl.Acti
 
     myCloseButton = myBalloon.new ActionButton(
       AllIcons.Ide.Notification.Close, AllIcons.Ide.Notification.CloseHover,
-      IdeBundle.message("tooltip.close.notification", SystemInfo.isMac ? "⌥" : "Alt+"),
+      IdeBundle.message( "tooltip.close.notification", SystemInfo.isMac ? "⌥" : "Alt+"),
       event -> {
         final int modifiers = event.getModifiers();
         //noinspection SSBasedInspection
@@ -170,8 +169,8 @@ public final class NotificationBalloonActionProvider implements BalloonImpl.Acti
           g2.dispose();
         }
       }
-      if (MainToolbarKt.isDarkHeader() && JBColor.isBright() && icon instanceof CachedImageIcon cachedImageIcon) {
-        icon = CustomIconUtilKt.loadIconCustomVersionOrScale(cachedImageIcon.getDarkIcon(true), 16);
+      if (ColorUtil.isDark(JBColor.namedColor("MainToolbar.background")) && JBColor.isBright() && icon instanceof CachedImageIcon) {
+        icon = CustomIconUtilKt.loadIconCustomVersionOrScale((CachedImageIcon)icon, 16, true, true);
       }
     }
     return icon;

@@ -44,7 +44,7 @@ fun getHeaderBackgroundColor(component: JComponent, state: Int): Color? {
 }
 
 open class HeaderToolbarButtonLook(
-  private val iconSize: () -> Int = { JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSize() },
+  private val iconSize: () -> Int = { JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSize() }
 ) : IdeaActionButtonLook() {
   override fun getButtonArc(): JBValue {
     return JBUI.CurrentTheme.MainToolbar.Button.hoverArc()
@@ -84,7 +84,7 @@ open class HeaderToolbarButtonLook(
     val iconSize = iconSize()
 
     if (icon is ReplaceableIcon) {
-      val replacer = object : IconReplacer {
+      val replacer = object: IconReplacer {
         override fun replaceIcon(icon: Icon): Icon {
           return scaleAndAdjustIcon(icon)
         }
@@ -94,7 +94,7 @@ open class HeaderToolbarButtonLook(
 
     if (icon is CachedImageIcon) {
       val darkHeader = isDarkHeader()
-      return loadIconCustomVersionOrScale(icon = icon.getDarkIcon(darkHeader), size = iconSize)
+      return loadIconCustomVersionOrScale(icon = icon, size = iconSize, isDark = darkHeader.takeIf { it }, isDarkForScale = darkHeader)
     }
 
     return if (icon is ScalableIcon) loadIconCustomVersionOrScale(icon = icon, size = iconSize) else icon
