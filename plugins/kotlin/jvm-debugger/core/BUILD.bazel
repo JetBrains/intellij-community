@@ -28,6 +28,7 @@ jvm_library(
     "@lib//:asm",
     "@lib//:jb-jdi",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
     "//plugins/kotlin/base/frontend-agnostic",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/plugin",

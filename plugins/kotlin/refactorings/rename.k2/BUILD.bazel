@@ -27,6 +27,7 @@ jvm_library(
   deps = [
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
+    "//platform/indexing-api:indexing",
     "//plugins/kotlin/base/psi",
     "//plugins/kotlin/base/util",
     "//java/java-psi-api:psi",
@@ -56,6 +57,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:gson",
     "@lib//:kotlinc-analysis-api",
+    "//platform/indexing-api:indexing",
     "//plugins/kotlin/plugin/k2",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",

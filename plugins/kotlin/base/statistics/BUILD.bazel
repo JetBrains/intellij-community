@@ -11,6 +11,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-jps-common",
+    "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//plugins/kotlin/base/frontend-agnostic",
     "//plugins/kotlin/base/plugin",

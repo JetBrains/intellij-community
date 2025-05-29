@@ -26,6 +26,7 @@ jvm_library(
     "@lib//:xerces",
     "//platform/util/nanoxml",
     "//platform/indexing-impl",
+    "//platform/indexing-api:indexing",
   ],
   exports = ["//xml/xml-analysis-api:analysis"],
   runtime_deps = [":analysis-impl_resources"]

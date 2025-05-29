@@ -13,7 +13,7 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" exported="" />
     <orderEntry type="module" module-name="intellij.platform.lvcs" />
-    <orderEntry type="module" module-name="intellij.platform.indexing" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" exported="" />
     <orderEntry type="module" module-name="intellij.platform.analysis" exported="" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />

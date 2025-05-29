@@ -11,6 +11,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl_test_lib",
     "@lib//:jmh-core",
     "@lib//:jmh-generator-annprocess",
+    "//platform/indexing-api:indexing",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:fastutil-min",

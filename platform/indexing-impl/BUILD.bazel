@@ -29,7 +29,6 @@ jvm_library(
     "//platform/util/xmlDom",
     "//platform/workspace/storage",
     "//platform/util/storages",
-  ],
-  exports = ["//platform/indexing-api:indexing"]
+  ]
 )
 ### auto-generated section `build intellij.platform.indexing.impl` end

@@ -176,6 +176,7 @@ jvm_library(
     "//platform/credential-store",
     "//platform/editor-ui-api:editor-ui",
     "//platform/foldings",
+    "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//platform/refactoring",
     "//platform/structure-view-impl:structureView-impl",
@@ -351,6 +352,7 @@ jvm_library(
   deps = [
     "//platform/editor-ui-api:editor-ui",
     "//platform/foldings",
+    "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//platform/refactoring",
     "//platform/testFramework",

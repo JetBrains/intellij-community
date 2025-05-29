@@ -26,6 +26,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//platform/refactoring",
     "//plugins/kotlin/plugin/k1",

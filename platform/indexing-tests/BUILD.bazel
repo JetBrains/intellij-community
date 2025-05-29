@@ -10,6 +10,7 @@ jvm_library(
   deps = [
     "//platform/core-impl",
     "//platform/analysis-api:analysis",
+    "//platform/indexing-api:indexing",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
   ]

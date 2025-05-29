@@ -21,5 +21,6 @@
     <orderEntry type="library" name="Xerces" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.nanoxml" />
     <orderEntry type="module" module-name="intellij.platform.indexing.impl" />
+    <orderEntry type="module" module-name="intellij.platform.indexing" />
   </component>
 </module>

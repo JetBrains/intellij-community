@@ -126,6 +126,7 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//plugins/gradle/java",
     "//java/openapi:java",
+    "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

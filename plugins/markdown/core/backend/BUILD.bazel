@@ -17,6 +17,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/core-ui",
     "@lib//:kotlinx-coroutines-core",
+    "//platform/indexing-api:indexing",
     "//platform/util/coroutines",
     "//platform/diagnostic",
     "@lib//:jetbrains-markdown",

@@ -24,6 +24,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   deps = [
+    "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//platform/workspace/storage",
     "@lib//:kotlin-stdlib",
@@ -62,6 +63,7 @@ jvm_library(
   associates = [":analysis-api-platform"],
   deps = [
     "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//platform/workspace/storage",
     "//plugins/kotlin/plugin/k2",

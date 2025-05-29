@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "//platform/credential-store",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//platform/lvcs-api:lvcs",
     "//platform/vcs-api:vcs",
@@ -74,6 +75,7 @@ jvm_library(
   deps = [
     "//platform/credential-store",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//platform/lvcs-api:lvcs",
     "//platform/vcs-api:vcs",

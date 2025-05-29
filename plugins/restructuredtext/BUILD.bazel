@@ -48,6 +48,7 @@ jvm_library(
     "@lib//:jsoup",
     "//platform/util/jdom",
     "@lib//:jcef",
+    "//platform/indexing-api:indexing",
     ":lang-impl_provided",
     ":execution-impl_provided",
     ":core-ui_provided",

@@ -23,6 +23,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "@lib//:kotlin-test",
     "@lib//:junit4",
+    "//platform/indexing-api:indexing",
     "//plugins/kotlin/base/frontend-agnostic",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",

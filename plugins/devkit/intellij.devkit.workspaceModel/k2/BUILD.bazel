@@ -26,6 +26,7 @@ jvm_library(
   kotlinc_opts = ":custom",
   deps = [
     "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
+    "//platform/indexing-api:indexing",
     "//plugins/kotlin/base/indices",
     "//plugins/kotlin/base/project-structure",
     "//java/java-indexing-api:indexing",
@@ -49,6 +50,7 @@ jvm_library(
   associates = [":k2"],
   deps = [
     "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
+    "//platform/indexing-api:indexing",
     "//plugins/kotlin/base/indices",
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/project-structure:project-structure_test_lib",

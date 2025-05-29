@@ -25,6 +25,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:guava",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
     "//plugins/kotlin/base/frontend-agnostic",
     "//plugins/kotlin/base/util",
     "//platform/core-impl",

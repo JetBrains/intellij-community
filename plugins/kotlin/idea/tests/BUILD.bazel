@@ -27,6 +27,7 @@ jvm_library(
     "//platform/external-system-impl:externalSystem-impl",
     "//platform/ide-core-impl",
     "//platform/core-api:core",
+    "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//platform/refactoring",
     "//platform/smRunner",

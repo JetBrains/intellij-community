@@ -30,6 +30,7 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   associates = [":k2"],
   deps = [
+    "//platform/indexing-api:indexing",
     "//plugins/kotlin/plugin/k2",
     "@lib//:kotlin-stdlib",
     "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",

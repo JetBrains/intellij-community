@@ -36,6 +36,7 @@ jvm_library(
     "@lib//:kotlinc-analysis-api-platform-interface",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:guava",
+    "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//platform/workspace/storage",
     "//plugins/kotlin/base/frontend-agnostic",

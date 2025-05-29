@@ -9,6 +9,7 @@ jvm_library(
   deps = [
     "//platform/editor-ui-api:editor-ui",
     "//platform/external-system-impl:externalSystem-impl",
+    "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//platform/refactoring",
     "//platform/testFramework",

@@ -37,7 +37,6 @@ jvm_library(
   exports = [
     "//platform/platform-api:ide",
     "//platform/lang-core",
-    "//platform/indexing-api:indexing",
     "//platform/projectModel-api:projectModel",
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",

@@ -24,6 +24,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//platform/refactoring",
     "//platform/workspace/storage",
@@ -87,6 +88,7 @@ jvm_library(
   associates = [":groovy"],
   deps = [
     "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//platform/refactoring",
     "//platform/structure-view-impl:structureView-impl",

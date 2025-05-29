@@ -10,6 +10,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",
+    "//platform/indexing-api:indexing",
     "//plugins/kotlin/base/psi",
     "//plugins/kotlin/base/indices",
     "//plugins/kotlin/base/project-structure",

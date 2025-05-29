@@ -16,6 +16,7 @@ jvm_library(
     "@lib//:kotlin-reflect",
     "@lib//:kotlin-test",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "@lib//:asm",
     "//java/execution/impl",

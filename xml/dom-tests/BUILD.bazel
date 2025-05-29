@@ -14,6 +14,7 @@ jvm_library(
   associates = ["//xml/dom-impl"],
   deps = [
     "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
     "//xml/impl",
     "//java/testFramework",
     "//java/java-psi-impl:psi-impl",
