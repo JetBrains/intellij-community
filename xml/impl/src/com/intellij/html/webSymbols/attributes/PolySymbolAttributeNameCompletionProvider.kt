@@ -7,7 +7,7 @@ import com.intellij.codeInsight.completion.XmlAttributeInsertHandler
 import com.intellij.codeInsight.completion.XmlTagInsertHandler
 import com.intellij.html.webSymbols.HtmlDescriptorUtils.getStandardHtmlAttributeDescriptors
 import com.intellij.html.webSymbols.WebSymbolsFrameworkHtmlSupport
-import com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator
+import com.intellij.html.webSymbols.PolySymbolsHtmlQueryConfigurator
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlAttribute
@@ -54,7 +54,7 @@ class PolySymbolAttributeNameCompletionProvider : PolySymbolsCompletionProviderB
       context,
       providedNames = providedAttributes,
       filter = { item ->
-        if (item.symbol is WebSymbolsHtmlQueryConfigurator.StandardHtmlSymbol
+        if (item.symbol is PolySymbolsHtmlQueryConfigurator.StandardHtmlSymbol
             && item.offset == 0
             && item.symbol?.name == item.name) {
           filteredOutStandardSymbols.remove(item.name)

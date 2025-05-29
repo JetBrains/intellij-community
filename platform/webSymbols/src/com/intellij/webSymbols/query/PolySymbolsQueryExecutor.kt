@@ -11,7 +11,7 @@ import com.intellij.webSymbols.context.PolyContext.Companion.KIND_FRAMEWORK
 
 /**
  * To create a query executor use [WebSymbolsQueryExecutorFactory].
- * The query executor will be configured by all the registered [WebSymbolsQueryConfigurator]'s
+ * The query executor will be configured by all the registered [PolySymbolsQueryConfigurator]'s
  * based on the provided source code location. Configurators will provide initial Web Symbol scopes,
  * rules for calculating Web Symbols context and rules for symbol names conversion.
  */

@@ -24,7 +24,7 @@
       <with attribute="implementation" implements="com.intellij.webSymbols.webTypes.WebTypesSymbolTypeSupportFactory"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.webSymbols.queryConfigurator"
-                    interface="com.intellij.webSymbols.query.WebSymbolsQueryConfigurator"
+                    interface="com.intellij.webSymbols.query.PolySymbolsQueryConfigurator"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webSymbols.webTypes.filter"
                     beanClass="com.intellij.webSymbols.webTypes.impl.WebSymbolsFilterEP"

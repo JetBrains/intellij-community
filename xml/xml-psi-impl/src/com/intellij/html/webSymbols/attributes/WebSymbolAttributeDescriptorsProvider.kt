@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.html.webSymbols.attributes
 
-import com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator
+import com.intellij.html.webSymbols.PolySymbolsHtmlQueryConfigurator
 import com.intellij.html.webSymbols.attributes.WebSymbolAttributeDescriptor.Companion.toAttributeDescriptor
 import com.intellij.html.webSymbols.elements.WebSymbolElementDescriptor
 import com.intellij.html.webSymbols.hasOnlyStandardHtmlSymbols
@@ -28,7 +28,7 @@ class WebSymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
       XmlAttributeDescriptor.EMPTY
     else {
       val queryExecutor = WebSymbolsQueryExecutorFactory.create(context)
-      val additionalScope = listOf(WebSymbolsHtmlQueryConfigurator.HtmlContextualPolySymbolsScope(context.firstChild))
+      val additionalScope = listOf(PolySymbolsHtmlQueryConfigurator.HtmlContextualPolySymbolsScope(context.firstChild))
       queryExecutor
         .runListSymbolsQuery(HTML_ATTRIBUTES, expandPatterns = true, additionalScope = additionalScope, virtualSymbols = false)
         .asSequence()
@@ -48,7 +48,7 @@ class WebSymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
       val additionalScope = if (attribute != null)
         emptyList()
       else
-        listOf(WebSymbolsHtmlQueryConfigurator.HtmlContextualPolySymbolsScope(context.firstChild))
+        listOf(PolySymbolsHtmlQueryConfigurator.HtmlContextualPolySymbolsScope(context.firstChild))
 
       queryExecutor
         .runNameMatchQuery(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES, attributeName, additionalScope = additionalScope)
@@ -63,7 +63,7 @@ class WebSymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
 
   private fun PolySymbol.getAttributeDescriptor(attributeName: String, context: XmlTag, registry: PolySymbolsQueryExecutor) =
     this
-      .asSafely<WebSymbolsHtmlQueryConfigurator.HtmlAttributeDescriptorBasedSymbol>()
+      .asSafely<PolySymbolsHtmlQueryConfigurator.HtmlAttributeDescriptorBasedSymbol>()
       ?.descriptor
     ?: WebSymbolHtmlAttributeInfo.create(attributeName, registry, this, context)
       .toAttributeDescriptor(context)

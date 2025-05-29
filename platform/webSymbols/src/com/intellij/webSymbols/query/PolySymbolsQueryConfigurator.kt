@@ -11,7 +11,7 @@ import com.intellij.webSymbols.context.PolyContextRulesProvider
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 
-interface WebSymbolsQueryConfigurator {
+interface PolySymbolsQueryConfigurator {
 
   fun getScope(project: Project, location: PsiElement?, context: PolyContext, allowResolve: Boolean): List<PolySymbolsScope> =
     emptyList()
@@ -31,7 +31,7 @@ interface WebSymbolsQueryConfigurator {
 
     @TestOnly
     @Internal
-    val EP_NAME: ExtensionPointName<WebSymbolsQueryConfigurator> = ExtensionPointName<WebSymbolsQueryConfigurator>("com.intellij.webSymbols.queryConfigurator")
+    val EP_NAME: ExtensionPointName<PolySymbolsQueryConfigurator> = ExtensionPointName<PolySymbolsQueryConfigurator>("com.intellij.webSymbols.queryConfigurator")
 
   }
 

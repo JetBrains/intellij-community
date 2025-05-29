@@ -31,7 +31,7 @@ import com.intellij.xml.util.HtmlUtil
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
-class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
+class PolySymbolsHtmlQueryConfigurator : PolySymbolsQueryConfigurator {
 
   override fun getScope(project: Project,
                         location: PsiElement?,

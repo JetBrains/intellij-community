@@ -552,10 +552,10 @@
       id="html"
       implementation="com.intellij.html.webSymbols.PolySymbolsHtmlHighlightingCustomizer"/>
     <webSymbols.queryConfigurator
-      implementation="com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator"/>
+      implementation="com.intellij.html.webSymbols.PolySymbolsHtmlQueryConfigurator"/>
     <webSymbols.codeCompletionItemCustomizer
       id="html"
-      implementation="com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator$HtmlSymbolsCodeCompletionItemCustomizer"/>
+      implementation="com.intellij.html.webSymbols.PolySymbolsHtmlQueryConfigurator$HtmlSymbolsCodeCompletionItemCustomizer"/>
     <xml.attributeDescriptorsProvider
       implementation="com.intellij.html.webSymbols.attributes.WebSymbolAttributeDescriptorsProvider"/>
     <xml.elementDescriptorProvider

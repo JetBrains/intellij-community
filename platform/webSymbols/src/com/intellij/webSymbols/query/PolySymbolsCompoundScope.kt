@@ -11,7 +11,7 @@ import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 
 /**
  * A special purpose scope, which provides other scopes, possibly calling a [PolySymbolsQueryExecutor] to retrieve them.
- * This scope is useful if your [WebSymbolsQueryConfigurator] needs to provide scopes based on the location and these
+ * This scope is useful if your [PolySymbolsQueryConfigurator] needs to provide scopes based on the location and these
  * in turn require to query the model. It can also be added as an additional scope to any WebSymbol query, or be used
  * just to encompass logic related to building a list of scopes. [PolySymbolsCompoundScope] cannot be nested within each
  * other to prevent any recursive inclusion problems.

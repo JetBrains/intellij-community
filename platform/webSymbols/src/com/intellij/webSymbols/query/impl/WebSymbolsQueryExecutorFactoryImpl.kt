@@ -34,7 +34,7 @@ class WebSymbolsQueryExecutorFactoryImpl(private val project: Project) : WebSymb
     val application = ApplicationManager.getApplication()
     application.assertReadAccessAllowed()
 
-    WebSymbolsQueryConfigurator.EP_NAME.extensionList
+    PolySymbolsQueryConfigurator.EP_NAME.extensionList
       .forEach { it.beforeQueryExecutorCreation(project) }
 
     val context = location?.let { buildWebSymbolsContext(it) } ?: PolyContext.empty()
@@ -43,7 +43,7 @@ class WebSymbolsQueryExecutorFactoryImpl(private val project: Project) : WebSymb
     getCustomScope(location).forEach(scopeList::add)
     val internalMode = ApplicationManager.getApplication().isInternal
     val originalLocation = location?.originalElement
-    scopeList.addAll(WebSymbolsQueryConfigurator.EP_NAME.extensionList.flatMap { queryConfigurator ->
+    scopeList.addAll(PolySymbolsQueryConfigurator.EP_NAME.extensionList.flatMap { queryConfigurator ->
       queryConfigurator.getScope(project, originalLocation, context, allowResolve)
         .also {
           // check configurator
@@ -97,7 +97,7 @@ class WebSymbolsQueryExecutorFactoryImpl(private val project: Project) : WebSymb
       }
 
     val providers = mutableListOf<Pointer<out PolyContextRulesProvider>>()
-    for (provider in WebSymbolsQueryConfigurator.EP_NAME.extensionList.flatMap {
+    for (provider in PolySymbolsQueryConfigurator.EP_NAME.extensionList.flatMap {
       it.beforeQueryExecutorCreation(project)
       it.getContextRulesProviders(project, dir)
     }) {
@@ -110,7 +110,7 @@ class WebSymbolsQueryExecutorFactoryImpl(private val project: Project) : WebSymb
   private fun createNamesProvider(project: Project, location: PsiElement?, context: PolyContext): WebSymbolNamesProvider {
     val nameConversionRules = mutableListOf<WebSymbolNameConversionRules>()
     val providers = mutableListOf<Pointer<out WebSymbolNameConversionRulesProvider>>()
-    WebSymbolsQueryConfigurator.EP_NAME.extensionList.flatMap { provider ->
+    PolySymbolsQueryConfigurator.EP_NAME.extensionList.flatMap { provider ->
       provider.getNameConversionRulesProviders(project, location, context)
     }.forEach { provider ->
       nameConversionRules.add(provider.getNameConversionRules())
