@@ -3,9 +3,9 @@ package com.intellij.webSymbols.references
 
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.webSymbols.PolySymbolQualifiedKind
-import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
+import com.intellij.webSymbols.references.PolySymbolReferenceProblem.ProblemKind
 
-sealed interface WebSymbolReferenceProblem {
+sealed interface PolySymbolReferenceProblem {
   val symbolKinds: Set<PolySymbolQualifiedKind>
   val kind: ProblemKind
   val descriptor: ProblemDescriptor
@@ -23,13 +23,13 @@ sealed interface WebSymbolReferenceProblem {
       symbolKinds: Set<PolySymbolQualifiedKind>,
       kind: ProblemKind,
       descriptor: ProblemDescriptor,
-    ): WebSymbolReferenceProblem =
-      WebSymbolReferenceProblemData(symbolKinds, kind, descriptor)
+    ): PolySymbolReferenceProblem =
+      PolySymbolReferenceProblemData(symbolKinds, kind, descriptor)
   }
 }
 
-private data class WebSymbolReferenceProblemData(
+private data class PolySymbolReferenceProblemData(
   override val symbolKinds: Set<PolySymbolQualifiedKind>,
   override val kind: ProblemKind,
   override val descriptor: ProblemDescriptor,
-) : WebSymbolReferenceProblem
+) : PolySymbolReferenceProblem

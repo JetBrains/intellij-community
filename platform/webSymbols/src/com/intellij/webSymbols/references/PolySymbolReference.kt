@@ -12,7 +12,7 @@ interface PolySymbolReference : PsiSymbolReference {
   override fun resolvesTo(target: Symbol): Boolean =
     resolveReference().any { it.isEquivalentTo(target) }
 
-  fun getProblems(): Collection<WebSymbolReferenceProblem> =
+  fun getProblems(): Collection<PolySymbolReferenceProblem> =
     emptyList()
 
 }

@@ -27,7 +27,7 @@ import com.intellij.webSymbols.impl.withRange
 import com.intellij.webSymbols.patterns.impl.applyIcons
 import com.intellij.webSymbols.query.*
 import com.intellij.webSymbols.query.impl.PolySymbolMatchImpl
-import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
+import com.intellij.webSymbols.references.PolySymbolReferenceProblem.ProblemKind
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import javax.swing.Icon

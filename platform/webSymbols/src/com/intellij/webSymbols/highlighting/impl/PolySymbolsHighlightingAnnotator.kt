@@ -41,8 +41,8 @@ import com.intellij.webSymbols.impl.PolySymbolNameSegmentImpl
 import com.intellij.webSymbols.impl.highlightingEnd
 import com.intellij.webSymbols.inspections.impl.PolySymbolsInspectionToolMappingEP
 import com.intellij.webSymbols.references.PolySymbolReference
-import com.intellij.webSymbols.references.WebSymbolReferenceProblem
-import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
+import com.intellij.webSymbols.references.PolySymbolReferenceProblem
+import com.intellij.webSymbols.references.PolySymbolReferenceProblem.ProblemKind
 import com.intellij.webSymbols.references.impl.IJ_IGNORE_REFS
 import com.intellij.webSymbols.references.impl.PsiWebSymbolReferenceProviderImpl
 import com.intellij.webSymbols.search.WebSymbolReferenceHints
@@ -238,7 +238,7 @@ class PolySymbolsHighlightingAnnotator : Annotator {
     }
   }
 
-  private fun WebSymbolReferenceProblem.getInspectionInfo(
+  private fun PolySymbolReferenceProblem.getInspectionInfo(
     problemKind: ProblemKind, map: MutableMap<String, InspectionToolInfo>, holder: AnnotationHolder,
   ): List<InspectionToolInfo> =
     symbolKinds

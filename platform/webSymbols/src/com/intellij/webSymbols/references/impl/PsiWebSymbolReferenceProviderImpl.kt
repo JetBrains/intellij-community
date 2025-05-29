@@ -30,8 +30,8 @@ import com.intellij.webSymbols.inspections.PolySymbolsProblemQuickFixProvider
 import com.intellij.webSymbols.inspections.impl.PolySymbolsInspectionToolMappingEP
 import com.intellij.webSymbols.references.PsiPolySymbolReferenceProvider
 import com.intellij.webSymbols.references.PolySymbolReference
-import com.intellij.webSymbols.references.WebSymbolReferenceProblem
-import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
+import com.intellij.webSymbols.references.PolySymbolReferenceProblem
+import com.intellij.webSymbols.references.PolySymbolReferenceProblem.ProblemKind
 import com.intellij.webSymbols.utils.asSingleSymbol
 import com.intellij.webSymbols.utils.getProblemKind
 import com.intellij.webSymbols.utils.hasOnlyExtensions
@@ -172,7 +172,7 @@ private class NameSegmentReferenceWithProblem(
   override fun resolveReference(): Collection<PolySymbol> =
     if (problemOnly) emptyList() else super.resolveReference()
 
-  override fun getProblems(): Collection<WebSymbolReferenceProblem> {
+  override fun getProblems(): Collection<PolySymbolReferenceProblem> {
     val inspectionManager = InspectionManager.getInstance(element.project)
     val matchProblem = nameSegments
       .asSequence()
@@ -181,7 +181,7 @@ private class NameSegmentReferenceWithProblem(
         val toolMapping = segment.symbolKinds.map {
           PolySymbolsInspectionToolMappingEP.get(it.namespace, it.kind, problemKind)
         }.firstOrNull()
-        WebSymbolReferenceProblem.create(
+        PolySymbolReferenceProblem.create(
           segment.symbolKinds,
           problemKind,
           inspectionManager.createProblemDescriptor(
@@ -222,7 +222,7 @@ private class NameSegmentReferenceWithProblem(
                    ?: PolySymbolsBundle.message(if (isDeprecated) "web.inspection.message.deprecated.symbol.message"
                                                else "web.inspection.message.obsolete.symbol.message")
 
-      WebSymbolReferenceProblem.create(
+      PolySymbolReferenceProblem.create(
         symbolTypes,
         if (isDeprecated) ProblemKind.DeprecatedSymbol else ProblemKind.ObsoleteSymbol,
         inspectionManager.createProblemDescriptor(

@@ -8,7 +8,7 @@ import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.webSymbols.SymbolNamespace
 import com.intellij.webSymbols.PolySymbolsBundle
-import com.intellij.webSymbols.references.WebSymbolReferenceProblem
+import com.intellij.webSymbols.references.PolySymbolReferenceProblem
 import org.jetbrains.annotations.Nls
 
 internal class PolySymbolsInspectionToolMappingEP : PluginAware {
@@ -17,7 +17,7 @@ internal class PolySymbolsInspectionToolMappingEP : PluginAware {
 
     fun get(symbolNamespace: SymbolNamespace,
             symbolKind: String,
-            problemKind: WebSymbolReferenceProblem.ProblemKind): PolySymbolsInspectionToolMappingEP? =
+            problemKind: PolySymbolReferenceProblem.ProblemKind): PolySymbolsInspectionToolMappingEP? =
       map.value[ExtensionKey(symbolNamespace, symbolKind, problemKind)]
 
   }
@@ -35,7 +35,7 @@ internal class PolySymbolsInspectionToolMappingEP : PluginAware {
   @Attribute("problemKind")
   @RequiredElement
   @JvmField
-  var problemKind: WebSymbolReferenceProblem.ProblemKind? = null
+  var problemKind: PolySymbolReferenceProblem.ProblemKind? = null
 
   @Attribute("toolShortName")
   @JvmField
@@ -76,7 +76,7 @@ internal class PolySymbolsInspectionToolMappingEP : PluginAware {
 private data class ExtensionKey(
   var symbolNamespace: SymbolNamespace,
   var symbolKind: String,
-  var problemKind: WebSymbolReferenceProblem.ProblemKind,
+  var problemKind: PolySymbolReferenceProblem.ProblemKind,
 )
 
 private val EP_NAME = ExtensionPointName<PolySymbolsInspectionToolMappingEP>("com.intellij.webSymbols.inspectionToolMapping")
