@@ -19,7 +19,7 @@ import com.intellij.webSymbols.PolySymbolsPrioritizedScope
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.context.PolyContext
 import com.intellij.webSymbols.context.PolyContextKindRules
-import com.intellij.webSymbols.context.WebSymbolsContextRulesProvider
+import com.intellij.webSymbols.context.PolyContextRulesProvider
 import com.intellij.webSymbols.context.impl.buildWebSymbolsContext
 import com.intellij.webSymbols.query.*
 import com.intellij.webSymbols.utils.createModificationTracker
@@ -90,13 +90,13 @@ class WebSymbolsQueryExecutorFactoryImpl(private val project: Project) : WebSymb
     val result = MultiMap<ContextKind, PolyContextKindRules>()
 
     getCustomScope(dir)
-      .filterIsInstance<WebSymbolsContextRulesProvider>()
+      .filterIsInstance<PolyContextRulesProvider>()
       .map { it.getContextRules() }
       .forEach {
         result.putAllValues(it)
       }
 
-    val providers = mutableListOf<Pointer<out WebSymbolsContextRulesProvider>>()
+    val providers = mutableListOf<Pointer<out PolyContextRulesProvider>>()
     for (provider in WebSymbolsQueryConfigurator.EP_NAME.extensionList.flatMap {
       it.beforeQueryExecutorCreation(project)
       it.getContextRulesProviders(project, dir)

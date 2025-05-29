@@ -4,10 +4,10 @@ package com.intellij.webSymbols.impl
 import com.intellij.model.Pointer
 import com.intellij.webSymbols.FrameworkId
 import com.intellij.webSymbols.PolySymbolsScope
-import com.intellij.webSymbols.context.WebSymbolsContextRulesProvider
+import com.intellij.webSymbols.context.PolyContextRulesProvider
 import com.intellij.webSymbols.query.WebSymbolNameConversionRulesProvider
 
-interface StaticPolySymbolsScope : PolySymbolsScope, WebSymbolsContextRulesProvider {
+interface StaticPolySymbolsScope : PolySymbolsScope, PolyContextRulesProvider {
 
   override fun createPointer(): Pointer<out StaticPolySymbolsScope>
 

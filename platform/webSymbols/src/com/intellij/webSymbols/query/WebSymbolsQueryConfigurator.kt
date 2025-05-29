@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.context.PolyContext
-import com.intellij.webSymbols.context.WebSymbolsContextRulesProvider
+import com.intellij.webSymbols.context.PolyContextRulesProvider
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 
@@ -16,7 +16,7 @@ interface WebSymbolsQueryConfigurator {
   fun getScope(project: Project, location: PsiElement?, context: PolyContext, allowResolve: Boolean): List<PolySymbolsScope> =
     emptyList()
 
-  fun getContextRulesProviders(project: Project, dir: VirtualFile): List<WebSymbolsContextRulesProvider> =
+  fun getContextRulesProviders(project: Project, dir: VirtualFile): List<PolyContextRulesProvider> =
     emptyList()
 
   fun getNameConversionRulesProviders(project: Project,

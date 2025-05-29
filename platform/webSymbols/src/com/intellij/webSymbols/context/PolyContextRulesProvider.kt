@@ -6,10 +6,10 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.containers.MultiMap
 import com.intellij.webSymbols.ContextKind
 
-interface WebSymbolsContextRulesProvider : ModificationTracker {
+interface PolyContextRulesProvider : ModificationTracker {
 
   fun getContextRules(): MultiMap<ContextKind, PolyContextKindRules>
 
-  fun createPointer(): Pointer<out WebSymbolsContextRulesProvider>
+  fun createPointer(): Pointer<out PolyContextRulesProvider>
 
 }
