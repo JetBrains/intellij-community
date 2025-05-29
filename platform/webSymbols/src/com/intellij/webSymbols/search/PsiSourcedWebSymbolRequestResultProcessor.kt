@@ -47,7 +47,7 @@ class PsiSourcedWebSymbolRequestResultProcessor(private val targetElement: PsiEl
           }
           if (equivalentSymbol == null) return@forEach
           if (!consumer.process(
-              PsiSourcedWebSymbolReference(equivalentSymbol, targetElement, element, ref.rangeInElement))) {
+              PsiSourcedPolySymbolReference(equivalentSymbol, targetElement, element, ref.rangeInElement))) {
             return false
           }
         }

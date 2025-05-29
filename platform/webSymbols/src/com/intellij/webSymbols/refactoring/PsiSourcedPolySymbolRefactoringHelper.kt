@@ -8,12 +8,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringHelper
 import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.usageView.UsageInfo
-import com.intellij.webSymbols.search.PsiSourcedWebSymbolReference
-import com.intellij.webSymbols.search.PsiSourcedWebSymbolReference.RenameHandler
+import com.intellij.webSymbols.search.PsiSourcedPolySymbolReference
+import com.intellij.webSymbols.search.PsiSourcedPolySymbolReference.RenameHandler
 
 private class PsiSourcedPolySymbolRefactoringHelper : RefactoringHelper<List<RenameHandler>> {
   override fun prepareOperation(usages: Array<out UsageInfo>, elements: List<PsiElement>): List<RenameHandler> =
-    usages.mapNotNull { (it.reference as? PsiSourcedWebSymbolReference)?.createRenameHandler() }
+    usages.mapNotNull { (it.reference as? PsiSourcedPolySymbolReference)?.createRenameHandler() }
 
   override fun performOperation(project: Project, operationData: List<RenameHandler>?) {
     if (operationData.isNullOrEmpty()) return

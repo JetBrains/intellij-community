@@ -13,7 +13,7 @@ import com.intellij.webSymbols.query.PolySymbolsQueryExecutorFactory
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class PsiSourcedWebSymbolReference(
+class PsiSourcedPolySymbolReference(
   private val symbol: PolySymbol,
   private val sourceElement: PsiElement,
   private val host: PsiExternalReferenceHost,
@@ -52,7 +52,7 @@ class PsiSourcedWebSymbolReference(
   override fun isSoft(): Boolean =
     false
 
-  class RenameHandler(reference: PsiSourcedWebSymbolReference) {
+  class RenameHandler(reference: PsiSourcedPolySymbolReference) {
     private val symbol = reference.symbol
     private val targetPointer = reference.resolve()
       .let { if (it is FakePsiElement) it.context ?: it else it }
