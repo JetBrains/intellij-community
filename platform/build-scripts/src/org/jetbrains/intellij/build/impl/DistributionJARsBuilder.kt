@@ -362,15 +362,13 @@ private suspend fun buildOsSpecificBundledPlugins(
   pluginDirs: List<Pair<SupportedDistribution, Path>>,
   moduleOutputPatcher: ModuleOutputPatcher,
 ): Map<SupportedDistribution, List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>> {
-  // we do not support arch-dependent plugins for now, so, use only current arch
-  val currentArch = JvmArchitecture.currentJvmArch
   return spanBuilder("build os-specific bundled plugins")
     .setAttribute("isUpdateFromSources", isUpdateFromSources)
     .setAttribute(AttributeKey.stringArrayKey("pluginDirectoriesToSkip"), context.options.bundledPluginDirectoriesToSkip.toList())
     .use {
       pluginDirs.mapNotNull { (dist, targetDir) ->
         val (os, arch) = dist
-        if (arch != currentArch || !context.shouldBuildDistributionForOS(os, arch)) {
+        if (!context.shouldBuildDistributionForOS(os, arch)) {
           return@mapNotNull null
         }
 

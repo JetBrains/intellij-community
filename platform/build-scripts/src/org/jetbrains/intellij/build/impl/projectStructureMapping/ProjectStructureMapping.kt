@@ -6,13 +6,17 @@ package org.jetbrains.intellij.build.impl.projectStructureMapping
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildPaths
+import org.jetbrains.intellij.build.DistFile
+import org.jetbrains.intellij.build.MAVEN_REPO
+import org.jetbrains.intellij.build.PluginBuildDescriptor
 import org.jetbrains.intellij.build.impl.ProjectLibraryData
 import org.jetbrains.intellij.build.io.ZipFileWriter
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.file.Path
-import java.util.*
+import java.util.TreeMap
 
 internal fun getIncludedModules(entries: Sequence<DistributionFileEntry>): Sequence<String> {
   return entries.mapNotNull { (it as? ModuleOutputEntry)?.moduleName }.distinct()
@@ -29,7 +33,14 @@ private fun buildPluginContentReport(pluginToEntries: List<Pair<PluginBuildDescr
   val writer = createYamlGenerator(out)
 
   writer.writeStartArray()
+  val written = HashSet<String>()
   for ((plugin, entries) in pluginToEntries) {
+    val key = plugin.layout.mainModule + (if (plugin.os == null) "" else " (os=${plugin.os})")
+    if (!written.add(key)) {
+      // duplicate, e.g. OS-specific plugin
+      continue
+    }
+
     val fileToPresentablePath = HashMap<Path, String>()
 
     val fileToEntry = TreeMap<String, MutableList<DistributionFileEntry>>()
@@ -130,16 +141,24 @@ private fun buildPlatformContentReport(contentReport: ContentReport, buildPaths:
 
   writer.writeStartObject()
 
+  fun writeWithoutDuplicates(pairs: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>) {
+    val written = HashSet<String>()
+    for ((plugin, _) in pairs) {
+      val key = plugin.layout.mainModule + (if (plugin.os == null) "" else " (os=${plugin.os})")
+      if (!written.add(key)) {
+        // duplicate, e.g. OS-specific plugin
+        continue
+      }
+      writer.writeString(plugin.layout.mainModule)
+    }
+  }
+
   writer.writeObjectField("name", "plugins")
   writer.writeArrayFieldStart("bundled")
-  for (p in contentReport.bundledPlugins) {
-    writer.writeString(p.first.layout.mainModule)
-  }
+  writeWithoutDuplicates(contentReport.bundledPlugins)
   writer.writeEndArray()
   writer.writeArrayFieldStart("nonBundled")
-  for (p in contentReport.nonBundledPlugins) {
-    writer.writeString(p.first.layout.mainModule)
-  }
+  writeWithoutDuplicates(contentReport.nonBundledPlugins)
   writer.writeEndArray()
 
   writer.writeEndObject()

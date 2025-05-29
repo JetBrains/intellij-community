@@ -82,7 +82,9 @@ fun createContentCheckTests(projectHomePath: Path, productProperties: ProductPro
 
 private fun toMap(contentList: List<PluginContentReport>): Map<String, PluginContentReport> {
   val result = contentList.associateByTo(LinkedHashMap(contentList.size)) { getPluginContentKey(it) }
-  assert(result.size == contentList.size)
+  require(result.size == contentList.size) {
+    "Duplicate plugin content entries: ${contentList.groupBy { getPluginContentKey(it) }.filterValues { it.size > 1 }.keys}"
+  }
   return result
 }
 
