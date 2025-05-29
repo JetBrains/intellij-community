@@ -22,5 +22,7 @@
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="library" name="netty-buffer" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.eel" />
+    <orderEntry type="module" module-name="intellij.platform.eel.provider" />
   </component>
 </module>

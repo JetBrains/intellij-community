@@ -25,6 +25,8 @@ jvm_library(
     "//platform/platform-util-netty:ide-util-netty",
     "@lib//:netty-codec-http",
     "@lib//:netty-buffer",
+    "//platform/eel",
+    "//platform/eel-provider",
   ],
   exports = ["//platform/built-in-server:builtInServer-impl"],
   runtime_deps = [":external-process-auth-helper_resources"]
@@ -50,6 +52,8 @@ jvm_library(
     "@lib//:netty-codec-http",
     "@lib//:netty-buffer",
     "@lib//:junit5",
+    "//platform/eel",
+    "//platform/eel-provider",
   ],
   runtime_deps = [":external-process-auth-helper_resources"]
 )
