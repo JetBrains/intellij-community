@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 
-interface WebSymbolsContextSourceProximityProvider {
+interface PolyContextSourceProximityProvider {
 
   fun calculateProximity(project: Project, dir: VirtualFile, sourceNames: Set<String>, sourceKind: SourceKind): Result
 
@@ -38,7 +38,7 @@ interface WebSymbolsContextSourceProximityProvider {
     fun mergeProximity(a: Double?, b: Double): Double =
       a?.coerceAtMost(b) ?: b
 
-    private val EP_NAME = ExtensionPointName<WebSymbolsContextSourceProximityProvider>(
+    private val EP_NAME = ExtensionPointName<PolyContextSourceProximityProvider>(
       "com.intellij.webSymbols.contextSourceProximityProvider")
 
     internal fun calculateProximity(project: Project,
@@ -65,4 +65,4 @@ interface WebSymbolsContextSourceProximityProvider {
 private data class WebSymbolsContextSourceProximityProviderResultData(
   override val dependency2proximity: Map<String, Double>,
   override val modificationTrackers: Collection<ModificationTracker>
-) : WebSymbolsContextSourceProximityProvider.Result
+) : PolyContextSourceProximityProvider.Result

@@ -70,7 +70,7 @@
                     interface="com.intellij.webSymbols.inspections.WebSymbolsProblemQuickFixProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webSymbols.contextSourceProximityProvider"
-                    interface="com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider"
+                    interface="com.intellij.webSymbols.context.PolyContextSourceProximityProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webSymbols.highlightingCustomizer"
                     interface="com.intellij.webSymbols.highlighting.WebSymbolHighlightingCustomizer"

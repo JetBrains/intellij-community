@@ -45,9 +45,9 @@ import com.intellij.webSymbols.context.PolyContextChangeListener
 import com.intellij.webSymbols.context.PolyContext
 import com.intellij.webSymbols.context.PolyContextKindRules
 import com.intellij.webSymbols.context.PolyContextKindRules.EnablementRules
-import com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider
-import com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider.Companion.mergeProximity
-import com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider.SourceKind
+import com.intellij.webSymbols.context.PolyContextSourceProximityProvider
+import com.intellij.webSymbols.context.PolyContextSourceProximityProvider.Companion.mergeProximity
+import com.intellij.webSymbols.context.PolyContextSourceProximityProvider.SourceKind
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.query.impl.WebSymbolsQueryExecutorFactoryImpl
 import com.intellij.webSymbols.utils.findOriginalFile
@@ -217,7 +217,7 @@ private fun calcProximityPerContextFromRules(project: Project,
     .mapValues { perSourceKind -> perSourceKind.value.groupBy({ it.first }, { it.second }) }
 
   sourceKindToDepsToContext.forEach { (sourceKind, depsToContext) ->
-    WebSymbolsContextSourceProximityProvider.calculateProximity(project, directory, depsToContext.keys, sourceKind)
+    PolyContextSourceProximityProvider.calculateProximity(project, directory, depsToContext.keys, sourceKind)
       .let {
         it.dependency2proximity.forEach { (lib, proximity) ->
           depsToContext[lib]?.forEach { (contextKind, contextName) ->
