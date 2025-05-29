@@ -5,12 +5,12 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
-import com.intellij.webSymbols.context.WebSymbolsContext
+import com.intellij.webSymbols.context.PolyContext
 import com.intellij.webSymbols.query.impl.WebSymbolsCompoundQueryResultsCustomizer
 
 interface WebSymbolsQueryResultsCustomizerFactory {
 
-  fun create(location: PsiElement, context: WebSymbolsContext): WebSymbolsQueryResultsCustomizer?
+  fun create(location: PsiElement, context: PolyContext): WebSymbolsQueryResultsCustomizer?
 
   companion object {
     private val EP_NAME = ExtensionPointName.create<WebSymbolsQueryResultsCustomizerFactory>(
@@ -18,7 +18,7 @@ interface WebSymbolsQueryResultsCustomizerFactory {
 
     @JvmStatic
     fun getQueryResultsCustomizer(location: PsiElement?,
-                                  context: WebSymbolsContext): WebSymbolsQueryResultsCustomizer =
+                                  context: PolyContext): WebSymbolsQueryResultsCustomizer =
       if (location == null) {
         WebSymbolsCompoundQueryResultsCustomizer(emptyList())
       }

@@ -6,7 +6,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.webSymbols.context.WebSymbolsContext
+import com.intellij.webSymbols.context.PolyContext
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.query.*
 import com.intellij.webSymbols.query.impl.SearchMap
@@ -85,7 +85,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
     queryExecutorCache.clear()
   }
 
-  protected abstract fun matchContext(origin: Origin, context: WebSymbolsContext): Boolean
+  protected abstract fun matchContext(origin: Origin, context: PolyContext): Boolean
 
   private fun getMaps(params: WebSymbolsQueryParams): Sequence<ContributionSearchMap> =
     roots.asSequence()
@@ -165,7 +165,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
     val pattern: WebSymbolsPattern?
     val framework: FrameworkId?
     fun withQueryExecutorContext(queryExecutor: WebSymbolsQueryExecutor): PolySymbol
-    fun matchContext(context: WebSymbolsContext): Boolean =
+    fun matchContext(context: PolyContext): Boolean =
       framework == null || context.framework == null || context.framework == framework
   }
 

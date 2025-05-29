@@ -3,9 +3,9 @@ package com.intellij.webSymbols.context.impl
 
 import com.intellij.webSymbols.ContextKind
 import com.intellij.webSymbols.ContextName
-import com.intellij.webSymbols.context.WebSymbolsContext
+import com.intellij.webSymbols.context.PolyContext
 
-internal class WebSymbolsContextImpl(private val map: Map<ContextKind, ContextName>) : WebSymbolsContext {
+internal class PolyContextImpl(private val map: Map<ContextKind, ContextName>) : PolyContext {
   override fun get(kind: ContextKind): ContextName? =
     map[kind]
 
@@ -13,7 +13,7 @@ internal class WebSymbolsContextImpl(private val map: Map<ContextKind, ContextNa
     map.toString()
 
   companion object {
-    val empty = object : WebSymbolsContext {
+    val empty = object : PolyContext {
       override fun get(kind: ContextKind): ContextName? = null
     }
   }

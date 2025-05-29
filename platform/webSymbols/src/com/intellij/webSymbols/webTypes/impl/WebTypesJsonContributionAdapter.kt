@@ -12,7 +12,7 @@ import com.intellij.webSymbols.SymbolNamespace
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbol.Companion.KIND_HTML_ATTRIBUTES
 import com.intellij.webSymbols.PolySymbolQualifiedKind
-import com.intellij.webSymbols.context.WebSymbolsContext
+import com.intellij.webSymbols.context.PolyContext
 import com.intellij.webSymbols.impl.StaticPolySymbolsScopeBase
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
@@ -68,7 +68,7 @@ abstract class WebTypesJsonContributionAdapter private constructor(internal val 
 
   private var exclusiveContributions: Set<PolySymbolQualifiedKind>? = null
 
-  override fun matchContext(context: WebSymbolsContext): Boolean =
+  override fun matchContext(context: PolyContext): Boolean =
     super.matchContext(context) && contribution.requiredContext.evaluate(context)
 
   fun isExclusiveFor(qualifiedKind: PolySymbolQualifiedKind): Boolean =

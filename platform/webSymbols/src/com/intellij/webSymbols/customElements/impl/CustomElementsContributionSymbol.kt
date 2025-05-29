@@ -5,7 +5,7 @@ import com.intellij.model.Pointer
 import com.intellij.webSymbols.FrameworkId
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolApiStatus
-import com.intellij.webSymbols.context.WebSymbolsContext
+import com.intellij.webSymbols.context.PolyContext
 import com.intellij.webSymbols.customElements.CustomElementsJsonOrigin
 import com.intellij.webSymbols.customElements.CustomElementsSymbol
 import com.intellij.webSymbols.customElements.json.CustomElementsContribution
@@ -40,7 +40,7 @@ abstract class CustomElementsContributionSymbol<T : CustomElementsContribution> 
   final override fun withQueryExecutorContext(queryExecutor: WebSymbolsQueryExecutor): PolySymbol =
     this
 
-  override fun matchContext(context: WebSymbolsContext): Boolean =
+  override fun matchContext(context: PolyContext): Boolean =
     super<CustomElementsSymbol>.matchContext(context)
 
   override fun createPointer(): Pointer<out CustomElementsContributionSymbol<out T>> =

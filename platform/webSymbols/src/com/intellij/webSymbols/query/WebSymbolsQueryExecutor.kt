@@ -6,8 +6,8 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.webSymbols.context.WebSymbolsContext
-import com.intellij.webSymbols.context.WebSymbolsContext.Companion.KIND_FRAMEWORK
+import com.intellij.webSymbols.context.PolyContext
+import com.intellij.webSymbols.context.PolyContext.Companion.KIND_FRAMEWORK
 
 /**
  * To create a query executor use [WebSymbolsQueryExecutorFactory].
@@ -23,7 +23,7 @@ interface WebSymbolsQueryExecutor : ModificationTracker {
 
   val location: PsiElement?
 
-  val context: WebSymbolsContext
+  val context: PolyContext
 
   val framework: FrameworkId? get() = context[KIND_FRAMEWORK]
 

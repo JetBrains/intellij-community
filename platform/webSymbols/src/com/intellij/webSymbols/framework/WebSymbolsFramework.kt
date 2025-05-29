@@ -6,8 +6,8 @@ import com.intellij.openapi.util.KeyedExtensionCollector
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.PolySymbolQualifiedName
-import com.intellij.webSymbols.context.WebSymbolsContext
-import com.intellij.webSymbols.context.WebSymbolsContext.Companion.KIND_FRAMEWORK
+import com.intellij.webSymbols.context.PolyContext
+import com.intellij.webSymbols.context.PolyContext.Companion.KIND_FRAMEWORK
 import com.intellij.webSymbols.query.WebSymbolNamesProvider
 import javax.swing.Icon
 
@@ -26,9 +26,9 @@ abstract class WebSymbolsFramework {
 
   open fun getNames(qualifiedName: PolySymbolQualifiedName, target: WebSymbolNamesProvider.Target): List<String> = emptyList()
 
-  fun isInContext(location: PsiElement): Boolean = WebSymbolsContext.get(KIND_FRAMEWORK, location) == id
+  fun isInContext(location: PsiElement): Boolean = PolyContext.get(KIND_FRAMEWORK, location) == id
 
-  fun isInContext(location: VirtualFile, project: Project): Boolean = WebSymbolsContext.get(KIND_FRAMEWORK, location, project) == id
+  fun isInContext(location: VirtualFile, project: Project): Boolean = PolyContext.get(KIND_FRAMEWORK, location, project) == id
 
   companion object {
 
@@ -40,10 +40,10 @@ abstract class WebSymbolsFramework {
     fun get(id: String): WebSymbolsFramework = WEB_FRAMEWORK_EP.findSingle(id) ?: UnregisteredWebFramework(id)
 
     @JvmStatic
-    fun inLocation(location: VirtualFile, project: Project): WebSymbolsFramework? = WebSymbolsContext.get(KIND_FRAMEWORK, location, project)?.let { get(it) }
+    fun inLocation(location: VirtualFile, project: Project): WebSymbolsFramework? = PolyContext.get(KIND_FRAMEWORK, location, project)?.let { get(it) }
 
     @JvmStatic
-    fun inLocation(location: PsiElement): WebSymbolsFramework? = WebSymbolsContext.get(KIND_FRAMEWORK, location)?.let { get(it) }
+    fun inLocation(location: PsiElement): WebSymbolsFramework? = PolyContext.get(KIND_FRAMEWORK, location)?.let { get(it) }
 
     @JvmStatic
     val all: List<WebSymbolsFramework>

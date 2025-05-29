@@ -5,8 +5,8 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.webSymbols.ContextKind
 import com.intellij.webSymbols.ContextName
 import com.intellij.webSymbols.PolySymbolsScope
-import com.intellij.webSymbols.context.WebSymbolsContext.Companion.KIND_FRAMEWORK
-import com.intellij.webSymbols.context.impl.WebSymbolsContextImpl
+import com.intellij.webSymbols.context.PolyContext.Companion.KIND_FRAMEWORK
+import com.intellij.webSymbols.context.impl.PolyContextImpl
 import com.intellij.webSymbols.query.WebSymbolNameConversionRules
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory.WebSymbolsQueryExecutorBuilder
@@ -56,7 +56,7 @@ class WebSymbolsQueryExecutorBuilderImpl() : WebSymbolsQueryExecutorBuilder {
       rootScopes,
       WebSymbolNamesProviderImpl(context[KIND_FRAMEWORK], nameConversionRules, ModificationTracker.NEVER_CHANGED),
       WebSymbolsCompoundQueryResultsCustomizer(customizers),
-      WebSymbolsContextImpl(context),
+      PolyContextImpl(context),
       allowResolve
     )
 }

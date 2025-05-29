@@ -15,7 +15,7 @@ import com.intellij.util.text.minimatch.Minimatch
 import com.intellij.util.text.minimatch.MinimatchOptions
 import com.intellij.webSymbols.ContextKind
 import com.intellij.webSymbols.ContextName
-import com.intellij.webSymbols.context.WebSymbolsContext
+import com.intellij.webSymbols.context.PolyContext
 import java.io.IOException
 
 internal class WebSymbolsContextFileData private constructor(
@@ -96,7 +96,7 @@ internal class WebSymbolsContextFileData private constructor(
         }
         else if (reader.peek() == JsonToken.NULL) {
           reader.nextNull()
-          dirContext[key] = WebSymbolsContext.VALUE_NONE
+          dirContext[key] = PolyContext.VALUE_NONE
         }
         else
           reader.skipValue()

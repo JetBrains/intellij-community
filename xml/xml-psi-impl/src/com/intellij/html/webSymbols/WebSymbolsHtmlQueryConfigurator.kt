@@ -21,7 +21,7 @@ import com.intellij.webSymbols.*
 import com.intellij.webSymbols.PolySymbol.Companion.HTML_ATTRIBUTE_VALUES
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItemCustomizer
-import com.intellij.webSymbols.context.WebSymbolsContext
+import com.intellij.webSymbols.context.PolyContext
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.query.*
 import com.intellij.webSymbols.utils.match
@@ -35,7 +35,7 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
 
   override fun getScope(project: Project,
                         location: PsiElement?,
-                        context: WebSymbolsContext,
+                        context: PolyContext,
                         allowResolve: Boolean): List<PolySymbolsScope> =
     if (location is XmlElement) {
       listOfNotNull(

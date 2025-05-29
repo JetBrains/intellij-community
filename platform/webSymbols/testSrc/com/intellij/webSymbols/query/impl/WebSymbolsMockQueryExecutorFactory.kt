@@ -6,8 +6,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.ContextKind
 import com.intellij.webSymbols.ContextName
 import com.intellij.webSymbols.PolySymbolsScope
-import com.intellij.webSymbols.context.WebSymbolsContext
-import com.intellij.webSymbols.context.WebSymbolsContext.Companion.KIND_FRAMEWORK
+import com.intellij.webSymbols.context.PolyContext
+import com.intellij.webSymbols.context.PolyContext.Companion.KIND_FRAMEWORK
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.query.WebSymbolsQueryResultsCustomizerFactory
@@ -30,8 +30,8 @@ class WebSymbolsMockQueryExecutorFactory : WebSymbolsQueryExecutorFactory {
                                   } ?: emptyList(),
                                   createModificationTracker(
                                     scopeList.filterIsInstance<WebTypesMockScopeImpl>().map { it.createPointer() })),
-                                WebSymbolsQueryResultsCustomizerFactory.getQueryResultsCustomizer(location, WebSymbolsContext.create(context)),
-                                WebSymbolsContext.create(context),
+                                WebSymbolsQueryResultsCustomizerFactory.getQueryResultsCustomizer(location, PolyContext.create(context)),
+                                PolyContext.create(context),
                                 allowResolve)
 
   override fun addScope(

@@ -9,7 +9,7 @@ import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.webSymbols.context.WebSymbolsContext.Companion.KIND_FRAMEWORK
+import com.intellij.webSymbols.context.PolyContext.Companion.KIND_FRAMEWORK
 import com.intellij.webSymbols.context.impl.WebSymbolsContextProviderExtensionPoint
 import com.intellij.webSymbols.query.impl.CustomElementsManifestMockScopeImpl
 import com.intellij.webSymbols.query.impl.WebSymbolsMockQueryExecutorFactory

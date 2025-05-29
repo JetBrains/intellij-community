@@ -17,7 +17,7 @@ import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.refactoring.rename.symbol.RenameableSymbol
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import com.intellij.webSymbols.context.WebSymbolsContext
+import com.intellij.webSymbols.context.PolyContext
 import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 import com.intellij.webSymbols.documentation.WebSymbolDocumentationCustomizer
 import com.intellij.webSymbols.documentation.impl.WebSymbolDocumentationTargetImpl
@@ -322,7 +322,7 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsP
    * Return `true` if the symbol should be present in the query results
    * in the particular context. By default, the current symbol framework is checked.
    */
-  fun matchContext(context: WebSymbolsContext): Boolean =
+  fun matchContext(context: PolyContext): Boolean =
     origin.framework == null || context.framework == null || origin.framework == context.framework
 
   /**

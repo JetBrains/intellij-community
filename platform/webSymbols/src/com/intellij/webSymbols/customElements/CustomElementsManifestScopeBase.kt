@@ -10,7 +10,7 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.webSymbols.ContextKind
 import com.intellij.webSymbols.FrameworkId
 import com.intellij.webSymbols.PolySymbolTypeSupport
-import com.intellij.webSymbols.context.WebSymbolsContext
+import com.intellij.webSymbols.context.PolyContext
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules
 import com.intellij.webSymbols.customElements.json.*
 import com.intellij.webSymbols.impl.StaticPolySymbolsScopeBase
@@ -52,7 +52,7 @@ abstract class CustomElementsManifestScopeBase :
       else -> emptySequence()
     }
 
-  override fun matchContext(origin: CustomElementsJsonOrigin, context: WebSymbolsContext): Boolean =
+  override fun matchContext(origin: CustomElementsJsonOrigin, context: PolyContext): Boolean =
     true
 
   override fun getContextRules(): MultiMap<ContextKind, WebSymbolsContextKindRules> = MultiMap.empty()

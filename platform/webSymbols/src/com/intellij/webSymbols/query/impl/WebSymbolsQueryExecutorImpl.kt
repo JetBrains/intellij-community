@@ -17,7 +17,7 @@ import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.PolySymbolQualifiedName
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.webSymbols.context.WebSymbolsContext
+import com.intellij.webSymbols.context.PolyContext
 import com.intellij.webSymbols.impl.filterByQueryParams
 import com.intellij.webSymbols.impl.selectBest
 import com.intellij.webSymbols.query.*
@@ -33,7 +33,7 @@ class WebSymbolsQueryExecutorImpl(
   rootScope: List<PolySymbolsScope>,
   override val namesProvider: WebSymbolNamesProvider,
   override val resultsCustomizer: WebSymbolsQueryResultsCustomizer,
-  override val context: WebSymbolsContext,
+  override val context: PolyContext,
   override val allowResolve: Boolean,
 ) : WebSymbolsQueryExecutor {
 

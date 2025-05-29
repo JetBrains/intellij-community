@@ -3,7 +3,7 @@ package com.intellij.webSymbols.customElements.impl
 
 import com.intellij.model.Pointer
 import com.intellij.webSymbols.*
-import com.intellij.webSymbols.context.WebSymbolsContext
+import com.intellij.webSymbols.context.PolyContext
 import com.intellij.webSymbols.customElements.CustomElementsJsonOrigin
 import com.intellij.webSymbols.customElements.CustomElementsSymbol
 import com.intellij.webSymbols.customElements.json.CustomElementExport
@@ -32,7 +32,7 @@ class CustomElementsCustomElementExportSymbol private constructor(
   override fun createPointer(): Pointer<out PolySymbol> =
     Pointer.hardPointer(this)
 
-  override fun matchContext(context: WebSymbolsContext): Boolean =
+  override fun matchContext(context: PolyContext): Boolean =
     super<CustomElementsSymbol>.matchContext(context)
 
   companion object {

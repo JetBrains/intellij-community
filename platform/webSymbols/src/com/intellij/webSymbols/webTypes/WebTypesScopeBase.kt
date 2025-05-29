@@ -15,8 +15,8 @@ import com.intellij.webSymbols.ContextKind
 import com.intellij.webSymbols.ContextName
 import com.intellij.webSymbols.FrameworkId
 import com.intellij.webSymbols.PolySymbolTypeSupport
-import com.intellij.webSymbols.context.WebSymbolsContext
-import com.intellij.webSymbols.context.WebSymbolsContext.Companion.KIND_FRAMEWORK
+import com.intellij.webSymbols.context.PolyContext
+import com.intellij.webSymbols.context.PolyContext.Companion.KIND_FRAMEWORK
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules.DisablementRules
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules.EnablementRules
@@ -89,7 +89,7 @@ abstract class WebTypesScopeBase :
     nameConversionRulesCache.drop()
   }
 
-  override fun matchContext(origin: WebTypesJsonOrigin, context: WebSymbolsContext): Boolean =
+  override fun matchContext(origin: WebTypesJsonOrigin, context: PolyContext): Boolean =
     origin.matchContext(context)
 
   override fun adaptAllRootContributions(root: Contributions,
@@ -201,7 +201,7 @@ abstract class WebTypesScopeBase :
       return if (path.startsWith("<svg")) WebTypesSvgStringIconLoader.loadIcon(path) else iconLoader(path)
     }
 
-    override fun matchContext(context: WebSymbolsContext): Boolean {
+    override fun matchContext(context: PolyContext): Boolean {
       return ((framework == null || context.framework == framework) && contextExpr?.evaluate(context) != false)
     }
 

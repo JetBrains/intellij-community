@@ -9,12 +9,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.ContextKind
 import com.intellij.webSymbols.ContextName
 import com.intellij.webSymbols.FrameworkId
-import com.intellij.webSymbols.context.impl.WebSymbolsContextImpl
+import com.intellij.webSymbols.context.impl.PolyContextImpl
 import com.intellij.webSymbols.context.impl.WebSymbolsContextProviderExtensionCollector
 import com.intellij.webSymbols.context.impl.findWebSymbolsContext
 import org.jetbrains.annotations.TestOnly
 
-interface WebSymbolsContext {
+interface PolyContext {
 
   val framework: FrameworkId?
     get() = this[KIND_FRAMEWORK]
@@ -56,12 +56,12 @@ interface WebSymbolsContext {
       findWebSymbolsContext(kind, location)
 
     @JvmStatic
-    fun empty(): WebSymbolsContext =
-      WebSymbolsContextImpl.empty
+    fun empty(): PolyContext =
+      PolyContextImpl.empty
 
     @JvmStatic
-    fun create(map: Map<ContextKind, ContextName>): WebSymbolsContext =
-      WebSymbolsContextImpl(map)
+    fun create(map: Map<ContextKind, ContextName>): PolyContext =
+      PolyContextImpl(map)
 
   }
 }

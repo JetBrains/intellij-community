@@ -25,10 +25,10 @@ import com.intellij.webSymbols.PolySymbol.Companion.PROP_HIDE_FROM_COMPLETION
 import com.intellij.webSymbols.PolySymbol.Companion.PROP_KIND
 import com.intellij.webSymbols.PolySymbol.Companion.PROP_READ_ONLY
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.webSymbols.context.WebSymbolsContext
-import com.intellij.webSymbols.context.WebSymbolsContext.Companion.PKG_MANAGER_RUBY_GEMS
-import com.intellij.webSymbols.context.WebSymbolsContext.Companion.PKG_MANAGER_NODE_PACKAGES
-import com.intellij.webSymbols.context.WebSymbolsContext.Companion.PKG_MANAGER_SYMFONY_BUNDLES
+import com.intellij.webSymbols.context.PolyContext
+import com.intellij.webSymbols.context.PolyContext.Companion.PKG_MANAGER_RUBY_GEMS
+import com.intellij.webSymbols.context.PolyContext.Companion.PKG_MANAGER_NODE_PACKAGES
+import com.intellij.webSymbols.context.PolyContext.Companion.PKG_MANAGER_SYMFONY_BUNDLES
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.impl.canUnwrapSymbols
@@ -507,7 +507,7 @@ internal fun List<Type>.mapToTypeReferences(): List<PolySymbolTypeSupport.TypeRe
     }
   }
 
-internal fun RequiredContextBase?.evaluate(context: WebSymbolsContext): Boolean =
+internal fun RequiredContextBase?.evaluate(context: PolyContext): Boolean =
   when (this) {
     null -> true
     is RequiredContextKindName -> context[kind] == name

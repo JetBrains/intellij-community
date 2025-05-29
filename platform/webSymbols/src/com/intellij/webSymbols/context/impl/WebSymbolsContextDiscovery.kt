@@ -42,7 +42,7 @@ import com.intellij.util.lazyUnsafe
 import com.intellij.webSymbols.ContextKind
 import com.intellij.webSymbols.ContextName
 import com.intellij.webSymbols.context.WebSymbolContextChangeListener
-import com.intellij.webSymbols.context.WebSymbolsContext
+import com.intellij.webSymbols.context.PolyContext
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules.EnablementRules
 import com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider
@@ -57,10 +57,10 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.component1
 import kotlin.collections.component2
 
-private val WEB_SYMBOLS_CONTEXT_EP get() = WebSymbolsContext.WEB_SYMBOLS_CONTEXT_EP as WebSymbolsContextProviderExtensionCollector
+private val WEB_SYMBOLS_CONTEXT_EP get() = PolyContext.WEB_SYMBOLS_CONTEXT_EP as WebSymbolsContextProviderExtensionCollector
 private val CONTEXT_RELOAD_MARKER_KEY = Key<Any>("web.isContext.reloadMarker")
 private val reloadMonitor = Any()
-private val LOG = Logger.getInstance(WebSymbolsContext::class.java)
+private val LOG = Logger.getInstance(PolyContext::class.java)
 
 @RequiresReadLock
 internal fun findWebSymbolsContext(kind: ContextKind, location: PsiElement): ContextName? =
@@ -75,14 +75,14 @@ internal fun findWebSymbolsContext(kind: ContextKind, location: VirtualFile, pro
   }
 
 @RequiresReadLock
-internal fun buildWebSymbolsContext(location: PsiElement): WebSymbolsContext =
+internal fun buildWebSymbolsContext(location: PsiElement): PolyContext =
   forPsiLocation(location) { locationInfo ->
     allKinds(locationInfo.rulesConfigInDir, locationInfo.fileConfigInDir)
       .asSequence()
       .mapNotNull { kind -> findWebSymbolsContext(kind, locationInfo)?.let { Pair(kind, it) } }
       .toMap()
-      .let { WebSymbolsContext.create(it) }
-  } ?: WebSymbolsContext.empty()
+      .let { PolyContext.create(it) }
+  } ?: PolyContext.empty()
 
 private fun findWebSymbolsContext(kind: ContextKind, locationInfo: LocationInfo): ContextName? =
   locationInfo.psiFile
@@ -153,7 +153,7 @@ private fun findContextInDirOrFileCached(kind: ContextKind, locationInfo: Locati
   // File config overrides any automatic detection
   fileConfigInDir
     .findByFileName(kind, file?.name)
-    ?.let { return if (it == WebSymbolsContext.VALUE_NONE) null else it }
+    ?.let { return if (it == PolyContext.VALUE_NONE) null else it }
 
   val webSymbolsContextKindDisableRules = rulesConfigInDir.rules[kind]?.disable
   file
@@ -295,7 +295,7 @@ private fun loadContextFilesConfiguration(directory: VirtualFile): ContextFileCo
   val dependencies = mutableListOf<Any>(VFS_STRUCTURE_MODIFICATIONS)
   val contexts = generateSequence(Pair(directory, 0)) { (dir, proximity) -> dir.parent?.let { Pair(it, proximity - 1) } }
     .flatMap { (dir, proximity) ->
-      dir.findFile(WebSymbolsContext.WEB_SYMBOLS_CONTEXT_FILE)
+      dir.findFile(PolyContext.WEB_SYMBOLS_CONTEXT_FILE)
         ?.let {
           dependencies.add(it)
           WebSymbolsContextFileData.getOrCreate(it)
@@ -369,7 +369,7 @@ private const val EMPTY_CONTEXT = "%EMPTY%"
 
 private fun withContextChangeCheck(kind: ContextKind, locationInfo: LocationInfo): ContextName? {
   val currentState = findContextInDirOrFileCached(kind, locationInfo)
-    ?.takeIf { it != WebSymbolsContext.VALUE_NONE }
+    ?.takeIf { it != PolyContext.VALUE_NONE }
 
   val contextFile = locationInfo.file ?: locationInfo.dir
   val prevState = locationInfo.contextInfo.updateContext(contextFile, kind, currentState ?: EMPTY_CONTEXT)
@@ -442,7 +442,7 @@ private class WebSymbolsContextDiscoveryInfo(private val project: Project, priva
     })
     messageBus.subscribe(VFS_CHANGES, object : BulkFileListener {
       override fun after(events: MutableList<out VFileEvent>) {
-        val wsFile = events.find { it.file?.name == WebSymbolsContext.WEB_SYMBOLS_CONTEXT_FILE }
+        val wsFile = events.find { it.file?.name == PolyContext.WEB_SYMBOLS_CONTEXT_FILE }
         if (wsFile != null) {
           thisLogger().info("Notifying that Web Symbol context may have changed due to changes in ${wsFile.path}.")
           cs.launch {

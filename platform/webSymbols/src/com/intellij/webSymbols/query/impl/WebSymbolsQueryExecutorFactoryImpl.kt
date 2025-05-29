@@ -17,7 +17,7 @@ import com.intellij.webSymbols.ContextKind
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolsPrioritizedScope
 import com.intellij.webSymbols.PolySymbolsScope
-import com.intellij.webSymbols.context.WebSymbolsContext
+import com.intellij.webSymbols.context.PolyContext
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules
 import com.intellij.webSymbols.context.WebSymbolsContextRulesProvider
 import com.intellij.webSymbols.context.impl.buildWebSymbolsContext
@@ -37,7 +37,7 @@ class WebSymbolsQueryExecutorFactoryImpl(private val project: Project) : WebSymb
     WebSymbolsQueryConfigurator.EP_NAME.extensionList
       .forEach { it.beforeQueryExecutorCreation(project) }
 
-    val context = location?.let { buildWebSymbolsContext(it) } ?: WebSymbolsContext.empty()
+    val context = location?.let { buildWebSymbolsContext(it) } ?: PolyContext.empty()
 
     val scopeList = mutableListOf<PolySymbolsScope>()
     getCustomScope(location).forEach(scopeList::add)
@@ -107,7 +107,7 @@ class WebSymbolsQueryExecutorFactoryImpl(private val project: Project) : WebSymb
     return Pair(result, createModificationTracker(providers))
   }
 
-  private fun createNamesProvider(project: Project, location: PsiElement?, context: WebSymbolsContext): WebSymbolNamesProvider {
+  private fun createNamesProvider(project: Project, location: PsiElement?, context: PolyContext): WebSymbolNamesProvider {
     val nameConversionRules = mutableListOf<WebSymbolNameConversionRules>()
     val providers = mutableListOf<Pointer<out WebSymbolNameConversionRulesProvider>>()
     WebSymbolsQueryConfigurator.EP_NAME.extensionList.flatMap { provider ->
