@@ -20,7 +20,7 @@ import org.jetbrains.annotations.ApiStatus
 class SeTextTab(private val delegate: SeTabDelegate) : SeTab {
   override val name: String get() = FindBundle.message("search.everywhere.group.name")
   override val shortName: String get() = name
-  override val id: String get() = "TextSearchContributor"
+  override val id: String get() = ID
 
   override fun getItems(params: SeParams): Flow<SeResultEvent> =
     if (params.inputQuery.isEmpty()) emptyFlow()
@@ -40,5 +40,10 @@ class SeTextTab(private val delegate: SeTabDelegate) : SeTab {
 
   override fun dispose() {
     Disposer.dispose(delegate)
+  }
+
+  companion object {
+    @ApiStatus.Internal
+    const val ID: String = "TextSearchContributor"
   }
 }

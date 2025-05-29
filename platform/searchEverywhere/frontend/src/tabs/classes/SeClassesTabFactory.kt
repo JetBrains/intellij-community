@@ -15,7 +15,9 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class SeClassesTabFactory : SeTabFactory {
-  override fun getTab(scope: CoroutineScope, project: Project?, sessionRef: DurableRef<SeSessionEntity>, initEvent: AnActionEvent): SeTab? {
+  override val id: String get() = SeClassesTab.ID
+
+  override suspend fun getTab(scope: CoroutineScope, project: Project?, sessionRef: DurableRef<SeSessionEntity>, initEvent: AnActionEvent): SeTab? {
     project ?: return null
 
     val delegate = SeTabDelegate(project,

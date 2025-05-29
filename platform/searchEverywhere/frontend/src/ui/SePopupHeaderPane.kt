@@ -98,6 +98,10 @@ class SePopupHeaderPane(tabNames: @Nls List<String>,
     }
   }
 
+  fun addTab(tabName: @Nls String) {
+    tabbedPane.addTab(tabName, null, JPanel(), tabName)
+  }
+
   private fun setFilterComponent(filterComponent: JComponent?) {
     val oldCount = tabFilterContainer.componentCount
 

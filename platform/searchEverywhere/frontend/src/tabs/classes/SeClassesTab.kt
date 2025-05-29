@@ -23,7 +23,7 @@ import org.jetbrains.annotations.ApiStatus
 class SeClassesTab(private val delegate: SeTabDelegate) : SeTab {
   override val name: String get() = GotoClassPresentationUpdater.getTabTitlePluralized()
   override val shortName: String get() = name
-  override val id: String get() = "ClassSearchEverywhereContributor"
+  override val id: String get() = ID
   private val filterEditor: SuspendLazyProperty<SeFilterEditor> = initAsync(delegate.scope) {
     SeTargetsFilterEditor(delegate.getSearchScopesInfos().firstOrNull(), delegate.getTypeVisibilityStates())
   }
@@ -46,5 +46,10 @@ class SeClassesTab(private val delegate: SeTabDelegate) : SeTab {
 
   override fun dispose() {
     Disposer.dispose(delegate)
+  }
+
+  companion object {
+    @ApiStatus.Internal
+    const val ID: String = "ClassSearchEverywhereContributor"
   }
 }

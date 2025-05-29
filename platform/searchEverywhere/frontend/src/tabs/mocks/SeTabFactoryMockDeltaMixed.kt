@@ -15,7 +15,9 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 class SeTabFactoryMockDeltaMixed : SeTabFactory {
-  override fun getTab(scope: CoroutineScope, project: Project?, sessionRef: DurableRef<SeSessionEntity>, initEvent: AnActionEvent): SeTab =
+  override val id: String get() = "DeltaMixed"
+
+  override suspend fun getTab(scope: CoroutineScope, project: Project?, sessionRef: DurableRef<SeSessionEntity>, initEvent: AnActionEvent): SeTab =
     SeTabMock.create(project,
                      sessionRef,
                      "DeltaMixed",

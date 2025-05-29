@@ -11,13 +11,11 @@ import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeSessionEntity
 import com.intellij.platform.searchEverywhere.SeUsageEventsLogger
 import com.intellij.platform.searchEverywhere.frontend.SeTab
+import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.util.SystemProperties
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -27,6 +25,7 @@ class SePopupVm(
   private val project: Project?,
   private val sessionRef: DurableRef<SeSessionEntity>,
   tabs: List<SeTab>,
+  loadingTabs: List<SuspendLazyProperty<SeTab?>>,
   initialSearchPattern: String?,
   initialTabIndex: String,
   private val historyList: SearchHistoryList,
@@ -34,9 +33,10 @@ class SePopupVm(
 ) {
   val searchPattern: MutableStateFlow<String> = MutableStateFlow("")
 
-  val tabVms: List<SeTabVm> = tabs.map {
-    SeTabVm(project, coroutineScope, it, searchPattern)
-  }
+  private val _deferredTabVms = MutableSharedFlow<SeTabVm>(replay = 100)
+  val deferredTabVms: SharedFlow<SeTabVm> = _deferredTabVms.asSharedFlow()
+  private val tabVmsSateFlow = MutableStateFlow(tabs.map { SeTabVm(project, coroutineScope, it, searchPattern) })
+  val tabVms: List<SeTabVm> get() = tabVmsSateFlow.value
 
   val currentTabIndex: MutableStateFlow<Int> = MutableStateFlow(tabVms.indexOfFirst { it.tabId == initialTabIndex }.takeIf { it >= 0 } ?: 0)
   val currentTab: SeTabVm get() = tabVms[currentTabIndex.value.coerceIn(tabVms.indices)]
@@ -74,6 +74,20 @@ class SePopupVm(
                              Registry.`is`("search.everywhere.disable.history.for.all"))
       if (!suppressHistory) historyIterator.next() else ""
     }
+
+    coroutineScope.launch {
+      deferredTabVms.collect { tabVm ->
+        tabVmsSateFlow.update { it + tabVm }
+      }
+    }
+
+    loadingTabs.forEach {
+      coroutineScope.launch {
+        it.getValue()?.let { tab ->
+          _deferredTabVms.emit(SeTabVm(project, coroutineScope, tab, searchPattern))
+        }
+      }
+    }
   }
 
   suspend fun itemSelected(item: SeItemData, modifiers: Int): Boolean {
@@ -92,6 +106,10 @@ class SePopupVm(
         }
       }.awaitAll().any { it }
     }
+  }
+
+  private fun addTab() {
+
   }
 
   fun selectNextTab() {

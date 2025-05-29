@@ -24,7 +24,7 @@ import org.jetbrains.annotations.ApiStatus
 class SeActionsTab(private val delegate: SeTabDelegate): SeTab {
   override val name: String get() = IdeBundle.message("search.everywhere.group.name.actions")
   override val shortName: String get() = name
-  override val id: String get() = "ActionSearchEverywhereContributor"
+  override val id: String get() = ID
   private val filterEditor: SeFilterEditor = SeActionsFilterEditor()
 
   override fun getItems(params: SeParams): Flow<SeResultEvent> = delegate.getItems(params)
@@ -44,6 +44,11 @@ class SeActionsTab(private val delegate: SeTabDelegate): SeTab {
 
   override fun dispose() {
     Disposer.dispose(delegate)
+  }
+
+  companion object {
+    @ApiStatus.Internal
+    const val ID: String = "ActionSearchEverywhereContributor"
   }
 }
 

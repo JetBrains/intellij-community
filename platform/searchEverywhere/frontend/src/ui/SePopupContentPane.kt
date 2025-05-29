@@ -179,6 +179,14 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
       }
     }
 
+    vm.coroutineScope.launch {
+      vm.deferredTabVms.collect { tabVm ->
+        withContext(Dispatchers.EDT) {
+          headerPane.addTab(tabVm.name)
+        }
+      }
+    }
+
     val isScrolledAlmostToAnEnd = MutableStateFlow(false)
     val verticalScrollBar = resultsScrollPane.verticalScrollBar
     verticalScrollBar.addAdjustmentListener { adjustmentEvent ->

@@ -14,7 +14,9 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 class SeTabFactoryMockAlphaLocal : SeTabFactory {
-  override fun getTab(scope: CoroutineScope, project: Project?, sessionRef: DurableRef<SeSessionEntity>, initEvent: AnActionEvent): SeTab =
+  override val id: String get() = "AlphaLocal"
+
+  override suspend fun getTab(scope: CoroutineScope, project: Project?, sessionRef: DurableRef<SeSessionEntity>, initEvent: AnActionEvent): SeTab =
     SeTabMock.create(project,
                      sessionRef,
                      "AlphaLocal",

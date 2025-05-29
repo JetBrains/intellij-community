@@ -12,7 +12,8 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 @ApiStatus.Internal
 interface SeTabFactory {
-  fun getTab(scope: CoroutineScope, project: Project?, sessionRef: DurableRef<SeSessionEntity>, initEvent: AnActionEvent): SeTab?
+  val id: String
+  suspend fun getTab(scope: CoroutineScope, project: Project?, sessionRef: DurableRef<SeSessionEntity>, initEvent: AnActionEvent): SeTab? = null
 
   companion object {
     @ApiStatus.Internal
