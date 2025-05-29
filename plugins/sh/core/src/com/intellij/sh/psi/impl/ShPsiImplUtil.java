@@ -1,14 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.psi.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.sh.codeInsight.ShFunctionReference;
-import com.intellij.sh.codeInsight.ShIncludeCommandReference;
-import com.intellij.sh.psi.ShLiteral;
-import com.intellij.sh.psi.ShLiteralExpression;
-import com.intellij.sh.psi.ShString;
-import com.intellij.sh.psi.ShVariable;
+import com.intellij.sh.codeInsight.ShFunctionReferenceSupport;
+import com.intellij.sh.codeInsight.ShIncludeCommandReferenceSupport;
+import com.intellij.sh.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public final class ShPsiImplUtil {
@@ -18,8 +16,8 @@ public final class ShPsiImplUtil {
       int length = array.length;
       PsiReference[] result = new PsiReference[length + 2];
       System.arraycopy(array, 0, result, 2, length);
-      result[0] = new ShIncludeCommandReference(o);
-      result[1] = new ShFunctionReference(o);
+      result[0] = ApplicationManager.getApplication().getService(ShIncludeCommandReferenceSupport.class).resolveReference(o);
+      result[1] = ApplicationManager.getApplication().getService(ShFunctionReferenceSupport.class).resolveReference(o);
       return result;
     }
     return PsiReference.EMPTY_ARRAY;

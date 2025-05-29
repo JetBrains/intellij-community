@@ -5,6 +5,13 @@
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.sh.codeInsight.ShFunctionReferenceSupport"
+                        serviceImplementation="com.intellij.sh.backend.codeInsight.ShBackendFunctionReferenceSupport"/>
+    <applicationService serviceInterface="com.intellij.sh.codeInsight.ShIncludeCommandReferenceSupport"
+                        serviceImplementation="com.intellij.sh.backend.codeInsight.ShBackendIncludeCommandReferenceSupport"/>
+
+    <lang.findUsagesProvider language="Shell Script" implementationClass="com.intellij.sh.codeInsight.ShFindUsagesProvider"/>
+    <targetElementEvaluator language="Shell Script" implementationClass="com.intellij.sh.backend.codeInsight.ShTargetElementEvaluator"/>
   </extensions>
 
 </idea-plugin>

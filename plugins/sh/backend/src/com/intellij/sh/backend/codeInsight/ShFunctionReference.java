@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.sh.codeInsight;
+package com.intellij.sh.backend.codeInsight;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -8,7 +8,7 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.sh.codeInsight.processor.ShFunctionDeclarationProcessor;
+import com.intellij.sh.backend.codeInsight.processor.ShFunctionDeclarationProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
