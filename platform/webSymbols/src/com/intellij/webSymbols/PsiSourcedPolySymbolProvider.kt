@@ -8,15 +8,15 @@ import com.intellij.psi.PsiElement
  * Implement this interface if symbol name can have a different format and a name provider needs to be
  * called to allow for [PolySymbol] -> [PsiElement] reference to be found.
  */
-interface PsiSourcedWebSymbolProvider {
+interface PsiSourcedPolySymbolProvider {
 
-  fun getWebSymbols(element: PsiElement): List<PsiSourcedPolySymbol>
+  fun getSymbols(element: PsiElement): List<PsiSourcedPolySymbol>
 
   companion object {
-    val EP_NAME: ExtensionPointName<PsiSourcedWebSymbolProvider> = ExtensionPointName.create<PsiSourcedWebSymbolProvider>("com.intellij.webSymbols.psiSourcedSymbolProvider")
+    val EP_NAME: ExtensionPointName<PsiSourcedPolySymbolProvider> = ExtensionPointName.create<PsiSourcedPolySymbolProvider>("com.intellij.webSymbols.psiSourcedSymbolProvider")
 
-    fun getAllWebSymbols(element: PsiElement): Collection<PsiSourcedPolySymbol> =
-      EP_NAME.extensionList.flatMap { it.getWebSymbols(element) }
+    fun getAllSymbols(element: PsiElement): Collection<PsiSourcedPolySymbol> =
+      EP_NAME.extensionList.flatMap { it.getSymbols(element) }
 
   }
 

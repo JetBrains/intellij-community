@@ -10,7 +10,7 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.search.UsageSearchContext
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.Processor
-import com.intellij.webSymbols.PsiSourcedWebSymbolProvider
+import com.intellij.webSymbols.PsiSourcedPolySymbolProvider
 import com.intellij.webSymbols.query.WebSymbolNamesProvider
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.search.impl.WebSymbolPsiSourcedSymbolHostClassEP
@@ -22,7 +22,7 @@ internal class PsiSourcedWebSymbolReferenceSearcher : QueryExecutorBase<PsiRefer
     val targetElement = queryParameters.elementToSearch
     if (elementClasses.value.none { it.isInstance(targetElement) }) return
 
-    val foundSymbols = PsiSourcedWebSymbolProvider.getAllWebSymbols(queryParameters.elementToSearch)
+    val foundSymbols = PsiSourcedPolySymbolProvider.getAllSymbols(queryParameters.elementToSearch)
       .filter { it.source == targetElement }
     val names = if (foundSymbols.isNotEmpty()) {
       val queryExecutor = WebSymbolsQueryExecutorFactory.create(targetElement, true)
