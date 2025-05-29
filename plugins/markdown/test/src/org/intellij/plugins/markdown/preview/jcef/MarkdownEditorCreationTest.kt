@@ -88,6 +88,8 @@ class MarkdownEditorCreationTest {
     override fun dispose() = Unit
     override fun setHtml(html: String, initialScrollOffset: Int, document: VirtualFile?) = Unit
     override fun reloadWithOffset(offset: Int) = Unit
+    @Deprecated("Deprecated in Java")
+    override fun scrollToMarkdownSrcOffset(offset: Int, smooth: Boolean) = Unit
     override fun addScrollListener(listener: MarkdownHtmlPanel.ScrollListener) = Unit
     override fun removeScrollListener(listener: MarkdownHtmlPanel.ScrollListener) = Unit
   }

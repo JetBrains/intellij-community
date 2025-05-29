@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.intellij.ide.BrowserUtil
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
@@ -187,6 +188,10 @@ internal class MarkdownComposePanel(
   }
 
   override fun removeScrollListener(listener: MarkdownHtmlPanel.ScrollListener) {
+  }
+
+  override suspend fun scrollTo(editor: Editor, line: Int) {
+    scrollToLineFlow.emit(line)
   }
 
   override fun scrollBy(horizontalUnits: Int, verticalUnits: Int) {

@@ -2,9 +2,13 @@
 package org.intellij.plugins.markdown.ui.preview;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import kotlin.Unit;
+import kotlin.coroutines.Continuation;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,7 +17,7 @@ import javax.swing.*;
 import java.nio.file.Path;
 import java.util.EventListener;
 
-public interface MarkdownHtmlPanel extends Disposable {
+public interface MarkdownHtmlPanel extends ScrollableMarkdownPreview, Disposable {
   @NotNull JComponent getComponent();
 
   /**
@@ -69,6 +73,21 @@ public interface MarkdownHtmlPanel extends Disposable {
   void reloadWithOffset(int offset);
 
   default void ensureMarkdownSrcOffsetIsVisible(int offset) {}
+
+   /**
+   * @deprecated implement {@code scrollTo(editor, line, $completion)} instead
+   */
+  @Deprecated
+  default void scrollToMarkdownSrcOffset(int offset, boolean ignoredSmooth) {
+    ensureMarkdownSrcOffsetIsVisible(offset);
+  }
+
+  @Override
+  @Nullable
+  default Object scrollTo(@NotNull Editor editor, int line, @NotNull Continuation<? super @NotNull Unit> $completion) {
+    ensureMarkdownSrcOffsetIsVisible(EditorUtil.getVisualLineEndOffset(editor, line));
+    return null;
+  }
 
   interface ScrollListener extends EventListener {
     @SuppressWarnings("unused")

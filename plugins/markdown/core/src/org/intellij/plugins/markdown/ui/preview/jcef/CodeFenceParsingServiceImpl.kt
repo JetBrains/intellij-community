@@ -87,7 +87,9 @@ class CodeFenceParsingServiceImpl(cs: CoroutineScope? = null) : CodeFenceParsing
 
     Thread {
       try {
-        highlightJS = highlighterCache.readCache()
+        synchronized(highlighterCache) {
+          highlightJS = highlighterCache.readCache()
+        }
       }
       catch (_: Exception) {}
 
@@ -108,7 +110,9 @@ class CodeFenceParsingServiceImpl(cs: CoroutineScope? = null) : CodeFenceParsing
       //   to load, so get it now if possible and use it the next time.
       try {
         val latestJS = URL("https://unpkg.com/@highlightjs/cdn-assets/highlight.min.js").readText()
-        highlighterCache.writeCache(latestJS)
+        synchronized(highlighterCache) {
+          highlighterCache.writeCache(latestJS)
+        }
       }
       catch (_: Exception) {
         LOG.warn("Failed to cache latest highlight.js code.")
@@ -122,8 +126,6 @@ class CodeFenceParsingServiceImpl(cs: CoroutineScope? = null) : CodeFenceParsing
       available = false
       return
     }
-
-    // LOG.info("Using ${if (highlightJS == latestJS) "latest" else "built-in"} highlight.js.")
 
     @Suppress("JSUnresolvedReference")
     @Language("JavaScript")
