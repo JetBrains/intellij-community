@@ -17,9 +17,9 @@ import com.intellij.webSymbols.utils.asSingleSymbol
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class PsiSourcedWebSymbolRequestResultProcessor(private val targetElement: PsiElement,
-                                                private val targetSymbols: List<PolySymbol>,
-                                                private val includeRegularReferences: Boolean) : RequestResultProcessor() {
+class PsiSourcedPolySymbolRequestResultProcessor(private val targetElement: PsiElement,
+                                                 private val targetSymbols: List<PolySymbol>,
+                                                 private val includeRegularReferences: Boolean) : RequestResultProcessor() {
   private val mySymbolReferenceService = PsiSymbolReferenceService.getService()
   private val myPsiReferenceService = PsiReferenceService.getService()
   private val myTargetSymbol = PsiSymbolService.getInstance().asSymbol(targetElement)
