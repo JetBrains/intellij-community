@@ -37,13 +37,11 @@ object ParameterObjectUtils {
       .mapNotNull { it.element as? PsiReferenceExpression }
       .filter { reference -> reference.textRange.startOffset >= afterScope || reference.textRange.endOffset <= beforeScope }
       .sortedBy { reference -> reference.textRange.startOffset }
-    val referencesBefore = references.filter { ref -> ref.textRange.endOffset <= beforeScope }
-    if (!referencesBefore.isEmpty()) {
-      val loop = PsiTreeUtil.getParentOfType(parent, PsiLoopStatement::class.java, true)
-      if (loop != null) {
-        val suspiciousLoop = referencesBefore.any { ref -> PsiTreeUtil.isAncestor(loop, ref, true) }
-        if (suspiciousLoop) return null
-      }
+    val loop = PsiTreeUtil.getParentOfType(parent, PsiLoopStatement::class.java, true,
+                                           PsiMember::class.java, PsiLambdaExpression::class.java)
+    if (loop != null) {
+      val suspiciousLoop = variable.textOffset < loop.textOffset
+      if (suspiciousLoop) return null
     }
     val firstAssignment = references.find { reference -> PsiUtil.isAccessedForWriting(reference) } ?: return references
     val assignmentExpression = PsiTreeUtil.getParentOfType(firstAssignment, PsiAssignmentExpression::class.java)

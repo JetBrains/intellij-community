@@ -449,6 +449,12 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     }
   }
 
+  fun testIntroduceObjectFailedWithLoop2(){
+    assertThrows(RefactoringErrorHintException::class.java) {
+      doTest()
+    }
+  }
+
   fun testIntroduceObjectFailedWithAssignment1(){
     assertThrows(RefactoringErrorHintException::class.java) {
       doTest()
